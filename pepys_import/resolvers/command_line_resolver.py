@@ -220,7 +220,7 @@ class CommandLineResolver(DataResolver):
         if tabletypeId in self.table_privacies:
             return tabletypeId, self.table_privacies[tabletypeId]
 
-        ###### Chose Classification (aka Privacy) ######
+        # Choose Privacy
         privacies = data_store.getPrivacies()
         privacy_names = [c.name for c in privacies]
         privacy_names.append("Add a new classification")
