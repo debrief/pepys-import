@@ -7,8 +7,7 @@ We're aiming for 100% code coverage on the project, track our progress here:  [!
 Link to working demo of datafile import: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/debrief/pepys-import/develop?filepath=examples%2Fnotebooks%2Fdata_store_sqlite.ipynb)
 
 # Work in progress
-_LINK TO BE UPDATED_:
-View the project Kanban board [here](https://github.com/debrief/pepys-import/projects/1)
+View the project Kanban board [here](https://github.com/debrief/pepys-import/projects/3)
 
 # Setup
 
