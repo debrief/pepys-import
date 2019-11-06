@@ -1,4 +1,5 @@
-from pint import UnitRegistry
+from . import unit_registry
+
 
 class Singleton(type):
     """
@@ -15,14 +16,15 @@ class Singleton(type):
             cls._instance = super().__call__(*args, **kwargs)
         return cls._instance
 
+
 class UnitConversion(metaclass=Singleton):
 
     def __init__(self):
 
         # Initialize pint's unit registry object
-        self.unitreg = UnitRegistry()
+        self.unit_reg = unit_registry()
 
-        self.metre_per_second = self.unitreg.metre / self.unitreg.second
+        self.metre_per_second = self.unit_reg.metre / self.unit_reg.second
 
-    def getUnitRegistry(self):
-        return self.unitreg
+    def get_unit_registry(self):
+        return self.unit_reg
