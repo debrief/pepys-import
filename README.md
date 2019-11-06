@@ -1,6 +1,5 @@
 # Code coverage
 
-_LINK TO BE UPDATED_: 
 We're aiming for 100% code coverage on the project, track our progress here:  [![codecov](https://codecov.io/gh/debrief/pepys-import/branch/develop/graph/badge.svg)](https://codecov.io/gh/debrief/pepys-import)
 
 # Jupyter demo
