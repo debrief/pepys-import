@@ -1,4 +1,3 @@
-
 def get_choice_input(heading, choices):
     map_choice = False
     while 1:
@@ -24,4 +23,4 @@ def get_choice_input(heading, choices):
             if not map_choice:
                 return choice_value
             else:
-                return choices[choice_value-1][1]
+                return choices[choice_value - 1][1]
