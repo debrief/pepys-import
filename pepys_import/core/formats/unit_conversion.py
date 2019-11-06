@@ -18,7 +18,6 @@ class Singleton(type):
 
 
 class UnitConversion(metaclass=Singleton):
-
     def __init__(self):
 
         # Initialize pint's unit registry object
