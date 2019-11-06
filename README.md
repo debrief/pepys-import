@@ -1,20 +1,15 @@
 # Code coverage
 
 _LINK TO BE UPDATED_: 
-We're aiming for 100% code coverage on the project, track our progress here:  [![codecov](https://codecov.io/gh/debrief/python-import-library/branch/develop/graph/badge.svg)](https://codecov.io/gh/debrief/python-import-library)
+We're aiming for 100% code coverage on the project, track our progress here:  [![codecov](https://codecov.io/gh/debrief/pepys-import/branch/develop/graph/badge.svg)](https://codecov.io/gh/debrief/pepys-import)
 
 # Jupyter demo
 
-_LINK TO BE UPDATED_:
-Link to working demo of datafile import: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/debrief/python-import-library/master?filepath=jupyter%2FDataStore_sqliteExperiment.ipynb)
-
-_LINK TO BE UPDATED_:
-Placeholder for live Jupyter view of whole repo
-[![Master branch](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/debrief/python-import-library/master)
+Link to working demo of datafile import: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/debrief/pepys-import/develop?filepath=examples%2Fnotebooks%2Fdata_store_sqlite.ipynb)
 
 # Work in progress
 _LINK TO BE UPDATED_:
-View the project Kanban board [here](https://github.com/debrief/python-import-library/projects/1)
+View the project Kanban board [here](https://github.com/debrief/pepys-import/projects/1)
 
 # Setup
 
