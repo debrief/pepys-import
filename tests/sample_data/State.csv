@@ -1,0 +1,3 @@
+time,datafile,sensor,lat,long,heading,speed
+2019-04-01,FILE-1,SENSOR-1,46.000,32.000,TEST,100
+2019-04-010,FILE-2,SENSOR-2,23.000,28.000,TEST,50
