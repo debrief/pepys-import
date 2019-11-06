@@ -4,3 +4,4 @@ psycopg2
 nose2==0.9.1
 testing.postgresql
 black
+pint==0.9
