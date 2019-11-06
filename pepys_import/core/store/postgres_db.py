@@ -27,7 +27,7 @@ class TableType(base):
     __tablename__ = "TableTypes"
     table_type = TableTypes.METADATA
 
-    tabletype_id = Column(Integer, nullable=False, primary_key=True)
+    table_type_id = Column(Integer, nullable=False, primary_key=True)
     name = Column(String(150))
 
 
@@ -89,7 +89,7 @@ class DatafileType(base):
     __tablename__ = "DatafileTypes"
     table_type = TableTypes.REFERENCE
 
-    data_file_type_id = Column(
+    datafile_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     # TODO: does this, or other string limits need checking or validating on file import?
@@ -109,7 +109,7 @@ class Datafile(base):
     reference = Column(String(150))
     url = Column(String(150))
     privacy_id = Column(UUID(as_uuid=True), nullable=False)
-    data_file_type_id = Column(UUID(as_uuid=True), nullable=False)
+    datafile_type_id = Column(UUID(as_uuid=True), nullable=False)
     # TODO: add relationships and ForeignKey entries to auto-create Entry ids
 
 

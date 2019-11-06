@@ -86,7 +86,7 @@ class DatafileType(base):
     __tablename__ = "DatafileTypes"
     table_type = TableTypes.REFERENCE
 
-    data_file_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    datafile_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     # TODO: does this, or other string limits need checking or validating on file import?
     name = Column(String(150), nullable=False)
 
@@ -105,7 +105,7 @@ class Datafile(base):
     reference = Column(String(150))
     url = Column(String(150))
     privacy_id = Column(UUID(), nullable=False)
-    data_file_type_id = Column(UUID(), nullable=False)
+    datafile_type_id = Column(UUID(), nullable=False)
     # TODO: add relationships and ForeignKey entries to auto-create Entry ids
 
 
