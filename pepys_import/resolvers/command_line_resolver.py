@@ -135,9 +135,7 @@ class CommandLineResolver(DataResolver):
         elif choice == len(privacy_names) - 1:
             privacy_check_ok = False
             while not privacy_check_ok:
-                new_input = input(
-                    "Please type name of new classification: "
-                )
+                new_input = input("Please type name of new classification: ")
                 privacy_check_ok = data_store.checkPrivacy(new_input)
             chosen_privacy = data_store.addToPrivacies(new_input)
         else:
@@ -191,9 +189,7 @@ class CommandLineResolver(DataResolver):
         sensor_type_names = [st.name for st in sensor_types]
         sensor_type_names.append("Add a new sensor type")
         sensor_type_names.append("Cancel import")
-        choice = get_choice_input(
-            "Please provide sensor type: ", sensor_type_names
-        )
+        choice = get_choice_input("Please provide sensor type: ", sensor_type_names)
         if choice == len(sensor_type_names):
             print("Quitting")
             sys.exit(1)
@@ -208,7 +204,7 @@ class CommandLineResolver(DataResolver):
 
         return sensorName, chosen_sensor_type
 
-    def resolveSensor(self, data_store, sensorName):
+    def resolve_sensor(self, data_store, sensorName):
         choice = get_choice_input(
             f"Sensor '{sensorName}' not found. Do you wish to: ",
             [f"Add a new sensor, titled '{sensorName}'", "Cancel import"],
@@ -220,7 +216,7 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
-    def resolvePrivacy(self, data_store, tabletypeId, tablename):
+    def resolve_privacy(self, data_store, tabletypeId, tablename):
         if tabletypeId in self.table_privacies:
             return tabletypeId, self.table_privacies[tabletypeId]
 
@@ -240,9 +236,7 @@ class CommandLineResolver(DataResolver):
         elif choice == len(privacy_names) - 1:
             privacy_check_ok = False
             while not privacy_check_ok:
-                new_input = input(
-                    "Please type name of new classification: "
-                )
+                new_input = input("Please type name of new classification: ")
                 privacy_check_ok = data_store.checkPrivacy(new_input)
             chosen_privacy = data_store.addToPrivacies(new_input)
         else:
