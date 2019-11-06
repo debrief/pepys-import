@@ -5,8 +5,8 @@ from . import unit_registry, quantity
 
 class State:
 
-    def __init__(self, linenumber, line):
-        self.lineNum = linenumber
+    def __init__(self, line_number, line):
+        self.line_num = line_number
         self.line = line
 
         self.timestamp = None
@@ -17,118 +17,113 @@ class State:
         self.heading = None
         self.speed = None
         self.depth = None
-        self.textLabel = None
+        self.text_label = None
 
         # Initialize pint's unit registry object
         self.unit_registry = unit_registry
 
     def print(self):
         print("REP Line {} - Timestamp: {} Vessel: {} Symbology: {} Latitude: {} Longitude: {} Heading: {} Speed: {} Depth: {} TextLabel: {}"
-              .format(self.lineNum, self.timestamp, self.vessel, self.symbology,
-                      self.latitude, self.longitude, self.heading, self.speed, self.depth, self.textLabel))
+              .format(self.line_num, self.timestamp, self.vessel, self.symbology,
+                      self.latitude, self.longitude, self.heading, self.speed, self.depth, self.text_label))
 
     def parse(self):
 
         tokens = self.line.split()
 
         if len(tokens) < 15:
-            print("Error on line {} not enough tokens: {}".format(self.lineNum, self.line))
+            print("Error on line {} not enough tokens: {}".format(self.line_num, self.line))
             return False
 
-
         # separate token strings
-        dateToken = tokens[0]
-        timeToken = tokens[1]
-        vesselNameToken = tokens[2]
-        symbologyToken = tokens[3]
-        latDegreesToken = tokens[4]
-        latMinsToken = tokens[5]
-        latSecsToken = tokens[6]
-        latHemiToken = tokens[7]
-        longDegreesToken = tokens[8]
-        longMinsToken = tokens[9]
-        longSecsToken = tokens[10]
-        longHemiToken = tokens[11]
-        headingToken = tokens[12]
-        speedToken = tokens[13]
-        depthToken = tokens[14]
-        textLabelToken = ""
-
-
-
+        date_token = tokens[0]
+        time_token = tokens[1]
+        vessel_name_token = tokens[2]
+        symbology_token = tokens[3]
+        lat_degrees_token = tokens[4]
+        lat_mins_token = tokens[5]
+        lat_secs_token = tokens[6]
+        lat_hemi_token = tokens[7]
+        long_degrees_token = tokens[8]
+        long_mins_token = tokens[9]
+        long_secs_token = tokens[10]
+        long_hemi_token = tokens[11]
+        heading_token = tokens[12]
+        speed_token = tokens[13]
+        depth_token = tokens[14]
+        text_label_token = ""
 
         if len(tokens) >= 16:
             # TODO: join back into single string, or extract full substring
-            self.textLabelToken = tokens[15:]
+            self.text_label = tokens[15:]
 
-
-        if len(dateToken) != 6 and len(dateToken) != 8:
-            print("Line {}. Error in Date format {}. Should be either 2 of 4 figure date, followed by month then date".format(self.lineNum, dateToken))
+        if len(date_token) != 6 and len(date_token) != 8:
+            print("Line {}. Error in Date format {}. Should be either 2 of 4 figure date, followed by month then date".format(self.line_num, date_token))
             return False
 
         # Times always in Zulu/GMT
-        if len(timeToken) != 6 and  len(timeToken) != 10:
-            print("Line {}. Error in Time format {}. Should be HHMMSS[.SSS]".format(self.lineNum, timeToken))
+        if len(time_token) != 6 and  len(time_token) != 10:
+            print("Line {}. Error in Time format {}. Should be HHMMSS[.SSS]".format(self.line_num, time_token))
             return False
 
-        self.timestamp = self.parseTimestamp(dateToken, timeToken)
+        self.timestamp = self.parse_timestamp(date_token, time_token)
 
-        self.vessel = vesselNameToken.strip('"')
+        self.vessel = vessel_name_token.strip('"')
 
-        symVals = symbologyToken.split("[")
-        if len(symVals) >= 1:
-            if len(symVals[0]) != 2 and len(symVals[0]) != 5:
-                print("Line {}. Error in Symbology format {}. Should be 2 or 5 chars".format(self.lineNum, symbologyToken))
+        symbology_values = symbology_token.split("[")
+        if len(symbology_values) >= 1:
+            if len(symbology_values[0]) != 2 and len(symbology_values[0]) != 5:
+                print("Line {}. Error in Symbology format {}. Should be 2 or 5 chars".format(self.line_num, symbology_token))
                 return False
-        if len(symVals) != 1 and len(symVals) != 2:
-            print("Line {}. Error in Symbology format {}".format(self.lineNum, symbologyToken))
+        if len(symbology_values) != 1 and len(symbology_values) != 2:
+            print("Line {}. Error in Symbology format {}".format(self.line_num, symbology_token))
             return False
 
-        self.symbology = symbologyToken
+        self.symbology = symbology_token
 
-        self.latitude = Location(latDegreesToken, latMinsToken, latSecsToken, latHemiToken)
+        self.latitude = Location(lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token)
         if not self.latitude.parse():
-            print("Line {}. Error in latitude parsing".format(self.lineNum))
+            print("Line {}. Error in latitude parsing".format(self.line_num))
             return False
 
-        self.longitude = Location(longDegreesToken, longMinsToken, longSecsToken, longHemiToken)
+        self.longitude = Location(long_degrees_token, long_mins_token, long_secs_token, long_hemi_token)
         if not self.latitude.parse():
-            print("Line {}. Error in longitude parsing".format(self.lineNum))
+            print("Line {}. Error in longitude parsing".format(self.line_num))
             return False
 
         try:
-            valid_heading = float(headingToken)
+            valid_heading = float(heading_token)
         except ValueError:
-            print("Line {}. Error in heading value {}. Couldn't convert to a number".format(self.lineNum, headingToken))
+            print("Line {}. Error in heading value {}. Couldn't convert to a number".format(self.line_num, heading_token))
             return False
         if 0.0 > valid_heading >= 360.0:
-            print("Line {}. Error in heading value {}. Should be be between 0 and 359.9 degrees".format(self.lineNum, headingToken))
+            print("Line {}. Error in heading value {}. Should be be between 0 and 359.9 degrees".format(self.line_num, heading_token))
             return False
 
         # Set heading as degree(quantity-with-unit) object
-        self.setHeading(valid_heading * self.unitreg.degree)
+        self.set_heading(valid_heading * self.unit_registry.degree)
 
         try:
-            valid_speed = float(speedToken)
+            valid_speed = float(speed_token)
         except ValueError:
-            print("Line {}. Error in speed value {}. Couldn't convert to a number".format(self.lineNum, speedToken))
+            print("Line {}. Error in speed value {}. Couldn't convert to a number".format(self.line_num, speed_token))
             return False
         
         # Set speed as knots(quantity-with-unit) object
-        self.setSpeed(valid_speed * self.unitreg.knot)
+        self.set_speed(valid_speed * self.unit_registry.knot)
 
         try:
-            if depthToken == 'NaN':
+            if depth_token == 'NaN':
                 self.depth = 0.0
             else:
-                self.depth = float(depthToken)
+                self.depth = float(depth_token)
         except ValueError:
-            print("Line {}. Error in depth value {}. Couldn't convert to a number".format(self.lineNum, depthToken))
+            print("Line {}. Error in depth value {}. Couldn't convert to a number".format(self.line_num, depth_token))
             return False
 
         return True
 
-    def parseTimestamp(self, date, time):
+    def parse_timestamp(self, date, time):
         if len(date) == 6:
             formatStr = '%y%m%d'
         else:
@@ -141,44 +136,44 @@ class State:
 
         return datetime.strptime(date + time, formatStr)
 
-    def setSpeed(self, speed):
+    def set_speed(self, speed):
         self.speed = speed
 
-    def setHeading(self, heading : quantity):
+    def set_heading(self, heading : quantity):
         self.heading = heading
 
-    def setLatitude(self):
+    def set_latitude(self):
         pass
     
-    def setLongitude(self):
+    def set_longitude(self):
         pass
 
-    def getLineNum(self):
-        return self.lineNum
+    def get_line_number(self):
+        return self.line_num
 
-    def getTimestamp(self):
+    def get_timestamp(self):
         return self.timestamp
 
-    def getPlatform(self):
+    def get_platform(self):
         return self.vessel
 
-    def getSymbology(self):
+    def get_symbology(self):
         return self.symbology
 
-    def getLatitude(self):
+    def get_latitude(self):
         return self.latitude
 
-    def getLongitude(self):
+    def get_longitude(self):
         return self.longitude
 
-    def getHeading(self):
+    def get_heading(self):
         return self.heading
 
-    def getSpeed(self):
+    def get_speed(self):
         return self.speed
 
-    def getDepth(self):
+    def get_depth(self):
         return self.depth
 
-    def getTextLabel(self):
-        return self.textLabel
+    def get_text_label(self):
+        return self.text_label
