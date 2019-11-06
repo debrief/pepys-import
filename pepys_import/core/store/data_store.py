@@ -23,29 +23,38 @@ class DataStore:
 
     # TODO: supply or lookup user id
     # Valid options for db_type are 'postgres' and 'sqlite'
-    def __init__(self, db_username, db_password, db_host, db_port, db_name,
-                 db_type='postgres', missing_data_resolver=DefaultResolver()):
-        if db_type == 'postgres':
-            self.db_classes = import_module('Store.PostgresDB')
-            driver = 'postgresql+psycopg2'
-        elif db_type == 'sqlite':
-            self.db_classes = import_module('Store.SqliteDB')
-            driver = 'sqlite+pysqlite'
+    def __init__(
+        self,
+        db_username,
+        db_password,
+        db_host,
+        db_port,
+        db_name,
+        db_type="postgres",
+        missing_data_resolver=DefaultResolver(),
+    ):
+        if db_type == "postgres":
+            self.db_classes = import_module("Store.PostgresDB")
+            driver = "postgresql+psycopg2"
+        elif db_type == "sqlite":
+            self.db_classes = import_module("Store.SqliteDB")
+            driver = "sqlite+pysqlite"
         else:
             raise Exception(
-                f"Unknown db_type {db_type} supplied, if specified should be one of 'postgres' or 'sqlite'")
+                f"Unknown db_type {db_type} supplied, if specified should be one of 'postgres' or 'sqlite'"
+            )
 
         # setup table type data
         self.setup_table_type_mapping()
 
-        connection_string = '{}://{}:{}@{}:{}/{}'.format(driver, db_username,
-                                                         db_password, db_host, db_port,
-                                                         db_name)
+        connection_string = "{}://{}:{}@{}:{}/{}".format(
+            driver, db_username, db_password, db_host, db_port, db_name
+        )
         self.engine = create_engine(connection_string, echo=False)
 
-        if db_type == 'postgres':
+        if db_type == "postgres":
             base_postgres.metadata.bind = self.engine
-        elif db_type == 'sqlite':
+        elif db_type == "sqlite":
             base_sqlite.metadata.bind = self.engine
 
         self.missing_data_resolver = missing_data_resolver
@@ -75,19 +84,25 @@ class DataStore:
     def initialise(self):
         """Create schemas for the database"""
 
-        if self.db_type == 'sqlite':
+        if self.db_type == "sqlite":
             try:
                 # Attempt to create schema if not present, to cope with fresh DB file
                 base_sqlite.metadata.create_all(self.engine)
             except OperationalError:
                 print(
-                    "Error creating database schema, possible invalid path? ('" + self.db_name + "'). Quitting")
+                    "Error creating database schema, possible invalid path? ('"
+                    + self.db_name
+                    + "'). Quitting"
+                )
                 exit()
-        elif self.db_type == 'postgres':
+        elif self.db_type == "postgres":
             try:
                 #  ensure that create schema scripts created before create table scripts
-                event.listen(base_postgres.metadata, 'before_create',
-                             CreateSchema('datastore_schema'))
+                event.listen(
+                    base_postgres.metadata,
+                    "before_create",
+                    CreateSchema("datastore_schema"),
+                )
                 base_postgres.metadata.create_all(self.engine)
             except OperationalError:
                 print(f"Error creating database({self.db_name})! Quitting")
@@ -124,8 +139,7 @@ class DataStore:
 
         # enough info to proceed and create entry
         table_type = self.db_classes.TableType(
-            table_type_id=table_type_id,
-            name=table_name
+            table_type_id=table_type_id, name=table_name
         )
         self.session.add(table_type)
         self.session.flush()
@@ -141,8 +155,7 @@ class DataStore:
 
         # No cache for entries, just add new one when called
         entry_obj = self.db_classes.Entry(
-            table_type_id=table_type_id,
-            created_user=self.default_user_id
+            table_type_id=table_type_id, created_user=self.default_user_id
         )
 
         self.session.add(entry_obj)
@@ -231,9 +244,7 @@ class DataStore:
             return datafile_types
 
         # proceed and create entry
-        datafile_type_obj = self.db_classes.DatafileType(
-            name=datafile_type
-        )
+        datafile_type_obj = self.db_classes.DatafileType(name=datafile_type)
 
         self.session.add(datafile_type_obj)
         self.session.flush()
@@ -258,15 +269,19 @@ class DataStore:
         datafile_type_obj = self.add_to_datafile_types(datafile_type)
 
         # don't know privacy, use resolver to query for data
-        privacy = self.missing_data_resolver.resolve_privacy(self,
-                                                             self.db_classes.Datafile.table_type_id,
-                                                             self.db_classes.Datafile.__tablename__)
+        privacy = self.missing_data_resolver.resolve_privacy(
+            self,
+            self.db_classes.Datafile.table_type_id,
+            self.db_classes.Datafile.__tablename__,
+        )
 
         # privacy should contain (tabletype, privacy_name)
         # enough info to proceed and create entry
         table_type, privacy = privacy
-        entry_id = self.add_to_entries(self.db_classes.Datafile.table_type_id,
-                                     self.db_classes.Datafile.__tablename__)
+        entry_id = self.add_to_entries(
+            self.db_classes.Datafile.table_type_id,
+            self.db_classes.Datafile.__tablename__,
+        )
 
         datafile_obj = self.db_classes.Datafile(
             datafile_id=entry_id,
@@ -274,7 +289,7 @@ class DataStore:
             reference=datafile_name,
             url=None,
             privacy_id=privacy.privacy_id,
-            datafiletype_id=datafile_type_obj.datafiletype_id
+            datafiletype_id=datafile_type_obj.datafiletype_id,
         )
 
         self.session.add(datafile_obj)
@@ -302,15 +317,17 @@ class DataStore:
         # platform should contain (platform_name, platform_type, nationality)
         # enough info to proceed and create entry
         _, platform_type, nationality = platform
-        entry_id = self.add_to_entries(self.db_classes.Platform.table_type_id,
-                                       self.db_classes.Platform.__tablename__)
+        entry_id = self.add_to_entries(
+            self.db_classes.Platform.table_type_id,
+            self.db_classes.Platform.__tablename__,
+        )
 
         platform_obj = self.db_classes.Platform(
             platform_id=entry_id,
             name=platform_name,
             platform_type_id=platform_type.platform_type_id,
             host_platform_id=None,
-            nationality_id=nationality.nationality_id
+            nationality_id=nationality.nationality_id,
         )
 
         self.session.add(platform_obj)
@@ -361,14 +378,15 @@ class DataStore:
         # sensor should contain (sensor_name, sensorType)
         # enough info to proceed and create entry
         _, sensor_type = sensor
-        entry_id = self.add_to_entries(self.db_classes.Sensor.table_type_id,
-                                       self.db_classes.Sensor.__tablename__)
+        entry_id = self.add_to_entries(
+            self.db_classes.Sensor.table_type_id, self.db_classes.Sensor.__tablename__
+        )
 
         sensor_obj = self.db_classes.Sensor(
             sensor_id=entry_id,
             name=sensor_name,
             sensortype_id=self.db_classes.mapUUIDType(sensor_type.sensor_type_id),
-            platform_id=self.db_classes.mapUUIDType(platform.platform_id)
+            platform_id=self.db_classes.mapUUIDType(platform.platform_id),
         )
 
         self.session.add(sensor_obj)
@@ -379,32 +397,36 @@ class DataStore:
         # should return DB type or something else decoupled from DB?
         return sensor_obj
 
-    def add_to_states_from_rep(self, timestamp, datafile, sensor, lat, long, heading,
-                               speed):
+    def add_to_states_from_rep(
+        self, timestamp, datafile, sensor, lat, long, heading, speed
+    ):
         # No cache for entries, just add new one when called
 
         # don't know privacy, use resolver to query for data
-        privacy = self.missing_data_resolver.resolve_privacy(self,
-                                                             self.db_classes.State.table_type_id,
-                                                             self.db_classes.State.__tablename__)
+        privacy = self.missing_data_resolver.resolve_privacy(
+            self,
+            self.db_classes.State.table_type_id,
+            self.db_classes.State.__tablename__,
+        )
 
         # privacy should contain (table_type, privacy_name)
         # enough info to proceed and create entry
         table_type, privacy = privacy
-        entry_id = self.add_to_entries(self.db_classes.State.table_type_id,
-                                       self.db_classes.State.__tablename__)
+        entry_id = self.add_to_entries(
+            self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
+        )
 
         state_obj = self.db_classes.State(
             state_id=entry_id,
             time=timestamp,
             sensor_id=sensor.sensor_id,
-            location='(' + str(long.degrees) + ',' + str(lat.degrees) + ')',
+            location="(" + str(long.degrees) + "," + str(lat.degrees) + ")",
             heading=heading,
             # TODO: how to calculate course?
             # course=,
             speed=speed,
             datafile_id=datafile.datafile_id,
-            privacy_id=privacy.privacy_id
+            privacy_id=privacy.privacy_id,
         )
         self.session.add(state_obj)
         self.session.flush()
@@ -419,14 +441,15 @@ class DataStore:
             print(f"There is missing value(s) in '{sensor_type}, {host}'!")
             return
 
-        entry_id = self.add_to_entries(self.db_classes.Sensor.table_type_id,
-                                       self.db_classes.Sensor.__tablename__)
+        entry_id = self.add_to_entries(
+            self.db_classes.Sensor.table_type_id, self.db_classes.Sensor.__tablename__
+        )
 
         sensor_obj = self.db_classes.Sensor(
             sensor_id=entry_id,
             name=name,
             sensor_type_id=sensor_type.sensor_type_id,
-            platform_id=host.platform_id
+            platform_id=host.platform_id,
         )
         self.session.add(sensor_obj)
         self.session.flush()
@@ -442,8 +465,10 @@ class DataStore:
             print("There is missing value(s) in the data!")
             return
 
-        entry_id = self.add_to_entries(self.db_classes.Datafile.table_type_id,
-                                       self.db_classes.Datafile.__tablename__)
+        entry_id = self.add_to_entries(
+            self.db_classes.Datafile.table_type_id,
+            self.db_classes.Datafile.__tablename__,
+        )
 
         datafile_obj = self.db_classes.Datafile(
             datafile_id=entry_id,
@@ -469,15 +494,17 @@ class DataStore:
             print("There is missing value(s) in the data!")
             return
 
-        entry_id = self.add_to_entries(self.db_classes.Platform.table_type_id,
-                                     self.db_classes.Platform.__tablename__)
+        entry_id = self.add_to_entries(
+            self.db_classes.Platform.table_type_id,
+            self.db_classes.Platform.__tablename__,
+        )
 
         platform_obj = self.db_classes.Platform(
             platform_id=entry_id,
             name=name,
             nationality_id=nationality.nationality_id,
             platform_type_id=platform_type.platform_type_id,
-            privacy_id=privacy.privacy_id
+            privacy_id=privacy.privacy_id,
         )
 
         self.session.add(platform_obj)
@@ -493,48 +520,75 @@ class DataStore:
 
     def search_datafile_type(self, name):
         # search for any datafile type with this name
-        return self.session.query(self.db_classes.DatafileType).filter(
-            self.db_classes.DatafileType.name == name).first()
+        return (
+            self.session.query(self.db_classes.DatafileType)
+            .filter(self.db_classes.DatafileType.name == name)
+            .first()
+        )
 
     def search_datafile(self, name):
         # search for any datafile with this name
-        return self.session.query(self.db_classes.Datafile).filter(
-            self.db_classes.Datafile.reference == name).first()
+        return (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.reference == name)
+            .first()
+        )
 
     def search_platform(self, name):
         # search for any platform with this name
-        return self.session.query(self.db_classes.Platform).filter(
-            self.db_classes.Platform.name == name).first()
+        return (
+            self.session.query(self.db_classes.Platform)
+            .filter(self.db_classes.Platform.name == name)
+            .first()
+        )
 
     def search_platform_type(self, name):
         # search for any platform type with this name
-        return self.session.query(self.db_classes.PlatformType).filter(
-            self.db_classes.PlatformType.name == name).first()
+        return (
+            self.session.query(self.db_classes.PlatformType)
+            .filter(self.db_classes.PlatformType.name == name)
+            .first()
+        )
 
     def search_nationality(self, name):
         # search for any nationality with this name
-        return self.session.query(self.db_classes.Nationality).filter(
-            self.db_classes.Nationality.name == name).first()
+        return (
+            self.session.query(self.db_classes.Nationality)
+            .filter(self.db_classes.Nationality.name == name)
+            .first()
+        )
 
     def search_sensor(self, name):
         # search for any sensor type featuring this name
-        return self.session.query(self.db_classes.Sensor).filter(
-            self.db_classes.Sensor.name == name).first()
+        return (
+            self.session.query(self.db_classes.Sensor)
+            .filter(self.db_classes.Sensor.name == name)
+            .first()
+        )
 
     def search_sensor_type(self, name):
         # search for any sensor type featuring this name
-        return self.session.query(self.db_classes.SensorType).filter(
-            self.db_classes.SensorType.name == name).first()
+        return (
+            self.session.query(self.db_classes.SensorType)
+            .filter(self.db_classes.SensorType.name == name)
+            .first()
+        )
 
     def search_privacy(self, name):
         # search for any privacy with this name
-        return self.session.query(self.db_classes.Privacy).filter(
-            self.db_classes.Privacy.name == name).first()
+        return (
+            self.session.query(self.db_classes.Privacy)
+            .filter(self.db_classes.Privacy.name == name)
+            .first()
+        )
 
     def search_table_type(self, table_type_id):
         # search for any table type with this id
-        return self.session.query(self.db_classes.TableType).filter(
-            self.db_classes.TableType.table_type_id == table_type_id).first()
+        return (
+            self.session.query(self.db_classes.TableType)
+            .filter(self.db_classes.TableType.table_type_id == table_type_id)
+            .first()
+        )
 
     #############################################################
     # Get functions
@@ -569,10 +623,19 @@ class DataStore:
 
     def get_sensors_by_platform_type(self, platform_type):
         # given platform type, return all Sensors contained on platforms of that type
-        return self.session.query(self.db_classes.Platform,
-                                  self.db_classes.Sensor).join(self.db_classes.Sensor,
-                                                               self.db_classes.Sensor.platform_id == self.db_classes.Platform.platform_id).filter(
-            self.db_classes.Platform.platform_type_id == platform_type.platform_type_id).all()
+        return (
+            self.session.query(self.db_classes.Platform, self.db_classes.Sensor)
+            .join(
+                self.db_classes.Sensor,
+                self.db_classes.Sensor.platform_id
+                == self.db_classes.Platform.platform_id,
+            )
+            .filter(
+                self.db_classes.Platform.platform_type_id
+                == platform_type.platform_type_id
+            )
+            .all()
+        )
 
     #############################################################
     # Validation/check functions
@@ -582,8 +645,9 @@ class DataStore:
         if len(nationality) == 0:
             return False
 
-        if next((nat for nat in self.get_nationalities() if nat.name == nationality),
-                None):
+        if next(
+            (nat for nat in self.get_nationalities() if nat.name == nationality), None
+        ):
             # A nationality already exists with that name
             return False
 
@@ -605,8 +669,9 @@ class DataStore:
         if len(platform_type) == 0:
             return False
 
-        if next((pt for pt in self.get_platform_types() if pt.name == platform_type),
-                None):
+        if next(
+            (pt for pt in self.get_platform_types() if pt.name == platform_type), None
+        ):
             # A platform type already exists with that name
             return False
 
@@ -640,13 +705,20 @@ class DataStore:
     def setup_table_type_mapping(self):
         # setup a map of tables keyed by TableType
         db_classes = dict(
-            [(name, cls) for name, cls in self.db_classes.__dict__.items() if
-             isinstance(cls, type)
-             and (issubclass(cls, base_postgres) or issubclass(cls,
-                                                               base_sqlite)) and cls.__name__ != 'Base'])
+            [
+                (name, cls)
+                for name, cls in self.db_classes.__dict__.items()
+                if isinstance(cls, type)
+                and (issubclass(cls, base_postgres) or issubclass(cls, base_sqlite))
+                and cls.__name__ != "Base"
+            ]
+        )
         for table_type in TableTypes:
-            self.metaClasses[table_type] = [cls for name, cls in db_classes.items() if
-                                           db_classes[name].table_type == table_type]
+            self.metaClasses[table_type] = [
+                cls
+                for name, cls in db_classes.items()
+                if db_classes[name].table_type == table_type
+            ]
 
     def get_table_type_data(self, table_types):
         data = dict()
@@ -673,15 +745,16 @@ class DataStore:
             for object in list(reference_table_objects):
                 reference_tables.append(object.__tablename__)
 
-        reference_files = [file for file in files if
-                           os.path.splitext(file)[0] in reference_tables]
+        reference_files = [
+            file for file in files if os.path.splitext(file)[0] in reference_tables
+        ]
         for file in reference_files:
             # split file into filename and extension
             table_name, _ = os.path.splitext(file)
-            possible_method = 'addTo' + table_name
+            possible_method = "addTo" + table_name
             method_to_call = getattr(self, possible_method, None)
             if method_to_call:
-                with open(os.path.join(reference_data_folder, file), 'r') as f:
+                with open(os.path.join(reference_data_folder, file), "r") as f:
                     reader = csv.reader(f)
                     # skip header
                     _ = next(reader)
@@ -706,15 +779,16 @@ class DataStore:
             for object in list(metadata_table_objects):
                 metadata_tables.append(object.__tablename__)
 
-        metadata_files = [file for file in files if
-                          os.path.splitext(file)[0] in metadata_tables]
+        metadata_files = [
+            file for file in files if os.path.splitext(file)[0] in metadata_tables
+        ]
         for file in sorted(metadata_files):
             # split file into filename and extension
             table_name, _ = os.path.splitext(file)
-            possible_method = 'addTo' + table_name
+            possible_method = "addTo" + table_name
             method_to_call = getattr(self, possible_method, None)
             if method_to_call:
-                with open(os.path.join(sample_data_folder, file), 'r') as f:
+                with open(os.path.join(sample_data_folder, file), "r") as f:
                     reader = csv.reader(f)
                     # skip header
                     _ = next(reader)
