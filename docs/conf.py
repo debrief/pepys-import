@@ -20,7 +20,9 @@
 #
 import os
 import sys
+# TODO: probably new paths must be inserted to sys before using  it
 sys.path.insert(0, os.path.abspath('..'))
+
 
 import pepys_import
 
@@ -48,7 +50,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'pepys-import'
-copyright = u"2019, """
+copyright = u"2019"
 author = u""""
 
 # The version info for the project you're documenting, acts as replacement
@@ -157,7 +159,7 @@ texinfo_documents = [
      'pepys_import',
      'One line description of project.',
      'Miscellaneous'),
-]
+]"""
 
 
 
