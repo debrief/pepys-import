@@ -1,0 +1,22 @@
+language: python
+python:
+  - "3.8"
+cache: pip
+addons:
+  postgresql: "10"
+  apt:
+    packages:
+      - postgresql-10-postgis-2.5
+services:
+  - postgresql
+install:
+  - pip install -r requirements.txt
+  - pip install codecov
+before_script:
+  - psql -U postgres -c "CREATE EXTENSION postgis"
+script:
+  - coverage3 run -m unittest discover -v
+after_success:
+  - coverage3 report
+  # Push the results back to codecov
+  - codecov
