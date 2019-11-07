@@ -9,7 +9,7 @@ class CommandLineResolver(DataResolver):
 
     def synonym_search(self, data_store, platform_name):
         input_ = input("Please type word stem to search for: ")
-        result = data_store.searchPlatform(input_)
+        result = data_store.search_platform(input_)
         if result is None:
             # couldn't find it
             not_found = get_choice_input(
@@ -49,7 +49,7 @@ class CommandLineResolver(DataResolver):
         print("Ok, adding new platform.")
 
         # Choose Nationality
-        nationalities = data_store.getNationalities()
+        nationalities = data_store.get_nationalities()
         nationality_names = [n.name for n in nationalities]
         nationality_names.append("Add a new nationality")
         nationality_names.append("Cancel import")
@@ -61,13 +61,13 @@ class CommandLineResolver(DataResolver):
             nationality_check_ok = False
             while not nationality_check_ok:
                 new_input = input("Please type name of new nationality: ")
-                nationality_check_ok = data_store.checkNationality(new_input)
-            chosen_nationality = data_store.addToNationalities(new_input)
+                nationality_check_ok = data_store.check_nationality(new_input)
+            chosen_nationality = data_store.add_to_nationalities(new_input)
         else:
             chosen_nationality = nationalities[choice - 2]
 
         # Choose Platform Type
-        platform_types = data_store.getPlatformTypes()
+        platform_types = data_store.get_platform_types()
         platform_type_names = [c.name for c in platform_types]
         platform_type_names.append("Add a new class")
         platform_type_names.append("Cancel import")
@@ -79,8 +79,8 @@ class CommandLineResolver(DataResolver):
             platform_type_ok = False
             while not platform_type_ok:
                 new_input = input("Please type name of new class: ")
-                platform_type_ok = data_store.checkPlatformType(new_input)
-            chosen_platform_type = data_store.addToPlatformTypes(new_input)
+                platform_type_ok = data_store.check_platform_type(new_input)
+            chosen_platform_type = data_store.add_to_platform_types(new_input)
         else:
             chosen_platform_type = platform_types[choice - 2]
 
@@ -121,7 +121,7 @@ class CommandLineResolver(DataResolver):
             #     newSensor = True
 
         # Choose Privacy
-        privacies = data_store.getPrivacies()
+        privacies = data_store.get_privacies()
         privacy_names = [c.name for c in privacies]
         privacy_names.append("Add a new classification")
         privacy_names.append("Cancel import")
@@ -136,8 +136,8 @@ class CommandLineResolver(DataResolver):
             privacy_check_ok = False
             while not privacy_check_ok:
                 new_input = input("Please type name of new classification: ")
-                privacy_check_ok = data_store.checkPrivacy(new_input)
-            chosen_privacy = data_store.addToPrivacies(new_input)
+                privacy_check_ok = data_store.check_privacy(new_input)
+            chosen_privacy = data_store.add_to_privacies(new_input)
         else:
             chosen_privacy = privacies[choice - 2]
 
@@ -160,7 +160,7 @@ class CommandLineResolver(DataResolver):
             # TODO: pass back sensor and classification when Schema changed
             return platform_name, chosen_platform_type, chosen_nationality
         elif choice == 2:
-            return self.addToPlatformsFromREPL(data_store, platform_name)
+            return self.add_to_platforms(data_store, platform_name)
         elif choice == 3:
             print("Quitting")
             sys.exit(1)
@@ -177,15 +177,15 @@ class CommandLineResolver(DataResolver):
         if choice == 1:
             # synSearch = self.synonym_search(data_store, platform_name)
             # print(f"Adding {synSearch} as a synonym for {platform_name}")
-            return self.addToPlatforms(data_store, platform_name)
+            return self.add_to_platforms(data_store, platform_name)
         else:
             print("Quitting")
             sys.exit(1)
 
-    def add_to_sensors(self, data_store, sensorName):
+    def add_to_sensors(self, data_store, sensor_name):
         # Choose Sensor Type
         print("Ok, adding new sensor.")
-        sensor_types = data_store.getSensorTypes()
+        sensor_types = data_store.get_sensor_types()
         sensor_type_names = [st.name for st in sensor_types]
         sensor_type_names.append("Add a new sensor type")
         sensor_type_names.append("Cancel import")
@@ -197,36 +197,36 @@ class CommandLineResolver(DataResolver):
             sensor_type_check_ok = False
             while not sensor_type_check_ok:
                 new_input = input("Please type name of new sensor type: ")
-                sensor_type_check_ok = data_store.checkSensorType(new_input)
-            chosen_sensor_type = data_store.addToSensorTypes(new_input)
+                sensor_type_check_ok = data_store.check_sensor_type(new_input)
+            chosen_sensor_type = data_store.add_to_sensor_types(new_input)
         else:
             chosen_sensor_type = sensor_types[choice - 2]
 
-        return sensorName, chosen_sensor_type
+        return sensor_name, chosen_sensor_type
 
-    def resolve_sensor(self, data_store, sensorName):
+    def resolve_sensor(self, data_store, sensor_name):
         choice = get_choice_input(
-            f"Sensor '{sensorName}' not found. Do you wish to: ",
-            [f"Add a new sensor, titled '{sensorName}'", "Cancel import"],
+            f"Sensor '{sensor_name}' not found. Do you wish to: ",
+            [f"Add a new sensor, titled '{sensor_name}'", "Cancel import"],
         )
 
         if choice == 1:
-            return self.addToSensors(data_store, sensorName)
+            return self.add_to_sensors(data_store, sensor_name)
         elif choice == 2:
             print("Quitting")
             sys.exit(1)
 
-    def resolve_privacy(self, data_store, tabletypeId, tablename):
-        if tabletypeId in self.table_privacies:
-            return tabletypeId, self.table_privacies[tabletypeId]
+    def resolve_privacy(self, data_store, table_type_id, table_name):
+        if table_type_id in self.table_privacies:
+            return table_type_id, self.table_privacies[table_type_id]
 
         # Choose Privacy
-        privacies = data_store.getPrivacies()
+        privacies = data_store.get_privacies()
         privacy_names = [c.name for c in privacies]
         privacy_names.append("Add a new classification")
         privacy_names.append("Cancel import")
         choice = get_choice_input(
-            f"Ok, please provide classification for table '{tablename}': ",
+            f"Ok, please provide classification for table '{table_name}': ",
             privacy_names,
         )
 
@@ -237,11 +237,11 @@ class CommandLineResolver(DataResolver):
             privacy_check_ok = False
             while not privacy_check_ok:
                 new_input = input("Please type name of new classification: ")
-                privacy_check_ok = data_store.checkPrivacy(new_input)
-            chosen_privacy = data_store.addToPrivacies(new_input)
+                privacy_check_ok = data_store.check_privacy(new_input)
+            chosen_privacy = data_store.add_to_privacies(new_input)
         else:
             chosen_privacy = privacies[choice - 2]
 
-        self.table_privacies[tabletypeId] = chosen_privacy
+        self.table_privacies[table_type_id] = chosen_privacy
 
-        return tabletypeId, chosen_privacy
+        return table_type_id, chosen_privacy
