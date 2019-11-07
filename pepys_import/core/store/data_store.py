@@ -1,5 +1,5 @@
-import csv
 import os
+from pathlib import Path
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.schema import CreateSchema
@@ -9,9 +9,12 @@ from importlib import import_module
 from contextlib import contextmanager
 
 from pepys_import.resolvers.default_resolver import DefaultResolver
+from pepys_import.utils.data_store_utils import import_from_csv
 from .db_base import base_postgres, base_sqlite
 from .db_status import TableTypes
 
+MAIN_DIRECTORY_PATH = Path(__file__).parent.parent.parent  # pepys_import/pepys_import
+DEFAULT_DATA_PATH = os.path.join(MAIN_DIRECTORY_PATH, "database", "default_data")
 
 # TODO: add foreign key refs
 # TODO: add proper uuid funcs that interact with entries table
@@ -733,7 +736,7 @@ class DataStore:
     def populate_reference(self, reference_data_folder=None):
         """Import given CSV file to the given reference table"""
         if reference_data_folder is None:
-            reference_data_folder = os.path.join("..", "default_data")
+            reference_data_folder = DEFAULT_DATA_PATH
 
         files = os.listdir(reference_data_folder)
 
@@ -748,26 +751,12 @@ class DataStore:
         reference_files = [
             file for file in files if os.path.splitext(file)[0].replace(" ", "") in reference_tables
         ]
-        for file in reference_files:
-            # split file into filename and extension
-            table_name, _ = os.path.splitext(file)
-            possible_method = "add_to_" + table_name.lower().replace(" ", "_")
-            method_to_call = getattr(self, possible_method, None)
-            if method_to_call:
-                with open(os.path.join(reference_data_folder, file), "r") as f:
-                    reader = csv.reader(f)
-                    # skip header
-                    _ = next(reader)
-                    with self.session_scope() as session:
-                        for row in reader:
-                            method_to_call(*row)
-            else:
-                print(f"Method({possible_method}) not found!")
+        import_from_csv(self, reference_data_folder, reference_files)
 
     def populate_metadata(self, sample_data_folder=None):
         """Import CSV files from the given folder to the related Metadata Tables"""
         if sample_data_folder is None:
-            sample_data_folder = os.path.join("..", "default_data")
+            sample_data_folder = DEFAULT_DATA_PATH
 
         files = os.listdir(sample_data_folder)
 
@@ -782,18 +771,4 @@ class DataStore:
         metadata_files = [
             file for file in files if os.path.splitext(file)[0] in metadata_tables
         ]
-        for file in sorted(metadata_files):
-            # split file into filename and extension
-            table_name, _ = os.path.splitext(file)
-            possible_method = "add_to_" + table_name.lower().replace(" ", "_")
-            method_to_call = getattr(self, possible_method, None)
-            if method_to_call:
-                with open(os.path.join(sample_data_folder, file), "r") as f:
-                    reader = csv.reader(f)
-                    # skip header
-                    _ = next(reader)
-                    with self.session_scope() as session:
-                        for row in reader:
-                            method_to_call(*row)
-            else:
-                print(f"Method({possible_method}) not found!")
+        import_from_csv(self, sample_data_folder, metadata_files)
