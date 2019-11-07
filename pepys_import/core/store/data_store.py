@@ -300,7 +300,9 @@ class DataStore:
         # should return DB type or something else decoupled from DB?
         return datafile_obj
 
-    def add_to_platforms_from_rep(self, platform_name, platform_type, nationality, privacy):
+    def add_to_platforms_from_rep(
+        self, platform_name, platform_type, nationality, privacy
+    ):
         # check in cache for platform
         if platform_name in self.platforms:
             return self.platforms[platform_name]
@@ -313,7 +315,9 @@ class DataStore:
             return platforms
 
         # doesn't exist in DB, use resolver to query for data
-        platform = self.missing_data_resolver.resolve_platform(self, platform_name, platform_type, nationality, privacy)
+        platform = self.missing_data_resolver.resolve_platform(
+            self, platform_name, platform_type, nationality, privacy
+        )
 
         # platform should contain (platform_name, platform_type, nationality)
         # enough info to proceed and create entry
@@ -418,9 +422,8 @@ class DataStore:
             self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
         )
 
-
         # heading is a quantity. Convert to radians
-        heading_rads =  heading.to(unit_registry.radians).magnitude
+        heading_rads = heading.to(unit_registry.radians).magnitude
 
         # speed is a quantity. Convert to m/sec
         speed_m_sec = speed.to(unit_registry.meter / unit_registry.second).magnitude

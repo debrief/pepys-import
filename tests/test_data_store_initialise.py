@@ -14,8 +14,7 @@ class TestDataStoreInitialisePostgres(TestCase):
                 database="test", host="localhost", user="postgres", port=55527
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! "
-                  "Test is skipping.")
+            print("PostgreSQL database couldn't be created! " "Test is skipping.")
 
     def tearDown(self):
         try:

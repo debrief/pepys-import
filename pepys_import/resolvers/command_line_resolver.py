@@ -42,7 +42,9 @@ class CommandLineResolver(DataResolver):
                 print("Quitting")
                 sys.exit(1)
 
-    def add_to_platforms(self, data_store, platform_name, platform_type_str, nationality_str, privacy_str):
+    def add_to_platforms(
+        self, data_store, platform_name, platform_type_str, nationality_str, privacy_str
+    ):
         print("Ok, adding new platform.")
 
         # Choose Nationality
@@ -174,7 +176,9 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
-    def resolve_platform(self, data_store, platform_name, platform_type, nationality, privacy):
+    def resolve_platform(
+        self, data_store, platform_name, platform_type, nationality, privacy
+    ):
         choice = get_choice_input(
             f"Platform '{platform_name}' not found. Do you wish to: ",
             [  # "Search for synonym of this name",
@@ -186,7 +190,9 @@ class CommandLineResolver(DataResolver):
         if choice == 1:
             # synSearch = self.synonym_search(data_store, platform_name)
             # print(f"Adding {synSearch} as a synonym for {platform_name}")
-            return self.add_to_platforms(data_store, platform_name, platform_type, nationality, privacy)
+            return self.add_to_platforms(
+                data_store, platform_name, platform_type, nationality, privacy
+            )
         else:
             print("Quitting")
             sys.exit(1)

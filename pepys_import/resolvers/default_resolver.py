@@ -8,7 +8,9 @@ class DefaultResolver(DataResolver):
     default_sensor_type = "Position"
     default_privacy = "Private"
 
-    def resolve_platform(self, data_store, platformName, platform_type_str, nationality_str, privacy_str):
+    def resolve_platform(
+        self, data_store, platformName, platform_type_str, nationality_str, privacy_str
+    ):
         # needs to establish defaults for platform_type, nationality
         if not platform_type_str:
             platform_type_str = self.default_platform_type
@@ -21,7 +23,6 @@ class DefaultResolver(DataResolver):
         nationality = data_store.search_nationality(nationality_str)
         if not nationality:
             nationality = data_store.add_to_nationalities(nationality_str)
-
 
         if not privacy_str:
             privacy_str = self.default_privacy
