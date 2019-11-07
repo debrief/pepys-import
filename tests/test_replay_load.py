@@ -4,7 +4,7 @@ from unittest import TestCase
 from sqlalchemy import inspect, MetaData, Table
 
 
-from pepys_import.core.debug.support_methods import Support_Methods
+from pepys_import.core.debug.support_methods import SupportMethods
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats.repl_file import REPFile
 from pepys_import.core.store.sqlite_db import State
@@ -49,7 +49,7 @@ class TestLoadReplay(TestCase):
                     repLine.get_speed(),
                 )
 
-        support = Support_Methods()
+        support = SupportMethods()
         print("Found:" + str(support.count_states(data_store)))
 
         support.list_all(data_store)

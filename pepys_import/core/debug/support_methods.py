@@ -11,7 +11,7 @@ from pepys_import.core.store.sqlite_db import (
 )
 
 
-class Support_Methods:
+class SupportMethods:
     def count_states(self, data_store):
         """
         return the number of State records present in the database
