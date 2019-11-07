@@ -15,7 +15,7 @@ class UUID(types.TypeDecorator):
         if value and isinstance(value, uuid.UUID):
             return value.bytes
         elif value and not isinstance(value, uuid.UUID):
-            raise ValueError(f'value {value} is not a valid uuid.UUID')
+            raise ValueError(f"value {value} is not a valid uuid.UUID")
         else:
             return None
 
@@ -29,6 +29,8 @@ class UUID(types.TypeDecorator):
     @staticmethod
     def is_mutable():
         return False
+
+
 #
 #
 # id_column_name = "id"
