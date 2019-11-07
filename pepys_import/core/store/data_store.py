@@ -776,3 +776,21 @@ class DataStore:
             file for file in files if os.path.splitext(file)[0] in metadata_tables
         ]
         import_from_csv(self, sample_data_folder, metadata_files)
+
+    def populate_measurement(self, sample_data_folder=None):
+        """Import CSV files from the given folder to the related Measurement Tables"""
+        if sample_data_folder is None:
+            sample_data_folder = DEFAULT_DATA_PATH
+
+        files = os.listdir(sample_data_folder)
+
+        measurement_tables = []
+        # Create measurement table list
+        measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
+        for table_object in list(measurement_table_objects):
+            measurement_tables.append(table_object.__tablename__)
+
+        measurement_files = [
+            file for file in files if os.path.splitext(file)[0] in measurement_tables
+        ]
+        import_from_csv(self, sample_data_folder, measurement_files)
