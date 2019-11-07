@@ -5,7 +5,6 @@ from sqlalchemy import inspect
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats.repl_file import REPFile
-from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "rep_files")
@@ -15,7 +14,7 @@ BROKEN_FILE = os.path.join(TEST_DATA_PATH, "rep_test2.rep")
 class TestLoadReplay(TestCase):
     def test_load_replay(self):
         """Test  whether we can load REP data"""
-        data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=CommandLineResolver())
+        data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
 
         # creating database from schema
         data_store.initialise()
