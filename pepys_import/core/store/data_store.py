@@ -746,7 +746,9 @@ class DataStore:
                 reference_tables.append(table_object.__tablename__)
 
         reference_files = [
-            file for file in files if os.path.splitext(file)[0].replace(" ", "") in reference_tables
+            file
+            for file in files
+            if os.path.splitext(file)[0].replace(" ", "") in reference_tables
         ]
         for file in reference_files:
             # split file into filename and extension
