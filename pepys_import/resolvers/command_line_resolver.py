@@ -155,7 +155,12 @@ class CommandLineResolver(DataResolver):
 
         if choice == 1:
             # TODO: pass back sensor and classification when Schema changed
-            return platform_name, chosen_platform_type, chosen_nationality, chosen_privacy
+            return (
+                platform_name,
+                chosen_platform_type,
+                chosen_nationality,
+                chosen_privacy,
+            )
         elif choice == 2:
             return self.add_to_platforms(data_store, platform_name)
         elif choice == 3:
