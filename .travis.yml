@@ -16,6 +16,7 @@ before_script:
   - psql -U postgres -c "CREATE EXTENSION postgis"
 script:
   - coverage3 run -m unittest discover -v
+  - black --check --diff pepys_import
 after_success:
   - coverage3 report
   # Push the results back to codecov
