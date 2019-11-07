@@ -1,10 +1,15 @@
 import os
 import unittest
 from unittest import TestCase
-from sqlalchemy import inspect
+from sqlalchemy import inspect, MetaData, Table
+
+
+from .support_methods import Support_Methods
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats.repl_file import REPFile
+from pepys_import.core.store.sqlite_db import State
+
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "rep_files")
@@ -31,6 +36,7 @@ class TestLoadReplay(TestCase):
                 platform = session.add_to_platforms_from_rep(
                     repLine.get_platform(), "Fisher", "UK", "Public"
                 )
+                 
                 sensor = session.add_to_sensors_from_rep(platform.name + "_GPS", platform)
                 session.add_to_states_from_rep(
                     repLine.get_timestamp(),
@@ -41,17 +47,11 @@ class TestLoadReplay(TestCase):
                     repLine.get_heading(),
                     repLine.get_speed(),
                 )
+            
+        support = Support_Methods()
+        print("Found:" + str(support.count_states(data_store)))
 
-        inspector = inspect(data_store.engine)
-        table_names = inspector.get_table_names()
-
-        # 11 tables must be created. A few of them tested
-        self.assertEqual(len(table_names), 11)
-        self.assertIn("Entry", table_names)
-        self.assertIn("Platforms", table_names)
-        self.assertIn("State", table_names)
-        self.assertIn("Datafiles", table_names)
-        self.assertIn("Nationalities", table_names)
+        support.list_all(data_store)
 
 
 if __name__ == "__main__":
