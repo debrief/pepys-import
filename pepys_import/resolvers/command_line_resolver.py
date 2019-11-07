@@ -42,44 +42,48 @@ class CommandLineResolver(DataResolver):
                 print("Quitting")
                 sys.exit(1)
 
-    def add_to_platforms(self, data_store, platform_name):
+    def add_to_platforms(self, data_store, platform_name, platform_type_str, nationality_str, privacy_str):
         print("Ok, adding new platform.")
 
         # Choose Nationality
-        nationalities = data_store.get_nationalities()
-        nationality_names = [n.name for n in nationalities]
-        nationality_names.append("Add a new nationality")
-        nationality_names.append("Cancel import")
-        choice = get_choice_input("Please provide nationality: ", nationality_names)
-        if choice == len(nationality_names):
-            print("Quitting")
-            sys.exit(1)
-        elif choice == len(nationality_names) - 1:
-            nationality_check_ok = False
-            while not nationality_check_ok:
-                new_input = input("Please type name of new nationality: ")
-                nationality_check_ok = data_store.check_nationality(new_input)
-            chosen_nationality = data_store.add_to_nationalities(new_input)
+        if nationality_str:
+            chosen_nationality = data_store.add_to_nationalities(nationality_str)
         else:
-            chosen_nationality = nationalities[choice - 2]
+            nationalities = data_store.get_nationalities()
+            nationality_names = [n.name for n in nationalities]
+            nationality_names.append("Add a new nationality")
+            nationality_names.append("Cancel import")
+            choice = get_choice_input("Please provide nationality: ", nationality_names)
+            if choice == len(nationality_names):
+                print("Quitting")
+                sys.exit(1)
+            elif choice == len(nationality_names) - 1:
+                nationality_check_ok = False
+                while not nationality_check_ok:
+                    new_input = input("Please type name of new nationality: ")
+                    nationality_check_ok = data_store.check_nationality(new_input)
+                chosen_nationality = data_store.add_to_nationalities(new_input)
 
         # Choose Platform Type
-        platform_types = data_store.get_platform_types()
-        platform_type_names = [c.name for c in platform_types]
-        platform_type_names.append("Add a new class")
-        platform_type_names.append("Cancel import")
-        choice = get_choice_input("Ok, please provide class: ", platform_type_names)
-        if choice == len(platform_type_names):
-            print("Quitting")
-            sys.exit(1)
-        elif choice == len(platform_type_names) - 1:
-            platform_type_ok = False
-            while not platform_type_ok:
-                new_input = input("Please type name of new class: ")
-                platform_type_ok = data_store.check_platform_type(new_input)
-            chosen_platform_type = data_store.add_to_platform_types(new_input)
+        if platform_type_str:
+            chosen_platform_type = data_store.add_to_platform_types(platform_type_str)
         else:
-            chosen_platform_type = platform_types[choice - 2]
+            platform_types = data_store.get_platform_types()
+            platform_type_names = [c.name for c in platform_types]
+            platform_type_names.append("Add a new class")
+            platform_type_names.append("Cancel import")
+            choice = get_choice_input("Ok, please provide class: ", platform_type_names)
+            if choice == len(platform_type_names):
+                print("Quitting")
+                sys.exit(1)
+            elif choice == len(platform_type_names) - 1:
+                platform_type_ok = False
+                while not platform_type_ok:
+                    new_input = input("Please type name of new class: ")
+                    platform_type_ok = data_store.check_platform_type(new_input)
+                chosen_platform_type = data_store.add_to_platform_types(new_input)
+            else:
+                chosen_platform_type = platform_types[choice - 2]
 
         # Choose Sensor
         sensors = data_store.get_sensors_by_platform_type(chosen_platform_type)
@@ -118,25 +122,28 @@ class CommandLineResolver(DataResolver):
             #     newSensor = True
 
         # Choose Privacy
-        privacies = data_store.get_privacies()
-        privacy_names = [c.name for c in privacies]
-        privacy_names.append("Add a new classification")
-        privacy_names.append("Cancel import")
-        choice = get_choice_input(
-            "Ok, please provide classification for this platform: ", privacy_names
-        )
-
-        if choice == len(privacy_names):
-            print("Quitting")
-            sys.exit(1)
-        elif choice == len(privacy_names) - 1:
-            privacy_check_ok = False
-            while not privacy_check_ok:
-                new_input = input("Please type name of new classification: ")
-                privacy_check_ok = data_store.check_privacy(new_input)
-            chosen_privacy = data_store.add_to_privacies(new_input)
+        if privacy_str:
+            chosen_privacy = data_store.add_to_privacies(privacy_str)
         else:
-            chosen_privacy = privacies[choice - 2]
+            privacies = data_store.get_privacies()
+            privacy_names = [c.name for c in privacies]
+            privacy_names.append("Add a new classification")
+            privacy_names.append("Cancel import")
+            choice = get_choice_input(
+                "Ok, please provide classification for this platform: ", privacy_names
+            )
+
+            if choice == len(privacy_names):
+                print("Quitting")
+                sys.exit(1)
+            elif choice == len(privacy_names) - 1:
+                privacy_check_ok = False
+                while not privacy_check_ok:
+                    new_input = input("Please type name of new classification: ")
+                    privacy_check_ok = data_store.check_privacy(new_input)
+                chosen_privacy = data_store.add_to_privacies(new_input)
+            else:
+                chosen_privacy = privacies[choice - 2]
 
         print("Input complete. About to create this platform:")
         print(f"Name: {platform_name}")
@@ -167,7 +174,7 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
-    def resolve_platform(self, data_store, platform_name):
+    def resolve_platform(self, data_store, platform_name, platform_type, nationality, privacy):
         choice = get_choice_input(
             f"Platform '{platform_name}' not found. Do you wish to: ",
             [  # "Search for synonym of this name",
@@ -179,7 +186,7 @@ class CommandLineResolver(DataResolver):
         if choice == 1:
             # synSearch = self.synonym_search(data_store, platform_name)
             # print(f"Adding {synSearch} as a synonym for {platform_name}")
-            return self.add_to_platforms(data_store, platform_name)
+            return self.add_to_platforms(data_store, platform_name, platform_type, nationality, privacy)
         else:
             print("Quitting")
             sys.exit(1)
