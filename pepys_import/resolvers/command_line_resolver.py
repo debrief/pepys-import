@@ -42,9 +42,6 @@ class CommandLineResolver(DataResolver):
                 print("Quitting")
                 sys.exit(1)
 
-    # TODO: be sure it works with new method names
-    #  (addToTable and addToTableFromREPL)
-    # TODO: privacy_id added to Platform. Resolver must be modified for that
     def add_to_platforms(self, data_store, platform_name):
         print("Ok, adding new platform.")
 
@@ -158,7 +155,7 @@ class CommandLineResolver(DataResolver):
 
         if choice == 1:
             # TODO: pass back sensor and classification when Schema changed
-            return platform_name, chosen_platform_type, chosen_nationality
+            return platform_name, chosen_platform_type, chosen_nationality, chosen_privacy
         elif choice == 2:
             return self.add_to_platforms(data_store, platform_name)
         elif choice == 3:

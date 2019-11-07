@@ -316,7 +316,7 @@ class DataStore:
 
         # platform should contain (platform_name, platform_type, nationality)
         # enough info to proceed and create entry
-        _, platform_type, nationality = platform
+        _, platform_type, nationality, privacy = platform
         entry_id = self.add_to_entries(
             self.db_classes.Platform.table_type_id,
             self.db_classes.Platform.__tablename__,
@@ -328,6 +328,7 @@ class DataStore:
             platform_type_id=platform_type.platform_type_id,
             host_platform_id=None,
             nationality_id=nationality.nationality_id,
+            privacy_id=privacy.privacy_id,
         )
 
         self.session.add(platform_obj)
