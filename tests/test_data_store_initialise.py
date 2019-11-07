@@ -8,9 +8,9 @@ from unittest import TestCase
 
 class TestDataStoreInitialisePostgres(TestCase):
     def setUp(self):
-        self.postgres = None
+        self.store = None
         try:
-            self.postgres = Postgresql(
+            self.store = Postgresql(
                 database="test", host="localhost", user="postgres", port=55527
             )
         except RuntimeError:
@@ -19,13 +19,13 @@ class TestDataStoreInitialisePostgres(TestCase):
 
     def tearDown(self):
         try:
-            self.postgres.stop()
+            self.store.stop()
         except AttributeError:
             return
 
     def test_postgres_initialise(self):
         """Test whether schemas created successfully on PostgresSQL"""
-        if self.postgres is None:
+        if self.store is None:
             self.skipTest("Postgres is not available. Test is skipping")
 
         data_store_postgres = DataStore(
