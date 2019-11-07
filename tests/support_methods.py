@@ -1,7 +1,7 @@
 from sqlalchemy.orm import sessionmaker
 from tabulate import tabulate
 
-from pepys_import.core.store.sqlite_db import State, Platform, Sensor
+from pepys_import.core.store.sqlite_db import State, Platform, Sensor, Nationality, PlatformType
 
 class Support_Methods():
     def count_states(self, data_store):
@@ -35,7 +35,7 @@ class Support_Methods():
 
     def list_platforms(self, data_store):
         '''
-        return the number of State records present in the database
+        return the number of platform records present in the database
         '''
         engine = data_store.engine
         Session = sessionmaker(bind = engine)
@@ -51,10 +51,9 @@ class Support_Methods():
 
         return res
 
-
     def list_sensors(self, data_store):
         '''
-        return the number of State records present in the database
+        return the number of sensor records present in the database
         '''
         engine = data_store.engine
         Session = sessionmaker(bind = engine)
@@ -69,3 +68,56 @@ class Support_Methods():
         res = tabulate(rows, headers=headers)
 
         return res
+
+    def list_nationalities(self, data_store):
+        '''
+        return the number of nationalities records present in the database
+        '''
+        engine = data_store.engine
+        Session = sessionmaker(bind = engine)
+        session = Session()
+        result = session.query(Nationality).all()
+
+        headers = "Id", "Name"
+
+        rows = []
+        for row in result:
+            rows.append([row.nationality_id,row.name])
+        res = tabulate(rows, headers=headers)
+
+        return res
+
+    def list_platform_types(self, data_store):
+        '''
+        return the number of nationalities records present in the database
+        '''
+        engine = data_store.engine
+        Session = sessionmaker(bind = engine)
+        session = Session()
+        result = session.query(PlatformType).all()
+
+        headers = "Id", "Name"
+
+        rows = []
+        for row in result:
+            rows.append([row.platform_type_id,row.name])
+        res = tabulate(rows, headers=headers)
+
+        return res        
+
+    def list_all(self, data_store):
+
+        print("Nationalities")
+        print(self.list_nationalities(data_store))
+
+        print("Platform-Types")
+        print(self.list_platform_types(data_store))
+
+        print("Platforms")
+        print(self.list_platforms(data_store))
+
+        print("Sensors")
+        print(self.list_sensors(data_store))
+
+        print("States:")
+        print(self.list_states(data_store))   
