@@ -386,8 +386,8 @@ class DataStore:
         sensor_obj = self.db_classes.Sensor(
             sensor_id=entry_id,
             name=sensor_name,
-            sensortype_id=self.db_classes.mapUUIDType(sensor_type.sensor_type_id),
-            platform_id=self.db_classes.mapUUIDType(platform.platform_id),
+            sensor_type_id=self.db_classes.map_uuid_type(sensor_type.sensor_type_id),
+            platform_id=self.db_classes.map_uuid_type(platform.platform_id),
         )
 
         self.session.add(sensor_obj)
@@ -425,7 +425,8 @@ class DataStore:
             heading=heading,
             # TODO: how to calculate course?
             # course=,
-            speed=speed,
+            # TODO: fix speed error, "cannot convert from "knot" to "dimensionless"
+            # speed=speed,
             datafile_id=datafile.datafile_id,
             privacy_id=privacy.privacy_id,
         )
@@ -747,7 +748,9 @@ class DataStore:
                 reference_tables.append(table_object.__tablename__)
 
         reference_files = [
-            file for file in files if os.path.splitext(file)[0].replace(" ", "") in reference_tables
+            file
+            for file in files
+            if os.path.splitext(file)[0].replace(" ", "") in reference_tables
         ]
         for file in reference_files:
             # split file into filename and extension
