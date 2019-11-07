@@ -2,6 +2,18 @@
 
 We're aiming for 100% code coverage on the project, track our progress here:  [![codecov](https://codecov.io/gh/debrief/pepys-import/branch/develop/graph/badge.svg)](https://codecov.io/gh/debrief/pepys-import)
 
+# Code Style
+
+Black is used on the project: [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+It is suggested to install a pre-commit hook in order to apply Black before pushing commits:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+
 # Jupyter demo
 
 Link to working demo of datafile import: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/debrief/pepys-import/develop?filepath=examples%2Fnotebooks%2Fdata_store_sqlite.ipynb)

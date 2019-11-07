@@ -35,7 +35,7 @@ class SensorType(base):
     __tablename__ = "SensorTypes"
     table_type = TableTypes.REFERENCE
 
-    sensortype_id = Column(
+    sensor_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     # TODO: does this, or other string limits need checking or validating on file import?
