@@ -31,7 +31,7 @@ class TestLoadReplay(TestCase):
                 platform = session.add_to_platforms_from_rep(
                     repLine.get_platform(), "Fisher", "UK", "Public"
                 )
-                sensor = session.add_to_sensors_from_rep("GPS", platform)
+                sensor = session.add_to_sensors_from_rep(platform.name + "_GPS", platform)
                 session.add_to_states_from_rep(
                     repLine.get_timestamp(),
                     datafile,
