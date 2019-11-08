@@ -56,7 +56,7 @@ class TestDataStoreInitialisePostgres(TestCase):
         self.assertEqual(len(table_names), 11)
         self.assertIn("Entry", table_names)
         self.assertIn("Platforms", table_names)
-        self.assertIn("State", table_names)
+        self.assertIn("States", table_names)
         self.assertIn("Datafiles", table_names)
         self.assertIn("Nationalities", table_names)
 
@@ -87,7 +87,7 @@ class TestDataStoreInitialiseSQLite(TestCase):
         self.assertEqual(len(table_names), 11)
         self.assertIn("Entry", table_names)
         self.assertIn("Platforms", table_names)
-        self.assertIn("State", table_names)
+        self.assertIn("States", table_names)
         self.assertIn("Datafiles", table_names)
         self.assertIn("Nationalities", table_names)
 
