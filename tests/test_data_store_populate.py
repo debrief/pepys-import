@@ -1,5 +1,6 @@
 import unittest
 import os
+from datetime import datetime
 
 from pepys_import.core.store.data_store import DataStore
 from unittest import TestCase
@@ -131,6 +132,60 @@ class TestDataStorePopulate(TestCase):
                 .first()
             )
             self.assertEqual(platform.name, "PLATFORM-1")
+
+    def test_populate_measurement(self):
+        # reference and metadata tables must be filled first
+        with self.store.session_scope() as session:
+            self.store.populate_reference(TEST_DATA_PATH)
+            self.store.populate_metadata(TEST_DATA_PATH)
+
+        # get all table values
+        with self.store.session_scope() as session:
+            states = self.store.get_states()
+
+        # There must be no entities at the beginning
+        self.assertEqual(len(states), 0)
+
+        # Import CSVs to the related tables
+        with self.store.session_scope() as session:
+            self.store.populate_measurement(TEST_DATA_PATH)
+
+        # Check tables filled with correct data
+        with self.store.session_scope() as session:
+            states = self.store.get_states()
+            first_state = self.store.session.query(self.store.db_classes.State).first()
+
+            # Check whether they are not empty anymore and filled with correct data
+            self.assertNotEqual(len(states), 0)
+
+            # The following assertions filter objects by foreign key ids and
+            # compares values with the data from CSV
+
+            # first_state = 2019-01-12 12:10:00, SENSOR-1, DATAFILE-1,46.000 32.000,,,,
+            # PRIVACY-1
+            self.assertEqual(
+                first_state.time,
+                datetime.strptime("2019-01-12 12:10:00", "%Y-%m-%d %H:%M:%S"),
+            )
+            self.assertEqual(first_state.location, "46.000 32.000")
+            privacy = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter_by(privacy_id=first_state.privacy_id)
+                .first()
+            )
+            self.assertEqual(privacy.name, "PRIVACY-1")
+            datafile = (
+                self.store.session.query(self.store.db_classes.Datafile)
+                .filter_by(datafile_id=first_state.datafile_id)
+                .first()
+            )
+            self.assertEqual(datafile.reference, "DATAFILE-1")
+            sensor = (
+                self.store.session.query(self.store.db_classes.Sensor)
+                .filter_by(sensor_id=first_state.sensor_id)
+                .first()
+            )
+            self.assertEqual(sensor.name, "SENSOR-1")
 
 
 if __name__ == "__main__":
