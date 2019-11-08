@@ -12,7 +12,8 @@ from pepys_import.resolvers.default_resolver import DefaultResolver
 from .db_base import base_postgres, base_sqlite
 from .db_status import TableTypes
 from pepys_import.core.formats import unit_registry
-
+from pepys_import import __version__
+from pepys_import.utils.branding_util import show_welcome_banner, show_software_meta_info
 
 # TODO: add foreign key refs
 # TODO: add proper uuid funcs that interact with entries table
@@ -33,6 +34,8 @@ class DataStore:
         db_name,
         db_type="postgres",
         missing_data_resolver=DefaultResolver(),
+        show_welcome=True,
+        show_status=True
     ):
         if db_type == "postgres":
             self.db_classes = import_module("pepys_import.core.store.postgres_db")
@@ -60,6 +63,8 @@ class DataStore:
             base_sqlite.metadata.bind = self.engine
 
         self.missing_data_resolver = missing_data_resolver
+        self.show_welcome = show_welcome
+        self.show_status = show_status
 
         # caches of known data
         self.table_types = {}
@@ -81,6 +86,13 @@ class DataStore:
 
         # use session_scope() to create a new session
         self.session = None
+
+        # Branding Text
+        if self.show_welcome:
+            show_welcome_banner()
+        if self.show_status:
+            show_software_meta_info(__version__, self.db_type, self.db_name, db_host)
+            print("---------------------------------")
 
     def initialise(self):
         """Create schemas for the database"""
