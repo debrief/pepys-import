@@ -8,3 +8,5 @@ pint==0.9
 pre-commit
 tabulate
 pyfiglet
+sphinx
+sphinx_rtd_theme
