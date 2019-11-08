@@ -11,7 +11,7 @@ Stable release
 To install pepys-import, run this command in your terminal:
 
 .. code-block:: console
-
+k
     $ pip install pepys_import
 
 This is the preferred method to install pepys-import, as it will always install the most recent stable release.
@@ -32,13 +32,13 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/""/pepys_import
+    $ git clone git://github.com/pepys_import
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl -OJL https://github.com/""/pepys_import/tarball/master
+    $ curl -OJL https://github.com/pepys_import/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/""/pepys_import
-.. _tarball: https://github.com/""/pepys_import/tarball/master
+.. _Github repo: https://github.com/pepys_import
+.. _tarball: https://github.com/pepys_import/tarball/master
