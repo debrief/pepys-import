@@ -2,6 +2,11 @@
 
 We're aiming for 100% code coverage on the project, track our progress here:  [![codecov](https://codecov.io/gh/debrief/pepys-import/branch/develop/graph/badge.svg)](https://codecov.io/gh/debrief/pepys-import)
 
+# Online documentation
+
+Learn more here [![Documentation Status](https://readthedocs.org/projects/pepys-import/badge/?version=latest)](https://pepys-import.readthedocs.io/en/latest/?badge=latest)
+
+
 # Code Style
 
 Black is used on the project: [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
