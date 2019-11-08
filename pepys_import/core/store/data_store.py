@@ -12,6 +12,7 @@ from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import import_from_csv
 from .db_base import base_postgres, base_sqlite
 from .db_status import TableTypes
+from pepys_import.core.formats import unit_registry
 
 MAIN_DIRECTORY_PATH = Path(__file__).parent.parent.parent  # pepys_import/pepys_import
 DEFAULT_DATA_PATH = os.path.join(MAIN_DIRECTORY_PATH, "database", "default_data")
@@ -302,7 +303,9 @@ class DataStore:
         # should return DB type or something else decoupled from DB?
         return datafile_obj
 
-    def add_to_platforms_from_rep(self, platform_name):
+    def add_to_platforms_from_rep(
+        self, platform_name, platform_type, nationality, privacy
+    ):
         # check in cache for platform
         if platform_name in self.platforms:
             return self.platforms[platform_name]
@@ -315,7 +318,9 @@ class DataStore:
             return platforms
 
         # doesn't exist in DB, use resolver to query for data
-        platform = self.missing_data_resolver.resolve_platform(self, platform_name)
+        platform = self.missing_data_resolver.resolve_platform(
+            self, platform_name, platform_type, nationality, privacy
+        )
 
         # platform should contain (platform_name, platform_type, nationality)
         # enough info to proceed and create entry
@@ -420,16 +425,19 @@ class DataStore:
             self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
         )
 
+        # heading is a quantity. Convert to radians
+        heading_rads = heading.to(unit_registry.radians).magnitude
+
+        # speed is a quantity. Convert to m/sec
+        speed_m_sec = speed.to(unit_registry.meter / unit_registry.second).magnitude
+
         state_obj = self.db_classes.State(
             state_id=entry_id,
             time=timestamp,
             sensor_id=sensor.sensor_id,
             location="(" + str(long.degrees) + "," + str(lat.degrees) + ")",
-            heading=heading,
-            # TODO: how to calculate course?
-            # course=,
-            # TODO: fix speed error, "cannot convert from "knot" to "dimensionless"
-            # speed=speed,
+            heading=heading_rads,
+            speed=speed_m_sec,
             datafile_id=datafile.datafile_id,
             privacy_id=privacy.privacy_id,
         )

@@ -6,3 +6,4 @@ testing.postgresql
 black
 pint==0.9
 pre-commit
+tabulate
