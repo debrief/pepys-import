@@ -446,6 +446,42 @@ class DataStore:
 
         return state_obj
 
+    def add_to_states(
+        self, time, sensor, location, heading, course, speed, datafile, privacy
+    ):
+        sensor = self.search_sensor(sensor)
+        datafile = self.search_datafile(datafile)
+        privacy = self.search_privacy(privacy)
+
+        if sensor is None or datafile is None or privacy is None:
+            print(f"There is missing value(s) in '{sensor}, {datafile}, {privacy}'!")
+            return
+
+        # heading is a quantity. Convert to radians
+        heading_rads = heading.to(unit_registry.radians).magnitude
+
+        # speed is a quantity. Convert to m/sec
+        speed_m_sec = speed.to(unit_registry.meter / unit_registry.second).magnitude
+
+        entry_id = self.add_to_entries(
+            self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
+        )
+        state_obj = self.db_classes.State(
+            state_id=entry_id,
+            time=time,
+            sensor_id=sensor.sensor_id,
+            location=location,
+            heading=heading_rads,
+            course=course,
+            speed=speed_m_sec,
+            datafile_id=datafile.datafile_id,
+            privacy_id=privacy.privacy_id,
+        )
+        self.session.add(state_obj)
+        self.session.flush()
+
+        return state_obj
+
     def add_to_sensors(self, name, sensor_type, host):
         sensor_type = self.search_sensor_type(sensor_type)
         host = self.search_platform(host)
