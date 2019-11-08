@@ -70,3 +70,6 @@ html_static_path = ["_static"]
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+# index is our root, not the contents
+master_doc = "index"
