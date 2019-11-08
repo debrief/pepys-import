@@ -110,12 +110,12 @@ class Datafile(base):
 
 
 class State(base):
-    __tablename__ = "State"
+    __tablename__ = "States"
     table_type = TableTypes.MEASUREMENT
 
     # These only needed for tables referenced by Entry table
     table_type_id = 3
-    tableName = "State"
+    tableName = "States"
 
     state_id = Column(Integer, primary_key=True)
     time = Column(DATETIME, nullable=False)

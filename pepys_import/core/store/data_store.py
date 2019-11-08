@@ -1,6 +1,7 @@
-import csv
 import os
+from pathlib import Path
 
+from datetime import datetime
 from sqlalchemy import create_engine, event
 from sqlalchemy.schema import CreateSchema
 from sqlalchemy.orm import sessionmaker
@@ -9,10 +10,13 @@ from importlib import import_module
 from contextlib import contextmanager
 
 from pepys_import.resolvers.default_resolver import DefaultResolver
+from pepys_import.utils.data_store_utils import import_from_csv
 from .db_base import base_postgres, base_sqlite
 from .db_status import TableTypes
 from pepys_import.core.formats import unit_registry
 
+MAIN_DIRECTORY_PATH = Path(__file__).parent.parent.parent  # pepys_import/pepys_import
+DEFAULT_DATA_PATH = os.path.join(MAIN_DIRECTORY_PATH, "database", "default_data")
 
 # TODO: add foreign key refs
 # TODO: add proper uuid funcs that interact with entries table
@@ -443,6 +447,60 @@ class DataStore:
 
         return state_obj
 
+    def add_to_states(
+        self,
+        time,
+        sensor,
+        datafile,
+        location=None,
+        heading=None,
+        course=None,
+        speed=None,
+        privacy=None,
+    ):
+        time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+
+        sensor = self.search_sensor(sensor)
+        datafile = self.search_datafile(datafile)
+        privacy = self.search_privacy(privacy)
+
+        if sensor is None or datafile is None:
+            print(f"There is missing value(s) in '{sensor}, {datafile}'!")
+            return
+
+        heading_rads = None
+        if heading:
+            # heading is a string, turn into quantity. Convert to radians
+            heading_quantity = float(heading) * unit_registry.knot
+            heading_rads = heading_quantity.to(unit_registry.radians).magnitude
+
+        speed_m_sec = None
+        if speed:
+            # speed is a string, turn into quantity. Convert to m/sec
+            speed_quantity = float(speed) * unit_registry.knot
+            speed_m_sec = speed_quantity.to(
+                unit_registry.meter / unit_registry.second
+            ).magnitude
+
+        entry_id = self.add_to_entries(
+            self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
+        )
+        state_obj = self.db_classes.State(
+            state_id=entry_id,
+            time=time,
+            sensor_id=sensor.sensor_id,
+            location=location,
+            heading=heading_rads,
+            # course=course,
+            speed=speed_m_sec,
+            datafile_id=datafile.datafile_id,
+            privacy_id=privacy.privacy_id,
+        )
+        self.session.add(state_obj)
+        self.session.flush()
+
+        return state_obj
+
     def add_to_sensors(self, name, sensor_type, host):
         sensor_type = self.search_sensor_type(sensor_type)
         host = self.search_platform(host)
@@ -647,6 +705,10 @@ class DataStore:
             .all()
         )
 
+    def get_states(self):
+        # get list of all states in the DB
+        return self.session.query(self.db_classes.State).all()
+
     #############################################################
     # Validation/check functions
 
@@ -743,69 +805,55 @@ class DataStore:
     def populate_reference(self, reference_data_folder=None):
         """Import given CSV file to the given reference table"""
         if reference_data_folder is None:
-            reference_data_folder = os.path.join("..", "default_data")
+            reference_data_folder = DEFAULT_DATA_PATH
 
         files = os.listdir(reference_data_folder)
 
         reference_tables = []
         # Create reference table list
-        with self.session_scope() as session:
-            self.setup_table_type_mapping()
-            reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
-            for table_object in list(reference_table_objects):
-                reference_tables.append(table_object.__tablename__)
+        reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
+        for table_object in list(reference_table_objects):
+            reference_tables.append(table_object.__tablename__)
 
         reference_files = [
             file
             for file in files
             if os.path.splitext(file)[0].replace(" ", "") in reference_tables
         ]
-        for file in reference_files:
-            # split file into filename and extension
-            table_name, _ = os.path.splitext(file)
-            possible_method = "add_to_" + table_name.lower().replace(" ", "_")
-            method_to_call = getattr(self, possible_method, None)
-            if method_to_call:
-                with open(os.path.join(reference_data_folder, file), "r") as f:
-                    reader = csv.reader(f)
-                    # skip header
-                    _ = next(reader)
-                    with self.session_scope() as session:
-                        for row in reader:
-                            method_to_call(*row)
-            else:
-                print(f"Method({possible_method}) not found!")
+        import_from_csv(self, reference_data_folder, reference_files)
 
     def populate_metadata(self, sample_data_folder=None):
         """Import CSV files from the given folder to the related Metadata Tables"""
         if sample_data_folder is None:
-            sample_data_folder = os.path.join("..", "default_data")
+            sample_data_folder = DEFAULT_DATA_PATH
 
         files = os.listdir(sample_data_folder)
 
         metadata_tables = []
         # Create metadata table list
-        with self.session_scope() as session:
-            self.setup_table_type_mapping()
-            metadata_table_objects = self.meta_classes[TableTypes.METADATA]
-            for table_object in list(metadata_table_objects):
-                metadata_tables.append(table_object.__tablename__)
+        metadata_table_objects = self.meta_classes[TableTypes.METADATA]
+        for table_object in list(metadata_table_objects):
+            metadata_tables.append(table_object.__tablename__)
 
         metadata_files = [
             file for file in files if os.path.splitext(file)[0] in metadata_tables
         ]
-        for file in sorted(metadata_files):
-            # split file into filename and extension
-            table_name, _ = os.path.splitext(file)
-            possible_method = "add_to_" + table_name.lower().replace(" ", "_")
-            method_to_call = getattr(self, possible_method, None)
-            if method_to_call:
-                with open(os.path.join(sample_data_folder, file), "r") as f:
-                    reader = csv.reader(f)
-                    # skip header
-                    _ = next(reader)
-                    with self.session_scope() as session:
-                        for row in reader:
-                            method_to_call(*row)
-            else:
-                print(f"Method({possible_method}) not found!")
+        import_from_csv(self, sample_data_folder, metadata_files)
+
+    def populate_measurement(self, sample_data_folder=None):
+        """Import CSV files from the given folder to the related Measurement Tables"""
+        if sample_data_folder is None:
+            sample_data_folder = DEFAULT_DATA_PATH
+
+        files = os.listdir(sample_data_folder)
+
+        measurement_tables = []
+        # Create measurement table list
+        measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
+        for table_object in list(measurement_table_objects):
+            measurement_tables.append(table_object.__tablename__)
+
+        measurement_files = [
+            file for file in files if os.path.splitext(file)[0] in measurement_tables
+        ]
+        import_from_csv(self, sample_data_folder, measurement_files)

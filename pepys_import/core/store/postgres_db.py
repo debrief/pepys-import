@@ -114,7 +114,7 @@ class Datafile(base):
 
 
 class State(base):
-    __tablename__ = "State"
+    __tablename__ = "States"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 3  # Only needed for tables referenced by Entry table
 

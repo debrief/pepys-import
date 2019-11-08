@@ -1,0 +1,3 @@
+time,sensor,datafile,location,heading,course,speed,privacy
+2019-01-12 12:10:00,SENSOR-1,DATAFILE-1,46.000 32.000,,,,PRIVACY-1
+2019-04-10 00:00:00,SENSOR-2,DATAFILE-2,23.000 28.000,,,,PRIVACY-2
