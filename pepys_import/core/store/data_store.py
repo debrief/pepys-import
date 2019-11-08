@@ -705,6 +705,10 @@ class DataStore:
             .all()
         )
 
+    def get_states(self):
+        # get list of all states in the DB
+        return self.session.query(self.db_classes.State).all()
+
     #############################################################
     # Validation/check functions
 
