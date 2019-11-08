@@ -11,6 +11,6 @@ The source for Pepys Import documentation is in this directory. Our documentatio
 
 If you would like regenerate the document structure:
 
-- `sphinx-quickstart` can be called to set up a source directory and create necessary configurations.
-- Another option is using the following code: `sphinx-apidoc -F -o docs pepys_import`
+- `sphinx-quickstart` [link](https://www.sphinx-doc.org/en/master/usage/quickstart.html#setting-up-the-documentation-sources) can be called to set up a source directory and create necessary configurations.
+- Another option is using the following code: `sphinx-apidoc -F -o docs pepys_import`[link](https://www.sphinx-doc.org/en/master/man/sphinx-apidoc.html)
 
