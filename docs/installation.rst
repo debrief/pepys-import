@@ -11,7 +11,7 @@ Stable release
 To install pepys-import, run this command in your terminal:
 
 .. code-block:: console
-k
+
     $ pip install pepys_import
 
 This is the preferred method to install pepys-import, as it will always install the most recent stable release.
