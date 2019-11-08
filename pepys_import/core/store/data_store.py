@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+from datetime import datetime
 from sqlalchemy import create_engine, event
 from sqlalchemy.schema import CreateSchema
 from sqlalchemy.orm import sessionmaker
@@ -447,21 +448,39 @@ class DataStore:
         return state_obj
 
     def add_to_states(
-        self, time, sensor, location, heading, course, speed, datafile, privacy
+        self,
+        time,
+        sensor,
+        datafile,
+        location=None,
+        heading=None,
+        course=None,
+        speed=None,
+        privacy=None,
     ):
+        time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+
         sensor = self.search_sensor(sensor)
         datafile = self.search_datafile(datafile)
         privacy = self.search_privacy(privacy)
 
-        if sensor is None or datafile is None or privacy is None:
-            print(f"There is missing value(s) in '{sensor}, {datafile}, {privacy}'!")
+        if sensor is None or datafile is None:
+            print(f"There is missing value(s) in '{sensor}, {datafile}'!")
             return
 
-        # heading is a quantity. Convert to radians
-        heading_rads = heading.to(unit_registry.radians).magnitude
+        heading_rads = None
+        if heading:
+            # heading is a string, turn into quantity. Convert to radians
+            heading_quantity = float(heading) * unit_registry.knot
+            heading_rads = heading_quantity.to(unit_registry.radians).magnitude
 
-        # speed is a quantity. Convert to m/sec
-        speed_m_sec = speed.to(unit_registry.meter / unit_registry.second).magnitude
+        speed_m_sec = None
+        if speed:
+            # speed is a string, turn into quantity. Convert to m/sec
+            speed_quantity = float(speed) * unit_registry.knot
+            speed_m_sec = speed_quantity.to(
+                unit_registry.meter / unit_registry.second
+            ).magnitude
 
         entry_id = self.add_to_entries(
             self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
@@ -472,7 +491,7 @@ class DataStore:
             sensor_id=sensor.sensor_id,
             location=location,
             heading=heading_rads,
-            course=course,
+            # course=course,
             speed=speed_m_sec,
             datafile_id=datafile.datafile_id,
             privacy_id=privacy.privacy_id,
@@ -788,11 +807,9 @@ class DataStore:
 
         reference_tables = []
         # Create reference table list
-        with self.session_scope() as session:
-            self.setup_table_type_mapping()
-            reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
-            for table_object in list(reference_table_objects):
-                reference_tables.append(table_object.__tablename__)
+        reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
+        for table_object in list(reference_table_objects):
+            reference_tables.append(table_object.__tablename__)
 
         reference_files = [
             file
@@ -810,11 +827,9 @@ class DataStore:
 
         metadata_tables = []
         # Create metadata table list
-        with self.session_scope() as session:
-            self.setup_table_type_mapping()
-            metadata_table_objects = self.meta_classes[TableTypes.METADATA]
-            for table_object in list(metadata_table_objects):
-                metadata_tables.append(table_object.__tablename__)
+        metadata_table_objects = self.meta_classes[TableTypes.METADATA]
+        for table_object in list(metadata_table_objects):
+            metadata_tables.append(table_object.__tablename__)
 
         metadata_files = [
             file for file in files if os.path.splitext(file)[0] in metadata_tables
