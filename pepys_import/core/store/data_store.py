@@ -13,7 +13,10 @@ from .db_base import base_postgres, base_sqlite
 from .db_status import TableTypes
 from pepys_import.core.formats import unit_registry
 from pepys_import import __version__
-from pepys_import.utils.branding_util import show_welcome_banner, show_software_meta_info
+from pepys_import.utils.branding_util import (
+    show_welcome_banner,
+    show_software_meta_info,
+)
 
 # TODO: add foreign key refs
 # TODO: add proper uuid funcs that interact with entries table
@@ -35,7 +38,7 @@ class DataStore:
         db_type="postgres",
         missing_data_resolver=DefaultResolver(),
         show_welcome=True,
-        show_status=True
+        show_status=True,
     ):
         if db_type == "postgres":
             self.db_classes = import_module("pepys_import.core.store.postgres_db")
