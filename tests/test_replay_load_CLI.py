@@ -6,6 +6,7 @@ from sqlalchemy import inspect
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats.repl_file import REPFile
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
+from pepys_import.core.debug.support_methods import SupportMethods
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "rep_files")
@@ -15,7 +16,7 @@ INITIAL_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 
 
 class TestLoadReplay(TestCase):
-    @unittest.skip("Skip until we can automate command-line-resolver")
+    # unittest.skip("Skip until we can automate command-line-resolver")
     def test_load_replay(self):
         """Test  whether we can load REP data"""
         data_store = DataStore(
@@ -65,6 +66,9 @@ class TestLoadReplay(TestCase):
         self.assertIn("States", table_names)
         self.assertIn("Datafiles", table_names)
         self.assertIn("Nationalities", table_names)
+
+        support = SupportMethods()
+        self.assertEqual(8, support.count_states(data_store))
 
 
 if __name__ == "__main__":
