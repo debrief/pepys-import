@@ -2,6 +2,9 @@ from .core_parser import core_parser
 
 
 class sample_parser(core_parser):
+    def __init__(self):
+        super().__init__("Sample")
+
     def can_accept_suffix(self, suffix):
         return suffix == "rep"
 
