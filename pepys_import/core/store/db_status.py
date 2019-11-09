@@ -10,15 +10,13 @@ class TableTypes(Enum):
 class DBStatus:
     """Utility to class to allow the state of the databaes to be
     captured, potentially for subsequent comparison
+
+    Arguments:
+        data_store {DataStore} -- The database we're looking at
+        table_types {[String]} -- List of table types to capture
     """
 
     def __init__(self, data_store, table_types):
-        """ Create a new DBStatus object
-        
-        Arguments:
-            data_store {DataStore} -- The database we're looking at
-            table_types {[String]} -- List of table types to capture
-        """
         self.data_store = data_store
         self.table_types = table_types
         self.status = None
