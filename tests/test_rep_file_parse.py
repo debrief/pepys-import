@@ -107,8 +107,6 @@ class BasicTests(unittest.TestCase):
 
         self.assertEqual(1, rep_line.get_line_number())
 
-        print(rep_line.get_timestamp())
-
         uReg = unit_registry
 
         self.assertEqual(
