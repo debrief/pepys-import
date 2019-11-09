@@ -52,6 +52,11 @@ class TestLoadReplay(TestCase):
         support = SupportMethods()
         print("Found:" + str(support.count_states(data_store)))
 
+        support = SupportMethods()
+        self.assertEqual(
+            8, support.count_states(data_store), "Should have loaded 8 states"
+        )
+
         support.list_all(data_store)
 
 
