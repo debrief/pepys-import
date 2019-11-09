@@ -314,6 +314,7 @@ class DataStore:
 
         # privacy should contain (tabletype, privacy_name)
         # enough info to proceed and create entry
+        table_type, privacy = privacy
         entry_id = self.add_to_entries(
             self.db_classes.Datafile.table_type_id,
             self.db_classes.Datafile.__tablename__,
@@ -452,6 +453,7 @@ class DataStore:
 
         # privacy should contain (table_type, privacy_name)
         # enough info to proceed and create entry
+        table_type, privacy = privacy
         entry_id = self.add_to_entries(
             self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
         )
