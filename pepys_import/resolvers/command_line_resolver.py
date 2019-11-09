@@ -173,7 +173,7 @@ class CommandLineResolver(DataResolver):
                 chosen_privacy,
             )
         elif choice == 2:
-            return self.add_to_platforms(data_store, platform_name)
+            return self.add_to_platforms(data_store, platform_name, None, None, None)
         elif choice == 3:
             print("Quitting")
             sys.exit(1)
