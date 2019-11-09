@@ -18,8 +18,8 @@ setup_requirements = []
 test_requirements = []
 
 setup(
-    author='""',
-    author_email='""',
+    author="Ian Mayo",
+    author_email="ian@planetmayo.com",
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
@@ -37,7 +37,8 @@ setup(
     description="Python library to handle database ingest of geospatial track (and other) data ",
     install_requires=requirements,
     license="Apache Software License 2.0",
-    long_description=readme + "\n\n" + history,
+    long_description=readme,
+    long_description_content_type="text/markdown",
     include_package_data=True,
     keywords="pepys_import",
     name="pepys_import",
