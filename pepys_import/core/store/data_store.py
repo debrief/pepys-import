@@ -31,6 +31,12 @@ DEFAULT_DATA_PATH = os.path.join(MAIN_DIRECTORY_PATH, "database", "default_data"
 
 
 class DataStore:
+    """ Representation of database
+    
+    
+    Returns:
+        DataStore -- the data store
+    """
 
     # TODO: supply or lookup user id
     # Valid options for db_type are 'postgres' and 'sqlite'
@@ -104,7 +110,8 @@ class DataStore:
             print("---------------------------------")
 
     def initialise(self):
-        """Create schemas for the database"""
+        """Create schemas for the database
+        """
 
         if self.db_type == "sqlite":
             try:
@@ -254,6 +261,14 @@ class DataStore:
 
     # TODO: it is possible to merge two methods taking a resolver=True/False argument
     def add_to_datafile_types(self, datafile_type):
+        """Add new datafile-type
+        
+        Arguments:
+            datafile_type {String} -- name of datafile type
+        
+        Returns:
+            DataFileType -- Wrapped database entity for DatafileType
+        """
         # check in cache for datafile type
         if datafile_type in self.datafile_types:
             return self.datafile_types[datafile_type]
