@@ -16,7 +16,7 @@ INITIAL_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 
 
 class TestLoadReplay(TestCase):
-    # unittest.skip("Skip until we can automate command-line-resolver")
+    @unittest.skip("Skip until we can automate command-line-resolver")
     def test_load_replay(self):
         """Test  whether we can load REP data"""
         data_store = DataStore(
