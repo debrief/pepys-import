@@ -6,11 +6,14 @@ class core_parser(ABC):
         super().__init__()
         self.name = name
 
+    def __str__(self):
+        return self.name
+
     @abstractmethod
     def can_accept_suffix(self, suffix) -> bool:
         """Whether this parser can handle a file with this suffix
         
-        :param suffix: File suffix (e.g. "doc")
+        :param suffix: File suffix (e.g. ".doc")
         :type suffix: String
         :return: Yes/No
         :rtype: bool

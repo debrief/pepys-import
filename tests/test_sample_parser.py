@@ -14,7 +14,7 @@ class test_parser_1(core_parser):
         super().__init__("test_1")
 
     def can_accept_suffix(self, suffix):
-        return suffix == "rep"
+        return suffix == ".rep"
 
     def can_accept_filename(self, filename):
         return "good_file" in filename
@@ -34,7 +34,7 @@ class test_parser_2(core_parser):
         super().__init__("test_2")
 
     def can_accept_suffix(self, suffix):
-        return suffix == "csv"
+        return suffix == ".csv"
 
     def can_accept_filename(self, filename):
         return "good_file" in filename
@@ -83,13 +83,13 @@ class SampleParserTests(unittest.TestCase):
         # try bad file
         exception = False
         try:
-            processor.process(BAD_DATA_PATH, False)
+            processor.process(BAD_DATA_PATH, None)
         except Exception:
             exception = True
         self.assertTrue(exception)
 
         # now good one
-        processor.process(DATA_PATH, None, False)
+        processor.process(DATA_PATH, None)
 
         pass
 
