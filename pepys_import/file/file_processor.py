@@ -24,6 +24,10 @@ class file_processor:
         if not os.path.isdir(folder):
             raise Exception("Folder not found: {}".format(folder))
 
+        # get the datastore
+        data_store = DataStore("", "", "", 0, "bulk_load.db", db_type="sqlite")
+        data_store.initialise()
+
         # make copy of list of parsers
         good_parsers = self.parsers.copy()
 
@@ -120,9 +124,15 @@ class file_processor:
                     good_parsers.remove(parser)
 
             # ok, let these parsers handle the file
+
+            with data_store.session_scope() as session:
+                data_file = session.add_to_datafile_from_rep(filename, file_extension)
+                data_file_id = data_file.datafile_id
+                session.close()
+
             for parser in good_parsers:
                 processed_ctr += 1
-                parser.process(data_store, file, file_contents)
+                parser.process(data_store, file, file_contents, data_file_id)
 
         return processed_ctr
 

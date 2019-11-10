@@ -17,6 +17,6 @@ class nmea_parser(core_parser):
     def can_process_file(self, file_contents):
         return True
 
-    def process(self, data_store, path, file_contents):
+    def process(self, data_store, path, file_contents, datafile):
         print("NMEA parser working on " + path)
         pass

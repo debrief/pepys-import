@@ -634,6 +634,14 @@ class DataStore:
             .first()
         )
 
+    def search_datafile_by_id(self, id):
+        # search for any datafile with this id
+        return (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.datafile_id == str(id))
+            .first()
+        )
+
     def search_platform(self, name):
         # search for any platform with this name
         return (

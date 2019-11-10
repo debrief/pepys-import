@@ -54,7 +54,7 @@ class core_parser(ABC):
         pass
 
     @abstractmethod
-    def process(self, data_store, path, file_contents):
+    def process(self, data_store, path, file_contents, datafile):
         """Process this data-file
         
         :param data_store: The datastore
@@ -63,5 +63,7 @@ class core_parser(ABC):
         :type path: String
         :param file_contents: File contents
         :type file_contents: String
+        :param data_file: DataFile object
+        :type data_file: DataFile
         """
         pass
