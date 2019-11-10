@@ -11,7 +11,7 @@ from pepys_import.core.store.sqlite_db import State
 
 
 FILE_PATH = os.path.dirname(__file__)
-TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "rep_files")
+TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "track_files", "rep_data")
 TEST_FILE = os.path.join(TEST_DATA_PATH, "rep_test1.rep")
 BROKEN_FILE = os.path.join(TEST_DATA_PATH, "rep_test2.rep")
 

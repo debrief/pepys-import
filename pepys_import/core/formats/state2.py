@@ -3,7 +3,7 @@ from .location import Location
 from . import unit_registry, quantity
 
 
-class State:
+class State2:
     def __init__(self, timestamp, datafile):
 
         self.timestamp = timestamp

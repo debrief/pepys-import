@@ -128,7 +128,6 @@ class file_processor:
             with data_store.session_scope() as session:
                 data_file = session.add_to_datafile_from_rep(filename, file_extension)
                 data_file_id = data_file.datafile_id
-                session.close()
 
             for parser in good_parsers:
                 processed_ctr += 1

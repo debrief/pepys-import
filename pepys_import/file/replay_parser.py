@@ -1,5 +1,5 @@
 from .core_parser import core_parser
-from pepys_import.core.formats.state import State
+from pepys_import.core.formats.state2 import State2
 from datetime import datetime
 from pepys_import.core.formats.location import Location
 from pepys_import.core.formats import unit_registry, quantity
@@ -81,7 +81,7 @@ class replay_parser(core_parser):
                 timestamp = self.parse_timestamp(date_token, time_token)
 
                 # creata state, to store the data
-                new_state = State(timestamp, data_file_id)
+                new_state = State2(timestamp, data_file_id)
 
                 new_state.vessel = vessel_name_token.strip('"')
 
@@ -169,24 +169,23 @@ class replay_parser(core_parser):
 
                 # and finally store it
                 with data_store.session_scope() as session:
-                    print("id received:" + str(data_file_id))
                     datafile = session.search_datafile_by_id(data_file_id)
-                    platform = session.add_to_platforms_from_rep(
-                        new_state.get_platform(), "Fisher", "UK", "Public"
-                    )
+                    # platform = session.add_to_platforms_from_rep(
+                    # )
+                    ##    new_state.get_platform(), "Fisher", "UK", "Public"
 
-                    sensor = session.add_to_sensors_from_rep(
-                        platform.name + "_GPS", platform
-                    )
-                    session.add_to_states_from_rep(
-                        new_state.get_timestamp(),
-                        datafile,
-                        sensor,
-                        new_state.get_latitude(),
-                        new_state.get_longitude(),
-                        new_state.get_heading(),
-                        new_state.get_speed(),
-                    )
+                    # sensor = session.add_to_sensors_from_rep(
+                    #    platform.name + "_GPS", platform
+                    # )
+                    # session.add_to_states_from_rep(
+                    #    new_state.get_timestamp(),
+                    #    datafile,
+                    #    sensor,
+                    #    new_state.get_latitude(),
+                    #    new_state.get_longitude(),
+                    #    new_state.get_heading(),
+                    #    new_state.get_speed(),
+                    # )
 
     def parse_timestamp(self, date, time):
         if len(date) == 6:
