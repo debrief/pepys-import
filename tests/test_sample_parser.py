@@ -8,6 +8,8 @@ from pepys_import.file.file_processor import FileProcessor
 
 
 FILE_PATH = os.path.dirname(__file__)
+BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
+DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 
 
 class SampleParserTests(unittest.TestCase):
@@ -16,9 +18,6 @@ class SampleParserTests(unittest.TestCase):
 
         processor.register(ReplayParser())
         processor.register(NMEAParser())
-
-        BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
-        DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 
         # try bad file
         exception = False
@@ -36,9 +35,6 @@ class SampleParserTests(unittest.TestCase):
 
         processor.register(ReplayParser())
         processor.register(NMEAParser())
-
-        BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
-        DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 
         # try bad file
         exception = False
