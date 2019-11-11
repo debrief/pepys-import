@@ -21,12 +21,10 @@ Black is used on the project:
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
     :target: https://github.com/python/black
 
-It is suggested to install a pre-commit hook in order to apply Black before pushing commits:
+It is suggested to install a pre-commit hook in order to apply Black before pushing commits::
 
-```bash
-pip install pre-commit
-pre-commit install
-```
+    $ pip install pre-commit
+    $ pre-commit install
 
 
 Jupyter demo
@@ -46,10 +44,12 @@ Setup
 ===============
 
 To prepare for running ensure these tools and packages are installed:
+
 * Python 3 - at least Python 3.6.4 or later
 * SQL Alchemy 1.3
 
 For Postgres support and unit tests these packages are also required:
+
 * geoalchemy2
 * psycopg2
 * nose2 (0.9.1)
@@ -59,7 +59,7 @@ Dependencies
 
 Install the python dependencies with: :code:`pip install -r requirements.txt`
 
-Was: _To install packages use :code:`pip install <package>` or :code:`py -3 -m pip install <package>` depending on your installation_
+(Was: To install packages use :code:`pip install <package>` or :code:`py -3 -m pip install <package>` depending on your installation.)
 
 Unit tests
 --------------
