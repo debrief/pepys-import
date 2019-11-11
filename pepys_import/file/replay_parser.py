@@ -169,15 +169,14 @@ class ReplayParser(CoreParser):
 
                 # and finally store it
                 with data_store.session_scope() as session:
-                    datafile = session.search_datafile_by_id(data_file_id)
-                    platform = session.add_to_platforms_from_rep(
+                    datafile = data_store.search_datafile_by_id(data_file_id)
+                    platform = data_store.add_to_platforms_from_rep(
                         new_state.get_platform(), "Fisher", "UK", "Public"
                     )
-
-                    sensor = session.add_to_sensors_from_rep(
+                    sensor = data_store.add_to_sensors_from_rep(
                         platform.name + "_GPS", platform
                     )
-                    session.add_to_states_from_rep(
+                    data_store.add_to_states_from_rep(
                         new_state.get_timestamp(),
                         datafile,
                         sensor,
