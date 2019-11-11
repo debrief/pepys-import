@@ -6,7 +6,7 @@
 Welcome to pepys-import's documentation!
 ========================================
 
-.. include:: ./README.rst
+.. include:: ../README.md
 
 .. toctree::
    :maxdepth: 2
