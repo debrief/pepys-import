@@ -12,7 +12,7 @@ class FileProcessor:
         
         :param folder: Folder path
         :type folder: String
-        :param data_Store: Database
+        :param data_store: Database
         :type data_store: DataStore
         :param descend_tree: Whether to recursively descend through the folder tree
         :type descend_tree: bool
@@ -24,7 +24,7 @@ class FileProcessor:
         if not os.path.isdir(folder):
             raise Exception("Folder not found: {}".format(folder))
 
-        # get the datastore
+        # get the data_store
         data_store = DataStore("", "", "", 0, "bulk_load.db", db_type="sqlite")
         data_store.initialise()
 
@@ -39,18 +39,18 @@ class FileProcessor:
         # decide whether to descend tree, or just work on this folder
         if descend_tree:
             # loop through this folder and children
-            for currentpath, folders, files in os.walk(abs_path):
+            for current_path, folders, files in os.walk(abs_path):
                 for file in files:
-                    processed_ctr = self.processFile(
-                        file, currentpath, good_parsers, data_store, processed_ctr
+                    processed_ctr = self.process_file(
+                        file, current_path, good_parsers, data_store, processed_ctr
                     )
         else:
             # loop through this folder
             for file in os.scandir(abs_path):
                 if file.is_file():
-                    currentpath = os.path.join(abs_path, file)
-                    processed_ctr = self.processFile(
-                        file, currentpath, good_parsers, data_store, processed_ctr
+                    current_path = os.path.join(abs_path, file)
+                    processed_ctr = self.process_file(
+                        file, current_path, good_parsers, data_store, processed_ctr
                     )
 
         print("Files got processed:" + str(processed_ctr) + " times")
@@ -80,12 +80,12 @@ class FileProcessor:
             f.close()
         return lines
 
-    def processFile(self, file, currentpath, good_parsers, data_store, processed_ctr):
+    def process_file(self, file, current_path, good_parsers, data_store, processed_ctr):
         filename, file_extension = os.path.splitext(file)
         # make copy of list of parsers
         good_parsers = self.parsers.copy()
 
-        full_path = os.path.join(currentpath, file)
+        full_path = os.path.join(current_path, file)
         # print("Checking:" + str(full_path))
 
         # start with file suffxies
