@@ -1,9 +1,11 @@
-# Pepys Import Documentation
+Pepys Import Documentation
+--------------------------
 
 The source for Pepys Import documentation is in this directory. Our documentation uses
 [Sphinx](https://www.sphinx-doc.org/en/master/index.html) and [Sphinx's RTD Theme](https://sphinx-rtd-theme.readthedocs.io/en/stable/).
 
-## Building the documentation
+Building the documentation
+--------------------------
 
 - Install requirements.txt in the top level of the project: `pip install -r requirements.txt`
 - From the top level directory, `cd` into the `docs/` folder and run:
