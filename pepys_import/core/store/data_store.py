@@ -303,7 +303,9 @@ class DataStore:
             self.datafiles[datafile_name] = datafiles
             return datafiles
 
-        datafile_type_obj = self.add_to_datafile_types(datafile_type)
+        datafile_type_obj = self.search_datafile_type(datafile_type)
+        if datafile_type_obj is None:
+            datafile_type_obj = self.add_to_datafile_types(datafile_type)
 
         # don't know privacy, use resolver to query for data
         privacy = self.missing_data_resolver.resolve_privacy(
