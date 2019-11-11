@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class core_parser(ABC):
+class CoreParser(ABC):
     def __init__(self, name):
         super().__init__()
         self.name = name

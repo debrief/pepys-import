@@ -3,7 +3,7 @@ import os
 from pepys_import.core.store.data_store import DataStore
 
 
-class file_processor:
+class FileProcessor:
     def __init__(self):
         self.parsers = []
 
@@ -139,6 +139,6 @@ class file_processor:
         """Add this parser
         
         :param parser: new parser
-        :type parser: core_parser
+        :type parser: CoreParser
         """
         self.parsers.append(parser)

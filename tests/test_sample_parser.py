@@ -1,10 +1,10 @@
 import os
 import unittest
 
-from pepys_import.file.replay_parser import replay_parser
-from pepys_import.file.nmea_parser import nmea_parser
-from pepys_import.file.core_parser import core_parser
-from pepys_import.file.file_processor import file_processor
+from pepys_import.file.replay_parser import ReplayParser
+from pepys_import.file.nmea_parser import NMEAParser
+from pepys_import.file.core_parser import CoreParser
+from pepys_import.file.file_processor import FileProcessor
 
 
 FILE_PATH = os.path.dirname(__file__)
@@ -12,10 +12,10 @@ FILE_PATH = os.path.dirname(__file__)
 
 class SampleParserTests(unittest.TestCase):
     def test_process_folders_not_descending(self):
-        processor = file_processor()
+        processor = FileProcessor()
 
-        processor.register(replay_parser())
-        processor.register(nmea_parser())
+        processor.register(ReplayParser())
+        processor.register(NMEAParser())
 
         BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
         DATA_PATH = os.path.join(FILE_PATH, "sample_data")
@@ -32,10 +32,10 @@ class SampleParserTests(unittest.TestCase):
         processor.process(DATA_PATH, None, False)
 
     def test_process_folders_descending(self):
-        processor = file_processor()
+        processor = FileProcessor()
 
-        processor.register(replay_parser())
-        processor.register(nmea_parser())
+        processor.register(ReplayParser())
+        processor.register(NMEAParser())
 
         BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
         DATA_PATH = os.path.join(FILE_PATH, "sample_data")

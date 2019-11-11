@@ -1,11 +1,11 @@
-from .core_parser import core_parser
+from .core_parser import CoreParser
 from pepys_import.core.formats.state2 import State2
 from datetime import datetime
 from pepys_import.core.formats.location import Location
 from pepys_import.core.formats import unit_registry, quantity
 
 
-class replay_parser(core_parser):
+class ReplayParser(CoreParser):
     def __init__(self):
         super().__init__("Replay File Format")
 

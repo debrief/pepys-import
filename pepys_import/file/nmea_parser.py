@@ -1,7 +1,7 @@
-from .core_parser import core_parser
+from .core_parser import CoreParser
 
 
-class nmea_parser(core_parser):
+class NMEAParser(CoreParser):
     def __init__(self):
         super().__init__("NMEA File Format")
 
