@@ -126,7 +126,9 @@ class FileProcessor:
             # ok, let these parsers handle the file
 
             with data_store.session_scope() as session:
-                data_file = session.add_to_datafile_from_rep(filename, file_extension)
+                data_file = data_store.add_to_datafile_from_rep(
+                    filename, file_extension
+                )
                 data_file_id = data_file.datafile_id
 
             for parser in good_parsers:
