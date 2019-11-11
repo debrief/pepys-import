@@ -342,8 +342,8 @@ class DataStore:
         self, platform_name, platform_type, nationality, privacy
     ):
         # check in cache for platform
-        if platform_name in self.platforms:
-            return self.platforms[platform_name]
+        # if platform_name in self.platforms:
+        #     return self.platforms[platform_name]
 
         # doesn't exist in cache, try to lookup in DB
         platforms = self.search_platform(platform_name)
@@ -406,8 +406,8 @@ class DataStore:
 
     def add_to_sensors_from_rep(self, sensor_name, platform):
         # check in cache for sensor
-        if sensor_name in self.sensors:
-            return self.sensors[sensor_name]
+        # if sensor_name in self.sensors:
+        #     return self.sensors[sensor_name]
 
         # doesn't exist in cache, try to lookup in DB
         sensors = self.search_sensor(sensor_name)
