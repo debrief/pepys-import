@@ -18,7 +18,7 @@ install:
   - pip install codecov
 before_script:
   - sudo -u postgres psql -c "CREATE ROLE gis PASSWORD 'gis' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN;"
-  - sudo -u postgres createdb -E UTF-8 gis
+  - sudo -u postgres createdb -E UTF-8 test
   - sudo -u postgres psql -d test -c 'CREATE SCHEMA gis;'
   - sudo -u postgres psql -c 'GRANT CREATE ON DATABASE test TO "gis";'
   - sudo -u postgres psql -d test -c 'GRANT USAGE,CREATE ON SCHEMA gis TO "gis";'
