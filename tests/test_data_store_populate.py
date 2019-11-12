@@ -4,7 +4,6 @@ from datetime import datetime
 
 from pepys_import.core.store.data_store import DataStore
 from unittest import TestCase
-from geoalchemy2 import WKBElement
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -167,12 +166,6 @@ class TestDataStorePopulate(TestCase):
             self.assertEqual(
                 first_state.time,
                 datetime.strptime("2019-01-12 12:10:00", "%Y-%m-%d %H:%M:%S"),
-            )
-            # Check location point's type and value
-            self.assertTrue(isinstance(first_state.location, WKBElement))
-            self.assertEqual(
-                first_state.location.data,
-                "0101000020FFFFFFFF00000000000047400000000000004040",
             )
 
             privacy = (
