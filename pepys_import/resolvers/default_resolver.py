@@ -26,7 +26,7 @@ class DefaultResolver(DataResolver):
 
         if not privacy_str:
             privacy_str = self.default_privacy
-        privacy = data_store.search_nationality(privacy_str)
+        privacy = data_store.search_privacy(privacy_str)
         if not privacy:
             privacy = data_store.add_to_privacies(privacy_str)
 

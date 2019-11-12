@@ -8,6 +8,7 @@ Subpackages
 
    pepys_import.core
    pepys_import.database
+   pepys_import.file
    pepys_import.resolvers
    pepys_import.utils
 

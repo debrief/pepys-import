@@ -303,7 +303,9 @@ class DataStore:
             self.datafiles[datafile_name] = datafiles
             return datafiles
 
-        datafile_type_obj = self.add_to_datafile_types(datafile_type)
+        datafile_type_obj = self.search_datafile_type(datafile_type)
+        if datafile_type_obj is None:
+            datafile_type_obj = self.add_to_datafile_types(datafile_type)
 
         # don't know privacy, use resolver to query for data
         privacy = self.missing_data_resolver.resolve_privacy(
@@ -340,8 +342,8 @@ class DataStore:
         self, platform_name, platform_type, nationality, privacy
     ):
         # check in cache for platform
-        if platform_name in self.platforms:
-            return self.platforms[platform_name]
+        # if platform_name in self.platforms:
+        #     return self.platforms[platform_name]
 
         # doesn't exist in cache, try to lookup in DB
         platforms = self.search_platform(platform_name)
@@ -404,8 +406,8 @@ class DataStore:
 
     def add_to_sensors_from_rep(self, sensor_name, platform):
         # check in cache for sensor
-        if sensor_name in self.sensors:
-            return self.sensors[sensor_name]
+        # if sensor_name in self.sensors:
+        #     return self.sensors[sensor_name]
 
         # doesn't exist in cache, try to lookup in DB
         sensors = self.search_sensor(sensor_name)
@@ -631,6 +633,14 @@ class DataStore:
         return (
             self.session.query(self.db_classes.Datafile)
             .filter(self.db_classes.Datafile.reference == name)
+            .first()
+        )
+
+    def search_datafile_by_id(self, id):
+        # search for any datafile with this id
+        return (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.datafile_id == str(id))
             .first()
         )
 
