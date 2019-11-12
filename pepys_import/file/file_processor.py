@@ -11,7 +11,9 @@ class FileProcessor:
         else:
             self.filename = filename
 
-    def process(self, folder: str, data_store: DataStore, descend_tree: bool = True):
+    def process(
+        self, folder: str, data_store: DataStore = None, descend_tree: bool = True
+    ):
         """Process this folder of data
         
         :param folder: Folder path
@@ -129,7 +131,7 @@ class FileProcessor:
 
             # ok, let these parsers handle the file
 
-            with data_store.session_scope() as session:
+            with data_store.session_scope():
                 data_file = data_store.add_to_datafile_from_rep(
                     filename, file_extension
                 )
