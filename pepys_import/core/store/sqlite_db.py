@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.dialects.sqlite import DATETIME
 from sqlalchemy.dialects.sqlite import REAL
-import uuid
+
+from geoalchemy2 import Geography, Geometry
 
 from .db_base import base_sqlite as base
 from .db_status import TableTypes
-from .uuid import UUID
 
 
 def map_uuid_type(val):
@@ -120,8 +120,7 @@ class State(base):
     state_id = Column(Integer, primary_key=True)
     time = Column(DATETIME, nullable=False)
     sensor_id = Column(Integer, nullable=False)
-    # location = Column(Geometry(geometry_type='POINT', srid=4326))
-    location = Column(String(150), nullable=False)
+    location = Column(Geometry(geometry_type="POINT", management=True))
     heading = Column(REAL)
     course = Column(REAL)
     speed = Column(REAL)
