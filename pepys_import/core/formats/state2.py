@@ -40,8 +40,11 @@ class State2:
     def set_heading(self, heading: quantity):
         self.heading = heading
 
-    def set_latitude(self, lat_val: float):
-        self.latitude = lat_val
+    def set_location(self, lat_val: float, long_val: float):
+        self.location = (lat_val, long_val)
+
+    def set_location_obj(self, location):
+        self.location = location
 
     def set_longitude(self, long_val: float):
         self.longitude = long_val
