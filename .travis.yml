@@ -16,13 +16,6 @@ before_install:
 install:
   - pip install -r requirements.txt
   - pip install codecov
-before_script:
-  - sudo -u postgres psql -c "CREATE ROLE gis PASSWORD 'gis' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN;"
-  - sudo -u postgres createdb -E UTF-8 test
-  - sudo -u postgres psql -d test -c 'CREATE SCHEMA gis;'
-  - sudo -u postgres psql -c 'GRANT CREATE ON DATABASE test TO "gis";'
-  - sudo -u postgres psql -d test -c 'GRANT USAGE,CREATE ON SCHEMA gis TO "gis";'
-  - sudo -u postgres psql -d test -U postgres -c "CREATE EXTENSION postgis;"
 script:
   - coverage3 run -m unittest discover -v
   - black --check --diff pepys_import
