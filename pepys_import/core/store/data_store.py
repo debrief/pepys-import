@@ -3,6 +3,7 @@ from pathlib import Path
 
 from datetime import datetime
 from sqlalchemy import create_engine, event
+from sqlalchemy.event import listen
 from sqlalchemy.schema import CreateSchema
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError
@@ -11,6 +12,7 @@ from contextlib import contextmanager
 
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import import_from_csv
+from pepys_import.utils.geoalchemy_utils import load_spatialite
 from .db_base import base_postgres, base_sqlite
 from .db_status import TableTypes
 from pepys_import.core.formats import unit_registry
@@ -76,6 +78,7 @@ class DataStore:
         if db_type == "postgres":
             base_postgres.metadata.bind = self.engine
         elif db_type == "sqlite":
+            listen(self.engine, "connect", load_spatialite)
             base_sqlite.metadata.bind = self.engine
 
         self.missing_data_resolver = missing_data_resolver
