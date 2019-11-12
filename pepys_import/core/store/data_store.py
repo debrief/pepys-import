@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy import create_engine, event
 from sqlalchemy.event import listen
 from sqlalchemy.schema import CreateSchema
+from sqlalchemy.sql import select, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError
 from importlib import import_module
@@ -119,6 +120,9 @@ class DataStore:
 
         if self.db_type == "sqlite":
             try:
+                # Create geometry_columns and spatial_ref_sys metadata table
+                with self.engine.connect() as conn:
+                    conn.execute(select([func.InitSpatialMetaData()]))
                 # Attempt to create schema if not present, to cope with fresh DB file
                 base_sqlite.metadata.create_all(self.engine)
             except OperationalError:
