@@ -55,7 +55,6 @@ class ReplayParser(CoreParser):
                 heading_token = tokens[12]
                 speed_token = tokens[13]
                 depth_token = tokens[14]
-                text_label_token = ""
 
                 if len(tokens) >= 16:
                     # TODO: join back into single string, or extract full substring
@@ -104,22 +103,16 @@ class ReplayParser(CoreParser):
 
                 new_state.symbology = symbology_token
 
-                new_state.latitude = Location(
+                new_state.latitude = self.degrees_for(
                     lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token
                 )
-                if not new_state.latitude.parse():
-                    print("Line {}. Error in latitude parsing".format(line_num))
-                    return False
 
-                new_state.longitude = Location(
+                new_state.longitude = self.degrees_for(
                     long_degrees_token,
                     long_mins_token,
                     long_secs_token,
                     long_hemi_token,
                 )
-                if not new_state.latitude.parse():
-                    print("Line {}. Error in longitude parsing".format(line_num))
-                    return False
 
                 try:
                     valid_heading = float(heading_token)
@@ -168,7 +161,7 @@ class ReplayParser(CoreParser):
                     return False
 
                 # and finally store it
-                with data_store.session_scope() as session:
+                with data_store.session_scope():
                     datafile = data_store.search_datafile_by_id(data_file_id)
                     platform = data_store.add_to_platforms_from_rep(
                         new_state.get_platform(), "Fisher", "UK", "Public"
@@ -176,15 +169,16 @@ class ReplayParser(CoreParser):
                     sensor = data_store.add_to_sensors_from_rep(
                         platform.name + "_GPS", platform
                     )
-                    data_store.add_to_states_from_rep(
-                        new_state.get_timestamp(),
-                        datafile,
-                        sensor,
-                        new_state.get_latitude(),
-                        new_state.get_longitude(),
-                        new_state.get_heading(),
-                        new_state.get_speed(),
+                    data_store.add_state_to_states(
+                        new_state, datafile, sensor,
                     )
+
+    def degrees_for(self, degs, mins, secs, hemi: str):
+        if hemi.upper() == "S" or hemi.upper() == "W":
+            factor = -1
+        else:
+            factor = 1
+        return factor * (float(degs) + float(mins) / 60 + float(secs) / 60 / 60)
 
     def parse_timestamp(self, date, time):
         if len(date) == 6:

@@ -43,8 +43,7 @@ class TestLoadReplay(TestCase):
                     repLine.get_timestamp(),
                     datafile,
                     sensor,
-                    repLine.get_latitude(),
-                    repLine.get_longitude(),
+                    (repLine.get_latitude(), repLine.get_longitude()),
                     repLine.get_heading(),
                     repLine.get_speed(),
                 )
