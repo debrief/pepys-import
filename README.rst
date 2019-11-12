@@ -11,17 +11,17 @@ PostGres and SQLite databases are currently supported, with SQLite being
 the low-friction option favoured for getting started with Pepys-Import, or
 for project maintainers.
 
-Here's a working demonstrator of datafile import:
+Here's a working demonstrator of datafile import: |binder|
 
-.. image:: https://mybinder.org/badge_logo.svg
+.. |binder| image:: https://mybinder.org/badge_logo.svg
   :target: https://mybinder.org/v2/gh/debrief/pepys-import/develop?filepath=examples%2Fnotebooks%2Fdata_store_sqlite.ipynb
 
 Online documentation
 --------------------
 
-Learn more here:
+Learn more here: |docs|
 
-.. image:: https://readthedocs.org/projects/pepys-import/badge/?version=latest
+.. |docs| image:: https://readthedocs.org/projects/pepys-import/badge/?version=latest
   :target:  https://pepys-import.readthedocs.io/
 
 
@@ -31,16 +31,29 @@ Development
 Code coverage
 -------------
 
-We're aiming for 100% code coverage on the project, track our progress here:
+We're aiming for 100% code coverage on the project, track our progress
+here: |code_cov|
 
-.. image:: https://codecov.io/gh/debrief/pepys-import/branch/develop/graph/badge.svg
+.. |code_cov| image:: https://codecov.io/gh/debrief/pepys-import/branch/develop/graph/badge.svg
    :target: https://codecov.io/gh/debrief/pepys-import/branch/develop
+
+Upstream security
+-----------------
+
+We have continuous vulnerability testing on the Open Source libraries
+we depend upon for development: |dev_req| and production: |plain_req|
+
+.. |plain_req| image:: https://snyk.io/test/github/debrief/pepys-import/badge.svg?targetFile=requirements.txt
+   :target: https://snyk.io/test/github/debrief/pepys-import?targetFile=requirements.txt
+
+.. |dev_req| image:: https://snyk.io/test/github/debrief/pepys-import/badge.svg?targetFile=requirements_dev.txt
+   :target: https://snyk.io/test/github/debrief/pepys-import?targetFile=requirements_dev.txt
 
 Code Style
 ----------
-Black is used on the project:
+Black is used on the project: |black|
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
  :target: https://github.com/python/black
 
 It is suggested to install a pre-commit hook in order to apply Black before pushing commits::
