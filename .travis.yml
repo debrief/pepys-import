@@ -11,13 +11,8 @@ services:
   - postgresql
 before_install:
   - sudo apt-get install -y sqlite3
-  - sudo apt-get install -y libsqlite3-mod-spatialite
-  - wget http://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-4.4.0-RC1.tar.gz
-  - tar xzf libspatialite-4.4.0-RC1.tar.gz
-  - cd libspatialite-4.4.0-RC1
-  - ./configure
-  - make
-  - sudo make install
+  - sudo apt install -y libgdal-dev libproj-dev libproj-dev
+  - sudo apt install -y libsqlite3-dev spatialite-bin libsqlite3-mod-spatialite
 install:
   - pip install -r requirements.txt
   - pip install codecov
