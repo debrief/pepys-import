@@ -4,8 +4,12 @@ from pepys_import.core.store.data_store import DataStore
 
 
 class FileProcessor:
-    def __init__(self):
+    def __init__(self, filename=None):
         self.parsers = []
+        if filename == None:
+            self.filename = ":memory:"
+        else:
+            self.filename = filename
 
     def process(self, folder: str, data_store: DataStore, descend_tree: bool = True):
         """Process this folder of data
@@ -25,7 +29,7 @@ class FileProcessor:
             raise Exception("Folder not found: {}".format(folder))
 
         # get the data_store
-        data_store = DataStore("", "", "", 0, "bulk_load.db", db_type="sqlite")
+        data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
         data_store.initialise()
 
         # make copy of list of parsers

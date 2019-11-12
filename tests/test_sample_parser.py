@@ -14,7 +14,7 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 
 class SampleParserTests(unittest.TestCase):
     def test_process_folders_not_descending(self):
-        processor = FileProcessor()
+        processor = FileProcessor("single_level.db")
 
         processor.register(ReplayParser())
         processor.register(NMEAParser())
@@ -31,7 +31,7 @@ class SampleParserTests(unittest.TestCase):
         processor.process(DATA_PATH, None, False)
 
     def test_process_folders_descending(self):
-        processor = FileProcessor()
+        processor = FileProcessor("descending.db")
 
         processor.register(ReplayParser())
         processor.register(NMEAParser())
