@@ -9,6 +9,15 @@ addons:
       - postgresql-10-postgis-2.5
 services:
   - postgresql
+before_install:
+  - sudo apt-get install -y sqlite3
+  - sudo apt-get install -y libsqlite3-mod-spatialite
+  - wget http://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-4.4.0-RC1.tar.gz
+  - tar xzf libspatialite-4.4.0-RC1.tar.gz
+  - cd libspatialite-4.4.0-RC1.tar.gz
+  - ./configure
+  - make
+  - sudo make install
 install:
   - pip install -r requirements.txt
   - pip install codecov
