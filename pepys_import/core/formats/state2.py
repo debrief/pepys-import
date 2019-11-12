@@ -34,17 +34,17 @@ class State2:
             )
         )
 
-    def set_speed(self, speed):
+    def set_speed(self, speed: quantity):
         self.speed = speed
 
     def set_heading(self, heading: quantity):
         self.heading = heading
 
-    def set_latitude(self):
-        pass
+    def set_latitude(self, lat_val: float):
+        self.latitude = lat_val
 
-    def set_longitude(self):
-        pass
+    def set_longitude(self, long_val: float):
+        self.longitude = long_val
 
     def get_timestamp(self):
         return self.timestamp
@@ -55,11 +55,8 @@ class State2:
     def get_symbology(self):
         return self.symbology
 
-    def get_latitude(self):
-        return self.latitude
-
-    def get_longitude(self):
-        return self.longitude
+    def get_location(self):
+        return (self.latitude, self.longitude)
 
     def get_heading(self):
         return self.heading

@@ -14,6 +14,7 @@ from pepys_import.utils.data_store_utils import import_from_csv
 from .db_base import base_postgres, base_sqlite
 from .db_status import TableTypes
 from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.state2 import State2
 
 from pepys_import import __version__
 from pepys_import.utils.branding_util import (
@@ -441,8 +442,42 @@ class DataStore:
         # should return DB type or something else decoupled from DB?
         return sensor_obj
 
+    def add_state_to_states(self, state: State2, data_file, sensor):
+        # No cache for entries, just add new one when called
+
+        # don't know privacy, use resolver to query for data
+        privacy = self.missing_data_resolver.resolve_privacy(
+            self,
+            self.db_classes.State.table_type_id,
+            self.db_classes.State.__tablename__,
+        )
+
+        # privacy should contain (table_type, privacy_name)
+        # enough info to proceed and create entry
+        _, privacy = privacy
+        entry_id = self.add_to_entries(
+            self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
+        )
+
+        state_obj = self.db_classes.State(
+            state_id=entry_id,
+            time=state.get_timestamp(),
+            sensor_id=sensor.sensor_id,
+            location=str(state.get_location()),
+            heading=state.get_heading().to(unit_registry.radians).magnitude,
+            speed=state.get_speed()
+            .to(unit_registry.meter / unit_registry.second)
+            .magnitude,
+            datafile_id=data_file.datafile_id,
+            privacy_id=privacy.privacy_id,
+        )
+        self.session.add(state_obj)
+        self.session.flush()
+
+        return state_obj
+
     def add_to_states_from_rep(
-        self, timestamp, datafile, sensor, lat, long, heading, speed
+        self, timestamp, datafile, sensor, location, heading, speed
     ):
         # No cache for entries, just add new one when called
 
@@ -470,7 +505,7 @@ class DataStore:
             state_id=entry_id,
             time=timestamp,
             sensor_id=sensor.sensor_id,
-            location="(" + str(long.degrees) + "," + str(lat.degrees) + ")",
+            location=str(location),
             heading=heading_rads,
             speed=speed_m_sec,
             datafile_id=datafile.datafile_id,
