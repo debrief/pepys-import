@@ -11,7 +11,11 @@ class TestDataStoreInitialisePostgres(TestCase):
         self.store = None
         try:
             self.store = Postgresql(
-                database="test", host="localhost", user="postgres", port=55527
+                database="test",
+                host="localhost",
+                user="gis",
+                password="gis",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -28,8 +32,8 @@ class TestDataStoreInitialisePostgres(TestCase):
             self.skipTest("Postgres is not available. Test is skipping")
 
         data_store_postgres = DataStore(
-            db_username="postgres",
-            db_password="",
+            db_username="gis",
+            db_password="gis",
             db_host="localhost",
             db_port=55527,
             db_name="test",
