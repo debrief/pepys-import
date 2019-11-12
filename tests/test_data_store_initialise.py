@@ -52,13 +52,18 @@ class TestDataStoreInitialisePostgres(TestCase):
         table_names = inspector.get_table_names()
         schema_names = inspector.get_schema_names()
 
-        # 11 tables must be created. A few of them tested
-        self.assertEqual(len(table_names), 11)
+        # 11 tables + 24 spatial tables must be created. A few of them tested
+        self.assertEqual(len(table_names), 35)
         self.assertIn("Entry", table_names)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
         self.assertIn("Datafiles", table_names)
         self.assertIn("Nationalities", table_names)
+
+        # tables created by Spatialite
+        self.assertIn("geometry_columns", table_names)
+        self.assertIn("view_geometry_columns", table_names)
+        self.assertIn("spatialite_history", table_names)
 
         # datastore_schema must be created
         self.assertIn("datastore_schema", schema_names)
