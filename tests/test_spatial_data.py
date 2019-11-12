@@ -1,7 +1,7 @@
 import unittest
 import os
 
-from geoalchemy2 import WKBElement, WKTElement
+from geoalchemy2 import WKBElement
 
 from pepys_import.core.store.data_store import DataStore
 
@@ -27,13 +27,14 @@ class SpatialDataTestCase(unittest.TestCase):
                 self.store.session.query(self.store.db_classes.State)
                 .filter(
                     self.store.db_classes.State.location.ST_Contains(
-                        WKTElement("POINT(46.000 32.000)")
+                        WKBElement("POINT(46.000 32.000)")
                     )
                 )
                 .first()
             )
 
             # Check location point's type and WKTE value
+            self.assertFalse(isinstance(first_state.location, str))
             self.assertTrue(isinstance(first_state.location, WKBElement))
             self.assertEqual(
                 first_state.location.data,
