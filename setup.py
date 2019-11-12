@@ -5,7 +5,7 @@
 
 from setuptools import setup, find_packages
 
-with open("README.md") as readme_file:
+with open("README.rst") as readme_file:
     readme = readme_file.read()
 
 with open("HISTORY.rst") as history_file:
@@ -46,7 +46,7 @@ setup(
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
-    url="https://github.com/pepys_import",
+    url="https://github.com/debrief/pepys-import",
     version="0.0.2",
     zip_safe=False,
 )
