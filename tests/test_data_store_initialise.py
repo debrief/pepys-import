@@ -22,7 +22,6 @@ class TestDataStoreInitialisePostgres(TestCase):
         except AttributeError:
             return
 
-    @unittest.skip("Skip until PostGIS is setup")
     def test_postgres_initialise(self):
         """Test whether schemas created successfully on PostgresSQL"""
         if self.store is None:
