@@ -94,7 +94,8 @@ class TestDataStoreInitialiseSQLite(TestCase):
 
         # tables created by Spatialite
         self.assertIn("geometry_columns", table_names)
-        self.assertIn("view_geometry_columns", table_names)
+        self.assertIn("views_geometry_columns", table_names)
+        self.assertIn("virts_geometry_columns", table_names)
         self.assertIn("spatialite_history", table_names)
 
 
