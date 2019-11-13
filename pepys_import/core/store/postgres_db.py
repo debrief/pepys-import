@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, FetchedValue
+from sqlalchemy import Column, Integer, String, Boolean, FetchedValue, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.dialects.postgresql import TIME
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
@@ -53,9 +53,12 @@ class Sensor(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
-    sensor_type_id = Column(UUID, nullable=False)
-    platform_id = Column(UUID, nullable=False)
-    table_type_id = Column(Integer, nullable=False, primary_key=True)
+    sensor_type_id = Column(
+        UUID(as_uuid=True), ForeignKey("SensorTypes.sensor_type_id"), nullable=False
+    )
+    platform_id = Column(
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
+    )
 
 
 class PlatformType(base):
@@ -81,12 +84,20 @@ class Platform(base):
     )
     # TODO: does this, or other string limits need checking or validating on file import?
     name = Column(String(150))
-    platform_type_id = Column(UUID(as_uuid=True), nullable=False)
-    host_platform_id = Column(UUID(as_uuid=True))
-    nationality_id = Column(UUID(as_uuid=True), nullable=False)
+    platform_type_id = Column(
+        UUID(as_uuid=True), ForeignKey("PlatformTypes.platform_type_id"), nullable=False
+    )
+    host_platform_id = Column(
+        UUID(as_uuid=True), ForeignKey("PlatformTypes.platform_type_id")
+    )
+    nationality_id = Column(
+        UUID(as_uuid=True), ForeignKey("Nationalities.nationality_id"), nullable=False
+    )
     # TODO: add relationships and ForeignKey entries to auto-create Entry ids
 
-    privacy_id = Column(UUID(as_uuid=True), nullable=False)
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
 
 
 class DatafileType(base):
@@ -99,7 +110,6 @@ class DatafileType(base):
     )
     # TODO: does this, or other string limits need checking or validating on file import?
     name = Column(String(150), nullable=False)
-    # table_type_id = Column(Integer, nullable=False, primary_key=True)
 
 
 class Datafile(base):
@@ -114,8 +124,12 @@ class Datafile(base):
     simulated = Column(Boolean)
     reference = Column(String(150))
     url = Column(String(150))
-    privacy_id = Column(UUID(as_uuid=True), nullable=False)
-    datafile_type_id = Column(UUID(as_uuid=True), nullable=False)
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
+    datafile_type_id = Column(
+        UUID(as_uuid=True), ForeignKey("DatafileTypes.datafile_type_id"), nullable=False
+    )
     # TODO: add relationships and ForeignKey entries to auto-create Entry ids
 
 
@@ -128,12 +142,16 @@ class State(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     time = Column(TIME, nullable=False)
-    sensor_id = Column(UUID(as_uuid=True), nullable=False)
+    sensor_id = Column(
+        UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
+    )
     location = Column(Geography(geometry_type="POINT", srid=4326))
     heading = Column(DOUBLE_PRECISION)
     course = Column(DOUBLE_PRECISION)
     speed = Column(DOUBLE_PRECISION)
-    datafile_id = Column(UUID(as_uuid=True), nullable=False)
+    datafile_id = Column(
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
+    )
     privacy_id = Column(UUID(as_uuid=True))
 
 
