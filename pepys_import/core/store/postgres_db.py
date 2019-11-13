@@ -7,6 +7,7 @@ from geoalchemy2 import Geography
 
 from .db_base import base_postgres as base
 from .db_status import TableTypes
+from uuid import uuid4
 
 
 def map_uuid_type(val):
@@ -18,9 +19,7 @@ class Entry(base):
     __tablename__ = "Entry"
     table_type = TableTypes.METADATA
 
-    entry_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    entry_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table_type_id = Column(Integer, nullable=False)
     created_user = Column(Integer)
 
@@ -36,6 +35,7 @@ class TableType(base):
 class SensorType(base):
     __tablename__ = "SensorTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 1
 
     sensor_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -55,11 +55,13 @@ class Sensor(base):
     name = Column(String(150), nullable=False)
     sensor_type_id = Column(UUID, nullable=False)
     platform_id = Column(UUID, nullable=False)
+    table_type_id = Column(Integer, nullable=False, primary_key=True)
 
 
 class PlatformType(base):
     __tablename__ = "PlatformTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 3
 
     platform_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -72,7 +74,7 @@ class PlatformType(base):
 class Platform(base):
     __tablename__ = "Platforms"
     table_type = TableTypes.METADATA
-    table_type_id = 1  # Only needed for tables referenced by Entry table
+    table_type_id = 4  # Only needed for tables referenced by Entry table
 
     platform_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -90,18 +92,20 @@ class Platform(base):
 class DatafileType(base):
     __tablename__ = "DatafileTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 5
 
     datafile_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     # TODO: does this, or other string limits need checking or validating on file import?
     name = Column(String(150), nullable=False)
+    # table_type_id = Column(Integer, nullable=False, primary_key=True)
 
 
 class Datafile(base):
     __tablename__ = "Datafiles"
     table_type = TableTypes.METADATA
-    table_type_id = 4  # Only needed for tables referenced by Entry table
+    table_type_id = 6  # Only needed for tables referenced by Entry table
 
     datafile_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -118,7 +122,7 @@ class Datafile(base):
 class State(base):
     __tablename__ = "States"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 7  # Only needed for tables referenced by Entry table
 
     state_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -136,6 +140,7 @@ class State(base):
 class Nationality(base):
     __tablename__ = "Nationalities"
     table_type = TableTypes.REFERENCE
+    table_type_id = 8
 
     nationality_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -146,6 +151,7 @@ class Nationality(base):
 class Privacy(base):
     __tablename__ = "Privacies"
     table_type = TableTypes.REFERENCE
+    table_type_id = 9
 
     privacy_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
