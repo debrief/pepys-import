@@ -216,8 +216,14 @@ class DataStore:
             self.platform_types[platform_type_name] = platform_types
             return platform_types
 
+        entry_id = self.add_to_entries(
+            self.db_classes.PlatformType.table_type_id,
+            self.db_classes.PlatformType.__tablename__,
+        )
         # enough info to proceed and create entry
-        platform_type = self.db_classes.PlatformType(name=platform_type_name)
+        platform_type = self.db_classes.PlatformType(
+            platform_type_id=entry_id, name=platform_type_name,
+        )
         self.session.add(platform_type)
         self.session.flush()
 
@@ -238,8 +244,14 @@ class DataStore:
             self.nationalities[nationality_name] = nationalities
             return nationalities
 
+        entry_id = self.add_to_entries(
+            self.db_classes.Nationality.table_type_id,
+            self.db_classes.Nationality.__tablename__,
+        )
         # enough info to proceed and create entry
-        nationality = self.db_classes.Nationality(name=nationality_name)
+        nationality = self.db_classes.Nationality(
+            nationality_id=entry_id, name=nationality_name,
+        )
         self.session.add(nationality)
         self.session.flush()
 
@@ -260,8 +272,12 @@ class DataStore:
             self.privacies[privacy_name] = privacies
             return privacies
 
+        entry_id = self.add_to_entries(
+            self.db_classes.Privacy.table_type_id,
+            self.db_classes.Privacy.__tablename__,
+        )
         # enough info to proceed and create entry
-        privacy = self.db_classes.Privacy(name=privacy_name)
+        privacy = self.db_classes.Privacy(privacy_id=entry_id, name=privacy_name)
         self.session.add(privacy)
         self.session.flush()
 
@@ -291,8 +307,14 @@ class DataStore:
             self.datafile_types[datafile_type] = datafile_types
             return datafile_types
 
+        entry_id = self.add_to_entries(
+            self.db_classes.DatafileType.table_type_id,
+            self.db_classes.DatafileType.__tablename__,
+        )
         # proceed and create entry
-        datafile_type_obj = self.db_classes.DatafileType(name=datafile_type)
+        datafile_type_obj = self.db_classes.DatafileType(
+            datafile_type_id=entry_id, name=datafile_type
+        )
 
         self.session.add(datafile_type_obj)
         self.session.flush()
@@ -405,8 +427,14 @@ class DataStore:
             self.sensor_types[sensor_type_name] = sensor_types
             return sensor_types
 
+        entry_id = self.add_to_entries(
+            self.db_classes.SensorType.table_type_id,
+            self.db_classes.SensorType.__tablename__,
+        )
         # enough info to proceed and create entry
-        sensor_type = self.db_classes.SensorType(name=sensor_type_name)
+        sensor_type = self.db_classes.SensorType(
+            sensor_type_id=entry_id, name=sensor_type_name,
+        )
         self.session.add(sensor_type)
         self.session.flush()
 
