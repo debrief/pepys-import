@@ -134,6 +134,9 @@ class DataStore:
                 exit()
         elif self.db_type == "postgres":
             try:
+                # Create extension for PostGIS first
+                with self.engine.connect() as conn:
+                    conn.execute("CREATE EXTENSION postgis;")
                 #  ensure that create schema scripts created before create table scripts
                 event.listen(
                     base_postgres.metadata,
@@ -141,9 +144,6 @@ class DataStore:
                     CreateSchema("datastore_schema"),
                 )
                 base_postgres.metadata.create_all(self.engine)
-                # Create extension for PostGIS
-                with self.engine.connect() as conn:
-                    conn.execute("CREATE EXTENSION postgis;")
             except OperationalError:
                 print(f"Error creating database({self.db_name})! Quitting")
                 exit()
