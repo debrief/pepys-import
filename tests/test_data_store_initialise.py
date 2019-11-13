@@ -28,8 +28,8 @@ class TestDataStoreInitialisePostgres(TestCase):
 
     def test_postgres_initialise(self):
         """Test whether schemas created successfully on PostgresSQL"""
-        # if self.store is None:
-        #     self.skipTest("Postgres is not available. Test is skipping")
+        if self.store is None:
+            self.skipTest("Postgres is not available. Test is skipping")
 
         data_store_postgres = DataStore(
             db_username="postgres",
