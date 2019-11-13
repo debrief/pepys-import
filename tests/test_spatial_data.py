@@ -36,13 +36,13 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
                 )
                 .first()
             )
+            point = self.store.session.query(func.ST_AsText(first_state.location)).one()
 
             # Check location point's type and WKTE value
             self.assertFalse(isinstance(first_state.location, str))
             self.assertTrue(isinstance(first_state.location, WKBElement))
             self.assertEqual(
-                first_state.location.data,
-                "0101000020FFFFFFFF00000000000047400000000000004040",
+                point[0], "POINT(46 32)",
             )
 
 
@@ -97,12 +97,13 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
                 )
                 .first()
             )
+            point = data_store.session.query(func.ST_AsText(first_state.location)).one()
 
             # Check location point's type and WKBE value
             self.assertFalse(isinstance(first_state.location, str))
             self.assertTrue(isinstance(first_state.location, WKBElement))
             self.assertEqual(
-                first_state.location.desc, "010100000000000000000047400000000000004040",
+                point[0], "POINT(46 32)",
             )
 
 
