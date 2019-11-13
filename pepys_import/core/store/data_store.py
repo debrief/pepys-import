@@ -141,6 +141,9 @@ class DataStore:
                     CreateSchema("datastore_schema"),
                 )
                 base_postgres.metadata.create_all(self.engine)
+                # Create extension for PostGIS
+                with self.engine.connect() as conn:
+                    conn.execute("CREATE EXTENSION postgis;")
             except OperationalError:
                 print(f"Error creating database({self.db_name})! Quitting")
                 exit()
