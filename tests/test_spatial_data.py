@@ -2,10 +2,12 @@ import unittest
 import os
 
 from geoalchemy2 import WKBElement
-from sqlalchemy import func
+from sqlalchemy import func, event
+from sqlalchemy.schema import DropSchema
 from testing.postgresql import Postgresql
 
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store.db_base import base_postgres
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -60,6 +62,9 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
 
     def tearDown(self):
         try:
+            event.listen(
+                base_postgres.metadata, "before_create", DropSchema("datastore_schema"),
+            )
             self.store.stop()
         except AttributeError:
             return

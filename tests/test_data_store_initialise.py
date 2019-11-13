@@ -1,9 +1,13 @@
 import unittest
 
+from sqlalchemy.sql.ddl import DropSchema
+
 from pepys_import.core.store.data_store import DataStore
 from testing.postgresql import Postgresql
-from sqlalchemy import inspect, create_engine
+from sqlalchemy import inspect, event
 from unittest import TestCase
+
+from pepys_import.core.store.db_base import base_postgres
 
 
 class TestDataStoreInitialisePostgres(TestCase):
@@ -22,6 +26,9 @@ class TestDataStoreInitialisePostgres(TestCase):
 
     def tearDown(self):
         try:
+            event.listen(
+                base_postgres.metadata, "before_create", DropSchema("datastore_schema"),
+            )
             self.store.stop()
         except AttributeError:
             return
