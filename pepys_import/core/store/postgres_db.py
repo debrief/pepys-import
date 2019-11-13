@@ -3,7 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.dialects.postgresql import TIME
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
 
-from geoalchemy2 import Geography
+from geoalchemy2 import Geometry
 
 from .db_base import base_postgres as base
 from .db_status import TableTypes
@@ -145,7 +145,7 @@ class State(base):
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
     )
-    location = Column(Geography(geometry_type="POINT", srid=4326))
+    location = Column(Geometry(geometry_type="POINT", srid=0))
     heading = Column(DOUBLE_PRECISION)
     course = Column(DOUBLE_PRECISION)
     speed = Column(DOUBLE_PRECISION)
