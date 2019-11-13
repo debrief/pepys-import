@@ -17,9 +17,6 @@ class TestDataStoreInitialisePostgres(TestCase):
                 password="postgres",
                 port=55527,
             )
-            engine = create_engine(self.store.url())
-            with engine.connect() as conn:
-                conn.execute("CREATE EXTENSION postgis;")
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
 
@@ -48,9 +45,8 @@ class TestDataStoreInitialisePostgres(TestCase):
         table_names = inspector.get_table_names()
         schema_names = inspector.get_schema_names()
 
-        # there must be one table for spatial objects (spatial_ref_sys),
-        # and no schema for datastore at the beginning
-        self.assertEqual(len(table_names), 1)
+        # there must be no table and no schema for datastore at the beginning
+        self.assertEqual(len(table_names), 0)
         self.assertNotIn("datastore_schema", schema_names)
 
         # creating database from schema
@@ -60,7 +56,7 @@ class TestDataStoreInitialisePostgres(TestCase):
         table_names = inspector.get_table_names()
         schema_names = inspector.get_schema_names()
 
-        # 11 tables must be created. So, there should be 12 tables in total.
+        # 11 tables and 1  table for spatial objects (spatial_ref_sys) must be created.
         self.assertEqual(len(table_names), 12)
         self.assertIn("Entry", table_names)
         self.assertIn("Platforms", table_names)
