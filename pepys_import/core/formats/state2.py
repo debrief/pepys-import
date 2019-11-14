@@ -59,7 +59,7 @@ class State2:
         return self.symbology
 
     def get_location(self):
-        return (self.latitude, self.longitude)
+        return f"POINT({self.longitude} {self.latitude})"
 
     def get_heading(self):
         return self.heading

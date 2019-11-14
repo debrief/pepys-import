@@ -167,7 +167,7 @@ class TestDataStorePopulate(TestCase):
                 first_state.time,
                 datetime.strptime("2019-01-12 12:10:00", "%Y-%m-%d %H:%M:%S"),
             )
-            self.assertEqual(first_state.location, "46.000 32.000")
+
             privacy = (
                 self.store.session.query(self.store.db_classes.Privacy)
                 .filter_by(privacy_id=first_state.privacy_id)

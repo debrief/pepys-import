@@ -3,7 +3,9 @@ from pathlib import Path
 
 from datetime import datetime
 from sqlalchemy import create_engine, event
+from sqlalchemy.event import listen
 from sqlalchemy.schema import CreateSchema
+from sqlalchemy.sql import select, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError
 from importlib import import_module
@@ -11,6 +13,7 @@ from contextlib import contextmanager
 
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import import_from_csv
+from pepys_import.utils.geoalchemy_utils import load_spatialite
 from .db_base import base_postgres, base_sqlite
 from .db_status import TableTypes
 from pepys_import.core.formats import unit_registry
@@ -76,6 +79,7 @@ class DataStore:
         if db_type == "postgres":
             base_postgres.metadata.bind = self.engine
         elif db_type == "sqlite":
+            listen(self.engine, "connect", load_spatialite)
             base_sqlite.metadata.bind = self.engine
 
         self.missing_data_resolver = missing_data_resolver
@@ -116,6 +120,9 @@ class DataStore:
 
         if self.db_type == "sqlite":
             try:
+                # Create geometry_columns and spatial_ref_sys metadata table
+                with self.engine.connect() as conn:
+                    conn.execute(select([func.InitSpatialMetaData()]))
                 # Attempt to create schema if not present, to cope with fresh DB file
                 base_sqlite.metadata.create_all(self.engine)
             except OperationalError:
@@ -127,6 +134,9 @@ class DataStore:
                 exit()
         elif self.db_type == "postgres":
             try:
+                # Create extension for PostGIS first
+                with self.engine.connect() as conn:
+                    conn.execute("CREATE EXTENSION postgis;")
                 #  ensure that create schema scripts created before create table scripts
                 event.listen(
                     base_postgres.metadata,
@@ -206,8 +216,14 @@ class DataStore:
             self.platform_types[platform_type_name] = platform_types
             return platform_types
 
+        entry_id = self.add_to_entries(
+            self.db_classes.PlatformType.table_type_id,
+            self.db_classes.PlatformType.__tablename__,
+        )
         # enough info to proceed and create entry
-        platform_type = self.db_classes.PlatformType(name=platform_type_name)
+        platform_type = self.db_classes.PlatformType(
+            platform_type_id=entry_id, name=platform_type_name,
+        )
         self.session.add(platform_type)
         self.session.flush()
 
@@ -228,8 +244,14 @@ class DataStore:
             self.nationalities[nationality_name] = nationalities
             return nationalities
 
+        entry_id = self.add_to_entries(
+            self.db_classes.Nationality.table_type_id,
+            self.db_classes.Nationality.__tablename__,
+        )
         # enough info to proceed and create entry
-        nationality = self.db_classes.Nationality(name=nationality_name)
+        nationality = self.db_classes.Nationality(
+            nationality_id=entry_id, name=nationality_name,
+        )
         self.session.add(nationality)
         self.session.flush()
 
@@ -250,8 +272,12 @@ class DataStore:
             self.privacies[privacy_name] = privacies
             return privacies
 
+        entry_id = self.add_to_entries(
+            self.db_classes.Privacy.table_type_id,
+            self.db_classes.Privacy.__tablename__,
+        )
         # enough info to proceed and create entry
-        privacy = self.db_classes.Privacy(name=privacy_name)
+        privacy = self.db_classes.Privacy(privacy_id=entry_id, name=privacy_name)
         self.session.add(privacy)
         self.session.flush()
 
@@ -281,8 +307,14 @@ class DataStore:
             self.datafile_types[datafile_type] = datafile_types
             return datafile_types
 
+        entry_id = self.add_to_entries(
+            self.db_classes.DatafileType.table_type_id,
+            self.db_classes.DatafileType.__tablename__,
+        )
         # proceed and create entry
-        datafile_type_obj = self.db_classes.DatafileType(name=datafile_type)
+        datafile_type_obj = self.db_classes.DatafileType(
+            datafile_type_id=entry_id, name=datafile_type
+        )
 
         self.session.add(datafile_type_obj)
         self.session.flush()
@@ -395,8 +427,14 @@ class DataStore:
             self.sensor_types[sensor_type_name] = sensor_types
             return sensor_types
 
+        entry_id = self.add_to_entries(
+            self.db_classes.SensorType.table_type_id,
+            self.db_classes.SensorType.__tablename__,
+        )
         # enough info to proceed and create entry
-        sensor_type = self.db_classes.SensorType(name=sensor_type_name)
+        sensor_type = self.db_classes.SensorType(
+            sensor_type_id=entry_id, name=sensor_type_name,
+        )
         self.session.add(sensor_type)
         self.session.flush()
 

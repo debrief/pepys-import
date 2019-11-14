@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.dialects.sqlite import DATETIME
 from sqlalchemy.dialects.sqlite import REAL
-import uuid
+
+from geoalchemy2 import Geography, Geometry
 
 from .db_base import base_sqlite as base
 from .db_status import TableTypes
-from .uuid import UUID
 
 
 def map_uuid_type(val):
@@ -33,6 +33,7 @@ class TableType(base):
 class SensorType(base):
     __tablename__ = "SensorTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 1
 
     sensor_type_id = Column(Integer, primary_key=True)
     # TODO: does this, or other string limits need checking or validating on file import?
@@ -42,10 +43,7 @@ class SensorType(base):
 class Sensor(base):
     __tablename__ = "Sensors"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 2
-    tableName = "Sensor"
 
     sensor_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
@@ -56,6 +54,7 @@ class Sensor(base):
 class PlatformType(base):
     __tablename__ = "PlatformTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 3
 
     platform_type_id = Column(Integer, primary_key=True)
     # TODO: does this, or other string limits need checking or validating on file import?
@@ -66,10 +65,7 @@ class PlatformType(base):
 class Platform(base):
     __tablename__ = "Platforms"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
-    table_type_id = 1
-    tableName = "Platforms"
+    table_type_id = 4
 
     platform_id = Column(Integer, primary_key=True)
     # TODO: does this, or other string limits need checking or validating on file import?
@@ -85,6 +81,7 @@ class Platform(base):
 class DatafileType(base):
     __tablename__ = "DatafileTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 5
 
     datafile_type_id = Column(Integer, primary_key=True)
     # TODO: does this, or other string limits need checking or validating on file import?
@@ -94,10 +91,7 @@ class DatafileType(base):
 class Datafile(base):
     __tablename__ = "Datafiles"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
-    table_type_id = 4
-    tableName = "Datafiles"
+    table_type_id = 6
 
     datafile_id = Column(Integer, primary_key=True)
     # TODO: does this, or other string limits need checking or validating on file import?
@@ -112,16 +106,12 @@ class Datafile(base):
 class State(base):
     __tablename__ = "States"
     table_type = TableTypes.MEASUREMENT
-
-    # These only needed for tables referenced by Entry table
-    table_type_id = 3
-    tableName = "States"
+    table_type_id = 7
 
     state_id = Column(Integer, primary_key=True)
     time = Column(DATETIME, nullable=False)
     sensor_id = Column(Integer, nullable=False)
-    # location = Column(Geometry(geometry_type='POINT', srid=4326))
-    location = Column(String(150), nullable=False)
+    location = Column(Geometry(geometry_type="POINT", management=True))
     heading = Column(REAL)
     course = Column(REAL)
     speed = Column(REAL)
@@ -132,6 +122,7 @@ class State(base):
 class Nationality(base):
     __tablename__ = "Nationalities"
     table_type = TableTypes.REFERENCE
+    table_type_id = 8
 
     nationality_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
@@ -140,6 +131,7 @@ class Nationality(base):
 class Privacy(base):
     __tablename__ = "Privacies"
     table_type = TableTypes.REFERENCE
+    table_type_id = 9
 
     privacy_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
