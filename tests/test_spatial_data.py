@@ -70,6 +70,7 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
 class SpatialDataPostGISTestCase(unittest.TestCase):
     def setUp(self):
         self.postgres = None
+        self.store = None
         try:
             self.postgres = Postgresql(
                 database="test",
@@ -134,7 +135,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
     def test_non_existing_location(self):
         """Test filtering State objects by non existing point returns None on PostGIS"""
 
-        if self.postgres is None:
+        if self.store is None:
             self.skipTest("Postgres is not available. Test is skipping")
 
         with self.store.session_scope() as session:
