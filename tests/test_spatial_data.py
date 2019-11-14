@@ -3,6 +3,7 @@ import os
 
 from geoalchemy2 import WKBElement, WKTElement
 from sqlalchemy import func, event
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.schema import DropSchema
 from testing.postgresql import Postgresql
 
@@ -25,6 +26,7 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
         pass
 
     def test_location(self):
+        """Test location saved as Geo Point and it is possible to filter State objects on SpatiaLite"""
         with self.store.session_scope() as session:
             # Filter state object by spatial location
             first_state = (
@@ -46,12 +48,30 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
                 point[0], "POINT(46 32)",
             )
 
+    def test_non_existing_location(self):
+        """Test filtering State objects by non existing point returns None on SpatiaLite"""
+
+        with self.store.session_scope() as session:
+            # Filter state object by spatial location
+            first_state = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(
+                    func.ST_Contains(
+                        self.store.db_classes.State.location,
+                        WKTElement("POINT(123456 123456)"),
+                    )
+                )
+                .one_or_none()
+            )
+            # There is no State object with location (123456 123456). Should return None
+            self.assertIsNone(first_state)
+
 
 class SpatialDataPostGISTestCase(unittest.TestCase):
     def setUp(self):
-        self.store = None
+        self.postgres = None
         try:
-            self.store = Postgresql(
+            self.postgres = Postgresql(
                 database="test",
                 host="localhost",
                 user="postgres",
@@ -60,45 +80,48 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
+        try:
+            self.store = DataStore(
+                db_name="test",
+                db_host="localhost",
+                db_username="postgres",
+                db_password="postgres",
+                db_port=55527,
+            )
+            self.store.initialise()
+            self.store.populate_reference(TEST_DATA_PATH)
+            self.store.populate_metadata(TEST_DATA_PATH)
+            self.store.populate_measurement(TEST_DATA_PATH)
+        except OperationalError:
+            print("Database schema and data population failed! Test is skipping.")
 
     def tearDown(self):
         try:
             event.listen(
                 base_postgres.metadata, "before_create", DropSchema("datastore_schema"),
             )
-            self.store.stop()
+            self.postgres.stop()
         except AttributeError:
             return
 
     def test_location(self):
-        """Test whether schemas created successfully on PostgresSQL"""
-        if self.store is None:
+        """Test location saved as Geo Point and it is possible to filter State objects on PostGIS"""
+        if self.postgres is None:
             self.skipTest("Postgres is not available. Test is skipping")
 
-        data_store = DataStore(
-            db_name="test",
-            db_host="localhost",
-            db_username="postgres",
-            db_password="postgres",
-            db_port=55527,
-        )
-        data_store.initialise()
-        data_store.populate_reference(TEST_DATA_PATH)
-        data_store.populate_metadata(TEST_DATA_PATH)
-        data_store.populate_measurement(TEST_DATA_PATH)
-
-        with data_store.session_scope() as session:
+        with self.store.session_scope() as session:
             # Filter state object by spatial location
             first_state = (
-                data_store.session.query(data_store.db_classes.State)
+                self.store.session.query(self.store.db_classes.State)
                 .filter(
                     func.ST_Contains(
-                        data_store.db_classes.State.location, "POINT(46.000 32.000)"
+                        self.store.db_classes.State.location,
+                        WKTElement("POINT(46.000 32.000)"),
                     )
                 )
                 .one()
             )
-            point = data_store.session.query(func.ST_AsText(first_state.location)).one()
+            point = self.store.session.query(func.ST_AsText(first_state.location)).one()
 
             # Check location point's type and value
             self.assertFalse(isinstance(first_state.location, str))
@@ -106,6 +129,27 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
             self.assertEqual(
                 point[0], "POINT(46 32)",
             )
+
+    def test_non_existing_location(self):
+        """Test filtering State objects by non existing point returns None on PostGIS"""
+
+        if self.store is None:
+            self.skipTest("Postgres is not available. Test is skipping")
+
+        with self.store.session_scope() as session:
+            # Filter state object by spatial location
+            first_state = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(
+                    func.ST_Contains(
+                        self.store.db_classes.State.location,
+                        WKTElement("POINT(123456 123456)"),
+                    )
+                )
+                .one_or_none()
+            )
+            # There is no State object with location (123456 123456). Should return None
+            self.assertIsNone(first_state)
 
 
 if __name__ == "__main__":
