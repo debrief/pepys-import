@@ -70,6 +70,7 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
 class SpatialDataPostGISTestCase(unittest.TestCase):
     def setUp(self):
         self.postgres = None
+        self.store = None
         try:
             self.postgres = Postgresql(
                 database="test",
@@ -80,6 +81,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
+            return
         try:
             self.store = DataStore(
                 db_name="test",
