@@ -80,6 +80,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
+            return
         try:
             self.store = DataStore(
                 db_name="test",
@@ -133,7 +134,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
     def test_non_existing_location(self):
         """Test filtering State objects by non existing point returns None on PostGIS"""
 
-        if self.store is None:
+        if self.postgres is None:
             self.skipTest("Postgres is not available. Test is skipping")
 
         with self.store.session_scope() as session:
