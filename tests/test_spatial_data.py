@@ -1,7 +1,7 @@
 import unittest
 import os
 
-from geoalchemy2 import WKBElement
+from geoalchemy2 import WKBElement, WKTElement
 from sqlalchemy import func, event
 from sqlalchemy.schema import DropSchema
 from testing.postgresql import Postgresql
@@ -30,11 +30,12 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
             first_state = (
                 self.store.session.query(self.store.db_classes.State)
                 .filter(
-                    self.store.db_classes.State.location.ST_Contains(
-                        WKBElement("POINT(46.000 32.000)")
+                    func.ST_Contains(
+                        self.store.db_classes.State.location,
+                        WKTElement("POINT(46.000 32.000)"),
                     )
                 )
-                .first()
+                .one()
             )
             point = self.store.session.query(func.ST_AsText(first_state.location)).one()
 
@@ -95,7 +96,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
                         data_store.db_classes.State.location, "POINT(46.000 32.000)"
                     )
                 )
-                .first()
+                .one()
             )
             point = data_store.session.query(func.ST_AsText(first_state.location)).one()
 
