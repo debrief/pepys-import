@@ -438,12 +438,30 @@ class DataStore:
             else:
                 print(f"Method({possible_method}) not found!")
 
+    def populate_measurement(self, sample_data_folder=None):
+        """Import CSV files from the given folder to the related Measurement Tables"""
+        if sample_data_folder is None:
+            sample_data_folder = DEFAULT_DATA_PATH
+
+        files = os.listdir(sample_data_folder)
+
+        measurement_tables = []
+        # Create measurement table list
+        measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
+        for table_object in list(measurement_table_objects):
+            measurement_tables.append(table_object.__tablename__)
+
+        measurement_files = [
+            file for file in files if os.path.splitext(file)[0] in measurement_tables
+        ]
+        import_from_csv(self, sample_data_folder, measurement_files)
+
     # End of Data Store methods
     #############################################################
 
-    def add_to_entries(self, table_type_id, tableName):
+    def add_to_entries(self, table_type_id, table_name):
         # ensure table type exists to satisfy foreign key constraint
-        self.add_to_table_types(table_type_id, tableName)
+        self.add_to_table_types(table_type_id, table_name)
 
         # No cache for entries, just add new one when called
         entry_obj = self.db_classes.Entry(
@@ -545,34 +563,6 @@ class DataStore:
         self.platforms[platform_name] = platform_obj
         # should return DB type or something else decoupled from DB?
         return platform_obj
-
-    def add_to_sensor_types(self, sensor_type_name):
-        # check in cache for sensor type
-        if sensor_type_name in self.sensor_types:
-            return self.sensor_types[sensor_type_name]
-
-        # doesn't exist in cache, try to lookup in DB
-        sensor_types = self.search_sensor_type(sensor_type_name)
-        if sensor_types:
-            # add to cache and return looked up sensor type
-            self.sensor_types[sensor_type_name] = sensor_types
-            return sensor_types
-
-        entry_id = self.add_to_entries(
-            self.db_classes.SensorType.table_type_id,
-            self.db_classes.SensorType.__tablename__,
-        )
-        # enough info to proceed and create entry
-        sensor_type = self.db_classes.SensorType(
-            sensor_type_id=entry_id, name=sensor_type_name,
-        )
-        self.session.add(sensor_type)
-        self.session.flush()
-
-        # add to cache and return created sensor type
-        self.sensor_types[sensor_type_name] = sensor_type
-        # should return DB type or something else decoupled from DB?
-        return sensor_type
 
     def add_to_sensors_from_rep(self, sensor_name, platform):
         # check in cache for sensor
@@ -1021,59 +1011,3 @@ class DataStore:
 
     #############################################################
     # Populate methods in order to import CSV files
-
-    def populate_reference(self, reference_data_folder=None):
-        """Import given CSV file to the given reference table"""
-        if reference_data_folder is None:
-            reference_data_folder = DEFAULT_DATA_PATH
-
-        files = os.listdir(reference_data_folder)
-
-        reference_tables = []
-        # Create reference table list
-        reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
-        for table_object in list(reference_table_objects):
-            reference_tables.append(table_object.__tablename__)
-
-        reference_files = [
-            file
-            for file in files
-            if os.path.splitext(file)[0].replace(" ", "") in reference_tables
-        ]
-        import_from_csv(self, reference_data_folder, reference_files)
-
-    def populate_metadata(self, sample_data_folder=None):
-        """Import CSV files from the given folder to the related Metadata Tables"""
-        if sample_data_folder is None:
-            sample_data_folder = DEFAULT_DATA_PATH
-
-        files = os.listdir(sample_data_folder)
-
-        metadata_tables = []
-        # Create metadata table list
-        metadata_table_objects = self.meta_classes[TableTypes.METADATA]
-        for table_object in list(metadata_table_objects):
-            metadata_tables.append(table_object.__tablename__)
-
-        metadata_files = [
-            file for file in files if os.path.splitext(file)[0] in metadata_tables
-        ]
-        import_from_csv(self, sample_data_folder, metadata_files)
-
-    def populate_measurement(self, sample_data_folder=None):
-        """Import CSV files from the given folder to the related Measurement Tables"""
-        if sample_data_folder is None:
-            sample_data_folder = DEFAULT_DATA_PATH
-
-        files = os.listdir(sample_data_folder)
-
-        measurement_tables = []
-        # Create measurement table list
-        measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
-        for table_object in list(measurement_table_objects):
-            measurement_tables.append(table_object.__tablename__)
-
-        measurement_files = [
-            file for file in files if os.path.splitext(file)[0] in measurement_tables
-        ]
-        import_from_csv(self, sample_data_folder, measurement_files)
