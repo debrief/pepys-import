@@ -445,8 +445,9 @@ class Geometries(base):
     table_name = "Geometries"
 
     geometry_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
-    # TODO: Type Geometry?
-    # geometry = Column(Geometry, nullable=False)
+    geometry = Column(
+        Geometry(geometry_type="GEOMETRY", management=True), nullable=False
+    )
     name = Column(String(150), nullable=False)
     geo_type_id = Column(Integer, nullable=False)
     geo_sub_type_id = Column(Integer, nullable=False)
