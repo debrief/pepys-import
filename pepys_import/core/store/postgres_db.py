@@ -390,7 +390,7 @@ class ConfidenceLevels(base):
 
 # Measurements Tables
 class States(base):
-    __tablename__ = "State"
+    __tablename__ = "States"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 7  # Only needed for tables referenced by Entry table
 
@@ -502,8 +502,7 @@ class Geometries(base):
     geometry_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
-    # TODO: Type Geometry?
-    geometry = Column(Geometry(geometry_type="GEOMETRY", srid=4326), nullable=True)
+    geometry = Column(Geometry, nullable=False)
     name = Column(String(150), nullable=False)
     geo_type_id = Column(UUID(as_uuid=True))
     geo_sub_type_id = Column(UUID(as_uuid=True))
