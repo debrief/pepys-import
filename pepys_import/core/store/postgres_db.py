@@ -504,7 +504,7 @@ class Geometries(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     # TODO: Type Geometry?
-    # geometry = Column(Geometry(geometry_type='POINT', srid=4326), nullable=True)
+    geometry = Column(Geometry(geometry_type="GEOMETRY"), nullable=True)
     name = Column(String(150), nullable=False)
     geo_type_id = Column(UUID(as_uuid=True))
     geo_sub_type_id = Column(UUID(as_uuid=True))
