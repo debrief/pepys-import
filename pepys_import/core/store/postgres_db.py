@@ -426,8 +426,7 @@ class Contacts(base):
     bearing = Column(DOUBLE_PRECISION)
     rel_bearing = Column(DOUBLE_PRECISION)
     freq = Column(DOUBLE_PRECISION)
-    # TODO: it should be Point
-    # location = Column(Geometry(geometry_type='POINT', srid=4326))
+    location = Column(Geometry(geometry_type="POINT", srid=4326))
     major = Column(DOUBLE_PRECISION)
     minor = Column(DOUBLE_PRECISION)
     orientation = Column(DOUBLE_PRECISION)
@@ -504,7 +503,7 @@ class Geometries(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     # TODO: Type Geometry?
-    geometry = Column(Geometry(geometry_type="GEOMETRY"), nullable=True)
+    geometry = Column(Geometry(geometry_type="GEOMETRY", srid=4326), nullable=True)
     name = Column(String(150), nullable=False)
     geo_type_id = Column(UUID(as_uuid=True))
     geo_sub_type_id = Column(UUID(as_uuid=True))
@@ -529,8 +528,7 @@ class Media(base):
     source_id = Column(UUID(as_uuid=True))
     subject_id = Column(UUID(as_uuid=True))
     sensor_id = Column(UUID(as_uuid=True))
-    # TODO: it should be Point
-    # location = Column(Geometry(geometry_type='POINT', srid=4326), nullable=True)
+    location = Column(Geometry(geometry_type="POINT", srid=4326), nullable=True)
     time = Column(TIMESTAMP)
     media_type_id = Column(UUID(as_uuid=True), nullable=False)
     # TODO: it says type URL, what is it?
