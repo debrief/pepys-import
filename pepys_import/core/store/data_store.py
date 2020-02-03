@@ -260,8 +260,8 @@ class DataStore:
             return privacies
 
         entry_id = self.add_to_entries(
-            self.db_classes.Privacy.table_type_id,
-            self.db_classes.Privacy.__tablename__,
+            self.db_classes.Privacies.table_type_id,
+            self.db_classes.Privacies.__tablename__,
         )
         # enough info to proceed and create entry
         privacy = self.db_classes.Privacies(privacy_id=entry_id, name=privacy_name)
@@ -295,8 +295,8 @@ class DataStore:
             return datafile_types
 
         entry_id = self.add_to_entries(
-            self.db_classes.DatafileType.table_type_id,
-            self.db_classes.DatafileType.__tablename__,
+            self.db_classes.DatafileTypes.table_type_id,
+            self.db_classes.DatafileTypes.__tablename__,
         )
         # proceed and create entry
         datafile_type_obj = self.db_classes.DatafileTypes(
