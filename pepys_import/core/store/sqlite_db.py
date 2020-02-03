@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, DATE, TIMESTAMP
-from sqlalchemy.dialects.sqlite import DATETIME
+from sqlalchemy import Column, Integer, String, Boolean, DATE
+from sqlalchemy.dialects.sqlite import DATETIME, TIMESTAMP
 from sqlalchemy.dialects.sqlite import REAL
 import uuid
 
@@ -363,24 +363,115 @@ class States(base):
 
 
 class Contacts(base):
-    pass
+    __tablename__ = "Contacts"
+    table_type = TableTypes.MEASUREMENT
+    table_type_id = 3  # Only needed for tables referenced by Entry table
+
+    contact_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    name = Column(String(150), nullable=False)
+    sensor_id = Column(UUID(), nullable=False)
+    time = Column(TIMESTAMP, nullable=False)
+    bearing = Column(REAL)
+    rel_bearing = Column(REAL)
+    freq = Column(REAL)
+    # TODO: it should be Point
+    # location = Column(Geometry(geometry_type='POINT', srid=4326))
+    major = Column(REAL)
+    minor = Column(REAL)
+    orientation = Column(REAL)
+    classification = Column(String(150))
+    confidence = Column(String(150))
+    contact_type = Column(String(150))
+    mla = Column(REAL)
+    sla = Column(REAL)
+    subject_id = Column(UUID())
+    source_id = Column(UUID(), nullable=False)
+    privacy_id = Column(UUID())
 
 
 class Activations(base):
-    pass
+    __tablename__ = "Activations"
+    table_type = TableTypes.MEASUREMENT
+    table_type_id = 3  # Only needed for tables referenced by Entry table
+
+    activation_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    name = Column(String(150), nullable=False)
+    sensor_id = Column(UUID(), nullable=False)
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    min_range = Column(REAL)
+    max_range = Column(REAL)
+    left_arc = Column(REAL)
+    right_arc = Column(REAL)
+    source_id = Column(UUID(), nullable=False)
+    privacy_id = Column(UUID())
 
 
 class LogsHoldings(base):
-    pass
+    __tablename__ = "LogsHoldings"
+    table_type = TableTypes.MEASUREMENT
+    table_type_id = 3  # Only needed for tables referenced by Entry table
+
+    logs_holding_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    time = Column(TIMESTAMP, nullable=False)
+    quantity = Column(REAL, nullable=False)
+    unit_type_id = Column(UUID(), nullable=False)
+    platform_id = Column(UUID(), nullable=False)
+    comment = Column(String(150), nullable=False)
+    source_id = Column(UUID(), nullable=False)
+    privacy_id = Column(UUID())
 
 
 class Comments(base):
-    pass
+    __tablename__ = "Comments"
+    table_type = TableTypes.MEASUREMENT
+    table_type_id = 3  # Only needed for tables referenced by Entry table
+
+    comment_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    # TODO: There are 2 source fields
+    source_id = Column(UUID())
+    time = Column(TIMESTAMP, nullable=False)
+    comment_type_id = Column(UUID(), nullable=False)
+    content = Column(String(150), nullable=False)
+    source_id = Column(UUID(), nullable=False)
+    privacy_id = Column(UUID())
 
 
 class Geometries(base):
-    pass
+    __tablename__ = "Geometries"
+    table_type = TableTypes.MEASUREMENT
+    table_type_id = 3  # Only needed for tables referenced by Entry table
+
+    geometry_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    # TODO: Type Geometry?
+    # geometry = Column(Geometry(geometry_type='POINT', srid=4326), nullable=True)
+    name = Column(String(150), nullable=False)
+    geo_type_id = Column(UUID())
+    geo_sub_type_id = Column(UUID())
+    start = Column(TIMESTAMP)
+    end = Column(TIMESTAMP)
+    task_id = Column(UUID())
+    subject_platform_id = Column(UUID())
+    sensor_platform_id = Column(UUID())
+    source_id = Column(UUID(), nullable=False)
+    privacy_id = Column(UUID())
 
 
 class Media(base):
-    pass
+    __tablename__ = "Media"
+    table_type = TableTypes.MEASUREMENT
+    table_type_id = 3  # Only needed for tables referenced by Entry table
+
+    media_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    # TODO: There are 2 source fields
+    source_id = Column(UUID())
+    subject_id = Column(UUID())
+    sensor_id = Column(UUID())
+    # TODO: it should be Point
+    # location = Column(Geometry(geometry_type='POINT', srid=4326), nullable=True)
+    time = Column(TIMESTAMP)
+    media_type_id = Column(UUID(), nullable=False)
+    # TODO: it says type URL, what is it?
+    url = Column(String(150), nullable=False)
+    source_id = Column(UUID(), nullable=False)
+    privacy_id = Column(UUID())

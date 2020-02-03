@@ -1,7 +1,5 @@
-from sqlalchemy import Column, Integer, String, Boolean, FetchedValue, DATE, TIMESTAMP
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.dialects.postgresql import TIME
-from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
+from sqlalchemy import Column, Integer, String, Boolean, FetchedValue, DATE
+from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, DOUBLE_PRECISION
 
 from .db_base import base_postgres as base
 from .db_status import TableTypes
@@ -382,7 +380,7 @@ class States(base):
     state_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
-    time = Column(TIME, nullable=False)
+    time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(UUID(as_uuid=True), nullable=False)
     # location = Column(Geometry(geometry_type='POINT', srid=4326))
     location = Column(String(150), nullable=False)
@@ -394,24 +392,127 @@ class States(base):
 
 
 class Contacts(base):
-    pass
+    __tablename__ = "Contacts"
+    table_type = TableTypes.MEASUREMENT
+    table_type_id = 3  # Only needed for tables referenced by Entry table
+
+    contact_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    name = Column(String(150), nullable=False)
+    sensor_id = Column(UUID(as_uuid=True), nullable=False)
+    time = Column(TIMESTAMP, nullable=False)
+    bearing = Column(DOUBLE_PRECISION)
+    rel_bearing = Column(DOUBLE_PRECISION)
+    freq = Column(DOUBLE_PRECISION)
+    # TODO: it should be Point
+    # location = Column(Geometry(geometry_type='POINT', srid=4326))
+    major = Column(DOUBLE_PRECISION)
+    minor = Column(DOUBLE_PRECISION)
+    orientation = Column(DOUBLE_PRECISION)
+    classification = Column(String(150))
+    confidence = Column(String(150))
+    contact_type = Column(String(150))
+    mla = Column(DOUBLE_PRECISION)
+    sla = Column(DOUBLE_PRECISION)
+    subject_id = Column(UUID(as_uuid=True))
+    source_id = Column(UUID(as_uuid=True), nullable=False)
+    privacy_id = Column(UUID(as_uuid=True))
 
 
 class Activations(base):
-    pass
+    __tablename__ = "Activations"
+    table_type = TableTypes.MEASUREMENT
+    table_type_id = 3  # Only needed for tables referenced by Entry table
+
+    activation_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    name = Column(String(150), nullable=False)
+    sensor_id = Column(UUID(as_uuid=True), nullable=False)
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    min_range = Column(DOUBLE_PRECISION)
+    max_range = Column(DOUBLE_PRECISION)
+    left_arc = Column(DOUBLE_PRECISION)
+    right_arc = Column(DOUBLE_PRECISION)
+    source_id = Column(UUID(as_uuid=True), nullable=False)
+    privacy_id = Column(UUID(as_uuid=True))
 
 
 class LogsHoldings(base):
-    pass
+    __tablename__ = "LogsHoldings"
+    table_type = TableTypes.MEASUREMENT
+    table_type_id = 3  # Only needed for tables referenced by Entry table
+
+    logs_holding_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    time = Column(TIMESTAMP, nullable=False)
+    quantity = Column(DOUBLE_PRECISION, nullable=False)
+    unit_type_id = Column(UUID(as_uuid=True), nullable=False)
+    platform_id = Column(UUID(as_uuid=True), nullable=False)
+    comment = Column(String(150), nullable=False)
+    source_id = Column(UUID(as_uuid=True), nullable=False)
+    privacy_id = Column(UUID(as_uuid=True))
 
 
 class Comments(base):
-    pass
+    __tablename__ = "Comments"
+    table_type = TableTypes.MEASUREMENT
+    table_type_id = 3  # Only needed for tables referenced by Entry table
+
+    comment_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    # TODO: There are 2 source fields
+    source_id = Column(UUID(as_uuid=True))
+    time = Column(TIMESTAMP, nullable=False)
+    comment_type_id = Column(UUID(as_uuid=True), nullable=False)
+    content = Column(String(150), nullable=False)
+    source_id = Column(UUID(as_uuid=True), nullable=False)
+    privacy_id = Column(UUID(as_uuid=True))
 
 
 class Geometries(base):
-    pass
+    __tablename__ = "Geometries"
+    table_type = TableTypes.MEASUREMENT
+    table_type_id = 3  # Only needed for tables referenced by Entry table
+
+    geometry_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    # TODO: Type Geometry?
+    # geometry = Column(Geometry(geometry_type='POINT', srid=4326), nullable=True)
+    name = Column(String(150), nullable=False)
+    geo_type_id = Column(UUID(as_uuid=True))
+    geo_sub_type_id = Column(UUID(as_uuid=True))
+    start = Column(TIMESTAMP)
+    end = Column(TIMESTAMP)
+    task_id = Column(UUID(as_uuid=True))
+    subject_platform_id = Column(UUID(as_uuid=True))
+    sensor_platform_id = Column(UUID(as_uuid=True))
+    source_id = Column(UUID(as_uuid=True), nullable=False)
+    privacy_id = Column(UUID(as_uuid=True))
 
 
 class Media(base):
-    pass
+    __tablename__ = "Media"
+    table_type = TableTypes.MEASUREMENT
+    table_type_id = 3  # Only needed for tables referenced by Entry table
+
+    media_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    # TODO: There are 2 source fields
+    source_id = Column(UUID(as_uuid=True))
+    subject_id = Column(UUID(as_uuid=True))
+    sensor_id = Column(UUID(as_uuid=True))
+    # TODO: it should be Point
+    # location = Column(Geometry(geometry_type='POINT', srid=4326), nullable=True)
+    time = Column(TIMESTAMP)
+    media_type_id = Column(UUID(as_uuid=True), nullable=False)
+    # TODO: it says type URL, what is it?
+    url = Column(String(150), nullable=False)
+    source_id = Column(UUID(as_uuid=True), nullable=False)
+    privacy_id = Column(UUID(as_uuid=True))
