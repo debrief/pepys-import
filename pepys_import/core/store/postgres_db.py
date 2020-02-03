@@ -63,19 +63,6 @@ class Sensors(base):
     )
 
 
-class PlatformType(base):
-    __tablename__ = "PlatformTypes"
-    table_type = TableTypes.REFERENCE
-    table_type_id = 3
-
-    platform_type_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
-    # TODO: does this, or other string limits need checking or validating on file import?
-    name = Column(String(150))
-    # TODO: add relationships and ForeignKey entries to auto-create Entry ids
-
-
 class Platforms(base):
     __tablename__ = "Platforms"
     table_type = TableTypes.METADATA
