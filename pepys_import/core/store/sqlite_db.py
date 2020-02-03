@@ -151,8 +151,8 @@ class Changes(base):
     reason = Column(String(500), nullable=False)
 
 
-class Log(base):
-    __tablename__ = "Log"
+class Logs(base):
+    __tablename__ = "Logs"
     table_type = TableTypes.METADATA
 
     # These only needed for tables referenced by Entry table
@@ -338,7 +338,7 @@ class ConfidenceLevels(base):
 
 # Measurements Tables
 class States(base):
-    __tablename__ = "State"
+    __tablename__ = "States"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 7
 
@@ -417,9 +417,8 @@ class Comments(base):
     table_type = TableTypes.MEASUREMENT
     table_type_id = 3  # Only needed for tables referenced by Entry table
 
+    platform_id = Column(Integer)
     comment_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
-    # TODO: There are 2 source fields
-    source_id = Column(Integer)
     time = Column(TIMESTAMP, nullable=False)
     comment_type_id = Column(Integer, nullable=False)
     content = Column(String(150), nullable=False)
@@ -434,7 +433,7 @@ class Geometries(base):
 
     geometry_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     # TODO: Type Geometry?
-    geometry = Column(Geometry(geometry_type="GEOMETRY", srid=4326), nullable=True)
+    # geometry = Column(Geometry, nullable=False)
     name = Column(String(150), nullable=False)
     geo_type_id = Column(Integer)
     geo_sub_type_id = Column(Integer)
@@ -453,14 +452,12 @@ class Media(base):
     table_type_id = 3  # Only needed for tables referenced by Entry table
 
     media_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
-    # TODO: There are 2 source fields
-    source_id = Column(Integer)
+    platform_id = Column(Integer)
     subject_id = Column(Integer)
     sensor_id = Column(Integer)
     location = Column(Geometry(geometry_type="POINT", management=True))
     time = Column(TIMESTAMP)
     media_type_id = Column(Integer, nullable=False)
-    # TODO: it says type URL, what is it?
     url = Column(String(150), nullable=False)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
