@@ -95,8 +95,8 @@ class TestDataStoreInitialiseSQLite(TestCase):
         inspector = inspect(data_store_sqlite.engine)
         table_names = inspector.get_table_names()
 
-        # 36 tables + 32 spatial tables must be created. A few of them tested
-        self.assertEqual(len(table_names), 68)
+        # 36 tables + 36 spatial tables must be created. A few of them tested
+        self.assertEqual(len(table_names), 72)
         self.assertIn("Entry", table_names)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
