@@ -140,27 +140,64 @@ class Nationalities(base):
 
 
 class GeometryTypes(base):
-    pass
+    __tablename__ = "GeometryTypes"
+    table_type = TableTypes.REFERENCE
+
+    geometry_type_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    name = Column(String(150), nullable=False)
 
 
 class GeometrySubTypes(base):
-    pass
+    __tablename__ = "GeometrySubTypes"
+    table_type = TableTypes.REFERENCE
+
+    geometry_sub_type_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    name = Column(String(150), nullable=False)
+    parent = Column(UUID(as_uuid=True), ForeignKey("GeometryTypes.geometry_type_id"))
 
 
 class Users(base):
-    pass
+    __tablename__ = "Users"
+    table_type = TableTypes.REFERENCE
+
+    user_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    name = Column(String(150), nullable=False)
 
 
 class UnitTypes(base):
-    pass
+    __tablename__ = "UnitTypes"
+    table_type = TableTypes.REFERENCE
+
+    unit_type_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    units = Column(String(150), nullable=False)
 
 
 class ClassificationTypes(base):
-    pass
+    __tablename__ = "ClassificationTypes"
+    table_type = TableTypes.REFERENCE
+
+    classification_type_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    class_type = Column(String(150), nullable=False)
 
 
 class ContactTypes(base):
-    pass
+    __tablename__ = "ContactTypes"
+    table_type = TableTypes.REFERENCE
+
+    contact_type_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    contact_type_name = Column(String(150), nullable=False)
 
 
 class SensorTypes(base):
@@ -196,19 +233,43 @@ class DatafileTypes(base):
 
 
 class MediaTypes(base):
-    pass
+    __tablename__ = "MediaTypes"
+    table_type = TableTypes.REFERENCE
+
+    media_type_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    name = Column(String(150), nullable=False)
 
 
 class CommentTypes(base):
-    pass
+    __tablename__ = "CommentTypes"
+    table_type = TableTypes.REFERENCE
+
+    comment_type_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    name = Column(String(150), nullable=False)
 
 
 class CommodityTypes(base):
-    pass
+    __tablename__ = "CommodityTypes"
+    table_type = TableTypes.REFERENCE
+
+    commodity_type_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    name = Column(String(150), nullable=False)
 
 
 class ConfidenceLevels(base):
-    pass
+    __tablename__ = "ConfidenceLevels"
+    table_type = TableTypes.REFERENCE
+
+    confidence_level_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    level = Column(String(150), nullable=False)
 
 
 # Measurements Tables
