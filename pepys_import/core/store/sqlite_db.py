@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, DATE, TIMESTAMP
 from sqlalchemy.dialects.sqlite import DATETIME
 from sqlalchemy.dialects.sqlite import REAL
 import uuid
@@ -32,7 +32,18 @@ class TableType(base):
 
 # Metadata Tables
 class HostedBy(base):
-    pass
+    __tablename__ = "HostedBy"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 2
+    tableName = "HostedBy"
+    hosted_by_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    subject_id = Column(UUID, nullable=False)
+    host_id = Column(UUID, nullable=False)
+    hosted_from = Column(DATE, nullable=False)
+    host_to = Column(DATE, nullable=False)
+    privacy_id = Column(UUID, nullable=False)
 
 
 class Sensors(base):
@@ -46,7 +57,7 @@ class Sensors(base):
     sensor_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
     sensor_type_id = Column(UUID, nullable=False)
-    platform_id = Column(UUID, nullable=False)
+    host_id = Column(UUID, nullable=False)
 
 
 class Platforms(base):
@@ -60,20 +71,42 @@ class Platforms(base):
     platform_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     # TODO: does this, or other string limits need checking or validating on file import?
     name = Column(String(150))
-    platform_type_id = Column(UUID(), nullable=False)
-    host_platform_id = Column(UUID())
     nationality_id = Column(UUID(), nullable=False)
-    # TODO: add relationships and ForeignKey entries to auto-create Entry ids
-
-    privacy_id = Column(UUID(), nullable=False)
+    platform_type_id = Column(UUID(), nullable=False)
+    privacy_id = Column(UUID, nullable=False)
 
 
 class Tasks(base):
-    pass
+    __tablename__ = "Tasks"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 1
+    tableName = "Tasks"
+
+    task_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    parent_id = Column(UUID, nullable=False)
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    environment = Column(String(150))
+    location = Column(String(150))
+    privacy_id = Column(UUID, nullable=False)
 
 
 class Participants(base):
-    pass
+    __tablename__ = "Participants"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 1
+    tableName = "Participants"
+
+    participant_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    task_id = Column(UUID, nullable=False)
+    start = Column(TIMESTAMP)
+    end = Column(TIMESTAMP)
+    force = Column(String(150))
+    privacy_id = Column(UUID, nullable=False)
 
 
 class Datafiles(base):
@@ -86,36 +119,100 @@ class Datafiles(base):
 
     datafile_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     # TODO: does this, or other string limits need checking or validating on file import?
-    simulated = Column(Boolean)
-    reference = Column(String(150))
-    url = Column(String(150))
+    simulated = Column(Boolean, nullable=False)
     privacy_id = Column(UUID(), nullable=False)
     datafile_type_id = Column(UUID(), nullable=False)
+    reference = Column(String(150))
+    url = Column(String(150))
     # TODO: add relationships and ForeignKey entries to auto-create Entry ids
 
 
 class Synonyms(base):
-    pass
+    __tablename__ = "Synonyms"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 4
+    tableName = "Synonyms"
+
+    synonym_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    table = Column(String(150), nullable=False)
+    # TODO: not sure how to implement a serial
+    id = Column(UUID)
+    synonym = Column(String(150), nullable=False)
 
 
 class Changes(base):
-    pass
+    __tablename__ = "Changes"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 4
+    tableName = "Changes"
+
+    change_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    user = Column(String(150), nullable=False)
+    modified = Column(DATE, nullable=False)
+    reason = Column(String(500), nullable=False)
 
 
 class Log(base):
-    pass
+    __tablename__ = "Log"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 4
+    tableName = "Log"
+
+    log_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    table = Column(String(150), nullable=False)
+    # TODO: not sure how to implement it
+    id = Column(UUID)
+    field = Column(String(150), nullable=False)
+    new_value = Column(String(150), nullable=False)
+    change_id = Column(UUID, nullable=False)
 
 
 class Extractions(base):
-    pass
+    __tablename__ = "Extractions"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 4
+    tableName = "Extractions"
+
+    extraction_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    table = Column(String(150), nullable=False)
+    field = Column(String(150), nullable=False)
+    chars = Column(String(150), nullable=False)
 
 
 class Tags(base):
-    pass
+    __tablename__ = "Tags"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 4
+    tableName = "Tags"
+
+    tag_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    name = Column(String(150), nullable=False)
 
 
 class TaggedItems(base):
-    pass
+    __tablename__ = "TaggedItems"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 4
+    tableName = "TaggedItems"
+
+    tag_items_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    tag_id = Column(UUID, nullable=False)
+    item_id = Column(UUID, nullable=False)
+    tagged_by_id = Column(UUID, nullable=False)
+    private = Column(Boolean, nullable=False)
+    tagged_on = Column(DATE, nullable=False)
 
 
 # Reference Tables
