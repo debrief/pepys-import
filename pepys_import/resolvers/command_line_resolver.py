@@ -72,16 +72,18 @@ class CommandLineResolver(DataResolver):
         else:
             platform_types = data_store.get_platform_types()
             platform_type_names = [c.name for c in platform_types]
-            platform_type_names.append("Add a new class")
+            platform_type_names.append("Add a new platform-type")
             platform_type_names.append("Cancel import")
-            choice = get_choice_input("Ok, please provide class: ", platform_type_names)
+            choice = get_choice_input(
+                "Ok, please provide platform-type: ", platform_type_names
+            )
             if choice == len(platform_type_names):
                 print("Quitting")
                 sys.exit(1)
             elif choice == len(platform_type_names) - 1:
                 platform_type_ok = False
                 while not platform_type_ok:
-                    new_input = input("Please type name of new class: ")
+                    new_input = input("Please type name of new platform-type: ")
                     platform_type_ok = data_store.check_platform_type(new_input)
                 chosen_platform_type = data_store.add_to_platform_types(new_input)
             else:
@@ -171,7 +173,7 @@ class CommandLineResolver(DataResolver):
                 chosen_privacy,
             )
         elif choice == 2:
-            return self.add_to_platforms(data_store, platform_name)
+            return self.add_to_platforms(data_store, platform_name, None, None, None)
         elif choice == 3:
             print("Quitting")
             sys.exit(1)
@@ -202,16 +204,16 @@ class CommandLineResolver(DataResolver):
         print("Ok, adding new sensor.")
         sensor_types = data_store.get_sensor_types()
         sensor_type_names = [st.name for st in sensor_types]
-        sensor_type_names.append("Add a new sensor type")
+        sensor_type_names.append("Add a new sensor-type")
         sensor_type_names.append("Cancel import")
-        choice = get_choice_input("Please provide sensor type: ", sensor_type_names)
+        choice = get_choice_input("Please provide sensor-type: ", sensor_type_names)
         if choice == len(sensor_type_names):
             print("Quitting")
             sys.exit(1)
         elif choice == len(sensor_type_names) - 1:
             sensor_type_check_ok = False
             while not sensor_type_check_ok:
-                new_input = input("Please type name of new sensor type: ")
+                new_input = input("Please type name of new sensor-type: ")
                 sensor_type_check_ok = data_store.check_sensor_type(new_input)
             chosen_sensor_type = data_store.add_to_sensor_types(new_input)
         else:
@@ -241,7 +243,7 @@ class CommandLineResolver(DataResolver):
         privacy_names.append("Add a new classification")
         privacy_names.append("Cancel import")
         choice = get_choice_input(
-            f"Ok, please provide classification for table '{table_name}': ",
+            f"Ok, please provide classification for new entry in {table_name}: ",
             privacy_names,
         )
 

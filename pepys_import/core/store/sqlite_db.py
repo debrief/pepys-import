@@ -1,11 +1,14 @@
 from sqlalchemy import Column, Integer, String, Boolean, DATE
 from sqlalchemy.dialects.sqlite import DATETIME, TIMESTAMP
 from sqlalchemy.dialects.sqlite import REAL
-import uuid
+
+from geoalchemy2 import Geography, Geometry
 
 from .db_base import base_sqlite as base
 from .db_status import TableTypes
 from .uuid import UUID
+
+import uuid
 
 
 def map_uuid_type(val):
@@ -17,7 +20,7 @@ class Entry(base):
     __tablename__ = "Entry"
     table_type = TableTypes.METADATA
 
-    entry_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    entry_id = Column(Integer, primary_key=True)
     table_type_id = Column(Integer, nullable=False)
     created_user = Column(Integer)
 
@@ -49,26 +52,33 @@ class HostedBy(base):
 class Sensors(base):
     __tablename__ = "Sensors"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 2
-    tableName = "Sensor"
 
-    sensor_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    sensor_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
     sensor_type_id = Column(UUID, nullable=False)
     host_id = Column(UUID, nullable=False)
+    sensor_type_id = Column(Integer, nullable=False)
+    platform_id = Column(Integer, nullable=False)
+
+
+class PlatformType(base):
+    __tablename__ = "PlatformTypes"
+    table_type = TableTypes.REFERENCE
+    table_type_id = 3
+
+    platform_type_id = Column(Integer, primary_key=True)
+    # TODO: does this, or other string limits need checking or validating on file import?
+    name = Column(String(150))
+    # TODO: add relationships and ForeignKey entries to auto-create Entry ids
 
 
 class Platforms(base):
     __tablename__ = "Platforms"
     table_type = TableTypes.METADATA
+    table_type_id = 4
 
-    # These only needed for tables referenced by Entry table
-    table_type_id = 1
-    tableName = "Platforms"
-
-    platform_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    platform_id = Column(Integer, primary_key=True)
     # TODO: does this, or other string limits need checking or validating on file import?
     name = Column(String(150))
     nationality_id = Column(UUID(), nullable=False)
@@ -112,12 +122,9 @@ class Participants(base):
 class Datafiles(base):
     __tablename__ = "Datafiles"
     table_type = TableTypes.METADATA
+    table_type_id = 6
 
-    # These only needed for tables referenced by Entry table
-    table_type_id = 4
-    tableName = "Datafiles"
-
-    datafile_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    datafile_id = Column(Integer, primary_key=True)
     # TODO: does this, or other string limits need checking or validating on file import?
     simulated = Column(Boolean, nullable=False)
     privacy_id = Column(UUID(), nullable=False)
@@ -345,21 +352,17 @@ class ConfidenceLevels(base):
 class States(base):
     __tablename__ = "State"
     table_type = TableTypes.MEASUREMENT
+    table_type_id = 7
 
-    # These only needed for tables referenced by Entry table
-    table_type_id = 3
-    tableName = "State"
-
-    state_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    state_id = Column(Integer, primary_key=True)
     time = Column(DATETIME, nullable=False)
-    sensor_id = Column(UUID(), nullable=False)
-    # location = Column(Geometry(geometry_type='POINT', srid=4326))
-    location = Column(String(150), nullable=False)
+    sensor_id = Column(Integer, nullable=False)
+    location = Column(Geometry(geometry_type="POINT", management=True))
     heading = Column(REAL)
     course = Column(REAL)
     speed = Column(REAL)
-    datafile_id = Column(UUID(), nullable=False)
-    privacy_id = Column(UUID())
+    datafile_id = Column(Integer, nullable=False)
+    privacy_id = Column(Integer)
 
 
 class Contacts(base):

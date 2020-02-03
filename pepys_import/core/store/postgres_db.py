@@ -1,8 +1,11 @@
-from sqlalchemy import Column, Integer, String, Boolean, FetchedValue, DATE
+from sqlalchemy import Column, Integer, String, Boolean, FetchedValue, DATE, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, DOUBLE_PRECISION
+
+from geoalchemy2 import Geometry
 
 from .db_base import base_postgres as base
 from .db_status import TableTypes
+from uuid import uuid4
 
 
 def map_uuid_type(val):
@@ -14,9 +17,7 @@ class Entry(base):
     __tablename__ = "Entry"
     table_type = TableTypes.METADATA
 
-    entry_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    entry_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table_type_id = Column(Integer, nullable=False)
     created_user = Column(Integer)
 
@@ -54,26 +55,51 @@ class Sensors(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
-    sensor_type_id = Column(UUID, nullable=False)
-    platform_id = Column(UUID, nullable=False)
+    sensor_type_id = Column(
+        UUID(as_uuid=True), ForeignKey("SensorTypes.sensor_type_id"), nullable=False
+    )
+    platform_id = Column(
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
+    )
+
+
+class PlatformType(base):
+    __tablename__ = "PlatformTypes"
+    table_type = TableTypes.REFERENCE
+    table_type_id = 3
+
+    platform_type_id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
+    )
+    # TODO: does this, or other string limits need checking or validating on file import?
+    name = Column(String(150))
+    # TODO: add relationships and ForeignKey entries to auto-create Entry ids
 
 
 class Platforms(base):
     __tablename__ = "Platforms"
     table_type = TableTypes.METADATA
-    table_type_id = 1  # Only needed for tables referenced by Entry table
+    table_type_id = 4  # Only needed for tables referenced by Entry table
 
     platform_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     # TODO: does this, or other string limits need checking or validating on file import?
     name = Column(String(150))
-    platform_type_id = Column(UUID(as_uuid=True), nullable=False)
-    host_platform_id = Column(UUID(as_uuid=True))
-    nationality_id = Column(UUID(as_uuid=True), nullable=False)
+    platform_type_id = Column(
+        UUID(as_uuid=True), ForeignKey("PlatformTypes.platform_type_id"), nullable=False
+    )
+    host_platform_id = Column(
+        UUID(as_uuid=True), ForeignKey("PlatformTypes.platform_type_id")
+    )
+    nationality_id = Column(
+        UUID(as_uuid=True), ForeignKey("Nationalities.nationality_id"), nullable=False
+    )
     # TODO: add relationships and ForeignKey entries to auto-create Entry ids
 
-    privacy_id = Column(UUID(as_uuid=True), nullable=False)
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
 
 
 class Tasks(base):
@@ -112,7 +138,7 @@ class Participants(base):
 class Datafiles(base):
     __tablename__ = "Datafiles"
     table_type = TableTypes.METADATA
-    table_type_id = 4  # Only needed for tables referenced by Entry table
+    table_type_id = 6  # Only needed for tables referenced by Entry table
 
     datafile_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -121,8 +147,12 @@ class Datafiles(base):
     simulated = Column(Boolean)
     reference = Column(String(150))
     url = Column(String(150))
-    privacy_id = Column(UUID(as_uuid=True), nullable=False)
-    datafile_type_id = Column(UUID(as_uuid=True), nullable=False)
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
+    datafile_type_id = Column(
+        UUID(as_uuid=True), ForeignKey("DatafileTypes.datafile_type_id"), nullable=False
+    )
     # TODO: add relationships and ForeignKey entries to auto-create Entry ids
 
 
@@ -375,19 +405,23 @@ class ConfidenceLevels(base):
 class States(base):
     __tablename__ = "State"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 7  # Only needed for tables referenced by Entry table
 
     state_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     time = Column(TIMESTAMP, nullable=False)
-    sensor_id = Column(UUID(as_uuid=True), nullable=False)
+    sensor_id = Column(
+        UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
+    )
     # location = Column(Geometry(geometry_type='POINT', srid=4326))
     location = Column(String(150), nullable=False)
     heading = Column(DOUBLE_PRECISION)
     course = Column(DOUBLE_PRECISION)
     speed = Column(DOUBLE_PRECISION)
-    datafile_id = Column(UUID(as_uuid=True), nullable=False)
+    datafile_id = Column(
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
+    )
     privacy_id = Column(UUID(as_uuid=True))
 
 

@@ -6,11 +6,13 @@ from sqlalchemy import inspect
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats.repl_file import REPFile
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
+from pepys_import.core.debug.support_methods import SupportMethods
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "rep_files")
 TEST_FILE = os.path.join(TEST_DATA_PATH, "rep_test1.rep")
 BROKEN_FILE = os.path.join(TEST_DATA_PATH, "rep_test2.rep")
+INITIAL_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 
 
 class TestLoadReplay(TestCase):
@@ -30,6 +32,8 @@ class TestLoadReplay(TestCase):
         # creating database from schema
         data_store.initialise()
 
+        data_store.populate_reference(INITIAL_DATA_PATH)
+
         rep_file = REPFile(TEST_FILE)
         self.assertEqual("REP", rep_file.get_data_file_type())
 
@@ -39,7 +43,7 @@ class TestLoadReplay(TestCase):
             )
             for repLine in rep_file.get_lines():
                 platform = session.add_to_platforms_from_rep(
-                    repLine.get_platform(), "Fisher", "UK", "Public"
+                    repLine.get_platform(), None, "UK", "Public"
                 )
                 sensor = session.add_to_sensors_from_rep("GPS", platform)
                 session.add_to_states_from_rep(
@@ -59,9 +63,12 @@ class TestLoadReplay(TestCase):
         self.assertEqual(len(table_names), 11)
         self.assertIn("Entry", table_names)
         self.assertIn("Platforms", table_names)
-        self.assertIn("State", table_names)
+        self.assertIn("States", table_names)
         self.assertIn("Datafiles", table_names)
         self.assertIn("Nationalities", table_names)
+
+        support = SupportMethods()
+        self.assertEqual(8, support.count_states(data_store))
 
 
 if __name__ == "__main__":
