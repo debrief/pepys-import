@@ -257,7 +257,8 @@ class GeometrySubTypes(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
-    parent = Column(UUID(as_uuid=True), ForeignKey("GeometryTypes.geometry_type_id"))
+    # parent = Column(UUID(as_uuid=True), ForeignKey("GeometryTypes.geometry_type_id"))
+    parent = Column(UUID, nullable=False)
 
 
 class Users(base):
