@@ -117,7 +117,7 @@ class TaggedItems(base):
 
 
 # Reference Tables
-class PlatformType(base):
+class PlatformTypes(base):
     __tablename__ = "PlatformTypes"
     table_type = TableTypes.REFERENCE
 
@@ -229,3 +229,27 @@ class States(base):
     speed = Column(DOUBLE_PRECISION)
     datafile_id = Column(UUID(as_uuid=True), nullable=False)
     privacy_id = Column(UUID(as_uuid=True))
+
+
+class Contacts(base):
+    pass
+
+
+class Activations(base):
+    pass
+
+
+class LogsHoldings(base):
+    pass
+
+
+class Comments(base):
+    pass
+
+
+class Geometries(base):
+    pass
+
+
+class Media(base):
+    pass
