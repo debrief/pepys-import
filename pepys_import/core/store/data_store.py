@@ -204,8 +204,8 @@ class DataStore:
             return platform_types
 
         entry_id = self.add_to_entries(
-            self.db_classes.PlatformType.table_type_id,
-            self.db_classes.PlatformType.__tablename__,
+            self.db_classes.PlatformTypes.table_type_id,
+            self.db_classes.PlatformTypes.__tablename__,
         )
         # enough info to proceed and create entry
         platform_type = self.db_classes.PlatformTypes(
