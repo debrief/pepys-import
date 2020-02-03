@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, FetchedValue
+from sqlalchemy import Column, Integer, String, Boolean, FetchedValue, DATE, TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.dialects.postgresql import TIME
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
@@ -33,7 +33,18 @@ class TableType(base):
 
 # Metadata Tables
 class HostedBy(base):
-    pass
+    __tablename__ = "HostedBy"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 2
+    tableName = "HostedBy"
+    hosted_by_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    subject_id = Column(UUID, nullable=False)
+    host_id = Column(UUID, nullable=False)
+    hosted_from = Column(DATE, nullable=False)
+    host_to = Column(DATE, nullable=False)
+    privacy_id = Column(UUID, nullable=False)
 
 
 class Sensors(base):
@@ -68,11 +79,36 @@ class Platforms(base):
 
 
 class Tasks(base):
-    pass
+    __tablename__ = "Tasks"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 1
+    tableName = "Tasks"
+
+    task_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    parent_id = Column(UUID, nullable=False)
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    environment = Column(String(150))
+    location = Column(String(150))
+    privacy_id = Column(UUID, nullable=False)
 
 
 class Participants(base):
-    pass
+    __tablename__ = "Participants"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 1
+    tableName = "Participants"
+
+    participant_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    task_id = Column(UUID, nullable=False)
+    start = Column(TIMESTAMP)
+    end = Column(TIMESTAMP)
+    force = Column(String(150))
+    privacy_id = Column(UUID, nullable=False)
 
 
 class Datafiles(base):
@@ -93,27 +129,91 @@ class Datafiles(base):
 
 
 class Synonyms(base):
-    pass
+    __tablename__ = "Synonyms"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 4
+    tableName = "Synonyms"
+
+    synonym_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    table = Column(String(150), nullable=False)
+    # TODO: not sure how to implement a serial
+    id = Column(UUID)
+    synonym = Column(String(150), nullable=False)
 
 
 class Changes(base):
-    pass
+    __tablename__ = "Changes"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 4
+    tableName = "Changes"
+
+    change_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    user = Column(String(150), nullable=False)
+    modified = Column(DATE, nullable=False)
+    reason = Column(String(500), nullable=False)
 
 
 class Log(base):
-    pass
+    __tablename__ = "Log"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 4
+    tableName = "Log"
+
+    log_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    table = Column(String(150), nullable=False)
+    # TODO: not sure how to implement it
+    id = Column(UUID)
+    field = Column(String(150), nullable=False)
+    new_value = Column(String(150), nullable=False)
+    change_id = Column(UUID, nullable=False)
 
 
 class Extractions(base):
-    pass
+    __tablename__ = "Extractions"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 4
+    tableName = "Extractions"
+
+    extraction_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    table = Column(String(150), nullable=False)
+    field = Column(String(150), nullable=False)
+    chars = Column(String(150), nullable=False)
 
 
 class Tags(base):
-    pass
+    __tablename__ = "Tags"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 4
+    tableName = "Tags"
+
+    tag_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    name = Column(String(150), nullable=False)
 
 
 class TaggedItems(base):
-    pass
+    __tablename__ = "TaggedItems"
+    table_type = TableTypes.METADATA
+
+    # These only needed for tables referenced by Entry table
+    table_type_id = 4
+    tableName = "TaggedItems"
+
+    tag_items_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    tag_id = Column(UUID, nullable=False)
+    item_id = Column(UUID, nullable=False)
+    tagged_by_id = Column(UUID, nullable=False)
+    private = Column(Boolean, nullable=False)
+    tagged_on = Column(DATE, nullable=False)
 
 
 # Reference Tables
