@@ -43,7 +43,9 @@ class HostedBy(base):
     host_id = Column(UUID, nullable=False)
     hosted_from = Column(DATE, nullable=False)
     host_to = Column(DATE, nullable=False)
-    privacy_id = Column(UUID, nullable=False)
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
 
 
 class Sensors(base):
@@ -103,7 +105,9 @@ class Tasks(base):
     end = Column(TIMESTAMP, nullable=False)
     environment = Column(String(150))
     location = Column(String(150))
-    privacy_id = Column(UUID, nullable=False)
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
 
 
 class Participants(base):
@@ -119,7 +123,9 @@ class Participants(base):
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     force = Column(String(150))
-    privacy_id = Column(UUID, nullable=False)
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
 
 
 class Datafiles(base):
@@ -172,8 +178,8 @@ class Changes(base):
     reason = Column(String(500), nullable=False)
 
 
-class Log(base):
-    __tablename__ = "Log"
+class Logs(base):
+    __tablename__ = "Logs"
     table_type = TableTypes.METADATA
 
     # These only needed for tables referenced by Entry table
@@ -223,10 +229,13 @@ class TaggedItems(base):
     table_type_id = 4
     tableName = "TaggedItems"
 
-    tag_items_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
-    tag_id = Column(UUID, nullable=False)
-    item_id = Column(UUID, nullable=False)
-    tagged_by_id = Column(UUID, nullable=False)
+    tagged_item_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    tag_id = Column(UUID(as_uuid=True), ForeignKey("Tags.tag_id"), nullable=False)
+    # TODO: what is fk measurements?
+    item_id = Column(UUID(as_uuid=True), nullable=False)
+    tagged_by_id = Column(
+        UUID(as_uuid=True), ForeignKey("Users.user_id"), nullable=False
+    )
     private = Column(Boolean, nullable=False)
     tagged_on = Column(DATE, nullable=False)
 
@@ -258,7 +267,7 @@ class GeometryTypes(base):
     __tablename__ = "GeometryTypes"
     table_type = TableTypes.REFERENCE
 
-    geometry_type_id = Column(
+    geo_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
@@ -268,7 +277,7 @@ class GeometrySubTypes(base):
     __tablename__ = "GeometrySubTypes"
     table_type = TableTypes.REFERENCE
 
-    geometry_sub_type_id = Column(
+    geo_sub_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
@@ -300,7 +309,7 @@ class ClassificationTypes(base):
     __tablename__ = "ClassificationTypes"
     table_type = TableTypes.REFERENCE
 
-    classification_type_id = Column(
+    class_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     class_type = Column(String(150), nullable=False)
@@ -313,7 +322,7 @@ class ContactTypes(base):
     contact_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
-    contact_type_name = Column(String(150), nullable=False)
+    contact_type = Column(String(150), nullable=False)
 
 
 class SensorTypes(base):
@@ -401,15 +410,16 @@ class States(base):
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
     )
-    # location = Column(Geometry(geometry_type='POINT', srid=4326))
-    location = Column(String(150), nullable=False)
+    location = Column(Geometry(geometry_type="POINT", srid=4326))
     heading = Column(DOUBLE_PRECISION)
     course = Column(DOUBLE_PRECISION)
     speed = Column(DOUBLE_PRECISION)
-    datafile_id = Column(
+    source_id = Column(
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(UUID(as_uuid=True))
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
 
 
 class Contacts(base):
@@ -421,7 +431,9 @@ class Contacts(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
-    sensor_id = Column(UUID(as_uuid=True), nullable=False)
+    sensor_id = Column(
+        UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
+    )
     time = Column(TIMESTAMP, nullable=False)
     bearing = Column(DOUBLE_PRECISION)
     rel_bearing = Column(DOUBLE_PRECISION)
@@ -435,9 +447,15 @@ class Contacts(base):
     contact_type = Column(String(150))
     mla = Column(DOUBLE_PRECISION)
     sla = Column(DOUBLE_PRECISION)
-    subject_id = Column(UUID(as_uuid=True))
-    source_id = Column(UUID(as_uuid=True), nullable=False)
-    privacy_id = Column(UUID(as_uuid=True))
+    subject_id = Column(
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
+    )
+    source_id = Column(
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
+    )
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
 
 
 class Activations(base):
@@ -449,15 +467,21 @@ class Activations(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
-    sensor_id = Column(UUID(as_uuid=True), nullable=False)
+    sensor_id = Column(
+        UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
+    )
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     min_range = Column(DOUBLE_PRECISION)
     max_range = Column(DOUBLE_PRECISION)
     left_arc = Column(DOUBLE_PRECISION)
     right_arc = Column(DOUBLE_PRECISION)
-    source_id = Column(UUID(as_uuid=True), nullable=False)
-    privacy_id = Column(UUID(as_uuid=True))
+    source_id = Column(
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
+    )
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
 
 
 class LogsHoldings(base):
@@ -470,11 +494,19 @@ class LogsHoldings(base):
     )
     time = Column(TIMESTAMP, nullable=False)
     quantity = Column(DOUBLE_PRECISION, nullable=False)
-    unit_type_id = Column(UUID(as_uuid=True), nullable=False)
-    platform_id = Column(UUID(as_uuid=True), nullable=False)
+    unit_type_id = Column(
+        UUID(as_uuid=True), ForeignKey("UnitTypes.unit_type_id"), nullable=False
+    )
+    platform_id = Column(
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
+    )
     comment = Column(String(150), nullable=False)
-    source_id = Column(UUID(as_uuid=True), nullable=False)
-    privacy_id = Column(UUID(as_uuid=True))
+    source_id = Column(
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
+    )
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
 
 
 class Comments(base):
@@ -485,13 +517,18 @@ class Comments(base):
     comment_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
-    # TODO: There are 2 source fields
-    source_id = Column(UUID(as_uuid=True))
+    platform_id = Column(
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
+    )
     time = Column(TIMESTAMP, nullable=False)
     comment_type_id = Column(UUID(as_uuid=True), nullable=False)
     content = Column(String(150), nullable=False)
-    source_id = Column(UUID(as_uuid=True), nullable=False)
-    privacy_id = Column(UUID(as_uuid=True))
+    source_id = Column(
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
+    )
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
 
 
 class Geometries(base):
@@ -504,15 +541,25 @@ class Geometries(base):
     )
     geometry = Column(Geometry, nullable=False)
     name = Column(String(150), nullable=False)
-    geo_type_id = Column(UUID(as_uuid=True))
-    geo_sub_type_id = Column(UUID(as_uuid=True))
+    geo_type_id = Column(
+        UUID(as_uuid=True), ForeignKey("GeometryTypes.geometry_type_id"), nullable=False
+    )
+    geo_sub_type_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("GeometrySubTypes.geometry_sub_type_id"),
+        nullable=False,
+    )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     task_id = Column(UUID(as_uuid=True))
     subject_platform_id = Column(UUID(as_uuid=True))
     sensor_platform_id = Column(UUID(as_uuid=True))
-    source_id = Column(UUID(as_uuid=True), nullable=False)
-    privacy_id = Column(UUID(as_uuid=True))
+    source_id = Column(
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
+    )
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
 
 
 class Media(base):
@@ -523,14 +570,22 @@ class Media(base):
     media_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
-    # TODO: There are 2 source fields
-    source_id = Column(UUID(as_uuid=True))
-    subject_id = Column(UUID(as_uuid=True))
-    sensor_id = Column(UUID(as_uuid=True))
+    platform_id = Column(
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
+    )
+    subject_id = Column(
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
+    )
+    sensor_id = Column(
+        UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
+    )
     location = Column(Geometry(geometry_type="POINT", srid=4326), nullable=True)
     time = Column(TIMESTAMP)
     media_type_id = Column(UUID(as_uuid=True), nullable=False)
-    # TODO: it says type URL, what is it?
     url = Column(String(150), nullable=False)
-    source_id = Column(UUID(as_uuid=True), nullable=False)
-    privacy_id = Column(UUID(as_uuid=True))
+    source_id = Column(
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
+    )
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
+    )
