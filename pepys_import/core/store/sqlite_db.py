@@ -56,7 +56,6 @@ class Sensors(base):
 
     sensor_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
-    sensor_type_id = Column(UUID, nullable=False)
     host_id = Column(UUID, nullable=False)
     sensor_type_id = Column(Integer, nullable=False)
     platform_id = Column(Integer, nullable=False)
@@ -361,13 +360,12 @@ class Contacts(base):
 
     contact_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
-    sensor_id = Column(UUID(), nullable=False)
+    sensor_id = Column(Integer, nullable=False)
     time = Column(TIMESTAMP, nullable=False)
     bearing = Column(REAL)
     rel_bearing = Column(REAL)
     freq = Column(REAL)
-    # TODO: it should be Point
-    # location = Column(Geometry(geometry_type='POINT', srid=4326))
+    location = Column(Geometry(geometry_type="POINT", management=True))
     major = Column(REAL)
     minor = Column(REAL)
     orientation = Column(REAL)
@@ -376,9 +374,9 @@ class Contacts(base):
     contact_type = Column(String(150))
     mla = Column(REAL)
     sla = Column(REAL)
-    subject_id = Column(UUID())
-    source_id = Column(UUID(), nullable=False)
-    privacy_id = Column(UUID())
+    subject_id = Column(Integer)
+    source_id = Column(Integer, nullable=False)
+    privacy_id = Column(Integer)
 
 
 class Activations(base):
@@ -388,15 +386,15 @@ class Activations(base):
 
     activation_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
-    sensor_id = Column(UUID(), nullable=False)
+    sensor_id = Column(Integer, nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     min_range = Column(REAL)
     max_range = Column(REAL)
     left_arc = Column(REAL)
     right_arc = Column(REAL)
-    source_id = Column(UUID(), nullable=False)
-    privacy_id = Column(UUID())
+    source_id = Column(Integer, nullable=False)
+    privacy_id = Column(Integer)
 
 
 class LogsHoldings(base):
@@ -407,11 +405,11 @@ class LogsHoldings(base):
     logs_holding_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     time = Column(TIMESTAMP, nullable=False)
     quantity = Column(REAL, nullable=False)
-    unit_type_id = Column(UUID(), nullable=False)
-    platform_id = Column(UUID(), nullable=False)
+    unit_type_id = Column(Integer, nullable=False)
+    platform_id = Column(Integer, nullable=False)
     comment = Column(String(150), nullable=False)
-    source_id = Column(UUID(), nullable=False)
-    privacy_id = Column(UUID())
+    source_id = Column(Integer, nullable=False)
+    privacy_id = Column(Integer)
 
 
 class Comments(base):
@@ -421,12 +419,12 @@ class Comments(base):
 
     comment_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     # TODO: There are 2 source fields
-    source_id = Column(UUID())
+    source_id = Column(Integer)
     time = Column(TIMESTAMP, nullable=False)
-    comment_type_id = Column(UUID(), nullable=False)
+    comment_type_id = Column(Integer, nullable=False)
     content = Column(String(150), nullable=False)
-    source_id = Column(UUID(), nullable=False)
-    privacy_id = Column(UUID())
+    source_id = Column(Integer, nullable=False)
+    privacy_id = Column(Integer)
 
 
 class Geometries(base):
@@ -438,15 +436,15 @@ class Geometries(base):
     # TODO: Type Geometry?
     # geometry = Column(Geometry(geometry_type='POINT', srid=4326), nullable=True)
     name = Column(String(150), nullable=False)
-    geo_type_id = Column(UUID())
-    geo_sub_type_id = Column(UUID())
+    geo_type_id = Column(Integer)
+    geo_sub_type_id = Column(Integer)
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    task_id = Column(UUID())
-    subject_platform_id = Column(UUID())
-    sensor_platform_id = Column(UUID())
-    source_id = Column(UUID(), nullable=False)
-    privacy_id = Column(UUID())
+    task_id = Column(Integer)
+    subject_platform_id = Column(Integer)
+    sensor_platform_id = Column(Integer)
+    source_id = Column(Integer, nullable=False)
+    privacy_id = Column(Integer)
 
 
 class Media(base):
@@ -456,14 +454,13 @@ class Media(base):
 
     media_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     # TODO: There are 2 source fields
-    source_id = Column(UUID())
-    subject_id = Column(UUID())
-    sensor_id = Column(UUID())
-    # TODO: it should be Point
-    # location = Column(Geometry(geometry_type='POINT', srid=4326), nullable=True)
+    source_id = Column(Integer)
+    subject_id = Column(Integer)
+    sensor_id = Column(Integer)
+    location = Column(Geometry(geometry_type="POINT", management=True))
     time = Column(TIMESTAMP)
-    media_type_id = Column(UUID(), nullable=False)
+    media_type_id = Column(Integer, nullable=False)
     # TODO: it says type URL, what is it?
     url = Column(String(150), nullable=False)
-    source_id = Column(UUID(), nullable=False)
-    privacy_id = Column(UUID())
+    source_id = Column(Integer, nullable=False)
+    privacy_id = Column(Integer)
