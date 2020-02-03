@@ -37,7 +37,7 @@ class TableType(base):
 class HostedBy(base):
     __tablename__ = "HostedBy"
     table_type = TableTypes.METADATA
-    table_type_id = 2
+    table_type_id = 1
     table_name = "HostedBy"
 
     hosted_by_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -63,7 +63,7 @@ class Sensors(base):
 class Platforms(base):
     __tablename__ = "Platforms"
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 3
     table_name = "Platforms"
 
     platform_id = Column(Integer, primary_key=True, default=uuid.uuid4)
@@ -76,7 +76,7 @@ class Platforms(base):
 class Tasks(base):
     __tablename__ = "Tasks"
     table_type = TableTypes.METADATA
-    table_type_id = 1
+    table_type_id = 4
     table_name = "Tasks"
 
     task_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -92,7 +92,7 @@ class Tasks(base):
 class Participants(base):
     __tablename__ = "Participants"
     table_type = TableTypes.METADATA
-    table_type_id = 1
+    table_type_id = 5
     table_name = "Participants"
 
     participant_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -121,7 +121,7 @@ class Datafiles(base):
 class Synonyms(base):
     __tablename__ = "Synonyms"
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 7
     table_name = "Synonyms"
 
     synonym_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -132,7 +132,7 @@ class Synonyms(base):
 class Changes(base):
     __tablename__ = "Changes"
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 8
     table_name = "Changes"
 
     change_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -144,7 +144,7 @@ class Changes(base):
 class Logs(base):
     __tablename__ = "Logs"
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 9
     table_name = "Log"
 
     log_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -158,7 +158,7 @@ class Logs(base):
 class Extractions(base):
     __tablename__ = "Extractions"
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 10
     table_name = "Extractions"
 
     extraction_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -170,7 +170,7 @@ class Extractions(base):
 class Tags(base):
     __tablename__ = "Tags"
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 11
     table_name = "Tags"
 
     tag_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -180,7 +180,7 @@ class Tags(base):
 class TaggedItems(base):
     __tablename__ = "TaggedItems"
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 12
     table_name = "TaggedItems"
 
     tagged_item_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -196,6 +196,7 @@ class PlatformTypes(base):
     __tablename__ = "PlatformTypes"
     table_type = TableTypes.REFERENCE
     table_name = "PlatformTypes"
+    table_type_id = 13
 
     platform_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150))
@@ -214,6 +215,7 @@ class GeometryTypes(base):
     __tablename__ = "GeometryTypes"
     table_type = TableTypes.REFERENCE
     table_name = "GeometryTypes"
+    table_type_id = 14
 
     geo_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -223,6 +225,7 @@ class GeometrySubTypes(base):
     __tablename__ = "GeometrySubTypes"
     table_type = TableTypes.REFERENCE
     table_name = "GeometrySubTypes"
+    table_type_id = 15
 
     geo_sub_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -233,6 +236,7 @@ class Users(base):
     __tablename__ = "Users"
     table_type = TableTypes.REFERENCE
     table_name = "Users"
+    table_type_id = 16
 
     user_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -242,6 +246,7 @@ class UnitTypes(base):
     __tablename__ = "UnitTypes"
     table_type = TableTypes.REFERENCE
     table_name = "UnitTypes"
+    table_type_id = 17
 
     unit_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -251,6 +256,7 @@ class ClassificationTypes(base):
     __tablename__ = "ClassificationTypes"
     table_type = TableTypes.REFERENCE
     table_name = "ClassificationTypes"
+    table_type_id = 18
 
     class_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     class_type = Column(String(150), nullable=False)
@@ -260,6 +266,7 @@ class ContactTypes(base):
     __tablename__ = "ContactTypes"
     table_type = TableTypes.REFERENCE
     table_name = "ContactTypes"
+    table_type_id = 19
 
     contact_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     contact_type = Column(String(150), nullable=False)
@@ -269,6 +276,7 @@ class SensorTypes(base):
     __tablename__ = "SensorTypes"
     table_type = TableTypes.REFERENCE
     table_name = "SensorTypes"
+    table_type_id = 20
 
     sensor_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150))
@@ -278,6 +286,7 @@ class Privacies(base):
     __tablename__ = "Privacies"
     table_type = TableTypes.REFERENCE
     table_name = "Privacies"
+    table_type_id = 21
 
     privacy_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -287,6 +296,7 @@ class DatafileTypes(base):
     __tablename__ = "DatafileTypes"
     table_type = TableTypes.REFERENCE
     table_name = "DatafileTypes"
+    table_type_id = 22
 
     datafile_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -296,6 +306,7 @@ class MediaTypes(base):
     __tablename__ = "MediaTypes"
     table_type = TableTypes.REFERENCE
     table_name = "MediaTypes"
+    table_type_id = 23
 
     media_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -305,6 +316,7 @@ class CommentTypes(base):
     __tablename__ = "CommentTypes"
     table_type = TableTypes.REFERENCE
     table_name = "CommentTypes"
+    table_type_id = 24
 
     comment_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -314,6 +326,7 @@ class CommodityTypes(base):
     __tablename__ = "CommodityTypes"
     table_type = TableTypes.REFERENCE
     table_name = "CommodityTypes"
+    table_type_id = 25
 
     commodity_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -323,6 +336,7 @@ class ConfidenceLevels(base):
     __tablename__ = "ConfidenceLevels"
     table_type = TableTypes.REFERENCE
     table_name = "ConfidenceLevels"
+    table_type_id = 26
 
     confidence_level_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     level = Column(String(150), nullable=False)
@@ -332,7 +346,7 @@ class ConfidenceLevels(base):
 class States(base):
     __tablename__ = "States"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 7
+    table_type_id = 27
     table_name = "States"
 
     state_id = Column(Integer, primary_key=True)
@@ -349,7 +363,7 @@ class States(base):
 class Contacts(base):
     __tablename__ = "Contacts"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 28
     table_name = "Contacts"
 
     contact_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -376,7 +390,7 @@ class Contacts(base):
 class Activations(base):
     __tablename__ = "Activations"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 29
     table_name = "Activations"
 
     activation_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -395,7 +409,7 @@ class Activations(base):
 class LogsHoldings(base):
     __tablename__ = "LogsHoldings"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 30
     table_name = "LogsHoldings"
 
     logs_holding_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -412,7 +426,7 @@ class LogsHoldings(base):
 class Comments(base):
     __tablename__ = "Comments"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 31
     table_name = "Comments"
 
     comment_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -427,7 +441,7 @@ class Comments(base):
 class Geometries(base):
     __tablename__ = "Geometries"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 32
     table_name = "Geometries"
 
     geometry_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
@@ -448,7 +462,7 @@ class Geometries(base):
 class Media(base):
     __tablename__ = "Media"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 33
     table_name = "Media"
 
     media_id = Column(UUID(), primary_key=True, default=uuid.uuid4)

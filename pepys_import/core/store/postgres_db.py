@@ -34,7 +34,7 @@ class TableType(base):
 class HostedBy(base):
     __tablename__ = "HostedBy"
     table_type = TableTypes.METADATA
-    table_type_id = 2
+    table_type_id = 1
     table_name = "HostedBy"
 
     hosted_by_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
@@ -54,7 +54,7 @@ class HostedBy(base):
 class Sensors(base):
     __tablename__ = "Sensors"
     table_type = TableTypes.METADATA
-    table_type_id = 2  # Only needed for tables referenced by Entry table
+    table_type_id = 2
 
     sensor_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -71,7 +71,7 @@ class Sensors(base):
 class Platforms(base):
     __tablename__ = "Platforms"
     table_type = TableTypes.METADATA
-    table_type_id = 4  # Only needed for tables referenced by Entry table
+    table_type_id = 3
 
     platform_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -91,7 +91,7 @@ class Platforms(base):
 class Tasks(base):
     __tablename__ = "Tasks"
     table_type = TableTypes.METADATA
-    table_type_id = 1
+    table_type_id = 4
     table_name = "Tasks"
 
     task_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
@@ -108,7 +108,7 @@ class Tasks(base):
 class Participants(base):
     __tablename__ = "Participants"
     table_type = TableTypes.METADATA
-    table_type_id = 1
+    table_type_id = 5
     table_name = "Participants"
 
     participant_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
@@ -146,7 +146,7 @@ class Datafiles(base):
 class Synonyms(base):
     __tablename__ = "Synonyms"
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 7
     table_name = "Synonyms"
 
     synonym_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
@@ -157,7 +157,7 @@ class Synonyms(base):
 class Changes(base):
     __tablename__ = "Changes"
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 8
     table_name = "Changes"
 
     change_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
@@ -169,7 +169,7 @@ class Changes(base):
 class Logs(base):
     __tablename__ = "Logs"
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 9
     table_name = "Log"
 
     log_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
@@ -183,7 +183,7 @@ class Logs(base):
 class Extractions(base):
     __tablename__ = "Extractions"
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 10
     table_name = "Extractions"
 
     extraction_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
@@ -195,7 +195,7 @@ class Extractions(base):
 class Tags(base):
     __tablename__ = "Tags"
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 11
     table_name = "Tags"
 
     tag_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
@@ -205,7 +205,7 @@ class Tags(base):
 class TaggedItems(base):
     __tablename__ = "TaggedItems"
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 12
     table_name = "TaggedItems"
 
     tagged_item_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
@@ -223,6 +223,7 @@ class TaggedItems(base):
 class PlatformTypes(base):
     __tablename__ = "PlatformTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 13
 
     platform_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -243,6 +244,7 @@ class Nationalities(base):
 class GeometryTypes(base):
     __tablename__ = "GeometryTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 14
 
     geo_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -253,6 +255,7 @@ class GeometryTypes(base):
 class GeometrySubTypes(base):
     __tablename__ = "GeometrySubTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 15
 
     geo_sub_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -265,6 +268,7 @@ class GeometrySubTypes(base):
 class Users(base):
     __tablename__ = "Users"
     table_type = TableTypes.REFERENCE
+    table_type_id = 16
 
     user_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -275,6 +279,7 @@ class Users(base):
 class UnitTypes(base):
     __tablename__ = "UnitTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 17
 
     unit_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -285,6 +290,7 @@ class UnitTypes(base):
 class ClassificationTypes(base):
     __tablename__ = "ClassificationTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 18
 
     class_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -295,6 +301,7 @@ class ClassificationTypes(base):
 class ContactTypes(base):
     __tablename__ = "ContactTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 19
 
     contact_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -305,6 +312,7 @@ class ContactTypes(base):
 class SensorTypes(base):
     __tablename__ = "SensorTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 20
 
     sensor_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -315,6 +323,7 @@ class SensorTypes(base):
 class Privacies(base):
     __tablename__ = "Privacies"
     table_type = TableTypes.REFERENCE
+    table_type_id = 21
 
     privacy_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -325,6 +334,7 @@ class Privacies(base):
 class DatafileTypes(base):
     __tablename__ = "DatafileTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 22
 
     datafile_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -335,6 +345,7 @@ class DatafileTypes(base):
 class MediaTypes(base):
     __tablename__ = "MediaTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 23
 
     media_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -345,6 +356,7 @@ class MediaTypes(base):
 class CommentTypes(base):
     __tablename__ = "CommentTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 24
 
     comment_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -355,6 +367,7 @@ class CommentTypes(base):
 class CommodityTypes(base):
     __tablename__ = "CommodityTypes"
     table_type = TableTypes.REFERENCE
+    table_type_id = 25
 
     commodity_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -365,6 +378,7 @@ class CommodityTypes(base):
 class ConfidenceLevels(base):
     __tablename__ = "ConfidenceLevels"
     table_type = TableTypes.REFERENCE
+    table_type_id = 26
 
     confidence_level_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -376,7 +390,7 @@ class ConfidenceLevels(base):
 class States(base):
     __tablename__ = "States"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 7  # Only needed for tables referenced by Entry table
+    table_type_id = 27  # Only needed for tables referenced by Entry table
 
     state_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -398,7 +412,7 @@ class States(base):
 class Contacts(base):
     __tablename__ = "Contacts"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 28
 
     contact_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -432,7 +446,7 @@ class Contacts(base):
 class Activations(base):
     __tablename__ = "Activations"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 29
 
     activation_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -456,7 +470,7 @@ class Activations(base):
 class LogsHoldings(base):
     __tablename__ = "LogsHoldings"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 30
 
     logs_holding_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -479,7 +493,7 @@ class LogsHoldings(base):
 class Comments(base):
     __tablename__ = "Comments"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 31
 
     comment_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -499,7 +513,7 @@ class Comments(base):
 class Geometries(base):
     __tablename__ = "Geometries"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 32
 
     geometry_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
@@ -530,7 +544,7 @@ class Geometries(base):
 class Media(base):
     __tablename__ = "Media"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_type_id = 33
 
     media_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
