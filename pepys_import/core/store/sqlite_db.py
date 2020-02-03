@@ -37,10 +37,9 @@ class TableType(base):
 class HostedBy(base):
     __tablename__ = "HostedBy"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 2
-    tableName = "HostedBy"
+    table_name = "HostedBy"
+
     hosted_by_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     subject_id = Column(UUID, nullable=False)
     host_id = Column(UUID, nullable=False)
@@ -53,22 +52,22 @@ class Sensors(base):
     __tablename__ = "Sensors"
     table_type = TableTypes.METADATA
     table_type_id = 2
+    table_name = "Sensors"
 
-    sensor_id = Column(Integer, primary_key=True)
+    sensor_id = Column(Integer, primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
     host_id = Column(UUID, nullable=False)
     sensor_type_id = Column(Integer, nullable=False)
-    platform_id = Column(Integer, nullable=False)
 
 
 class Platforms(base):
     __tablename__ = "Platforms"
     table_type = TableTypes.METADATA
     table_type_id = 4
+    table_name = "Platforms"
 
-    platform_id = Column(Integer, primary_key=True)
-    # TODO: does this, or other string limits need checking or validating on file import?
-    name = Column(String(150))
+    platform_id = Column(Integer, primary_key=True, default=uuid.uuid4)
+    name = Column(String(150), nullable=False)
     nationality_id = Column(UUID(), nullable=False)
     platform_type_id = Column(UUID(), nullable=False)
     privacy_id = Column(UUID, nullable=False)
@@ -77,12 +76,11 @@ class Platforms(base):
 class Tasks(base):
     __tablename__ = "Tasks"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 1
-    tableName = "Tasks"
+    table_name = "Tasks"
 
     task_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    name = Column(String(150), nullable=False)
     parent_id = Column(UUID, nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
@@ -94,12 +92,11 @@ class Tasks(base):
 class Participants(base):
     __tablename__ = "Participants"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 1
-    tableName = "Participants"
+    table_name = "Participants"
 
     participant_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    platform_id = Column(UUID, nullable=False)
     task_id = Column(UUID, nullable=False)
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
@@ -111,39 +108,32 @@ class Datafiles(base):
     __tablename__ = "Datafiles"
     table_type = TableTypes.METADATA
     table_type_id = 6
+    table_name = "Datafiles"
 
     datafile_id = Column(Integer, primary_key=True)
-    # TODO: does this, or other string limits need checking or validating on file import?
     simulated = Column(Boolean, nullable=False)
     privacy_id = Column(UUID(), nullable=False)
     datafile_type_id = Column(UUID(), nullable=False)
     reference = Column(String(150))
     url = Column(String(150))
-    # TODO: add relationships and ForeignKey entries to auto-create Entry ids
 
 
 class Synonyms(base):
     __tablename__ = "Synonyms"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 4
-    tableName = "Synonyms"
+    table_name = "Synonyms"
 
     synonym_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     table = Column(String(150), nullable=False)
-    # TODO: not sure how to implement a serial
-    id = Column(UUID)
     synonym = Column(String(150), nullable=False)
 
 
 class Changes(base):
     __tablename__ = "Changes"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 4
-    tableName = "Changes"
+    table_name = "Changes"
 
     change_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     user = Column(String(150), nullable=False)
@@ -154,15 +144,12 @@ class Changes(base):
 class Logs(base):
     __tablename__ = "Logs"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 4
-    tableName = "Log"
+    table_name = "Log"
 
     log_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     table = Column(String(150), nullable=False)
-    # TODO: not sure how to implement it
-    id = Column(UUID)
+    id = Column(UUID, nullable=False)
     field = Column(String(150), nullable=False)
     new_value = Column(String(150), nullable=False)
     change_id = Column(UUID, nullable=False)
@@ -171,10 +158,8 @@ class Logs(base):
 class Extractions(base):
     __tablename__ = "Extractions"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 4
-    tableName = "Extractions"
+    table_name = "Extractions"
 
     extraction_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     table = Column(String(150), nullable=False)
@@ -185,10 +170,8 @@ class Extractions(base):
 class Tags(base):
     __tablename__ = "Tags"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 4
-    tableName = "Tags"
+    table_name = "Tags"
 
     tag_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -197,12 +180,10 @@ class Tags(base):
 class TaggedItems(base):
     __tablename__ = "TaggedItems"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 4
-    tableName = "TaggedItems"
+    table_name = "TaggedItems"
 
-    tag_items_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    tagged_item_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     tag_id = Column(UUID, nullable=False)
     item_id = Column(UUID, nullable=False)
     tagged_by_id = Column(UUID, nullable=False)
@@ -214,16 +195,16 @@ class TaggedItems(base):
 class PlatformTypes(base):
     __tablename__ = "PlatformTypes"
     table_type = TableTypes.REFERENCE
+    table_name = "PlatformTypes"
 
     platform_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
-    # TODO: does this, or other string limits need checking or validating on file import?
     name = Column(String(150))
-    # TODO: add relationships and ForeignKey entries to auto-create Entry ids
 
 
 class Nationalities(base):
     __tablename__ = "Nationalities"
     table_type = TableTypes.REFERENCE
+    table_name = "Nationalities"
 
     nationality_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -232,16 +213,18 @@ class Nationalities(base):
 class GeometryTypes(base):
     __tablename__ = "GeometryTypes"
     table_type = TableTypes.REFERENCE
+    table_name = "GeometryTypes"
 
-    geometry_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    geo_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
 
 
 class GeometrySubTypes(base):
     __tablename__ = "GeometrySubTypes"
     table_type = TableTypes.REFERENCE
+    table_name = "GeometrySubTypes"
 
-    geometry_sub_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    geo_sub_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
     parent = Column(UUID, nullable=False)
 
@@ -249,6 +232,7 @@ class GeometrySubTypes(base):
 class Users(base):
     __tablename__ = "Users"
     table_type = TableTypes.REFERENCE
+    table_name = "Users"
 
     user_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -257,6 +241,7 @@ class Users(base):
 class UnitTypes(base):
     __tablename__ = "UnitTypes"
     table_type = TableTypes.REFERENCE
+    table_name = "UnitTypes"
 
     unit_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -265,31 +250,34 @@ class UnitTypes(base):
 class ClassificationTypes(base):
     __tablename__ = "ClassificationTypes"
     table_type = TableTypes.REFERENCE
+    table_name = "ClassificationTypes"
 
-    classification_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    class_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     class_type = Column(String(150), nullable=False)
 
 
 class ContactTypes(base):
     __tablename__ = "ContactTypes"
     table_type = TableTypes.REFERENCE
+    table_name = "ContactTypes"
 
     contact_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
-    contact_type_name = Column(String(150), nullable=False)
+    contact_type = Column(String(150), nullable=False)
 
 
 class SensorTypes(base):
     __tablename__ = "SensorTypes"
     table_type = TableTypes.REFERENCE
+    table_name = "SensorTypes"
 
     sensor_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
-    # TODO: does this, or other string limits need checking or validating on file import?
     name = Column(String(150))
 
 
 class Privacies(base):
     __tablename__ = "Privacies"
     table_type = TableTypes.REFERENCE
+    table_name = "Privacies"
 
     privacy_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -298,15 +286,16 @@ class Privacies(base):
 class DatafileTypes(base):
     __tablename__ = "DatafileTypes"
     table_type = TableTypes.REFERENCE
+    table_name = "DatafileTypes"
 
     datafile_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
-    # TODO: does this, or other string limits need checking or validating on file import?
     name = Column(String(150), nullable=False)
 
 
 class MediaTypes(base):
     __tablename__ = "MediaTypes"
     table_type = TableTypes.REFERENCE
+    table_name = "MediaTypes"
 
     media_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -315,6 +304,7 @@ class MediaTypes(base):
 class CommentTypes(base):
     __tablename__ = "CommentTypes"
     table_type = TableTypes.REFERENCE
+    table_name = "CommentTypes"
 
     comment_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -323,6 +313,7 @@ class CommentTypes(base):
 class CommodityTypes(base):
     __tablename__ = "CommodityTypes"
     table_type = TableTypes.REFERENCE
+    table_name = "CommodityTypes"
 
     commodity_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -331,6 +322,7 @@ class CommodityTypes(base):
 class ConfidenceLevels(base):
     __tablename__ = "ConfidenceLevels"
     table_type = TableTypes.REFERENCE
+    table_name = "ConfidenceLevels"
 
     confidence_level_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     level = Column(String(150), nullable=False)
@@ -341,6 +333,7 @@ class States(base):
     __tablename__ = "States"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 7
+    table_name = "States"
 
     state_id = Column(Integer, primary_key=True)
     time = Column(DATETIME, nullable=False)
@@ -349,7 +342,7 @@ class States(base):
     heading = Column(REAL)
     course = Column(REAL)
     speed = Column(REAL)
-    datafile_id = Column(Integer, nullable=False)
+    source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
 
 
@@ -357,6 +350,7 @@ class Contacts(base):
     __tablename__ = "Contacts"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_name = "Contacts"
 
     contact_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -383,6 +377,7 @@ class Activations(base):
     __tablename__ = "Activations"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_name = "Activations"
 
     activation_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     name = Column(String(150), nullable=False)
@@ -401,9 +396,11 @@ class LogsHoldings(base):
     __tablename__ = "LogsHoldings"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_name = "LogsHoldings"
 
     logs_holding_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     time = Column(TIMESTAMP, nullable=False)
+    commodity_id = Column(Integer, nullable=False)
     quantity = Column(REAL, nullable=False)
     unit_type_id = Column(Integer, nullable=False)
     platform_id = Column(Integer, nullable=False)
@@ -416,9 +413,10 @@ class Comments(base):
     __tablename__ = "Comments"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_name = "Comments"
 
-    platform_id = Column(Integer)
     comment_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    platform_id = Column(Integer)
     time = Column(TIMESTAMP, nullable=False)
     comment_type_id = Column(Integer, nullable=False)
     content = Column(String(150), nullable=False)
@@ -430,13 +428,14 @@ class Geometries(base):
     __tablename__ = "Geometries"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_name = "Geometries"
 
     geometry_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     # TODO: Type Geometry?
     # geometry = Column(Geometry, nullable=False)
     name = Column(String(150), nullable=False)
-    geo_type_id = Column(Integer)
-    geo_sub_type_id = Column(Integer)
+    geo_type_id = Column(Integer, nullable=False)
+    geo_sub_type_id = Column(Integer, nullable=False)
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     task_id = Column(Integer)
@@ -450,6 +449,7 @@ class Media(base):
     __tablename__ = "Media"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 3  # Only needed for tables referenced by Entry table
+    table_name = "Media"
 
     media_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
     platform_id = Column(Integer)
