@@ -34,13 +34,16 @@ class TableType(base):
 class HostedBy(base):
     __tablename__ = "HostedBy"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 2
-    tableName = "HostedBy"
+    table_name = "HostedBy"
+
     hosted_by_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
-    subject_id = Column(UUID, nullable=False)
-    host_id = Column(UUID, nullable=False)
+    subject_id = Column(
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
+    )
+    host_id = Column(
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
+    )
     hosted_from = Column(DATE, nullable=False)
     host_to = Column(DATE, nullable=False)
     privacy_id = Column(
@@ -73,19 +76,13 @@ class Platforms(base):
     platform_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
-    # TODO: does this, or other string limits need checking or validating on file import?
     name = Column(String(150))
-    platform_type_id = Column(
-        UUID(as_uuid=True), ForeignKey("PlatformTypes.platform_type_id"), nullable=False
-    )
-    host_platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("PlatformTypes.platform_type_id")
-    )
     nationality_id = Column(
         UUID(as_uuid=True), ForeignKey("Nationalities.nationality_id"), nullable=False
     )
-    # TODO: add relationships and ForeignKey entries to auto-create Entry ids
-
+    platform_type_id = Column(
+        UUID(as_uuid=True), ForeignKey("PlatformTypes.platform_type_id"), nullable=False
+    )
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
     )
@@ -94,13 +91,11 @@ class Platforms(base):
 class Tasks(base):
     __tablename__ = "Tasks"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 1
-    tableName = "Tasks"
+    table_name = "Tasks"
 
     task_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
-    parent_id = Column(UUID, nullable=False)
+    parent_id = Column(UUID(as_uuid=True), ForeignKey("Tasks.task_id"), nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     environment = Column(String(150))
@@ -113,13 +108,14 @@ class Tasks(base):
 class Participants(base):
     __tablename__ = "Participants"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 1
-    tableName = "Participants"
+    table_name = "Participants"
 
     participant_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
-    task_id = Column(UUID, nullable=False)
+    platform_id = Column(
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
+    )
+    task_id = Column(UUID(as_uuid=True), ForeignKey("Tasks.task_id"), nullable=False)
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     force = Column(String(150))
@@ -136,41 +132,33 @@ class Datafiles(base):
     datafile_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
-    # TODO: does this, or other string limits need checking or validating on file import?
     simulated = Column(Boolean)
-    reference = Column(String(150))
-    url = Column(String(150))
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
     )
     datafile_type_id = Column(
         UUID(as_uuid=True), ForeignKey("DatafileTypes.datafile_type_id"), nullable=False
     )
-    # TODO: add relationships and ForeignKey entries to auto-create Entry ids
+    reference = Column(String(150))
+    url = Column(String(150))
 
 
 class Synonyms(base):
     __tablename__ = "Synonyms"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 4
-    tableName = "Synonyms"
+    table_name = "Synonyms"
 
     synonym_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
     table = Column(String(150), nullable=False)
-    # TODO: not sure how to implement a serial
-    id = Column(UUID)
     synonym = Column(String(150), nullable=False)
 
 
 class Changes(base):
     __tablename__ = "Changes"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 4
-    tableName = "Changes"
+    table_name = "Changes"
 
     change_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
     user = Column(String(150), nullable=False)
@@ -181,15 +169,12 @@ class Changes(base):
 class Logs(base):
     __tablename__ = "Logs"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 4
-    tableName = "Log"
+    table_name = "Log"
 
     log_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
     table = Column(String(150), nullable=False)
-    # TODO: not sure how to implement it
-    id = Column(UUID)
+    id = Column(UUID(as_uuid=True), ForeignKey("Logs.log_id"), nullable=False)
     field = Column(String(150), nullable=False)
     new_value = Column(String(150), nullable=False)
     change_id = Column(UUID, nullable=False)
@@ -198,10 +183,8 @@ class Logs(base):
 class Extractions(base):
     __tablename__ = "Extractions"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 4
-    tableName = "Extractions"
+    table_name = "Extractions"
 
     extraction_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
     table = Column(String(150), nullable=False)
@@ -212,10 +195,8 @@ class Extractions(base):
 class Tags(base):
     __tablename__ = "Tags"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 4
-    tableName = "Tags"
+    table_name = "Tags"
 
     tag_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
     name = Column(String(150), nullable=False)
@@ -224,10 +205,8 @@ class Tags(base):
 class TaggedItems(base):
     __tablename__ = "TaggedItems"
     table_type = TableTypes.METADATA
-
-    # These only needed for tables referenced by Entry table
     table_type_id = 4
-    tableName = "TaggedItems"
+    table_name = "TaggedItems"
 
     tagged_item_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
     tag_id = Column(UUID(as_uuid=True), ForeignKey("Tags.tag_id"), nullable=False)
@@ -248,9 +227,7 @@ class PlatformTypes(base):
     platform_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
-    # TODO: does this, or other string limits need checking or validating on file import?
-    name = Column(String(150))
-    # TODO: add relationships and ForeignKey entries to auto-create Entry ids
+    name = Column(String(150), nullable=False)
 
 
 class Nationalities(base):
@@ -332,8 +309,7 @@ class SensorTypes(base):
     sensor_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
-    # TODO: does this, or other string limits need checking or validating on file import?
-    name = Column(String(150))
+    name = Column(String(150), nullable=False)
 
 
 class Privacies(base):
@@ -353,7 +329,6 @@ class DatafileTypes(base):
     datafile_type_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
-    # TODO: does this, or other string limits need checking or validating on file import?
     name = Column(String(150), nullable=False)
 
 
@@ -417,9 +392,7 @@ class States(base):
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
-    )
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
 
 
 class Contacts(base):
@@ -453,9 +426,7 @@ class Contacts(base):
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
-    )
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
 
 
 class Activations(base):
@@ -479,9 +450,7 @@ class Activations(base):
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
-    )
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
 
 
 class LogsHoldings(base):
@@ -504,9 +473,7 @@ class LogsHoldings(base):
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
-    )
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
 
 
 class Comments(base):
@@ -526,9 +493,7 @@ class Comments(base):
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
-    )
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
 
 
 class Geometries(base):
@@ -542,24 +507,24 @@ class Geometries(base):
     geometry = Column(Geometry, nullable=False)
     name = Column(String(150), nullable=False)
     geo_type_id = Column(
-        UUID(as_uuid=True), ForeignKey("GeometryTypes.geometry_type_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("GeometryTypes.geo_type_id"), nullable=False
     )
     geo_sub_type_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("GeometrySubTypes.geometry_sub_type_id"),
+        ForeignKey("GeometrySubTypes.geo_sub_type_id"),
         nullable=False,
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     task_id = Column(UUID(as_uuid=True))
-    subject_platform_id = Column(UUID(as_uuid=True))
-    sensor_platform_id = Column(UUID(as_uuid=True))
+    subject_platform_id = Column(
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id")
+    )
+    sensor_platform_id = Column(UUID(as_uuid=True), ForeignKey("Platforms.platform_id"))
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
-    )
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
 
 
 class Media(base):
@@ -570,22 +535,14 @@ class Media(base):
     media_id = Column(
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
-    platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
-    )
-    subject_id = Column(
-        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
-    )
-    sensor_id = Column(
-        UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
-    )
-    location = Column(Geometry(geometry_type="POINT", srid=4326), nullable=True)
+    platform_id = Column(UUID(as_uuid=True), ForeignKey("Platforms.platform_id"))
+    subject_id = Column(UUID(as_uuid=True), ForeignKey("Platforms.platform_id"))
+    sensor_id = Column(UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"))
+    location = Column(Geometry(geometry_type="POINT", srid=4326))
     time = Column(TIMESTAMP)
     media_type_id = Column(UUID(as_uuid=True), nullable=False)
     url = Column(String(150), nullable=False)
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
-    )
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
