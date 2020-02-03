@@ -63,8 +63,8 @@ class TestDataStoreInitialisePostgres(TestCase):
         table_names = inspector.get_table_names()
         schema_names = inspector.get_schema_names()
 
-        # 11 tables and 1  table for spatial objects (spatial_ref_sys) must be created.
-        self.assertEqual(len(table_names), 12)
+        # 36 tables and 1  table for spatial objects (spatial_ref_sys) must be created.
+        self.assertEqual(len(table_names), 37)
         self.assertIn("Entry", table_names)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
@@ -95,8 +95,8 @@ class TestDataStoreInitialiseSQLite(TestCase):
         inspector = inspect(data_store_sqlite.engine)
         table_names = inspector.get_table_names()
 
-        # 11 tables + 24 spatial tables must be created. A few of them tested
-        self.assertEqual(len(table_names), 35)
+        # 36 tables + 32 spatial tables must be created. A few of them tested
+        self.assertEqual(len(table_names), 68)
         self.assertIn("Entry", table_names)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
