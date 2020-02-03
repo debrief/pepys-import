@@ -124,7 +124,7 @@ class DataStore:
             self.session.close()
 
     #############################################################
-    # Add functions
+    # Reference Type Maintenance
 
     def add_to_table_types(self, table_type_id, table_name):
         # check in cache for table type
@@ -149,20 +149,6 @@ class DataStore:
         self.table_types[table_type_id] = table_type
         # should return DB type or something else decoupled from DB?
         return table_type
-
-    def add_to_entries(self, table_type_id, tableName):
-        # ensure table type exists to satisfy foreign key constraint
-        self.add_to_table_types(table_type_id, tableName)
-
-        # No cache for entries, just add new one when called
-        entry_obj = self.db_classes.Entry(
-            table_type_id=table_type_id, created_user=self.default_user_id
-        )
-
-        self.session.add(entry_obj)
-        self.session.flush()
-
-        return entry_obj.entry_id
 
     # TODO: add function to do common pattern of action in these functions
     def add_to_platform_types(self, platform_type_name):
@@ -255,6 +241,45 @@ class DataStore:
         # should return DB type or something else decoupled from DB?
         return datafile_type_obj
 
+    def add_to_sensor_types(self, sensor_type_name):
+        # check in cache for sensor type
+        if sensor_type_name in self.sensor_types:
+            return self.sensor_types[sensor_type_name]
+
+        # doesn't exist in cache, try to lookup in DB
+        sensor_types = self.search_sensor_type(sensor_type_name)
+        if sensor_types:
+            # add to cache and return looked up sensor type
+            self.sensor_types[sensor_type_name] = sensor_types
+            return sensor_types
+
+        # enough info to proceed and create entry
+        sensor_type = self.db_classes.SensorType(name=sensor_type_name)
+        self.session.add(sensor_type)
+        self.session.flush()
+
+        # add to cache and return created sensor type
+        self.sensor_types[sensor_type_name] = sensor_type
+        # should return DB type or something else decoupled from DB?
+        return sensor_type
+
+    # End of Reference Type Maintenance
+    #############################################################
+
+    def add_to_entries(self, table_type_id, tableName):
+        # ensure table type exists to satisfy foreign key constraint
+        self.add_to_table_types(table_type_id, tableName)
+
+        # No cache for entries, just add new one when called
+        entry_obj = self.db_classes.Entry(
+            table_type_id=table_type_id, created_user=self.default_user_id
+        )
+
+        self.session.add(entry_obj)
+        self.session.flush()
+
+        return entry_obj.entry_id
+
     def add_to_datafile_from_rep(self, datafile_name, datafile_type):
         # check in cache for datafile
         if datafile_name in self.datafiles:
@@ -343,28 +368,6 @@ class DataStore:
         self.platforms[platform_name] = platform_obj
         # should return DB type or something else decoupled from DB?
         return platform_obj
-
-    def add_to_sensor_types(self, sensor_type_name):
-        # check in cache for sensor type
-        if sensor_type_name in self.sensor_types:
-            return self.sensor_types[sensor_type_name]
-
-        # doesn't exist in cache, try to lookup in DB
-        sensor_types = self.search_sensor_type(sensor_type_name)
-        if sensor_types:
-            # add to cache and return looked up sensor type
-            self.sensor_types[sensor_type_name] = sensor_types
-            return sensor_types
-
-        # enough info to proceed and create entry
-        sensor_type = self.db_classes.SensorType(name=sensor_type_name)
-        self.session.add(sensor_type)
-        self.session.flush()
-
-        # add to cache and return created sensor type
-        self.sensor_types[sensor_type_name] = sensor_type
-        # should return DB type or something else decoupled from DB?
-        return sensor_type
 
     def add_to_sensors_from_rep(self, sensor_name, platform):
         # check in cache for sensor
