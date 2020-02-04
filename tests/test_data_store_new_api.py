@@ -128,13 +128,37 @@ class TestDataStoreStatus(TestCase):
         pass
 
     def test_get_status_of_measurement(self):
-        table_summary = self.store.get_status(report_measurement=True)
+        """Test whether summary contents correct for measurement tables"""
+
+        # get_status returns dictionary for measurement, metadata, and reference tables
+        # respectively. Therefore, the first return is import in this case.
+        table_summary, _, _ = self.store.get_status(report_measurement=True)
+        self.assertNotEqual(table_summary, {})
+        self.assertIn("States", table_summary.keys())
+        self.assertIn("Contacts", table_summary.keys())
+        self.assertIn("Activations", table_summary.keys())
 
     def test_get_status_of_metadata(self):
-        table_summary = self.store.get_status(report_metadata=True)
+        """Test whether summary contents correct for metadata tables"""
+
+        # get_status returns dictionary for measurement, metadata, and reference tables
+        # respectively. Therefore, the second return is import in this case
+        _, table_summary, _ = self.store.get_status(report_metadata=True)
+        self.assertNotEqual(table_summary, {})
+        self.assertIn("Sensors", table_summary.keys())
+        self.assertIn("Platforms", table_summary.keys())
+        self.assertIn("Datafiles", table_summary.keys())
 
     def test_get_status_of_reference(self):
-        table_summary = self.store.get_status(report_reference=True)
+        """Test whether summary contents correct for reference tables"""
+
+        # get_status returns dictionary for measurement, metadata, and reference tables
+        # respectively. Therefore, the third return is import in this case.
+        _, _, table_summary = self.store.get_status(report_reference=True)
+        self.assertNotEqual(table_summary, {})
+        self.assertIn("Nationalities", table_summary.keys())
+        self.assertIn("Privacies", table_summary.keys())
+        self.assertIn("PlatformTypes", table_summary.keys())
 
 
 if __name__ == "__main__":
