@@ -30,6 +30,25 @@ class TestDataStore(TestCase):
         self.assertEqual(len(datafiles), 1)
 
     def test_present_datafile_not_added(self):
+        """Test whether present datafile is not created"""
+
+        with self.store.session_scope() as session:
+            datafiles = self.store.get_datafiles()
+
+        # there must be no entry at the beginning
+        self.assertEqual(len(datafiles), 0)
+
+        with self.store.session_scope() as session:
+            created_datafile = self.store.get_datafile("test_file.csv", "csv")
+            created_datafile_2 = self.store.get_datafile("test_file.csv", "csv")
+
+        # there must be one entry
+        with self.store.session_scope() as session:
+            datafiles = self.store.get_datafiles()
+        self.assertEqual(len(datafiles), 1)
+
+    @unittest.skip("Skip until missing data resolver is implemented.")
+    def test_resolver_works_for_datafile(self):
         pass
 
     def test_new_platform_added_successfully(self):
