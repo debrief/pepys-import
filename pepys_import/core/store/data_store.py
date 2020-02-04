@@ -209,7 +209,7 @@ class DataStore:
         )
         # enough info to proceed and create entry
         platform_type = self.db_classes.PlatformTypes(
-            platform_type_id=entry_id, name=platform_type_name,
+            platform_type_id=entry_id, name=platform_type_name
         )
         self.session.add(platform_type)
         self.session.flush()
@@ -237,7 +237,7 @@ class DataStore:
         )
         # enough info to proceed and create entry
         nationality = self.db_classes.Nationalities(
-            nationality_id=entry_id, name=nationality_name,
+            nationality_id=entry_id, name=nationality_name
         )
         self.session.add(nationality)
         self.session.flush()
@@ -1008,5 +1008,38 @@ class DataStore:
                 data[table.__name__] = self.session.query(table).count()
         return data
 
-    #############################################################
-    # Populate methods in order to import CSV files
+    #############################################
+    # New methods
+
+    def get_datafile(self, datafile_name, datafile_type):
+        """Lookup or create DataFile"""
+
+        # return True if provided datafile ok
+        def check_datafile(datafile):
+            if len(datafile) == 0:
+                return False
+
+            if next(
+                (file for file in self.get_datafiles() if file.reference == datafile),
+                None,
+            ):
+                # A datafile already exists with that name
+                return False
+
+            return True
+
+        self.add_to_datafile_types(datafile_type)
+        self.add_to_privacies("NEW")
+        if check_datafile(datafile_name):
+            return self.add_to_datafiles(
+                simulated=True,
+                privacy="NEW",
+                file_type=datafile_type,
+                reference=datafile_name,
+            )
+        else:
+            return (
+                self.session.query(self.db_classes.Datafiles)
+                .filter(self.db_classes.Datafiles.reference == datafile_name)
+                .first()
+            )
