@@ -1014,7 +1014,7 @@ class DataStore:
     def get_datafile(self, datafile_name, datafile_type):
         """Lookup or create DataFile"""
 
-        # return True if provided datafile ok
+        # return True if provided datafile exists
         def check_datafile(datafile):
             if len(datafile) == 0:
                 return False
@@ -1041,5 +1041,42 @@ class DataStore:
             return (
                 self.session.query(self.db_classes.Datafiles)
                 .filter(self.db_classes.Datafiles.reference == datafile_name)
+                .first()
+            )
+
+    def get_platform(
+        self, platform_name, nationality=None, platform_type=None, privacy=None
+    ):
+        """Lookup or create Platform"""
+
+        # return True if provided platform exists
+        def check_platform(name):
+            if len(name) == 0:
+                return False
+
+            if next(
+                (
+                    platform
+                    for platform in self.get_platforms()
+                    if platform.name == name
+                ),
+                None,
+            ):
+                # A platform already exists with that name
+                return False
+
+            return True
+
+        if check_platform(platform_name):
+            return self.add_to_platforms(
+                name=platform_name,
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+            )
+        else:
+            return (
+                self.session.query(self.db_classes.Platforms)
+                .filter(self.db_classes.Platforms.name == platform_name)
                 .first()
             )
