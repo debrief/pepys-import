@@ -550,9 +550,8 @@ class DataStore:
         platform_obj = self.db_classes.Platforms(
             platform_id=entry_id,
             name=platform_name,
-            platform_type_id=platform_type.platform_type_id,
-            host_platform_id=None,
             nationality_id=nationality.nationality_id,
+            platform_type_id=platform_type.platform_type_id,
             privacy_id=privacy.privacy_id,
         )
 
