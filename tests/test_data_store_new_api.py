@@ -161,5 +161,32 @@ class TestDataStoreStatus(TestCase):
         self.assertIn("PlatformTypes", table_summary.keys())
 
 
+class TestSensor(TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+        self.store.populate_reference(TEST_DATA_PATH)
+        self.store.populate_metadata(TEST_DATA_PATH)
+        self.store.populate_measurement(TEST_DATA_PATH)
+
+    def tearDown(self):
+        pass
+
+    # TODO: not implemented yet
+    def test_new_sensor_added_successfully(self):
+        """Test whether a new sensor is created"""
+
+        pass
+
+    def test_present_sensor_not_added(self):
+        """Test whether present sensor is not created"""
+
+        pass
+
+    @unittest.skip("Skip until missing data resolver is implemented.")
+    def test_missing_data_resolver_works_for_sensor(self):
+        pass
+
+
 if __name__ == "__main__":
     unittest.main()
