@@ -2,6 +2,7 @@ import csv
 import os
 from pathlib import Path
 
+from tabulate import tabulate
 from datetime import datetime
 from sqlalchemy import create_engine, event
 from sqlalchemy.event import listen
@@ -1008,6 +1009,9 @@ class DataStore:
     #############################################
     # New methods
 
+    # TODO: These methods use add_to_xxx methods from above. They should be changed to
+    # internal functions.
+
     def get_datafile(self, datafile_name, datafile_type):
         """Adds an entry to the datafiles table of the specified name (path)
         and type if not already present. """
@@ -1088,6 +1092,7 @@ class DataStore:
     ):
         """Provides a summary of the contents of the DataStore."""
 
+        headers = ["Table Name", "Number of rows"]
         if report_measurement:
             measurement_tables = {}
             # Create measurement table list
@@ -1095,7 +1100,14 @@ class DataStore:
             for table_object in list(measurement_table_objects):
                 name = table_object.__tablename__
                 measurement_tables[name] = table_summary(self.session, table_object)
-            print(measurement_tables)
+            print("\nMEASUREMENT TABLES", "\n")
+            print(
+                tabulate(
+                    [(k, v) for k, v in measurement_tables.items()],
+                    headers=headers,
+                    tablefmt="pretty",
+                )
+            )
 
         if report_metadata:
             metadata_tables = {}
@@ -1104,7 +1116,14 @@ class DataStore:
             for table_object in list(metadata_table_objects):
                 name = table_object.__tablename__
                 metadata_tables[name] = table_summary(self.session, table_object)
-            print(metadata_tables)
+            print("\nMETADATA TABLES", "\n")
+            print(
+                tabulate(
+                    [(k, v) for k, v in metadata_tables.items()],
+                    headers=headers,
+                    tablefmt="pretty",
+                )
+            )
 
         if report_reference:
             reference_tables = {}
@@ -1113,4 +1132,11 @@ class DataStore:
             for table_object in list(reference_table_objects):
                 name = table_object.__tablename__
                 reference_tables[name] = table_summary(self.session, table_object)
-            print(reference_tables)
+            print("\nREFERENCE TABLES", "\n")
+            print(
+                tabulate(
+                    [(k, v) for k, v in reference_tables.items()],
+                    headers=headers,
+                    tablefmt="pretty",
+                )
+            )
