@@ -6,9 +6,6 @@ from geoalchemy2 import Geography, Geometry
 
 from .db_base import base_sqlite as base
 from .db_status import TableTypes
-from .uuid import UUID
-
-import uuid
 
 
 def map_uuid_type(val):
@@ -40,12 +37,12 @@ class HostedBy(base):
     table_type_id = 1
     table_name = "HostedBy"
 
-    hosted_by_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
-    subject_id = Column(UUID, nullable=False)
-    host_id = Column(UUID, nullable=False)
+    hosted_by_id = Column(Integer, primary_key=True)
+    subject_id = Column(Integer, nullable=False)
+    host_id = Column(Integer, nullable=False)
     hosted_from = Column(DATE, nullable=False)
     host_to = Column(DATE, nullable=False)
-    privacy_id = Column(UUID, nullable=False)
+    privacy_id = Column(Integer, nullable=False)
 
 
 class Sensors(base):
@@ -54,9 +51,9 @@ class Sensors(base):
     table_type_id = 2
     table_name = "Sensors"
 
-    sensor_id = Column(Integer, primary_key=True, default=uuid.uuid4)
+    sensor_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
-    host_id = Column(UUID, nullable=False)
+    host_id = Column(Integer, nullable=False)
     sensor_type_id = Column(Integer, nullable=False)
 
 
@@ -66,11 +63,11 @@ class Platforms(base):
     table_type_id = 3
     table_name = "Platforms"
 
-    platform_id = Column(Integer, primary_key=True, default=uuid.uuid4)
+    platform_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
-    nationality_id = Column(UUID(), nullable=False)
-    platform_type_id = Column(UUID(), nullable=False)
-    privacy_id = Column(UUID, nullable=False)
+    nationality_id = Column(Integer, nullable=False)
+    platform_type_id = Column(Integer, nullable=False)
+    privacy_id = Column(Integer, nullable=False)
 
 
 class Tasks(base):
@@ -79,14 +76,14 @@ class Tasks(base):
     table_type_id = 4
     table_name = "Tasks"
 
-    task_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    task_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
-    parent_id = Column(UUID, nullable=False)
+    parent_id = Column(Integer, nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     environment = Column(String(150))
     location = Column(String(150))
-    privacy_id = Column(UUID, nullable=False)
+    privacy_id = Column(Integer, nullable=False)
 
 
 class Participants(base):
@@ -95,13 +92,13 @@ class Participants(base):
     table_type_id = 5
     table_name = "Participants"
 
-    participant_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
-    platform_id = Column(UUID, nullable=False)
-    task_id = Column(UUID, nullable=False)
+    participant_id = Column(Integer, primary_key=True)
+    platform_id = Column(Integer, nullable=False)
+    task_id = Column(Integer, nullable=False)
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     force = Column(String(150))
-    privacy_id = Column(UUID, nullable=False)
+    privacy_id = Column(Integer, nullable=False)
 
 
 class Datafiles(base):
@@ -112,8 +109,8 @@ class Datafiles(base):
 
     datafile_id = Column(Integer, primary_key=True)
     simulated = Column(Boolean, nullable=False)
-    privacy_id = Column(UUID(), nullable=False)
-    datafile_type_id = Column(UUID(), nullable=False)
+    privacy_id = Column(Integer, nullable=False)
+    datafile_type_id = Column(Integer, nullable=False)
     reference = Column(String(150))
     url = Column(String(150))
 
@@ -124,7 +121,7 @@ class Synonyms(base):
     table_type_id = 7
     table_name = "Synonyms"
 
-    synonym_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    synonym_id = Column(Integer, primary_key=True)
     table = Column(String(150), nullable=False)
     synonym = Column(String(150), nullable=False)
 
@@ -135,7 +132,7 @@ class Changes(base):
     table_type_id = 8
     table_name = "Changes"
 
-    change_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    change_id = Column(Integer, primary_key=True)
     user = Column(String(150), nullable=False)
     modified = Column(DATE, nullable=False)
     reason = Column(String(500), nullable=False)
@@ -147,12 +144,12 @@ class Logs(base):
     table_type_id = 9
     table_name = "Log"
 
-    log_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    log_id = Column(Integer, primary_key=True)
     table = Column(String(150), nullable=False)
-    id = Column(UUID, nullable=False)
+    id = Column(Integer, nullable=False)
     field = Column(String(150), nullable=False)
     new_value = Column(String(150), nullable=False)
-    change_id = Column(UUID, nullable=False)
+    change_id = Column(Integer, nullable=False)
 
 
 class Extractions(base):
@@ -161,7 +158,7 @@ class Extractions(base):
     table_type_id = 10
     table_name = "Extractions"
 
-    extraction_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    extraction_id = Column(Integer, primary_key=True)
     table = Column(String(150), nullable=False)
     field = Column(String(150), nullable=False)
     chars = Column(String(150), nullable=False)
@@ -173,7 +170,7 @@ class Tags(base):
     table_type_id = 11
     table_name = "Tags"
 
-    tag_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    tag_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
 
 
@@ -183,10 +180,10 @@ class TaggedItems(base):
     table_type_id = 12
     table_name = "TaggedItems"
 
-    tagged_item_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
-    tag_id = Column(UUID, nullable=False)
-    item_id = Column(UUID, nullable=False)
-    tagged_by_id = Column(UUID, nullable=False)
+    tagged_item_id = Column(Integer, primary_key=True)
+    tag_id = Column(Integer, nullable=False)
+    item_id = Column(Integer, nullable=False)
+    tagged_by_id = Column(Integer, nullable=False)
     private = Column(Boolean, nullable=False)
     tagged_on = Column(DATE, nullable=False)
 
@@ -198,7 +195,7 @@ class PlatformTypes(base):
     table_name = "PlatformTypes"
     table_type_id = 13
 
-    platform_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    platform_type_id = Column(Integer, primary_key=True)
     name = Column(String(150))
 
 
@@ -206,8 +203,9 @@ class Nationalities(base):
     __tablename__ = "Nationalities"
     table_type = TableTypes.REFERENCE
     table_name = "Nationalities"
+    table_type_id = 14
 
-    nationality_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    nationality_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
 
 
@@ -215,9 +213,9 @@ class GeometryTypes(base):
     __tablename__ = "GeometryTypes"
     table_type = TableTypes.REFERENCE
     table_name = "GeometryTypes"
-    table_type_id = 14
+    table_type_id = 15
 
-    geo_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    geo_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
 
 
@@ -225,20 +223,20 @@ class GeometrySubTypes(base):
     __tablename__ = "GeometrySubTypes"
     table_type = TableTypes.REFERENCE
     table_name = "GeometrySubTypes"
-    table_type_id = 15
+    table_type_id = 16
 
-    geo_sub_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    geo_sub_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
-    parent = Column(UUID, nullable=False)
+    parent = Column(Integer, nullable=False)
 
 
 class Users(base):
     __tablename__ = "Users"
     table_type = TableTypes.REFERENCE
     table_name = "Users"
-    table_type_id = 16
+    table_type_id = 17
 
-    user_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
 
 
@@ -246,9 +244,9 @@ class UnitTypes(base):
     __tablename__ = "UnitTypes"
     table_type = TableTypes.REFERENCE
     table_name = "UnitTypes"
-    table_type_id = 17
+    table_type_id = 18
 
-    unit_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    unit_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
 
 
@@ -256,9 +254,9 @@ class ClassificationTypes(base):
     __tablename__ = "ClassificationTypes"
     table_type = TableTypes.REFERENCE
     table_name = "ClassificationTypes"
-    table_type_id = 18
+    table_type_id = 19
 
-    class_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    class_type_id = Column(Integer, primary_key=True)
     class_type = Column(String(150), nullable=False)
 
 
@@ -266,9 +264,9 @@ class ContactTypes(base):
     __tablename__ = "ContactTypes"
     table_type = TableTypes.REFERENCE
     table_name = "ContactTypes"
-    table_type_id = 19
+    table_type_id = 20
 
-    contact_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    contact_type_id = Column(Integer, primary_key=True)
     contact_type = Column(String(150), nullable=False)
 
 
@@ -276,9 +274,9 @@ class SensorTypes(base):
     __tablename__ = "SensorTypes"
     table_type = TableTypes.REFERENCE
     table_name = "SensorTypes"
-    table_type_id = 20
+    table_type_id = 21
 
-    sensor_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    sensor_type_id = Column(Integer, primary_key=True)
     name = Column(String(150))
 
 
@@ -286,9 +284,9 @@ class Privacies(base):
     __tablename__ = "Privacies"
     table_type = TableTypes.REFERENCE
     table_name = "Privacies"
-    table_type_id = 21
+    table_type_id = 22
 
-    privacy_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    privacy_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
 
 
@@ -296,9 +294,9 @@ class DatafileTypes(base):
     __tablename__ = "DatafileTypes"
     table_type = TableTypes.REFERENCE
     table_name = "DatafileTypes"
-    table_type_id = 22
+    table_type_id = 23
 
-    datafile_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    datafile_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
 
 
@@ -306,9 +304,9 @@ class MediaTypes(base):
     __tablename__ = "MediaTypes"
     table_type = TableTypes.REFERENCE
     table_name = "MediaTypes"
-    table_type_id = 23
+    table_type_id = 24
 
-    media_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    media_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
 
 
@@ -316,9 +314,9 @@ class CommentTypes(base):
     __tablename__ = "CommentTypes"
     table_type = TableTypes.REFERENCE
     table_name = "CommentTypes"
-    table_type_id = 24
+    table_type_id = 25
 
-    comment_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    comment_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
 
 
@@ -326,9 +324,9 @@ class CommodityTypes(base):
     __tablename__ = "CommodityTypes"
     table_type = TableTypes.REFERENCE
     table_name = "CommodityTypes"
-    table_type_id = 25
+    table_type_id = 26
 
-    commodity_type_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    commodity_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
 
 
@@ -336,9 +334,9 @@ class ConfidenceLevels(base):
     __tablename__ = "ConfidenceLevels"
     table_type = TableTypes.REFERENCE
     table_name = "ConfidenceLevels"
-    table_type_id = 26
+    table_type_id = 27
 
-    confidence_level_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    confidence_level_id = Column(Integer, primary_key=True)
     level = Column(String(150), nullable=False)
 
 
@@ -346,7 +344,7 @@ class ConfidenceLevels(base):
 class States(base):
     __tablename__ = "States"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 27
+    table_type_id = 28
     table_name = "States"
 
     state_id = Column(Integer, primary_key=True)
@@ -363,10 +361,10 @@ class States(base):
 class Contacts(base):
     __tablename__ = "Contacts"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 28
+    table_type_id = 29
     table_name = "Contacts"
 
-    contact_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    contact_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
     sensor_id = Column(Integer, nullable=False)
     time = Column(TIMESTAMP, nullable=False)
@@ -390,10 +388,10 @@ class Contacts(base):
 class Activations(base):
     __tablename__ = "Activations"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 29
+    table_type_id = 30
     table_name = "Activations"
 
-    activation_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    activation_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
     sensor_id = Column(Integer, nullable=False)
     start = Column(TIMESTAMP, nullable=False)
@@ -409,10 +407,10 @@ class Activations(base):
 class LogsHoldings(base):
     __tablename__ = "LogsHoldings"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 30
+    table_type_id = 31
     table_name = "LogsHoldings"
 
-    logs_holding_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    logs_holding_id = Column(Integer, primary_key=True)
     time = Column(TIMESTAMP, nullable=False)
     commodity_id = Column(Integer, nullable=False)
     quantity = Column(REAL, nullable=False)
@@ -426,10 +424,10 @@ class LogsHoldings(base):
 class Comments(base):
     __tablename__ = "Comments"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 31
+    table_type_id = 32
     table_name = "Comments"
 
-    comment_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    comment_id = Column(Integer, primary_key=True)
     platform_id = Column(Integer)
     time = Column(TIMESTAMP, nullable=False)
     comment_type_id = Column(Integer, nullable=False)
@@ -441,10 +439,10 @@ class Comments(base):
 class Geometries(base):
     __tablename__ = "Geometries"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 32
+    table_type_id = 33
     table_name = "Geometries"
 
-    geometry_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    geometry_id = Column(Integer, primary_key=True)
     geometry = Column(
         Geometry(geometry_type="GEOMETRY", management=True), nullable=False
     )
@@ -463,10 +461,10 @@ class Geometries(base):
 class Media(base):
     __tablename__ = "Media"
     table_type = TableTypes.MEASUREMENT
-    table_type_id = 33
+    table_type_id = 34
     table_name = "Media"
 
-    media_id = Column(UUID(), primary_key=True, default=uuid.uuid4)
+    media_id = Column(Integer, primary_key=True)
     platform_id = Column(Integer)
     subject_id = Column(Integer)
     sensor_id = Column(Integer)
