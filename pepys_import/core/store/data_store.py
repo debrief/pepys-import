@@ -25,6 +25,7 @@ from pepys_import.utils.branding_util import (
     show_welcome_banner,
     show_software_meta_info,
 )
+from .table_summary import table_summary
 
 MAIN_DIRECTORY_PATH = Path(__file__).parent.parent.parent  # pepys_import/pepys_import
 DEFAULT_DATA_PATH = os.path.join(MAIN_DIRECTORY_PATH, "database", "default_data")
@@ -1088,10 +1089,28 @@ class DataStore:
         """Provides a summary of the contents of the DataStore."""
 
         if report_measurement:
-            pass
+            measurement_tables = {}
+            # Create measurement table list
+            measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
+            for table_object in list(measurement_table_objects):
+                name = table_object.__tablename__
+                measurement_tables[name] = table_summary(self.session, table_object)
+            print(measurement_tables)
 
         if report_metadata:
-            pass
+            metadata_tables = {}
+            # Create metadata table list
+            metadata_table_objects = self.meta_classes[TableTypes.METADATA]
+            for table_object in list(metadata_table_objects):
+                name = table_object.__tablename__
+                metadata_tables[name] = table_summary(self.session, table_object)
+            print(metadata_tables)
 
         if report_reference:
-            pass
+            reference_tables = {}
+            # Create reference table list
+            reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
+            for table_object in list(reference_table_objects):
+                name = table_object.__tablename__
+                reference_tables[name] = table_summary(self.session, table_object)
+            print(reference_tables)
