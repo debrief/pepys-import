@@ -346,10 +346,6 @@ class DataStore:
         # get list of all platforms in the DB
         return self.session.query(self.db_classes.Platforms).all()
 
-    # TODO: Not implemented yet
-    def get_status(self):
-        pass
-
     def setup_table_type_mapping(self):
         # setup a map of tables keyed by TableType
         db_classes = dict(
@@ -1012,7 +1008,8 @@ class DataStore:
     # New methods
 
     def get_datafile(self, datafile_name, datafile_type):
-        """Lookup or create DataFile"""
+        """Adds an entry to the datafiles table of the specified name (path)
+        and type if not already present. """
 
         # return True if provided datafile exists
         def check_datafile(datafile):
@@ -1047,7 +1044,8 @@ class DataStore:
     def get_platform(
         self, platform_name, nationality=None, platform_type=None, privacy=None
     ):
-        """Lookup or create Platform"""
+        """Adds an entry to the platforms table for the specified platform
+        if not already present."""
 
         # return True if provided platform exists
         def check_platform(name):
@@ -1080,3 +1078,20 @@ class DataStore:
                 .filter(self.db_classes.Platforms.name == platform_name)
                 .first()
             )
+
+    def get_status(
+        self,
+        report_measurement: bool = False,
+        report_metadata: bool = False,
+        report_reference: bool = False,
+    ):
+        """Provides a summary of the contents of the DataStore."""
+
+        if report_measurement:
+            pass
+
+        if report_metadata:
+            pass
+
+        if report_reference:
+            pass
