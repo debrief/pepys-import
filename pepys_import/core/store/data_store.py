@@ -1092,9 +1092,11 @@ class DataStore:
     ):
         """Provides a summary of the contents of the DataStore."""
 
+        reference_tables = {}
+        metadata_tables = {}
+        measurement_tables = {}
         headers = ["Table Name", "Number of rows"]
         if report_measurement:
-            measurement_tables = {}
             # Create measurement table list
             measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
             for table_object in list(measurement_table_objects):
@@ -1110,7 +1112,6 @@ class DataStore:
             )
 
         if report_metadata:
-            metadata_tables = {}
             # Create metadata table list
             metadata_table_objects = self.meta_classes[TableTypes.METADATA]
             for table_object in list(metadata_table_objects):
@@ -1126,7 +1127,6 @@ class DataStore:
             )
 
         if report_reference:
-            reference_tables = {}
             # Create reference table list
             reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
             for table_object in list(reference_table_objects):
@@ -1140,3 +1140,5 @@ class DataStore:
                     tablefmt="pretty",
                 )
             )
+
+        return measurement_tables, metadata_tables, reference_tables
