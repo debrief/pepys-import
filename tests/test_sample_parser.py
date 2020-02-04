@@ -13,6 +13,7 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 
 
 class SampleParserTests(unittest.TestCase):
+    @unittest.skip
     def test_process_folders_not_descending(self):
         processor = FileProcessor("single_level.db")
 
@@ -30,6 +31,7 @@ class SampleParserTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, False)
 
+    @unittest.skip
     def test_process_folders_descending(self):
         processor = FileProcessor("descending.db")
 
