@@ -86,19 +86,19 @@ class TestDataStorePopulate(TestCase):
 
             # Platform Object: PLATFORM-1, UNITED KINGDOM, TYPE-1, PRIVACY-1
             nationality = (
-                self.store.session.query(self.store.db_classes.Nationality)
+                self.store.session.query(self.store.db_classes.Nationalities)
                 .filter_by(nationality_id=platform_object.nationality_id)
                 .first()
             )
             self.assertEqual(nationality.name, "UNITED KINGDOM")
             platform_type = (
-                self.store.session.query(self.store.db_classes.PlatformType)
+                self.store.session.query(self.store.db_classes.PlatformTypes)
                 .filter_by(platform_type_id=platform_object.platform_type_id)
                 .first()
             )
             self.assertEqual(platform_type.name, "TYPE-1")
             privacy = (
-                self.store.session.query(self.store.db_classes.Privacy)
+                self.store.session.query(self.store.db_classes.Privacies)
                 .filter_by(privacy_id=platform_object.privacy_id)
                 .first()
             )
@@ -107,13 +107,13 @@ class TestDataStorePopulate(TestCase):
             # Datafile Object: DATAFILE-1, True, PRIVACY-1, DATAFILE-TYPE-1
             self.assertEqual(datafile_object.simulated, True)
             privacy = (
-                self.store.session.query(self.store.db_classes.Privacy)
+                self.store.session.query(self.store.db_classes.Privacies)
                 .filter_by(privacy_id=datafile_object.privacy_id)
                 .first()
             )
             self.assertEqual(privacy.name, "PRIVACY-1")
             datafile_type = (
-                self.store.session.query(self.store.db_classes.DatafileType)
+                self.store.session.query(self.store.db_classes.DatafileTypes)
                 .filter_by(datafile_type_id=datafile_object.datafile_type_id)
                 .first()
             )
@@ -121,17 +121,11 @@ class TestDataStorePopulate(TestCase):
 
             # Sensor Object: SENSOR-1, SENSOR-TYPE-1, PLATFORM-1
             sensor_type = (
-                self.store.session.query(self.store.db_classes.SensorType)
+                self.store.session.query(self.store.db_classes.SensorTypes)
                 .filter_by(sensor_type_id=sensor_object.sensor_type_id)
                 .first()
             )
             self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
-            platform = (
-                self.store.session.query(self.store.db_classes.Platform)
-                .filter_by(platform_id=sensor_object.platform_id)
-                .first()
-            )
-            self.assertEqual(platform.name, "PLATFORM-1")
 
     def test_populate_measurement(self):
         # reference and metadata tables must be filled first
@@ -153,7 +147,7 @@ class TestDataStorePopulate(TestCase):
         # Check tables filled with correct data
         with self.store.session_scope() as session:
             states = self.store.get_states()
-            first_state = self.store.session.query(self.store.db_classes.State).first()
+            first_state = self.store.session.query(self.store.db_classes.States).first()
 
             # Check whether they are not empty anymore and filled with correct data
             self.assertNotEqual(len(states), 0)
@@ -169,19 +163,19 @@ class TestDataStorePopulate(TestCase):
             )
 
             privacy = (
-                self.store.session.query(self.store.db_classes.Privacy)
+                self.store.session.query(self.store.db_classes.Privacies)
                 .filter_by(privacy_id=first_state.privacy_id)
                 .first()
             )
             self.assertEqual(privacy.name, "PRIVACY-1")
             datafile = (
-                self.store.session.query(self.store.db_classes.Datafile)
-                .filter_by(datafile_id=first_state.datafile_id)
+                self.store.session.query(self.store.db_classes.Datafiles)
+                .filter_by(datafile_id=first_state.source_id)
                 .first()
             )
             self.assertEqual(datafile.reference, "DATAFILE-1")
             sensor = (
-                self.store.session.query(self.store.db_classes.Sensor)
+                self.store.session.query(self.store.db_classes.Sensors)
                 .filter_by(sensor_id=first_state.sensor_id)
                 .first()
             )
