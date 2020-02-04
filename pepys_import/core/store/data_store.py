@@ -1142,3 +1142,33 @@ class DataStore:
             )
 
         return measurement_tables, metadata_tables, reference_tables
+
+    def get_sensor(self, sensor_name, sensor_type=None, privacy=None):
+        """Lookup or create a sensor of this name for this platform. Specified sensor
+        will be added to the sensors table."""
+
+        # return True if provided sensor exists
+        def check_sensor(name):
+            if len(name) == 0:
+                return False
+
+            if next(
+                (sensor for sensor in self.get_sensors() if sensor.name == name), None,
+            ):
+                # A platform already exists with that name
+                return False
+
+            return True
+
+        if check_sensor(sensor_name):
+            return self.add_to_sensors(
+                name=sensor_name,
+                sensor_type=sensor_type,
+                # privacy=privacy,
+            )
+        else:
+            return (
+                self.session.query(self.db_classes.Sensors)
+                .filter(self.db_classes.Sensors.name == sensor_name)
+                .first()
+            )
