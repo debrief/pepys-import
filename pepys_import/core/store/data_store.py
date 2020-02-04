@@ -232,8 +232,8 @@ class DataStore:
             return nationalities
 
         entry_id = self.add_to_entries(
-            self.db_classes.Nationality.table_type_id,
-            self.db_classes.Nationality.__tablename__,
+            self.db_classes.Nationalities.table_type_id,
+            self.db_classes.Nationalities.__tablename__,
         )
         # enough info to proceed and create entry
         nationality = self.db_classes.Nationalities(
@@ -711,9 +711,9 @@ class DataStore:
             ).magnitude
 
         entry_id = self.add_to_entries(
-            self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
+            self.db_classes.States.table_type_id, self.db_classes.States.__tablename__
         )
-        state_obj = self.db_classes.State(
+        state_obj = self.db_classes.States(
             state_id=entry_id,
             time=time,
             sensor_id=sensor.sensor_id,
@@ -721,7 +721,7 @@ class DataStore:
             heading=heading_rads,
             # course=course,
             speed=speed_m_sec,
-            datafile_id=datafile.datafile_id,
+            source_id=datafile.datafile_id,
             privacy_id=privacy.privacy_id,
         )
         self.session.add(state_obj)
@@ -745,7 +745,7 @@ class DataStore:
             sensor_id=entry_id,
             name=name,
             sensor_type_id=sensor_type.sensor_type_id,
-            platform_id=host.platform_id,
+            host_id=host.platform_id,
         )
         self.session.add(sensor_obj)
         self.session.flush()
