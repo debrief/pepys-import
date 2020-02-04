@@ -1,7 +1,11 @@
 import unittest
+import os
 
 from pepys_import.core.store.data_store import DataStore
 from unittest import TestCase
+
+FILE_PATH = os.path.dirname(__file__)
+TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 
 
 class TestDataStore(TestCase):
@@ -111,11 +115,26 @@ class TestDataStore(TestCase):
     def test_missing_data_resolver_works_for_platform(self):
         pass
 
-    def test_new_sensor_added_successfully(self):
+
+class TestDataStoreStatus(TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+        self.store.populate_reference(TEST_DATA_PATH)
+        self.store.populate_metadata(TEST_DATA_PATH)
+        self.store.populate_measurement(TEST_DATA_PATH)
+
+    def tearDown(self):
         pass
 
-    def test_present_sensor_not_added(self):
-        pass
+    def test_get_status_of_measurement(self):
+        table_summary = self.store.get_status(report_measurement=True)
+
+    def test_get_status_of_metadata(self):
+        table_summary = self.store.get_status(report_metadata=True)
+
+    def test_get_status_of_reference(self):
+        table_summary = self.store.get_status(report_reference=True)
 
 
 if __name__ == "__main__":
