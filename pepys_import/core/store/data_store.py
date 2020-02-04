@@ -166,179 +166,6 @@ class DataStore:
             self.session.close()
 
     #############################################################
-    # Reference Type Maintenance
-
-    def add_to_table_types(self, table_type_id, table_name):
-        # check in cache for table type
-        if table_type_id in self.table_types:
-            return self.table_types[table_type_id]
-
-        # doesn't exist in cache, try to lookup in DB
-        table_types = self.search_table_type(table_type_id)
-        if table_types:
-            # add to cache and return
-            self.table_types[table_type_id] = table_types
-            return table_types
-
-        # enough info to proceed and create entry
-        table_type = self.db_classes.TableType(
-            table_type_id=table_type_id, name=table_name
-        )
-        self.session.add(table_type)
-        self.session.flush()
-
-        # add to cache and return created table type
-        self.table_types[table_type_id] = table_type
-        # should return DB type or something else decoupled from DB?
-        return table_type
-
-    # TODO: add function to do common pattern of action in these functions
-    def add_to_platform_types(self, platform_type_name):
-        # check in cache for nationality
-        if platform_type_name in self.platform_types:
-            return self.platform_types[platform_type_name]
-
-        # doesn't exist in cache, try to lookup in DB
-        platform_types = self.search_platform_type(platform_type_name)
-        if platform_types:
-            # add to cache and return looked up platform type
-            self.platform_types[platform_type_name] = platform_types
-            return platform_types
-
-        entry_id = self.add_to_entries(
-            self.db_classes.PlatformTypes.table_type_id,
-            self.db_classes.PlatformTypes.__tablename__,
-        )
-        # enough info to proceed and create entry
-        platform_type = self.db_classes.PlatformTypes(
-            platform_type_id=entry_id, name=platform_type_name
-        )
-        self.session.add(platform_type)
-        self.session.flush()
-
-        # add to cache and return created platform type
-        self.platform_types[platform_type_name] = platform_type
-        # should return DB type or something else decoupled from DB?
-        return platform_type
-
-    def add_to_nationalities(self, nationality_name):
-        # check in cache for nationality
-        if nationality_name in self.nationalities:
-            return self.nationalities[nationality_name]
-
-        # doesn't exist in cache, try to lookup in DB
-        nationalities = self.search_nationality(nationality_name)
-        if nationalities:
-            # add to cache and return looked up nationality
-            self.nationalities[nationality_name] = nationalities
-            return nationalities
-
-        entry_id = self.add_to_entries(
-            self.db_classes.Nationalities.table_type_id,
-            self.db_classes.Nationalities.__tablename__,
-        )
-        # enough info to proceed and create entry
-        nationality = self.db_classes.Nationalities(
-            nationality_id=entry_id, name=nationality_name
-        )
-        self.session.add(nationality)
-        self.session.flush()
-
-        # add to cache and return created platform
-        self.nationalities[nationality_name] = nationality
-        # should return DB type or something else decoupled from DB?
-        return nationality
-
-    def add_to_privacies(self, privacy_name):
-        # check in cache for privacy
-        if privacy_name in self.privacies:
-            return self.privacies[privacy_name]
-
-        # doesn't exist in cache, try to lookup in DB
-        privacies = self.search_privacy(privacy_name)
-        if privacies:
-            # add to cache and return looked up platform
-            self.privacies[privacy_name] = privacies
-            return privacies
-
-        entry_id = self.add_to_entries(
-            self.db_classes.Privacies.table_type_id,
-            self.db_classes.Privacies.__tablename__,
-        )
-        # enough info to proceed and create entry
-        privacy = self.db_classes.Privacies(privacy_id=entry_id, name=privacy_name)
-        self.session.add(privacy)
-        self.session.flush()
-
-        # add to cache and return created platform
-        self.privacies[privacy_name] = privacy
-        # should return DB type or something else decoupled from DB?
-        return privacy
-
-    # TODO: it is possible to merge two methods taking a resolver=True/False argument
-    def add_to_datafile_types(self, datafile_type):
-        """Add new datafile-type
-
-        Arguments:
-            datafile_type {String} -- name of datafile type
-
-        Returns:
-            DataFileType -- Wrapped database entity for DatafileType
-        """
-        # check in cache for datafile type
-        if datafile_type in self.datafile_types:
-            return self.datafile_types[datafile_type]
-
-        # doesn't exist in cache, try to lookup in DB
-        datafile_types = self.search_datafile_type(datafile_type)
-        if datafile_types:
-            # add to cache and return looked up datafile type
-            self.datafile_types[datafile_type] = datafile_types
-            return datafile_types
-
-        entry_id = self.add_to_entries(
-            self.db_classes.DatafileTypes.table_type_id,
-            self.db_classes.DatafileTypes.__tablename__,
-        )
-        # proceed and create entry
-        datafile_type_obj = self.db_classes.DatafileTypes(
-            datafile_type_id=entry_id, name=datafile_type
-        )
-
-        self.session.add(datafile_type_obj)
-        self.session.flush()
-
-        # add to cache and return created datafile type
-        self.datafile_types[datafile_type] = datafile_type_obj
-        # should return DB type or something else decoupled from DB?
-        return datafile_type_obj
-
-    def add_to_sensor_types(self, sensor_type_name):
-        # check in cache for sensor type
-        if sensor_type_name in self.sensor_types:
-            return self.sensor_types[sensor_type_name]
-
-        # doesn't exist in cache, try to lookup in DB
-        sensor_types = self.search_sensor_type(sensor_type_name)
-        if sensor_types:
-            # add to cache and return looked up sensor type
-            self.sensor_types[sensor_type_name] = sensor_types
-            return sensor_types
-
-        # enough info to proceed and create entry
-        sensor_type = self.db_classes.SensorTypes(name=sensor_type_name)
-        self.session.add(sensor_type)
-        self.session.flush()
-
-        # add to cache and return created sensor type
-        self.sensor_types[sensor_type_name] = sensor_type
-        # should return DB type or something else decoupled from DB?
-        return sensor_type
-
-    # End of Reference Type Maintenance
-    #############################################################
-
-    #############################################################
     # Other DataStore Methods
     def get_datafiles(self):
         # get list of all datafiles in the DB
@@ -1006,7 +833,7 @@ class DataStore:
                 data[table.__name__] = self.session.query(table).count()
         return data
 
-    #############################################
+    #############################################################
     # New methods
 
     # TODO: These methods use add_to_xxx methods from above. They should be changed to
@@ -1172,3 +999,211 @@ class DataStore:
                 .filter(self.db_classes.Sensors.name == sensor_name)
                 .first()
             )
+
+    #############################################################
+    # Measurements
+
+    def create_state(self, sensor, timestamp):
+        """
+        Creates an intermediate State object representing a row in the State table
+
+        :param sensor:
+        :param timestamp:
+        :return:
+        """
+        pass
+
+    def create_contact(self, sensor, timestamp):
+        """
+        Creates an intermediate Contact object representing a row in the Contact table
+
+        :param sensor:
+        :param timestamp:
+        :return:
+        """
+        pass
+
+    def create_comment(self, sensor, timestamp, comment, type):
+        """
+        Creates an intermediate Comment object representing a row in the Comment table
+        :param sensor:
+        :param timestamp:
+        :param comment:
+        :param type:
+        :return:
+        """
+        pass
+
+    # End of Measurements
+    #############################################################
+    # Reference Type Maintenance
+
+    def add_to_table_types(self, table_type_id, table_name):
+        # check in cache for table type
+        if table_type_id in self.table_types:
+            return self.table_types[table_type_id]
+
+        # doesn't exist in cache, try to lookup in DB
+        table_types = self.search_table_type(table_type_id)
+        if table_types:
+            # add to cache and return
+            self.table_types[table_type_id] = table_types
+            return table_types
+
+        # enough info to proceed and create entry
+        table_type = self.db_classes.TableType(
+            table_type_id=table_type_id, name=table_name
+        )
+        self.session.add(table_type)
+        self.session.flush()
+
+        # add to cache and return created table type
+        self.table_types[table_type_id] = table_type
+        # should return DB type or something else decoupled from DB?
+        return table_type
+
+    # TODO: add function to do common pattern of action in these functions
+    def add_to_platform_types(self, platform_type_name):
+        # check in cache for nationality
+        if platform_type_name in self.platform_types:
+            return self.platform_types[platform_type_name]
+
+        # doesn't exist in cache, try to lookup in DB
+        platform_types = self.search_platform_type(platform_type_name)
+        if platform_types:
+            # add to cache and return looked up platform type
+            self.platform_types[platform_type_name] = platform_types
+            return platform_types
+
+        entry_id = self.add_to_entries(
+            self.db_classes.PlatformTypes.table_type_id,
+            self.db_classes.PlatformTypes.__tablename__,
+        )
+        # enough info to proceed and create entry
+        platform_type = self.db_classes.PlatformTypes(
+            platform_type_id=entry_id, name=platform_type_name
+        )
+        self.session.add(platform_type)
+        self.session.flush()
+
+        # add to cache and return created platform type
+        self.platform_types[platform_type_name] = platform_type
+        # should return DB type or something else decoupled from DB?
+        return platform_type
+
+    def add_to_nationalities(self, nationality_name):
+        # check in cache for nationality
+        if nationality_name in self.nationalities:
+            return self.nationalities[nationality_name]
+
+        # doesn't exist in cache, try to lookup in DB
+        nationalities = self.search_nationality(nationality_name)
+        if nationalities:
+            # add to cache and return looked up nationality
+            self.nationalities[nationality_name] = nationalities
+            return nationalities
+
+        entry_id = self.add_to_entries(
+            self.db_classes.Nationalities.table_type_id,
+            self.db_classes.Nationalities.__tablename__,
+        )
+        # enough info to proceed and create entry
+        nationality = self.db_classes.Nationalities(
+            nationality_id=entry_id, name=nationality_name
+        )
+        self.session.add(nationality)
+        self.session.flush()
+
+        # add to cache and return created platform
+        self.nationalities[nationality_name] = nationality
+        # should return DB type or something else decoupled from DB?
+        return nationality
+
+    def add_to_privacies(self, privacy_name):
+        # check in cache for privacy
+        if privacy_name in self.privacies:
+            return self.privacies[privacy_name]
+
+        # doesn't exist in cache, try to lookup in DB
+        privacies = self.search_privacy(privacy_name)
+        if privacies:
+            # add to cache and return looked up platform
+            self.privacies[privacy_name] = privacies
+            return privacies
+
+        entry_id = self.add_to_entries(
+            self.db_classes.Privacies.table_type_id,
+            self.db_classes.Privacies.__tablename__,
+        )
+        # enough info to proceed and create entry
+        privacy = self.db_classes.Privacies(privacy_id=entry_id, name=privacy_name)
+        self.session.add(privacy)
+        self.session.flush()
+
+        # add to cache and return created platform
+        self.privacies[privacy_name] = privacy
+        # should return DB type or something else decoupled from DB?
+        return privacy
+
+    # TODO: it is possible to merge two methods taking a resolver=True/False argument
+    def add_to_datafile_types(self, datafile_type):
+        """Add new datafile-type
+
+        Arguments:
+            datafile_type {String} -- name of datafile type
+
+        Returns:
+            DataFileType -- Wrapped database entity for DatafileType
+        """
+        # check in cache for datafile type
+        if datafile_type in self.datafile_types:
+            return self.datafile_types[datafile_type]
+
+        # doesn't exist in cache, try to lookup in DB
+        datafile_types = self.search_datafile_type(datafile_type)
+        if datafile_types:
+            # add to cache and return looked up datafile type
+            self.datafile_types[datafile_type] = datafile_types
+            return datafile_types
+
+        entry_id = self.add_to_entries(
+            self.db_classes.DatafileTypes.table_type_id,
+            self.db_classes.DatafileTypes.__tablename__,
+        )
+        # proceed and create entry
+        datafile_type_obj = self.db_classes.DatafileTypes(
+            datafile_type_id=entry_id, name=datafile_type
+        )
+
+        self.session.add(datafile_type_obj)
+        self.session.flush()
+
+        # add to cache and return created datafile type
+        self.datafile_types[datafile_type] = datafile_type_obj
+        # should return DB type or something else decoupled from DB?
+        return datafile_type_obj
+
+    def add_to_sensor_types(self, sensor_type_name):
+        # check in cache for sensor type
+        if sensor_type_name in self.sensor_types:
+            return self.sensor_types[sensor_type_name]
+
+        # doesn't exist in cache, try to lookup in DB
+        sensor_types = self.search_sensor_type(sensor_type_name)
+        if sensor_types:
+            # add to cache and return looked up sensor type
+            self.sensor_types[sensor_type_name] = sensor_types
+            return sensor_types
+
+        # enough info to proceed and create entry
+        sensor_type = self.db_classes.SensorTypes(name=sensor_type_name)
+        self.session.add(sensor_type)
+        self.session.flush()
+
+        # add to cache and return created sensor type
+        self.sensor_types[sensor_type_name] = sensor_type
+        # should return DB type or something else decoupled from DB?
+        return sensor_type
+
+    # End of Reference Type Maintenance
+    #############################################################
