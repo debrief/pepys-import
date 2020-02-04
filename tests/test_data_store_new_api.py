@@ -165,9 +165,6 @@ class TestSensor(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
-        self.store.populate_reference(TEST_DATA_PATH)
-        self.store.populate_metadata(TEST_DATA_PATH)
-        self.store.populate_measurement(TEST_DATA_PATH)
 
     def tearDown(self):
         pass
@@ -185,6 +182,58 @@ class TestSensor(TestCase):
 
     @unittest.skip("Skip until missing data resolver is implemented.")
     def test_missing_data_resolver_works_for_sensor(self):
+        pass
+
+
+class TestMeasurements(TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    # TODO: not implemented yet
+    def test_new_state_added_successfully(self):
+        """Test whether a new state is created"""
+
+        pass
+
+    def test_present_state_not_added(self):
+        """Test whether present state is not created"""
+
+        pass
+
+    @unittest.skip("Skip until missing data resolver is implemented.")
+    def test_missing_data_resolver_works_for_state(self):
+        pass
+
+    def test_new_contact_added_successfully(self):
+        """Test whether a new contact is created"""
+
+        pass
+
+    def test_present_contact_not_added(self):
+        """Test whether present contact is not created"""
+
+        pass
+
+    @unittest.skip("Skip until missing data resolver is implemented.")
+    def test_missing_data_resolver_works_for_contact(self):
+        pass
+
+    def test_new_comment_added_successfully(self):
+        """Test whether a new comment is created"""
+
+        pass
+
+    def test_present_comment_not_added(self):
+        """Test whether present comment is not created"""
+
+        pass
+
+    @unittest.skip("Skip until missing data resolver is implemented.")
+    def test_missing_data_resolver_works_for_comment(self):
         pass
 
 
