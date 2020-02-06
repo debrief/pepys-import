@@ -53,8 +53,8 @@ class Sensors(base):
 
     sensor_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
-    host_id = Column(Integer, nullable=False)
     sensor_type_id = Column(Integer, nullable=False)
+    platform_id = Column(Integer, nullable=False)
 
 
 class Platforms(base):
