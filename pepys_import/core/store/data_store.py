@@ -569,7 +569,7 @@ class DataStore:
             sensor_id=entry_id,
             name=name,
             sensor_type_id=sensor_type.sensor_type_id,
-            host_id=host.platform_id,
+            platform_id=host.platform_id,
         )
         self.session.add(sensor_obj)
         self.session.flush()
