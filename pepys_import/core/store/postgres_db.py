@@ -315,6 +315,7 @@ class SensorTypes(base):
     table_type = TableTypes.REFERENCE
     table_type_id = 21
 
+    # TODO: server default doesn't work for sensor_type_id
     sensor_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
 
