@@ -17,6 +17,7 @@ BROKEN_FILE = os.path.join(TEST_DATA_PATH, "rep_test2.rep")
 
 
 class TestLoadReplay(TestCase):
+    @unittest.skip("Skip until datafile parsers are implemented")
     def test_load_replay(self):
         """Test  whether we can load REP data"""
         data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
