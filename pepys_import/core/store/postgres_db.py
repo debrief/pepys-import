@@ -315,9 +315,7 @@ class SensorTypes(base):
     table_type = TableTypes.REFERENCE
     table_type_id = 21
 
-    sensor_type_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    sensor_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
 
 
@@ -400,7 +398,7 @@ class States(base):
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
     )
-    location = Column(Geometry(geometry_type="POINT", srid=4326))
+    location = Column(Geometry(geometry_type="POINT", srid=0))
     heading = Column(DOUBLE_PRECISION)
     course = Column(DOUBLE_PRECISION)
     speed = Column(DOUBLE_PRECISION)
