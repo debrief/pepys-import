@@ -8,7 +8,7 @@ FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 
 
-class TestDataStore(TestCase):
+class DataStoreTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -116,7 +116,7 @@ class TestDataStore(TestCase):
         pass
 
 
-class TestDataStoreStatus(TestCase):
+class DataStoreStatusTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -161,7 +161,7 @@ class TestDataStoreStatus(TestCase):
         self.assertIn("PlatformTypes", table_summary.keys())
 
 
-class TestSensor(TestCase):
+class SensorTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -185,7 +185,7 @@ class TestSensor(TestCase):
         pass
 
 
-class TestMeasurements(TestCase):
+class MeasurementsTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
