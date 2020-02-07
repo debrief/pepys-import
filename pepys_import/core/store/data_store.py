@@ -840,8 +840,17 @@ class DataStore:
     # internal functions.
 
     def get_datafile(self, datafile_name, datafile_type):
-        """Adds an entry to the datafiles table of the specified name (path)
-        and type if not already present. """
+        """
+        Adds an entry to the datafiles table of the specified name (path)
+        and type if not already present.
+
+        Args:
+            datafile_name: {String} -- Name of Datafile
+            datafile_type: {String} -- Name of Datafile Type
+
+        Returns:
+            A Datafile object that can used to add state.
+        """
 
         # return True if provided datafile exists
         def check_datafile(datafile):
@@ -876,8 +885,19 @@ class DataStore:
     def get_platform(
         self, platform_name, nationality=None, platform_type=None, privacy=None
     ):
-        """Adds an entry to the platforms table for the specified platform
-        if not already present."""
+        """
+        Adds an entry to the platforms table for the specified platform
+        if not already present.
+
+        Args:
+            platform_name: {String} -- Name of Platform
+            nationality: {String} -- Name of Nationality
+            platform_type: {String} -- Name of Platform Type
+            privacy: {String} -- Name of Privacy
+
+        Returns:
+            A Platform object that can be used to lookup/create Sensors.
+        """
 
         # return True if provided platform exists
         def check_platform(name):
@@ -917,7 +937,17 @@ class DataStore:
         report_metadata: bool = False,
         report_reference: bool = False,
     ):
-        """Provides a summary of the contents of the DataStore."""
+        """
+        Provides a summary of the contents of the DataStore.
+
+        Args:
+            report_measurement: {Boolean} -- Boolean flag indicates Measurement Tables
+            report_metadata: {Boolean} -- Boolean flag indicates Metadata Tables
+            report_reference: {Boolean} -- Boolean flag indicates Reference Tables
+
+        Returns:
+            A TableSummarySet.
+        """
 
         reference_tables = {}
         metadata_tables = {}
@@ -971,8 +1001,17 @@ class DataStore:
         return measurement_tables, metadata_tables, reference_tables
 
     def get_sensor(self, sensor_name, sensor_type=None, privacy=None):
-        """Lookup or create a sensor of this name for this platform. Specified sensor
-        will be added to the sensors table."""
+        """
+        Lookup or create a sensor of this name for this platform. Specified sensor
+        will be added to the sensors table.
+        Args:
+            sensor_name: {String} -- Name of Sensor
+            sensor_type: {String} -- Type of Sensor
+            privacy: {String} -- Name of Privacy
+
+        Returns:
+            A Sensor object that can be passed to the add_state() function of Datafile.
+        """
 
         # return True if provided sensor exists
         def check_sensor(name):
@@ -1005,32 +1044,45 @@ class DataStore:
 
     def create_state(self, sensor, timestamp):
         """
-        Creates an intermediate State object representing a row in the State table
+        Creates an intermediate State object representing a row in the State table.
 
-        :param sensor:
-        :param timestamp:
-        :return:
+        Args:
+            sensor: {String} -- Database object representing a Sensor
+            timestamp: {Datetime} -- Timestamp the state was recorded
+
+        Returns:
+            A State object, to which other attributes can be added, prior to
+            submission to the database.
         """
         pass
 
     def create_contact(self, sensor, timestamp):
         """
-        Creates an intermediate Contact object representing a row in the Contact table
+        Creates an intermediate Contact object representing a row in the Contact table.
 
-        :param sensor:
-        :param timestamp:
-        :return:
+        Args:
+            sensor: {String} -- Database object representing a Sensor
+            timestamp: {Datetime} -- Timestamp the state was recorded
+
+        Returns:
+            A Contact object, to which other attributes can be added, prior to
+            submission to the database.
         """
         pass
 
     def create_comment(self, sensor, timestamp, comment, type):
         """
-        Creates an intermediate Comment object representing a row in the Comment table
-        :param sensor:
-        :param timestamp:
-        :param comment:
-        :param type:
-        :return:
+        Creates an intermediate Comment object representing a row in the Comment table.
+
+        Args:
+            sensor: {String} -- Database object representing a Sensor
+            timestamp: {Datetime} -- Timestamp the state was recorded
+            comment: {String} -- Textual comment
+            type: {commentType} -- Type of comment being added
+
+        Returns:
+            A Comment object, to which other attributes can be added, prior to
+            submission to the database.
         """
         pass
 
@@ -1039,6 +1091,17 @@ class DataStore:
     # Reference Type Maintenance
 
     def add_to_table_types(self, table_type_id, table_name):
+        """
+        Adds the specified table type and name to the table types table if not already
+        present.
+
+        Args:
+            table_type_id: {String} -- ID of Table Type
+            table_name: {String} -- Name of Table Type
+
+        Returns:
+            Created table type entity
+        """
         # check in cache for table type
         if table_type_id in self.table_types:
             return self.table_types[table_type_id]
@@ -1064,6 +1127,16 @@ class DataStore:
 
     # TODO: add function to do common pattern of action in these functions
     def add_to_platform_types(self, platform_type_name):
+        """
+        Adds the specified platform type to the platformtypes table if not already
+        present.
+
+        Args:
+            platform_type_name: {String} -- Name of Platform Type
+
+        Returns:
+            Created platform type entity
+        """
         # check in cache for nationality
         if platform_type_name in self.platform_types:
             return self.platform_types[platform_type_name]
@@ -1092,6 +1165,14 @@ class DataStore:
         return platform_type
 
     def add_to_nationalities(self, nationality_name):
+        """
+        Adds the specified nationality to the nationalities table if not already present
+        Args:
+            nationality_name: {String} -- Name of Nationality
+
+        Returns:
+            Created Nationality entity
+        """
         # check in cache for nationality
         if nationality_name in self.nationalities:
             return self.nationalities[nationality_name]
@@ -1120,6 +1201,15 @@ class DataStore:
         return nationality
 
     def add_to_privacies(self, privacy_name):
+        """
+        Adds the specified privacy entry to the privacies table if not already present.
+
+        Args:
+            privacy_name: {String} -- Name of Privacy
+
+        Returns:
+            Created Privacy entity
+        """
         # check in cache for privacy
         if privacy_name in self.privacies:
             return self.privacies[privacy_name]
@@ -1147,10 +1237,12 @@ class DataStore:
 
     # TODO: it is possible to merge two methods taking a resolver=True/False argument
     def add_to_datafile_types(self, datafile_type):
-        """Add new datafile-type
+        """
+        Adds the specified datafile type to the datafiletypes table if not already
+        present.
 
         Arguments:
-            datafile_type {String} -- name of datafile type
+            datafile_type {String} -- Name of Datafile Type
 
         Returns:
             DataFileType -- Wrapped database entity for DatafileType
@@ -1184,6 +1276,15 @@ class DataStore:
         return datafile_type_obj
 
     def add_to_sensor_types(self, sensor_type_name):
+        """
+        Adds the specified sensor type to the sensor types table if not already present.
+
+        Args:
+            sensor_type_name {String} -- Name of Sensor Type
+
+        Returns:
+            Created Sensor Type entity
+        """
         # check in cache for sensor type
         if sensor_type_name in self.sensor_types:
             return self.sensor_types[sensor_type_name]
