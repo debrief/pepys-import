@@ -1019,7 +1019,7 @@ class DataStore:
                 return False
 
             if next(
-                (sensor for sensor in self.get_sensors() if sensor.name == name), None,
+                (sensor for sensor in self.get_sensors() if sensor.name == name), None
             ):
                 # A platform already exists with that name
                 return False
@@ -1054,7 +1054,9 @@ class DataStore:
             A State object, to which other attributes can be added, prior to
             submission to the database.
         """
-        pass
+        # TODO: the rest of fields will be returned by the missing data resolver.
+        # TODO: this method doesn't work now because datafile has to be passed.
+        self.add_to_states(time=timestamp, sensor=sensor)
 
     def create_contact(self, sensor, timestamp):
         """
@@ -1068,7 +1070,35 @@ class DataStore:
             A Contact object, to which other attributes can be added, prior to
             submission to the database.
         """
-        pass
+        # TODO: doesn't work for now
+
+        time = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+
+        sensor = self.search_sensor(sensor)
+
+        if sensor is None:
+            print(f"There is missing value(s) in '{sensor}'!")
+            return
+
+        entry_id = self.add_to_entries(
+            self.db_classes.Contacts.table_type_id,
+            self.db_classes.Contacts.__tablename__,
+        )
+        contact_obj = self.db_classes.Contacts(
+            contact_id=entry_id, time=time, sensor_id=sensor.sensor_id
+        )
+        self.session.add(contact_obj)
+        self.session.flush()
+
+        return contact_obj
+
+    def search_comment_type(self, name):
+        # search for any comment type featuring this name
+        return (
+            self.session.query(self.db_classes.CommentTypes)
+            .filter(self.db_classes.CommentTypes.name == name)
+            .first()
+        )
 
     def create_comment(self, sensor, timestamp, comment, type):
         """
@@ -1084,7 +1114,31 @@ class DataStore:
             A Comment object, to which other attributes can be added, prior to
             submission to the database.
         """
-        pass
+
+        # TODO: doesn't work for now
+        time = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+
+        sensor = self.search_sensor(sensor)
+        comment_type = self.search_comment_type(type)
+
+        if sensor is None or comment_type is None:
+            print(f"There is missing value(s) in '{sensor}, {comment_type}'!")
+            return
+
+        entry_id = self.add_to_entries(
+            self.db_classes.Contacts.table_type_id,
+            self.db_classes.Contacts.__tablename__,
+        )
+        comment_obj = self.db_classes.Comments(
+            comment_id=entry_id,
+            time=time,
+            content=comment,
+            comment_type_id=comment_type,
+        )
+        self.session.add(comment_obj)
+        self.session.flush()
+
+        return comment_obj
 
     # End of Measurements
     #############################################################
