@@ -10,7 +10,7 @@ from unittest import TestCase
 from pepys_import.core.store.db_base import base_postgres
 
 
-class TestDataStoreInitialisePostgres(TestCase):
+class DataStoreInitialisePostGISTestCase(TestCase):
     def setUp(self):
         self.store = None
         try:
@@ -76,7 +76,7 @@ class TestDataStoreInitialisePostgres(TestCase):
         self.assertIn("datastore_schema", schema_names)
 
 
-class TestDataStoreInitialiseSQLite(TestCase):
+class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
     def test_sqlite_initialise(self):
         """Test whether schemas created successfully on SQLite"""
         data_store_sqlite = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
