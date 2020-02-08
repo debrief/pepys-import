@@ -7,6 +7,7 @@ from geoalchemy2 import Geography, Geometry
 
 from .db_base import base_sqlite as base
 from .db_status import TableTypes
+from pepys_import.core.formats import quantity
 
 
 def map_uuid_type(val):
@@ -174,6 +175,10 @@ class Datafiles(base):
     reference = Column(String(150))
     url = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    def create_state(self, sensor, timestamp):
+        state = States(sensor_id=sensor, time=timestamp,)
+        return state
 
 
 class Synonyms(base):
@@ -439,6 +444,21 @@ class States(base):
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    def set_location(self, lat_val: float, long_val: float):
+        self.location = (lat_val, long_val)
+
+    def set_location_obj(self, location):
+        self.location = location
+
+    def set_heading(self, heading: quantity):
+        self.heading = heading
+
+    def set_course(self, course: quantity):
+        self.course = course
+
+    def set_speed(self, speed: quantity):
+        self.speed = speed
 
 
 class Contacts(base):
