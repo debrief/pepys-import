@@ -269,11 +269,17 @@ class MeasurementsTestCase(TestCase):
 
         self.assertEqual(state.get_timestamp(), "2020-01-01")
 
+        if self.file.validate():
+            add_state(state)
+            with self.store.session_scope() as session:
+                states = self.store.get_states()
+            self.assertEqual(len(states), 1)
+
     @unittest.skip("Skip until missing data resolver is implemented.")
     def test_missing_data_resolver_works_for_state(self):
         pass
 
-    def test_new_contact_added_successfully(self):
+    def test_new_intermediate_contact_created_successfully(self):
         """Test whether a new contact is created"""
 
         with self.store.session_scope() as session:
@@ -284,16 +290,22 @@ class MeasurementsTestCase(TestCase):
 
         self.file.create_contact(self.sensor, datetime.utcnow)
 
-        # there must be one entry
+        # there must be no entry because it's kept in-memory
         with self.store.session_scope() as session:
             contacts = self.store.get_contacts()
-        self.assertEqual(len(contacts), 1)
+        self.assertEqual(len(contacts), 0)
+
+        if self.file.validate():
+            add_contact(contact)
+            with self.store.session_scope() as session:
+                contacts = self.store.get_contacts()
+            self.assertEqual(len(contacts), 1)
 
     @unittest.skip("Skip until missing data resolver is implemented.")
     def test_missing_data_resolver_works_for_contact(self):
         pass
 
-    def test_new_comment_added_successfully(self):
+    def test_new_intermediate_comment_created_successfully(self):
         """Test whether a new comment is created"""
 
         with self.store.session_scope() as session:
@@ -306,10 +318,16 @@ class MeasurementsTestCase(TestCase):
             self.sensor, datetime.utcnow, "Comment", self.comment_type
         )
 
-        # there must be one entry
+        # there must be no entry because it's kept in-memory
         with self.store.session_scope() as session:
             comments = self.store.get_comments()
-        self.assertEqual(len(comments), 1)
+        self.assertEqual(len(comments), 0)
+
+        if self.file.validate():
+            add_comment(comments)
+            with self.store.session_scope() as session:
+                comments = self.store.get_comments()
+            self.assertEqual(len(comments), 1)
 
     @unittest.skip("Skip until missing data resolver is implemented.")
     def test_missing_data_resolver_works_for_comment(self):
