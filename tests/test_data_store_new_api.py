@@ -33,12 +33,13 @@ class DataStoreTestCase(TestCase):
         self.assertEqual(len(datafiles), 0)
 
         with self.store.session_scope() as session:
-            created_datafile = self.store.get_datafile("test_file.csv", "csv")
+            self.store.get_datafile("test_file.csv", "csv")
 
         # there must be one entry
         with self.store.session_scope() as session:
             datafiles = self.store.get_datafiles()
-        self.assertEqual(len(datafiles), 1)
+            self.assertEqual(len(datafiles), 1)
+            self.assertEqual(datafiles[0].reference, "test_file.csv")
 
     def test_present_datafile_not_added(self):
         """Test whether present datafile is not created"""
@@ -50,13 +51,13 @@ class DataStoreTestCase(TestCase):
         self.assertEqual(len(datafiles), 0)
 
         with self.store.session_scope() as session:
-            created_datafile = self.store.get_datafile("test_file.csv", "csv")
-            created_datafile_2 = self.store.get_datafile("test_file.csv", "csv")
+            self.store.get_datafile("test_file.csv", "csv")
+            self.store.get_datafile("test_file.csv", "csv")
 
-        # there must be one entry
-        with self.store.session_scope() as session:
+            # there must be one entry
             datafiles = self.store.get_datafiles()
-        self.assertEqual(len(datafiles), 1)
+            self.assertEqual(len(datafiles), 1)
+            self.assertEqual(datafiles[0].reference, "test_file.csv")
 
     @unittest.skip("Skip until missing data resolver is implemented.")
     def test_missing_data_resolver_works_for_datafile(self):
@@ -72,7 +73,7 @@ class DataStoreTestCase(TestCase):
         self.assertEqual(len(platforms), 0)
 
         with self.store.session_scope() as session:
-            created_platform = self.store.get_platform(
+            self.store.get_platform(
                 "Test Platform",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
@@ -82,7 +83,9 @@ class DataStoreTestCase(TestCase):
         # there must be one entry
         with self.store.session_scope() as session:
             platforms = self.store.get_platforms()
-        self.assertEqual(len(platforms), 1)
+
+            self.assertEqual(len(platforms), 1)
+            self.assertEqual(platforms[0].name, "Test Platform")
 
     def test_present_platform_not_added(self):
         """Test whether present platform is not created"""
@@ -110,7 +113,9 @@ class DataStoreTestCase(TestCase):
         # there must be one entry
         with self.store.session_scope() as session:
             platforms = self.store.get_platforms()
-        self.assertEqual(len(platforms), 1)
+
+            self.assertEqual(len(platforms), 1)
+            self.assertEqual(platforms[0].name, "Test Platform")
 
     @unittest.skip("Skip until missing data resolver is implemented.")
     def test_missing_data_resolver_works_for_platform(self):
