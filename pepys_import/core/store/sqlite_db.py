@@ -4,6 +4,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DATE, DateTime
 from sqlalchemy.dialects.sqlite import DATETIME, TIMESTAMP, REAL
 
 from geoalchemy2 import Geography, Geometry
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from .db_base import base_sqlite as base
 from .db_status import TableTypes
@@ -139,9 +140,13 @@ class Datafiles(base):
     url = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    def create_state(self, sensor, timestamp):
-        state = States(sensor_id=sensor.sensor_id, time=timestamp,)
-        return state
+    @hybrid_property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, sensor, timestamp):
+        self._state = States(sensor_id=sensor.sensor_id, time=timestamp,)
 
     def create_contact(self, sensor, timestamp):
         contact = Contacts(sensor_id=sensor.sensor_id, time=timestamp,)
@@ -152,6 +157,12 @@ class Datafiles(base):
             time=timestamp, content=comment, comment_type_id=type.comment_type_id
         )
         return comment
+
+    def validate(self):
+        pass
+
+    def verify(self):
+        pass
 
 
 class Synonyms(base):
