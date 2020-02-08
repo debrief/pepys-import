@@ -34,11 +34,14 @@ class DBStatus:
 
     # print current stats, plus diff to supplied stats if passed
     def print_status(self, prev_status=None):
-        """Return a text summary of teh database status
+        """Return a text summary of the database status
         
         :param prev_status: A previous status, to compare to, defaults to None
         :type prev_status: DBStatus, optional
         """
+        if self.status is None:
+            raise Exception("Status is empty! Please call get_status() method first.")
+
         max_length = len(max(self.status, key=len)) + 1
         print("{:<{}} {:<4} {:<4}".format("Table", max_length, "Num", "Diff"))
         for table in self.status:
