@@ -99,6 +99,7 @@ class DataStore:
         self.platforms = {}
         self.sensor_types = {}
         self.sensors = {}
+        self.comment_types = {}
 
         # TEMP list of values for defaulted IDs, to be replaced by missing info lookup mechanism
         self.default_user_id = 1  # DevUser
@@ -1099,6 +1100,32 @@ class DataStore:
             .filter(self.db_classes.CommentTypes.name == name)
             .first()
         )
+
+    def add_to_comment_types(self, name):
+        # check in cache for comment type
+        if name in self.comment_types:
+            return self.comment_types[name]
+
+        # doesn't exist in cache, try to lookup in DB
+        comment_types = self.search_comment_type(name)
+        if comment_types:
+            # add to cache and return looked up platform type
+            self.comment_types[name] = comment_types
+            return comment_types
+
+        entry_id = self.add_to_entries(
+            self.db_classes.CommentTypes.table_type_id,
+            self.db_classes.CommentTypes.__tablename__,
+        )
+        # enough info to proceed and create entry
+        comment_type = self.db_classes.CommentTypes(comment_type_id=entry_id, name=name)
+        self.session.add(comment_type)
+        self.session.flush()
+
+        # add to cache and return created platform type
+        self.comment_types[name] = comment_type
+        # should return DB type or something else decoupled from DB?
+        return comment_type
 
     def create_comment(self, sensor, timestamp, comment, type):
         """
