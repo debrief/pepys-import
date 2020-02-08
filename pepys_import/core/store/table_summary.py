@@ -1,7 +1,12 @@
-# TODO: it doesn't return creation date of last item added.
 def table_summary(session, table_name):
     number_of_rows = session.query(table_name).count()
-    return number_of_rows
+    last_row = (
+        session.query(table_name).order_by(table_name.created_date.desc()).first()
+    )
+    created_date = "-"
+    if last_row:
+        created_date = str(last_row.created_date)
+    return number_of_rows, created_date
 
 
 # TODO: not implemented yet
