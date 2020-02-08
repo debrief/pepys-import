@@ -1,4 +1,15 @@
-from sqlalchemy import Column, Integer, String, Boolean, FetchedValue, DATE, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    FetchedValue,
+    DATE,
+    ForeignKey,
+    DateTime,
+)
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, DOUBLE_PRECISION
 
 from geoalchemy2 import Geometry
@@ -28,6 +39,7 @@ class TableType(base):
 
     table_type_id = Column(Integer, nullable=False, primary_key=True)
     name = Column(String(150))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 # Metadata Tables
@@ -49,6 +61,7 @@ class HostedBy(base):
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Sensors(base):
@@ -66,6 +79,7 @@ class Sensors(base):
     platform_id = Column(
         UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Platforms(base):
@@ -86,6 +100,7 @@ class Platforms(base):
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Tasks(base):
@@ -103,6 +118,7 @@ class Tasks(base):
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Participants(base):
@@ -122,6 +138,7 @@ class Participants(base):
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Datafiles(base):
@@ -141,6 +158,7 @@ class Datafiles(base):
     )
     reference = Column(String(150))
     url = Column(String(150))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Synonyms(base):
@@ -152,6 +170,7 @@ class Synonyms(base):
     synonym_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
     table = Column(String(150), nullable=False)
     synonym = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Changes(base):
@@ -164,6 +183,7 @@ class Changes(base):
     user = Column(String(150), nullable=False)
     modified = Column(DATE, nullable=False)
     reason = Column(String(500), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Logs(base):
@@ -178,6 +198,7 @@ class Logs(base):
     field = Column(String(150), nullable=False)
     new_value = Column(String(150), nullable=False)
     change_id = Column(UUID, nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Extractions(base):
@@ -190,6 +211,7 @@ class Extractions(base):
     table = Column(String(150), nullable=False)
     field = Column(String(150), nullable=False)
     chars = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Tags(base):
@@ -200,6 +222,7 @@ class Tags(base):
 
     tag_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class TaggedItems(base):
@@ -217,6 +240,7 @@ class TaggedItems(base):
     )
     private = Column(Boolean, nullable=False)
     tagged_on = Column(DATE, nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 # Reference Tables
@@ -229,6 +253,7 @@ class PlatformTypes(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Nationalities(base):
@@ -240,6 +265,7 @@ class Nationalities(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class GeometryTypes(base):
@@ -251,6 +277,7 @@ class GeometryTypes(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class GeometrySubTypes(base):
@@ -264,6 +291,7 @@ class GeometrySubTypes(base):
     name = Column(String(150), nullable=False)
     # parent = Column(UUID(as_uuid=True), ForeignKey("GeometryTypes.geometry_type_id"))
     parent = Column(UUID, nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Users(base):
@@ -275,6 +303,7 @@ class Users(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class UnitTypes(base):
@@ -286,6 +315,7 @@ class UnitTypes(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     units = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class ClassificationTypes(base):
@@ -297,6 +327,7 @@ class ClassificationTypes(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     class_type = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class ContactTypes(base):
@@ -308,6 +339,7 @@ class ContactTypes(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     contact_type = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class SensorTypes(base):
@@ -318,6 +350,7 @@ class SensorTypes(base):
     # TODO: server default doesn't work for sensor_type_id
     sensor_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Privacies(base):
@@ -329,6 +362,7 @@ class Privacies(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class DatafileTypes(base):
@@ -340,6 +374,7 @@ class DatafileTypes(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class MediaTypes(base):
@@ -351,6 +386,7 @@ class MediaTypes(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class CommentTypes(base):
@@ -362,6 +398,7 @@ class CommentTypes(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class CommodityTypes(base):
@@ -373,6 +410,7 @@ class CommodityTypes(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class ConfidenceLevels(base):
@@ -384,6 +422,7 @@ class ConfidenceLevels(base):
         UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
     )
     level = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 # Measurements Tables
@@ -407,6 +446,7 @@ class States(base):
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Contacts(base):
@@ -441,6 +481,7 @@ class Contacts(base):
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Activations(base):
@@ -465,6 +506,7 @@ class Activations(base):
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class LogsHoldings(base):
@@ -488,6 +530,7 @@ class LogsHoldings(base):
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Comments(base):
@@ -508,6 +551,7 @@ class Comments(base):
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Geometries(base):
@@ -539,6 +583,7 @@ class Geometries(base):
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Media(base):

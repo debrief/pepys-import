@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DATE
-from sqlalchemy.dialects.sqlite import DATETIME, TIMESTAMP
-from sqlalchemy.dialects.sqlite import REAL
+from datetime import datetime
+
+from sqlalchemy import Column, Integer, String, Boolean, DATE, DateTime
+from sqlalchemy.dialects.sqlite import DATETIME, TIMESTAMP, REAL
 
 from geoalchemy2 import Geography, Geometry
 
@@ -43,6 +44,7 @@ class HostedBy(base):
     hosted_from = Column(DATE, nullable=False)
     host_to = Column(DATE, nullable=False)
     privacy_id = Column(Integer, nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Sensors(base):
@@ -55,6 +57,7 @@ class Sensors(base):
     name = Column(String(150), nullable=False)
     sensor_type_id = Column(Integer, nullable=False)
     platform_id = Column(Integer, nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Platforms(base):
@@ -68,6 +71,7 @@ class Platforms(base):
     nationality_id = Column(Integer, nullable=False)
     platform_type_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer, nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Tasks(base):
@@ -84,6 +88,7 @@ class Tasks(base):
     environment = Column(String(150))
     location = Column(String(150))
     privacy_id = Column(Integer, nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Participants(base):
@@ -99,6 +104,7 @@ class Participants(base):
     end = Column(TIMESTAMP)
     force = Column(String(150))
     privacy_id = Column(Integer, nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Datafiles(base):
@@ -113,6 +119,7 @@ class Datafiles(base):
     datafile_type_id = Column(Integer, nullable=False)
     reference = Column(String(150))
     url = Column(String(150))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Synonyms(base):
@@ -124,6 +131,7 @@ class Synonyms(base):
     synonym_id = Column(Integer, primary_key=True)
     table = Column(String(150), nullable=False)
     synonym = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Changes(base):
@@ -136,6 +144,7 @@ class Changes(base):
     user = Column(String(150), nullable=False)
     modified = Column(DATE, nullable=False)
     reason = Column(String(500), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Logs(base):
@@ -150,6 +159,7 @@ class Logs(base):
     field = Column(String(150), nullable=False)
     new_value = Column(String(150), nullable=False)
     change_id = Column(Integer, nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Extractions(base):
@@ -162,6 +172,7 @@ class Extractions(base):
     table = Column(String(150), nullable=False)
     field = Column(String(150), nullable=False)
     chars = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Tags(base):
@@ -172,6 +183,7 @@ class Tags(base):
 
     tag_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class TaggedItems(base):
@@ -186,6 +198,7 @@ class TaggedItems(base):
     tagged_by_id = Column(Integer, nullable=False)
     private = Column(Boolean, nullable=False)
     tagged_on = Column(DATE, nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 # Reference Tables
@@ -197,6 +210,7 @@ class PlatformTypes(base):
 
     platform_type_id = Column(Integer, primary_key=True)
     name = Column(String(150))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Nationalities(base):
@@ -207,6 +221,7 @@ class Nationalities(base):
 
     nationality_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class GeometryTypes(base):
@@ -217,6 +232,7 @@ class GeometryTypes(base):
 
     geo_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class GeometrySubTypes(base):
@@ -228,6 +244,7 @@ class GeometrySubTypes(base):
     geo_sub_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
     parent = Column(Integer, nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Users(base):
@@ -238,6 +255,7 @@ class Users(base):
 
     user_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class UnitTypes(base):
@@ -248,6 +266,7 @@ class UnitTypes(base):
 
     unit_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class ClassificationTypes(base):
@@ -258,6 +277,7 @@ class ClassificationTypes(base):
 
     class_type_id = Column(Integer, primary_key=True)
     class_type = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class ContactTypes(base):
@@ -268,6 +288,7 @@ class ContactTypes(base):
 
     contact_type_id = Column(Integer, primary_key=True)
     contact_type = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class SensorTypes(base):
@@ -278,6 +299,7 @@ class SensorTypes(base):
 
     sensor_type_id = Column(Integer, primary_key=True)
     name = Column(String(150))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Privacies(base):
@@ -288,6 +310,7 @@ class Privacies(base):
 
     privacy_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class DatafileTypes(base):
@@ -298,6 +321,7 @@ class DatafileTypes(base):
 
     datafile_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class MediaTypes(base):
@@ -308,6 +332,7 @@ class MediaTypes(base):
 
     media_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class CommentTypes(base):
@@ -318,6 +343,7 @@ class CommentTypes(base):
 
     comment_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class CommodityTypes(base):
@@ -328,6 +354,7 @@ class CommodityTypes(base):
 
     commodity_type_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class ConfidenceLevels(base):
@@ -338,6 +365,7 @@ class ConfidenceLevels(base):
 
     confidence_level_id = Column(Integer, primary_key=True)
     level = Column(String(150), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 # Measurements Tables
@@ -356,6 +384,7 @@ class States(base):
     speed = Column(REAL)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Contacts(base):
@@ -383,6 +412,7 @@ class Contacts(base):
     subject_id = Column(Integer)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Activations(base):
@@ -402,6 +432,7 @@ class Activations(base):
     right_arc = Column(REAL)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class LogsHoldings(base):
@@ -419,6 +450,7 @@ class LogsHoldings(base):
     comment = Column(String(150), nullable=False)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Comments(base):
@@ -434,6 +466,7 @@ class Comments(base):
     content = Column(String(150), nullable=False)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Geometries(base):
@@ -456,6 +489,7 @@ class Geometries(base):
     sensor_platform_id = Column(Integer)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Media(base):
@@ -474,3 +508,4 @@ class Media(base):
     url = Column(String(150), nullable=False)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
+    created_date = Column(DateTime, default=datetime.utcnow)
