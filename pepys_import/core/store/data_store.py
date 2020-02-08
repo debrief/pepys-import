@@ -952,7 +952,7 @@ class DataStore:
         reference_tables = {}
         metadata_tables = {}
         measurement_tables = {}
-        headers = ["Table Name", "Number of rows"]
+        headers = ["Table name", "Number of rows", "Last item added"]
         if report_measurement:
             # Create measurement table list
             measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
@@ -962,7 +962,7 @@ class DataStore:
             print("\nMEASUREMENT TABLES", "\n")
             print(
                 tabulate(
-                    [(k, v) for k, v in measurement_tables.items()],
+                    [(k,) + v for k, v in measurement_tables.items()],
                     headers=headers,
                     tablefmt="pretty",
                 )
@@ -977,7 +977,7 @@ class DataStore:
             print("\nMETADATA TABLES", "\n")
             print(
                 tabulate(
-                    [(k, v) for k, v in metadata_tables.items()],
+                    [(k,) + v for k, v in metadata_tables.items()],
                     headers=headers,
                     tablefmt="pretty",
                 )
@@ -992,7 +992,7 @@ class DataStore:
             print("\nREFERENCE TABLES", "\n")
             print(
                 tabulate(
-                    [(k, v) for k, v in reference_tables.items()],
+                    [(k,) + v for k, v in reference_tables.items()],
                     headers=headers,
                     tablefmt="pretty",
                 )
