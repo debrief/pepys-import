@@ -140,8 +140,18 @@ class Datafiles(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
     def create_state(self, sensor, timestamp):
-        state = States(sensor_id=sensor, time=timestamp,)
+        state = States(sensor_id=sensor.sensor_id, time=timestamp,)
         return state
+
+    def create_contact(self, sensor, timestamp):
+        contact = Contacts(sensor_id=sensor.sensor_id, time=timestamp,)
+        return contact
+
+    def create_comment(self, sensor, timestamp, comment, type):
+        comment = Comments(
+            time=timestamp, content=comment, comment_type_id=type.comment_type_id
+        )
+        return comment
 
 
 class Synonyms(base):
@@ -423,6 +433,9 @@ class States(base):
     def set_speed(self, speed: quantity):
         self.speed = speed
 
+    def set_privacy(self, privacy_type):
+        self.privacy_id = privacy_type.privacy_id
+
 
 class Contacts(base):
     __tablename__ = "Contacts"
@@ -450,6 +463,18 @@ class Contacts(base):
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    def set_bearing(self, bearing):
+        self.bearing = bearing
+
+    def set_rel_bearing(self, rel_bearing):
+        self.rel_bearing = rel_bearing
+
+    def set_frequency(self, frequency):
+        self.freq = frequency
+
+    def set_privacy(self, privacy_type):
+        self.privacy_id = privacy_type.privacy_id
 
 
 class Activations(base):
@@ -504,6 +529,12 @@ class Comments(base):
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    def set_source(self, platform):
+        self.source_id = platform.platform_id
+
+    def set_privacy(self, privacy_type):
+        self.privacy_id = privacy_type.privacy_id
 
 
 class Geometries(base):
