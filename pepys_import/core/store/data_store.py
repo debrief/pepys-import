@@ -1045,6 +1045,8 @@ class DataStore:
     #############################################################
     # Measurements
 
+    # TODO:Not working yet. It has to be moved to datafile. i.e. datafile.create_state()
+    # instead of store.create_state()
     def create_state(self, sensor, timestamp):
         """
         Creates an intermediate State object representing a row in the State table.
@@ -1057,9 +1059,7 @@ class DataStore:
             A State object, to which other attributes can be added, prior to
             submission to the database.
         """
-        # TODO: the rest of fields will be returned by the missing data resolver.
-        # TODO: this method doesn't work now because datafile has to be passed.
-        state = State2(timestamp=timestamp, datafile="")
+        state = self.db_classes.States(timestamp=timestamp, datafile="")
         return state
 
     def create_contact(self, sensor, timestamp):
