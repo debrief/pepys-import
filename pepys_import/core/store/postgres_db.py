@@ -39,7 +39,6 @@ class TableType(base):
 
     table_type_id = Column(Integer, nullable=False, primary_key=True)
     name = Column(String(150))
-    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 # Metadata Tables
@@ -605,3 +604,4 @@ class Media(base):
         UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
+    created_date = Column(DateTime, default=datetime.utcnow)
