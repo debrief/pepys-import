@@ -31,6 +31,7 @@ class Entry(base):
     entry_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table_type_id = Column(Integer, nullable=False)
     created_user = Column(Integer)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class TableType(base):
@@ -39,6 +40,7 @@ class TableType(base):
 
     table_type_id = Column(Integer, nullable=False, primary_key=True)
     name = Column(String(150))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 # Metadata Tables
