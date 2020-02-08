@@ -1,6 +1,7 @@
 import unittest
 import os
 
+from datetime import datetime
 from pepys_import.core.store.data_store import DataStore
 from unittest import TestCase
 
@@ -165,20 +166,56 @@ class SensorTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
+        with self.store.session_scope() as session:
+            self.nationality = self.store.add_to_nationalities("test_nationality").name
+            self.platform_type = self.store.add_to_platform_types(
+                "test_platform_type"
+            ).name
+            self.privacy = self.store.add_to_privacies("test_privacy").name
+
+            self.platform = self.store.get_platform(
+                "Test Platform",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
 
     def tearDown(self):
         pass
 
-    # TODO: not implemented yet
+    # TODO: not working yet
     def test_new_sensor_added_successfully(self):
         """Test whether a new sensor is created"""
+        with self.store.session_scope() as session:
+            sensors = self.store.get_sensors()
 
-        pass
+        # there must be no entry at the beginning
+        self.assertEqual(len(sensors), 0)
+
+        self.platform.get_sensor(sensors, self.store.session, "gps")
+
+        # there must be one entry
+        with self.store.session_scope() as session:
+            sensors = self.store.get_sensors()
+        self.assertEqual(len(sensors), 1)
+        self.assertEqual(sensors[0].name, "gps")
 
     def test_present_sensor_not_added(self):
         """Test whether present sensor is not created"""
+        with self.store.session_scope() as session:
+            sensors = self.store.get_sensors()
 
-        pass
+        # there must be no entry at the beginning
+        self.assertEqual(len(sensors), 0)
+
+        self.platform.get_sensor(sensors, self.store.session, "gps")
+        self.platform.get_sensor(sensors, self.store.session, "gps")
+
+        # there must be one entry
+        with self.store.session_scope() as session:
+            sensors = self.store.get_sensors()
+
+        self.assertEqual(len(sensors), 1)
 
     @unittest.skip("Skip until missing data resolver is implemented.")
     def test_missing_data_resolver_works_for_sensor(self):
@@ -189,20 +226,57 @@ class MeasurementsTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
+        with self.store.session_scope() as session:
+            self.nationality = self.store.add_to_nationalities("test_nationality").name
+            self.platform_type = self.store.add_to_platform_types(
+                "test_platform_type"
+            ).name
+            self.privacy = self.store.add_to_privacies("test_privacy").name
+
+            self.platform = self.store.get_platform(
+                "Test Platform",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+            self.sensor = self.platform.get_sensor("gps")
+            self.file = self.store.get_datafile("test_file", "csv")
+            self.comment_type = self.store.add_to_comment_types("test_type").name
 
     def tearDown(self):
         pass
 
-    # TODO: not implemented yet
+    # TODO: not completed yet
     def test_new_state_added_successfully(self):
         """Test whether a new state is created"""
+        with self.store.session_scope() as session:
+            states = self.store.get_states()
 
-        pass
+        # there must be no entry at the beginning
+        self.assertEqual(len(states), 0)
+
+        self.file.create_state(self.sensor, datetime.utcnow, "Comment", self.co)
+
+        # there must be one entry
+        with self.store.session_scope() as session:
+            states = self.store.get_states()
+        self.assertEqual(len(states), 1)
 
     def test_present_state_not_added(self):
         """Test whether present state is not created"""
+        with self.store.session_scope() as session:
+            states = self.store.get_states()
 
-        pass
+        # there must be no entry at the beginning
+        self.assertEqual(len(states), 0)
+
+        self.file.create_state(self.sensor, "2020-01-01")
+        self.file.create_state(self.sensor, "2020-01-01")
+
+        # there must be one entry
+        with self.store.session_scope() as session:
+            states = self.store.get_states()
+        self.assertEqual(len(states), 1)
 
     @unittest.skip("Skip until missing data resolver is implemented.")
     def test_missing_data_resolver_works_for_state(self):
@@ -211,11 +285,34 @@ class MeasurementsTestCase(TestCase):
     def test_new_contact_added_successfully(self):
         """Test whether a new contact is created"""
 
-        pass
+        with self.store.session_scope() as session:
+            contacts = self.store.get_contacts()
+
+        # there must be no entry at the beginning
+        self.assertEqual(len(contacts), 0)
+
+        self.file.create_contact(self.sensor, datetime.utcnow)
+
+        # there must be one entry
+        with self.store.session_scope() as session:
+            contacts = self.store.get_contacts()
+        self.assertEqual(len(contacts), 1)
 
     def test_present_contact_not_added(self):
         """Test whether present contact is not created"""
+        with self.store.session_scope() as session:
+            contacts = self.store.get_contacts()
 
+        # there must be no entry at the beginning
+        self.assertEqual(len(contacts), 0)
+
+        self.file.create_contact(self.sensor, "2020-01-01")
+        self.file.create_contact(self.sensor, "2020-01-01")
+
+        # there must be one entry
+        with self.store.session_scope() as session:
+            contacts = self.store.get_contacts()
+        self.assertEqual(len(contacts), 1)
         pass
 
     @unittest.skip("Skip until missing data resolver is implemented.")
@@ -225,11 +322,40 @@ class MeasurementsTestCase(TestCase):
     def test_new_comment_added_successfully(self):
         """Test whether a new comment is created"""
 
-        pass
+        with self.store.session_scope() as session:
+            comments = self.store.get_comments()
+
+        # there must be no entry at the beginning
+        self.assertEqual(len(comments), 0)
+
+        self.file.create_comment(
+            self.sensor, datetime.utcnow, "Comment", self.comment_type
+        )
+
+        # there must be one entry
+        with self.store.session_scope() as session:
+            comments = self.store.get_comments()
+        self.assertEqual(len(comments), 1)
 
     def test_present_comment_not_added(self):
         """Test whether present comment is not created"""
+        with self.store.session_scope() as session:
+            comments = self.store.get_comments()
 
+        # there must be no entry at the beginning
+        self.assertEqual(len(comments), 0)
+
+        self.file.create_comment(
+            self.sensor, datetime.utcnow, "Comment", self.comment_type
+        )
+        self.file.create_comment(
+            self.sensor, datetime.utcnow, "Comment", self.comment_type
+        )
+
+        # there must be one entry
+        with self.store.session_scope() as session:
+            comments = self.store.get_comments()
+        self.assertEqual(len(comments), 1)
         pass
 
     @unittest.skip("Skip until missing data resolver is implemented.")
