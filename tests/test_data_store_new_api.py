@@ -197,7 +197,7 @@ class SensorTestCase(TestCase):
         # there must be no entry at the beginning
         self.assertEqual(len(sensors), 0)
 
-        self.platform.get_sensor(sensors, self.store.session, "gps")
+        self.platform.get_sensor("gps")
 
         # there must be one entry
         with self.store.session_scope() as session:
@@ -213,8 +213,8 @@ class SensorTestCase(TestCase):
         # there must be no entry at the beginning
         self.assertEqual(len(sensors), 0)
 
-        self.platform.get_sensor(sensors, self.store.session, "gps")
-        self.platform.get_sensor(sensors, self.store.session, "gps")
+        self.platform.get_sensor("gps")
+        self.platform.get_sensor("gps")
 
         # there must be one entry
         with self.store.session_scope() as session:

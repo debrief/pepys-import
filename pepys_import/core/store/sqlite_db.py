@@ -76,9 +76,7 @@ class Platforms(base):
     privacy_id = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    def get_sensor(
-        self, all_sensors, session, sensor_name, sensor_type=None, privacy=None
-    ):
+    def get_sensor(self, sensor_name, sensor_type=None, privacy=None):
         """
         Lookup or create a sensor of this name for this platform. Specified sensor
         will be added to the sensors table.
@@ -91,42 +89,7 @@ class Platforms(base):
             A Sensor object that can be passed to the add_state() function of Datafile.
         """
 
-        # return True if provided sensor exists
-        def check_sensor(name):
-            if len(name) == 0:
-                return False
-
-            if next((sensor for sensor in all_sensors if sensor.name == name), None):
-                # A sensor already exists with that name
-                return False
-
-            return True
-
-        if check_sensor(sensor_name):
-            entry_id = session.query(Sensors)(
-                Sensors.table_type_id, Sensors.__tablename__
-            )
-
-            sensor_obj = self.db_classes.Sensors(
-                sensor_id=entry_id,
-                name=name,
-                sensor_type_id=sensor_type.sensor_type_id,
-                platform_id=host.platform_id,
-            )
-            self.session.add(sensor_obj)
-            self.session.flush()
-
-            return sensor_obj
-
-            return self.add_to_sensors(
-                name=sensor_name,
-                sensor_type=sensor_type,
-                # privacy=privacy,
-            )
-        else:
-            return session.query(Sensors).filter(Sensors.name == sensor_name).first()
-
-        return
+    pass
 
 
 class Tasks(base):
