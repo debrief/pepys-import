@@ -823,15 +823,15 @@ class DataStore:
     #
     #     return True
     #
-    # #############################################################
-    # # Generic Metadata functions
-    #
-    # def get_table_type_data(self, table_types):
-    #     data = dict()
-    #     for table_type in table_types:
-    #         for table in self.meta_classes[table_type]:
-    #             data[table.__name__] = self.session.query(table).count()
-    #     return data
+    #############################################################
+    # Generic Metadata functions
+
+    def get_table_type_data(self, table_types):
+        data = dict()
+        for table_type in table_types:
+            for table in self.meta_classes[table_type]:
+                data[table.__name__] = self.session.query(table).count()
+        return data
 
     #############################################################
     # New methods
