@@ -16,6 +16,7 @@ TEST_FILE = os.path.join(TEST_DATA_PATH, "rep_test1.rep")
 BROKEN_FILE = os.path.join(TEST_DATA_PATH, "rep_test2.rep")
 
 
+@unittest.skip("Skip until parsers are implemented")
 class TestLoadReplay(TestCase):
     @unittest.skip("Skip until datafile parsers are implemented")
     def test_load_replay(self):
