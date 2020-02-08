@@ -30,8 +30,12 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         # Check tables are created but empty
         with self.store.session_scope() as session:
-            nationalities = self.store.get_nationalities()
-            platform_types = self.store.get_platform_types()
+            nationalities = self.store.session.query(
+                self.store.db_classes.Nationalities
+            ).all()
+            platform_types = self.store.session.query(
+                self.store.db_classes.PlatformTypes
+            ).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(nationalities), 0)
@@ -43,8 +47,12 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         # Check tables filled with correct data
         with self.store.session_scope() as session:
-            nationalities = self.store.get_nationalities()
-            platform_types = self.store.get_platform_types()
+            nationalities = self.store.session.query(
+                self.store.db_classes.Nationalities
+            ).all()
+            platform_types = self.store.session.query(
+                self.store.db_classes.PlatformTypes
+            ).all()
             nationality_object = self.store.search_nationality("UNITED KINGDOM")
             platform_type_object = self.store.search_platform_type("TYPE-1")
 
@@ -62,9 +70,9 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         # get all table values
         with self.store.session_scope() as session:
-            platforms = self.store.get_platforms()
-            datafiles = self.store.get_datafiles()
-            sensors = self.store.get_sensors()
+            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
+            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(platforms), 0)
@@ -76,9 +84,9 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
             self.store.populate_metadata(TEST_DATA_PATH)
 
         with self.store.session_scope() as session:
-            platforms = self.store.get_platforms()
-            datafiles = self.store.get_datafiles()
-            sensors = self.store.get_sensors()
+            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
+            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
 
             platform_object = self.store.search_platform("PLATFORM-1")
             datafile_object = self.store.search_datafile("DATAFILE-1")
@@ -143,7 +151,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         # get all table values
         with self.store.session_scope() as session:
-            states = self.store.get_states()
+            states = self.store.session.query(self.store.db_classes.States).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(states), 0)
@@ -154,7 +162,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         # Check tables filled with correct data
         with self.store.session_scope() as session:
-            states = self.store.get_states()
+            states = self.store.session.query(self.store.db_classes.States).all()
             first_state = self.store.session.query(self.store.db_classes.States).first()
 
             # Check whether they are not empty anymore and filled with correct data
@@ -231,8 +239,12 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         # Check tables are created but empty
         with self.store.session_scope() as session:
-            nationalities = self.store.get_nationalities()
-            platform_types = self.store.get_platform_types()
+            nationalities = self.store.session.query(
+                self.store.db_classes.Nationalities
+            ).all()
+            platform_types = self.store.session.query(
+                self.store.db_classes.PlatformTypes
+            ).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(nationalities), 0)
@@ -244,8 +256,12 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         # Check tables filled with correct data
         with self.store.session_scope() as session:
-            nationalities = self.store.get_nationalities()
-            platform_types = self.store.get_platform_types()
+            nationalities = self.store.session.query(
+                self.store.db_classes.Nationalities
+            ).all()
+            platform_types = self.store.session.query(
+                self.store.db_classes.PlatformTypes
+            ).all()
             nationality_object = self.store.search_nationality("UNITED KINGDOM")
             platform_type_object = self.store.search_platform_type("TYPE-1")
 
@@ -263,9 +279,9 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         # get all table values
         with self.store.session_scope() as session:
-            platforms = self.store.get_platforms()
-            datafiles = self.store.get_datafiles()
-            sensors = self.store.get_sensors()
+            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
+            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(platforms), 0)
@@ -277,9 +293,9 @@ class DataStorePopulatePostGISTestCase(TestCase):
             self.store.populate_metadata(TEST_DATA_PATH)
 
         with self.store.session_scope() as session:
-            platforms = self.store.get_platforms()
-            datafiles = self.store.get_datafiles()
-            sensors = self.store.get_sensors()
+            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
+            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
 
             platform_object = self.store.search_platform("PLATFORM-1")
             datafile_object = self.store.search_datafile("DATAFILE-1")
@@ -344,7 +360,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         # get all table values
         with self.store.session_scope() as session:
-            states = self.store.get_states()
+            states = self.store.session.query(self.store.db_classes.States).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(states), 0)
@@ -355,7 +371,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         # Check tables filled with correct data
         with self.store.session_scope() as session:
-            states = self.store.get_states()
+            states = self.store.session.query(self.store.db_classes.States).all()
             first_state = self.store.session.query(self.store.db_classes.States).first()
 
             # Check whether they are not empty anymore and filled with correct data

@@ -27,7 +27,7 @@ class DataStoreTestCase(TestCase):
         """Test whether a new datafile is created successfully or not"""
 
         with self.store.session_scope() as session:
-            datafiles = self.store.get_datafiles()
+            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(datafiles), 0)
@@ -37,7 +37,7 @@ class DataStoreTestCase(TestCase):
 
         # there must be one entry
         with self.store.session_scope() as session:
-            datafiles = self.store.get_datafiles()
+            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
             self.assertEqual(len(datafiles), 1)
             self.assertEqual(datafiles[0].reference, "test_file.csv")
 
@@ -45,7 +45,7 @@ class DataStoreTestCase(TestCase):
         """Test whether present datafile is not created"""
 
         with self.store.session_scope() as session:
-            datafiles = self.store.get_datafiles()
+            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(datafiles), 0)
@@ -55,7 +55,7 @@ class DataStoreTestCase(TestCase):
             self.store.get_datafile("test_file.csv", "csv")
 
             # there must be one entry
-            datafiles = self.store.get_datafiles()
+            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
             self.assertEqual(len(datafiles), 1)
             self.assertEqual(datafiles[0].reference, "test_file.csv")
 
@@ -67,7 +67,7 @@ class DataStoreTestCase(TestCase):
         """Test whether a new platform is created successfully or not"""
 
         with self.store.session_scope() as session:
-            platforms = self.store.get_platforms()
+            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(platforms), 0)
@@ -82,7 +82,7 @@ class DataStoreTestCase(TestCase):
 
         # there must be one entry
         with self.store.session_scope() as session:
-            platforms = self.store.get_platforms()
+            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
 
             self.assertEqual(len(platforms), 1)
             self.assertEqual(platforms[0].name, "Test Platform")
@@ -91,7 +91,7 @@ class DataStoreTestCase(TestCase):
         """Test whether present platform is not created"""
 
         with self.store.session_scope() as session:
-            platforms = self.store.get_platforms()
+            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(platforms), 0)
@@ -112,7 +112,7 @@ class DataStoreTestCase(TestCase):
 
         # there must be one entry
         with self.store.session_scope() as session:
-            platforms = self.store.get_platforms()
+            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
 
             self.assertEqual(len(platforms), 1)
             self.assertEqual(platforms[0].name, "Test Platform")
@@ -192,7 +192,7 @@ class SensorTestCase(TestCase):
     def test_new_sensor_added_successfully(self):
         """Test whether a new sensor is created"""
         with self.store.session_scope() as session:
-            sensors = self.store.get_sensors()
+            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(sensors), 0)
@@ -201,14 +201,14 @@ class SensorTestCase(TestCase):
 
         # there must be one entry
         with self.store.session_scope() as session:
-            sensors = self.store.get_sensors()
+            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
         self.assertEqual(len(sensors), 1)
         self.assertEqual(sensors[0].name, "gps")
 
     def test_present_sensor_not_added(self):
         """Test whether present sensor is not created"""
         with self.store.session_scope() as session:
-            sensors = self.store.get_sensors()
+            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(sensors), 0)
@@ -218,7 +218,7 @@ class SensorTestCase(TestCase):
 
         # there must be one entry
         with self.store.session_scope() as session:
-            sensors = self.store.get_sensors()
+            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
 
         self.assertEqual(len(sensors), 1)
 
@@ -255,7 +255,7 @@ class MeasurementsTestCase(TestCase):
     def test_new_intermediate_state_created_successfully(self):
         """Test whether a new state is created"""
         with self.store.session_scope() as session:
-            states = self.store.get_states()
+            states = self.store.session.query(self.store.db_classes.States).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(states), 0)
@@ -264,7 +264,7 @@ class MeasurementsTestCase(TestCase):
 
         # there must be no entry because it's kept in-memory
         with self.store.session_scope() as session:
-            states = self.store.get_states()
+            states = self.store.session.query(self.store.db_classes.States).all()
         self.assertEqual(len(states), 0)
 
         self.assertEqual(state.get_timestamp(), "2020-01-01")
@@ -272,7 +272,7 @@ class MeasurementsTestCase(TestCase):
         if self.file.validate():
             add_state(state)
             with self.store.session_scope() as session:
-                states = self.store.get_states()
+                states = self.store.session.query(self.store.db_classes.States).all()
             self.assertEqual(len(states), 1)
 
     @unittest.skip("Skip until missing data resolver is implemented.")
@@ -283,7 +283,7 @@ class MeasurementsTestCase(TestCase):
         """Test whether a new contact is created"""
 
         with self.store.session_scope() as session:
-            contacts = self.store.get_contacts()
+            contacts = self.store.session.query(self.store.db_classes.Contacts).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(contacts), 0)
@@ -292,13 +292,15 @@ class MeasurementsTestCase(TestCase):
 
         # there must be no entry because it's kept in-memory
         with self.store.session_scope() as session:
-            contacts = self.store.get_contacts()
+            contacts = self.store.session.query(self.store.db_classes.Contacts).all()
         self.assertEqual(len(contacts), 0)
 
         if self.file.validate():
             add_contact(contact)
             with self.store.session_scope() as session:
-                contacts = self.store.get_contacts()
+                contacts = self.store.session.query(
+                    self.store.db_classes.Contacts
+                ).all()
             self.assertEqual(len(contacts), 1)
 
     @unittest.skip("Skip until missing data resolver is implemented.")
@@ -309,7 +311,7 @@ class MeasurementsTestCase(TestCase):
         """Test whether a new comment is created"""
 
         with self.store.session_scope() as session:
-            comments = self.store.get_comments()
+            comments = self.store.session.query(self.store.db_classes.Comments).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(comments), 0)
@@ -320,14 +322,16 @@ class MeasurementsTestCase(TestCase):
 
         # there must be no entry because it's kept in-memory
         with self.store.session_scope() as session:
-            comments = self.store.get_comments()
+            comments = self.store.session.query(self.store.db_classes.Comments).all()
         self.assertEqual(len(comments), 0)
 
         comment.set_source(self.platform.platform_id)
         if self.file.validate():
             add_comment(comments)
             with self.store.session_scope() as session:
-                comments = self.store.get_comments()
+                comments = self.store.session.query(
+                    self.store.db_classes.Comments
+                ).all()
             self.assertEqual(len(comments), 1)
 
     @unittest.skip("Skip until missing data resolver is implemented.")
