@@ -1028,9 +1028,11 @@ class DataStore:
             return True
 
         if check_sensor(sensor_name):
+            platform = self.session.query(self.db_classes.Platforms).first()
             return self.add_to_sensors(
                 name=sensor_name,
                 sensor_type=sensor_type,
+                host=platform.platform_id
                 # privacy=privacy,
             )
         else:
@@ -1057,7 +1059,8 @@ class DataStore:
         """
         # TODO: the rest of fields will be returned by the missing data resolver.
         # TODO: this method doesn't work now because datafile has to be passed.
-        self.add_to_states(time=timestamp, sensor=sensor)
+        state = State2(timestamp=timestamp, datafile="")
+        return state
 
     def create_contact(self, sensor, timestamp):
         """
