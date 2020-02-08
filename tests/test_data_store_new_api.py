@@ -314,7 +314,7 @@ class MeasurementsTestCase(TestCase):
         # there must be no entry at the beginning
         self.assertEqual(len(comments), 0)
 
-        self.file.create_comment(
+        comment = self.file.create_comment(
             self.sensor, datetime.utcnow, "Comment", self.comment_type
         )
 
@@ -323,6 +323,7 @@ class MeasurementsTestCase(TestCase):
             comments = self.store.get_comments()
         self.assertEqual(len(comments), 0)
 
+        comment.set_source(self.platform.platform_id)
         if self.file.validate():
             add_comment(comments)
             with self.store.session_scope() as session:
