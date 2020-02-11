@@ -213,14 +213,20 @@ class SensorTestCase(TestCase):
         with self.store.session_scope() as session:
             sensors = self.store.session.query(self.store.db_classes.Sensors).all()
 
-        # there must be no entry at the beginning
-        self.assertEqual(len(sensors), 0)
+            # there must be no entry at the beginning
+            self.assertEqual(len(sensors), 0)
 
-        self.platform.get_sensor(self.store.session, sensors, "gps", self.sensor_type)
-        self.platform.get_sensor(self.store.session, sensors, "gps", self.sensor_type)
+            self.platform.get_sensor(
+                self.store.session, sensors, "gps", self.sensor_type
+            )
 
-        # there must be one entry
-        with self.store.session_scope() as session:
+            # query Sensors table again and try to add the same entity
+            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            self.platform.get_sensor(
+                self.store.session, sensors, "gps", self.sensor_type
+            )
+
+            # there must be one entry
             sensors = self.store.session.query(self.store.db_classes.Sensors).all()
 
         self.assertEqual(len(sensors), 1)
