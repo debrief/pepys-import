@@ -197,7 +197,7 @@ class DataStore:
     def populate_reference(self, reference_data_folder=None):
         """Import given CSV file to the given reference table"""
         if reference_data_folder is None:
-            reference_data_folder = os.path.join("..", "default_data")
+            reference_data_folder = os.path.join(DEFAULT_DATA_PATH)
 
         files = os.listdir(reference_data_folder)
 
@@ -233,7 +233,7 @@ class DataStore:
     def populate_metadata(self, sample_data_folder=None):
         """Import CSV files from the given folder to the related Metadata Tables"""
         if sample_data_folder is None:
-            sample_data_folder = os.path.join("..", "default_data")
+            sample_data_folder = os.path.join(DEFAULT_DATA_PATH)
 
         files = os.listdir(sample_data_folder)
 

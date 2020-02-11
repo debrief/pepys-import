@@ -43,7 +43,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         # Import CSVs to the related tables
         with self.store.session_scope() as session:
-            self.store.populate_reference(TEST_DATA_PATH)
+            self.store.populate_reference()
 
         # Check tables filled with correct data
         with self.store.session_scope() as session:
@@ -66,7 +66,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
     def test_populate_metadata(self):
         # reference tables must be filled first
         with self.store.session_scope() as session:
-            self.store.populate_reference(TEST_DATA_PATH)
+            self.store.populate_reference()
 
         # get all table values
         with self.store.session_scope() as session:
@@ -81,7 +81,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         # Import CSVs to the related tables
         with self.store.session_scope() as session:
-            self.store.populate_metadata(TEST_DATA_PATH)
+            self.store.populate_metadata()
 
         with self.store.session_scope() as session:
             platforms = self.store.session.query(self.store.db_classes.Platforms).all()
@@ -146,8 +146,8 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
     def test_populate_measurement(self):
         # reference and metadata tables must be filled first
         with self.store.session_scope() as session:
-            self.store.populate_reference(TEST_DATA_PATH)
-            self.store.populate_metadata(TEST_DATA_PATH)
+            self.store.populate_reference()
+            self.store.populate_metadata()
 
         # get all table values
         with self.store.session_scope() as session:
@@ -158,7 +158,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         # Import CSVs to the related tables
         with self.store.session_scope() as session:
-            self.store.populate_measurement(TEST_DATA_PATH)
+            self.store.populate_measurement()
 
         # Check tables filled with correct data
         with self.store.session_scope() as session:
@@ -252,7 +252,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         # Import CSVs to the related tables
         with self.store.session_scope() as session:
-            self.store.populate_reference(TEST_DATA_PATH)
+            self.store.populate_reference()
 
         # Check tables filled with correct data
         with self.store.session_scope() as session:
@@ -275,7 +275,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
     def test_populate_metadata(self):
         # reference tables must be filled first
         with self.store.session_scope() as session:
-            self.store.populate_reference(TEST_DATA_PATH)
+            self.store.populate_reference()
 
         # get all table values
         with self.store.session_scope() as session:
@@ -290,7 +290,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         # Import CSVs to the related tables
         with self.store.session_scope() as session:
-            self.store.populate_metadata(TEST_DATA_PATH)
+            self.store.populate_metadata()
 
         with self.store.session_scope() as session:
             platforms = self.store.session.query(self.store.db_classes.Platforms).all()
@@ -355,8 +355,8 @@ class DataStorePopulatePostGISTestCase(TestCase):
     def test_populate_measurement(self):
         # reference and metadata tables must be filled first
         with self.store.session_scope() as session:
-            self.store.populate_reference(TEST_DATA_PATH)
-            self.store.populate_metadata(TEST_DATA_PATH)
+            self.store.populate_reference()
+            self.store.populate_metadata()
 
         # get all table values
         with self.store.session_scope() as session:
@@ -367,7 +367,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         # Import CSVs to the related tables
         with self.store.session_scope() as session:
-            self.store.populate_measurement(TEST_DATA_PATH)
+            self.store.populate_measurement()
 
         # Check tables filled with correct data
         with self.store.session_scope() as session:
