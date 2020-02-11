@@ -19,20 +19,53 @@ def map_uuid_type(val):
 class Entry(base):
     __tablename__ = "Entry"
     table_type = TableTypes.METADATA
+    table_name = "Entry"
 
     entry_id = Column(Integer, primary_key=True)
     table_type_id = Column(Integer, nullable=False)
     created_user = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    @classmethod
+    def add_to_entries(cls, session, table_type_id, table_name):
+        # ensure table type exists to satisfy foreign key constraint
+        TableType().add_to_table_types(session, table_type_id, table_name)
+
+        # No cache for entries, just add new one when called
+        entry_obj = Entry(table_type_id=table_type_id, created_user=1)
+
+        session.add(entry_obj)
+        session.flush()
+
+        return entry_obj.entry_id
+
 
 class TableType(base):
     __tablename__ = "TableTypes"
     table_type = TableTypes.METADATA
+    table_name = "TableType"
 
     table_type_id = Column(Integer, nullable=False, primary_key=True)
     name = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    @classmethod
+    def search_table_type(cls, session, table_type_id):
+        # search for any table type with this id
+        return (
+            session.query(TableType)
+            .filter(TableType.table_type_id == table_type_id)
+            .first()
+        )
+
+    @classmethod
+    def add_to_table_types(cls, session, table_type_id, table_name):
+        # enough info to proceed and create entry
+        table_type = TableType(table_type_id=table_type_id, name=table_name)
+        session.add(table_type)
+        session.flush()
+
+        return table_type
 
 
 # Metadata Tables
@@ -63,6 +96,30 @@ class Sensors(base):
     platform_id = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    @classmethod
+    def add_to_sensors(cls, session, name, sensor_type, host):
+        sensor_type = SensorTypes().search_sensor_type(session, sensor_type)
+        host = Platforms().search_platform(session, host)
+
+        if sensor_type is None or host is None:
+            print(f"There is missing value(s) in '{sensor_type}, {host}'!")
+            return
+
+        entry_id = Entry().add_to_entries(
+            session, Sensors.table_type_id, Sensors.__tablename__
+        )
+
+        sensor_obj = Sensors(
+            sensor_id=entry_id,
+            name=name,
+            sensor_type_id=sensor_type.sensor_type_id,
+            platform_id=host.platform_id,
+        )
+        session.add(sensor_obj)
+        session.flush()
+
+        return sensor_obj
+
 
 class Platforms(base):
     __tablename__ = "Platforms"
@@ -77,7 +134,14 @@ class Platforms(base):
     privacy_id = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    def get_sensor(self, sensor_name, sensor_type=None, privacy=None):
+    @classmethod
+    def search_platform(cls, session, name):
+        # search for any platform with this name
+        return session.query(Platforms).filter(Platforms.name == name).first()
+
+    def get_sensor(
+        self, session, all_sensors, sensor_name, sensor_type=None, privacy=None
+    ):
         """
         Lookup or create a sensor of this name for this platform. Specified sensor
         will be added to the sensors table.
@@ -89,6 +153,30 @@ class Platforms(base):
         Returns:
             A Sensor object that can be passed to the add_state() function of Datafile.
         """
+
+        # return True if provided sensor exists
+        def check_sensor(name):
+            if len(name) == 0:
+                return False
+
+            if next((sensor for sensor in all_sensors if sensor.name == name), None):
+                # A sensor already exists with that name
+                return False
+
+            return True
+
+        if check_sensor(sensor_name):
+            platform = session.query(Platforms).first()
+            sensor_class = Sensors()
+            return sensor_class.add_to_sensors(
+                session=session,
+                name=sensor_name,
+                sensor_type=sensor_type,
+                host=platform.name
+                # privacy=privacy,
+            )
+        else:
+            return session.query(Sensors).filter(Sensors.name == sensor_name).first()
 
     pass
 
@@ -146,10 +234,10 @@ class Datafiles(base):
 
     @state.setter
     def state(self, sensor, timestamp):
-        self._state = States(sensor_id=sensor.sensor_id, time=timestamp,)
+        self._state = States(sensor_id=sensor.sensor_id, time=timestamp)
 
     def create_contact(self, sensor, timestamp):
-        contact = Contacts(sensor_id=sensor.sensor_id, time=timestamp,)
+        contact = Contacts(sensor_id=sensor.sensor_id, time=timestamp)
         return contact
 
     def create_comment(self, sensor, timestamp, comment, type):
@@ -343,6 +431,11 @@ class SensorTypes(base):
     sensor_type_id = Column(Integer, primary_key=True)
     name = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    @classmethod
+    def search_sensor_type(cls, session, name):
+        # search for any sensor type featuring this name
+        return session.query(SensorTypes).filter(SensorTypes.name == name).first()
 
 
 class Privacies(base):
