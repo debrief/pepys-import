@@ -137,35 +137,35 @@ class DataStoreStatusTestCase(TestCase):
     def test_get_status_of_measurement(self):
         """Test whether summary contents correct for measurement tables"""
 
-        # get_status returns dictionary for measurement, metadata, and reference tables
-        # respectively. Therefore, the first return is import in this case.
-        table_summary, _, _ = self.store.get_status(report_measurement=True)
-        self.assertNotEqual(table_summary, {})
-        self.assertIn("States", table_summary.keys())
-        self.assertIn("Contacts", table_summary.keys())
-        self.assertIn("Activations", table_summary.keys())
+        table_summary_object = self.store.get_status(report_measurement=True)
+        report = table_summary_object.report()
+
+        self.assertNotEqual(report, "")
+        self.assertIn("States", report)
+        self.assertIn("Contacts", report)
+        self.assertIn("Activations", report)
 
     def test_get_status_of_metadata(self):
         """Test whether summary contents correct for metadata tables"""
 
-        # get_status returns dictionary for measurement, metadata, and reference tables
-        # respectively. Therefore, the second return is import in this case
-        _, table_summary, _ = self.store.get_status(report_metadata=True)
-        self.assertNotEqual(table_summary, {})
-        self.assertIn("Sensors", table_summary.keys())
-        self.assertIn("Platforms", table_summary.keys())
-        self.assertIn("Datafiles", table_summary.keys())
+        table_summary_object = self.store.get_status(report_metadata=True)
+        report = table_summary_object.report()
+
+        self.assertNotEqual(report, "")
+        self.assertIn("Sensors", report)
+        self.assertIn("Platforms", report)
+        self.assertIn("Datafiles", report)
 
     def test_get_status_of_reference(self):
         """Test whether summary contents correct for reference tables"""
 
-        # get_status returns dictionary for measurement, metadata, and reference tables
-        # respectively. Therefore, the third return is import in this case.
-        _, _, table_summary = self.store.get_status(report_reference=True)
-        self.assertNotEqual(table_summary, {})
-        self.assertIn("Nationalities", table_summary.keys())
-        self.assertIn("Privacies", table_summary.keys())
-        self.assertIn("PlatformTypes", table_summary.keys())
+        table_summary_object = self.store.get_status(report_reference=True)
+        report = table_summary_object.report()
+
+        self.assertNotEqual(report, "")
+        self.assertIn("Nationalities", report)
+        self.assertIn("Privacies", report)
+        self.assertIn("PlatformTypes", report)
 
 
 # TODO: not working yet
