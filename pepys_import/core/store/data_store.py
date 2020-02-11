@@ -892,7 +892,7 @@ class DataStore:
             if next(
                 (sensor for sensor in self.get_sensors() if sensor.name == name), None
             ):
-                # A platform already exists with that name
+                # A sensor already exists with that name
                 return False
 
             return True

@@ -288,7 +288,7 @@ class MeasurementsTestCase(TestCase):
         # there must be no entry at the beginning
         self.assertEqual(len(contacts), 0)
 
-        self.file.create_contact(self.sensor, datetime.utcnow)
+        contact = self.file.create_contact(self.sensor, datetime.utcnow)
 
         # there must be no entry because it's kept in-memory
         with self.store.session_scope() as session:
@@ -327,7 +327,7 @@ class MeasurementsTestCase(TestCase):
 
         comment.set_source(self.platform.platform_id)
         if self.file.validate():
-            add_comment(comments)
+            add_comment(comment)
             with self.store.session_scope() as session:
                 comments = self.store.session.query(
                     self.store.db_classes.Comments
