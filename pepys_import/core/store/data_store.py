@@ -26,7 +26,7 @@ from pepys_import.utils.branding_util import (
     show_welcome_banner,
     show_software_meta_info,
 )
-from .table_summary import TableSummary
+from .table_summary import TableSummary, TableSummarySet
 
 MAIN_DIRECTORY_PATH = Path(__file__).parent.parent.parent  # pepys_import/pepys_import
 DEFAULT_DATA_PATH = os.path.join(MAIN_DIRECTORY_PATH, "database", "default_data")
@@ -845,60 +845,31 @@ class DataStore:
             A TableSummarySet.
         """
 
-        # TODO: change table_summary function with the class
-        reference_tables = {}
-        metadata_tables = {}
-        measurement_tables = {}
-        headers = ["Table name", "Number of rows", "Last item added"]
+        table_summaries = []
         if report_measurement:
             # Create measurement table list
             measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
             for table_object in list(measurement_table_objects):
-                name = table_object.__tablename__
                 ts = TableSummary(self.session, table_object)
-                measurement_tables[name] = (ts.number_of_rows, ts.created_date)
-            print("\nMEASUREMENT TABLES", "\n")
-            print(
-                tabulate(
-                    [(k,) + v for k, v in measurement_tables.items()],
-                    headers=headers,
-                    tablefmt="pretty",
-                )
-            )
+                table_summaries.append(ts)
 
         if report_metadata:
             # Create metadata table list
             metadata_table_objects = self.meta_classes[TableTypes.METADATA]
             for table_object in list(metadata_table_objects):
-                name = table_object.__tablename__
                 ts = TableSummary(self.session, table_object)
-                metadata_tables[name] = (ts.number_of_rows, ts.created_date)
-            print("\nMETADATA TABLES", "\n")
-            print(
-                tabulate(
-                    [(k,) + v for k, v in metadata_tables.items()],
-                    headers=headers,
-                    tablefmt="pretty",
-                )
-            )
+                table_summaries.append(ts)
 
         if report_reference:
             # Create reference table list
             reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
             for table_object in list(reference_table_objects):
-                name = table_object.__tablename__
                 ts = TableSummary(self.session, table_object)
-                reference_tables[name] = (ts.number_of_rows, ts.created_date)
-            print("\nREFERENCE TABLES", "\n")
-            print(
-                tabulate(
-                    [(k,) + v for k, v in reference_tables.items()],
-                    headers=headers,
-                    tablefmt="pretty",
-                )
-            )
+                table_summaries.append(ts)
 
-        return measurement_tables, metadata_tables, reference_tables
+        table_summaries_set = TableSummarySet(table_summaries)
+
+        return table_summaries_set
 
     def get_sensor(self, sensor_name, sensor_type=None, privacy=None):
         """
