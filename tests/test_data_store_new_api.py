@@ -122,6 +122,7 @@ class DataStoreTestCase(TestCase):
         pass
 
 
+# TODO: this tests will change because get_status has to return TableSummarySet
 class DataStoreStatusTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
