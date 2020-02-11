@@ -12,18 +12,19 @@ class TableSummary(object):
     :type table_name: String
     """
 
-    def __init__(self, session, table_name):
+    def __init__(self, session, table):
         self.session = session
-        self.table_name = table_name
+        self.table = table
+        self.table_name = self.table.table_name
         self.number_of_rows = None
         self.created_date = None
         self.table_summary()
 
     def table_summary(self):
-        number_of_rows = self.session.query(self.table_name).count()
+        number_of_rows = self.session.query(self.table).count()
         last_row = (
-            self.session.query(self.table_name)
-            .order_by(self.table_name.created_date.desc())
+            self.session.query(self.table)
+            .order_by(self.table.created_date.desc())
             .first()
         )
         created_date = "-"
@@ -59,16 +60,14 @@ class TableSummarySet(object):
         :return: String of HTML
         """
 
-        contents = []
-        for table in self.table_summaries:
-            content = tabulate(
-                [table.number_of_rows, table.created_date],
-                # headers=self.headers,
-                tablefmt="pretty",
-            )
-            contents.append(content)
-        print(contents)
-        return contents
+        return tabulate(
+            [
+                (table.table_name, table.number_of_rows, table.created_date)
+                for table in self.table_summaries
+            ],
+            headers=self.headers,
+            tablefmt="pretty",
+        )
 
     def compare_to(self, other: "TableSummarySet"):
         """Produce an HTML pretty-printed report of the contents of the summary.
