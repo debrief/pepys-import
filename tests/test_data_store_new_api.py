@@ -177,6 +177,7 @@ class SensorTestCase(TestCase):
             self.platform_type = self.store.add_to_platform_types(
                 "test_platform_type"
             ).name
+            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type").name
             self.privacy = self.store.add_to_privacies("test_privacy").name
 
             self.platform = self.store.get_platform(
@@ -194,16 +195,18 @@ class SensorTestCase(TestCase):
         with self.store.session_scope() as session:
             sensors = self.store.session.query(self.store.db_classes.Sensors).all()
 
-        # there must be no entry at the beginning
-        self.assertEqual(len(sensors), 0)
+            # there must be no entry at the beginning
+            self.assertEqual(len(sensors), 0)
 
-        self.platform.get_sensor("gps")
+            self.platform.get_sensor(
+                self.store.session, sensors, "gps", self.sensor_type
+            )
 
         # there must be one entry
         with self.store.session_scope() as session:
             sensors = self.store.session.query(self.store.db_classes.Sensors).all()
-        self.assertEqual(len(sensors), 1)
-        self.assertEqual(sensors[0].name, "gps")
+            self.assertEqual(len(sensors), 1)
+            self.assertEqual(sensors[0].name, "gps")
 
     def test_present_sensor_not_added(self):
         """Test whether present sensor is not created"""
@@ -213,8 +216,8 @@ class SensorTestCase(TestCase):
         # there must be no entry at the beginning
         self.assertEqual(len(sensors), 0)
 
-        self.platform.get_sensor("gps")
-        self.platform.get_sensor("gps")
+        self.platform.get_sensor(self.store.session, sensors, "gps", self.sensor_type)
+        self.platform.get_sensor(self.store.session, sensors, "gps", self.sensor_type)
 
         # there must be one entry
         with self.store.session_scope() as session:
