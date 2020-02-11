@@ -8,8 +8,8 @@ class TableSummary(object):
 
     :param session: Bounded session for querying table
     :type session: SQLAlchemy Session
-    :param table_name: Name of the table
-    :type table_name: String
+    :param table: SQLAlchemy Table object
+    :type table_name: SQLAlchemy Declarative Base
     """
 
     def __init__(self, session, table):
@@ -35,18 +35,21 @@ class TableSummary(object):
 
 
 # TODO: not implemented yet
-def table_delta(first_table, second_table):
+def table_delta(first_summary, second_summary):
     """
     A listing of changes between two TableSummarySet objects.
 
-    :param first_table: First TableSummarySet object
-    :param second_table: Second TableSummarySet object
+    :param first_summary: First TableSummarySet object
+    :param second_summary: Second TableSummarySet object
     :return: Change in number of rows
     """
-    pass
+    differences = []
+    for first, second in zip(first_summary, second_summary):
+        diff = first.number_of_rows - second.number_of_rows
+        differences.append(diff)
+    return differences
 
 
-# TODO: not implemented yet
 class TableSummarySet(object):
     """A collection of TableSummary elements."""
 
@@ -69,6 +72,7 @@ class TableSummarySet(object):
             tablefmt="pretty",
         )
 
+    # TODO: not completed yet
     def compare_to(self, other: "TableSummarySet"):
         """Produce an HTML pretty-printed report of the contents of the summary.
 
@@ -76,4 +80,5 @@ class TableSummarySet(object):
         :type other: TableSummarySet
         :return: An array of TableDelta items
         """
-        pass
+        diff = table_delta(self.table_summaries, other.table_summaries)
+        print(diff)
