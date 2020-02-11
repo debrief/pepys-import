@@ -167,7 +167,6 @@ class DataStoreStatusTestCase(TestCase):
         self.assertIn("PlatformTypes", report)
 
 
-# TODO: not working yet
 class SensorTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -236,7 +235,6 @@ class SensorTestCase(TestCase):
         pass
 
 
-# TODO: not working yet
 class MeasurementsTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -246,6 +244,7 @@ class MeasurementsTestCase(TestCase):
             self.platform_type = self.store.add_to_platform_types(
                 "test_platform_type"
             ).name
+            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type").name
             self.privacy = self.store.add_to_privacies("test_privacy").name
 
             self.platform = self.store.get_platform(
@@ -254,9 +253,18 @@ class MeasurementsTestCase(TestCase):
                 platform_type=self.platform_type,
                 privacy=self.privacy,
             )
-            self.sensor = self.platform.get_sensor("gps")
-            self.comment_type = self.store.add_to_comment_types("test_type").name
+            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            self.sensor = self.platform.get_sensor(
+                self.store.session, sensors, "gps", self.sensor_type
+            )
+            self.comment_type = self.store.add_to_comment_types("test_type")
             self.file = self.store.get_datafile("test_file", "csv")
+            self.current_time = datetime.utcnow()
+
+            self.store.session.expunge(self.sensor)
+            self.store.session.expunge(self.platform)
+            self.store.session.expunge(self.file)
+            self.store.session.expunge(self.comment_type)
 
     def tearDown(self):
         pass
@@ -266,21 +274,19 @@ class MeasurementsTestCase(TestCase):
         with self.store.session_scope() as session:
             states = self.store.session.query(self.store.db_classes.States).all()
 
-        # there must be no entry at the beginning
-        self.assertEqual(len(states), 0)
+            # there must be no entry at the beginning
+            self.assertEqual(len(states), 0)
 
-        state = self.file.create_state(self.sensor, "2020-01-01")
+            state = self.file.create_state(self.sensor, self.current_time)
 
-        # there must be no entry because it's kept in-memory
-        with self.store.session_scope() as session:
+            # there must be no entry because it's kept in-memory
             states = self.store.session.query(self.store.db_classes.States).all()
-        self.assertEqual(len(states), 0)
+            self.assertEqual(len(states), 0)
 
-        self.assertEqual(state.get_timestamp(), "2020-01-01")
+            self.assertEqual(state.time, self.current_time)
 
-        if self.file.validate():
-            add_state(state)
-            with self.store.session_scope() as session:
+            if self.file.validate():
+                state.submit(self.store.session)
                 states = self.store.session.query(self.store.db_classes.States).all()
             self.assertEqual(len(states), 1)
 
@@ -294,23 +300,23 @@ class MeasurementsTestCase(TestCase):
         with self.store.session_scope() as session:
             contacts = self.store.session.query(self.store.db_classes.Contacts).all()
 
-        # there must be no entry at the beginning
-        self.assertEqual(len(contacts), 0)
+            # there must be no entry at the beginning
+            self.assertEqual(len(contacts), 0)
 
-        contact = self.file.create_contact(self.sensor, datetime.utcnow)
+            contact = self.file.create_contact(self.sensor, self.current_time)
 
-        # there must be no entry because it's kept in-memory
-        with self.store.session_scope() as session:
+            # there must be no entry because it's kept in-memory
             contacts = self.store.session.query(self.store.db_classes.Contacts).all()
-        self.assertEqual(len(contacts), 0)
+            self.assertEqual(len(contacts), 0)
 
-        if self.file.validate():
-            add_contact(contact)
-            with self.store.session_scope() as session:
+            # Fill null constraint field
+            contact.set_name("TEST")
+            if self.file.validate():
+                contact.submit(self.store.session)
                 contacts = self.store.session.query(
                     self.store.db_classes.Contacts
                 ).all()
-            self.assertEqual(len(contacts), 1)
+                self.assertEqual(len(contacts), 1)
 
     @unittest.skip("Skip until missing data resolver is implemented.")
     def test_missing_data_resolver_works_for_contact(self):
@@ -322,26 +328,25 @@ class MeasurementsTestCase(TestCase):
         with self.store.session_scope() as session:
             comments = self.store.session.query(self.store.db_classes.Comments).all()
 
-        # there must be no entry at the beginning
-        self.assertEqual(len(comments), 0)
+            # there must be no entry at the beginning
+            self.assertEqual(len(comments), 0)
 
-        comment = self.file.create_comment(
-            self.sensor, datetime.utcnow, "Comment", self.comment_type
-        )
+            comment = self.file.create_comment(
+                self.sensor, self.current_time, "Comment", self.comment_type,
+            )
 
-        # there must be no entry because it's kept in-memory
-        with self.store.session_scope() as session:
+            # there must be no entry because it's kept in-memory
             comments = self.store.session.query(self.store.db_classes.Comments).all()
-        self.assertEqual(len(comments), 0)
+            self.assertEqual(len(comments), 0)
 
-        comment.set_source(self.platform.platform_id)
-        if self.file.validate():
-            add_comment(comment)
-            with self.store.session_scope() as session:
+            # Fill null constraint field
+            comment.set_source(self.platform)
+            if self.file.validate():
+                comment.submit(self.store.session)
                 comments = self.store.session.query(
                     self.store.db_classes.Comments
                 ).all()
-            self.assertEqual(len(comments), 1)
+                self.assertEqual(len(comments), 1)
 
     @unittest.skip("Skip until missing data resolver is implemented.")
     def test_missing_data_resolver_works_for_comment(self):

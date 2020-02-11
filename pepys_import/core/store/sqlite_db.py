@@ -179,8 +179,6 @@ class Platforms(BaseSpatiaLite):
         else:
             return session.query(Sensors).filter(Sensors.name == sensor_name).first()
 
-    pass
-
 
 class Tasks(BaseSpatiaLite):
     __tablename__ = "Tasks"
@@ -229,26 +227,29 @@ class Datafiles(BaseSpatiaLite):
     url = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    @hybrid_property
-    def state(self):
-        return self._state
-
-    @state.setter
-    def state(self, sensor, timestamp):
-        self._state = States(sensor_id=sensor.sensor_id, time=timestamp)
+    def create_state(self, sensor, timestamp):
+        state = States(
+            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
+        )
+        return state
 
     def create_contact(self, sensor, timestamp):
-        contact = Contacts(sensor_id=sensor.sensor_id, time=timestamp)
+        contact = Contacts(
+            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
+        )
         return contact
 
-    def create_comment(self, sensor, timestamp, comment, type):
+    def create_comment(self, sensor, timestamp, comment, comment_type):
         comment = Comments(
-            time=timestamp, content=comment, comment_type_id=type.comment_type_id
+            time=timestamp,
+            content=comment,
+            comment_type_id=comment_type.comment_type_id,
+            source_id=self.datafile_id,
         )
         return comment
 
     def validate(self):
-        pass
+        return True
 
     def verify(self):
         pass
@@ -513,7 +514,7 @@ class States(BaseSpatiaLite):
     table_name = "States"
 
     state_id = Column(Integer, primary_key=True)
-    time = Column(DATETIME, nullable=False)
+    time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(Integer, nullable=False)
     location = Column(Geometry(geometry_type="POINT", management=True))
     heading = Column(REAL)
@@ -540,6 +541,13 @@ class States(BaseSpatiaLite):
 
     def set_privacy(self, privacy_type):
         self.privacy_id = privacy_type.privacy_id
+
+    def submit(self, session):
+        """Submit intermediate object to the DB"""
+        session.add(self)
+        session.flush()
+
+        return self
 
 
 class Contacts(BaseSpatiaLite):
@@ -569,6 +577,9 @@ class Contacts(BaseSpatiaLite):
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    def set_name(self, name):
+        self.name = name
+
     def set_bearing(self, bearing):
         self.bearing = bearing
 
@@ -580,6 +591,13 @@ class Contacts(BaseSpatiaLite):
 
     def set_privacy(self, privacy_type):
         self.privacy_id = privacy_type.privacy_id
+
+    def submit(self, session):
+        """Submit intermediate object to the DB"""
+        session.add(self)
+        session.flush()
+
+        return self
 
 
 class Activations(BaseSpatiaLite):
@@ -640,6 +658,13 @@ class Comments(BaseSpatiaLite):
 
     def set_privacy(self, privacy_type):
         self.privacy_id = privacy_type.privacy_id
+
+    def submit(self, session):
+        """Submit intermediate object to the DB"""
+        session.add(self)
+        session.flush()
+
+        return self
 
 
 class Geometries(BaseSpatiaLite):
