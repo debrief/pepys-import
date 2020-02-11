@@ -252,7 +252,7 @@ class MeasurementsTestCase(TestCase):
     def tearDown(self):
         pass
 
-    def test_new_intermediate_state_created_successfully(self):
+    def test_new_state_created_successfully(self):
         """Test whether a new state is created"""
         with self.store.session_scope() as session:
             states = self.store.session.query(self.store.db_classes.States).all()
@@ -279,7 +279,7 @@ class MeasurementsTestCase(TestCase):
     def test_missing_data_resolver_works_for_state(self):
         pass
 
-    def test_new_intermediate_contact_created_successfully(self):
+    def test_new_contact_created_successfully(self):
         """Test whether a new contact is created"""
 
         with self.store.session_scope() as session:
@@ -307,7 +307,7 @@ class MeasurementsTestCase(TestCase):
     def test_missing_data_resolver_works_for_contact(self):
         pass
 
-    def test_new_intermediate_comment_created_successfully(self):
+    def test_new_comment_created_successfully(self):
         """Test whether a new comment is created"""
 
         with self.store.session_scope() as session:
