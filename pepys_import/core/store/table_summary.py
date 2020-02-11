@@ -17,6 +17,7 @@ class TableSummary(object):
         self.table_name = table_name
         self.number_of_rows = None
         self.created_date = None
+        self.table_summary()
 
     def table_summary(self):
         number_of_rows = self.session.query(self.table_name).count()
