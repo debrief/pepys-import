@@ -80,5 +80,4 @@ class TableSummarySet(object):
         :type other: TableSummarySet
         :return: An array of TableDelta items
         """
-        diff = table_delta(self.table_summaries, other.table_summaries)
-        print(diff)
+        return table_delta(self.table_summaries, other.table_summaries)
