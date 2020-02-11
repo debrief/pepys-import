@@ -11,11 +11,6 @@ from .db_status import TableTypes
 from pepys_import.core.formats import quantity
 
 
-def map_uuid_type(val):
-    # sql does not need to map to string
-    return val
-
-
 class Entry(BaseSpatiaLite):
     __tablename__ = "Entry"
     table_type = TableTypes.METADATA
@@ -104,8 +99,8 @@ class Sensors(BaseSpatiaLite):
         host = Platforms().search_platform(session, host)
 
         if sensor_type is None or host is None:
-            print(f"There is missing value(s) in '{sensor_type}, {host}'!")
-            return
+            text = f"There is missing value(s) in '{sensor_type}, {host}'!"
+            raise Exception(text)
 
         entry_id = Entry().add_to_entries(
             session, Sensors.table_type_id, Sensors.__tablename__
