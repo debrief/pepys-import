@@ -60,10 +60,12 @@ class TableType(base):
 
     @classmethod
     def add_to_table_types(cls, session, table_type_id, table_name):
-        # enough info to proceed and create entry
-        table_type = TableType(table_type_id=table_type_id, name=table_name)
-        session.add(table_type)
-        session.flush()
+        table_type = cls.search_table_type(session, table_type_id)
+        if table_type is None:
+            # enough info to proceed and create entry
+            table_type = TableType(table_type_id=table_type_id, name=table_name)
+            session.add(table_type)
+            session.flush()
 
         return table_type
 
@@ -167,8 +169,7 @@ class Platforms(base):
 
         if check_sensor(sensor_name):
             platform = session.query(Platforms).first()
-            sensor_class = Sensors()
-            return sensor_class.add_to_sensors(
+            return Sensors().add_to_sensors(
                 session=session,
                 name=sensor_name,
                 sensor_type=sensor_type,
