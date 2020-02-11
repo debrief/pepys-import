@@ -6,7 +6,7 @@ from sqlalchemy.dialects.sqlite import DATETIME, TIMESTAMP, REAL
 from geoalchemy2 import Geography, Geometry
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from .db_base import base_sqlite as base
+from .db_base import BaseSpatiaLite
 from .db_status import TableTypes
 from pepys_import.core.formats import quantity
 
@@ -16,7 +16,7 @@ def map_uuid_type(val):
     return val
 
 
-class Entry(base):
+class Entry(BaseSpatiaLite):
     __tablename__ = "Entry"
     table_type = TableTypes.METADATA
     table_name = "Entry"
@@ -40,7 +40,7 @@ class Entry(base):
         return entry_obj.entry_id
 
 
-class TableType(base):
+class TableType(BaseSpatiaLite):
     __tablename__ = "TableTypes"
     table_type = TableTypes.METADATA
     table_name = "TableType"
@@ -71,7 +71,7 @@ class TableType(base):
 
 
 # Metadata Tables
-class HostedBy(base):
+class HostedBy(BaseSpatiaLite):
     __tablename__ = "HostedBy"
     table_type = TableTypes.METADATA
     table_type_id = 1
@@ -86,7 +86,7 @@ class HostedBy(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Sensors(base):
+class Sensors(BaseSpatiaLite):
     __tablename__ = "Sensors"
     table_type = TableTypes.METADATA
     table_type_id = 2
@@ -123,7 +123,7 @@ class Sensors(base):
         return sensor_obj
 
 
-class Platforms(base):
+class Platforms(BaseSpatiaLite):
     __tablename__ = "Platforms"
     table_type = TableTypes.METADATA
     table_type_id = 3
@@ -182,7 +182,7 @@ class Platforms(base):
     pass
 
 
-class Tasks(base):
+class Tasks(BaseSpatiaLite):
     __tablename__ = "Tasks"
     table_type = TableTypes.METADATA
     table_type_id = 4
@@ -199,7 +199,7 @@ class Tasks(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Participants(base):
+class Participants(BaseSpatiaLite):
     __tablename__ = "Participants"
     table_type = TableTypes.METADATA
     table_type_id = 5
@@ -215,7 +215,7 @@ class Participants(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Datafiles(base):
+class Datafiles(BaseSpatiaLite):
     __tablename__ = "Datafiles"
     table_type = TableTypes.METADATA
     table_type_id = 6
@@ -254,7 +254,7 @@ class Datafiles(base):
         pass
 
 
-class Synonyms(base):
+class Synonyms(BaseSpatiaLite):
     __tablename__ = "Synonyms"
     table_type = TableTypes.METADATA
     table_type_id = 7
@@ -266,7 +266,7 @@ class Synonyms(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Changes(base):
+class Changes(BaseSpatiaLite):
     __tablename__ = "Changes"
     table_type = TableTypes.METADATA
     table_type_id = 8
@@ -279,7 +279,7 @@ class Changes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Logs(base):
+class Logs(BaseSpatiaLite):
     __tablename__ = "Logs"
     table_type = TableTypes.METADATA
     table_type_id = 9
@@ -294,7 +294,7 @@ class Logs(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Extractions(base):
+class Extractions(BaseSpatiaLite):
     __tablename__ = "Extractions"
     table_type = TableTypes.METADATA
     table_type_id = 10
@@ -307,7 +307,7 @@ class Extractions(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Tags(base):
+class Tags(BaseSpatiaLite):
     __tablename__ = "Tags"
     table_type = TableTypes.METADATA
     table_type_id = 11
@@ -318,7 +318,7 @@ class Tags(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class TaggedItems(base):
+class TaggedItems(BaseSpatiaLite):
     __tablename__ = "TaggedItems"
     table_type = TableTypes.METADATA
     table_type_id = 12
@@ -334,7 +334,7 @@ class TaggedItems(base):
 
 
 # Reference Tables
-class PlatformTypes(base):
+class PlatformTypes(BaseSpatiaLite):
     __tablename__ = "PlatformTypes"
     table_type = TableTypes.REFERENCE
     table_name = "PlatformTypes"
@@ -345,7 +345,7 @@ class PlatformTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Nationalities(base):
+class Nationalities(BaseSpatiaLite):
     __tablename__ = "Nationalities"
     table_type = TableTypes.REFERENCE
     table_name = "Nationalities"
@@ -356,7 +356,7 @@ class Nationalities(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class GeometryTypes(base):
+class GeometryTypes(BaseSpatiaLite):
     __tablename__ = "GeometryTypes"
     table_type = TableTypes.REFERENCE
     table_name = "GeometryTypes"
@@ -367,7 +367,7 @@ class GeometryTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class GeometrySubTypes(base):
+class GeometrySubTypes(BaseSpatiaLite):
     __tablename__ = "GeometrySubTypes"
     table_type = TableTypes.REFERENCE
     table_name = "GeometrySubTypes"
@@ -379,7 +379,7 @@ class GeometrySubTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Users(base):
+class Users(BaseSpatiaLite):
     __tablename__ = "Users"
     table_type = TableTypes.REFERENCE
     table_name = "Users"
@@ -390,7 +390,7 @@ class Users(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class UnitTypes(base):
+class UnitTypes(BaseSpatiaLite):
     __tablename__ = "UnitTypes"
     table_type = TableTypes.REFERENCE
     table_name = "UnitTypes"
@@ -401,7 +401,7 @@ class UnitTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ClassificationTypes(base):
+class ClassificationTypes(BaseSpatiaLite):
     __tablename__ = "ClassificationTypes"
     table_type = TableTypes.REFERENCE
     table_name = "ClassificationTypes"
@@ -412,7 +412,7 @@ class ClassificationTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ContactTypes(base):
+class ContactTypes(BaseSpatiaLite):
     __tablename__ = "ContactTypes"
     table_type = TableTypes.REFERENCE
     table_name = "ContactTypes"
@@ -423,7 +423,7 @@ class ContactTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class SensorTypes(base):
+class SensorTypes(BaseSpatiaLite):
     __tablename__ = "SensorTypes"
     table_type = TableTypes.REFERENCE
     table_name = "SensorTypes"
@@ -439,7 +439,7 @@ class SensorTypes(base):
         return session.query(SensorTypes).filter(SensorTypes.name == name).first()
 
 
-class Privacies(base):
+class Privacies(BaseSpatiaLite):
     __tablename__ = "Privacies"
     table_type = TableTypes.REFERENCE
     table_name = "Privacies"
@@ -450,7 +450,7 @@ class Privacies(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class DatafileTypes(base):
+class DatafileTypes(BaseSpatiaLite):
     __tablename__ = "DatafileTypes"
     table_type = TableTypes.REFERENCE
     table_name = "DatafileTypes"
@@ -461,7 +461,7 @@ class DatafileTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class MediaTypes(base):
+class MediaTypes(BaseSpatiaLite):
     __tablename__ = "MediaTypes"
     table_type = TableTypes.REFERENCE
     table_name = "MediaTypes"
@@ -472,7 +472,7 @@ class MediaTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class CommentTypes(base):
+class CommentTypes(BaseSpatiaLite):
     __tablename__ = "CommentTypes"
     table_type = TableTypes.REFERENCE
     table_name = "CommentTypes"
@@ -483,7 +483,7 @@ class CommentTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class CommodityTypes(base):
+class CommodityTypes(BaseSpatiaLite):
     __tablename__ = "CommodityTypes"
     table_type = TableTypes.REFERENCE
     table_name = "CommodityTypes"
@@ -494,7 +494,7 @@ class CommodityTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ConfidenceLevels(base):
+class ConfidenceLevels(BaseSpatiaLite):
     __tablename__ = "ConfidenceLevels"
     table_type = TableTypes.REFERENCE
     table_name = "ConfidenceLevels"
@@ -506,7 +506,7 @@ class ConfidenceLevels(base):
 
 
 # Measurements Tables
-class States(base):
+class States(BaseSpatiaLite):
     __tablename__ = "States"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
@@ -542,7 +542,7 @@ class States(base):
         self.privacy_id = privacy_type.privacy_id
 
 
-class Contacts(base):
+class Contacts(BaseSpatiaLite):
     __tablename__ = "Contacts"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
@@ -582,7 +582,7 @@ class Contacts(base):
         self.privacy_id = privacy_type.privacy_id
 
 
-class Activations(base):
+class Activations(BaseSpatiaLite):
     __tablename__ = "Activations"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 30
@@ -602,7 +602,7 @@ class Activations(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class LogsHoldings(base):
+class LogsHoldings(BaseSpatiaLite):
     __tablename__ = "LogsHoldings"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 31
@@ -620,7 +620,7 @@ class LogsHoldings(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Comments(base):
+class Comments(BaseSpatiaLite):
     __tablename__ = "Comments"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 32
@@ -642,7 +642,7 @@ class Comments(base):
         self.privacy_id = privacy_type.privacy_id
 
 
-class Geometries(base):
+class Geometries(BaseSpatiaLite):
     __tablename__ = "Geometries"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 33
@@ -665,7 +665,7 @@ class Geometries(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Media(base):
+class Media(BaseSpatiaLite):
     __tablename__ = "Media"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34

@@ -7,7 +7,7 @@ from testing.postgresql import Postgresql
 from sqlalchemy import inspect, event
 from unittest import TestCase
 
-from pepys_import.core.store.db_base import base_postgres
+from pepys_import.core.store.db_base import BasePostGIS
 
 
 class DataStoreInitialisePostGISTestCase(TestCase):
@@ -27,7 +27,7 @@ class DataStoreInitialisePostGISTestCase(TestCase):
     def tearDown(self):
         try:
             event.listen(
-                base_postgres.metadata, "before_create", DropSchema("datastore_schema"),
+                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema"),
             )
             self.store.stop()
         except AttributeError:

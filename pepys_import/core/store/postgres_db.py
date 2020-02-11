@@ -14,7 +14,7 @@ from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, DOUBLE_PRECISION
 
 from geoalchemy2 import Geometry
 
-from .db_base import base_postgres as base
+from .db_base import BasePostGIS
 from .db_status import TableTypes
 from uuid import uuid4
 
@@ -24,7 +24,7 @@ def map_uuid_type(val):
     return str(val)
 
 
-class Entry(base):
+class Entry(BasePostGIS):
     __tablename__ = "Entry"
     table_type = TableTypes.METADATA
 
@@ -34,7 +34,7 @@ class Entry(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class TableType(base):
+class TableType(BasePostGIS):
     __tablename__ = "TableTypes"
     table_type = TableTypes.METADATA
 
@@ -44,7 +44,7 @@ class TableType(base):
 
 
 # Metadata Tables
-class HostedBy(base):
+class HostedBy(BasePostGIS):
     __tablename__ = "HostedBy"
     table_type = TableTypes.METADATA
     table_type_id = 1
@@ -65,7 +65,7 @@ class HostedBy(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Sensors(base):
+class Sensors(BasePostGIS):
     __tablename__ = "Sensors"
     table_type = TableTypes.METADATA
     table_type_id = 2
@@ -83,7 +83,7 @@ class Sensors(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Platforms(base):
+class Platforms(BasePostGIS):
     __tablename__ = "Platforms"
     table_type = TableTypes.METADATA
     table_type_id = 3
@@ -104,7 +104,7 @@ class Platforms(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Tasks(base):
+class Tasks(BasePostGIS):
     __tablename__ = "Tasks"
     table_type = TableTypes.METADATA
     table_type_id = 4
@@ -122,7 +122,7 @@ class Tasks(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Participants(base):
+class Participants(BasePostGIS):
     __tablename__ = "Participants"
     table_type = TableTypes.METADATA
     table_type_id = 5
@@ -142,7 +142,7 @@ class Participants(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Datafiles(base):
+class Datafiles(BasePostGIS):
     __tablename__ = "Datafiles"
     table_type = TableTypes.METADATA
     table_type_id = 6  # Only needed for tables referenced by Entry table
@@ -162,7 +162,7 @@ class Datafiles(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Synonyms(base):
+class Synonyms(BasePostGIS):
     __tablename__ = "Synonyms"
     table_type = TableTypes.METADATA
     table_type_id = 7
@@ -174,7 +174,7 @@ class Synonyms(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Changes(base):
+class Changes(BasePostGIS):
     __tablename__ = "Changes"
     table_type = TableTypes.METADATA
     table_type_id = 8
@@ -187,7 +187,7 @@ class Changes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Logs(base):
+class Logs(BasePostGIS):
     __tablename__ = "Logs"
     table_type = TableTypes.METADATA
     table_type_id = 9
@@ -202,7 +202,7 @@ class Logs(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Extractions(base):
+class Extractions(BasePostGIS):
     __tablename__ = "Extractions"
     table_type = TableTypes.METADATA
     table_type_id = 10
@@ -215,7 +215,7 @@ class Extractions(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Tags(base):
+class Tags(BasePostGIS):
     __tablename__ = "Tags"
     table_type = TableTypes.METADATA
     table_type_id = 11
@@ -226,7 +226,7 @@ class Tags(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class TaggedItems(base):
+class TaggedItems(BasePostGIS):
     __tablename__ = "TaggedItems"
     table_type = TableTypes.METADATA
     table_type_id = 12
@@ -245,7 +245,7 @@ class TaggedItems(base):
 
 
 # Reference Tables
-class PlatformTypes(base):
+class PlatformTypes(BasePostGIS):
     __tablename__ = "PlatformTypes"
     table_type = TableTypes.REFERENCE
     table_type_id = 13
@@ -257,7 +257,7 @@ class PlatformTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Nationalities(base):
+class Nationalities(BasePostGIS):
     __tablename__ = "Nationalities"
     table_type = TableTypes.REFERENCE
     table_type_id = 14
@@ -269,7 +269,7 @@ class Nationalities(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class GeometryTypes(base):
+class GeometryTypes(BasePostGIS):
     __tablename__ = "GeometryTypes"
     table_type = TableTypes.REFERENCE
     table_type_id = 15
@@ -281,7 +281,7 @@ class GeometryTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class GeometrySubTypes(base):
+class GeometrySubTypes(BasePostGIS):
     __tablename__ = "GeometrySubTypes"
     table_type = TableTypes.REFERENCE
     table_type_id = 16
@@ -295,7 +295,7 @@ class GeometrySubTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Users(base):
+class Users(BasePostGIS):
     __tablename__ = "Users"
     table_type = TableTypes.REFERENCE
     table_type_id = 17
@@ -307,7 +307,7 @@ class Users(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class UnitTypes(base):
+class UnitTypes(BasePostGIS):
     __tablename__ = "UnitTypes"
     table_type = TableTypes.REFERENCE
     table_type_id = 18
@@ -319,7 +319,7 @@ class UnitTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ClassificationTypes(base):
+class ClassificationTypes(BasePostGIS):
     __tablename__ = "ClassificationTypes"
     table_type = TableTypes.REFERENCE
     table_type_id = 19
@@ -331,7 +331,7 @@ class ClassificationTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ContactTypes(base):
+class ContactTypes(BasePostGIS):
     __tablename__ = "ContactTypes"
     table_type = TableTypes.REFERENCE
     table_type_id = 20
@@ -343,7 +343,7 @@ class ContactTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class SensorTypes(base):
+class SensorTypes(BasePostGIS):
     __tablename__ = "SensorTypes"
     table_type = TableTypes.REFERENCE
     table_type_id = 21
@@ -354,7 +354,7 @@ class SensorTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Privacies(base):
+class Privacies(BasePostGIS):
     __tablename__ = "Privacies"
     table_type = TableTypes.REFERENCE
     table_type_id = 22
@@ -366,7 +366,7 @@ class Privacies(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class DatafileTypes(base):
+class DatafileTypes(BasePostGIS):
     __tablename__ = "DatafileTypes"
     table_type = TableTypes.REFERENCE
     table_type_id = 23
@@ -378,7 +378,7 @@ class DatafileTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class MediaTypes(base):
+class MediaTypes(BasePostGIS):
     __tablename__ = "MediaTypes"
     table_type = TableTypes.REFERENCE
     table_type_id = 24
@@ -390,7 +390,7 @@ class MediaTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class CommentTypes(base):
+class CommentTypes(BasePostGIS):
     __tablename__ = "CommentTypes"
     table_type = TableTypes.REFERENCE
     table_type_id = 25
@@ -402,7 +402,7 @@ class CommentTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class CommodityTypes(base):
+class CommodityTypes(BasePostGIS):
     __tablename__ = "CommodityTypes"
     table_type = TableTypes.REFERENCE
     table_type_id = 26
@@ -414,7 +414,7 @@ class CommodityTypes(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ConfidenceLevels(base):
+class ConfidenceLevels(BasePostGIS):
     __tablename__ = "ConfidenceLevels"
     table_type = TableTypes.REFERENCE
     table_type_id = 27  # Only needed for tables referenced by Entry table
@@ -427,7 +427,7 @@ class ConfidenceLevels(base):
 
 
 # Measurements Tables
-class States(base):
+class States(BasePostGIS):
     __tablename__ = "States"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
@@ -450,7 +450,7 @@ class States(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Contacts(base):
+class Contacts(BasePostGIS):
     __tablename__ = "Contacts"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
@@ -485,7 +485,7 @@ class Contacts(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Activations(base):
+class Activations(BasePostGIS):
     __tablename__ = "Activations"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 30
@@ -510,7 +510,7 @@ class Activations(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class LogsHoldings(base):
+class LogsHoldings(BasePostGIS):
     __tablename__ = "LogsHoldings"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 31
@@ -534,7 +534,7 @@ class LogsHoldings(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Comments(base):
+class Comments(BasePostGIS):
     __tablename__ = "Comments"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 32
@@ -555,7 +555,7 @@ class Comments(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Geometries(base):
+class Geometries(BasePostGIS):
     __tablename__ = "Geometries"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 33
@@ -587,7 +587,7 @@ class Geometries(base):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Media(base):
+class Media(BasePostGIS):
     __tablename__ = "Media"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34

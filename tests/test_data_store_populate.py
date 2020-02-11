@@ -10,7 +10,7 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy import event
 
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.core.store.db_base import base_postgres
+from pepys_import.core.store.db_base import BasePostGIS
 
 
 FILE_PATH = os.path.dirname(__file__)
@@ -228,7 +228,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
     def tearDown(self) -> None:
         try:
             event.listen(
-                base_postgres.metadata, "before_create", DropSchema("datastore_schema")
+                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
             )
             self.postgres.stop()
         except AttributeError:

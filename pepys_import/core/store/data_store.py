@@ -16,7 +16,7 @@ from contextlib import contextmanager
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
-from .db_base import base_postgres, base_sqlite
+from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.state2 import State2
@@ -80,10 +80,10 @@ class DataStore:
         self.engine = create_engine(connection_string, echo=False)
 
         if db_type == "postgres":
-            base_postgres.metadata.bind = self.engine
+            BasePostGIS.metadata.bind = self.engine
         elif db_type == "sqlite":
             listen(self.engine, "connect", load_spatialite)
-            base_sqlite.metadata.bind = self.engine
+            BaseSpatiaLite.metadata.bind = self.engine
 
         self.missing_data_resolver = missing_data_resolver
         self.show_welcome = show_welcome
@@ -128,7 +128,7 @@ class DataStore:
                 with self.engine.connect() as conn:
                     conn.execute(select([func.InitSpatialMetaData()]))
                 # Attempt to create schema if not present, to cope with fresh DB file
-                base_sqlite.metadata.create_all(self.engine)
+                BaseSpatiaLite.metadata.create_all(self.engine)
             except OperationalError:
                 print(
                     "Error creating database schema, possible invalid path? ('"
@@ -143,11 +143,11 @@ class DataStore:
                     conn.execute("CREATE EXTENSION postgis;")
                 #  ensure that create schema scripts created before create table scripts
                 event.listen(
-                    base_postgres.metadata,
+                    BasePostGIS.metadata,
                     "before_create",
                     CreateSchema("datastore_schema"),
                 )
-                base_postgres.metadata.create_all(self.engine)
+                BasePostGIS.metadata.create_all(self.engine)
             except OperationalError:
                 print(f"Error creating database({self.db_name})! Quitting")
                 exit()
@@ -183,7 +183,7 @@ class DataStore:
                 (name, cls)
                 for name, cls in self.db_classes.__dict__.items()
                 if isinstance(cls, type)
-                and (issubclass(cls, base_postgres) or issubclass(cls, base_sqlite))
+                and (issubclass(cls, BasePostGIS) or issubclass(cls, BaseSpatiaLite))
                 and cls.__name__ != "Base"
             ]
         )
