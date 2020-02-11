@@ -26,7 +26,7 @@ from pepys_import.utils.branding_util import (
     show_welcome_banner,
     show_software_meta_info,
 )
-from .table_summary import table_summary
+from .table_summary import TableSummary
 
 MAIN_DIRECTORY_PATH = Path(__file__).parent.parent.parent  # pepys_import/pepys_import
 DEFAULT_DATA_PATH = os.path.join(MAIN_DIRECTORY_PATH, "database", "default_data")
@@ -845,6 +845,7 @@ class DataStore:
             A TableSummarySet.
         """
 
+        # TODO: change table_summary function with the class
         reference_tables = {}
         metadata_tables = {}
         measurement_tables = {}
