@@ -71,7 +71,6 @@ class TableSummarySet(object):
             tablefmt="pretty",
         )
 
-    # TODO: not completed yet
     def compare_to(self, other: "TableSummarySet"):
         """Produce an HTML pretty-printed report of the contents of the summary.
 
