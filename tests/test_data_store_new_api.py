@@ -240,6 +240,17 @@ class SensorTestCase(TestCase):
 
             self.platform.get_sensor(self.store.session, sensors, "gps")
 
+    @unittest.expectedFailure
+    def test_empty_sensor_name(self):
+        """Test whether a new sensor with empty name is created"""
+        with self.store.session_scope() as session:
+            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+
+            # there must be no entry at the beginning
+            self.assertEqual(len(sensors), 0)
+
+            self.platform.get_sensor(self.store.session, sensors, "", self.sensor_type)
+
     @unittest.skip("Skip until missing data resolver is implemented.")
     def test_missing_data_resolver_works_for_sensor(self):
         pass

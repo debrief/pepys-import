@@ -136,9 +136,8 @@ class Platforms(BaseSpatiaLite):
         # search for any platform with this name
         return session.query(Platforms).filter(Platforms.name == name).first()
 
-    def get_sensor(
-        self, session, all_sensors, sensor_name, sensor_type=None, privacy=None
-    ):
+    @staticmethod
+    def get_sensor(session, all_sensors, sensor_name, sensor_type=None, privacy=None):
         """
         Lookup or create a sensor of this name for this platform. Specified sensor
         will be added to the sensors table.
@@ -153,16 +152,15 @@ class Platforms(BaseSpatiaLite):
 
         # return True if provided sensor exists
         def check_sensor(name):
-            if len(name) == 0:
-                return False
-
             if next((sensor for sensor in all_sensors if sensor.name == name), None):
                 # A sensor already exists with that name
                 return False
 
             return True
 
-        if check_sensor(sensor_name):
+        if len(sensor_name) == 0:
+            raise Exception("Please enter sensor name!")
+        elif check_sensor(sensor_name):
             platform = session.query(Platforms).first()
             return Sensors().add_to_sensors(
                 session=session,
