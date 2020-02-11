@@ -34,7 +34,6 @@ class TableSummary(object):
         self.created_date = created_date
 
 
-# TODO: not implemented yet
 def table_delta(first_summary, second_summary):
     """
     A listing of changes between two TableSummarySet objects.
