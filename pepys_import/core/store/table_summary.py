@@ -3,11 +3,13 @@ from tabulate import tabulate
 
 class TableSummary(object):
     """
-    A summary of the contents of a table.
+    A summary of the contents of a table, which sends query to DB and finds
+    number of rows and creation date of last item added.
 
     :param session: Bounded session for querying table
+    :type session: SQLAlchemy Session
     :param table_name: Name of the table
-    :return: Number of rows and creation date of last item added
+    :type table_name: String
     """
 
     def __init__(self, session, table_name):
@@ -51,14 +53,27 @@ class TableSummarySet(object):
         self.headers = ["Table name", "Number of rows", "Last item added"]
 
     def report(self):
-        """Produce an HTML pretty-printed report of the contents of the summary."""
+        """Produce an HTML pretty-printed report of the contents of the summary.
 
-        return tabulate(
-            [(k,) + v for k, v in self.table_summaries.items()],
-            headers=self.headers,
-            tablefmt="pretty",
-        )
+        :return: String of HTML
+        """
+
+        contents = []
+        for table in self.table_summaries:
+            content = tabulate(
+                [table.number_of_rows, table.created_date],
+                # headers=self.headers,
+                tablefmt="pretty",
+            )
+            contents.append(content)
+        print(contents)
+        return contents
 
     def compare_to(self, other: "TableSummarySet"):
-        """Produce an HTML pretty-printed report of the contents of the summary."""
+        """Produce an HTML pretty-printed report of the contents of the summary.
+
+        :param other: A TableSummarySet object to compare
+        :type other: TableSummarySet
+        :return: An array of TableDelta items
+        """
         pass
