@@ -19,11 +19,6 @@ from .db_status import TableTypes
 from uuid import uuid4
 
 
-def map_uuid_type(val):
-    # postgres needs to map to string
-    return str(val)
-
-
 class Entry(BasePostGIS):
     __tablename__ = "Entry"
     table_type = TableTypes.METADATA
