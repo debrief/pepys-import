@@ -855,7 +855,8 @@ class DataStore:
             measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
             for table_object in list(measurement_table_objects):
                 name = table_object.__tablename__
-                measurement_tables[name] = table_summary(self.session, table_object)
+                ts = TableSummary(self.session, table_object)
+                measurement_tables[name] = (ts.number_of_rows, ts.created_date)
             print("\nMEASUREMENT TABLES", "\n")
             print(
                 tabulate(
@@ -870,7 +871,8 @@ class DataStore:
             metadata_table_objects = self.meta_classes[TableTypes.METADATA]
             for table_object in list(metadata_table_objects):
                 name = table_object.__tablename__
-                metadata_tables[name] = table_summary(self.session, table_object)
+                ts = TableSummary(self.session, table_object)
+                metadata_tables[name] = (ts.number_of_rows, ts.created_date)
             print("\nMETADATA TABLES", "\n")
             print(
                 tabulate(
@@ -885,7 +887,8 @@ class DataStore:
             reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
             for table_object in list(reference_table_objects):
                 name = table_object.__tablename__
-                reference_tables[name] = table_summary(self.session, table_object)
+                ts = TableSummary(self.session, table_object)
+                reference_tables[name] = (ts.number_of_rows, ts.created_date)
             print("\nREFERENCE TABLES", "\n")
             print(
                 tabulate(
