@@ -328,8 +328,7 @@ class DataStore(object):
         privacy = self.search_privacy(privacy)
 
         if sensor is None or datafile is None:
-            print(f"There is missing value(s) in '{sensor}, {datafile}'!")
-            return
+            raise Exception(f"There is missing value(s) in '{sensor}, {datafile}'!")
 
         heading_rads = None
         if heading:
