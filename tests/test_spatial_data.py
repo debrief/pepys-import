@@ -30,10 +30,10 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
         with self.store.session_scope() as session:
             # Filter state object by spatial location
             first_state = (
-                self.store.session.query(self.store.db_classes.States)
+                self.store.session.query(self.store.db_classes.State)
                 .filter(
                     func.ST_Contains(
-                        self.store.db_classes.States.location,
+                        self.store.db_classes.State.location,
                         WKTElement("POINT(46.000 32.000)"),
                     )
                 )
@@ -54,10 +54,10 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
         with self.store.session_scope() as session:
             # Filter state object by spatial location
             first_state = (
-                self.store.session.query(self.store.db_classes.States)
+                self.store.session.query(self.store.db_classes.State)
                 .filter(
                     func.ST_Contains(
-                        self.store.db_classes.States.location,
+                        self.store.db_classes.State.location,
                         WKTElement("POINT(123456 123456)"),
                     )
                 )
@@ -114,10 +114,10 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
         with self.store.session_scope() as session:
             # Filter state object by spatial location
             first_state = (
-                self.store.session.query(self.store.db_classes.States)
+                self.store.session.query(self.store.db_classes.State)
                 .filter(
                     func.ST_Contains(
-                        self.store.db_classes.States.location,
+                        self.store.db_classes.State.location,
                         WKTElement("POINT(46.000 32.000)"),
                     )
                 )
@@ -141,10 +141,10 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
         with self.store.session_scope() as session:
             # Filter state object by spatial location
             first_state = (
-                self.store.session.query(self.store.db_classes.States)
+                self.store.session.query(self.store.db_classes.State)
                 .filter(
                     func.ST_Contains(
-                        self.store.db_classes.States.location,
+                        self.store.db_classes.State.location,
                         WKTElement("POINT(123456 123456)"),
                     )
                 )

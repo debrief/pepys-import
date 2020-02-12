@@ -31,10 +31,10 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
         # Check tables are created but empty
         with self.store.session_scope() as session:
             nationalities = self.store.session.query(
-                self.store.db_classes.Nationalities
+                self.store.db_classes.Nationality
             ).all()
             platform_types = self.store.session.query(
-                self.store.db_classes.PlatformTypes
+                self.store.db_classes.PlatformType
             ).all()
 
         # There must be no entities at the beginning
@@ -48,10 +48,10 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
         # Check tables filled with correct data
         with self.store.session_scope() as session:
             nationalities = self.store.session.query(
-                self.store.db_classes.Nationalities
+                self.store.db_classes.Nationality
             ).all()
             platform_types = self.store.session.query(
-                self.store.db_classes.PlatformTypes
+                self.store.db_classes.PlatformType
             ).all()
             nationality_object = self.store.search_nationality("UNITED KINGDOM")
             platform_type_object = self.store.search_platform_type("TYPE-1")
@@ -70,9 +70,9 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         # get all table values
         with self.store.session_scope() as session:
-            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
-            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(platforms), 0)
@@ -84,9 +84,9 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
             self.store.populate_metadata()
 
         with self.store.session_scope() as session:
-            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
-            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             platform_object = self.store.search_platform("PLATFORM-1")
             datafile_object = self.store.search_datafile("DATAFILE-1")
@@ -102,19 +102,19 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
             # Platform Object: PLATFORM-1, UNITED KINGDOM, TYPE-1, PRIVACY-1
             nationality = (
-                self.store.session.query(self.store.db_classes.Nationalities)
+                self.store.session.query(self.store.db_classes.Nationality)
                 .filter_by(nationality_id=platform_object.nationality_id)
                 .first()
             )
             self.assertEqual(nationality.name, "UNITED KINGDOM")
             platform_type = (
-                self.store.session.query(self.store.db_classes.PlatformTypes)
+                self.store.session.query(self.store.db_classes.PlatformType)
                 .filter_by(platform_type_id=platform_object.platform_type_id)
                 .first()
             )
             self.assertEqual(platform_type.name, "TYPE-1")
             privacy = (
-                self.store.session.query(self.store.db_classes.Privacies)
+                self.store.session.query(self.store.db_classes.Privacy)
                 .filter_by(privacy_id=platform_object.privacy_id)
                 .first()
             )
@@ -123,13 +123,13 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
             # Datafile Object: DATAFILE-1, True, PRIVACY-1, DATAFILE-TYPE-1
             self.assertEqual(datafile_object.simulated, True)
             privacy = (
-                self.store.session.query(self.store.db_classes.Privacies)
+                self.store.session.query(self.store.db_classes.Privacy)
                 .filter_by(privacy_id=datafile_object.privacy_id)
                 .first()
             )
             self.assertEqual(privacy.name, "PRIVACY-1")
             datafile_type = (
-                self.store.session.query(self.store.db_classes.DatafileTypes)
+                self.store.session.query(self.store.db_classes.DatafileType)
                 .filter_by(datafile_type_id=datafile_object.datafile_type_id)
                 .first()
             )
@@ -137,7 +137,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
             # Sensor Object: SENSOR-1, SENSOR-TYPE-1, PLATFORM-1
             sensor_type = (
-                self.store.session.query(self.store.db_classes.SensorTypes)
+                self.store.session.query(self.store.db_classes.SensorType)
                 .filter_by(sensor_type_id=sensor_object.sensor_type_id)
                 .first()
             )
@@ -151,7 +151,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         # get all table values
         with self.store.session_scope() as session:
-            states = self.store.session.query(self.store.db_classes.States).all()
+            states = self.store.session.query(self.store.db_classes.State).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(states), 0)
@@ -162,8 +162,8 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         # Check tables filled with correct data
         with self.store.session_scope() as session:
-            states = self.store.session.query(self.store.db_classes.States).all()
-            first_state = self.store.session.query(self.store.db_classes.States).first()
+            states = self.store.session.query(self.store.db_classes.State).all()
+            first_state = self.store.session.query(self.store.db_classes.State).first()
 
             # Check whether they are not empty anymore and filled with correct data
             self.assertNotEqual(len(states), 0)
@@ -179,19 +179,19 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
             )
 
             privacy = (
-                self.store.session.query(self.store.db_classes.Privacies)
+                self.store.session.query(self.store.db_classes.Privacy)
                 .filter_by(privacy_id=first_state.privacy_id)
                 .first()
             )
             self.assertEqual(privacy.name, "PRIVACY-1")
             datafile = (
-                self.store.session.query(self.store.db_classes.Datafiles)
+                self.store.session.query(self.store.db_classes.Datafile)
                 .filter_by(datafile_id=first_state.source_id)
                 .first()
             )
             self.assertEqual(datafile.reference, "DATAFILE-1")
             sensor = (
-                self.store.session.query(self.store.db_classes.Sensors)
+                self.store.session.query(self.store.db_classes.Sensor)
                 .filter_by(sensor_id=first_state.sensor_id)
                 .first()
             )
@@ -240,10 +240,10 @@ class DataStorePopulatePostGISTestCase(TestCase):
         # Check tables are created but empty
         with self.store.session_scope() as session:
             nationalities = self.store.session.query(
-                self.store.db_classes.Nationalities
+                self.store.db_classes.Nationality
             ).all()
             platform_types = self.store.session.query(
-                self.store.db_classes.PlatformTypes
+                self.store.db_classes.PlatformType
             ).all()
 
         # There must be no entities at the beginning
@@ -257,10 +257,10 @@ class DataStorePopulatePostGISTestCase(TestCase):
         # Check tables filled with correct data
         with self.store.session_scope() as session:
             nationalities = self.store.session.query(
-                self.store.db_classes.Nationalities
+                self.store.db_classes.Nationality
             ).all()
             platform_types = self.store.session.query(
-                self.store.db_classes.PlatformTypes
+                self.store.db_classes.PlatformType
             ).all()
             nationality_object = self.store.search_nationality("UNITED KINGDOM")
             platform_type_object = self.store.search_platform_type("TYPE-1")
@@ -279,9 +279,9 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         # get all table values
         with self.store.session_scope() as session:
-            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
-            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(platforms), 0)
@@ -293,9 +293,9 @@ class DataStorePopulatePostGISTestCase(TestCase):
             self.store.populate_metadata()
 
         with self.store.session_scope() as session:
-            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
-            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             platform_object = self.store.search_platform("PLATFORM-1")
             datafile_object = self.store.search_datafile("DATAFILE-1")
@@ -311,19 +311,19 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
             # Platform Object: PLATFORM-1, UNITED KINGDOM, TYPE-1, PRIVACY-1
             nationality = (
-                self.store.session.query(self.store.db_classes.Nationalities)
+                self.store.session.query(self.store.db_classes.Nationality)
                 .filter_by(nationality_id=platform_object.nationality_id)
                 .first()
             )
             self.assertEqual(nationality.name, "UNITED KINGDOM")
             platform_type = (
-                self.store.session.query(self.store.db_classes.PlatformTypes)
+                self.store.session.query(self.store.db_classes.PlatformType)
                 .filter_by(platform_type_id=platform_object.platform_type_id)
                 .first()
             )
             self.assertEqual(platform_type.name, "TYPE-1")
             privacy = (
-                self.store.session.query(self.store.db_classes.Privacies)
+                self.store.session.query(self.store.db_classes.Privacy)
                 .filter_by(privacy_id=platform_object.privacy_id)
                 .first()
             )
@@ -332,13 +332,13 @@ class DataStorePopulatePostGISTestCase(TestCase):
             # Datafile Object: DATAFILE-1, True, PRIVACY-1, DATAFILE-TYPE-1
             self.assertEqual(datafile_object.simulated, True)
             privacy = (
-                self.store.session.query(self.store.db_classes.Privacies)
+                self.store.session.query(self.store.db_classes.Privacy)
                 .filter_by(privacy_id=datafile_object.privacy_id)
                 .first()
             )
             self.assertEqual(privacy.name, "PRIVACY-1")
             datafile_type = (
-                self.store.session.query(self.store.db_classes.DatafileTypes)
+                self.store.session.query(self.store.db_classes.DatafileType)
                 .filter_by(datafile_type_id=datafile_object.datafile_type_id)
                 .first()
             )
@@ -346,7 +346,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
             # Sensor Object: SENSOR-1, SENSOR-TYPE-1, PLATFORM-1
             sensor_type = (
-                self.store.session.query(self.store.db_classes.SensorTypes)
+                self.store.session.query(self.store.db_classes.SensorType)
                 .filter_by(sensor_type_id=sensor_object.sensor_type_id)
                 .first()
             )
@@ -360,7 +360,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         # get all table values
         with self.store.session_scope() as session:
-            states = self.store.session.query(self.store.db_classes.States).all()
+            states = self.store.session.query(self.store.db_classes.State).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(states), 0)
@@ -371,8 +371,8 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         # Check tables filled with correct data
         with self.store.session_scope() as session:
-            states = self.store.session.query(self.store.db_classes.States).all()
-            first_state = self.store.session.query(self.store.db_classes.States).first()
+            states = self.store.session.query(self.store.db_classes.State).all()
+            first_state = self.store.session.query(self.store.db_classes.State).first()
 
             # Check whether they are not empty anymore and filled with correct data
             self.assertNotEqual(len(states), 0)
@@ -388,19 +388,19 @@ class DataStorePopulatePostGISTestCase(TestCase):
             )
 
             privacy = (
-                self.store.session.query(self.store.db_classes.Privacies)
+                self.store.session.query(self.store.db_classes.Privacy)
                 .filter_by(privacy_id=first_state.privacy_id)
                 .first()
             )
             self.assertEqual(privacy.name, "PRIVACY-1")
             datafile = (
-                self.store.session.query(self.store.db_classes.Datafiles)
+                self.store.session.query(self.store.db_classes.Datafile)
                 .filter_by(datafile_id=first_state.source_id)
                 .first()
             )
             self.assertEqual(datafile.reference, "DATAFILE-1")
             sensor = (
-                self.store.session.query(self.store.db_classes.Sensors)
+                self.store.session.query(self.store.db_classes.Sensor)
                 .filter_by(sensor_id=first_state.sensor_id)
                 .first()
             )

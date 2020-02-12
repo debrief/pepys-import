@@ -21,7 +21,7 @@ class DataStoreCacheTestCase(TestCase):
         """Test whether a new comment type entity cached and returned"""
         with self.store.session_scope() as session:
             comment_types = self.store.session.query(
-                self.store.db_classes.CommentTypes
+                self.store.db_classes.CommentType
             ).all()
 
             # there must be no entity at the beginning
@@ -36,7 +36,7 @@ class DataStoreCacheTestCase(TestCase):
             self.assertEqual(comment_type_1, comment_type_2)
 
             comment_types = self.store.session.query(
-                self.store.db_classes.CommentTypes
+                self.store.db_classes.CommentType
             ).all()
             # there must be only one entity at the beginning
             self.assertEqual(len(comment_types), 1)
@@ -72,7 +72,7 @@ class DataStoreCacheTestCase(TestCase):
         """Test whether a new platform type entity cached and returned"""
         with self.store.session_scope() as session:
             platform_types = self.store.session.query(
-                self.store.db_classes.PlatformTypes
+                self.store.db_classes.PlatformType
             ).all()
 
             # there must be no entity at the beginning
@@ -89,7 +89,7 @@ class DataStoreCacheTestCase(TestCase):
             # objects must be the same
             self.assertEqual(platform_type_1, platform_type_2)
             platform_types = self.store.session.query(
-                self.store.db_classes.PlatformTypes
+                self.store.db_classes.PlatformType
             ).all()
 
             # there must be only one entity at the beginning
@@ -99,7 +99,7 @@ class DataStoreCacheTestCase(TestCase):
         """Test whether a new nationality entity cached and returned"""
         with self.store.session_scope() as session:
             nationalities = self.store.session.query(
-                self.store.db_classes.Nationalities
+                self.store.db_classes.Nationality
             ).all()
 
             # there must be no entity at the beginning
@@ -112,7 +112,7 @@ class DataStoreCacheTestCase(TestCase):
             # objects must be the same
             self.assertEqual(nationality_1, nationality_2)
             nationalities = self.store.session.query(
-                self.store.db_classes.Nationalities
+                self.store.db_classes.Nationality
             ).all()
 
             # there must be only one entity at the beginning
@@ -121,7 +121,7 @@ class DataStoreCacheTestCase(TestCase):
     def test_cached_privacies(self):
         """Test whether a new privacy entity cached and returned"""
         with self.store.session_scope() as session:
-            privacies = self.store.session.query(self.store.db_classes.Privacies).all()
+            privacies = self.store.session.query(self.store.db_classes.Privacy).all()
 
             # there must be no entity at the beginning
             self.assertEqual(len(privacies), 0)
@@ -132,7 +132,7 @@ class DataStoreCacheTestCase(TestCase):
 
             # objects must be the same
             self.assertEqual(privacy_1, privacy_2)
-            privacies = self.store.session.query(self.store.db_classes.Privacies).all()
+            privacies = self.store.session.query(self.store.db_classes.Privacy).all()
 
             # there must be only one entity at the beginning
             self.assertEqual(len(privacies), 1)
@@ -141,7 +141,7 @@ class DataStoreCacheTestCase(TestCase):
         """Test whether a new datafile type entity cached and returned"""
         with self.store.session_scope() as session:
             datafile_types = self.store.session.query(
-                self.store.db_classes.DatafileTypes
+                self.store.db_classes.DatafileType
             ).all()
 
             # there must be no entity at the beginning
@@ -154,7 +154,7 @@ class DataStoreCacheTestCase(TestCase):
             # objects must be the same
             self.assertEqual(datafile_type_1, datafile_type_2)
             datafile_types = self.store.session.query(
-                self.store.db_classes.DatafileTypes
+                self.store.db_classes.DatafileType
             ).all()
 
             # there must be only one entity at the beginning
@@ -164,7 +164,7 @@ class DataStoreCacheTestCase(TestCase):
         """Test whether a new sensor type entity cached and returned"""
         with self.store.session_scope() as session:
             sensor_types = self.store.session.query(
-                self.store.db_classes.SensorTypes
+                self.store.db_classes.SensorType
             ).all()
 
             # there must be no entity at the beginning
@@ -177,7 +177,7 @@ class DataStoreCacheTestCase(TestCase):
             # objects must be the same
             self.assertEqual(sensor_type_1, sensor_type_2)
             sensor_types = self.store.session.query(
-                self.store.db_classes.SensorTypes
+                self.store.db_classes.SensorType
             ).all()
 
             # there must be only one entity at the beginning
@@ -197,12 +197,12 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
 
     def test_comment_types(self):
         with self.store.session_scope() as session:
-            comment_type = self.store.db_classes.CommentTypes(name="test")
+            comment_type = self.store.db_classes.CommentType(name="test")
             self.store.session.add(comment_type)
             self.store.session.flush()
 
             comment_types = self.store.session.query(
-                self.store.db_classes.CommentTypes
+                self.store.db_classes.CommentType
             ).all()
 
             # there must be one entity at the beginning
@@ -211,7 +211,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.store.add_to_comment_types("test")
 
             comment_types = self.store.session.query(
-                self.store.db_classes.CommentTypes
+                self.store.db_classes.CommentType
             ).all()
 
             # there must be only one entity again
@@ -241,12 +241,12 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
 
     def test_platform_types(self):
         with self.store.session_scope() as session:
-            platform_type = self.store.db_classes.PlatformTypes(name="test")
+            platform_type = self.store.db_classes.PlatformType(name="test")
             self.store.session.add(platform_type)
             self.store.session.flush()
 
             platform_types = self.store.session.query(
-                self.store.db_classes.PlatformTypes
+                self.store.db_classes.PlatformType
             ).all()
 
             # there must be one entity at the beginning
@@ -255,7 +255,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.store.add_to_platform_types("test")
 
             platform_types = self.store.session.query(
-                self.store.db_classes.PlatformTypes
+                self.store.db_classes.PlatformType
             ).all()
 
             # there must be only one entity again
@@ -263,12 +263,12 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
 
     def test_nationalities(self):
         with self.store.session_scope() as session:
-            nationality = self.store.db_classes.Nationalities(name="test")
+            nationality = self.store.db_classes.Nationality(name="test")
             self.store.session.add(nationality)
             self.store.session.flush()
 
             nationalities = self.store.session.query(
-                self.store.db_classes.Nationalities
+                self.store.db_classes.Nationality
             ).all()
 
             # there must be one entity at the beginning
@@ -277,7 +277,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.store.add_to_nationalities("test")
 
             nationalities = self.store.session.query(
-                self.store.db_classes.Nationalities
+                self.store.db_classes.Nationality
             ).all()
 
             # there must be only one entity again
@@ -285,30 +285,30 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
 
     def test_privacies(self):
         with self.store.session_scope() as session:
-            privacy = self.store.db_classes.Privacies(name="test")
+            privacy = self.store.db_classes.Privacy(name="test")
             self.store.session.add(privacy)
             self.store.session.flush()
 
-            privacies = self.store.session.query(self.store.db_classes.Privacies).all()
+            privacies = self.store.session.query(self.store.db_classes.Privacy).all()
 
             # there must be one entity at the beginning
             self.assertEqual(len(privacies), 1)
 
             self.store.add_to_privacies("test")
 
-            privacies = self.store.session.query(self.store.db_classes.Privacies).all()
+            privacies = self.store.session.query(self.store.db_classes.Privacy).all()
 
             # there must be only one entity again
             self.assertEqual(len(privacies), 1)
 
     def test_datafile_types(self):
         with self.store.session_scope() as session:
-            datafile_type = self.store.db_classes.DatafileTypes(name="test")
+            datafile_type = self.store.db_classes.DatafileType(name="test")
             self.store.session.add(datafile_type)
             self.store.session.flush()
 
             datafile_types = self.store.session.query(
-                self.store.db_classes.DatafileTypes
+                self.store.db_classes.DatafileType
             ).all()
 
             # there must be one entity at the beginning
@@ -317,7 +317,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.store.add_to_datafile_types("test")
 
             datafile_types = self.store.session.query(
-                self.store.db_classes.DatafileTypes
+                self.store.db_classes.DatafileType
             ).all()
 
             # there must be only one entity again
@@ -325,12 +325,12 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
 
     def test_sensor_types(self):
         with self.store.session_scope() as session:
-            sensor_type = self.store.db_classes.SensorTypes(name="test")
+            sensor_type = self.store.db_classes.SensorType(name="test")
             self.store.session.add(sensor_type)
             self.store.session.flush()
 
             sensor_types = self.store.session.query(
-                self.store.db_classes.SensorTypes
+                self.store.db_classes.SensorType
             ).all()
 
             # there must be one entity at the beginning
@@ -339,7 +339,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.store.add_to_sensor_types("test")
 
             sensor_types = self.store.session.query(
-                self.store.db_classes.SensorTypes
+                self.store.db_classes.SensorType
             ).all()
 
             # there must be only one entity again
@@ -364,7 +364,7 @@ class DataStoreTestCase(TestCase):
         """Test whether a new datafile is created successfully or not"""
 
         with self.store.session_scope() as session:
-            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(datafiles), 0)
@@ -374,7 +374,7 @@ class DataStoreTestCase(TestCase):
 
         # there must be one entry
         with self.store.session_scope() as session:
-            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
             self.assertEqual(datafiles[0].reference, "test_file.csv")
 
@@ -382,7 +382,7 @@ class DataStoreTestCase(TestCase):
         """Test whether present datafile is not created"""
 
         with self.store.session_scope() as session:
-            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(datafiles), 0)
@@ -392,7 +392,7 @@ class DataStoreTestCase(TestCase):
             self.store.get_datafile("test_file.csv", "csv")
 
             # there must be one entry
-            datafiles = self.store.session.query(self.store.db_classes.Datafiles).all()
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
             self.assertEqual(datafiles[0].reference, "test_file.csv")
 
@@ -411,7 +411,7 @@ class DataStoreTestCase(TestCase):
         """Test whether a new platform is created successfully or not"""
 
         with self.store.session_scope() as session:
-            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(platforms), 0)
@@ -426,7 +426,7 @@ class DataStoreTestCase(TestCase):
 
         # there must be one entry
         with self.store.session_scope() as session:
-            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
 
             self.assertEqual(len(platforms), 1)
             self.assertEqual(platforms[0].name, "Test Platform")
@@ -435,7 +435,7 @@ class DataStoreTestCase(TestCase):
         """Test whether present platform is not created"""
 
         with self.store.session_scope() as session:
-            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(platforms), 0)
@@ -456,7 +456,7 @@ class DataStoreTestCase(TestCase):
 
         # there must be one entry
         with self.store.session_scope() as session:
-            platforms = self.store.session.query(self.store.db_classes.Platforms).all()
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
 
             self.assertEqual(len(platforms), 1)
             self.assertEqual(platforms[0].name, "Test Platform")
@@ -543,7 +543,7 @@ class SensorTestCase(TestCase):
     def test_new_sensor_added_successfully(self):
         """Test whether a new sensor is created"""
         with self.store.session_scope() as session:
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
@@ -553,14 +553,14 @@ class SensorTestCase(TestCase):
             )
 
             # there must be one entry
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
             self.assertEqual(len(sensors), 1)
             self.assertEqual(sensors[0].name, "gps")
 
     def test_present_sensor_not_added(self):
         """Test whether present sensor is not created"""
         with self.store.session_scope() as session:
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
@@ -569,14 +569,14 @@ class SensorTestCase(TestCase):
                 self.store.session, sensors, "gps", self.sensor_type
             )
 
-            # query Sensors table again and try to add the same entity
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            # query Sensor table again and try to add the same entity
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
             self.platform.get_sensor(
                 self.store.session, sensors, "gps", self.sensor_type
             )
 
             # there must be one entry
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             self.assertEqual(len(sensors), 1)
 
@@ -584,7 +584,7 @@ class SensorTestCase(TestCase):
     def test_new_sensor_with_empty_sensor_type(self):
         """Test whether a new sensor without sensor type is created"""
         with self.store.session_scope() as session:
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
@@ -595,7 +595,7 @@ class SensorTestCase(TestCase):
     def test_empty_sensor_name(self):
         """Test whether a new sensor with empty name is created"""
         with self.store.session_scope() as session:
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
@@ -625,7 +625,7 @@ class MeasurementsTestCase(TestCase):
                 platform_type=self.platform_type,
                 privacy=self.privacy,
             )
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
             self.sensor = self.platform.get_sensor(
                 self.store.session, sensors, "gps", self.sensor_type
             )
@@ -644,7 +644,7 @@ class MeasurementsTestCase(TestCase):
     def test_new_state_created_successfully(self):
         """Test whether a new state is created"""
         with self.store.session_scope() as session:
-            states = self.store.session.query(self.store.db_classes.States).all()
+            states = self.store.session.query(self.store.db_classes.State).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(states), 0)
@@ -652,14 +652,14 @@ class MeasurementsTestCase(TestCase):
             state = self.file.create_state(self.sensor, self.current_time)
 
             # there must be no entry because it's kept in-memory
-            states = self.store.session.query(self.store.db_classes.States).all()
+            states = self.store.session.query(self.store.db_classes.State).all()
             self.assertEqual(len(states), 0)
 
             self.assertEqual(state.time, self.current_time)
 
             if self.file.validate():
                 state.submit(self.store.session)
-                states = self.store.session.query(self.store.db_classes.States).all()
+                states = self.store.session.query(self.store.db_classes.State).all()
             self.assertEqual(len(states), 1)
 
     @unittest.skip("Skip until missing data resolver is implemented.")
@@ -670,7 +670,7 @@ class MeasurementsTestCase(TestCase):
         """Test whether a new contact is created"""
 
         with self.store.session_scope() as session:
-            contacts = self.store.session.query(self.store.db_classes.Contacts).all()
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(contacts), 0)
@@ -678,7 +678,7 @@ class MeasurementsTestCase(TestCase):
             contact = self.file.create_contact(self.sensor, self.current_time)
 
             # there must be no entry because it's kept in-memory
-            contacts = self.store.session.query(self.store.db_classes.Contacts).all()
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
             self.assertEqual(len(contacts), 0)
 
             # Fill null constraint field
@@ -686,9 +686,7 @@ class MeasurementsTestCase(TestCase):
             contact.set_subject(self.platform)
             if self.file.validate():
                 contact.submit(self.store.session)
-                contacts = self.store.session.query(
-                    self.store.db_classes.Contacts
-                ).all()
+                contacts = self.store.session.query(self.store.db_classes.Contact).all()
                 self.assertEqual(len(contacts), 1)
 
     @unittest.skip("Skip until missing data resolver is implemented.")
@@ -699,7 +697,7 @@ class MeasurementsTestCase(TestCase):
         """Test whether a new comment is created"""
 
         with self.store.session_scope() as session:
-            comments = self.store.session.query(self.store.db_classes.Comments).all()
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(comments), 0)
@@ -709,16 +707,14 @@ class MeasurementsTestCase(TestCase):
             )
 
             # there must be no entry because it's kept in-memory
-            comments = self.store.session.query(self.store.db_classes.Comments).all()
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
             self.assertEqual(len(comments), 0)
 
             # Fill null constraint field
             comment.set_platform(self.platform)
             if self.file.validate():
                 comment.submit(self.store.session)
-                comments = self.store.session.query(
-                    self.store.db_classes.Comments
-                ).all()
+                comments = self.store.session.query(self.store.db_classes.Comment).all()
                 self.assertEqual(len(comments), 1)
 
     @unittest.skip("Skip until missing data resolver is implemented.")

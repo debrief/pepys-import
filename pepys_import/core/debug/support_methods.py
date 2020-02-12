@@ -2,12 +2,12 @@ from sqlalchemy.orm import sessionmaker
 from tabulate import tabulate
 
 from pepys_import.core.store.sqlite_db import (
-    States,
-    Platforms,
-    Sensors,
-    Nationalities,
-    PlatformTypes,
-    Datafiles,
+    State,
+    Platform,
+    Sensor,
+    Nationality,
+    PlatformType,
+    Datafile,
 )
 
 
@@ -19,7 +19,7 @@ class SupportMethods:
         engine = data_store.engine
         Session = sessionmaker(bind=engine)
         session = Session()
-        numStates = session.query(States).count()
+        numStates = session.query(State).count()
         return numStates
 
     def list_states(self, data_store):
@@ -29,7 +29,7 @@ class SupportMethods:
         engine = data_store.engine
         Session = sessionmaker(bind=engine)
         session = Session()
-        result = session.query(States).all()
+        result = session.query(State).all()
 
         headers = (
             "Id",
@@ -67,7 +67,7 @@ class SupportMethods:
         engine = data_store.engine
         Session = sessionmaker(bind=engine)
         session = Session()
-        result = session.query(Platforms).all()
+        result = session.query(Platform).all()
 
         headers = "Id", "Name", "Platform-Type", "Nationality"
 
@@ -87,7 +87,7 @@ class SupportMethods:
         engine = data_store.engine
         Session = sessionmaker(bind=engine)
         session = Session()
-        result = session.query(Sensors).all()
+        result = session.query(Sensor).all()
 
         headers = "Id", "Name", "Sensor-Type", "Platform-id"
 
@@ -107,7 +107,7 @@ class SupportMethods:
         engine = data_store.engine
         Session = sessionmaker(bind=engine)
         session = Session()
-        result = session.query(Nationalities).all()
+        result = session.query(Nationality).all()
 
         headers = "Id", "Name"
 
@@ -125,7 +125,7 @@ class SupportMethods:
         engine = data_store.engine
         Session = sessionmaker(bind=engine)
         session = Session()
-        result = session.query(Datafiles).all()
+        result = session.query(Datafile).all()
 
         headers = "Id", "Reference"
 
@@ -143,7 +143,7 @@ class SupportMethods:
         engine = data_store.engine
         Session = sessionmaker(bind=engine)
         session = Session()
-        result = session.query(PlatformTypes).all()
+        result = session.query(PlatformType).all()
 
         headers = "Id", "Name"
 

@@ -304,26 +304,26 @@ class DataStore(object):
         privacy=None,
     ):
         """
-        Adds the specified state to the :class:`States` table if not already present.
+        Adds the specified state to the :class:`State` table if not already present.
 
-        :param time: Timestamp of :class:`States`
+        :param time: Timestamp of :class:`State`
         :type time: datetime
-        :param sensor: Sensor of :class:`States`
+        :param sensor: Sensor of :class:`State`
         :type sensor: Sensor
-        :param datafile: Datafile of :class:`States`
-        :type datafile: Datafiles
-        :param location: Location of :class:`States`
+        :param datafile: Datafile of :class:`State`
+        :type datafile: Datafile
+        :param location: Location of :class:`State`
         :type location: Point
-        :param heading: Heading of :class:`States` (Which converted to radians)
+        :param heading: Heading of :class:`State` (Which converted to radians)
         :type heading: String
-        :param course: Course of :class:`States`
+        :param course: Course of :class:`State`
         :type course:
-        :param speed: Speed of :class:`States` (Which converted to m/sec)
+        :param speed: Speed of :class:`State` (Which converted to m/sec)
         :type speed: String
-        :param privacy: :class:`Privacies` of :class:`States`
-        :type privacy: Privacies
-        :return: Created :class:`States` entity
-        :rtype: States
+        :param privacy: :class:`Privacy` of :class:`State`
+        :type privacy: Privacy
+        :return: Created :class:`State` entity
+        :rtype: State
         """
         time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
 
@@ -350,9 +350,9 @@ class DataStore(object):
             ).magnitude
 
         entry_id = self.add_to_entries(
-            self.db_classes.States.table_type_id, self.db_classes.States.__tablename__
+            self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
         )
-        state_obj = self.db_classes.States(
+        state_obj = self.db_classes.State(
             state_id=entry_id,
             time=time,
             sensor_id=sensor.sensor_id,
@@ -370,15 +370,15 @@ class DataStore(object):
 
     def add_to_sensors(self, name, sensor_type, host):
         """
-        Adds the specified sensor to the :class:`Sensors` table if not already present.
+        Adds the specified sensor to the :class:`Sensor` table if not already present.
 
         :param name: Name of sensor
         :type name: String
         :param sensor_type: Type of sensor
-        :type sensor_type: :class:`SensorTypes`
+        :type sensor_type: :class:`SensorType`
         :param host: Platform of sensor
-        :type host: Platforms
-        :return: Created Sensors entity
+        :type host: Platform
+        :return: Created Sensor entity
         """
         sensor_type = self.search_sensor_type(sensor_type)
         host = self.search_platform(host)
@@ -388,10 +388,10 @@ class DataStore(object):
             return
 
         entry_id = self.add_to_entries(
-            self.db_classes.Sensors.table_type_id, self.db_classes.Sensors.__tablename__
+            self.db_classes.Sensor.table_type_id, self.db_classes.Sensor.__tablename__
         )
 
-        sensor_obj = self.db_classes.Sensors(
+        sensor_obj = self.db_classes.Sensor(
             sensor_id=entry_id,
             name=name,
             sensor_type_id=sensor_type.sensor_type_id,
@@ -404,20 +404,20 @@ class DataStore(object):
 
     def add_to_datafiles(self, simulated, privacy, file_type, reference=None, url=None):
         """
-        Adds the specified datafile to the Datafiles table if not already present.
+        Adds the specified datafile to the Datafile table if not already present.
 
-        :param simulated: :class:`Datafiles` is simulated or not
+        :param simulated: :class:`Datafile` is simulated or not
         :type simulated: Boolean
-        :param privacy: :class:`Privacies` of :class:`Datafiles`
-        :type privacy: Privacies
-        :param file_type: Type of :class:`Datafiles`
+        :param privacy: :class:`Privacy` of :class:`Datafile`
+        :type privacy: Privacy
+        :param file_type: Type of :class:`Datafile`
         :type file_type: String
-        :param reference: Reference of :class:`Datafiles`
+        :param reference: Reference of :class:`Datafile`
         :type reference: String
         :param url: URL of datafile
         :type url: String
-        :return: Created :class:`Datafiles` entity
-        :rtype: Datafiles
+        :return: Created :class:`Datafile` entity
+        :rtype: Datafile
         """
         privacy = self.search_privacy(privacy)
         datafile_type = self.search_datafile_type(file_type)
@@ -427,11 +427,11 @@ class DataStore(object):
             return
 
         entry_id = self.add_to_entries(
-            self.db_classes.Datafiles.table_type_id,
-            self.db_classes.Datafiles.__tablename__,
+            self.db_classes.Datafile.table_type_id,
+            self.db_classes.Datafile.__tablename__,
         )
 
-        datafile_obj = self.db_classes.Datafiles(
+        datafile_obj = self.db_classes.Datafile(
             datafile_id=entry_id,
             simulated=bool(simulated),
             privacy_id=privacy.privacy_id,
@@ -447,18 +447,18 @@ class DataStore(object):
 
     def add_to_platforms(self, name, nationality, platform_type, privacy):
         """
-        Adds the specified platform to the Platforms table if not already present.
+        Adds the specified platform to the Platform table if not already present.
 
         :param name: Name of :class:`Platform`
         :type name: String
         :param nationality: Nationality of :class:`Platform`
-        :type nationality: Nationalities
+        :type nationality: Nationality
         :param platform_type: Type of :class:`Platform`
-        :type platform_type: PlatformTypes
-        :param privacy: :class:`Privacies` of :class:`Platform`
-        :type privacy: Privacies
+        :type platform_type: PlatformType
+        :param privacy: :class:`Privacy` of :class:`Platform`
+        :type privacy: Privacy
         :return: Created Platform entity
-        :rtype: Platforms
+        :rtype: Platform
         """
         nationality = self.search_nationality(nationality)
         platform_type = self.search_platform_type(platform_type)
@@ -469,11 +469,11 @@ class DataStore(object):
             return
 
         entry_id = self.add_to_entries(
-            self.db_classes.Platforms.table_type_id,
-            self.db_classes.Platforms.__tablename__,
+            self.db_classes.Platform.table_type_id,
+            self.db_classes.Platform.__tablename__,
         )
 
-        platform_obj = self.db_classes.Platforms(
+        platform_obj = self.db_classes.Platform(
             platform_id=entry_id,
             name=name,
             nationality_id=nationality.nationality_id,
@@ -495,16 +495,16 @@ class DataStore(object):
     def search_datafile_type(self, name):
         """Search for any datafile type with this name"""
         return (
-            self.session.query(self.db_classes.DatafileTypes)
-            .filter(self.db_classes.DatafileTypes.name == name)
+            self.session.query(self.db_classes.DatafileType)
+            .filter(self.db_classes.DatafileType.name == name)
             .first()
         )
 
     def search_datafile(self, name):
         """Search for any datafile with this name"""
         return (
-            self.session.query(self.db_classes.Datafiles)
-            .filter(self.db_classes.Datafiles.reference == name)
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.reference == name)
             .first()
         )
 
@@ -519,48 +519,48 @@ class DataStore(object):
     def search_platform(self, name):
         """Search for any platform with this name"""
         return (
-            self.session.query(self.db_classes.Platforms)
-            .filter(self.db_classes.Platforms.name == name)
+            self.session.query(self.db_classes.Platform)
+            .filter(self.db_classes.Platform.name == name)
             .first()
         )
 
     def search_platform_type(self, name):
         """Search for any platform type with this name"""
         return (
-            self.session.query(self.db_classes.PlatformTypes)
-            .filter(self.db_classes.PlatformTypes.name == name)
+            self.session.query(self.db_classes.PlatformType)
+            .filter(self.db_classes.PlatformType.name == name)
             .first()
         )
 
     def search_nationality(self, name):
         """Search for any nationality with this name"""
         return (
-            self.session.query(self.db_classes.Nationalities)
-            .filter(self.db_classes.Nationalities.name == name)
+            self.session.query(self.db_classes.Nationality)
+            .filter(self.db_classes.Nationality.name == name)
             .first()
         )
 
     def search_sensor(self, name):
         """Search for any sensor type featuring this name"""
         return (
-            self.session.query(self.db_classes.Sensors)
-            .filter(self.db_classes.Sensors.name == name)
+            self.session.query(self.db_classes.Sensor)
+            .filter(self.db_classes.Sensor.name == name)
             .first()
         )
 
     def search_sensor_type(self, name):
         """Search for any sensor type featuring this name"""
         return (
-            self.session.query(self.db_classes.SensorTypes)
-            .filter(self.db_classes.SensorTypes.name == name)
+            self.session.query(self.db_classes.SensorType)
+            .filter(self.db_classes.SensorType.name == name)
             .first()
         )
 
     def search_privacy(self, name):
         """Search for any privacy with this name"""
         return (
-            self.session.query(self.db_classes.Privacies)
-            .filter(self.db_classes.Privacies.name == name)
+            self.session.query(self.db_classes.Privacy)
+            .filter(self.db_classes.Privacy.name == name)
             .first()
         )
 
@@ -583,14 +583,14 @@ class DataStore(object):
         :param datafile_name:  Name of Datafile
         :type datafile_name: String
         :param datafile_type: Type of Datafile
-        :type datafile_type: DatafileTypes
+        :type datafile_type: DatafileType
         :return:  Created Datafile entity
-        :rtype: Datafiles
+        :rtype: Datafile
         """
 
         # return True if provided datafile exists
         def check_datafile(datafile):
-            all_datafiles = self.session.query(self.db_classes.Datafiles).all()
+            all_datafiles = self.session.query(self.db_classes.Datafile).all()
             if next(
                 (file for file in all_datafiles if file.reference == datafile), None,
             ):
@@ -613,8 +613,8 @@ class DataStore(object):
             )
         else:
             return (
-                self.session.query(self.db_classes.Datafiles)
-                .filter(self.db_classes.Datafiles.reference == datafile_name)
+                self.session.query(self.db_classes.Datafile)
+                .filter(self.db_classes.Datafile.reference == datafile_name)
                 .first()
             )
 
@@ -627,18 +627,18 @@ class DataStore(object):
 
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
-        :param nationality: Name of :class:`Nationalities`
-        :type nationality: Nationalities
-        :param platform_type: Name of :class:`PlatformTypes`
-        :type platform_type: PlatformTypes
-        :param privacy: Name of :class:`Privacies`
-        :type privacy: Privacies
-        :return: Created Platforms entity
+        :param nationality: Name of :class:`Nationality`
+        :type nationality: Nationality
+        :param platform_type: Name of :class:`PlatformType`
+        :type platform_type: PlatformType
+        :param privacy: Name of :class:`Privacy`
+        :type privacy: Privacy
+        :return: Created Platform entity
         """
 
         # return True if provided platform exists
         def check_platform(name):
-            all_platforms = self.session.query(self.db_classes.Platforms).all()
+            all_platforms = self.session.query(self.db_classes.Platform).all()
             if next(
                 (platform for platform in all_platforms if platform.name == name), None,
             ):
@@ -658,8 +658,8 @@ class DataStore(object):
             )
         else:
             return (
-                self.session.query(self.db_classes.Platforms)
-                .filter(self.db_classes.Platforms.name == platform_name)
+                self.session.query(self.db_classes.Platform)
+                .filter(self.db_classes.Platform.name == platform_name)
                 .first()
             )
 
@@ -711,19 +711,19 @@ class DataStore(object):
     def search_comment_type(self, name):
         """Search for any comment type featuring this name"""
         return (
-            self.session.query(self.db_classes.CommentTypes)
-            .filter(self.db_classes.CommentTypes.name == name)
+            self.session.query(self.db_classes.CommentType)
+            .filter(self.db_classes.CommentType.name == name)
             .first()
         )
 
     def add_to_comment_types(self, name):
         """
-        Adds the specified comment type to the CommentTypes table if not already present
+        Adds the specified comment type to the CommentType table if not already present
 
-        :param name: Name of :class:`CommentTypes`
+        :param name: Name of :class:`CommentType`
         :type name: String
-        :return: Created entity of :class:`CommentTypes` table
-        :rtype: CommentTypes
+        :return: Created entity of :class:`CommentType` table
+        :rtype: CommentType
         """
 
         # check in cache for comment type
@@ -738,11 +738,11 @@ class DataStore(object):
             return comment_types
 
         entry_id = self.add_to_entries(
-            self.db_classes.CommentTypes.table_type_id,
-            self.db_classes.CommentTypes.__tablename__,
+            self.db_classes.CommentType.table_type_id,
+            self.db_classes.CommentType.__tablename__,
         )
         # enough info to proceed and create entry
-        comment_type = self.db_classes.CommentTypes(comment_type_id=entry_id, name=name)
+        comment_type = self.db_classes.CommentType(comment_type_id=entry_id, name=name)
         self.session.add(comment_type)
         self.session.flush()
 
@@ -798,10 +798,10 @@ class DataStore(object):
         Adds the specified platform type to the platform types table if not already
         present.
 
-        :param platform_type_name: Name of :class:`PlatformTypes`
+        :param platform_type_name: Name of :class:`PlatformType`
         :type platform_type_name: String
-        :return: Created :class:`PlatformTypes` entity
-        :rtype: PlatformTypes
+        :return: Created :class:`PlatformType` entity
+        :rtype: PlatformType
         """
         # check in cache for nationality
         if platform_type_name in self.platform_types:
@@ -815,11 +815,11 @@ class DataStore(object):
             return platform_types
 
         entry_id = self.add_to_entries(
-            self.db_classes.PlatformTypes.table_type_id,
-            self.db_classes.PlatformTypes.__tablename__,
+            self.db_classes.PlatformType.table_type_id,
+            self.db_classes.PlatformType.__tablename__,
         )
         # enough info to proceed and create entry
-        platform_type = self.db_classes.PlatformTypes(
+        platform_type = self.db_classes.PlatformType(
             platform_type_id=entry_id, name=platform_type_name
         )
         self.session.add(platform_type)
@@ -834,10 +834,10 @@ class DataStore(object):
         """
         Adds the specified nationality to the nationalities table if not already present
 
-        :param nationality_name: Name of :class:`Nationalities`
+        :param nationality_name: Name of :class:`Nationality`
         :type nationality_name: String
-        :return: Created :class:`Nationalities` entity
-        :rtype: Nationalities
+        :return: Created :class:`Nationality` entity
+        :rtype: Nationality
         """
         # check in cache for nationality
         if nationality_name in self.nationalities:
@@ -851,11 +851,11 @@ class DataStore(object):
             return nationalities
 
         entry_id = self.add_to_entries(
-            self.db_classes.Nationalities.table_type_id,
-            self.db_classes.Nationalities.__tablename__,
+            self.db_classes.Nationality.table_type_id,
+            self.db_classes.Nationality.__tablename__,
         )
         # enough info to proceed and create entry
-        nationality = self.db_classes.Nationalities(
+        nationality = self.db_classes.Nationality(
             nationality_id=entry_id, name=nationality_name
         )
         self.session.add(nationality)
@@ -868,12 +868,12 @@ class DataStore(object):
 
     def add_to_privacies(self, privacy_name):
         """
-        Adds the specified privacy entry to the :class:`Privacies` table if not already present.
+        Adds the specified privacy entry to the :class:`Privacy` table if not already present.
 
-        :param privacy_name: Name of :class:`Privacies`
+        :param privacy_name: Name of :class:`Privacy`
         :type privacy_name: String
-        :return: Created :class:`Privacies` entity
-        :rtype: Privacies
+        :return: Created :class:`Privacy` entity
+        :rtype: Privacy
         """
         # check in cache for privacy
         if privacy_name in self.privacies:
@@ -887,11 +887,11 @@ class DataStore(object):
             return privacies
 
         entry_id = self.add_to_entries(
-            self.db_classes.Privacies.table_type_id,
-            self.db_classes.Privacies.__tablename__,
+            self.db_classes.Privacy.table_type_id,
+            self.db_classes.Privacy.__tablename__,
         )
         # enough info to proceed and create entry
-        privacy = self.db_classes.Privacies(privacy_id=entry_id, name=privacy_name)
+        privacy = self.db_classes.Privacy(privacy_id=entry_id, name=privacy_name)
         self.session.add(privacy)
         self.session.flush()
 
@@ -905,10 +905,10 @@ class DataStore(object):
         Adds the specified datafile type to the datafile types table if not already
         present.
 
-        :param datafile_type: Name of :class:`DatafileTypes`
+        :param datafile_type: Name of :class:`DatafileType`
         :type datafile_type: String
-        :return: Wrapped database entity for :class:`DatafileTypes`
-        :rtype: DatafileTypes
+        :return: Wrapped database entity for :class:`DatafileType`
+        :rtype: DatafileType
         """
         # check in cache for datafile type
         if datafile_type in self.datafile_types:
@@ -922,11 +922,11 @@ class DataStore(object):
             return datafile_types
 
         entry_id = self.add_to_entries(
-            self.db_classes.DatafileTypes.table_type_id,
-            self.db_classes.DatafileTypes.__tablename__,
+            self.db_classes.DatafileType.table_type_id,
+            self.db_classes.DatafileType.__tablename__,
         )
         # proceed and create entry
-        datafile_type_obj = self.db_classes.DatafileTypes(
+        datafile_type_obj = self.db_classes.DatafileType(
             datafile_type_id=entry_id, name=datafile_type
         )
 
@@ -940,12 +940,12 @@ class DataStore(object):
 
     def add_to_sensor_types(self, sensor_type_name):
         """
-        Adds the specified sensor type to the :class:`SensorTypes` table if not already present.
+        Adds the specified sensor type to the :class:`SensorType` table if not already present.
 
-        :param sensor_type_name: Name of :class:`SensorTypes`
+        :param sensor_type_name: Name of :class:`SensorType`
         :type sensor_type_name: String
-        :return: Created :class:`SensorTypes` entity
-        :rtype: SensorTypes
+        :return: Created :class:`SensorType` entity
+        :rtype: SensorType
         """
         # check in cache for sensor type
         if sensor_type_name in self.sensor_types:
@@ -959,7 +959,7 @@ class DataStore(object):
             return sensor_types
 
         # enough info to proceed and create entry
-        sensor_type = self.db_classes.SensorTypes(name=sensor_type_name)
+        sensor_type = self.db_classes.SensorType(name=sensor_type_name)
         self.session.add(sensor_type)
         self.session.flush()
 

@@ -7,7 +7,7 @@ from sqlalchemy import inspect, MetaData, Table
 from pepys_import.core.debug.support_methods import SupportMethods
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats.repl_file import REPFile
-from pepys_import.core.store.sqlite_db import States
+from pepys_import.core.store.sqlite_db import State
 
 
 FILE_PATH = os.path.dirname(__file__)

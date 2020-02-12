@@ -20,14 +20,14 @@ class TableSummarySetTestCase(TestCase):
         """Test whether Table Summary class returns correct values or not """
 
         with self.store.session_scope() as session:
-            ts = TableSummary(self.store.session, self.store.db_classes.Privacies)
+            ts = TableSummary(self.store.session, self.store.db_classes.Privacy)
 
             # Two entities created, created_date can't be null
             self.assertEqual(ts.number_of_rows, 2)
             self.assertNotEqual(ts.created_date, "-")
 
-            # There is no entity in States table
-            ts = TableSummary(self.store.session, self.store.db_classes.States)
+            # There is no entity in State table
+            ts = TableSummary(self.store.session, self.store.db_classes.State)
             self.assertEqual(ts.number_of_rows, 0)
             self.assertEqual(ts.created_date, "-")
 
@@ -41,10 +41,10 @@ class TableSummaryTestCase(TestCase):
             self.store.add_to_nationalities("NAT-1")
             self.store.add_to_nationalities("NAT-2")
             privacy_sum = TableSummary(
-                self.store.session, self.store.db_classes.Privacies
+                self.store.session, self.store.db_classes.Privacy
             )
             nationality_sum = TableSummary(
-                self.store.session, self.store.db_classes.Nationalities
+                self.store.session, self.store.db_classes.Nationality
             )
         self.summaries = [privacy_sum, nationality_sum]
 
@@ -68,16 +68,16 @@ class TableSummaryTestCase(TestCase):
             self.store.add_to_privacies("TEST-2")
             self.store.add_to_privacies("TEST-3")
             privacy_sum = TableSummary(
-                self.store.session, self.store.db_classes.Privacies
+                self.store.session, self.store.db_classes.Privacy
             )
             nationality_sum = TableSummary(
-                self.store.session, self.store.db_classes.Nationalities
+                self.store.session, self.store.db_classes.Nationality
             )
         second_summary = [privacy_sum, nationality_sum]
         second_table_summary_set = TableSummarySet(second_summary)
         diff = second_table_summary_set.compare_to(first_table_summary_set)
 
-        # Privacies table has 2 new rows, no changes for Nationalities table
+        # Privacy table has 2 new rows, no changes for Nationality table
         self.assertEqual(diff, [2, 0])
 
 
