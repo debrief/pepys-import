@@ -380,8 +380,7 @@ class DataStore(object):
         host = self.search_platform(host)
 
         if sensor_type is None or host is None:
-            print(f"There is missing value(s) in '{sensor_type}, {host}'!")
-            return
+            raise Exception(f"There is missing value(s) in '{sensor_type}, {host}'!")
 
         entry_id = self.add_to_entries(
             self.db_classes.Sensor.table_type_id, self.db_classes.Sensor.__tablename__
@@ -419,8 +418,7 @@ class DataStore(object):
         datafile_type = self.search_datafile_type(file_type)
 
         if privacy is None or datafile_type is None:
-            print("There is missing value(s) in the data!")
-            return
+            raise Exception("There is missing value(s) in the data!")
 
         entry_id = self.add_to_entries(
             self.db_classes.Datafile.table_type_id,
@@ -461,8 +459,7 @@ class DataStore(object):
         privacy = self.search_privacy(privacy)
 
         if nationality is None or platform_type is None or privacy is None:
-            print("There is missing value(s) in the data!")
-            return
+            raise Exception("There is missing value(s) in the data!")
 
         entry_id = self.add_to_entries(
             self.db_classes.Platform.table_type_id,
