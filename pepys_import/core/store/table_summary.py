@@ -15,7 +15,7 @@ class TableSummary(object):
     def __init__(self, session, table):
         self.session = session
         self.table = table
-        self.table_name = self.table.table_name
+        self.table_name = self.table.__tablename__
         self.number_of_rows = None
         self.created_date = None
         self.table_summary()
