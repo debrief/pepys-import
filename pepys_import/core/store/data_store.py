@@ -845,7 +845,7 @@ class DataStore:
     # TODO: it is possible to merge two methods taking a resolver=True/False argument
     def add_to_datafile_types(self, datafile_type):
         """
-        Adds the specified datafile type to the datafiletypes table if not already
+        Adds the specified datafile type to the datafile types table if not already
         present.
 
         Arguments:
