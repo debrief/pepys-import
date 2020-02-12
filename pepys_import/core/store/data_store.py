@@ -160,16 +160,9 @@ class DataStore(object):
 
     #############################################################
     # Other DataStore Methods
-    def get_datafiles(self):
-        # get list of all datafiles in the DB
-        return self.session.query(self.db_classes.Datafiles).all()
-
-    def get_platforms(self):
-        # get list of all platforms in the DB
-        return self.session.query(self.db_classes.Platforms).all()
 
     def setup_table_type_mapping(self):
-        # setup a map of tables keyed by TableType
+        """Setup a map of tables keyed by TableType"""
         db_classes = dict(
             [
                 (name, cls)
@@ -278,6 +271,16 @@ class DataStore(object):
     #############################################################
 
     def add_to_entries(self, table_type_id, table_name):
+        """
+        Adds the specified entry to the Entry table if not already present.
+
+        :param table_type_id: Table Type ID
+        :type table_type_id: Integer
+        :param table_name: Name of table
+        :type table_name: String
+        :return: Created Entry entity's entry_id
+        :rtype: UUID
+        """
         # ensure table type exists to satisfy foreign key constraint
         self.add_to_table_types(table_type_id, table_name)
 
@@ -302,6 +305,28 @@ class DataStore(object):
         speed=None,
         privacy=None,
     ):
+        """
+        Adds the specified state to the States table if not already present.
+
+        :param time: Timestamp of State
+        :type time: datetime
+        :param sensor: Sensor of State
+        :type sensor: Sensor object
+        :param datafile: Datafile of State
+        :type datafile: Datafile object
+        :param location: Location of State
+        :type location: Point
+        :param heading: Heading of State (Which converted to radians)
+        :type heading: String
+        :param course: Course of State
+        :type course:
+        :param speed: Speed of State (Which converted to m/sec)
+        :type speed: String
+        :param privacy: Privacy of State
+        :type privacy: Privacy object
+        :return: Created State entity
+        :rtype: State object
+        """
         time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
 
         sensor = self.search_sensor(sensor)
@@ -470,7 +495,7 @@ class DataStore(object):
     # Search/lookup functions
 
     def search_datafile_type(self, name):
-        # search for any datafile type with this name
+        """Search for any datafile type with this name"""
         return (
             self.session.query(self.db_classes.DatafileTypes)
             .filter(self.db_classes.DatafileTypes.name == name)
@@ -478,7 +503,7 @@ class DataStore(object):
         )
 
     def search_datafile(self, name):
-        # search for any datafile with this name
+        """Search for any datafile with this name"""
         return (
             self.session.query(self.db_classes.Datafiles)
             .filter(self.db_classes.Datafiles.reference == name)
@@ -494,7 +519,7 @@ class DataStore(object):
     #     )
 
     def search_platform(self, name):
-        # search for any platform with this name
+        """Search for any platform with this name"""
         return (
             self.session.query(self.db_classes.Platforms)
             .filter(self.db_classes.Platforms.name == name)
@@ -502,7 +527,7 @@ class DataStore(object):
         )
 
     def search_platform_type(self, name):
-        # search for any platform type with this name
+        """Search for any platform type with this name"""
         return (
             self.session.query(self.db_classes.PlatformTypes)
             .filter(self.db_classes.PlatformTypes.name == name)
@@ -510,7 +535,7 @@ class DataStore(object):
         )
 
     def search_nationality(self, name):
-        # search for any nationality with this name
+        """Search for any nationality with this name"""
         return (
             self.session.query(self.db_classes.Nationalities)
             .filter(self.db_classes.Nationalities.name == name)
@@ -518,7 +543,7 @@ class DataStore(object):
         )
 
     def search_sensor(self, name):
-        # search for any sensor type featuring this name
+        """Search for any sensor type featuring this name"""
         return (
             self.session.query(self.db_classes.Sensors)
             .filter(self.db_classes.Sensors.name == name)
@@ -526,7 +551,7 @@ class DataStore(object):
         )
 
     def search_sensor_type(self, name):
-        # search for any sensor type featuring this name
+        """Search for any sensor type featuring this name"""
         return (
             self.session.query(self.db_classes.SensorTypes)
             .filter(self.db_classes.SensorTypes.name == name)
@@ -534,7 +559,7 @@ class DataStore(object):
         )
 
     def search_privacy(self, name):
-        # search for any privacy with this name
+        """Search for any privacy with this name"""
         return (
             self.session.query(self.db_classes.Privacies)
             .filter(self.db_classes.Privacies.name == name)
@@ -542,7 +567,7 @@ class DataStore(object):
         )
 
     def search_table_type(self, table_type_id):
-        # search for any table type with this id
+        """Search for any table type with this id"""
         return (
             self.session.query(self.db_classes.TableType)
             .filter(self.db_classes.TableType.table_type_id == table_type_id)
@@ -567,9 +592,9 @@ class DataStore(object):
 
         # return True if provided datafile exists
         def check_datafile(datafile):
+            all_datafiles = self.session.query(self.db_classes.Datafiles).all()
             if next(
-                (file for file in self.get_datafiles() if file.reference == datafile),
-                None,
+                (file for file in all_datafiles if file.reference == datafile), None,
             ):
                 # A datafile already exists with that name
                 return False
@@ -614,13 +639,9 @@ class DataStore(object):
 
         # return True if provided platform exists
         def check_platform(name):
+            all_platforms = self.session.query(self.db_classes.Platforms).all()
             if next(
-                (
-                    platform
-                    for platform in self.get_platforms()
-                    if platform.name == name
-                ),
-                None,
+                (platform for platform in all_platforms if platform.name == name), None,
             ):
                 # A platform already exists with that name
                 return False
