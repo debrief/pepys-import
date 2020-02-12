@@ -28,6 +28,19 @@ class Entry(BasePostGIS):
     created_user = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    @classmethod
+    def add_to_entries(cls, session, table_type_id, table_name):
+        # ensure table type exists to satisfy foreign key constraint
+        TableType().add_to_table_types(session, table_type_id, table_name)
+
+        # No cache for entries, just add new one when called
+        entry_obj = Entry(table_type_id=table_type_id, created_user=1)
+
+        session.add(entry_obj)
+        session.flush()
+
+        return entry_obj.entry_id
+
 
 class TableType(BasePostGIS):
     __tablename__ = "TableTypes"
@@ -37,6 +50,26 @@ class TableType(BasePostGIS):
     name = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    @classmethod
+    def search_table_type(cls, session, table_type_id):
+        # search for any table type with this id
+        return (
+            session.query(TableType)
+            .filter(TableType.table_type_id == table_type_id)
+            .first()
+        )
+
+    @classmethod
+    def add_to_table_types(cls, session, table_type_id, table_name):
+        table_type = cls.search_table_type(session, table_type_id)
+        if table_type is None:
+            # enough info to proceed and create entry
+            table_type = TableType(table_type_id=table_type_id, name=table_name)
+            session.add(table_type)
+            session.flush()
+
+        return table_type
+
 
 # Metadata Tables
 class HostedBy(BasePostGIS):
@@ -45,7 +78,7 @@ class HostedBy(BasePostGIS):
     table_type_id = 1
     table_name = "HostedBy"
 
-    hosted_by_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    hosted_by_id = Column(UUID(), primary_key=True, default=uuid4)
     subject_id = Column(
         UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
     )
@@ -65,9 +98,7 @@ class Sensors(BasePostGIS):
     table_type = TableTypes.METADATA
     table_type_id = 2
 
-    sensor_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    sensor_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     sensor_type_id = Column(
         UUID(as_uuid=True), ForeignKey("SensorTypes.sensor_type_id"), nullable=False
@@ -77,15 +108,37 @@ class Sensors(BasePostGIS):
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    @classmethod
+    def add_to_sensors(cls, session, name, sensor_type, host):
+        sensor_type = SensorTypes().search_sensor_type(session, sensor_type)
+        host = Platforms().search_platform(session, host)
+
+        if sensor_type is None or host is None:
+            text = f"There is missing value(s) in '{sensor_type}, {host}'!"
+            raise Exception(text)
+
+        entry_id = Entry().add_to_entries(
+            session, Sensors.table_type_id, Sensors.__tablename__
+        )
+
+        sensor_obj = Sensors(
+            sensor_id=entry_id,
+            name=name,
+            sensor_type_id=sensor_type.sensor_type_id,
+            platform_id=host.platform_id,
+        )
+        session.add(sensor_obj)
+        session.flush()
+
+        return sensor_obj
+
 
 class Platforms(BasePostGIS):
     __tablename__ = "Platforms"
     table_type = TableTypes.METADATA
     table_type_id = 3
 
-    platform_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    platform_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150))
     nationality_id = Column(
         UUID(as_uuid=True), ForeignKey("Nationalities.nationality_id"), nullable=False
@@ -98,6 +151,47 @@ class Platforms(BasePostGIS):
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    @classmethod
+    def search_platform(cls, session, name):
+        # search for any platform with this name
+        return session.query(Platforms).filter(Platforms.name == name).first()
+
+    @staticmethod
+    def get_sensor(session, all_sensors, sensor_name, sensor_type=None, privacy=None):
+        """
+        Lookup or create a sensor of this name for this platform. Specified sensor
+        will be added to the sensors table.
+        Args:
+            sensor_name: {String} -- Name of Sensor
+            sensor_type: {String} -- Type of Sensor
+            privacy: {String} -- Name of Privacy
+
+        Returns:
+            A Sensor object that can be passed to the add_state() function of Datafile.
+        """
+
+        # return True if provided sensor exists
+        def check_sensor(name):
+            if next((sensor for sensor in all_sensors if sensor.name == name), None):
+                # A sensor already exists with that name
+                return False
+
+            return True
+
+        if len(sensor_name) == 0:
+            raise Exception("Please enter sensor name!")
+        elif check_sensor(sensor_name):
+            platform = session.query(Platforms).first()
+            return Sensors().add_to_sensors(
+                session=session,
+                name=sensor_name,
+                sensor_type=sensor_type,
+                host=platform.name
+                # privacy=privacy,
+            )
+        else:
+            return session.query(Sensors).filter(Sensors.name == sensor_name).first()
+
 
 class Tasks(BasePostGIS):
     __tablename__ = "Tasks"
@@ -105,7 +199,7 @@ class Tasks(BasePostGIS):
     table_type_id = 4
     table_name = "Tasks"
 
-    task_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    task_id = Column(UUID(), primary_key=True, default=uuid4)
     parent_id = Column(UUID(as_uuid=True), ForeignKey("Tasks.task_id"), nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
@@ -123,7 +217,7 @@ class Participants(BasePostGIS):
     table_type_id = 5
     table_name = "Participants"
 
-    participant_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    participant_id = Column(UUID(), primary_key=True, default=uuid4)
     platform_id = Column(
         UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
     )
@@ -142,9 +236,7 @@ class Datafiles(BasePostGIS):
     table_type = TableTypes.METADATA
     table_type_id = 6  # Only needed for tables referenced by Entry table
 
-    datafile_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    datafile_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     simulated = Column(Boolean)
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
@@ -156,6 +248,33 @@ class Datafiles(BasePostGIS):
     url = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    def create_state(self, sensor, timestamp):
+        state = States(
+            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
+        )
+        return state
+
+    def create_contact(self, sensor, timestamp):
+        contact = Contacts(
+            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
+        )
+        return contact
+
+    def create_comment(self, sensor, timestamp, comment, comment_type):
+        comment = Comments(
+            time=timestamp,
+            content=comment,
+            comment_type_id=comment_type.comment_type_id,
+            source_id=self.datafile_id,
+        )
+        return comment
+
+    def validate(self):
+        return True
+
+    # def verify(self):
+    #     pass
+
 
 class Synonyms(BasePostGIS):
     __tablename__ = "Synonyms"
@@ -163,7 +282,7 @@ class Synonyms(BasePostGIS):
     table_type_id = 7
     table_name = "Synonyms"
 
-    synonym_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    synonym_id = Column(UUID(), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
     synonym = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -175,7 +294,7 @@ class Changes(BasePostGIS):
     table_type_id = 8
     table_name = "Changes"
 
-    change_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    change_id = Column(UUID(), primary_key=True, default=uuid4)
     user = Column(String(150), nullable=False)
     modified = Column(DATE, nullable=False)
     reason = Column(String(500), nullable=False)
@@ -188,7 +307,7 @@ class Logs(BasePostGIS):
     table_type_id = 9
     table_name = "Log"
 
-    log_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    log_id = Column(UUID(), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
     id = Column(UUID(as_uuid=True), ForeignKey("Logs.log_id"), nullable=False)
     field = Column(String(150), nullable=False)
@@ -203,7 +322,7 @@ class Extractions(BasePostGIS):
     table_type_id = 10
     table_name = "Extractions"
 
-    extraction_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    extraction_id = Column(UUID(), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
     field = Column(String(150), nullable=False)
     chars = Column(String(150), nullable=False)
@@ -216,7 +335,7 @@ class Tags(BasePostGIS):
     table_type_id = 11
     table_name = "Tags"
 
-    tag_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    tag_id = Column(UUID(), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -227,7 +346,7 @@ class TaggedItems(BasePostGIS):
     table_type_id = 12
     table_name = "TaggedItems"
 
-    tagged_item_id = Column(UUID(), primary_key=True, server_default=FetchedValue())
+    tagged_item_id = Column(UUID(), primary_key=True, default=uuid4)
     tag_id = Column(UUID(as_uuid=True), ForeignKey("Tags.tag_id"), nullable=False)
     # TODO: what is fk measurements?
     item_id = Column(UUID(as_uuid=True), nullable=False)
@@ -245,9 +364,7 @@ class PlatformTypes(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 13
 
-    platform_type_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    platform_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -257,9 +374,7 @@ class Nationalities(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 14
 
-    nationality_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    nationality_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -269,9 +384,7 @@ class GeometryTypes(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 15
 
-    geo_type_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    geo_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -281,9 +394,7 @@ class GeometrySubTypes(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 16
 
-    geo_sub_type_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    geo_sub_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     # parent = Column(UUID(as_uuid=True), ForeignKey("GeometryTypes.geometry_type_id"))
     parent = Column(UUID, nullable=False)
@@ -295,9 +406,7 @@ class Users(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 17
 
-    user_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -307,9 +416,7 @@ class UnitTypes(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 18
 
-    unit_type_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    unit_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     units = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -319,9 +426,7 @@ class ClassificationTypes(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 19
 
-    class_type_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    class_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     class_type = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -331,9 +436,7 @@ class ContactTypes(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 20
 
-    contact_type_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    contact_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     contact_type = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -348,15 +451,18 @@ class SensorTypes(BasePostGIS):
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    @classmethod
+    def search_sensor_type(cls, session, name):
+        # search for any sensor type featuring this name
+        return session.query(SensorTypes).filter(SensorTypes.name == name).first()
+
 
 class Privacies(BasePostGIS):
     __tablename__ = "Privacies"
     table_type = TableTypes.REFERENCE
     table_type_id = 22
 
-    privacy_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    privacy_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -366,9 +472,7 @@ class DatafileTypes(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 23
 
-    datafile_type_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    datafile_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -378,9 +482,7 @@ class MediaTypes(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 24
 
-    media_type_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    media_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -390,9 +492,7 @@ class CommentTypes(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 25
 
-    comment_type_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    comment_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -402,9 +502,7 @@ class CommodityTypes(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 26
 
-    commodity_type_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    commodity_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -414,9 +512,7 @@ class ConfidenceLevels(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 27  # Only needed for tables referenced by Entry table
 
-    confidence_level_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    confidence_level_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     level = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -427,9 +523,7 @@ class States(BasePostGIS):
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
 
-    state_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    state_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
@@ -444,15 +538,20 @@ class States(BasePostGIS):
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    def submit(self, session):
+        """Submit intermediate object to the DB"""
+        session.add(self)
+        session.flush()
+
+        return self
+
 
 class Contacts(BasePostGIS):
     __tablename__ = "Contacts"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
 
-    contact_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    contact_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
@@ -479,15 +578,38 @@ class Contacts(BasePostGIS):
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    def set_name(self, name):
+        self.name = name
+
+    def set_subject(self, platform):
+        self.subject_id = platform.platform_id
+
+    # def set_bearing(self, bearing):
+    #     self.bearing = bearing
+    #
+    # def set_rel_bearing(self, rel_bearing):
+    #     self.rel_bearing = rel_bearing
+    #
+    # def set_frequency(self, frequency):
+    #     self.freq = frequency
+    #
+    # def set_privacy(self, privacy_type):
+    #     self.privacy_id = privacy_type.privacy_id
+
+    def submit(self, session):
+        """Submit intermediate object to the DB"""
+        session.add(self)
+        session.flush()
+
+        return self
+
 
 class Activations(BasePostGIS):
     __tablename__ = "Activations"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 30
 
-    activation_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    activation_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
@@ -510,9 +632,7 @@ class LogsHoldings(BasePostGIS):
     table_type = TableTypes.MEASUREMENT
     table_type_id = 31
 
-    logs_holding_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    logs_holding_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     time = Column(TIMESTAMP, nullable=False)
     quantity = Column(DOUBLE_PRECISION, nullable=False)
     unit_type_id = Column(
@@ -534,9 +654,7 @@ class Comments(BasePostGIS):
     table_type = TableTypes.MEASUREMENT
     table_type_id = 32
 
-    comment_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    comment_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     platform_id = Column(
         UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
     )
@@ -549,15 +667,26 @@ class Comments(BasePostGIS):
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    def set_platform(self, platform):
+        self.platform_id = platform.platform_id
+
+    # def set_privacy(self, privacy_type):
+    #     self.privacy_id = privacy_type.privacy_id
+
+    def submit(self, session):
+        """Submit intermediate object to the DB"""
+        session.add(self)
+        session.flush()
+
+        return self
+
 
 class Geometries(BasePostGIS):
     __tablename__ = "Geometries"
     table_type = TableTypes.MEASUREMENT
     table_type_id = 33
 
-    geometry_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    geometry_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     geometry = Column(Geometry, nullable=False)
     name = Column(String(150), nullable=False)
     geo_type_id = Column(
@@ -587,9 +716,7 @@ class Media(BasePostGIS):
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34
 
-    media_id = Column(
-        UUID(as_uuid=True), primary_key=True, server_default=FetchedValue()
-    )
+    media_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     platform_id = Column(UUID(as_uuid=True), ForeignKey("Platforms.platform_id"))
     subject_id = Column(UUID(as_uuid=True), ForeignKey("Platforms.platform_id"))
     sensor_id = Column(UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"))
