@@ -338,7 +338,6 @@ class TaggedItems(BasePostGIS):
 
     tagged_item_id = Column(UUID(), primary_key=True, default=uuid4)
     tag_id = Column(UUID(as_uuid=True), ForeignKey("Tags.tag_id"), nullable=False)
-    # TODO: what is fk measurements?
     item_id = Column(UUID(as_uuid=True), nullable=False)
     tagged_by_id = Column(
         UUID(as_uuid=True), ForeignKey("Users.user_id"), nullable=False
@@ -436,7 +435,6 @@ class SensorTypes(BasePostGIS):
     table_type = TableTypes.REFERENCE
     table_type_id = 21
 
-    # TODO: server default doesn't work for sensor_type_id
     sensor_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)

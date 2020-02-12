@@ -31,21 +31,13 @@ from .table_summary import TableSummary, TableSummarySet
 MAIN_DIRECTORY_PATH = Path(__file__).parent.parent.parent  # pepys_import/pepys_import
 DEFAULT_DATA_PATH = os.path.join(MAIN_DIRECTORY_PATH, "database", "default_data")
 
-# TODO: add foreign key refs
-# TODO: add proper uuid funcs that interact with entries table
 
-# TODO: probably move this module to the top level as it's the main one
-
-
-class DataStore:
+class DataStore(object):
     """ Representation of database
 
-
-    Returns:
-        DataStore -- the data store
+    :returns: DataStore object
     """
 
-    # TODO: supply or lookup user id
     # Valid options for db_type are 'postgres' and 'sqlite'
     def __init__(
         self,
@@ -354,6 +346,17 @@ class DataStore:
         return state_obj
 
     def add_to_sensors(self, name, sensor_type, host):
+        """
+        Adds the specified sensor to the Sensors table if not already present.
+
+        :param name: Name of sensor
+        :type name: String
+        :param sensor_type: Type of sensor
+        :type sensor_type: SensorType object
+        :param host: Platform of Sensor
+        :type host: Platform object
+        :return: Created Sensor entity
+        """
         sensor_type = self.search_sensor_type(sensor_type)
         host = self.search_platform(host)
 
@@ -377,7 +380,22 @@ class DataStore:
         return sensor_obj
 
     def add_to_datafiles(self, simulated, privacy, file_type, reference=None, url=None):
+        """
+        Adds the specified datafile to the Datafiles table if not already present.
 
+        :param simulated: Datafile is simulated or not
+        :type simulated: Boolean
+        :param privacy: Privacy of Datafile
+        :type privacy: Privacy object
+        :param file_type: Type of Datafile
+        :type file_type: String
+        :param reference: Reference of Datafile
+        :type reference: String
+        :param url: URL of datafile
+        :type url: String
+        :return: Created Datafiles entity
+        :rtype: Datafiles object
+        """
         privacy = self.search_privacy(privacy)
         datafile_type = self.search_datafile_type(file_type)
 
@@ -405,7 +423,20 @@ class DataStore:
         return datafile_obj
 
     def add_to_platforms(self, name, nationality, platform_type, privacy):
+        """
+        Adds the specified platform to the Platforms table if not already present.
 
+        :param name: Name of Platform
+        :type name: String
+        :param nationality: Nationality of Platform
+        :type nationality: Nationality object
+        :param platform_type: Type of Platform
+        :type platform_type: PlatformTypes object
+        :param privacy: Privacy of Platform
+        :type privacy: Privacy object
+        :return: Created Platform entity
+        :rtype: Platform object
+        """
         nationality = self.search_nationality(nationality)
         platform_type = self.search_platform_type(platform_type)
         privacy = self.search_privacy(privacy)
@@ -520,9 +551,6 @@ class DataStore:
 
     #############################################################
     # New methods
-
-    # TODO: These methods use add_to_xxx methods from above. They should be changed to
-    # internal functions.
 
     def get_datafile(self, datafile_name, datafile_type):
         """
@@ -668,6 +696,15 @@ class DataStore:
         )
 
     def add_to_comment_types(self, name):
+        """
+        Adds the specified comment type to the CommentTypes table if not already present
+
+        :param name: Name of comment type
+        :type name: String
+        :return: Created entity of CommentTypes table
+        :rtype: CommentTypes Object
+        """
+
         # check in cache for comment type
         if name in self.comment_types:
             return self.comment_types[name]
@@ -773,11 +810,11 @@ class DataStore:
     def add_to_nationalities(self, nationality_name):
         """
         Adds the specified nationality to the nationalities table if not already present
-        Args:
-            nationality_name: {String} -- Name of Nationality
 
-        Returns:
-            Created Nationality entity
+        :param nationality_name: Name of Nationality
+        :type nationality_name: String
+        :return: Created Nationality entity
+        :rtype: Nationality Object
         """
         # check in cache for nationality
         if nationality_name in self.nationalities:
@@ -810,11 +847,10 @@ class DataStore:
         """
         Adds the specified privacy entry to the privacies table if not already present.
 
-        Args:
-            privacy_name: {String} -- Name of Privacy
-
-        Returns:
-            Created Privacy entity
+        :param privacy_name: Name of Privacy
+        :type privacy_name: String
+        :return: Created Privacy entity
+        :rtype: Privacy Object
         """
         # check in cache for privacy
         if privacy_name in self.privacies:
@@ -846,11 +882,10 @@ class DataStore:
         Adds the specified datafile type to the datafile types table if not already
         present.
 
-        Arguments:
-            datafile_type {String} -- Name of Datafile Type
-
-        Returns:
-            DataFileType -- Wrapped database entity for DatafileType
+        :param datafile_type: Name of Datafile Type
+        :type datafile_type: String
+        :return: Wrapped database entity for DatafileType
+        :rtype: DatafileType Object
         """
         # check in cache for datafile type
         if datafile_type in self.datafile_types:
@@ -884,11 +919,10 @@ class DataStore:
         """
         Adds the specified sensor type to the sensor types table if not already present.
 
-        Args:
-            sensor_type_name {String} -- Name of Sensor Type
-
-        Returns:
-            Created Sensor Type entity
+        :param sensor_type_name: Name of Sensor Type
+        :type sensor_type_name: String
+        :return: Created SensorType entity
+        :rtype: SensorType Object
         """
         # check in cache for sensor type
         if sensor_type_name in self.sensor_types:
@@ -910,6 +944,3 @@ class DataStore:
         self.sensor_types[sensor_type_name] = sensor_type
         # should return DB type or something else decoupled from DB?
         return sensor_type
-
-    # End of Reference Type Maintenance
-    #############################################################
