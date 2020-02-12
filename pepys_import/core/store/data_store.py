@@ -33,7 +33,7 @@ DEFAULT_DATA_PATH = os.path.join(MAIN_DIRECTORY_PATH, "database", "default_data"
 class DataStore(object):
     """ Representation of database
 
-    :returns: DataStore object
+    :returns: :class:`DataStore`
     """
 
     # Valid options for db_type are 'postgres' and 'sqlite'
@@ -160,7 +160,7 @@ class DataStore(object):
     # Other DataStore Methods
 
     def setup_table_type_mapping(self):
-        """Setup a map of tables keyed by TableType"""
+        """Setup a map of tables keyed by :class:`TableType`"""
         db_classes = dict(
             [
                 (name, cls)
@@ -270,13 +270,13 @@ class DataStore(object):
 
     def add_to_entries(self, table_type_id, table_name):
         """
-        Adds the specified entry to the Entry table if not already present.
+        Adds the specified entry to the :class:`Entry` table if not already present.
 
         :param table_type_id: Table Type ID
         :type table_type_id: Integer
         :param table_name: Name of table
         :type table_name: String
-        :return: Created Entry entity's entry_id
+        :return: Created :class:`Entry` entity's entry_id
         :rtype: UUID
         """
         # ensure table type exists to satisfy foreign key constraint
@@ -304,26 +304,26 @@ class DataStore(object):
         privacy=None,
     ):
         """
-        Adds the specified state to the States table if not already present.
+        Adds the specified state to the :class:`States` table if not already present.
 
-        :param time: Timestamp of State
+        :param time: Timestamp of :class:`States`
         :type time: datetime
-        :param sensor: Sensor of State
-        :type sensor: Sensor object
-        :param datafile: Datafile of State
-        :type datafile: Datafile object
-        :param location: Location of State
+        :param sensor: Sensor of :class:`States`
+        :type sensor: Sensor
+        :param datafile: Datafile of :class:`States`
+        :type datafile: Datafiles
+        :param location: Location of :class:`States`
         :type location: Point
-        :param heading: Heading of State (Which converted to radians)
+        :param heading: Heading of :class:`States` (Which converted to radians)
         :type heading: String
-        :param course: Course of State
+        :param course: Course of :class:`States`
         :type course:
-        :param speed: Speed of State (Which converted to m/sec)
+        :param speed: Speed of :class:`States` (Which converted to m/sec)
         :type speed: String
-        :param privacy: Privacy of State
-        :type privacy: Privacy object
-        :return: Created State entity
-        :rtype: State object
+        :param privacy: :class:`Privacies` of :class:`States`
+        :type privacy: Privacies
+        :return: Created :class:`States` entity
+        :rtype: States
         """
         time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
 
@@ -370,15 +370,15 @@ class DataStore(object):
 
     def add_to_sensors(self, name, sensor_type, host):
         """
-        Adds the specified sensor to the Sensors table if not already present.
+        Adds the specified sensor to the :class:`Sensors` table if not already present.
 
         :param name: Name of sensor
         :type name: String
         :param sensor_type: Type of sensor
-        :type sensor_type: SensorType object
-        :param host: Platform of Sensor
-        :type host: Platform object
-        :return: Created Sensor entity
+        :type sensor_type: :class:`SensorTypes`
+        :param host: Platform of sensor
+        :type host: Platforms
+        :return: Created Sensors entity
         """
         sensor_type = self.search_sensor_type(sensor_type)
         host = self.search_platform(host)
@@ -406,18 +406,18 @@ class DataStore(object):
         """
         Adds the specified datafile to the Datafiles table if not already present.
 
-        :param simulated: Datafile is simulated or not
+        :param simulated: :class:`Datafiles` is simulated or not
         :type simulated: Boolean
-        :param privacy: Privacy of Datafile
-        :type privacy: Privacy object
-        :param file_type: Type of Datafile
+        :param privacy: :class:`Privacies` of :class:`Datafiles`
+        :type privacy: Privacies
+        :param file_type: Type of :class:`Datafiles`
         :type file_type: String
-        :param reference: Reference of Datafile
+        :param reference: Reference of :class:`Datafiles`
         :type reference: String
         :param url: URL of datafile
         :type url: String
-        :return: Created Datafiles entity
-        :rtype: Datafiles object
+        :return: Created :class:`Datafiles` entity
+        :rtype: Datafiles
         """
         privacy = self.search_privacy(privacy)
         datafile_type = self.search_datafile_type(file_type)
@@ -449,16 +449,16 @@ class DataStore(object):
         """
         Adds the specified platform to the Platforms table if not already present.
 
-        :param name: Name of Platform
+        :param name: Name of :class:`Platform`
         :type name: String
-        :param nationality: Nationality of Platform
-        :type nationality: Nationality object
-        :param platform_type: Type of Platform
-        :type platform_type: PlatformTypes object
-        :param privacy: Privacy of Platform
-        :type privacy: Privacy object
+        :param nationality: Nationality of :class:`Platform`
+        :type nationality: Nationalities
+        :param platform_type: Type of :class:`Platform`
+        :type platform_type: PlatformTypes
+        :param privacy: :class:`Privacies` of :class:`Platform`
+        :type privacy: Privacies
         :return: Created Platform entity
-        :rtype: Platform object
+        :rtype: Platforms
         """
         nationality = self.search_nationality(nationality)
         platform_type = self.search_platform_type(platform_type)
@@ -580,12 +580,12 @@ class DataStore(object):
         Adds an entry to the datafiles table of the specified name (path)
         and type if not already present.
 
-        Args:
-            datafile_name: {String} -- Name of Datafile
-            datafile_type: {String} -- Name of Datafile Type
-
-        Returns:
-            A Datafile object that can used to add state.
+        :param datafile_name:  Name of Datafile
+        :type datafile_name: String
+        :param datafile_type: Type of Datafile
+        :type datafile_type: DatafileTypes
+        :return:  Created Datafile entity
+        :rtype: Datafiles
         """
 
         # return True if provided datafile exists
@@ -625,14 +625,15 @@ class DataStore(object):
         Adds an entry to the platforms table for the specified platform
         if not already present.
 
-        Args:
-            platform_name: {String} -- Name of Platform
-            nationality: {String} -- Name of Nationality
-            platform_type: {String} -- Name of Platform Type
-            privacy: {String} -- Name of Privacy
-
-        Returns:
-            A Platform object that can be used to lookup/create Sensors.
+        :param platform_name: Name of :class:`Platform`
+        :type platform_name: String
+        :param nationality: Name of :class:`Nationalities`
+        :type nationality: Nationalities
+        :param platform_type: Name of :class:`PlatformTypes`
+        :type platform_type: PlatformTypes
+        :param privacy: Name of :class:`Privacies`
+        :type privacy: Privacies
+        :return: Created Platforms entity
         """
 
         # return True if provided platform exists
@@ -669,15 +670,16 @@ class DataStore(object):
         report_reference: bool = False,
     ):
         """
-        Provides a summary of the contents of the DataStore.
+        Provides a summary of the contents of the :class:`DataStore`.
 
-        Args:
-            report_measurement: {Boolean} -- Boolean flag indicates Measurement Tables
-            report_metadata: {Boolean} -- Boolean flag indicates Metadata Tables
-            report_reference: {Boolean} -- Boolean flag indicates Reference Tables
-
-        Returns:
-            A TableSummarySet.
+        :param report_measurement: Boolean flag includes Metadata Tables
+        :type report_measurement: Boolean
+        :param report_metadata: Boolean flag includes Metadata Tables
+        :type report_metadata: Boolean
+        :param report_reference: Boolean flag includes Metadata Tables
+        :type report_reference: Boolean
+        :return: The summary of the contents of the :class:`DataStore`
+        :rtype: TableSummarySet
         """
 
         table_summaries = []
@@ -707,7 +709,7 @@ class DataStore(object):
         return table_summaries_set
 
     def search_comment_type(self, name):
-        # search for any comment type featuring this name
+        """Search for any comment type featuring this name"""
         return (
             self.session.query(self.db_classes.CommentTypes)
             .filter(self.db_classes.CommentTypes.name == name)
@@ -718,10 +720,10 @@ class DataStore(object):
         """
         Adds the specified comment type to the CommentTypes table if not already present
 
-        :param name: Name of comment type
+        :param name: Name of :class:`CommentTypes`
         :type name: String
-        :return: Created entity of CommentTypes table
-        :rtype: CommentTypes Object
+        :return: Created entity of :class:`CommentTypes` table
+        :rtype: CommentTypes
         """
 
         # check in cache for comment type
@@ -758,12 +760,15 @@ class DataStore(object):
         Adds the specified table type and name to the table types table if not already
         present.
 
-        Args:
-            table_type_id: {String} -- ID of Table Type
-            table_name: {String} -- Name of Table Type
-
         Returns:
             Created table type entity
+
+        :param table_type_id: ID of :class:`TableType`
+        :type table_type_id: Integer
+        :param table_name: Name of :class:`TableType`
+        :type table_name: String
+        :return: Created :class:`TableType` entity
+        :rtype: TableType
         """
         # check in cache for table type
         if table_type_id in self.table_types:
@@ -793,11 +798,10 @@ class DataStore(object):
         Adds the specified platform type to the platform types table if not already
         present.
 
-        Args:
-            platform_type_name: {String} -- Name of Platform Type
-
-        Returns:
-            Created platform type entity
+        :param platform_type_name: Name of :class:`PlatformTypes`
+        :type platform_type_name: String
+        :return: Created :class:`PlatformTypes` entity
+        :rtype: PlatformTypes
         """
         # check in cache for nationality
         if platform_type_name in self.platform_types:
@@ -830,10 +834,10 @@ class DataStore(object):
         """
         Adds the specified nationality to the nationalities table if not already present
 
-        :param nationality_name: Name of Nationality
+        :param nationality_name: Name of :class:`Nationalities`
         :type nationality_name: String
-        :return: Created Nationality entity
-        :rtype: Nationality Object
+        :return: Created :class:`Nationalities` entity
+        :rtype: Nationalities
         """
         # check in cache for nationality
         if nationality_name in self.nationalities:
@@ -864,12 +868,12 @@ class DataStore(object):
 
     def add_to_privacies(self, privacy_name):
         """
-        Adds the specified privacy entry to the privacies table if not already present.
+        Adds the specified privacy entry to the :class:`Privacies` table if not already present.
 
-        :param privacy_name: Name of Privacy
+        :param privacy_name: Name of :class:`Privacies`
         :type privacy_name: String
-        :return: Created Privacy entity
-        :rtype: Privacy Object
+        :return: Created :class:`Privacies` entity
+        :rtype: Privacies
         """
         # check in cache for privacy
         if privacy_name in self.privacies:
@@ -901,10 +905,10 @@ class DataStore(object):
         Adds the specified datafile type to the datafile types table if not already
         present.
 
-        :param datafile_type: Name of Datafile Type
+        :param datafile_type: Name of :class:`DatafileTypes`
         :type datafile_type: String
-        :return: Wrapped database entity for DatafileType
-        :rtype: DatafileType Object
+        :return: Wrapped database entity for :class:`DatafileTypes`
+        :rtype: DatafileTypes
         """
         # check in cache for datafile type
         if datafile_type in self.datafile_types:
@@ -936,12 +940,12 @@ class DataStore(object):
 
     def add_to_sensor_types(self, sensor_type_name):
         """
-        Adds the specified sensor type to the sensor types table if not already present.
+        Adds the specified sensor type to the :class:`SensorTypes` table if not already present.
 
-        :param sensor_type_name: Name of Sensor Type
+        :param sensor_type_name: Name of :class:`SensorTypes`
         :type sensor_type_name: String
-        :return: Created SensorType entity
-        :rtype: SensorType Object
+        :return: Created :class:`SensorTypes` entity
+        :rtype: SensorTypes
         """
         # check in cache for sensor type
         if sensor_type_name in self.sensor_types:
