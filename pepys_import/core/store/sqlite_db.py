@@ -132,15 +132,20 @@ class Platforms(BaseSpatiaLite):
     @staticmethod
     def get_sensor(session, all_sensors, sensor_name, sensor_type=None, privacy=None):
         """
-        Lookup or create a sensor of this name for this platform. Specified sensor
-        will be added to the sensors table.
-        Args:
-            sensor_name: {String} -- Name of Sensor
-            sensor_type: {String} -- Type of Sensor
-            privacy: {String} -- Name of Privacy
+        Lookup or create a sensor of this name for this :class:`Platforms`.
+        Specified sensor will be added to the :class:`Sensors` table.
 
-        Returns:
-            A Sensor object that can be passed to the add_state() function of Datafile.
+        :param session: Session to query DB
+        :type: :class:`sqlalchemy.orm.session.Session`
+        :param all_sensors: All Sensors Entities
+        :type: :class:`Sensors` List
+        :param sensor_name: Name of :class:`Sensors`
+        :type sensor_name: String
+        :param sensor_type: Type of :class:`Sensors`
+        :type sensor_type: SensorTypes
+        :param privacy: Privacy of :class:`Sensors`
+        :type privacy: Privacies
+        :return: Created :class:`Sensors` entity
         """
 
         # return True if provided sensor exists
