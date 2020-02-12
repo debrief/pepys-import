@@ -54,6 +54,343 @@ class DBConnectionTestCase(TestCase):
         store.initialise()
 
 
+class DataStoreCacheTestCase(TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_cached_comment_types(self):
+        """Test whether a new comment type entity cached and returned"""
+        with self.store.session_scope() as session:
+            comment_types = self.store.session.query(
+                self.store.db_classes.CommentTypes
+            ).all()
+
+            # there must be no entity at the beginning
+            self.assertEqual(len(comment_types), 0)
+
+            comment_type_1 = self.store.add_to_comment_types("Comment-1")
+            # This one shouldn't duplicate, it must return existing entity
+            comment_type_2 = self.store.add_to_comment_types("Comment-1")
+
+            # objects must be the same since the second object
+            # is cached of first the one
+            self.assertEqual(comment_type_1, comment_type_2)
+
+            comment_types = self.store.session.query(
+                self.store.db_classes.CommentTypes
+            ).all()
+            # there must be only one entity at the beginning
+            self.assertEqual(len(comment_types), 1)
+
+    def test_cached_table_type(self):
+        """Test whether a new table type entity cached and returned"""
+        with self.store.session_scope() as session:
+            table_types = self.store.session.query(
+                self.store.db_classes.TableType
+            ).all()
+
+            # there must be no entity at the beginning
+            self.assertEqual(len(table_types), 0)
+
+            table_type_1 = self.store.add_to_table_types(
+                table_type_id=1, table_name="test"
+            )
+            # This one shouldn't duplicate, it should return existing entity
+            table_type_2 = self.store.add_to_table_types(
+                table_type_id=1, table_name="test"
+            )
+
+            # objects must be the same
+            self.assertEqual(table_type_1, table_type_2)
+            table_types = self.store.session.query(
+                self.store.db_classes.TableType
+            ).all()
+
+            # there must be only one entity at the beginning
+            self.assertEqual(len(table_types), 1)
+
+    def test_cached_platform_types(self):
+        """Test whether a new platform type entity cached and returned"""
+        with self.store.session_scope() as session:
+            platform_types = self.store.session.query(
+                self.store.db_classes.PlatformTypes
+            ).all()
+
+            # there must be no entity at the beginning
+            self.assertEqual(len(platform_types), 0)
+
+            platform_type_1 = self.store.add_to_platform_types(
+                platform_type_name="test"
+            )
+            # This one shouldn't duplicate, it should return existing entity
+            platform_type_2 = self.store.add_to_platform_types(
+                platform_type_name="test"
+            )
+
+            # objects must be the same
+            self.assertEqual(platform_type_1, platform_type_2)
+            platform_types = self.store.session.query(
+                self.store.db_classes.PlatformTypes
+            ).all()
+
+            # there must be only one entity at the beginning
+            self.assertEqual(len(platform_types), 1)
+
+    def test_cached_nationalities(self):
+        """Test whether a new nationality entity cached and returned"""
+        with self.store.session_scope() as session:
+            nationalities = self.store.session.query(
+                self.store.db_classes.Nationalities
+            ).all()
+
+            # there must be no entity at the beginning
+            self.assertEqual(len(nationalities), 0)
+
+            nationality_1 = self.store.add_to_nationalities(nationality_name="test")
+            # This one shouldn't duplicate, it should return existing entity
+            nationality_2 = self.store.add_to_nationalities(nationality_name="test")
+
+            # objects must be the same
+            self.assertEqual(nationality_1, nationality_2)
+            nationalities = self.store.session.query(
+                self.store.db_classes.Nationalities
+            ).all()
+
+            # there must be only one entity at the beginning
+            self.assertEqual(len(nationalities), 1)
+
+    def test_cached_privacies(self):
+        """Test whether a new privacy entity cached and returned"""
+        with self.store.session_scope() as session:
+            privacies = self.store.session.query(self.store.db_classes.Privacies).all()
+
+            # there must be no entity at the beginning
+            self.assertEqual(len(privacies), 0)
+
+            privacy_1 = self.store.add_to_privacies(privacy_name="test")
+            # This one shouldn't duplicate, it should return existing entity
+            privacy_2 = self.store.add_to_privacies(privacy_name="test")
+
+            # objects must be the same
+            self.assertEqual(privacy_1, privacy_2)
+            privacies = self.store.session.query(self.store.db_classes.Privacies).all()
+
+            # there must be only one entity at the beginning
+            self.assertEqual(len(privacies), 1)
+
+    def test_cached_datafile_types(self):
+        """Test whether a new datafile type entity cached and returned"""
+        with self.store.session_scope() as session:
+            datafile_types = self.store.session.query(
+                self.store.db_classes.DatafileTypes
+            ).all()
+
+            # there must be no entity at the beginning
+            self.assertEqual(len(datafile_types), 0)
+
+            datafile_type_1 = self.store.add_to_datafile_types(datafile_type="test")
+            # This one shouldn't duplicate, it should return existing entity
+            datafile_type_2 = self.store.add_to_datafile_types(datafile_type="test")
+
+            # objects must be the same
+            self.assertEqual(datafile_type_1, datafile_type_2)
+            datafile_types = self.store.session.query(
+                self.store.db_classes.DatafileTypes
+            ).all()
+
+            # there must be only one entity at the beginning
+            self.assertEqual(len(datafile_types), 1)
+
+    def test_cached_sensor_types(self):
+        """Test whether a new sensor type entity cached and returned"""
+        with self.store.session_scope() as session:
+            sensor_types = self.store.session.query(
+                self.store.db_classes.SensorTypes
+            ).all()
+
+            # there must be no entity at the beginning
+            self.assertEqual(len(sensor_types), 0)
+
+            sensor_type_1 = self.store.add_to_sensor_types(sensor_type_name="test")
+            # This one shouldn't duplicate, it should return existing entity
+            sensor_type_2 = self.store.add_to_sensor_types(sensor_type_name="test")
+
+            # objects must be the same
+            self.assertEqual(sensor_type_1, sensor_type_2)
+            sensor_types = self.store.session.query(
+                self.store.db_classes.SensorTypes
+            ).all()
+
+            # there must be only one entity at the beginning
+            self.assertEqual(len(sensor_types), 1)
+
+
+class DataStoreLookUpDBAndAddToCacheTestCase(TestCase):
+    """Test searching functionality and adding existing DB entities to the cache of
+    DataStore"""
+
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_comment_types(self):
+        with self.store.session_scope() as session:
+            comment_type = self.store.db_classes.CommentTypes(name="test")
+            self.store.session.add(comment_type)
+            self.store.session.flush()
+
+            comment_types = self.store.session.query(
+                self.store.db_classes.CommentTypes
+            ).all()
+
+            # there must be one entity at the beginning
+            self.assertEqual(len(comment_types), 1)
+
+            self.store.add_to_comment_types("test")
+
+            comment_types = self.store.session.query(
+                self.store.db_classes.CommentTypes
+            ).all()
+
+            # there must be only one entity again
+            self.assertEqual(len(comment_types), 1)
+
+    def test_table_type(self):
+        with self.store.session_scope() as session:
+            table_type = self.store.db_classes.TableType(table_type_id=1, name="test")
+            self.store.session.add(table_type)
+            self.store.session.flush()
+
+            table_types = self.store.session.query(
+                self.store.db_classes.TableType
+            ).all()
+
+            # there must be one entity at the beginning
+            self.assertEqual(len(table_types), 1)
+
+            self.store.add_to_table_types(1, "test")
+
+            table_types = self.store.session.query(
+                self.store.db_classes.TableType
+            ).all()
+
+            # there must be only one entity again
+            self.assertEqual(len(table_types), 1)
+
+    def test_platform_types(self):
+        with self.store.session_scope() as session:
+            platform_type = self.store.db_classes.PlatformTypes(name="test")
+            self.store.session.add(platform_type)
+            self.store.session.flush()
+
+            platform_types = self.store.session.query(
+                self.store.db_classes.PlatformTypes
+            ).all()
+
+            # there must be one entity at the beginning
+            self.assertEqual(len(platform_types), 1)
+
+            self.store.add_to_platform_types("test")
+
+            platform_types = self.store.session.query(
+                self.store.db_classes.PlatformTypes
+            ).all()
+
+            # there must be only one entity again
+            self.assertEqual(len(platform_types), 1)
+
+    def test_nationalities(self):
+        with self.store.session_scope() as session:
+            nationality = self.store.db_classes.Nationalities(name="test")
+            self.store.session.add(nationality)
+            self.store.session.flush()
+
+            nationalities = self.store.session.query(
+                self.store.db_classes.Nationalities
+            ).all()
+
+            # there must be one entity at the beginning
+            self.assertEqual(len(nationalities), 1)
+
+            self.store.add_to_nationalities("test")
+
+            nationalities = self.store.session.query(
+                self.store.db_classes.Nationalities
+            ).all()
+
+            # there must be only one entity again
+            self.assertEqual(len(nationalities), 1)
+
+    def test_privacies(self):
+        with self.store.session_scope() as session:
+            privacy = self.store.db_classes.Privacies(name="test")
+            self.store.session.add(privacy)
+            self.store.session.flush()
+
+            privacies = self.store.session.query(self.store.db_classes.Privacies).all()
+
+            # there must be one entity at the beginning
+            self.assertEqual(len(privacies), 1)
+
+            self.store.add_to_privacies("test")
+
+            privacies = self.store.session.query(self.store.db_classes.Privacies).all()
+
+            # there must be only one entity again
+            self.assertEqual(len(privacies), 1)
+
+    def test_datafile_types(self):
+        with self.store.session_scope() as session:
+            datafile_type = self.store.db_classes.DatafileTypes(name="test")
+            self.store.session.add(datafile_type)
+            self.store.session.flush()
+
+            datafile_types = self.store.session.query(
+                self.store.db_classes.DatafileTypes
+            ).all()
+
+            # there must be one entity at the beginning
+            self.assertEqual(len(datafile_types), 1)
+
+            self.store.add_to_datafile_types("test")
+
+            datafile_types = self.store.session.query(
+                self.store.db_classes.DatafileTypes
+            ).all()
+
+            # there must be only one entity again
+            self.assertEqual(len(datafile_types), 1)
+
+    def test_sensor_types(self):
+        with self.store.session_scope() as session:
+            sensor_type = self.store.db_classes.SensorTypes(name="test")
+            self.store.session.add(sensor_type)
+            self.store.session.flush()
+
+            sensor_types = self.store.session.query(
+                self.store.db_classes.SensorTypes
+            ).all()
+
+            # there must be one entity at the beginning
+            self.assertEqual(len(sensor_types), 1)
+
+            self.store.add_to_sensor_types("test")
+
+            sensor_types = self.store.session.query(
+                self.store.db_classes.SensorTypes
+            ).all()
+
+            # there must be only one entity again
+            self.assertEqual(len(sensor_types), 1)
+
+
 class DataStoreTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
