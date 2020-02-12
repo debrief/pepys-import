@@ -1,20 +1,24 @@
 import unittest
 import os
+
 from datetime import datetime
-
 from unittest import TestCase
-
 from sqlalchemy.sql.ddl import DropSchema
 from testing.postgresql import Postgresql
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import event
-
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_base import BasePostGIS
+
+from contextlib import redirect_stdout
+from io import StringIO
 
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
+NOT_IMPLEMENTED_PATH = os.path.join(
+    FILE_PATH, "sample_data", "csv_files", "for_not_implemented_methods"
+)
 
 
 class DataStorePopulateSpatiaLiteTestCase(TestCase):
@@ -405,6 +409,50 @@ class DataStorePopulatePostGISTestCase(TestCase):
                 .first()
             )
             self.assertEqual(sensor.name, "SENSOR-1")
+
+
+# TODO: This test case should fail when all add_to_XXX methods are implemented.
+#  Remove it when there are add methods for each DB table.
+class DataStorePopulateNotImplementedMethodTestCase(TestCase):
+    """Test whether populate methods print correct table name and message
+    when the corresponding add method is not found"""
+
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_populate_reference(self):
+        with self.store.session_scope() as session:
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.store.populate_reference(NOT_IMPLEMENTED_PATH)
+            output = temp_output.getvalue()
+            self.assertIn("Method(add_to_confidence_levels) not found!", output)
+
+    def test_populate_metadata(self):
+        with self.store.session_scope() as session:
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.store.populate_reference(NOT_IMPLEMENTED_PATH)
+                self.store.populate_metadata(NOT_IMPLEMENTED_PATH)
+            output = temp_output.getvalue()
+            self.assertIn("Method(add_to_confidence_levels) not found!", output)
+            self.assertIn("Method(add_to_tags) not found!", output)
+
+    def test_populate_measurement(self):
+        with self.store.session_scope() as session:
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.store.populate_reference(NOT_IMPLEMENTED_PATH)
+                self.store.populate_metadata(NOT_IMPLEMENTED_PATH)
+                self.store.populate_measurement(NOT_IMPLEMENTED_PATH)
+            output = temp_output.getvalue()
+            self.assertIn("Method(add_to_confidence_levels) not found!", output)
+            self.assertIn("Method(add_to_tags) not found!", output)
+            self.assertIn("Method(add_to_media) not found!", output)
 
 
 if __name__ == "__main__":
