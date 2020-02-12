@@ -120,12 +120,9 @@ class DataStore(object):
                 # Attempt to create schema if not present, to cope with fresh DB file
                 BaseSpatiaLite.metadata.create_all(self.engine)
             except OperationalError:
-                message = (
-                    "Error creating database schema, possible invalid path? ('"
-                    + self.db_name
-                    + "'). Quitting"
+                raise Exception(
+                    f"Error creating database schema, possible invalid path? ('{self.db_name}'). Quitting"
                 )
-                raise Exception(message)
         elif self.db_type == "postgres":
             try:
                 # Create extension for PostGIS first
@@ -591,7 +588,7 @@ class DataStore(object):
         def check_datafile(datafile):
             all_datafiles = self.session.query(self.db_classes.Datafile).all()
             if next(
-                (file for file in all_datafiles if file.reference == datafile), None,
+                (file for file in all_datafiles if file.reference == datafile), None
             ):
                 # A datafile already exists with that name
                 return False
@@ -639,7 +636,7 @@ class DataStore(object):
         def check_platform(name):
             all_platforms = self.session.query(self.db_classes.Platform).all()
             if next(
-                (platform for platform in all_platforms if platform.name == name), None,
+                (platform for platform in all_platforms if platform.name == name), None
             ):
                 # A platform already exists with that name
                 return False
@@ -886,8 +883,7 @@ class DataStore(object):
             return privacies
 
         entry_id = self.add_to_entries(
-            self.db_classes.Privacy.table_type_id,
-            self.db_classes.Privacy.__tablename__,
+            self.db_classes.Privacy.table_type_id, self.db_classes.Privacy.__tablename__
         )
         # enough info to proceed and create entry
         privacy = self.db_classes.Privacy(privacy_id=entry_id, name=privacy_name)
