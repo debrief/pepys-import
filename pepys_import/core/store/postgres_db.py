@@ -452,7 +452,7 @@ class SensorType(BasePostGIS):
 
 
 class Privacy(BasePostGIS):
-    __tablename__ = "Privacy"
+    __tablename__ = "Privacies"
     table_type = TableTypes.REFERENCE
     table_type_id = 22
 
