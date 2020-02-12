@@ -108,6 +108,13 @@ class DataStoreTestCase(TestCase):
     def test_missing_data_resolver_works_for_datafile(self):
         pass
 
+    @unittest.expectedFailure
+    def test_empty_datafile_name(self):
+        """Test whether a new datafile without a name is created or not"""
+
+        with self.store.session_scope() as session:
+            self.store.get_datafile(datafile_name="", datafile_type="csv")
+
     def test_new_platform_added_successfully(self):
         """Test whether a new platform is created successfully or not"""
 
@@ -165,6 +172,13 @@ class DataStoreTestCase(TestCase):
     @unittest.skip("Skip until missing data resolver is implemented.")
     def test_missing_data_resolver_works_for_platform(self):
         pass
+
+    @unittest.expectedFailure
+    def test_empty_platform_name(self):
+        """Test whether a new platform without a name is created or not"""
+
+        with self.store.session_scope() as session:
+            self.store.get_platform(platform_name="")
 
 
 class DataStoreStatusTestCase(TestCase):
