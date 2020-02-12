@@ -5,7 +5,6 @@ from sqlalchemy import (
     Integer,
     String,
     Boolean,
-    FetchedValue,
     DATE,
     ForeignKey,
     DateTime,
@@ -76,7 +75,6 @@ class HostedBy(BasePostGIS):
     __tablename__ = "HostedBy"
     table_type = TableTypes.METADATA
     table_type_id = 1
-    table_name = "HostedBy"
 
     hosted_by_id = Column(UUID(), primary_key=True, default=uuid4)
     subject_id = Column(
@@ -197,7 +195,6 @@ class Tasks(BasePostGIS):
     __tablename__ = "Tasks"
     table_type = TableTypes.METADATA
     table_type_id = 4
-    table_name = "Tasks"
 
     task_id = Column(UUID(), primary_key=True, default=uuid4)
     parent_id = Column(UUID(as_uuid=True), ForeignKey("Tasks.task_id"), nullable=False)
@@ -215,7 +212,6 @@ class Participants(BasePostGIS):
     __tablename__ = "Participants"
     table_type = TableTypes.METADATA
     table_type_id = 5
-    table_name = "Participants"
 
     participant_id = Column(UUID(), primary_key=True, default=uuid4)
     platform_id = Column(
@@ -280,7 +276,6 @@ class Synonyms(BasePostGIS):
     __tablename__ = "Synonyms"
     table_type = TableTypes.METADATA
     table_type_id = 7
-    table_name = "Synonyms"
 
     synonym_id = Column(UUID(), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
@@ -292,7 +287,6 @@ class Changes(BasePostGIS):
     __tablename__ = "Changes"
     table_type = TableTypes.METADATA
     table_type_id = 8
-    table_name = "Changes"
 
     change_id = Column(UUID(), primary_key=True, default=uuid4)
     user = Column(String(150), nullable=False)
@@ -305,7 +299,6 @@ class Logs(BasePostGIS):
     __tablename__ = "Logs"
     table_type = TableTypes.METADATA
     table_type_id = 9
-    table_name = "Log"
 
     log_id = Column(UUID(), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
@@ -320,7 +313,6 @@ class Extractions(BasePostGIS):
     __tablename__ = "Extractions"
     table_type = TableTypes.METADATA
     table_type_id = 10
-    table_name = "Extractions"
 
     extraction_id = Column(UUID(), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
@@ -333,7 +325,6 @@ class Tags(BasePostGIS):
     __tablename__ = "Tags"
     table_type = TableTypes.METADATA
     table_type_id = 11
-    table_name = "Tags"
 
     tag_id = Column(UUID(), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
@@ -344,7 +335,6 @@ class TaggedItems(BasePostGIS):
     __tablename__ = "TaggedItems"
     table_type = TableTypes.METADATA
     table_type_id = 12
-    table_name = "TaggedItems"
 
     tagged_item_id = Column(UUID(), primary_key=True, default=uuid4)
     tag_id = Column(UUID(as_uuid=True), ForeignKey("Tags.tag_id"), nullable=False)
