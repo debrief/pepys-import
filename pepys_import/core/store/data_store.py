@@ -539,9 +539,6 @@ class DataStore:
 
         # return True if provided datafile exists
         def check_datafile(datafile):
-            if len(datafile) == 0:
-                return False
-
             if next(
                 (file for file in self.get_datafiles() if file.reference == datafile),
                 None,
@@ -553,7 +550,10 @@ class DataStore:
 
         self.add_to_datafile_types(datafile_type)
         self.add_to_privacies("NEW")
-        if check_datafile(datafile_name):
+
+        if len(datafile_name) == 0:
+            raise Exception("Datafile name can't be empty!")
+        elif check_datafile(datafile_name):
             return self.add_to_datafiles(
                 simulated=True,
                 privacy="NEW",
@@ -586,9 +586,6 @@ class DataStore:
 
         # return True if provided platform exists
         def check_platform(name):
-            if len(name) == 0:
-                return False
-
             if next(
                 (
                     platform
@@ -602,7 +599,9 @@ class DataStore:
 
             return True
 
-        if check_platform(platform_name):
+        if len(platform_name) == 0:
+            raise Exception("Platform name can't be empty!")
+        elif check_platform(platform_name):
             return self.add_to_platforms(
                 name=platform_name,
                 nationality=nationality,
