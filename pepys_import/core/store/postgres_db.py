@@ -78,15 +78,15 @@ class HostedBy(BasePostGIS):
 
     hosted_by_id = Column(UUID(), primary_key=True, default=uuid4)
     subject_id = Column(
-        UUID(as_uuid=True), ForeignKey("Platform.platform_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
     )
     host_id = Column(
-        UUID(as_uuid=True), ForeignKey("Platform.platform_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
     )
     hosted_from = Column(DATE, nullable=False)
     host_to = Column(DATE, nullable=False)
     privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("Privacy.privacy_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -99,10 +99,10 @@ class Sensor(BasePostGIS):
     sensor_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     sensor_type_id = Column(
-        UUID(as_uuid=True), ForeignKey("SensorType.sensor_type_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("SensorTypes.sensor_type_id"), nullable=False
     )
     platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("Platform.platform_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -139,13 +139,13 @@ class Platform(BasePostGIS):
     platform_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150))
     nationality_id = Column(
-        UUID(as_uuid=True), ForeignKey("Nationality.nationality_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Nationalities.nationality_id"), nullable=False
     )
     platform_type_id = Column(
-        UUID(as_uuid=True), ForeignKey("PlatformType.platform_type_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("PlatformTypes.platform_type_id"), nullable=False
     )
     privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("Privacy.privacy_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -203,13 +203,13 @@ class Task(BasePostGIS):
     table_type_id = 4
 
     task_id = Column(UUID(), primary_key=True, default=uuid4)
-    parent_id = Column(UUID(as_uuid=True), ForeignKey("Task.task_id"), nullable=False)
+    parent_id = Column(UUID(as_uuid=True), ForeignKey("Tasks.task_id"), nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     environment = Column(String(150))
     location = Column(String(150))
     privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("Privacy.privacy_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -221,14 +221,14 @@ class Participant(BasePostGIS):
 
     participant_id = Column(UUID(), primary_key=True, default=uuid4)
     platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("Platform.platform_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
     )
-    task_id = Column(UUID(as_uuid=True), ForeignKey("Task.task_id"), nullable=False)
+    task_id = Column(UUID(as_uuid=True), ForeignKey("Tasks.task_id"), nullable=False)
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     force = Column(String(150))
     privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("Privacy.privacy_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -241,10 +241,10 @@ class Datafile(BasePostGIS):
     datafile_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     simulated = Column(Boolean)
     privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("Privacy.privacy_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"), nullable=False
     )
     datafile_type_id = Column(
-        UUID(as_uuid=True), ForeignKey("DatafileType.datafile_type_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("DatafileTypes.datafile_type_id"), nullable=False
     )
     reference = Column(String(150))
     url = Column(String(150))
@@ -308,7 +308,7 @@ class Log(BasePostGIS):
 
     log_id = Column(UUID(), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
-    id = Column(UUID(as_uuid=True), ForeignKey("Log.log_id"), nullable=False)
+    id = Column(UUID(as_uuid=True), ForeignKey("Logs.log_id"), nullable=False)
     field = Column(String(150), nullable=False)
     new_value = Column(String(150), nullable=False)
     change_id = Column(UUID, nullable=False)
@@ -343,10 +343,10 @@ class TaggedItem(BasePostGIS):
     table_type_id = 12
 
     tagged_item_id = Column(UUID(), primary_key=True, default=uuid4)
-    tag_id = Column(UUID(as_uuid=True), ForeignKey("Tag.tag_id"), nullable=False)
+    tag_id = Column(UUID(as_uuid=True), ForeignKey("Tags.tag_id"), nullable=False)
     item_id = Column(UUID(as_uuid=True), nullable=False)
     tagged_by_id = Column(
-        UUID(as_uuid=True), ForeignKey("User.user_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Users.user_id"), nullable=False
     )
     private = Column(Boolean, nullable=False)
     tagged_on = Column(DATE, nullable=False)
@@ -391,7 +391,7 @@ class GeometrySubType(BasePostGIS):
 
     geo_sub_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
-    # parent = Column(UUID(as_uuid=True), ForeignKey("GeometryType.geometry_type_id"))
+    # parent = Column(UUID(as_uuid=True), ForeignKey("GeometryTypes.geometry_type_id"))
     parent = Column(UUID, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -520,16 +520,16 @@ class State(BasePostGIS):
     state_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(
-        UUID(as_uuid=True), ForeignKey("Sensor.sensor_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
     )
     location = Column(Geometry(geometry_type="POINT", srid=0))
     heading = Column(DOUBLE_PRECISION)
     course = Column(DOUBLE_PRECISION)
     speed = Column(DOUBLE_PRECISION)
     source_id = Column(
-        UUID(as_uuid=True), ForeignKey("Datafile.datafile_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacy.privacy_id"))
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
     def submit(self, session):
@@ -548,7 +548,7 @@ class Contact(BasePostGIS):
     contact_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     sensor_id = Column(
-        UUID(as_uuid=True), ForeignKey("Sensor.sensor_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
     )
     time = Column(TIMESTAMP, nullable=False)
     bearing = Column(DOUBLE_PRECISION)
@@ -564,12 +564,12 @@ class Contact(BasePostGIS):
     mla = Column(DOUBLE_PRECISION)
     sla = Column(DOUBLE_PRECISION)
     subject_id = Column(
-        UUID(as_uuid=True), ForeignKey("Platform.platform_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
     )
     source_id = Column(
-        UUID(as_uuid=True), ForeignKey("Datafile.datafile_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacy.privacy_id"))
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
     def set_name(self, name):
@@ -606,7 +606,7 @@ class Activation(BasePostGIS):
     activation_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     sensor_id = Column(
-        UUID(as_uuid=True), ForeignKey("Sensor.sensor_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"), nullable=False
     )
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
@@ -615,9 +615,9 @@ class Activation(BasePostGIS):
     left_arc = Column(DOUBLE_PRECISION)
     right_arc = Column(DOUBLE_PRECISION)
     source_id = Column(
-        UUID(as_uuid=True), ForeignKey("Datafile.datafile_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacy.privacy_id"))
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -630,16 +630,16 @@ class LogsHolding(BasePostGIS):
     time = Column(TIMESTAMP, nullable=False)
     quantity = Column(DOUBLE_PRECISION, nullable=False)
     unit_type_id = Column(
-        UUID(as_uuid=True), ForeignKey("UnitType.unit_type_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("UnitTypes.unit_type_id"), nullable=False
     )
     platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("Platform.platform_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
     )
     comment = Column(String(150), nullable=False)
     source_id = Column(
-        UUID(as_uuid=True), ForeignKey("Datafile.datafile_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacy.privacy_id"))
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -650,15 +650,15 @@ class Comment(BasePostGIS):
 
     comment_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("Platform.platform_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
     )
     time = Column(TIMESTAMP, nullable=False)
     comment_type_id = Column(UUID(as_uuid=True), nullable=False)
     content = Column(String(150), nullable=False)
     source_id = Column(
-        UUID(as_uuid=True), ForeignKey("Datafile.datafile_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacy.privacy_id"))
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
     def set_platform(self, platform):
@@ -684,22 +684,24 @@ class Geometry1(BasePostGIS):
     geometry = Column(Geometry, nullable=False)
     name = Column(String(150), nullable=False)
     geo_type_id = Column(
-        UUID(as_uuid=True), ForeignKey("GeometryType.geo_type_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("GeometryTypes.geo_type_id"), nullable=False
     )
     geo_sub_type_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("GeometrySubType.geo_sub_type_id"),
+        ForeignKey("GeometrySubTypes.geo_sub_type_id"),
         nullable=False,
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     task_id = Column(UUID(as_uuid=True))
-    subject_platform_id = Column(UUID(as_uuid=True), ForeignKey("Platform.platform_id"))
-    sensor_platform_id = Column(UUID(as_uuid=True), ForeignKey("Platform.platform_id"))
-    source_id = Column(
-        UUID(as_uuid=True), ForeignKey("Datafile.datafile_id"), nullable=False
+    subject_platform_id = Column(
+        UUID(as_uuid=True), ForeignKey("Platforms.platform_id")
     )
-    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacy.privacy_id"))
+    sensor_platform_id = Column(UUID(as_uuid=True), ForeignKey("Platforms.platform_id"))
+    source_id = Column(
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
+    )
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -709,15 +711,15 @@ class Media(BasePostGIS):
     table_type_id = 34
 
     media_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    platform_id = Column(UUID(as_uuid=True), ForeignKey("Platform.platform_id"))
-    subject_id = Column(UUID(as_uuid=True), ForeignKey("Platform.platform_id"))
-    sensor_id = Column(UUID(as_uuid=True), ForeignKey("Sensor.sensor_id"))
+    platform_id = Column(UUID(as_uuid=True), ForeignKey("Platforms.platform_id"))
+    subject_id = Column(UUID(as_uuid=True), ForeignKey("Platforms.platform_id"))
+    sensor_id = Column(UUID(as_uuid=True), ForeignKey("Sensors.sensor_id"))
     location = Column(Geometry(geometry_type="POINT", srid=4326))
     time = Column(TIMESTAMP)
     media_type_id = Column(UUID(as_uuid=True), nullable=False)
     url = Column(String(150), nullable=False)
     source_id = Column(
-        UUID(as_uuid=True), ForeignKey("Datafile.datafile_id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("Datafiles.datafile_id"), nullable=False
     )
-    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacy.privacy_id"))
+    privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
