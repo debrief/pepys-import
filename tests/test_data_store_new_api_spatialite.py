@@ -9,13 +9,6 @@ FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 
 
-class UnknownDBTestCase(TestCase):
-    @unittest.expectedFailure
-    def test_unknown_database_type(self):
-        """Test whether DataStore raises exception when unknown database name entered"""
-        DataStore("", "", "", 0, "", db_type="TestDB")
-
-
 class DataStoreCacheTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
