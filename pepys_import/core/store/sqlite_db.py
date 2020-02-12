@@ -136,9 +136,9 @@ class Platforms(BaseSpatiaLite):
         Specified sensor will be added to the :class:`Sensors` table.
 
         :param session: Session to query DB
-        :type: :class:`sqlalchemy.orm.session.Session`
-        :param all_sensors: All Sensors Entities
-        :type: :class:`Sensors` List
+        :type session: :class:`sqlalchemy.orm.session.Session`
+        :param all_sensors: All :class:`Sensors` Entities
+        :type all_sensors: :class:`Sensors` List
         :param sensor_name: Name of :class:`Sensors`
         :type sensor_name: String
         :param sensor_type: Type of :class:`Sensors`
@@ -146,6 +146,7 @@ class Platforms(BaseSpatiaLite):
         :param privacy: Privacy of :class:`Sensors`
         :type privacy: Privacies
         :return: Created :class:`Sensors` entity
+        :rtype: Sensors
         """
 
         # return True if provided sensor exists
