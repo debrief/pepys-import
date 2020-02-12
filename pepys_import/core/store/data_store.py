@@ -732,10 +732,9 @@ class DataStore:
         # should return DB type or something else decoupled from DB?
         return table_type
 
-    # TODO: add function to do common pattern of action in these functions
     def add_to_platform_types(self, platform_type_name):
         """
-        Adds the specified platform type to the platformtypes table if not already
+        Adds the specified platform type to the platform types table if not already
         present.
 
         Args:
@@ -842,7 +841,6 @@ class DataStore:
         # should return DB type or something else decoupled from DB?
         return privacy
 
-    # TODO: it is possible to merge two methods taking a resolver=True/False argument
     def add_to_datafile_types(self, datafile_type):
         """
         Adds the specified datafile type to the datafile types table if not already
