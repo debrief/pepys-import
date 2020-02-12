@@ -184,7 +184,7 @@ class DataStoreCacheTestCase(TestCase):
             self.assertEqual(len(sensor_types), 1)
 
 
-class DataStoreLookUpDBAndAddToCacheTestCase(TestCase):
+class LookUpDBAndAddToCacheTestCase(TestCase):
     """Test searching functionality and adding existing DB entities to the cache of
     DataStore"""
 
@@ -683,6 +683,7 @@ class MeasurementsTestCase(TestCase):
 
             # Fill null constraint field
             contact.set_name("TEST")
+            contact.set_subject(self.platform)
             if self.file.validate():
                 contact.submit(self.store.session)
                 contacts = self.store.session.query(
@@ -712,7 +713,7 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(len(comments), 0)
 
             # Fill null constraint field
-            comment.set_source(self.platform)
+            comment.set_platform(self.platform)
             if self.file.validate():
                 comment.submit(self.store.session)
                 comments = self.store.session.query(

@@ -573,6 +573,9 @@ class Contacts(BaseSpatiaLite):
     def set_name(self, name):
         self.name = name
 
+    def set_subject(self, platform):
+        self.subject_id = platform.platform_id
+
     # def set_bearing(self, bearing):
     #     self.bearing = bearing
     #
@@ -646,8 +649,8 @@ class Comments(BaseSpatiaLite):
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    def set_source(self, platform):
-        self.source_id = platform.platform_id
+    def set_platform(self, platform):
+        self.platform_id = platform.platform_id
 
     # def set_privacy(self, privacy_type):
     #     self.privacy_id = privacy_type.privacy_id
