@@ -727,7 +727,7 @@ class SensorTestCase(TestCase):
             )
 
             # there must be one entry
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             self.assertEqual(len(sensors), 1)
 
@@ -735,7 +735,7 @@ class SensorTestCase(TestCase):
     def test_new_sensor_with_empty_sensor_type(self):
         """Test whether a new sensor without sensor type is created"""
         with self.store.session_scope() as session:
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
@@ -746,7 +746,7 @@ class SensorTestCase(TestCase):
     def test_empty_sensor_name(self):
         """Test whether a new sensor with empty name is created"""
         with self.store.session_scope() as session:
-            sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
@@ -800,7 +800,7 @@ class MeasurementsTestCase(TestCase):
                     platform_type=self.platform_type,
                     privacy=self.privacy,
                 )
-                sensors = self.store.session.query(self.store.db_classes.Sensors).all()
+                sensors = self.store.session.query(self.store.db_classes.Sensor).all()
                 self.sensor = self.platform.get_sensor(
                     self.store.session, sensors, "gps", self.sensor_type
                 )
