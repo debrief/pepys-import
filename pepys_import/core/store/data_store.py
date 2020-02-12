@@ -120,12 +120,12 @@ class DataStore(object):
                 # Attempt to create schema if not present, to cope with fresh DB file
                 BaseSpatiaLite.metadata.create_all(self.engine)
             except OperationalError:
-                print(
+                message = (
                     "Error creating database schema, possible invalid path? ('"
                     + self.db_name
                     + "'). Quitting"
                 )
-                exit()
+                raise Exception(message)
         elif self.db_type == "postgres":
             try:
                 # Create extension for PostGIS first
@@ -139,8 +139,7 @@ class DataStore(object):
                 )
                 BasePostGIS.metadata.create_all(self.engine)
             except OperationalError:
-                print(f"Error creating database({self.db_name})! Quitting")
-                exit()
+                raise Exception(f"Error creating database({self.db_name})! Quitting")
 
     @contextmanager
     def session_scope(self):
