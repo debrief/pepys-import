@@ -26,47 +26,39 @@ class TestLoadReplay(TestCase):
         self.assertEqual("REP", rep_file.get_data_file_type())
 
         with data_store.session_scope() as session:
-            # TODO: The following line and privacy argument should be deleted.
-            # Missing data resolver has to be used
-            data_store.add_to_privacies("TEST")
-            if data_store.search_datafile_type(rep_file.get_data_file_type()) is None:
-                data_store.add_to_datafile_types(rep_file.get_data_file_type())
-            datafile = data_store.add_to_datafiles(
-                simulated=False,
-                privacy="TEST",
-                reference=rep_file.get_data_file_name(),
-                file_type=rep_file.get_data_file_type(),
+            datafile = data_store.get_datafile(
+                rep_file.get_data_file_name(), rep_file.get_data_file_type()
             )
-
-            if data_store.search_privacy("Public") is None:
-                data_store.add_to_privacies("Public")
-            if data_store.search_nationality("UK") is None:
-                data_store.add_to_nationalities("UK")
-            if data_store.search_platform_type("Fisher") is None:
-                data_store.add_to_platform_types("Fisher")
-            if data_store.search_sensor_type("_GPS") is None:
-                data_store.add_to_sensor_types("_GPS")
             for repLine in rep_file.get_lines():
-                platform = data_store.add_to_platforms(
-                    name=repLine.get_platform(),
+                platform = data_store.get_platform(
+                    platform_name=repLine.get_platform(),
                     nationality="UK",
                     platform_type="Fisher",
                     privacy="Public",
                 )
-                sensor = data_store.add_to_sensors(
-                    name=platform.name, sensor_type="_GPS", host=platform.name
-                )
-                data_store.add_to_states(
-                    time=repLine.timestamp,
-                    sensor=sensor.name,
-                    datafile=datafile.reference,
-                    location=repLine.get_location(),
-                    heading=repLine.heading.to(unit_registry.radians).magnitude,
-                    speed=repLine.speed.to(
-                        unit_registry.meter / unit_registry.second
-                    ).magnitude,
+                all_sensors = data_store.session.query(
+                    data_store.db_classes.Sensor
+                ).all()
+                data_store.add_to_sensor_types("_GPS")
+                sensor = platform.get_sensor(
+                    session=data_store.session,
+                    all_sensors=all_sensors,
+                    sensor_name=platform.name,
+                    sensor_type="_GPS",
                     privacy="TEST",
                 )
+                state = datafile.create_state(sensor, repLine.timestamp)
+                state.set_location(repLine.get_location())
+                state.set_heading(repLine.heading.to(unit_registry.radians).magnitude)
+                state.set_speed(
+                    repLine.speed.to(
+                        unit_registry.meter / unit_registry.second
+                    ).magnitude
+                )
+                privacy = data_store.search_privacy("TEST")
+                state.set_privacy(privacy)
+                if datafile.validate():
+                    state.submit(data_store.session)
 
         print("Found:" + str(count_states(data_store)))
 
