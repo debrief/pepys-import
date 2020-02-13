@@ -1,5 +1,6 @@
 import unittest
 
+from datetime import datetime
 from pepys_import.core.store.data_store import DataStore
 
 
@@ -14,9 +15,7 @@ class MissingFieldsTestCase(unittest.TestCase):
     @unittest.expectedFailure
     def test_missing_fields_for_add_to_states(self):
         with self.store.session_scope() as session:
-            self.store.add_to_states(
-                time="2020-02-01 19:00:00", sensor=None, datafile=None
-            )
+            self.store.add_to_states(time=datetime.utcnow(), sensor=None, datafile=None)
 
     @unittest.expectedFailure
     def test_missing_fields_for_add_to_sensors(self):
