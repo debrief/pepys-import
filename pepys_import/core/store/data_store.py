@@ -321,7 +321,8 @@ class DataStore(object):
         :return: Created :class:`State` entity
         :rtype: State
         """
-        # time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+        if type(time) == str:
+            time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
 
         sensor = self.search_sensor(sensor)
         datafile = self.search_datafile(datafile)
@@ -330,6 +331,12 @@ class DataStore(object):
         if sensor is None or datafile is None:
             raise Exception(f"There is missing value(s) in '{sensor}, {datafile}'!")
 
+        if heading == "":
+            heading = None
+        if course == "":
+            course = None
+        if speed == "":
+            speed = None
         # heading_rads = None
         # if heading:
         #  #   heading is a string, turn into quantity. Convert to radians
@@ -353,7 +360,7 @@ class DataStore(object):
             sensor_id=sensor.sensor_id,
             location=location,
             heading=heading,
-            # course=course,
+            course=course,
             speed=speed,
             source_id=datafile.datafile_id,
             privacy_id=privacy.privacy_id,
