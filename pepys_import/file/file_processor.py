@@ -113,11 +113,11 @@ class FileProcessor:
                     reference=filename,
                     file_type=file_extension,
                 )
-                datafile_type = data_store.search_datafile_type(file_extension).name
+                datafile_name = datafile.reference
 
             for parser in good_parsers:
                 processed_ctr += 1
-                parser.process(data_store, file, file_contents, datafile_type)
+                parser.process(data_store, file, file_contents, datafile_name)
 
         return processed_ctr
 

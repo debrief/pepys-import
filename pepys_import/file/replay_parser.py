@@ -21,7 +21,7 @@ class ReplayParser(CoreParser):
     def can_process_file(self, file_contents):
         return True
 
-    def process(self, data_store, path, file_contents, data_file_id):
+    def process(self, data_store, path, file_contents, datafile_name):
         print("Rep parser working on " + path)
         line_num = 0
         for line in file_contents:
@@ -79,8 +79,8 @@ class ReplayParser(CoreParser):
 
                 timestamp = self.parse_timestamp(date_token, time_token)
 
-                # creata state, to store the data
-                new_state = State2(timestamp, data_file_id)
+                # create state, to store the data
+                new_state = State2(timestamp)
 
                 new_state.vessel = vessel_name_token.strip('"')
 
@@ -162,18 +162,44 @@ class ReplayParser(CoreParser):
 
                 # and finally store it
                 with data_store.session_scope():
-                    datafile = data_store.search_datafile_by_id(data_file_id)
-                    platform = data_store.add_to_platforms_from_rep(
-                        new_state.get_platform(), "Fisher", "UK", "Public"
+                    datafile = data_store.search_datafile(datafile_name)
+                    if data_store.search_privacy("Public") is None:
+                        data_store.add_to_privacies("Public")
+                    if data_store.search_nationality("UK") is None:
+                        data_store.add_to_nationalities("UK")
+                    if data_store.search_platform_type("Fisher") is None:
+                        data_store.add_to_platform_types("Fisher")
+
+                    platform = data_store.add_to_platforms(
+                        name=new_state.get_platform(),
+                        nationality="UK",
+                        platform_type="Fisher",
+                        privacy="Public",
                     )
-                    sensor = data_store.add_to_sensors_from_rep(
-                        platform.name + "_GPS", platform
+                    if data_store.search_sensor_type("_GPS") is None:
+                        data_store.add_to_sensor_types("_GPS")
+                    sensor = data_store.add_to_sensors(
+                        name=platform.name, sensor_type="_GPS", host=platform.name
                     )
-                    data_store.add_state_to_states(
-                        new_state, datafile, sensor,
+                    # TODO: The following line and privacy argument should be deleted.
+                    # Missing data resolver has to be used
+                    privacy = data_store.add_to_privacies("TEST")
+                    data_store.add_to_states(
+                        time=new_state.get_timestamp(),
+                        sensor=sensor.name,
+                        datafile=datafile.reference,
+                        location=str(new_state.get_location()),
+                        heading=new_state.get_heading()
+                        .to(unit_registry.radians)
+                        .magnitude,
+                        speed=new_state.get_speed()
+                        .to(unit_registry.meter / unit_registry.second)
+                        .magnitude,
+                        privacy="TEST",
                     )
 
-    def degrees_for(self, degs, mins, secs, hemi: str):
+    @staticmethod
+    def degrees_for(degs, mins, secs, hemi: str):
         if hemi.upper() == "S" or hemi.upper() == "W":
             factor = -1
         else:

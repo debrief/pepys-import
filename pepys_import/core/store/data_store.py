@@ -321,7 +321,7 @@ class DataStore(object):
         :return: Created :class:`State` entity
         :rtype: State
         """
-        time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+        # time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
 
         sensor = self.search_sensor(sensor)
         datafile = self.search_datafile(datafile)
@@ -330,19 +330,19 @@ class DataStore(object):
         if sensor is None or datafile is None:
             raise Exception(f"There is missing value(s) in '{sensor}, {datafile}'!")
 
-        heading_rads = None
-        if heading:
-            # heading is a string, turn into quantity. Convert to radians
-            heading_quantity = float(heading) * unit_registry.knot
-            heading_rads = heading_quantity.to(unit_registry.radians).magnitude
+        # heading_rads = None
+        # if heading:
+        #  #   heading is a string, turn into quantity. Convert to radians
+        #     heading_quantity = float(heading) * unit_registry.knot
+        #     heading_rads = heading_quantity.to(unit_registry.radians).magnitude
 
-        speed_m_sec = None
-        if speed:
-            # speed is a string, turn into quantity. Convert to m/sec
-            speed_quantity = float(speed) * unit_registry.knot
-            speed_m_sec = speed_quantity.to(
-                unit_registry.meter / unit_registry.second
-            ).magnitude
+        # speed_m_sec = None
+        # if speed:
+        #    # speed is a string, turn into quantity. Convert to m/sec
+        # speed_quantity = float(speed) * unit_registry.knot
+        # speed_m_sec = speed_quantity.to(
+        #     unit_registry.meter / unit_registry.second
+        # ).magnitude
 
         entry_id = self.add_to_entries(
             self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
@@ -352,9 +352,9 @@ class DataStore(object):
             time=time,
             sensor_id=sensor.sensor_id,
             location=location,
-            heading=heading_rads,
+            heading=heading,
             # course=course,
-            speed=speed_m_sec,
+            speed=speed,
             source_id=datafile.datafile_id,
             privacy_id=privacy.privacy_id,
         )
@@ -592,6 +592,7 @@ class DataStore(object):
             return True
 
         self.add_to_datafile_types(datafile_type)
+        # TODO: this has to be changed with missing data resolver
         self.add_to_privacies("NEW")
 
         if len(datafile_name) == 0:
