@@ -46,7 +46,7 @@ class FileProcessor:
             for current_path, folders, files in os.walk(abs_path):
                 for file in files:
                     processed_ctr = self.process_file(
-                        file, current_path, good_parsers, data_store, processed_ctr
+                        file, current_path, data_store, processed_ctr
                     )
         else:
             # loop through this folder
@@ -54,7 +54,7 @@ class FileProcessor:
                 if file.is_file():
                     current_path = os.path.join(abs_path, file)
                     processed_ctr = self.process_file(
-                        file, current_path, good_parsers, data_store, processed_ctr
+                        file, current_path, data_store, processed_ctr
                     )
 
         print("Files got processed:" + str(processed_ctr) + " times")
