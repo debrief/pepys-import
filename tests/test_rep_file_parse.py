@@ -5,7 +5,6 @@ from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.state import State
 
 
-@unittest.skip("Skip until parsers are implemented")
 class BasicTests(unittest.TestCase):
     def test_long_timestamp(self):
         # long date
@@ -13,32 +12,16 @@ class BasicTests(unittest.TestCase):
             1,
             "19951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
         )
-        rep_line.parse()
+        self.assertTrue(rep_line.parse())
+        self.assertEqual(str(rep_line.timestamp.date()), "1995-12-12")
 
         # long time
         rep_line = State(
             1,
             "951212 120800.555 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
         )
-        rep_line.parse()
-
-    def test_Getters(self):
-        rep_line = State(
-            1,
-            "951212 120800.555 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
-        )
-        rep_line.parse()
-
-        rep_line.get_line_number
-        rep_line.get_timestamp
-        rep_line.get_platform
-        rep_line.get_symbology
-        rep_line.get_latitude
-        rep_line.get_longitude
-        rep_line.get_heading
-        rep_line.get_speed
-        rep_line.get_depth
-        rep_line.get_text_label
+        self.assertTrue(rep_line.parse())
+        self.assertEqual(str(rep_line.timestamp.time()), "12:08:00.555000")
 
     def test_error_reports(self):
         # too few fields

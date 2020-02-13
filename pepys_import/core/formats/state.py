@@ -199,35 +199,8 @@ class State:
     def set_longitude(self):
         pass
 
-    def get_line_number(self):
-        return self.line_num
-
-    def get_timestamp(self):
-        return self.timestamp
-
     def get_platform(self):
         return self.vessel
 
-    def get_symbology(self):
-        return self.symbology
-
-    def get_latitude(self):
-        return self.latitude
-
-    def get_longitude(self):
-        return self.longitude
-
     def get_location(self):
         return f"POINT({self.longitude} {self.latitude})"
-
-    def get_heading(self):
-        return self.heading
-
-    def get_speed(self):
-        return self.speed
-
-    def get_depth(self):
-        return self.depth
-
-    def get_text_label(self):
-        return self.text_label
