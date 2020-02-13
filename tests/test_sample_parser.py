@@ -50,13 +50,13 @@ class SampleParserTests(unittest.TestCase):
         # try bad file
         exception = False
         try:
-            processor.process(BAD_DATA_PATH, True)
+            processor.process(BAD_DATA_PATH, None, True)
         except Exception:
             exception = True
         self.assertTrue(exception)
 
         # now good one
-        processor.process(DATA_PATH, True)
+        processor.process(DATA_PATH, None, True)
 
 
 if __name__ == "__main__":
