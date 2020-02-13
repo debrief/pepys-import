@@ -1,6 +1,6 @@
 from .core_parser import CoreParser
 from pepys_import.core.formats import unit_registry, quantity
-from pepys_import.core.formats.state2 import State2
+from pepys_import.core.formats.state import State
 from datetime import datetime
 
 
@@ -35,7 +35,7 @@ class NMEAParser(CoreParser):
 
         ctr = 0
 
-        for line in file_contents:
+        for line_number, line in enumerate(file_contents):
 
             ctr += 1
 
@@ -75,8 +75,7 @@ class NMEAParser(CoreParser):
                             platform.name + "_GPS", platform
                         )
 
-                        date_time = self.parse_timestamp(date_tok, time_tok)
-                        state = State2(date_time)
+                        state = State(line_number + 1, line)
 
                         loc = self.parse_location(
                             lat_tok, lat_hem_tok, long_tok, long_hem_tok
