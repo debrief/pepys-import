@@ -68,17 +68,3 @@ class CoreParser(ABC):
         :type data_file: DataFile
         """
         pass
-
-    @staticmethod
-    def parse_timestamp(date, time):
-        if len(date) == 6:
-            format_str = "%y%m%d"
-        else:
-            format_str = "%Y%m%d"
-
-        if len(time) == 6:
-            format_str += "%H%M%S"
-        else:
-            format_str += "%H%M%S.%f"
-
-        return datetime.strptime(date + time, format_str)
