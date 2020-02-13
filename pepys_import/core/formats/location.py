@@ -18,6 +18,18 @@ class Location:
             + ")"
         )
 
+    def __eq__(self, other):
+        if not isinstance(other, Location):
+            # don't attempt to compare against unrelated types
+            return NotImplemented
+
+        return (
+            self.degrees == other.degrees
+            and self.minutes == other.minutes
+            and self.seconds == other.seconds
+            and self.hemisphere == other.hemisphere
+        )
+
     def parse(self):
         try:
             self.degrees = float(self.degrees)
