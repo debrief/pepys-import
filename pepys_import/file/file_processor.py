@@ -6,7 +6,7 @@ from pepys_import.core.store.data_store import DataStore
 class FileProcessor:
     def __init__(self, filename=None):
         self.parsers = []
-        if filename == None:
+        if filename is None:
             self.filename = ":memory:"
         else:
             self.filename = filename
@@ -37,8 +37,6 @@ class FileProcessor:
         # make copy of list of parsers
         good_parsers = self.parsers.copy()
 
-        filename, file_extension = os.path.splitext(folder)
-
         # capture path in absolute form
         abs_path = os.path.abspath(folder)
 
@@ -61,16 +59,17 @@ class FileProcessor:
 
         print("Files got processed:" + str(processed_ctr) + " times")
 
-    def get_first_line(self, path):
+    @staticmethod
+    def get_first_line(file_path: str):
         """Retrieve the first line from the file
-        
-        :param path: Full tile path
-        :type path: String
+
+        :param file_path: Full file path
+        :type file_path: String
         :return: First line of text
         :rtype: String
         """
         try:
-            with open(path, "r", encoding="windows-1252") as f:
+            with open(file_path, "r", encoding="windows-1252") as f:
                 first_line = f.readline()
                 return first_line
         except UnicodeDecodeError:
@@ -78,7 +77,8 @@ class FileProcessor:
         finally:
             f.close()
 
-    def get_file_contents(self, full_path: str):
+    @staticmethod
+    def get_file_contents(full_path: str):
         try:
             with open(full_path, "r", encoding="windows-1252") as f:
                 lines = f.read().split("\n")
@@ -86,7 +86,7 @@ class FileProcessor:
             f.close()
         return lines
 
-    def process_file(self, file, current_path, good_parsers, data_store, processed_ctr):
+    def process_file(self, file, current_path, data_store, processed_ctr):
         filename, file_extension = os.path.splitext(file)
         # make copy of list of parsers
         good_parsers = self.parsers.copy()
@@ -94,7 +94,7 @@ class FileProcessor:
         full_path = os.path.join(current_path, file)
         # print("Checking:" + str(full_path))
 
-        # start with file suffxies
+        # start with file suffixes
         tmp_parsers = good_parsers.copy()
         for parser in tmp_parsers:
             # print("Checking suffix:" + str(parser))

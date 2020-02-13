@@ -179,16 +179,3 @@ class ReplayParser(CoreParser):
         else:
             factor = 1
         return factor * (float(degs) + float(mins) / 60 + float(secs) / 60 / 60)
-
-    def parse_timestamp(self, date, time):
-        if len(date) == 6:
-            formatStr = "%y%m%d"
-        else:
-            formatStr = "%Y%m%d"
-
-        if len(time) == 6:
-            formatStr += "%H%M%S"
-        else:
-            formatStr += "%H%M%S.%f"
-
-        return datetime.strptime(date + time, formatStr)

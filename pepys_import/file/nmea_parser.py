@@ -97,34 +97,22 @@ class NMEAParser(CoreParser):
                         hdg_tok = None
                         lat_tok = None
 
-    def parse_timestamp(self, date, time):
-        if len(date) == 6:
-            formatStr = "%y%m%d"
-        else:
-            formatStr = "%Y%m%d"
+    @staticmethod
+    def parse_location(lat, lat_hem, lon, long_hem):
+        lat_degrees = float(lat[0:2])
+        lat_minutes = float(lat[2:4])
+        lat_seconds = float(lat[4:])
+        lat_degrees = lat_degrees + lat_minutes / 60 + lat_seconds / 60 / 60
 
-        if len(time) == 6:
-            formatStr += "%H%M%S"
-        else:
-            formatStr += "%H%M%S.%f"
-
-        return datetime.strptime(date + time, formatStr)
-
-    def parse_location(self, lat, lat_hem, lon, long_hem):
-        latDegs = float(lat[0:2])
-        latMins = float(lat[2:4])
-        latSecs = float(lat[4:])
-        latDegs = latDegs + latMins / 60 + latSecs / 60 / 60
-
-        lonDegs = float(lon[0:3])
-        lonMins = float(lon[3:5])
-        lonSecs = float(lon[5:])
-        lonDegs = lonDegs + lonMins / 60 + lonSecs / 60 / 60
+        lon_degrees = float(lon[0:3])
+        lon_minutes = float(lon[3:5])
+        lon_seconds = float(lon[5:])
+        lon_degrees = lon_degrees + lon_minutes / 60 + lon_seconds / 60 / 60
 
         if lat_hem == "S":
-            latDegs = -1 * latDegs
+            lat_degrees = -1 * lat_degrees
 
         if lat_hem == "W":
-            lonDegs = -1 * lonDegs
+            lon_degrees = -1 * lon_degrees
 
-        return (latDegs, lonDegs)
+        return lat_degrees, lon_degrees
