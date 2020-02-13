@@ -129,8 +129,9 @@ class Platform(BaseSpatiaLite):
         # search for any platform with this name
         return session.query(Platform).filter(Platform.name == name).first()
 
-    @staticmethod
-    def get_sensor(session, all_sensors, sensor_name, sensor_type=None, privacy=None):
+    def get_sensor(
+        self, session, all_sensors, sensor_name, sensor_type=None, privacy=None
+    ):
         """
         Lookup or create a sensor of this name for this :class:`Platform`.
         Specified sensor will be added to the :class:`Sensor` table.
@@ -160,13 +161,11 @@ class Platform(BaseSpatiaLite):
         if len(sensor_name) == 0:
             raise Exception("Please enter sensor name!")
         elif check_sensor(sensor_name):
-            platform = session.query(Platform).first()
             return Sensor().add_to_sensors(
                 session=session,
                 name=sensor_name,
                 sensor_type=sensor_type,
-                host=platform.name
-                # privacy=privacy,
+                host=self.name,
             )
         else:
             return session.query(Sensor).filter(Sensor.name == sensor_name).first()
