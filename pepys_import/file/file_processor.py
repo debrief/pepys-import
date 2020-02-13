@@ -34,9 +34,6 @@ class FileProcessor:
         data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
         data_store.initialise()
 
-        # make copy of list of parsers
-        good_parsers = self.parsers.copy()
-
         # capture path in absolute form
         abs_path = os.path.abspath(folder)
 
@@ -57,34 +54,7 @@ class FileProcessor:
                         file, current_path, data_store, processed_ctr
                     )
 
-        print("Files got processed:" + str(processed_ctr) + " times")
-
-    @staticmethod
-    def get_first_line(file_path: str):
-        """Retrieve the first line from the file
-
-        :param file_path: Full file path
-        :type file_path: String
-        :return: First line of text
-        :rtype: String
-        """
-        try:
-            with open(file_path, "r", encoding="windows-1252") as f:
-                first_line = f.readline()
-                return first_line
-        except UnicodeDecodeError:
-            return None
-        finally:
-            f.close()
-
-    @staticmethod
-    def get_file_contents(full_path: str):
-        try:
-            with open(full_path, "r", encoding="windows-1252") as f:
-                lines = f.read().split("\n")
-        finally:
-            f.close()
-        return lines
+        print(f"Files got processed: {processed_ctr} times")
 
     def process_file(self, file, current_path, data_store, processed_ctr):
         filename, file_extension = os.path.splitext(file)
@@ -150,3 +120,30 @@ class FileProcessor:
         :type parser: CoreParser
         """
         self.parsers.append(parser)
+
+    @staticmethod
+    def get_first_line(file_path: str):
+        """Retrieve the first line from the file
+
+        :param file_path: Full file path
+        :type file_path: String
+        :return: First line of text
+        :rtype: String
+        """
+        try:
+            with open(file_path, "r", encoding="windows-1252") as f:
+                first_line = f.readline()
+                return first_line
+        except UnicodeDecodeError:
+            return None
+        finally:
+            f.close()
+
+    @staticmethod
+    def get_file_contents(full_path: str):
+        try:
+            with open(full_path, "r", encoding="windows-1252") as f:
+                lines = f.read().split("\n")
+        finally:
+            f.close()
+        return lines
