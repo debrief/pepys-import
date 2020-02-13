@@ -133,17 +133,15 @@ class FileProcessor:
         try:
             with open(file_path, "r", encoding="windows-1252") as f:
                 first_line = f.readline()
-                return first_line
+            return first_line
         except UnicodeDecodeError:
             return None
-        finally:
-            f.close()
 
     @staticmethod
     def get_file_contents(full_path: str):
         try:
             with open(full_path, "r", encoding="windows-1252") as f:
                 lines = f.read().split("\n")
-        finally:
-            f.close()
-        return lines
+            return lines
+        except UnicodeDecodeError:
+            return None
