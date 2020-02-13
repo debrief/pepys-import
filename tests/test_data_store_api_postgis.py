@@ -679,6 +679,7 @@ class SensorTestCase(TestCase):
                     platform_type=self.platform_type,
                     privacy=self.privacy,
                 )
+                self.store.session.expunge(self.platform)
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 

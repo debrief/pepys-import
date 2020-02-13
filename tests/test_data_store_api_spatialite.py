@@ -536,6 +536,7 @@ class SensorTestCase(TestCase):
                 platform_type=self.platform_type,
                 privacy=self.privacy,
             )
+            self.store.session.expunge(self.platform)
 
     def tearDown(self):
         pass
