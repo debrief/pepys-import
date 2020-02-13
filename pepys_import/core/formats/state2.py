@@ -1,10 +1,8 @@
-from datetime import datetime
-from .location import Location
 from . import unit_registry, quantity
 
 
 class State2:
-    def __init__(self, timestamp, datafile):
+    def __init__(self, timestamp):
 
         self.timestamp = timestamp
         self.vessel = None
@@ -21,7 +19,8 @@ class State2:
 
     def print(self):
         print(
-            "State: Timestamp: {} Vessel: {} Symbology: {} Latitude: {} Longitude: {} Heading: {} Speed: {} Depth: {} TextLabel: {}".format(
+            "State: Timestamp: {} Vessel: {} Symbology: {} Latitude: {} Longitude: {} "
+            "Heading: {} Speed: {} Depth: {} TextLabel: {}".format(
                 self.timestamp,
                 self.vessel,
                 self.symbology,
