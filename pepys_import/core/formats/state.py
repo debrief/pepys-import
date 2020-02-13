@@ -122,7 +122,7 @@ class State:
         self.longitude = Location(
             long_degrees_token, long_mins_token, long_secs_token, long_hemi_token
         )
-        if not self.latitude.parse():
+        if not self.longitude.parse():
             print("Line {}. Error in longitude parsing".format(self.line_num))
             return False
 
