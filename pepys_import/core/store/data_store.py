@@ -127,7 +127,7 @@ class DataStore(object):
             try:
                 # Create extension for PostGIS first
                 with self.engine.connect() as conn:
-                    conn.execute("CREATE EXTENSION postgis;")
+                    conn.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
                 #  ensure that create schema scripts created before create table scripts
                 event.listen(
                     BasePostGIS.metadata,

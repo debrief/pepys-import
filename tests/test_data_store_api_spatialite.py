@@ -1,54 +1,21 @@
 import unittest
 import os
-from sqlite3 import OperationalError
 
 from unittest import TestCase
-from testing.postgresql import Postgresql
 from datetime import datetime
-from sqlalchemy import event
-from sqlalchemy.sql.ddl import DropSchema
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.core.store.db_base import BasePostGIS
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 
 
 class DataStoreCacheTestCase(TestCase):
-    def setUp(self) -> None:
-        self.postgres = None
-        self.store = None
-        try:
-            self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
-            )
-        except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
-        try:
-            self.store = DataStore(
-                db_name="test",
-                db_host="localhost",
-                db_username="postgres",
-                db_password="postgres",
-                db_port=55527,
-            )
-            self.store.initialise()
-        except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
 
-    def tearDown(self) -> None:
-        try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
-            self.postgres.stop()
-        except AttributeError:
-            return
+    def tearDown(self):
+        pass
 
     def test_cached_comment_types(self):
         """Test whether a new comment type entity cached and returned"""
@@ -221,40 +188,12 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
     """Test searching functionality and adding existing DB entities to the cache of
     DataStore"""
 
-    def setUp(self) -> None:
-        self.postgres = None
-        self.store = None
-        try:
-            self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
-            )
-        except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
-        try:
-            self.store = DataStore(
-                db_name="test",
-                db_host="localhost",
-                db_username="postgres",
-                db_password="postgres",
-                db_port=55527,
-            )
-            self.store.initialise()
-        except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
 
-    def tearDown(self) -> None:
-        try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
-            self.postgres.stop()
-        except AttributeError:
-            return
+    def tearDown(self):
+        pass
 
     def test_comment_types(self):
         with self.store.session_scope() as session:
@@ -407,49 +346,19 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(sensor_types), 1)
 
 
-class DataStoreTestCase(TestCase):
-    def setUp(self) -> None:
-        self.postgres = None
-        self.store = None
-        try:
-            self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
-            )
-        except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
-        try:
-            self.store = DataStore(
-                db_name="test",
-                db_host="localhost",
-                db_username="postgres",
-                db_password="postgres",
-                db_port=55527,
-            )
-            self.store.initialise()
-            with self.store.session_scope() as session:
-                self.nationality = self.store.add_to_nationalities(
-                    "test_nationality"
-                ).name
-                self.platform_type = self.store.add_to_platform_types(
-                    "test_platform_type"
-                ).name
-                self.privacy = self.store.add_to_privacies("test_privacy").name
-        except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+class PlatformAndDatafileTestCase(TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+        with self.store.session_scope() as session:
+            self.nationality = self.store.add_to_nationalities("test_nationality").name
+            self.platform_type = self.store.add_to_platform_types(
+                "test_platform_type"
+            ).name
+            self.privacy = self.store.add_to_privacies("test_privacy").name
 
-    def tearDown(self) -> None:
-        try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
-            self.postgres.stop()
-        except AttributeError:
-            return
+    def tearDown(self):
+        pass
 
     def test_new_datafile_added_successfully(self):
         """Test whether a new datafile is created successfully or not"""
@@ -565,43 +474,15 @@ class DataStoreTestCase(TestCase):
 
 
 class DataStoreStatusTestCase(TestCase):
-    def setUp(self) -> None:
-        self.postgres = None
-        self.store = None
-        try:
-            self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
-            )
-        except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
-        try:
-            self.store = DataStore(
-                db_name="test",
-                db_host="localhost",
-                db_username="postgres",
-                db_password="postgres",
-                db_port=55527,
-            )
-            self.store.initialise()
-            self.store.populate_reference(TEST_DATA_PATH)
-            self.store.populate_metadata(TEST_DATA_PATH)
-            self.store.populate_measurement(TEST_DATA_PATH)
-        except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+        self.store.populate_reference(TEST_DATA_PATH)
+        self.store.populate_metadata(TEST_DATA_PATH)
+        self.store.populate_measurement(TEST_DATA_PATH)
 
-    def tearDown(self) -> None:
-        try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
-            self.postgres.stop()
-        except AttributeError:
-            return
+    def tearDown(self):
+        pass
 
     def test_get_status_of_measurement(self):
         """Test whether summary contents correct for measurement tables"""
@@ -638,58 +519,26 @@ class DataStoreStatusTestCase(TestCase):
 
 
 class SensorTestCase(TestCase):
-    def setUp(self) -> None:
-        self.postgres = None
-        self.store = None
-        try:
-            self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
-            )
-        except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
-        try:
-            self.store = DataStore(
-                db_name="test",
-                db_host="localhost",
-                db_username="postgres",
-                db_password="postgres",
-                db_port=55527,
-            )
-            self.store.initialise()
-            with self.store.session_scope() as session:
-                self.nationality = self.store.add_to_nationalities(
-                    "test_nationality"
-                ).name
-                self.platform_type = self.store.add_to_platform_types(
-                    "test_platform_type"
-                ).name
-                self.sensor_type = self.store.add_to_sensor_types(
-                    "test_sensor_type"
-                ).name
-                self.privacy = self.store.add_to_privacies("test_privacy").name
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+        with self.store.session_scope() as session:
+            self.nationality = self.store.add_to_nationalities("test_nationality").name
+            self.platform_type = self.store.add_to_platform_types(
+                "test_platform_type"
+            ).name
+            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type").name
+            self.privacy = self.store.add_to_privacies("test_privacy").name
 
-                self.platform = self.store.get_platform(
-                    "Test Platform",
-                    nationality=self.nationality,
-                    platform_type=self.platform_type,
-                    privacy=self.privacy,
-                )
-        except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
-
-    def tearDown(self) -> None:
-        try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
+            self.platform = self.store.get_platform(
+                "Test Platform",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
             )
-            self.postgres.stop()
-        except AttributeError:
-            return
+
+    def tearDown(self):
+        pass
 
     def test_new_sensor_added_successfully(self):
         """Test whether a new sensor is created"""
@@ -759,70 +608,38 @@ class SensorTestCase(TestCase):
 
 
 class MeasurementsTestCase(TestCase):
-    def setUp(self) -> None:
-        self.postgres = None
-        self.store = None
-        try:
-            self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
-            )
-        except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
-        try:
-            self.store = DataStore(
-                db_name="test",
-                db_host="localhost",
-                db_username="postgres",
-                db_password="postgres",
-                db_port=55527,
-            )
-            self.store.initialise()
-            with self.store.session_scope() as session:
-                self.nationality = self.store.add_to_nationalities(
-                    "test_nationality"
-                ).name
-                self.platform_type = self.store.add_to_platform_types(
-                    "test_platform_type"
-                ).name
-                self.sensor_type = self.store.add_to_sensor_types(
-                    "test_sensor_type"
-                ).name
-                self.privacy = self.store.add_to_privacies("test_privacy").name
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+        with self.store.session_scope() as session:
+            self.nationality = self.store.add_to_nationalities("test_nationality").name
+            self.platform_type = self.store.add_to_platform_types(
+                "test_platform_type"
+            ).name
+            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type").name
+            self.privacy = self.store.add_to_privacies("test_privacy").name
 
-                self.platform = self.store.get_platform(
-                    "Test Platform",
-                    nationality=self.nationality,
-                    platform_type=self.platform_type,
-                    privacy=self.privacy,
-                )
-                sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-                self.sensor = self.platform.get_sensor(
-                    self.store.session, sensors, "gps", self.sensor_type
-                )
-                self.comment_type = self.store.add_to_comment_types("test_type")
-                self.file = self.store.get_datafile("test_file", "csv")
-                self.current_time = datetime.utcnow()
-
-                self.store.session.expunge(self.sensor)
-                self.store.session.expunge(self.platform)
-                self.store.session.expunge(self.file)
-                self.store.session.expunge(self.comment_type)
-        except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
-
-    def tearDown(self) -> None:
-        try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
+            self.platform = self.store.get_platform(
+                "Test Platform",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
             )
-            self.postgres.stop()
-        except AttributeError:
-            return
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
+            self.sensor = self.platform.get_sensor(
+                self.store.session, sensors, "gps", self.sensor_type
+            )
+            self.comment_type = self.store.add_to_comment_types("test_type")
+            self.file = self.store.get_datafile("test_file", "csv")
+            self.current_time = datetime.utcnow()
+
+            self.store.session.expunge(self.sensor)
+            self.store.session.expunge(self.platform)
+            self.store.session.expunge(self.file)
+            self.store.session.expunge(self.comment_type)
+
+    def tearDown(self):
+        pass
 
     def test_new_state_created_successfully(self):
         """Test whether a new state is created"""
