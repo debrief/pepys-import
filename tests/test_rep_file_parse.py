@@ -5,6 +5,7 @@ from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.state import State
 
 
+@unittest.skip("Skip until parsers are implemented")
 class BasicTests(unittest.TestCase):
     def test_long_timestamp(self):
         # long date

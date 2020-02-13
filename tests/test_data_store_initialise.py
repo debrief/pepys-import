@@ -7,10 +7,10 @@ from testing.postgresql import Postgresql
 from sqlalchemy import inspect, event
 from unittest import TestCase
 
-from pepys_import.core.store.db_base import base_postgres
+from pepys_import.core.store.db_base import BasePostGIS
 
 
-class TestDataStoreInitialisePostgres(TestCase):
+class DataStoreInitialisePostGISTestCase(TestCase):
     def setUp(self):
         self.store = None
         try:
@@ -27,7 +27,7 @@ class TestDataStoreInitialisePostgres(TestCase):
     def tearDown(self):
         try:
             event.listen(
-                base_postgres.metadata, "before_create", DropSchema("datastore_schema"),
+                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema"),
             )
             self.store.stop()
         except AttributeError:
@@ -63,8 +63,8 @@ class TestDataStoreInitialisePostgres(TestCase):
         table_names = inspector.get_table_names()
         schema_names = inspector.get_schema_names()
 
-        # 11 tables and 1  table for spatial objects (spatial_ref_sys) must be created.
-        self.assertEqual(len(table_names), 12)
+        # 36 tables and 1  table for spatial objects (spatial_ref_sys) must be created.
+        self.assertEqual(len(table_names), 37)
         self.assertIn("Entry", table_names)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
@@ -76,7 +76,7 @@ class TestDataStoreInitialisePostgres(TestCase):
         self.assertIn("datastore_schema", schema_names)
 
 
-class TestDataStoreInitialiseSQLite(TestCase):
+class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
     def test_sqlite_initialise(self):
         """Test whether schemas created successfully on SQLite"""
         data_store_sqlite = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -95,8 +95,8 @@ class TestDataStoreInitialiseSQLite(TestCase):
         inspector = inspect(data_store_sqlite.engine)
         table_names = inspector.get_table_names()
 
-        # 11 tables + 24 spatial tables must be created. A few of them tested
-        self.assertEqual(len(table_names), 35)
+        # 36 tables + 36 spatial tables must be created. A few of them tested
+        self.assertEqual(len(table_names), 72)
         self.assertIn("Entry", table_names)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)

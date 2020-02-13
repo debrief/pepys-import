@@ -102,7 +102,7 @@ class SupportMethods:
 
     def list_nationalities(self, data_store):
         """
-        return the number of nationalities records present in the database
+        return the number of nationality records present in the database
         """
         engine = data_store.engine
         Session = sessionmaker(bind=engine)
@@ -120,7 +120,7 @@ class SupportMethods:
 
     def list_datafiles(self, data_store):
         """
-        return the number of nationalities records present in the database
+        return the number of nationality records present in the database
         """
         engine = data_store.engine
         Session = sessionmaker(bind=engine)
@@ -138,7 +138,7 @@ class SupportMethods:
 
     def list_platform_types(self, data_store):
         """
-        return the number of nationalities records present in the database
+        return the number of nationality records present in the database
         """
         engine = data_store.engine
         Session = sessionmaker(bind=engine)
