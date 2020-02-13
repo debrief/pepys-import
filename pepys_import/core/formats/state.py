@@ -1,6 +1,20 @@
 from datetime import datetime
 from .location import Location
-from . import unit_registry, quantity
+from . import unit_registry
+
+
+def parse_timestamp(date, time):
+    if len(date) == 6:
+        format_str = "%y%m%d"
+    else:
+        format_str = "%Y%m%d"
+
+    if len(time) == 6:
+        format_str += "%H%M%S"
+    else:
+        format_str += "%H%M%S.%f"
+
+    return datetime.strptime(date + time, format_str)
 
 
 class State:
@@ -66,7 +80,6 @@ class State:
         heading_token = tokens[12]
         speed_token = tokens[13]
         depth_token = tokens[14]
-        text_label_token = ""
 
         if len(tokens) >= 16:
             # TODO: join back into single string, or extract full substring
@@ -74,22 +87,20 @@ class State:
 
         if len(date_token) != 6 and len(date_token) != 8:
             print(
-                "Line {}. Error in Date format {}. Should be either 2 of 4 figure date, followed by month then date".format(
-                    self.line_num, date_token
-                )
+                f"Line {self.line_num}. Error in Date format {date_token}. "
+                f"Should be either 2 of 4 figure date, followed by month then date"
             )
             return False
 
         # Times always in Zulu/GMT
         if len(time_token) != 6 and len(time_token) != 10:
             print(
-                "Line {}. Error in Time format {}. Should be HHMMSS[.SSS]".format(
-                    self.line_num, time_token
-                )
+                f"Line { self.line_num}. Error in Time format {time_token}. "
+                f"Should be HHMMSS[.SSS]"
             )
             return False
 
-        self.timestamp = self.parse_timestamp(date_token, time_token)
+        self.timestamp = parse_timestamp(date_token, time_token)
 
         self.vessel = vessel_name_token.strip('"')
 
@@ -97,17 +108,12 @@ class State:
         if len(symbology_values) >= 1:
             if len(symbology_values[0]) != 2 and len(symbology_values[0]) != 5:
                 print(
-                    "Line {}. Error in Symbology format {}. Should be 2 or 5 chars".format(
-                        self.line_num, symbology_token
-                    )
+                    f"Line {self.line_num}. Error in Symbology format "
+                    f"{symbology_token}. Should be 2 or 5 chars"
                 )
                 return False
         if len(symbology_values) != 1 and len(symbology_values) != 2:
-            print(
-                "Line {}. Error in Symbology format {}".format(
-                    self.line_num, symbology_token
-                )
-            )
+            print(f"Line {self.line_num}. Error in Symbology format {symbology_token}")
             return False
 
         self.symbology = symbology_token
@@ -116,48 +122,45 @@ class State:
             lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token
         )
         if not self.latitude.parse():
-            print("Line {}. Error in latitude parsing".format(self.line_num))
+            print(f"Line {self.line_num}. Error in latitude parsing")
             return False
 
         self.longitude = Location(
             long_degrees_token, long_mins_token, long_secs_token, long_hemi_token
         )
         if not self.longitude.parse():
-            print("Line {}. Error in longitude parsing".format(self.line_num))
+            print(f"Line {self.line_num}. Error in longitude parsing")
             return False
 
         try:
             valid_heading = float(heading_token)
         except ValueError:
             print(
-                "Line {}. Error in heading value {}. Couldn't convert to a number".format(
-                    self.line_num, heading_token
-                )
+                f"Line {self.line_num}. Error in heading value {heading_token}. "
+                f"Couldn't convert to a number"
             )
             return False
         if 0.0 > valid_heading >= 360.0:
             print(
-                "Line {}. Error in heading value {}. Should be be between 0 and 359.9 degrees".format(
-                    self.line_num, heading_token
-                )
+                f"Line {self.line_num}. Error in heading value {heading_token}. "
+                f"Should be be between 0 and 359.9 degrees"
             )
             return False
 
         # Set heading as degree(quantity-with-unit) object
-        self.set_heading(valid_heading * self.unit_registry.degree)
+        self.heading = valid_heading * self.unit_registry.degree
 
         try:
             valid_speed = float(speed_token)
         except ValueError:
             print(
-                "Line {}. Error in speed value {}. Couldn't convert to a number".format(
-                    self.line_num, speed_token
-                )
+                f"Line {self.line_num}. Error in speed value {speed_token}. "
+                f"Couldn't convert to a number"
             )
             return False
 
         # Set speed as knots(quantity-with-unit) object
-        self.set_speed(valid_speed * self.unit_registry.knot)
+        self.speed = valid_speed * self.unit_registry.knot
 
         try:
             if depth_token == "NaN":
@@ -166,38 +169,12 @@ class State:
                 self.depth = float(depth_token)
         except ValueError:
             print(
-                "Line {}. Error in depth value {}. Couldn't convert to a number".format(
-                    self.line_num, depth_token
-                )
+                f"Line {self.line_num}. Error in depth value {depth_token}. "
+                f"Couldn't convert to a number"
             )
             return False
 
         return True
-
-    def parse_timestamp(self, date, time):
-        if len(date) == 6:
-            formatStr = "%y%m%d"
-        else:
-            formatStr = "%Y%m%d"
-
-        if len(time) == 6:
-            formatStr += "%H%M%S"
-        else:
-            formatStr += "%H%M%S.%f"
-
-        return datetime.strptime(date + time, formatStr)
-
-    def set_speed(self, speed):
-        self.speed = speed
-
-    def set_heading(self, heading: quantity):
-        self.heading = heading
-
-    def set_latitude(self):
-        pass
-
-    def set_longitude(self):
-        pass
 
     def get_platform(self):
         return self.vessel
