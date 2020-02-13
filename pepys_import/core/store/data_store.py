@@ -600,14 +600,14 @@ class DataStore(object):
 
         self.add_to_datafile_types(datafile_type)
         # TODO: this has to be changed with missing data resolver
-        self.add_to_privacies("NEW")
+        self.add_to_privacies("TEST")
 
         if len(datafile_name) == 0:
             raise Exception("Datafile name can't be empty!")
         elif check_datafile(datafile_name):
             return self.add_to_datafiles(
-                simulated=True,
-                privacy="NEW",
+                simulated=False,
+                privacy="TEST",
                 file_type=datafile_type,
                 reference=datafile_name,
             )
@@ -646,6 +646,10 @@ class DataStore(object):
                 return False
 
             return True
+
+        self.add_to_nationalities(nationality)
+        self.add_to_platform_types(platform_type)
+        self.add_to_privacies(privacy)
 
         if len(platform_name) == 0:
             raise Exception("Platform name can't be empty!")
