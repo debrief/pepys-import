@@ -7,6 +7,7 @@ from geoalchemy2 import Geometry
 
 from .db_base import BaseSpatiaLite
 from .db_status import TableTypes
+from ..formats import quantity
 
 
 class Entry(BaseSpatiaLite):
@@ -490,23 +491,20 @@ class State(BaseSpatiaLite):
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    # def set_location(self, lat_val: float, long_val: float):
-    #     self.location = (lat_val, long_val)
-    #
-    # def set_location_obj(self, location):
-    #     self.location = location
-    #
-    # def set_heading(self, heading: quantity):
-    #     self.heading = heading
-    #
+    def set_location(self, location):
+        self.location = location
+
+    def set_heading(self, heading: quantity):
+        self.heading = heading
+
     # def set_course(self, course: quantity):
     #     self.course = course
-    #
-    # def set_speed(self, speed: quantity):
-    #     self.speed = speed
-    #
-    # def set_privacy(self, privacy_type):
-    #     self.privacy_id = privacy_type.privacy_id
+
+    def set_speed(self, speed: quantity):
+        self.speed = speed
+
+    def set_privacy(self, privacy):
+        self.privacy_id = privacy.privacy_id
 
     def submit(self, session):
         """Submit intermediate object to the DB"""
