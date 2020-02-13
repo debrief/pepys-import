@@ -111,26 +111,25 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
         if self.postgres is None:
             self.skipTest("Postgres is not available. Test is skipping")
 
-        with self.store.session_scope():
-            # Filter state object by spatial location
-            first_state = (
-                self.store.session.query(self.store.db_classes.State)
-                .filter(
-                    func.ST_Contains(
-                        self.store.db_classes.State.location,
-                        WKTElement("POINT(46.000 32.000)"),
-                    )
+        # Filter state object by spatial location
+        first_state = (
+            self.store.session.query(self.store.db_classes.State)
+            .filter(
+                func.ST_Contains(
+                    self.store.db_classes.State.location,
+                    WKTElement("POINT(46.000 32.000)"),
                 )
-                .one()
             )
-            point = self.store.session.query(func.ST_AsText(first_state.location)).one()
+            .one()
+        )
+        point = self.store.session.query(func.ST_AsText(first_state.location)).one()
 
-            # Check location point's type and value
-            self.assertFalse(isinstance(first_state.location, str))
-            self.assertTrue(isinstance(first_state.location, WKBElement))
-            self.assertEqual(
-                point[0], "POINT(46 32)",
-            )
+        # Check location point's type and value
+        self.assertFalse(isinstance(first_state.location, str))
+        self.assertTrue(isinstance(first_state.location, WKBElement))
+        self.assertEqual(
+            point[0], "POINT(46 32)",
+        )
 
     def test_non_existing_location(self):
         """Test filtering State objects by non existing point returns None on PostGIS"""
