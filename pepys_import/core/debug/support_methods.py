@@ -52,7 +52,7 @@ class SupportMethods:
                     row.location,
                     row.heading,
                     row.speed,
-                    row.datafile_id,
+                    row.source_id,
                     row.privacy_id,
                 ]
             )
