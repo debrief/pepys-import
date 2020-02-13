@@ -3,7 +3,7 @@ import unittest
 from unittest import TestCase
 
 
-from pepys_import.core.debug.support_methods import SupportMethods
+from pepys_import.core.debug.support_methods import list_all, count_states
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats.repl_file import REPFile
 from pepys_import.core.formats import unit_registry
@@ -68,15 +68,11 @@ class TestLoadReplay(TestCase):
                     privacy="TEST",
                 )
 
-        support = SupportMethods()
-        print("Found:" + str(support.count_states(data_store)))
+        print("Found:" + str(count_states(data_store)))
 
-        support = SupportMethods()
-        self.assertEqual(
-            8, support.count_states(data_store), "Should have loaded 8 states"
-        )
+        self.assertEqual(8, count_states(data_store), "Should have loaded 8 states")
 
-        support.list_all(data_store)
+        list_all(data_store)
 
 
 if __name__ == "__main__":
