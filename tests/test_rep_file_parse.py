@@ -95,7 +95,7 @@ class BasicTests(unittest.TestCase):
         self.assertEqual("SUBJECT", rep_line.get_platform())
         self.assertEqual("VC", rep_line.symbology)
         self.assertEqual(Location(60.0, 23.0, 40.25, "N"), rep_line.latitude)
-        self.assertEqual(Location("000", "01", "25.86", "E"), rep_line.longitude)
+        self.assertEqual(Location(0.0, 1.0, 25.86, "E"), rep_line.longitude)
         self.assertAlmostEqual(1.9038051480754146, rep_line.heading)
         self.assertAlmostEqual(6.00, rep_line.speed.to(unit_registry.knot).magnitude)
         self.assertEqual(0.0, rep_line.depth)
