@@ -23,7 +23,8 @@ class State:
 
     def print(self):
         print(
-            "REP Line {} - Timestamp: {} Vessel: {} Symbology: {} Latitude: {} Longitude: {} Heading: {} Speed: {} Depth: {} TextLabel: {}".format(
+            "REP Line {} - Timestamp: {} Vessel: {} Symbology: {} Latitude: {} "
+            "Longitude: {} Heading: {} Speed: {} Depth: {} TextLabel: {}".format(
                 self.line_num,
                 self.timestamp,
                 self.vessel,

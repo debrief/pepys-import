@@ -57,14 +57,14 @@ class TestLoadReplay(TestCase):
                     name=platform.name, sensor_type="_GPS", host=platform.name
                 )
                 data_store.add_to_states(
-                    time=repLine.get_timestamp(),
+                    time=repLine.timestamp,
                     sensor=sensor.name,
                     datafile=datafile.reference,
                     location=repLine.get_location(),
-                    heading=repLine.get_heading().to(unit_registry.radians).magnitude,
-                    speed=repLine.get_speed()
-                    .to(unit_registry.meter / unit_registry.second)
-                    .magnitude,
+                    heading=repLine.heading.to(unit_registry.radians).magnitude,
+                    speed=repLine.speed.to(
+                        unit_registry.meter / unit_registry.second
+                    ).magnitude,
                     privacy="TEST",
                 )
 

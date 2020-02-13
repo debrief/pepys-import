@@ -76,7 +76,7 @@ class NMEAParser(CoreParser):
                         )
 
                         date_time = self.parse_timestamp(date_tok, time_tok)
-                        state = State2(date_time, sensor)
+                        state = State2(date_time)
 
                         loc = self.parse_location(
                             lat_tok, lat_hem_tok, long_tok, long_hem_tok

@@ -174,16 +174,14 @@ class ReplayParser(CoreParser):
                     # Missing data resolver has to be used
                     data_store.add_to_privacies("TEST")
                     data_store.add_to_states(
-                        time=new_state.get_timestamp(),
+                        time=new_state.timestamp,
                         sensor=sensor.name,
                         datafile=datafile.reference,
                         location=str(new_state.get_location()),
-                        heading=new_state.get_heading()
-                        .to(unit_registry.radians)
-                        .magnitude,
-                        speed=new_state.get_speed()
-                        .to(unit_registry.meter / unit_registry.second)
-                        .magnitude,
+                        heading=new_state.heading.to(unit_registry.radians).magnitude,
+                        speed=new_state.speed.to(
+                            unit_registry.meter / unit_registry.second
+                        ).magnitude,
                         privacy="TEST",
                     )
 
