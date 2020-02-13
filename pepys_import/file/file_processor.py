@@ -102,17 +102,7 @@ class FileProcessor:
             # ok, let these parsers handle the file
 
             with data_store.session_scope():
-                # TODO: The following line and privacy argument should be deleted.
-                # Missing data resolver has to be used
-                data_store.add_to_privacies("TEST")
-                if data_store.search_datafile_type(file_extension) is None:
-                    data_store.add_to_datafile_types(file_extension)
-                datafile = data_store.add_to_datafiles(
-                    simulated=False,
-                    privacy="TEST",
-                    reference=filename,
-                    file_type=file_extension,
-                )
+                datafile = data_store.get_datafile(filename, file_extension)
                 datafile_name = datafile.reference
 
             for parser in good_parsers:

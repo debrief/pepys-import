@@ -152,38 +152,38 @@ class ReplayParser(CoreParser):
                 # and finally store it
                 with data_store.session_scope():
                     datafile = data_store.search_datafile(datafile_name)
-                    if data_store.search_privacy("Public") is None:
-                        data_store.add_to_privacies("Public")
-                    if data_store.search_nationality("UK") is None:
-                        data_store.add_to_nationalities("UK")
-                    if data_store.search_platform_type("Fisher") is None:
-                        data_store.add_to_platform_types("Fisher")
-
-                    platform = data_store.add_to_platforms(
-                        name=new_state.get_platform(),
+                    platform = data_store.get_platform(
+                        platform_name=new_state.get_platform(),
                         nationality="UK",
                         platform_type="Fisher",
                         privacy="Public",
                     )
-                    if data_store.search_sensor_type("_GPS") is None:
-                        data_store.add_to_sensor_types("_GPS")
-                    sensor = data_store.add_to_sensors(
-                        name=platform.name, sensor_type="_GPS", host=platform.name
-                    )
-                    # TODO: The following line and privacy argument should be deleted.
-                    # Missing data resolver has to be used
-                    data_store.add_to_privacies("TEST")
-                    data_store.add_to_states(
-                        time=new_state.timestamp,
-                        sensor=sensor.name,
-                        datafile=datafile.reference,
-                        location=str(new_state.get_location()),
-                        heading=new_state.heading.to(unit_registry.radians).magnitude,
-                        speed=new_state.speed.to(
-                            unit_registry.meter / unit_registry.second
-                        ).magnitude,
+
+                    all_sensors = data_store.session.query(
+                        data_store.db_classes.Sensor
+                    ).all()
+                    data_store.add_to_sensor_types("_GPS")
+                    sensor = platform.get_sensor(
+                        session=data_store.session,
+                        all_sensors=all_sensors,
+                        sensor_name=platform.name,
+                        sensor_type="_GPS",
                         privacy="TEST",
                     )
+                    state = datafile.create_state(sensor, new_state.timestamp)
+                    state.set_location(new_state.get_location())
+                    state.set_heading(
+                        new_state.heading.to(unit_registry.radians).magnitude
+                    )
+                    state.set_speed(
+                        new_state.speed.to(
+                            unit_registry.meter / unit_registry.second
+                        ).magnitude
+                    )
+                    privacy = data_store.search_privacy("TEST")
+                    state.set_privacy(privacy)
+                    if datafile.validate():
+                        state.submit(data_store.session)
 
     @staticmethod
     def degrees_for(degs, mins, secs, hemi: str):
