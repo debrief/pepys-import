@@ -116,7 +116,7 @@ class DataStore(object):
             try:
                 # Create geometry_columns and spatial_ref_sys metadata table
                 with self.engine.connect() as conn:
-                    conn.execute(select([func.InitSpatialMetaData()]))
+                    conn.execute(select([func.InitSpatialMetaData(1)]))
                 # Attempt to create schema if not present, to cope with fresh DB file
                 BaseSpatiaLite.metadata.create_all(self.engine)
             except OperationalError:

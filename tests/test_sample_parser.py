@@ -12,6 +12,18 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 
 
 class SampleParserTests(unittest.TestCase):
+    def setUp(self) -> None:
+        pass
+
+    def tearDown(self) -> None:
+        single_level_file = os.path.join(FILE_PATH, "single_level.db")
+        if os.path.exists(single_level_file):
+            os.remove(single_level_file)
+
+        descending_file = os.path.join(FILE_PATH, "descending.db")
+        if os.path.exists(descending_file):
+            os.remove(descending_file)
+
     def test_process_folders_not_descending(self):
         processor = FileProcessor("single_level.db")
 
@@ -22,7 +34,7 @@ class SampleParserTests(unittest.TestCase):
         exception = False
         try:
             processor.process(BAD_DATA_PATH, None, False)
-        except Exception:
+        except BaseException:
             exception = True
         self.assertTrue(exception)
 
