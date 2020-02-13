@@ -1,13 +1,13 @@
 from .core_parser import CoreParser
 from pepys_import.core.formats.state2 import State2
-from datetime import datetime
-from pepys_import.core.formats.location import Location
-from pepys_import.core.formats import unit_registry, quantity
+from pepys_import.core.formats import unit_registry
 
 
 class ReplayParser(CoreParser):
     def __init__(self):
         super().__init__("Replay File Format")
+        self.text_label = None
+        self.depth = 0.0
 
     def can_accept_suffix(self, suffix):
         return suffix.upper() == ".REP" or suffix.upper() == ".DSF"
@@ -62,18 +62,16 @@ class ReplayParser(CoreParser):
 
                 if len(date_token) != 6 and len(date_token) != 8:
                     print(
-                        "Line {}. Error in Date format {}. Should be either 2 of 4 figure date, followed by month then date".format(
-                            line_num, date_token
-                        )
+                        f"Line {line_num}. Error in Date format {date_token}. Should "
+                        f"be either 2 of 4 figure date, followed by month then date"
                     )
                     return False
 
                 # Times always in Zulu/GMT
                 if len(time_token) != 6 and len(time_token) != 10:
                     print(
-                        "Line {}. Error in Time format {}. Should be HHMMSS[.SSS]".format(
-                            line_num, time_token
-                        )
+                        f"Line {line_num}. Error in Time format {time_token}. "
+                        f"Should be HHMMSS[.SSS]"
                     )
                     return False
 
@@ -88,16 +86,13 @@ class ReplayParser(CoreParser):
                 if len(symbology_values) >= 1:
                     if len(symbology_values[0]) != 2 and len(symbology_values[0]) != 5:
                         print(
-                            "Line {}. Error in Symbology format {}. Should be 2 or 5 chars".format(
-                                line_num, symbology_token
-                            )
+                            f"Line {line_num}. Error in Symbology format "
+                            f"{symbology_token}. Should be 2 or 5 chars"
                         )
                         return False
                 if len(symbology_values) != 1 and len(symbology_values) != 2:
                     print(
-                        "Line {}. Error in Symbology format {}".format(
-                            line_num, symbology_token
-                        )
+                        f"Line {line_num}. Error in Symbology format {symbology_token}"
                     )
                     return False
 
@@ -118,16 +113,14 @@ class ReplayParser(CoreParser):
                     valid_heading = float(heading_token)
                 except ValueError:
                     print(
-                        "Line {}. Error in heading value {}. Couldn't convert to a number".format(
-                            line_num, heading_token
-                        )
+                        f"Line {line_num}. Error in heading value {heading_token}. "
+                        f"Couldn't convert to a number"
                     )
                     return False
                 if 0.0 > valid_heading >= 360.0:
                     print(
-                        "Line {}. Error in heading value {}. Should be be between 0 and 359.9 degrees".format(
-                            line_num, heading_token
-                        )
+                        f"Line {line_num}. Error in heading value {heading_token}. "
+                        f"Should be be between 0 and 359.9 degrees"
                     )
                     return False
 
@@ -138,9 +131,8 @@ class ReplayParser(CoreParser):
                     valid_speed = float(speed_token)
                 except ValueError:
                     print(
-                        "Line {}. Error in speed value {}. Couldn't convert to a number".format(
-                            line_num, speed_token
-                        )
+                        f"Line {line_num}. Error in speed value {speed_token}. "
+                        f"Couldn't convert to a number"
                     )
                     return False
 
@@ -148,15 +140,12 @@ class ReplayParser(CoreParser):
                 new_state.set_speed(valid_speed * unit_registry.knot)
 
                 try:
-                    if depth_token == "NaN":
-                        self.depth = 0.0
-                    else:
+                    if not depth_token == "NaN":
                         self.depth = float(depth_token)
                 except ValueError:
                     print(
-                        "Line {}. Error in depth value {}. Couldn't convert to a number".format(
-                            line_num, depth_token
-                        )
+                        f"Line {line_num}. Error in depth value {depth_token}. "
+                        f"Couldn't convert to a number"
                     )
                     return False
 
@@ -183,7 +172,7 @@ class ReplayParser(CoreParser):
                     )
                     # TODO: The following line and privacy argument should be deleted.
                     # Missing data resolver has to be used
-                    privacy = data_store.add_to_privacies("TEST")
+                    data_store.add_to_privacies("TEST")
                     data_store.add_to_states(
                         time=new_state.get_timestamp(),
                         sensor=sensor.name,
