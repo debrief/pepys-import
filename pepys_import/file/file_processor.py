@@ -28,7 +28,7 @@ class FileProcessor:
 
         # check folder exists
         if not os.path.isdir(folder):
-            raise Exception(f"Folder not found: {folder}")
+            raise FileNotFoundError(f"Folder not found: {folder}")
 
         # get the data_store
         data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")

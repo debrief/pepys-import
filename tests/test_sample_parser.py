@@ -34,7 +34,7 @@ class SampleParserTests(unittest.TestCase):
         exception = False
         try:
             processor.process(BAD_DATA_PATH, None, False)
-        except BaseException:
+        except FileNotFoundError:
             exception = True
         self.assertTrue(exception)
 
@@ -51,7 +51,7 @@ class SampleParserTests(unittest.TestCase):
         exception = False
         try:
             processor.process(BAD_DATA_PATH, None, True)
-        except Exception:
+        except FileNotFoundError:
             exception = True
         self.assertTrue(exception)
 
