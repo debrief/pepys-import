@@ -216,6 +216,9 @@ class State:
     def get_longitude(self):
         return self.longitude
 
+    def get_location(self):
+        return f"POINT({self.longitude} {self.latitude})"
+
     def get_heading(self):
         return self.heading
 
