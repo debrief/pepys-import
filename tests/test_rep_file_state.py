@@ -21,20 +21,20 @@ class BasicTests(unittest.TestCase):
 
     def test_get_file_type(self):
         rep_file = REPFile(TEST_FILE)
-        self.assertEqual("REP", rep_file.get_data_file_type())
+        self.assertEqual("REP", rep_file.datafile_type)
 
     def test_get_file_name(self):
         rep_file = REPFile(TEST_FILE)
-        self.assertEqual(TEST_FILE, rep_file.get_data_file_name())
+        self.assertEqual(TEST_FILE, rep_file.filepath)
 
     def test_get_all_lines(self):
         rep_file = REPFile(TEST_FILE)
-        self.assertEqual(8, len(rep_file.get_lines()))
+        self.assertEqual(8, len(rep_file.lines))
 
     def test_file_types(self):
         rep_file = REPFile(TEST_FILE)
-        self.assertEqual("REP", rep_file.get_data_file_type())
-        self.assertEqual(TEST_FILE, rep_file.get_data_file_name())
+        self.assertEqual("REP", rep_file.datafile_type)
+        self.assertEqual(TEST_FILE, rep_file.filepath)
 
     def test_file_parse_error(self):
         exception = False

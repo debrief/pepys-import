@@ -36,13 +36,13 @@ class TestLoadReplay(TestCase):
         data_store.populate_reference(INITIAL_DATA_PATH)
 
         rep_file = REPFile(TEST_FILE)
-        self.assertEqual("REP", rep_file.get_data_file_type())
+        self.assertEqual("REP", rep_file.datafile_type)
 
         with data_store.session_scope() as session:
             datafile = session.add_to_datafile_from_rep(
-                rep_file.get_data_file_name(), rep_file.get_data_file_type()
+                rep_file.filepath, rep_file.datafile_type
             )
-            for repLine in rep_file.get_lines():
+            for repLine in rep_file.lines:
                 platform = session.add_to_platforms_from_rep(
                     repLine.get_platform(), None, "UK", "Public"
                 )

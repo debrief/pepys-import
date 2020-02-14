@@ -23,13 +23,13 @@ class TestLoadReplay(TestCase):
         data_store.initialise()
 
         rep_file = REPFile(TEST_FILE)
-        self.assertEqual("REP", rep_file.get_data_file_type())
+        self.assertEqual("REP", rep_file.datafile_type)
 
         with data_store.session_scope() as session:
             datafile = data_store.get_datafile(
-                rep_file.get_data_file_name(), rep_file.get_data_file_type()
+                rep_file.filepath, rep_file.datafile_type
             )
-            for repLine in rep_file.get_lines():
+            for repLine in rep_file.lines:
                 platform = data_store.get_platform(
                     platform_name=repLine.get_platform(),
                     nationality="UK",
