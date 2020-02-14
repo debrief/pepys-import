@@ -1,6 +1,6 @@
 from .core_parser import CoreParser
 from pepys_import.core.formats import unit_registry
-from pepys_import.core.formats.rep_line import REPLine
+from datetime import datetime
 
 
 class NMEAParser(CoreParser):
@@ -22,43 +22,37 @@ class NMEAParser(CoreParser):
     def process(self, data_store, path, file_contents, datafile_name):
         print("NMEA parser working on " + path)
 
-        line_num = 0
-        lat_tok = None
-        lat_hem_tok = None
-        long_tok = None
-        long_hem_tok = None
-        date_tok = None
-        time_tok = None
-        hdg_tok = None
-        spd_tok = None
+        lat_token = None
+        lat_hem_token = None
+        long_token = None
+        long_hem_token = None
+        date_token = None
+        time_token = None
+        hdg_token = None
+        spd_token = None
 
         for line_number, line in enumerate(file_contents):
-
             if line_number > 5000:
                 break
-
             tokens = line.split(",")
-
-            line_num += 1
-
             if len(tokens) > 0:
 
                 msg_type = tokens[1]
                 if msg_type == "DZA":
-                    date_tok = tokens[2]
-                    time_tok = tokens[3]
+                    date_token = tokens[2]
+                    time_token = tokens[3]
                 elif msg_type == "VEL":
-                    spd_tok = tokens[6]
+                    spd_token = tokens[6]
                 elif msg_type == "HDG":
-                    hdg_tok = tokens[2]
+                    hdg_token = tokens[2]
                 elif msg_type == "POS":
-                    lat_tok = tokens[3]
-                    lat_hem_tok = tokens[4]
-                    long_tok = tokens[5]
-                    long_hem_tok = tokens[6]
+                    lat_token = tokens[3]
+                    lat_hem_token = tokens[4]
+                    long_token = tokens[5]
+                    long_hem_token = tokens[6]
 
                 # do we have all we need?
-                if date_tok and spd_tok and hdg_tok and lat_tok:
+                if date_token and time_token and spd_token and hdg_token and lat_token:
 
                     # and finally store it
                     with data_store.session_scope():
@@ -77,31 +71,49 @@ class NMEAParser(CoreParser):
                             sensor_type="_GPS",
                             privacy="TEST",
                         )
+                        timestamp = self.parse_timestamp(date_token, time_token)
 
-                        nmea_line = REPLine(line_number + 1, line)
-                        nmea_line.latitude, nmea_line.longitude = self.parse_location(
-                            lat_tok, lat_hem_tok, long_tok, long_hem_tok
+                        state = datafile.create_state(sensor, timestamp)
+                        location = self.parse_location(
+                            lat_token, lat_hem_token, long_token, long_hem_token
                         )
+                        state.set_location(location)
 
-                        state = datafile.create_state(sensor, nmea_line.timestamp)
-                        if not nmea_line.parse():
-                            continue
+                        try:
+                            valid_heading = float(hdg_token)
+                        except ValueError:
+                            print(
+                                f"Line {line_number+1}. Error in heading value {hdg_token}. "
+                                f"Couldn't convert to a number"
+                            )
+                            return False
+                        if 0.0 > valid_heading or valid_heading >= 360.0:
+                            print(
+                                f"Line {line_number+1}. Error in heading value {hdg_token}. "
+                                f"Should be be between 0 and 359.9 degrees"
+                            )
+                            return False
+                        state.set_heading(valid_heading * unit_registry.degree)
 
-                        state.set_location(nmea_line.get_location())
-                        state.set_heading(float(hdg_tok) * unit_registry.degree)
-                        state.set_speed(
-                            float(spd_tok) * unit_registry.metre / unit_registry.second
-                        )
+                        try:
+                            valid_speed = float(spd_token)
+                        except ValueError:
+                            print(
+                                f"Line {line_number+1}. Error in speed value {spd_token}. "
+                                f"Couldn't convert to a number"
+                            )
+                            return False
+                        state.set_speed(valid_speed * unit_registry.knot)
 
                         privacy = data_store.search_privacy("TEST")
                         state.set_privacy(privacy)
                         if datafile.validate():
                             state.submit(data_store.session)
 
-                        date_tok = None
-                        spd_tok = None
-                        hdg_tok = None
-                        lat_tok = None
+                        date_token = None
+                        spd_token = None
+                        hdg_token = None
+                        lat_token = None
 
     @staticmethod
     def parse_location(lat, lat_hem, lon, long_hem):
@@ -121,4 +133,18 @@ class NMEAParser(CoreParser):
         if lat_hem == "W":
             lon_degrees = -1 * lon_degrees
 
-        return lat_degrees, lon_degrees
+        return f"({lat_degrees} {lon_degrees})"
+
+    @staticmethod
+    def parse_timestamp(date, time):
+        if len(date) == 6:
+            format_str = "%y%m%d"
+        else:
+            format_str = "%Y%m%d"
+
+        if len(time) == 6:
+            format_str += "%H%M%S"
+        else:
+            format_str += "%H%M%S.%f"
+
+        return datetime.strptime(date + time, format_str)
