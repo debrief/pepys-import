@@ -99,7 +99,7 @@ class BasicTests(unittest.TestCase):
     def test_line_ok(self):
         rep_line = REPLine(
             1,
-            "100112 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 Label",
+            "100112 120800 SUBJECT VC 60 23 40.25 S 000 01 25.86 W 109.08  6.00  0.00 Label",
         )
         self.assertTrue(rep_line.parse())
 
