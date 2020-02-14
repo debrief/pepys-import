@@ -438,7 +438,7 @@ class DataStore(object):
 
         return datafile_obj
 
-    def add_to_platforms(self, name, pennant, nationality, platform_type, privacy):
+    def add_to_platforms(self, name, nationality, platform_type, privacy, pennant=None):
         """
         Adds the specified platform to the Platform table if not already present.
 
@@ -622,7 +622,7 @@ class DataStore(object):
             )
 
     def get_platform(
-        self, platform_name, nationality=None, platform_type=None, privacy=None,
+        self, platform_name, nationality=None, platform_type=None, privacy=None
     ):
         """
         Adds an entry to the platforms table for the specified platform
