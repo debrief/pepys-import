@@ -622,12 +622,7 @@ class DataStore(object):
             )
 
     def get_platform(
-        self,
-        platform_name,
-        pennant=None,
-        nationality=None,
-        platform_type=None,
-        privacy=None,
+        self, platform_name, nationality=None, platform_type=None, privacy=None,
     ):
         """
         Adds an entry to the platforms table for the specified platform
@@ -635,8 +630,6 @@ class DataStore(object):
 
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
-        :param pennant: Pennant number of :class:`Platform`
-        :type pennant: String
         :param nationality: Name of :class:`Nationality`
         :type nationality: Nationality
         :param platform_type: Name of :class:`PlatformType`
@@ -657,6 +650,8 @@ class DataStore(object):
 
             return True
 
+        # This line should change with missing data resolver
+        pennant = None
         if len(platform_name) == 0:
             raise Exception("Platform name can't be empty!")
         elif check_platform(platform_name):

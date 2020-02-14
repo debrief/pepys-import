@@ -510,7 +510,6 @@ class PlatformAndDatafileTestCase(TestCase):
         with self.store.session_scope() as session:
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
-                pennant="A123",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
@@ -535,14 +534,12 @@ class PlatformAndDatafileTestCase(TestCase):
         with self.store.session_scope() as session:
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
-                pennant="A123",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
             )
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
-                pennant="A123",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
@@ -678,7 +675,6 @@ class SensorTestCase(TestCase):
 
                 self.platform = self.store.get_platform(
                     platform_name="Test Platform",
-                    pennant="A123",
                     nationality=self.nationality,
                     platform_type=self.platform_type,
                     privacy=self.privacy,
@@ -800,7 +796,6 @@ class MeasurementsTestCase(TestCase):
 
                 self.platform = self.store.get_platform(
                     platform_name="Test Platform",
-                    pennant="A123",
                     nationality=self.nationality,
                     platform_type=self.platform_type,
                     privacy=self.privacy,
