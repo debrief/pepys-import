@@ -1,6 +1,6 @@
 import unittest
 
-from pepys_import.core.formats.state import State
+from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.formats import unit_registry, quantity
 
 
@@ -60,7 +60,7 @@ class UnitsTests(unittest.TestCase):
         self.assertAlmostEqual(20, back_to_kilometes.magnitude)
 
     def test_state_conversion(self):
-        state = State(
+        state = REPLine(
             1,
             "100112 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
         )

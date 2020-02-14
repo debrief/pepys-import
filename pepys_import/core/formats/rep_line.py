@@ -17,7 +17,7 @@ def parse_timestamp(date, time):
     return datetime.strptime(date + time, format_str)
 
 
-class State:
+class REPLine:
     def __init__(self, line_number, line):
         self.line_num = line_number
         self.line = line

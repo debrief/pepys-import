@@ -1,7 +1,6 @@
 from .core_parser import CoreParser
-from pepys_import.core.formats import unit_registry, quantity
-from pepys_import.core.formats.state import State
-from datetime import datetime
+from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.rep_line import REPLine
 
 
 class NMEAParser(CoreParser):
@@ -75,7 +74,7 @@ class NMEAParser(CoreParser):
                             platform.name + "_GPS", platform
                         )
 
-                        state = State(line_number + 1, line)
+                        state = REPLine(line_number + 1, line)
 
                         loc = self.parse_location(
                             lat_tok, lat_hem_tok, long_tok, long_hem_tok

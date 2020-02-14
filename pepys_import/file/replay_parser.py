@@ -1,5 +1,5 @@
 from .core_parser import CoreParser
-from pepys_import.core.formats.state import State
+from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.formats import unit_registry
 
 
@@ -25,18 +25,18 @@ class ReplayParser(CoreParser):
         print("Rep parser working on " + path)
         for line_number, line in enumerate(file_contents):
             if line.startswith(";"):
-                pass
+                continue
             else:
                 # create state, to store the data
-                new_state = State(line_number + 1, line)
-                if not new_state.parse():
+                rep_line = REPLine(line_number + 1, line)
+                if not rep_line.parse():
                     continue
 
                 # and finally store it
                 with data_store.session_scope():
                     datafile = data_store.search_datafile(datafile_name)
                     platform = data_store.get_platform(
-                        platform_name=new_state.get_platform(),
+                        platform_name=rep_line.get_platform(),
                         nationality="UK",
                         platform_type="Fisher",
                         privacy="Public",
@@ -53,13 +53,13 @@ class ReplayParser(CoreParser):
                         sensor_type="_GPS",
                         privacy="TEST",
                     )
-                    state = datafile.create_state(sensor, new_state.timestamp)
-                    state.set_location(new_state.get_location())
+                    state = datafile.create_state(sensor, rep_line.timestamp)
+                    state.set_location(rep_line.get_location())
                     state.set_heading(
-                        new_state.heading.to(unit_registry.radians).magnitude
+                        rep_line.heading.to(unit_registry.radians).magnitude
                     )
                     state.set_speed(
-                        new_state.speed.to(
+                        rep_line.speed.to(
                             unit_registry.meter / unit_registry.second
                         ).magnitude
                     )
