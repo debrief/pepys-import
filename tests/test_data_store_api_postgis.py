@@ -508,8 +508,9 @@ class PlatformAndDatafileTestCase(TestCase):
         self.assertEqual(len(platforms), 0)
 
         with self.store.session_scope() as session:
-            self.store.get_platform(
-                "Test Platform",
+            self.platform = self.store.get_platform(
+                platform_name="Test Platform",
+                pennant="A123",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
@@ -532,14 +533,16 @@ class PlatformAndDatafileTestCase(TestCase):
         self.assertEqual(len(platforms), 0)
 
         with self.store.session_scope() as session:
-            self.store.get_platform(
-                "Test Platform",
+            self.platform = self.store.get_platform(
+                platform_name="Test Platform",
+                pennant="A123",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
             )
-            self.store.get_platform(
-                "Test Platform",
+            self.platform = self.store.get_platform(
+                platform_name="Test Platform",
+                pennant="A123",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
@@ -674,7 +677,8 @@ class SensorTestCase(TestCase):
                 self.privacy = self.store.add_to_privacies("test_privacy").name
 
                 self.platform = self.store.get_platform(
-                    "Test Platform",
+                    platform_name="Test Platform",
+                    pennant="A123",
                     nationality=self.nationality,
                     platform_type=self.platform_type,
                     privacy=self.privacy,
@@ -795,7 +799,8 @@ class MeasurementsTestCase(TestCase):
                 self.privacy = self.store.add_to_privacies("test_privacy").name
 
                 self.platform = self.store.get_platform(
-                    "Test Platform",
+                    platform_name="Test Platform",
+                    pennant="A123",
                     nationality=self.nationality,
                     platform_type=self.platform_type,
                     privacy=self.privacy,

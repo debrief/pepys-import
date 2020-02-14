@@ -438,12 +438,14 @@ class DataStore(object):
 
         return datafile_obj
 
-    def add_to_platforms(self, name, nationality, platform_type, privacy):
+    def add_to_platforms(self, name, pennant, nationality, platform_type, privacy):
         """
         Adds the specified platform to the Platform table if not already present.
 
         :param name: Name of :class:`Platform`
         :type name: String
+        :param pennant: Pennant Number of :class:`Platform`
+        :type pennant: String
         :param nationality: Nationality of :class:`Platform`
         :type nationality: Nationality
         :param platform_type: Type of :class:`Platform`
@@ -468,6 +470,9 @@ class DataStore(object):
         platform_obj = self.db_classes.Platform(
             platform_id=entry_id,
             name=name,
+            pennant=pennant,
+            trigraph=name[:3],
+            quadgraph=name[:4],
             nationality_id=nationality.nationality_id,
             platform_type_id=platform_type.platform_type_id,
             privacy_id=privacy.privacy_id,
@@ -611,7 +616,7 @@ class DataStore(object):
             )
 
     def get_platform(
-        self, platform_name, nationality=None, platform_type=None, privacy=None
+        self, platform_name, pennant, nationality=None, platform_type=None, privacy=None
     ):
         """
         Adds an entry to the platforms table for the specified platform
@@ -619,6 +624,8 @@ class DataStore(object):
 
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
+        :param pennant: Pennant number of :class:`Platform`
+        :type pennant: String
         :param nationality: Name of :class:`Nationality`
         :type nationality: Nationality
         :param platform_type: Name of :class:`PlatformType`
@@ -644,6 +651,7 @@ class DataStore(object):
         elif check_platform(platform_name):
             return self.add_to_platforms(
                 name=platform_name,
+                pennant=pennant,
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
