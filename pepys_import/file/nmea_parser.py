@@ -81,11 +81,11 @@ class NMEAParser(CoreParser):
                         state.set_location(location)
 
                         heading = convert_heading(hdg_token, line_number)
-                        if heading is not None:
+                        if heading:
                             state.set_heading(heading)
 
                         speed = convert_speed(spd_token, line_number)
-                        if speed is not None:
+                        if speed:
                             state.set_speed(speed)
 
                         privacy = data_store.search_privacy("TEST")
