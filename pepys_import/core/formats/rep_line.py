@@ -1,6 +1,7 @@
 from datetime import datetime
 from .location import Location
 from . import unit_registry
+from pepys_import.utils.unit_utils import convert_heading, convert_speed
 
 
 def parse_timestamp(date, time):
@@ -131,35 +132,17 @@ class REPLine:
             print(f"Line {self.line_num}. Error in longitude parsing")
             return False
 
-        try:
-            valid_heading = float(heading_token)
-        except ValueError:
-            print(
-                f"Line {self.line_num}. Error in heading value {heading_token}. "
-                f"Couldn't convert to a number"
-            )
-            return False
-        if 0.0 > valid_heading or valid_heading >= 360.0:
-            print(
-                f"Line {self.line_num}. Error in heading value {heading_token}. "
-                f"Should be be between 0 and 359.9 degrees"
-            )
+        heading = convert_heading(heading_token, self.line_num)
+        if not heading:
             return False
 
-        # Set heading as degree(quantity-with-unit) object
-        self.heading = valid_heading * self.unit_registry.degree
+        self.heading = heading
 
-        try:
-            valid_speed = float(speed_token)
-        except ValueError:
-            print(
-                f"Line {self.line_num}. Error in speed value {speed_token}. "
-                f"Couldn't convert to a number"
-            )
+        speed = convert_speed(speed_token, self.line_num)
+        if not speed:
             return False
-
         # Set speed as knots(quantity-with-unit) object
-        self.speed = valid_speed * self.unit_registry.knot
+        self.speed = speed
 
         try:
             if depth_token == "NaN":
