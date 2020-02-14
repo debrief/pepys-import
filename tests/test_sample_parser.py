@@ -58,6 +58,23 @@ class SampleParserTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, True)
 
+    def test_process_folders_descending_in_memory(self):
+        processor = FileProcessor()
+
+        processor.register(ReplayParser())
+        processor.register(NMEAParser())
+
+        # try bad file
+        exception = False
+        try:
+            processor.process(BAD_DATA_PATH, None, True)
+        except FileNotFoundError:
+            exception = True
+        self.assertTrue(exception)
+
+        # now good one
+        processor.process(DATA_PATH, None, True)
+
 
 if __name__ == "__main__":
     unittest.main()
