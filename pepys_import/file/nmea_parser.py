@@ -1,6 +1,7 @@
 from .core_parser import CoreParser
-from pepys_import.core.formats import unit_registry
 from datetime import datetime
+
+from pepys_import.utils.unit_utils import convert_heading, convert_speed
 
 
 class NMEAParser(CoreParser):
@@ -79,36 +80,13 @@ class NMEAParser(CoreParser):
                         )
                         state.set_location(location)
 
-                        try:
-                            valid_heading = float(hdg_token)
-                        except ValueError:
-                            print(
-                                f"Line {line_number + 1}. Error in heading value {hdg_token}. "
-                                f"Couldn't convert to a number"
-                            )
-                            return False
-                        if 0.0 > valid_heading or valid_heading >= 360.0:
-                            print(
-                                f"Line {line_number + 1}. Error in heading value {hdg_token}. "
-                                f"Should be be between 0 and 359.9 degrees"
-                            )
-                            return False
-                        state.set_heading(valid_heading * unit_registry.degree)
+                        heading = convert_heading(hdg_token, line_number)
+                        if heading is not None:
+                            state.set_heading(heading)
 
-                        try:
-                            valid_speed = float(spd_token)
-                        except ValueError:
-                            print(
-                                f"Line {line_number + 1}. Error in speed value {spd_token}. "
-                                f"Couldn't convert to a number"
-                            )
-                            return False
-                        speed = (
-                            (valid_speed * unit_registry.knot)
-                            .to(unit_registry.meter / unit_registry.second)
-                            .magnitude
-                        )
-                        state.set_speed(speed)
+                        speed = convert_speed(spd_token, line_number)
+                        if speed is not None:
+                            state.set_speed(speed)
 
                         privacy = data_store.search_privacy("TEST")
                         state.set_privacy(privacy)
@@ -116,6 +94,7 @@ class NMEAParser(CoreParser):
                             state.submit(data_store.session)
 
                         date_token = None
+                        time_token = None
                         spd_token = None
                         hdg_token = None
                         lat_token = None
