@@ -99,7 +99,7 @@ class BasicTests(unittest.TestCase):
     def test_line_ok(self):
         rep_line = REPLine(
             1,
-            "100112 120800 SUBJECT VC 60 23 40.25 S 000 01 25.86 W 109.08  6.00  0.00 Label",
+            "100112 120800 SUBJECT VC 60 23 40.25 S 000 01 25.86 E 109.08  6.00  0.00 Label",
         )
         self.assertTrue(rep_line.parse())
 
@@ -107,7 +107,7 @@ class BasicTests(unittest.TestCase):
         self.assertEqual(datetime.datetime(2010, 1, 12, 12, 8), rep_line.timestamp)
         self.assertEqual("SUBJECT", rep_line.get_platform())
         self.assertEqual("VC", rep_line.symbology)
-        self.assertEqual(Location(60.0, 23.0, 40.25, "N"), rep_line.latitude)
+        self.assertEqual(Location(60.0, 23.0, 40.25, "S"), rep_line.latitude)
         self.assertEqual(Location(0.0, 1.0, 25.86, "E"), rep_line.longitude)
         self.assertAlmostEqual(1.9038051480754146, rep_line.heading)
         self.assertAlmostEqual(3.086666666666667, rep_line.speed)
