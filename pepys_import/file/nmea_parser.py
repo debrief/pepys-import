@@ -83,13 +83,13 @@ class NMEAParser(CoreParser):
                             valid_heading = float(hdg_token)
                         except ValueError:
                             print(
-                                f"Line {line_number+1}. Error in heading value {hdg_token}. "
+                                f"Line {line_number + 1}. Error in heading value {hdg_token}. "
                                 f"Couldn't convert to a number"
                             )
                             return False
                         if 0.0 > valid_heading or valid_heading >= 360.0:
                             print(
-                                f"Line {line_number+1}. Error in heading value {hdg_token}. "
+                                f"Line {line_number + 1}. Error in heading value {hdg_token}. "
                                 f"Should be be between 0 and 359.9 degrees"
                             )
                             return False
@@ -99,11 +99,16 @@ class NMEAParser(CoreParser):
                             valid_speed = float(spd_token)
                         except ValueError:
                             print(
-                                f"Line {line_number+1}. Error in speed value {spd_token}. "
+                                f"Line {line_number + 1}. Error in speed value {spd_token}. "
                                 f"Couldn't convert to a number"
                             )
                             return False
-                        state.set_speed(valid_speed * unit_registry.knot)
+                        speed = (
+                            (valid_speed * unit_registry.knot)
+                            .to(unit_registry.meter / unit_registry.second)
+                            .magnitude
+                        )
+                        state.set_speed(speed)
 
                         privacy = data_store.search_privacy("TEST")
                         state.set_privacy(privacy)
