@@ -22,7 +22,7 @@ class NMEAImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def process(self, data_store, path, file_contents, datafile_name):
+    def load_this_file(self, data_store, path, file_contents, datafile_name):
         print("NMEA parser working on " + path)
 
         lat_token = None

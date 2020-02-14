@@ -55,7 +55,7 @@ class Importer(ABC):
         pass
 
     @abstractmethod
-    def process(self, data_store, path, file_contents, data_file):
+    def load_this_file(self, data_store, path, file_contents, data_file):
         """Process this data-file
         
         :param data_store: The data_store

@@ -107,7 +107,7 @@ class FileProcessor:
 
             for importer in good_importers:
                 processed_ctr += 1
-                importer.process(data_store, file, file_contents, datafile_name)
+                importer.load_this_file(data_store, file, file_contents, datafile_name)
 
         return processed_ctr
 

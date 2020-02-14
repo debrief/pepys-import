@@ -23,7 +23,7 @@ class ReplayImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def process(self, data_store, path, file_contents, datafile_name):
+    def load_this_file(self, data_store, path, file_contents, datafile_name):
         print("Rep parser working on " + path)
         for line_number, line in enumerate(file_contents):
             if line.startswith(";"):
