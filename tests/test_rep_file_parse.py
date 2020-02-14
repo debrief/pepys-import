@@ -11,7 +11,7 @@ class BasicTests(unittest.TestCase):
         # long date
         rep_line = State(
             1,
-            "19951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  NaN Label",
+            "19951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  NaN",
         )
         self.assertTrue(rep_line.parse())
         self.assertEqual(str(rep_line.timestamp.date()), "1995-12-12")
@@ -99,7 +99,7 @@ class BasicTests(unittest.TestCase):
     def test_line_ok(self):
         rep_line = State(
             1,
-            "100112 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
+            "100112 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 Label",
         )
         self.assertTrue(rep_line.parse())
 
@@ -112,7 +112,7 @@ class BasicTests(unittest.TestCase):
         self.assertAlmostEqual(1.9038051480754146, rep_line.heading)
         self.assertAlmostEqual(6.00, rep_line.speed.to(unit_registry.knot).magnitude)
         self.assertEqual(0.0, rep_line.depth)
-        self.assertEqual(None, rep_line.text_label)
+        self.assertEqual("Label", rep_line.text_label)
 
 
 if __name__ == "__main__":
