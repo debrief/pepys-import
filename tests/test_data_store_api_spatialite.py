@@ -711,7 +711,7 @@ class MeasurementsTestCase(TestCase):
                 self.sensor, self.current_time, "Comment", self.comment_type,
             )
 
-            # there must be no entry because it's kept in-memory
+            # there must be noget_plat entry because it's kept in-memory
             comments = self.store.session.query(self.store.db_classes.Comment).all()
             self.assertEqual(len(comments), 0)
 

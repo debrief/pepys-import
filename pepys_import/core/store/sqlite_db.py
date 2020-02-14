@@ -119,9 +119,9 @@ class Platform(BaseSpatiaLite):
 
     platform_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
-    pennant = Column(String(150), nullable=False)
-    trigraph = Column(String(3), nullable=False)
-    quadgraph = Column(String(4), nullable=False)
+    pennant = Column(String(150))
+    trigraph = Column(String(3))
+    quadgraph = Column(String(4))
     nationality_id = Column(Integer, nullable=False)
     platform_type_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer, nullable=False)

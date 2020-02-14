@@ -466,13 +466,19 @@ class DataStore(object):
             self.db_classes.Platform.table_type_id,
             self.db_classes.Platform.__tablename__,
         )
+        trigraph = None
+        if len(name) >= 3:
+            trigraph = name[:3]
+        quadgraph = None
+        if len(name) >= 4:
+            quadgraph = name[:4]
 
         platform_obj = self.db_classes.Platform(
             platform_id=entry_id,
             name=name,
             pennant=pennant,
-            trigraph=name[:3],
-            quadgraph=name[:4],
+            trigraph=trigraph,
+            quadgraph=quadgraph,
             nationality_id=nationality.nationality_id,
             platform_type_id=platform_type.platform_type_id,
             privacy_id=privacy.privacy_id,
@@ -616,7 +622,12 @@ class DataStore(object):
             )
 
     def get_platform(
-        self, platform_name, pennant, nationality=None, platform_type=None, privacy=None
+        self,
+        platform_name,
+        pennant=None,
+        nationality=None,
+        platform_type=None,
+        privacy=None,
     ):
         """
         Adds an entry to the platforms table for the specified platform
