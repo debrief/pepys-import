@@ -68,10 +68,10 @@ class UnitsTests(unittest.TestCase):
 
         # Speed and Heading from state
         # heading -> 109.08 (degrees)
-        # speed   -> 6.00 (knots)
+        # speed   -> 3.086 (m/sec)
 
         self.assertEqual("<Quantity(109.08, 'degree')>", repr(state.heading))
-        self.assertEqual("<Quantity(6.0, 'knot')>", repr(state.speed))
+        self.assertAlmostEqual(3.086666666666667, state.speed)
 
 
 if __name__ == "__main__":

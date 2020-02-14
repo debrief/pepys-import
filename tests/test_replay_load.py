@@ -29,9 +29,9 @@ class TestLoadReplay(TestCase):
             datafile = data_store.get_datafile(
                 rep_file.filepath, rep_file.datafile_type
             )
-            for repLine in rep_file.lines:
+            for rep_line in rep_file.lines:
                 platform = data_store.get_platform(
-                    platform_name=repLine.get_platform(),
+                    platform_name=rep_line.get_platform(),
                     nationality="UK",
                     platform_type="Fisher",
                     privacy="Public",
@@ -47,14 +47,10 @@ class TestLoadReplay(TestCase):
                     sensor_type="_GPS",
                     privacy="TEST",
                 )
-                state = datafile.create_state(sensor, repLine.timestamp)
-                state.set_location(repLine.get_location())
-                state.set_heading(repLine.heading.to(unit_registry.radians).magnitude)
-                state.set_speed(
-                    repLine.speed.to(
-                        unit_registry.meter / unit_registry.second
-                    ).magnitude
-                )
+                state = datafile.create_state(sensor, rep_line.timestamp)
+                state.set_location(rep_line.get_location())
+                state.set_heading(rep_line.heading.to(unit_registry.radians).magnitude)
+                state.set_speed(rep_line.speed)
                 privacy = data_store.search_privacy("TEST")
                 state.set_privacy(privacy)
                 if datafile.validate():
