@@ -13,8 +13,8 @@ from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, DOUBLE_PRECISION
 
 from geoalchemy2 import Geometry
 
-from .db_base import BasePostGIS
-from .db_status import TableTypes
+from pepys_import.core.store.db_base import BasePostGIS
+from pepys_import.core.store.db_status import TableTypes
 from uuid import uuid4
 
 

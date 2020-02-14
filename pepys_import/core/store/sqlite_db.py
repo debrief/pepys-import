@@ -5,9 +5,9 @@ from sqlalchemy.dialects.sqlite import TIMESTAMP, REAL
 
 from geoalchemy2 import Geometry
 
-from .db_base import BaseSpatiaLite
-from .db_status import TableTypes
-from ..formats import quantity
+from pepys_import.core.store.db_base import BaseSpatiaLite
+from pepys_import.core.store.db_status import TableTypes
+from pepys_import.core.formats import quantity
 
 
 class Entry(BaseSpatiaLite):
