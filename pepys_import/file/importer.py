@@ -1,18 +1,18 @@
 from abc import ABC, abstractmethod
-from datetime import datetime
 
 
-class CoreParser(ABC):
-    def __init__(self, name):
+class Importer(ABC):
+    name = "Importer"
+
+    def __init__(self):
         super().__init__()
-        self.name = name
 
     def __str__(self):
         return self.name
 
     @abstractmethod
-    def can_accept_suffix(self, suffix) -> bool:
-        """Whether this parser can handle a file with this suffix
+    def can_load_this_type(self, suffix) -> bool:
+        """Whether this importer can load files with the specified suffix.
         
         :param suffix: File suffix (e.g. ".doc")
         :type suffix: String
@@ -22,8 +22,8 @@ class CoreParser(ABC):
         pass
 
     @abstractmethod
-    def can_accept_filename(self, filename) -> bool:
-        """Whether this parser can handle a file with this full filename
+    def can_load_this_filename(self, filename) -> bool:
+        """Whether this importer can load a file with the provided filename
         
         :param filename: Full filename
         :type filename: String
@@ -33,11 +33,11 @@ class CoreParser(ABC):
         pass
 
     @abstractmethod
-    def can_accept_first_line(self, first_line) -> bool:
-        """Whether this parser can handle a file with this initial line of text
+    def can_load_this_header(self, header) -> bool:
+        """Whether this importer can load a file with this first line of text
         
-        :param first_line: The initial line of text
-        :type first_line: String
+        :param header: The initial line of text
+        :type header: String
         :return: Yes/No
         :rtype: bool
         """

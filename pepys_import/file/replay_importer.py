@@ -1,21 +1,23 @@
-from .core_parser import CoreParser
+from .importer import Importer
 from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.formats import unit_registry
 
 
-class ReplayParser(CoreParser):
+class ReplayImporter(Importer):
+    name = "Replay File Format Importer"
+
     def __init__(self):
-        super().__init__("Replay File Format")
+        super().__init__()
         self.text_label = None
         self.depth = 0.0
 
-    def can_accept_suffix(self, suffix):
+    def can_load_this_type(self, suffix):
         return suffix.upper() == ".REP" or suffix.upper() == ".DSF"
 
-    def can_accept_filename(self, filename):
+    def can_load_this_filename(self, filename):
         return True
 
-    def can_accept_first_line(self, first_line):
+    def can_load_this_header(self, first_line):
         return True
 
     def can_process_file(self, file_contents):

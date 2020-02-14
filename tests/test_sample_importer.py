@@ -1,8 +1,8 @@
 import os
 import unittest
 
-from pepys_import.file.replay_parser import ReplayParser
-from pepys_import.file.nmea_parser import NMEAParser
+from pepys_import.file.replay_importer import ReplayImporter
+from pepys_import.file.nmea_importer import NMEAImporter
 from pepys_import.file.file_processor import FileProcessor
 
 
@@ -11,7 +11,7 @@ BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
 DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 
 
-class SampleParserTests(unittest.TestCase):
+class SampleImporterTests(unittest.TestCase):
     def setUp(self) -> None:
         pass
 
@@ -27,8 +27,8 @@ class SampleParserTests(unittest.TestCase):
     def test_process_folders_not_descending(self):
         processor = FileProcessor("single_level.db")
 
-        processor.register(ReplayParser())
-        processor.register(NMEAParser())
+        processor.register_importer(ReplayImporter())
+        processor.register_importer(NMEAImporter())
 
         # try bad file
         exception = False
@@ -44,8 +44,8 @@ class SampleParserTests(unittest.TestCase):
     def test_process_folders_descending(self):
         processor = FileProcessor("descending.db")
 
-        processor.register(ReplayParser())
-        processor.register(NMEAParser())
+        processor.register_importer(ReplayImporter())
+        processor.register_importer(NMEAImporter())
 
         # try bad file
         exception = False
@@ -61,8 +61,8 @@ class SampleParserTests(unittest.TestCase):
     def test_process_folders_descending_in_memory(self):
         processor = FileProcessor()
 
-        processor.register(ReplayParser())
-        processor.register(NMEAParser())
+        processor.register_importer(ReplayImporter())
+        processor.register_importer(NMEAImporter())
 
         # try bad file
         exception = False

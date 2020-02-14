@@ -5,7 +5,7 @@ from pepys_import.core.store.data_store import DataStore
 
 class FileProcessor:
     def __init__(self, filename=None):
-        self.parsers = []
+        self.importers = []
         if filename is None:
             self.filename = ":memory:"
         else:
@@ -58,66 +58,67 @@ class FileProcessor:
 
     def process_file(self, file, current_path, data_store, processed_ctr):
         filename, file_extension = os.path.splitext(file)
-        # make copy of list of parsers
-        good_parsers = self.parsers.copy()
+        # make copy of list of importers
+        good_importers = self.importers.copy()
 
         full_path = os.path.join(current_path, file)
         # print("Checking:" + str(full_path))
 
         # start with file suffixes
-        tmp_parsers = good_parsers.copy()
-        for parser in tmp_parsers:
-            # print("Checking suffix:" + str(parser))
-            if not parser.can_accept_suffix(file_extension):
-                good_parsers.remove(parser)
+        tmp_importers = good_importers.copy()
+        for importer in tmp_importers:
+            # print("Checking suffix:" + str(importer))
+            if not importer.can_load_this_type(file_extension):
+                good_importers.remove(importer)
 
         # now the filename
-        tmp_parsers = good_parsers.copy()
-        for parser in tmp_parsers:
-            # print("Checking filename:" + str(parser))
-            if not parser.can_accept_filename(filename):
-                good_parsers.remove(parser)
+        tmp_importers = good_importers.copy()
+        for importer in tmp_importers:
+            # print("Checking filename:" + str(importer))
+            if not importer.can_load_this_filename(filename):
+                good_importers.remove(importer)
 
         # tests are starting to get expensive. Check
-        # we have some file parsers left
-        if len(good_parsers) > 0:
+        # we have some file importers left
+        if len(good_importers) > 0:
 
             # now the first line
-            tmp_parsers = good_parsers.copy()
+            tmp_importers = good_importers.copy()
             first_line = self.get_first_line(full_path)
-            for parser in tmp_parsers:
-                # print("Checking first_line:" + str(parser))
-                if not parser.can_accept_first_line(first_line):
-                    good_parsers.remove(parser)
+            for importer in tmp_importers:
+                # print("Checking first_line:" + str(importer))
+                if not importer.can_load_this_header(first_line):
+                    good_importers.remove(importer)
 
             # get the file contents
             file_contents = self.get_file_contents(full_path)
 
             # lastly the contents
-            tmp_parsers = good_parsers.copy()
-            for parser in tmp_parsers:
-                if not parser.can_process_file(file_contents):
-                    good_parsers.remove(parser)
+            tmp_importers = good_importers.copy()
+            for importer in tmp_importers:
+                if not importer.can_process_file(file_contents):
+                    good_importers.remove(importer)
 
-            # ok, let these parsers handle the file
+            # ok, let these importers handle the file
 
             with data_store.session_scope():
                 datafile = data_store.get_datafile(filename, file_extension)
                 datafile_name = datafile.reference
 
-            for parser in good_parsers:
+            for importer in good_importers:
                 processed_ctr += 1
-                parser.process(data_store, file, file_contents, datafile_name)
+                importer.process(data_store, file, file_contents, datafile_name)
 
         return processed_ctr
 
-    def register(self, parser):
-        """Add this parser
+    def register_importer(self, importer):
+        """Adds the supplied importer to the list of import modules
         
-        :param parser: new parser
-        :type parser: CoreParser
+        :param importer: An importer module that must define the functions defined
+        in the Importer base class
+        :type importer: Importer
         """
-        self.parsers.append(parser)
+        self.importers.append(importer)
 
     @staticmethod
     def get_first_line(file_path: str):

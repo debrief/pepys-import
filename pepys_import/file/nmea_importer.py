@@ -1,20 +1,22 @@
-from .core_parser import CoreParser
+from .importer import Importer
 from datetime import datetime
 
 from pepys_import.utils.unit_utils import convert_heading, convert_speed
 
 
-class NMEAParser(CoreParser):
-    def __init__(self):
-        super().__init__("NMEA File Format")
+class NMEAImporter(Importer):
+    name = "NMEA File Format Importer"
 
-    def can_accept_suffix(self, suffix):
+    def __init__(self):
+        super().__init__()
+
+    def can_load_this_type(self, suffix):
         return suffix.upper() == ".LOG" or suffix.upper() == ".TXT"
 
-    def can_accept_filename(self, filename):
+    def can_load_this_filename(self, filename):
         return True
 
-    def can_accept_first_line(self, first_line):
+    def can_load_this_header(self, first_line):
         return "$POSL" in first_line
 
     def can_process_file(self, file_contents):
