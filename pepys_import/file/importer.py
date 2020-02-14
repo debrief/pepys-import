@@ -44,7 +44,7 @@ class Importer(ABC):
         pass
 
     @abstractmethod
-    def can_process_file(self, file_contents) -> bool:
+    def can_load_this_file(self, file_contents) -> bool:
         """Whether this parser can handle this whole file
         
         :param file_contents: Whole file contents

@@ -96,7 +96,7 @@ class FileProcessor:
             # lastly the contents
             tmp_importers = good_importers.copy()
             for importer in tmp_importers:
-                if not importer.can_process_file(file_contents):
+                if not importer.can_load_this_file(file_contents):
                     good_importers.remove(importer)
 
             # ok, let these importers handle the file

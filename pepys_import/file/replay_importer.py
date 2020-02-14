@@ -20,7 +20,7 @@ class ReplayImporter(Importer):
     def can_load_this_header(self, first_line):
         return True
 
-    def can_process_file(self, file_contents):
+    def can_load_this_file(self, file_contents):
         return True
 
     def process(self, data_store, path, file_contents, datafile_name):
