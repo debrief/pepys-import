@@ -19,7 +19,7 @@ class NMEAParser(CoreParser):
     def can_process_file(self, file_contents):
         return True
 
-    def process(self, data_store, path, file_contents, data_file_id):
+    def process(self, data_store, path, file_contents, datafile_name):
         print("NMEA parser working on " + path)
 
         line_num = 0
@@ -32,13 +32,9 @@ class NMEAParser(CoreParser):
         hdg_tok = None
         spd_tok = None
 
-        ctr = 0
-
         for line_number, line in enumerate(file_contents):
 
-            ctr += 1
-
-            if ctr > 5000:
+            if line_number > 5000:
                 break
 
             tokens = line.split(",")
@@ -66,29 +62,41 @@ class NMEAParser(CoreParser):
 
                     # and finally store it
                     with data_store.session_scope():
-                        datafile = data_store.search_datafile_by_id(data_file_id)
-                        platform = data_store.add_to_platforms_from_rep(
+                        datafile = data_store.search_datafile(datafile_name)
+                        platform = data_store.get_platform(
                             "Toure", "Ferry", "FR", "Public"
                         )
-                        sensor = data_store.add_to_sensors_from_rep(
-                            platform.name + "_GPS", platform
+                        all_sensors = data_store.session.query(
+                            data_store.db_classes.Sensor
+                        ).all()
+                        data_store.add_to_sensor_types("_GPS")
+                        sensor = platform.get_sensor(
+                            session=data_store.session,
+                            all_sensors=all_sensors,
+                            sensor_name=platform.name,
+                            sensor_type="_GPS",
+                            privacy="TEST",
                         )
 
-                        state = REPLine(line_number + 1, line)
-
-                        loc = self.parse_location(
+                        nmea_line = REPLine(line_number + 1, line)
+                        nmea_line.latitude, nmea_line.longitude = self.parse_location(
                             lat_tok, lat_hem_tok, long_tok, long_hem_tok
                         )
 
-                        state.set_location_obj(loc)
+                        state = datafile.create_state(sensor, nmea_line.timestamp)
+                        if not nmea_line.parse():
+                            continue
+
+                        state.set_location(nmea_line.get_location())
+                        state.set_heading(float(hdg_tok) * unit_registry.degree)
                         state.set_speed(
                             float(spd_tok) * unit_registry.metre / unit_registry.second
                         )
-                        state.set_heading(float(hdg_tok) * unit_registry.degree)
 
-                        data_store.add_state_to_states(
-                            state, datafile, sensor,
-                        )
+                        privacy = data_store.search_privacy("TEST")
+                        state.set_privacy(privacy)
+                        if datafile.validate():
+                            state.submit(data_store.session)
 
                         date_tok = None
                         spd_tok = None
