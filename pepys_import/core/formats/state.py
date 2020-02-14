@@ -139,7 +139,7 @@ class State:
                 f"Couldn't convert to a number"
             )
             return False
-        if 0.0 > valid_heading >= 360.0:
+        if 0.0 > valid_heading or valid_heading >= 360.0:
             print(
                 f"Line {self.line_num}. Error in heading value {heading_token}. "
                 f"Should be be between 0 and 359.9 degrees"

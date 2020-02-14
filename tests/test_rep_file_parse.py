@@ -11,7 +11,7 @@ class BasicTests(unittest.TestCase):
         # long date
         rep_line = State(
             1,
-            "19951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
+            "19951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  NaN Label",
         )
         self.assertTrue(rep_line.parse())
         self.assertEqual(str(rep_line.timestamp.date()), "1995-12-12")
@@ -48,6 +48,12 @@ class BasicTests(unittest.TestCase):
         )
         self.assertFalse(rep_line.parse())
 
+        # wrong symbology
+        rep_line = State(
+            1,
+            "951212 120800 SUBJECT VC[VC[VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
+        )
+        self.assertFalse(rep_line.parse())
         # bad latitude
         rep_line = State(
             1,
@@ -62,10 +68,17 @@ class BasicTests(unittest.TestCase):
         )
         self.assertFalse(rep_line.parse())
 
-        # bad course
+        # bad heading
         rep_line = State(
             1,
-            "951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 10a.08  6.00  0.00 ",
+            "951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 1000.00  6.00  0.00 ",
+        )
+        self.assertFalse(rep_line.parse())
+
+        # bad heading
+        rep_line = State(
+            1,
+            "951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 10b.08  6.00  0.00 ",
         )
         self.assertFalse(rep_line.parse())
 
