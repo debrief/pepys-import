@@ -58,11 +58,7 @@ class ReplayParser(CoreParser):
                     state.set_heading(
                         rep_line.heading.to(unit_registry.radians).magnitude
                     )
-                    state.set_speed(
-                        rep_line.speed.to(
-                            unit_registry.meter / unit_registry.second
-                        ).magnitude
-                    )
+                    state.set_speed(rep_line.speed)
                     privacy = data_store.search_privacy("TEST")
                     state.set_privacy(privacy)
                     if datafile.validate():
