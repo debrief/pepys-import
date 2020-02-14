@@ -438,14 +438,12 @@ class DataStore(object):
 
         return datafile_obj
 
-    def add_to_platforms(self, name, nationality, platform_type, privacy, pennant=None):
+    def add_to_platforms(self, name, nationality, platform_type, privacy):
         """
         Adds the specified platform to the Platform table if not already present.
 
         :param name: Name of :class:`Platform`
         :type name: String
-        :param pennant: Pennant Number of :class:`Platform`
-        :type pennant: String
         :param nationality: Nationality of :class:`Platform`
         :type nationality: Nationality
         :param platform_type: Type of :class:`Platform`
@@ -472,7 +470,8 @@ class DataStore(object):
         quadgraph = None
         if len(name) >= 4:
             quadgraph = name[:4]
-
+        # This line should change with missing data resolver
+        pennant = None
         platform_obj = self.db_classes.Platform(
             platform_id=entry_id,
             name=name,
@@ -650,14 +649,11 @@ class DataStore(object):
 
             return True
 
-        # This line should change with missing data resolver
-        pennant = None
         if len(platform_name) == 0:
             raise Exception("Platform name can't be empty!")
         elif check_platform(platform_name):
             return self.add_to_platforms(
                 name=platform_name,
-                pennant=pennant,
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
