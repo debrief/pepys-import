@@ -82,8 +82,7 @@ class State:
         depth_token = tokens[14]
 
         if len(tokens) >= 16:
-            # TODO: join back into single string, or extract full substring
-            self.text_label = tokens[15:]
+            self.text_label = " ".join(tokens[15:])
 
         if len(date_token) != 6 and len(date_token) != 8:
             print(
@@ -95,7 +94,7 @@ class State:
         # Times always in Zulu/GMT
         if len(time_token) != 6 and len(time_token) != 10:
             print(
-                f"Line { self.line_num}. Error in Time format {time_token}. "
+                f"Line {self.line_num}. Error in Time format {time_token}. "
                 f"Should be HHMMSS[.SSS]"
             )
             return False

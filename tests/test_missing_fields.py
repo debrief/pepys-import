@@ -14,22 +14,22 @@ class MissingFieldsTestCase(unittest.TestCase):
 
     @unittest.expectedFailure
     def test_missing_fields_for_add_to_states(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.add_to_states(time=datetime.utcnow(), sensor=None, datafile=None)
 
     @unittest.expectedFailure
     def test_missing_fields_for_add_to_sensors(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.add_to_sensors(name="Sensor-1", sensor_type=None, host=None)
 
     @unittest.expectedFailure
     def test_missing_fields_for_add_to_datafiles(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.add_to_datafiles(simulated=True, privacy=None, file_type=None)
 
     @unittest.expectedFailure
     def test_missing_fields_for_add_to_platforms(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.add_to_platforms(
                 name="Platform-1", platform_type=None, privacy=None, nationality=None
             )

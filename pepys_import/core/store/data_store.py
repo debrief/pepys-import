@@ -182,7 +182,7 @@ class DataStore(object):
 
         reference_tables = []
         # Create reference table list
-        with self.session_scope() as session:
+        with self.session_scope():
             self.setup_table_type_mapping()
             reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
             for table_object in list(reference_table_objects):
@@ -203,7 +203,7 @@ class DataStore(object):
                     reader = csv.reader(f)
                     # skip header
                     _ = next(reader)
-                    with self.session_scope() as session:
+                    with self.session_scope():
                         for row in reader:
                             method_to_call(*row)
             else:
@@ -218,7 +218,7 @@ class DataStore(object):
 
         metadata_tables = []
         # Create metadata table list
-        with self.session_scope() as session:
+        with self.session_scope():
             self.setup_table_type_mapping()
             metadata_table_objects = self.meta_classes[TableTypes.METADATA]
             for table_object in list(metadata_table_objects):
@@ -237,7 +237,7 @@ class DataStore(object):
                     reader = csv.reader(f)
                     # skip header
                     _ = next(reader)
-                    with self.session_scope() as session:
+                    with self.session_scope():
                         for row in reader:
                             method_to_call(*row)
             else:

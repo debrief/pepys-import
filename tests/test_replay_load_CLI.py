@@ -38,7 +38,7 @@ class TestLoadReplay(TestCase):
         rep_file = REPFile(TEST_FILE)
         self.assertEqual("REP", rep_file.datafile_type)
 
-        with data_store.session_scope() as session:
+        with data_store.session_scope():
             datafile = session.add_to_datafile_from_rep(
                 rep_file.filepath, rep_file.datafile_type
             )
