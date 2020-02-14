@@ -1,9 +1,10 @@
 import unittest
 import datetime
 
-from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.formats.rep_line import REPLine
+from contextlib import redirect_stdout
+from io import StringIO
 
 
 class BasicTests(unittest.TestCase):
@@ -103,6 +104,12 @@ class BasicTests(unittest.TestCase):
         )
         self.assertTrue(rep_line.parse())
 
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            rep_line.print()
+        rep_line.print()
+        output = temp_output.getvalue()
+        self.assertIn("REP Line 1 - Timestamp: 2010-01-12 12:08:00", output)
         self.assertEqual(1, rep_line.line_num)
         self.assertEqual(datetime.datetime(2010, 1, 12, 12, 8), rep_line.timestamp)
         self.assertEqual("SUBJECT", rep_line.get_platform())
