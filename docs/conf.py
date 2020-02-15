@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "pepys_import"
-copyright = "2019, Author"
-author = "Author"
+copyright = "2020, Ian Mayo"
+author = "Ian Mayo"
 
 
 # -- General configuration ---------------------------------------------------

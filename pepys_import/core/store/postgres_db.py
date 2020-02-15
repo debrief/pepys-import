@@ -137,7 +137,10 @@ class Platform(BasePostGIS):
     table_type_id = 3
 
     platform_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150))
+    name = Column(String(150), nullable=False)
+    pennant = Column(String(10))
+    trigraph = Column(String(3))
+    quadgraph = Column(String(4))
     nationality_id = Column(
         UUID(as_uuid=True), ForeignKey("Nationalities.nationality_id"), nullable=False
     )
