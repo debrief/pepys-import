@@ -77,6 +77,12 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, True)
 
+    def test_class_name(self):
+        replay_importer = ReplayImporter()
+        self.assertEqual(str(replay_importer), "Replay File Format Importer")
+        nmea_importer = NMEAImporter()
+        self.assertEqual(str(nmea_importer), "NMEA File Format Importer")
+
 
 class ImporterRemoveTestCase(unittest.TestCase):
     def test_can_load_this_header(self):
