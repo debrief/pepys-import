@@ -6,8 +6,9 @@ from pepys_import.core.formats import unit_registry
 class ReplayImporter(Importer):
     name = "Replay File Format Importer"
 
-    def __init__(self):
+    def __init__(self, separator=" "):
         super().__init__()
+        self.separator = separator
         self.text_label = None
         self.depth = 0.0
 
@@ -30,7 +31,7 @@ class ReplayImporter(Importer):
                 continue
             else:
                 # create state, to store the data
-                rep_line = REPLine(line_number + 1, line, " ")
+                rep_line = REPLine(line_number + 1, line, self.separator)
                 if not rep_line.parse():
                     continue
 

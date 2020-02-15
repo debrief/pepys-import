@@ -7,8 +7,18 @@ from pepys_import.utils.unit_utils import convert_heading, convert_speed
 class NMEAImporter(Importer):
     name = "NMEA File Format Importer"
 
-    def __init__(self):
+    def __init__(self, separator=","):
         super().__init__()
+        self.separator = separator
+
+        self.latitude = None
+        self.latitude_hem = None
+        self.longitude = None
+        self.longitude_hem = None
+        self.date = None
+        self.time = None
+        self.heading = None
+        self.speed = None
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".LOG" or suffix.upper() == ".TXT"
@@ -22,40 +32,66 @@ class NMEAImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
+    def tokens(self, line):
+        """
+        Tokenize parsed line.
+
+        :return: A series of Token object from this line of text, separated according to
+         the FieldSeparator specified by this importer.
+        """
+        if self.separator == " ":
+            return line.split()
+        else:
+            return line.split(self.separator)
+
+    # TODO: does nothing now
+    def record(self, importer, record_type, measurement_object) -> None:
+        """
+        Log the fact that this set of characters was loaded by the specified importer.
+        After the intermediate objects have been imported into the database,
+        it is possible to modify the import record to include a URL to a browser-based
+        view of that imported row.
+
+        :param importer: Name of the import library that loaded this line
+        :type importer: String
+        :param record_type: Description of the type of data that was loaded
+        :type record_type: String
+        :param measurement_object: Intermediate object for the line that was imported.
+        :type measurement_object: Measurement
+        :return: Nothing
+        """
+
     def load_this_file(self, data_store, path, file_contents, datafile_name):
         print("NMEA parser working on " + path)
-
-        lat_token = None
-        lat_hem_token = None
-        long_token = None
-        long_hem_token = None
-        date_token = None
-        time_token = None
-        hdg_token = None
-        spd_token = None
 
         for line_number, line in enumerate(file_contents):
             if line_number > 5000:
                 break
-            tokens = line.split(",")
+            tokens = self.tokens(line)
             if len(tokens) > 0:
 
                 msg_type = tokens[1]
                 if msg_type == "DZA":
-                    date_token = tokens[2]
-                    time_token = tokens[3]
+                    self.date = tokens[2]
+                    self.time = tokens[3]
                 elif msg_type == "VEL":
-                    spd_token = tokens[6]
+                    self.speed = tokens[6]
                 elif msg_type == "HDG":
-                    hdg_token = tokens[2]
+                    self.heading = tokens[2]
                 elif msg_type == "POS":
-                    lat_token = tokens[3]
-                    lat_hem_token = tokens[4]
-                    long_token = tokens[5]
-                    long_hem_token = tokens[6]
+                    self.latitude = tokens[3]
+                    self.latitude_hem = tokens[4]
+                    self.longitude = tokens[5]
+                    self.longitude_hem = tokens[6]
 
                 # do we have all we need?
-                if date_token and time_token and spd_token and hdg_token and lat_token:
+                if (
+                    self.date
+                    and self.time
+                    and self.speed
+                    and self.heading
+                    and self.latitude
+                ):
 
                     # and finally store it
                     with data_store.session_scope():
@@ -74,19 +110,22 @@ class NMEAImporter(Importer):
                             sensor_type="_GPS",
                             privacy="TEST",
                         )
-                        timestamp = self.parse_timestamp(date_token, time_token)
+                        timestamp = self.parse_timestamp(self.date, self.time)
 
                         state = datafile.create_state(sensor, timestamp)
                         location = self.parse_location(
-                            lat_token, lat_hem_token, long_token, long_hem_token
+                            self.latitude,
+                            self.latitude_hem,
+                            self.longitude,
+                            self.longitude_hem,
                         )
                         state.set_location(location)
 
-                        heading = convert_heading(hdg_token, line_number)
+                        heading = convert_heading(self.heading, line_number)
                         if heading:
                             state.set_heading(heading)
 
-                        speed = convert_speed(spd_token, line_number)
+                        speed = convert_speed(self.speed, line_number)
                         if speed:
                             state.set_speed(speed)
 
@@ -95,11 +134,11 @@ class NMEAImporter(Importer):
                         if datafile.validate():
                             state.submit(data_store.session)
 
-                        date_token = None
-                        time_token = None
-                        spd_token = None
-                        hdg_token = None
-                        lat_token = None
+                        self.date = None
+                        self.time = None
+                        self.speed = None
+                        self.heading = None
+                        self.latitude = None
 
     # def requires_user_review(self) -> bool:
     #     """
