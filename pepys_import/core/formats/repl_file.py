@@ -19,7 +19,9 @@ class REPFile:
                 repL = State(line_number, line)
                 if not repL.parse():
                     raise Exception(
-                        "failed parsing REP file {} line {}".format(filepath, line_number)
+                        "failed parsing REP file {} line {}".format(
+                            filepath, line_number
+                        )
                     )
 
                 self.lines.append(repL)
