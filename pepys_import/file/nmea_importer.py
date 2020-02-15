@@ -116,7 +116,7 @@ class NMEAImporter(Importer):
         if lat_hem == "S":
             lat_degrees = -1 * lat_degrees
 
-        if lat_hem == "W":
+        if long_hem == "W":
             lon_degrees = -1 * lon_degrees
 
         return f"({lat_degrees} {lon_degrees})"

@@ -211,11 +211,17 @@ class ReplayImporterTestCase(unittest.TestCase):
 
 
 class NMEAImporterTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.nmea_importer = NMEAImporter()
+
     def test_parse_timestamp(self):
-        nmea_importer = NMEAImporter()
-        timestamp = nmea_importer.parse_timestamp("010101", "010101")
+        timestamp = self.nmea_importer.parse_timestamp("010101", "010101")
         self.assertEqual(type(timestamp), datetime)
         self.assertEqual(str(timestamp), "2001-01-01 01:01:01")
+
+    def test_parse_location(self):
+        location = self.nmea_importer.parse_location("01603600", "S", "001603600", "W")
+        self.assertEqual("(-3.0 -3.0)", location)
 
 
 if __name__ == "__main__":
