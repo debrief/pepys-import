@@ -66,6 +66,17 @@ class ReplayImporter(Importer):
                     if datafile.validate():
                         state.submit(data_store.session)
 
+    # def requires_user_review(self) -> bool:
+    #     """
+    #     Whether this importer requires user review of the loaded intermediate data
+    #     before pushing to the database.  The review may be by viewing an HTML import
+    #     summary, or examining some statistical/graphical overview.
+    #
+    #     :return: True or False
+    #     :rtype: bool
+    #     """
+    #     pass
+    #
     @staticmethod
     def degrees_for(degs, mins, secs, hemi: str):
         if hemi.upper() == "S" or hemi.upper() == "W":

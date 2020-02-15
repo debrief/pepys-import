@@ -101,6 +101,17 @@ class NMEAImporter(Importer):
                         hdg_token = None
                         lat_token = None
 
+    # def requires_user_review(self) -> bool:
+    #     """
+    #     Whether this importer requires user review of the loaded intermediate data
+    #     before pushing to the database.  The review may be by viewing an HTML import
+    #     summary, or examining some statistical/graphical overview.
+    #
+    #     :return: True or False
+    #     :rtype: bool
+    #     """
+    #     pass
+
     @staticmethod
     def parse_location(lat, lat_hem, lon, long_hem):
         lat_degrees = float(lat[0:2])
