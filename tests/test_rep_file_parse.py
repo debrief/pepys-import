@@ -114,8 +114,8 @@ class BasicTests(unittest.TestCase):
     def test_line_ok(self):
         rep_line = REPLine(
             1,
-            "100112 120800 SUBJECT VC 60 23 40.25 S 000 01 25.86 E 109.08  6.00  0.00 Label",
-            " ",
+            "100112\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel",
+            "\t",
         )
         self.assertTrue(rep_line.parse())
 
