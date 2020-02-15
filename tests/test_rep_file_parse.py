@@ -13,6 +13,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             1,
             "19951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  NaN",
+            " ",
         )
         self.assertTrue(rep_line.parse())
         self.assertEqual(str(rep_line.timestamp.date()), "1995-12-12")
@@ -21,24 +22,29 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             1,
             "951212 120800.555 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
+            " ",
         )
         self.assertTrue(rep_line.parse())
         self.assertEqual(str(rep_line.timestamp.time()), "12:08:00.555000")
 
     def test_error_reports(self):
         # too few fields
-        rep_line = REPLine(1, " 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ")
+        rep_line = REPLine(1, " 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ", " ")
         self.assertFalse(rep_line.parse())
 
         # wrong length date
         rep_line = REPLine(
-            1, "12 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
+            1,
+            "12 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
+            " ",
         )
         self.assertFalse(rep_line.parse())
 
         # wrong length time
         rep_line = REPLine(
-            1, "951212 12 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
+            1,
+            "951212 12 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
+            " ",
         )
         self.assertFalse(rep_line.parse())
 
@@ -46,6 +52,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             1,
             "951212 120800 SUBJECT VCC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
+            " ",
         )
         self.assertFalse(rep_line.parse())
 
@@ -53,12 +60,14 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             1,
             "951212 120800 SUBJECT VC[VC[VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
+            " ",
         )
         self.assertFalse(rep_line.parse())
         # bad latitude
         rep_line = REPLine(
             1,
             "951212 120800 SUBJECT VC 6A 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
+            " ",
         )
         self.assertFalse(rep_line.parse())
 
@@ -66,6 +75,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             1,
             "951212 120800 SUBJECT VC 60 23 40.25 N 00A 01 2B.86 E 109.08  6.00  0.00 ",
+            " ",
         )
         self.assertFalse(rep_line.parse())
 
@@ -73,6 +83,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             1,
             "951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 1000.00  6.00  0.00 ",
+            " ",
         )
         self.assertFalse(rep_line.parse())
 
@@ -80,6 +91,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             1,
             "951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 10b.08  6.00  0.00 ",
+            " ",
         )
         self.assertFalse(rep_line.parse())
 
@@ -87,6 +99,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             1,
             "951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.b0  0.00 ",
+            " ",
         )
         self.assertFalse(rep_line.parse())
 
@@ -94,6 +107,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             1,
             "951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.c0 ",
+            " ",
         )
         self.assertFalse(rep_line.parse())
 
@@ -101,6 +115,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             1,
             "100112 120800 SUBJECT VC 60 23 40.25 S 000 01 25.86 E 109.08  6.00  0.00 Label",
+            " ",
         )
         self.assertTrue(rep_line.parse())
 

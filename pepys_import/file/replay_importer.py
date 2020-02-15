@@ -30,7 +30,7 @@ class ReplayImporter(Importer):
                 continue
             else:
                 # create state, to store the data
-                rep_line = REPLine(line_number + 1, line)
+                rep_line = REPLine(line_number + 1, line, " ")
                 if not rep_line.parse():
                     continue
 

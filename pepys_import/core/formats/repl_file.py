@@ -13,7 +13,7 @@ class REPFile:
                 if len(line) == 0 or line[0] == ";":
                     continue
 
-                rep_line = REPLine(line_number + 1, line)
+                rep_line = REPLine(line_number + 1, line, " ")
                 if not rep_line.parse():
                     raise Exception(
                         f"failed parsing REP file {filepath} line {line_number+1}"

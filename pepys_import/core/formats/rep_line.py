@@ -19,9 +19,10 @@ def parse_timestamp(date, time):
 
 
 class REPLine:
-    def __init__(self, line_number, line):
+    def __init__(self, line_number, line, separator):
         self.line_num = line_number
         self.line = line
+        self.separator = separator
 
         self.timestamp = None
         self.vessel = None
@@ -53,9 +54,37 @@ class REPLine:
             )
         )
 
-    def parse(self):
+    def tokens(self):
+        """
+        Tokenize parsed line.
 
-        tokens = self.line.split()
+        :return: A series of Token object from this line of text, separated according to
+         the FieldSeparator specified by this importer.
+        """
+        if self.separator == " ":
+            return self.line.split()
+        else:
+            return self.line.split(self.separator)
+
+    # TODO: does nothing now
+    def record(self, importer, record_type, measurement_object) -> None:
+        """
+        Log the fact that this set of characters was loaded by the specified importer.
+        After the intermediate objects have been imported into the database,
+        it is possible to modify the import record to include a URL to a browser-based
+        view of that imported row.
+
+        :param importer: Name of the import library that loaded this line
+        :type importer: String
+        :param record_type: Description of the type of data that was loaded
+        :type record_type: String
+        :param measurement_object: Intermediate object for the line that was imported.
+        :type measurement_object: Measurement
+        :return: Nothing
+        """
+
+    def parse(self):
+        tokens = self.tokens()
 
         if len(tokens) < 15:
             print(
