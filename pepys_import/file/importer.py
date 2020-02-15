@@ -19,7 +19,6 @@ class Importer(ABC):
         :return: Yes/No
         :rtype: bool
         """
-        pass
 
     @abstractmethod
     def can_load_this_filename(self, filename) -> bool:
@@ -30,7 +29,6 @@ class Importer(ABC):
         :return: Yes/No
         :rtype: bool
         """
-        pass
 
     @abstractmethod
     def can_load_this_header(self, header) -> bool:
@@ -41,7 +39,6 @@ class Importer(ABC):
         :return: Yes/No
         :rtype: bool
         """
-        pass
 
     @abstractmethod
     def can_load_this_file(self, file_contents) -> bool:
@@ -52,7 +49,6 @@ class Importer(ABC):
         :return: Yes/No
         :rtype: bool
         """
-        pass
 
     @abstractmethod
     def load_this_file(self, data_store, path, file_contents, data_file):
@@ -67,4 +63,3 @@ class Importer(ABC):
         :param data_file: DataFile object
         :type data_file: DataFile
         """
-        pass
