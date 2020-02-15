@@ -337,19 +337,6 @@ class DataStore(object):
             course = None
         if speed == "":
             speed = None
-        # heading_rads = None
-        # if heading:
-        #  #   heading is a string, turn into quantity. Convert to radians
-        #     heading_quantity = float(heading) * unit_registry.knot
-        #     heading_rads = heading_quantity.to(unit_registry.radians).magnitude
-
-        # speed_m_sec = None
-        # if speed:
-        #    # speed is a string, turn into quantity. Convert to m/sec
-        # speed_quantity = float(speed) * unit_registry.knot
-        # speed_m_sec = speed_quantity.to(
-        #     unit_registry.meter / unit_registry.second
-        # ).magnitude
 
         entry_id = self.add_to_entries(
             self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
