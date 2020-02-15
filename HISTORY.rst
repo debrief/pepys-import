@@ -2,6 +2,11 @@
 History
 =======
 
+0.0.4 (2020-02-15)
+------------------
+
+* Refactor datastore code to match design API
+
 0.0.3 (2019-11-12)
 ------------------
 
