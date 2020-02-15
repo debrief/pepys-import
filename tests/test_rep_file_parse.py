@@ -113,9 +113,10 @@ class BasicTests(unittest.TestCase):
 
     def test_line_ok(self):
         rep_line = REPLine(
-            1,
-            "100112\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel",
-            "\t",
+            line_number=1,
+            line="100112\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t"
+            "109.08\t6.00\t0.00\tLabel",
+            separator="\t",
         )
         self.assertTrue(rep_line.parse())
 
