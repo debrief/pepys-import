@@ -2,6 +2,15 @@ from pepys_import.core.formats import unit_registry
 
 
 def convert_heading(heading, line_number):
+    """
+    Converts given heading value to degree.
+
+    :param heading: Heading value in string format
+    :type heading: String
+    :param line_number: Line number
+    :type line_number: String
+    :return: returns the converted heading value
+    """
     try:
         valid_heading = float(heading)
     except ValueError:
@@ -20,6 +29,14 @@ def convert_heading(heading, line_number):
 
 
 def convert_speed(speed, line_number):
+    """
+    Converts the given speed value to meter/seconds format.
+    :param speed: Speed value in string format
+    :type speed: String
+    :param line_number: Line number
+    :type line_number: String
+    :return: return the converted speed value
+    """
     try:
         valid_speed = float(speed)
     except ValueError:
