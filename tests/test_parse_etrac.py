@@ -14,7 +14,7 @@ TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 class ETracTests(unittest.TestCase):
     def test_process_e_trac_data(self):
         print("started")
-        processor = FileProcessor("trac.db")
+        processor = FileProcessor()
 
         store = DataStore(
             "", "", "", 0, ":memory:", db_type="sqlite", show_welcome=False
