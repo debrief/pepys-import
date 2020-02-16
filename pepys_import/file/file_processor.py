@@ -30,9 +30,10 @@ class FileProcessor:
         if not os.path.isdir(folder):
             raise Exception("Folder not found: {}".format(folder))
 
-        # get the data_store
-        data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
-        data_store.initialise()
+        # get the data_store, if necessary
+        if data_store is None:
+            data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
+            data_store.initialise()
 
         # make copy of list of parsers
         good_parsers = self.parsers.copy()
@@ -130,11 +131,8 @@ class FileProcessor:
                     good_parsers.remove(parser)
 
             # ok, let these parsers handle the file
-
             with data_store.session_scope():
-                data_file = data_store.add_to_datafile_from_rep(
-                    filename, file_extension
-                )
+                data_file = data_store.add_to_datafiles(simulated=False, url=full_path)
                 data_file_id = data_file.datafile_id
 
             for parser in good_parsers:
