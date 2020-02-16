@@ -5,6 +5,8 @@ from pepys_import.core.store.data_store import DataStore
 
 
 class MissingFieldsTestCase(unittest.TestCase):
+    """This class includes tests where missing fields given to add methods"""
+
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()

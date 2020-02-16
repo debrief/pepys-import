@@ -27,6 +27,7 @@ class SampleImporterTests(unittest.TestCase):
             os.remove(descending_file)
 
     def test_process_folders_not_descending(self):
+        """Test whether single level processing works for the given path"""
         processor = FileProcessor("single_level.db")
 
         processor.register_importer(ReplayImporter())
@@ -44,6 +45,7 @@ class SampleImporterTests(unittest.TestCase):
         processor.process(DATA_PATH, None, False)
 
     def test_process_folders_descending(self):
+        """Test whether descending processing works for the given path"""
         processor = FileProcessor("descending.db")
 
         processor.register_importer(ReplayImporter())
@@ -61,6 +63,7 @@ class SampleImporterTests(unittest.TestCase):
         processor.process(DATA_PATH, None, True)
 
     def test_process_folders_descending_in_memory(self):
+        """Test whether :memory: is used when no filename is given"""
         processor = FileProcessor()
 
         processor.register_importer(ReplayImporter())
@@ -78,12 +81,14 @@ class SampleImporterTests(unittest.TestCase):
         processor.process(DATA_PATH, None, True)
 
     def test_class_name(self):
+        """Test whether class names are correct"""
         replay_importer = ReplayImporter()
         self.assertEqual(str(replay_importer), "Replay File Format Importer")
         nmea_importer = NMEAImporter()
         self.assertEqual(str(nmea_importer), "NMEA File Format Importer")
 
     def test_giving_file_path_only(self):
+        """Test whether process method works when a file path is given"""
         processor = FileProcessor()
 
         processor.register_importer(ReplayImporter())
@@ -101,6 +106,8 @@ class SampleImporterTests(unittest.TestCase):
 
 class ImporterRemoveTestCase(unittest.TestCase):
     def test_can_load_this_header(self):
+        """Test whether can_load_this_header removes the importer from the importers"""
+
         class TestImporter(Importer):
             def can_load_this_header(self, header) -> bool:
                 return False
@@ -131,6 +138,8 @@ class ImporterRemoveTestCase(unittest.TestCase):
         self.assertIn("Files got processed: 0 times", output)
 
     def test_can_load_this_filename(self):
+        """Test whether can_load_this_filename removes the importer from the importers"""
+
         class TestImporter(Importer):
             def can_load_this_header(self, header) -> bool:
                 return True
@@ -161,6 +170,8 @@ class ImporterRemoveTestCase(unittest.TestCase):
         self.assertIn("Files got processed: 0 times", output)
 
     def test_can_load_this_type(self):
+        """Test whether can_load_this_type removes the importer from the importers"""
+
         class TestImporter(Importer):
             def can_load_this_header(self, header) -> bool:
                 return True
@@ -191,6 +202,8 @@ class ImporterRemoveTestCase(unittest.TestCase):
         self.assertIn("Files got processed: 0 times", output)
 
     def test_can_load_this_file(self):
+        """Test whether can_load_this_file removes the importer from the importers"""
+
         class TestImporter(Importer):
             def can_load_this_header(self, header) -> bool:
                 return True
@@ -223,6 +236,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
 class ReplayImporterTestCase(unittest.TestCase):
     def test_degrees_for(self):
+        """Test whether the method correctly converts the given values to degree"""
         replay_importer = ReplayImporter()
         degree = replay_importer.degrees_for(1.0, 60.0, 3600.0, "S")
         self.assertEqual(degree, -3.0)
@@ -236,15 +250,18 @@ class NMEAImporterTestCase(unittest.TestCase):
         self.nmea_importer = NMEAImporter(separator=" ")
 
     def test_parse_timestamp(self):
+        """Test whether the method correctly converts the given string date and time"""
         timestamp = self.nmea_importer.parse_timestamp("010101", "010101")
         self.assertEqual(type(timestamp), datetime)
         self.assertEqual(str(timestamp), "2001-01-01 01:01:01")
 
     def test_parse_location(self):
+        """Test whether the method correctly converts the given string location"""
         location = self.nmea_importer.parse_location("01603600", "S", "001603600", "W")
         self.assertEqual("(-3.0 -3.0)", location)
 
     def test_tokens(self):
+        """Test whether the method correctly tokenize the given string"""
         tokens = self.nmea_importer.tokens("Test line")
         self.assertEqual(tokens[0], "Test")
         self.assertEqual(tokens[1], "line")

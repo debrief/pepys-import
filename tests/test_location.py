@@ -4,6 +4,8 @@ from pepys_import.core.formats.location import Location
 
 
 class LocationTestCase(unittest.TestCase):
+    """This class includes tests where wrong parameters given to the Location class"""
+
     def test_wrong_minutes(self):
         location = Location(1.0, "WRONG_MINUTE", 1.0, "N")
         self.assertFalse(location.parse())
