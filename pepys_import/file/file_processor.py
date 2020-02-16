@@ -12,12 +12,12 @@ class FileProcessor:
             self.filename = filename
 
     def process(
-        self, folder: str, data_store: DataStore = None, descend_tree: bool = True
+        self, path: str, data_store: DataStore = None, descend_tree: bool = True
     ):
-        """Process this folder of data
+        """Process the data in the given path
         
-        :param folder: Folder path
-        :type folder: String
+        :param path: File/Folder path
+        :type path: String
         :param data_store: Database
         :type data_store: DataStore
         :param descend_tree: Whether to recursively descend through the folder tree
@@ -26,16 +26,22 @@ class FileProcessor:
 
         processed_ctr = 0
 
+        # check given path is a file
+        if os.path.isfile(path):
+            processed_ctr = self.process_file(path, path, data_store, processed_ctr)
+            print(f"Files got processed: {processed_ctr} times")
+            return
+
         # check folder exists
-        if not os.path.isdir(folder):
-            raise FileNotFoundError(f"Folder not found: {folder}")
+        if not os.path.isdir(path):
+            raise FileNotFoundError(f"Folder not found in the given path: {path}")
 
         # get the data_store
         data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
         data_store.initialise()
 
         # capture path in absolute form
-        abs_path = os.path.abspath(folder)
+        abs_path = os.path.abspath(path)
 
         # decide whether to descend tree, or just work on this folder
         if descend_tree:
@@ -46,7 +52,7 @@ class FileProcessor:
                         file, current_path, data_store, processed_ctr
                     )
         else:
-            # loop through this folder
+            # loop through this path
             for file in os.scandir(abs_path):
                 if file.is_file():
                     current_path = os.path.join(abs_path, file)

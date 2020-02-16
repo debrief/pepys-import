@@ -83,6 +83,21 @@ class SampleImporterTests(unittest.TestCase):
         nmea_importer = NMEAImporter()
         self.assertEqual(str(nmea_importer), "NMEA File Format Importer")
 
+    def test_giving_file_path_only(self):
+        processor = FileProcessor()
+
+        processor.register_importer(ReplayImporter())
+        processor.register_importer(NMEAImporter())
+
+        file_path = os.path.join(DATA_PATH, "test_importers.csv")
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            processor.process(file_path, None, False)
+        output = temp_output.getvalue()
+
+        self.assertIn("Files got processed: 0 times", output)
+
 
 class ImporterRemoveTestCase(unittest.TestCase):
     def test_can_load_this_header(self):
