@@ -48,11 +48,11 @@ class TestLoadReplay(TestCase):
                     privacy="TEST",
                 )
                 state = datafile.create_state(sensor, rep_line.timestamp)
-                state.set_location(rep_line.get_location())
-                state.set_heading(rep_line.heading.to(unit_registry.radians).magnitude)
-                state.set_speed(rep_line.speed)
+                state.location = rep_line.get_location()
+                state.heading = rep_line.heading.to(unit_registry.radians).magnitude
+                state.speed = rep_line.speed
                 privacy = data_store.search_privacy("TEST")
-                state.set_privacy(privacy)
+                state.privacy = privacy.privacy_id
                 if datafile.validate():
                     state.submit(data_store.session)
 

@@ -574,24 +574,6 @@ class Contact(BasePostGIS):
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    def set_name(self, name):
-        self.name = name
-
-    def set_subject(self, platform):
-        self.subject_id = platform.platform_id
-
-    # def set_bearing(self, bearing):
-    #     self.bearing = bearing
-    #
-    # def set_rel_bearing(self, rel_bearing):
-    #     self.rel_bearing = rel_bearing
-    #
-    # def set_frequency(self, frequency):
-    #     self.freq = frequency
-    #
-    # def set_privacy(self, privacy_type):
-    #     self.privacy_id = privacy_type.privacy_id
-
     def submit(self, session):
         """Submit intermediate object to the DB"""
         session.add(self)
@@ -662,12 +644,6 @@ class Comment(BasePostGIS):
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def set_platform(self, platform):
-        self.platform_id = platform.platform_id
-
-    # def set_privacy(self, privacy_type):
-    #     self.privacy_id = privacy_type.privacy_id
 
     def submit(self, session):
         """Submit intermediate object to the DB"""

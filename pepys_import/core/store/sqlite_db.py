@@ -494,21 +494,6 @@ class State(BaseSpatiaLite):
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    def set_location(self, location):
-        self.location = location
-
-    def set_heading(self, heading: quantity):
-        self.heading = heading
-
-    # def set_course(self, course: quantity):
-    #     self.course = course
-
-    def set_speed(self, speed: quantity):
-        self.speed = speed
-
-    def set_privacy(self, privacy):
-        self.privacy_id = privacy.privacy_id
-
     def submit(self, session):
         """Submit intermediate object to the DB"""
         session.add(self)
@@ -542,24 +527,6 @@ class Contact(BaseSpatiaLite):
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def set_name(self, name):
-        self.name = name
-
-    def set_subject(self, platform):
-        self.subject_id = platform.platform_id
-
-    # def set_bearing(self, bearing):
-    #     self.bearing = bearing
-    #
-    # def set_rel_bearing(self, rel_bearing):
-    #     self.rel_bearing = rel_bearing
-    #
-    # def set_frequency(self, frequency):
-    #     self.freq = frequency
-    #
-    # def set_privacy(self, privacy_type):
-    #     self.privacy_id = privacy_type.privacy_id
 
     def submit(self, session):
         """Submit intermediate object to the DB"""
@@ -618,12 +585,6 @@ class Comment(BaseSpatiaLite):
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def set_platform(self, platform):
-        self.platform_id = platform.platform_id
-
-    # def set_privacy(self, privacy_type):
-    #     self.privacy_id = privacy_type.privacy_id
 
     def submit(self, session):
         """Submit intermediate object to the DB"""

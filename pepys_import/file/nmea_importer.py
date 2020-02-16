@@ -119,18 +119,18 @@ class NMEAImporter(Importer):
                             self.longitude,
                             self.longitude_hem,
                         )
-                        state.set_location(location)
+                        state.location = location
 
                         heading = convert_heading(self.heading, line_number)
                         if heading:
-                            state.set_heading(heading)
+                            state.heading = heading
 
                         speed = convert_speed(self.speed, line_number)
                         if speed:
-                            state.set_speed(speed)
+                            state.speed = speed
 
                         privacy = data_store.search_privacy("TEST")
-                        state.set_privacy(privacy)
+                        state.privacy = privacy.privacy_id
                         if datafile.validate():
                             state.submit(data_store.session)
 
