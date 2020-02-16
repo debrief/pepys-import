@@ -396,7 +396,9 @@ class DataStore(object):
 
         return sensor_obj
 
-    def add_to_datafiles(self, simulated, privacy, file_type, reference=None, url=None):
+    def add_to_datafiles(
+        self, simulated=False, privacy=None, file_type=None, reference=None, url=None
+    ):
         """
         Adds the specified datafile to the Datafile table if not already present.
 
@@ -413,7 +415,15 @@ class DataStore(object):
         :return: Created :class:`Datafile` entity
         :rtype: Datafile
         """
+
+        # fill in missing privacy, if necessary
+        if privacy is None:
+            privacy = self.missing_data_resolver.default_privacy
         privacy = self.search_privacy(privacy)
+
+        # fill in missing file_type, if necessary
+        if file_type is None:
+            file_type = self.missing_data_resolver.default_datafile_type
         datafile_type = self.search_datafile_type(file_type)
 
         if privacy is None or datafile_type is None:
@@ -602,14 +612,13 @@ class DataStore(object):
             return True
 
         self.add_to_datafile_types(datafile_type)
-        self.add_to_privacies("NEW")
 
         if len(datafile_name) == 0:
             raise Exception("Datafile name can't be empty!")
         elif check_datafile(datafile_name):
             return self.add_to_datafiles(
                 simulated=True,
-                privacy="NEW",
+                privacy=self.missing_data_resolver.default_datafile_type,
                 file_type=datafile_type,
                 reference=datafile_name,
             )
