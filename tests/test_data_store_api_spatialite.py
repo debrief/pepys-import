@@ -684,7 +684,7 @@ class MeasurementsTestCase(TestCase):
 
             # Fill null constraint field
             contact.name = "TEST"
-            contact.subject = self.platform.platform_id
+            contact.subject_id = self.platform.platform_id
             if self.file.validate():
                 contact.submit(self.store.session)
                 contacts = self.store.session.query(self.store.db_classes.Contact).all()
@@ -712,7 +712,7 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(len(comments), 0)
 
             # Fill null constraint field
-            comment.platform = self.platform.platform_id
+            comment.platform_id = self.platform.platform_id
             if self.file.validate():
                 comment.submit(self.store.session)
                 comments = self.store.session.query(self.store.db_classes.Comment).all()
