@@ -19,14 +19,6 @@ class BasicTests(unittest.TestCase):
 
         self.assertTrue(exception)
 
-    def test_get_file_type(self):
-        rep_file = REPFile(TEST_FILE)
-        self.assertEqual("REP", rep_file.datafile_type)
-
-    def test_get_file_name(self):
-        rep_file = REPFile(TEST_FILE)
-        self.assertEqual(TEST_FILE, rep_file.filepath)
-
     def test_get_all_lines(self):
         rep_file = REPFile(TEST_FILE)
         self.assertEqual(8, len(rep_file.lines))
