@@ -41,7 +41,6 @@ class ETracTests(unittest.TestCase):
 
         # parse the folder
         processor.process(DATA_PATH, store, False)
-        # processor.process("Z:/MacDownloads/reetracdatafiles/db", store, False)
 
         # check data got created
         with store.session_scope():
