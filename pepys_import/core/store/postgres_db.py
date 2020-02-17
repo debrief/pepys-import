@@ -13,8 +13,8 @@ from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, DOUBLE_PRECISION
 
 from geoalchemy2 import Geometry
 
-from .db_base import BasePostGIS
-from .db_status import TableTypes
+from pepys_import.core.store.db_base import BasePostGIS
+from pepys_import.core.store.db_status import TableTypes
 from uuid import uuid4
 
 
@@ -157,8 +157,9 @@ class Platform(BasePostGIS):
         # search for any platform with this name
         return session.query(Platform).filter(Platform.name == name).first()
 
-    @staticmethod
-    def get_sensor(session, all_sensors, sensor_name, sensor_type=None, privacy=None):
+    def get_sensor(
+        self, session, all_sensors, sensor_name, sensor_type=None, privacy=None
+    ):
         """
         Lookup or create a sensor of this name for this :class:`Platform`.
         Specified sensor will be added to the :class:`Sensor` table.
@@ -188,13 +189,11 @@ class Platform(BasePostGIS):
         if len(sensor_name) == 0:
             raise Exception("Please enter sensor name!")
         elif check_sensor(sensor_name):
-            platform = session.query(Platform).first()
             return Sensor().add_to_sensors(
                 session=session,
                 name=sensor_name,
                 sensor_type=sensor_type,
-                host=platform.name
-                # privacy=privacy,
+                host=self.name,
             )
         else:
             return session.query(Sensor).filter(Sensor.name == sensor_name).first()
@@ -575,24 +574,6 @@ class Contact(BasePostGIS):
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    def set_name(self, name):
-        self.name = name
-
-    def set_subject(self, platform):
-        self.subject_id = platform.platform_id
-
-    # def set_bearing(self, bearing):
-    #     self.bearing = bearing
-    #
-    # def set_rel_bearing(self, rel_bearing):
-    #     self.rel_bearing = rel_bearing
-    #
-    # def set_frequency(self, frequency):
-    #     self.freq = frequency
-    #
-    # def set_privacy(self, privacy_type):
-    #     self.privacy_id = privacy_type.privacy_id
-
     def submit(self, session):
         """Submit intermediate object to the DB"""
         session.add(self)
@@ -663,12 +644,6 @@ class Comment(BasePostGIS):
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def set_platform(self, platform):
-        self.platform_id = platform.platform_id
-
-    # def set_privacy(self, privacy_type):
-    #     self.privacy_id = privacy_type.privacy_id
 
     def submit(self, session):
         """Submit intermediate object to the DB"""
