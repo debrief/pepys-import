@@ -6,7 +6,7 @@ from qprompt import ask_int, Menu
 
 
 def create_menu(heading, choices):
-    menu = Menu(header=heading)
+    menu = Menu(header=heading, fzf=True)
     for index, choice in enumerate(choices, 1):
         menu.add(str(index), choice)
     menu.add(".", "Cancel")
