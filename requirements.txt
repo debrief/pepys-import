@@ -10,3 +10,4 @@ tabulate
 pyfiglet
 sphinx
 sphinx_rtd_theme
+qprompt==0.15.6
