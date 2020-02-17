@@ -87,7 +87,7 @@ On Debian-based distributions the following libraries are necessary to run Spati
     $ sudo apt-get install- y libsqlite3-mod-spatialite
     $ sudo apt-get install binutils libproj-dev gdal-bin libgeos-dev libxml2-dev
 
-After it's installed, it is necessary to download and run the latest SpatiaLite version::
+After all libraries are installed, it is necessary to download and run the latest SpatiaLite version::
 
     $ wget https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-X.Y.Z.tar.gz
     $ tar xaf libspatialite-X.Y.Z.tar.gz
@@ -103,10 +103,18 @@ the following commands must be executed respectively::
 
     $ pip install virtualenv
     $ virtualenv --python=python3.8 venv
+
+It is also possible to create a virtual environment with the following code (please change X with your Python version)::
+
+    $ python3.X -m virtualenv venv
+
+When environment is created successfully, please run the following commands::
+
     $ source venv/bin/activate
     $ pip install -r requirements.txt
 
 **Installing PostGIS**
+
 The best way to install PostGIS is running the codes as follows::
 
     sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
