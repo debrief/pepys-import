@@ -27,6 +27,7 @@ class ETracParser(Importer):
     def load_this_file(self, data_store, path, file_contents, data_file_id):
         print("E-trac parser working on ", path)
         line_num = 0
+        cur_datafile_id = None
         for line in file_contents:
 
             line_num += 1
@@ -36,7 +37,10 @@ class ETracParser(Importer):
                 continue
 
             tokens = line.split(",")
-            if len(tokens) < 17:
+            if len(tokens) == 0:
+                # done
+                return False
+            elif len(tokens) < 17:
                 print("Error on line {} not enough tokens: {}".format(line_num, line))
                 return False
 
@@ -99,7 +103,11 @@ class ETracParser(Importer):
 
             # and finally store it
             with data_store.session_scope():
-                datafile = data_store.search_datafile(data_file_id)
+                if cur_datafile_id is None:
+                    datafile = data_store.search_datafile(data_file_id)
+                    cur_datafile_id = datafile.datafile_id
+                else:
+                    datafile = data_store.get_datafile_from_id(cur_datafile_id)
                 platform = data_store.get_platform(
                     platform_name=vessel_name,
                     nationality="UK",
@@ -121,7 +129,7 @@ class ETracParser(Importer):
                 privacy = data_store.search_privacy("TEST")
                 state.privacy = privacy.privacy_id
 
-                state.latitude = f"POINT({long_degrees_token} {lat_degrees_token})" 
+                state.location = f"POINT({long_degrees_token} {lat_degrees_token})" 
 
                 headingVal = convert_heading(heading_token, line_num)
                 state.heading = headingVal.to(unit_registry.radians).magnitude
