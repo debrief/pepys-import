@@ -407,7 +407,17 @@ class DataStore(object):
         :return: Created :class:`Datafile` entity
         :rtype: Datafile
         """
+        # privacy = self.search_privacy(privacy)
+        # datafile_type = self.search_datafile_type(file_type)
+
+        # fill in missing privacy, if necessary
+        if privacy is None:
+            privacy = self.missing_data_resolver.default_privacy
         privacy = self.search_privacy(privacy)
+
+        # fill in missing file_type, if necessary
+        if file_type is None:
+            file_type = self.missing_data_resolver.default_datafile_type
         datafile_type = self.search_datafile_type(file_type)
 
         if privacy is None or datafile_type is None:
@@ -452,7 +462,10 @@ class DataStore(object):
         privacy = self.search_privacy(privacy)
 
         if nationality is None or platform_type is None or privacy is None:
-            raise Exception("There is missing value(s) in the data!")
+            # raise Exception("There is missing value(s) in the data!")
+            nationality = self.missing_data_resolver.resolve_platform(
+                self, name, platform_type, nationality, privacy
+            )
 
         entry_id = self.add_to_entries(
             self.db_classes.Platform.table_type_id,
