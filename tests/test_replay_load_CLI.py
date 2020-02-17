@@ -9,15 +9,13 @@ from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 from pepys_import.core.debug.support_methods import count_states
 
 FILE_PATH = os.path.dirname(__file__)
-TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "rep_files")
+TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "track_files", "rep_data")
 TEST_FILE = os.path.join(TEST_DATA_PATH, "rep_test1.rep")
 BROKEN_FILE = os.path.join(TEST_DATA_PATH, "rep_test2.rep")
 INITIAL_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 
 
-@unittest.skip("Skip until parsers are implemented")
 class TestLoadReplay(TestCase):
-    @unittest.skip("Skip until we can automate command-line-resolver")
     def test_load_replay(self):
         """Test  whether we can load REP data"""
         data_store = DataStore(
@@ -39,22 +37,25 @@ class TestLoadReplay(TestCase):
         self.assertEqual("REP", rep_file.datafile_type)
 
         with data_store.session_scope():
-            datafile = session.add_to_datafile_from_rep(
-                rep_file.filepath, rep_file.datafile_type
+            datafile = data_store.add_to_datafiles(
+                simulated=False,
+                privacy="TEST",
+                file_type=rep_file.datafile_type,
+                reference=rep_file.filepath,
             )
-            for repLine in rep_file.lines:
-                platform = session.add_to_platforms_from_rep(
-                    repLine.get_platform(), None, "UK", "Public"
+            for rep_line in rep_file.lines:
+                platform = data_store.add_to_platforms(
+                    rep_line.get_platform(), None, "UK", "Public"
                 )
-                sensor = session.add_to_sensors_from_rep("GPS", platform)
-                session.add_to_states_from_rep(
-                    repLine.get_timestamp(),
+                sensor = data_store.add_to_sensors("GPS", "_GPS", platform)
+                data_store.add_to_states(
+                    rep_line.timestamp,
                     datafile,
                     sensor,
-                    repLine.get_latitude(),
-                    repLine.get_longitude(),
-                    repLine.get_heading(),
-                    repLine.get_speed(),
+                    rep_line.latitude,
+                    rep_line.longitude,
+                    rep_line.heading,
+                    rep_line.speed,
                 )
 
         inspector = inspect(data_store.engine)
