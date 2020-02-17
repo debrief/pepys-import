@@ -4,11 +4,11 @@ from abc import ABC, abstractmethod
 class DataResolver(ABC):
     @abstractmethod
     def resolve_platform(
-        self, data_store, platform_name, platform_type_str, nationality_str, privacy_str
+        self, data_store, platform_name, platform_type, nationality, privacy
     ):
         """
         Implementation method should return any data necessary to create a platform.
-        Currently: platformName, platformType, nationality.
+        Currently: platform_name, platform_type, nationality.
         Probably host when that is needed
         """
 
@@ -16,7 +16,7 @@ class DataResolver(ABC):
     def resolve_sensor(self, data_store, sensor_name):
         """
         Implementation method should return any data necessary to create a sensor.
-        Currently: sensorName, sensorType
+        Currently: sensor_name, sensor_type
         """
 
     @abstractmethod
