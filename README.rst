@@ -62,7 +62,7 @@ It is suggested to install a pre-commit hook in order to apply Black before push
     $ pre-commit install
 
 
-Project Progres
+Project Progress
 ----------------
 
 View the project Kanban board `here <https://github.com/debrief/pepys-import/projects/3>`_
