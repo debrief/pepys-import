@@ -322,6 +322,8 @@ class DataStore(object):
         :rtype: State
         """
         if type(time) == str:
+            # TODO we can't assume the time is in this format. We should throw
+            # exception if time isn't of type datetime
             time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
 
         sensor = self.search_sensor(sensor)
