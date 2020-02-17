@@ -26,12 +26,12 @@ class ReplayImporter(Importer):
 
     def load_this_file(self, data_store, path, file_contents, datafile_name):
         print("Rep parser working on " + path)
-        for line_number, line in enumerate(file_contents):
+        for line_number, line in enumerate(file_contents, 1):
             if line.startswith(";"):
                 continue
             else:
                 # create state, to store the data
-                rep_line = REPLine(line_number + 1, line, self.separator)
+                rep_line = REPLine(line_number, line, self.separator)
                 if not rep_line.parse():
                     continue
 
