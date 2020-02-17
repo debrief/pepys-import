@@ -70,7 +70,7 @@ class ETracParser(CoreParser):
             # creata state, to store the data
             new_state = State2(timestamp, data_file_id)
 
-            new_state.vessel = vessel_name_token.strip('"')
+            new_state.vessel = self.name_for(comp_name_token)
 
             new_state.latitude = lat_degrees_token
             new_state.longitude = long_degrees_token
@@ -128,10 +128,16 @@ class ETracParser(CoreParser):
             factor = 1
         return factor * (float(degs) + float(mins) / 60 + float(secs) / 60 / 60)
 
+    @staticmethod
+    def name_for(token):
+        # split into two
+        tokens = token.split()
+        return tokens[1]
+
     def parse_timestamp(self, date, time):
         formatStr = "%Y/%m/%d "
-        # formatStr += "%H::%M::%S"
+        formatStr += "%H:%M:%S"
 
-        print(datetime.strptime(date, formatStr))
+        res = datetime.strptime(date.strip() + " " + time.strip(), formatStr)
 
-        return datetime.strptime(date + " " + time, formatStr)
+        return res
