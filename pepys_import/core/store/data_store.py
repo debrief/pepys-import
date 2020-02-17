@@ -17,7 +17,6 @@ from pepys_import.utils.data_store_utils import import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
-from pepys_import.core.formats import unit_registry
 
 from pepys_import import __version__
 from pepys_import.utils.branding_util import (
