@@ -52,7 +52,7 @@ class DataStoreCacheTestCase(TestCase):
 
     def test_cached_comment_types(self):
         """Test whether a new comment type entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             comment_types = self.store.session.query(
                 self.store.db_classes.CommentType
             ).all()
@@ -76,7 +76,7 @@ class DataStoreCacheTestCase(TestCase):
 
     def test_cached_table_type(self):
         """Test whether a new table type entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             table_types = self.store.session.query(
                 self.store.db_classes.TableType
             ).all()
@@ -103,7 +103,7 @@ class DataStoreCacheTestCase(TestCase):
 
     def test_cached_platform_types(self):
         """Test whether a new platform type entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platform_types = self.store.session.query(
                 self.store.db_classes.PlatformType
             ).all()
@@ -130,7 +130,7 @@ class DataStoreCacheTestCase(TestCase):
 
     def test_cached_nationalities(self):
         """Test whether a new nationality entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             nationalities = self.store.session.query(
                 self.store.db_classes.Nationality
             ).all()
@@ -153,7 +153,7 @@ class DataStoreCacheTestCase(TestCase):
 
     def test_cached_privacies(self):
         """Test whether a new privacy entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             privacies = self.store.session.query(self.store.db_classes.Privacy).all()
 
             # there must be no entity at the beginning
@@ -172,7 +172,7 @@ class DataStoreCacheTestCase(TestCase):
 
     def test_cached_datafile_types(self):
         """Test whether a new datafile type entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             datafile_types = self.store.session.query(
                 self.store.db_classes.DatafileType
             ).all()
@@ -195,7 +195,7 @@ class DataStoreCacheTestCase(TestCase):
 
     def test_cached_sensor_types(self):
         """Test whether a new sensor type entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             sensor_types = self.store.session.query(
                 self.store.db_classes.SensorType
             ).all()
@@ -257,7 +257,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             return
 
     def test_comment_types(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             comment_type = self.store.db_classes.CommentType(name="test")
             self.store.session.add(comment_type)
             self.store.session.flush()
@@ -279,7 +279,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(comment_types), 1)
 
     def test_table_type(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             table_type = self.store.db_classes.TableType(table_type_id=1, name="test")
             self.store.session.add(table_type)
             self.store.session.flush()
@@ -301,7 +301,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(table_types), 1)
 
     def test_platform_types(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platform_type = self.store.db_classes.PlatformType(name="test")
             self.store.session.add(platform_type)
             self.store.session.flush()
@@ -323,7 +323,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(platform_types), 1)
 
     def test_nationalities(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             nationality = self.store.db_classes.Nationality(name="test")
             self.store.session.add(nationality)
             self.store.session.flush()
@@ -345,7 +345,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(nationalities), 1)
 
     def test_privacies(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             privacy = self.store.db_classes.Privacy(name="test")
             self.store.session.add(privacy)
             self.store.session.flush()
@@ -363,7 +363,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(privacies), 1)
 
     def test_datafile_types(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             datafile_type = self.store.db_classes.DatafileType(name="test")
             self.store.session.add(datafile_type)
             self.store.session.flush()
@@ -385,7 +385,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(datafile_types), 1)
 
     def test_sensor_types(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             sensor_type = self.store.db_classes.SensorType(name="test")
             self.store.session.add(sensor_type)
             self.store.session.flush()
@@ -431,7 +431,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 db_port=55527,
             )
             self.store.initialise()
-            with self.store.session_scope() as session:
+            with self.store.session_scope():
                 self.nationality = self.store.add_to_nationalities(
                     "test_nationality"
                 ).name
@@ -454,17 +454,17 @@ class PlatformAndDatafileTestCase(TestCase):
     def test_new_datafile_added_successfully(self):
         """Test whether a new datafile is created successfully or not"""
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(datafiles), 0)
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.get_datafile("test_file.csv", "csv")
 
         # there must be one entry
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
             self.assertEqual(datafiles[0].reference, "test_file.csv")
@@ -472,13 +472,13 @@ class PlatformAndDatafileTestCase(TestCase):
     def test_present_datafile_not_added(self):
         """Test whether present datafile is not created"""
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(datafiles), 0)
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.get_datafile("test_file.csv", "csv")
             self.store.get_datafile("test_file.csv", "csv")
 
@@ -495,19 +495,19 @@ class PlatformAndDatafileTestCase(TestCase):
     def test_empty_datafile_name(self):
         """Test whether a new datafile without a name is created or not"""
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.get_datafile(datafile_name="", datafile_type="csv")
 
     def test_new_platform_added_successfully(self):
         """Test whether a new platform is created successfully or not"""
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(platforms), 0)
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
                 nationality=self.nationality,
@@ -516,7 +516,7 @@ class PlatformAndDatafileTestCase(TestCase):
             )
 
         # there must be one entry
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
 
             self.assertEqual(len(platforms), 1)
@@ -525,13 +525,13 @@ class PlatformAndDatafileTestCase(TestCase):
     def test_present_platform_not_added(self):
         """Test whether present platform is not created"""
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(platforms), 0)
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
                 nationality=self.nationality,
@@ -546,7 +546,7 @@ class PlatformAndDatafileTestCase(TestCase):
             )
 
         # there must be one entry
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
 
             self.assertEqual(len(platforms), 1)
@@ -560,7 +560,7 @@ class PlatformAndDatafileTestCase(TestCase):
     def test_empty_platform_name(self):
         """Test whether a new platform without a name is created or not"""
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.get_platform(platform_name="")
 
 
@@ -661,7 +661,7 @@ class SensorTestCase(TestCase):
                 db_port=55527,
             )
             self.store.initialise()
-            with self.store.session_scope() as session:
+            with self.store.session_scope():
                 self.nationality = self.store.add_to_nationalities(
                     "test_nationality"
                 ).name
@@ -679,6 +679,7 @@ class SensorTestCase(TestCase):
                     platform_type=self.platform_type,
                     privacy=self.privacy,
                 )
+                self.store.session.expunge(self.platform)
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 
@@ -693,7 +694,7 @@ class SensorTestCase(TestCase):
 
     def test_new_sensor_added_successfully(self):
         """Test whether a new sensor is created"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
@@ -710,7 +711,7 @@ class SensorTestCase(TestCase):
 
     def test_present_sensor_not_added(self):
         """Test whether present sensor is not created"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
@@ -734,7 +735,7 @@ class SensorTestCase(TestCase):
     @unittest.expectedFailure
     def test_new_sensor_with_empty_sensor_type(self):
         """Test whether a new sensor without sensor type is created"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
@@ -745,7 +746,7 @@ class SensorTestCase(TestCase):
     @unittest.expectedFailure
     def test_empty_sensor_name(self):
         """Test whether a new sensor with empty name is created"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
@@ -782,7 +783,7 @@ class MeasurementsTestCase(TestCase):
                 db_port=55527,
             )
             self.store.initialise()
-            with self.store.session_scope() as session:
+            with self.store.session_scope():
                 self.nationality = self.store.add_to_nationalities(
                     "test_nationality"
                 ).name
@@ -826,7 +827,7 @@ class MeasurementsTestCase(TestCase):
 
     def test_new_state_created_successfully(self):
         """Test whether a new state is created"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             states = self.store.session.query(self.store.db_classes.State).all()
 
             # there must be no entry at the beginning
@@ -865,8 +866,8 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(len(contacts), 0)
 
             # Fill null constraint field
-            contact.set_name("TEST")
-            contact.set_subject(self.platform)
+            contact.name = "TEST"
+            contact.subject_id = self.platform.platform_id
             if self.file.validate():
                 contact.submit(self.store.session)
                 contacts = self.store.session.query(self.store.db_classes.Contact).all()
@@ -894,7 +895,7 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(len(comments), 0)
 
             # Fill null constraint field
-            comment.set_platform(self.platform)
+            comment.platform_id = self.platform.platform_id
             if self.file.validate():
                 comment.submit(self.store.session)
                 comments = self.store.session.query(self.store.db_classes.Comment).all()
