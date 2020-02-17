@@ -80,9 +80,12 @@ For Ubuntu
 ----------
 **Installing Spatialite**
 
-On Debian-based distributions the following library is necessary to run SpatiaLite::
+On Debian-based distributions the following libraries are necessary to run SpatiaLite::
 
+    $ sudo apt install zlib1g-dev
+    $ sudo apt-get install sqlite3 libsqlite3-dev
     $ sudo apt-get install- y libsqlite3-mod-spatialite
+    $ sudo apt-get install binutils libproj-dev gdal-bin libgeos-dev libxml2-dev
 
 After it's installed, it is necessary to download and run the latest SpatiaLite version::
 
@@ -95,13 +98,20 @@ After it's installed, it is necessary to download and run the latest SpatiaLite 
 
 **Creating Python Environment**
 
-Virtual Environment might be used to run the project. For creating a proper one, the following commands must be executed respectively::
+Virtual Environment might be used to run the project. For creating a proper one,
+the following commands must be executed respectively::
 
     $ pip install virtualenv
     $ virtualenv --python=python3.8 venv
     $ source venv/bin/activate
     $ pip install -r requirements.txt
 
+**Installing PostGIS**
+The best way to install PostGIS is running the codes as follows::
+
+    sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
+    sudo apt-get update
+    sudo apt-get install postgis
 
 Unit tests
 ----------
