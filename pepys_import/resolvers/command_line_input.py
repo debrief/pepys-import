@@ -1,3 +1,10 @@
+import qprompt
+
+# Two refinements are necessary: some responses permanently  assigned to a key
+# (. for Cancel)
+# Inject some responses for unit tests
+
+
 def get_choice_input(heading, choices):
     map_choice = False
     while 1:
@@ -8,9 +15,9 @@ def get_choice_input(heading, choices):
                 map_choice = True
             else:
                 choice_string = choice
-            input_text += "   " + str(idx) + ") " + choice_string + "\n"
-        choice = input(input_text)
-
+            input_text += f"   {str(idx)}) {choice_string}\n"
+        # choice = input(input_text)
+        choice = qprompt.ask_int(input_text, valid=choices)
         try:
             choice_value = int(choice)
         except ValueError:
