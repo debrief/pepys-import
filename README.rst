@@ -70,25 +70,43 @@ View the project Kanban board `here <https://github.com/debrief/pepys-import/pro
 Setup
 -----
 
-To prepare for running ensure these tools and packages are installed:
+To prepare for running ensure Python 3.6.4 or later are installed in your system.
+You can check your Python 3 version with the following command::
 
-* Python 3 - at least Python 3.6.4 or later
-* SQL Alchemy 1.3
+    $ python3 --version
 
-For Postgres support and unit tests these packages are also required:
+----------
+For Ubuntu
+----------
+**Installing Spatialite**
 
-* geoalchemy2
-* psycopg2
-* nose2 (0.9.1)
+On Debian-based distributions the following library is necessary to run SpatiaLite::
 
-Dependencies
-------------
+    $ sudo apt-get install- y libsqlite3-mod-spatialite
 
-Install the python dependencies with: :code:`pip install -r requirements.txt`
+After it's installed, it is necessary to download and run the latest SpatiaLite version::
+
+    $ wget https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-X.Y.Z.tar.gz
+    $ tar xaf libspatialite-X.Y.Z.tar.gz
+    $ cd libspatialite-X.Y.Z
+    $ ./configure
+    $ make
+    $ sudo make install
+
+**Creating Python Environment**
+
+Virtual Environment might be used to run the project. For creating a proper one, the following commands must be executed respectively::
+
+    $ pip install virtualenv
+    $ virtualenv --python=python3.8 venv
+    $ source venv/bin/activate
+    $ pip install -r requirements.txt
+
 
 Unit tests
 ----------
 
+* In order to run the tests, please install requirements_dev: :code:`pip install -r requirements_dev.txt`
 * Run the unit test suite with:  :code:`coverage3 run -m unittest discover -v`
 * View the unit test coverage with: :code:`coverage report`
 
