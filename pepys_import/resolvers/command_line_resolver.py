@@ -1,6 +1,6 @@
 import sys
 from .data_resolver import DataResolver
-from .command_line_input import get_choice_input
+from .command_line_input import get_choice_input, create_menu
 
 
 class CommandLineResolver(DataResolver):
@@ -43,13 +43,13 @@ class CommandLineResolver(DataResolver):
                 sys.exit(1)
 
     def add_to_platforms(
-        self, data_store, platform_name, platform_type_str, nationality_str, privacy_str
+        self, data_store, platform_name, platform_type, nationality, privacy
     ):
         print("Ok, adding new platform.")
 
         # Choose Nationality
-        if nationality_str:
-            chosen_nationality = data_store.add_to_nationalities(nationality_str)
+        if nationality:
+            chosen_nationality = data_store.add_to_nationalities(nationality)
         else:
             nationalities = data_store.get_nationalities()
             nationality_names = [n.name for n in nationalities]
@@ -67,8 +67,8 @@ class CommandLineResolver(DataResolver):
                 chosen_nationality = data_store.add_to_nationalities(new_input)
 
         # Choose Platform Type
-        if platform_type_str:
-            chosen_platform_type = data_store.add_to_platform_types(platform_type_str)
+        if platform_type:
+            chosen_platform_type = data_store.add_to_platform_types(platform_type)
         else:
             platform_types = data_store.get_platform_types()
             platform_type_names = [c.name for c in platform_types]
@@ -126,8 +126,8 @@ class CommandLineResolver(DataResolver):
             #     newSensor = True
 
         # Choose Privacy
-        if privacy_str:
-            chosen_privacy = data_store.add_to_privacies(privacy_str)
+        if privacy:
+            chosen_privacy = data_store.add_to_privacies(privacy)
         else:
             privacies = data_store.get_privacies()
             privacy_names = [c.name for c in privacies]
@@ -181,21 +181,16 @@ class CommandLineResolver(DataResolver):
     def resolve_platform(
         self, data_store, platform_name, platform_type, nationality, privacy
     ):
-        choice = get_choice_input(
+        choice = create_menu(
             f"Platform '{platform_name}' not found. Do you wish to: ",
-            [  # "Search for synonym of this name",
-                f"Add a new platform, titled '{platform_name}'",
-                "Cancel import",
-            ],
+            [f"Add a new platform, titled '{platform_name}'"],
         )
 
-        if choice == 1:
-            # synSearch = self.synonym_search(data_store, platform_name)
-            # print(f"Adding {synSearch} as a synonym for {platform_name}")
+        if choice == str(1):
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy
             )
-        else:
+        elif choice == "q":
             print("Quitting")
             sys.exit(1)
 
