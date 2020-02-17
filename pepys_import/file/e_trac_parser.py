@@ -1,27 +1,30 @@
-from .core_parser import CoreParser
-from pepys_import.core.formats.state2 import State2
+from .importer import Importer
 from datetime import datetime
-from pepys_import.core.formats.location import Location
-from pepys_import.core.formats import unit_registry, quantity
+from pepys_import.core.formats import unit_registry
+from pepys_import.utils.unit_utils import convert_heading, convert_speed
 
+class ETracParser(Importer):
+    name = "E-Trac Format Importer"
 
-class ETracParser(CoreParser):
-    def __init__(self):
-        super().__init__("E-Trac File Format")
+    def __init__(self, separator=" "):
+        super().__init__()
+        self.separator = separator
+        self.text_label = None
+        self.depth = 0.0
 
-    def can_accept_suffix(self, suffix):
+    def can_load_this_type(self, suffix):
         return suffix.upper() == ".TXT"
 
-    def can_accept_filename(self, filename):
+    def can_load_this_filename(self, filename):
         return True
 
-    def can_accept_first_line(self, first_line):
+    def can_load_this_header(self, first_line):
         return first_line.startswith("!Target,MMSI")
 
-    def can_process_file(self, file_contents):
+    def can_load_this_file(self, file_contents):
         return True
 
-    def process(self, data_store, path, file_contents, data_file_id):
+    def load_this_file(self, data_store, path, file_contents, data_file_id):
         print("E-trac parser working on ", path)
         line_num = 0
         for line in file_contents:
@@ -38,7 +41,6 @@ class ETracParser(CoreParser):
                 return False
 
             # separate token strings
-            mmsi_token = tokens[1]
             date_token = tokens[2]
             time_token = tokens[3]
             lat_degrees_token = tokens[4]
@@ -46,6 +48,7 @@ class ETracParser(CoreParser):
             heading_token = tokens[8]
             speed_token = tokens[6]
             comp_name_token = tokens[18]
+            vessel_name = self.name_for(comp_name_token)
 
             if len(date_token) != 12:
                 print(len(date_token))
@@ -67,14 +70,6 @@ class ETracParser(CoreParser):
 
             timestamp = self.parse_timestamp(date_token, time_token)
 
-            # creata state, to store the data
-            new_state = State2(timestamp, data_file_id)
-
-            new_state.vessel = self.name_for(comp_name_token)
-
-            new_state.latitude = lat_degrees_token
-            new_state.longitude = long_degrees_token
-
             try:
                 valid_heading = float(heading_token)
             except ValueError:
@@ -92,9 +87,6 @@ class ETracParser(CoreParser):
                 )
                 return False
 
-            # Set heading as degree(quantity-with-unit) object
-            new_state.set_heading(valid_heading * unit_registry.degree)
-
             try:
                 valid_speed = float(speed_token)
             except ValueError:
@@ -105,28 +97,40 @@ class ETracParser(CoreParser):
                 )
                 return False
 
-            # Set speed as knots(quantity-with-unit) object
-            new_state.set_speed(valid_speed * unit_registry.knot)
-
             # and finally store it
             with data_store.session_scope():
-                datafile = data_store.search_datafile_by_id(data_file_id)
-                platform = data_store.add_to_platforms_from_rep(
-                    new_state.get_platform(), "Fisher", "UK", "Public"
-                )
-                sensor = data_store.add_to_sensors_from_rep(
-                    platform.name + "_GPS", platform
-                )
-                data_store.add_state_to_states(
-                    new_state, datafile, sensor,
+                datafile = data_store.search_datafile(data_file_id)
+                platform = data_store.get_platform(
+                    platform_name=vessel_name,
+                    nationality="UK",
+                    platform_type="Fisher",
+                    privacy="Public",
                 )
 
-    def degrees_for(self, degs, mins, secs, hemi: str):
-        if hemi.upper() == "S" or hemi.upper() == "W":
-            factor = -1
-        else:
-            factor = 1
-        return factor * (float(degs) + float(mins) / 60 + float(secs) / 60 / 60)
+                all_sensors = data_store.session.query(
+                    data_store.db_classes.Sensor
+                ).all()
+                data_store.add_to_sensor_types("GPS")
+                sensor = platform.get_sensor(
+                    session=data_store.session,
+                    all_sensors=all_sensors,
+                    sensor_name="E-Trac",
+                    sensor_type="GPS",
+                    privacy="TEST",
+                )
+                state = datafile.create_state(sensor, timestamp)
+                privacy = data_store.search_privacy("TEST")
+                state.privacy = privacy.privacy_id
+
+                state.latitude = f"POINT({long_degrees_token} {lat_degrees_token})" 
+
+                headingVal = convert_heading(heading_token, line_num)
+                state.heading = headingVal.to(unit_registry.radians).magnitude
+
+                speedVal = convert_speed(speed_token, line_num)
+                state.speed = speedVal
+                if datafile.validate():
+                    state.submit(data_store.session)
 
     @staticmethod
     def name_for(token):
