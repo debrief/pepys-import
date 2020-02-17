@@ -658,9 +658,19 @@ class DataStore(object):
 
             return True
 
-        self.add_to_nationalities(nationality)
-        self.add_to_platform_types(platform_type)
-        self.add_to_privacies(privacy)
+        nationality = self.search_nationality(nationality)
+        platform_type = self.search_platform_type(platform_type)
+        privacy = self.search_privacy(privacy)
+
+        if nationality is None or platform_type is None or privacy is None:
+            # raise Exception("There is missing value(s) in the data!")
+            nationality = self.missing_data_resolver.resolve_platform(
+                self, platform_name, platform_type, nationality, privacy
+            )
+
+        # self.add_to_nationalities(nationality)
+        # self.add_to_platform_types(platform_type)
+        # self.add_to_privacies(privacy)
 
         if len(platform_name) == 0:
             raise Exception("Platform name can't be empty!")
