@@ -6,8 +6,7 @@ if SYSTEM == "Linux":
 elif SYSTEM == "Darwin":  # Darwin is MacOS
     EXTENSION_PATH = "/usr/local/lib/mod_spatialite.dylib"
 elif SYSTEM == "Windows":
-    # TODO: mod_spatialite path for Windows should be added
-    EXTENSION_PATH = None
+    EXTENSION_PATH = "mod_spatialite.dll"
 
 
 def load_spatialite(connection, connection_record):
