@@ -42,11 +42,11 @@ class DefaultResolver(DataResolver):
 
         return sensor_name, sensor_type
 
-    def resolve_privacy(self, data_store, table_type_id, table_name):
+    def resolve_privacy(self, data_store, table_name):
         # needs to establish defaults for privacy
 
         privacy = data_store.search_privacy(self.default_privacy)
         if not privacy:
             privacy = data_store.add_to_privacies(self.default_privacy)
 
-        return table_type_id, privacy
+        return privacy

@@ -20,8 +20,8 @@ class DataResolver(ABC):
         """
 
     @abstractmethod
-    def resolve_privacy(self, data_store, table_type_id, table_name):
+    def resolve_privacy(self, data_store, table_name):
         """
         Implementation method should return any data necessary to create a privacy.
-        Currently: table_type_id, privacy_name
+        Currently: privacy_name
         """
