@@ -106,7 +106,6 @@ class ETracParser(Importer):
                     platform_type="Fisher",
                     privacy="Public",
                 )
-
                 all_sensors = data_store.session.query(
                     data_store.db_classes.Sensor
                 ).all()
