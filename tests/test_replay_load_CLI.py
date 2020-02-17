@@ -37,26 +37,23 @@ class TestLoadReplay(TestCase):
         self.assertEqual("REP", rep_file.datafile_type)
 
         with data_store.session_scope():
-            datafile = data_store.add_to_datafiles(
-                simulated=False,
-                privacy="TEST",
-                file_type=rep_file.datafile_type,
-                reference=rep_file.filepath,
+            datafile = data_store.get_datafile(
+                rep_file.datafile_type, rep_file.filepath
             )
             for rep_line in rep_file.lines:
-                platform = data_store.add_to_platforms(
+                platform = data_store.get_platform(
                     rep_line.get_platform(), None, "UK", "Public"
                 )
-                sensor = data_store.add_to_sensors("GPS", "_GPS", platform)
-                data_store.add_to_states(
-                    rep_line.timestamp,
-                    datafile,
-                    sensor,
-                    rep_line.latitude,
-                    rep_line.longitude,
-                    rep_line.heading,
-                    rep_line.speed,
-                )
+                sensors = data_store.session.query(data_store.db_classes.Sensor).all()
+                sensor = platform.get_sensor(data_store.session, sensors, "GPS", "_GPS")
+                state = datafile.create_state(sensor, rep_line.timestamp)
+                state.location = rep_line.get_location()
+                state.heading = rep_line.heading
+                state.speed = rep_line.speed
+                privacy = data_store.search_privacy("TEST")
+                state.privacy = privacy.privacy_id
+                if datafile.validate():
+                    state.submit(data_store.session)
 
         inspector = inspect(data_store.engine)
         table_names = inspector.get_table_names()
