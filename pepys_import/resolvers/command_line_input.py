@@ -1,8 +1,17 @@
-import qprompt
+from qprompt import ask_int, Menu
 
 # Two refinements are necessary: some responses permanently  assigned to a key
 # (. for Cancel)
 # Inject some responses for unit tests
+
+
+def create_menu(heading, choices):
+    menu = Menu(header=heading)
+    for index, choice in enumerate(choices, 1):
+        menu.add(str(index), choice)
+    menu.add(".", "Cancel")
+    choice = menu.show()
+    return choice
 
 
 def get_choice_input(heading, choices):
@@ -20,7 +29,7 @@ def get_choice_input(heading, choices):
             indexes.append(idx)
 
         # choice = input(input_text)
-        choice = qprompt.ask_int(input_text, valid=indexes)
+        choice = ask_int(input_text, valid=indexes)
 
         if not map_choice:
             return choice
