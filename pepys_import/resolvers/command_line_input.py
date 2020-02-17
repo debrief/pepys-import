@@ -7,6 +7,7 @@ import qprompt
 
 def get_choice_input(heading, choices):
     map_choice = False
+    indexes = []
     while 1:
         input_text = heading + "\n"
         for idx, choice in enumerate(choices, 1):
@@ -16,18 +17,12 @@ def get_choice_input(heading, choices):
             else:
                 choice_string = choice
             input_text += f"   {str(idx)}) {choice_string}\n"
-        # choice = input(input_text)
-        choice = qprompt.ask_int(input_text, valid=choices)
-        try:
-            choice_value = int(choice)
-        except ValueError:
-            print(choice + " wasn't a valid number, please try again")
-            continue
+            indexes.append(idx)
 
-        if choice_value < 1 or choice_value > len(choices):
-            print(choice + " was not one of the options, please try again")
+        # choice = input(input_text)
+        choice = qprompt.ask_int(input_text, valid=indexes)
+
+        if not map_choice:
+            return choice
         else:
-            if not map_choice:
-                return choice_value
-            else:
-                return choices[choice_value - 1][1]
+            return choices[choice - 1][1]
