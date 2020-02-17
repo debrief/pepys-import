@@ -5,7 +5,7 @@ from .command_line_input import get_choice_input, create_menu
 
 class CommandLineResolver(DataResolver):
     def __init__(self):
-        self.table_privacies = {}
+        super().__init__()
 
     def synonym_search(self, data_store, platform_name):
         input_ = input("Please type word stem to search for: ")
@@ -51,11 +51,8 @@ class CommandLineResolver(DataResolver):
         if nationality:
             chosen_nationality = data_store.add_to_nationalities(nationality)
         else:
-            nationalities = data_store.get_nationalities()
-            nationality_names = [n.name for n in nationalities]
-            nationality_names.append("Add a new nationality")
-            nationality_names.append("Cancel import")
-            choice = get_choice_input("Please provide nationality: ", nationality_names)
+            nationality_names = ["Add a new nationality"]
+            choice = create_menu("Please provide nationality: ", nationality_names)
             if choice == len(nationality_names):
                 print("Quitting")
                 sys.exit(1)
@@ -63,7 +60,7 @@ class CommandLineResolver(DataResolver):
                 nationality_check_ok = False
                 while not nationality_check_ok:
                     new_input = input("Please type name of new nationality: ")
-                    nationality_check_ok = data_store.check_nationality(new_input)
+                    nationality_check_ok = data_store.search_nationality(new_input)
                 chosen_nationality = data_store.add_to_nationalities(new_input)
 
         # Choose Platform Type
@@ -181,79 +178,84 @@ class CommandLineResolver(DataResolver):
     def resolve_platform(
         self, data_store, platform_name, platform_type, nationality, privacy
     ):
+        if platform_name:
+            platform = data_store.search_platform(platform_name)
+            if platform:
+                return platform
+
+            # platform = self.check_trigraph_and_quadgraph(platform_name)
+            # if platform:
+            #     return platform
+            #
+            # platform = self.check_synonym(platform_name)
+            # if platform:
+            #     return platform
+
         choice = create_menu(
             f"Platform '{platform_name}' not found. Do you wish to: ",
-            [f"Add a new platform, titled '{platform_name}'"],
+            [
+                f"Search for existing platform",
+                f"Add a new platform, titled '{platform_name}'",
+            ],
         )
 
         if choice == str(1):
+            # search = fzf_search(input)
+            pass
+        elif choice == str(2):
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy
             )
-        elif choice == "q":
+        elif choice == ".":
             print("Quitting")
             sys.exit(1)
 
     def add_to_sensors(self, data_store, sensor_name):
         # Choose Sensor Type
         print("Ok, adding new sensor.")
-        sensor_types = data_store.get_sensor_types()
-        sensor_type_names = [st.name for st in sensor_types]
-        sensor_type_names.append("Add a new sensor-type")
-        sensor_type_names.append("Cancel import")
-        choice = get_choice_input("Please provide sensor-type: ", sensor_type_names)
-        if choice == len(sensor_type_names):
+        sensor_type_names = ["Add a new sensor-type"]
+        choice = create_menu("Please provide sensor-type: ", sensor_type_names)
+
+        if choice == ".":
             print("Quitting")
             sys.exit(1)
-        elif choice == len(sensor_type_names) - 1:
+        elif choice == str(1):
             sensor_type_check_ok = False
             while not sensor_type_check_ok:
                 new_input = input("Please type name of new sensor-type: ")
                 sensor_type_check_ok = data_store.check_sensor_type(new_input)
             chosen_sensor_type = data_store.add_to_sensor_types(new_input)
-        else:
-            chosen_sensor_type = sensor_types[choice - 2]
 
-        return sensor_name, chosen_sensor_type
+            return sensor_name, chosen_sensor_type
 
     def resolve_sensor(self, data_store, sensor_name):
-        choice = get_choice_input(
+        choice = create_menu(
             f"Sensor '{sensor_name}' not found. Do you wish to: ",
-            [f"Add a new sensor, titled '{sensor_name}'", "Cancel import"],
+            [f"Add a new sensor, titled '{sensor_name}'"],
         )
 
-        if choice == 1:
+        if choice == str(1):
             return self.add_to_sensors(data_store, sensor_name)
-        elif choice == 2:
+        elif choice == ".":
             print("Quitting")
             sys.exit(1)
 
-    def resolve_privacy(self, data_store, table_type_id, table_name):
-        if table_type_id in self.table_privacies:
-            return table_type_id, self.table_privacies[table_type_id]
-
+    def resolve_privacy(self, data_store, table_name):
         # Choose Privacy
-        privacies = data_store.get_privacies()
-        privacy_names = [c.name for c in privacies]
-        privacy_names.append("Add a new classification")
-        privacy_names.append("Cancel import")
-        choice = get_choice_input(
+        privacy_names = ["Add a new classification"]
+        choice = create_menu(
             f"Ok, please provide classification for new entry in {table_name}: ",
             privacy_names,
         )
 
-        if choice == len(privacy_names):
-            print("Quitting")
-            sys.exit(1)
-        elif choice == len(privacy_names) - 1:
+        if choice == str(1):
             privacy_check_ok = False
             while not privacy_check_ok:
                 new_input = input("Please type name of new classification: ")
                 privacy_check_ok = data_store.check_privacy(new_input)
             chosen_privacy = data_store.add_to_privacies(new_input)
-        else:
-            chosen_privacy = privacies[choice - 2]
 
-        self.table_privacies[table_type_id] = chosen_privacy
-
-        return table_type_id, chosen_privacy
+            return chosen_privacy
+        elif choice == ".":
+            print("Quitting")
+            sys.exit(1)
