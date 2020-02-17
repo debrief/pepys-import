@@ -7,4 +7,7 @@ tox==3.14.0
 coverage==4.5.4
 Sphinx==1.8.5
 twine==1.14.0
-
+nose2==0.9.1
+black
+pre-commit
+sphinx_rtd_theme
