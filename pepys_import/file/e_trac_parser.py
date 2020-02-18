@@ -3,6 +3,7 @@ from datetime import datetime
 from pepys_import.core.formats import unit_registry
 from pepys_import.utils.unit_utils import convert_heading, convert_speed
 
+
 class ETracParser(Importer):
     name = "E-Trac Format Importer"
 
@@ -74,33 +75,6 @@ class ETracParser(Importer):
 
             timestamp = self.parse_timestamp(date_token, time_token)
 
-            try:
-                valid_heading = float(heading_token)
-            except ValueError:
-                print(
-                    "Line {}. Error in heading value {}. Couldn't convert to a number".format(
-                        line_num, heading_token
-                    )
-                )
-                return False
-            if 0.0 > valid_heading >= 360.0:
-                print(
-                    "Line {}. Error in heading value {}. Should be be between 0 and 359.9 degrees".format(
-                        line_num, heading_token
-                    )
-                )
-                return False
-
-            try:
-                valid_speed = float(speed_token)
-            except ValueError:
-                print(
-                    "Line {}. Error in speed value {}. Couldn't convert to a number".format(
-                        line_num, speed_token
-                    )
-                )
-                return False
-
             # and finally store it
             with data_store.session_scope():
                 if cur_datafile_id is None:
@@ -129,7 +103,7 @@ class ETracParser(Importer):
                 privacy = data_store.search_privacy("TEST")
                 state.privacy = privacy.privacy_id
 
-                state.location = f"POINT({long_degrees_token} {lat_degrees_token})" 
+                state.location = f"POINT({long_degrees_token} {lat_degrees_token})"
 
                 headingVal = convert_heading(heading_token, line_num)
                 state.heading = headingVal.to(unit_registry.radians).magnitude
