@@ -80,11 +80,23 @@ If you don't have Python 3.7+ in your system, please download it from `python.or
 ----------
 For Ubuntu
 ----------
-**Installing Spatialite**
+
+Installing Spatialite
+^^^^^^^^^^^^^^^^^^^^^
+
+1. Easy Way
+"""""""""""
+
+Open a terminal and run the following command::
+
+    $ sudo apt install spatialite-bin
+
+2. Alternative Way (Compiling From Source)
+""""""""""""""""""""""""""""""""""""""""""
 
 On Debian-based distributions the following libraries are necessary to run SpatiaLite::
 
-    $ sudo apt install zlib1g-dev
+    $ sudo apt install zlib1g-dev libfreexl1
     $ sudo apt-get install sqlite3 libsqlite3-dev
     $ sudo apt-get install- y libsqlite3-mod-spatialite
     $ sudo apt-get install binutils libproj-dev gdal-bin libgeos-dev libxml2-dev
@@ -98,7 +110,8 @@ After all libraries are installed, it is necessary to download and run the lates
     $ make
     $ sudo make install
 
-**Installing PostGIS**
+Installing PostGIS
+^^^^^^^^^^^^^^^^^^
 
 The best way to install PostGIS is running the codes as follows::
 
@@ -106,14 +119,14 @@ The best way to install PostGIS is running the codes as follows::
     sudo apt-get update
     sudo apt-get install postgis
 
-**Cloning the Repository**
-
+Cloning the Repository
+^^^^^^^^^^^^^^^^^^^^^^
 Navigate to folder you would like to download the repository and run the following command::
 
     $ git clone https://github.com/debrief/pepys-import.git
 
-**Creating Python Environment**
-
+Creating Python Environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Virtual Environment might be used to run the project. For creating a proper one,
 the following commands must be executed respectively in your project directory::
 
