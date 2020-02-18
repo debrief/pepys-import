@@ -115,6 +115,7 @@ Installing PostGIS
 
 The best way to install PostGIS is running the codes as follows::
 
+    sudo apt-get install libpq-dev python-dev
     sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
     sudo apt-get update
     sudo apt-get install postgis
@@ -136,6 +137,11 @@ the following commands must be executed respectively in your project directory::
 It is also possible to create a virtual environment with the following code (please change X with your Python version)::
 
     $ python3.X -m virtualenv venv
+
+**Note:** If you don't have pip/pip3 or/and virtualenv, use these commands to install::
+
+    $ sudo apt install python3-pip
+    $ pip3 install virtualenv
 
 When environment is created successfully, please run the following commands::
 
