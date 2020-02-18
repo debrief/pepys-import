@@ -1,6 +1,7 @@
 import sys
 from .data_resolver import DataResolver
-from .command_line_input import get_choice_input, create_menu
+from .command_line_input import create_menu
+from qprompt import ask_str
 
 
 class CommandLineResolver(DataResolver):
@@ -8,11 +9,11 @@ class CommandLineResolver(DataResolver):
         super().__init__()
 
     def synonym_search(self, data_store, platform_name):
-        input_ = input("Please type word stem to search for: ")
+        input_ = ask_str("Please type word stem to search for: ")
         result = data_store.search_platform(input_)
         if result is None:
             # couldn't find it
-            not_found = get_choice_input(
+            not_found = create_menu(
                 f"Platform with '{input_}' not found. Do you wish to: ",
                 [
                     "Search for another synonym of this name",
@@ -30,7 +31,7 @@ class CommandLineResolver(DataResolver):
                 sys.exit(1)
         else:
             # found something
-            found = get_choice_input(
+            found = create_menu(
                 f"Platform '{result}' found. Would you like to add this as a synonym: ",
                 ["Yes", "No, find other synonym", "Cancel import"],
             )
@@ -48,22 +49,24 @@ class CommandLineResolver(DataResolver):
         print("Ok, adding new platform.")
 
         # Choose Nationality
+        chosen_nationality = None
         if nationality:
             chosen_nationality = data_store.add_to_nationalities(nationality)
         else:
             nationality_names = ["Add a new nationality"]
             choice = create_menu("Please provide nationality: ", nationality_names)
-            if choice == len(nationality_names):
+            if choice == ".":
                 print("Quitting")
                 sys.exit(1)
-            elif choice == len(nationality_names) - 1:
+            elif choice == str(1):
                 nationality_check_ok = False
                 while not nationality_check_ok:
-                    new_input = input("Please type name of new nationality: ")
+                    new_input = ask_str("Please type name of new nationality: ")
                     nationality_check_ok = data_store.search_nationality(new_input)
                 chosen_nationality = data_store.add_to_nationalities(new_input)
 
         # Choose Platform Type
+        chosen_platform_type = None
         if platform_type:
             chosen_platform_type = data_store.add_to_platform_types(platform_type)
         else:
@@ -71,58 +74,38 @@ class CommandLineResolver(DataResolver):
             platform_type_names = [c.name for c in platform_types]
             platform_type_names.append("Add a new platform-type")
             platform_type_names.append("Cancel import")
-            choice = get_choice_input(
+            choice = create_menu(
                 "Ok, please provide platform-type: ", platform_type_names
             )
-            if choice == len(platform_type_names):
+            if choice == ".":
                 print("Quitting")
                 sys.exit(1)
-            elif choice == len(platform_type_names) - 1:
+            elif choice == str(1):
                 platform_type_ok = False
                 while not platform_type_ok:
-                    new_input = input("Please type name of new platform-type: ")
+                    new_input = ask_str("Please type name of new platform-type: ")
                     platform_type_ok = data_store.check_platform_type(new_input)
                 chosen_platform_type = data_store.add_to_platform_types(new_input)
-            else:
-                chosen_platform_type = platform_types[choice - 2]
 
         # Choose Sensor
-        sensors = data_store.get_sensors_by_platform_type(chosen_platform_type)
-        if len(sensors) > 0:
-            sensor_names = [s.Sensor.name for s in sensors]
-            sensor_names.append("Cancel import")
-            choice = get_choice_input(
-                f"We have {len(sensor_names) - 1} other instances of "
-                f"{chosen_platform_type.name} class. They contain these "
-                f"sensors. Please indicate which you wish to add to "
-                f"{platform_name}: ",
-                sensor_names,
-            )
-            if choice == len(sensor_names):
-                print("Quitting")
-                sys.exit(1)
-
-            chosen_sensor = sensors[choice - 1]
-        else:
-            print("No sensors found for that class. Skipping Sensor add")
-            chosen_sensor = None
-            # TODO: Should we delete the code below?
-            # choices = ["Add a new sensor", "Cancel import"]
-            # choice = get_choice_input(f"No instances of class {chosen_platform_type.name} exist. Please choose an option: ",
-            #                                                choices)
-            # if choice == len(choices):
-            #     print("Quitting")
-            #     sys.exit(1)
-            # elif choice == len(choices)-1:
-            #     sensorCheckOk = False
-            #     while not sensorCheckOk:
-            #         newSensorInput = input("Please type name of new sensor: ")
-            #         sensorCheckOk = data_store.checkSensor(newSensorInput)
-            #     #chosen_sensor = data_store.addToSensors(new_input)
-            #     chosen_sensor = newSensorInput
-            #     newSensor = True
+        chosen_sensor = None
+        sensor_names = ["Add a new sensor"]
+        choice = create_menu(
+            f"Please indicate which sensor you wish to add to {platform_name}: ",
+            sensor_names,
+        )
+        if choice == ".":
+            print("Quitting")
+            sys.exit(1)
+        elif choice == str(1):
+            sensor_check_ok = False
+            while not sensor_check_ok:
+                new_input = ask_str("Please type name of new sensor: ")
+                sensor_check_ok = data_store.search_sensor(new_input)
+            chosen_sensor = data_store.add_to_sensors(new_input)
 
         # Choose Privacy
+        chosen_privacy = None
         if privacy:
             chosen_privacy = data_store.add_to_privacies(privacy)
         else:
@@ -130,33 +113,31 @@ class CommandLineResolver(DataResolver):
             privacy_names = [c.name for c in privacies]
             privacy_names.append("Add a new classification")
             privacy_names.append("Cancel import")
-            choice = get_choice_input(
+            choice = create_menu(
                 "Ok, please provide classification for this platform: ", privacy_names
             )
 
-            if choice == len(privacy_names):
+            if choice == ".":
                 print("Quitting")
                 sys.exit(1)
-            elif choice == len(privacy_names) - 1:
+            elif choice == str(1):
                 privacy_check_ok = False
                 while not privacy_check_ok:
-                    new_input = input("Please type name of new classification: ")
+                    new_input = ask_str("Please type name of new classification: ")
                     privacy_check_ok = data_store.check_privacy(new_input)
                 chosen_privacy = data_store.add_to_privacies(new_input)
-            else:
-                chosen_privacy = privacies[choice - 2]
 
         print("Input complete. About to create this platform:")
         print(f"Name: {platform_name}")
         print(f"Nationality: {chosen_nationality.name}")
         print(f"Class: {chosen_platform_type.name}")
         if chosen_sensor:
-            print(f"Sensors: {chosen_sensor.Sensor.name}")
+            print(f"Sensors: {chosen_sensor}")
         else:
             print("Sensors: None")
         print(f"Classification: {chosen_privacy.name}")
 
-        choice = get_choice_input(
+        choice = create_menu(
             "Create this platform?: ",
             ["Yes", "No, make further edits", "Cancel import"],
         )
@@ -210,50 +191,52 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
-    def add_to_sensors(self, data_store, sensor_name):
+    def add_to_sensors(self, data_store, sensor_name, privacy):
         # Choose Sensor Type
         print("Ok, adding new sensor.")
         sensor_type_names = ["Add a new sensor-type"]
         choice = create_menu("Please provide sensor-type: ", sensor_type_names)
 
-        if choice == ".":
+        if choice == str(1):
+            sensor_type = None
+            while not sensor_type:
+                new_input = ask_str("Please type name of new sensor-type: ")
+                sensor_type = data_store.search_sensor_type(new_input)
+            chosen_sensor_type = sensor_type
+
+            if not privacy:
+                privacy = self.resolve_privacy(data_store)
+
+            return sensor_name, chosen_sensor_type, privacy
+        elif choice == ".":
             print("Quitting")
             sys.exit(1)
-        elif choice == str(1):
-            sensor_type_check_ok = False
-            while not sensor_type_check_ok:
-                new_input = input("Please type name of new sensor-type: ")
-                sensor_type_check_ok = data_store.check_sensor_type(new_input)
-            chosen_sensor_type = data_store.add_to_sensor_types(new_input)
 
-            return sensor_name, chosen_sensor_type
-
-    def resolve_sensor(self, data_store, sensor_name):
+    def resolve_sensor(self, data_store, sensor_name, privacy):
         choice = create_menu(
             f"Sensor '{sensor_name}' not found. Do you wish to: ",
             [f"Add a new sensor, titled '{sensor_name}'"],
         )
 
         if choice == str(1):
-            return self.add_to_sensors(data_store, sensor_name)
+            return self.add_to_sensors(data_store, sensor_name, privacy)
         elif choice == ".":
             print("Quitting")
             sys.exit(1)
 
-    def resolve_privacy(self, data_store, table_name):
+    def resolve_privacy(self, data_store):
         # Choose Privacy
         privacy_names = ["Add a new classification"]
         choice = create_menu(
-            f"Ok, please provide classification for new entry in {table_name}: ",
-            privacy_names,
+            f"Ok, please provide classification for new entry: ", privacy_names,
         )
 
         if choice == str(1):
-            privacy_check_ok = False
-            while not privacy_check_ok:
-                new_input = input("Please type name of new classification: ")
-                privacy_check_ok = data_store.check_privacy(new_input)
-            chosen_privacy = data_store.add_to_privacies(new_input)
+            privacy = None
+            while not privacy:
+                new_input = ask_str("Please type name of new classification: ")
+                privacy = data_store.check_privacy(new_input)
+            chosen_privacy = privacy
 
             return chosen_privacy
         elif choice == ".":
