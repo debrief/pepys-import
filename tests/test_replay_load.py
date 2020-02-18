@@ -41,8 +41,7 @@ class TestLoadReplay(TestCase):
                 ).all()
                 data_store.add_to_sensor_types("_GPS")
                 sensor = platform.get_sensor(
-                    session=data_store.session,
-                    resolver=data_store.missing_data_resolver,
+                    data_store=data_store,
                     all_sensors=all_sensors,
                     sensor_name=platform.name,
                     sensor_type="_GPS",
