@@ -15,6 +15,7 @@ before_install:
   - sudo apt install -y libsqlite3-dev spatialite-bin libsqlite3-mod-spatialite
 install:
   - pip install -r requirements.txt
+  - pip install -r requirements_dev.txt
   - pip install codecov
 script:
   - coverage3 run -m unittest discover -v
