@@ -77,6 +77,15 @@ You can check your Python 3 version with the following command::
 
 If you don't have Python 3.7+ in your system, please download it from `python.org <https://www.python.org/downloads/>`_
 
+Pip is also necessary to create virtual environment. If you don't have it in your system, please download it::
+
+    $ sudo apt-get install python3-pip
+    $ pip3 install virtualenv
+
+It is possible to verify pip installation with the following command::
+
+    $ pip3 --version
+
 ----------
 For Ubuntu
 ----------
@@ -130,17 +139,15 @@ Creating Python Environment
 Virtual Environment might be used to run the project. For creating a proper one,
 the following commands must be executed respectively in your project directory::
 
-    $ pip install virtualenv
+    $ pip3 install virtualenv
     $ virtualenv --python=python3.8 venv
+
+Note: If you downloaded virtualenv in the current terminal, virtualenv command won't work,
+please try to run it in a new terminal.
 
 It is also possible to create a virtual environment with the following code (please change X with your Python version)::
 
     $ python3.X -m virtualenv venv
-
-**Note:** If you don't have pip/pip3 or/and virtualenv, use these commands to install::
-
-    $ sudo apt install python3-pip
-    $ pip3 install virtualenv
 
 When environment is created successfully, please run the following commands::
 
