@@ -172,7 +172,7 @@ class Platform(BasePostGIS):
 
         if sensor_type is None or privacy is None:
             sensor_type, privacy = data_store.missing_data_resolver.resolve_sensor(
-                data_store, sensor_name, privacy
+                data_store, sensor_name, sensor_type, privacy
             )
 
         # return True if provided sensor exists

@@ -156,7 +156,7 @@ class Platform(BaseSpatiaLite):
 
         if sensor_type is None or privacy is None:
             resolved_values = data_store.missing_data_resolver.resolve_sensor(
-                data_store, sensor_name, privacy
+                data_store, sensor_name, sensor_type, privacy
             )
             if sensor_type is None:
                 sensor_type = resolved_values[0]

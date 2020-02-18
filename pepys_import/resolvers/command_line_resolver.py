@@ -193,27 +193,25 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
-    def add_to_sensors(self, data_store, sensor_name, privacy):
+    def add_to_sensors(self, data_store, sensor_type, privacy):
         # Choose Sensor Type
         print("Ok, adding new sensor.")
         sensor_type_names = ["Add a new sensor-type"]
         choice = create_menu("Please provide sensor-type: ", sensor_type_names)
 
         if choice == str(1):
-            sensor_type = None
-            while not sensor_type:
+            if not sensor_type:
                 new_input = ask_str("Please type name of new sensor-type: ")
                 sensor_type = data_store.search_sensor_type(new_input)
-            chosen_sensor_type = sensor_type
-
             if not privacy:
                 privacy = self.resolve_privacy(data_store)
-            return chosen_sensor_type, privacy
+
+            return sensor_type, privacy
         elif choice == ".":
             print("Quitting")
             sys.exit(1)
 
-    def resolve_sensor(self, data_store, sensor_name, privacy):
+    def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy):
         # Check for name match in Sensor Table
         sensor = data_store.search_sensor(sensor_name.upper())
         if sensor:
@@ -238,7 +236,7 @@ class CommandLineResolver(DataResolver):
             # If match found: ask yes/no to add to synonyms table
             pass
         elif choice == str(2):
-            return self.add_to_sensors(data_store, sensor_name, privacy)
+            return self.add_to_sensors(data_store, sensor_type, privacy)
         elif choice == ".":
             print("Quitting")
             sys.exit(1)
