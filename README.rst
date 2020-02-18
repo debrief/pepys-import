@@ -106,7 +106,7 @@ On Debian-based distributions the following libraries are necessary to run Spati
 
     $ sudo apt install zlib1g-dev libfreexl1
     $ sudo apt-get install sqlite3 libsqlite3-dev
-    $ sudo apt-get install- y libsqlite3-mod-spatialite
+    $ sudo apt-get install -y libsqlite3-mod-spatialite
     $ sudo apt-get install binutils libproj-dev gdal-bin libgeos-dev libxml2-dev
 
 After all libraries are installed, it is necessary to download and run the latest SpatiaLite version::
