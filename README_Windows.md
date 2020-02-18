@@ -1,7 +1,5 @@
 # Installation instructions for Windows 10
 These instructions are to install pepys-import for _development_ on Windows 10 - not for deployment on the client's machines. For those instructions see TODO.
-# Installation instructions for Windows 10
-
 
 1. Install Python 3.7 from www.python.org
 
@@ -25,7 +23,7 @@ These instructions are to install pepys-import for _development_ on Windows 10 -
 
 10. Go through the installation wizard making sure that you choose to load the 'Stack Builder' application when you exit the wizard.
 
-11. Use the StackBuilder application to install PostGIS
+11. Use the StackBuilder application to install PostGIS, follow the wizard through to the end.
 
 12. Add the Postgres bin directory to the `%PATH%` - eg. `C:\Program Files\PostgreSQL\12\bin\` - but make sure it comes _after_ the `mod_spatialite` folder (hint: using [Rapid Environment Editor](https://www.rapidee.com/en/about) makes it easy to re-arrange entries in the PATH)
 
@@ -39,6 +37,7 @@ These instructions are to install pepys-import for _development_ on Windows 10 -
 
 17. Run `pip install -e git+https://github.com/tk0miya/testing.postgresql.git#egg=testing.postgresql` to install the development version of `testing.postgresql` (**TODO:** this can be removed once another PR updating the requirements files is merged)
 
+18. Everything should be installed now, in that virtual environment. Remember to activate it before doing any work on pepys!
 
 Notes on why we have to do it this way:
 
