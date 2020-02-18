@@ -33,7 +33,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
         """Test whether CSVs successfully imported to SQLite"""
 
         # Check tables are created but empty
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             nationalities = self.store.session.query(
                 self.store.db_classes.Nationality
             ).all()
@@ -46,11 +46,11 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
         self.assertEqual(len(platform_types), 0)
 
         # Import CSVs to the related tables
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.populate_reference()
 
         # Check tables filled with correct data
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             nationalities = self.store.session.query(
                 self.store.db_classes.Nationality
             ).all()
@@ -69,11 +69,11 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
     def test_populate_metadata(self):
         # reference tables must be filled first
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.populate_reference()
 
         # get all table values
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
@@ -84,10 +84,10 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
         self.assertEqual(len(sensors), 0)
 
         # Import CSVs to the related tables
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.populate_metadata()
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
@@ -149,23 +149,23 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
     def test_populate_measurement(self):
         # reference and metadata tables must be filled first
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.populate_reference()
             self.store.populate_metadata()
 
         # get all table values
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             states = self.store.session.query(self.store.db_classes.State).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(states), 0)
 
         # Import CSVs to the related tables
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.populate_measurement()
 
         # Check tables filled with correct data
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             states = self.store.session.query(self.store.db_classes.State).all()
             first_state = self.store.session.query(self.store.db_classes.State).first()
 
@@ -242,7 +242,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
         """Test whether CSVs successfully imported to PostGIS"""
 
         # Check tables are created but empty
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             nationalities = self.store.session.query(
                 self.store.db_classes.Nationality
             ).all()
@@ -255,11 +255,11 @@ class DataStorePopulatePostGISTestCase(TestCase):
         self.assertEqual(len(platform_types), 0)
 
         # Import CSVs to the related tables
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.populate_reference()
 
         # Check tables filled with correct data
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             nationalities = self.store.session.query(
                 self.store.db_classes.Nationality
             ).all()
@@ -278,11 +278,11 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
     def test_populate_metadata(self):
         # reference tables must be filled first
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.populate_reference()
 
         # get all table values
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
@@ -293,10 +293,10 @@ class DataStorePopulatePostGISTestCase(TestCase):
         self.assertEqual(len(sensors), 0)
 
         # Import CSVs to the related tables
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.populate_metadata()
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
@@ -358,23 +358,23 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
     def test_populate_measurement(self):
         # reference and metadata tables must be filled first
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.populate_reference()
             self.store.populate_metadata()
 
         # get all table values
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             states = self.store.session.query(self.store.db_classes.State).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(states), 0)
 
         # Import CSVs to the related tables
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.populate_measurement()
 
         # Check tables filled with correct data
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             states = self.store.session.query(self.store.db_classes.State).all()
             first_state = self.store.session.query(self.store.db_classes.State).first()
 
@@ -425,7 +425,7 @@ class DataStorePopulateNotImplementedMethodTestCase(TestCase):
         pass
 
     def test_populate_reference(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             temp_output = StringIO()
             with redirect_stdout(temp_output):
                 self.store.populate_reference(NOT_IMPLEMENTED_PATH)
@@ -433,7 +433,7 @@ class DataStorePopulateNotImplementedMethodTestCase(TestCase):
             self.assertIn("Method(add_to_confidence_levels) not found!", output)
 
     def test_populate_metadata(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             temp_output = StringIO()
             with redirect_stdout(temp_output):
                 self.store.populate_reference(NOT_IMPLEMENTED_PATH)
@@ -443,7 +443,7 @@ class DataStorePopulateNotImplementedMethodTestCase(TestCase):
             self.assertIn("Method(add_to_tags) not found!", output)
 
     def test_populate_measurement(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             temp_output = StringIO()
             with redirect_stdout(temp_output):
                 self.store.populate_reference(NOT_IMPLEMENTED_PATH)
