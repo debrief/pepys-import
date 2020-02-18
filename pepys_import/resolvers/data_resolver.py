@@ -13,7 +13,7 @@ class DataResolver(ABC):
         """
 
     @abstractmethod
-    def resolve_sensor(self, data_store, sensor_name, privacy):
+    def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy):
         """
         Implementation method should return any data necessary to create a sensor.
         Currently: sensor_name, sensor_type
