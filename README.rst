@@ -139,7 +139,6 @@ Creating Python Environment
 Virtual Environment might be used to run the project. For creating a proper one,
 the following commands must be executed respectively in your project directory::
 
-    $ pip3 install virtualenv
     $ virtualenv --python=python3.8 venv
 
 Note: If you downloaded virtualenv in the current terminal, virtualenv command won't work,
