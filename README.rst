@@ -70,10 +70,12 @@ View the project Kanban board `here <https://github.com/debrief/pepys-import/pro
 Setup
 -----
 
-To prepare for running ensure Python 3.6.4 or later are installed in your system.
+To prepare for running ensure Python 3.7 or later are installed in your system.
 You can check your Python 3 version with the following command::
 
     $ python3 --version
+
+If you don't have Python 3.7+ in your system, please download it from `python.org <https://www.python.org/downloads/>`_
 
 ----------
 For Ubuntu
