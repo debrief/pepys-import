@@ -177,7 +177,7 @@ class Platform(BaseSpatiaLite):
             return Sensor().add_to_sensors(
                 session=data_store.session,
                 name=sensor_name,
-                sensor_type=sensor_type,
+                sensor_type=sensor_type.name,
                 host=self.name,
             )
         else:
