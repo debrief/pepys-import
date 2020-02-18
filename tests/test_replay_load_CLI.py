@@ -6,7 +6,7 @@ from sqlalchemy import inspect
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats.repl_file import REPFile
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
-from pepys_import.core.debug.support_methods import SupportMethods
+from pepys_import.core.debug.support_methods import count_states
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "rep_files")
@@ -36,13 +36,13 @@ class TestLoadReplay(TestCase):
         data_store.populate_reference(INITIAL_DATA_PATH)
 
         rep_file = REPFile(TEST_FILE)
-        self.assertEqual("REP", rep_file.get_data_file_type())
+        self.assertEqual("REP", rep_file.datafile_type)
 
-        with data_store.session_scope() as session:
+        with data_store.session_scope():
             datafile = session.add_to_datafile_from_rep(
-                rep_file.get_data_file_name(), rep_file.get_data_file_type()
+                rep_file.filepath, rep_file.datafile_type
             )
-            for repLine in rep_file.get_lines():
+            for repLine in rep_file.lines:
                 platform = session.add_to_platforms_from_rep(
                     repLine.get_platform(), None, "UK", "Public"
                 )
@@ -68,8 +68,7 @@ class TestLoadReplay(TestCase):
         self.assertIn("Datafiles", table_names)
         self.assertIn("Nationalities", table_names)
 
-        support = SupportMethods()
-        self.assertEqual(8, support.count_states(data_store))
+        self.assertEqual(8, count_states(data_store))
 
 
 if __name__ == "__main__":
