@@ -8,40 +8,40 @@ class CommandLineResolver(DataResolver):
     def __init__(self):
         super().__init__()
 
-    def synonym_search(self, data_store, platform_name):
-        input_ = ask_str("Please type word stem to search for: ")
-        result = data_store.search_platform(input_)
-        if result is None:
-            # couldn't find it
-            not_found = create_menu(
-                f"Platform with '{input_}' not found. Do you wish to: ",
-                [
-                    "Search for another synonym of this name",
-                    f"Add a new platform, titled '{platform_name}'",
-                    "Cancel import",
-                ],
-            )
-
-            if not_found == 1:
-                self.synonym_search(data_store, platform_name)
-            elif not_found == 2:
-                return 2
-            elif not_found == 3:
-                print("Quitting")
-                sys.exit(1)
-        else:
-            # found something
-            found = create_menu(
-                f"Platform '{result}' found. Would you like to add this as a synonym: ",
-                ["Yes", "No, find other synonym", "Cancel import"],
-            )
-            if found == 1:
-                return result
-            elif found == 2:
-                self.synonym_search(data_store, platform_name)
-            elif found == 3:
-                print("Quitting")
-                sys.exit(1)
+    # def synonym_search(self, data_store, platform_name):
+    #     input_ = ask_str("Please type word stem to search for: ")
+    #     result = data_store.search_platform(input_)
+    #     if result is None:
+    #         # couldn't find it
+    #         not_found = create_menu(
+    #             f"Platform with '{input_}' not found. Do you wish to: ",
+    #             [
+    #                 "Search for another synonym of this name",
+    #                 f"Add a new platform, titled '{platform_name}'",
+    #                 "Cancel import",
+    #             ],
+    #         )
+    #
+    #         if not_found == 1:
+    #             self.synonym_search(data_store, platform_name)
+    #         elif not_found == 2:
+    #             return 2
+    #         elif not_found == 3:
+    #             print("Quitting")
+    #             sys.exit(1)
+    #     else:
+    #         # found something
+    #         found = create_menu(
+    #             f"Platform '{result}' found. Would you like to add this as a synonym: ",
+    #             ["Yes", "No, find other synonym", "Cancel import"],
+    #         )
+    #         if found == 1:
+    #             return result
+    #         elif found == 2:
+    #             self.synonym_search(data_store, platform_name)
+    #         elif found == 3:
+    #             print("Quitting")
+    #             sys.exit(1)
 
     def add_to_platforms(
         self, data_store, platform_name, platform_type, nationality, privacy
