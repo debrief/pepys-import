@@ -9,7 +9,7 @@ class TableSummarySetTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.add_to_privacies("TEST-1")
             self.store.add_to_privacies("TEST-2")
 
@@ -19,7 +19,7 @@ class TableSummarySetTestCase(TestCase):
     def test_table_summary_returns_correct_values(self):
         """Test whether Table Summary class returns correct values or not """
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             ts = TableSummary(self.store.session, self.store.db_classes.Privacy)
 
             # Two entities created, created_date can't be null

@@ -116,7 +116,7 @@ class DataStore(object):
             try:
                 # Create geometry_columns and spatial_ref_sys metadata table
                 with self.engine.connect() as conn:
-                    conn.execute(select([func.InitSpatialMetaData()]))
+                    conn.execute(select([func.InitSpatialMetaData(1)]))
                 # Attempt to create schema if not present, to cope with fresh DB file
                 BaseSpatiaLite.metadata.create_all(self.engine)
             except OperationalError:
@@ -182,7 +182,7 @@ class DataStore(object):
 
         reference_tables = []
         # Create reference table list
-        with self.session_scope() as session:
+        with self.session_scope():
             self.setup_table_type_mapping()
             reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
             for table_object in list(reference_table_objects):
@@ -203,7 +203,7 @@ class DataStore(object):
                     reader = csv.reader(f)
                     # skip header
                     _ = next(reader)
-                    with self.session_scope() as session:
+                    with self.session_scope():
                         for row in reader:
                             method_to_call(*row)
             else:
@@ -218,7 +218,7 @@ class DataStore(object):
 
         metadata_tables = []
         # Create metadata table list
-        with self.session_scope() as session:
+        with self.session_scope():
             self.setup_table_type_mapping()
             metadata_table_objects = self.meta_classes[TableTypes.METADATA]
             for table_object in list(metadata_table_objects):
@@ -237,7 +237,7 @@ class DataStore(object):
                     reader = csv.reader(f)
                     # skip header
                     _ = next(reader)
-                    with self.session_scope() as session:
+                    with self.session_scope():
                         for row in reader:
                             method_to_call(*row)
             else:
@@ -321,7 +321,10 @@ class DataStore(object):
         :return: Created :class:`State` entity
         :rtype: State
         """
-        time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
+        if type(time) == str:
+            # TODO we can't assume the time is in this format. We should throw
+            # exception if time isn't of type datetime
+            time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
 
         sensor = self.search_sensor(sensor)
         datafile = self.search_datafile(datafile)
@@ -330,19 +333,12 @@ class DataStore(object):
         if sensor is None or datafile is None:
             raise Exception(f"There is missing value(s) in '{sensor}, {datafile}'!")
 
-        heading_rads = None
-        if heading:
-            # heading is a string, turn into quantity. Convert to radians
-            heading_quantity = float(heading) * unit_registry.knot
-            heading_rads = heading_quantity.to(unit_registry.radians).magnitude
-
-        speed_m_sec = None
-        if speed:
-            # speed is a string, turn into quantity. Convert to m/sec
-            speed_quantity = float(speed) * unit_registry.knot
-            speed_m_sec = speed_quantity.to(
-                unit_registry.meter / unit_registry.second
-            ).magnitude
+        if heading == "":
+            heading = None
+        if course == "":
+            course = None
+        if speed == "":
+            speed = None
 
         entry_id = self.add_to_entries(
             self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
@@ -352,9 +348,9 @@ class DataStore(object):
             time=time,
             sensor_id=sensor.sensor_id,
             location=location,
-            heading=heading_rads,
-            # course=course,
-            speed=speed_m_sec,
+            heading=heading,
+            course=course,
+            speed=speed,
             source_id=datafile.datafile_id,
             privacy_id=privacy.privacy_id,
         )
@@ -602,14 +598,15 @@ class DataStore(object):
             return True
 
         self.add_to_datafile_types(datafile_type)
-        self.add_to_privacies("NEW")
+        # TODO: this has to be changed with missing data resolver
+        self.add_to_privacies("TEST")
 
         if len(datafile_name) == 0:
             raise Exception("Datafile name can't be empty!")
         elif check_datafile(datafile_name):
             return self.add_to_datafiles(
-                simulated=True,
-                privacy="NEW",
+                simulated=False,
+                privacy="TEST",
                 file_type=datafile_type,
                 reference=datafile_name,
             )
@@ -648,6 +645,10 @@ class DataStore(object):
                 return False
 
             return True
+
+        self.add_to_nationalities(nationality)
+        self.add_to_platform_types(platform_type)
+        self.add_to_privacies(privacy)
 
         if len(platform_name) == 0:
             raise Exception("Platform name can't be empty!")
