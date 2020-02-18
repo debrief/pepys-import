@@ -7,6 +7,8 @@ from testing.postgresql import Postgresql
 from sqlalchemy import inspect, event
 from unittest import TestCase
 
+import platform
+
 from pepys_import.core.store.db_base import BasePostGIS
 
 
@@ -95,8 +97,15 @@ class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
         inspector = inspect(data_store_sqlite.engine)
         table_names = inspector.get_table_names()
 
+        SYSTEM = platform.system()
+
+        if SYSTEM == "Windows":
+            correct_n_tables = 74
+        else:
+            correct_n_tables = 72
+
         # 36 tables + 36 spatial tables must be created. A few of them tested
-        self.assertEqual(len(table_names), 72)
+        self.assertEqual(len(table_names), correct_n_tables)
         self.assertIn("Entry", table_names)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
