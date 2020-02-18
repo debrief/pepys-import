@@ -213,12 +213,30 @@ class CommandLineResolver(DataResolver):
             sys.exit(1)
 
     def resolve_sensor(self, data_store, sensor_name, privacy):
+        # Check for name match in Sensor Table
+        sensor = data_store.search_sensor(sensor_name.upper())
+        if sensor:
+            return sensor
+        # Check for synonym match
+        # TODO: search_synonym not implemented yet
+        sensor_synonym = data_store.search_synonym(sensor_name.upper())
+        if sensor_synonym:
+            return sensor_synonym
+
+        # Not found, carry on
         choice = create_menu(
             f"Sensor '{sensor_name}' not found. Do you wish to: ",
-            [f"Add a new sensor, titled '{sensor_name}'"],
+            [
+                f"Search for existing sensor",
+                f"Add a new sensor, titled '{sensor_name}'",
+            ],
         )
 
         if choice == str(1):
+            # TODO: do fuzzy search of names and synonyms
+            # If match found: ask yes/no to add to synonyms table
+            pass
+        elif choice == str(2):
             return self.add_to_sensors(data_store, sensor_name, privacy)
         elif choice == ".":
             print("Quitting")
