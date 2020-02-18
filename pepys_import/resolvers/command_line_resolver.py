@@ -206,7 +206,7 @@ class CommandLineResolver(DataResolver):
 
             if not privacy:
                 privacy = self.resolve_privacy(data_store)
-
+            # TODO: instead of these values, new sensor should be created
             return sensor_name, chosen_sensor_type, privacy
         elif choice == ".":
             print("Quitting")
@@ -219,9 +219,9 @@ class CommandLineResolver(DataResolver):
             return sensor
         # Check for synonym match
         # TODO: search_synonym not implemented yet
-        sensor_synonym = data_store.search_synonym(sensor_name.upper())
-        if sensor_synonym:
-            return sensor_synonym
+        # sensor_synonym = data_store.search_synonym(sensor_name.upper())
+        # if sensor_synonym:
+        #     return sensor_synonym
 
         # Not found, carry on
         choice = create_menu(
@@ -250,13 +250,12 @@ class CommandLineResolver(DataResolver):
         )
 
         if choice == str(1):
-            privacy = None
-            while not privacy:
-                new_input = ask_str("Please type name of new classification: ")
-                privacy = data_store.check_privacy(new_input)
-            chosen_privacy = privacy
-
-            return chosen_privacy
+            new_privacy = ask_str("Please type name of new classification: ")
+            privacy = data_store.search_privacy(new_privacy)
+            if privacy:
+                return privacy
+            else:
+                return data_store.add_to_privacies(new_privacy)
         elif choice == ".":
             print("Quitting")
             sys.exit(1)
