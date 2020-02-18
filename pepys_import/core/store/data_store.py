@@ -620,6 +620,42 @@ class DataStore(object):
                 .first()
             )
 
+    def get_all_datafiles(self):
+        """
+        Gets all datafiles.
+
+        :return: Datafile entity
+        :rtype: Datafile
+        """
+        datafiles = self.session.query(
+            self.db_classes.Datafile
+        ).all()
+        return datafiles
+
+    def export_datafile(self, datafile_id):
+        """
+        Get states, contacts and comments based on Datafile ID.
+
+        :param datafile_id:  ID of Datafile
+        :type datafile_id: String
+        :return:  Created Datafile entity
+        :rtype: Datafile
+        """
+        states = self.session.query(
+            self.db_classes.State
+        ).filter(self.db_classes.State.source_id == datafile_id).all()
+
+        contacts = self.session.query(
+            self.db_classes.Contact
+        ).filter(self.db_classes.Contact.source_id == datafile_id).all()
+
+        comments = self.session.query(
+            self.db_classes.Comment
+        ).filter(self.db_classes.Comment.source_id == datafile_id).all()
+
+        print(states, contacts, comments)
+        return True
+
     def get_platform(
         self, platform_name, nationality=None, platform_type=None, privacy=None
     ):
