@@ -1,6 +1,8 @@
 import sys
-from .data_resolver import DataResolver
-from .command_line_input import create_menu
+
+from pepys_import.resolvers.data_resolver import DataResolver
+from pepys_import.resolvers.command_line_input import create_menu
+
 from qprompt import ask_str
 
 
