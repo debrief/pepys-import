@@ -39,10 +39,13 @@ class ETracParser(Importer):
 
             tokens = line.split(",")
             if len(tokens) <= 1:
-                # done
+                # the last line may be empty, don't worry
                 continue
             elif len(tokens) < 17:
-                print("Error on line {} not enough tokens: {}".format(line_num, line), len(tokens))
+                print(
+                    "Error on line {} not enough tokens: {}".format(line_num, line),
+                    len(tokens),
+                )
                 continue
 
             # separate token strings
