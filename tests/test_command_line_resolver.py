@@ -34,12 +34,12 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     def test_resolve_sensor(self):
         with self.store.session_scope():
-            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1")
-            privacy = self.store.add_to_privacies("PRIVACY-1")
+            self.store.add_to_sensor_types("SENSOR-TYPE-1")
+            self.store.add_to_privacies("PRIVACY-1")
 
-            with StdinAuto(["2", "1", "SENSOR-TYPE-1"]):
+            with StdinAuto(["2", "1", "SENSOR-TYPE-1", "1", "PRIVACY-1"]):
                 sensor_type, privacy = self.resolver.resolve_sensor(
-                    self.store, "TEST", sensor_type, privacy
+                    self.store, "TEST", sensor_type=None, privacy=None
                 )
 
             self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
@@ -50,13 +50,52 @@ class CommandLineResolverTestCase(unittest.TestCase):
             with StdinAuto(["."]):
                 with self.assertRaises(SystemExit):
                     self.resolver.resolve_sensor(self.store, "", "", "")
+            with StdinAuto(["2", "."]):
+                with self.assertRaises(SystemExit):
+                    self.resolver.resolve_sensor(self.store, "", "", "")
 
     def test_resolver_platform(self):
-        pass
+        with self.store.session_scope():
+            self.store.add_to_privacies("PRIVACY-1")
+            self.store.add_to_platform_types("Warship")
+            self.store.add_to_nationalities("UK")
+            with StdinAuto(["2", "1", "UK", "1", "Warship", "1", "PRIVACY-1", "1"]):
+                (
+                    platform_name,
+                    platform_type,
+                    nationality,
+                    privacy,
+                ) = self.resolver.resolve_platform(
+                    data_store=self.store,
+                    platform_name="TEST",
+                    platform_type=None,
+                    nationality=None,
+                    privacy=None,
+                )
+                self.assertEqual(platform_name, "TEST")
+                self.assertEqual(platform_type.name, "Warship")
+                self.assertEqual(nationality.name, "UK")
+                self.assertEqual(privacy.name, "PRIVACY-1")
 
     def test_quit_works_for_resolver_platform(self):
         with self.store.session_scope():
+            self.store.add_to_privacies("PRIVACY-1")
+            self.store.add_to_platform_types("Warship")
+            self.store.add_to_nationalities("UK")
+
             with StdinAuto(["."]):
+                with self.assertRaises(SystemExit):
+                    self.resolver.resolve_platform(self.store, "", "", "", "")
+            with StdinAuto(["2", "."]):
+                with self.assertRaises(SystemExit):
+                    self.resolver.resolve_platform(self.store, "", "", "", "")
+            with StdinAuto(["2", "1", "UK", "."]):
+                with self.assertRaises(SystemExit):
+                    self.resolver.resolve_platform(self.store, "", "", "", "")
+            with StdinAuto(["2", "1", "UK", "1", "Warship", "."]):
+                with self.assertRaises(SystemExit):
+                    self.resolver.resolve_platform(self.store, "", "", "", "")
+            with StdinAuto(["2", "1", "UK", "1", "Warship", "1", "PRIVACY-1", "."]):
                 with self.assertRaises(SystemExit):
                     self.resolver.resolve_platform(self.store, "", "", "", "")
 

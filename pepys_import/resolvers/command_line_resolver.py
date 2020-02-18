@@ -72,10 +72,7 @@ class CommandLineResolver(DataResolver):
         if platform_type:
             chosen_platform_type = data_store.add_to_platform_types(platform_type)
         else:
-            platform_types = data_store.get_platform_types()
-            platform_type_names = [c.name for c in platform_types]
-            platform_type_names.append("Add a new platform-type")
-            platform_type_names.append("Cancel import")
+            platform_type_names = ["Add a new platform-type"]
             choice = create_menu(
                 "Ok, please provide platform-type: ", platform_type_names
             )
@@ -83,38 +80,18 @@ class CommandLineResolver(DataResolver):
                 print("Quitting")
                 sys.exit(1)
             elif choice == str(1):
-                platform_type_ok = False
-                while not platform_type_ok:
+                platform_type = False
+                while not platform_type:
                     new_input = ask_str("Please type name of new platform-type: ")
-                    platform_type_ok = data_store.check_platform_type(new_input)
+                    platform_type = data_store.search_platform_type(new_input)
                 chosen_platform_type = data_store.add_to_platform_types(new_input)
-
-        # Choose Sensor
-        chosen_sensor = None
-        sensor_names = ["Add a new sensor"]
-        choice = create_menu(
-            f"Please indicate which sensor you wish to add to {platform_name}: ",
-            sensor_names,
-        )
-        if choice == ".":
-            print("Quitting")
-            sys.exit(1)
-        elif choice == str(1):
-            sensor_check_ok = False
-            while not sensor_check_ok:
-                new_input = ask_str("Please type name of new sensor: ")
-                sensor_check_ok = data_store.search_sensor(new_input)
-            chosen_sensor = data_store.add_to_sensors(new_input)
 
         # Choose Privacy
         chosen_privacy = None
         if privacy:
             chosen_privacy = data_store.add_to_privacies(privacy)
         else:
-            privacies = data_store.get_privacies()
-            privacy_names = [c.name for c in privacies]
-            privacy_names.append("Add a new classification")
-            privacy_names.append("Cancel import")
+            privacy_names = ["Add a new classification"]
             choice = create_menu(
                 "Ok, please provide classification for this platform: ", privacy_names
             )
@@ -123,38 +100,32 @@ class CommandLineResolver(DataResolver):
                 print("Quitting")
                 sys.exit(1)
             elif choice == str(1):
-                privacy_check_ok = False
-                while not privacy_check_ok:
+                privacy_check = False
+                while not privacy_check:
                     new_input = ask_str("Please type name of new classification: ")
-                    privacy_check_ok = data_store.check_privacy(new_input)
+                    privacy_check = data_store.search_privacy(new_input)
                 chosen_privacy = data_store.add_to_privacies(new_input)
 
         print("Input complete. About to create this platform:")
         print(f"Name: {platform_name}")
         print(f"Nationality: {chosen_nationality.name}")
         print(f"Class: {chosen_platform_type.name}")
-        if chosen_sensor:
-            print(f"Sensors: {chosen_sensor}")
-        else:
-            print("Sensors: None")
         print(f"Classification: {chosen_privacy.name}")
 
         choice = create_menu(
-            "Create this platform?: ",
-            ["Yes", "No, make further edits", "Cancel import"],
+            "Create this platform?: ", ["Yes", "No, make further edits"],
         )
 
-        if choice == 1:
-            # TODO: pass back sensor and classification when Schema changed
+        if choice == str(1):
             return (
                 platform_name,
                 chosen_platform_type,
                 chosen_nationality,
                 chosen_privacy,
             )
-        elif choice == 2:
+        elif choice == str(2):
             return self.add_to_platforms(data_store, platform_name, None, None, None)
-        elif choice == 3:
+        elif choice == ".":
             print("Quitting")
             sys.exit(1)
 
@@ -166,11 +137,12 @@ class CommandLineResolver(DataResolver):
             if platform:
                 return platform
 
-            # platform = self.check_trigraph_and_quadgraph(platform_name)
+            # TODO: implement these search methods
+            # platform = self.search_trigraph_and_quadgraph(platform_name)
             # if platform:
             #     return platform
             #
-            # platform = self.check_synonym(platform_name)
+            # platform = self.search_synonym(platform_name)
             # if platform:
             #     return platform
 
@@ -183,6 +155,7 @@ class CommandLineResolver(DataResolver):
         )
 
         if choice == str(1):
+            # TODO: if match found, ask for keep as synonym
             # search = fzf_search(input)
             pass
         elif choice == str(2):
