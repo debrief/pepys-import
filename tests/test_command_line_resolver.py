@@ -26,6 +26,12 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 privacy = self.resolver.resolve_privacy(self.store)
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
+    def test_quit_works_for_resolver_privacy(self):
+        with self.store.session_scope():
+            with StdinAuto(["."]):
+                with self.assertRaises(SystemExit):
+                    self.resolver.resolve_privacy(self.store)
+
     def test_resolve_sensor(self):
         with self.store.session_scope():
             self.store.add_to_sensor_types("SENSOR-TYPE-1")
@@ -39,8 +45,20 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.assertEqual(sensor_name, "TEST")
             self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
 
+    def test_quit_works_for_resolver_sensor(self):
+        with self.store.session_scope():
+            with StdinAuto(["."]):
+                with self.assertRaises(SystemExit):
+                    self.resolver.resolve_sensor(self.store, "", "")
+
     def test_resolver_platform(self):
         pass
+
+    def test_quit_works_for_resolver_platform(self):
+        with self.store.session_scope():
+            with StdinAuto(["."]):
+                with self.assertRaises(SystemExit):
+                    self.resolver.resolve_platform(self.store, "", "", "", "")
 
 
 if __name__ == "__main__":
