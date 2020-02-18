@@ -38,12 +38,12 @@ class CommandLineResolverTestCase(unittest.TestCase):
             privacy = self.store.add_to_privacies("PRIVACY-1")
 
             with StdinAuto(["2", "1", "SENSOR-TYPE-1"]):
-                sensor_name, sensor_type, privacy = self.resolver.resolve_sensor(
+                sensor_type, privacy = self.resolver.resolve_sensor(
                     self.store, "TEST", privacy
                 )
 
-            self.assertEqual(sensor_name, "TEST")
             self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
+            self.assertEqual(privacy.name, "PRIVACY-1")
 
     def test_quit_works_for_resolver_sensor(self):
         with self.store.session_scope():

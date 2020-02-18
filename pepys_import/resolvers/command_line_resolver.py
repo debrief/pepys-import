@@ -206,8 +206,7 @@ class CommandLineResolver(DataResolver):
 
             if not privacy:
                 privacy = self.resolve_privacy(data_store)
-            # TODO: instead of these values, new sensor should be created
-            return sensor_name, chosen_sensor_type, privacy
+            return chosen_sensor_type, privacy
         elif choice == ".":
             print("Quitting")
             sys.exit(1)

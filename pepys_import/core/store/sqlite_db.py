@@ -134,14 +134,14 @@ class Platform(BaseSpatiaLite):
         return session.query(Platform).filter(Platform.name == name).first()
 
     def get_sensor(
-        self, session, all_sensors, sensor_name, sensor_type=None, privacy=None
+        self, data_store, all_sensors, sensor_name, sensor_type=None, privacy=None
     ):
         """
         Lookup or create a sensor of this name for this :class:`Platform`.
         Specified sensor will be added to the :class:`Sensor` table.
 
-        :param session: Session to query DB
-        :type session: :class:`sqlalchemy.orm.session.Session`
+        :param data_store: DataStore object to to query DB and use missing data resolver
+        :type data_store: :class:`DataStore`
         :param all_sensors: All :class:`Sensor` Entities
         :type all_sensors: :class:`Sensor` List
         :param sensor_name: Name of :class:`Sensor`
@@ -153,6 +153,15 @@ class Platform(BaseSpatiaLite):
         :return: Created :class:`Sensor` entity
         :rtype: Sensor
         """
+
+        if sensor_type is None or privacy is None:
+            resolved_values = data_store.missing_data_resolver.resolve_sensor(
+                data_store, sensor_name, privacy
+            )
+            if sensor_type is None:
+                sensor_type = resolved_values[0]
+            if privacy is None:
+                privacy = resolved_values[1]
 
         # return True if provided sensor exists
         def check_sensor(name):
@@ -166,13 +175,17 @@ class Platform(BaseSpatiaLite):
             raise Exception("Please enter sensor name!")
         elif check_sensor(sensor_name):
             return Sensor().add_to_sensors(
-                session=session,
+                session=data_store.session,
                 name=sensor_name,
                 sensor_type=sensor_type,
                 host=self.name,
             )
         else:
-            return session.query(Sensor).filter(Sensor.name == sensor_name).first()
+            return (
+                data_store.session.query(Sensor)
+                .filter(Sensor.name == sensor_name)
+                .first()
+            )
 
 
 class Task(BaseSpatiaLite):

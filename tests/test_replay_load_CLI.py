@@ -48,7 +48,7 @@ class TestLoadReplay(TestCase):
                         rep_line.get_platform(), None, "UK", "Public"
                     )
                 sensors = data_store.session.query(data_store.db_classes.Sensor).all()
-                sensor = platform.get_sensor(data_store.session, sensors, "GPS", "_GPS")
+                sensor = platform.get_sensor(data_store, sensors, "GPS", "_GPS")
                 state = datafile.create_state(sensor, rep_line.timestamp)
                 state.location = rep_line.get_location()
                 state.heading = rep_line.heading
