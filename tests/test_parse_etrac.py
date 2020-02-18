@@ -2,7 +2,7 @@ import os
 import unittest
 from sqlite3 import OperationalError
 
-from pepys_import.file.e_trac_parser import ETracParser
+from pepys_import.file.e_trac_importer import ETracImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
 from testing.postgresql import Postgresql
@@ -53,7 +53,7 @@ class ETracTests(unittest.TestCase):
 
     def test_process_e_trac_data(self):
         processor = FileProcessor()
-        processor.register_importer(ETracParser())
+        processor.register_importer(ETracImporter())
 
         # check states empty
         with self.store.session_scope():

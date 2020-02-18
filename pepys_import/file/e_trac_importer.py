@@ -4,7 +4,7 @@ from pepys_import.core.formats import unit_registry
 from pepys_import.utils.unit_utils import convert_heading, convert_speed
 
 
-class ETracParser(Importer):
+class ETracImporter(Importer):
     name = "E-Trac Format Importer"
 
     def __init__(self, separator=" "):
