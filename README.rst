@@ -98,10 +98,24 @@ After all libraries are installed, it is necessary to download and run the lates
     $ make
     $ sudo make install
 
+**Installing PostGIS**
+
+The best way to install PostGIS is running the codes as follows::
+
+    sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
+    sudo apt-get update
+    sudo apt-get install postgis
+
+**Cloning the Repository**
+
+Navigate to folder you would like to download the repository and run the following command::
+
+    $ git clone https://github.com/debrief/pepys-import.git
+
 **Creating Python Environment**
 
 Virtual Environment might be used to run the project. For creating a proper one,
-the following commands must be executed respectively::
+the following commands must be executed respectively in your project directory::
 
     $ pip install virtualenv
     $ virtualenv --python=python3.8 venv
@@ -114,14 +128,6 @@ When environment is created successfully, please run the following commands::
 
     $ source venv/bin/activate
     $ pip install -r requirements.txt
-
-**Installing PostGIS**
-
-The best way to install PostGIS is running the codes as follows::
-
-    sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
-    sudo apt-get update
-    sudo apt-get install postgis
 
 Unit tests
 ----------
