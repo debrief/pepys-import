@@ -38,12 +38,12 @@ class ETracParser(Importer):
                 continue
 
             tokens = line.split(",")
-            if len(tokens) == 0:
+            if len(tokens) <= 1:
                 # done
-                return False
+                continue
             elif len(tokens) < 17:
-                print("Error on line {} not enough tokens: {}".format(line_num, line))
-                return False
+                print("Error on line {} not enough tokens: {}".format(line_num, line), len(tokens))
+                continue
 
             # separate token strings
             date_token = tokens[2]
@@ -62,7 +62,7 @@ class ETracParser(Importer):
                         line_num, date_token
                     )
                 )
-                return False
+                continue
 
             # Times always in Zulu/GMT
             if len(time_token) != 8:
@@ -71,7 +71,7 @@ class ETracParser(Importer):
                         line_num, time_token
                     )
                 )
-                return False
+                continue
 
             timestamp = self.parse_timestamp(date_token, time_token)
 
