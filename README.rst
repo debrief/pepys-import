@@ -82,8 +82,7 @@ For Ubuntu
 ----------
 
 Installing Spatialite
-^^^^^^^^^^^^^^^^^^^^^
-
+*********************
 1. Easy Way
 """""""""""
 
@@ -111,7 +110,7 @@ After all libraries are installed, it is necessary to download and run the lates
     $ sudo make install
 
 Installing PostGIS
-^^^^^^^^^^^^^^^^^^
+******************
 
 The best way to install PostGIS is running the codes as follows::
 
@@ -121,13 +120,13 @@ The best way to install PostGIS is running the codes as follows::
     sudo apt-get install postgis
 
 Cloning the Repository
-^^^^^^^^^^^^^^^^^^^^^^
+**********************
 Navigate to folder you would like to download the repository and run the following command::
 
     $ git clone https://github.com/debrief/pepys-import.git
 
 Creating Python Environment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+***************************
 Virtual Environment might be used to run the project. For creating a proper one,
 the following commands must be executed respectively in your project directory::
 
