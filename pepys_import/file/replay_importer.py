@@ -48,12 +48,12 @@ class ReplayImporter(Importer):
                     all_sensors = data_store.session.query(
                         data_store.db_classes.Sensor
                     ).all()
-                    data_store.add_to_sensor_types("_GPS")
+                    sensor_type = data_store.add_to_sensor_types("_GPS")
                     sensor = platform.get_sensor(
                         data_store=data_store,
                         all_sensors=all_sensors,
                         sensor_name=platform.name,
-                        sensor_type="_GPS",
+                        sensor_type=sensor_type,
                         privacy="TEST",
                     )
                     state = datafile.create_state(sensor, rep_line.timestamp)
