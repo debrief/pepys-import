@@ -20,18 +20,27 @@ class CommandLineResolverTestCase(unittest.TestCase):
         )
         self.store.initialise()
 
+    def test_resolver_privacy(self):
+        with self.store.session_scope():
+            with StdinAuto(["1", "PRIVACY-TEST"]):
+                privacy = self.resolver.resolve_privacy(self.store)
+            self.assertEqual(privacy.name, "PRIVACY-TEST")
+
     def test_resolve_sensor(self):
         with self.store.session_scope():
             self.store.add_to_sensor_types("SENSOR-TYPE-1")
             privacy = self.store.add_to_privacies("PRIVACY-1")
 
-            with StdinAuto(["1", "1", "SENSOR-TYPE-1"]):
+            with StdinAuto(["2", "1", "SENSOR-TYPE-1"]):
                 sensor_name, sensor_type, privacy = self.resolver.resolve_sensor(
                     self.store, "TEST", privacy
                 )
 
             self.assertEqual(sensor_name, "TEST")
             self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
+
+    def test_resolver_platform(self):
+        pass
 
 
 if __name__ == "__main__":
