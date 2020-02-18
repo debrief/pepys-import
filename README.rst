@@ -137,14 +137,14 @@ Navigate to folder you would like to download the repository and run the followi
 Creating Python Environment
 ***************************
 Virtual Environment might be used to run the project. For creating a proper one,
-the following commands must be executed respectively in your project directory::
+the following commands must be executed respectively in your project directory (please change X with your Python version)::
 
-    $ virtualenv --python=python3.8 venv
+    $ virtualenv --python=python3.X venv
 
-Note: If you downloaded virtualenv in the current terminal, virtualenv command won't work,
-please try to run it in a new terminal.
+**Note:** If you downloaded virtualenv in the current session, virtualenv command won't work,
+please try to run it after rebooting your machine.
 
-It is also possible to create a virtual environment with the following code (please change X with your Python version)::
+It is also possible to create a virtual environment with the following code::
 
     $ python3.X -m virtualenv venv
 
