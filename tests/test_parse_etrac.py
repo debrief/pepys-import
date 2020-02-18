@@ -52,13 +52,7 @@ class ETracTests(unittest.TestCase):
             return
 
     def test_process_e_trac_data(self):
-        print("started")
         processor = FileProcessor()
-
-
-        # self.store.initialise()
-        # self.store.populate_reference(TEST_DATA_PATH)
-
         processor.register_importer(ETracParser())
 
         # check states empty
