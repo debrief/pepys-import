@@ -459,11 +459,23 @@ class DataStore(object):
         :rtype: Platform
         """
 
+        # TODO: remove the following duplicated lines
+        nationality = self.search_nationality(nationality)
+        platform_type = self.search_platform_type(platform_type)
+        privacy = self.search_privacy(privacy)
+
         if nationality is None or platform_type is None or privacy is None:
-            # raise Exception("There is missing value(s) in the data!")
-            nationality = self.missing_data_resolver.resolve_platform(
+            (
+                platform_name,
+                platform_type,
+                nationality,
+                privacy,
+            ) = self.missing_data_resolver.resolve_platform(
                 self, name, platform_type, nationality, privacy
             )
+
+        if nationality is None or platform_type is None or privacy is None:
+            raise Exception("There is missing value(s) in the data!")
 
         entry_id = self.add_to_entries(
             self.db_classes.Platform.table_type_id,
@@ -660,23 +672,26 @@ class DataStore(object):
         privacy = self.search_privacy(privacy)
 
         if nationality is None or platform_type is None or privacy is None:
-            # raise Exception("There is missing value(s) in the data!")
-            nationality = self.missing_data_resolver.resolve_platform(
+            (
+                platform_name,
+                platform_type,
+                nationality,
+                privacy,
+            ) = self.missing_data_resolver.resolve_platform(
                 self, platform_name, platform_type, nationality, privacy
             )
 
-        # self.add_to_nationalities(nationality)
-        # self.add_to_platform_types(platform_type)
-        # self.add_to_privacies(privacy)
+        if nationality is None or platform_type is None or privacy is None:
+            raise Exception("There is missing value(s) in the data!")
 
         if len(platform_name) == 0:
             raise Exception("Platform name can't be empty!")
         elif check_platform(platform_name):
             return self.add_to_platforms(
                 name=platform_name,
-                nationality=nationality,
-                platform_type=platform_type,
-                privacy=privacy,
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
             )
         else:
             return (

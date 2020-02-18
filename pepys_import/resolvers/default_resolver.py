@@ -15,21 +15,23 @@ class DefaultResolver(DataResolver):
         # needs to establish defaults for platform_type, nationality
         if not platform_type:
             platform_type = self.default_platform_type
-        platform_type = data_store.search_platform_type(platform_type)
-        if not platform_type:
-            platform_type = data_store.add_to_platform_types(platform_type)
+            platform_type = data_store.search_platform_type(platform_type)
+            if not platform_type:
+                platform_type = data_store.add_to_platform_types(
+                    self.default_platform_type
+                )
 
         if not nationality:
             nationality = self.default_nationality
-        nationality = data_store.search_nationality(nationality)
-        if not nationality:
-            nationality = data_store.add_to_nationalities(nationality)
+            nationality = data_store.search_nationality(nationality)
+            if not nationality:
+                nationality = data_store.add_to_nationalities(self.default_nationality)
 
         if not privacy:
             privacy = self.default_privacy
-        privacy = data_store.search_privacy(privacy)
-        if not privacy:
-            privacy = data_store.add_to_privacies(privacy)
+            privacy = data_store.search_privacy(privacy)
+            if not privacy:
+                privacy = data_store.add_to_privacies(self.default_privacy)
 
         return platform_name, platform_type, nationality, privacy
 
