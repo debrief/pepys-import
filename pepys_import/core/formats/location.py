@@ -30,6 +30,13 @@ class Location:
             and self.hemisphere == other.hemisphere
         )
 
+    # provide representation of this location element in whole degrees
+    def as_degrees(self):
+        degs = self.degrees + self.minutes / 60 + self.seconds / 3600
+        if self.hemisphere.upper() in ("S", "W"):
+            degs *= -1
+        return degs
+
     def parse(self):
         try:
             self.degrees = float(self.degrees)
