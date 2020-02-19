@@ -2,7 +2,6 @@ import os
 import unittest
 from unittest import TestCase
 from sqlalchemy import inspect
-from qprompt import StdinAuto
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats.repl_file import REPFile
@@ -43,6 +42,7 @@ class TestLoadReplay(TestCase):
                 rep_file.datafile_type, rep_file.filepath
             )
             for rep_line in rep_file.lines:
+                # TODO: use mock.patch
                 with StdinAuto([2, 1]):
                     platform = data_store.get_platform(
                         rep_line.get_platform(), None, "UK", "Public"

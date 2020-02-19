@@ -3,7 +3,7 @@ import sys
 from pepys_import.resolvers.data_resolver import DataResolver
 from pepys_import.resolvers.command_line_input import create_menu
 
-from qprompt import ask_str
+from prompt_toolkit import prompt
 
 
 class CommandLineResolver(DataResolver):
@@ -11,7 +11,7 @@ class CommandLineResolver(DataResolver):
         super().__init__()
 
     # def synonym_search(self, data_store, platform_name):
-    #     input_ = ask_str("Please type word stem to search for: ")
+    #     input_ = prompt("Please type word stem to search for: ")
     #     result = data_store.search_platform(input_)
     #     if result is None:
     #         # couldn't find it
@@ -63,7 +63,7 @@ class CommandLineResolver(DataResolver):
             elif choice == str(1):
                 nationality_check_ok = False
                 while not nationality_check_ok:
-                    new_input = ask_str("Please type name of new nationality: ")
+                    new_input = prompt("Please type name of new nationality: ")
                     nationality_check_ok = data_store.search_nationality(new_input)
                 chosen_nationality = data_store.add_to_nationalities(new_input)
 
@@ -82,7 +82,7 @@ class CommandLineResolver(DataResolver):
             elif choice == str(1):
                 platform_type = False
                 while not platform_type:
-                    new_input = ask_str("Please type name of new platform-type: ")
+                    new_input = prompt("Please type name of new platform-type: ")
                     platform_type = data_store.search_platform_type(new_input)
                 chosen_platform_type = data_store.add_to_platform_types(new_input)
 
@@ -102,7 +102,7 @@ class CommandLineResolver(DataResolver):
             elif choice == str(1):
                 privacy_check = False
                 while not privacy_check:
-                    new_input = ask_str("Please type name of new classification: ")
+                    new_input = prompt("Please type name of new classification: ")
                     privacy_check = data_store.search_privacy(new_input)
                 chosen_privacy = data_store.add_to_privacies(new_input)
 
@@ -174,7 +174,7 @@ class CommandLineResolver(DataResolver):
 
         if choice == str(1):
             if not sensor_type:
-                new_input = ask_str("Please type name of new sensor-type: ")
+                new_input = prompt("Please type name of new sensor-type: ")
                 sensor_type = data_store.search_sensor_type(new_input)
             if not privacy:
                 privacy = self.resolve_privacy(data_store)
@@ -222,7 +222,7 @@ class CommandLineResolver(DataResolver):
         )
 
         if choice == str(1):
-            new_privacy = ask_str("Please type name of new classification: ")
+            new_privacy = prompt("Please type name of new classification: ")
             privacy = data_store.search_privacy(new_privacy)
             if privacy:
                 return privacy

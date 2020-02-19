@@ -1,14 +1,11 @@
-from qprompt import ask_int, Menu
-
-# Two refinements are necessary: some responses permanently  assigned to a key
-# (. for Cancel)
-# Inject some responses for unit tests
+from prompt_toolkit import prompt
 
 
 def create_menu(heading, choices):
-    menu = Menu(header=heading, fzf=True)
+    input_text = heading + "\n"
     for index, choice in enumerate(choices, 1):
-        menu.add(str(index), choice)
-    menu.add(".", "Cancel")
-    choice = menu.show()
+        input_text += f"   {str(index)}) {choice}\n"
+    input_text += f"   .) Cancel import\n > "
+    choice = prompt(input_text)
+
     return choice
