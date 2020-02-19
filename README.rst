@@ -130,8 +130,9 @@ The best way to install PostGIS is running the codes as follows::
 
 Cloning the Repository
 **********************
-Navigate to folder you would like to download the repository and run the following command::
+Navigate to folder you would like to download the repository and run the following commands::
 
+    $ sudo apt install git
     $ git clone https://github.com/debrief/pepys-import.git
 
 Creating Python Environment
