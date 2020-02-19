@@ -624,9 +624,7 @@ class DataStore(object):
         :return: Datafile entity
         :rtype: Datafile
         """
-        datafiles = self.session.query(
-            self.db_classes.Datafile
-        ).all()
+        datafiles = self.session.query(self.db_classes.Datafile).all()
         return datafiles
 
     def export_datafile(self, datafile_id):
@@ -638,17 +636,23 @@ class DataStore(object):
         :return:  Created Datafile entity
         :rtype: Datafile
         """
-        states = self.session.query(
-            self.db_classes.State
-        ).filter(self.db_classes.State.source_id == datafile_id).all()
+        states = (
+            self.session.query(self.db_classes.State)
+            .filter(self.db_classes.State.source_id == datafile_id)
+            .all()
+        )
 
-        contacts = self.session.query(
-            self.db_classes.Contact
-        ).filter(self.db_classes.Contact.source_id == datafile_id).all()
+        contacts = (
+            self.session.query(self.db_classes.Contact)
+            .filter(self.db_classes.Contact.source_id == datafile_id)
+            .all()
+        )
 
-        comments = self.session.query(
-            self.db_classes.Comment
-        ).filter(self.db_classes.Comment.source_id == datafile_id).all()
+        comments = (
+            self.session.query(self.db_classes.Comment)
+            .filter(self.db_classes.Comment.source_id == datafile_id)
+            .all()
+        )
 
         print(states, contacts, comments)
         return True
