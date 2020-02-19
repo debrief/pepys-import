@@ -12,3 +12,4 @@ nose2==0.9.1
 black
 pre-commit
 sphinx_rtd_theme
+git+https://github.com/tk0miya/testing.postgresql.git#egg=testing.postgresql
