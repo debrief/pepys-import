@@ -508,6 +508,20 @@ class DataStore(object):
         # should return DB type or something else decoupled from DB?
         return platform_obj
 
+    def add_to_synonyms(self, table, name):
+        entry_id = self.add_to_entries(
+            self.db_classes.Nationality.table_type_id,
+            self.db_classes.Nationality.__tablename__,
+        )
+        # enough info to proceed and create entry
+        synonym = self.db_classes.Synonym(
+            synonym_id=entry_id, table=table, synonym=name
+        )
+        self.session.add(synonym)
+        self.session.flush()
+
+        return synonym
+
     #############################################################
     # Search/lookup functions
 

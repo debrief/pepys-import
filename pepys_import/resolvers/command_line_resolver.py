@@ -1,5 +1,8 @@
 import sys
 
+from prompt_toolkit.completion import FuzzyWordCompleter
+from sqlalchemy import or_
+
 from pepys_import.resolvers.data_resolver import DataResolver
 from pepys_import.resolvers.command_line_input import create_menu
 
@@ -44,6 +47,71 @@ class CommandLineResolver(DataResolver):
     #         elif found == 3:
     #             print("Quitting")
     #             sys.exit(1)
+
+    @staticmethod
+    def find_platform(data_store, platform_name):
+        platform = (
+            data_store.session.query(data_store.db_classes.Platform)
+            .filter(
+                or_(
+                    data_store.db_classes.Platform.name == platform_name,
+                    data_store.db_classes.Platform.trigraph == platform_name,
+                    data_store.db_classes.Platform.quadgraph == platform_name,
+                )
+            )
+            .first()
+        )
+        if platform:
+            return platform
+
+        synonyms = (
+            data_store.session.query(data_store.db_classes.Synonym)
+            .filter(data_store.db_classes.Synonym.synonym == platform_name)
+            .all()
+        )
+        for synonym in synonyms:
+            platform = (
+                data_store.session.query(data_store.db_classes.Platform)
+                .filter(
+                    or_(
+                        data_store.db_classes.Platform.name == synonym,
+                        data_store.db_classes.Platform.trigraph == synonym,
+                        data_store.db_classes.Platform.quadgraph == synonym,
+                    )
+                )
+                .first()
+            )
+            if platform:
+                return platform
+
+        return None
+
+    @staticmethod
+    def fuzzy_search_platform(data_store, platform_name):
+        completer = list()
+        platforms = (
+            data_store.session.query(data_store.db_classes.Platform)
+            .filter(
+                or_(
+                    data_store.db_classes.Platform.name == platform_name,
+                    data_store.db_classes.Platform.trigraph == platform_name,
+                    data_store.db_classes.Platform.quadgraph == platform_name,
+                )
+            )
+            .all()
+        )
+        for platform in platforms:
+            completer.append(platform.name)
+            completer.append(platform.trigraph)
+            completer.append(platform.quadgraph)
+
+        choice = create_menu(
+            "Please start typing to show suggested values",
+            choices=[],
+            completer=FuzzyWordCompleter(completer),
+        )
+        print(choice)
+        return choice
 
     def add_to_platforms(
         self, data_store, platform_name, platform_type, nationality, privacy
@@ -113,7 +181,7 @@ class CommandLineResolver(DataResolver):
         print(f"Classification: {chosen_privacy.name}")
 
         choice = create_menu(
-            "Create this platform?: ", ["Yes", "No, make further edits"],
+            "Create this platform?: ", ["Yes", "No, make further edits"]
         )
 
         if choice == str(1):
@@ -133,18 +201,9 @@ class CommandLineResolver(DataResolver):
         self, data_store, platform_name, platform_type, nationality, privacy
     ):
         if platform_name:
-            platform = data_store.search_platform(platform_name)
+            platform = self.find_platform(data_store, platform_name)
             if platform:
                 return platform
-
-            # TODO: implement these search methods
-            # platform = self.search_trigraph_and_quadgraph(platform_name)
-            # if platform:
-            #     return platform
-            #
-            # platform = self.search_synonym(platform_name)
-            # if platform:
-            #     return platform
 
         choice = create_menu(
             f"Platform '{platform_name}' not found. Do you wish to: ",
@@ -155,9 +214,20 @@ class CommandLineResolver(DataResolver):
         )
 
         if choice == str(1):
-            # TODO: if match found, ask for keep as synonym
-            # search = fzf_search(input)
-            pass
+            result = self.fuzzy_search_platform(data_store, platform_name)
+            if result and platform_name:
+                synonym_choice = create_menu(
+                    f"Do you wish to keep {platform_name} as synonym?", ["Yes", "No"]
+                )
+                if synonym_choice == str(1):
+                    return data_store.add_to_synonyms("Platforms", platform_name)
+                elif synonym_choice == str(2):
+                    return self.add_to_platforms(
+                        data_store, platform_name, platform_type, nationality, privacy
+                    )
+                elif synonym_choice == ".":
+                    print("Quitting")
+                    sys.exit(1)
         elif choice == str(2):
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy
@@ -218,7 +288,7 @@ class CommandLineResolver(DataResolver):
         # Choose Privacy
         privacy_names = ["Add a new classification"]
         choice = create_menu(
-            f"Ok, please provide classification for new entry: ", privacy_names,
+            f"Ok, please provide classification for new entry: ", privacy_names
         )
 
         if choice == str(1):
