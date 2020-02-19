@@ -53,33 +53,6 @@ class CommandLineResolver(DataResolver):
 
         return None
 
-    @staticmethod
-    def fuzzy_search_platform(data_store, platform_name):
-        completer = list()
-        platforms = (
-            data_store.session.query(data_store.db_classes.Platform)
-            .filter(
-                or_(
-                    data_store.db_classes.Platform.name == platform_name,
-                    data_store.db_classes.Platform.trigraph == platform_name,
-                    data_store.db_classes.Platform.quadgraph == platform_name,
-                )
-            )
-            .all()
-        )
-        for platform in platforms:
-            completer.append(platform.name)
-            completer.append(platform.trigraph)
-            completer.append(platform.quadgraph)
-
-        choice = create_menu(
-            "Please start typing to show suggested values",
-            choices=[],
-            completer=FuzzyWordCompleter(completer),
-        )
-        print(choice)
-        return choice
-
     def add_to_platforms(
         self, data_store, platform_name, platform_type, nationality, privacy
     ):
@@ -90,56 +63,132 @@ class CommandLineResolver(DataResolver):
         if nationality:
             chosen_nationality = data_store.add_to_nationalities(nationality)
         else:
-            nationality_names = ["Add a new nationality"]
+            nationality_names = [
+                "Search for an existing nationality",
+                "Add a new nationality",
+            ]
             choice = create_menu("Please provide nationality: ", nationality_names)
-            if choice == ".":
+            if choice == str(1):
+                nationalities = data_store.session.query(
+                    data_store.db_classes.Nationality
+                ).all()
+                completer = [n.name for n in nationalities]
+                new_choice = create_menu(
+                    "Please start typing to show suggested values",
+                    choices=[],
+                    completer=FuzzyWordCompleter(completer),
+                )
+                while new_choice not in completer:
+                    new_choice = create_menu(
+                        "You didn't select an existing Nationality. "
+                        "Please start typing to show suggested values",
+                        choices=[],
+                        completer=FuzzyWordCompleter(completer),
+                    )
+                chosen_nationality = (
+                    data_store.session.query(data_store.db_classes.Nationality)
+                    .filter(data_store.db_classes.Nationality.name == new_choice)
+                    .first()
+                )
+            elif choice == str(2):
+                new_nationality = prompt("Please type name of new nationality: ")
+                nationality_check = data_store.search_nationality(new_nationality)
+                if not nationality_check:
+                    chosen_nationality = data_store.add_to_nationalities(
+                        new_nationality
+                    )
+            elif choice == ".":
                 print("Quitting")
                 sys.exit(1)
-            elif choice == str(1):
-                nationality_check_ok = False
-                while not nationality_check_ok:
-                    new_input = prompt("Please type name of new nationality: ")
-                    nationality_check_ok = data_store.search_nationality(new_input)
-                chosen_nationality = data_store.add_to_nationalities(new_input)
 
         # Choose Platform Type
         chosen_platform_type = None
         if platform_type:
             chosen_platform_type = data_store.add_to_platform_types(platform_type)
         else:
-            platform_type_names = ["Add a new platform-type"]
+            platform_type_names = [
+                "Search for an existing platform-type",
+                "Add a new platform-type",
+            ]
             choice = create_menu(
                 "Ok, please provide platform-type: ", platform_type_names
             )
-            if choice == ".":
+            if choice == str(1):
+                platform_types = data_store.session.query(
+                    data_store.db_classes.PlatformType
+                ).all()
+                completer = [p.name for p in platform_types]
+                new_choice = create_menu(
+                    "Please start typing to show suggested values",
+                    choices=[],
+                    completer=FuzzyWordCompleter(completer),
+                )
+                while new_choice not in completer:
+                    new_choice = create_menu(
+                        "You didn't select an existing Platform Type. "
+                        "Please start typing to show suggested values",
+                        choices=[],
+                        completer=FuzzyWordCompleter(completer),
+                    )
+                chosen_platform_type = (
+                    data_store.session.query(data_store.db_classes.PlatformType)
+                    .filter(data_store.db_classes.PlatformType.name == new_choice)
+                    .first()
+                )
+            elif choice == str(2):
+                new_platform_type = prompt("Please type name of new platform-type: ")
+                platform_type = data_store.search_platform_type(new_platform_type)
+                if not platform_type:
+                    chosen_platform_type = data_store.add_to_platform_types(
+                        new_platform_type
+                    )
+            elif choice == ".":
                 print("Quitting")
                 sys.exit(1)
-            elif choice == str(1):
-                platform_type = False
-                while not platform_type:
-                    new_input = prompt("Please type name of new platform-type: ")
-                    platform_type = data_store.search_platform_type(new_input)
-                chosen_platform_type = data_store.add_to_platform_types(new_input)
 
         # Choose Privacy
         chosen_privacy = None
         if privacy:
             chosen_privacy = data_store.add_to_privacies(privacy)
         else:
-            privacy_names = ["Add a new classification"]
+            privacy_names = [
+                "Search for an existing classification",
+                "Add a new classification",
+            ]
             choice = create_menu(
                 "Ok, please provide classification for this platform: ", privacy_names
             )
 
-            if choice == ".":
+            if choice == str(1):
+                privacies = data_store.session.query(
+                    data_store.db_classes.Privacy
+                ).all()
+                completer = [p.name for p in privacies]
+                new_choice = create_menu(
+                    "Please start typing to show suggested values",
+                    choices=[],
+                    completer=FuzzyWordCompleter(completer),
+                )
+                while new_choice not in completer:
+                    new_choice = create_menu(
+                        "You didn't select an existing classification. "
+                        "Please start typing to show suggested values",
+                        choices=[],
+                        completer=FuzzyWordCompleter(completer),
+                    )
+                chosen_privacy = (
+                    data_store.session.query(data_store.db_classes.Privacy)
+                    .filter(data_store.db_classes.Privacy.name == new_choice)
+                    .first()
+                )
+            elif choice == str(2):
+                new_privacy = prompt("Please type name of new classification: ")
+                privacy_check = data_store.search_privacy(new_privacy)
+                if not privacy_check:
+                    chosen_privacy = data_store.add_to_privacies(new_privacy)
+            elif choice == ".":
                 print("Quitting")
                 sys.exit(1)
-            elif choice == str(1):
-                privacy_check = False
-                while not privacy_check:
-                    new_input = prompt("Please type name of new classification: ")
-                    privacy_check = data_store.search_privacy(new_input)
-                chosen_privacy = data_store.add_to_privacies(new_input)
 
         print("Input complete. About to create this platform:")
         print(f"Name: {platform_name}")
@@ -181,7 +230,18 @@ class CommandLineResolver(DataResolver):
         )
 
         if choice == str(1):
-            result = self.fuzzy_search_platform(data_store, platform_name)
+            completer = list()
+            platforms = data_store.session.query(data_store.db_classes.Platform).all()
+            for platform in platforms:
+                completer.append(platform.name)
+                completer.append(platform.trigraph)
+                completer.append(platform.quadgraph)
+            result = create_menu(
+                "Please start typing to show suggested values",
+                choices=[],
+                completer=FuzzyWordCompleter(completer),
+            )
+            # TODO: this if clause should change
             if result and platform_name:
                 synonym_choice = create_menu(
                     f"Do you wish to keep {platform_name} as synonym?", ["Yes", "No"]
