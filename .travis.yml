@@ -1,6 +1,6 @@
 language: python
 python:
-  - "3.8"
+  - "3.7"
 cache: pip
 addons:
   postgresql: "10"
@@ -15,9 +15,10 @@ before_install:
   - sudo apt install -y libsqlite3-dev spatialite-bin libsqlite3-mod-spatialite
 install:
   - pip install -r requirements.txt
+  - pip install -r requirements_dev.txt
   - pip install codecov
 script:
-  - coverage3 run -m unittest discover -v
+  - coverage3 run -m pytest tests
   - black --check --diff pepys_import
 after_success:
   - coverage3 report
