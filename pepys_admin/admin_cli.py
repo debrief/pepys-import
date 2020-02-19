@@ -25,18 +25,6 @@ def sqlite_initialise():
     print("SQLITE")
 
 
-parser = argparse.ArgumentParser(description="DB Selection!")
-parser.add_argument("--db", type=str, help="Db Path")
-
-args = parser.parse_args()
-db_flag = args.db
-
-if db_flag:
-    datastore = sqlite_initialise()
-else:
-    datastore = postgres_initialise()
-
-
 class AdminShell(cmd.Cmd):
     intro = "Welcome to the Pepys Admin shell.   Type help or ? to list commands.\n"
     prompt = "(pepys-admin) "
@@ -50,73 +38,27 @@ class AdminShell(cmd.Cmd):
     def do_export(self, arg):
         "Start the export process"
         # datafile_name = input("Please enter Datafile name:")
-        with self.datastore.session_scope() as session:
+        with self.datastore.session_scope():
             datafiles = self.datastore.get_all_datafiles()
             datafiles_dict = {}
             for datafile in datafiles:
                 datafiles_dict[datafile.reference] = datafile
         datafile_references = list(datafiles_dict.keys())
-        datafile_references += [
-            "DATAFILE-99",
-            "DATAFILE-100",
-            "DATA-3",
-            "FILE-2",
-            "RECORD-1",
-            "RECORDS-2",
-            "RECORDS-3",
-            "FILE-9",
-            "RECORS-2",
-            "RECRDS-3",
-            "FLE-9",
-            "REORDS-2",
-            "ECORDS-3",
-            "FILE9",
-            "RCRDS-2",
-            "ECORDS-3",
-            "FLE-9",
-            "RERDS-2",
-            "RCDS-3",
-            "ILE-9",
-            "CORDS-0",
-            "RCODS-3",
-            "IE-9",
-            "RODS-2",
-            "RCORDS-00",
-            "FILE-99",
-            "RECORDS-29",
-            "RECORDS-93",
-            "FILE-79",
-            "RECORDS-72",
-            "RECORDS-73",
-            "FILE-79",
-            "RECRDS-22",
-            "RECRDS-23",
-            "FILE-29",
-            "RECORDS-12",
-            "RECORS-13",
-            "FIL-19",
-            "RECODS-12",
-            "RECORS-13",
-            "FILE-19",
-            "RECORS-12",
-            "RECOS-223",
-            "FIE-29",
-            "RECDS-12",
-            "RECDS-123",
-            "FE-19",
-        ]
         datafile_reference = iterfzf(datafile_references)
 
+        if datafile_reference is None:
+            return
+
         export_flag = input(
-            "Do you want to export {} Datafile. (y/n)\n".format(datafile_reference)
+            "Do you want to export {} Datafile. (Y/n)\n".format(datafile_reference)
         )
-        if export_flag == "y":
+        if export_flag in ["", "Y", "y"]:
             print("Exported Datafile is: {} TODO".format(datafile_reference))
 
-        # selected_datafile = datafiles_dict[datafile_reference]
-        # print(selected_datafile.datafile_id)
-        # with self.datastore.session_scope() as session:
-        #     self.datastore.export_datafile(datafile_id)
+        selected_datafile = datafiles_dict[datafile_reference]
+        print(selected_datafile)
+        with self.datastore.session_scope():
+            self.datastore.export_datafile(selected_datafile.datafile_id)
 
     def do_status(self, arg):
         "Report on the database contents"
@@ -151,5 +93,16 @@ class AdminShell(cmd.Cmd):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="DB Selection!")
+    parser.add_argument("--db", type=str, help="Db Path")
+
+    args = parser.parse_args()
+    db_flag = args.db
+
+    if db_flag:
+        datastore = sqlite_initialise()
+    else:
+        datastore = postgres_initialise()
+
     intro = "Welcome to the Pepys Admin shell.\n --- Menu --- \n (1) Export\n (2) Status\n (0) Exit\n"
     admin = AdminShell(datastore).cmdloop(intro=intro)
