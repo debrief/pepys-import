@@ -45,7 +45,7 @@ class DataStore(object):
         db_name,
         db_type="postgres",
         missing_data_resolver=DefaultResolver(),
-        show_welcome=True,
+        welcome_text="Pepys_import",
         show_status=True,
     ):
         if db_type == "postgres":
@@ -75,7 +75,7 @@ class DataStore(object):
             BaseSpatiaLite.metadata.bind = self.engine
 
         self.missing_data_resolver = missing_data_resolver
-        self.show_welcome = show_welcome
+        self.welcome_text = welcome_text
         self.show_status = show_status
 
         # caches of known data
@@ -101,8 +101,8 @@ class DataStore(object):
         self.session = None
 
         # Branding Text
-        if self.show_welcome:
-            show_welcome_banner()
+        if self.welcome_text:
+            show_welcome_banner(welcome_text)
         if self.show_status:
             show_software_meta_info(__version__, self.db_type, self.db_name, db_host)
             print("---------------------------------")

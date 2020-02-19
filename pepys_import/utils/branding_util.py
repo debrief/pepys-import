@@ -6,9 +6,9 @@ def render_text(font, text):
     print(f.renderText(text))
 
 
-def show_welcome_banner():
+def show_welcome_banner(banner_text):
     font = "doom"
-    text = "Pepys_import"
+    text = banner_text
     render_text(font, text)
 
 
