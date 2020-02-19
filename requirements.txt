@@ -10,3 +10,4 @@ tabulate
 pyfiglet
 sphinx
 sphinx_rtd_theme
+prompt_toolkit
