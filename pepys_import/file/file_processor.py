@@ -44,21 +44,22 @@ class FileProcessor:
         abs_path = os.path.abspath(path)
 
         # decide whether to descend tree, or just work on this folder
-        if descend_tree:
-            # loop through this folder and children
-            for current_path, folders, files in os.walk(abs_path):
-                for file in files:
-                    processed_ctr = self.process_file(
-                        file, current_path, data_store, processed_ctr
-                    )
-        else:
-            # loop through this path
-            for file in os.scandir(abs_path):
-                if file.is_file():
-                    current_path = os.path.join(abs_path, file)
-                    processed_ctr = self.process_file(
-                        file, current_path, data_store, processed_ctr
-                    )
+        with data_store.session_scope():
+            if descend_tree:
+                # loop through this folder and children
+                for current_path, folders, files in os.walk(abs_path):
+                    for file in files:
+                        processed_ctr = self.process_file(
+                            file, current_path, data_store, processed_ctr
+                        )
+            else:
+                # loop through this path
+                for file in os.scandir(abs_path):
+                    if file.is_file():
+                        current_path = os.path.join(abs_path, file)
+                        processed_ctr = self.process_file(
+                            file, current_path, data_store, processed_ctr
+                        )
 
         print(f"Files got processed: {processed_ctr} times")
 
@@ -106,10 +107,8 @@ class FileProcessor:
                     good_importers.remove(importer)
 
             # ok, let these importers handle the file
-
-            with data_store.session_scope():
-                datafile = data_store.get_datafile(filename, file_extension)
-                datafile_name = datafile.reference
+            datafile = data_store.get_datafile(filename, file_extension)
+            datafile_name = datafile.reference
 
             for importer in good_importers:
                 processed_ctr += 1

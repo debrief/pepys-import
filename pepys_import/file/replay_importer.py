@@ -26,45 +26,44 @@ class ReplayImporter(Importer):
 
     def load_this_file(self, data_store, path, file_contents, datafile_name):
         print("Rep parser working on " + path)
-        with data_store.session_scope():
-            for line_number, line in enumerate(file_contents, 1):
-                if line.startswith(";"):
+        for line_number, line in enumerate(file_contents, 1):
+            if line.startswith(";"):
+                continue
+            else:
+                # create state, to store the data
+                rep_line = REPLine(line_number, line, self.separator)
+                if not rep_line.parse():
                     continue
-                else:
-                    # create state, to store the data
-                    rep_line = REPLine(line_number, line, self.separator)
-                    if not rep_line.parse():
-                        continue
 
-                    # and finally store it
-                    datafile = data_store.search_datafile(datafile_name)
-                    platform = data_store.get_platform(
-                        platform_name=rep_line.get_platform(),
-                        nationality="UK",
-                        platform_type="Fisher",
-                        privacy="Public",
-                    )
+                # and finally store it
+                datafile = data_store.search_datafile(datafile_name)
+                platform = data_store.get_platform(
+                    platform_name=rep_line.get_platform(),
+                    nationality="UK",
+                    platform_type="Fisher",
+                    privacy="Public",
+                )
 
-                    all_sensors = data_store.session.query(
-                        data_store.db_classes.Sensor
-                    ).all()
-                    sensor_type = data_store.add_to_sensor_types("_GPS")
-                    sensor = platform.get_sensor(
-                        data_store=data_store,
-                        all_sensors=all_sensors,
-                        sensor_name=platform.name,
-                        sensor_type=sensor_type,
-                        privacy="TEST",
-                    )
-                    state = datafile.create_state(sensor, rep_line.timestamp)
-                    state.location = rep_line.get_location()
-                    state.heading = rep_line.heading.to(unit_registry.radians).magnitude
+                all_sensors = data_store.session.query(
+                    data_store.db_classes.Sensor
+                ).all()
+                sensor_type = data_store.add_to_sensor_types("_GPS")
+                sensor = platform.get_sensor(
+                    data_store=data_store,
+                    all_sensors=all_sensors,
+                    sensor_name=platform.name,
+                    sensor_type=sensor_type,
+                    privacy="TEST",
+                )
+                state = datafile.create_state(sensor, rep_line.timestamp)
+                state.location = rep_line.get_location()
+                state.heading = rep_line.heading.to(unit_registry.radians).magnitude
 
-                    state.speed = rep_line.speed
-                    privacy = data_store.search_privacy("TEST")
-                    state.privacy = privacy.privacy_id
-                    if datafile.validate():
-                        state.submit(data_store.session)
+                state.speed = rep_line.speed
+                privacy = data_store.search_privacy("TEST")
+                state.privacy = privacy.privacy_id
+                if datafile.validate():
+                    state.submit(data_store.session)
 
     # def requires_user_review(self) -> bool:
     #     """
