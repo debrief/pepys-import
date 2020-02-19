@@ -15,7 +15,7 @@ def postgres_initialise():
         db_host="localhost",
         db_port=5432,
         db_name="pepys",
-        welcome_text="Pepys_admin",
+        welcome_text="Pepys_Admin",
     )
     return data_store_postgres
 
