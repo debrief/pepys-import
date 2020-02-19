@@ -56,7 +56,7 @@ class AdminShell(cmd.Cmd):
             for datafile in datafiles:
                 datafiles_dict[datafile.reference] = datafile
         datafile_references = list(datafiles_dict.keys())
-        datafile_references = [
+        datafile_references += [
             "DATAFILE-99",
             "DATAFILE-100",
             "DATA-3",
