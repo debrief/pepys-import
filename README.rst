@@ -70,12 +70,12 @@ View the project Kanban board `here <https://github.com/debrief/pepys-import/pro
 Setup
 -----
 
-To prepare for running ensure Python 3.7 or later are installed in your system.
+To prepare for running ensure Python 3.6 or later are installed in your system.
 You can check your Python 3 version with the following command::
 
     $ python3 --version
 
-If you don't have Python 3.7+ in your system, please download it from `python.org <https://www.python.org/downloads/>`_
+If you don't have Python 3.6+ in your system, please download it from `python.org <https://www.python.org/downloads/>`_
 
 Pip is also necessary to create virtual environment. If you don't have it in your system, please download it::
 
@@ -86,9 +86,9 @@ It is possible to verify pip installation with the following command::
 
     $ pip3 --version
 
-----------
-For Ubuntu
-----------
+-----------------------------------------
+Ubuntu 18.04 LTS Development Instructions
+-----------------------------------------
 
 Installing Spatialite
 *********************
@@ -139,16 +139,16 @@ Navigate to folder you would like to download the repository and run the followi
 Creating Python Environment
 ***************************
 Virtual Environment might be used to run the project. For creating a proper one,
-the following commands must be executed respectively in your project directory (please change X with your Python version)::
+the following commands must be executed respectively in your project directory (please change the version with your Python version)::
 
-    $ virtualenv --python=python3.X venv
+    $ virtualenv --python=python3.6 venv
 
 **Note:** If you downloaded virtualenv in the current session, virtualenv command won't work,
 please try to run it after rebooting your machine.
 
 It is also possible to create a virtual environment with the following code::
 
-    $ python3.X -m virtualenv venv
+    $ python3.6 -m virtualenv venv
 
 When environment is created successfully, please run the following commands::
 
