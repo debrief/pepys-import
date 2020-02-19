@@ -191,4 +191,4 @@ class REPLine:
         return self.vessel
 
     def get_location(self):
-        return f"POINT({self.longitude} {self.latitude})"
+        return f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
