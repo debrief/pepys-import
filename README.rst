@@ -98,6 +98,7 @@ Installing Spatialite
 Open a terminal and run the following command::
 
     $ sudo apt install spatialite-bin
+    $ sudo apt-get install -y libsqlite3-mod-spatialite
 
 2. Alternative Way (Compiling From Source)
 """"""""""""""""""""""""""""""""""""""""""
