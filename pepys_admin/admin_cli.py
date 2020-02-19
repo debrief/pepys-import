@@ -42,7 +42,7 @@ class AdminShell(cmd.Cmd):
             datafiles = self.datastore.get_all_datafiles()
             datafiles_dict = {}
             for datafile in datafiles:
-                datafiles_dict[datafile.reference] = datafile
+                datafiles_dict[datafile.reference] = datafile.datafile_id
         datafile_references = list(datafiles_dict.keys())
         datafile_reference = iterfzf(datafile_references)
 
@@ -58,7 +58,7 @@ class AdminShell(cmd.Cmd):
         selected_datafile = datafiles_dict[datafile_reference]
         print(selected_datafile)
         with self.datastore.session_scope():
-            self.datastore.export_datafile(selected_datafile.datafile_id)
+            self.datastore.export_datafile(selected_datafile)
 
     def do_status(self, arg):
         "Report on the database contents"
