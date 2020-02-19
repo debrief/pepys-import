@@ -5,8 +5,9 @@ from sqlalchemy.dialects.sqlite import TIMESTAMP, REAL
 
 from geoalchemy2 import Geometry
 
-from .db_base import BaseSpatiaLite
-from .db_status import TableTypes
+from pepys_import.core.store.db_base import BaseSpatiaLite
+from pepys_import.core.store.db_status import TableTypes
+from pepys_import.core.formats import quantity
 
 
 class Entry(BaseSpatiaLite):
@@ -132,8 +133,9 @@ class Platform(BaseSpatiaLite):
         # search for any platform with this name
         return session.query(Platform).filter(Platform.name == name).first()
 
-    @staticmethod
-    def get_sensor(session, all_sensors, sensor_name, sensor_type=None, privacy=None):
+    def get_sensor(
+        self, session, all_sensors, sensor_name, sensor_type=None, privacy=None
+    ):
         """
         Lookup or create a sensor of this name for this :class:`Platform`.
         Specified sensor will be added to the :class:`Sensor` table.
@@ -163,13 +165,11 @@ class Platform(BaseSpatiaLite):
         if len(sensor_name) == 0:
             raise Exception("Please enter sensor name!")
         elif check_sensor(sensor_name):
-            platform = session.query(Platform).first()
             return Sensor().add_to_sensors(
                 session=session,
                 name=sensor_name,
                 sensor_type=sensor_type,
-                host=platform.name
-                # privacy=privacy,
+                host=self.name,
             )
         else:
             return session.query(Sensor).filter(Sensor.name == sensor_name).first()
@@ -494,24 +494,6 @@ class State(BaseSpatiaLite):
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    # def set_location(self, lat_val: float, long_val: float):
-    #     self.location = (lat_val, long_val)
-    #
-    # def set_location_obj(self, location):
-    #     self.location = location
-    #
-    # def set_heading(self, heading: quantity):
-    #     self.heading = heading
-    #
-    # def set_course(self, course: quantity):
-    #     self.course = course
-    #
-    # def set_speed(self, speed: quantity):
-    #     self.speed = speed
-    #
-    # def set_privacy(self, privacy_type):
-    #     self.privacy_id = privacy_type.privacy_id
-
     def submit(self, session):
         """Submit intermediate object to the DB"""
         session.add(self)
@@ -545,24 +527,6 @@ class Contact(BaseSpatiaLite):
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def set_name(self, name):
-        self.name = name
-
-    def set_subject(self, platform):
-        self.subject_id = platform.platform_id
-
-    # def set_bearing(self, bearing):
-    #     self.bearing = bearing
-    #
-    # def set_rel_bearing(self, rel_bearing):
-    #     self.rel_bearing = rel_bearing
-    #
-    # def set_frequency(self, frequency):
-    #     self.freq = frequency
-    #
-    # def set_privacy(self, privacy_type):
-    #     self.privacy_id = privacy_type.privacy_id
 
     def submit(self, session):
         """Submit intermediate object to the DB"""
@@ -621,12 +585,6 @@ class Comment(BaseSpatiaLite):
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def set_platform(self, platform):
-        self.platform_id = platform.platform_id
-
-    # def set_privacy(self, privacy_type):
-    #     self.privacy_id = privacy_type.privacy_id
 
     def submit(self, session):
         """Submit intermediate object to the DB"""
