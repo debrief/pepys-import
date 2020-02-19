@@ -64,37 +64,37 @@ class NMEAImporter(Importer):
     def load_this_file(self, data_store, path, file_contents, datafile_name):
         print("NMEA parser working on " + path)
 
-        for line_number, line in enumerate(file_contents):
-            if line_number > 5000:
-                break
-            tokens = self.tokens(line)
-            if len(tokens) > 0:
+        with data_store.session_scope():
+            for line_number, line in enumerate(file_contents):
+                if line_number > 5000:
+                    break
+                tokens = self.tokens(line)
+                if len(tokens) > 0:
 
-                msg_type = tokens[1]
-                if msg_type == "DZA":
-                    self.date = tokens[2]
-                    self.time = tokens[3]
-                elif msg_type == "VEL":
-                    self.speed = tokens[6]
-                elif msg_type == "HDG":
-                    self.heading = tokens[2]
-                elif msg_type == "POS":
-                    self.latitude = tokens[3]
-                    self.latitude_hem = tokens[4]
-                    self.longitude = tokens[5]
-                    self.longitude_hem = tokens[6]
+                    msg_type = tokens[1]
+                    if msg_type == "DZA":
+                        self.date = tokens[2]
+                        self.time = tokens[3]
+                    elif msg_type == "VEL":
+                        self.speed = tokens[6]
+                    elif msg_type == "HDG":
+                        self.heading = tokens[2]
+                    elif msg_type == "POS":
+                        self.latitude = tokens[3]
+                        self.latitude_hem = tokens[4]
+                        self.longitude = tokens[5]
+                        self.longitude_hem = tokens[6]
 
-                # do we have all we need?
-                if (
-                    self.date
-                    and self.time
-                    and self.speed
-                    and self.heading
-                    and self.latitude
-                ):
+                    # do we have all we need?
+                    if (
+                        self.date
+                        and self.time
+                        and self.speed
+                        and self.heading
+                        and self.latitude
+                    ):
 
-                    # and finally store it
-                    with data_store.session_scope():
+                        # and finally store it
                         datafile = data_store.search_datafile(datafile_name)
                         platform = data_store.get_platform(
                             "Toure", "Ferry", "FR", "Public"
