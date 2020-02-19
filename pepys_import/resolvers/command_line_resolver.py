@@ -1,52 +1,16 @@
 import sys
 
+from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyWordCompleter
 from sqlalchemy import or_
 
 from pepys_import.resolvers.data_resolver import DataResolver
 from pepys_import.resolvers.command_line_input import create_menu
 
-from prompt_toolkit import prompt
-
 
 class CommandLineResolver(DataResolver):
     def __init__(self):
         super().__init__()
-
-    # def synonym_search(self, data_store, platform_name):
-    #     input_ = prompt("Please type word stem to search for: ")
-    #     result = data_store.search_platform(input_)
-    #     if result is None:
-    #         # couldn't find it
-    #         not_found = create_menu(
-    #             f"Platform with '{input_}' not found. Do you wish to: ",
-    #             [
-    #                 "Search for another synonym of this name",
-    #                 f"Add a new platform, titled '{platform_name}'",
-    #                 "Cancel import",
-    #             ],
-    #         )
-    #
-    #         if not_found == 1:
-    #             self.synonym_search(data_store, platform_name)
-    #         elif not_found == 2:
-    #             return 2
-    #         elif not_found == 3:
-    #             print("Quitting")
-    #             sys.exit(1)
-    #     else:
-    #         # found something
-    #         found = create_menu(
-    #             f"Platform '{result}' found. Would you like to add this as a synonym: ",
-    #             ["Yes", "No, find other synonym", "Cancel import"],
-    #         )
-    #         if found == 1:
-    #             return result
-    #         elif found == 2:
-    #             self.synonym_search(data_store, platform_name)
-    #         elif found == 3:
-    #             print("Quitting")
-    #             sys.exit(1)
 
     @staticmethod
     def find_platform(data_store, platform_name):
@@ -66,7 +30,10 @@ class CommandLineResolver(DataResolver):
 
         synonyms = (
             data_store.session.query(data_store.db_classes.Synonym)
-            .filter(data_store.db_classes.Synonym.synonym == platform_name)
+            .filter(
+                data_store.db_classes.Synonym.synonym == platform_name,
+                data_store.db_classes.Synonym.table == "Platforms",
+            )
             .all()
         )
         for synonym in synonyms:

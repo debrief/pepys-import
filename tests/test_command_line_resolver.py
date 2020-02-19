@@ -56,9 +56,11 @@ class CommandLineResolverTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_quit_works_for_resolver_sensor(self, resolver_prompt, menu_prompt):
-        menu_prompt.side_effect = [".", "."]
-        resolver_prompt.side_effect = ["2"]
+        menu_prompt.side_effect = [".", "2", ".", "2", "."]
+        resolver_prompt.side_effect = ["TEST"]
         with self.store.session_scope():
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_sensor(self.store, "", "", "")
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_sensor(self.store, "", "", "")
             with self.assertRaises(SystemExit):
@@ -138,6 +140,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
             "1",
             "1",
             ".",
+            "1",
+            "TEST",
+            ".",
         ]
         resolver_prompt.side_effect = [
             "UK",
@@ -162,6 +167,8 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 self.resolver.resolve_platform(self.store, "", "", "", "")
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_platform(self.store, "", "", "", "")
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_platform(self.store, "TEST", "", "", "")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_resolver_platform_with_values(self, menu_prompt):
@@ -209,6 +216,24 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.assertEqual(platform.platform_type_id, platform_type.platform_type_id)
             self.assertEqual(platform.nationality_id, nationality.nationality_id)
             self.assertEqual(platform.privacy_id, privacy.privacy_id)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_resolver_platform_add_to_synonym_table(self, menu_prompt):
+        menu_prompt.side_effect = ["1", "TEST", "1"]
+        with self.store.session_scope():
+            synonym = self.resolver.resolve_platform(
+                data_store=self.store,
+                platform_name="TEST",
+                platform_type=None,
+                nationality=None,
+                privacy=None,
+            )
+            self.assertEqual(synonym.synonym, "TEST")
+            self.assertEqual(synonym.table, "Platforms")
+
+    def test_resolver_platform_find_platform_from_synonym(self):
+        # TODO: hit the lines between 66-87 in command line resolver
+        pass
 
 
 if __name__ == "__main__":
