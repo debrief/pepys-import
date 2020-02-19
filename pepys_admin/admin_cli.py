@@ -45,6 +45,7 @@ class AdminShell(cmd.Cmd):
     def __init__(self, datastore):
         super(AdminShell, self).__init__()
         self.datastore = datastore
+        self.aliases = {"0": self.do_exit, "1": self.do_export, "2": self.do_status}
 
     def do_export(self, arg):
         "Start the export process"
@@ -132,6 +133,23 @@ class AdminShell(cmd.Cmd):
             self.file.close()
             self.file = None
 
+    def default(self, line):
+        cmd, arg, line = self.parseline(line)
+        if cmd in self.aliases:
+            self.aliases[cmd](arg)
+            if cmd == "0":
+                self.close()
+                return True
+        else:
+            print("*** Unknown syntax: %s" % line)
+
+    def postcmd(self, stop, line):
+        intro = "--- Menu --- \n (1) Export\n (2) Status\n (0) Exit\n"
+        if line != "0":
+            print(intro)
+        return cmd.Cmd.postcmd(self, stop, line)
+
 
 if __name__ == "__main__":
-    admin = AdminShell(datastore).cmdloop()
+    intro = "Welcome to the Pepys Admin shell.\n --- Menu --- \n (1) Export\n (2) Status\n (0) Exit\n"
+    admin = AdminShell(datastore).cmdloop(intro=intro)
