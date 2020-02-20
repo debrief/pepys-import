@@ -98,7 +98,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_platform(self, resolver_prompt, menu_prompt):
-        menu_prompt.side_effect = ["2", "1", "1", "1", "1"]
+        menu_prompt.side_effect = ["2", "2", "2", "2", "1"]
         resolver_prompt.side_effect = ["UK", "Warship", "PRIVACY-1"]
         with self.store.session_scope():
             self.store.add_to_privacies("PRIVACY-1")
@@ -129,16 +129,16 @@ class CommandLineResolverTestCase(unittest.TestCase):
             "2",
             ".",
             "2",
-            "1",
+            "2",
             ".",
             "2",
-            "1",
-            "1",
+            "2",
+            "2",
             ".",
             "2",
-            "1",
-            "1",
-            "1",
+            "2",
+            "2",
+            "2",
             ".",
             "1",
             "TEST",

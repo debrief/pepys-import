@@ -92,8 +92,8 @@ class CommandLineResolver(DataResolver):
                 )
             elif choice == str(2):
                 new_nationality = prompt("Please type name of new nationality: ")
-                nationality_check = data_store.search_nationality(new_nationality)
-                if not nationality_check:
+                chosen_nationality = data_store.search_nationality(new_nationality)
+                if not chosen_nationality:
                     chosen_nationality = data_store.add_to_nationalities(
                         new_nationality
                     )
@@ -137,8 +137,10 @@ class CommandLineResolver(DataResolver):
                 )
             elif choice == str(2):
                 new_platform_type = prompt("Please type name of new platform-type: ")
-                platform_type = data_store.search_platform_type(new_platform_type)
-                if not platform_type:
+                chosen_platform_type = data_store.search_platform_type(
+                    new_platform_type
+                )
+                if not chosen_platform_type:
                     chosen_platform_type = data_store.add_to_platform_types(
                         new_platform_type
                     )
@@ -183,8 +185,8 @@ class CommandLineResolver(DataResolver):
                 )
             elif choice == str(2):
                 new_privacy = prompt("Please type name of new classification: ")
-                privacy_check = data_store.search_privacy(new_privacy)
-                if not privacy_check:
+                chosen_privacy = data_store.search_privacy(new_privacy)
+                if not chosen_privacy:
                     chosen_privacy = data_store.add_to_privacies(new_privacy)
             elif choice == ".":
                 print("Quitting")
