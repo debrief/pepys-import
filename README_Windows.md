@@ -33,9 +33,11 @@ These instructions are to install pepys-import for _development_ on Windows 10 -
 
 14. Run `.\venv\Scripts\activate.bat` to activate the virtual environment
 
-15. Run `pip install -r requirements.txt`
+15. Change to the `pepys-import` folder (`cd pepys-import`)
 
-17. Run `pip install -e git+https://github.com/tk0miya/testing.postgresql.git#egg=testing.postgresql` to install the development version of `testing.postgresql` (**TODO:** this can be removed once another PR updating the requirements files is merged)
+16. Run `pip install -r requirements.txt`
+
+17. Run `pip install -r requirements_dev.txt` (only needed if you're doing development work, including running tests, formatting code etc)
 
 18. Everything should be installed now, in that virtual environment. Remember to activate it before doing any work on pepys!
 
