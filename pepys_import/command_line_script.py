@@ -8,10 +8,11 @@ from pepys_import.file.replay_importer import ReplayImporter
 
 FILE_PATH = os.path.abspath(__file__)
 DIRECTORY_PATH = os.path.dirname(FILE_PATH)
+DEFAULT_DATABASE = ":memory:"
 
 
-def main(path=DIRECTORY_PATH):
-    data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+def main(path=DIRECTORY_PATH, db=DEFAULT_DATABASE):
+    data_store = DataStore("", "", "", 0, db_name=db, db_type="sqlite")
     data_store.initialise()
 
     processor = FileProcessor("descending.db")
@@ -23,7 +24,11 @@ def main(path=DIRECTORY_PATH):
 if __name__ == "__main__":
     # Parse arguments
     parser = argparse.ArgumentParser()
-    help = "Please enter a path: (The default value is the directory of the script)"
-    parser.add_argument("--path", help=help, required=False, default=DIRECTORY_PATH)
+    path_help = "The path to import data from (The default value is the directory of the script)"
+    db_help = "The database to connect to: (The is to use an in-memory database)"
+    parser.add_argument(
+        "--path", help=path_help, required=False, default=DIRECTORY_PATH
+    )
+    parser.add_argument("--db", help=db_help, required=False, default=DEFAULT_DATABASE)
     args = parser.parse_args()
-    main(args.path)
+    main(path=args.path, db=args.db)
