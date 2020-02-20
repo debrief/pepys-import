@@ -80,7 +80,6 @@ If you don't have Python 3.6+ in your system, please download it from `python.or
 Pip is also necessary to create virtual environment. If you don't have it in your system, please download it::
 
     $ sudo apt-get install python3-pip
-    $ pip3 install virtualenv
 
 It is possible to verify pip installation with the following command::
 
@@ -141,14 +140,10 @@ Creating Python Environment
 Virtual Environment might be used to run the project. For creating a proper one,
 the following commands must be executed respectively in your project directory (please change the version with your Python version)::
 
-    $ virtualenv --python=python3.6 venv
+    $ python3.6 -m virtualenv venv
 
 **Note:** If you downloaded virtualenv in the current session, virtualenv command won't work,
 please try to run it after rebooting your machine.
-
-It is also possible to create a virtual environment with the following code::
-
-    $ python3.6 -m virtualenv venv
 
 When environment is created successfully, please run the following commands::
 
