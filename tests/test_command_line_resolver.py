@@ -370,7 +370,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.assertEqual(platform.nationality_id, nationality.nationality_id)
             self.assertEqual(platform.privacy_id, privacy.privacy_id)
 
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_input.prompt")
     def test_resolver_platform_add_to_synonym_table(self, menu_prompt):
         menu_prompt.side_effect = ["1", "TEST", "1"]
         with self.store.session_scope():
