@@ -1,5 +1,6 @@
 import argparse
-import cmd, sys
+import cmd
+import sys
 from iterfzf import iterfzf
 
 sys.path.append(".")
@@ -33,7 +34,12 @@ class AdminShell(cmd.Cmd):
     def __init__(self, datastore):
         super(AdminShell, self).__init__()
         self.datastore = datastore
-        self.aliases = {"0": self.do_exit, "1": self.do_export, "2": self.do_status}
+        self.aliases = {
+            "0": self.do_exit,
+            "1": self.do_export,
+            "2": self.do_initialise,
+            "3": self.do_status,
+        }
 
     def do_export(self, arg):
         "Start the export process"
@@ -56,9 +62,12 @@ class AdminShell(cmd.Cmd):
             print("Exported Datafile is: {} TODO".format(datafile_reference))
 
         selected_datafile = datafiles_dict[datafile_reference]
-        print(selected_datafile)
         with self.datastore.session_scope():
             self.datastore.export_datafile(selected_datafile)
+
+    def do_initialise(self, arg):
+        "Allow the currently connected database to be configured"
+        print("initialise")
 
     def do_status(self, arg):
         "Report on the database contents"
@@ -86,7 +95,7 @@ class AdminShell(cmd.Cmd):
             print("*** Unknown syntax: %s" % line)
 
     def postcmd(self, stop, line):
-        intro = "--- Menu --- \n (1) Export\n (2) Status\n (0) Exit\n"
+        intro = "--- Menu --- \n (1) Export\n (2) Initialise\n (3) Status\n (0) Exit\n"
         if line != "0":
             print(intro)
         return cmd.Cmd.postcmd(self, stop, line)
@@ -104,5 +113,5 @@ if __name__ == "__main__":
     else:
         datastore = postgres_initialise()
 
-    intro = "Welcome to the Pepys Admin shell.\n --- Menu --- \n (1) Export\n (2) Status\n (0) Exit\n"
+    intro = "Welcome to the Pepys Admin shell.\n --- Menu --- \n (1) Export\n (2) Initialise\n (3) Status\n (0) Exit\n"
     admin = AdminShell(datastore).cmdloop(intro=intro)
