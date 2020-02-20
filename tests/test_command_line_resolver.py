@@ -273,55 +273,53 @@ class CommandLineResolverTestCase(unittest.TestCase):
     #         self.assertEqual(platform_type.name, "Warship")
     #         self.assertEqual(nationality.name, "UK")
     #         self.assertEqual(privacy.name, "PRIVACY-1")
-    #
-    # @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    # @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    # def test_quit_works_for_resolver_platform(self, resolver_prompt, menu_prompt):
-    #     menu_prompt.side_effect = [
-    #         ".",
-    #         "2",
-    #         ".",
-    #         "2",
-    #         "2",
-    #         ".",
-    #         "2",
-    #         "2",
-    #         "2",
-    #         ".",
-    #         "2",
-    #         "2",
-    #         "2",
-    #         "2",
-    #         ".",
-    #         "1",
-    #         "TEST",
-    #         ".",
-    #     ]
-    #     resolver_prompt.side_effect = [
-    #         "UK",
-    #         "UK",
-    #         "Warship",
-    #         "UK",
-    #         "Warship",
-    #         "PRIVACY-1",
-    #     ]
-    #     with self.store.session_scope():
-    #         self.store.add_to_privacies("PRIVACY-1")
-    #         self.store.add_to_platform_types("Warship")
-    #         self.store.add_to_nationalities("UK")
-    #
-    #         with self.assertRaises(SystemExit):
-    #             self.resolver.resolve_platform(self.store, "", "", "", "")
-    #         with self.assertRaises(SystemExit):
-    #             self.resolver.resolve_platform(self.store, "", "", "", "")
-    #         with self.assertRaises(SystemExit):
-    #             self.resolver.resolve_platform(self.store, "", "", "", "")
-    #         with self.assertRaises(SystemExit):
-    #             self.resolver.resolve_platform(self.store, "", "", "", "")
-    #         with self.assertRaises(SystemExit):
-    #             self.resolver.resolve_platform(self.store, "", "", "", "")
-    #         with self.assertRaises(SystemExit):
-    #             self.resolver.resolve_platform(self.store, "TEST", "", "", "")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_quit_works_for_resolver_platform(self, resolver_prompt, menu_prompt):
+        menu_prompt.side_effect = [
+            ".",
+            "2",
+            ".",
+            "2",
+            "2",
+            ".",
+            "2",
+            "2",
+            "2",
+            ".",
+            "2",
+            "2",
+            "2",
+            "2",
+            ".",
+            "1",
+            "TEST",
+            ".",
+        ]
+        resolver_prompt.side_effect = [
+            "UK",
+            "UK",
+            "Warship",
+            "UK",
+            "Warship",
+            "PRIVACY-1",
+        ]
+        with self.store.session_scope():
+            self.store.add_to_privacies("PRIVACY-1")
+            self.store.add_to_platform_types("Warship")
+            self.store.add_to_nationalities("UK")
+
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_platform(self.store, "", "", "", "")
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_platform(self.store, "", "", "", "")
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_platform(self.store, "", "", "", "")
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_platform(self.store, "", "", "", "")
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_platform(self.store, "", "", "", "")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_resolver_platform_with_values(self, menu_prompt):
