@@ -227,24 +227,58 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
+    def fuzzy_search_sensor_type(self, data_store):
+        sensor_types = data_store.session.query(data_store.db_classes.SensorType).all()
+        completer = [sensor_type.name for sensor_type in sensor_types]
+        choice = create_menu(
+            "Please start typing to show suggested values",
+            choices=[],
+            completer=FuzzyWordCompleter(completer),
+        )
+        if choice not in completer:
+            new_choice = create_menu(
+                f"You didn't select an existing sensor type. "
+                f"Do you want to add '{choice}' to it?",
+                choices=["Yes", "No, I'd like to select an sensor type"],
+            )
+            if new_choice == str(1):
+                return data_store.add_to_sensor_types(choice)
+            elif new_choice == str(2):
+                return self.fuzzy_search_sensor_type(data_store)
+            elif new_choice == ".":
+                print("Quitting")
+                sys.exit(1)
+        else:
+            return (
+                data_store.session.query(data_store.db_classes.SensorType)
+                .filter(data_store.db_classes.SensorType.name == choice)
+                .first()
+            )
+
     def add_to_sensors(self, data_store, sensor_type, privacy):
         # Choose Sensor Type
         print("Ok, adding new sensor.")
 
-        sensor_type_names = ["Add a new sensor-type"]
-        choice = create_menu("Please provide sensor-type: ", sensor_type_names)
+        if not sensor_type:
+            sensor_type_names = [
+                "Search for an existing sensor-type",
+                "Add a new sensor-type",
+            ]
+            choice = create_menu("Please provide sensor-type: ", sensor_type_names)
 
-        if choice == str(1):
-            if not sensor_type:
+            if choice == str(1):
+                sensor_type = self.fuzzy_search_sensor_type(data_store)
+            elif choice == str(2):
                 new_input = prompt("Please type name of new sensor-type: ")
                 sensor_type = data_store.search_sensor_type(new_input)
-            if not privacy:
-                privacy = self.resolve_privacy(data_store)
+            elif choice == ".":
+                print("Quitting")
+                sys.exit(1)
 
-            return sensor_type, privacy
-        elif choice == ".":
-            print("Quitting")
-            sys.exit(1)
+        if not privacy:
+            privacy = self.fuzzy_search_privacy(data_store)
+
+        return sensor_type, privacy
 
     def fuzzy_search_sensor(self, data_store, sensor_type, privacy):
         sensors = data_store.session.query(data_store.db_classes.Sensor).all()
@@ -274,16 +308,41 @@ class CommandLineResolver(DataResolver):
                 .first()
             )
 
-    def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy):
-        # Check for name match in Sensor Table
-        sensor = data_store.search_sensor(sensor_name.upper())
+    @staticmethod
+    def find_sensor(data_store, sensor_name):
+        sensor = (
+            data_store.session.query(data_store.db_classes.Sensor)
+            .filter(data_store.db_classes.Sensor.name == sensor_name)
+            .first()
+        )
         if sensor:
             return sensor
-        # Check for synonym match
-        # TODO: search_synonym not implemented yet
-        # sensor_synonym = data_store.search_synonym(sensor_name.upper())
-        # if sensor_synonym:
-        #     return sensor_synonym
+
+        synonyms = (
+            data_store.session.query(data_store.db_classes.Synonym)
+            .filter(
+                data_store.db_classes.Synonym.synonym == sensor_name,
+                data_store.db_classes.Synonym.table == "Sensors",
+            )
+            .all()
+        )
+        # TODO: ask questions if this is the use of synonyms table or not
+        # for synonym in synonyms:
+        #     sensor = (
+        #         data_store.session.query(data_store.db_classes.Sensor)
+        #         .filter(data_store.db_classes.Sensor.name == synonym)
+        #         .first()
+        #     )
+        #     if sensor:
+        #         return sensor
+
+        return None
+
+    def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy):
+        # Check for name match in Sensor and Synonym Tables
+        sensor = self.find_sensor(data_store, sensor_name)
+        if sensor:
+            return sensor
 
         # Not found, carry on
         choice = create_menu(
