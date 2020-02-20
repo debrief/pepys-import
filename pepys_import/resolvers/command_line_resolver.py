@@ -230,6 +230,7 @@ class CommandLineResolver(DataResolver):
     def add_to_sensors(self, data_store, sensor_type, privacy):
         # Choose Sensor Type
         print("Ok, adding new sensor.")
+
         sensor_type_names = ["Add a new sensor-type"]
         choice = create_menu("Please provide sensor-type: ", sensor_type_names)
 
@@ -244,6 +245,34 @@ class CommandLineResolver(DataResolver):
         elif choice == ".":
             print("Quitting")
             sys.exit(1)
+
+    def fuzzy_search_sensor(self, data_store, sensor_type, privacy):
+        sensors = data_store.session.query(data_store.db_classes.Sensor).all()
+        completer = [sensor.name for sensor in sensors]
+        choice = create_menu(
+            "Please start typing to show suggested values",
+            choices=[],
+            completer=FuzzyWordCompleter(completer),
+        )
+        if choice not in completer:
+            new_choice = create_menu(
+                f"You didn't select an existing sensor. "
+                f"Do you want to add '{choice}' to it?",
+                choices=["Yes", "No, I'd like to select an existing sensor"],
+            )
+            if new_choice == str(1):
+                return self.add_to_sensors(data_store, sensor_type, privacy)
+            elif new_choice == str(2):
+                return self.fuzzy_search_sensor(data_store, sensor_type, privacy)
+            elif new_choice == ".":
+                print("Quitting")
+                sys.exit(1)
+        else:
+            return (
+                data_store.session.query(data_store.db_classes.Sensor)
+                .filter(data_store.db_classes.Sensor.name == choice)
+                .first()
+            )
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy):
         # Check for name match in Sensor Table
@@ -266,9 +295,7 @@ class CommandLineResolver(DataResolver):
         )
 
         if choice == str(1):
-            # TODO: do fuzzy search of names and synonyms
-            # If match found: ask yes/no to add to synonyms table
-            pass
+            return self.fuzzy_search_sensor(data_store, sensor_type, privacy)
         elif choice == str(2):
             return self.add_to_sensors(data_store, sensor_type, privacy)
         elif choice == ".":
