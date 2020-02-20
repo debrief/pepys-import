@@ -149,48 +149,10 @@ class CommandLineResolver(DataResolver):
                 sys.exit(1)
 
         # Choose Privacy
-        chosen_privacy = None
         if privacy:
             chosen_privacy = data_store.add_to_privacies(privacy)
         else:
-            privacy_names = [
-                "Search for an existing classification",
-                "Add a new classification",
-            ]
-            choice = create_menu(
-                "Ok, please provide classification for this platform: ", privacy_names
-            )
-
-            if choice == str(1):
-                privacies = data_store.session.query(
-                    data_store.db_classes.Privacy
-                ).all()
-                completer = [p.name for p in privacies]
-                new_choice = create_menu(
-                    "Please start typing to show suggested values",
-                    choices=[],
-                    completer=FuzzyWordCompleter(completer),
-                )
-                while new_choice not in completer:
-                    new_choice = create_menu(
-                        "You didn't select an existing classification. "
-                        "Please start typing to show suggested values",
-                        choices=[],
-                        completer=FuzzyWordCompleter(completer),
-                    )
-                chosen_privacy = (
-                    data_store.session.query(data_store.db_classes.Privacy)
-                    .filter(data_store.db_classes.Privacy.name == new_choice)
-                    .first()
-                )
-            elif choice == str(2):
-                new_privacy = prompt("Please type name of new classification: ")
-                chosen_privacy = data_store.search_privacy(new_privacy)
-                if not chosen_privacy:
-                    chosen_privacy = data_store.add_to_privacies(new_privacy)
-            elif choice == ".":
-                print("Quitting")
-                sys.exit(1)
+            chosen_privacy = self.fuzzy_search_privacy(data_store)
 
         print("Input complete. About to create this platform:")
         print(f"Name: {platform_name}")
@@ -313,14 +275,47 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
+    def fuzzy_search_privacy(self, data_store):
+        privacies = data_store.session.query(data_store.db_classes.Privacy).all()
+        completer = [p.name for p in privacies]
+        choice = create_menu(
+            "Please start typing to show suggested values",
+            choices=[],
+            completer=FuzzyWordCompleter(completer),
+        )
+        if choice not in completer:
+            new_choice = create_menu(
+                f"You didn't select an existing classification. "
+                f"Do you want to add '{choice}' to it?",
+                choices=["Yes", "No, I'd like to select an existing classification"],
+            )
+            if new_choice == str(1):
+                return data_store.add_to_privacies(choice)
+            elif new_choice == str(2):
+                return self.fuzzy_search_privacy(data_store)
+            elif new_choice == ".":
+                print("Quitting")
+                sys.exit(1)
+        else:
+            return (
+                data_store.session.query(data_store.db_classes.Privacy)
+                .filter(data_store.db_classes.Privacy.name == choice)
+                .first()
+            )
+
     def resolve_privacy(self, data_store):
         # Choose Privacy
-        privacy_names = ["Add a new classification"]
+        privacy_names = [
+            "Search an existing classification",
+            "Add a new classification",
+        ]
         choice = create_menu(
             f"Ok, please provide classification for new entry: ", privacy_names
         )
 
         if choice == str(1):
+            return self.fuzzy_search_privacy(data_store)
+        elif choice == str(2):
             new_privacy = prompt("Please type name of new classification: ")
             privacy = data_store.search_privacy(new_privacy)
             if privacy:

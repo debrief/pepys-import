@@ -20,7 +20,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
         )
         self.store.initialise()
 
-    @patch("pepys_import.resolvers.command_line_input.prompt", return_value="1")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu", return_value="2")
     @patch(
         "pepys_import.resolvers.command_line_resolver.prompt",
         return_value="PRIVACY-TEST",
@@ -30,11 +30,36 @@ class CommandLineResolverTestCase(unittest.TestCase):
             privacy = self.resolver.resolve_privacy(self.store)
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
-    @patch(
-        "pepys_import.resolvers.command_line_input.prompt", return_value=".",
-    )
-    def test_quit_works_for_resolver_privacy(self, prompt):
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_resolver_privacy_fuzzy_search_add_new_privacy(self, menu_prompt):
+        menu_prompt.side_effect = ["1", "PRIVACY-TEST", "1"]
         with self.store.session_scope():
+            privacy = self.resolver.resolve_privacy(self.store)
+            self.assertEqual(privacy.name, "PRIVACY-TEST")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_resolver_privacy_fuzzy_search_select_existing_privacy(self, menu_prompt):
+        menu_prompt.side_effect = ["1", "PRIVACY-TEST"]
+        with self.store.session_scope():
+            self.store.add_to_privacies("PRIVACY-TEST")
+            privacy = self.resolver.resolve_privacy(self.store)
+            self.assertEqual(privacy.name, "PRIVACY-TEST")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_resolver_privacy_fuzzy_search_recursive(self, menu_prompt):
+        menu_prompt.side_effect = ["1", "PRIVACY-TEST", "2", "PRIVACY-1"]
+        with self.store.session_scope():
+            self.store.add_to_privacies("PRIVACY-1")
+            self.store.add_to_privacies("PRIVACY-2")
+            privacy = self.resolver.resolve_privacy(self.store)
+            self.assertEqual(privacy.name, "PRIVACY-1")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_quit_works_for_resolver_privacy(self, menu_prompt):
+        menu_prompt.side_effect = [".", "1", "TEST", "."]
+        with self.store.session_scope():
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_privacy(self.store)
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_privacy(self.store)
 
