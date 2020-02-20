@@ -36,35 +36,34 @@ class ReplayImporter(Importer):
                     continue
 
                 # and finally store it
-                with data_store.session_scope():
-                    datafile = data_store.search_datafile(datafile_name)
-                    platform = data_store.get_platform(
-                        platform_name=rep_line.get_platform(),
-                        nationality="UK",
-                        platform_type="Fisher",
-                        privacy="Public",
-                    )
+                datafile = data_store.search_datafile(datafile_name)
+                platform = data_store.get_platform(
+                    platform_name=rep_line.get_platform(),
+                    nationality="UK",
+                    platform_type="Fisher",
+                    privacy="Public",
+                )
 
-                    all_sensors = data_store.session.query(
-                        data_store.db_classes.Sensor
-                    ).all()
-                    data_store.add_to_sensor_types("_GPS")
-                    sensor = platform.get_sensor(
-                        session=data_store.session,
-                        all_sensors=all_sensors,
-                        sensor_name=platform.name,
-                        sensor_type="_GPS",
-                        privacy="TEST",
-                    )
-                    state = datafile.create_state(sensor, rep_line.timestamp)
-                    state.location = rep_line.get_location()
-                    state.heading = rep_line.heading.to(unit_registry.radians).magnitude
+                all_sensors = data_store.session.query(
+                    data_store.db_classes.Sensor
+                ).all()
+                data_store.add_to_sensor_types("_GPS")
+                sensor = platform.get_sensor(
+                    session=data_store.session,
+                    all_sensors=all_sensors,
+                    sensor_name=platform.name,
+                    sensor_type="_GPS",
+                    privacy="TEST",
+                )
+                state = datafile.create_state(sensor, rep_line.timestamp)
+                state.location = rep_line.get_location()
+                state.heading = rep_line.heading.to(unit_registry.radians).magnitude
 
-                    state.speed = rep_line.speed
-                    privacy = data_store.search_privacy("TEST")
-                    state.privacy = privacy.privacy_id
-                    if datafile.validate():
-                        state.submit(data_store.session)
+                state.speed = rep_line.speed
+                privacy = data_store.search_privacy("TEST")
+                state.privacy = privacy.privacy_id
+                if datafile.validate():
+                    state.submit(data_store.session)
 
     # def requires_user_review(self) -> bool:
     #     """
