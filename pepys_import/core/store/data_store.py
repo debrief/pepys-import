@@ -391,7 +391,9 @@ class DataStore(object):
 
         return sensor_obj
 
-    def add_to_datafiles(self, simulated, privacy, file_type, reference=None, url=None):
+    def add_to_datafiles(
+        self, simulated=False, privacy=None, file_type=None, reference=None, url=None
+    ):
         """
         Adds the specified datafile to the Datafile table if not already present.
 
@@ -408,8 +410,6 @@ class DataStore(object):
         :return: Created :class:`Datafile` entity
         :rtype: Datafile
         """
-        # privacy = self.search_privacy(privacy)
-        # datafile_type = self.search_datafile_type(file_type)
 
         # fill in missing privacy, if necessary
         if privacy is None:
@@ -458,8 +458,6 @@ class DataStore(object):
         :return: Created Platform entity
         :rtype: Platform
         """
-
-        # TODO: remove the following duplicated lines
         nationality = self.search_nationality(nationality)
         platform_type = self.search_platform_type(platform_type)
         privacy = self.search_privacy(privacy)
@@ -511,6 +509,14 @@ class DataStore(object):
 
     #############################################################
     # Search/lookup functions
+
+    def get_datafile_from_id(self, datafile_id):
+        """Search for datafile with this id"""
+        return (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.datafile_id == datafile_id)
+            .first()
+        )
 
     def search_datafile_type(self, name):
         """Search for any datafile type with this name"""
