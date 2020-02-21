@@ -464,19 +464,6 @@ class DataStore(object):
         platform_type = self.search_platform_type(platform_type)
         privacy = self.search_privacy(privacy)
 
-        if nationality is None or platform_type is None or privacy is None:
-            (
-                platform_name,
-                platform_type,
-                nationality,
-                privacy,
-            ) = self.missing_data_resolver.resolve_platform(
-                self, name, platform_type, nationality, privacy
-            )
-
-        if nationality is None or platform_type is None or privacy is None:
-            raise Exception("There is missing value(s) in the data!")
-
         entry_id = self.add_to_entries(
             self.db_classes.Platform.table_type_id,
             self.db_classes.Platform.__tablename__,
@@ -695,8 +682,9 @@ class DataStore(object):
                 self, platform_name, platform_type, nationality, privacy
             )
 
-        if nationality is None or platform_type is None or privacy is None:
-            raise Exception("There is missing value(s) in the data!")
+        assert type(nationality), self.db_classes.Nationality
+        assert type(platform_type), self.db_classes.PlatformType
+        assert type(privacy), self.db_classes.Privacy
 
         if len(platform_name) == 0:
             raise Exception("Platform name can't be empty!")
