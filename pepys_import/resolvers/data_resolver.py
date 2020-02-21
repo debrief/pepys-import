@@ -10,11 +10,16 @@ class DataResolver(ABC):
         Implementation method should return any data necessary to create a platform.
         Currently: platform_name, platform_type, nationality, privacy.
 
-        :param data_store:
-        :param platform_name:
-        :param platform_type:
-        :param nationality:
-        :param privacy:
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :param platform_name: Name of :class:`Platform`
+        :type platform_name: String
+        :param nationality: Name of :class:`Nationality`
+        :type nationality: Nationality
+        :param platform_type: Name of :class:`PlatformType`
+        :type platform_type: PlatformType
+        :param privacy: Name of :class:`Privacy`
+        :type privacy: Privacy
         :return:
         """
 
@@ -24,10 +29,14 @@ class DataResolver(ABC):
         Implementation method should return any data necessary to create a sensor.
         Currently: sensor_name, sensor_type.
 
-        :param data_store:
-        :param sensor_name:
-        :param sensor_type:
-        :param privacy:
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :param sensor_name: Name of :class:`Sensor`
+        :type sensor_name: String
+        :param sensor_type: Type of :class:`Sensor`
+        :type sensor_type: SensorType
+        :param privacy: Name of :class:`Privacy`
+        :type privacy: Privacy
         :return:
         """
 
@@ -37,7 +46,8 @@ class DataResolver(ABC):
         Implementation method should return any data necessary to create a privacy.
         Currently: name
 
-        :param data_store:
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
         :return:
         """
 
@@ -46,9 +56,14 @@ class DataResolver(ABC):
         """
         Implementation method should return any data necessary to create a datafile.
         Currently: datafile_type, privacy
-        :param data_store:
-        :param datafile_name:
-        :param datafile_type:
-        :param privacy:
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :param datafile_name:  Name of Datafile
+        :type datafile_name: String
+        :param datafile_type: Type of Datafile
+        :type datafile_type: DatafileType
+        :param privacy: Name of :class:`Privacy`
+        :type privacy: Privacy
         :return:
         """
