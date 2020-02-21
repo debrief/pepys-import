@@ -95,15 +95,15 @@ class ETracImporter(Importer):
                     data_store.db_classes.Sensor
                 ).all()
                 sensor_type = data_store.add_to_sensor_types("GPS")
+                privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
                 sensor = platform.get_sensor(
                     data_store=data_store,
                     all_sensors=all_sensors,
                     sensor_name="E-Trac",
                     sensor_type=sensor_type,
-                    privacy="TEST",
+                    privacy=privacy.name,
                 )
                 state = datafile.create_state(sensor, timestamp)
-                privacy = data_store.search_privacy("TEST")
                 state.privacy = privacy.privacy_id
 
                 state.location = f"POINT({long_degrees_token} {lat_degrees_token})"
