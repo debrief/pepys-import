@@ -16,40 +16,12 @@ TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 
 
 class ETracTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.postgres = None
-        self.store = None
-        try:
-            self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
-            )
-        except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
-        try:
-            self.store = DataStore(
-                db_name="test",
-                db_host="localhost",
-                db_username="postgres",
-                db_password="postgres",
-                db_port=55527,
-            )
-            self.store.initialise()
-        except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
 
-    def tearDown(self) -> None:
-        try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
-            self.postgres.stop()
-        except AttributeError:
-            return
+    def tearDown(self):
+        pass
 
     def test_process_e_trac_data(self):
         processor = FileProcessor()
