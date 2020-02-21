@@ -114,6 +114,22 @@ class CommandLineResolver(DataResolver):
 
     # Helper methods
     def fuzzy_search_datafile(self, data_store, datafile_name, datafile_type, privacy):
+        """
+        This method parses all datafiles in the DB, and uses fuzzy search when
+        user is typing. If user enters a new value, it adds to Synonym or Datafiles
+        according to user's choice. If user selects an existing value, it returns the
+        selected Datafile entity.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :param datafile_name:  Name of Datafile
+        :type datafile_name: String
+        :param datafile_type: Type of Datafile
+        :type datafile_type: DatafileType
+        :param privacy: Name of :class:`Privacy`
+        :type privacy: Privacy
+        :return:
+        """
         datafiles = data_store.session.query(data_store.db_classes.Datafile).all()
         completer = [datafile.reference for datafile in datafiles]
         choice = create_menu(
@@ -146,6 +162,24 @@ class CommandLineResolver(DataResolver):
     def fuzzy_search_platform(
         self, data_store, platform_name, platform_type, nationality, privacy
     ):
+        """
+        This method parses all platforms in the DB, and uses fuzzy search when
+        user is typing. If user enters a new value, it adds to Synonym or Platforms
+        according to user's choice. If user selects an existing value, it returns the
+        selected Platform entity.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :param platform_name: Name of :class:`Platform`
+        :type platform_name: String
+        :param nationality: Name of :class:`Nationality`
+        :type nationality: Nationality
+        :param platform_type: Name of :class:`PlatformType`
+        :type platform_type: PlatformType
+        :param privacy: Name of :class:`Privacy`
+        :type privacy: Privacy
+        :return:
+        """
         completer = list()
         platforms = data_store.session.query(data_store.db_classes.Platform).all()
         for platform in platforms:
@@ -180,6 +214,20 @@ class CommandLineResolver(DataResolver):
             )
 
     def fuzzy_search_sensor(self, data_store, sensor_type, privacy):
+        """
+        This method parses all sensors in the DB, and uses fuzzy search when
+        user is typing. If user enters a new value, it adds to Sensor table or searches
+        for an existing sensor again. If user selects an existing value, it returns the
+        selected Sensor entity.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :param sensor_type: Type of :class:`Sensor`
+        :type sensor_type: SensorType
+        :param privacy: Name of :class:`Privacy`
+        :type privacy: Privacy
+        :return:
+        """
         sensors = data_store.session.query(data_store.db_classes.Sensor).all()
         completer = [sensor.name for sensor in sensors]
         choice = create_menu(
@@ -208,6 +256,17 @@ class CommandLineResolver(DataResolver):
             )
 
     def fuzzy_search_privacy(self, data_store):
+        """
+        This method parses all privacies in the DB, and uses fuzzy search when
+        user is typing. If user enters a new value, it adds to Privacy table or searches
+        for an existing privacy again. If user selects an existing value, it returns the
+        selected Privacy entity.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :return:
+        """
+
         privacies = data_store.session.query(data_store.db_classes.Privacy).all()
         completer = [p.name for p in privacies]
         choice = create_menu(
@@ -236,6 +295,17 @@ class CommandLineResolver(DataResolver):
             )
 
     def fuzzy_search_datafile_type(self, data_store):
+        """
+        This method parses all datafile types in the DB, and uses fuzzy search when
+        user is typing. If user enters a new value, it adds to DatafileType table or
+        searches for an existing privacy again. If user selects an existing value,
+        it returns the selected DatafileType entity.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :return:
+        """
+
         datafile_types = data_store.session.query(
             data_store.db_classes.DatafileType
         ).all()
@@ -266,6 +336,16 @@ class CommandLineResolver(DataResolver):
             )
 
     def fuzzy_search_nationality(self, data_store):
+        """
+        This method parses all Nationalities in the DB, and uses fuzzy search when
+        user is typing. If user enters a new value, it adds to Nationality table or
+        searches for an existing nationality again. If user selects an existing value,
+        it returns the selected Nationality entity.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :return:
+        """
         nationalities = data_store.session.query(
             data_store.db_classes.Nationality
         ).all()
@@ -296,6 +376,16 @@ class CommandLineResolver(DataResolver):
             )
 
     def fuzzy_search_platform_type(self, data_store):
+        """
+        This method parses all platform types in the DB, and uses fuzzy search when
+        user is typing. If user enters a new value, it adds to PlatformType table or
+        searches for an existing privacy again. If user selects an existing value,
+        it returns the selected PlatformType entity.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :return:
+        """
         platform_types = data_store.session.query(
             data_store.db_classes.PlatformType
         ).all()
@@ -326,6 +416,16 @@ class CommandLineResolver(DataResolver):
             )
 
     def fuzzy_search_sensor_type(self, data_store):
+        """
+        This method parses all sensor types in the DB, and uses fuzzy search when
+        user is typing. If user enters a new value, it adds to SensorType table or
+        searches for an existing privacy again. If user selects an existing value,
+        it returns the selected SensorType entity.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :return:
+        """
         sensor_types = data_store.session.query(data_store.db_classes.SensorType).all()
         completer = [sensor_type.name for sensor_type in sensor_types]
         choice = create_menu(
@@ -354,6 +454,17 @@ class CommandLineResolver(DataResolver):
             )
 
     def resolve_nationality(self, data_store):
+        """
+        This method asks user whether user wants to select from an existing nationality
+        or add a new nationality. If user wants to select from an existing nationality,
+        it returns the result from fuzzy search method. If user wants to add a new
+        nationality, it searches DB first to prevent duplicates. If it is not found,
+        it adds it to Nationality table. Finally, it returns the found or created entity
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :return:
+        """
         nationality_names = [
             "Search for an existing nationality",
             "Add a new nationality",
@@ -392,6 +503,17 @@ class CommandLineResolver(DataResolver):
             sys.exit(1)
 
     def resolve_sensor_type(self, data_store):
+        """
+        This method asks user whether user wants to select from an existing sensor type
+        or add a new sensor type. If user wants to select from an existing sensor type,
+        it returns the result from fuzzy search method. If user wants to add a new
+        sensor type, it searches DB first to prevent duplicates. If it is not found,
+        it adds it to SensorType table. Finally, it returns the found or created entity.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :return:
+        """
         sensor_type_names = [
             "Search for an existing sensor-type",
             "Add a new sensor-type",
@@ -412,6 +534,21 @@ class CommandLineResolver(DataResolver):
             sys.exit(1)
 
     def add_to_datafiles(self, data_store, datafile_name, datafile_type, privacy):
+        """
+        This method resolves datafile type and privacy. It asks user whether to create
+        a datafile with resolved values or not. If user enters Yes, it returns all
+        necessary data to create a datafile. If user enters No, it resolves values again
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :param datafile_name:  Name of Datafile
+        :type datafile_name: String
+        :param datafile_type: Type of Datafile
+        :type datafile_type: DatafileType
+        :param privacy: Name of :class:`Privacy`
+        :type privacy: Privacy
+        :return:
+        """
         print("Ok, adding new datafile.")
 
         # Choose Datafile Type
@@ -446,6 +583,24 @@ class CommandLineResolver(DataResolver):
     def add_to_platforms(
         self, data_store, platform_name, platform_type, nationality, privacy
     ):
+        """
+        This method resolves platform type, nationality and privacy. It asks user
+        whether to create a platform with resolved values or not. If user enters Yes,
+        it returns all necessary data to create a platform.
+        If user enters No, it resolves values again.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :param platform_name: Name of :class:`Platform`
+        :type platform_name: String
+        :param nationality: Name of :class:`Nationality`
+        :type nationality: Nationality
+        :param platform_type: Name of :class:`PlatformType`
+        :type platform_type: PlatformType
+        :param privacy: Name of :class:`Privacy`
+        :type privacy: Privacy
+        :return:
+        """
         print("Ok, adding new platform.")
 
         # Choose Nationality
@@ -490,6 +645,18 @@ class CommandLineResolver(DataResolver):
             sys.exit(1)
 
     def add_to_sensors(self, data_store, sensor_type, privacy):
+        """
+        This method resolves sensor type and privacy. It returns existing or resolved
+        sensor type and privacy entities.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :param sensor_type: Type of :class:`Sensor`
+        :type sensor_type: SensorType
+        :param privacy: Name of :class:`Privacy`
+        :type privacy: Privacy
+        :return:
+        """
         # Choose Sensor Type
         print("Ok, adding new sensor.")
 
@@ -507,6 +674,16 @@ class CommandLineResolver(DataResolver):
 
     @staticmethod
     def find_datafile(data_store, datafile_name):
+        """
+        This method tries to find a Datafile entity with the given datafile_name. If it
+        finds, it returns the entity. If it is not found, it searches synonyms.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :param datafile_name:  Name of Datafile
+        :type datafile_name: String
+        :return:
+        """
         datafile = (
             data_store.session.query(data_store.db_classes.Datafile)
             .filter(data_store.db_classes.Datafile.reference == datafile_name)
@@ -543,6 +720,16 @@ class CommandLineResolver(DataResolver):
 
     @staticmethod
     def find_platform(data_store, platform_name):
+        """
+        This method tries to find a Platform entity with the given platform_name. If it
+        finds, it returns the entity. If it is not found, it searches synonyms.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :param platform_name: Name of :class:`Platform`
+        :type platform_name: String
+        :return:
+        """
         platform = (
             data_store.session.query(data_store.db_classes.Platform)
             .filter(
@@ -585,6 +772,16 @@ class CommandLineResolver(DataResolver):
 
     @staticmethod
     def find_sensor(data_store, sensor_name):
+        """
+        This method tries to find a Sensor entity with the given sensor_name. If it
+        finds, it returns the entity. If it is not found, it searches synonyms.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :param sensor_name: Name of :class:`Sensor`
+        :type sensor_name: String
+        :return:
+        """
         sensor = (
             data_store.session.query(data_store.db_classes.Sensor)
             .filter(data_store.db_classes.Sensor.name == sensor_name)
