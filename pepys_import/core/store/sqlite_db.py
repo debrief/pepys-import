@@ -93,10 +93,6 @@ class Sensor(BaseSpatiaLite):
         sensor_type = SensorType().search_sensor_type(session, sensor_type)
         host = Platform().search_platform(session, host)
 
-        if sensor_type is None or host is None:
-            text = f"There is missing value(s) in '{sensor_type}, {host}'!"
-            raise Exception(text)
-
         entry_id = Entry().add_to_entries(
             session, Sensor.table_type_id, Sensor.__tablename__
         )
@@ -155,13 +151,12 @@ class Platform(BaseSpatiaLite):
         """
 
         if sensor_type is None or privacy is None:
-            resolved_values = data_store.missing_data_resolver.resolve_sensor(
+            sensor_type, privacy = data_store.missing_data_resolver.resolve_sensor(
                 data_store, sensor_name, sensor_type, privacy
             )
-            if sensor_type is None:
-                sensor_type = resolved_values[0]
-            if privacy is None:
-                privacy = resolved_values[1]
+
+        assert type(sensor_type), SensorType
+        assert type(privacy), Privacy
 
         # return True if provided sensor exists
         def check_sensor(name):
