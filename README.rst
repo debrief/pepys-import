@@ -62,7 +62,7 @@ It is suggested to install a pre-commit hook in order to apply Black before push
     $ pre-commit install
 
 
-Project Progres
+Project Progress
 ----------------
 
 View the project Kanban board `here <https://github.com/debrief/pepys-import/projects/3>`_
@@ -70,25 +70,90 @@ View the project Kanban board `here <https://github.com/debrief/pepys-import/pro
 Setup
 -----
 
-To prepare for running ensure these tools and packages are installed:
+To prepare for running ensure Python 3.6 or later are installed in your system.
+You can check your Python 3 version with the following command::
 
-* Python 3 - at least Python 3.6.4 or later
-* SQL Alchemy 1.3
+    $ python3 --version
 
-For Postgres support and unit tests these packages are also required:
+If you don't have Python 3.6+ in your system, please download it from `python.org <https://www.python.org/downloads/>`_
 
-* geoalchemy2
-* psycopg2
-* nose2 (0.9.1)
+Pip is also necessary to create virtual environment. If you don't have it in your system, please download it::
 
-Dependencies
-------------
+    $ sudo apt-get install python3-pip
 
-Install the python dependencies with: :code:`pip install -r requirements.txt`
+It is possible to verify pip installation with the following command::
+
+    $ pip3 --version
+
+-----------------------------------------
+Ubuntu 18.04 LTS Development Instructions
+-----------------------------------------
+
+Installing Spatialite
+*********************
+1. Easy Way
+"""""""""""
+
+Open a terminal and run the following command::
+
+    $ sudo apt install spatialite-bin
+    $ sudo apt-get install -y libsqlite3-mod-spatialite
+
+2. Alternative Way (Compiling From Source)
+""""""""""""""""""""""""""""""""""""""""""
+
+On Debian-based distributions the following libraries are necessary to run SpatiaLite::
+
+    $ sudo apt install zlib1g-dev libfreexl1
+    $ sudo apt-get install sqlite3 libsqlite3-dev
+    $ sudo apt-get install -y libsqlite3-mod-spatialite
+    $ sudo apt-get install binutils libproj-dev gdal-bin libgeos-dev libxml2-dev
+
+After all libraries are installed, it is necessary to download and run the latest SpatiaLite version::
+
+    $ wget https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-X.Y.Z.tar.gz
+    $ tar xaf libspatialite-X.Y.Z.tar.gz
+    $ cd libspatialite-X.Y.Z
+    $ ./configure
+    $ make
+    $ sudo make install
+
+Installing PostGIS
+******************
+
+The best way to install PostGIS is running the codes as follows::
+
+    sudo apt-get install libpq-dev python-dev
+    sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable
+    sudo apt-get update
+    sudo apt-get install postgis
+
+Cloning the Repository
+**********************
+Navigate to folder you would like to download the repository and run the following commands::
+
+    $ sudo apt install git
+    $ git clone https://github.com/debrief/pepys-import.git
+
+Creating Python Environment
+***************************
+Virtual Environment might be used to run the project. For creating a proper one,
+the following commands must be executed respectively in your project directory (please change the version with your Python version)::
+
+    $ python3.6 -m virtualenv venv
+
+**Note:** If you downloaded virtualenv in the current session, virtualenv command won't work,
+please try to run it after rebooting your machine.
+
+When environment is created successfully, please run the following commands::
+
+    $ source venv/bin/activate
+    $ pip install -r requirements.txt
 
 Unit tests
 ----------
 
+* In order to run the tests, please install requirements_dev: :code:`pip install -r requirements_dev.txt`
 * Run the unit test suite with:  :code:`coverage3 run -m unittest discover -v`
 * View the unit test coverage with: :code:`coverage report`
 

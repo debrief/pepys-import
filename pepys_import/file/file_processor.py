@@ -1,6 +1,7 @@
 import os
 
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 
 
 class FileProcessor:
@@ -37,14 +38,23 @@ class FileProcessor:
             raise FileNotFoundError(f"Folder not found in the given path: {path}")
 
         # get the data_store
-        data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
-        data_store.initialise()
+        if data_store is None:
+            data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
+            data_store.initialise()
 
         # capture path in absolute form
         abs_path = os.path.abspath(path)
 
         # decide whether to descend tree, or just work on this folder
         with data_store.session_scope():
+
+            states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            platforms_sum = TableSummary(
+                data_store.session, data_store.db_classes.Platform
+            )
+            first_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+            print(first_table_summary_set.report("==Before=="))
+
             if descend_tree:
                 # loop through this folder and children
                 for current_path, folders, files in os.walk(abs_path):
@@ -60,6 +70,13 @@ class FileProcessor:
                         processed_ctr = self.process_file(
                             file, current_path, data_store, processed_ctr
                         )
+
+            states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            platforms_sum = TableSummary(
+                data_store.session, data_store.db_classes.Platform
+            )
+            second_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+            print(second_table_summary_set.report("==After=="))
 
         print(f"Files got processed: {processed_ctr} times")
 
