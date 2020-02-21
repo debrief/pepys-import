@@ -248,6 +248,105 @@ class CommandLineResolverTestCase(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.resolver.fuzzy_search_sensor_type(self.store)
 
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_add_new_nationality(self, menu_prompt):
+        menu_prompt.side_effect = ["TEST", "1"]
+        with self.store.session_scope():
+            nationality = self.resolver.fuzzy_search_nationality(self.store)
+            self.assertEqual(nationality.name, "TEST")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_nationality_recursive(self, menu_prompt):
+        menu_prompt.side_effect = ["TEST", "2", "UK"]
+        with self.store.session_scope():
+            self.store.add_to_nationalities("UK")
+            self.store.add_to_nationalities("USA")
+            nationality = self.resolver.fuzzy_search_nationality(self.store)
+            self.assertEqual(nationality.name, "UK")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_quit_works__for_fuzzy_search_nationality(self, menu_prompt):
+        menu_prompt.side_effect = ["TEST", "."]
+        with self.store.session_scope():
+            with self.assertRaises(SystemExit):
+                self.resolver.fuzzy_search_nationality(self.store)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_add_new_platform_type(self, menu_prompt):
+        menu_prompt.side_effect = ["TEST", "1"]
+        with self.store.session_scope():
+            platform_type = self.resolver.fuzzy_search_platform_type(self.store)
+            self.assertEqual(platform_type.name, "TEST")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_platform_type_recursive(self, menu_prompt):
+        menu_prompt.side_effect = ["TEST", "2", "PLATFORM-TYPE-1"]
+        with self.store.session_scope():
+            self.store.add_to_platform_types("PLATFORM-TYPE-1")
+            self.store.add_to_platform_types("PLATFORM-TYPE-2")
+            platform_type = self.resolver.fuzzy_search_platform_type(self.store)
+            self.assertEqual(platform_type.name, "PLATFORM-TYPE-1")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_quit_works_for_fuzzy_search_platform_type(self, menu_prompt):
+        menu_prompt.side_effect = ["TEST", "."]
+        with self.store.session_scope():
+            with self.assertRaises(SystemExit):
+                self.resolver.fuzzy_search_platform_type(self.store)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_add_platform_to_synonym(self, menu_prompt):
+        menu_prompt.side_effect = ["TEST", "1"]
+        with self.store.session_scope():
+            platform = self.resolver.fuzzy_search_platform(
+                self.store, "TEST", "", "", ""
+            )
+            self.assertEqual(platform.synonym, "TEST")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_add_new_platform(self, menu_prompt):
+        menu_prompt.side_effect = ["PLATFORM-2", "2", "1"]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("PRIVACY-1")
+            platform_type = self.store.add_to_platform_types("Warship")
+            nationality = self.store.add_to_nationalities("UK")
+            self.resolver.fuzzy_search_platform(
+                self.store,
+                "PLATFORM-1",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+            )
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_platform_select_existing_platform(self, menu_prompt):
+        menu_prompt.return_value = "PLATFORM-1"
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("PRIVACY-1")
+            platform_type = self.store.add_to_platform_types("Warship")
+            nationality = self.store.add_to_nationalities("UK")
+            self.store.get_platform(
+                "PLATFORM-1",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+            )
+            platform = self.resolver.fuzzy_search_platform(
+                self.store,
+                "PLATFORM-1",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+            )
+            self.assertEqual(platform.name, "PLATFORM-1")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_quit_works_for_fuzzy_search_platform(self, menu_prompt):
+        menu_prompt.side_effect = ["TEST", "."]
+        with self.store.session_scope():
+            with self.assertRaises(SystemExit):
+                self.resolver.fuzzy_search_platform(self.store, "TEST", "", "", "")
+
     # @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     # @patch("pepys_import.resolvers.command_line_resolver.prompt")
     # def test_resolver_platform(self, resolver_prompt, menu_prompt):
@@ -385,52 +484,6 @@ class CommandLineResolverTestCase(unittest.TestCase):
     def test_resolver_platform_find_platform_from_synonym(self):
         # TODO: hit the lines between 66-87 in command line resolver
         pass
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_add_new_nationality(self, menu_prompt):
-        menu_prompt.side_effect = ["TEST", "1"]
-        with self.store.session_scope():
-            nationality = self.resolver.fuzzy_search_nationality(self.store)
-            self.assertEqual(nationality.name, "TEST")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_nationality_recursive(self, menu_prompt):
-        menu_prompt.side_effect = ["TEST", "2", "UK"]
-        with self.store.session_scope():
-            self.store.add_to_nationalities("UK")
-            self.store.add_to_nationalities("USA")
-            nationality = self.resolver.fuzzy_search_nationality(self.store)
-            self.assertEqual(nationality.name, "UK")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_quit_works__for_fuzzy_search_nationality(self, menu_prompt):
-        menu_prompt.side_effect = ["TEST", "."]
-        with self.store.session_scope():
-            with self.assertRaises(SystemExit):
-                self.resolver.fuzzy_search_nationality(self.store)
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_add_new_platform_type(self, menu_prompt):
-        menu_prompt.side_effect = ["TEST", "1"]
-        with self.store.session_scope():
-            platform_type = self.resolver.fuzzy_search_platform_type(self.store)
-            self.assertEqual(platform_type.name, "TEST")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_platform_type_recursive(self, menu_prompt):
-        menu_prompt.side_effect = ["TEST", "2", "PLATFORM-TYPE-1"]
-        with self.store.session_scope():
-            self.store.add_to_platform_types("PLATFORM-TYPE-1")
-            self.store.add_to_platform_types("PLATFORM-TYPE-2")
-            platform_type = self.resolver.fuzzy_search_platform_type(self.store)
-            self.assertEqual(platform_type.name, "PLATFORM-TYPE-1")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_quit_works_for_fuzzy_search_platform_type(self, menu_prompt):
-        menu_prompt.side_effect = ["TEST", "."]
-        with self.store.session_scope():
-            with self.assertRaises(SystemExit):
-                self.resolver.fuzzy_search_platform_type(self.store)
 
 
 if __name__ == "__main__":
