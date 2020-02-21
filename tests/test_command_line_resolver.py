@@ -589,7 +589,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
             privacy = self.store.add_to_privacies("PRIVACY-1")
             datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1")
             self.store.add_to_datafiles(
-                file_type=datafile_type, privacy=privacy, reference="TEST",
+                file_type=datafile_type.name, privacy=privacy.name, reference="TEST",
             )
             datafile = self.resolver.resolve_datafile(
                 data_store=self.store,
@@ -668,7 +668,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
             privacy = self.store.add_to_privacies("PRIVACY-1")
             datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1")
             self.store.add_to_datafiles(
-                file_type=datafile_type, privacy=privacy, reference="TEST",
+                file_type=datafile_type.name, privacy=privacy.name, reference="TEST",
             )
             datafile = self.resolver.fuzzy_search_datafile(
                 data_store=self.store,

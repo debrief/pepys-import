@@ -56,7 +56,10 @@ class DefaultResolverTestCase(unittest.TestCase):
     def test_resolver_datafile(self):
         with self.store.session_scope():
             datafile_type, privacy = self.resolver.resolve_datafile(
-                data_store=self.store, datafile_type=None, privacy=None
+                data_store=self.store,
+                datafile_name="TEST",
+                datafile_type=None,
+                privacy=None,
             )
             self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
             self.assertEqual(privacy.name, "PRIVACY-1")
