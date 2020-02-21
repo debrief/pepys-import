@@ -10,7 +10,7 @@ def create_menu(title, choices, completer=None):
     :param choices: Options to choose
     :type choices: List of strings
     :param completer: Optional argument that shows possible options while typing.
-    :type completer: :class:`prompt_toolkit.completion.FuzzyCompleter`
+    :type completer: :class:`prompt_toolkit.completion.FuzzyWordCompleter`
     :return: Entered choice
     """
     input_text = title + "\n"
