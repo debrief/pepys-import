@@ -392,7 +392,9 @@ class DataStore(object):
 
         return sensor_obj
 
-    def add_to_datafiles(self, simulated, privacy, file_type, reference=None, url=None):
+    def add_to_datafiles(
+        self, simulated=False, privacy=None, file_type=None, reference=None, url=None
+    ):
         """
         Adds the specified datafile to the Datafile table if not already present.
 
@@ -409,7 +411,15 @@ class DataStore(object):
         :return: Created :class:`Datafile` entity
         :rtype: Datafile
         """
+
+        # fill in missing privacy, if necessary
+        if privacy is None:
+            privacy = self.missing_data_resolver.default_privacy
         privacy = self.search_privacy(privacy)
+
+        # fill in missing file_type, if necessary
+        if file_type is None:
+            file_type = self.missing_data_resolver.default_datafile_type
         datafile_type = self.search_datafile_type(file_type)
 
         if privacy is None or datafile_type is None:
@@ -489,6 +499,14 @@ class DataStore(object):
 
     #############################################################
     # Search/lookup functions
+
+    def get_datafile_from_id(self, datafile_id):
+        """Search for datafile with this id"""
+        return (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.datafile_id == datafile_id)
+            .first()
+        )
 
     def search_datafile_type(self, name):
         """Search for any datafile type with this name"""
