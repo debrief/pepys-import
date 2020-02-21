@@ -77,10 +77,24 @@ class CommandLineResolverTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolve_sensor(self, resolver_prompt, menu_prompt):
-        menu_prompt.side_effect = ["2", "2", "PRIVACY-1"]
-        resolver_prompt.side_effect = ["SENSOR-TYPE-1"]
+        menu_prompt.side_effect = ["2", "2", "2"]
+        resolver_prompt.side_effect = ["SENSOR-TYPE-1", "PRIVACY-1"]
         with self.store.session_scope():
             self.store.add_to_sensor_types("SENSOR-TYPE-1")
+            self.store.add_to_privacies("PRIVACY-1")
+            sensor_type, privacy = self.resolver.resolve_sensor(
+                self.store, "TEST", sensor_type=None, privacy=None
+            )
+
+            self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
+            self.assertEqual(privacy.name, "PRIVACY-1")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolve_sensor_with_new_sensor_type(self, resolver_prompt, menu_prompt):
+        menu_prompt.side_effect = ["2", "2", "2"]
+        resolver_prompt.side_effect = ["SENSOR-TYPE-1", "PRIVACY-1"]
+        with self.store.session_scope():
             self.store.add_to_privacies("PRIVACY-1")
             sensor_type, privacy = self.resolver.resolve_sensor(
                 self.store, "TEST", sensor_type=None, privacy=None
@@ -168,6 +182,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
             "1",
             "1",
             "SENSOR-TYPE-1",
+            "1",
             "PRIVACY-1",
         ]
         with self.store.session_scope():
@@ -236,6 +251,18 @@ class CommandLineResolverTestCase(unittest.TestCase):
             )
             self.assertEqual(sensor.name, "TEST")
             self.assertEqual(sensor.sensor_type_id, sensor_type.sensor_type_id)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_resolver_sensor_with_values_given(self, menu_prompt):
+        menu_prompt.side_effect = ["2"]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1")
+            privacy = self.store.add_to_privacies("PRIVACY-1")
+            resolved_type, resolved_privacy = self.resolver.resolve_sensor(
+                self.store, "TEST", sensor_type.name, privacy.name
+            )
+            self.assertEqual(resolved_type.sensor_type_id, sensor_type.sensor_type_id)
+            self.assertEqual(resolved_privacy.privacy_id, privacy.privacy_id)
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_sensor_type_add_sensor_type(self, menu_prompt):

@@ -238,6 +238,25 @@ class CommandLineResolver(DataResolver):
                 .first()
             )
 
+    def resolve_nationality(self, data_store):
+        nationality_names = [
+            "Search for an existing nationality",
+            "Add a new nationality",
+        ]
+        choice = create_menu("Please provide nationality: ", nationality_names)
+        if choice == str(1):
+            return self.fuzzy_search_nationality(data_store)
+        elif choice == str(2):
+            new_nationality = prompt("Please type name of new nationality: ")
+            nationality = data_store.search_nationality(new_nationality)
+            if nationality:
+                return nationality
+            else:
+                return data_store.add_to_nationalities(new_nationality)
+        elif choice == ".":
+            print("Quitting")
+            sys.exit(1)
+
     def fuzzy_search_platform_type(self, data_store):
         platform_types = data_store.session.query(
             data_store.db_classes.PlatformType
@@ -268,60 +287,41 @@ class CommandLineResolver(DataResolver):
                 .first()
             )
 
+    def resolve_platform_type(self, data_store):
+        platform_type_names = [
+            "Search for an existing platform-type",
+            "Add a new platform-type",
+        ]
+        choice = create_menu("Ok, please provide platform-type: ", platform_type_names)
+        if choice == str(1):
+            return self.fuzzy_search_platform_type(data_store)
+        elif choice == str(2):
+            new_platform_type = prompt("Please type name of new platform-type: ")
+            platform_type = data_store.search_platform_type(new_platform_type)
+            if platform_type:
+                return platform_type
+            else:
+                return data_store.add_to_platform_types(new_platform_type)
+        elif choice == ".":
+            print("Quitting")
+            sys.exit(1)
+
     def add_to_platforms(
         self, data_store, platform_name, platform_type, nationality, privacy
     ):
         print("Ok, adding new platform.")
 
         # Choose Nationality
-        chosen_nationality = None
         if nationality:
             chosen_nationality = data_store.add_to_nationalities(nationality)
         else:
-            nationality_names = [
-                "Search for an existing nationality",
-                "Add a new nationality",
-            ]
-            choice = create_menu("Please provide nationality: ", nationality_names)
-            if choice == str(1):
-                chosen_nationality = self.fuzzy_search_nationality(data_store)
-            elif choice == str(2):
-                new_nationality = prompt("Please type name of new nationality: ")
-                chosen_nationality = data_store.search_nationality(new_nationality)
-                if not chosen_nationality:
-                    chosen_nationality = data_store.add_to_nationalities(
-                        new_nationality
-                    )
-            elif choice == ".":
-                print("Quitting")
-                sys.exit(1)
+            chosen_nationality = self.resolve_nationality(data_store)
 
         # Choose Platform Type
-        chosen_platform_type = None
         if platform_type:
             chosen_platform_type = data_store.add_to_platform_types(platform_type)
         else:
-            platform_type_names = [
-                "Search for an existing platform-type",
-                "Add a new platform-type",
-            ]
-            choice = create_menu(
-                "Ok, please provide platform-type: ", platform_type_names
-            )
-            if choice == str(1):
-                chosen_platform_type = self.fuzzy_search_platform_type(data_store)
-            elif choice == str(2):
-                new_platform_type = prompt("Please type name of new platform-type: ")
-                chosen_platform_type = data_store.search_platform_type(
-                    new_platform_type
-                )
-                if not chosen_platform_type:
-                    chosen_platform_type = data_store.add_to_platform_types(
-                        new_platform_type
-                    )
-            elif choice == ".":
-                print("Quitting")
-                sys.exit(1)
+            chosen_platform_type = self.resolve_platform_type(data_store)
 
         # Choose Privacy
         if privacy:
@@ -444,27 +444,38 @@ class CommandLineResolver(DataResolver):
                 .first()
             )
 
+    def resolve_sensor_type(self, data_store):
+        sensor_type_names = [
+            "Search for an existing sensor-type",
+            "Add a new sensor-type",
+        ]
+        choice = create_menu("Please provide sensor-type: ", sensor_type_names)
+
+        if choice == str(1):
+            return self.fuzzy_search_sensor_type(data_store)
+        elif choice == str(2):
+            new_input = prompt("Please type name of new sensor-type: ")
+            sensor_type = data_store.search_sensor_type(new_input)
+            if sensor_type:
+                return sensor_type
+
+            return data_store.add_to_sensor_types(new_input)
+        elif choice == ".":
+            print("Quitting")
+            sys.exit(1)
+
     def add_to_sensors(self, data_store, sensor_type, privacy):
         # Choose Sensor Type
         print("Ok, adding new sensor.")
 
-        if not sensor_type:
-            sensor_type_names = [
-                "Search for an existing sensor-type",
-                "Add a new sensor-type",
-            ]
-            choice = create_menu("Please provide sensor-type: ", sensor_type_names)
+        if sensor_type:
+            sensor_type = data_store.add_to_sensor_types(sensor_type)
+        else:
+            sensor_type = self.resolve_sensor_type(data_store)
 
-            if choice == str(1):
-                sensor_type = self.fuzzy_search_sensor_type(data_store)
-            elif choice == str(2):
-                new_input = prompt("Please type name of new sensor-type: ")
-                sensor_type = data_store.search_sensor_type(new_input)
-            elif choice == ".":
-                print("Quitting")
-                sys.exit(1)
-
-        if not privacy:
+        if privacy:
+            privacy = data_store.add_to_privacies(privacy)
+        else:
             privacy = self.resolve_privacy(data_store)
 
         return sensor_type, privacy
