@@ -21,16 +21,12 @@ class CommandLineResolverTestCase(unittest.TestCase):
         self.store.initialise()
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_resolver_privacy(self, resolver_prompt, menu_prompt):
-        menu_prompt.return_value = "2"
-        resolver_prompt.return_value = "PRIVACY-TEST"
-        with self.store.session_scope():
-            privacy = self.resolver.resolve_privacy(self.store)
-            self.assertEqual(privacy.name, "PRIVACY-TEST")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_add_new_privacy(self, menu_prompt):
+        """Test whether a new Privacy entity created or not
+        after searched and not founded in the Privacy Table."""
+
+        # Select "Search an existing classification"->Search "PRIVACY-TEST"->
+        # Select "Yes"
         menu_prompt.side_effect = ["1", "PRIVACY-TEST", "1"]
         with self.store.session_scope():
             privacy = self.resolver.resolve_privacy(self.store)
@@ -38,6 +34,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_select_existing_privacy(self, menu_prompt):
+        """Test whether an existing Privacy entity searched and returned or not"""
+
+        # Select "Search an existing classification"->Search "PRIVACY-TEST"
         menu_prompt.side_effect = ["1", "PRIVACY-TEST"]
         with self.store.session_scope():
             self.store.add_to_privacies("PRIVACY-TEST")
@@ -49,6 +48,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
     def test_fuzzy_search_select_existing_privacy_without_search(
         self, resolver_prompt, menu_prompt
     ):
+        """Test whether a new Privacy entity created or not"""
+
+        # Select "Add a new classification"->Type "PRIVACY-TEST"
         menu_prompt.side_effect = ["2"]
         resolver_prompt.side_effect = ["PRIVACY-TEST"]
         with self.store.session_scope():
@@ -58,6 +60,10 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_recursive_privacy(self, menu_prompt):
+        """Test whether recursive call works for privacy"""
+
+        # Select "Search an existing classification"->Search "PRIVACY-TEST"->Select "No"
+        # ->Search "PRIVACY-1"
         menu_prompt.side_effect = ["1", "PRIVACY-TEST", "2", "PRIVACY-1"]
         with self.store.session_scope():
             self.store.add_to_privacies("PRIVACY-1")
@@ -67,16 +73,23 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_quit_works_for_resolver_privacy(self, menu_prompt):
+        """Test whether "." quits from the resolve privacy"""
         menu_prompt.side_effect = [".", "1", "TEST", "."]
         with self.store.session_scope():
+            # Select "."
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_privacy(self.store)
+            # Select "Search an existing classification"->Search "TEST"->Select "."
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_privacy(self.store)
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolve_sensor(self, resolver_prompt, menu_prompt):
+        """Test whether correct sensor type and privacy entities are resolved or not"""
+
+        # Select "Add a new sensor"->Select "Add a new sensor-type"->
+        # Type "SENSOR-TYPE-1"->Select "Add a new classification"->Type "PRIVACY-1"
         menu_prompt.side_effect = ["2", "2", "2"]
         resolver_prompt.side_effect = ["SENSOR-TYPE-1", "PRIVACY-1"]
         with self.store.session_scope():
@@ -92,6 +105,10 @@ class CommandLineResolverTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolve_sensor_with_new_sensor_type(self, resolver_prompt, menu_prompt):
+        """Test whether correct sensor type and privacy entities are resolved or not"""
+
+        # Select "Add a new sensor"->Select "Add a new sensor-type"->
+        # Type "SENSOR-TYPE-1"->Select "Add a new classification"->Type "PRIVACY-1"
         menu_prompt.side_effect = ["2", "2", "2"]
         resolver_prompt.side_effect = ["SENSOR-TYPE-1", "PRIVACY-1"]
         with self.store.session_scope():
@@ -103,33 +120,11 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
             self.assertEqual(privacy.name, "PRIVACY-1")
 
-    def test_resolve_sensor_with_existing_sensor(self):
-        with self.store.session_scope():
-            # Create platform first, then create a Sensor object
-            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1")
-            privacy = self.store.add_to_privacies("PRIVACY-1").name
-            nationality = self.store.add_to_nationalities("UK").name
-            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1").name
-            platform = self.store.get_platform(
-                platform_name="Test Platform",
-                nationality=nationality,
-                platform_type=platform_type,
-                privacy=privacy,
-            )
-            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            sensor = platform.get_sensor(
-                self.store, sensors, "TEST", sensor_type, privacy
-            )
-
-            sensor_2 = self.resolver.resolve_sensor(
-                self.store, "TEST", sensor_type, privacy
-            )
-
-            self.assertEqual(sensor.name, sensor_2.name)
-            self.assertEqual(sensor_2.name, "TEST")
-
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_select_existing_sensor(self, menu_prompt):
+        """Test whether an existing Sensor entity returned after fuzzy search"""
+
+        # Select "Search for existing sensor"->Search "TEST"
         menu_prompt.side_effect = ["1", "TEST"]
         with self.store.session_scope():
             # Create platform first, then create a Sensor object
@@ -145,6 +140,8 @@ class CommandLineResolverTestCase(unittest.TestCase):
             )
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
             platform.get_sensor(self.store, sensors, "TEST", sensor_type, privacy)
+
+            # it will return existing Sensor entity
             sensor = self.resolver.resolve_sensor(
                 self.store, "TEST", sensor_type, privacy
             )
@@ -152,6 +149,10 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_recursive_sensor(self, menu_prompt):
+        """Test whether recursive call works for sensor"""
+
+        # Select "Search an existing sensor"->Search "SENSOR-TEST"->Select "No"
+        # ->Search "SENSOR-1"
         menu_prompt.side_effect = ["1", "SENSOR-TEST", "2", "SENSOR-1"]
         with self.store.session_scope():
             # Create platform first, then create a Sensor object
@@ -176,6 +177,12 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_add_sensor(self, menu_prompt):
+        """Test whether a new Sensor entity created or not after searched
+        and not founded in the Sensor Table."""
+
+        # Select "Search an existing sensor"->Search "SENSOR-TEST"->Select "Yes"->
+        # Select "Search for an existing sensor-type"->Search "SENSOR-TYPE-1"->
+        # Select "Search an existing classification"->Search "PRIVACY-1"
         menu_prompt.side_effect = [
             "1",
             "SENSOR-TEST",
@@ -211,19 +218,26 @@ class CommandLineResolverTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_quit_works_for_resolver_sensor(self, resolver_prompt, menu_prompt):
+        """Test whether "." quits from the resolve sensor"""
+        # TODO: selects not correct
         menu_prompt.side_effect = [".", "2", ".", "2", ".", "1", "TEST", "."]
         resolver_prompt.side_effect = ["TEST"]
         with self.store.session_scope():
+            # Select "."
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_sensor(self.store, "", "", "")
+            # Select "Add a new sensor"->Select "."
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_sensor(self.store, "", "", "")
+            # Select "Add a new sensor"->Search "TEST"->Select "."
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_sensor(self.store, "", "", "")
+            # Select "Search an existing sensor"->Search "TEST"->Select "."
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_sensor(self.store, "", "", "")
 
     def test_resolver_sensor_with_sensor_given(self):
+        """Test whether an existing Sensor entity returned or not"""
         with self.store.session_scope():
             sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1")
             privacy = self.store.add_to_privacies("PRIVACY-1")
@@ -243,6 +257,8 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 sensor_type=sensor_type,
                 privacy=privacy,
             )
+
+            # it will return existing Sensor entity
             sensor = self.resolver.resolve_sensor(
                 data_store=self.store,
                 sensor_name="TEST",
