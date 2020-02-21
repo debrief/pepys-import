@@ -94,12 +94,12 @@ class ETracImporter(Importer):
                 all_sensors = data_store.session.query(
                     data_store.db_classes.Sensor
                 ).all()
-                data_store.add_to_sensor_types("GPS")
+                sensor_type = data_store.add_to_sensor_types("GPS")
                 sensor = platform.get_sensor(
-                    session=data_store.session,
+                    data_store=data_store,
                     all_sensors=all_sensors,
                     sensor_name="E-Trac",
-                    sensor_type="GPS",
+                    sensor_type=sensor_type,
                     privacy="TEST",
                 )
                 state = datafile.create_state(sensor, timestamp)
