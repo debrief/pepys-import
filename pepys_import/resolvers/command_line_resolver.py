@@ -12,6 +12,160 @@ class CommandLineResolver(DataResolver):
     def __init__(self):
         super().__init__()
 
+    def fuzzy_search_datafile_type(self, data_store):
+        datafile_types = data_store.session.query(
+            data_store.db_classes.DatafileType
+        ).all()
+        completer = [p.name for p in datafile_types]
+        choice = create_menu(
+            "Please start typing to show suggested values",
+            choices=[],
+            completer=FuzzyWordCompleter(completer),
+        )
+        if choice not in completer:
+            new_choice = create_menu(
+                f"You didn't select an existing datafile type. "
+                f"Do you want to add '{choice}' to it?",
+                choices=["Yes", "No, I'd like to select an existing datafile type"],
+            )
+            if new_choice == str(1):
+                return data_store.add_to_datafile_types(choice)
+            elif new_choice == str(2):
+                return self.fuzzy_search_datafile_type(data_store)
+            elif new_choice == ".":
+                print("Quitting")
+                sys.exit(1)
+        else:
+            return (
+                data_store.session.query(data_store.db_classes.DatafileType)
+                .filter(data_store.db_classes.DatafileType.name == choice)
+                .first()
+            )
+
+    @staticmethod
+    def find_datafile(data_store, datafile_name):
+        datafile = (
+            data_store.session.query(data_store.db_classes.Datafile)
+            .filter(data_store.db_classes.Datafile.reference == datafile_name)
+            .first()
+        )
+        if datafile:
+            return datafile
+
+        synonyms = (
+            data_store.session.query(data_store.db_classes.Synonym)
+            .filter(
+                data_store.db_classes.Synonym.synonym == datafile_name,
+                data_store.db_classes.Synonym.table == "Datafiles",
+            )
+            .all()
+        )
+        # TODO: this should change
+        # for synonym in synonyms:
+        #     platform = (
+        #         data_store.session.query(data_store.db_classes.Platform)
+        #         .filter(
+        #             or_(
+        #                 data_store.db_classes.Platform.name == synonym,
+        #                 data_store.db_classes.Platform.trigraph == synonym,
+        #                 data_store.db_classes.Platform.quadgraph == synonym,
+        #             )
+        #         )
+        #         .first()
+        #     )
+        #     if platform:
+        #         return platform
+
+        return None
+
+    def fuzzy_search_datafile(self, data_store, datafile_name, datafile_type, privacy):
+        datafiles = data_store.session.query(data_store.db_classes.Datafile).all()
+        completer = [datafile.reference for datafile in datafiles]
+        choice = create_menu(
+            "Please start typing to show suggested values",
+            choices=[],
+            completer=FuzzyWordCompleter(completer),
+        )
+        if choice not in completer:
+            new_choice = create_menu(
+                f"You didn't select an existing datafile. "
+                f"Do you wish to keep {choice} as synonym?",
+                ["Yes", "No"],
+            )
+            if new_choice == str(1):
+                return data_store.add_to_synonyms("Datafiles", datafile_name)
+            elif new_choice == str(2):
+                return self.add_to_datafiles(
+                    data_store, datafile_name, datafile_type, privacy
+                )
+            elif new_choice == ".":
+                print("Quitting")
+                sys.exit(1)
+        else:
+            return (
+                data_store.session.query(data_store.db_classes.Datafile)
+                .filter(data_store.db_classes.Datafile.reference == choice)
+                .first()
+            )
+
+    def add_to_datafiles(self, data_store, datafile_name, datafile_type, privacy):
+        print("Ok, adding new datafile.")
+
+        # Choose Datafile Type
+        if datafile_type:
+            chosen_datafile_type = data_store.add_to_datafile_types(datafile_type)
+        else:
+            chosen_datafile_type = self.fuzzy_search_datafile_type(data_store)
+
+        # Choose Privacy
+        if privacy:
+            chosen_privacy = data_store.add_to_privacies(privacy)
+        else:
+            chosen_privacy = self.resolve_privacy(data_store)
+
+        print("Input complete. About to create this datafile:")
+        print(f"Name: {datafile_name}")
+        print(f"Type: {chosen_datafile_type.name}")
+        print(f"Classification: {chosen_privacy.name}")
+
+        choice = create_menu(
+            "Create this datafile?: ", ["Yes", "No, make further edits"]
+        )
+
+        if choice == str(1):
+            return datafile_name, chosen_datafile_type, chosen_privacy
+        elif choice == str(2):
+            return self.add_to_datafiles(data_store, datafile_name, None, None)
+        elif choice == ".":
+            print("Quitting")
+            sys.exit(1)
+
+    def resolve_datafile(self, data_store, datafile_name, datafile_type, privacy):
+        if datafile_name:
+            datafile = self.find_datafile(data_store, datafile_name)
+            if datafile:
+                return datafile
+
+        choice = create_menu(
+            f"Datafile '{datafile_name}' not found. Do you wish to: ",
+            [
+                f"Search for existing datafile",
+                f"Add a new datafile, titled '{datafile_name}'",
+            ],
+        )
+
+        if choice == str(1):
+            return self.fuzzy_search_datafile(
+                data_store, datafile_name, datafile_type, privacy
+            )
+        elif choice == str(2):
+            return self.add_to_datafiles(
+                data_store, datafile_name, datafile_type, privacy
+            )
+        elif choice == ".":
+            print("Quitting")
+            sys.exit(1)
+
     @staticmethod
     def find_platform(data_store, platform_name):
         platform = (
@@ -170,25 +324,10 @@ class CommandLineResolver(DataResolver):
                 sys.exit(1)
 
         # Choose Privacy
-        chosen_privacy = None
         if privacy:
             chosen_privacy = data_store.add_to_privacies(privacy)
         else:
-            privacy_names = [
-                "Search for an existing privacy",
-                "Add a new privacy",
-            ]
-            choice = create_menu("Ok, please provide platform-type: ", privacy_names)
-            if choice == str(1):
-                chosen_privacy = self.fuzzy_search_privacy(data_store)
-            elif choice == str(2):
-                new_privacy = prompt("Please type name of new classification: ")
-                chosen_privacy = data_store.search_privacy(new_privacy)
-                if not chosen_privacy:
-                    chosen_privacy = data_store.add_to_privacies(new_privacy)
-            elif choice == ".":
-                print("Quitting")
-                sys.exit(1)
+            chosen_privacy = self.resolve_privacy(data_store)
 
         print("Input complete. About to create this platform:")
         print(f"Name: {platform_name}")
