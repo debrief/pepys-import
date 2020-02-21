@@ -53,3 +53,14 @@ class DefaultResolver(DataResolver):
             privacy = data_store.add_to_privacies(self.default_privacy)
 
         return privacy
+
+    def resolve_datafile(self, data_store, datafile_type, privacy):
+        datafile_type = data_store.search_datafile_type(self.default_datafile_type)
+        if not datafile_type:
+            datafile_type = data_store.add_to_datafile_types(self.default_datafile_type)
+
+        privacy = data_store.search_privacy(self.default_privacy)
+        if not privacy:
+            privacy = data_store.add_to_privacies(self.default_privacy)
+
+        return datafile_type, privacy
