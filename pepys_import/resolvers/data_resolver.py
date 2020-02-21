@@ -42,11 +42,12 @@ class DataResolver(ABC):
         """
 
     @abstractmethod
-    def resolve_datafile(self, data_store, datafile_type):
+    def resolve_datafile(self, data_store, datafile_type, privacy):
         """
         Implementation method should return any data necessary to create a datafile.
         Currently: datafile_type, privacy
         :param data_store:
         :param datafile_type:
+        :param privacy:
         :return:
         """
