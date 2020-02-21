@@ -2,10 +2,13 @@ import argparse
 import cmd
 import sys
 from iterfzf import iterfzf
+import os
 
 sys.path.append(".")
 
 from pepys_import.core.store.data_store import DataStore
+
+dirpath = os.path.dirname(os.path.abspath(__file__))
 
 
 def postgres_initialise():
@@ -24,6 +27,58 @@ def postgres_initialise():
 def sqlite_initialise():
     """Test whether schemas created successfully on PostgresSQL"""
     print("SQLITE")
+
+
+class InitialiseShell(cmd.Cmd):
+    prompt = "(initialise) "
+
+    def __init__(self, datastore):
+        super(InitialiseShell, self).__init__()
+        self.datastore = datastore
+        self.aliases = {
+            "0": self.do_cancel,
+            "1": self.do_cleardb,
+            "2": self.do_create_pepys_schema,
+            "3": self.do_import_reference_data,
+            "4": self.do_import_metadata,
+            "5": self.do_import_sample_measurements,
+        }
+
+    def do_cleardb(self, args):
+        pass
+
+    def do_create_pepys_schema(self, args):
+        self.datastore.initialise()
+
+    def do_import_reference_data(self, args):
+        self.datastore.populate_reference(dirpath)
+
+    def do_import_metadata(self, args):
+        self.datastore.populate_metadata(dirpath)
+
+    def do_import_sample_measurements(self, args):
+        self.datastore.populate_measurement(dirpath)
+
+    def do_cancel(self, *args):
+        return True
+
+    do_EOF = do_cancel
+
+    def default(self, line):
+        cmd, arg, line = self.parseline(line)
+        if cmd in self.aliases:
+            self.aliases[cmd](arg)
+            if cmd == "0":
+                self.do_cancel()
+                return True
+        else:
+            print("*** Unknown syntax: %s" % line)
+
+    def postcmd(self, stop, line):
+        intro = "--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n (3) Import Reference data\n (4) Import Metadata\n (5) Import Sample Measurements\n (0) Exit\n"
+        if line != "0":
+            print(intro)
+        return cmd.Cmd.postcmd(self, stop, line)
 
 
 class AdminShell(cmd.Cmd):
@@ -67,11 +122,30 @@ class AdminShell(cmd.Cmd):
 
     def do_initialise(self, arg):
         "Allow the currently connected database to be configured"
-        print("initialise")
+        initialise = InitialiseShell(self.datastore)
+        intro = "--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n (3) Import Reference data\n (4) Import Metadata\n (5) Import Sample Measurements\n (0) Exit\n"
+        initialise.cmdloop(intro=intro)
 
     def do_status(self, arg):
         "Report on the database contents"
-        print("status")
+        with self.datastore.session_scope():
+            measurement_summary = self.datastore.get_status(report_measurement=True)
+            report = measurement_summary.report()
+            print("## Measurements")
+            print(report)
+            print("\n")
+
+            metadata_summary = self.datastore.get_status(report_metadata=True)
+            report = metadata_summary.report()
+            print("## Metadata")
+            print(report)
+            print("\n")
+
+            reference_summary = self.datastore.get_status(report_reference=True)
+            report = reference_summary.report()
+            print("## Reference")
+            print(report)
+            print("\n")
 
     def do_exit(self, arg):
         "Exit the application"
