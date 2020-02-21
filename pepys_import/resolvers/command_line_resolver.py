@@ -465,7 +465,7 @@ class CommandLineResolver(DataResolver):
                 sys.exit(1)
 
         if not privacy:
-            privacy = self.fuzzy_search_privacy(data_store)
+            privacy = self.resolve_privacy(data_store)
 
         return sensor_type, privacy
 
