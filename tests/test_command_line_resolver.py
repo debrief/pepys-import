@@ -45,6 +45,18 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_fuzzy_search_select_existing_privacy_without_search(
+        self, resolver_prompt, menu_prompt
+    ):
+        menu_prompt.side_effect = ["2"]
+        resolver_prompt.side_effect = ["PRIVACY-TEST"]
+        with self.store.session_scope():
+            self.store.add_to_privacies("PRIVACY-TEST")
+            privacy = self.resolver.resolve_privacy(self.store)
+            self.assertEqual(privacy.name, "PRIVACY-TEST")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_recursive_privacy(self, menu_prompt):
         menu_prompt.side_effect = ["1", "PRIVACY-TEST", "2", "PRIVACY-1"]
         with self.store.session_scope():
@@ -347,31 +359,160 @@ class CommandLineResolverTestCase(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.resolver.fuzzy_search_platform(self.store, "TEST", "", "", "")
 
-    # @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    # @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    # def test_resolver_platform(self, resolver_prompt, menu_prompt):
-    #     menu_prompt.side_effect = ["2", "2", "2", "2", "1"]
-    #     resolver_prompt.side_effect = ["UK", "Warship", "PRIVACY-1"]
-    #     with self.store.session_scope():
-    #         self.store.add_to_privacies("PRIVACY-1")
-    #         self.store.add_to_platform_types("Warship")
-    #         self.store.add_to_nationalities("UK")
-    #         (
-    #             platform_name,
-    #             platform_type,
-    #             nationality,
-    #             privacy,
-    #         ) = self.resolver.resolve_platform(
-    #             data_store=self.store,
-    #             platform_name="TEST",
-    #             platform_type=None,
-    #             nationality=None,
-    #             privacy=None,
-    #         )
-    #         self.assertEqual(platform_name, "TEST")
-    #         self.assertEqual(platform_type.name, "Warship")
-    #         self.assertEqual(nationality.name, "UK")
-    #         self.assertEqual(privacy.name, "PRIVACY-1")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_resolver_platform_with_fuzzy_searches(self, menu_prompt):
+        menu_prompt.side_effect = [
+            "2",
+            "1",
+            "UK",
+            "1",
+            "Warship",
+            "1",
+            "PRIVACY-1",
+            "1",
+        ]
+        with self.store.session_scope():
+            self.store.add_to_privacies("PRIVACY-1")
+            self.store.add_to_platform_types("Warship")
+            self.store.add_to_nationalities("UK")
+            (
+                platform_name,
+                platform_type,
+                nationality,
+                privacy,
+            ) = self.resolver.resolve_platform(
+                data_store=self.store,
+                platform_name="TEST",
+                platform_type=None,
+                nationality=None,
+                privacy=None,
+            )
+            self.assertEqual(platform_name, "TEST")
+            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(nationality.name, "UK")
+            self.assertEqual(privacy.name, "PRIVACY-1")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_resolver_platform_with_existing_values(self, menu_prompt):
+        menu_prompt.side_effect = ["2", "1"]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("PRIVACY-1").name
+            platform_type = self.store.add_to_platform_types("Warship").name
+            nationality = self.store.add_to_nationalities("UK").name
+            (
+                platform_name,
+                platform_type,
+                nationality,
+                privacy,
+            ) = self.resolver.resolve_platform(
+                data_store=self.store,
+                platform_name="TEST",
+                platform_type=platform_type,
+                nationality=nationality,
+                privacy=privacy,
+            )
+            self.assertEqual(platform_name, "TEST")
+            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(nationality.name, "UK")
+            self.assertEqual(privacy.name, "PRIVACY-1")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_platform_with_new_values(self, resolver_prompt, menu_prompt):
+        menu_prompt.side_effect = ["2", "2", "2", "2", "1"]
+        resolver_prompt.side_effect = ["UK", "Warship", "PRIVACY-1"]
+        with self.store.session_scope():
+            (
+                platform_name,
+                platform_type,
+                nationality,
+                privacy,
+            ) = self.resolver.resolve_platform(
+                data_store=self.store,
+                platform_name="TEST",
+                platform_type=None,
+                nationality=None,
+                privacy=None,
+            )
+            self.assertEqual(platform_name, "TEST")
+            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(nationality.name, "UK")
+            self.assertEqual(privacy.name, "PRIVACY-1")
+
+    def test_resolver_platform_with_platform_given(self):
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("PRIVACY-1")
+            platform_type = self.store.add_to_platform_types("Warship")
+            nationality = self.store.add_to_nationalities("UK")
+            self.store.get_platform(
+                "TEST",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+            )
+            platform = self.resolver.resolve_platform(
+                data_store=self.store,
+                platform_name="TEST",
+                platform_type=platform_type.name,
+                nationality=nationality.name,
+                privacy=privacy.name,
+            )
+            self.assertEqual(platform.name, "TEST")
+            self.assertEqual(platform.platform_type_id, platform_type.platform_type_id)
+            self.assertEqual(platform.nationality_id, nationality.nationality_id)
+            self.assertEqual(platform.privacy_id, privacy.privacy_id)
+
+    @patch("pepys_import.resolvers.command_line_input.prompt")
+    def test_resolver_platform_add_to_synonym_table(self, menu_prompt):
+        menu_prompt.side_effect = ["1", "TEST", "1"]
+        with self.store.session_scope():
+            synonym = self.resolver.resolve_platform(
+                data_store=self.store,
+                platform_name="TEST",
+                platform_type=None,
+                nationality=None,
+                privacy=None,
+            )
+            self.assertEqual(synonym.synonym, "TEST")
+            self.assertEqual(synonym.table, "Platforms")
+
+    def test_resolver_platform_find_platform_from_synonym(self):
+        # TODO: hit the lines between 66-87 in command line resolver
+        pass
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_resolver_platform_edit_given_values(self, menu_prompt):
+        menu_prompt.side_effect = [
+            "2",
+            "2",
+            "1",
+            "UK",
+            "1",
+            "Warship",
+            "1",
+            "PRIVACY-1",
+            "1",
+        ]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("PRIVACY-1").name
+            platform_type = self.store.add_to_platform_types("Warship").name
+            nationality = self.store.add_to_nationalities("UK").name
+            (
+                platform_name,
+                platform_type,
+                nationality,
+                privacy,
+            ) = self.resolver.resolve_platform(
+                data_store=self.store,
+                platform_name="TEST",
+                platform_type=platform_type,
+                nationality=nationality,
+                privacy=privacy,
+            )
+            self.assertEqual(platform_name, "TEST")
+            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(nationality.name, "UK")
+            self.assertEqual(privacy.name, "PRIVACY-1")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
@@ -419,71 +560,6 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 self.resolver.resolve_platform(self.store, "", "", "", "")
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_platform(self.store, "", "", "", "")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_resolver_platform_with_values(self, menu_prompt):
-        menu_prompt.side_effect = ["2", "1"]
-        with self.store.session_scope():
-            privacy = self.store.add_to_privacies("PRIVACY-1").name
-            platform_type = self.store.add_to_platform_types("Warship").name
-            nationality = self.store.add_to_nationalities("UK").name
-            (
-                platform_name,
-                platform_type,
-                nationality,
-                privacy,
-            ) = self.resolver.resolve_platform(
-                data_store=self.store,
-                platform_name="TEST",
-                platform_type=platform_type,
-                nationality=nationality,
-                privacy=privacy,
-            )
-            self.assertEqual(platform_name, "TEST")
-            self.assertEqual(platform_type.name, "Warship")
-            self.assertEqual(nationality.name, "UK")
-            self.assertEqual(privacy.name, "PRIVACY-1")
-
-    def test_resolver_platform_with_platform_given(self):
-        with self.store.session_scope():
-            privacy = self.store.add_to_privacies("PRIVACY-1")
-            platform_type = self.store.add_to_platform_types("Warship")
-            nationality = self.store.add_to_nationalities("UK")
-            self.store.get_platform(
-                "TEST",
-                nationality=nationality.name,
-                platform_type=platform_type.name,
-                privacy=privacy.name,
-            )
-            platform = self.resolver.resolve_platform(
-                data_store=self.store,
-                platform_name="TEST",
-                platform_type=platform_type.name,
-                nationality=nationality.name,
-                privacy=privacy.name,
-            )
-            self.assertEqual(platform.name, "TEST")
-            self.assertEqual(platform.platform_type_id, platform_type.platform_type_id)
-            self.assertEqual(platform.nationality_id, nationality.nationality_id)
-            self.assertEqual(platform.privacy_id, privacy.privacy_id)
-
-    @patch("pepys_import.resolvers.command_line_input.prompt")
-    def test_resolver_platform_add_to_synonym_table(self, menu_prompt):
-        menu_prompt.side_effect = ["1", "TEST", "1"]
-        with self.store.session_scope():
-            synonym = self.resolver.resolve_platform(
-                data_store=self.store,
-                platform_name="TEST",
-                platform_type=None,
-                nationality=None,
-                privacy=None,
-            )
-            self.assertEqual(synonym.synonym, "TEST")
-            self.assertEqual(synonym.table, "Platforms")
-
-    def test_resolver_platform_find_platform_from_synonym(self):
-        # TODO: hit the lines between 66-87 in command line resolver
-        pass
 
 
 if __name__ == "__main__":

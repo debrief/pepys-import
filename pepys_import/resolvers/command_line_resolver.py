@@ -185,7 +185,7 @@ class CommandLineResolver(DataResolver):
                 new_privacy = prompt("Please type name of new classification: ")
                 chosen_privacy = data_store.search_privacy(new_privacy)
                 if not chosen_privacy:
-                    return data_store.add_to_privacies(new_privacy)
+                    chosen_privacy = data_store.add_to_privacies(new_privacy)
             elif choice == ".":
                 print("Quitting")
                 sys.exit(1)
