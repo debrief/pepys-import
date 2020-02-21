@@ -1,6 +1,7 @@
 import os
 
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 
 
 class FileProcessor:
@@ -36,7 +37,7 @@ class FileProcessor:
         if not os.path.isdir(path):
             raise FileNotFoundError(f"Folder not found in the given path: {path}")
 
-        # get the data_store, if necessary
+        # get the data_store
         if data_store is None:
             data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
             data_store.initialise()
@@ -45,21 +46,37 @@ class FileProcessor:
         abs_path = os.path.abspath(path)
 
         # decide whether to descend tree, or just work on this folder
-        if descend_tree:
-            # loop through this folder and children
-            for current_path, folders, files in os.walk(abs_path):
-                for file in files:
-                    processed_ctr = self.process_file(
-                        file, current_path, data_store, processed_ctr
-                    )
-        else:
-            # loop through this path
-            for file in os.scandir(abs_path):
-                if file.is_file():
-                    current_path = os.path.join(abs_path, file)
-                    processed_ctr = self.process_file(
-                        file, current_path, data_store, processed_ctr
-                    )
+        with data_store.session_scope():
+
+            states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            platforms_sum = TableSummary(
+                data_store.session, data_store.db_classes.Platform
+            )
+            first_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+            print(first_table_summary_set.report("==Before=="))
+
+            if descend_tree:
+                # loop through this folder and children
+                for current_path, folders, files in os.walk(abs_path):
+                    for file in files:
+                        processed_ctr = self.process_file(
+                            file, current_path, data_store, processed_ctr
+                        )
+            else:
+                # loop through this path
+                for file in os.scandir(abs_path):
+                    if file.is_file():
+                        current_path = os.path.join(abs_path, file)
+                        processed_ctr = self.process_file(
+                            file, current_path, data_store, processed_ctr
+                        )
+
+            states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            platforms_sum = TableSummary(
+                data_store.session, data_store.db_classes.Platform
+            )
+            second_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+            print(second_table_summary_set.report("==After=="))
 
         print(f"Files got processed: {processed_ctr} times")
 
@@ -106,9 +123,7 @@ class FileProcessor:
                 if not importer.can_load_this_file(file_contents):
                     good_importers.remove(importer)
 
-            # ok, let these importers handle the file
-
-            with data_store.session_scope():
+                # ok, let these importers handle the file
                 datafile = data_store.get_datafile(filename, file_extension)
                 datafile_name = datafile.reference
 
