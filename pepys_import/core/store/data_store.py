@@ -392,7 +392,7 @@ class DataStore(object):
         return sensor_obj
 
     def add_to_datafiles(
-        self, simulated=False, privacy=None, file_type=None, reference=None, url=None
+        self, privacy, file_type, reference=None, simulated=False, url=None
     ):
         """
         Adds the specified datafile to the Datafile table if not already present.
@@ -410,19 +410,8 @@ class DataStore(object):
         :return: Created :class:`Datafile` entity
         :rtype: Datafile
         """
-
-        # fill in missing privacy, if necessary
-        if privacy is None:
-            privacy = self.missing_data_resolver.default_privacy
-        privacy = self.search_privacy(privacy)
-
-        # fill in missing file_type, if necessary
-        if file_type is None:
-            file_type = self.missing_data_resolver.default_datafile_type
         datafile_type = self.search_datafile_type(file_type)
-
-        if privacy is None or datafile_type is None:
-            raise Exception("There is missing value(s) in the data!")
+        privacy = self.search_privacy(privacy)
 
         entry_id = self.add_to_entries(
             self.db_classes.Datafile.table_type_id,
@@ -625,17 +614,20 @@ class DataStore(object):
 
             return True
 
-        self.add_to_datafile_types(datafile_type)
-        # TODO: this has to be changed with missing data resolver
-        self.add_to_privacies("TEST")
+        datafile_type, privacy = self.missing_data_resolver.resolve_datafile(
+            self, datafile_name, datafile_type, None
+        )
+
+        assert type(datafile_type), self.db_classes.DatafileType
+        assert type(privacy), self.db_classes.Privacy
 
         if len(datafile_name) == 0:
             raise Exception("Datafile name can't be empty!")
         elif check_datafile(datafile_name):
             return self.add_to_datafiles(
                 simulated=False,
-                privacy="TEST",
-                file_type=datafile_type,
+                privacy=privacy.name,
+                file_type=datafile_type.name,
                 reference=datafile_name,
             )
         else:
