@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from datetime import datetime
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, or_
 from sqlalchemy.event import listen
 from sqlalchemy.schema import CreateSchema
 from sqlalchemy.sql import select, func
@@ -589,6 +589,41 @@ class DataStore(object):
 
     #############################################################
     # New methods
+    def find_datafile(self, datafile_name):
+        """
+        This method tries to find a Datafile entity with the given datafile_name. If it
+        finds, it returns the entity. If it is not found, it searches synonyms.
+
+        :param datafile_name:  Name of Datafile
+        :type datafile_name: String
+        :return:
+        """
+        datafile = (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.reference == datafile_name)
+            .first()
+        )
+        if datafile:
+            return datafile
+
+        synonym = (
+            self.session.query(self.db_classes.Synonym)
+            .filter(
+                self.db_classes.Synonym.synonym == datafile_name,
+                self.db_classes.Synonym.table == "Datafiles",
+            )
+            .first()
+        )
+        if synonym:
+            datafile = (
+                self.session.query(self.db_classes.Datafile)
+                .filter(self.db_classes.Datafile.datafile_id == synonym.entity)
+                .first()
+            )
+            if datafile:
+                return datafile
+
+        return None
 
     def get_datafile(self, datafile_name, datafile_type):
         """
@@ -603,16 +638,10 @@ class DataStore(object):
         :rtype: Datafile
         """
 
-        # return True if provided datafile exists
-        def check_datafile(datafile):
-            all_datafiles = self.session.query(self.db_classes.Datafile).all()
-            if next(
-                (file for file in all_datafiles if file.reference == datafile), None
-            ):
-                # A datafile already exists with that name
-                return False
-
-            return True
+        # Check for name match in Datafile and Synonym Tables
+        datafile = self.find_datafile(datafile_name=datafile_name)
+        if datafile:
+            return datafile
 
         datafile_type, privacy = self.missing_data_resolver.resolve_datafile(
             self, datafile_name, datafile_type, None
@@ -623,19 +652,55 @@ class DataStore(object):
 
         if len(datafile_name) == 0:
             raise Exception("Datafile name can't be empty!")
-        elif check_datafile(datafile_name):
+        else:
             return self.add_to_datafiles(
                 simulated=False,
                 privacy=privacy.name,
                 file_type=datafile_type.name,
                 reference=datafile_name,
             )
-        else:
-            return (
-                self.session.query(self.db_classes.Datafile)
-                .filter(self.db_classes.Datafile.reference == datafile_name)
+
+    def find_platform(self, platform_name):
+        """
+        This method tries to find a Platform entity with the given platform_name. If it
+        finds, it returns the entity. If it is not found, it searches synonyms.
+
+        :param platform_name: Name of :class:`Platform`
+        :type platform_name: String
+        :return:
+        """
+        platform = (
+            self.session.query(self.db_classes.Platform)
+            .filter(
+                or_(
+                    self.db_classes.Platform.name == platform_name,
+                    self.db_classes.Platform.trigraph == platform_name,
+                    self.db_classes.Platform.quadgraph == platform_name,
+                )
+            )
+            .first()
+        )
+        if platform:
+            return platform
+
+        synonym = (
+            self.session.query(self.db_classes.Synonym)
+            .filter(
+                self.db_classes.Synonym.synonym == platform_name,
+                self.db_classes.Synonym.table == "Platforms",
+            )
+            .first()
+        )
+        if synonym:
+            platform = (
+                self.session.query(self.db_classes.Platform)
+                .filter(self.db_classes.Platform.platform_id == synonym.entity)
                 .first()
             )
+            if platform:
+                return
+
+        return None
 
     def get_platform(
         self, platform_name, nationality=None, platform_type=None, privacy=None
@@ -655,16 +720,10 @@ class DataStore(object):
         :return: Created Platform entity
         """
 
-        # return True if provided platform exists
-        def check_platform(name):
-            all_platforms = self.session.query(self.db_classes.Platform).all()
-            if next(
-                (platform for platform in all_platforms if platform.name == name), None
-            ):
-                # A platform already exists with that name
-                return False
-
-            return True
+        # Check for name match in Platform and Synonym Tables
+        platform = self.find_platform(platform_name)
+        if platform:
+            return platform
 
         nationality = self.search_nationality(nationality)
         platform_type = self.search_platform_type(platform_type)
@@ -686,18 +745,12 @@ class DataStore(object):
 
         if len(platform_name) == 0:
             raise Exception("Platform name can't be empty!")
-        elif check_platform(platform_name):
+        else:
             return self.add_to_platforms(
                 name=platform_name,
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
-            )
-        else:
-            return (
-                self.session.query(self.db_classes.Platform)
-                .filter(self.db_classes.Platform.name == platform_name)
-                .first()
             )
 
     def get_status(

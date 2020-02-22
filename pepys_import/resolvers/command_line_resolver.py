@@ -2,7 +2,6 @@ import sys
 
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyWordCompleter
-from sqlalchemy import or_
 
 from pepys_import.resolvers.data_resolver import DataResolver
 from pepys_import.resolvers.command_line_input import create_menu
@@ -13,11 +12,6 @@ class CommandLineResolver(DataResolver):
         super().__init__()
 
     def resolve_datafile(self, data_store, datafile_name, datafile_type, privacy):
-        if datafile_name:
-            datafile = self.find_datafile(data_store, datafile_name)
-            if datafile:
-                return datafile
-
         choice = create_menu(
             f"Datafile '{datafile_name}' not found. Do you wish to: ",
             [
@@ -41,11 +35,6 @@ class CommandLineResolver(DataResolver):
     def resolve_platform(
         self, data_store, platform_name, platform_type, nationality, privacy
     ):
-        if platform_name:
-            platform = self.find_platform(data_store, platform_name)
-            if platform:
-                return platform
-
         choice = create_menu(
             f"Platform '{platform_name}' not found. Do you wish to: ",
             [
@@ -67,12 +56,6 @@ class CommandLineResolver(DataResolver):
             sys.exit(1)
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy):
-        # Check for name match in Sensor and Synonym Tables
-        sensor = self.find_sensor(data_store, sensor_name)
-        if sensor:
-            return sensor
-
-        # Not found, carry on
         choice = create_menu(
             f"Sensor '{sensor_name}' not found. Do you wish to: ",
             [
@@ -671,126 +654,3 @@ class CommandLineResolver(DataResolver):
             privacy = self.resolve_privacy(data_store)
 
         return sensor_type, privacy
-
-    @staticmethod
-    def find_datafile(data_store, datafile_name):
-        """
-        This method tries to find a Datafile entity with the given datafile_name. If it
-        finds, it returns the entity. If it is not found, it searches synonyms.
-
-        :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
-        :param datafile_name:  Name of Datafile
-        :type datafile_name: String
-        :return:
-        """
-        datafile = (
-            data_store.session.query(data_store.db_classes.Datafile)
-            .filter(data_store.db_classes.Datafile.reference == datafile_name)
-            .first()
-        )
-        if datafile:
-            return datafile
-
-        synonym = (
-            data_store.session.query(data_store.db_classes.Synonym)
-            .filter(
-                data_store.db_classes.Synonym.synonym == datafile_name,
-                data_store.db_classes.Synonym.table == "Datafiles",
-            )
-            .all()
-        )
-
-        datafile = (
-            data_store.session.query(data_store.db_classes.Datafile)
-            .filter(data_store.db_classes.Datafile.datafile_id == synonym.entity)
-            .first()
-        )
-        if datafile:
-            return datafile
-
-        return None
-
-    @staticmethod
-    def find_platform(data_store, platform_name):
-        """
-        This method tries to find a Platform entity with the given platform_name. If it
-        finds, it returns the entity. If it is not found, it searches synonyms.
-
-        :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
-        :param platform_name: Name of :class:`Platform`
-        :type platform_name: String
-        :return:
-        """
-        platform = (
-            data_store.session.query(data_store.db_classes.Platform)
-            .filter(
-                or_(
-                    data_store.db_classes.Platform.name == platform_name,
-                    data_store.db_classes.Platform.trigraph == platform_name,
-                    data_store.db_classes.Platform.quadgraph == platform_name,
-                )
-            )
-            .first()
-        )
-        if platform:
-            return platform
-
-        synonym = (
-            data_store.session.query(data_store.db_classes.Synonym)
-            .filter(
-                data_store.db_classes.Synonym.synonym == platform_name,
-                data_store.db_classes.Synonym.table == "Platforms",
-            )
-            .all()
-        )
-
-        platform = (
-            data_store.session.query(data_store.db_classes.Platform)
-            .filter(data_store.db_classes.Platform.platform_id == synonym.entity)
-            .first()
-        )
-        if platform:
-            return
-
-        return None
-
-    @staticmethod
-    def find_sensor(data_store, sensor_name):
-        """
-        This method tries to find a Sensor entity with the given sensor_name. If it
-        finds, it returns the entity. If it is not found, it searches synonyms.
-
-        :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
-        :param sensor_name: Name of :class:`Sensor`
-        :type sensor_name: String
-        :return:
-        """
-        sensor = (
-            data_store.session.query(data_store.db_classes.Sensor)
-            .filter(data_store.db_classes.Sensor.name == sensor_name)
-            .first()
-        )
-        if sensor:
-            return sensor
-
-        synonym = (
-            data_store.session.query(data_store.db_classes.Synonym)
-            .filter(
-                data_store.db_classes.Synonym.synonym == sensor_name,
-                data_store.db_classes.Synonym.table == "Sensors",
-            )
-            .first()
-        )
-
-        sensor = (
-            data_store.session.query(data_store.db_classes.Sensor)
-            .filter(data_store.db_classes.Sensor.sensor_id == synonym.entity)
-            .first()
-        )
-        if sensor:
-            return
-
-        return None

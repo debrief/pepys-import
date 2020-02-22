@@ -99,6 +99,46 @@ class Sensor(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
     @classmethod
+    def find_sensor(cls, data_store, sensor_name):
+        """
+        This method tries to find a Sensor entity with the given sensor_name. If it
+        finds, it returns the entity. If it is not found, it searches synonyms.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: :class:`DataStore`
+        :param sensor_name: Name of :class:`Sensor`
+        :type sensor_name: String
+        :return:
+        """
+        sensor = (
+            data_store.session.query(data_store.db_classes.Sensor)
+            .filter(data_store.db_classes.Sensor.name == sensor_name)
+            .first()
+        )
+        if sensor:
+            return sensor
+
+        synonym = (
+            data_store.session.query(data_store.db_classes.Synonym)
+            .filter(
+                data_store.db_classes.Synonym.synonym == sensor_name,
+                data_store.db_classes.Synonym.table == "Sensors",
+            )
+            .first()
+        )
+
+        if synonym:
+            sensor = (
+                data_store.session.query(data_store.db_classes.Sensor)
+                    .filter(data_store.db_classes.Sensor.sensor_id == synonym.entity)
+                    .first()
+            )
+            if sensor:
+                return
+
+        return None
+
+    @classmethod
     def add_to_sensors(cls, session, name, sensor_type, host):
         sensor_type = SensorType().search_sensor_type(session, sensor_type)
         host = Platform().search_platform(session, host)
@@ -166,6 +206,11 @@ class Platform(BasePostGIS):
         :rtype: Sensor
         """
 
+        # Check for name match in Sensor and Synonym Tables
+        sensor = Sensor().find_sensor(data_store, sensor_name)
+        if sensor:
+            return sensor
+
         if sensor_type is None or privacy is None:
             sensor_type, privacy = data_store.missing_data_resolver.resolve_sensor(
                 data_store, sensor_name, sensor_type, privacy
@@ -174,28 +219,14 @@ class Platform(BasePostGIS):
         assert type(sensor_type), SensorType
         assert type(privacy), Privacy
 
-        # return True if provided sensor exists
-        def check_sensor(name):
-            if next((sensor for sensor in all_sensors if sensor.name == name), None):
-                # A sensor already exists with that name
-                return False
-
-            return True
-
         if len(sensor_name) == 0:
             raise Exception("Please enter sensor name!")
-        elif check_sensor(sensor_name):
+        else:
             return Sensor().add_to_sensors(
                 session=data_store.session,
                 name=sensor_name,
                 sensor_type=sensor_type.name,
                 host=self.name,
-            )
-        else:
-            return (
-                data_store.session.query(Sensor)
-                .filter(Sensor.name == sensor_name)
-                .first()
             )
 
 
