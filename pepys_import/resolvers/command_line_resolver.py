@@ -437,7 +437,7 @@ class CommandLineResolver(DataResolver):
             new_choice = create_menu(
                 f"You didn't select an existing sensor type. "
                 f"Do you want to add '{choice}' to it?",
-                choices=["Yes", "No, I'd like to select an sensor type"],
+                choices=["Yes", "No, I'd like to select a sensor type"],
             )
             if new_choice == str(1):
                 return data_store.add_to_sensor_types(choice)
