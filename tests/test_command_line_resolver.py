@@ -764,7 +764,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
             self.assertEqual(privacy.name, "PRIVACY-1")
 
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_input.prompt")
     def test_fuzzy_search_datafile_returns_existing_datafile(self, menu_prompt):
         menu_prompt.side_effect = ["TEST"]
         with self.store.session_scope():
