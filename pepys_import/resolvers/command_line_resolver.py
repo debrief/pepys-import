@@ -2,6 +2,7 @@ import sys
 
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyWordCompleter
+from sqlalchemy import or_
 
 from pepys_import.resolvers.data_resolver import DataResolver
 from pepys_import.resolvers.command_line_input import create_menu
@@ -174,6 +175,35 @@ class CommandLineResolver(DataResolver):
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
+        if platform_name and choice in completer:
+            new_choice = create_menu(
+                f"Do you wish to keep {platform_name} as synonym?", ["Yes", "No"],
+            )
+            if new_choice == str(1):
+                platform_id = (
+                    data_store.session.query(data_store.db_classes.Platform)
+                    .filter(
+                        or_(
+                            data_store.db_classes.Platform.name == platform_name,
+                            data_store.db_classes.Platform.trigraph == platform_name,
+                            data_store.db_classes.Platform.quadgraph == platform_name,
+                        )
+                    )
+                    .first()
+                    .platform_id
+                )
+                return data_store.add_to_synonyms(
+                    "Platforms", platform_name, platform_id
+                )
+            elif new_choice == str(2):
+                return self.add_to_platforms(
+                    data_store, platform_name, platform_type, nationality, privacy
+                )
+            elif new_choice == ".":
+                print("Quitting")
+                sys.exit(1)
+
+        # TODO: this logic should change
         if choice not in completer:
             new_choice = create_menu(
                 f"You didn't select an existing platform. "
@@ -221,7 +251,7 @@ class CommandLineResolver(DataResolver):
         if choice not in completer:
             new_choice = create_menu(
                 f"You didn't select an existing sensor. "
-                f"Do you want to add '{choice}' to it?",
+                f"Do you want to add '{choice}' ?",
                 choices=["Yes", "No, I'd like to select an existing sensor"],
             )
             if new_choice == str(1):
@@ -260,7 +290,7 @@ class CommandLineResolver(DataResolver):
         if choice not in completer:
             new_choice = create_menu(
                 f"You didn't select an existing classification. "
-                f"Do you want to add '{choice}' to it?",
+                f"Do you want to add '{choice}' ?",
                 choices=["Yes", "No, I'd like to select an existing classification"],
             )
             if new_choice == str(1):
@@ -301,7 +331,7 @@ class CommandLineResolver(DataResolver):
         if choice not in completer:
             new_choice = create_menu(
                 f"You didn't select an existing datafile type. "
-                f"Do you want to add '{choice}' to it?",
+                f"Do you want to add '{choice}' ?",
                 choices=["Yes", "No, I'd like to select an existing datafile type"],
             )
             if new_choice == str(1):
@@ -341,7 +371,7 @@ class CommandLineResolver(DataResolver):
         if choice not in completer:
             new_choice = create_menu(
                 f"You didn't select an existing nationality. "
-                f"Do you want to add '{choice}' to it?",
+                f"Do you want to add '{choice}' ?",
                 choices=["Yes", "No, I'd like to select an existing nationality"],
             )
             if new_choice == str(1):
@@ -381,7 +411,7 @@ class CommandLineResolver(DataResolver):
         if choice not in completer:
             new_choice = create_menu(
                 f"You didn't select an existing platform type. "
-                f"Do you want to add '{choice}' to it?",
+                f"Do you want to add '{choice}' ?",
                 choices=["Yes", "No, I'd like to select an existing platform type"],
             )
             if new_choice == str(1):
@@ -419,7 +449,7 @@ class CommandLineResolver(DataResolver):
         if choice not in completer:
             new_choice = create_menu(
                 f"You didn't select an existing sensor type. "
-                f"Do you want to add '{choice}' to it?",
+                f"Do you want to add '{choice}' ?",
                 choices=["Yes", "No, I'd like to select a sensor type"],
             )
             if new_choice == str(1):
