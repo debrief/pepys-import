@@ -177,16 +177,17 @@ class CommandLineResolver(DataResolver):
         )
         if platform_name and choice in completer:
             new_choice = create_menu(
-                f"Do you wish to keep {platform_name} as synonym?", ["Yes", "No"],
+                f"Do you wish to keep {platform_name} as synonym for {choice}?",
+                ["Yes", "No"],
             )
             if new_choice == str(1):
                 platform_id = (
                     data_store.session.query(data_store.db_classes.Platform)
                     .filter(
                         or_(
-                            data_store.db_classes.Platform.name == platform_name,
-                            data_store.db_classes.Platform.trigraph == platform_name,
-                            data_store.db_classes.Platform.quadgraph == platform_name,
+                            data_store.db_classes.Platform.name == choice,
+                            data_store.db_classes.Platform.trigraph == choice,
+                            data_store.db_classes.Platform.quadgraph == choice,
                         )
                     )
                     .first()
@@ -202,28 +203,9 @@ class CommandLineResolver(DataResolver):
             elif new_choice == ".":
                 print("Quitting")
                 sys.exit(1)
-
-        # TODO: this logic should change
-        if choice not in completer:
-            new_choice = create_menu(
-                f"You didn't select an existing platform. "
-                f"Do you wish to keep {choice} as synonym?",
-                ["Yes", "No"],
-            )
-            if new_choice == str(1):
-                return data_store.add_to_synonyms("Platforms", platform_name)
-            elif new_choice == str(2):
-                return self.add_to_platforms(
-                    data_store, platform_name, platform_type, nationality, privacy
-                )
-            elif new_choice == ".":
-                print("Quitting")
-                sys.exit(1)
-        else:
-            return (
-                data_store.session.query(data_store.db_classes.Platform)
-                .filter(data_store.db_classes.Platform.name == choice)
-                .first()
+        elif choice not in completer:
+            return self.add_to_platforms(
+                data_store, choice, platform_type, nationality, privacy
             )
 
     def fuzzy_search_sensor(self, data_store, sensor_type, privacy):
@@ -616,6 +598,15 @@ class CommandLineResolver(DataResolver):
         """
         print("Ok, adding new platform.")
 
+        platform_name = prompt("Please enter a name: ", default=platform_name)
+        trigraph = prompt(
+            "Please enter trigraph (optional): ", default=platform_name[:3]
+        )
+        quadgraph = prompt(
+            "Please enter quadgraph (optional): ", default=platform_name[:4]
+        )
+        pennat_number = prompt("Please enter pennat number (optional): ", default="")
+
         # Choose Nationality
         if nationality:
             chosen_nationality = data_store.add_to_nationalities(nationality)
@@ -634,8 +625,12 @@ class CommandLineResolver(DataResolver):
         else:
             chosen_privacy = self.resolve_privacy(data_store)
 
+        print("-" * 30)
         print("Input complete. About to create this platform:")
         print(f"Name: {platform_name}")
+        print(f"Trigraph: {trigraph}")
+        print(f"Quadgraph: {quadgraph}")
+        print(f"Pennat Number: {pennat_number}")
         print(f"Nationality: {chosen_nationality.name}")
         print(f"Class: {chosen_platform_type.name}")
         print(f"Classification: {chosen_privacy.name}")

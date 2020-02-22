@@ -338,12 +338,20 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.assertEqual(nationality.name, "UK")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_quit_works__for_fuzzy_search_nationality(self, menu_prompt):
+    def test_quit_works_for_fuzzy_search_nationality(self, menu_prompt):
         """Test whether "." quits from the fuzzy search nationality """
         menu_prompt.side_effect = ["TEST", "."]
         with self.store.session_scope():
             with self.assertRaises(SystemExit):
                 self.resolver.fuzzy_search_nationality(self.store)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_quit_works_for_resolve_nationality(self, menu_prompt):
+        """Test whether "." quits from the resolve nationality """
+        menu_prompt.side_effect = ["."]
+        with self.store.session_scope():
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_nationality(self.store)
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_add_new_platform_type(self, menu_prompt):
@@ -377,34 +385,43 @@ class CommandLineResolverTestCase(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.resolver.fuzzy_search_platform_type(self.store)
 
-    # TODO: fails now
-    # @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    # def test_fuzzy_search_add_platform_to_synonym(self, menu_prompt):
-    #     menu_prompt.side_effect = ["TEST", "1"]
-    #     with self.store.session_scope():
-    #         platform = self.resolver.fuzzy_search_platform(
-    #             self.store, "TEST", "", "", ""
-    #         )
-    #         self.assertEqual(platform.synonym, "TEST")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_quit_works_for_resolve_platform_type(self, menu_prompt):
+        """Test whether "." quits from the resolve platform type """
+        menu_prompt.side_effect = ["."]
+        with self.store.session_scope():
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_platform_type(self.store)
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_add_new_platform(self, menu_prompt):
-        menu_prompt.side_effect = ["PLATFORM-2", "2", "1"]
+    def test_fuzzy_search_add_platform_to_synonym(self, menu_prompt):
+        menu_prompt.side_effect = ["PLATFORM-1", "1"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1")
             platform_type = self.store.add_to_platform_types("Warship")
             nationality = self.store.add_to_nationalities("UK")
-            self.resolver.fuzzy_search_platform(
-                self.store,
+            platform = self.store.get_platform(
                 "PLATFORM-1",
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
             )
 
+            synonym = self.resolver.fuzzy_search_platform(
+                self.store,
+                "TEST",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+            )
+
+            self.assertEqual(platform.platform_id, synonym.entity)
+
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_platform_select_existing_platform(self, menu_prompt):
-        menu_prompt.return_value = "PLATFORM-1"
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_fuzzy_search_add_new_platform(self, resolver_prompt, menu_prompt):
+        menu_prompt.side_effect = ["PLATFORM-1", "2", "1"]
+        resolver_prompt.side_effect = ["TEST", "TST", "TEST", "-"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1")
             platform_type = self.store.add_to_platform_types("Warship")
@@ -415,29 +432,49 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 platform_type=platform_type.name,
                 privacy=privacy.name,
             )
-            platform = self.resolver.fuzzy_search_platform(
+
+            (
+                platform_name,
+                platform_type,
+                nationality,
+                privacy,
+            ) = self.resolver.fuzzy_search_platform(
                 self.store,
-                "PLATFORM-1",
+                "TEST",
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
             )
-            self.assertEqual(platform.name, "PLATFORM-1")
+
+            self.assertEqual(platform_name, "TEST")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_quit_works_for_fuzzy_search_platform(self, menu_prompt):
         """Test whether "." quits from platform"""
 
         # Type "TEST"->Select "."
-        menu_prompt.side_effect = ["TEST", "."]
+        menu_prompt.side_effect = ["PLATFORM-1", "."]
         with self.store.session_scope():
+            privacy = self.store.add_to_privacies("PRIVACY-1")
+            platform_type = self.store.add_to_platform_types("Warship")
+            nationality = self.store.add_to_nationalities("UK")
+            self.store.get_platform(
+                "PLATFORM-1",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+            )
             with self.assertRaises(SystemExit):
                 self.resolver.fuzzy_search_platform(self.store, "TEST", "", "", "")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_resolver_platform_with_fuzzy_searches(self, menu_prompt):
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_platform_with_fuzzy_searches(
+        self, resolver_platform, menu_prompt
+    ):
         menu_prompt.side_effect = [
-            "2",
+            "1",
+            "TEST",
             "1",
             "UK",
             "1",
@@ -446,6 +483,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
             "PRIVACY-1",
             "1",
         ]
+        resolver_platform.side_effect = ["TEST", "TST", "TEST", "123"]
         with self.store.session_scope():
             self.store.add_to_privacies("PRIVACY-1")
             self.store.add_to_platform_types("Warship")
@@ -468,34 +506,18 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "PRIVACY-1")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_resolver_platform_with_existing_values(self, menu_prompt):
-        menu_prompt.side_effect = ["2", "1"]
-        with self.store.session_scope():
-            privacy = self.store.add_to_privacies("PRIVACY-1").name
-            platform_type = self.store.add_to_platform_types("Warship").name
-            nationality = self.store.add_to_nationalities("UK").name
-            (
-                platform_name,
-                platform_type,
-                nationality,
-                privacy,
-            ) = self.resolver.resolve_platform(
-                data_store=self.store,
-                platform_name="TEST",
-                platform_type=platform_type,
-                nationality=nationality,
-                privacy=privacy,
-            )
-            self.assertEqual(platform_name, "TEST")
-            self.assertEqual(platform_type.name, "Warship")
-            self.assertEqual(nationality.name, "UK")
-            self.assertEqual(privacy.name, "PRIVACY-1")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_platform_with_new_values(self, resolver_prompt, menu_prompt):
         menu_prompt.side_effect = ["2", "2", "2", "2", "1"]
-        resolver_prompt.side_effect = ["UK", "Warship", "PRIVACY-1"]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "TST",
+            "TEST",
+            "123",
+            "UK",
+            "Warship",
+            "PRIVACY-1",
+        ]
         with self.store.session_scope():
             (
                 platform_name,
@@ -537,27 +559,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
     #         self.assertEqual(platform.nationality_id, nationality.nationality_id)
     #         self.assertEqual(platform.privacy_id, privacy.privacy_id)
 
-    # TODO: fails now
-    # @patch("pepys_import.resolvers.command_line_input.prompt")
-    # def test_resolver_platform_add_to_synonym_table(self, menu_prompt):
-    #     menu_prompt.side_effect = ["1", "TEST", "1"]
-    #     with self.store.session_scope():
-    #         synonym = self.resolver.resolve_platform(
-    #             data_store=self.store,
-    #             platform_name="TEST",
-    #             platform_type=None,
-    #             nationality=None,
-    #             privacy=None,
-    #         )
-    #         self.assertEqual(synonym.synonym, "TEST")
-    #         self.assertEqual(synonym.table, "Platforms")
-
-    def test_resolver_platform_find_platform_from_synonym(self):
-        # TODO: hit the lines between 66-87 in command line resolver
-        pass
-
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_resolver_platform_edit_given_values(self, menu_prompt):
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_platform_edit_given_values(self, resolver_prompt, menu_prompt):
         menu_prompt.side_effect = [
             "2",
             "2",
@@ -568,6 +572,16 @@ class CommandLineResolverTestCase(unittest.TestCase):
             "1",
             "PRIVACY-1",
             "1",
+        ]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "TST",
+            "TEST",
+            "123",
+            "TEST",
+            "TST",
+            "TEST",
+            "123",
         ]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1").name
@@ -597,45 +611,57 @@ class CommandLineResolverTestCase(unittest.TestCase):
             ".",
             "2",
             ".",
-            "2",
-            "2",
-            ".",
-            "2",
-            "2",
-            "2",
-            ".",
-            "2",
-            "2",
-            "2",
-            "2",
-            ".",
-            "1",
-            "TEST",
-            ".",
+            # "2",
+            # "2",
+            # ".",
+            # "2",
+            # "2",
+            # "2",
+            # ".",
+            # "2",
+            # "2",
+            # "2",
+            # "2",
+            # ".",
+            # "1",
+            # "TEST",
+            # ".",
         ]
         resolver_prompt.side_effect = [
-            "UK",
-            "UK",
-            "Warship",
-            "UK",
-            "Warship",
-            "PRIVACY-1",
+            "TEST",
+            "TST",
+            "TEST",
+            "123",
+            "TEST",
+            "TST",
+            "TEST",
+            "123"
+            # "TEST",
+            # "TST",
+            # "TEST",
+            # "123"
         ]
         with self.store.session_scope():
-            self.store.add_to_privacies("PRIVACY-1")
-            self.store.add_to_platform_types("Warship")
-            self.store.add_to_nationalities("UK")
+            privacy = self.store.add_to_privacies("PRIVACY-1").name
+            platform_type = self.store.add_to_platform_types("Warship").name
+            nationality = self.store.add_to_nationalities("UK").name
 
+            # Select "."
             with self.assertRaises(SystemExit):
-                self.resolver.resolve_platform(self.store, "", "", "", "")
+                self.resolver.resolve_platform(
+                    self.store, "TEST", platform_type, nationality, privacy
+                )
+            # Select "Add a new platform"->Type name/trigraph/quadgraph/pennat->Select "."
             with self.assertRaises(SystemExit):
-                self.resolver.resolve_platform(self.store, "", "", "", "")
-            with self.assertRaises(SystemExit):
-                self.resolver.resolve_platform(self.store, "", "", "", "")
-            with self.assertRaises(SystemExit):
-                self.resolver.resolve_platform(self.store, "", "", "", "")
-            with self.assertRaises(SystemExit):
-                self.resolver.resolve_platform(self.store, "", "", "", "")
+                self.resolver.resolve_platform(
+                    self.store, "TEST", platform_type, nationality, privacy
+                )
+            # with self.assertRaises(SystemExit):
+            #     self.resolver.resolve_platform(self.store, "TEST", platform_type, nationality, privacy)
+            # with self.assertRaises(SystemExit):
+            #     self.resolver.resolve_platform(self.store, "TEST", platform_type, nationality, privacy)
+            # with self.assertRaises(SystemExit):
+            #     self.resolver.resolve_platform(self.store, "TEST", platform_type, nationality, privacy)
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_add_new_datafile_type(self, menu_prompt):
