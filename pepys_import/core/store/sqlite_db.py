@@ -262,6 +262,7 @@ class Synonym(BaseSpatiaLite):
 
     synonym_id = Column(Integer, primary_key=True)
     table = Column(String(150), nullable=False)
+    entity = Column(Integer, nullable=False)
     synonym = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 

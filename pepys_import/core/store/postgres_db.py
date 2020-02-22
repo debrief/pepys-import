@@ -287,6 +287,7 @@ class Synonym(BasePostGIS):
 
     synonym_id = Column(UUID(), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
+    entity = Column(UUID(as_uuid=True), nullable=False)
     synonym = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
