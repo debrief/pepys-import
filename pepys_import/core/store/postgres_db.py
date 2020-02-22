@@ -130,8 +130,8 @@ class Sensor(BasePostGIS):
         if synonym:
             sensor = (
                 data_store.session.query(data_store.db_classes.Sensor)
-                    .filter(data_store.db_classes.Sensor.sensor_id == synonym.entity)
-                    .first()
+                .filter(data_store.db_classes.Sensor.sensor_id == synonym.entity)
+                .first()
             )
             if sensor:
                 return
