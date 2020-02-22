@@ -1,3 +1,5 @@
+from pepys_import.core.store.data_store import DataStore
+
 import argparse
 import cmd
 import sys
@@ -6,7 +8,6 @@ import os
 
 sys.path.append(".")
 
-from pepys_import.core.store.data_store import DataStore
 
 dirpath = os.path.dirname(os.path.abspath(__file__))
 
@@ -75,7 +76,9 @@ class InitialiseShell(cmd.Cmd):
             print("*** Unknown syntax: %s" % line)
 
     def postcmd(self, stop, line):
-        intro = "--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n (3) Import Reference data\n (4) Import Metadata\n (5) Import Sample Measurements\n (0) Exit\n"
+        intro = "--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n "
+        "(3) Import Reference data\n (4) Import Metadata\n "
+        "(5) Import Sample Measurements\n (0) Exit\n"
         if line != "0":
             print(intro)
         return cmd.Cmd.postcmd(self, stop, line)
@@ -123,7 +126,9 @@ class AdminShell(cmd.Cmd):
     def do_initialise(self, arg):
         "Allow the currently connected database to be configured"
         initialise = InitialiseShell(self.datastore)
-        intro = "--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n (3) Import Reference data\n (4) Import Metadata\n (5) Import Sample Measurements\n (0) Exit\n"
+        intro = "--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n"
+        " (3) Import Reference data\n (4) Import Metadata\n "
+        "(5) Import Sample Measurements\n (0) Exit\n"
         initialise.cmdloop(intro=intro)
 
     def do_status(self, arg):
@@ -187,5 +192,6 @@ if __name__ == "__main__":
     else:
         datastore = postgres_initialise()
 
-    intro = "Welcome to the Pepys Admin shell.\n --- Menu --- \n (1) Export\n (2) Initialise\n (3) Status\n (0) Exit\n"
+    intro = "Welcome to the Pepys Admin shell.\n --- Menu --- \n (1) Export\n "
+    "(2) Initialise\n (3) Status\n (0) Exit\n"
     admin = AdminShell(datastore).cmdloop(intro=intro)
