@@ -692,7 +692,7 @@ class CommandLineResolver(DataResolver):
         if datafile:
             return datafile
 
-        synonyms = (
+        synonym = (
             data_store.session.query(data_store.db_classes.Synonym)
             .filter(
                 data_store.db_classes.Synonym.synonym == datafile_name,
@@ -700,21 +700,14 @@ class CommandLineResolver(DataResolver):
             )
             .all()
         )
-        # TODO: this should change
-        # for synonym in synonyms:
-        #     platform = (
-        #         data_store.session.query(data_store.db_classes.Platform)
-        #         .filter(
-        #             or_(
-        #                 data_store.db_classes.Platform.name == synonym,
-        #                 data_store.db_classes.Platform.trigraph == synonym,
-        #                 data_store.db_classes.Platform.quadgraph == synonym,
-        #             )
-        #         )
-        #         .first()
-        #     )
-        #     if platform:
-        #         return platform
+
+        datafile = (
+            data_store.session.query(data_store.db_classes.Datafile)
+            .filter(data_store.db_classes.Datafile.datafile_id == synonym.entity)
+            .first()
+        )
+        if datafile:
+            return datafile
 
         return None
 
@@ -744,7 +737,7 @@ class CommandLineResolver(DataResolver):
         if platform:
             return platform
 
-        synonyms = (
+        synonym = (
             data_store.session.query(data_store.db_classes.Synonym)
             .filter(
                 data_store.db_classes.Synonym.synonym == platform_name,
@@ -752,21 +745,14 @@ class CommandLineResolver(DataResolver):
             )
             .all()
         )
-        # TODO: this should change
-        # for synonym in synonyms:
-        #     platform = (
-        #         data_store.session.query(data_store.db_classes.Platform)
-        #         .filter(
-        #             or_(
-        #                 data_store.db_classes.Platform.name == synonym,
-        #                 data_store.db_classes.Platform.trigraph == synonym,
-        #                 data_store.db_classes.Platform.quadgraph == synonym,
-        #             )
-        #         )
-        #         .first()
-        #     )
-        #     if platform:
-        #         return platform
+
+        platform = (
+            data_store.session.query(data_store.db_classes.Platform)
+            .filter(data_store.db_classes.Platform.platform_id == synonym.entity)
+            .first()
+        )
+        if platform:
+            return
 
         return None
 
@@ -790,22 +776,21 @@ class CommandLineResolver(DataResolver):
         if sensor:
             return sensor
 
-        synonyms = (
+        synonym = (
             data_store.session.query(data_store.db_classes.Synonym)
             .filter(
                 data_store.db_classes.Synonym.synonym == sensor_name,
                 data_store.db_classes.Synonym.table == "Sensors",
             )
-            .all()
+            .first()
         )
-        # TODO: ask questions if this is the use of synonyms table or not
-        # for synonym in synonyms:
-        #     sensor = (
-        #         data_store.session.query(data_store.db_classes.Sensor)
-        #         .filter(data_store.db_classes.Sensor.name == synonym)
-        #         .first()
-        #     )
-        #     if sensor:
-        #         return sensor
+
+        sensor = (
+            data_store.session.query(data_store.db_classes.Sensor)
+            .filter(data_store.db_classes.Sensor.sensor_id == synonym.entity)
+            .first()
+        )
+        if sensor:
+            return
 
         return None
