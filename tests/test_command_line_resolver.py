@@ -270,6 +270,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_resolver_sensor_with_values_given(self, menu_prompt):
+        """Test whether correct sensor type and privacy returns from add_to_sensors method or not"""
+
+        # Select "Add a new sensor"
         menu_prompt.side_effect = ["2"]
         with self.store.session_scope():
             sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1")
@@ -282,6 +285,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_sensor_type_add_sensor_type(self, menu_prompt):
+        """Test whether a new sensor type is added or not"""
+
+        # Type "TEST"->Select "Yes"
         menu_prompt.side_effect = ["TEST", "1"]
         with self.store.session_scope():
             sensor_type = self.resolver.fuzzy_search_sensor_type(self.store)
@@ -289,6 +295,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_sensor_type_recursive(self, menu_prompt):
+        """Test whether recursive call works for sensor type"""
+
+        # Type "TEST"->Select "No, I'd like to select a sensor type"->Type "SENSOR-TYPE-1"
         menu_prompt.side_effect = ["TEST", "2", "SENSOR-TYPE-1"]
         with self.store.session_scope():
             self.store.add_to_sensor_types("SENSOR-TYPE-1")
@@ -298,6 +307,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_quit_works_for_fuzzy_search_sensor_type(self, menu_prompt):
+        """Test whether "." quits from the fuzzy search sensor type"""
+
+        # Type "TEST"->Select "."
         menu_prompt.side_effect = ["TEST", "."]
         with self.store.session_scope():
             with self.assertRaises(SystemExit):
@@ -305,6 +317,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_add_new_nationality(self, menu_prompt):
+        """Test whether a new nationality is added or not"""
+
+        # Type "TEST"->Select "Yes"
         menu_prompt.side_effect = ["TEST", "1"]
         with self.store.session_scope():
             nationality = self.resolver.fuzzy_search_nationality(self.store)
@@ -312,6 +327,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_nationality_recursive(self, menu_prompt):
+        """Test whether recursive call works for Nationality"""
+
+        # Type "TEST"->Select "No, I'd like to select a nationality"->Type "UK"
         menu_prompt.side_effect = ["TEST", "2", "UK"]
         with self.store.session_scope():
             self.store.add_to_nationalities("UK")
@@ -321,6 +339,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_quit_works__for_fuzzy_search_nationality(self, menu_prompt):
+        """Test whether "." quits from the fuzzy search nationality """
         menu_prompt.side_effect = ["TEST", "."]
         with self.store.session_scope():
             with self.assertRaises(SystemExit):
@@ -328,6 +347,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_add_new_platform_type(self, menu_prompt):
+        """Test whether a new Platform Type is added or not"""
+
+        # Type "TEST"->Select "Yes"
         menu_prompt.side_effect = ["TEST", "1"]
         with self.store.session_scope():
             platform_type = self.resolver.fuzzy_search_platform_type(self.store)
@@ -335,6 +357,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_platform_type_recursive(self, menu_prompt):
+        """Test whether recursive call works for Platform Type"""
+
+        # Type "TEST"->Select "No, I'd like to select a platform type"->Type "PLATFORM-TYPE-1"
         menu_prompt.side_effect = ["TEST", "2", "PLATFORM-TYPE-1"]
         with self.store.session_scope():
             self.store.add_to_platform_types("PLATFORM-TYPE-1")
@@ -344,6 +369,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_quit_works_for_fuzzy_search_platform_type(self, menu_prompt):
+        """Test whether "." quits from platform type"""
+
+        # Type "TEST"->Select "."
         menu_prompt.side_effect = ["TEST", "."]
         with self.store.session_scope():
             with self.assertRaises(SystemExit):
@@ -397,6 +425,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_quit_works_for_fuzzy_search_platform(self, menu_prompt):
+        """Test whether "." quits from platform"""
+
+        # Type "TEST"->Select "."
         menu_prompt.side_effect = ["TEST", "."]
         with self.store.session_scope():
             with self.assertRaises(SystemExit):
