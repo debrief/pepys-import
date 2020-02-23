@@ -34,10 +34,12 @@ $url = 'http://www.7-zip.org/a/7za920.zip'
 
 Expand-Archive -Path 7zip.zip -DestinationPath .\7zip
 
+# Extract the mod_spatialite 7zip file into the lib folder (it creates its own subfolder in there)
 .\7zip\7za.exe x .\mod_spatialite.7z -olib
 
 Write-Output "INFO: Downloaded and extracted mod_spatialite"
 
+# Set the Python Path file to tell it where to find modules - including the new pip location and the directory above (with pepys-import in it)
 Set-Content -Encoding ascii .\python\python37._pth @"
 python37.zip
 .
@@ -47,10 +49,12 @@ Lib\site-packages
 
 Write-Output "INFO: Set Python pth file"
 
+# Do a standard pip install of the requirements
 .\python\python.exe -m pip install -r requirements.txt --no-warn-script-location
 
 Write-Output "INFO: Installed Python dependencies"
 
+# Remove folders/files that we don't need any more
 Remove-Item .\7zip -Recurse
 Remove-Item *.zip
 Remove-Item *.7z
