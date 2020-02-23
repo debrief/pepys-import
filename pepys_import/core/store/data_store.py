@@ -152,6 +152,17 @@ class DataStore(object):
         finally:
             self.session.close()
 
+    def clear_db(self):
+        """Delete records of all database tables"""
+        if self.db_type == "sqlite":
+            meta = BaseSpatiaLite.metadata
+        else:
+            meta = BasePostGIS.metadata
+
+        with self.session_scope():
+            for table in reversed(meta.sorted_tables):
+                self.session.execute(table.delete())
+
     #############################################################
     # Other DataStore Methods
 

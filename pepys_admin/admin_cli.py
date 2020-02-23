@@ -1,13 +1,14 @@
-from pepys_import.core.store.data_store import DataStore
-
-import argparse
-import cmd
+# TODO: we have to keep these statements on top, due to load pepys_import.
+# We will see better approach to access module inside other module.
 import sys
-from iterfzf import iterfzf
-import os
 
 sys.path.append(".")
 
+import argparse
+import cmd
+from iterfzf import iterfzf
+import os
+from pepys_import.core.store.data_store import DataStore
 
 dirpath = os.path.dirname(os.path.abspath(__file__))
 
@@ -25,9 +26,12 @@ def postgres_initialise():
     return data_store_postgres
 
 
-def sqlite_initialise():
+def sqlite_initialise(file):
     """Test whether schemas created successfully on PostgresSQL"""
-    print("SQLITE")
+    store = DataStore("", "", "", 0, file, db_type="sqlite")
+    if not os.path.isfile(file):
+        store.initialise()
+    return store
 
 
 class InitialiseShell(cmd.Cmd):
@@ -46,7 +50,7 @@ class InitialiseShell(cmd.Cmd):
         }
 
     def do_cleardb(self, args):
-        pass
+        self.datastore.clear_db()
 
     def do_create_pepys_schema(self, args):
         self.datastore.initialise()
@@ -76,9 +80,11 @@ class InitialiseShell(cmd.Cmd):
             print("*** Unknown syntax: %s" % line)
 
     def postcmd(self, stop, line):
-        intro = "--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n "
-        "(3) Import Reference data\n (4) Import Metadata\n "
-        "(5) Import Sample Measurements\n (0) Exit\n"
+        intro = (
+            "--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n "
+            "(3) Import Reference data\n (4) Import Metadata\n "
+            "(5) Import Sample Measurements\n (0) Exit\n"
+        )
         if line != "0":
             print(intro)
         return cmd.Cmd.postcmd(self, stop, line)
@@ -126,9 +132,11 @@ class AdminShell(cmd.Cmd):
     def do_initialise(self, arg):
         "Allow the currently connected database to be configured"
         initialise = InitialiseShell(self.datastore)
-        intro = "--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n"
-        " (3) Import Reference data\n (4) Import Metadata\n "
-        "(5) Import Sample Measurements\n (0) Exit\n"
+        intro = (
+            "--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n"
+            " (3) Import Reference data\n (4) Import Metadata\n "
+            "(5) Import Sample Measurements\n (0) Exit\n"
+        )
         initialise.cmdloop(intro=intro)
 
     def do_status(self, arg):
@@ -185,13 +193,15 @@ if __name__ == "__main__":
     parser.add_argument("--db", type=str, help="Db Path")
 
     args = parser.parse_args()
-    db_flag = args.db
+    db_file = args.db
 
-    if db_flag:
-        datastore = sqlite_initialise()
+    if db_file:
+        datastore = sqlite_initialise(db_file)
     else:
         datastore = postgres_initialise()
 
-    intro = "Welcome to the Pepys Admin shell.\n --- Menu --- \n (1) Export\n "
-    "(2) Initialise\n (3) Status\n (0) Exit\n"
+    intro = (
+        "Welcome to the Pepys Admin shell.\n --- Menu --- \n (1) Export\n "
+        "(2) Initialise\n (3) Status\n (0) Exit\n"
+    )
     admin = AdminShell(datastore).cmdloop(intro=intro)
