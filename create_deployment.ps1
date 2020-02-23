@@ -1,0 +1,58 @@
+
+# Download embedded Python distribution
+$url = 'https://www.python.org/ftp/python/3.7.6/python-3.7.6-embed-amd64.zip'
+(New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\python.zip")
+
+# Extract zip file
+Expand-Archive -Path python.zip -DestinationPath .\python
+Write-Output "INFO: Downloaded and extracted embedded Python"
+
+# Download and run get-pip to install pip
+$url = 'https://bootstrap.pypa.io/get-pip.py'
+(New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\get-pip.py")
+
+.\python\python.exe .\get-pip.py --no-warn-script-location
+
+Write-Output "INFO: Installed pip"
+
+# Download SQLite DLL
+$url = 'https://www.sqlite.org/2020/sqlite-dll-win64-x64-3310100.zip'
+(New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\sqlite.zip")
+
+# Extract SQLite DLL to Python folder, deliberately overwriting sqlite3.dll provided by Python
+Expand-Archive -Path sqlite.zip -DestinationPath .\python -Force
+
+Write-Output "INFO: Downloaded and extracted SQLite"
+
+# Download mod_spatialite DLL files
+$url = 'http://www.gaia-gis.it/gaia-sins/windows-bin-NEXTGEN-amd64/mod_spatialite-NG-win-amd64.7z'
+(New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\mod_spatialite.7z")
+
+# mod_spatialite comes in a 7zip archive, so we need to download 7zip to be able to extract it
+$url = 'http://www.7-zip.org/a/7za920.zip'
+(New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\7zip.zip")
+
+Expand-Archive -Path 7zip.zip -DestinationPath .\7zip
+
+.\7zip\7za.exe x .\mod_spatialite.7z -olib
+
+Write-Output "INFO: Downloaded and extracted mod_spatialite"
+
+Set-Content -Encoding ascii .\python\python37._pth @"
+python37.zip
+.
+Lib\site-packages
+..
+"@
+
+Write-Output "INFO: Set Python pth file"
+
+.\python\python.exe -m pip install -r requirements.txt --no-warn-script-location
+
+Write-Output "INFO: Installed Python dependencies"
+
+Remove-Item .\7zip -Recurse
+Remove-Item *.zip
+Remove-Item *.7z
+
+Write-Output "INFO: Finished cleanup"
