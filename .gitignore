@@ -105,3 +105,10 @@ venv.bak/
 /.idea
 *.iml
 *.DS_Store
+
+
+# binaries for distribution
+/python/*
+/lib
+/7zip
+*.zip
