@@ -634,9 +634,10 @@ class DataStoreStatusTestCase(TestCase):
                 db_port=55527,
             )
             self.store.initialise()
-            self.store.populate_reference(TEST_DATA_PATH)
-            self.store.populate_metadata(TEST_DATA_PATH)
-            self.store.populate_measurement(TEST_DATA_PATH)
+            with self.store.session_scope():
+                self.store.populate_reference(TEST_DATA_PATH)
+                self.store.populate_metadata(TEST_DATA_PATH)
+                self.store.populate_measurement(TEST_DATA_PATH)
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 
@@ -652,7 +653,8 @@ class DataStoreStatusTestCase(TestCase):
     def test_get_status_of_measurement(self):
         """Test whether summary contents correct for measurement tables"""
 
-        table_summary_object = self.store.get_status(report_measurement=True)
+        with self.store.session_scope():
+            table_summary_object = self.store.get_status(report_measurement=True)
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")
@@ -663,7 +665,8 @@ class DataStoreStatusTestCase(TestCase):
     def test_get_status_of_metadata(self):
         """Test whether summary contents correct for metadata tables"""
 
-        table_summary_object = self.store.get_status(report_metadata=True)
+        with self.store.session_scope():
+            table_summary_object = self.store.get_status(report_metadata=True)
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")
@@ -674,7 +677,8 @@ class DataStoreStatusTestCase(TestCase):
     def test_get_status_of_reference(self):
         """Test whether summary contents correct for reference tables"""
 
-        table_summary_object = self.store.get_status(report_reference=True)
+        with self.store.session_scope():
+            table_summary_object = self.store.get_status(report_reference=True)
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")
