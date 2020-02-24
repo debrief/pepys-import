@@ -62,8 +62,9 @@ Remove-Item get-pip.py
 
 Write-Output "INFO: Finished cleanup"
 
-
+# Zip up whole folder into a zip-file with the git revision in the name
 $gitcommit = git rev-parse --short HEAD
-Compress-Archive -Path .\* -DestinationPath pepys-deploy_$gitcommit.zip
+$output_filename = "pepys-deploy_$gitcommit.zip"
+Compress-Archive -Path .\* -DestinationPath $output_filename
 
-Write-Output "INFO: Written zipped deployment file to pepys-deploy_$gitcommit.zip"
+Write-Output "INFO: Written zipped deployment file to $output_filename"
