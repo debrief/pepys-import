@@ -233,38 +233,6 @@ class CommandLineResolverTestCase(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_sensor(self.store, "", "", "")
 
-    # def test_resolver_sensor_with_sensor_given(self):
-    #     """Test whether an existing Sensor entity returned or not"""
-    #     with self.store.session_scope():
-    #         sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1")
-    #         privacy = self.store.add_to_privacies("PRIVACY-1")
-    #         platform_type = self.store.add_to_platform_types("Warship")
-    #         nationality = self.store.add_to_nationalities("UK")
-    #         platform = self.store.get_platform(
-    #             "PLATFORM-1",
-    #             nationality=nationality.name,
-    #             platform_type=platform_type.name,
-    #             privacy=privacy.name,
-    #         )
-    #         all_sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-    #         platform.get_sensor(
-    #             data_store=self.store,
-    #             all_sensors=all_sensors,
-    #             sensor_name="TEST",
-    #             sensor_type=sensor_type,
-    #             privacy=privacy,
-    #         )
-    #
-    #         # it will return existing Sensor entity
-    #         sensor = self.resolver.resolve_sensor(
-    #             data_store=self.store,
-    #             sensor_name="TEST",
-    #             sensor_type=sensor_type,
-    #             privacy=privacy,
-    #         )
-    #         self.assertEqual(sensor.name, "TEST")
-    #         self.assertEqual(sensor.sensor_type_id, sensor_type.sensor_type_id)
-
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_resolver_sensor_with_values_given(self, menu_prompt):
         """Test whether correct sensor type and privacy returns from add_to_sensors method or not"""
@@ -550,30 +518,6 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "PRIVACY-1")
 
-    # TODO: use it for find method in data store or delete it
-    # def test_resolver_platform_with_platform_given(self):
-    #     with self.store.session_scope():
-    #         privacy = self.store.add_to_privacies("PRIVACY-1")
-    #         platform_type = self.store.add_to_platform_types("Warship")
-    #         nationality = self.store.add_to_nationalities("UK")
-    #         self.store.get_platform(
-    #             "TEST",
-    #             nationality=nationality.name,
-    #             platform_type=platform_type.name,
-    #             privacy=privacy.name,
-    #         )
-    #         platform = self.resolver.resolve_platform(
-    #             data_store=self.store,
-    #             platform_name="TEST",
-    #             platform_type=platform_type.name,
-    #             nationality=nationality.name,
-    #             privacy=privacy.name,
-    #         )
-    #         self.assertEqual(platform.name, "TEST")
-    #         self.assertEqual(platform.platform_type_id, platform_type.platform_type_id)
-    #         self.assertEqual(platform.nationality_id, nationality.nationality_id)
-    #         self.assertEqual(platform.privacy_id, privacy.privacy_id)
-
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_platform_edit_given_values(self, resolver_prompt, menu_prompt):
@@ -682,24 +626,6 @@ class CommandLineResolverTestCase(unittest.TestCase):
         with self.store.session_scope():
             with self.assertRaises(SystemExit):
                 self.resolver.fuzzy_search_datafile_type(self.store)
-
-    # TODO: use it for find method in data store or delete it
-    # def test_resolver_datafile_with_datafile_given(self):
-    #     with self.store.session_scope():
-    #         privacy = self.store.add_to_privacies("PRIVACY-1")
-    #         datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1")
-    #         self.store.add_to_datafiles(
-    #             file_type=datafile_type.name, privacy=privacy.name, reference="TEST",
-    #         )
-    #         datafile = self.resolver.resolve_datafile(
-    #             data_store=self.store,
-    #             datafile_name="TEST",
-    #             datafile_type=datafile_type.name,
-    #             privacy=privacy.name,
-    #         )
-    #         self.assertEqual(datafile.reference, "TEST")
-    #         self.assertEqual(datafile.datafile_type_id, datafile_type.datafile_type_id)
-    #         self.assertEqual(datafile.privacy_id, privacy.privacy_id)
 
     # TODO: modify it when resolve_datafile is refactored
     # @patch("pepys_import.resolvers.command_line_resolver.create_menu")
