@@ -25,12 +25,10 @@ class DefaultResolverTestCase(unittest.TestCase):
 
     def test_resolve_sensor(self):
         with self.store.session_scope():
-            sensor_type, privacy = self.resolver.resolve_sensor(
-                data_store=self.store,
-                sensor_name="TEST",
-                sensor_type=None,
-                privacy=None,
+            sensor_name, sensor_type, privacy = self.resolver.resolve_sensor(
+                data_store=self.store, sensor_name=None, sensor_type=None, privacy=None,
             )
+            self.assertEqual(sensor_name, "SENSOR-1")
             self.assertEqual(sensor_type.name, "Position")
             self.assertEqual(privacy.name, "PRIVACY-1")
 
@@ -43,24 +41,25 @@ class DefaultResolverTestCase(unittest.TestCase):
                 privacy,
             ) = self.resolver.resolve_platform(
                 data_store=self.store,
-                platform_name="TEST",
+                platform_name=None,
                 platform_type=None,
                 nationality=None,
                 privacy=None,
             )
-            self.assertEqual(platform_name, "TEST")
+            self.assertEqual(platform_name, "PLATFORM-1")
             self.assertEqual(platform_type.name, "Warship")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "PRIVACY-1")
 
     def test_resolver_datafile(self):
         with self.store.session_scope():
-            datafile_type, privacy = self.resolver.resolve_datafile(
+            datafile_name, datafile_type, privacy = self.resolver.resolve_datafile(
                 data_store=self.store,
-                datafile_name="TEST",
+                datafile_name=None,
                 datafile_type=None,
                 privacy=None,
             )
+            self.assertEqual(datafile_name, "DATAFILE-1")
             self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
             self.assertEqual(privacy.name, "PRIVACY-1")
 

@@ -510,13 +510,6 @@ class PlatformAndDatafileTestCase(TestCase):
             found_datafile = self.store.find_datafile("TEST")
             self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
 
-    @unittest.expectedFailure
-    def test_empty_datafile_name(self):
-        """Test whether a new datafile without a name is created or not"""
-
-        with self.store.session_scope():
-            self.store.get_datafile(datafile_name="", datafile_type="csv")
-
     def test_new_platform_added_successfully(self):
         """Test whether a new platform is created successfully or not"""
 
@@ -615,13 +608,6 @@ class PlatformAndDatafileTestCase(TestCase):
             found_platform = self.store.find_platform("TEST")
             self.assertEqual(platform.platform_id, found_platform.platform_id)
             self.assertEqual(found_platform.name, "Test Platform")
-
-    @unittest.expectedFailure
-    def test_empty_platform_name(self):
-        """Test whether a new platform without a name is created or not"""
-
-        with self.store.session_scope():
-            self.store.get_platform(platform_name="")
 
 
 class DataStoreStatusTestCase(TestCase):
@@ -783,17 +769,6 @@ class SensorTestCase(TestCase):
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             self.assertEqual(len(sensors), 1)
-
-    @unittest.expectedFailure
-    def test_empty_sensor_name(self):
-        """Test whether a new sensor with empty name is created"""
-        with self.store.session_scope():
-            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-
-            # there must be no entry at the beginning
-            self.assertEqual(len(sensors), 0)
-
-            self.platform.get_sensor(self.store, "", self.sensor_type)
 
     def test_find_sensor(self):
         """Test whether find_sensor method returns the correct Sensor entity"""

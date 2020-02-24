@@ -625,7 +625,7 @@ class DataStore(object):
 
         return None
 
-    def get_datafile(self, datafile_name, datafile_type):
+    def get_datafile(self, datafile_name=None, datafile_type=None):
         """
         Adds an entry to the datafiles table of the specified name (path)
         and type if not already present.
@@ -639,26 +639,28 @@ class DataStore(object):
         """
 
         # Check for name match in Datafile and Synonym Tables
-        datafile = self.find_datafile(datafile_name=datafile_name)
-        if datafile:
-            return datafile
+        if datafile_name:
+            datafile = self.find_datafile(datafile_name=datafile_name)
+            if datafile:
+                return datafile
 
-        datafile_type, privacy = self.missing_data_resolver.resolve_datafile(
+        (
+            datafile_name,
+            datafile_type,
+            privacy,
+        ) = self.missing_data_resolver.resolve_datafile(
             self, datafile_name, datafile_type, None
         )
 
         assert type(datafile_type), self.db_classes.DatafileType
         assert type(privacy), self.db_classes.Privacy
 
-        if len(datafile_name) == 0:
-            raise Exception("Datafile name can't be empty!")
-        else:
-            return self.add_to_datafiles(
-                simulated=False,
-                privacy=privacy.name,
-                file_type=datafile_type.name,
-                reference=datafile_name,
-            )
+        return self.add_to_datafiles(
+            simulated=False,
+            privacy=privacy.name,
+            file_type=datafile_type.name,
+            reference=datafile_name,
+        )
 
     def find_platform(self, platform_name):
         """
@@ -703,7 +705,7 @@ class DataStore(object):
         return None
 
     def get_platform(
-        self, platform_name, nationality=None, platform_type=None, privacy=None
+        self, platform_name=None, nationality=None, platform_type=None, privacy=None
     ):
         """
         Adds an entry to the platforms table for the specified platform
@@ -721,15 +723,21 @@ class DataStore(object):
         """
 
         # Check for name match in Platform and Synonym Tables
-        platform = self.find_platform(platform_name)
-        if platform:
-            return platform
+        if platform_name:
+            platform = self.find_platform(platform_name)
+            if platform:
+                return platform
 
         nationality = self.search_nationality(nationality)
         platform_type = self.search_platform_type(platform_type)
         privacy = self.search_privacy(privacy)
 
-        if nationality is None or platform_type is None or privacy is None:
+        if (
+            platform_name is None
+            or nationality is None
+            or platform_type is None
+            or privacy is None
+        ):
             (
                 platform_name,
                 platform_type,
@@ -743,15 +751,12 @@ class DataStore(object):
         assert type(platform_type), self.db_classes.PlatformType
         assert type(privacy), self.db_classes.Privacy
 
-        if len(platform_name) == 0:
-            raise Exception("Platform name can't be empty!")
-        else:
-            return self.add_to_platforms(
-                name=platform_name,
-                nationality=nationality.name,
-                platform_type=platform_type.name,
-                privacy=privacy.name,
-            )
+        return self.add_to_platforms(
+            name=platform_name,
+            nationality=nationality.name,
+            platform_type=platform_type.name,
+            privacy=privacy.name,
+        )
 
     def get_status(
         self,

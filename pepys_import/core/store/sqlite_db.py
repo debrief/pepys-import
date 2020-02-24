@@ -168,7 +168,7 @@ class Platform(BaseSpatiaLite):
         # search for any platform with this name
         return session.query(Platform).filter(Platform.name == name).first()
 
-    def get_sensor(self, data_store, sensor_name, sensor_type=None, privacy=None):
+    def get_sensor(self, data_store, sensor_name=None, sensor_type=None, privacy=None):
         """
         Lookup or create a sensor of this name for this :class:`Platform`.
         Specified sensor will be added to the :class:`Sensor` table.
@@ -189,22 +189,23 @@ class Platform(BaseSpatiaLite):
             return sensor
 
         if sensor_type is None or privacy is None:
-            sensor_type, privacy = data_store.missing_data_resolver.resolve_sensor(
+            (
+                sensor_name,
+                sensor_type,
+                privacy,
+            ) = data_store.missing_data_resolver.resolve_sensor(
                 data_store, sensor_name, sensor_type, privacy
             )
 
         assert type(sensor_type), SensorType
         assert type(privacy), Privacy
 
-        if len(sensor_name) == 0:
-            raise Exception("Please enter sensor name!")
-        else:
-            return Sensor().add_to_sensors(
-                session=data_store.session,
-                name=sensor_name,
-                sensor_type=sensor_type.name,
-                host=self.name,
-            )
+        return Sensor().add_to_sensors(
+            session=data_store.session,
+            name=sensor_name,
+            sensor_type=sensor_type.name,
+            host=self.name,
+        )
 
 
 class Task(BaseSpatiaLite):
