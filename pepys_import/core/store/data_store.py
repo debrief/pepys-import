@@ -698,7 +698,7 @@ class DataStore(object):
                 .first()
             )
             if platform:
-                return
+                return platform
 
         return None
 
