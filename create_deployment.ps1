@@ -58,5 +58,12 @@ Write-Output "INFO: Installed Python dependencies"
 Remove-Item .\7zip -Recurse
 Remove-Item *.zip
 Remove-Item *.7z
+Remove-Item get-pip.py
 
 Write-Output "INFO: Finished cleanup"
+
+
+$gitcommit = git rev-parse --short HEAD
+Compress-Archive -Path .\* -DestinationPath pepys-deploy_$gitcommit.zip
+
+Write-Output "INFO: Written zipped deployment file to pepys-deploy_$gitcommit.zip"
