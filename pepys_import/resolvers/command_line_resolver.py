@@ -121,14 +121,21 @@ class CommandLineResolver(DataResolver):
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
-        if choice not in completer:
+        if datafile_name and choice in completer:
             new_choice = create_menu(
-                f"You didn't select an existing datafile. "
-                f"Do you wish to keep {choice} as synonym?",
+                f"Do you wish to keep {datafile_name} as synonym for {choice}?",
                 ["Yes", "No"],
             )
             if new_choice == str(1):
-                return data_store.add_to_synonyms("Datafiles", datafile_name)
+                datafile_id = (
+                    data_store.session.query(data_store.db_classes.Datafile)
+                    .filter(data_store.db_classes.Datafile.reference == choice)
+                    .first()
+                    .datafile_id
+                )
+                return data_store.add_to_synonyms(
+                    "Datafiles", datafile_name, datafile_id
+                )
             elif new_choice == str(2):
                 return self.add_to_datafiles(
                     data_store, datafile_name, datafile_type, privacy
@@ -136,11 +143,9 @@ class CommandLineResolver(DataResolver):
             elif new_choice == ".":
                 print("Quitting")
                 sys.exit(1)
-        else:
-            return (
-                data_store.session.query(data_store.db_classes.Datafile)
-                .filter(data_store.db_classes.Datafile.reference == choice)
-                .first()
+        elif choice not in completer:
+            return self.add_to_datafiles(
+                data_store, datafile_name, datafile_type, privacy
             )
 
     def fuzzy_search_platform(

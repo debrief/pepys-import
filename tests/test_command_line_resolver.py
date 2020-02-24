@@ -668,8 +668,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
     def test_resolver_datafile_add_new_datafile(self, menu_prompt):
         menu_prompt.side_effect = [
             "1",
-            "TEST",
-            "2",
+            "DATAFILE-1",
             "DATAFILE-TYPE-1",
             "1",
             "PRIVACY-1",
@@ -689,30 +688,27 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "PRIVACY-1")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_datafile_returns_existing_datafile(self, menu_prompt):
-        menu_prompt.side_effect = ["TEST"]
+    def test_resolve_datafile_add_to_synonyms(self, menu_prompt):
+        menu_prompt.side_effect = ["DATAFILE-1", "1"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1")
             datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1")
-            self.store.add_to_datafiles(
-                file_type=datafile_type.name, privacy=privacy.name, reference="TEST",
+            datafile = self.store.add_to_datafiles(
+                file_type=datafile_type.name,
+                privacy=privacy.name,
+                reference="DATAFILE-1",
             )
-            datafile = self.resolver.fuzzy_search_datafile(
+            synonym = self.resolver.fuzzy_search_datafile(
                 data_store=self.store,
                 datafile_name="TEST",
                 datafile_type=datafile_type.name,
                 privacy=privacy.name,
             )
-            self.assertEqual(datafile.reference, "TEST")
-            self.assertEqual(datafile.datafile_type_id, datafile_type.datafile_type_id)
-            self.assertEqual(datafile.privacy_id, privacy.privacy_id)
+            self.assertEqual(synonym.entity, datafile.datafile_id)
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_quit_works_for_resolver_datafile(self, menu_prompt):
         menu_prompt.side_effect = [
-            ".",
-            "2",
-            "DATAFILE-TYPE-1",
             ".",
             "2",
             ".",
@@ -721,19 +717,48 @@ class CommandLineResolverTestCase(unittest.TestCase):
             ".",
         ]
         with self.store.session_scope():
-            self.store.add_to_privacies("PRIVACY-1")
-            self.store.add_to_datafile_types("DATAFILE-TYPE-1")
+            privacy = self.store.add_to_privacies("PRIVACY-1").name
+            datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1").name
 
             with self.assertRaises(SystemExit):
-                self.resolver.resolve_datafile(self.store, "TEST", "", "")
-            with self.assertRaises(SystemExit):
-                self.resolver.resolve_datafile(self.store, "TEST", "", "")
-            with self.assertRaises(SystemExit):
                 self.resolver.resolve_datafile(
-                    self.store, "TEST", "DATAFILE-TYPE-1", "PRIVACY-1"
+                    self.store, "TEST", datafile_type, privacy
                 )
             with self.assertRaises(SystemExit):
-                self.resolver.resolve_datafile(self.store, "TEST", "", "")
+                self.resolver.resolve_datafile(
+                    self.store, "TEST", datafile_type, privacy
+                )
+            with self.assertRaises(SystemExit):
+                self.store.add_to_datafiles(
+                    file_type=datafile_type, privacy=privacy, reference="TEST",
+                )
+                self.resolver.resolve_datafile(
+                    self.store, "DATAFILE-1", "DATAFILE-TYPE-1", "PRIVACY-1"
+                )
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_datafile_add_new_datafile(self, menu_prompt):
+        menu_prompt.side_effect = [
+            "DATAFILE-1",
+            "2",
+            "1",
+        ]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("PRIVACY-1").name
+            datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1").name
+            self.store.add_to_datafiles(
+                file_type=datafile_type, privacy=privacy, reference="DATAFILE-1",
+            )
+
+            datafile_name, datafile_type, privacy = self.resolver.fuzzy_search_datafile(
+                data_store=self.store,
+                datafile_name="TEST",
+                datafile_type=datafile_type,
+                privacy=privacy,
+            )
+            self.assertEqual(datafile_name, "TEST")
+            self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
+            self.assertEqual(privacy.name, "PRIVACY-1")
 
 
 if __name__ == "__main__":
