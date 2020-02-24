@@ -231,9 +231,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
+            event.listen(BasePostGIS.metadata, "before_create", DropSchema("Pepys"))
             self.postgres.stop()
         except AttributeError:
             return

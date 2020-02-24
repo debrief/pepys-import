@@ -29,7 +29,7 @@ class DataStoreInitialisePostGISTestCase(TestCase):
     def tearDown(self):
         try:
             event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema"),
+                BasePostGIS.metadata, "before_create", DropSchema("Pepys"),
             )
             self.store.stop()
         except AttributeError:
@@ -56,26 +56,30 @@ class DataStoreInitialisePostGISTestCase(TestCase):
 
         # there must be no table and no schema for datastore at the beginning
         self.assertEqual(len(table_names), 0)
-        self.assertNotIn("datastore_schema", schema_names)
+        self.assertNotIn("Pepys", schema_names)
 
         # creating database from schema
         data_store_postgres.initialise()
 
         inspector = inspect(data_store_postgres.engine)
-        table_names = inspector.get_table_names()
+        table_names = inspector.get_table_names(schema="Pepys")
         schema_names = inspector.get_schema_names()
 
-        # 36 tables and 1  table for spatial objects (spatial_ref_sys) must be created.
-        self.assertEqual(len(table_names), 37)
+        # 36 tables must be created.
+        self.assertEqual(len(table_names), 36)
         self.assertIn("Entry", table_names)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
         self.assertIn("Datafiles", table_names)
         self.assertIn("Nationalities", table_names)
+
+        # 1 table for spatial objects (spatial_ref_sys) must be created to default schema
+        table_names = inspector.get_table_names()
+        self.assertEqual(len(table_names), 1)
         self.assertIn("spatial_ref_sys", table_names)
 
-        # datastore_schema must be created
-        self.assertIn("datastore_schema", schema_names)
+        # pepys must be created
+        self.assertIn("Pepys", schema_names)
 
 
 class DataStoreInitialiseSpatiaLiteTestCase(TestCase):

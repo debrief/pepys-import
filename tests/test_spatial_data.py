@@ -100,7 +100,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
     def tearDown(self):
         try:
             event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema"),
+                BasePostGIS.metadata, "before_create", DropSchema("Pepys"),
             )
             self.postgres.stop()
         except AttributeError:

@@ -130,9 +130,7 @@ class DataStore(object):
                     conn.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
                 #  ensure that create schema scripts created before create table scripts
                 event.listen(
-                    BasePostGIS.metadata,
-                    "before_create",
-                    CreateSchema("datastore_schema"),
+                    BasePostGIS.metadata, "before_create", CreateSchema("Pepys"),
                 )
                 BasePostGIS.metadata.create_all(self.engine)
             except OperationalError:
