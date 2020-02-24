@@ -66,9 +66,11 @@ class CommandLineResolver(DataResolver):
         )
 
         if choice == str(1):
-            return self.fuzzy_search_sensor(data_store, sensor_type, privacy)
+            return self.fuzzy_search_sensor(
+                data_store, sensor_name, sensor_type, privacy
+            )
         elif choice == str(2):
-            return self.add_to_sensors(data_store, sensor_type, privacy)
+            return self.add_to_sensors(data_store, sensor_name, sensor_type, privacy)
         elif choice == ".":
             print("Quitting")
             sys.exit(1)
@@ -213,7 +215,7 @@ class CommandLineResolver(DataResolver):
                 data_store, choice, platform_type, nationality, privacy
             )
 
-    def fuzzy_search_sensor(self, data_store, sensor_type, privacy):
+    def fuzzy_search_sensor(self, data_store, sensor_name, sensor_type, privacy):
         """
         This method parses all sensors in the DB, and uses fuzzy search when
         user is typing. If user enters a new value, it adds to Sensor table or searches
@@ -222,10 +224,12 @@ class CommandLineResolver(DataResolver):
 
         :param data_store: A :class:`DataStore` object
         :type data_store: :class:`DataStore`
+        :param sensor_name: Name of :class:`Sensor`
+        :type sensor_name: :class:`Sensor`
         :param sensor_type: Type of :class:`Sensor`
-        :type sensor_type: SensorType
+        :type sensor_type: :class:`SensorType`
         :param privacy: Name of :class:`Privacy`
-        :type privacy: Privacy
+        :type privacy: :class:`Privacy`
         :return:
         """
         sensors = data_store.session.query(data_store.db_classes.Sensor).all()
@@ -235,25 +239,28 @@ class CommandLineResolver(DataResolver):
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
-        if choice not in completer:
+        if sensor_name and choice in completer:
             new_choice = create_menu(
-                f"You didn't select an existing sensor. "
-                f"Do you want to add '{choice}' ?",
-                choices=["Yes", "No, I'd like to select an existing sensor"],
+                f"Do you wish to keep {sensor_name} as synonym for {choice}?",
+                ["Yes", "No"],
             )
             if new_choice == str(1):
-                return self.add_to_sensors(data_store, sensor_type, privacy)
+                sensor_id = (
+                    data_store.session.query(data_store.db_classes.Sensor)
+                    .filter(data_store.db_classes.Sensor.name == choice)
+                    .first()
+                    .sensor_id
+                )
+                return data_store.add_to_synonyms("Sensors", sensor_name, sensor_id)
             elif new_choice == str(2):
-                return self.fuzzy_search_sensor(data_store, sensor_type, privacy)
+                return self.add_to_sensors(
+                    data_store, sensor_name, sensor_type, privacy
+                )
             elif new_choice == ".":
                 print("Quitting")
                 sys.exit(1)
-        else:
-            return (
-                data_store.session.query(data_store.db_classes.Sensor)
-                .filter(data_store.db_classes.Sensor.name == choice)
-                .first()
-            )
+        elif choice not in completer:
+            return self.add_to_sensors(data_store, sensor_name, sensor_type, privacy)
 
     def fuzzy_search_privacy(self, data_store):
         """
@@ -645,13 +652,15 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
-    def add_to_sensors(self, data_store, sensor_type, privacy):
+    def add_to_sensors(self, data_store, sensor_name, sensor_type, privacy):
         """
         This method resolves sensor type and privacy. It returns existing or resolved
         sensor type and privacy entities.
 
         :param data_store: A :class:`DataStore` object
         :type data_store: :class:`DataStore`
+        :param sensor_name: Name of :class:`Sensor`
+        :type sensor_name: :class:`Sensor`
         :param sensor_type: Type of :class:`Sensor`
         :type sensor_type: SensorType
         :param privacy: Name of :class:`Privacy`
@@ -661,6 +670,7 @@ class CommandLineResolver(DataResolver):
         # Choose Sensor Type
         print("Ok, adding new sensor.")
 
+        sensor_name = prompt("Please enter a name: ", default=sensor_name)
         if sensor_type:
             sensor_type = data_store.add_to_sensor_types(sensor_type)
         else:
@@ -671,4 +681,18 @@ class CommandLineResolver(DataResolver):
         else:
             privacy = self.resolve_privacy(data_store)
 
-        return sensor_type, privacy
+        print("-" * 30)
+        print("Input complete. About to create this platform:")
+        print(f"Name: {sensor_name}")
+        print(f"Type: {sensor_type.name}")
+        print(f"Classification: {privacy.name}")
+
+        choice = create_menu("Create this sensor?: ", ["Yes", "No, make further edits"])
+
+        if choice == str(1):
+            return sensor_name, sensor_type, privacy
+        elif choice == str(2):
+            return self.add_to_sensors(data_store, sensor_name, None, None)
+        elif choice == ".":
+            print("Quitting")
+            sys.exit(1)
