@@ -185,17 +185,13 @@ class Platform(BasePostGIS):
         # search for any platform with this name
         return session.query(Platform).filter(Platform.name == name).first()
 
-    def get_sensor(
-        self, data_store, all_sensors, sensor_name, sensor_type=None, privacy=None
-    ):
+    def get_sensor(self, data_store, sensor_name, sensor_type=None, privacy=None):
         """
         Lookup or create a sensor of this name for this :class:`Platform`.
         Specified sensor will be added to the :class:`Sensor` table.
 
         :param data_store: DataStore object to to query DB and use missing data resolver
         :type data_store: :class:`DataStore`
-        :param all_sensors: All :class:`Sensor` Entities
-        :type all_sensors: :class:`Sensor` List
         :param sensor_name: Name of :class:`Sensor`
         :type sensor_name: String
         :param sensor_type: Type of :class:`Sensor`

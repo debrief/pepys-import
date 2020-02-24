@@ -138,8 +138,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 platform_type=platform_type,
                 privacy=privacy,
             )
-            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            platform.get_sensor(self.store, sensors, "TEST", sensor_type, privacy)
+            platform.get_sensor(self.store, "TEST", sensor_type, privacy)
 
             # it will return existing Sensor entity
             sensor = self.resolver.resolve_sensor(
@@ -166,9 +165,8 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 platform_type=platform_type,
                 privacy=privacy,
             )
-            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            platform.get_sensor(self.store, sensors, "SENSOR-1", sensor_type, privacy)
-            platform.get_sensor(self.store, sensors, "SENSOR-2", sensor_type, privacy)
+            platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy)
+            platform.get_sensor(self.store, "SENSOR-2", sensor_type, privacy)
 
             sensor = self.resolver.resolve_sensor(
                 self.store, "SENSOR-TEST", sensor_type, privacy
@@ -204,9 +202,8 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 platform_type=platform_type,
                 privacy=privacy,
             )
-            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            platform.get_sensor(self.store, sensors, "SENSOR-1", sensor_type, privacy)
-            platform.get_sensor(self.store, sensors, "SENSOR-2", sensor_type, privacy)
+            platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy)
+            platform.get_sensor(self.store, "SENSOR-2", sensor_type, privacy)
 
             sensor_type, privacy = self.resolver.resolve_sensor(
                 self.store, "SENSOR-TEST", sensor_type=None, privacy=None

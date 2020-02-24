@@ -759,7 +759,7 @@ class SensorTestCase(TestCase):
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(self.store, sensors, "gps", self.sensor_type)
+            self.platform.get_sensor(self.store, "gps", self.sensor_type)
 
             # there must be one entry
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
@@ -774,11 +774,10 @@ class SensorTestCase(TestCase):
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(self.store, sensors, "gps", self.sensor_type)
+            self.platform.get_sensor(self.store, "gps", self.sensor_type)
 
-            # query Sensor table again and try to add the same entity
-            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            self.platform.get_sensor(self.store, sensors, "gps", self.sensor_type)
+            # try to add the same entity
+            self.platform.get_sensor(self.store, "gps", self.sensor_type)
 
             # there must be one entry
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
@@ -794,11 +793,42 @@ class SensorTestCase(TestCase):
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(self.store, sensors, "", self.sensor_type)
+            self.platform.get_sensor(self.store, "", self.sensor_type)
 
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_sensor(self):
-        pass
+    def test_find_sensor(self):
+        """Test whether find_sensor method returns the correct Sensor entity"""
+        with self.store.session_scope():
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
+
+            # there must be no entry at the beginning
+            self.assertEqual(len(sensors), 0)
+
+            sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
+            sensor_2 = self.platform.get_sensor(self.store, "gps_2", self.sensor_type)
+
+            found_sensor = self.store.db_classes.Sensor().find_sensor(self.store, "gps")
+            self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
+            self.assertEqual(found_sensor.name, "gps")
+
+    def test_find_sensor_synonym(self):
+        """Test whether find_sensor method finds the correct Sensor entity from Synonyms table"""
+        with self.store.session_scope():
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
+
+            # there must be no entry at the beginning
+            self.assertEqual(len(sensors), 0)
+
+            sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
+            sensor_2 = self.platform.get_sensor(self.store, "gps_2", self.sensor_type)
+            self.store.add_to_synonyms(
+                table="Sensors", name="TEST", entity=sensor.sensor_id
+            )
+
+            found_sensor = self.store.db_classes.Sensor().find_sensor(
+                self.store, "TEST"
+            )
+            self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
+            self.assertEqual(found_sensor.name, "gps")
 
 
 class MeasurementsTestCase(TestCase):
@@ -841,9 +871,8 @@ class MeasurementsTestCase(TestCase):
                     platform_type=self.platform_type,
                     privacy=self.privacy,
                 )
-                sensors = self.store.session.query(self.store.db_classes.Sensor).all()
                 self.sensor = self.platform.get_sensor(
-                    self.store, sensors, "gps", self.sensor_type
+                    self.store, "gps", self.sensor_type
                 )
                 self.comment_type = self.store.add_to_comment_types("test_type")
                 self.file = self.store.get_datafile("test_file", "csv")

@@ -44,14 +44,10 @@ class ReplayImporter(Importer):
                     privacy="Public",
                 )
 
-                all_sensors = data_store.session.query(
-                    data_store.db_classes.Sensor
-                ).all()
                 sensor_type = data_store.add_to_sensor_types("_GPS")
                 privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
                 sensor = platform.get_sensor(
                     data_store=data_store,
-                    all_sensors=all_sensors,
                     sensor_name=platform.name,
                     sensor_type=sensor_type,
                     privacy=privacy.name,

@@ -96,16 +96,12 @@ class NMEAImporter(Importer):
                     # and finally store it
                     datafile = data_store.search_datafile(datafile_name)
                     platform = data_store.get_platform("Toure", "Ferry", "FR", "Public")
-                    all_sensors = data_store.session.query(
-                        data_store.db_classes.Sensor
-                    ).all()
                     sensor_type = data_store.add_to_sensor_types("_GPS")
                     privacy = data_store.missing_data_resolver.resolve_privacy(
                         data_store
                     )
                     sensor = platform.get_sensor(
                         data_store=data_store,
-                        all_sensors=all_sensors,
                         sensor_name=platform.name,
                         sensor_type=sensor_type,
                         privacy=privacy.name,
