@@ -6,7 +6,8 @@ class DefaultResolver(DataResolver):
     default_platform_type = "Warship"
     default_nationality = "UK"
     default_sensor_type = "Position"
-    default_privacy = "Private"
+    default_privacy = "PRIVACY-1"
+    default_datafile_type = "DATAFILE-TYPE-1"
 
     def resolve_platform(
         self, data_store, platformName, platform_type_str, nationality_str, privacy_str
