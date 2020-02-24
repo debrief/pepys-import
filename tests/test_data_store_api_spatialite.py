@@ -397,6 +397,7 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(datafiles[0].reference, "test_file.csv")
 
     def test_find_datafile(self):
+        """Test whether find_datafile method returns the correct Datafile entity"""
         with self.store.session_scope():
             # Create a datafile
             datafile = self.store.get_datafile("test_file.csv", "csv")
@@ -407,6 +408,7 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(found_datafile.reference, "test_file.csv")
 
     def test_find_datafile_synonym(self):
+        """Test whether find_datafile method finds the correct Datafile entity from Synonyms table"""
         with self.store.session_scope():
             datafile = self.store.get_datafile("test_file.csv", "csv")
             datafile_2 = self.store.get_datafile("test_file_2.csv", "csv")
@@ -479,6 +481,7 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(platforms[0].name, "Test Platform")
 
     def test_find_platform(self):
+        """Test whether find_platform method returns the correct Platform entity"""
         with self.store.session_scope() as session:
             # Create two platforms
             platform = self.store.get_platform(
@@ -499,26 +502,28 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(found_platform.name, "Test Platform")
 
     def test_find_platform_synonym(self):
-        # Create two platforms
-        platform = self.store.get_platform(
-            platform_name="Test Platform",
-            nationality=self.nationality,
-            platform_type=self.platform_type,
-            privacy=self.privacy,
-        )
-        platform_2 = self.store.get_platform(
-            platform_name="Test Platform 2",
-            nationality=self.nationality,
-            platform_type=self.platform_type,
-            privacy=self.privacy,
-        )
-        self.store.add_to_synonyms(
-            table="Platforms", name="TEST", entity=platform.platform_id
-        )
+        """Test whether find_platform method finds the correct Platform entity from Synonyms table"""
+        with self.store.session_scope() as session:
+            # Create two platforms
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+            platform_2 = self.store.get_platform(
+                platform_name="Test Platform 2",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+            self.store.add_to_synonyms(
+                table="Platforms", name="TEST", entity=platform.platform_id
+            )
 
-        found_platform = self.store.find_platform("TEST")
-        self.assertEqual(platform.platform_id, found_platform.platform_id)
-        self.assertEqual(found_platform.name, "Test Platform")
+            found_platform = self.store.find_platform("TEST")
+            self.assertEqual(platform.platform_id, found_platform.platform_id)
+            self.assertEqual(found_platform.name, "Test Platform")
 
     @unittest.expectedFailure
     def test_empty_platform_name(self):
@@ -630,6 +635,12 @@ class SensorTestCase(TestCase):
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             self.assertEqual(len(sensors), 1)
+
+    def test_find_sensor(self):
+        pass
+
+    def test_find_sensor_synonym(self):
+        pass
 
     @unittest.expectedFailure
     def test_empty_sensor_name(self):
