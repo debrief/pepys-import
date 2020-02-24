@@ -915,10 +915,6 @@ class MeasurementsTestCase(TestCase):
                 states = self.store.session.query(self.store.db_classes.State).all()
             self.assertEqual(len(states), 1)
 
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_state(self):
-        pass
-
     def test_new_contact_created_successfully(self):
         """Test whether a new contact is created"""
 
@@ -941,10 +937,6 @@ class MeasurementsTestCase(TestCase):
                 contact.submit(self.store.session)
                 contacts = self.store.session.query(self.store.db_classes.Contact).all()
                 self.assertEqual(len(contacts), 1)
-
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_contact(self):
-        pass
 
     def test_new_comment_created_successfully(self):
         """Test whether a new comment is created"""
@@ -969,10 +961,6 @@ class MeasurementsTestCase(TestCase):
                 comment.submit(self.store.session)
                 comments = self.store.session.query(self.store.db_classes.Comment).all()
                 self.assertEqual(len(comments), 1)
-
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_comment(self):
-        pass
 
 
 if __name__ == "__main__":
