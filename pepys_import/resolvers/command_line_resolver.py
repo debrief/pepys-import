@@ -474,11 +474,7 @@ class CommandLineResolver(DataResolver):
             return self.fuzzy_search_nationality(data_store)
         elif choice == str(2):
             new_nationality = prompt("Please type name of new nationality: ")
-            nationality = data_store.search_nationality(new_nationality)
-            if nationality:
-                return nationality
-            else:
-                return data_store.add_to_nationalities(new_nationality)
+            return data_store.add_to_nationalities(new_nationality)
         elif choice == ".":
             print("Quitting")
             sys.exit(1)
@@ -493,11 +489,7 @@ class CommandLineResolver(DataResolver):
             return self.fuzzy_search_platform_type(data_store)
         elif choice == str(2):
             new_platform_type = prompt("Please type name of new platform-type: ")
-            platform_type = data_store.search_platform_type(new_platform_type)
-            if platform_type:
-                return platform_type
-            else:
-                return data_store.add_to_platform_types(new_platform_type)
+            return data_store.add_to_platform_types(new_platform_type)
         elif choice == ".":
             print("Quitting")
             sys.exit(1)
@@ -524,10 +516,6 @@ class CommandLineResolver(DataResolver):
             return self.fuzzy_search_sensor_type(data_store)
         elif choice == str(2):
             new_input = prompt("Please type name of new sensor-type: ")
-            sensor_type = data_store.search_sensor_type(new_input)
-            if sensor_type:
-                return sensor_type
-
             return data_store.add_to_sensor_types(new_input)
         elif choice == ".":
             print("Quitting")
