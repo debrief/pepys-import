@@ -88,7 +88,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
     def test_resolve_sensor(self, resolver_prompt, menu_prompt):
         """Test whether correct sensor type and privacy entities are resolved or not"""
 
-        # Select "Add a new sensor"->Select "Add a new sensor-type"->
+        # Select "Add a new sensor"->Type "TEST"->Select "Add a new sensor-type"->
         # Type "SENSOR-TYPE-1"->Select "Add a new classification"->Type "PRIVACY-1"->Select "Yes"
         menu_prompt.side_effect = ["2", "2", "2", "1"]
         resolver_prompt.side_effect = ["TEST", "SENSOR-TYPE-1", "PRIVACY-1"]
@@ -103,32 +103,11 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
             self.assertEqual(privacy.name, "PRIVACY-1")
 
-    # TODO: this test might not be necessary, check coverage for it
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_resolve_sensor_with_new_sensor_type(self, resolver_prompt, menu_prompt):
-        """Test whether correct sensor type and privacy entities are resolved or not"""
-
-        # Select "Add a new sensor"->Select "Add a new sensor-type"->
-        # Type "SENSOR-TYPE-1"->Select "Add a new classification"->Type "PRIVACY-1"
-        menu_prompt.side_effect = ["2", "2", "2", "1"]
-        resolver_prompt.side_effect = ["TEST", "SENSOR-TYPE-1", "PRIVACY-1"]
-        with self.store.session_scope():
-            self.store.add_to_privacies("PRIVACY-1")
-            sensor_name, sensor_type, privacy = self.resolver.resolve_sensor(
-                self.store, "TEST", sensor_type=None, privacy=None
-            )
-
-            self.assertEqual(sensor_name, "TEST")
-            self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
-            self.assertEqual(privacy.name, "PRIVACY-1")
-
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_resolve_sensor_add_to_synonyms(self, menu_prompt):
-        """Test whether recursive call works for sensor"""
+        """Test whether the given sensor name is correctly added to Synonyms table or not"""
 
-        # Select "Search an existing sensor"->Search "SENSOR-TEST"->Select "No"
-        # ->Search "SENSOR-1"
+        # Select "Search an existing sensor"->Search "SENSOR-1"->Select "Yes"
         menu_prompt.side_effect = ["1", "SENSOR-1", "1"]
         with self.store.session_scope():
             # Create platform first, then create a Sensor object
@@ -148,6 +127,68 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 self.store, "SENSOR-TEST", sensor_type, privacy
             )
             self.assertEqual(synonym.entity, sensor.sensor_id)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_quit_works_for_resolver_sensor(self, resolver_prompt, menu_prompt):
+        """Test whether "." quits from the resolve sensor"""
+        menu_prompt.side_effect = [".", "2", ".", "1", "SENSOR-1", "."]
+        resolver_prompt.side_effect = ["TEST"]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1")
+            privacy = self.store.add_to_privacies("PRIVACY-1").name
+            # Select "."
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_sensor(self.store, "", "", "")
+            # Select "Add a new sensor"->Type "TEST->Select "."
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_sensor(self.store, "", sensor_type.name, privacy)
+            # Select "Search an existing sensor"->Search "SENSOR-1"->Select "."
+            nationality = self.store.add_to_nationalities("UK").name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1").name
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+            )
+            platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy)
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_sensor(self.store, "TEST", sensor_type, privacy)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_sensor_make_further_edit(self, resolver_prompt, menu_prompt):
+        """Test whether correct sensor type and privacy returns after resolver is further edited"""
+
+        # Select "Add a new sensor"->Type "TEST"->Select "No"->Type "TEST"->
+        # Select "Search for an existing sensor-type"->Search "SENSOR-TYPE-2"->
+        # Select "Search for an existing classification"->Search "PRIVACY-2"->Select "Yes"
+        menu_prompt.side_effect = [
+            "2",
+            "2",
+            "1",
+            "SENSOR-TYPE-2",
+            "1",
+            "PRIVACY-2",
+            "1",
+        ]
+        resolver_prompt.side_effect = ["TEST", "TEST"]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1")
+            sensor_type_2 = self.store.add_to_sensor_types("SENSOR-TYPE-2")
+            privacy = self.store.add_to_privacies("PRIVACY-1")
+            privacy_2 = self.store.add_to_privacies("PRIVACY-2")
+            (
+                resolved_name,
+                resolved_type,
+                resolved_privacy,
+            ) = self.resolver.resolve_sensor(
+                self.store, "TEST", sensor_type.name, privacy.name
+            )
+            self.assertEqual(resolved_name, "TEST")
+            self.assertEqual(resolved_type.sensor_type_id, sensor_type_2.sensor_type_id)
+            self.assertEqual(resolved_privacy.privacy_id, privacy_2.privacy_id)
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
@@ -194,62 +235,25 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_quit_works_for_resolver_sensor(self, resolver_prompt, menu_prompt):
-        """Test whether "." quits from the resolve sensor"""
-        # TODO: selects not correct
-        menu_prompt.side_effect = [".", "2", ".", "1", "SENSOR-1", "."]
-        resolver_prompt.side_effect = ["TEST"]
+    def test_fuzzy_search_add_sensor_alternative(self, resolver_prompt, menu_prompt):
+        """Test whether a new Sensor entity created when the Sensor Table is empty."""
+
+        # Select "Search an existing sensor"->Search "SENSOR-1"->Type "SENSOR-TEST"->Select "Yes"
+        menu_prompt.side_effect = [
+            "1",
+            "SENSOR-1",
+            "1",
+        ]
+        resolver_prompt.side_effect = ["SENSOR-TEST"]
         with self.store.session_scope():
             sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1")
             privacy = self.store.add_to_privacies("PRIVACY-1").name
-            # Select "."
-            with self.assertRaises(SystemExit):
-                self.resolver.resolve_sensor(self.store, "", "", "")
-            # Select "Add a new sensor"->Type "TEST->Select "."
-            with self.assertRaises(SystemExit):
-                self.resolver.resolve_sensor(self.store, "", sensor_type.name, privacy)
-            # Select "Search an existing sensor"->Search "SENSOR-1"->Select "."
-            nationality = self.store.add_to_nationalities("UK").name
-            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1").name
-            platform = self.store.get_platform(
-                platform_name="Test Platform",
-                nationality=nationality,
-                platform_type=platform_type,
-                privacy=privacy,
-            )
-            platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy)
-            with self.assertRaises(SystemExit):
-                self.resolver.resolve_sensor(self.store, "TEST", sensor_type, privacy)
 
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_resolver_sensor_make_further_edit(self, resolver_prompt, menu_prompt):
-        """Test whether correct sensor type and privacy returns from add_to_sensors method or not"""
-
-        # Select "Add a new sensor"
-        menu_prompt.side_effect = [
-            "2",
-            "2",
-            "1",
-            "SENSOR-TYPE-1",
-            "1",
-            "PRIVACY-1",
-            "1",
-        ]
-        resolver_prompt.side_effect = ["TEST", "TEST"]
-        with self.store.session_scope():
-            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1")
-            privacy = self.store.add_to_privacies("PRIVACY-1")
-            (
-                resolved_name,
-                resolved_type,
-                resolved_privacy,
-            ) = self.resolver.resolve_sensor(
-                self.store, "TEST", sensor_type.name, privacy.name
+            sensor_name, sensor_type, privacy = self.resolver.resolve_sensor(
+                self.store, "SENSOR-TEST", sensor_type=sensor_type.name, privacy=privacy
             )
-            self.assertEqual(resolved_name, "TEST")
-            self.assertEqual(resolved_type.sensor_type_id, sensor_type.sensor_type_id)
-            self.assertEqual(resolved_privacy.privacy_id, privacy.privacy_id)
+
+            self.assertEqual(sensor_name, "SENSOR-TEST")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_sensor_type_add_sensor_type(self, menu_prompt):
@@ -433,7 +437,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
     def test_quit_works_for_fuzzy_search_platform(self, menu_prompt):
         """Test whether "." quits from platform"""
 
-        # Type "TEST"->Select "."
+        # Type "PLATFORM-1"->Select "."
         menu_prompt.side_effect = ["PLATFORM-1", "."]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1")
@@ -593,10 +597,6 @@ class CommandLineResolverTestCase(unittest.TestCase):
             "TST",
             "TEST",
             "123",
-            "TEST",
-            "TST",
-            "TEST",
-            "123",
         ]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1").name
@@ -616,6 +616,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_add_new_datafile_type(self, menu_prompt):
+        """Test whether a new datafile type is added or not"""
+
+        # Type "TEST"->Select "Yes"
         menu_prompt.side_effect = ["TEST", "1"]
         with self.store.session_scope():
             datafile_type = self.resolver.fuzzy_search_datafile_type(self.store)
@@ -623,6 +626,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_datafile_type_recursive(self, menu_prompt):
+        """Test whether recursive call works for datafile type"""
+
+        # Type "TEST"->Select "No, I'd like to select a datafile type"->Type "DATAFILE-TYPE-1"
         menu_prompt.side_effect = ["TEST", "2", "DATAFILE-TYPE-1"]
         with self.store.session_scope():
             self.store.add_to_datafile_types("DATAFILE-TYPE-1")
@@ -632,38 +638,34 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_quit_works_for_fuzzy_search_datafile_type(self, menu_prompt):
+        """Test whether "." quits from the fuzzy search datafile type"""
+
+        # Type "TEST"->Select "."
         menu_prompt.side_effect = ["TEST", "."]
         with self.store.session_scope():
             with self.assertRaises(SystemExit):
                 self.resolver.fuzzy_search_datafile_type(self.store)
 
-    # TODO: modify it when resolve_datafile is refactored
-    # @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    # def test_resolver_datafile_add_to_synonym(self, menu_prompt):
-    #     menu_prompt.side_effect = ["1", "TEST", "1"]
-    #     with self.store.session_scope():
-    #         synonym = self.resolver.resolve_datafile(
-    #             data_store=self.store,
-    #             datafile_name="TEST",
-    #             datafile_type=None,
-    #             privacy=None,
-    #         )
-    #         self.assertEqual(synonym.synonym, "TEST")
-    #         self.assertEqual(synonym.table, "Datafiles")
-
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_resolver_datafile_edit_given_values(self, menu_prompt):
+        """Test whether correct datafile type and privacy returns after resolver is further edited"""
+
+        # Select "Add a new datafile"->Select "No"->Type "TEST"->
+        # Select "Search for an existing datafile-type"->Search "DATAFILE-TYPE-2"->
+        # Select "Search for an existing classification"->Search "PRIVACY-2"->Select "Yes"
         menu_prompt.side_effect = [
             "2",
             "2",
-            "DATAFILE-TYPE-1",
+            "DATAFILE-TYPE-2",
             "1",
-            "PRIVACY-1",
+            "PRIVACY-2",
             "1",
         ]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1").name
+            privacy_2 = self.store.add_to_privacies("PRIVACY-2").name
             datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1").name
+            datafile_type_2 = self.store.add_to_datafile_types("DATAFILE-TYPE-2").name
             (datafile_name, datafile_type, privacy,) = self.resolver.resolve_datafile(
                 data_store=self.store,
                 datafile_name="TEST",
@@ -671,11 +673,16 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 privacy=privacy,
             )
             self.assertEqual(datafile_name, "TEST")
-            self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(datafile_type.name, "DATAFILE-TYPE-2")
+            self.assertEqual(privacy.name, "PRIVACY-2")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_resolver_datafile_add_new_datafile(self, menu_prompt):
+        """Test whether the correct datafile type and privacy entities are returned after searched and not found in
+        Datafile Table."""
+
+        # Select "Search for an existing Datafile"->Search "DATAFILE-1"->Search "DATAFILE-TYPE-1"->
+        # Select "Search for an existing classification"->Search "PRIVACY-1->Select "Yes"
         menu_prompt.side_effect = [
             "1",
             "DATAFILE-1",
@@ -699,7 +706,10 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_resolve_datafile_add_to_synonyms(self, menu_prompt):
-        menu_prompt.side_effect = ["DATAFILE-1", "1"]
+        """Test whether the given datafile name is correctly added to Synonyms table or not"""
+
+        # Select "Search an existing datafile"->Search "DATAFILE-1"->Select "Yes"
+        menu_prompt.side_effect = ["1", "DATAFILE-1", "1"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1")
             datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1")
@@ -708,7 +718,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 privacy=privacy.name,
                 reference="DATAFILE-1",
             )
-            synonym = self.resolver.fuzzy_search_datafile(
+            synonym = self.resolver.resolve_datafile(
                 data_store=self.store,
                 datafile_name="TEST",
                 datafile_type=datafile_type.name,
@@ -718,6 +728,8 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_quit_works_for_resolver_datafile(self, menu_prompt):
+        """Test whether "." quits from the resolver datafile"""
+
         menu_prompt.side_effect = [
             ".",
             "2",
@@ -730,14 +742,17 @@ class CommandLineResolverTestCase(unittest.TestCase):
             privacy = self.store.add_to_privacies("PRIVACY-1").name
             datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1").name
 
+            # Select "."
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_datafile(
                     self.store, "TEST", datafile_type, privacy
                 )
+            # Select "Add a new datafile"->Select "."
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_datafile(
                     self.store, "TEST", datafile_type, privacy
                 )
+            # Select "Search for an existing datafile"->Search "TEST"->Select "."
             with self.assertRaises(SystemExit):
                 self.store.add_to_datafiles(
                     file_type=datafile_type, privacy=privacy, reference="TEST",
@@ -748,6 +763,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_datafile_add_new_datafile(self, menu_prompt):
+        """Test whether a new datafile is created or not after searched and not founded in Datafile Table."""
+
+        # Search "DATAFILE-1"->Select "No"->Select "Yes"
         menu_prompt.side_effect = [
             "DATAFILE-1",
             "2",
