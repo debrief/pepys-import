@@ -396,9 +396,26 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(len(datafiles), 1)
             self.assertEqual(datafiles[0].reference, "test_file.csv")
 
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_datafile(self):
-        pass
+    def test_find_datafile(self):
+        with self.store.session_scope():
+            # Create a datafile
+            datafile = self.store.get_datafile("test_file.csv", "csv")
+            datafile_2 = self.store.get_datafile("test_file_2.csv", "csv")
+            found_datafile = self.store.find_datafile("test_file.csv")
+
+            self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
+            self.assertEqual(found_datafile.reference, "test_file.csv")
+
+    def test_find_datafile_synonym(self):
+        with self.store.session_scope():
+            datafile = self.store.get_datafile("test_file.csv", "csv")
+            datafile_2 = self.store.get_datafile("test_file_2.csv", "csv")
+            self.store.add_to_synonyms(
+                table="Datafiles", name="TEST", entity=datafile.datafile_id
+            )
+
+            found_datafile = self.store.find_datafile("TEST")
+            self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
 
     @unittest.expectedFailure
     def test_empty_datafile_name(self):
@@ -461,9 +478,47 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(len(platforms), 1)
             self.assertEqual(platforms[0].name, "Test Platform")
 
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_platform(self):
-        pass
+    def test_find_platform(self):
+        with self.store.session_scope() as session:
+            # Create two platforms
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+            platform_2 = self.store.get_platform(
+                platform_name="Test Platform 2",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+
+            found_platform = self.store.find_platform("Test Platform")
+            self.assertEqual(platform.platform_id, found_platform.platform_id)
+            self.assertEqual(found_platform.name, "Test Platform")
+
+    def test_find_platform_synonym(self):
+        # Create two platforms
+        platform = self.store.get_platform(
+            platform_name="Test Platform",
+            nationality=self.nationality,
+            platform_type=self.platform_type,
+            privacy=self.privacy,
+        )
+        platform_2 = self.store.get_platform(
+            platform_name="Test Platform 2",
+            nationality=self.nationality,
+            platform_type=self.platform_type,
+            privacy=self.privacy,
+        )
+        self.store.add_to_synonyms(
+            table="Platforms", name="TEST", entity=platform.platform_id
+        )
+
+        found_platform = self.store.find_platform("TEST")
+        self.assertEqual(platform.platform_id, found_platform.platform_id)
+        self.assertEqual(found_platform.name, "Test Platform")
 
     @unittest.expectedFailure
     def test_empty_platform_name(self):
