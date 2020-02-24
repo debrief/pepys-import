@@ -68,7 +68,7 @@ class HostedBy(BasePostGIS):
     table_type = TableTypes.METADATA
     table_type_id = 1
 
-    hosted_by_id = Column(UUID(), primary_key=True, default=uuid4)
+    hosted_by_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     subject_id = Column(
         UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
     )
@@ -134,7 +134,7 @@ class Sensor(BasePostGIS):
                 .first()
             )
             if sensor:
-                return
+                return sensor
 
         return None
 
@@ -235,7 +235,7 @@ class Task(BasePostGIS):
     table_type = TableTypes.METADATA
     table_type_id = 4
 
-    task_id = Column(UUID(), primary_key=True, default=uuid4)
+    task_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     parent_id = Column(UUID(as_uuid=True), ForeignKey("Tasks.task_id"), nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
@@ -252,7 +252,7 @@ class Participant(BasePostGIS):
     table_type = TableTypes.METADATA
     table_type_id = 5
 
-    participant_id = Column(UUID(), primary_key=True, default=uuid4)
+    participant_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     platform_id = Column(
         UUID(as_uuid=True), ForeignKey("Platforms.platform_id"), nullable=False
     )
@@ -316,7 +316,7 @@ class Synonym(BasePostGIS):
     table_type = TableTypes.METADATA
     table_type_id = 7
 
-    synonym_id = Column(UUID(), primary_key=True, default=uuid4)
+    synonym_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
     entity = Column(UUID(as_uuid=True), nullable=False)
     synonym = Column(String(150), nullable=False)
@@ -328,7 +328,7 @@ class Change(BasePostGIS):
     table_type = TableTypes.METADATA
     table_type_id = 8
 
-    change_id = Column(UUID(), primary_key=True, default=uuid4)
+    change_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user = Column(String(150), nullable=False)
     modified = Column(DATE, nullable=False)
     reason = Column(String(500), nullable=False)
@@ -340,7 +340,7 @@ class Log(BasePostGIS):
     table_type = TableTypes.METADATA
     table_type_id = 9
 
-    log_id = Column(UUID(), primary_key=True, default=uuid4)
+    log_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
     id = Column(UUID(as_uuid=True), ForeignKey("Logs.log_id"), nullable=False)
     field = Column(String(150), nullable=False)
@@ -354,7 +354,7 @@ class Extraction(BasePostGIS):
     table_type = TableTypes.METADATA
     table_type_id = 10
 
-    extraction_id = Column(UUID(), primary_key=True, default=uuid4)
+    extraction_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
     field = Column(String(150), nullable=False)
     chars = Column(String(150), nullable=False)
@@ -366,7 +366,7 @@ class Tag(BasePostGIS):
     table_type = TableTypes.METADATA
     table_type_id = 11
 
-    tag_id = Column(UUID(), primary_key=True, default=uuid4)
+    tag_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -376,7 +376,7 @@ class TaggedItem(BasePostGIS):
     table_type = TableTypes.METADATA
     table_type_id = 12
 
-    tagged_item_id = Column(UUID(), primary_key=True, default=uuid4)
+    tagged_item_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     tag_id = Column(UUID(as_uuid=True), ForeignKey("Tags.tag_id"), nullable=False)
     item_id = Column(UUID(as_uuid=True), nullable=False)
     tagged_by_id = Column(

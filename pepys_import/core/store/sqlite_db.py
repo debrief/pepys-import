@@ -123,7 +123,7 @@ class Sensor(BaseSpatiaLite):
                 .first()
             )
             if sensor:
-                return
+                return sensor
 
         return None
 
