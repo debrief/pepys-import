@@ -54,7 +54,7 @@ class TestLoadReplay(TestCase):
                 privacy = data_store.search_privacy("TEST")
                 state.privacy = privacy.privacy_id
                 if datafile.validate():
-                    state.submit(data_store.session)
+                    datafile.commit(data_store.session)
 
         print("Found:" + str(count_states(data_store)))
 
