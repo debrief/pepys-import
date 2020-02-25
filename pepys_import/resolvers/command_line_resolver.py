@@ -608,7 +608,7 @@ class CommandLineResolver(DataResolver):
         quadgraph = prompt(
             "Please enter quadgraph (optional): ", default=platform_name[:4]
         )
-        pennat_number = prompt("Please enter pennat number (optional): ", default="")
+        pennant_number = prompt("Please enter pennant number (optional): ", default="")
 
         # Choose Nationality
         if nationality:
@@ -633,7 +633,7 @@ class CommandLineResolver(DataResolver):
         print(f"Name: {platform_name}")
         print(f"Trigraph: {trigraph}")
         print(f"Quadgraph: {quadgraph}")
-        print(f"Pennat Number: {pennat_number}")
+        print(f"Pennant Number: {pennant_number}")
         print(f"Nationality: {chosen_nationality.name}")
         print(f"Class: {chosen_platform_type.name}")
         print(f"Classification: {chosen_privacy.name}")

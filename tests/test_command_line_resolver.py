@@ -404,7 +404,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
     def test_fuzzy_search_add_new_platform(self, resolver_prompt, menu_prompt):
         """Test whether a new platform entity is created or not"""
 
-        # Search "PLATFORM-1"->Select "No"->Type name/trigraph/quadgraph/pennat number->Select "Yes"
+        # Search "PLATFORM-1"->Select "No"->Type name/trigraph/quadgraph/pennant number->Select "Yes"
         menu_prompt.side_effect = ["PLATFORM-1", "2", "1"]
         resolver_prompt.side_effect = ["TEST", "TST", "TEST", "123"]
         with self.store.session_scope():
@@ -460,7 +460,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
         """Test whether correct entities return when fuzzy search for platform type, nationality and privacy are
         called"""
 
-        # Select "Search for existing platform"->Type "TEST"->Type name/trigraph/quadgraph/pennat number->Select
+        # Select "Search for existing platform"->Type "TEST"->Type name/trigraph/quadgraph/pennant number->Select
         # "Search for an existing nationality"->Select "UK"->Select "Search for an existing platform type"->Select
         # "Warship"->Select "Search for an existing classification"->Select "PRIVACY-1"->Select "Yes"
         menu_prompt.side_effect = [
@@ -501,7 +501,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
     def test_resolver_platform_with_new_values(self, resolver_prompt, menu_prompt):
         """Test whether new platform type, nationality and privacy entities are created for Platform or not"""
 
-        # Select "Add a new platform"->Type name/trigraph/quadgraph/pennat number->Select "Add a new nationality"->
+        # Select "Add a new platform"->Type name/trigraph/quadgraph/pennant number->Select "Add a new nationality"->
         # Select "UK"->Select "Add a new platform type"->Select "Warship"->Select "Add a new classification"->Select
         # "PRIVACY-1"->Select "Yes"
         menu_prompt.side_effect = ["2", "2", "2", "2", "1"]
@@ -537,8 +537,8 @@ class CommandLineResolverTestCase(unittest.TestCase):
     def test_resolver_platform_edit_given_values(self, resolver_prompt, menu_prompt):
         """Test a new platform is created after make further edits option is selected"""
 
-        # Select "Add a new platform"->Type name/trigraph/quadgraph/pennat number->Select "No"->
-        # Type name/trigraph/quadgraph/pennat number->Select "Search for an existing nationality"->Select
+        # Select "Add a new platform"->Type name/trigraph/quadgraph/pennant number->Select "No"->
+        # Type name/trigraph/quadgraph/pennant number->Select "Search for an existing nationality"->Select
         # "UK"->Select "Search for an existing platform type"->Select "Warship"->Select "Search for an existing
         # classification"->Select "PRIVACY-1"->Select "Yes"
         menu_prompt.side_effect = [
@@ -608,7 +608,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 self.resolver.resolve_platform(
                     self.store, "TEST", platform_type, nationality, privacy
                 )
-            # Select "Add a new platform"->Type name/trigraph/quadgraph/pennat->Select "."
+            # Select "Add a new platform"->Type name/trigraph/quadgraph/pennant->Select "."
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_platform(
                     self.store, "TEST", platform_type, nationality, privacy
