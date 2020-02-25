@@ -25,10 +25,9 @@ class ETracImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def load_this_file(self, data_store, path, file_contents, data_file_id):
+    def load_this_file(self, data_store, path, file_contents, datafile):
         print("E-trac parser working on ", path)
         line_num = 0
-        cur_datafile_id = None
         for line in file_contents:
 
             line_num += 1
@@ -80,11 +79,6 @@ class ETracImporter(Importer):
 
             # and finally store it
             with data_store.session_scope():
-                if cur_datafile_id is None:
-                    datafile = data_store.search_datafile(data_file_id)
-                    cur_datafile_id = datafile.datafile_id
-                else:
-                    datafile = data_store.get_datafile_from_id(cur_datafile_id)
                 platform = data_store.get_platform(
                     platform_name=vessel_name,
                     nationality="UK",
@@ -108,11 +102,11 @@ class ETracImporter(Importer):
 
                 state.location = f"POINT({long_degrees_token} {lat_degrees_token})"
 
-                headingVal = convert_heading(heading_token, line_num)
-                state.heading = headingVal.to(unit_registry.radians).magnitude
+                heading = convert_heading(heading_token, line_num)
+                state.heading = heading.to(unit_registry.radians).magnitude
 
-                speedVal = convert_speed(speed_token, line_num)
-                state.speed = speedVal
+                speed = convert_speed(speed_token, line_num)
+                state.speed = speed
                 if datafile.validate():
                     state.submit(data_store.session)
 
@@ -122,7 +116,8 @@ class ETracImporter(Importer):
         tokens = token.split()
         return tokens[1]
 
-    def parse_timestamp(self, date, time):
+    @staticmethod
+    def parse_timestamp(date, time):
         formatStr = "%Y/%m/%d "
         formatStr += "%H:%M:%S"
 

@@ -27,6 +27,11 @@ class FileProcessor:
 
         processed_ctr = 0
 
+        # get the data_store
+        if data_store is None:
+            data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
+            data_store.initialise()
+
         # check given path is a file
         if os.path.isfile(path):
             with data_store.session_scope():
@@ -54,11 +59,6 @@ class FileProcessor:
         # check folder exists
         if not os.path.isdir(path):
             raise FileNotFoundError(f"Folder not found in the given path: {path}")
-
-        # get the data_store
-        if data_store is None:
-            data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
-            data_store.initialise()
 
         # capture path in absolute form
         abs_path = os.path.abspath(path)
@@ -141,13 +141,13 @@ class FileProcessor:
                 if not importer.can_load_this_file(file_contents):
                     good_importers.remove(importer)
 
-                # ok, let these importers handle the file
-                datafile = data_store.get_datafile(filename, file_extension)
-                datafile_name = datafile.reference
+            # ok, let these importers handle the file
+            datafile = data_store.get_datafile(filename, file_extension)
+            # datafile_name = datafile.reference
 
             for importer in good_importers:
                 processed_ctr += 1
-                importer.load_this_file(data_store, file, file_contents, datafile_name)
+                importer.load_this_file(data_store, file, file_contents, datafile)
 
         return processed_ctr
 

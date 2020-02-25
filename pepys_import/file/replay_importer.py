@@ -24,7 +24,7 @@ class ReplayImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def load_this_file(self, data_store, path, file_contents, datafile_name):
+    def load_this_file(self, data_store, path, file_contents, datafile):
         print("Rep parser working on " + path)
         for line_number, line in enumerate(file_contents, 1):
             if line.startswith(";"):
@@ -36,7 +36,6 @@ class ReplayImporter(Importer):
                     continue
 
                 # and finally store it
-                datafile = data_store.search_datafile(datafile_name)
                 platform = data_store.get_platform(
                     platform_name=rep_line.get_platform(),
                     nationality="UK",
