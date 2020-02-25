@@ -158,8 +158,9 @@ class Platform(BaseSpatiaLite):
 
     def get_sensor(self, data_store, sensor_name=None, sensor_type=None, privacy=None):
         """
-        Lookup or create a sensor of this name for this :class:`Platform`.
-        Specified sensor will be added to the :class:`Sensor` table.
+         Lookup or create a sensor of this name for this :class:`Platform`.
+         Specified sensor will be added to the :class:`Sensor` table.
+         It uses find_sensor method to search existing sensors.
 
         :param data_store: DataStore object to to query DB and use missing data resolver
         :type data_store: :class:`DataStore`

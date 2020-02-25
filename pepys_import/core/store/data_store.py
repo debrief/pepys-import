@@ -644,7 +644,7 @@ class DataStore(object):
     def get_datafile(self, datafile_name=None, datafile_type=None):
         """
         Adds an entry to the datafiles table of the specified name (path)
-        and type if not already present.
+        and type if not already present. It uses find_datafile method to search existing datafiles.
 
         :param datafile_name:  Name of Datafile
         :type datafile_name: String
@@ -713,7 +713,7 @@ class DataStore(object):
     ):
         """
         Adds an entry to the platforms table for the specified platform
-        if not already present.
+        if not already present. It uses find_platform method to search existing platforms.
 
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
