@@ -106,7 +106,9 @@ class DataStore(object):
             show_welcome_banner(welcome_text)
         if self.show_status:
             show_software_meta_info(__version__, self.db_type, self.db_name, db_host)
-            print("---------------------------------")
+            # The 'pepys-import' banner is 61 characters wide, so making a line
+            # of the same length makes things prettier
+            print("-"*61)
 
     def initialise(self):
         """Create schemas for the database
