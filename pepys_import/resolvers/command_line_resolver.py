@@ -108,10 +108,10 @@ class CommandLineResolver(DataResolver):
         selected Datafile entity.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
-        :param datafile_name:  Name of Datafile
+        :type data_store: DataStore
+        :param datafile_name:  Name of :class`Datafile`
         :type datafile_name: String
-        :param datafile_type: Type of Datafile
+        :param datafile_type: Type of :class`Datafile`
         :type datafile_type: DatafileType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
@@ -161,7 +161,7 @@ class CommandLineResolver(DataResolver):
         selected Platform entity.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
         :param nationality: Name of :class:`Nationality`
@@ -224,13 +224,13 @@ class CommandLineResolver(DataResolver):
         selected Sensor entity.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :param sensor_name: Name of :class:`Sensor`
-        :type sensor_name: :class:`Sensor`
+        :type sensor_name: Sensor
         :param sensor_type: Type of :class:`Sensor`
-        :type sensor_type: :class:`SensorType`
+        :type sensor_type: SensorType
         :param privacy: Name of :class:`Privacy`
-        :type privacy: :class:`Privacy`
+        :type privacy: Privacy
         :return:
         """
         sensors = data_store.session.query(data_store.db_classes.Sensor).all()
@@ -273,7 +273,7 @@ class CommandLineResolver(DataResolver):
         selected Privacy entity.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :return:
         """
 
@@ -312,7 +312,7 @@ class CommandLineResolver(DataResolver):
         it returns the selected DatafileType entity.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :return:
         """
 
@@ -353,7 +353,7 @@ class CommandLineResolver(DataResolver):
         it returns the selected Nationality entity.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :return:
         """
         nationalities = data_store.session.query(
@@ -393,7 +393,7 @@ class CommandLineResolver(DataResolver):
         it returns the selected PlatformType entity.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :return:
         """
         platform_types = data_store.session.query(
@@ -433,7 +433,7 @@ class CommandLineResolver(DataResolver):
         it returns the selected SensorType entity.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :return:
         """
         sensor_types = data_store.session.query(data_store.db_classes.SensorType).all()
@@ -472,7 +472,7 @@ class CommandLineResolver(DataResolver):
         it adds it to Nationality table. Finally, it returns the found or created entity
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :return:
         """
         nationality_names = [
@@ -513,7 +513,7 @@ class CommandLineResolver(DataResolver):
         it adds it to SensorType table. Finally, it returns the found or created entity.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :return:
         """
         sensor_type_names = [
@@ -538,10 +538,10 @@ class CommandLineResolver(DataResolver):
         necessary data to create a datafile. If user enters No, it resolves values again
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
-        :param datafile_name:  Name of Datafile
+        :type data_store: DataStore
+        :param datafile_name:  Name of :class`Datafile`
         :type datafile_name: String
-        :param datafile_type: Type of Datafile
+        :param datafile_type: Type of :class`Datafile`
         :type datafile_type: DatafileType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
@@ -588,7 +588,7 @@ class CommandLineResolver(DataResolver):
         If user enters No, it resolves values again.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
         :param nationality: Name of :class:`Nationality`
@@ -661,9 +661,9 @@ class CommandLineResolver(DataResolver):
         sensor type and privacy entities.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :param sensor_name: Name of :class:`Sensor`
-        :type sensor_name: :class:`Sensor`
+        :type sensor_name: Sensor
         :param sensor_type: Type of :class:`Sensor`
         :type sensor_type: SensorType
         :param privacy: Name of :class:`Privacy`

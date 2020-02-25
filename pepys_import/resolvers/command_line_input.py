@@ -12,6 +12,7 @@ def create_menu(title, choices, completer=None):
     :param completer: Optional argument that shows possible options while typing.
     :type completer: :class:`prompt_toolkit.completion.FuzzyWordCompleter`
     :return: Entered choice
+    :rtype: String
     """
     input_text = title + "\n"
     for index, choice in enumerate(choices, 1):

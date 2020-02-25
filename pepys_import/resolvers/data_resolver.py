@@ -11,7 +11,7 @@ class DataResolver(ABC):
         Currently: platform_name, platform_type, nationality, privacy.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
         :param nationality: Name of :class:`Nationality`
@@ -30,7 +30,7 @@ class DataResolver(ABC):
         Currently: sensor_name, sensor_type.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :param sensor_name: Name of :class:`Sensor`
         :type sensor_name: String
         :param sensor_type: Type of :class:`Sensor`
@@ -47,7 +47,7 @@ class DataResolver(ABC):
         Currently: name
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :return:
         """
 
@@ -58,10 +58,10 @@ class DataResolver(ABC):
         Currently: datafile_type, privacy
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
-        :param datafile_name:  Name of Datafile
+        :type data_store: DataStore
+        :param datafile_name:  Name of :class`Datafile`
         :type datafile_name: String
-        :param datafile_type: Type of Datafile
+        :param datafile_type: Type of :class`Datafile`
         :type datafile_type: DatafileType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy

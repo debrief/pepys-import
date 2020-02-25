@@ -95,7 +95,7 @@ class Sensor(BaseSpatiaLite):
         finds, it returns the entity. If it is not found, it searches synonyms.
 
         :param data_store: A :class:`DataStore` object
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :param sensor_name: Name of :class:`Sensor`
         :type sensor_name: String
         :return:
@@ -163,7 +163,7 @@ class Platform(BaseSpatiaLite):
          It uses find_sensor method to search existing sensors.
 
         :param data_store: DataStore object to to query DB and use missing data resolver
-        :type data_store: :class:`DataStore`
+        :type data_store: DataStore
         :param sensor_name: Name of :class:`Sensor`
         :type sensor_name: String
         :param sensor_type: Type of :class:`Sensor`
