@@ -250,9 +250,9 @@ class Datafile(BaseSpatiaLite):
     def validate(self):
         return True
 
-    def commit(self):
+    def commit(self, session):
         for file in self._measurement_files:
-            file.submit()
+            file.submit(session)
 
     # def verify(self):
     #     pass
