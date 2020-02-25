@@ -1,3 +1,4 @@
+Write-Output "INFO: Starting to create Pepys deployment"
 
 # Download embedded Python distribution
 $url = 'https://www.python.org/ftp/python/3.7.6/python-3.7.6-embed-amd64.zip'
