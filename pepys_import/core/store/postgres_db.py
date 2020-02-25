@@ -7,11 +7,12 @@ from geoalchemy2 import Geometry
 
 from pepys_import.core.store.db_base import BasePostGIS
 from pepys_import.core.store.db_status import TableTypes
+from pepys_import.core.store import constants
 from uuid import uuid4
 
 
 class Entry(BasePostGIS):
-    __tablename__ = "Entry"
+    __tablename__ = constants.ENTRY
     table_type = TableTypes.METADATA
 
     entry_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
@@ -34,7 +35,7 @@ class Entry(BasePostGIS):
 
 
 class TableType(BasePostGIS):
-    __tablename__ = "TableTypes"
+    __tablename__ = constants.TABLE_TYPE
     table_type = TableTypes.METADATA
 
     table_type_id = Column(Integer, nullable=False, primary_key=True)
@@ -64,7 +65,7 @@ class TableType(BasePostGIS):
 
 # Metadata Tables
 class HostedBy(BasePostGIS):
-    __tablename__ = "HostedBy"
+    __tablename__ = constants.HOSTED_BY
     table_type = TableTypes.METADATA
     table_type_id = 1
 
@@ -84,7 +85,7 @@ class HostedBy(BasePostGIS):
 
 
 class Sensor(BasePostGIS):
-    __tablename__ = "Sensors"
+    __tablename__ = constants.SENSOR
     table_type = TableTypes.METADATA
     table_type_id = 2
 
@@ -160,7 +161,7 @@ class Sensor(BasePostGIS):
 
 
 class Platform(BasePostGIS):
-    __tablename__ = "Platforms"
+    __tablename__ = constants.PLATFORM
     table_type = TableTypes.METADATA
     table_type_id = 3
 
@@ -228,7 +229,7 @@ class Platform(BasePostGIS):
 
 
 class Task(BasePostGIS):
-    __tablename__ = "Tasks"
+    __tablename__ = constants.TASK
     table_type = TableTypes.METADATA
     table_type_id = 4
 
@@ -245,7 +246,7 @@ class Task(BasePostGIS):
 
 
 class Participant(BasePostGIS):
-    __tablename__ = "Participants"
+    __tablename__ = constants.PARTICIPANT
     table_type = TableTypes.METADATA
     table_type_id = 5
 
@@ -264,7 +265,7 @@ class Participant(BasePostGIS):
 
 
 class Datafile(BasePostGIS):
-    __tablename__ = "Datafiles"
+    __tablename__ = constants.DATAFILE
     table_type = TableTypes.METADATA
     table_type_id = 6  # Only needed for tables referenced by Entry table
 
@@ -309,7 +310,7 @@ class Datafile(BasePostGIS):
 
 
 class Synonym(BasePostGIS):
-    __tablename__ = "Synonyms"
+    __tablename__ = constants.SYNONYM
     table_type = TableTypes.METADATA
     table_type_id = 7
 
@@ -321,7 +322,7 @@ class Synonym(BasePostGIS):
 
 
 class Change(BasePostGIS):
-    __tablename__ = "Changes"
+    __tablename__ = constants.CHANGE
     table_type = TableTypes.METADATA
     table_type_id = 8
 
@@ -333,7 +334,7 @@ class Change(BasePostGIS):
 
 
 class Log(BasePostGIS):
-    __tablename__ = "Logs"
+    __tablename__ = constants.LOG
     table_type = TableTypes.METADATA
     table_type_id = 9
 
@@ -347,7 +348,7 @@ class Log(BasePostGIS):
 
 
 class Extraction(BasePostGIS):
-    __tablename__ = "Extractions"
+    __tablename__ = constants.EXTRACTION
     table_type = TableTypes.METADATA
     table_type_id = 10
 
@@ -359,7 +360,7 @@ class Extraction(BasePostGIS):
 
 
 class Tag(BasePostGIS):
-    __tablename__ = "Tags"
+    __tablename__ = constants.TAG
     table_type = TableTypes.METADATA
     table_type_id = 11
 
@@ -369,7 +370,7 @@ class Tag(BasePostGIS):
 
 
 class TaggedItem(BasePostGIS):
-    __tablename__ = "TaggedItems"
+    __tablename__ = constants.TAGGED_ITEM
     table_type = TableTypes.METADATA
     table_type_id = 12
 
@@ -386,7 +387,7 @@ class TaggedItem(BasePostGIS):
 
 # Reference Tables
 class PlatformType(BasePostGIS):
-    __tablename__ = "PlatformTypes"
+    __tablename__ = constants.PLATFORM_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 13
 
@@ -396,7 +397,7 @@ class PlatformType(BasePostGIS):
 
 
 class Nationality(BasePostGIS):
-    __tablename__ = "Nationalities"
+    __tablename__ = constants.NATIONALITY
     table_type = TableTypes.REFERENCE
     table_type_id = 14
 
@@ -406,7 +407,7 @@ class Nationality(BasePostGIS):
 
 
 class GeometryType(BasePostGIS):
-    __tablename__ = "GeometryTypes"
+    __tablename__ = constants.GEOMETRY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 15
 
@@ -416,7 +417,7 @@ class GeometryType(BasePostGIS):
 
 
 class GeometrySubType(BasePostGIS):
-    __tablename__ = "GeometrySubTypes"
+    __tablename__ = constants.GEOMETRY_SUBTYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 16
 
@@ -428,7 +429,7 @@ class GeometrySubType(BasePostGIS):
 
 
 class User(BasePostGIS):
-    __tablename__ = "Users"
+    __tablename__ = constants.USER
     table_type = TableTypes.REFERENCE
     table_type_id = 17
 
@@ -438,7 +439,7 @@ class User(BasePostGIS):
 
 
 class UnitType(BasePostGIS):
-    __tablename__ = "UnitTypes"
+    __tablename__ = constants.UNIT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 18
 
@@ -448,7 +449,7 @@ class UnitType(BasePostGIS):
 
 
 class ClassificationType(BasePostGIS):
-    __tablename__ = "ClassificationTypes"
+    __tablename__ = constants.CLASSIFICATION_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 19
 
@@ -458,7 +459,7 @@ class ClassificationType(BasePostGIS):
 
 
 class ContactType(BasePostGIS):
-    __tablename__ = "ContactTypes"
+    __tablename__ = constants.CONTACT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 20
 
@@ -468,7 +469,7 @@ class ContactType(BasePostGIS):
 
 
 class SensorType(BasePostGIS):
-    __tablename__ = "SensorTypes"
+    __tablename__ = constants.SENSOR_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 21
 
@@ -483,7 +484,7 @@ class SensorType(BasePostGIS):
 
 
 class Privacy(BasePostGIS):
-    __tablename__ = "Privacies"
+    __tablename__ = constants.PRIVACY
     table_type = TableTypes.REFERENCE
     table_type_id = 22
 
@@ -493,7 +494,7 @@ class Privacy(BasePostGIS):
 
 
 class DatafileType(BasePostGIS):
-    __tablename__ = "DatafileTypes"
+    __tablename__ = constants.DATAFILE_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 23
 
@@ -503,7 +504,7 @@ class DatafileType(BasePostGIS):
 
 
 class MediaType(BasePostGIS):
-    __tablename__ = "MediaTypes"
+    __tablename__ = constants.MEDIA_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 24
 
@@ -513,7 +514,7 @@ class MediaType(BasePostGIS):
 
 
 class CommentType(BasePostGIS):
-    __tablename__ = "CommentTypes"
+    __tablename__ = constants.COMMENT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 25
 
@@ -523,7 +524,7 @@ class CommentType(BasePostGIS):
 
 
 class CommodityType(BasePostGIS):
-    __tablename__ = "CommodityTypes"
+    __tablename__ = constants.COMMODITY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 26
 
@@ -533,7 +534,7 @@ class CommodityType(BasePostGIS):
 
 
 class ConfidenceLevel(BasePostGIS):
-    __tablename__ = "ConfidenceLevels"
+    __tablename__ = constants.CONFIDENCE_LEVEL
     table_type = TableTypes.REFERENCE
     table_type_id = 27  # Only needed for tables referenced by Entry table
 
@@ -544,7 +545,7 @@ class ConfidenceLevel(BasePostGIS):
 
 # Measurements Tables
 class State(BasePostGIS):
-    __tablename__ = "States"
+    __tablename__ = constants.STATE
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
 
@@ -572,7 +573,7 @@ class State(BasePostGIS):
 
 
 class Contact(BasePostGIS):
-    __tablename__ = "Contacts"
+    __tablename__ = constants.CONTACT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
 
@@ -612,7 +613,7 @@ class Contact(BasePostGIS):
 
 
 class Activation(BasePostGIS):
-    __tablename__ = "Activations"
+    __tablename__ = constants.ACTIVATION
     table_type = TableTypes.MEASUREMENT
     table_type_id = 30
 
@@ -635,7 +636,7 @@ class Activation(BasePostGIS):
 
 
 class LogsHolding(BasePostGIS):
-    __tablename__ = "LogsHoldings"
+    __tablename__ = constants.LOGS_HOLDING
     table_type = TableTypes.MEASUREMENT
     table_type_id = 31
 
@@ -657,7 +658,7 @@ class LogsHolding(BasePostGIS):
 
 
 class Comment(BasePostGIS):
-    __tablename__ = "Comments"
+    __tablename__ = constants.COMMENT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 32
 
@@ -683,7 +684,7 @@ class Comment(BasePostGIS):
 
 
 class Geometry1(BasePostGIS):
-    __tablename__ = "Geometries"
+    __tablename__ = constants.GEOMETRY
     table_type = TableTypes.MEASUREMENT
     table_type_id = 33
 
@@ -713,7 +714,7 @@ class Geometry1(BasePostGIS):
 
 
 class Media(BasePostGIS):
-    __tablename__ = "Media"
+    __tablename__ = constants.MEDIA
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34
 

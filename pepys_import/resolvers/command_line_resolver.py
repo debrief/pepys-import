@@ -6,6 +6,7 @@ from sqlalchemy import or_
 
 from pepys_import.resolvers.data_resolver import DataResolver
 from pepys_import.resolvers.command_line_input import create_menu
+from pepys_import.core.store import constants
 
 
 class CommandLineResolver(DataResolver):
@@ -136,7 +137,7 @@ class CommandLineResolver(DataResolver):
                     .datafile_id
                 )
                 return data_store.add_to_synonyms(
-                    "Datafiles", datafile_name, datafile_id
+                    constants.DATAFILE, datafile_name, datafile_id
                 )
             elif new_choice == str(2):
                 return self.add_to_datafiles(
@@ -201,7 +202,7 @@ class CommandLineResolver(DataResolver):
                     .platform_id
                 )
                 return data_store.add_to_synonyms(
-                    "Platforms", platform_name, platform_id
+                    constants.PLATFORM, platform_name, platform_id
                 )
             elif new_choice == str(2):
                 return self.add_to_platforms(
@@ -251,7 +252,9 @@ class CommandLineResolver(DataResolver):
                     .first()
                     .sensor_id
                 )
-                return data_store.add_to_synonyms("Sensors", sensor_name, sensor_id)
+                return data_store.add_to_synonyms(
+                    constants.SENSOR, sensor_name, sensor_id
+                )
             elif new_choice == str(2):
                 return self.add_to_sensors(
                     data_store, sensor_name, sensor_type, privacy

@@ -3,7 +3,9 @@ import os
 
 from unittest import TestCase
 from datetime import datetime
+
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store import constants
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -413,7 +415,7 @@ class PlatformAndDatafileTestCase(TestCase):
             datafile = self.store.get_datafile("test_file.csv", "csv")
             datafile_2 = self.store.get_datafile("test_file_2.csv", "csv")
             self.store.add_to_synonyms(
-                table="Datafiles", name="TEST", entity=datafile.datafile_id
+                table=constants.DATAFILE, name="TEST", entity=datafile.datafile_id
             )
 
             found_datafile = self.store.find_datafile("TEST")
@@ -511,7 +513,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 privacy=self.privacy,
             )
             self.store.add_to_synonyms(
-                table="Platforms", name="TEST", entity=platform.platform_id
+                table=constants.PLATFORM, name="TEST", entity=platform.platform_id
             )
 
             found_platform = self.store.find_platform("TEST")
@@ -646,7 +648,7 @@ class SensorTestCase(TestCase):
         sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
         sensor_2 = self.platform.get_sensor(self.store, "gps_2", self.sensor_type)
         self.store.add_to_synonyms(
-            table="Sensors", name="TEST", entity=sensor.sensor_id
+            table=constants.SENSOR, name="TEST", entity=sensor.sensor_id
         )
 
         found_sensor = self.store.db_classes.Sensor().find_sensor(self.store, "TEST")

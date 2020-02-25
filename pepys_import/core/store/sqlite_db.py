@@ -7,11 +7,11 @@ from geoalchemy2 import Geometry
 
 from pepys_import.core.store.db_base import BaseSpatiaLite
 from pepys_import.core.store.db_status import TableTypes
-from pepys_import.core.formats import quantity
+from pepys_import.core.store import constants
 
 
 class Entry(BaseSpatiaLite):
-    __tablename__ = "Entry"
+    __tablename__ = constants.ENTRY
     table_type = TableTypes.METADATA
 
     entry_id = Column(Integer, primary_key=True)
@@ -34,7 +34,7 @@ class Entry(BaseSpatiaLite):
 
 
 class TableType(BaseSpatiaLite):
-    __tablename__ = "TableTypes"
+    __tablename__ = constants.TABLE_TYPE
     table_type = TableTypes.METADATA
 
     table_type_id = Column(Integer, nullable=False, primary_key=True)
@@ -64,7 +64,7 @@ class TableType(BaseSpatiaLite):
 
 # Metadata Tables
 class HostedBy(BaseSpatiaLite):
-    __tablename__ = "HostedBy"
+    __tablename__ = constants.HOSTED_BY
     table_type = TableTypes.METADATA
     table_type_id = 1
 
@@ -78,7 +78,7 @@ class HostedBy(BaseSpatiaLite):
 
 
 class Sensor(BaseSpatiaLite):
-    __tablename__ = "Sensors"
+    __tablename__ = constants.SENSOR
     table_type = TableTypes.METADATA
     table_type_id = 2
 
@@ -149,7 +149,7 @@ class Sensor(BaseSpatiaLite):
 
 
 class Platform(BaseSpatiaLite):
-    __tablename__ = "Platforms"
+    __tablename__ = constants.PLATFORM
     table_type = TableTypes.METADATA
     table_type_id = 3
 
@@ -209,7 +209,7 @@ class Platform(BaseSpatiaLite):
 
 
 class Task(BaseSpatiaLite):
-    __tablename__ = "Tasks"
+    __tablename__ = constants.TASK
     table_type = TableTypes.METADATA
     table_type_id = 4
 
@@ -225,7 +225,7 @@ class Task(BaseSpatiaLite):
 
 
 class Participant(BaseSpatiaLite):
-    __tablename__ = "Participants"
+    __tablename__ = constants.PARTICIPANT
     table_type = TableTypes.METADATA
     table_type_id = 5
 
@@ -240,7 +240,7 @@ class Participant(BaseSpatiaLite):
 
 
 class Datafile(BaseSpatiaLite):
-    __tablename__ = "Datafiles"
+    __tablename__ = constants.DATAFILE
     table_type = TableTypes.METADATA
     table_type_id = 6
 
@@ -281,7 +281,7 @@ class Datafile(BaseSpatiaLite):
 
 
 class Synonym(BaseSpatiaLite):
-    __tablename__ = "Synonyms"
+    __tablename__ = constants.SYNONYM
     table_type = TableTypes.METADATA
     table_type_id = 7
 
@@ -293,7 +293,7 @@ class Synonym(BaseSpatiaLite):
 
 
 class Change(BaseSpatiaLite):
-    __tablename__ = "Changes"
+    __tablename__ = constants.CHANGE
     table_type = TableTypes.METADATA
     table_type_id = 8
 
@@ -305,7 +305,7 @@ class Change(BaseSpatiaLite):
 
 
 class Log(BaseSpatiaLite):
-    __tablename__ = "Logs"
+    __tablename__ = constants.LOG
     table_type = TableTypes.METADATA
     table_type_id = 9
 
@@ -319,7 +319,7 @@ class Log(BaseSpatiaLite):
 
 
 class Extraction(BaseSpatiaLite):
-    __tablename__ = "Extractions"
+    __tablename__ = constants.EXTRACTION
     table_type = TableTypes.METADATA
     table_type_id = 10
 
@@ -331,7 +331,7 @@ class Extraction(BaseSpatiaLite):
 
 
 class Tag(BaseSpatiaLite):
-    __tablename__ = "Tags"
+    __tablename__ = constants.TAG
     table_type = TableTypes.METADATA
     table_type_id = 11
 
@@ -341,7 +341,7 @@ class Tag(BaseSpatiaLite):
 
 
 class TaggedItem(BaseSpatiaLite):
-    __tablename__ = "TaggedItems"
+    __tablename__ = constants.TAGGED_ITEM
     table_type = TableTypes.METADATA
     table_type_id = 12
 
@@ -356,7 +356,7 @@ class TaggedItem(BaseSpatiaLite):
 
 # Reference Tables
 class PlatformType(BaseSpatiaLite):
-    __tablename__ = "PlatformTypes"
+    __tablename__ = constants.PLATFORM_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 13
 
@@ -366,7 +366,7 @@ class PlatformType(BaseSpatiaLite):
 
 
 class Nationality(BaseSpatiaLite):
-    __tablename__ = "Nationalities"
+    __tablename__ = constants.NATIONALITY
     table_type = TableTypes.REFERENCE
     table_type_id = 14
 
@@ -376,7 +376,7 @@ class Nationality(BaseSpatiaLite):
 
 
 class GeometryType(BaseSpatiaLite):
-    __tablename__ = "GeometryTypes"
+    __tablename__ = constants.GEOMETRY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 15
 
@@ -386,7 +386,7 @@ class GeometryType(BaseSpatiaLite):
 
 
 class GeometrySubType(BaseSpatiaLite):
-    __tablename__ = "GeometrySubTypes"
+    __tablename__ = constants.GEOMETRY_SUBTYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 16
 
@@ -397,7 +397,7 @@ class GeometrySubType(BaseSpatiaLite):
 
 
 class User(BaseSpatiaLite):
-    __tablename__ = "Users"
+    __tablename__ = constants.USER
     table_type = TableTypes.REFERENCE
     table_type_id = 17
 
@@ -407,7 +407,7 @@ class User(BaseSpatiaLite):
 
 
 class UnitType(BaseSpatiaLite):
-    __tablename__ = "UnitTypes"
+    __tablename__ = constants.UNIT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 18
 
@@ -417,7 +417,7 @@ class UnitType(BaseSpatiaLite):
 
 
 class ClassificationType(BaseSpatiaLite):
-    __tablename__ = "ClassificationTypes"
+    __tablename__ = constants.CLASSIFICATION_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 19
 
@@ -427,7 +427,7 @@ class ClassificationType(BaseSpatiaLite):
 
 
 class ContactType(BaseSpatiaLite):
-    __tablename__ = "ContactTypes"
+    __tablename__ = constants.CONTACT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 20
 
@@ -437,7 +437,7 @@ class ContactType(BaseSpatiaLite):
 
 
 class SensorType(BaseSpatiaLite):
-    __tablename__ = "SensorTypes"
+    __tablename__ = constants.SENSOR_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 21
 
@@ -452,7 +452,7 @@ class SensorType(BaseSpatiaLite):
 
 
 class Privacy(BaseSpatiaLite):
-    __tablename__ = "Privacies"
+    __tablename__ = constants.PRIVACY
     table_type = TableTypes.REFERENCE
     table_type_id = 22
 
@@ -462,7 +462,7 @@ class Privacy(BaseSpatiaLite):
 
 
 class DatafileType(BaseSpatiaLite):
-    __tablename__ = "DatafileTypes"
+    __tablename__ = constants.DATAFILE_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 23
 
@@ -472,7 +472,7 @@ class DatafileType(BaseSpatiaLite):
 
 
 class MediaType(BaseSpatiaLite):
-    __tablename__ = "MediaTypes"
+    __tablename__ = constants.MEDIA_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 24
 
@@ -482,7 +482,7 @@ class MediaType(BaseSpatiaLite):
 
 
 class CommentType(BaseSpatiaLite):
-    __tablename__ = "CommentTypes"
+    __tablename__ = constants.COMMENT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 25
 
@@ -492,7 +492,7 @@ class CommentType(BaseSpatiaLite):
 
 
 class CommodityType(BaseSpatiaLite):
-    __tablename__ = "CommodityTypes"
+    __tablename__ = constants.COMMODITY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 26
 
@@ -502,7 +502,7 @@ class CommodityType(BaseSpatiaLite):
 
 
 class ConfidenceLevel(BaseSpatiaLite):
-    __tablename__ = "ConfidenceLevels"
+    __tablename__ = constants.CONFIDENCE_LEVEL
     table_type = TableTypes.REFERENCE
     table_type_id = 27
 
@@ -513,7 +513,7 @@ class ConfidenceLevel(BaseSpatiaLite):
 
 # Measurements Tables
 class State(BaseSpatiaLite):
-    __tablename__ = "States"
+    __tablename__ = constants.STATE
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
 
@@ -537,7 +537,7 @@ class State(BaseSpatiaLite):
 
 
 class Contact(BaseSpatiaLite):
-    __tablename__ = "Contacts"
+    __tablename__ = constants.CONTACT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
 
@@ -571,7 +571,7 @@ class Contact(BaseSpatiaLite):
 
 
 class Activation(BaseSpatiaLite):
-    __tablename__ = "Activations"
+    __tablename__ = constants.ACTIVATION
     table_type = TableTypes.MEASUREMENT
     table_type_id = 30
 
@@ -590,7 +590,7 @@ class Activation(BaseSpatiaLite):
 
 
 class LogsHolding(BaseSpatiaLite):
-    __tablename__ = "LogsHoldings"
+    __tablename__ = constants.LOGS_HOLDING
     table_type = TableTypes.MEASUREMENT
     table_type_id = 31
 
@@ -607,7 +607,7 @@ class LogsHolding(BaseSpatiaLite):
 
 
 class Comment(BaseSpatiaLite):
-    __tablename__ = "Comments"
+    __tablename__ = constants.COMMENT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 32
 
@@ -629,7 +629,7 @@ class Comment(BaseSpatiaLite):
 
 
 class Geometry1(BaseSpatiaLite):
-    __tablename__ = "Geometries"
+    __tablename__ = constants.GEOMETRY
     table_type = TableTypes.MEASUREMENT
     table_type_id = 33
 
@@ -651,7 +651,7 @@ class Geometry1(BaseSpatiaLite):
 
 
 class Media(BaseSpatiaLite):
-    __tablename__ = "Media"
+    __tablename__ = constants.MEDIA
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34
 
