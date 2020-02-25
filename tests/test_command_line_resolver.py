@@ -132,7 +132,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_quit_works_for_resolver_sensor(self, resolver_prompt, menu_prompt):
         """Test whether "." quits from the resolve sensor"""
-        menu_prompt.side_effect = [".", "2", ".", "1", "SENSOR-1", "."]
+        menu_prompt.side_effect = [".", "2", ".", "1", ".", "1", "SENSOR-1", "."]
         resolver_prompt.side_effect = ["TEST"]
         with self.store.session_scope():
             sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1")
@@ -140,10 +140,14 @@ class CommandLineResolverTestCase(unittest.TestCase):
             # Select "."
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_sensor(self.store, "", "", "")
-            # Select "Add a new sensor"->Type "TEST->Select "."
+            # Select "Add a new sensor"->Search "TEST"->Select "."
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_sensor(self.store, "", sensor_type.name, privacy)
-            # Select "Search an existing sensor"->Search "SENSOR-1"->Select "."
+            # Select "Search an existing sensor"->Select "."
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_sensor(self.store, "", "", "")
+
+            # Select "Add a new sensor"->Type "SENSOR-1"->Select "."
             nationality = self.store.add_to_nationalities("UK").name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1").name
             platform = self.store.get_platform(
@@ -413,6 +417,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
             nationality = self.store.add_to_nationalities("UK")
             self.store.get_platform(
                 "PLATFORM-1",
+                trigraph="PL1",
+                quadgraph="PLT1",
+                pennant_number="123",
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
@@ -611,11 +618,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_quit_works_for_resolver_platform(self, resolver_prompt, menu_prompt):
         """Test whether "." quits works for resolver platform """
-        menu_prompt.side_effect = [
-            ".",
-            "2",
-            ".",
-        ]
+        menu_prompt.side_effect = [".", "2", ".", "1", "."]
         resolver_prompt.side_effect = [
             "TEST",
             "TST",
@@ -628,6 +631,11 @@ class CommandLineResolverTestCase(unittest.TestCase):
             nationality = self.store.add_to_nationalities("UK").name
 
             # Select "."
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_platform(
+                    self.store, "TEST", platform_type, nationality, privacy
+                )
+            # Select "Search for an existing platform"->Select "."
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_platform(
                     self.store, "TEST", platform_type, nationality, privacy
@@ -759,6 +767,8 @@ class CommandLineResolverTestCase(unittest.TestCase):
             "2",
             ".",
             "1",
+            ".",
+            "1",
             "TEST",
             ".",
         ]
@@ -775,6 +785,11 @@ class CommandLineResolverTestCase(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_datafile(
                     self.store, "TEST", datafile_type, privacy
+                )
+            # Select "Search for an existing datafile"->Select "."
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_datafile(
+                    self.store, "DATAFILE-1", datafile_type, privacy
                 )
             # Select "Search for an existing datafile"->Search "TEST"->Select "."
             with self.assertRaises(SystemExit):
