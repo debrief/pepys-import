@@ -125,15 +125,14 @@ class DataStore(object):
                 )
         elif self.db_type == "postgres":
             try:
-                # Create extension for PostGIS first
+                # Create schema pepys and extension for PostGIS first
+                query = """
+                    CREATE SCHEMA IF NOT EXISTS pepys;
+                    CREATE EXTENSION IF NOT EXISTS postgis SCHEMA pepys;
+                    SET search_path = pepys,public;
+                """
                 with self.engine.connect() as conn:
-                    conn.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
-                #  ensure that create schema scripts created before create table scripts
-                event.listen(
-                    BasePostGIS.metadata,
-                    "before_create",
-                    CreateSchema("datastore_schema"),
-                )
+                    conn.execute(query)
                 BasePostGIS.metadata.create_all(self.engine)
             except OperationalError:
                 raise Exception(f"Error creating database({self.db_name})! Quitting")
