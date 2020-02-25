@@ -1,0 +1,1 @@
+powershell.exe -executionpolicy remotesigned -File copy_shortcuts.ps1
