@@ -85,11 +85,11 @@ class Sensor(BaseSpatiaLite):
     sensor_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
     sensor_type_id = Column(Integer, nullable=False)
-    platform_id = Column(Integer, nullable=False)
+    host = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
     @classmethod
-    def find_sensor(cls, data_store, sensor_name):
+    def find_sensor(cls, data_store, sensor_name, platform_id):
         """
         This method tries to find a Sensor entity with the given sensor_name. If it
         finds, it returns the entity. If it is not found, it searches synonyms.
@@ -98,11 +98,14 @@ class Sensor(BaseSpatiaLite):
         :type data_store: DataStore
         :param sensor_name: Name of :class:`Sensor`
         :type sensor_name: String
+        :param platform_id:  Primary key of the Platform that Sensor belongs to
+        :type platform_id: int
         :return:
         """
         sensor = (
             data_store.session.query(data_store.db_classes.Sensor)
             .filter(data_store.db_classes.Sensor.name == sensor_name)
+            .filter(data_store.db_classes.Sensor.host == platform_id)
             .first()
         )
         if sensor:
@@ -128,7 +131,7 @@ class Sensor(BaseSpatiaLite):
             sensor_id=entry_id,
             name=name,
             sensor_type_id=sensor_type.sensor_type_id,
-            platform_id=host.platform_id,
+            host=host.platform_id,
         )
         session.add(sensor_obj)
         session.flush()
@@ -173,7 +176,7 @@ class Platform(BaseSpatiaLite):
         :return: Created :class:`Sensor` entity
         :rtype: Sensor
         """
-        sensor = Sensor().find_sensor(data_store, sensor_name)
+        sensor = Sensor().find_sensor(data_store, sensor_name, self.platform_id)
         if sensor:
             return sensor
 

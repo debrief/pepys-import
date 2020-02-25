@@ -634,7 +634,9 @@ class SensorTestCase(TestCase):
             sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
             sensor_2 = self.platform.get_sensor(self.store, "gps_2", self.sensor_type)
 
-            found_sensor = self.store.db_classes.Sensor().find_sensor(self.store, "gps")
+            found_sensor = self.store.db_classes.Sensor().find_sensor(
+                self.store, "gps", self.platform.platform_id
+            )
             self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
             self.assertEqual(found_sensor.name, "gps")
 
@@ -651,7 +653,9 @@ class SensorTestCase(TestCase):
             table=constants.SENSOR, name="TEST", entity=sensor.sensor_id
         )
 
-        found_sensor = self.store.db_classes.Sensor().find_sensor(self.store, "TEST")
+        found_sensor = self.store.db_classes.Sensor().find_sensor(
+            self.store, "TEST", self.platform.platform_id
+        )
         self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
         self.assertEqual(found_sensor.name, "gps")
 

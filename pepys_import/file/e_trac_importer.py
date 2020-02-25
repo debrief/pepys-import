@@ -79,38 +79,37 @@ class ETracImporter(Importer):
             timestamp = self.parse_timestamp(date_token, time_token)
 
             # and finally store it
-            with data_store.session_scope():
-                if cur_datafile_id is None:
-                    datafile = data_store.search_datafile(data_file_id)
-                    cur_datafile_id = datafile.datafile_id
-                else:
-                    datafile = data_store.get_datafile_from_id(cur_datafile_id)
-                platform = data_store.get_platform(
-                    platform_name=vessel_name,
-                    nationality="UK",
-                    platform_type="Fisher",
-                    privacy="Public",
-                )
-                sensor_type = data_store.add_to_sensor_types("GPS")
-                privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
-                sensor = platform.get_sensor(
-                    data_store=data_store,
-                    sensor_name="E-Trac",
-                    sensor_type=sensor_type,
-                    privacy=privacy.name,
-                )
-                state = datafile.create_state(sensor, timestamp)
-                state.privacy = privacy.privacy_id
+            if cur_datafile_id is None:
+                datafile = data_store.search_datafile(data_file_id)
+                cur_datafile_id = datafile.datafile_id
+            else:
+                datafile = data_store.get_datafile_from_id(cur_datafile_id)
+            platform = data_store.get_platform(
+                platform_name=vessel_name,
+                nationality="UK",
+                platform_type="Fisher",
+                privacy="Public",
+            )
+            sensor_type = data_store.add_to_sensor_types("GPS")
+            privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
+            sensor = platform.get_sensor(
+                data_store=data_store,
+                sensor_name="E-Trac",
+                sensor_type=sensor_type,
+                privacy=privacy.name,
+            )
+            state = datafile.create_state(sensor, timestamp)
+            state.privacy = privacy.privacy_id
 
-                state.location = f"POINT({long_degrees_token} {lat_degrees_token})"
+            state.location = f"POINT({long_degrees_token} {lat_degrees_token})"
 
-                headingVal = convert_heading(heading_token, line_num)
-                state.heading = headingVal.to(unit_registry.radians).magnitude
+            headingVal = convert_heading(heading_token, line_num)
+            state.heading = headingVal.to(unit_registry.radians).magnitude
 
-                speedVal = convert_speed(speed_token, line_num)
-                state.speed = speedVal
-                if datafile.validate():
-                    state.submit(data_store.session)
+            speedVal = convert_speed(speed_token, line_num)
+            state.speed = speedVal
+            if datafile.validate():
+                state.submit(data_store.session)
 
     @staticmethod
     def name_for(token):
