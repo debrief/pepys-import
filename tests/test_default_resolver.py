@@ -36,6 +36,9 @@ class DefaultResolverTestCase(unittest.TestCase):
         with self.store.session_scope():
             (
                 platform_name,
+                trigraph,
+                quadgraph,
+                pennant_number,
                 platform_type,
                 nationality,
                 privacy,
@@ -47,6 +50,9 @@ class DefaultResolverTestCase(unittest.TestCase):
                 privacy=None,
             )
             self.assertEqual(platform_name, "PLATFORM-1")
+            self.assertEqual(trigraph, "PL1")
+            self.assertEqual(quadgraph, "PLT1")
+            self.assertEqual(pennant_number, "123")
             self.assertEqual(platform_type.name, "Warship")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "PRIVACY-1")

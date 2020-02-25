@@ -4,6 +4,9 @@ from .data_resolver import DataResolver
 class DefaultResolver(DataResolver):
     # Hardcoded default values
     default_platform_name = "PLATFORM-1"
+    default_trigraph = "PL1"
+    default_quadgraph = "PLT1"
+    default_pennant_number = "123"
     default_platform_type = "Warship"
     default_nationality = "UK"
     default_sensor_name = "SENSOR-1"
@@ -36,7 +39,15 @@ class DefaultResolver(DataResolver):
             if not privacy:
                 privacy = data_store.add_to_privacies(self.default_privacy)
 
-        return platform_name, platform_type, nationality, privacy
+        return (
+            platform_name,
+            self.default_trigraph,
+            self.default_quadgraph,
+            self.default_pennant_number,
+            platform_type,
+            nationality,
+            privacy,
+        )
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy):
 

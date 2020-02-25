@@ -420,6 +420,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
 
             (
                 platform_name,
+                trigraph,
+                quadgraph,
+                pennant_number,
                 platform_type,
                 nationality,
                 privacy,
@@ -432,6 +435,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
             )
 
             self.assertEqual(platform_name, "TEST")
+            self.assertEqual(trigraph, "TST")
+            self.assertEqual(quadgraph, "TEST")
+            self.assertEqual(pennant_number, "123")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_quit_works_for_fuzzy_search_platform(self, menu_prompt):
@@ -481,6 +487,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.store.add_to_nationalities("UK")
             (
                 platform_name,
+                trigraph,
+                quadgraph,
+                pennant_number,
                 platform_type,
                 nationality,
                 privacy,
@@ -492,6 +501,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 privacy=None,
             )
             self.assertEqual(platform_name, "TEST")
+            self.assertEqual(trigraph, "TST")
+            self.assertEqual(quadgraph, "TEST")
+            self.assertEqual(pennant_number, "123")
             self.assertEqual(platform_type.name, "Warship")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "PRIVACY-1")
@@ -517,6 +529,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
         with self.store.session_scope():
             (
                 platform_name,
+                trigraph,
+                quadgraph,
+                pennant_number,
                 platform_type,
                 nationality,
                 privacy,
@@ -528,6 +543,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 privacy=None,
             )
             self.assertEqual(platform_name, "TEST")
+            self.assertEqual(trigraph, "TST")
+            self.assertEqual(quadgraph, "TEST")
+            self.assertEqual(pennant_number, "123")
             self.assertEqual(platform_type.name, "Warship")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "PRIVACY-1")
@@ -568,6 +586,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
             nationality = self.store.add_to_nationalities("UK").name
             (
                 platform_name,
+                trigraph,
+                quadgraph,
+                pennant_number,
                 platform_type,
                 nationality,
                 privacy,
@@ -579,6 +600,9 @@ class CommandLineResolverTestCase(unittest.TestCase):
                 privacy=privacy,
             )
             self.assertEqual(platform_name, "TEST")
+            self.assertEqual(trigraph, "TST")
+            self.assertEqual(quadgraph, "TEST")
+            self.assertEqual(pennant_number, "123")
             self.assertEqual(platform_type.name, "Warship")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "PRIVACY-1")

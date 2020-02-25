@@ -433,7 +433,16 @@ class DataStore(object):
 
         return datafile_obj
 
-    def add_to_platforms(self, name, nationality, platform_type, privacy):
+    def add_to_platforms(
+        self,
+        name,
+        nationality,
+        platform_type,
+        privacy,
+        trigraph=None,
+        quadgraph=None,
+        pennant_number=None,
+    ):
         """
         Adds the specified platform to the Platform table if not already present.
 
@@ -445,6 +454,12 @@ class DataStore(object):
         :type platform_type: PlatformType
         :param privacy: :class:`Privacy` of :class:`Platform`
         :type privacy: Privacy
+        :param trigraph: Trigraph of :class:`Platform`
+        :type trigraph: String
+        :param quadgraph: Quadgraph of :class:`Platform`
+        :type quadgraph: String
+        :param pennant_number: Pennant number of :class:`Platform`
+        :type pennant_number: String
         :return: Created Platform entity
         :rtype: Platform
         """
@@ -456,20 +471,13 @@ class DataStore(object):
             self.db_classes.Platform.table_type_id,
             self.db_classes.Platform.__tablename__,
         )
-        trigraph = None
-        if len(name) >= 3:
-            trigraph = name[:3]
-        quadgraph = None
-        if len(name) >= 4:
-            quadgraph = name[:4]
-        # This line should change with missing data resolver
-        pennant = None
+
         platform_obj = self.db_classes.Platform(
             platform_id=entry_id,
             name=name,
-            pennant=pennant,
             trigraph=trigraph,
             quadgraph=quadgraph,
+            pennant=pennant_number,
             nationality_id=nationality.nationality_id,
             platform_type_id=platform_type.platform_type_id,
             privacy_id=privacy.privacy_id,
@@ -710,7 +718,14 @@ class DataStore(object):
         )
 
     def get_platform(
-        self, platform_name=None, nationality=None, platform_type=None, privacy=None
+        self,
+        platform_name=None,
+        nationality=None,
+        platform_type=None,
+        privacy=None,
+        trigraph=None,
+        quadgraph=None,
+        pennant_number=None,
     ):
         """
         Adds an entry to the platforms table for the specified platform
@@ -724,6 +739,12 @@ class DataStore(object):
         :type platform_type: PlatformType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param trigraph: Trigraph of :class:`Platform`
+        :type trigraph: String
+        :param quadgraph: Quadgraph of :class:`Platform`
+        :type quadgraph: String
+        :param pennant_number: Pennant number of :class:`Platform`
+        :type pennant_number: String
         :return: Created Platform entity
         """
 
@@ -745,6 +766,9 @@ class DataStore(object):
         ):
             (
                 platform_name,
+                trigraph,
+                quadgraph,
+                pennant_number,
                 platform_type,
                 nationality,
                 privacy,
@@ -758,6 +782,9 @@ class DataStore(object):
 
         return self.add_to_platforms(
             name=platform_name,
+            trigraph=trigraph,
+            quadgraph=quadgraph,
+            pennant_number=pennant_number,
             nationality=nationality.name,
             platform_type=platform_type.name,
             privacy=privacy.name,

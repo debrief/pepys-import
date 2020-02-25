@@ -146,6 +146,9 @@ class CommandLineResolver(DataResolver):
             elif new_choice == ".":
                 print("Quitting")
                 sys.exit(1)
+        elif choice == ".":
+            print("Quitting")
+            sys.exit(1)
         elif choice not in completer:
             return self.add_to_datafiles(
                 data_store, datafile_name, datafile_type, privacy
@@ -176,8 +179,10 @@ class CommandLineResolver(DataResolver):
         platforms = data_store.session.query(data_store.db_classes.Platform).all()
         for platform in platforms:
             completer.append(platform.name)
-            completer.append(platform.trigraph)
-            completer.append(platform.quadgraph)
+            if platform.trigraph:
+                completer.append(platform.trigraph)
+            if platform.quadgraph:
+                completer.append(platform.quadgraph)
         choice = create_menu(
             "Please start typing to show suggested values",
             choices=[],
@@ -211,6 +216,9 @@ class CommandLineResolver(DataResolver):
             elif new_choice == ".":
                 print("Quitting")
                 sys.exit(1)
+        elif choice == ".":
+            print("Quitting")
+            sys.exit(1)
         elif choice not in completer:
             return self.add_to_platforms(
                 data_store, choice, platform_type, nationality, privacy
@@ -262,6 +270,9 @@ class CommandLineResolver(DataResolver):
             elif new_choice == ".":
                 print("Quitting")
                 sys.exit(1)
+        elif choice == ".":
+            print("Quitting")
+            sys.exit(1)
         elif choice not in completer:
             return self.add_to_sensors(data_store, sensor_name, sensor_type, privacy)
 
@@ -645,6 +656,9 @@ class CommandLineResolver(DataResolver):
         if choice == str(1):
             return (
                 platform_name,
+                trigraph,
+                quadgraph,
+                pennant_number,
                 chosen_platform_type,
                 chosen_nationality,
                 chosen_privacy,
