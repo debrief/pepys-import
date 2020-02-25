@@ -127,14 +127,15 @@ class NMEAImporter(Importer):
 
                     privacy = data_store.search_privacy("TEST")
                     state.privacy = privacy.privacy_id
-                    if datafile.validate():
-                        state.submit(data_store.session)
 
                     self.date = None
                     self.time = None
                     self.speed = None
                     self.heading = None
                     self.latitude = None
+
+        if datafile.validate():
+            datafile.commit(data_store.session)
 
     # def requires_user_review(self) -> bool:
     #     """

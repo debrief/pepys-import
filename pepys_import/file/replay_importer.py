@@ -61,8 +61,9 @@ class ReplayImporter(Importer):
                 state.speed = rep_line.speed
                 privacy = data_store.search_privacy("TEST")
                 state.privacy = privacy.privacy_id
-                if datafile.validate():
-                    state.submit(data_store.session)
+
+        if datafile.validate():
+            datafile.commit(data_store.session)
 
     # def requires_user_review(self) -> bool:
     #     """
