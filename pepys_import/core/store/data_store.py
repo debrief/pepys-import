@@ -500,14 +500,6 @@ class DataStore(object):
     #############################################################
     # Search/lookup functions
 
-    def get_datafile_from_id(self, datafile_id):
-        """Search for datafile with this id"""
-        return (
-            self.session.query(self.db_classes.Datafile)
-            .filter(self.db_classes.Datafile.datafile_id == datafile_id)
-            .first()
-        )
-
     def search_datafile_type(self, name):
         """Search for any datafile type with this name"""
         return (
