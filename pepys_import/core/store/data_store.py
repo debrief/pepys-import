@@ -106,7 +106,9 @@ class DataStore(object):
             show_welcome_banner(welcome_text)
         if self.show_status:
             show_software_meta_info(__version__, self.db_type, self.db_name, db_host)
-            print("---------------------------------")
+            # The 'pepys-import' banner is 61 characters wide, so making a line
+            # of the same length makes things prettier
+            print("-" * 61)
 
     def initialise(self):
         """Create schemas for the database
@@ -125,15 +127,14 @@ class DataStore(object):
                 )
         elif self.db_type == "postgres":
             try:
-                # Create extension for PostGIS first
+                # Create schema pepys and extension for PostGIS first
+                query = """
+                    CREATE SCHEMA IF NOT EXISTS pepys;
+                    CREATE EXTENSION IF NOT EXISTS postgis SCHEMA pepys;
+                    SET search_path = pepys,public;
+                """
                 with self.engine.connect() as conn:
-                    conn.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
-                #  ensure that create schema scripts created before create table scripts
-                event.listen(
-                    BasePostGIS.metadata,
-                    "before_create",
-                    CreateSchema("datastore_schema"),
-                )
+                    conn.execute(query)
                 BasePostGIS.metadata.create_all(self.engine)
             except OperationalError:
                 raise Exception(f"Error creating database({self.db_name})! Quitting")

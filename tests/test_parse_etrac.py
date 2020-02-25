@@ -5,10 +5,6 @@ from sqlite3 import OperationalError
 from pepys_import.file.e_trac_importer import ETracImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
-from testing.postgresql import Postgresql
-from sqlalchemy import event
-from pepys_import.core.store.db_base import BasePostGIS
-from sqlalchemy.sql.ddl import DropSchema
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data")

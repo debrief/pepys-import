@@ -3,12 +3,9 @@ import os
 
 from datetime import datetime
 from unittest import TestCase
-from sqlalchemy.sql.ddl import DropSchema
 from testing.postgresql import Postgresql
 from sqlalchemy.exc import OperationalError
-from sqlalchemy import event
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.core.store.db_base import BasePostGIS
 
 from contextlib import redirect_stdout
 from io import StringIO
@@ -231,9 +228,6 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
             self.postgres.stop()
         except AttributeError:
             return
