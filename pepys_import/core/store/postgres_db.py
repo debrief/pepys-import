@@ -119,25 +119,12 @@ class Sensor(BasePostGIS):
         if sensor:
             return sensor
 
-        synonym = (
-            data_store.session.query(data_store.db_classes.Synonym)
-            .filter(
-                data_store.db_classes.Synonym.synonym == sensor_name,
-                data_store.db_classes.Synonym.table == "Sensors",
-            )
-            .first()
+        # Sensor is not found, try to find a synonym
+        return data_store.synonym_search(
+            name=sensor_name,
+            table=data_store.db_classes.Sensor,
+            pk_field=data_store.db_classes.Sensor.sensor_id,
         )
-
-        if synonym:
-            sensor = (
-                data_store.session.query(data_store.db_classes.Sensor)
-                .filter(data_store.db_classes.Sensor.sensor_id == synonym.entity)
-                .first()
-            )
-            if sensor:
-                return sensor
-
-        return None
 
     @classmethod
     def add_to_sensors(cls, session, name, sensor_type, host):

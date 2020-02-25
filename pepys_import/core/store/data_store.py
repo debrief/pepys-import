@@ -589,6 +589,34 @@ class DataStore(object):
 
     #############################################################
     # New methods
+    def synonym_search(self, name, table, pk_field):
+        """
+        This method looks up the Synonyms Table and returns if there is any matched entity.
+
+        :param name: Name to search
+        :type name: String
+        :param table: Table object to query found synonym entity
+        :type table: :class:`BasePostGIS` or :class``BaseSpatiaLite
+        :param pk_field: Primary Key field of the table
+        :type pk_field: :class:`sqlalchemy.orm.attributes.InstrumentedAttribute`
+        :return: Returns found entity or None
+        """
+
+        synonym = (
+            self.session.query(self.db_classes.Synonym)
+            .filter(
+                self.db_classes.Synonym.synonym == name,
+                self.db_classes.Synonym.table == table.__tablename__,
+            )
+            .first()
+        )
+        if synonym:
+            match = self.session.query(table).filter(pk_field == synonym.entity).first()
+            if match:
+                return match
+
+        return None
+
     def find_datafile(self, datafile_name):
         """
         This method tries to find a Datafile entity with the given datafile_name. If it
@@ -606,24 +634,12 @@ class DataStore(object):
         if datafile:
             return datafile
 
-        synonym = (
-            self.session.query(self.db_classes.Synonym)
-            .filter(
-                self.db_classes.Synonym.synonym == datafile_name,
-                self.db_classes.Synonym.table == "Datafiles",
-            )
-            .first()
+        # Datafile is not found, try to find a synonym
+        return self.synonym_search(
+            name=datafile_name,
+            table=self.db_classes.Datafile,
+            pk_field=self.db_classes.Datafile.datafile_id,
         )
-        if synonym:
-            datafile = (
-                self.session.query(self.db_classes.Datafile)
-                .filter(self.db_classes.Datafile.datafile_id == synonym.entity)
-                .first()
-            )
-            if datafile:
-                return datafile
-
-        return None
 
     def get_datafile(self, datafile_name=None, datafile_type=None):
         """
@@ -685,24 +701,12 @@ class DataStore(object):
         if platform:
             return platform
 
-        synonym = (
-            self.session.query(self.db_classes.Synonym)
-            .filter(
-                self.db_classes.Synonym.synonym == platform_name,
-                self.db_classes.Synonym.table == "Platforms",
-            )
-            .first()
+        # Platform is not found, try to find a synonym
+        return self.synonym_search(
+            name=platform_name,
+            table=self.db_classes.Platform,
+            pk_field=self.db_classes.Platform.platform_id,
         )
-        if synonym:
-            platform = (
-                self.session.query(self.db_classes.Platform)
-                .filter(self.db_classes.Platform.platform_id == synonym.entity)
-                .first()
-            )
-            if platform:
-                return platform
-
-        return None
 
     def get_platform(
         self, platform_name=None, nationality=None, platform_type=None, privacy=None
