@@ -63,7 +63,7 @@ class TableSummarySet(object):
         """
         res = ""
         if title:
-            res += title
+            res += title + "\n"
         res += tabulate(
             [
                 (table.table_name, table.number_of_rows, table.created_date)
@@ -72,6 +72,7 @@ class TableSummarySet(object):
             headers=self.headers,
             tablefmt="github",
         )
+        res += "\n"
         return res
 
     def compare_to(self, other: "TableSummarySet"):
