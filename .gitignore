@@ -112,3 +112,4 @@ venv.bak/
 /lib
 /7zip
 *.zip
+*.lnk
