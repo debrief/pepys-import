@@ -1,9 +1,11 @@
+import os
 import unittest
 from unittest.mock import patch
 
-
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 from pepys_import.core.store.data_store import DataStore
+
+DIR_PATH = os.path.dirname(__file__)
 
 
 class CommandLineResolverTestCase(unittest.TestCase):
@@ -826,6 +828,56 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.assertEqual(datafile_name, "TEST")
             self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
             self.assertEqual(privacy.name, "PRIVACY-1")
+
+
+class GetPlatformTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.file_path = os.path.join(DIR_PATH, "test.db")
+        self.store = DataStore(
+            "",
+            "",
+            "",
+            0,
+            self.file_path,
+            db_type="sqlite",
+            missing_data_resolver=CommandLineResolver(),
+        )
+        with self.store.session_scope():
+            self.store.initialise()
+            self.store.populate_reference()
+            self.store.populate_metadata()
+            self.store.populate_measurement()
+
+    def tearDown(self) -> None:
+        if os.path.exists(self.file_path):
+            os.remove(self.file_path)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_get_platform_adds_resolved_platform_successfully(
+        self, resolver_prompt, menu_prompt
+    ):
+        menu_prompt.side_effect = [
+            "2",
+            "1",
+            "NETHERLANDS",
+            "1",
+            "TYPE-1",
+            "1",
+            "PRIVACY-1",
+            "1",
+        ]
+        resolver_prompt.side_effect = ["Test Platform", "Tst", "Test", "123"]
+        with self.store.session_scope():
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            # there must be 2 entities at the beginning
+            self.assertEqual(len(platforms), 2)
+
+            self.store.get_platform("Test Platform")
+
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 3)
+            self.assertEqual(platforms[2].name, "Test Platform")
 
 
 if __name__ == "__main__":
