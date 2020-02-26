@@ -431,6 +431,10 @@ class DataStore(object):
         self.session.add(datafile_obj)
         self.session.flush()
 
+        print(f"'{reference}' added to Datafile!")
+        # add to cache and return created datafile
+        self.datafiles[reference] = datafile_obj
+
         return datafile_obj
 
     def add_to_platforms(
@@ -486,6 +490,7 @@ class DataStore(object):
         self.session.add(platform_obj)
         self.session.flush()
 
+        print(f"'{name}' added to Platform!")
         # add to cache and return created platform
         self.platforms[name] = platform_obj
         # should return DB type or something else decoupled from DB?
