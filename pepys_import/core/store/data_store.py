@@ -677,8 +677,12 @@ class DataStore(object):
             self, datafile_name, datafile_type, None
         )
 
-        assert type(datafile_type), self.db_classes.DatafileType
-        assert type(privacy), self.db_classes.Privacy
+        assert isinstance(
+            datafile_type, self.db_classes.DatafileType
+        ), "Type error for DatafileType entity"
+        assert isinstance(
+            privacy, self.db_classes.Privacy
+        ), "Type error for Privacy entity"
 
         return self.add_to_datafiles(
             simulated=False,
@@ -764,21 +768,32 @@ class DataStore(object):
             or platform_type is None
             or privacy is None
         ):
-            (
-                platform_name,
-                trigraph,
-                quadgraph,
-                pennant_number,
-                platform_type,
-                nationality,
-                privacy,
-            ) = self.missing_data_resolver.resolve_platform(
+            resolved_data = self.missing_data_resolver.resolve_platform(
                 self, platform_name, platform_type, nationality, privacy
             )
+            if isinstance(resolved_data, self.db_classes.Synonym):
+                print("Added to Synonym!")
+                return
+            elif len(resolved_data) == 7:
+                (
+                    platform_name,
+                    trigraph,
+                    quadgraph,
+                    pennant_number,
+                    platform_type,
+                    nationality,
+                    privacy,
+                ) = resolved_data
 
-        assert type(nationality), self.db_classes.Nationality
-        assert type(platform_type), self.db_classes.PlatformType
-        assert type(privacy), self.db_classes.Privacy
+        assert isinstance(
+            nationality, self.db_classes.Nationality
+        ), "Type error for Nationality entity"
+        assert isinstance(
+            platform_type, self.db_classes.PlatformType
+        ), "Type error for PlatformType entity"
+        assert isinstance(
+            privacy, self.db_classes.Privacy
+        ), "Type error for Privacy entity"
 
         return self.add_to_platforms(
             name=platform_name,
