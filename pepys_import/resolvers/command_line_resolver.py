@@ -129,7 +129,6 @@ class CommandLineResolver(DataResolver):
             "Please start typing to show suggested values",
             choices=[],
             completer=FuzzyWordCompleter(completer),
-            validate_method=is_valid,
         )
         if datafile_name and choice in completer:
             new_choice = create_menu(

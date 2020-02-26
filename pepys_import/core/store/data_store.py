@@ -669,13 +669,14 @@ class DataStore(object):
             if datafile:
                 return datafile
 
-        (
-            datafile_name,
-            datafile_type,
-            privacy,
-        ) = self.missing_data_resolver.resolve_datafile(
+        resolved_data = self.missing_data_resolver.resolve_datafile(
             self, datafile_name, datafile_type, None
         )
+        if isinstance(resolved_data, self.db_classes.Synonym):
+            print("Added to Synonym!")
+            return
+
+        datafile_name, datafile_type, privacy = resolved_data
 
         assert isinstance(
             datafile_type, self.db_classes.DatafileType
