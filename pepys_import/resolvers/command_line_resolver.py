@@ -153,12 +153,12 @@ class CommandLineResolver(DataResolver):
                     data_store, datafile_name, datafile_type, privacy
                 )
             elif new_choice == ".":
-                print("Returning to the previous menu\n")
+                print("-" * 61, "\nReturning to the previous menu\n")
                 return self.fuzzy_search_datafile(
                     data_store, datafile_name, datafile_type, privacy
                 )
         elif choice == ".":
-            print("Returning to the previous menu\n")
+            print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_datafile(
                 data_store, datafile_name, datafile_type, privacy
             )
@@ -231,12 +231,12 @@ class CommandLineResolver(DataResolver):
                     data_store, platform_name, platform_type, nationality, privacy
                 )
             elif new_choice == ".":
-                print("Returning to the previous menu\n")
+                print("-" * 61, "\nReturning to the previous menu\n")
                 return self.fuzzy_search_platform(
                     data_store, platform_name, platform_type, nationality, privacy
                 )
         elif choice == ".":
-            print("Returning to the previous menu\n")
+            print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_platform(
                 data_store, platform_name, nationality, platform_type, privacy
             )
@@ -293,12 +293,12 @@ class CommandLineResolver(DataResolver):
                     data_store, sensor_name, sensor_type, privacy
                 )
             elif new_choice == ".":
-                print("Returning to the previous menu\n")
+                print("-" * 61, "\nReturning to the previous menu\n")
                 return self.fuzzy_search_sensor(
                     data_store, sensor_name, sensor_type, privacy
                 )
         elif choice == ".":
-            print("Returning to the previous menu\n")
+            print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_sensor(data_store, sensor_name, sensor_type, privacy)
         elif choice not in completer:
             return self.add_to_sensors(data_store, sensor_name, sensor_type, privacy)
@@ -335,7 +335,7 @@ class CommandLineResolver(DataResolver):
             elif new_choice == str(2):
                 return self.fuzzy_search_privacy(data_store)
             elif new_choice == ".":
-                print("Returning to the previous menu\n")
+                print("-" * 61, "\nReturning to the previous menu\n")
                 return self.resolve_privacy(data_store)
         else:
             return (
@@ -378,7 +378,7 @@ class CommandLineResolver(DataResolver):
             elif new_choice == str(2):
                 return self.fuzzy_search_datafile_type(data_store, datafile_name)
             elif new_choice == ".":
-                print("Returning to the previous menu\n")
+                print("-" * 61, "\nReturning to the previous menu\n")
                 return self.resolve_datafile_type(data_store, datafile_name)
         else:
             return (
@@ -410,7 +410,7 @@ class CommandLineResolver(DataResolver):
             completer=FuzzyWordCompleter(completer),
         )
         if choice == ".":
-            print("Returning to the previous menu\n")
+            print("-" * 61, "\nReturning to the previous menu\n")
             self.resolve_nationality(data_store, platform_name)
         elif choice not in completer:
             new_choice = create_menu(
@@ -424,7 +424,7 @@ class CommandLineResolver(DataResolver):
             elif new_choice == str(2):
                 return self.fuzzy_search_nationality(data_store, platform_name)
             elif new_choice == ".":
-                print("Returning to the previous menu\n")
+                print("-" * 61, "\nReturning to the previous menu\n")
                 return self.resolve_nationality(data_store, platform_name)
         else:
             return (
@@ -456,7 +456,7 @@ class CommandLineResolver(DataResolver):
             completer=FuzzyWordCompleter(completer),
         )
         if choice == ".":
-            print("Returning to the previous menu\n")
+            print("-" * 61, "\nReturning to the previous menu\n")
             self.resolve_platform_type(data_store, platform_name)
         elif choice not in completer:
             new_choice = create_menu(
@@ -470,7 +470,7 @@ class CommandLineResolver(DataResolver):
             elif new_choice == str(2):
                 return self.fuzzy_search_platform_type(data_store, platform_name)
             elif new_choice == ".":
-                print("Returning to the previous menu\n")
+                print("-" * 61, "\nReturning to the previous menu\n")
                 return self.resolve_platform_type(data_store, platform_name)
         else:
             return (
@@ -500,7 +500,7 @@ class CommandLineResolver(DataResolver):
             completer=FuzzyWordCompleter(completer),
         )
         if choice == ".":
-            print("Returning to the previous menu\n")
+            print("-" * 61, "\nReturning to the previous menu\n")
             self.resolve_nationality(data_store, sensor_name)
         elif choice not in completer:
             new_choice = create_menu(
@@ -514,7 +514,7 @@ class CommandLineResolver(DataResolver):
             elif new_choice == str(2):
                 return self.fuzzy_search_sensor_type(data_store, sensor_name)
             elif new_choice == ".":
-                print("Returning to the previous menu\n")
+                print("-" * 61, "\nReturning to the previous menu\n")
                 return self.resolve_sensor_type(data_store, sensor_name)
         else:
             return (
@@ -549,7 +549,7 @@ class CommandLineResolver(DataResolver):
             new_nationality = prompt("Please type name of new nationality: ")
             return data_store.add_to_nationalities(new_nationality)
         elif choice == ".":
-            print("Returning to the previous menu\n")
+            print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_platform(data_store, platform_name, None, None, None)
 
     def resolve_platform_type(self, data_store, platform_name):
@@ -568,7 +568,7 @@ class CommandLineResolver(DataResolver):
             new_platform_type = prompt("Please type name of new platform-type: ")
             return data_store.add_to_platform_types(new_platform_type)
         elif choice == ".":
-            print("Returning to the previous menu\n")
+            print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_platform(data_store, platform_name, None, None, None)
 
     def resolve_sensor_type(self, data_store, sensor_name):
@@ -624,7 +624,7 @@ class CommandLineResolver(DataResolver):
             new_datafile_type = prompt("Please type name of new datafile-type: ")
             return data_store.add_to_datafile_types(new_datafile_type)
         elif choice == ".":
-            print("Returning to the previous menu\n")
+            print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_datafile(data_store, datafile_name, None, None)
 
     def add_to_datafiles(self, data_store, datafile_name, datafile_type, privacy):
@@ -645,6 +645,7 @@ class CommandLineResolver(DataResolver):
         """
         print("Ok, adding new datafile.")
 
+        datafile_name = prompt("Please enter a name: ", default=datafile_name)
         # Choose Datafile Type
         if datafile_type:
             chosen_datafile_type = data_store.add_to_datafile_types(datafile_type)
@@ -673,7 +674,7 @@ class CommandLineResolver(DataResolver):
         elif choice == str(2):
             return self.add_to_datafiles(data_store, datafile_name, None, None)
         elif choice == ".":
-            print("Returning to the previous menu\n")
+            print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_datafile(data_store, datafile_name, None, None)
 
     def add_to_platforms(
@@ -755,7 +756,7 @@ class CommandLineResolver(DataResolver):
         elif choice == str(2):
             return self.add_to_platforms(data_store, platform_name, None, None, None)
         elif choice == ".":
-            print("Returning to the previous menu\n")
+            print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_platform(data_store, platform_name, None, None, None)
 
     def add_to_sensors(self, data_store, sensor_name, sensor_type, privacy):
@@ -804,5 +805,5 @@ class CommandLineResolver(DataResolver):
         elif choice == str(2):
             return self.add_to_sensors(data_store, sensor_name, None, None)
         elif choice == ".":
-            print("Returning to the previous menu\n")
+            print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_sensor(data_store, sensor_name, None, None)
