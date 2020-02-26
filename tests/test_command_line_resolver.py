@@ -830,7 +830,7 @@ class CommandLineResolverTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "PRIVACY-1")
 
 
-class GetPlatformTestCase(unittest.TestCase):
+class GetMethodsTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.file_path = os.path.join(DIR_PATH, "test.db")
         self.store = DataStore(
@@ -878,6 +878,58 @@ class GetPlatformTestCase(unittest.TestCase):
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             self.assertEqual(len(platforms), 3)
             self.assertEqual(platforms[2].name, "Test Platform")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_get_datafile_adds_resolved_datafile_successfully(
+        self, resolver_prompt, menu_prompt
+    ):
+        menu_prompt.side_effect = [
+            "2",
+            "1",
+            "DATAFILE-TYPE-1",
+            "1",
+            "PRIVACY-1",
+            "1",
+        ]
+        resolver_prompt.side_effect = ["DATAFILE-TEST"]
+        with self.store.session_scope():
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            # there must be 2 entities at the beginning
+            self.assertEqual(len(datafiles), 2)
+
+            self.store.get_datafile("test")
+
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 3)
+            self.assertEqual(datafiles[2].reference, "DATAFILE-TEST")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_get_sensor_adds_resolved_sensor_successfully(
+        self, resolver_prompt, menu_prompt
+    ):
+        menu_prompt.side_effect = [
+            "2",
+            "1",
+            "SENSOR-TYPE-1",
+            "1",
+            "PRIVACY-1",
+            "1",
+        ]
+        resolver_prompt.side_effect = ["SENSOR-TEST"]
+        with self.store.session_scope():
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
+            # there must be 2 entities at the beginning
+            self.assertEqual(len(sensors), 2)
+
+            platform = self.store.get_platform("PLATFORM-1")
+            platform.get_sensor(self.store, "SENSOR-TEST")
+
+            # there must be 3 entities now
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
+            self.assertEqual(len(sensors), 3)
+            self.assertEqual(sensors[2].name, "SENSOR-TEST")
 
 
 if __name__ == "__main__":
