@@ -82,14 +82,6 @@ class BasicTests(unittest.TestCase):
         # bad heading
         rep_line = REPLine(
             1,
-            "951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 1000.00  6.00  0.00 ",
-            " ",
-        )
-        self.assertFalse(rep_line.parse())
-
-        # bad heading
-        rep_line = REPLine(
-            1,
             "951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 10b.08  6.00  0.00 ",
             " ",
         )

@@ -94,51 +94,48 @@ class NMEAImporter(Importer):
                 ):
 
                     # and finally store it
-                    with data_store.session_scope():
-                        datafile = data_store.search_datafile(datafile_name)
-                        platform = data_store.get_platform(
-                            "Toure", "Ferry", "FR", "Public"
-                        )
-                        all_sensors = data_store.session.query(
-                            data_store.db_classes.Sensor
-                        ).all()
-                        data_store.add_to_sensor_types("_GPS")
-                        sensor = platform.get_sensor(
-                            session=data_store.session,
-                            all_sensors=all_sensors,
-                            sensor_name=platform.name,
-                            sensor_type="_GPS",
-                            privacy="TEST",
-                        )
-                        timestamp = self.parse_timestamp(self.date, self.time)
+                    datafile = data_store.search_datafile(datafile_name)
+                    platform = data_store.get_platform("Toure", "Ferry", "FR", "Public")
+                    all_sensors = data_store.session.query(
+                        data_store.db_classes.Sensor
+                    ).all()
+                    data_store.add_to_sensor_types("_GPS")
+                    sensor = platform.get_sensor(
+                        session=data_store.session,
+                        all_sensors=all_sensors,
+                        sensor_name=platform.name,
+                        sensor_type="_GPS",
+                        privacy="TEST",
+                    )
+                    timestamp = self.parse_timestamp(self.date, self.time)
 
-                        state = datafile.create_state(sensor, timestamp)
-                        location = self.parse_location(
-                            self.latitude,
-                            self.latitude_hem,
-                            self.longitude,
-                            self.longitude_hem,
-                        )
-                        state.location = location
+                    state = datafile.create_state(sensor, timestamp)
+                    location = self.parse_location(
+                        self.latitude,
+                        self.latitude_hem,
+                        self.longitude,
+                        self.longitude_hem,
+                    )
+                    state.location = location
 
-                        heading = convert_heading(self.heading, line_number)
-                        if heading:
-                            state.heading = heading
+                    heading = convert_heading(self.heading, line_number)
+                    if heading:
+                        state.heading = heading
 
-                        speed = convert_speed(self.speed, line_number)
-                        if speed:
-                            state.speed = speed
+                    speed = convert_speed(self.speed, line_number)
+                    if speed:
+                        state.speed = speed
 
-                        privacy = data_store.search_privacy("TEST")
-                        state.privacy = privacy.privacy_id
-                        if datafile.validate():
-                            state.submit(data_store.session)
+                    privacy = data_store.search_privacy("TEST")
+                    state.privacy = privacy.privacy_id
+                    if datafile.validate():
+                        state.submit(data_store.session)
 
-                        self.date = None
-                        self.time = None
-                        self.speed = None
-                        self.heading = None
-                        self.latitude = None
+                    self.date = None
+                    self.time = None
+                    self.speed = None
+                    self.heading = None
+                    self.latitude = None
 
     # def requires_user_review(self) -> bool:
     #     """

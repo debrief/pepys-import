@@ -5,10 +5,7 @@ from sqlite3 import OperationalError
 from unittest import TestCase
 from testing.postgresql import Postgresql
 from datetime import datetime
-from sqlalchemy import event
-from sqlalchemy.sql.ddl import DropSchema
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.core.store.db_base import BasePostGIS
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -43,9 +40,6 @@ class DataStoreCacheTestCase(TestCase):
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
             self.postgres.stop()
         except AttributeError:
             return
@@ -249,9 +243,6 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
             self.postgres.stop()
         except AttributeError:
             return
@@ -444,9 +435,6 @@ class PlatformAndDatafileTestCase(TestCase):
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
             self.postgres.stop()
         except AttributeError:
             return
@@ -588,17 +576,15 @@ class DataStoreStatusTestCase(TestCase):
                 db_port=55527,
             )
             self.store.initialise()
-            self.store.populate_reference(TEST_DATA_PATH)
-            self.store.populate_metadata(TEST_DATA_PATH)
-            self.store.populate_measurement(TEST_DATA_PATH)
+            with self.store.session_scope():
+                self.store.populate_reference(TEST_DATA_PATH)
+                self.store.populate_metadata(TEST_DATA_PATH)
+                self.store.populate_measurement(TEST_DATA_PATH)
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
             self.postgres.stop()
         except AttributeError:
             return
@@ -606,7 +592,8 @@ class DataStoreStatusTestCase(TestCase):
     def test_get_status_of_measurement(self):
         """Test whether summary contents correct for measurement tables"""
 
-        table_summary_object = self.store.get_status(report_measurement=True)
+        with self.store.session_scope():
+            table_summary_object = self.store.get_status(report_measurement=True)
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")
@@ -617,7 +604,8 @@ class DataStoreStatusTestCase(TestCase):
     def test_get_status_of_metadata(self):
         """Test whether summary contents correct for metadata tables"""
 
-        table_summary_object = self.store.get_status(report_metadata=True)
+        with self.store.session_scope():
+            table_summary_object = self.store.get_status(report_metadata=True)
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")
@@ -628,7 +616,8 @@ class DataStoreStatusTestCase(TestCase):
     def test_get_status_of_reference(self):
         """Test whether summary contents correct for reference tables"""
 
-        table_summary_object = self.store.get_status(report_reference=True)
+        with self.store.session_scope():
+            table_summary_object = self.store.get_status(report_reference=True)
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")
@@ -685,9 +674,6 @@ class SensorTestCase(TestCase):
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
             self.postgres.stop()
         except AttributeError:
             return
@@ -818,9 +804,6 @@ class MeasurementsTestCase(TestCase):
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
             self.postgres.stop()
         except AttributeError:
             return

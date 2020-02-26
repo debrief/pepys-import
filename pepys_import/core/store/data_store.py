@@ -106,7 +106,9 @@ class DataStore(object):
             show_welcome_banner(welcome_text)
         if self.show_status:
             show_software_meta_info(__version__, self.db_type, self.db_name, db_host)
-            print("---------------------------------")
+            # The 'pepys-import' banner is 61 characters wide, so making a line
+            # of the same length makes things prettier
+            print("-" * 61)
 
     def initialise(self):
         """Create schemas for the database
@@ -125,15 +127,14 @@ class DataStore(object):
                 )
         elif self.db_type == "postgres":
             try:
-                # Create extension for PostGIS first
+                # Create schema pepys and extension for PostGIS first
+                query = """
+                    CREATE SCHEMA IF NOT EXISTS pepys;
+                    CREATE EXTENSION IF NOT EXISTS postgis SCHEMA pepys;
+                    SET search_path = pepys,public;
+                """
                 with self.engine.connect() as conn:
-                    conn.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
-                #  ensure that create schema scripts created before create table scripts
-                event.listen(
-                    BasePostGIS.metadata,
-                    "before_create",
-                    CreateSchema("datastore_schema"),
-                )
+                    conn.execute(query)
                 BasePostGIS.metadata.create_all(self.engine)
             except OperationalError:
                 raise Exception(f"Error creating database({self.db_name})! Quitting")
@@ -151,17 +152,6 @@ class DataStore(object):
             raise
         finally:
             self.session.close()
-
-    def clear_db(self):
-        """Delete records of all database tables"""
-        if self.db_type == "sqlite":
-            meta = BaseSpatiaLite.metadata
-        else:
-            meta = BasePostGIS.metadata
-
-        with self.session_scope():
-            for table in reversed(meta.sorted_tables):
-                self.session.execute(table.delete())
 
     #############################################################
     # Other DataStore Methods
@@ -403,7 +393,9 @@ class DataStore(object):
 
         return sensor_obj
 
-    def add_to_datafiles(self, simulated, privacy, file_type, reference=None, url=None):
+    def add_to_datafiles(
+        self, simulated=False, privacy=None, file_type=None, reference=None, url=None
+    ):
         """
         Adds the specified datafile to the Datafile table if not already present.
 
@@ -420,7 +412,15 @@ class DataStore(object):
         :return: Created :class:`Datafile` entity
         :rtype: Datafile
         """
+
+        # fill in missing privacy, if necessary
+        if privacy is None:
+            privacy = self.missing_data_resolver.default_privacy
         privacy = self.search_privacy(privacy)
+
+        # fill in missing file_type, if necessary
+        if file_type is None:
+            file_type = self.missing_data_resolver.default_datafile_type
         datafile_type = self.search_datafile_type(file_type)
 
         if privacy is None or datafile_type is None:
@@ -500,6 +500,14 @@ class DataStore(object):
 
     #############################################################
     # Search/lookup functions
+
+    def get_datafile_from_id(self, datafile_id):
+        """Search for datafile with this id"""
+        return (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.datafile_id == datafile_id)
+            .first()
+        )
 
     def search_datafile_type(self, name):
         """Search for any datafile type with this name"""
@@ -627,46 +635,6 @@ class DataStore(object):
                 .filter(self.db_classes.Datafile.reference == datafile_name)
                 .first()
             )
-
-    def get_all_datafiles(self):
-        """
-        Gets all datafiles.
-
-        :return: Datafile entity
-        :rtype: Datafile
-        """
-        datafiles = self.session.query(self.db_classes.Datafile).all()
-        return datafiles
-
-    def export_datafile(self, datafile_id):
-        """
-        Get states, contacts and comments based on Datafile ID.
-
-        :param datafile_id:  ID of Datafile
-        :type datafile_id: String
-        :return:  Created Datafile entity
-        :rtype: Datafile
-        """
-        states = (
-            self.session.query(self.db_classes.State)
-            .filter(self.db_classes.State.source_id == datafile_id)
-            .all()
-        )
-
-        contacts = (
-            self.session.query(self.db_classes.Contact)
-            .filter(self.db_classes.Contact.source_id == datafile_id)
-            .all()
-        )
-
-        comments = (
-            self.session.query(self.db_classes.Comment)
-            .filter(self.db_classes.Comment.source_id == datafile_id)
-            .all()
-        )
-
-        print(states, contacts, comments)
-        return True
 
     def get_platform(
         self, platform_name, nationality=None, platform_type=None, privacy=None
@@ -1020,3 +988,51 @@ class DataStore(object):
         self.sensor_types[sensor_type_name] = sensor_type
         # should return DB type or something else decoupled from DB?
         return sensor_type
+
+    def clear_db(self):
+        """Delete records of all database tables"""
+        if self.db_type == "sqlite":
+            meta = BaseSpatiaLite.metadata
+        else:
+            meta = BasePostGIS.metadata
+
+        with self.session_scope():
+            for table in reversed(meta.sorted_tables):
+                self.session.execute(table.delete())
+
+    def get_all_datafiles(self):
+        """
+        Gets all datafiles.
+
+        :return: Datafile entity
+        :rtype: Datafile
+        """
+        datafiles = self.session.query(self.db_classes.Datafile).all()
+        return datafiles
+
+    def export_datafile(self, datafile_id):
+        """
+        Get states, contacts and comments based on Datafile ID.
+
+        :param datafile_id:  ID of Datafile
+        :type datafile_id: String
+        """
+        states = (
+            self.session.query(self.db_classes.State)
+            .filter(self.db_classes.State.source_id == datafile_id)
+            .all()
+        )
+
+        contacts = (
+            self.session.query(self.db_classes.Contact)
+            .filter(self.db_classes.Contact.source_id == datafile_id)
+            .all()
+        )
+
+        comments = (
+            self.session.query(self.db_classes.Comment)
+            .filter(self.db_classes.Comment.source_id == datafile_id)
+            .all()
+        )
+
+        print(states, contacts, comments)

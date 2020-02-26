@@ -19,12 +19,10 @@ def convert_heading(heading, line_number):
             f"Couldn't convert to a number"
         )
         return False
-    if 0.0 > valid_heading or valid_heading >= 360.0:
-        print(
-            f"Line {line_number}. Error in heading value {heading}. "
-            f"Should be be between 0 and 359.9 degrees"
-        )
-        return False
+    if valid_heading < 0:
+        valid_heading += 360
+    if valid_heading > 360:
+        valid_heading -= 360
     return valid_heading * unit_registry.degree
 
 

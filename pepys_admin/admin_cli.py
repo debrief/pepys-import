@@ -1,5 +1,5 @@
-# TODO: we have to keep these statements on top, due to load pepys_import.
-# We will see better approach to access module inside other module.
+# TODO: we have to keep these statements on top to load pepys_import.
+# We will see better approach to access modules inside the other module.
 import sys
 
 sys.path.append(".")
@@ -13,9 +13,14 @@ from pepys_import.core.store.data_store import DataStore
 dirpath = os.path.dirname(os.path.abspath(__file__))
 
 
-def postgres_initialise():
-    """Test whether schemas created successfully on PostgresSQL"""
-    data_store_postgres = DataStore(
+def create_postgres_data_store():
+    """
+    Create configured PostgresSQL data store.
+    
+    :return: Postgres data store
+    :rtype: DataStore 
+    """
+    return DataStore(
         db_username="postgres",
         db_password="postgres",
         db_host="localhost",
@@ -23,11 +28,18 @@ def postgres_initialise():
         db_name="pepys",
         welcome_text="Pepys_Admin",
     )
-    return data_store_postgres
 
 
-def sqlite_initialise(file):
-    """Test whether schemas created successfully on PostgresSQL"""
+def create_sqlite_data_store(file):
+    """
+    Create and Initialise SQLite data store at provided location (file).
+    
+    :param file:  absolute/relative file path
+    :type file: String
+    
+    :return:  Created Datafile entity
+    :rtype: Datafile
+    """
     store = DataStore("", "", "", 0, file, db_type="sqlite")
     if not os.path.isfile(file):
         store.initialise()
@@ -35,9 +47,14 @@ def sqlite_initialise(file):
 
 
 class InitialiseShell(cmd.Cmd):
+    intro = (
+        "\n--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n"
+        " (3) Import Reference data\n (4) Import Metadata\n "
+        "(5) Import Sample Measurements\n (0) Exit\n"
+    )
     prompt = "(initialise) "
 
-    def __init__(self, datastore):
+    def __init__(self, datastore, parentShell):
         super(InitialiseShell, self).__init__()
         self.datastore = datastore
         self.aliases = {
@@ -48,6 +65,9 @@ class InitialiseShell(cmd.Cmd):
             "4": self.do_import_metadata,
             "5": self.do_import_sample_measurements,
         }
+
+        if parentShell:
+            self.prompt = parentShell.prompt.strip() + "/" + self.prompt
 
     def do_cleardb(self, args):
         self.datastore.clear_db()
@@ -80,20 +100,14 @@ class InitialiseShell(cmd.Cmd):
             print("*** Unknown syntax: %s" % line)
 
     def postcmd(self, stop, line):
-        intro = (
-            "--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n "
-            "(3) Import Reference data\n (4) Import Metadata\n "
-            "(5) Import Sample Measurements\n (0) Exit\n"
-        )
         if line != "0":
-            print(intro)
+            print(self.intro)
         return cmd.Cmd.postcmd(self, stop, line)
 
 
 class AdminShell(cmd.Cmd):
-    intro = "Welcome to the Pepys Admin shell.   Type help or ? to list commands.\n"
+    intro = "\n--- Menu --- \n (1) Export\n " "(2) Initialise\n (3) Status\n (0) Exit\n"
     prompt = "(pepys-admin) "
-    file = None
 
     def __init__(self, datastore):
         super(AdminShell, self).__init__()
@@ -107,13 +121,12 @@ class AdminShell(cmd.Cmd):
 
     def do_export(self, arg):
         "Start the export process"
-        # datafile_name = input("Please enter Datafile name:")
         with self.datastore.session_scope():
             datafiles = self.datastore.get_all_datafiles()
             datafiles_dict = {}
             for datafile in datafiles:
                 datafiles_dict[datafile.reference] = datafile.datafile_id
-        datafile_references = list(datafiles_dict.keys())
+        datafile_references = datafiles_dict.keys()
         datafile_reference = iterfzf(datafile_references)
 
         if datafile_reference is None:
@@ -123,21 +136,16 @@ class AdminShell(cmd.Cmd):
             "Do you want to export {} Datafile. (Y/n)\n".format(datafile_reference)
         )
         if export_flag in ["", "Y", "y"]:
-            print("Exported Datafile is: {} TODO".format(datafile_reference))
+            print("Exported Datafile is: {}.".format(datafile_reference))
 
-        selected_datafile = datafiles_dict[datafile_reference]
+        selected_datafile_id = datafiles_dict[datafile_reference]
         with self.datastore.session_scope():
-            self.datastore.export_datafile(selected_datafile)
+            self.datastore.export_datafile(selected_datafile_id)
 
     def do_initialise(self, arg):
         "Allow the currently connected database to be configured"
-        initialise = InitialiseShell(self.datastore)
-        intro = (
-            "--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n"
-            " (3) Import Reference data\n (4) Import Metadata\n "
-            "(5) Import Sample Measurements\n (0) Exit\n"
-        )
-        initialise.cmdloop(intro=intro)
+        initialise = InitialiseShell(self.datastore, self)
+        initialise.cmdloop()
 
     def do_status(self, arg):
         "Report on the database contents"
@@ -182,26 +190,21 @@ class AdminShell(cmd.Cmd):
             print("*** Unknown syntax: %s" % line)
 
     def postcmd(self, stop, line):
-        intro = "--- Menu --- \n (1) Export\n (2) Initialise\n (3) Status\n (0) Exit\n"
         if line != "0":
-            print(intro)
+            print(self.intro)
         return cmd.Cmd.postcmd(self, stop, line)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="DB Selection!")
+    parser = argparse.ArgumentParser(description="SQLite file path!")
     parser.add_argument("--db", type=str, help="Db Path")
 
     args = parser.parse_args()
     db_file = args.db
 
     if db_file:
-        datastore = sqlite_initialise(db_file)
+        datastore = create_sqlite_data_store(db_file)
     else:
-        datastore = postgres_initialise()
+        datastore = create_postgres_data_store()
 
-    intro = (
-        "Welcome to the Pepys Admin shell.\n --- Menu --- \n (1) Export\n "
-        "(2) Initialise\n (3) Status\n (0) Exit\n"
-    )
-    admin = AdminShell(datastore).cmdloop(intro=intro)
+    AdminShell(datastore).cmdloop()
