@@ -414,7 +414,7 @@ class CommandLineResolver(DataResolver):
         )
         if choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
-            self.resolve_nationality(data_store, platform_name)
+            return self.resolve_nationality(data_store, platform_name)
         elif choice not in completer:
             new_choice = create_menu(
                 f"You didn't select an existing nationality. "
