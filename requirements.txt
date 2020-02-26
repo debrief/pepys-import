@@ -4,3 +4,4 @@ psycopg2
 pint==0.9
 tabulate
 pyfiglet
+iterfzf
