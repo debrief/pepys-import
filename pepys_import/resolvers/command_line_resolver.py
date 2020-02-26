@@ -101,9 +101,8 @@ class CommandLineResolver(DataResolver):
             else:
                 return data_store.add_to_privacies(new_privacy)
         elif choice == ".":
-            # TODO: should go to previous menu
-            print("Quitting")
-            sys.exit(1)
+            print("-" * 61, "\nReturning to the previous menu\n")
+            return None
 
     # Helper methods
     def fuzzy_search_datafile(self, data_store, datafile_name, datafile_type, privacy):
@@ -163,9 +162,8 @@ class CommandLineResolver(DataResolver):
                 data_store, datafile_name, datafile_type, privacy
             )
         elif choice not in completer:
-            return self.add_to_datafiles(
-                data_store, datafile_name, datafile_type, privacy
-            )
+            print(f"'{choice}' could not found! Redirecting to adding a new datafile..")
+            return self.add_to_datafiles(data_store, choice, datafile_type, privacy)
 
     def fuzzy_search_platform(
         self, data_store, platform_name, platform_type, nationality, privacy
@@ -241,6 +239,7 @@ class CommandLineResolver(DataResolver):
                 data_store, platform_name, nationality, platform_type, privacy
             )
         elif choice not in completer:
+            print(f"'{choice}' could not found! Redirecting to adding a new platform..")
             return self.add_to_platforms(
                 data_store, choice, platform_type, nationality, privacy
             )
@@ -301,6 +300,7 @@ class CommandLineResolver(DataResolver):
             print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_sensor(data_store, sensor_name, sensor_type, privacy)
         elif choice not in completer:
+            print(f"'{choice}' could not found! Redirecting to adding a new sensor..")
             return self.add_to_sensors(data_store, sensor_name, sensor_type, privacy)
 
     def fuzzy_search_privacy(self, data_store):
@@ -553,7 +553,7 @@ class CommandLineResolver(DataResolver):
             return data_store.add_to_nationalities(new_nationality)
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
-            return self.resolve_platform(data_store, platform_name, None, None, None)
+            return None
 
     def resolve_platform_type(self, data_store, platform_name):
         platform_type_names = [
@@ -572,7 +572,7 @@ class CommandLineResolver(DataResolver):
             return data_store.add_to_platform_types(new_platform_type)
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
-            return self.resolve_platform(data_store, platform_name, None, None, None)
+            return None
 
     def resolve_sensor_type(self, data_store, sensor_name):
         """
@@ -601,9 +601,8 @@ class CommandLineResolver(DataResolver):
             new_input = prompt("Please type name of new sensor-type: ")
             return data_store.add_to_sensor_types(new_input)
         elif choice == ".":
-            # TODO: should change
-            print("Quitting")
-            sys.exit(1)
+            print("-" * 61, "\nReturning to the previous menu\n")
+            return None
 
     def resolve_datafile_type(self, data_store, datafile_name):
         """
@@ -628,7 +627,7 @@ class CommandLineResolver(DataResolver):
             return data_store.add_to_datafile_types(new_datafile_type)
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
-            return self.resolve_datafile(data_store, datafile_name, None, None)
+            return None
 
     def add_to_datafiles(self, data_store, datafile_name, datafile_type, privacy):
         """
@@ -655,12 +654,19 @@ class CommandLineResolver(DataResolver):
         else:
             chosen_datafile_type = self.resolve_datafile_type(data_store, datafile_name)
 
+        if chosen_datafile_type is None:
+            return self.resolve_datafile(data_store, datafile_name, None, None)
+
         # Choose Privacy
         if privacy:
             chosen_privacy = data_store.add_to_privacies(privacy)
         else:
             chosen_privacy = self.resolve_privacy(data_store)
 
+        if chosen_privacy is None:
+            return self.resolve_datafile(data_store, datafile_name, None, None)
+
+        print("-" * 61)
         print("Input complete. About to create this datafile:")
         print(f"Name: {datafile_name}")
         print(f"Type: {chosen_datafile_type.name}")
@@ -718,11 +724,17 @@ class CommandLineResolver(DataResolver):
         else:
             chosen_nationality = self.resolve_nationality(data_store, platform_name)
 
+        if chosen_nationality is None:
+            return self.resolve_platform(data_store, platform_name, None, None, None)
+
         # Choose Platform Type
         if platform_type:
             chosen_platform_type = data_store.add_to_platform_types(platform_type)
         else:
             chosen_platform_type = self.resolve_platform_type(data_store, platform_name)
+
+        if chosen_platform_type is None:
+            return self.resolve_platform(data_store, platform_name, None, None, None)
 
         # Choose Privacy
         if privacy:
@@ -730,7 +742,10 @@ class CommandLineResolver(DataResolver):
         else:
             chosen_privacy = self.resolve_privacy(data_store)
 
-        print("-" * 30)
+        if chosen_privacy is None:
+            return self.resolve_platform(data_store, platform_name, None, None, None)
+
+        print("-" * 61)
         print("Input complete. About to create this platform:")
         print(f"Name: {platform_name}")
         print(f"Trigraph: {trigraph}")
@@ -786,12 +801,18 @@ class CommandLineResolver(DataResolver):
         else:
             sensor_type = self.resolve_sensor_type(data_store, sensor_name)
 
+        if sensor_type is None:
+            return self.resolve_sensor(data_store, sensor_name, None, None)
+
         if privacy:
             privacy = data_store.add_to_privacies(privacy)
         else:
             privacy = self.resolve_privacy(data_store)
 
-        print("-" * 30)
+        if privacy is None:
+            return self.resolve_sensor(data_store, sensor_name, None, None)
+
+        print("-" * 61)
         print("Input complete. About to create this platform:")
         print(f"Name: {sensor_name}")
         print(f"Type: {sensor_type.name}")
