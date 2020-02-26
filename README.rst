@@ -46,7 +46,7 @@ example, ``run_python.bat filename.py`` will run ``filename.py`` in the standalo
 Online documentation
 --------------------
 
-More details on the structure and API of pepys-import is available here: |docs|
+More details on the structure and API of pepys-import is available in the full documentation: |docs|
 
 .. |docs| image:: https://readthedocs.org/projects/pepys-import/badge/?version=latest
   :target:  https://pepys-import.readthedocs.io/

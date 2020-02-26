@@ -1,65 +1,41 @@
-Development
-===========
-
-Code coverage
--------------
-
-We're aiming for 100% code coverage on the project, track our progress
-here: |code_cov|
-
-.. |code_cov| image:: https://codecov.io/gh/debrief/pepys-import/branch/develop/graph/badge.svg
-   :target: https://codecov.io/gh/debrief/pepys-import/branch/develop
-
-Upstream security
------------------
-
-We have continuous vulnerability testing on the Open Source libraries
-we depend upon for development: |dev_req| and production: |plain_req|
-
-.. |plain_req| image:: https://snyk.io/test/github/debrief/pepys-import/badge.svg?targetFile=requirements.txt
-   :target: https://snyk.io/test/github/debrief/pepys-import?targetFile=requirements.txt
-
-.. |dev_req| image:: https://snyk.io/test/github/debrief/pepys-import/badge.svg?targetFile=requirements_dev.txt
-   :target: https://snyk.io/test/github/debrief/pepys-import?targetFile=requirements_dev.txt
-
-Code Style
-----------
-Black is used on the project: |black|
-
-.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
- :target: https://github.com/python/black
-
-It is suggested to install a pre-commit hook in order to apply Black before pushing commits::
-
-    $ pip install pre-commit
-    $ pre-commit install
-
-
-Project Progress
-----------------
-
-View the project Kanban board `here <https://github.com/debrief/pepys-import/projects/3>`_
+Developer Guide
+===============
+This document provides instructions for setting up pepys-import for development, along with contributers
+guidance on code style, testing and so on.
 
 Setup
 -----
 
-To prepare for running ensure Python 3.6 or later are installed in your system.
+To prepare for running ensure Python 3.6 or later is installed on your system.
 You can check your Python 3 version with the following command::
 
-    $ python3 --version
+    $ python --version
+
+**Note:** Depending on the set up on your computer, you may need to run ``python3`` or ``python3.7`` rather
+than ``python`` in this and all following commands.
 
 If you don't have Python 3.6+ in your system, please download it from `python.org <https://www.python.org/downloads/>`_
 
-Pip is also necessary to create virtual environment. If you don't have it in your system, please download it::
+Pip is also necessary to install dependencies. If you don't have it in your system, please download it::
 
     $ sudo apt-get install python3-pip
 
 It is possible to verify pip installation with the following command::
 
-    $ pip3 --version
+    $ pip --version
+
+**Note:** Depending on the set up on your computer, you may need to run ``pip3`` rather than ``pip`` in
+this and all following commands. Alternatively, you can run ``python -m pip``.
+
+
+Platform-specific Setup
+'''''''''''''''''''''''
+
+Once Python and pip are installed, follow the relevant instructions below for your platform:
+
 
 -----------------------------------------
-Ubuntu 18.04 LTS Development Instructions
+Linux (Ubuntu 18.04 LTS)
 -----------------------------------------
 
 Installing Spatialite
@@ -101,49 +77,166 @@ The best way to install PostGIS is running the codes as follows::
     sudo apt-get update
     sudo apt-get install postgis
 
-Cloning the Repository
+Install Git
 **********************
-Navigate to folder you would like to download the repository and run the following commands::
+Run the following command::
 
     $ sudo apt install git
-    $ git clone https://github.com/debrief/pepys-import.git
 
-Creating Python Environment
-***************************
-Virtual Environment might be used to run the project. For creating a proper one,
-the following commands must be executed respectively in your project directory (please change the version with your Python version)::
+-----------------------------------------
+Mac OS X
+-----------------------------------------
+**TODO**
 
-    $ python3.6 -m virtualenv venv
+-----------------------------------------
+Windows
+-----------------------------------------
+1. Create a ``pepys`` folder, which contains a ``lib`` folder.
 
-**Note:** If you downloaded virtualenv in the current session, virtualenv command won't work,
-please try to run it after rebooting your machine.
+2. Download the 64-bit sqlite3 DLL from https://www.sqlite.org/download.html
 
-When environment is created successfully, please run the following commands::
+3. Unzip that DLL to ``lib\sqlite-python``
 
-    $ source venv/bin/activate
+4. Navigate to the ``<python installation directory>\DLLs`` folder, copy ``_sqlite3.pyd`` to ``lib\sqlite-python``
+
+5. Add the ``lib\sqlite-python`` folder to your `%PYTHONPATH%` environment variable (create the variable if necessary)
+
+6. Download spatialite from http://www.gaia-gis.it/gaia-sins/windows-bin-NEXTGEN-amd64/mod_spatialite-NG-win-amd64.7z
+
+7. Unzip and put the folder ``mod_spatialite-NG-win-amd64`` inside the `lib` folder
+
+8. Add that folder to your ``%PATH%`` variable
+
+9. Install PostreSQL by downloading version 12.2 for Windows x86-64 from https://www.enterprisedb.com/downloads/postgres-postgresql-downloads
+
+10. Go through the installation wizard, accepting the default settings and choosing to load the Stack Builder
+application after installation
+
+11. Use the StackBuilder application to install PostGIS, and follow the wizard through to the end.
+
+12. Add the Postgres bin directory to the ``%PATH%`` - eg. ``C:\Program Files\PostgreSQL\12\bin\`` - but make
+sure it comes *after* the ``mod_spatialite`` folder (hint: using
+[Rapid Environment Editor](https://www.rapidee.com/en/about) makes it easy to re-arrange entries in the PATH)
+
+13. **TODO** install Git
+
+Clone the repository
+''''''''''''''''''''
+Clone the pepys-import repository into a folder of your choice by running::
+
+    $ git clone git@github.com:debrief/pepys-import.git
+
+Create Python virtual environment and install dependencies
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Following best practice, a Python virtual environment will be used to run the project.
+To create a virtual environment, move to the folder in which you cloned the repository, and run::
+
+    $ python -m venv venv
+
+This will create a virtual environment in a folder called ``venv``.
+
+When environment is created successfully, please run the following commands to activate the environment
+and install the Python dependencies::
+
+    $ source venv/bin/activate # Linux and OS X
+    $ .\venv\Scripts\activate.bat # Windows
     $ pip install -r requirements.txt
+    $ pip install -r requirements_dev.txt
 
-Unit tests
-----------
+Run the unit tests
+''''''''''''''''''
+To run the unittests run::
 
-* In order to run the tests, please install requirements_dev: :code:`pip install -r requirements_dev.txt`
-* Run the unit test suite with:  :code:`coverage3 run -m unittest discover -v`
-* View the unit test coverage with: :code:`coverage report`
+    $ pytest tests/
 
-Command Line Instructions
--------------------------
+To view the coverage of the test suite, run::
+
+    $ coverage run -m pytest tests/
+
+and then view the report with::
+
+    $ coverage report
+
+Run pepys-import from the command-line
+''''''''''''''''''''''''''''''''''''''
 
 To run from the command line go to the top level directory of the library in
-your bash shell or terminal program
+your terminal.
 
 Run by specifying the program as a module with :code:`-m` and
 leaving off the .py file extension
 
-The exact executable name for invoking python will depend how
-you have it installed, but most commonly it's just :code:`python`
+For example, to run the importer command-line interface, run::
 
-For example run the Sqlite example using:
-:code:`python -m Experiments.DataStore_sqliteExperiment`
+    python -m pepys_import.import --path /path/to/file/to/import
+
+
+Contributing Notes
+------------------
+
+Code coverage
+'''''''''''''
+
+We're aiming for 100% code coverage on the project, track our progress
+here: |code_cov|
+
+.. |code_cov| image:: https://codecov.io/gh/debrief/pepys-import/branch/develop/graph/badge.svg
+   :target: https://codecov.io/gh/debrief/pepys-import/branch/develop
+
+Upstream security
+'''''''''''''''''
+
+We have continuous vulnerability testing on the Open Source libraries
+we depend upon for development: |dev_req| and production: |plain_req|
+
+.. |plain_req| image:: https://snyk.io/test/github/debrief/pepys-import/badge.svg?targetFile=requirements.txt
+   :target: https://snyk.io/test/github/debrief/pepys-import?targetFile=requirements.txt
+
+.. |dev_req| image:: https://snyk.io/test/github/debrief/pepys-import/badge.svg?targetFile=requirements_dev.txt
+   :target: https://snyk.io/test/github/debrief/pepys-import?targetFile=requirements_dev.txt
+
+Code Style
+''''''''''
+Black is used on the project: |black|
+
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+ :target: https://github.com/python/black
+
+It is suggested to install a pre-commit hook in order to apply Black before pushing commits::
+
+    $ pip install pre-commit
+    $ pre-commit install
+
+-----------------------------------------
+Windows-specific pre-commit instructions
+-----------------------------------------
+There are some minor issues with the pre-commit library on Windows. If you run into errors Installing
+the pre-commit hook, the follow the instructions at `this Github issue <https://github.com/pre-commit/pre-commit/issues/891>`_,
+by loading a Command Prompt with administrator permissions and running::
+
+    $ pre-commit clean
+    $ pre-commit run black --all-files
+
+Online documentation
+--------------------
+
+User-focused API documentation is available in the full documentation: |docs|
+
+.. |docs| image:: https://readthedocs.org/projects/pepys-import/badge/?version=latest
+  :target:  https://pepys-import.readthedocs.io/
+
+
+
+Project Progress
+----------------
+
+View the project Kanban board `here <https://github.com/debrief/pepys-import/projects/3>`_
+
+Creating a deployable release
+-----------------------------
+**TODO**
+
+
 
 IntelliJ Instructions
 ---------------------
