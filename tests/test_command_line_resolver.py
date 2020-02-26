@@ -445,7 +445,7 @@ class PlatformTestCase(unittest.TestCase):
 
             self.assertEqual(platform.platform_id, synonym_platform.platform_id)
 
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_input.prompt")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_fuzzy_search_add_new_platform(self, resolver_prompt, menu_prompt):
         """Test whether a new platform entity is created or not"""
