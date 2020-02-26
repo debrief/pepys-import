@@ -76,6 +76,15 @@ class PrivacyTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "PRIVACY-1")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_cancelling_fuzzy_search_privacy(self, menu_prompt):
+        """Test whether "." quits from the fuzzy search privacy"""
+
+        menu_prompt.side_effect = ["TEST", ".", "."]
+        with self.store.session_scope():
+            privacy = self.resolver.fuzzy_search_privacy(self.store)
+            self.assertIsNone(privacy)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_cancelling_resolver_privacy(self, menu_prompt):
         """Test whether "." quits from the resolve privacy"""
         menu_prompt.side_effect = ["."]
@@ -128,9 +137,17 @@ class NationalityTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_cancelling_fuzzy_search_nationality(self, menu_prompt):
         """Test whether "." quits from the fuzzy search nationality """
-        menu_prompt.side_effect = [".", "."]
+        menu_prompt.side_effect = [".", ".", "TEST", ".", "."]
         with self.store.session_scope():
             temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                nationality = self.resolver.fuzzy_search_nationality(
+                    self.store, "PLATFORM-1"
+                )
+            output = temp_output.getvalue()
+            self.assertIn("Returning to the previous menu", output)
+            self.assertIsNone(nationality)
+
             with redirect_stdout(temp_output):
                 nationality = self.resolver.fuzzy_search_nationality(
                     self.store, "PLATFORM-1"
@@ -194,10 +211,18 @@ class PlatformTypeTestCase(unittest.TestCase):
         """Test whether "." quits from platform type"""
 
         # Type "TEST"->Select "."
-        menu_prompt.side_effect = [".", "."]
+        menu_prompt.side_effect = [".", ".", "TEST", ".", "."]
 
         with self.store.session_scope():
             temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                platform_type = self.resolver.fuzzy_search_platform_type(
+                    self.store, "PLATFORM-1"
+                )
+            output = temp_output.getvalue()
+            self.assertIn("Returning to the previous menu", output)
+            self.assertIsNone(platform_type)
+
             with redirect_stdout(temp_output):
                 platform_type = self.resolver.fuzzy_search_platform_type(
                     self.store, "PLATFORM-1"
@@ -262,10 +287,10 @@ class DatafileTypeTestCase(unittest.TestCase):
         """Test whether "." quits from datafile type"""
 
         # Type "TEST"->Select "."
-        menu_prompt.side_effect = [".", "."]
+        menu_prompt.side_effect = [".", ".", "TEST", ".", "."]
 
+        temp_output = StringIO()
         with self.store.session_scope():
-            temp_output = StringIO()
             with redirect_stdout(temp_output):
                 datafile_type = self.resolver.fuzzy_search_datafile_type(
                     self.store, "DATAFILE-1"
@@ -273,6 +298,30 @@ class DatafileTypeTestCase(unittest.TestCase):
             output = temp_output.getvalue()
             self.assertIn("Returning to the previous menu", output)
             self.assertIsNone(datafile_type)
+
+            with redirect_stdout(temp_output):
+                datafile_type = self.resolver.fuzzy_search_datafile_type(
+                    self.store, "DATAFILE-1"
+                )
+            output = temp_output.getvalue()
+            self.assertIn("Returning to the previous menu", output)
+            self.assertIsNone(datafile_type)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolve_datafile_type_add_new_datafile_type(
+        self, resolver_prompt, menu_prompt
+    ):
+        """Test whether a new Datafile Type is added or not"""
+
+        # Select "Add a new datafile type" -> Type "TEST"
+        menu_prompt.side_effect = ["2"]
+        resolver_prompt.side_effect = ["TEST"]
+        with self.store.session_scope():
+            datafile_type = self.resolver.resolve_datafile_type(
+                self.store, "DATAFILE-1"
+            )
+            self.assertEqual(datafile_type.name, "TEST")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_cancelling_resolve_datafile_type(self, menu_prompt):
@@ -326,10 +375,18 @@ class SensorTypeTestCase(unittest.TestCase):
         """Test whether "." quits from sensor type"""
 
         # Type "TEST"->Select "."
-        menu_prompt.side_effect = [".", "."]
+        menu_prompt.side_effect = [".", ".", "TEST", ".", "."]
 
         with self.store.session_scope():
             temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                sensor_type = self.resolver.fuzzy_search_sensor_type(
+                    self.store, "SENSOR-1"
+                )
+            output = temp_output.getvalue()
+            self.assertIn("Returning to the previous menu", output)
+            self.assertIsNone(sensor_type)
+
             with redirect_stdout(temp_output):
                 sensor_type = self.resolver.fuzzy_search_sensor_type(
                     self.store, "SENSOR-1"
@@ -920,7 +977,21 @@ class SensorTestCase(unittest.TestCase):
 
             self.assertEqual(sensor_name, "SENSOR-TEST")
 
-    # New
+
+class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.resolver = CommandLineResolver()
+        self.store = DataStore(
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
+        )
+        self.store.initialise()
+
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_top_level_quitting(self, menu_prompt):
         menu_prompt.side_effect = [".", ".", "."]
@@ -931,6 +1002,150 @@ class SensorTestCase(unittest.TestCase):
                 self.resolver.resolve_platform(self.store, "", "", "", "")
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_sensor(self.store, "", "", "")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_cancelling_fuzzy_search_datafile(self, menu_prompt):
+        menu_prompt.side_effect = ["DATAFILE-1", ".", ".", "."]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("PRIVACY-1")
+            datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1")
+            self.store.add_to_datafiles(
+                file_type=datafile_type.name,
+                privacy=privacy.name,
+                reference="DATAFILE-1",
+            )
+            with self.assertRaises(SystemExit):
+                self.resolver.fuzzy_search_datafile(self.store, "TEST", "", "")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_cancelling_fuzzy_search_platform(self, menu_prompt):
+        menu_prompt.side_effect = ["PLATFORM-1", ".", ".", "."]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("PRIVACY-1")
+            platform_type = self.store.add_to_platform_types("Warship")
+            nationality = self.store.add_to_nationalities("UK")
+            self.store.get_platform(
+                "PLATFORM-1",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+            )
+            with self.assertRaises(SystemExit):
+                self.resolver.fuzzy_search_platform(self.store, "TEST", "", "", "")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_cancelling_fuzzy_search_sensor(self, menu_prompt):
+        menu_prompt.side_effect = ["SENSOR-1", ".", ".", "."]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1")
+            privacy = self.store.add_to_privacies("PRIVACY-1").name
+            nationality = self.store.add_to_nationalities("UK").name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1").name
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+            )
+            platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy)
+
+            with self.assertRaises(SystemExit):
+                self.resolver.fuzzy_search_sensor(self.store, "TEST", "", "")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_cancelling_during_add_to_platforms(self, resolver_prompt, menu_prompt):
+        menu_prompt.side_effect = [
+            ".",
+            ".",
+            "2",
+            ".",
+            ".",
+            "2",
+            "2",
+            ".",
+            ".",
+            "2",
+            "2",
+            "2",
+            ".",
+            ".",
+        ]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "TST",
+            "TEST",
+            "123",
+            "TEST",
+            "TST",
+            "TEST",
+            "123",
+            "UK",
+            "TEST",
+            "TST",
+            "TEST",
+            "123",
+            "UK",
+            "TYPE-1",
+            "TEST",
+            "TST",
+            "TEST",
+            "123",
+            "UK",
+            "TYPE-1",
+            "PRIVACY-1",
+        ]
+        with self.store.session_scope():
+            with self.assertRaises(SystemExit):
+                self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "")
+            with self.assertRaises(SystemExit):
+                self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "")
+            with self.assertRaises(SystemExit):
+                self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "")
+            with self.assertRaises(SystemExit):
+                self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_cancelling_during_add_to_datafiles(self, resolver_prompt, menu_prompt):
+        menu_prompt.side_effect = [".", ".", "2", ".", ".", "2", "2", ".", "."]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "DATAFILE-TYPE-1",
+            "TEST",
+            "DATAFILE-TYPE-1",
+            "TEST",
+            "DATAFILE-TYPE-1",
+            "PRIVACY-1",
+        ]
+        with self.store.session_scope():
+            with self.assertRaises(SystemExit):
+                self.resolver.add_to_datafiles(self.store, "DATAFILE-1", "", "")
+            with self.assertRaises(SystemExit):
+                self.resolver.add_to_datafiles(self.store, "DATAFILE-1", "", "")
+            with self.assertRaises(SystemExit):
+                self.resolver.add_to_datafiles(self.store, "DATAFILE-1", "", "")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_cancelling_during_add_to_sensors(self, resolver_prompt, menu_prompt):
+        menu_prompt.side_effect = [".", ".", "2", ".", ".", "2", "2", ".", "."]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "SENSOR-TYPE-1",
+            "TEST",
+            "SENSOR-TYPE-1",
+            "TEST",
+            "SENSOR-TYPE-1",
+            "PRIVACY-1",
+        ]
+        with self.store.session_scope():
+            with self.assertRaises(SystemExit):
+                self.resolver.add_to_sensors(self.store, "SENSOR-1", "", "")
+            with self.assertRaises(SystemExit):
+                self.resolver.add_to_sensors(self.store, "SENSOR-1", "", "")
+            with self.assertRaises(SystemExit):
+                self.resolver.add_to_sensors(self.store, "SENSOR-1", "", "")
 
 
 class GetMethodsTestCase(unittest.TestCase):
