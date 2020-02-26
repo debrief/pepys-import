@@ -127,6 +127,7 @@ class CommandLineResolver(DataResolver):
         completer = [datafile.reference for datafile in datafiles]
         choice = create_menu(
             "Please start typing to show suggested values",
+            cancel="datafile search",
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
@@ -195,6 +196,7 @@ class CommandLineResolver(DataResolver):
                 completer.append(platform.quadgraph)
         choice = create_menu(
             "Please start typing to show suggested values",
+            cancel="platform search",
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
@@ -260,6 +262,7 @@ class CommandLineResolver(DataResolver):
         completer = [sensor.name for sensor in sensors]
         choice = create_menu(
             "Please start typing to show suggested values",
+            cancel="sensor search",
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
@@ -310,6 +313,7 @@ class CommandLineResolver(DataResolver):
         completer = [p.name for p in privacies]
         choice = create_menu(
             "Please start typing to show suggested values",
+            cancel="classification search",
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
@@ -352,6 +356,7 @@ class CommandLineResolver(DataResolver):
         completer = [p.name for p in datafile_types]
         choice = create_menu(
             "Please start typing to show suggested values",
+            cancel="datafile type search",
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
@@ -394,6 +399,7 @@ class CommandLineResolver(DataResolver):
         completer = [n.name for n in nationalities]
         choice = create_menu(
             "Please start typing to show suggested values",
+            cancel="nationality search",
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
@@ -439,6 +445,7 @@ class CommandLineResolver(DataResolver):
         completer = [p.name for p in platform_types]
         choice = create_menu(
             "Please start typing to show suggested values",
+            cancel="platform type search",
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
@@ -482,6 +489,7 @@ class CommandLineResolver(DataResolver):
         completer = [sensor_type.name for sensor_type in sensor_types]
         choice = create_menu(
             "Please start typing to show suggested values",
+            cancel="sensor type search",
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )

@@ -6,10 +6,11 @@ def is_valid(option):
     return option == str(1) or option == str(2) or option == "."
 
 
-def create_menu(title, choices, completer=None, validate_method=None):
+def create_menu(title, choices, cancel="import", completer=None, validate_method=None):
     """
     A basic function which creates a menu with title and choices.
 
+    :param cancel:
     :param title: Heading text
     :type title: String
     :param choices: Options to choose
@@ -32,7 +33,7 @@ def create_menu(title, choices, completer=None, validate_method=None):
     input_text = title + "\n"
     for index, choice in enumerate(choices, 1):
         input_text += f"   {str(index)}) {choice}\n"
-    input_text += f"   .) Cancel import\n > "
+    input_text += f"   .) Cancel {cancel}\n > "
     choice = prompt(input_text, completer=completer, validator=validator)
 
     return choice
