@@ -91,7 +91,10 @@ Run the following command::
 Mac OS X
 ^^^^^^^^
 
-**TODO**
+**Note:** These instructions are not complete due to not having a bare OS X machine to test on. However,
+they should give you some hints as to how to get an OS X machine set up to develop pepys-import.
+
+**TODO - Complete instructions here**
 
 
 Windows
@@ -115,16 +118,16 @@ Windows
 
 9. Install PostreSQL by downloading version 12.2 for Windows x86-64 from https://www.enterprisedb.com/downloads/postgres-postgresql-downloads
 
-10. Go through the installation wizard, accepting the default settings and choosing to load the Stack Builder
-application after installation
+10. Go through the installation wizard, accepting the default settings and choosing to load the Stack Builder application after installation
 
 11. Use the StackBuilder application to install PostGIS, and follow the wizard through to the end.
 
+
 12. Add the Postgres bin directory to the ``%PATH%`` - eg. ``C:\Program Files\PostgreSQL\12\bin\`` - but make
 sure it comes *after* the ``mod_spatialite`` folder (hint: using
-[Rapid Environment Editor](https://www.rapidee.com/en/about) makes it easy to re-arrange entries in the PATH)
+`Rapid Environment Editor <https://www.rapidee.com/en/about>`_ makes it easy to re-arrange entries in the PATH)
 
-13. **TODO** install Git
+13. Install Git from https://git-scm.com/downloads.
 
 Clone the repository
 --------------------
@@ -246,7 +249,7 @@ Creating a deployable release
 
 Pepys-import is deployed by providing a zip file to the client containing everything necessary to run
 pepys-import on a Windows 10 computer. For instructions on how to install from a deployable zip file,
-see `here <https://github.com/debrief/pepys-import/blob/develop/README.rst>`_.
+see `the user-focused README <https://github.com/debrief/pepys-import/blob/develop/README.rst>`_.
 
 To create a deployable release, follow the instructions below on a Windows 10 machine (this *cannot* be
 done from any other sort of computer):
@@ -257,16 +260,13 @@ you use as the basis for a release). (**Note:** Do not create a deployable relea
 version of the repository that you have developed in - always clone a clean copy, otherwise extraneous files
 will be included in the release).
 
-2. Run the **TODO HERE** file in the root of the cloned repository. This will run the **TODO HERE** Powershell
-script. This script obtains all the required binary dependencies (including a standalone version of Python) and
-places them in the correct place in the folder hierarchy, and then zips up the entire folder, resulting
-in a file in the root of the cloned repository called ``pepys-import_HASH.zip``, where ``HASH`` is the git
-commit hash that the release was created from.
+2. Run the ``create_deployment.bat`` file in the root of the cloned repository. This will run the ``create_deployment.ps1``
+Powershell script. This script obtains all the required binary dependencies (including a standalone
+version of Python) and places them in the correct place in the folder hierarchy, and then zips up the
+entire folder, resulting in a file in the root of the cloned repository called ``pepys-import_HASH.zip``,
+where ``HASH`` is the git commit hash that the release was created from.
 
 3. Upload the resulting zip file to the Github Releases page.
-
-
-
 
 IntelliJ Instructions
 =====================
