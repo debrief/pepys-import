@@ -137,15 +137,17 @@ class CommandLineResolver(DataResolver):
                 ["Yes", "No"],
             )
             if new_choice == str(1):
-                datafile_id = (
+                datafile = (
                     data_store.session.query(data_store.db_classes.Datafile)
                     .filter(data_store.db_classes.Datafile.reference == choice)
                     .first()
-                    .datafile_id
                 )
-                return data_store.add_to_synonyms(
-                    constants.DATAFILE, datafile_name, datafile_id
+                # Add it to synonyms and return existing datafile
+                data_store.add_to_synonyms(
+                    constants.DATAFILE, datafile_name, datafile.datafile_id
                 )
+                print(f"'{datafile_name}' added to Synonyms!")
+                return datafile
             elif new_choice == str(2):
                 return self.add_to_datafiles(
                     data_store, datafile_name, datafile_type, privacy
@@ -218,6 +220,7 @@ class CommandLineResolver(DataResolver):
                     )
                     .first()
                 )
+                # Add it to synonyms and return existing platform
                 data_store.add_to_synonyms(
                     constants.PLATFORM, platform_name, platform.platform_id
                 )

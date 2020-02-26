@@ -672,9 +672,9 @@ class DataStore(object):
         resolved_data = self.missing_data_resolver.resolve_datafile(
             self, datafile_name, datafile_type, None
         )
-        if isinstance(resolved_data, self.db_classes.Synonym):
-            print("Added to Synonym!")
-            return
+        # It means that new datafile added as a synonym and existing datafile returned
+        if isinstance(resolved_data, self.db_classes.Datafile):
+            return resolved_data
 
         datafile_name, datafile_type, privacy = resolved_data
 
