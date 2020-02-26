@@ -4,11 +4,11 @@ import sys
 
 sys.path.append(".")
 
-import argparse
-import cmd
-from iterfzf import iterfzf
-import os
-from pepys_import.core.store.data_store import DataStore
+import argparse     # noqa: E402
+import cmd          # noqa: E402
+from iterfzf import iterfzf      # noqa: E402
+import os                        # noqa: E402
+from pepys_import.core.store.data_store import DataStore   # noqa: E402
 
 dirpath = os.path.dirname(os.path.abspath(__file__))
 
@@ -16,9 +16,9 @@ dirpath = os.path.dirname(os.path.abspath(__file__))
 def create_postgres_data_store():
     """
     Create configured PostgresSQL data store.
-    
+
     :return: Postgres data store
-    :rtype: DataStore 
+    :rtype: DataStore
     """
     return DataStore(
         db_username="postgres",
@@ -33,10 +33,10 @@ def create_postgres_data_store():
 def create_sqlite_data_store(file):
     """
     Create and Initialise SQLite data store at provided location (file).
-    
+
     :param file:  absolute/relative file path
     :type file: String
-    
+
     :return:  Created Datafile entity
     :rtype: Datafile
     """
