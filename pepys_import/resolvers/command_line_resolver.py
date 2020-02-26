@@ -334,7 +334,7 @@ class CommandLineResolver(DataResolver):
                 .first()
             )
 
-    def fuzzy_search_datafile_type(self, data_store):
+    def fuzzy_search_datafile_type(self, data_store, datafile_name):
         """
         This method parses all datafile types in the DB, and uses fuzzy search when
         user is typing. If user enters a new value, it adds to DatafileType table or
@@ -365,11 +365,10 @@ class CommandLineResolver(DataResolver):
             if new_choice == str(1):
                 return data_store.add_to_datafile_types(choice)
             elif new_choice == str(2):
-                return self.fuzzy_search_datafile_type(data_store)
+                return self.fuzzy_search_datafile_type(data_store, datafile_name)
             elif new_choice == ".":
                 print("Returning to the previous menu\n")
-                # TODO: implement it
-                return self.resolve_datafile_type(data_store)
+                return self.resolve_datafile_type(data_store, datafile_name)
         else:
             return (
                 data_store.session.query(data_store.db_classes.DatafileType)
@@ -589,6 +588,31 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
+    def resolve_datafile_type(self, data_store, datafile_name):
+        """
+
+        :param data_store:
+        :param datafile_name:
+        :return:
+        """
+        datafile_type_names = [
+            "Search for an existing datafile-type",
+            "Add a new datafile-type",
+        ]
+        choice = create_menu(
+            "Ok, please provide datafile-type: ",
+            datafile_type_names,
+            validate_method=is_valid,
+        )
+        if choice == str(1):
+            return self.fuzzy_search_datafile_type(data_store, datafile_name)
+        elif choice == str(2):
+            new_datafile_type = prompt("Please type name of new datafile-type: ")
+            return data_store.add_to_datafile_types(new_datafile_type)
+        elif choice == ".":
+            print("Returning to the previous menu\n")
+            return self.resolve_datafile(data_store, datafile_name, None, None)
+
     def add_to_datafiles(self, data_store, datafile_name, datafile_type, privacy):
         """
         This method resolves datafile type and privacy. It asks user whether to create
@@ -611,7 +635,7 @@ class CommandLineResolver(DataResolver):
         if datafile_type:
             chosen_datafile_type = data_store.add_to_datafile_types(datafile_type)
         else:
-            chosen_datafile_type = self.fuzzy_search_datafile_type(data_store)
+            chosen_datafile_type = self.resolve_datafile_type(data_store, datafile_name)
 
         # Choose Privacy
         if privacy:
