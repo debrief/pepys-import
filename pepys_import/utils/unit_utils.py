@@ -28,7 +28,7 @@ def convert_heading(heading, line_number):
 
 def convert_speed(speed, line_number):
     """
-    Converts the given speed value to meter/seconds format.
+    Converts the given speed value in knots to meter/seconds format.
     :param speed: Speed value in string format
     :type speed: String
     :param line_number: Line number
