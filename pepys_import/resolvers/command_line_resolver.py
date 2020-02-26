@@ -207,7 +207,7 @@ class CommandLineResolver(DataResolver):
                 validate_method=is_valid,
             )
             if new_choice == str(1):
-                platform_id = (
+                platform = (
                     data_store.session.query(data_store.db_classes.Platform)
                     .filter(
                         or_(
@@ -217,11 +217,12 @@ class CommandLineResolver(DataResolver):
                         )
                     )
                     .first()
-                    .platform_id
                 )
-                return data_store.add_to_synonyms(
-                    constants.PLATFORM, platform_name, platform_id
+                data_store.add_to_synonyms(
+                    constants.PLATFORM, platform_name, platform.platform_id
                 )
+                print(f"'{platform_name}' added to Synonyms!")
+                return platform
             elif new_choice == str(2):
                 return self.add_to_platforms(
                     data_store, platform_name, platform_type, nationality, privacy
@@ -273,15 +274,17 @@ class CommandLineResolver(DataResolver):
                 validate_method=is_valid,
             )
             if new_choice == str(1):
-                sensor_id = (
+                sensor = (
                     data_store.session.query(data_store.db_classes.Sensor)
                     .filter(data_store.db_classes.Sensor.name == choice)
                     .first()
-                    .sensor_id
                 )
-                return data_store.add_to_synonyms(
-                    constants.SENSOR, sensor_name, sensor_id
+                # Add it to synonyms and return existing sensor
+                data_store.add_to_synonyms(
+                    constants.SENSOR, sensor_name, sensor.sensor_id
                 )
+                print(f"'{sensor_name}' added to Synonyms!")
+                return sensor
             elif new_choice == str(2):
                 return self.add_to_sensors(
                     data_store, sensor_name, sensor_type, privacy

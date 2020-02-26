@@ -211,16 +211,17 @@ class Platform(BasePostGIS):
             return sensor
 
         if sensor_type is None or privacy is None:
-            (
-                sensor_name,
-                sensor_type,
-                privacy,
-            ) = data_store.missing_data_resolver.resolve_sensor(
+            resolved_data = data_store.missing_data_resolver.resolve_sensor(
                 data_store, sensor_name, sensor_type, privacy
             )
+            # It means that new sensor added as a synonym and existing sensor returned
+            if isinstance(resolved_data, Sensor):
+                return resolved_data
+            elif len(resolved_data) == 3:
+                (sensor_name, sensor_type, privacy,) = resolved_data
 
-        assert type(sensor_type), SensorType
-        assert type(privacy), Privacy
+        assert isinstance(sensor_type, SensorType), "Type error for Sensor Type entity"
+        assert isinstance(privacy, Privacy), "Type error for Privacy entity"
 
         return Sensor().add_to_sensors(
             session=data_store.session,

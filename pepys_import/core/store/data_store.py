@@ -493,8 +493,8 @@ class DataStore(object):
 
     def add_to_synonyms(self, table, name, entity):
         entry_id = self.add_to_entries(
-            self.db_classes.Nationality.table_type_id,
-            self.db_classes.Nationality.__tablename__,
+            self.db_classes.Synonym.table_type_id,
+            self.db_classes.Synonym.__tablename__,
         )
         # enough info to proceed and create entry
         synonym = self.db_classes.Synonym(
@@ -772,9 +772,9 @@ class DataStore(object):
             resolved_data = self.missing_data_resolver.resolve_platform(
                 self, platform_name, platform_type, nationality, privacy
             )
-            if isinstance(resolved_data, self.db_classes.Synonym):
-                print("Added to Synonym!")
-                return
+            # It means that new platform added as a synonym and existing platform returned
+            if isinstance(resolved_data, self.db_classes.Platform):
+                return resolved_data
             elif len(resolved_data) == 7:
                 (
                     platform_name,
