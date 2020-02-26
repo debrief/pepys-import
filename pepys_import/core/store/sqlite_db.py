@@ -191,7 +191,8 @@ class Platform(BaseSpatiaLite):
                 (sensor_name, sensor_type, privacy,) = resolved_data
 
         assert isinstance(sensor_type, SensorType), "Type error for Sensor Type entity"
-        assert isinstance(privacy, Privacy), "Type error for Privacy entity"
+        # TODO: we don't use privacy for sensor. Is it necessary to resolve it?
+        # assert isinstance(privacy, Privacy), "Type error for Privacy entity"
 
         return Sensor().add_to_sensors(
             session=data_store.session,
