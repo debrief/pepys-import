@@ -366,7 +366,10 @@ class CommandLineResolver(DataResolver):
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
-        if choice not in completer:
+        if choice == ".":
+            print("-" * 61, "\nReturning to the previous menu\n")
+            self.resolve_datafile_type(data_store, datafile_name)
+        elif choice not in completer:
             new_choice = create_menu(
                 f"You didn't select an existing datafile type. "
                 f"Do you want to add '{choice}' ?",
