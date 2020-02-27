@@ -94,17 +94,21 @@ class NMEAImporter(Importer):
                 ):
 
                     # and finally store it
-                    platform = data_store.get_platform("Toure", "Ferry", "FR", "Public")
-                    all_sensors = data_store.session.query(
-                        data_store.db_classes.Sensor
-                    ).all()
-                    data_store.add_to_sensor_types("_GPS")
+                    platform = data_store.get_platform(
+                        platform_name=None,
+                        platform_type="Ferry",
+                        nationality="FR",
+                        privacy="Public",
+                    )
+                    sensor_type = data_store.add_to_sensor_types("_GPS")
+                    privacy = data_store.missing_data_resolver.resolve_privacy(
+                        data_store
+                    )
                     sensor = platform.get_sensor(
-                        session=data_store.session,
-                        all_sensors=all_sensors,
+                        data_store=data_store,
                         sensor_name=platform.name,
-                        sensor_type="_GPS",
-                        privacy="TEST",
+                        sensor_type=sensor_type,
+                        privacy=privacy.name,
                     )
                     timestamp = self.parse_timestamp(self.date, self.time)
 
@@ -125,7 +129,6 @@ class NMEAImporter(Importer):
                     if speed:
                         state.speed = speed
 
-                    privacy = data_store.search_privacy("TEST")
                     state.privacy = privacy.privacy_id
 
                     self.date = None

@@ -3,7 +3,9 @@ import os
 
 from unittest import TestCase
 from datetime import datetime
+
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store import constants
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -396,16 +398,28 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(len(datafiles), 1)
             self.assertEqual(datafiles[0].reference, "test_file.csv")
 
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_datafile(self):
-        pass
+    def test_find_datafile(self):
+        """Test whether find_datafile method returns the correct Datafile entity"""
+        with self.store.session_scope():
+            # Create a datafile
+            datafile = self.store.get_datafile("test_file.csv", "csv")
+            datafile_2 = self.store.get_datafile("test_file_2.csv", "csv")
+            found_datafile = self.store.find_datafile("test_file.csv")
 
-    @unittest.expectedFailure
-    def test_empty_datafile_name(self):
-        """Test whether a new datafile without a name is created or not"""
+            self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
+            self.assertEqual(found_datafile.reference, "test_file.csv")
 
-        with self.store.session_scope() as session:
-            self.store.get_datafile(datafile_name="", datafile_type="csv")
+    def test_find_datafile_synonym(self):
+        """Test whether find_datafile method finds the correct Datafile entity from Synonyms table"""
+        with self.store.session_scope():
+            datafile = self.store.get_datafile("test_file.csv", "csv")
+            datafile_2 = self.store.get_datafile("test_file_2.csv", "csv")
+            self.store.add_to_synonyms(
+                table=constants.DATAFILE, name="TEST", entity=datafile.datafile_id
+            )
+
+            found_datafile = self.store.find_datafile("TEST")
+            self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
 
     def test_new_platform_added_successfully(self):
         """Test whether a new platform is created successfully or not"""
@@ -461,16 +475,50 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(len(platforms), 1)
             self.assertEqual(platforms[0].name, "Test Platform")
 
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_platform(self):
-        pass
-
-    @unittest.expectedFailure
-    def test_empty_platform_name(self):
-        """Test whether a new platform without a name is created or not"""
-
+    def test_find_platform(self):
+        """Test whether find_platform method returns the correct Platform entity"""
         with self.store.session_scope() as session:
-            self.store.get_platform(platform_name="")
+            # Create two platforms
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+            platform_2 = self.store.get_platform(
+                platform_name="Test Platform 2",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+
+            found_platform = self.store.find_platform("Test Platform")
+            self.assertEqual(platform.platform_id, found_platform.platform_id)
+            self.assertEqual(found_platform.name, "Test Platform")
+
+    def test_find_platform_synonym(self):
+        """Test whether find_platform method finds the correct Platform entity from Synonyms table"""
+        with self.store.session_scope() as session:
+            # Create two platforms
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+            platform_2 = self.store.get_platform(
+                platform_name="Test Platform 2",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+            self.store.add_to_synonyms(
+                table=constants.PLATFORM, name="TEST", entity=platform.platform_id
+            )
+
+            found_platform = self.store.find_platform("TEST")
+            self.assertEqual(platform.platform_id, found_platform.platform_id)
+            self.assertEqual(found_platform.name, "Test Platform")
 
 
 class DataStoreStatusTestCase(TestCase):
@@ -527,7 +575,7 @@ class SensorTestCase(TestCase):
             self.platform_type = self.store.add_to_platform_types(
                 "test_platform_type"
             ).name
-            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type").name
+            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type")
             self.privacy = self.store.add_to_privacies("test_privacy").name
 
             self.platform = self.store.get_platform(
@@ -537,6 +585,7 @@ class SensorTestCase(TestCase):
                 privacy=self.privacy,
             )
             self.store.session.expunge(self.platform)
+            self.store.session.expunge(self.sensor_type)
 
     def tearDown(self):
         pass
@@ -549,9 +598,7 @@ class SensorTestCase(TestCase):
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(
-                self.store.session, sensors, "gps", self.sensor_type
-            )
+            self.platform.get_sensor(self.store, "gps", self.sensor_type)
 
             # there must be one entry
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
@@ -566,46 +613,51 @@ class SensorTestCase(TestCase):
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(
-                self.store.session, sensors, "gps", self.sensor_type
-            )
+            self.platform.get_sensor(self.store, "gps", self.sensor_type)
 
-            # query Sensor table again and try to add the same entity
-            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            self.platform.get_sensor(
-                self.store.session, sensors, "gps", self.sensor_type
-            )
+            # try to add the same entity
+            self.platform.get_sensor(self.store, "gps", self.sensor_type)
 
             # there must be one entry
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             self.assertEqual(len(sensors), 1)
 
-    @unittest.expectedFailure
-    def test_new_sensor_with_empty_sensor_type(self):
-        """Test whether a new sensor without sensor type is created"""
-        with self.store.session_scope() as session:
+    def test_find_sensor(self):
+        """Test whether find_sensor method returns the correct Sensor entity"""
+        with self.store.session_scope():
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(self.store.session, sensors, "gps")
+            sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
+            sensor_2 = self.platform.get_sensor(self.store, "gps_2", self.sensor_type)
 
-    @unittest.expectedFailure
-    def test_empty_sensor_name(self):
-        """Test whether a new sensor with empty name is created"""
-        with self.store.session_scope() as session:
-            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
+            found_sensor = self.store.db_classes.Sensor().find_sensor(
+                self.store, "gps", self.platform.platform_id
+            )
+            self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
+            self.assertEqual(found_sensor.name, "gps")
 
-            # there must be no entry at the beginning
-            self.assertEqual(len(sensors), 0)
+    def test_find_sensor_synonym(self):
+        """Test whether find_sensor method finds the correct Sensor entity from Synonyms table"""
+        sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
-            self.platform.get_sensor(self.store.session, sensors, "", self.sensor_type)
+        # there must be no entry at the beginning
+        self.assertEqual(len(sensors), 0)
 
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_sensor(self):
-        pass
+        sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
+        sensor_2 = self.platform.get_sensor(self.store, "gps_2", self.sensor_type)
+        self.store.add_to_synonyms(
+            table=constants.SENSOR, name="TEST", entity=sensor.sensor_id
+        )
+
+        found_sensor = self.store.db_classes.Sensor().find_sensor(
+            self.store, "TEST", self.platform.platform_id
+        )
+        self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
+        self.assertEqual(found_sensor.name, "gps")
 
 
 class MeasurementsTestCase(TestCase):
@@ -617,7 +669,7 @@ class MeasurementsTestCase(TestCase):
             self.platform_type = self.store.add_to_platform_types(
                 "test_platform_type"
             ).name
-            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type").name
+            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type")
             self.privacy = self.store.add_to_privacies("test_privacy").name
 
             self.platform = self.store.get_platform(
@@ -626,10 +678,7 @@ class MeasurementsTestCase(TestCase):
                 platform_type=self.platform_type,
                 privacy=self.privacy,
             )
-            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            self.sensor = self.platform.get_sensor(
-                self.store.session, sensors, "gps", self.sensor_type
-            )
+            self.sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
             self.comment_type = self.store.add_to_comment_types("test_type")
             self.file = self.store.get_datafile("test_file", "csv")
             self.current_time = datetime.utcnow()
@@ -638,6 +687,7 @@ class MeasurementsTestCase(TestCase):
             self.store.session.expunge(self.platform)
             self.store.session.expunge(self.file)
             self.store.session.expunge(self.comment_type)
+            self.store.session.expunge(self.sensor_type)
 
     def tearDown(self):
         pass
@@ -663,10 +713,6 @@ class MeasurementsTestCase(TestCase):
                 states = self.store.session.query(self.store.db_classes.State).all()
             self.assertEqual(len(states), 1)
 
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_state(self):
-        pass
-
     def test_new_contact_created_successfully(self):
         """Test whether a new contact is created"""
 
@@ -689,10 +735,6 @@ class MeasurementsTestCase(TestCase):
                 self.file.commit(self.store.session)
                 contacts = self.store.session.query(self.store.db_classes.Contact).all()
                 self.assertEqual(len(contacts), 1)
-
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_contact(self):
-        pass
 
     def test_new_comment_created_successfully(self):
         """Test whether a new comment is created"""
@@ -717,10 +759,6 @@ class MeasurementsTestCase(TestCase):
                 self.file.commit(self.store.session)
                 comments = self.store.session.query(self.store.db_classes.Comment).all()
                 self.assertEqual(len(comments), 1)
-
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_comment(self):
-        pass
 
 
 if __name__ == "__main__":

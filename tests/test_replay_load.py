@@ -36,22 +36,18 @@ class TestLoadReplay(TestCase):
                     platform_type="Fisher",
                     privacy="Public",
                 )
-                all_sensors = data_store.session.query(
-                    data_store.db_classes.Sensor
-                ).all()
-                data_store.add_to_sensor_types("_GPS")
+                sensor_type = data_store.add_to_sensor_types("_GPS")
+                privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
                 sensor = platform.get_sensor(
-                    session=data_store.session,
-                    all_sensors=all_sensors,
+                    data_store=data_store,
                     sensor_name=platform.name,
-                    sensor_type="_GPS",
-                    privacy="TEST",
+                    sensor_type=sensor_type,
+                    privacy=privacy.name,
                 )
                 state = datafile.create_state(sensor, rep_line.timestamp)
                 state.location = rep_line.get_location()
                 state.heading = rep_line.heading.to(unit_registry.radians).magnitude
                 state.speed = rep_line.speed
-                privacy = data_store.search_privacy("TEST")
                 state.privacy = privacy.privacy_id
                 if datafile.validate():
                     datafile.commit(data_store.session)
