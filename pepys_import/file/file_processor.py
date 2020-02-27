@@ -44,7 +44,11 @@ class FileProcessor:
                 first_table_summary_set = TableSummarySet([states_sum, platforms_sum])
                 print(first_table_summary_set.report("==Before=="))
 
-                processed_ctr = self.process_file(path, path, data_store, processed_ctr)
+                filename = os.path.abspath(path)
+                current_path = os.path.dirname(path)
+                processed_ctr = self.process_file(
+                    filename, current_path, data_store, processed_ctr
+                )
                 states_sum = TableSummary(
                     data_store.session, data_store.db_classes.State
                 )
