@@ -2,10 +2,12 @@ from .importer import Importer
 from datetime import datetime
 from pepys_import.core.formats import unit_registry
 from pepys_import.utils.unit_utils import convert_heading, convert_speed
+from pepys_import.core.validators import constants
 
 
 class ETracImporter(Importer):
     name = "E-Trac Format Importer"
+    validation_level = constants.BASIC_LEVEL
 
     def __init__(self, separator=" "):
         super().__init__()

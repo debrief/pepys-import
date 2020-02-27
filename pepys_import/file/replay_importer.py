@@ -1,10 +1,12 @@
 from .importer import Importer
 from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.formats import unit_registry
+from pepys_import.core.validators import constants
 
 
 class ReplayImporter(Importer):
     name = "Replay File Format Importer"
+    validation_level = constants.BASIC_LEVEL
 
     def __init__(self, separator=" "):
         super().__init__()

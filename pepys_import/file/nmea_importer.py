@@ -2,12 +2,13 @@ from .importer import Importer
 from datetime import datetime
 
 from pepys_import.utils.unit_utils import convert_heading, convert_speed
-from ..core.formats.location import Location
+from pepys_import.core.formats.location import Location
+from pepys_import.core.validators import constants
 
 
 class NMEAImporter(Importer):
     name = "NMEA File Format Importer"
-    validation_level = "basic"
+    validation_level = constants.BASIC_LEVEL
 
     def __init__(self, separator=","):
         super().__init__()

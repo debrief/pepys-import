@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
+from pepys_import.core.validators import constants
 
 
 class Importer(ABC):
     name = "Importer"
+    validation_level = constants.NONE_LEVEL
 
     def __init__(self):
         super().__init__()
