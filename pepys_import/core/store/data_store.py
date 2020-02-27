@@ -3,9 +3,8 @@ import os
 from pathlib import Path
 
 from datetime import datetime
-from sqlalchemy import create_engine, event, or_
+from sqlalchemy import create_engine, or_
 from sqlalchemy.event import listen
-from sqlalchemy.schema import CreateSchema
 from sqlalchemy.sql import select, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError
@@ -17,6 +16,7 @@ from pepys_import.utils.data_store_utils import import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
+from pepys_import.core.formats import unit_registry
 
 from pepys_import import __version__
 from pepys_import.utils.branding_util import (
@@ -1114,3 +1114,51 @@ class DataStore(object):
         self.sensor_types[sensor_type_name] = sensor_type
         # should return DB type or something else decoupled from DB?
         return sensor_type
+
+    def clear_db(self):
+        """Delete records of all database tables"""
+        if self.db_type == "sqlite":
+            meta = BaseSpatiaLite.metadata
+        else:
+            meta = BasePostGIS.metadata
+
+        with self.session_scope():
+            for table in reversed(meta.sorted_tables):
+                self.session.execute(table.delete())
+
+    def get_all_datafiles(self):
+        """
+        Gets all datafiles.
+
+        :return: Datafile entity
+        :rtype: Datafile
+        """
+        datafiles = self.session.query(self.db_classes.Datafile).all()
+        return datafiles
+
+    def export_datafile(self, datafile_id):
+        """
+        Get states, contacts and comments based on Datafile ID.
+
+        :param datafile_id:  ID of Datafile
+        :type datafile_id: String
+        """
+        states = (
+            self.session.query(self.db_classes.State)
+            .filter(self.db_classes.State.source_id == datafile_id)
+            .all()
+        )
+
+        contacts = (
+            self.session.query(self.db_classes.Contact)
+            .filter(self.db_classes.Contact.source_id == datafile_id)
+            .all()
+        )
+
+        comments = (
+            self.session.query(self.db_classes.Comment)
+            .filter(self.db_classes.Comment.source_id == datafile_id)
+            .all()
+        )
+
+        print(states, contacts, comments)
