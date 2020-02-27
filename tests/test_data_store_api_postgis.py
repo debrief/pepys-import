@@ -872,7 +872,7 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(state.time, self.current_time)
 
             if self.file.validate():
-                state.submit(self.store.session)
+                self.file.commit(self.store.session)
                 states = self.store.session.query(self.store.db_classes.State).all()
             self.assertEqual(len(states), 1)
 
@@ -895,7 +895,7 @@ class MeasurementsTestCase(TestCase):
             contact.name = "TEST"
             contact.subject_id = self.platform.platform_id
             if self.file.validate():
-                contact.submit(self.store.session)
+                self.file.commit(self.store.session)
                 contacts = self.store.session.query(self.store.db_classes.Contact).all()
                 self.assertEqual(len(contacts), 1)
 
@@ -919,7 +919,7 @@ class MeasurementsTestCase(TestCase):
             # Fill null constraint field
             comment.platform_id = self.platform.platform_id
             if self.file.validate():
-                comment.submit(self.store.session)
+                self.file.commit(self.store.session)
                 comments = self.store.session.query(self.store.db_classes.Comment).all()
                 self.assertEqual(len(comments), 1)
 

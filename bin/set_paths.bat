@@ -1,0 +1,1 @@
+set PATH=..\python;..\lib\mod_spatialite-NG-win-amd64;%PATH%

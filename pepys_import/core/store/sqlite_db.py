@@ -234,6 +234,10 @@ class Participant(BaseSpatiaLite):
 
 
 class Datafile(BaseSpatiaLite):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._measurements = []
+
     __tablename__ = constants.DATAFILE
     table_type = TableTypes.METADATA
     table_type_id = 6
@@ -250,12 +254,14 @@ class Datafile(BaseSpatiaLite):
         state = State(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
+        self._measurements.append(state)
         return state
 
     def create_contact(self, sensor, timestamp):
         contact = Contact(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
+        self._measurements.append(contact)
         return contact
 
     def create_comment(self, sensor, timestamp, comment, comment_type):
@@ -265,10 +271,15 @@ class Datafile(BaseSpatiaLite):
             comment_type_id=comment_type.comment_type_id,
             source_id=self.datafile_id,
         )
+        self._measurements.append(comment)
         return comment
 
     def validate(self):
         return True
+
+    def commit(self, session):
+        for file in self._measurements:
+            file.submit(session)
 
     # def verify(self):
     #     pass

@@ -27,20 +27,38 @@ class FileProcessor:
 
         processed_ctr = 0
 
+        # get the data_store
+        if data_store is None:
+            data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
+            data_store.initialise()
+
         # check given path is a file
         if os.path.isfile(path):
-            processed_ctr = self.process_file(path, path, data_store, processed_ctr)
+            with data_store.session_scope():
+                states_sum = TableSummary(
+                    data_store.session, data_store.db_classes.State
+                )
+                platforms_sum = TableSummary(
+                    data_store.session, data_store.db_classes.Platform
+                )
+                first_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+                print(first_table_summary_set.report("==Before=="))
+
+                processed_ctr = self.process_file(path, path, data_store, processed_ctr)
+                states_sum = TableSummary(
+                    data_store.session, data_store.db_classes.State
+                )
+                platforms_sum = TableSummary(
+                    data_store.session, data_store.db_classes.Platform
+                )
+                second_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+                print(second_table_summary_set.report("==After=="))
             print(f"Files got processed: {processed_ctr} times")
             return
 
         # check folder exists
         if not os.path.isdir(path):
             raise FileNotFoundError(f"Folder not found in the given path: {path}")
-
-        # get the data_store
-        if data_store is None:
-            data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
-            data_store.initialise()
 
         # capture path in absolute form
         abs_path = os.path.abspath(path)
@@ -125,11 +143,13 @@ class FileProcessor:
 
             # ok, let these importers handle the file
             datafile = data_store.get_datafile(filename, file_extension)
-            datafile_name = datafile.reference
 
             for importer in good_importers:
                 processed_ctr += 1
-                importer.load_this_file(data_store, file, file_contents, datafile_name)
+                importer.load_this_file(data_store, file, file_contents, datafile)
+
+            if datafile.validate():
+                datafile.commit(data_store.session)
 
         return processed_ctr
 

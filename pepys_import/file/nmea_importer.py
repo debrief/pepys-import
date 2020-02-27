@@ -61,7 +61,7 @@ class NMEAImporter(Importer):
         :return: Nothing
         """
 
-    def load_this_file(self, data_store, path, file_contents, datafile_name):
+    def load_this_file(self, data_store, path, file_contents, datafile):
         print("NMEA parser working on " + path)
 
         for line_number, line in enumerate(file_contents):
@@ -94,7 +94,6 @@ class NMEAImporter(Importer):
                 ):
 
                     # and finally store it
-                    datafile = data_store.search_datafile(datafile_name)
                     platform = data_store.get_platform(
                         platform_name=None,
                         platform_type="Ferry",
@@ -131,8 +130,6 @@ class NMEAImporter(Importer):
                         state.speed = speed
 
                     state.privacy = privacy.privacy_id
-                    if datafile.validate():
-                        state.submit(data_store.session)
 
                     self.date = None
                     self.time = None
