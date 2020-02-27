@@ -105,6 +105,7 @@ class GPXImporter(Importer):
                     course = convert_heading(course_str, tpt.sourceline)
                     state.course = course.to(unit_registry.radians).magnitude
 
+                # Add speed
                 if speed_str is not None:
                     try:
                         speed = float(speed_str)
@@ -114,16 +115,15 @@ class GPXImporter(Importer):
                         )
                     state.speed = speed
 
+                # TODO: Add support for extracting elevation
                 # if elevation_str is not None:
                 #     try:
                 #         elevation = float(elevation_str)
                 #     except ValueError:
                 #         print(f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. Couldn't convert to number")
                 #     state.elevation = elevation
-                state.privacy = privacy.privacy_id
 
-                # if datafile.validate():
-                #     state.submit(data_store.session)
+                state.privacy = privacy.privacy_id
 
     def get_child_text_if_exists(self, element, search_string):
         child = element.find(search_string)
