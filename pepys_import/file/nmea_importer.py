@@ -2,10 +2,12 @@ from .importer import Importer
 from datetime import datetime
 
 from pepys_import.utils.unit_utils import convert_heading, convert_speed
+from ..core.formats.location import Location
 
 
 class NMEAImporter(Importer):
     name = "NMEA File Format Importer"
+    validation_level = "basic"
 
     def __init__(self, separator=","):
         super().__init__()
@@ -91,6 +93,7 @@ class NMEAImporter(Importer):
                     and self.speed
                     and self.heading
                     and self.latitude
+                    and self.longitude
                 ):
 
                     # and finally store it
@@ -113,13 +116,33 @@ class NMEAImporter(Importer):
                     timestamp = self.parse_timestamp(self.date, self.time)
 
                     state = datafile.create_state(sensor, timestamp)
-                    location = self.parse_location(
-                        self.latitude,
-                        self.latitude_hem,
-                        self.longitude,
-                        self.longitude_hem,
+                    lat_degrees, lat_minutes, lat_seconds = (
+                        self.latitude[0:2],
+                        self.latitude[2:4],
+                        self.latitude[4:],
                     )
-                    state.location = location
+                    latitude = Location(
+                        lat_degrees, lat_minutes, lat_seconds, self.latitude_hem
+                    )
+                    if not latitude.parse():
+                        print(f"Line {line_number}. Error in latitude parsing")
+                        return False
+
+                    lon_degrees, lon_minutes, lon_seconds = (
+                        self.longitude[0:2],
+                        self.longitude[2:4],
+                        self.longitude[4:],
+                    )
+                    longitude = Location(
+                        lon_degrees, lon_minutes, lon_seconds, self.longitude_hem
+                    )
+                    if not longitude.parse():
+                        print(f"Line {line_number}. Error in longitude parsing")
+                        return False
+
+                    state.location = (
+                        f"POINT({longitude.as_degrees()} {latitude.as_degrees()})"
+                    )
 
                     heading = convert_heading(self.heading, line_number)
                     if heading:
@@ -136,6 +159,7 @@ class NMEAImporter(Importer):
                     self.speed = None
                     self.heading = None
                     self.latitude = None
+                    self.longitude = None
 
     # def requires_user_review(self) -> bool:
     #     """
@@ -147,26 +171,6 @@ class NMEAImporter(Importer):
     #     :rtype: bool
     #     """
     #     pass
-
-    @staticmethod
-    def parse_location(lat, lat_hem, lon, long_hem):
-        lat_degrees = float(lat[0:2])
-        lat_minutes = float(lat[2:4])
-        lat_seconds = float(lat[4:])
-        lat_degrees = lat_degrees + lat_minutes / 60 + lat_seconds / 60 / 60
-
-        lon_degrees = float(lon[0:3])
-        lon_minutes = float(lon[3:5])
-        lon_seconds = float(lon[5:])
-        lon_degrees = lon_degrees + lon_minutes / 60 + lon_seconds / 60 / 60
-
-        if lat_hem == "S":
-            lat_degrees = -1 * lat_degrees
-
-        if long_hem == "W":
-            lon_degrees = -1 * lon_degrees
-
-        return f"({lat_degrees} {lon_degrees})"
 
     @staticmethod
     def parse_timestamp(date, time):

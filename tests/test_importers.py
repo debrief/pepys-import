@@ -255,11 +255,6 @@ class NMEAImporterTestCase(unittest.TestCase):
         self.assertEqual(type(timestamp), datetime)
         self.assertEqual(str(timestamp), "2001-01-01 01:01:01")
 
-    def test_parse_location(self):
-        """Test whether the method correctly converts the given string location"""
-        location = self.nmea_importer.parse_location("01603600", "S", "001603600", "W")
-        self.assertEqual("(-3.0 -3.0)", location)
-
     def test_tokens(self):
         """Test whether the method correctly tokenize the given string"""
         tokens = self.nmea_importer.tokens("Test line")
