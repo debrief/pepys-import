@@ -98,9 +98,6 @@ class ETracImporter(Importer):
             speed = convert_speed(speed_token, line_number)
             state.speed = speed
 
-        if datafile.validate():
-            datafile.commit(data_store.session)
-
     @staticmethod
     def name_for(token):
         # split into two

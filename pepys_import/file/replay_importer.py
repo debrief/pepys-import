@@ -62,9 +62,6 @@ class ReplayImporter(Importer):
                 privacy = data_store.search_privacy("TEST")
                 state.privacy = privacy.privacy_id
 
-        if datafile.validate():
-            datafile.commit(data_store.session)
-
     # def requires_user_review(self) -> bool:
     #     """
     #     Whether this importer requires user review of the loaded intermediate data

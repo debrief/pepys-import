@@ -134,9 +134,6 @@ class NMEAImporter(Importer):
                     self.heading = None
                     self.latitude = None
 
-        if datafile.validate():
-            datafile.commit(data_store.session)
-
     # def requires_user_review(self) -> bool:
     #     """
     #     Whether this importer requires user review of the loaded intermediate data

@@ -143,11 +143,13 @@ class FileProcessor:
 
             # ok, let these importers handle the file
             datafile = data_store.get_datafile(filename, file_extension)
-            # datafile_name = datafile.reference
 
             for importer in good_importers:
                 processed_ctr += 1
                 importer.load_this_file(data_store, file, file_contents, datafile)
+
+            if datafile.validate():
+                datafile.commit(data_store.session)
 
         return processed_ctr
 
