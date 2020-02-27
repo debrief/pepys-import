@@ -3,9 +3,8 @@ import os
 from pathlib import Path
 
 from datetime import datetime
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, or_
 from sqlalchemy.event import listen
-from sqlalchemy.schema import CreateSchema
 from sqlalchemy.sql import select, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError
@@ -386,7 +385,7 @@ class DataStore(object):
             sensor_id=entry_id,
             name=name,
             sensor_type_id=sensor_type.sensor_type_id,
-            platform_id=host.platform_id,
+            host=host.platform_id,
         )
         self.session.add(sensor_obj)
         self.session.flush()
@@ -394,7 +393,7 @@ class DataStore(object):
         return sensor_obj
 
     def add_to_datafiles(
-        self, simulated=False, privacy=None, file_type=None, reference=None, url=None
+        self, privacy, file_type, reference=None, simulated=False, url=None
     ):
         """
         Adds the specified datafile to the Datafile table if not already present.
@@ -412,19 +411,8 @@ class DataStore(object):
         :return: Created :class:`Datafile` entity
         :rtype: Datafile
         """
-
-        # fill in missing privacy, if necessary
-        if privacy is None:
-            privacy = self.missing_data_resolver.default_privacy
-        privacy = self.search_privacy(privacy)
-
-        # fill in missing file_type, if necessary
-        if file_type is None:
-            file_type = self.missing_data_resolver.default_datafile_type
         datafile_type = self.search_datafile_type(file_type)
-
-        if privacy is None or datafile_type is None:
-            raise Exception("There is missing value(s) in the data!")
+        privacy = self.search_privacy(privacy)
 
         entry_id = self.add_to_entries(
             self.db_classes.Datafile.table_type_id,
@@ -443,9 +431,22 @@ class DataStore(object):
         self.session.add(datafile_obj)
         self.session.flush()
 
+        print(f"'{reference}' added to Datafile!")
+        # add to cache and return created datafile
+        self.datafiles[reference] = datafile_obj
+
         return datafile_obj
 
-    def add_to_platforms(self, name, nationality, platform_type, privacy):
+    def add_to_platforms(
+        self,
+        name,
+        nationality,
+        platform_type,
+        privacy,
+        trigraph=None,
+        quadgraph=None,
+        pennant_number=None,
+    ):
         """
         Adds the specified platform to the Platform table if not already present.
 
@@ -457,6 +458,12 @@ class DataStore(object):
         :type platform_type: PlatformType
         :param privacy: :class:`Privacy` of :class:`Platform`
         :type privacy: Privacy
+        :param trigraph: Trigraph of :class:`Platform`
+        :type trigraph: String
+        :param quadgraph: Quadgraph of :class:`Platform`
+        :type quadgraph: String
+        :param pennant_number: Pennant number of :class:`Platform`
+        :type pennant_number: String
         :return: Created Platform entity
         :rtype: Platform
         """
@@ -464,27 +471,17 @@ class DataStore(object):
         platform_type = self.search_platform_type(platform_type)
         privacy = self.search_privacy(privacy)
 
-        if nationality is None or platform_type is None or privacy is None:
-            raise Exception("There is missing value(s) in the data!")
-
         entry_id = self.add_to_entries(
             self.db_classes.Platform.table_type_id,
             self.db_classes.Platform.__tablename__,
         )
-        trigraph = None
-        if len(name) >= 3:
-            trigraph = name[:3]
-        quadgraph = None
-        if len(name) >= 4:
-            quadgraph = name[:4]
-        # This line should change with missing data resolver
-        pennant = None
+
         platform_obj = self.db_classes.Platform(
             platform_id=entry_id,
             name=name,
-            pennant=pennant,
             trigraph=trigraph,
             quadgraph=quadgraph,
+            pennant=pennant_number,
             nationality_id=nationality.nationality_id,
             platform_type_id=platform_type.platform_type_id,
             privacy_id=privacy.privacy_id,
@@ -493,10 +490,25 @@ class DataStore(object):
         self.session.add(platform_obj)
         self.session.flush()
 
+        print(f"'{name}' added to Platform!")
         # add to cache and return created platform
         self.platforms[name] = platform_obj
         # should return DB type or something else decoupled from DB?
         return platform_obj
+
+    def add_to_synonyms(self, table, name, entity):
+        entry_id = self.add_to_entries(
+            self.db_classes.Synonym.table_type_id,
+            self.db_classes.Synonym.__tablename__,
+        )
+        # enough info to proceed and create entry
+        synonym = self.db_classes.Synonym(
+            synonym_id=entry_id, table=table, synonym=name, entity=entity
+        )
+        self.session.add(synonym)
+        self.session.flush()
+
+        return synonym
 
     #############################################################
     # Search/lookup functions
@@ -591,11 +603,62 @@ class DataStore(object):
 
     #############################################################
     # New methods
+    def synonym_search(self, name, table, pk_field):
+        """
+        This method looks up the Synonyms Table and returns if there is any matched entity.
 
-    def get_datafile(self, datafile_name, datafile_type):
+        :param name: Name to search
+        :type name: String
+        :param table: Table object to query found synonym entity
+        :type table: :class:`BasePostGIS` or :class``BaseSpatiaLite
+        :param pk_field: Primary Key field of the table
+        :type pk_field: :class:`sqlalchemy.orm.attributes.InstrumentedAttribute`
+        :return: Returns found entity or None
+        """
+
+        synonym = (
+            self.session.query(self.db_classes.Synonym)
+            .filter(
+                self.db_classes.Synonym.synonym == name,
+                self.db_classes.Synonym.table == table.__tablename__,
+            )
+            .first()
+        )
+        if synonym:
+            match = self.session.query(table).filter(pk_field == synonym.entity).first()
+            if match:
+                return match
+
+        return None
+
+    def find_datafile(self, datafile_name):
+        """
+        This method tries to find a Datafile entity with the given datafile_name. If it
+        finds, it returns the entity. If it is not found, it searches synonyms.
+
+        :param datafile_name:  Name of Datafile
+        :type datafile_name: String
+        :return:
+        """
+        datafile = (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.reference == datafile_name)
+            .first()
+        )
+        if datafile:
+            return datafile
+
+        # Datafile is not found, try to find a synonym
+        return self.synonym_search(
+            name=datafile_name,
+            table=self.db_classes.Datafile,
+            pk_field=self.db_classes.Datafile.datafile_id,
+        )
+
+    def get_datafile(self, datafile_name=None, datafile_type=None):
         """
         Adds an entry to the datafiles table of the specified name (path)
-        and type if not already present.
+        and type if not already present. It uses find_datafile method to search existing datafiles.
 
         :param datafile_name:  Name of Datafile
         :type datafile_name: String
@@ -605,43 +668,78 @@ class DataStore(object):
         :rtype: Datafile
         """
 
-        # return True if provided datafile exists
-        def check_datafile(datafile):
-            all_datafiles = self.session.query(self.db_classes.Datafile).all()
-            if next(
-                (file for file in all_datafiles if file.reference == datafile), None
-            ):
-                # A datafile already exists with that name
-                return False
+        # Check for name match in Datafile and Synonym Tables
+        if datafile_name:
+            datafile = self.find_datafile(datafile_name=datafile_name)
+            if datafile:
+                return datafile
 
-            return True
+        resolved_data = self.missing_data_resolver.resolve_datafile(
+            self, datafile_name, datafile_type, None
+        )
+        # It means that new datafile added as a synonym and existing datafile returned
+        if isinstance(resolved_data, self.db_classes.Datafile):
+            return resolved_data
 
-        self.add_to_datafile_types(datafile_type)
-        # TODO: this has to be changed with missing data resolver
-        self.add_to_privacies("TEST")
+        datafile_name, datafile_type, privacy = resolved_data
 
-        if len(datafile_name) == 0:
-            raise Exception("Datafile name can't be empty!")
-        elif check_datafile(datafile_name):
-            return self.add_to_datafiles(
-                simulated=False,
-                privacy="TEST",
-                file_type=datafile_type,
-                reference=datafile_name,
+        assert isinstance(
+            datafile_type, self.db_classes.DatafileType
+        ), "Type error for DatafileType entity"
+        assert isinstance(
+            privacy, self.db_classes.Privacy
+        ), "Type error for Privacy entity"
+
+        return self.add_to_datafiles(
+            simulated=False,
+            privacy=privacy.name,
+            file_type=datafile_type.name,
+            reference=datafile_name,
+        )
+
+    def find_platform(self, platform_name):
+        """
+        This method tries to find a Platform entity with the given platform_name. If it
+        finds, it returns the entity. If it is not found, it searches synonyms.
+
+        :param platform_name: Name of :class:`Platform`
+        :type platform_name: String
+        :return:
+        """
+        platform = (
+            self.session.query(self.db_classes.Platform)
+            .filter(
+                or_(
+                    self.db_classes.Platform.name == platform_name,
+                    self.db_classes.Platform.trigraph == platform_name,
+                    self.db_classes.Platform.quadgraph == platform_name,
+                )
             )
-        else:
-            return (
-                self.session.query(self.db_classes.Datafile)
-                .filter(self.db_classes.Datafile.reference == datafile_name)
-                .first()
-            )
+            .first()
+        )
+        if platform:
+            return platform
+
+        # Platform is not found, try to find a synonym
+        return self.synonym_search(
+            name=platform_name,
+            table=self.db_classes.Platform,
+            pk_field=self.db_classes.Platform.platform_id,
+        )
 
     def get_platform(
-        self, platform_name, nationality=None, platform_type=None, privacy=None
+        self,
+        platform_name=None,
+        nationality=None,
+        platform_type=None,
+        privacy=None,
+        trigraph=None,
+        quadgraph=None,
+        pennant_number=None,
     ):
         """
         Adds an entry to the platforms table for the specified platform
-        if not already present.
+        if not already present. It uses find_platform method to search existing platforms.
 
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
@@ -651,39 +749,67 @@ class DataStore(object):
         :type platform_type: PlatformType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param trigraph: Trigraph of :class:`Platform`
+        :type trigraph: String
+        :param quadgraph: Quadgraph of :class:`Platform`
+        :type quadgraph: String
+        :param pennant_number: Pennant number of :class:`Platform`
+        :type pennant_number: String
         :return: Created Platform entity
         """
 
-        # return True if provided platform exists
-        def check_platform(name):
-            all_platforms = self.session.query(self.db_classes.Platform).all()
-            if next(
-                (platform for platform in all_platforms if platform.name == name), None
-            ):
-                # A platform already exists with that name
-                return False
+        # Check for name match in Platform and Synonym Tables
+        if platform_name:
+            platform = self.find_platform(platform_name)
+            if platform:
+                return platform
 
-            return True
+        nationality = self.search_nationality(nationality)
+        platform_type = self.search_platform_type(platform_type)
+        privacy = self.search_privacy(privacy)
 
-        self.add_to_nationalities(nationality)
-        self.add_to_platform_types(platform_type)
-        self.add_to_privacies(privacy)
-
-        if len(platform_name) == 0:
-            raise Exception("Platform name can't be empty!")
-        elif check_platform(platform_name):
-            return self.add_to_platforms(
-                name=platform_name,
-                nationality=nationality,
-                platform_type=platform_type,
-                privacy=privacy,
+        if (
+            platform_name is None
+            or nationality is None
+            or platform_type is None
+            or privacy is None
+        ):
+            resolved_data = self.missing_data_resolver.resolve_platform(
+                self, platform_name, platform_type, nationality, privacy
             )
-        else:
-            return (
-                self.session.query(self.db_classes.Platform)
-                .filter(self.db_classes.Platform.name == platform_name)
-                .first()
-            )
+            # It means that new platform added as a synonym and existing platform returned
+            if isinstance(resolved_data, self.db_classes.Platform):
+                return resolved_data
+            elif len(resolved_data) == 7:
+                (
+                    platform_name,
+                    trigraph,
+                    quadgraph,
+                    pennant_number,
+                    platform_type,
+                    nationality,
+                    privacy,
+                ) = resolved_data
+
+        assert isinstance(
+            nationality, self.db_classes.Nationality
+        ), "Type error for Nationality entity"
+        assert isinstance(
+            platform_type, self.db_classes.PlatformType
+        ), "Type error for PlatformType entity"
+        assert isinstance(
+            privacy, self.db_classes.Privacy
+        ), "Type error for Privacy entity"
+
+        return self.add_to_platforms(
+            name=platform_name,
+            trigraph=trigraph,
+            quadgraph=quadgraph,
+            pennant_number=pennant_number,
+            nationality=nationality.name,
+            platform_type=platform_type.name,
+            privacy=privacy.name,
+        )
 
     def get_status(
         self,
@@ -988,3 +1114,51 @@ class DataStore(object):
         self.sensor_types[sensor_type_name] = sensor_type
         # should return DB type or something else decoupled from DB?
         return sensor_type
+
+    def clear_db(self):
+        """Delete records of all database tables"""
+        if self.db_type == "sqlite":
+            meta = BaseSpatiaLite.metadata
+        else:
+            meta = BasePostGIS.metadata
+
+        with self.session_scope():
+            for table in reversed(meta.sorted_tables):
+                self.session.execute(table.delete())
+
+    def get_all_datafiles(self):
+        """
+        Gets all datafiles.
+
+        :return: Datafile entity
+        :rtype: Datafile
+        """
+        datafiles = self.session.query(self.db_classes.Datafile).all()
+        return datafiles
+
+    def export_datafile(self, datafile_id):
+        """
+        Get states, contacts and comments based on Datafile ID.
+
+        :param datafile_id:  ID of Datafile
+        :type datafile_id: String
+        """
+        states = (
+            self.session.query(self.db_classes.State)
+            .filter(self.db_classes.State.source_id == datafile_id)
+            .all()
+        )
+
+        contacts = (
+            self.session.query(self.db_classes.Contact)
+            .filter(self.db_classes.Contact.source_id == datafile_id)
+            .all()
+        )
+
+        comments = (
+            self.session.query(self.db_classes.Comment)
+            .filter(self.db_classes.Comment.source_id == datafile_id)
+            .all()
+        )
+
+        print(states, contacts, comments)

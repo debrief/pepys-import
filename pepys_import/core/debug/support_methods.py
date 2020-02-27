@@ -87,9 +87,7 @@ def list_sensors(data_store):
 
     rows = []
     for row in result:
-        rows.append(
-            [row.sensor_id, row.name, row.sensor_type_id, row.platform_id,]
-        )
+        rows.append([row.sensor_id, row.name, row.sensor_type_id, row.host])
     res = tabulate(rows, headers=headers)
 
     return res

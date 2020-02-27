@@ -29,13 +29,6 @@ class MissingFieldsTestCase(unittest.TestCase):
         with self.store.session_scope():
             self.store.add_to_datafiles(simulated=True, privacy=None, file_type=None)
 
-    @unittest.expectedFailure
-    def test_missing_fields_for_add_to_platforms(self):
-        with self.store.session_scope():
-            self.store.add_to_platforms(
-                name="Platform-1", platform_type=None, privacy=None, nationality=None
-            )
-
 
 if __name__ == "__main__":
     unittest.main()
