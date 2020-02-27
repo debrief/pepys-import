@@ -126,7 +126,7 @@ class NMEAImporter(Importer):
                     )
                     if not latitude.parse():
                         print(f"Line {line_number}. Error in latitude parsing")
-                        return False
+                        continue
 
                     lon_degrees, lon_minutes, lon_seconds = (
                         self.longitude[0:2],
@@ -138,7 +138,7 @@ class NMEAImporter(Importer):
                     )
                     if not longitude.parse():
                         print(f"Line {line_number}. Error in longitude parsing")
-                        return False
+                        continue
 
                     state.location = (
                         f"POINT({longitude.as_degrees()} {latitude.as_degrees()})"
