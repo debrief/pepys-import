@@ -12,9 +12,7 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/gpx")
 
 class GPXTests(unittest.TestCase):
     def setUp(self):
-        self.store = DataStore(
-            "", "", "", 0, "/Users/robin/test_pepys.db", db_type="sqlite"
-        )
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
     def tearDown(self):

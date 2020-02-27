@@ -29,7 +29,7 @@ class GPXImporter(Importer):
         # won't parse a string with an encoding attribute - it requires bytes instead
         return True
 
-    def load_this_file(self, data_store, path, file_contents, data_file_id):
+    def load_this_file(self, data_store, path, file_contents, datafile):
         print("GPX parser working on ", path.path)
 
         # Parse XML file from the full path of the file
@@ -40,8 +40,6 @@ class GPXImporter(Importer):
         except Exception as e:
             print(f'Invalid GPX file at {path.path}\nError from parsing was "{str(e)}"')
             return
-
-        cur_datafile_id = None
 
         # Iterate through <trk> elements - these should correspond to
         # a specific platform, with the platform name in the <name> element
@@ -78,64 +76,52 @@ class GPXImporter(Importer):
                     elevation_str,
                 )
 
-                # Get platform and sensor
-                with data_store.session_scope():
-                    if cur_datafile_id is None:
-                        datafile = data_store.search_datafile(data_file_id)
-                        cur_datafile_id = datafile.datafile_id
-                    else:
-                        datafile = data_store.get_datafile_from_id(cur_datafile_id)
-                    platform = data_store.get_platform(
-                        platform_name=track_name,
-                        nationality="UK",
-                        platform_type="Fisher",
-                        privacy="Public",
-                    )
-                    all_sensors = data_store.session.query(
-                        data_store.db_classes.Sensor
-                    ).all()
-                    data_store.add_to_sensor_types("GPS")
-                    sensor = platform.get_sensor(
-                        session=data_store.session,
-                        all_sensors=all_sensors,
-                        sensor_name="GPX",
-                        sensor_type="GPS",
-                        privacy="TEST",
-                    )
+                platform = data_store.get_platform(
+                    platform_name=track_name,
+                    nationality="UK",
+                    platform_type="Fisher",
+                    privacy="Public",
+                )
+                sensor_type = data_store.add_to_sensor_types("GPS")
+                privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
+                sensor = platform.get_sensor(
+                    data_store=data_store,
+                    sensor_name="GPX",
+                    sensor_type=sensor_type,
+                    privacy=privacy.name,
+                )
 
-                    # Parse timestamp and create state
-                    timestamp = parse(timestamp_str)
-                    state = datafile.create_state(sensor, timestamp)
+                # Parse timestamp and create state
+                timestamp = parse(timestamp_str)
+                state = datafile.create_state(sensor, timestamp)
 
-                    # Add location (no need to convert as it requires a string)
-                    state.location = f"POINT({longitude_str} {latitude_str})"
+                # Add location (no need to convert as it requires a string)
+                state.location = f"POINT({longitude_str} {latitude_str})"
 
-                    # Add course
-                    if course_str is not None:
-                        course = convert_heading(course_str, tpt.sourceline)
-                        state.course = course.to(unit_registry.radians).magnitude
+                # Add course
+                if course_str is not None:
+                    course = convert_heading(course_str, tpt.sourceline)
+                    state.course = course.to(unit_registry.radians).magnitude
 
-                    if speed_str is not None:
-                        try:
-                            speed = float(speed_str)
-                        except ValueError:
-                            print(
-                                f"Line {tpt.sourceline}. Error in speed value {speed_str}. Couldn't convert to number"
-                            )
-                        state.speed = speed
+                if speed_str is not None:
+                    try:
+                        speed = float(speed_str)
+                    except ValueError:
+                        print(
+                            f"Line {tpt.sourceline}. Error in speed value {speed_str}. Couldn't convert to number"
+                        )
+                    state.speed = speed
 
-                    # if elevation_str is not None:
-                    #     try:
-                    #         elevation = float(elevation_str)
-                    #     except ValueError:
-                    #         print(f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. Couldn't convert to number")
-                    #     state.elevation = elevation
+                # if elevation_str is not None:
+                #     try:
+                #         elevation = float(elevation_str)
+                #     except ValueError:
+                #         print(f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. Couldn't convert to number")
+                #     state.elevation = elevation
+                state.privacy = privacy.privacy_id
 
-                    privacy = data_store.search_privacy("TEST")
-                    state.privacy = privacy.privacy_id
-
-                    if datafile.validate():
-                        state.submit(data_store.session)
+                # if datafile.validate():
+                #     state.submit(data_store.session)
 
     def get_child_text_if_exists(self, element, search_string):
         child = element.find(search_string)
