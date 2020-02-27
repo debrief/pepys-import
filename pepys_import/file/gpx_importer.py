@@ -47,6 +47,23 @@ class GPXImporter(Importer):
             track_name = track_element.find("{*}name").text
             print(f"New track: {track_name}")
 
+            # Get the platform and sensor details, as these will be the same for all
+            # points in this track
+            platform = data_store.get_platform(
+                platform_name=track_name,
+                nationality="UK",
+                platform_type="Fisher",
+                privacy="Public",
+            )
+            sensor_type = data_store.add_to_sensor_types("GPS")
+            privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
+            sensor = platform.get_sensor(
+                data_store=data_store,
+                sensor_name="GPX",
+                sensor_type=sensor_type,
+                privacy=privacy.name,
+            )
+
             # Get all <trkpt> children of this track
             # (no matter which <trkseg> they are in - as all <trkseg> elements below this
             # belong to this track)
@@ -74,21 +91,6 @@ class GPXImporter(Importer):
                     speed_str,
                     course_str,
                     elevation_str,
-                )
-
-                platform = data_store.get_platform(
-                    platform_name=track_name,
-                    nationality="UK",
-                    platform_type="Fisher",
-                    privacy="Public",
-                )
-                sensor_type = data_store.add_to_sensor_types("GPS")
-                privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
-                sensor = platform.get_sensor(
-                    data_store=data_store,
-                    sensor_name="GPX",
-                    sensor_type=sensor_type,
-                    privacy=privacy.name,
                 )
 
                 # Parse timestamp and create state
