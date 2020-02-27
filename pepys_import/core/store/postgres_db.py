@@ -1,25 +1,18 @@
 from datetime import datetime
 
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Boolean,
-    DATE,
-    ForeignKey,
-    DateTime,
-)
+from sqlalchemy import Column, Integer, String, Boolean, DATE, ForeignKey, DateTime
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, DOUBLE_PRECISION
 
 from geoalchemy2 import Geometry
 
 from pepys_import.core.store.db_base import BasePostGIS
 from pepys_import.core.store.db_status import TableTypes
+from pepys_import.core.store import constants
 from uuid import uuid4
 
 
 class Entry(BasePostGIS):
-    __tablename__ = "Entry"
+    __tablename__ = constants.ENTRY
     table_type = TableTypes.METADATA
     __table_args__ = {"schema": "pepys"}
 
@@ -43,7 +36,7 @@ class Entry(BasePostGIS):
 
 
 class TableType(BasePostGIS):
-    __tablename__ = "TableTypes"
+    __tablename__ = constants.TABLE_TYPE
     table_type = TableTypes.METADATA
     __table_args__ = {"schema": "pepys"}
 
@@ -74,12 +67,12 @@ class TableType(BasePostGIS):
 
 # Metadata Tables
 class HostedBy(BasePostGIS):
-    __tablename__ = "HostedBy"
+    __tablename__ = constants.HOSTED_BY
     table_type = TableTypes.METADATA
     table_type_id = 1
     __table_args__ = {"schema": "pepys"}
 
-    hosted_by_id = Column(UUID(), primary_key=True, default=uuid4)
+    hosted_by_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     subject_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False
     )
@@ -95,7 +88,7 @@ class HostedBy(BasePostGIS):
 
 
 class Sensor(BasePostGIS):
-    __tablename__ = "Sensors"
+    __tablename__ = constants.SENSOR
     table_type = TableTypes.METADATA
     table_type_id = 2
     __table_args__ = {"schema": "pepys"}
@@ -107,19 +100,45 @@ class Sensor(BasePostGIS):
         ForeignKey("pepys.SensorTypes.sensor_type_id"),
         nullable=False,
     )
-    platform_id = Column(
+    host = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
     @classmethod
+    def find_sensor(cls, data_store, sensor_name, platform_id):
+        """
+        This method tries to find a Sensor entity with the given sensor_name. If it
+        finds, it returns the entity. If it is not found, it searches synonyms.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: DataStore
+        :param sensor_name: Name of :class:`Sensor`
+        :type sensor_name: String
+        :param platform_id:  Primary key of the Platform that Sensor belongs to
+        :type platform_id: UUID
+        :return:
+        """
+        sensor = (
+            data_store.session.query(data_store.db_classes.Sensor)
+            .filter(data_store.db_classes.Sensor.name == sensor_name)
+            .filter(data_store.db_classes.Sensor.host == platform_id)
+            .first()
+        )
+        if sensor:
+            return sensor
+
+        # Sensor is not found, try to find a synonym
+        return data_store.synonym_search(
+            name=sensor_name,
+            table=data_store.db_classes.Sensor,
+            pk_field=data_store.db_classes.Sensor.sensor_id,
+        )
+
+    @classmethod
     def add_to_sensors(cls, session, name, sensor_type, host):
         sensor_type = SensorType().search_sensor_type(session, sensor_type)
         host = Platform().search_platform(session, host)
-
-        if sensor_type is None or host is None:
-            text = f"There is missing value(s) in '{sensor_type}, {host}'!"
-            raise Exception(text)
 
         entry_id = Entry().add_to_entries(
             session, Sensor.table_type_id, Sensor.__tablename__
@@ -129,7 +148,7 @@ class Sensor(BasePostGIS):
             sensor_id=entry_id,
             name=name,
             sensor_type_id=sensor_type.sensor_type_id,
-            platform_id=host.platform_id,
+            host=host.platform_id,
         )
         session.add(sensor_obj)
         session.flush()
@@ -138,7 +157,7 @@ class Sensor(BasePostGIS):
 
 
 class Platform(BasePostGIS):
-    __tablename__ = "Platforms"
+    __tablename__ = constants.PLATFORM
     table_type = TableTypes.METADATA
     table_type_id = 3
     __table_args__ = {"schema": "pepys"}
@@ -168,17 +187,14 @@ class Platform(BasePostGIS):
         # search for any platform with this name
         return session.query(Platform).filter(Platform.name == name).first()
 
-    def get_sensor(
-        self, session, all_sensors, sensor_name, sensor_type=None, privacy=None
-    ):
+    def get_sensor(self, data_store, sensor_name=None, sensor_type=None, privacy=None):
         """
         Lookup or create a sensor of this name for this :class:`Platform`.
         Specified sensor will be added to the :class:`Sensor` table.
+        It uses find_sensor method to search existing sensors.
 
-        :param session: Session to query DB
-        :type session: :class:`sqlalchemy.orm.session.Session`
-        :param all_sensors: All :class:`Sensor` Entities
-        :type all_sensors: :class:`Sensor` List
+        :param data_store: DataStore object to to query DB and use missing data resolver
+        :type data_store: DataStore
         :param sensor_name: Name of :class:`Sensor`
         :type sensor_name: String
         :param sensor_type: Type of :class:`Sensor`
@@ -189,34 +205,40 @@ class Platform(BasePostGIS):
         :rtype: Sensor
         """
 
-        # return True if provided sensor exists
-        def check_sensor(name):
-            if next((sensor for sensor in all_sensors if sensor.name == name), None):
-                # A sensor already exists with that name
-                return False
+        # Check for name match in Sensor and Synonym Tables
+        sensor = Sensor().find_sensor(data_store, sensor_name, self.platform_id)
+        if sensor:
+            return sensor
 
-            return True
-
-        if len(sensor_name) == 0:
-            raise Exception("Please enter sensor name!")
-        elif check_sensor(sensor_name):
-            return Sensor().add_to_sensors(
-                session=session,
-                name=sensor_name,
-                sensor_type=sensor_type,
-                host=self.name,
+        if sensor_type is None or privacy is None:
+            resolved_data = data_store.missing_data_resolver.resolve_sensor(
+                data_store, sensor_name, sensor_type, privacy
             )
-        else:
-            return session.query(Sensor).filter(Sensor.name == sensor_name).first()
+            # It means that new sensor added as a synonym and existing sensor returned
+            if isinstance(resolved_data, Sensor):
+                return resolved_data
+            elif len(resolved_data) == 3:
+                (sensor_name, sensor_type, privacy,) = resolved_data
+
+        assert isinstance(sensor_type, SensorType), "Type error for Sensor Type entity"
+        # TODO: we don't use privacy for sensor. Is it necessary to resolve it?
+        # assert isinstance(privacy, Privacy), "Type error for Privacy entity"
+
+        return Sensor().add_to_sensors(
+            session=data_store.session,
+            name=sensor_name,
+            sensor_type=sensor_type.name,
+            host=self.name,
+        )
 
 
 class Task(BasePostGIS):
-    __tablename__ = "Tasks"
+    __tablename__ = constants.TASK
     table_type = TableTypes.METADATA
     table_type_id = 4
     __table_args__ = {"schema": "pepys"}
 
-    task_id = Column(UUID(), primary_key=True, default=uuid4)
+    task_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     parent_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Tasks.task_id"), nullable=False
     )
@@ -231,12 +253,12 @@ class Task(BasePostGIS):
 
 
 class Participant(BasePostGIS):
-    __tablename__ = "Participants"
+    __tablename__ = constants.PARTICIPANT
     table_type = TableTypes.METADATA
     table_type_id = 5
     __table_args__ = {"schema": "pepys"}
 
-    participant_id = Column(UUID(), primary_key=True, default=uuid4)
+    participant_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     platform_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False
     )
@@ -253,6 +275,11 @@ class Participant(BasePostGIS):
 
 
 class Datafile(BasePostGIS):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._measurements = []
+
+    __tablename__ = constants.DATAFILE
     __tablename__ = "Datafiles"
     table_type = TableTypes.METADATA
     table_type_id = 6  # Only needed for tables referenced by Entry table
@@ -276,12 +303,14 @@ class Datafile(BasePostGIS):
         state = State(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
+        self._measurements.append(state)
         return state
 
     def create_contact(self, sensor, timestamp):
         contact = Contact(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
+        self._measurements.append(contact)
         return contact
 
     def create_comment(self, sensor, timestamp, comment, comment_type):
@@ -291,34 +320,40 @@ class Datafile(BasePostGIS):
             comment_type_id=comment_type.comment_type_id,
             source_id=self.datafile_id,
         )
+        self._measurements.append(comment)
         return comment
 
     def validate(self):
         return True
+
+    def commit(self, session):
+        for file in self._measurements:
+            file.submit(session)
 
     # def verify(self):
     #     pass
 
 
 class Synonym(BasePostGIS):
-    __tablename__ = "Synonyms"
+    __tablename__ = constants.SYNONYM
     table_type = TableTypes.METADATA
     table_type_id = 7
     __table_args__ = {"schema": "pepys"}
 
-    synonym_id = Column(UUID(), primary_key=True, default=uuid4)
+    synonym_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
+    entity = Column(UUID(as_uuid=True), nullable=False)
     synonym = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Change(BasePostGIS):
-    __tablename__ = "Changes"
+    __tablename__ = constants.CHANGE
     table_type = TableTypes.METADATA
     table_type_id = 8
     __table_args__ = {"schema": "pepys"}
 
-    change_id = Column(UUID(), primary_key=True, default=uuid4)
+    change_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user = Column(String(150), nullable=False)
     modified = Column(DATE, nullable=False)
     reason = Column(String(500), nullable=False)
@@ -326,12 +361,12 @@ class Change(BasePostGIS):
 
 
 class Log(BasePostGIS):
-    __tablename__ = "Logs"
+    __tablename__ = constants.LOG
     table_type = TableTypes.METADATA
     table_type_id = 9
     __table_args__ = {"schema": "pepys"}
 
-    log_id = Column(UUID(), primary_key=True, default=uuid4)
+    log_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
     id = Column(UUID(as_uuid=True), ForeignKey("pepys.Logs.log_id"), nullable=False)
     field = Column(String(150), nullable=False)
@@ -341,12 +376,12 @@ class Log(BasePostGIS):
 
 
 class Extraction(BasePostGIS):
-    __tablename__ = "Extractions"
+    __tablename__ = constants.EXTRACTION
     table_type = TableTypes.METADATA
     table_type_id = 10
     __table_args__ = {"schema": "pepys"}
 
-    extraction_id = Column(UUID(), primary_key=True, default=uuid4)
+    extraction_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
     field = Column(String(150), nullable=False)
     chars = Column(String(150), nullable=False)
@@ -354,23 +389,23 @@ class Extraction(BasePostGIS):
 
 
 class Tag(BasePostGIS):
-    __tablename__ = "Tags"
+    __tablename__ = constants.TAG
     table_type = TableTypes.METADATA
     table_type_id = 11
     __table_args__ = {"schema": "pepys"}
 
-    tag_id = Column(UUID(), primary_key=True, default=uuid4)
+    tag_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class TaggedItem(BasePostGIS):
-    __tablename__ = "TaggedItems"
+    __tablename__ = constants.TAGGED_ITEM
     table_type = TableTypes.METADATA
     table_type_id = 12
     __table_args__ = {"schema": "pepys"}
 
-    tagged_item_id = Column(UUID(), primary_key=True, default=uuid4)
+    tagged_item_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     tag_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Tags.tag_id"), nullable=False)
     item_id = Column(UUID(as_uuid=True), nullable=False)
     tagged_by_id = Column(
@@ -383,7 +418,7 @@ class TaggedItem(BasePostGIS):
 
 # Reference Tables
 class PlatformType(BasePostGIS):
-    __tablename__ = "PlatformTypes"
+    __tablename__ = constants.PLATFORM_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 13
     __table_args__ = {"schema": "pepys"}
@@ -394,7 +429,7 @@ class PlatformType(BasePostGIS):
 
 
 class Nationality(BasePostGIS):
-    __tablename__ = "Nationalities"
+    __tablename__ = constants.NATIONALITY
     table_type = TableTypes.REFERENCE
     table_type_id = 14
     __table_args__ = {"schema": "pepys"}
@@ -405,7 +440,7 @@ class Nationality(BasePostGIS):
 
 
 class GeometryType(BasePostGIS):
-    __tablename__ = "GeometryTypes"
+    __tablename__ = constants.GEOMETRY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 15
     __table_args__ = {"schema": "pepys"}
@@ -416,7 +451,7 @@ class GeometryType(BasePostGIS):
 
 
 class GeometrySubType(BasePostGIS):
-    __tablename__ = "GeometrySubTypes"
+    __tablename__ = constants.GEOMETRY_SUBTYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 16
     __table_args__ = {"schema": "pepys"}
@@ -429,7 +464,7 @@ class GeometrySubType(BasePostGIS):
 
 
 class User(BasePostGIS):
-    __tablename__ = "Users"
+    __tablename__ = constants.USER
     table_type = TableTypes.REFERENCE
     table_type_id = 17
     __table_args__ = {"schema": "pepys"}
@@ -440,7 +475,7 @@ class User(BasePostGIS):
 
 
 class UnitType(BasePostGIS):
-    __tablename__ = "UnitTypes"
+    __tablename__ = constants.UNIT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 18
     __table_args__ = {"schema": "pepys"}
@@ -451,7 +486,7 @@ class UnitType(BasePostGIS):
 
 
 class ClassificationType(BasePostGIS):
-    __tablename__ = "ClassificationTypes"
+    __tablename__ = constants.CLASSIFICATION_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 19
     __table_args__ = {"schema": "pepys"}
@@ -462,7 +497,7 @@ class ClassificationType(BasePostGIS):
 
 
 class ContactType(BasePostGIS):
-    __tablename__ = "ContactTypes"
+    __tablename__ = constants.CONTACT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 20
     __table_args__ = {"schema": "pepys"}
@@ -473,7 +508,7 @@ class ContactType(BasePostGIS):
 
 
 class SensorType(BasePostGIS):
-    __tablename__ = "SensorTypes"
+    __tablename__ = constants.SENSOR_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 21
     __table_args__ = {"schema": "pepys"}
@@ -489,7 +524,7 @@ class SensorType(BasePostGIS):
 
 
 class Privacy(BasePostGIS):
-    __tablename__ = "Privacies"
+    __tablename__ = constants.PRIVACY
     table_type = TableTypes.REFERENCE
     table_type_id = 22
     __table_args__ = {"schema": "pepys"}
@@ -500,7 +535,7 @@ class Privacy(BasePostGIS):
 
 
 class DatafileType(BasePostGIS):
-    __tablename__ = "DatafileTypes"
+    __tablename__ = constants.DATAFILE_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 23
     __table_args__ = {"schema": "pepys"}
@@ -511,7 +546,7 @@ class DatafileType(BasePostGIS):
 
 
 class MediaType(BasePostGIS):
-    __tablename__ = "MediaTypes"
+    __tablename__ = constants.MEDIA_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 24
     __table_args__ = {"schema": "pepys"}
@@ -522,7 +557,7 @@ class MediaType(BasePostGIS):
 
 
 class CommentType(BasePostGIS):
-    __tablename__ = "CommentTypes"
+    __tablename__ = constants.COMMENT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 25
     __table_args__ = {"schema": "pepys"}
@@ -533,7 +568,7 @@ class CommentType(BasePostGIS):
 
 
 class CommodityType(BasePostGIS):
-    __tablename__ = "CommodityTypes"
+    __tablename__ = constants.COMMODITY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 26
     __table_args__ = {"schema": "pepys"}
@@ -544,7 +579,7 @@ class CommodityType(BasePostGIS):
 
 
 class ConfidenceLevel(BasePostGIS):
-    __tablename__ = "ConfidenceLevels"
+    __tablename__ = constants.CONFIDENCE_LEVEL
     table_type = TableTypes.REFERENCE
     table_type_id = 27  # Only needed for tables referenced by Entry table
     __table_args__ = {"schema": "pepys"}
@@ -556,7 +591,7 @@ class ConfidenceLevel(BasePostGIS):
 
 # Measurements Tables
 class State(BasePostGIS):
-    __tablename__ = "States"
+    __tablename__ = constants.STATE
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
     __table_args__ = {"schema": "pepys"}
@@ -585,7 +620,7 @@ class State(BasePostGIS):
 
 
 class Contact(BasePostGIS):
-    __tablename__ = "Contacts"
+    __tablename__ = constants.CONTACT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
     __table_args__ = {"schema": "pepys"}
@@ -626,7 +661,7 @@ class Contact(BasePostGIS):
 
 
 class Activation(BasePostGIS):
-    __tablename__ = "Activations"
+    __tablename__ = constants.ACTIVATION
     table_type = TableTypes.MEASUREMENT
     table_type_id = 30
     __table_args__ = {"schema": "pepys"}
@@ -650,7 +685,7 @@ class Activation(BasePostGIS):
 
 
 class LogsHolding(BasePostGIS):
-    __tablename__ = "LogsHoldings"
+    __tablename__ = constants.LOGS_HOLDING
     table_type = TableTypes.MEASUREMENT
     table_type_id = 31
     __table_args__ = {"schema": "pepys"}
@@ -673,7 +708,7 @@ class LogsHolding(BasePostGIS):
 
 
 class Comment(BasePostGIS):
-    __tablename__ = "Comments"
+    __tablename__ = constants.COMMENT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 32
     __table_args__ = {"schema": "pepys"}
@@ -700,7 +735,7 @@ class Comment(BasePostGIS):
 
 
 class Geometry1(BasePostGIS):
-    __tablename__ = "Geometries"
+    __tablename__ = constants.GEOMETRY
     table_type = TableTypes.MEASUREMENT
     table_type_id = 33
     __table_args__ = {"schema": "pepys"}
@@ -735,7 +770,7 @@ class Geometry1(BasePostGIS):
 
 
 class Media(BasePostGIS):
-    __tablename__ = "Media"
+    __tablename__ = constants.MEDIA
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34
     __table_args__ = {"schema": "pepys"}
