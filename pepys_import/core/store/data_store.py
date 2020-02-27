@@ -988,3 +988,51 @@ class DataStore(object):
         self.sensor_types[sensor_type_name] = sensor_type
         # should return DB type or something else decoupled from DB?
         return sensor_type
+
+    def clear_db(self):
+        """Delete records of all database tables"""
+        if self.db_type == "sqlite":
+            meta = BaseSpatiaLite.metadata
+        else:
+            meta = BasePostGIS.metadata
+
+        with self.session_scope():
+            for table in reversed(meta.sorted_tables):
+                self.session.execute(table.delete())
+
+    def get_all_datafiles(self):
+        """
+        Gets all datafiles.
+
+        :return: Datafile entity
+        :rtype: Datafile
+        """
+        datafiles = self.session.query(self.db_classes.Datafile).all()
+        return datafiles
+
+    def export_datafile(self, datafile_id):
+        """
+        Get states, contacts and comments based on Datafile ID.
+
+        :param datafile_id:  ID of Datafile
+        :type datafile_id: String
+        """
+        states = (
+            self.session.query(self.db_classes.State)
+            .filter(self.db_classes.State.source_id == datafile_id)
+            .all()
+        )
+
+        contacts = (
+            self.session.query(self.db_classes.Contact)
+            .filter(self.db_classes.Contact.source_id == datafile_id)
+            .all()
+        )
+
+        comments = (
+            self.session.query(self.db_classes.Comment)
+            .filter(self.db_classes.Comment.source_id == datafile_id)
+            .all()
+        )
+
+        print(states, contacts, comments)
