@@ -106,6 +106,9 @@ venv.bak/
 *.iml
 *.DS_Store
 
+# Editor files
+*.code-workspace
+
 
 # binaries for distribution
 /python/*
