@@ -51,7 +51,7 @@ class Importer(ABC):
         """
 
     @abstractmethod
-    def load_this_file(self, data_store, path, file_contents, data_file):
+    def load_this_file(self, data_store, path, file_contents, datafile):
         """Process this data-file
         
         :param data_store: The data_store
@@ -60,6 +60,6 @@ class Importer(ABC):
         :type path: String
         :param file_contents: File contents
         :type file_contents: String
-        :param data_file: DataFile object
-        :type data_file: DataFile
+        :param datafile: DataFile object
+        :type datafile: DataFile
         """
