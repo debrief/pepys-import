@@ -43,16 +43,16 @@ class GPXTests(unittest.TestCase):
         with self.store.session_scope():
             # there must be states after the import
             states = self.store.session.query(self.store.db_classes.State).all()
-            assert len(states) == 17
+            assert len(states) == 27
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 2
+            assert len(platforms) == 3
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             ## TODO: Check if this is correct - it seems to be counting the invalid data file
-            assert len(datafiles) == 4
+            assert len(datafiles) == 5
 
 
 if __name__ == "__main__":
