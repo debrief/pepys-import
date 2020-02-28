@@ -1,43 +1,19 @@
--- Table: public."Activations"
-
--- DROP TABLE public."Activations";
-
-CREATE TABLE public."Activations"
+CREATE TABLE pepys."Activations"
 (
-    --sensor_id uuid NOT NULL DEFAULT gen_random_uuid(),
-    sensor_id     uuid                                                NOT NULL DEFAULT uuid_generate_v4(),
-    "end"         timestamp without time zone                         NOT NULL,
-    min_range     double precision,
-    max_range     double precision,
-    left_arc      double precision,
-    right_arc     double precision,
-    datafile_id   uuid                                                NOT NULL,
-    privacy_id    uuid,
-    name          character varying(150) COLLATE pg_catalog."default" NOT NULL,
-    activation_id uuid                                                NOT NULL,
-    start         timestamp without time zone                         NOT NULL,
-    CONSTRAINT "Activations_pkey" PRIMARY KEY (activation_id),
-    CONSTRAINT activations_datafiles_fk FOREIGN KEY (datafile_id)
-        REFERENCES public."Datafiles" (datafile_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION,
-    CONSTRAINT activations_entry_fk FOREIGN KEY (activation_id)
-        REFERENCES public."Entry" (entry_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION,
-    CONSTRAINT activations_privacies_fk FOREIGN KEY (privacy_id)
-        REFERENCES public."Privacies" (privacy_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION,
-    CONSTRAINT activations_sensors_fk FOREIGN KEY (sensor_id)
-        REFERENCES public."Sensors" (sensor_id) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION
+    activation_id UUID                        NOT NULL,
+    name          VARCHAR(150)                NOT NULL,
+    sensor_id     UUID                        NOT NULL,
+    start         TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    "end"         TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    min_range     DOUBLE PRECISION,
+    max_range     DOUBLE PRECISION,
+    left_arc      DOUBLE PRECISION,
+    right_arc     DOUBLE PRECISION,
+    source_id     UUID                        NOT NULL,
+    privacy_id    UUID,
+    created_date  TIMESTAMP WITHOUT TIME ZONE,
+    PRIMARY KEY (activation_id),
+    FOREIGN KEY (sensor_id) REFERENCES pepys."Sensors" (sensor_id),
+    FOREIGN KEY (source_id) REFERENCES pepys."Datafiles" (datafile_id),
+    FOREIGN KEY (privacy_id) REFERENCES pepys."Privacies" (privacy_id)
 )
-    WITH (
-        OIDS = FALSE
-    )
-    TABLESPACE pg_default;
-
-ALTER TABLE public."Activations"
-    OWNER to tracstor_admin;
