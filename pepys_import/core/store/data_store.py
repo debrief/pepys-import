@@ -1139,7 +1139,7 @@ class DataStore(object):
         :param change_id:  Row ID of entity of :class:`Changes` about the change
         :return: Created :class:`Logs` entity
         """
-        log = self.db_classes.Logs(
+        log = self.db_classes.Log(
             table=table,
             id=row_id,
             field=field,
