@@ -358,13 +358,14 @@ class DataStore(object):
         self.session.flush()
 
         # State object created, log it to Logs table
-        self.add_to_logs(
-            table=constants.STATE,
-            row_id=state_obj.state_id,
-            field="-",
-            new_value="-",
-            change_id="XXX",  # TODO: Does it mean that we should create an entry in Changes first?
-        )
+        # TODO: It should comment out when change id is known
+        # self.add_to_logs(
+        #     table=constants.STATE,
+        #     row_id=state_obj.state_id,
+        #     field="-",
+        #     new_value="-",
+        #     change_id="XXX",  # TODO: Does it mean that we should create an entry in Changes first?
+        # )
 
         return state_obj
 
