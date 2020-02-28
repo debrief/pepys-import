@@ -14,9 +14,9 @@ from contextlib import contextmanager
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
+from pepys_import.core.store import constants
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
-from pepys_import.core.formats import unit_registry
 
 from pepys_import import __version__
 from pepys_import.utils.branding_util import (
@@ -356,6 +356,15 @@ class DataStore(object):
         )
         self.session.add(state_obj)
         self.session.flush()
+
+        # State object created, log it to Logs table
+        self.add_to_logs(
+            table=constants.STATE,
+            row_id=state_obj.state_id,
+            field="-",
+            new_value="-",
+            change_id="XXX",  # TODO: Does it mean that we should create an entry in Changes first?
+        )
 
         return state_obj
 
@@ -1114,6 +1123,51 @@ class DataStore(object):
         self.sensor_types[sensor_type_name] = sensor_type
         # should return DB type or something else decoupled from DB?
         return sensor_type
+
+    # End of References
+    #############################################################
+    # Metadata Maintenance
+
+    def add_to_logs(self, table, row_id, field, new_value, change_id):
+        """
+        Adds the specified event to the :class:`Logs`table if not already present.
+
+        :param table: Name of the table
+        :param row_id: Entity ID of the tale
+        :param field:  Name of the field
+        :param new_value:  New value of the field
+        :param change_id:  Row ID of entity of :class:`Changes` about the change
+        :return: Created :class:`Logs` entity
+        """
+        log = self.db_classes.Logs(
+            table=table,
+            id=row_id,
+            field=field,
+            new_value=new_value,
+            change_id=change_id,
+        )
+        self.session.add(log)
+        self.session.flush()
+
+        return log
+
+    def add_to_changes(self, user, modified, reason):
+        """
+        Adds the specified event to the :class:`Change`table if not already present.
+
+        :param user: Username of the current login
+        :param modified: Change date
+        :param reason:  Reason of the change
+        :return: Created :class:`Change` entity
+        """
+        change = self.db_classes.Changes(user=user, modified=modified, reason=reason,)
+        self.session.add(change)
+        self.session.flush()
+
+        return change
+
+    # End of Metadata Maintenance
+    #############################################################
 
     def clear_db(self):
         """Delete records of all database tables"""
