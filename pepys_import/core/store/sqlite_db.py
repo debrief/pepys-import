@@ -537,6 +537,7 @@ class State(BaseSpatiaLite):
         """Submit intermediate object to the DB"""
         session.add(self)
         session.flush()
+        # TODO: create one Log entry for table and row id
 
         return self
 
@@ -571,6 +572,7 @@ class Contact(BaseSpatiaLite):
         """Submit intermediate object to the DB"""
         session.add(self)
         session.flush()
+        # TODO: create one Log entry for table and row id
 
         return self
 
@@ -629,6 +631,7 @@ class Comment(BaseSpatiaLite):
         """Submit intermediate object to the DB"""
         session.add(self)
         session.flush()
+        # TODO: create one Log entry for table and row id
 
         return self
 

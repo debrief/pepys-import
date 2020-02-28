@@ -152,6 +152,7 @@ class FileProcessor:
                 processed_ctr += 1
                 importer.load_this_file(data_store, file, file_contents, datafile)
 
+            # TODO: might be the best place to put summaries to Changes
             if datafile.validate():
                 datafile.commit(data_store.session)
 
