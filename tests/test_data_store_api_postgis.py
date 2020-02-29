@@ -5,10 +5,8 @@ from sqlite3 import OperationalError
 from unittest import TestCase
 from testing.postgresql import Postgresql
 from datetime import datetime
-from sqlalchemy import event
-from sqlalchemy.sql.ddl import DropSchema
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.core.store.db_base import BasePostGIS
+from pepys_import.core.store import constants
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -43,16 +41,13 @@ class DataStoreCacheTestCase(TestCase):
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
             self.postgres.stop()
         except AttributeError:
             return
 
     def test_cached_comment_types(self):
         """Test whether a new comment type entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             comment_types = self.store.session.query(
                 self.store.db_classes.CommentType
             ).all()
@@ -76,7 +71,7 @@ class DataStoreCacheTestCase(TestCase):
 
     def test_cached_table_type(self):
         """Test whether a new table type entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             table_types = self.store.session.query(
                 self.store.db_classes.TableType
             ).all()
@@ -103,7 +98,7 @@ class DataStoreCacheTestCase(TestCase):
 
     def test_cached_platform_types(self):
         """Test whether a new platform type entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platform_types = self.store.session.query(
                 self.store.db_classes.PlatformType
             ).all()
@@ -130,7 +125,7 @@ class DataStoreCacheTestCase(TestCase):
 
     def test_cached_nationalities(self):
         """Test whether a new nationality entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             nationalities = self.store.session.query(
                 self.store.db_classes.Nationality
             ).all()
@@ -153,7 +148,7 @@ class DataStoreCacheTestCase(TestCase):
 
     def test_cached_privacies(self):
         """Test whether a new privacy entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             privacies = self.store.session.query(self.store.db_classes.Privacy).all()
 
             # there must be no entity at the beginning
@@ -172,7 +167,7 @@ class DataStoreCacheTestCase(TestCase):
 
     def test_cached_datafile_types(self):
         """Test whether a new datafile type entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             datafile_types = self.store.session.query(
                 self.store.db_classes.DatafileType
             ).all()
@@ -195,7 +190,7 @@ class DataStoreCacheTestCase(TestCase):
 
     def test_cached_sensor_types(self):
         """Test whether a new sensor type entity cached and returned"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             sensor_types = self.store.session.query(
                 self.store.db_classes.SensorType
             ).all()
@@ -249,15 +244,12 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
             self.postgres.stop()
         except AttributeError:
             return
 
     def test_comment_types(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             comment_type = self.store.db_classes.CommentType(name="test")
             self.store.session.add(comment_type)
             self.store.session.flush()
@@ -279,7 +271,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(comment_types), 1)
 
     def test_table_type(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             table_type = self.store.db_classes.TableType(table_type_id=1, name="test")
             self.store.session.add(table_type)
             self.store.session.flush()
@@ -301,7 +293,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(table_types), 1)
 
     def test_platform_types(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platform_type = self.store.db_classes.PlatformType(name="test")
             self.store.session.add(platform_type)
             self.store.session.flush()
@@ -323,7 +315,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(platform_types), 1)
 
     def test_nationalities(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             nationality = self.store.db_classes.Nationality(name="test")
             self.store.session.add(nationality)
             self.store.session.flush()
@@ -345,7 +337,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(nationalities), 1)
 
     def test_privacies(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             privacy = self.store.db_classes.Privacy(name="test")
             self.store.session.add(privacy)
             self.store.session.flush()
@@ -363,7 +355,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(privacies), 1)
 
     def test_datafile_types(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             datafile_type = self.store.db_classes.DatafileType(name="test")
             self.store.session.add(datafile_type)
             self.store.session.flush()
@@ -385,7 +377,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(datafile_types), 1)
 
     def test_sensor_types(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             sensor_type = self.store.db_classes.SensorType(name="test")
             self.store.session.add(sensor_type)
             self.store.session.flush()
@@ -431,7 +423,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 db_port=55527,
             )
             self.store.initialise()
-            with self.store.session_scope() as session:
+            with self.store.session_scope():
                 self.nationality = self.store.add_to_nationalities(
                     "test_nationality"
                 ).name
@@ -444,9 +436,6 @@ class PlatformAndDatafileTestCase(TestCase):
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
             self.postgres.stop()
         except AttributeError:
             return
@@ -454,17 +443,17 @@ class PlatformAndDatafileTestCase(TestCase):
     def test_new_datafile_added_successfully(self):
         """Test whether a new datafile is created successfully or not"""
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(datafiles), 0)
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.get_datafile("test_file.csv", "csv")
 
         # there must be one entry
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
             self.assertEqual(datafiles[0].reference, "test_file.csv")
@@ -472,13 +461,13 @@ class PlatformAndDatafileTestCase(TestCase):
     def test_present_datafile_not_added(self):
         """Test whether present datafile is not created"""
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(datafiles), 0)
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.get_datafile("test_file.csv", "csv")
             self.store.get_datafile("test_file.csv", "csv")
 
@@ -487,27 +476,39 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(len(datafiles), 1)
             self.assertEqual(datafiles[0].reference, "test_file.csv")
 
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_datafile(self):
-        pass
+    def test_find_datafile(self):
+        """Test whether find_datafile method returns the correct Datafile entity"""
+        with self.store.session_scope():
+            # Create a datafile
+            datafile = self.store.get_datafile("test_file.csv", "csv")
+            datafile_2 = self.store.get_datafile("test_file_2.csv", "csv")
+            found_datafile = self.store.find_datafile("test_file.csv")
 
-    @unittest.expectedFailure
-    def test_empty_datafile_name(self):
-        """Test whether a new datafile without a name is created or not"""
+            self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
+            self.assertEqual(found_datafile.reference, "test_file.csv")
 
-        with self.store.session_scope() as session:
-            self.store.get_datafile(datafile_name="", datafile_type="csv")
+    def test_find_datafile_synonym(self):
+        """Test whether find_datafile method finds the correct Datafile entity from Synonyms table"""
+        with self.store.session_scope():
+            datafile = self.store.get_datafile("test_file.csv", "csv")
+            datafile_2 = self.store.get_datafile("test_file_2.csv", "csv")
+            self.store.add_to_synonyms(
+                table=constants.DATAFILE, name="TEST", entity=datafile.datafile_id
+            )
+
+            found_datafile = self.store.find_datafile("TEST")
+            self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
 
     def test_new_platform_added_successfully(self):
         """Test whether a new platform is created successfully or not"""
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(platforms), 0)
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
                 nationality=self.nationality,
@@ -516,7 +517,7 @@ class PlatformAndDatafileTestCase(TestCase):
             )
 
         # there must be one entry
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
 
             self.assertEqual(len(platforms), 1)
@@ -525,13 +526,13 @@ class PlatformAndDatafileTestCase(TestCase):
     def test_present_platform_not_added(self):
         """Test whether present platform is not created"""
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
 
         # there must be no entry at the beginning
         self.assertEqual(len(platforms), 0)
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
                 nationality=self.nationality,
@@ -546,22 +547,56 @@ class PlatformAndDatafileTestCase(TestCase):
             )
 
         # there must be one entry
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
 
             self.assertEqual(len(platforms), 1)
             self.assertEqual(platforms[0].name, "Test Platform")
 
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_platform(self):
-        pass
-
-    @unittest.expectedFailure
-    def test_empty_platform_name(self):
-        """Test whether a new platform without a name is created or not"""
-
+    def test_find_platform(self):
+        """Test whether find_platform method returns the correct Platform entity"""
         with self.store.session_scope() as session:
-            self.store.get_platform(platform_name="")
+            # Create two platforms
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+            platform_2 = self.store.get_platform(
+                platform_name="Test Platform 2",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+
+            found_platform = self.store.find_platform("Test Platform")
+            self.assertEqual(platform.platform_id, found_platform.platform_id)
+            self.assertEqual(found_platform.name, "Test Platform")
+
+    def test_find_platform_synonym(self):
+        """Test whether find_platform method finds the correct Platform entity from Synonyms table"""
+        with self.store.session_scope() as session:
+            # Create two platforms
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+            platform_2 = self.store.get_platform(
+                platform_name="Test Platform 2",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+            self.store.add_to_synonyms(
+                table=constants.PLATFORM, name="TEST", entity=platform.platform_id
+            )
+
+            found_platform = self.store.find_platform("TEST")
+            self.assertEqual(platform.platform_id, found_platform.platform_id)
+            self.assertEqual(found_platform.name, "Test Platform")
 
 
 class DataStoreStatusTestCase(TestCase):
@@ -588,17 +623,15 @@ class DataStoreStatusTestCase(TestCase):
                 db_port=55527,
             )
             self.store.initialise()
-            self.store.populate_reference(TEST_DATA_PATH)
-            self.store.populate_metadata(TEST_DATA_PATH)
-            self.store.populate_measurement(TEST_DATA_PATH)
+            with self.store.session_scope():
+                self.store.populate_reference(TEST_DATA_PATH)
+                self.store.populate_metadata(TEST_DATA_PATH)
+                self.store.populate_measurement(TEST_DATA_PATH)
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
             self.postgres.stop()
         except AttributeError:
             return
@@ -606,7 +639,8 @@ class DataStoreStatusTestCase(TestCase):
     def test_get_status_of_measurement(self):
         """Test whether summary contents correct for measurement tables"""
 
-        table_summary_object = self.store.get_status(report_measurement=True)
+        with self.store.session_scope():
+            table_summary_object = self.store.get_status(report_measurement=True)
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")
@@ -617,7 +651,8 @@ class DataStoreStatusTestCase(TestCase):
     def test_get_status_of_metadata(self):
         """Test whether summary contents correct for metadata tables"""
 
-        table_summary_object = self.store.get_status(report_metadata=True)
+        with self.store.session_scope():
+            table_summary_object = self.store.get_status(report_metadata=True)
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")
@@ -628,7 +663,8 @@ class DataStoreStatusTestCase(TestCase):
     def test_get_status_of_reference(self):
         """Test whether summary contents correct for reference tables"""
 
-        table_summary_object = self.store.get_status(report_reference=True)
+        with self.store.session_scope():
+            table_summary_object = self.store.get_status(report_reference=True)
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")
@@ -661,16 +697,14 @@ class SensorTestCase(TestCase):
                 db_port=55527,
             )
             self.store.initialise()
-            with self.store.session_scope() as session:
+            with self.store.session_scope():
                 self.nationality = self.store.add_to_nationalities(
                     "test_nationality"
                 ).name
                 self.platform_type = self.store.add_to_platform_types(
                     "test_platform_type"
                 ).name
-                self.sensor_type = self.store.add_to_sensor_types(
-                    "test_sensor_type"
-                ).name
+                self.sensor_type = self.store.add_to_sensor_types("test_sensor_type")
                 self.privacy = self.store.add_to_privacies("test_privacy").name
 
                 self.platform = self.store.get_platform(
@@ -679,29 +713,26 @@ class SensorTestCase(TestCase):
                     platform_type=self.platform_type,
                     privacy=self.privacy,
                 )
+                self.store.session.expunge(self.platform)
+                self.store.session.expunge(self.sensor_type)
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
             self.postgres.stop()
         except AttributeError:
             return
 
     def test_new_sensor_added_successfully(self):
         """Test whether a new sensor is created"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(
-                self.store.session, sensors, "gps", self.sensor_type
-            )
+            self.platform.get_sensor(self.store, "gps", self.sensor_type)
 
             # there must be one entry
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
@@ -710,52 +741,58 @@ class SensorTestCase(TestCase):
 
     def test_present_sensor_not_added(self):
         """Test whether present sensor is not created"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(
-                self.store.session, sensors, "gps", self.sensor_type
-            )
+            self.platform.get_sensor(self.store, "gps", self.sensor_type)
 
-            # query Sensor table again and try to add the same entity
-            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            self.platform.get_sensor(
-                self.store.session, sensors, "gps", self.sensor_type
-            )
+            # try to add the same entity
+            self.platform.get_sensor(self.store, "gps", self.sensor_type)
 
             # there must be one entry
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             self.assertEqual(len(sensors), 1)
 
-    @unittest.expectedFailure
-    def test_new_sensor_with_empty_sensor_type(self):
-        """Test whether a new sensor without sensor type is created"""
-        with self.store.session_scope() as session:
+    def test_find_sensor(self):
+        """Test whether find_sensor method returns the correct Sensor entity"""
+        with self.store.session_scope():
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(self.store.session, sensors, "gps")
+            sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
+            sensor_2 = self.platform.get_sensor(self.store, "gps_2", self.sensor_type)
 
-    @unittest.expectedFailure
-    def test_empty_sensor_name(self):
-        """Test whether a new sensor with empty name is created"""
-        with self.store.session_scope() as session:
+            found_sensor = self.store.db_classes.Sensor().find_sensor(
+                self.store, "gps", self.platform.platform_id
+            )
+            self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
+            self.assertEqual(found_sensor.name, "gps")
+
+    def test_find_sensor_synonym(self):
+        """Test whether find_sensor method finds the correct Sensor entity from Synonyms table"""
+        with self.store.session_scope():
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(self.store.session, sensors, "", self.sensor_type)
+            sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
+            sensor_2 = self.platform.get_sensor(self.store, "gps_2", self.sensor_type)
+            self.store.add_to_synonyms(
+                table=constants.SENSOR, name="TEST", entity=sensor.sensor_id
+            )
 
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_sensor(self):
-        pass
+            found_sensor = self.store.db_classes.Sensor().find_sensor(
+                self.store, "TEST", self.platform.platform_id
+            )
+            self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
+            self.assertEqual(found_sensor.name, "gps")
 
 
 class MeasurementsTestCase(TestCase):
@@ -782,16 +819,14 @@ class MeasurementsTestCase(TestCase):
                 db_port=55527,
             )
             self.store.initialise()
-            with self.store.session_scope() as session:
+            with self.store.session_scope():
                 self.nationality = self.store.add_to_nationalities(
                     "test_nationality"
                 ).name
                 self.platform_type = self.store.add_to_platform_types(
                     "test_platform_type"
                 ).name
-                self.sensor_type = self.store.add_to_sensor_types(
-                    "test_sensor_type"
-                ).name
+                self.sensor_type = self.store.add_to_sensor_types("test_sensor_type")
                 self.privacy = self.store.add_to_privacies("test_privacy").name
 
                 self.platform = self.store.get_platform(
@@ -800,9 +835,8 @@ class MeasurementsTestCase(TestCase):
                     platform_type=self.platform_type,
                     privacy=self.privacy,
                 )
-                sensors = self.store.session.query(self.store.db_classes.Sensor).all()
                 self.sensor = self.platform.get_sensor(
-                    self.store.session, sensors, "gps", self.sensor_type
+                    self.store, "gps", self.sensor_type
                 )
                 self.comment_type = self.store.add_to_comment_types("test_type")
                 self.file = self.store.get_datafile("test_file", "csv")
@@ -817,16 +851,13 @@ class MeasurementsTestCase(TestCase):
 
     def tearDown(self) -> None:
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema")
-            )
             self.postgres.stop()
         except AttributeError:
             return
 
     def test_new_state_created_successfully(self):
         """Test whether a new state is created"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             states = self.store.session.query(self.store.db_classes.State).all()
 
             # there must be no entry at the beginning
@@ -841,13 +872,9 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(state.time, self.current_time)
 
             if self.file.validate():
-                state.submit(self.store.session)
+                self.file.commit(self.store.session)
                 states = self.store.session.query(self.store.db_classes.State).all()
             self.assertEqual(len(states), 1)
-
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_state(self):
-        pass
 
     def test_new_contact_created_successfully(self):
         """Test whether a new contact is created"""
@@ -865,16 +892,12 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(len(contacts), 0)
 
             # Fill null constraint field
-            contact.set_name("TEST")
-            contact.set_subject(self.platform)
+            contact.name = "TEST"
+            contact.subject_id = self.platform.platform_id
             if self.file.validate():
-                contact.submit(self.store.session)
+                self.file.commit(self.store.session)
                 contacts = self.store.session.query(self.store.db_classes.Contact).all()
                 self.assertEqual(len(contacts), 1)
-
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_contact(self):
-        pass
 
     def test_new_comment_created_successfully(self):
         """Test whether a new comment is created"""
@@ -894,15 +917,11 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(len(comments), 0)
 
             # Fill null constraint field
-            comment.set_platform(self.platform)
+            comment.platform_id = self.platform.platform_id
             if self.file.validate():
-                comment.submit(self.store.session)
+                self.file.commit(self.store.session)
                 comments = self.store.session.query(self.store.db_classes.Comment).all()
                 self.assertEqual(len(comments), 1)
-
-    @unittest.skip("Skip until missing data resolver is implemented.")
-    def test_missing_data_resolver_works_for_comment(self):
-        pass
 
 
 if __name__ == "__main__":

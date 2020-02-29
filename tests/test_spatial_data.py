@@ -2,13 +2,11 @@ import unittest
 import os
 
 from geoalchemy2 import WKBElement, WKTElement
-from sqlalchemy import func, event
+from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.schema import DropSchema
 from testing.postgresql import Postgresql
 
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.core.store.db_base import BasePostGIS
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -27,7 +25,7 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
 
     def test_location(self):
         """Test location saved as Geo Point and it is possible to filter State objects on SpatiaLite"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             # Filter state object by spatial location
             first_state = (
                 self.store.session.query(self.store.db_classes.State)
@@ -51,7 +49,7 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
     def test_non_existing_location(self):
         """Test filtering State objects by non existing point returns None on SpatiaLite"""
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             # Filter state object by spatial location
             first_state = (
                 self.store.session.query(self.store.db_classes.State)
@@ -99,9 +97,6 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
 
     def tearDown(self):
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema"),
-            )
             self.postgres.stop()
         except AttributeError:
             return
@@ -111,7 +106,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
         if self.postgres is None:
             self.skipTest("Postgres is not available. Test is skipping")
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             # Filter state object by spatial location
             first_state = (
                 self.store.session.query(self.store.db_classes.State)
@@ -138,7 +133,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
         if self.store is None:
             self.skipTest("Postgres is not available. Test is skipping")
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             # Filter state object by spatial location
             first_state = (
                 self.store.session.query(self.store.db_classes.State)

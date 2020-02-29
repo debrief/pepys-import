@@ -18,6 +18,25 @@ class Location:
             + ")"
         )
 
+    def __eq__(self, other):
+        if not isinstance(other, Location):
+            # don't attempt to compare against unrelated types
+            return NotImplemented
+
+        return (
+            self.degrees == other.degrees
+            and self.minutes == other.minutes
+            and self.seconds == other.seconds
+            and self.hemisphere == other.hemisphere
+        )
+
+    # provide representation of this location element in whole degrees
+    def as_degrees(self):
+        degs = self.degrees + self.minutes / 60 + self.seconds / 3600
+        if self.hemisphere.upper() in ("S", "W"):
+            degs *= -1
+        return degs
+
     def parse(self):
         try:
             self.degrees = float(self.degrees)

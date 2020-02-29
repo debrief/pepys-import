@@ -1,14 +1,12 @@
 import os
 import unittest
 from unittest import TestCase
-from sqlalchemy import inspect, MetaData, Table
 
 
-from pepys_import.core.debug.support_methods import SupportMethods
+from pepys_import.core.debug.support_methods import list_all, count_states
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats.repl_file import REPFile
-from pepys_import.core.store.sqlite_db import State
-
+from pepys_import.core.formats import unit_registry
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "track_files", "rep_data")
@@ -16,9 +14,7 @@ TEST_FILE = os.path.join(TEST_DATA_PATH, "rep_test1.rep")
 BROKEN_FILE = os.path.join(TEST_DATA_PATH, "rep_test2.rep")
 
 
-@unittest.skip("Skip until parsers are implemented")
 class TestLoadReplay(TestCase):
-    @unittest.skip("Skip until datafile parsers are implemented")
     def test_load_replay(self):
         """Test  whether we can load REP data"""
         data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -27,38 +23,40 @@ class TestLoadReplay(TestCase):
         data_store.initialise()
 
         rep_file = REPFile(TEST_FILE)
-        self.assertEqual("REP", rep_file.get_data_file_type())
+        self.assertEqual("REP", rep_file.datafile_type)
 
-        with data_store.session_scope() as session:
-            datafile = session.add_to_datafile_from_rep(
-                rep_file.get_data_file_name(), rep_file.get_data_file_type()
+        with data_store.session_scope():
+            datafile = data_store.get_datafile(
+                rep_file.filepath, rep_file.datafile_type
             )
-            for repLine in rep_file.get_lines():
-                platform = session.add_to_platforms_from_rep(
-                    repLine.get_platform(), "Fisher", "UK", "Public"
+            for rep_line in rep_file.lines:
+                platform = data_store.get_platform(
+                    platform_name=rep_line.get_platform(),
+                    nationality="UK",
+                    platform_type="Fisher",
+                    privacy="Public",
                 )
-
-                sensor = session.add_to_sensors_from_rep(
-                    platform.name + "_GPS", platform
+                sensor_type = data_store.add_to_sensor_types("_GPS")
+                privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
+                sensor = platform.get_sensor(
+                    data_store=data_store,
+                    sensor_name=platform.name,
+                    sensor_type=sensor_type,
+                    privacy=privacy.name,
                 )
-                session.add_to_states_from_rep(
-                    repLine.get_timestamp(),
-                    datafile,
-                    sensor,
-                    (repLine.get_latitude(), repLine.get_longitude()),
-                    repLine.get_heading(),
-                    repLine.get_speed(),
-                )
+                state = datafile.create_state(sensor, rep_line.timestamp)
+                state.location = rep_line.get_location()
+                state.heading = rep_line.heading.to(unit_registry.radians).magnitude
+                state.speed = rep_line.speed
+                state.privacy = privacy.privacy_id
+                if datafile.validate():
+                    datafile.commit(data_store.session)
 
-        support = SupportMethods()
-        print("Found:" + str(support.count_states(data_store)))
+        print("Found:" + str(count_states(data_store)))
 
-        support = SupportMethods()
-        self.assertEqual(
-            8, support.count_states(data_store), "Should have loaded 8 states"
-        )
+        self.assertEqual(8, count_states(data_store), "Should have loaded 8 states")
 
-        support.list_all(data_store)
+        list_all(data_store)
 
 
 if __name__ == "__main__":

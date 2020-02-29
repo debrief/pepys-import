@@ -1,6 +1,6 @@
 import unittest
 
-from pepys_import.core.formats.state import State
+from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.formats import unit_registry, quantity
 
 
@@ -44,7 +44,7 @@ class UnitsTests(unittest.TestCase):
         back_to_degree = heading_radians.to(self.unit_reg.degrees)
         self.assertEqual("<Quantity(180.0, 'degree')>", repr(back_to_degree))
 
-    def test_roundTripSpeed(self):
+    def test_round_trip_speed(self):
         speed_kilometers = quantity(20, self.unit_reg.knot)
         self.assertEqual("<Quantity(20, 'knot')>", repr(speed_kilometers))
 
@@ -59,19 +59,20 @@ class UnitsTests(unittest.TestCase):
         )
         self.assertAlmostEqual(20, back_to_kilometes.magnitude)
 
-    def test_stateConversion(self):
-        state = State(
+    def test_state_conversion(self):
+        state = REPLine(
             1,
             "100112 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
+            " ",
         )
-        state.parse()
+        self.assertTrue(state.parse())
 
         # Speed and Heading from state
         # heading -> 109.08 (degrees)
-        # speed   -> 6.00 (knots)
+        # speed   -> 3.086 (m/sec)
 
-        self.assertEqual("<Quantity(109.08, 'degree')>", repr(state.get_heading()))
-        self.assertEqual("<Quantity(6.0, 'knot')>", repr(state.get_speed()))
+        self.assertEqual("<Quantity(109.08, 'degree')>", repr(state.heading))
+        self.assertAlmostEqual(3.086666666666667, state.speed)
 
 
 if __name__ == "__main__":

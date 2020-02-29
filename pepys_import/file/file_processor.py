@@ -1,23 +1,24 @@
 import os
 
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 
 
 class FileProcessor:
     def __init__(self, filename=None):
-        self.parsers = []
-        if filename == None:
+        self.importers = []
+        if filename is None:
             self.filename = ":memory:"
         else:
             self.filename = filename
 
     def process(
-        self, folder: str, data_store: DataStore = None, descend_tree: bool = True
+        self, path: str, data_store: DataStore = None, descend_tree: bool = True
     ):
-        """Process this folder of data
+        """Process the data in the given path
         
-        :param folder: Folder path
-        :type folder: String
+        :param path: File/Folder path
+        :type path: String
         :param data_store: Database
         :type data_store: DataStore
         :param descend_tree: Whether to recursively descend through the folder tree
@@ -26,127 +27,166 @@ class FileProcessor:
 
         processed_ctr = 0
 
-        # check folder exists
-        if not os.path.isdir(folder):
-            raise Exception("Folder not found: {}".format(folder))
-
         # get the data_store
-        data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
-        data_store.initialise()
+        if data_store is None:
+            data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
+            data_store.initialise()
 
-        # make copy of list of parsers
-        good_parsers = self.parsers.copy()
+        # check given path is a file
+        if os.path.isfile(path):
+            with data_store.session_scope():
+                states_sum = TableSummary(
+                    data_store.session, data_store.db_classes.State
+                )
+                platforms_sum = TableSummary(
+                    data_store.session, data_store.db_classes.Platform
+                )
+                first_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+                print(first_table_summary_set.report("==Before=="))
 
-        filename, file_extension = os.path.splitext(folder)
+                filename = os.path.abspath(path)
+                current_path = os.path.dirname(path)
+                processed_ctr = self.process_file(
+                    filename, current_path, data_store, processed_ctr
+                )
+                states_sum = TableSummary(
+                    data_store.session, data_store.db_classes.State
+                )
+                platforms_sum = TableSummary(
+                    data_store.session, data_store.db_classes.Platform
+                )
+                second_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+                print(second_table_summary_set.report("==After=="))
+            print(f"Files got processed: {processed_ctr} times")
+            return
+
+        # check folder exists
+        if not os.path.isdir(path):
+            raise FileNotFoundError(f"Folder not found in the given path: {path}")
 
         # capture path in absolute form
-        abs_path = os.path.abspath(folder)
+        abs_path = os.path.abspath(path)
 
         # decide whether to descend tree, or just work on this folder
-        if descend_tree:
-            # loop through this folder and children
-            for current_path, folders, files in os.walk(abs_path):
-                for file in files:
-                    processed_ctr = self.process_file(
-                        file, current_path, good_parsers, data_store, processed_ctr
-                    )
-        else:
-            # loop through this folder
-            for file in os.scandir(abs_path):
-                if file.is_file():
-                    current_path = os.path.join(abs_path, file)
-                    processed_ctr = self.process_file(
-                        file, current_path, good_parsers, data_store, processed_ctr
-                    )
+        with data_store.session_scope():
 
-        print("Files got processed:" + str(processed_ctr) + " times")
+            states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            platforms_sum = TableSummary(
+                data_store.session, data_store.db_classes.Platform
+            )
+            first_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+            print(first_table_summary_set.report("==Before=="))
 
-    def get_first_line(self, path):
-        """Retrieve the first line from the file
-        
-        :param path: Full tile path
-        :type path: String
-        :return: First line of text
-        :rtype: String
-        """
-        try:
-            with open(path, "r", encoding="windows-1252") as f:
-                first_line = f.readline()
-                return first_line
-        except UnicodeDecodeError:
-            return None
-        finally:
-            f.close()
+            if descend_tree:
+                # loop through this folder and children
+                for current_path, folders, files in os.walk(abs_path):
+                    for file in files:
+                        processed_ctr = self.process_file(
+                            file, current_path, data_store, processed_ctr
+                        )
+            else:
+                # loop through this path
+                for file in os.scandir(abs_path):
+                    if file.is_file():
+                        current_path = os.path.join(abs_path, file)
+                        processed_ctr = self.process_file(
+                            file, current_path, data_store, processed_ctr
+                        )
 
-    def get_file_contents(self, full_path: str):
-        try:
-            with open(full_path, "r", encoding="windows-1252") as f:
-                lines = f.read().split("\n")
-        finally:
-            f.close()
-        return lines
+            states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            platforms_sum = TableSummary(
+                data_store.session, data_store.db_classes.Platform
+            )
+            second_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+            print(second_table_summary_set.report("==After=="))
 
-    def process_file(self, file, current_path, good_parsers, data_store, processed_ctr):
+        print(f"Files got processed: {processed_ctr} times")
+
+    def process_file(self, file, current_path, data_store, processed_ctr):
         filename, file_extension = os.path.splitext(file)
-        # make copy of list of parsers
-        good_parsers = self.parsers.copy()
+        # make copy of list of importers
+        good_importers = self.importers.copy()
 
         full_path = os.path.join(current_path, file)
         # print("Checking:" + str(full_path))
 
-        # start with file suffxies
-        tmp_parsers = good_parsers.copy()
-        for parser in tmp_parsers:
-            # print("Checking suffix:" + str(parser))
-            if not parser.can_accept_suffix(file_extension):
-                good_parsers.remove(parser)
+        # start with file suffixes
+        tmp_importers = good_importers.copy()
+        for importer in tmp_importers:
+            # print("Checking suffix:" + str(importer))
+            if not importer.can_load_this_type(file_extension):
+                good_importers.remove(importer)
 
         # now the filename
-        tmp_parsers = good_parsers.copy()
-        for parser in tmp_parsers:
-            # print("Checking filename:" + str(parser))
-            if not parser.can_accept_filename(filename):
-                good_parsers.remove(parser)
+        tmp_importers = good_importers.copy()
+        for importer in tmp_importers:
+            # print("Checking filename:" + str(importer))
+            if not importer.can_load_this_filename(filename):
+                good_importers.remove(importer)
 
         # tests are starting to get expensive. Check
-        # we have some file parsers left
-        if len(good_parsers) > 0:
+        # we have some file importers left
+        if len(good_importers) > 0:
 
             # now the first line
-            tmp_parsers = good_parsers.copy()
+            tmp_importers = good_importers.copy()
             first_line = self.get_first_line(full_path)
-            for parser in tmp_parsers:
-                # print("Checking first_line:" + str(parser))
-                if not parser.can_accept_first_line(first_line):
-                    good_parsers.remove(parser)
+            for importer in tmp_importers:
+                # print("Checking first_line:" + str(importer))
+                if not importer.can_load_this_header(first_line):
+                    good_importers.remove(importer)
 
             # get the file contents
             file_contents = self.get_file_contents(full_path)
 
             # lastly the contents
-            tmp_parsers = good_parsers.copy()
-            for parser in tmp_parsers:
-                if not parser.can_process_file(file_contents):
-                    good_parsers.remove(parser)
+            tmp_importers = good_importers.copy()
+            for importer in tmp_importers:
+                if not importer.can_load_this_file(file_contents):
+                    good_importers.remove(importer)
 
-            # ok, let these parsers handle the file
+            # ok, let these importers handle the file
+            datafile = data_store.get_datafile(filename, file_extension)
 
-            with data_store.session_scope():
-                data_file = data_store.add_to_datafile_from_rep(
-                    filename, file_extension
-                )
-                data_file_id = data_file.datafile_id
-
-            for parser in good_parsers:
+            for importer in good_importers:
                 processed_ctr += 1
-                parser.process(data_store, file, file_contents, data_file_id)
+                importer.load_this_file(data_store, file, file_contents, datafile)
+
+            if datafile.validate():
+                datafile.commit(data_store.session)
 
         return processed_ctr
 
-    def register(self, parser):
-        """Add this parser
+    def register_importer(self, importer):
+        """Adds the supplied importer to the list of import modules
         
-        :param parser: new parser
-        :type parser: CoreParser
+        :param importer: An importer module that must define the functions defined
+        in the Importer base class
+        :type importer: Importer
         """
-        self.parsers.append(parser)
+        self.importers.append(importer)
+
+    @staticmethod
+    def get_first_line(file_path: str):
+        """Retrieve the first line from the file
+
+        :param file_path: Full file path
+        :type file_path: String
+        :return: First line of text
+        :rtype: String
+        """
+        try:
+            with open(file_path, "r", encoding="windows-1252") as f:
+                first_line = f.readline()
+            return first_line
+        except UnicodeDecodeError:
+            return None
+
+    @staticmethod
+    def get_file_contents(full_path: str):
+        try:
+            with open(full_path, "r", encoding="windows-1252") as f:
+                lines = f.read().split("\n")
+            return lines
+        except UnicodeDecodeError:
+            return None

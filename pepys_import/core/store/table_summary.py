@@ -56,23 +56,27 @@ class TableSummarySet(object):
         self.table_summaries = table_summaries
         self.headers = ["Table name", "Number of rows", "Last item added"]
 
-    def report(self):
-        """Produce an HTML pretty-printed report of the contents of the summary.
+    def report(self, title=None):
+        """Produce an pretty-printed report of the contents of the summary.
 
-        :return: String of HTML
+        :return: String of text
         """
-
-        return tabulate(
+        res = ""
+        if title:
+            res += title + "\n"
+        res += tabulate(
             [
                 (table.table_name, table.number_of_rows, table.created_date)
                 for table in self.table_summaries
             ],
             headers=self.headers,
-            tablefmt="pretty",
+            tablefmt="github",
         )
+        res += "\n"
+        return res
 
     def compare_to(self, other: "TableSummarySet"):
-        """Produce an HTML pretty-printed report of the contents of the summary.
+        """Produce an pretty-printed report of the contents of the summary.
 
         :param other: A TableSummarySet object to compare
         :type other: TableSummarySet

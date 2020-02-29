@@ -1,26 +1,39 @@
-def get_choice_input(heading, choices):
-    map_choice = False
-    while 1:
-        input_text = heading + "\n"
-        for idx, choice in enumerate(choices, 1):
-            if isinstance(choice, list):
-                choice_string = choice[0]
-                map_choice = True
-            else:
-                choice_string = choice
-            input_text += "   " + str(idx) + ") " + choice_string + "\n"
-        choice = input(input_text)
+from prompt_toolkit import prompt
+from prompt_toolkit.validation import Validator
 
-        try:
-            choice_value = int(choice)
-        except ValueError:
-            print(choice + " wasn't a valid number, please try again")
-            continue
 
-        if choice_value < 1 or choice_value > len(choices):
-            print(choice + " was not one of the options, please try again")
-        else:
-            if not map_choice:
-                return choice_value
-            else:
-                return choices[choice_value - 1][1]
+def is_valid(option):
+    return option == str(1) or option == str(2) or option == "."
+
+
+def create_menu(title, choices, cancel="import", completer=None, validate_method=None):
+    """
+    A basic function which creates a menu with title and choices.
+
+    :param cancel:
+    :param title: Heading text
+    :type title: String
+    :param choices: Options to choose
+    :type choices: List of strings
+    :param completer: Optional argument that shows possible options while typing.
+    :type completer: :class:`prompt_toolkit.completion.FuzzyWordCompleter`
+    :param validate_method: Possible validator function
+    :type validate_method: Function
+    :return: Entered choice
+    :rtype: String
+    """
+    validator = None
+    if validate_method is not None:
+        validator = Validator.from_callable(
+            validate_method,
+            error_message="You didn't select a valid option",
+            move_cursor_to_end=True,
+        )
+
+    input_text = title + "\n"
+    for index, choice in enumerate(choices, 1):
+        input_text += f"   {str(index)}) {choice}\n"
+    input_text += f"   .) Cancel {cancel}\n > "
+    choice = prompt(input_text, completer=completer, validator=validator)
+
+    return choice
