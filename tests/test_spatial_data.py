@@ -43,7 +43,7 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
             self.assertFalse(isinstance(first_state.location, str))
             self.assertTrue(isinstance(first_state.location, WKBElement))
             self.assertEqual(
-                point[0], "POINT(46 32)",
+                point[0], "POINT Z(46 32 0)",
             )
 
     def test_non_existing_location(self):
@@ -124,7 +124,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
             self.assertFalse(isinstance(first_state.location, str))
             self.assertTrue(isinstance(first_state.location, WKBElement))
             self.assertEqual(
-                point[0], "POINT(46 32)",
+                point[0], "POINT Z (46 32 0)",
             )
 
     def test_non_existing_location(self):

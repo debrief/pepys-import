@@ -601,7 +601,7 @@ class State(BasePostGIS):
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )
-    location = Column(Geometry(geometry_type="POINT", srid=0))
+    location = Column(Geometry(geometry_type="POINTZ", dimension=3, srid=0))
     heading = Column(DOUBLE_PRECISION)
     course = Column(DOUBLE_PRECISION)
     speed = Column(DOUBLE_PRECISION)
@@ -634,7 +634,7 @@ class Contact(BasePostGIS):
     bearing = Column(DOUBLE_PRECISION)
     rel_bearing = Column(DOUBLE_PRECISION)
     freq = Column(DOUBLE_PRECISION)
-    location = Column(Geometry(geometry_type="POINT", srid=4326))
+    location = Column(Geometry(geometry_type="POINTZ", dimension=3, srid=4326))
     major = Column(DOUBLE_PRECISION)
     minor = Column(DOUBLE_PRECISION)
     orientation = Column(DOUBLE_PRECISION)
@@ -779,7 +779,7 @@ class Media(BasePostGIS):
     platform_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"))
-    location = Column(Geometry(geometry_type="POINT", srid=4326))
+    location = Column(Geometry(geometry_type="POINTZ", dimension=3, srid=4326))
     time = Column(TIMESTAMP)
     media_type_id = Column(UUID(as_uuid=True), nullable=False)
     url = Column(String(150), nullable=False)

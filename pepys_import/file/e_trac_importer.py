@@ -88,7 +88,7 @@ class ETracImporter(Importer):
             state = datafile.create_state(sensor, timestamp)
             state.privacy = privacy.privacy_id
 
-            state.location = f"POINT({long_degrees_token} {lat_degrees_token})"
+            state.location = f"POINT({long_degrees_token} {lat_degrees_token} 0)"
 
             heading = convert_heading(heading_token, line_number)
             state.heading = heading.to(unit_registry.radians).magnitude
