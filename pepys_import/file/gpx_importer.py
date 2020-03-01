@@ -113,7 +113,7 @@ class GPXImporter(Importer):
                         print(
                             f"Line {tpt.sourceline}. Error in speed value {speed_str}. Couldn't convert to number"
                         )
-                    state.speed = speed * (unit_registry.meter / unit_registry.second)
+                    state.speed = speed
 
                 # TODO: Add support for extracting elevation
                 # if elevation_str is not None:
