@@ -113,3 +113,6 @@ venv.bak/
 /7zip
 *.zip
 *.lnk
+
+# Editor files
+*.code-workspace
