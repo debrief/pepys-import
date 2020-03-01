@@ -4,7 +4,7 @@ from dateutil.parser import parse
 
 from .importer import Importer
 from pepys_import.core.formats import unit_registry
-from pepys_import.utils.unit_utils import convert_heading, convert_speed
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 
 class GPXImporter(Importer):
@@ -102,7 +102,7 @@ class GPXImporter(Importer):
 
                 # Add course
                 if course_str is not None:
-                    course = convert_heading(course_str, tpt.sourceline)
+                    course = convert_absolute_angle(course_str, tpt.sourceline)
                     state.course = course.to(unit_registry.radians).magnitude
 
                 # Add speed
@@ -113,7 +113,7 @@ class GPXImporter(Importer):
                         print(
                             f"Line {tpt.sourceline}. Error in speed value {speed_str}. Couldn't convert to number"
                         )
-                    state.speed = speed
+                    state.speed = speed * (unit_registry.meter / unit_registry.second)
 
                 # TODO: Add support for extracting elevation
                 # if elevation_str is not None:
