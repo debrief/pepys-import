@@ -269,6 +269,7 @@ class DataStore(object):
         sensor,
         datafile,
         location=None,
+        elevation=None,
         heading=None,
         course=None,
         speed=None,
@@ -285,6 +286,8 @@ class DataStore(object):
         :type datafile: Datafile
         :param location: Location of :class:`State`
         :type location: Point
+        :param elevation: Elevation of :class:`State` (use negative for depth)
+        :type elevation: String
         :param heading: Heading of :class:`State` (Which converted to radians)
         :type heading: String
         :param course: Course of :class:`State`
@@ -308,6 +311,8 @@ class DataStore(object):
         if sensor is None or datafile is None:
             raise Exception(f"There is missing value(s) in '{sensor}, {datafile}'!")
 
+        if elevation == "":
+            elevation = None
         if heading == "":
             heading = None
         if course == "":
@@ -319,6 +324,7 @@ class DataStore(object):
             time=time,
             sensor_id=sensor.sensor_id,
             location=location,
+            elevation=elevation,
             heading=heading,
             course=course,
             speed=speed,
