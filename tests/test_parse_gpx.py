@@ -53,6 +53,17 @@ class GPXTests(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             assert len(datafiles) == 7
 
+            # there should be 5 States with a speed of 4.5m/s
+            # as the first <trkpt> element in gpx_1_0.gpx has been imported
+            # 5 times based on the multiple modified versions of that file used
+            # for testing
+            speed_states = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(self.store.db_classes.State.speed == 4.5)
+                .all()
+            )
+            assert len(speed_states) == 5
+
 
 if __name__ == "__main__":
     unittest.main()
