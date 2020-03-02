@@ -51,7 +51,6 @@ class GPXTests(unittest.TestCase):
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            ## TODO: Check if this is correct - it seems to be counting the invalid data file
             assert len(datafiles) == 7
 
 
