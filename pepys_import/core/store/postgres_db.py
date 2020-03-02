@@ -540,6 +540,7 @@ class State(BasePostGIS):
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )
     location = Column(Geometry(geometry_type="POINT", srid=0))
+    elevation = Column(DOUBLE_PRECISION)
     heading = Column(DOUBLE_PRECISION)
     course = Column(DOUBLE_PRECISION)
     speed = Column(DOUBLE_PRECISION)
@@ -573,6 +574,7 @@ class Contact(BasePostGIS):
     rel_bearing = Column(DOUBLE_PRECISION)
     freq = Column(DOUBLE_PRECISION)
     location = Column(Geometry(geometry_type="POINT", srid=4326))
+    elevation = Column(DOUBLE_PRECISION)
     major = Column(DOUBLE_PRECISION)
     minor = Column(DOUBLE_PRECISION)
     orientation = Column(DOUBLE_PRECISION)
@@ -718,6 +720,7 @@ class Media(BasePostGIS):
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"))
     location = Column(Geometry(geometry_type="POINT", srid=4326))
+    elevation = Column(DOUBLE_PRECISION)
     time = Column(TIMESTAMP)
     media_type_id = Column(UUID(as_uuid=True), nullable=False)
     url = Column(String(150), nullable=False)

@@ -90,6 +90,8 @@ class ETracImporter(Importer):
 
             state.location = f"POINT({long_degrees_token} {lat_degrees_token})"
 
+            state.elevation = -1 * self.depth
+
             heading = convert_heading(heading_token, line_number)
             state.heading = heading.to(unit_registry.radians).magnitude
 
