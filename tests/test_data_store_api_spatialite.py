@@ -43,33 +43,6 @@ class DataStoreCacheTestCase(TestCase):
             # there must be only one entity at the beginning
             self.assertEqual(len(comment_types), 1)
 
-    def test_cached_table_type(self):
-        """Test whether a new table type entity cached and returned"""
-        with self.store.session_scope():
-            table_types = self.store.session.query(
-                self.store.db_classes.TableType
-            ).all()
-
-            # there must be no entity at the beginning
-            self.assertEqual(len(table_types), 0)
-
-            table_type_1 = self.store.add_to_table_types(
-                table_type_id=1, table_name="test"
-            )
-            # This one shouldn't duplicate, it should return existing entity
-            table_type_2 = self.store.add_to_table_types(
-                table_type_id=1, table_name="test"
-            )
-
-            # objects must be the same
-            self.assertEqual(table_type_1, table_type_2)
-            table_types = self.store.session.query(
-                self.store.db_classes.TableType
-            ).all()
-
-            # there must be only one entity at the beginning
-            self.assertEqual(len(table_types), 1)
-
     def test_cached_platform_types(self):
         """Test whether a new platform type entity cached and returned"""
         with self.store.session_scope():
@@ -218,28 +191,6 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
 
             # there must be only one entity again
             self.assertEqual(len(comment_types), 1)
-
-    def test_table_type(self):
-        with self.store.session_scope():
-            table_type = self.store.db_classes.TableType(table_type_id=1, name="test")
-            self.store.session.add(table_type)
-            self.store.session.flush()
-
-            table_types = self.store.session.query(
-                self.store.db_classes.TableType
-            ).all()
-
-            # there must be one entity at the beginning
-            self.assertEqual(len(table_types), 1)
-
-            self.store.add_to_table_types(1, "test")
-
-            table_types = self.store.session.query(
-                self.store.db_classes.TableType
-            ).all()
-
-            # there must be only one entity again
-            self.assertEqual(len(table_types), 1)
 
     def test_platform_types(self):
         with self.store.session_scope():

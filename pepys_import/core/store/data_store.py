@@ -79,7 +79,6 @@ class DataStore(object):
         self.show_status = show_status
 
         # caches of known data
-        self.table_types = {}
         self.privacies = {}
         self.nationalities = {}
         self.datafile_types = {}
@@ -264,30 +263,6 @@ class DataStore(object):
     # End of Data Store methods
     #############################################################
 
-    def add_to_entries(self, table_type_id, table_name):
-        """
-        Adds the specified entry to the :class:`Entry` table if not already present.
-
-        :param table_type_id: Table Type ID
-        :type table_type_id: Integer
-        :param table_name: Name of table
-        :type table_name: String
-        :return: Created :class:`Entry` entity's entry_id
-        :rtype: UUID
-        """
-        # ensure table type exists to satisfy foreign key constraint
-        self.add_to_table_types(table_type_id, table_name)
-
-        # No cache for entries, just add new one when called
-        entry_obj = self.db_classes.Entry(
-            table_type_id=table_type_id, created_user=self.default_user_id
-        )
-
-        self.session.add(entry_obj)
-        self.session.flush()
-
-        return entry_obj.entry_id
-
     def add_to_states(
         self,
         time,
@@ -345,11 +320,7 @@ class DataStore(object):
         if speed == "":
             speed = None
 
-        entry_id = self.add_to_entries(
-            self.db_classes.State.table_type_id, self.db_classes.State.__tablename__
-        )
         state_obj = self.db_classes.State(
-            state_id=entry_id,
             time=time,
             sensor_id=sensor.sensor_id,
             location=location,
@@ -383,15 +354,8 @@ class DataStore(object):
         if sensor_type is None or host is None:
             raise Exception(f"There is missing value(s) in '{sensor_type}, {host}'!")
 
-        entry_id = self.add_to_entries(
-            self.db_classes.Sensor.table_type_id, self.db_classes.Sensor.__tablename__
-        )
-
         sensor_obj = self.db_classes.Sensor(
-            sensor_id=entry_id,
-            name=name,
-            sensor_type_id=sensor_type.sensor_type_id,
-            host=host.platform_id,
+            name=name, sensor_type_id=sensor_type.sensor_type_id, host=host.platform_id,
         )
         self.session.add(sensor_obj)
         self.session.flush()
@@ -420,13 +384,7 @@ class DataStore(object):
         datafile_type = self.search_datafile_type(file_type)
         privacy = self.search_privacy(privacy)
 
-        entry_id = self.add_to_entries(
-            self.db_classes.Datafile.table_type_id,
-            self.db_classes.Datafile.__tablename__,
-        )
-
         datafile_obj = self.db_classes.Datafile(
-            datafile_id=entry_id,
             simulated=bool(simulated),
             privacy_id=privacy.privacy_id,
             datafile_type_id=datafile_type.datafile_type_id,
@@ -477,13 +435,7 @@ class DataStore(object):
         platform_type = self.search_platform_type(platform_type)
         privacy = self.search_privacy(privacy)
 
-        entry_id = self.add_to_entries(
-            self.db_classes.Platform.table_type_id,
-            self.db_classes.Platform.__tablename__,
-        )
-
         platform_obj = self.db_classes.Platform(
-            platform_id=entry_id,
             name=name,
             trigraph=trigraph,
             quadgraph=quadgraph,
@@ -503,14 +455,8 @@ class DataStore(object):
         return platform_obj
 
     def add_to_synonyms(self, table, name, entity):
-        entry_id = self.add_to_entries(
-            self.db_classes.Synonym.table_type_id,
-            self.db_classes.Synonym.__tablename__,
-        )
         # enough info to proceed and create entry
-        synonym = self.db_classes.Synonym(
-            synonym_id=entry_id, table=table, synonym=name, entity=entity
-        )
+        synonym = self.db_classes.Synonym(table=table, synonym=name, entity=entity)
         self.session.add(synonym)
         self.session.flush()
 
@@ -891,12 +837,8 @@ class DataStore(object):
             self.comment_types[name] = comment_types
             return comment_types
 
-        entry_id = self.add_to_entries(
-            self.db_classes.CommentType.table_type_id,
-            self.db_classes.CommentType.__tablename__,
-        )
         # enough info to proceed and create entry
-        comment_type = self.db_classes.CommentType(comment_type_id=entry_id, name=name)
+        comment_type = self.db_classes.CommentType(name=name)
         self.session.add(comment_type)
         self.session.flush()
 
@@ -908,44 +850,6 @@ class DataStore(object):
     # End of Measurements
     #############################################################
     # Reference Type Maintenance
-
-    def add_to_table_types(self, table_type_id, table_name):
-        """
-        Adds the specified table type and name to the table types table if not already
-        present.
-
-        Returns:
-            Created table type entity
-
-        :param table_type_id: ID of :class:`TableType`
-        :type table_type_id: Integer
-        :param table_name: Name of :class:`TableType`
-        :type table_name: String
-        :return: Created :class:`TableType` entity
-        :rtype: TableType
-        """
-        # check in cache for table type
-        if table_type_id in self.table_types:
-            return self.table_types[table_type_id]
-
-        # doesn't exist in cache, try to lookup in DB
-        table_types = self.search_table_type(table_type_id)
-        if table_types:
-            # add to cache and return
-            self.table_types[table_type_id] = table_types
-            return table_types
-
-        # enough info to proceed and create entry
-        table_type = self.db_classes.TableType(
-            table_type_id=table_type_id, name=table_name
-        )
-        self.session.add(table_type)
-        self.session.flush()
-
-        # add to cache and return created table type
-        self.table_types[table_type_id] = table_type
-        # should return DB type or something else decoupled from DB?
-        return table_type
 
     def add_to_platform_types(self, platform_type_name):
         """
@@ -968,14 +872,8 @@ class DataStore(object):
             self.platform_types[platform_type_name] = platform_types
             return platform_types
 
-        entry_id = self.add_to_entries(
-            self.db_classes.PlatformType.table_type_id,
-            self.db_classes.PlatformType.__tablename__,
-        )
         # enough info to proceed and create entry
-        platform_type = self.db_classes.PlatformType(
-            platform_type_id=entry_id, name=platform_type_name
-        )
+        platform_type = self.db_classes.PlatformType(name=platform_type_name)
         self.session.add(platform_type)
         self.session.flush()
 
@@ -1004,14 +902,8 @@ class DataStore(object):
             self.nationalities[nationality_name] = nationalities
             return nationalities
 
-        entry_id = self.add_to_entries(
-            self.db_classes.Nationality.table_type_id,
-            self.db_classes.Nationality.__tablename__,
-        )
         # enough info to proceed and create entry
-        nationality = self.db_classes.Nationality(
-            nationality_id=entry_id, name=nationality_name
-        )
+        nationality = self.db_classes.Nationality(name=nationality_name)
         self.session.add(nationality)
         self.session.flush()
 
@@ -1040,11 +932,8 @@ class DataStore(object):
             self.privacies[privacy_name] = privacies
             return privacies
 
-        entry_id = self.add_to_entries(
-            self.db_classes.Privacy.table_type_id, self.db_classes.Privacy.__tablename__
-        )
         # enough info to proceed and create entry
-        privacy = self.db_classes.Privacy(privacy_id=entry_id, name=privacy_name)
+        privacy = self.db_classes.Privacy(name=privacy_name)
         self.session.add(privacy)
         self.session.flush()
 
@@ -1074,14 +963,8 @@ class DataStore(object):
             self.datafile_types[datafile_type] = datafile_types
             return datafile_types
 
-        entry_id = self.add_to_entries(
-            self.db_classes.DatafileType.table_type_id,
-            self.db_classes.DatafileType.__tablename__,
-        )
         # proceed and create entry
-        datafile_type_obj = self.db_classes.DatafileType(
-            datafile_type_id=entry_id, name=datafile_type
-        )
+        datafile_type_obj = self.db_classes.DatafileType(name=datafile_type)
 
         self.session.add(datafile_type_obj)
         self.session.flush()

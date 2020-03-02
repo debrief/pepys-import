@@ -56,10 +56,8 @@ class DefaultResolver(DataResolver):
             sensor_name = self.default_sensor_name
 
         if not sensor_type:
-            default_sensor_type = data_store.search_sensor_type(
-                self.default_sensor_type
-            )
-            if not default_sensor_type:
+            sensor_type = data_store.search_sensor_type(self.default_sensor_type)
+            if not sensor_type:
                 sensor_type = data_store.add_to_sensor_types(self.default_sensor_type)
 
         if not privacy:

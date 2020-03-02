@@ -10,58 +10,6 @@ from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.store import constants
 
 
-class Entry(BaseSpatiaLite):
-    __tablename__ = constants.ENTRY
-    table_type = TableTypes.METADATA
-
-    entry_id = Column(Integer, primary_key=True)
-    table_type_id = Column(Integer, nullable=False)
-    created_user = Column(Integer)
-    created_date = Column(DateTime, default=datetime.utcnow)
-
-    @classmethod
-    def add_to_entries(cls, session, table_type_id, table_name):
-        # ensure table type exists to satisfy foreign key constraint
-        TableType().add_to_table_types(session, table_type_id, table_name)
-
-        # No cache for entries, just add new one when called
-        entry_obj = Entry(table_type_id=table_type_id, created_user=1)
-
-        session.add(entry_obj)
-        session.flush()
-
-        return entry_obj.entry_id
-
-
-class TableType(BaseSpatiaLite):
-    __tablename__ = constants.TABLE_TYPE
-    table_type = TableTypes.METADATA
-
-    table_type_id = Column(Integer, nullable=False, primary_key=True)
-    name = Column(String(150))
-    created_date = Column(DateTime, default=datetime.utcnow)
-
-    @classmethod
-    def search_table_type(cls, session, table_type_id):
-        # search for any table type with this id
-        return (
-            session.query(TableType)
-            .filter(TableType.table_type_id == table_type_id)
-            .first()
-        )
-
-    @classmethod
-    def add_to_table_types(cls, session, table_type_id, table_name):
-        table_type = cls.search_table_type(session, table_type_id)
-        if table_type is None:
-            # enough info to proceed and create entry
-            table_type = TableType(table_type_id=table_type_id, name=table_name)
-            session.add(table_type)
-            session.flush()
-
-        return table_type
-
-
 # Metadata Tables
 class HostedBy(BaseSpatiaLite):
     __tablename__ = constants.HOSTED_BY
@@ -123,15 +71,8 @@ class Sensor(BaseSpatiaLite):
         sensor_type = SensorType().search_sensor_type(session, sensor_type)
         host = Platform().search_platform(session, host)
 
-        entry_id = Entry().add_to_entries(
-            session, Sensor.table_type_id, Sensor.__tablename__
-        )
-
         sensor_obj = Sensor(
-            sensor_id=entry_id,
-            name=name,
-            sensor_type_id=sensor_type.sensor_type_id,
-            host=host.platform_id,
+            name=name, sensor_type_id=sensor_type.sensor_type_id, host=host.platform_id,
         )
         session.add(sensor_obj)
         session.flush()
