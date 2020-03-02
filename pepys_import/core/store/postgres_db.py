@@ -602,6 +602,7 @@ class State(BasePostGIS):
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )
     location = Column(Geometry(geometry_type="POINT", srid=0))
+    elevation = Column(DOUBLE_PRECISION)
     heading = Column(DOUBLE_PRECISION)
     course = Column(DOUBLE_PRECISION)
     speed = Column(DOUBLE_PRECISION)

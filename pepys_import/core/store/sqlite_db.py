@@ -526,6 +526,7 @@ class State(BaseSpatiaLite):
     time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(Integer, nullable=False)
     location = Column(Geometry(geometry_type="POINT", management=True))
+    elevation = Column(REAL)
     heading = Column(REAL)
     course = Column(REAL)
     speed = Column(REAL)

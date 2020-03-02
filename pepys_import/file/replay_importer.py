@@ -53,6 +53,7 @@ class ReplayImporter(Importer):
                 )
                 state = datafile.create_state(sensor, rep_line.timestamp)
                 state.location = rep_line.get_location()
+                state.elevation = -1 * rep_line.depth
                 state.heading = rep_line.heading.to(unit_registry.radians).magnitude
 
                 state.speed = rep_line.speed
