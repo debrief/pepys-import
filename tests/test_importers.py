@@ -9,6 +9,7 @@ from pepys_import.file.nmea_importer import NMEAImporter
 from pepys_import.file.file_processor import FileProcessor
 
 FILE_PATH = os.path.dirname(__file__)
+CURRENT_DIR = os.getcwd()
 BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
 DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 
@@ -18,11 +19,11 @@ class SampleImporterTests(unittest.TestCase):
         pass
 
     def tearDown(self) -> None:
-        single_level_file = os.path.join(FILE_PATH, "single_level.db")
+        single_level_file = os.path.join(CURRENT_DIR, "single_level.db")
         if os.path.exists(single_level_file):
             os.remove(single_level_file)
 
-        descending_file = os.path.join(FILE_PATH, "descending.db")
+        descending_file = os.path.join(CURRENT_DIR, "descending.db")
         if os.path.exists(descending_file):
             os.remove(descending_file)
 
