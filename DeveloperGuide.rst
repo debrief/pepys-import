@@ -247,10 +247,14 @@ View the project Kanban board `here <https://github.com/debrief/pepys-import/pro
 Creating a deployable release
 =============================
 
-For significant releases, the `pepys-import` version should be incremented, using:
+For significant releases, the `pepys-import` version should be incremented,
+using:
 ```
 bumpversion patch
 ```
+
+Note: once the version has been incremented, a new entry should be
+included in `History.rst`.
 
 Pepys-import is deployed by providing a zip file to the client containing everything necessary to run
 pepys-import on a Windows 10 computer. For instructions on how to install from a deployable zip file,
