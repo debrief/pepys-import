@@ -18,7 +18,7 @@ class GPXTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_process_e_trac_data(self):
+    def test_process_gpx_data(self):
         processor = FileProcessor()
         processor.register_importer(GPXImporter())
 
