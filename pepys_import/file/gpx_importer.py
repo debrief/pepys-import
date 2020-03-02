@@ -84,15 +84,6 @@ class GPXImporter(Importer):
                 course_str = self.get_child_text_if_exists(tpt, "{*}course")
                 elevation_str = self.get_child_text_if_exists(tpt, "{*}ele")
 
-                print(
-                    latitude_str,
-                    longitude_str,
-                    timestamp_str,
-                    speed_str,
-                    course_str,
-                    elevation_str,
-                )
-
                 # Parse timestamp and create state
                 timestamp = parse(timestamp_str)
                 state = datafile.create_state(sensor, timestamp)
