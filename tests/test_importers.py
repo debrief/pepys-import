@@ -24,7 +24,6 @@ class SampleImporterTests(unittest.TestCase):
             os.remove(single_level_file)
 
         descending_file = os.path.join(CURRENT_DIR, "descending.db")
-        print(descending_file)
         if os.path.exists(descending_file):
             os.remove(descending_file)
 
