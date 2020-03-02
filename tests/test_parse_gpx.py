@@ -53,6 +53,10 @@ class GPXTests(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             assert len(datafiles) == 7
 
+            #
+            # Test the actual values that are imported
+            #
+
             # there should be 5 States with a speed of 4.5m/s
             # as the first <trkpt> element in gpx_1_0.gpx has been imported
             # 5 times based on the multiple modified versions of that file used
@@ -63,6 +67,14 @@ class GPXTests(unittest.TestCase):
                 .all()
             )
             assert len(speed_states) == 5
+
+            # there should be one point with an elevation of 2372m
+            elev_states = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(self.store.db_classes.State.elevation == 2372)
+                .all()
+            )
+            assert len(elev_states) == 1
 
 
 if __name__ == "__main__":

@@ -115,13 +115,14 @@ class GPXImporter(Importer):
                         )
                     state.speed = speed
 
-                # TODO: Add support for extracting elevation
-                # if elevation_str is not None:
-                #     try:
-                #         elevation = float(elevation_str)
-                #     except ValueError:
-                #         print(f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. Couldn't convert to number")
-                #     state.elevation = elevation
+                if elevation_str is not None:
+                    try:
+                        elevation = float(elevation_str)
+                    except ValueError:
+                        print(
+                            f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. Couldn't convert to number"
+                        )
+                    state.elevation = elevation
 
                 state.privacy = privacy.privacy_id
 
