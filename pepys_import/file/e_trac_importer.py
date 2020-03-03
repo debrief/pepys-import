@@ -1,7 +1,7 @@
 from .importer import Importer
 from datetime import datetime
 from pepys_import.core.formats import unit_registry
-from pepys_import.utils.unit_utils import convert_heading, convert_speed
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 from pepys_import.core.validators import constants
 
 
@@ -92,7 +92,9 @@ class ETracImporter(Importer):
 
             state.location = f"POINT({long_degrees_token} {lat_degrees_token})"
 
-            heading = convert_heading(heading_token, line_number)
+            state.elevation = -1 * self.depth
+
+            heading = convert_absolute_angle(heading_token, line_number)
             state.heading = heading.to(unit_registry.radians).magnitude
 
             speed = convert_speed(speed_token, line_number)
