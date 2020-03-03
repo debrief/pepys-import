@@ -68,7 +68,7 @@ class NMEAImporter(Importer):
 
     def load_this_file(self, data_store, path, file_contents, datafile):
         print("NMEA parser working on " + path)
-
+        error_message = self.short_name + f" - Parsing error on {path}"
         for line_number, line in enumerate(file_contents):
             if line_number > 5000:
                 break
@@ -126,14 +126,22 @@ class NMEAImporter(Importer):
                         *self.parse_location(self.latitude, self.latitude_hem)
                     )
                     if not self.latitude.parse():
-                        print(f"Line {line_number}. Error in latitude parsing")
+                        self.errors.append(
+                            {
+                                error_message: f"Line {line_number}. Error in latitude parsing"
+                            }
+                        )
                         continue
 
                     self.longitude = Location(
                         *self.parse_location(self.longitude, self.longitude_hem)
                     )
                     if not self.longitude.parse():
-                        print(f"Line {line_number}. Error in longitude parsing")
+                        self.errors.append(
+                            {
+                                error_message: f"Line {line_number}. Error in longitude parsing"
+                            }
+                        )
                         continue
 
                     state.location = f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
