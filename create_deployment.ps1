@@ -67,9 +67,9 @@ Remove-Item get-pip.py
 
 Write-Output "INFO: Finished cleanup"
 
-# Zip up whole folder into a zip-file with the current git hash in the name
-$gitcommit = git rev-parse --short HEAD
-$output_filename = "pepys-deploy_$gitcommit.zip"
+# Zip up whole folder into a zip-file with the current date in the filename
+$date_str = Get-Date -Format "yyyymmdd"
+$output_filename = $date_str + "_pepys-import.zip"
 Compress-Archive -Path .\* -DestinationPath $output_filename
 
 Write-Output "INFO: Written zipped deployment file to $output_filename"
