@@ -150,7 +150,7 @@ class FileProcessor:
 
             for importer in good_importers:
                 processed_ctr += 1
-                importer.load_this_file(data_store, file, file_contents, datafile)
+                importer.load_this_file(data_store, full_path, file_contents, datafile)
 
             if datafile.validate():
                 datafile.commit(data_store.session)
@@ -165,6 +165,16 @@ class FileProcessor:
         :type importer: Importer
         """
         self.importers.append(importer)
+
+    def register_importers(self, importers):
+        """Adds all the importers in the supplied list to the list of import modules
+
+        :param importers: A list of importers, each of which is an Importer class that inherits
+        from the Importer base class
+        :type importers: list
+        """
+        for importer in importers:
+            self.importers.append(importer)
 
     @staticmethod
     def get_first_line(file_path: str):
