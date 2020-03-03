@@ -623,6 +623,8 @@ class DataStore(object):
         # Check for name match in Datafile and Synonym Tables
         if datafile_name:
             datafile = self.find_datafile(datafile_name=datafile_name)
+            # found object should be initialised because of _measurement variable
+            datafile.__init__()
             if datafile:
                 return datafile
 
