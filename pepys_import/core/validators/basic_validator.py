@@ -13,15 +13,18 @@ class BasicValidator:
         self.basic_validation()
 
     def validate_longitude(self):
-        if self.longitude and -90 <= float(self.longitude) <= 90:
+        # if longitude is none, there is nothing to validate, return True
+        if self.longitude is None or -90 <= float(self.longitude) <= 90:
             return True
+
         self.errors.append(
             {self.error_message: "Longitude is not between -90 and 90 degrees!"}
         )
         return False
 
     def validate_latitude(self):
-        if self.latitude and -180 <= float(self.latitude) <= 180:
+        # if latitude is none, there is nothing to validate, return True
+        if self.latitude is None or -180 <= float(self.latitude) <= 180:
             return True
         self.errors.append(
             {self.error_message: "Latitude is not between -180 and 180 degrees!"}
@@ -29,7 +32,8 @@ class BasicValidator:
         return False
 
     def validate_heading(self):
-        if self.heading and 0 <= self.heading <= 360:
+        # if heading is none, there is nothing to validate, return True
+        if self.heading is None or 0 <= self.heading <= 360:
             return True
         self.errors.append(
             {self.error_message: "Heading is not between 0 and 360 degrees!"}
@@ -37,7 +41,8 @@ class BasicValidator:
         return False
 
     def validate_course(self):
-        if self.course and 0 <= self.course <= 360:
+        # if course is none, there is nothing to validate, return True
+        if self.course is None or 0 <= self.course <= 360:
             return True
         self.errors.append(
             {self.error_message: "Course is not between 0 and 360 degrees!"}
