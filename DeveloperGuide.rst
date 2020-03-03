@@ -256,7 +256,7 @@ bumpversion patch
 Note 1: once the version has been incremented, a new entry should be
 included in `History.rst`.
 
-Note 2: _currently_ the substitution files on `pepys_import/__init__.py`,
+Note 2: _currently_ the substitution files on `pepys_import/__init__.py` and `setup.py`,
 and will need to be tidied manually.
 
 Pepys-import is deployed by providing a zip file to the client containing everything necessary to run
