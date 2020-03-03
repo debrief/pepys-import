@@ -10,7 +10,7 @@ from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 
-from pepys_import.core.validators.basic_validator import basic_validation
+from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import enhanced_validation
 
 
@@ -220,7 +220,7 @@ class Datafile(BaseSpatiaLite):
         return comment
 
     # TODO: not working yet
-    def validate(self, validation_level="NONE", errors=None):
+    def validate(self, validation_level="NONE", errors=None, message=None):
         # If there is no parsing error, it will return None.If that's the case, create a new list for validation errors.
         if errors is None:
             errors = list()
@@ -230,15 +230,15 @@ class Datafile(BaseSpatiaLite):
             return True
         elif validation_level == validation_constants.BASIC_LEVEL:
             for measurement in self._measurements:
-                basic_validation(measurement, errors)
+                BasicValidator(measurement, errors, message)
             if not errors:
                 return True
             return False
         elif validation_level == validation_constants.ENHANCED_LEVEL:
             # TODO: find prev_location
             for measurement in self._measurements:
-                basic_validation(measurement, errors)
-                enhanced_validation(measurement, prev_location, errors)
+                BasicValidator(measurement, errors, message)
+                enhanced_validation(measurement, prev_location, errors, message)
             if not errors:
                 return True
             return False

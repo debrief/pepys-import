@@ -1,46 +1,53 @@
-MESSAGE = f"Basic Validation Error"
+class BasicValidator:
+    def __init__(self, measurement_object, errors, message):
+        self.error_message = message + f" - Basic Validation Error"
+        self.errors = errors
+        self.longitude = None
+        self.latitude = None
+        self.heading = measurement_object.heading
+        self.course = measurement_object.course
 
+        if measurement_object.location is not None:
+            self.longitude, self.latitude = measurement_object.location[6:-1].split()
 
-def validate_longitude(longitude, errors):
-    if longitude and -90 <= longitude <= 90:
-        return True
-    errors.append({MESSAGE: "Longitude is not between -90 and 90 degrees!"})
-    return False
+        self.basic_validation()
 
-
-def validate_latitude(latitude, errors):
-    if latitude and -180 <= latitude <= 180:
-        return True
-    errors.append({MESSAGE: "Latitude is not between -180 and 180 degrees!"})
-    return False
-
-
-def validate_heading(heading, errors):
-    if heading and 0 <= heading <= 360:
-        return True
-    errors.append({MESSAGE: "Heading is not between 0 and 360 degrees!"})
-    return False
-
-
-def validate_course(course, errors):
-    if course and 0 <= course <= 360:
-        return True
-    errors.append({MESSAGE: "Course is not between 0 and 360 degrees!"})
-    return False
-
-
-def basic_validation(measurement_object, errors):
-    if measurement_object.location is not None:
-        longitude, latitude = measurement_object.location[6:-1].split()
-        return (
-            validate_longitude(float(longitude), errors)
-            and validate_latitude(float(latitude), errors)
-            and validate_heading(measurement_object.heading, errors)
-            and validate_course(measurement_object.course, errors)
+    def validate_longitude(self):
+        if self.longitude and -90 <= float(self.longitude) <= 90:
+            return True
+        self.errors.append(
+            {self.error_message: "Longitude is not between -90 and 90 degrees!"}
         )
-    return validate_heading(measurement_object.heading, errors) and validate_course(
-        measurement_object.course, errors
-    )
+        return False
 
+    def validate_latitude(self):
+        if self.latitude and -180 <= float(self.latitude) <= 180:
+            return True
+        self.errors.append(
+            {self.error_message: "Latitude is not between -180 and 180 degrees!"}
+        )
+        return False
 
-# basic_validation(-100, -20, 50, 50)
+    def validate_heading(self):
+        if self.heading and 0 <= self.heading <= 360:
+            return True
+        self.errors.append(
+            {self.error_message: "Heading is not between 0 and 360 degrees!"}
+        )
+        return False
+
+    def validate_course(self):
+        if self.course and 0 <= self.course <= 360:
+            return True
+        self.errors.append(
+            {self.error_message: "Course is not between 0 and 360 degrees!"}
+        )
+        return False
+
+    def basic_validation(self):
+        return (
+            self.validate_longitude()
+            and self.validate_latitude()
+            and self.validate_heading()
+            and self.validate_course()
+        )
