@@ -6,7 +6,7 @@ from pepys_import.core.validators import constants
 
 class ReplayImporter(Importer):
     name = "Replay File Format Importer"
-    validation_level = constants.BASIC_LEVEL
+    validation_level = constants.ENHANCED_LEVEL
     short_name = "REP Importer"
 
     def __init__(self, separator=" "):

@@ -10,7 +10,7 @@ from pepys_import.core.validators import constants
 
 class GPXImporter(Importer):
     name = "GPX Format Importer"
-    validation_level = constants.NONE_LEVEL
+    validation_level = constants.BASIC_LEVEL
     short_name = "GPX Importer"
 
     def __init__(self, separator=" "):
