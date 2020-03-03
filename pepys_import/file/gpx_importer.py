@@ -30,15 +30,15 @@ class GPXImporter(Importer):
         return True
 
     def load_this_file(self, data_store, path, file_contents, datafile):
-        print("GPX parser working on ", path.path)
+        print("GPX parser working on ", path)
 
         # Parse XML file from the full path of the file
         # Note: we can't use the file_contents variable passed in, as lxml refuses
         # to parse a string that has an encoding attribute in the XML - it requires bytes instead
         try:
-            doc = etree.parse(path.path)
+            doc = etree.parse(path)
         except Exception as e:
-            print(f'Invalid GPX file at {path.path}\nError from parsing was "{str(e)}"')
+            print(f'Invalid GPX file at {path}\nError from parsing was "{str(e)}"')
             return
 
         # Iterate through <trk> elements - these should correspond to
