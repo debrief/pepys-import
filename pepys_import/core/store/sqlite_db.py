@@ -224,6 +224,8 @@ class Datafile(BaseSpatiaLite):
         # If there is no parsing error, it will return None.If that's the case, create a new list for validation errors.
         if errors is None:
             errors = list()
+        assert isinstance(errors, list), "Type error for errors!"
+
         if validation_level == validation_constants.NONE_LEVEL:
             return True
         elif validation_level == validation_constants.BASIC_LEVEL:
