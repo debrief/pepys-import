@@ -32,7 +32,7 @@ class ETracImporter(Importer):
 
     def load_this_file(self, data_store, path, file_contents, datafile):
         print("E-trac parser working on ", path)
-
+        error_message = self.short_name + f" - Parsing error on {path}"
         for line_number, line in enumerate(file_contents, 1):
             # Skip the header
             if line_number == 1:
@@ -43,9 +43,10 @@ class ETracImporter(Importer):
                 # the last line may be empty, don't worry
                 continue
             elif len(tokens) < 17:
-                print(
-                    "Error on line {} not enough tokens: {}".format(line_number, line),
-                    len(tokens),
+                self.errors.append(
+                    {
+                        error_message: f"Error on line {line_number} not enough tokens: {line}\n{len(tokens)}"
+                    }
                 )
                 continue
 
@@ -60,16 +61,20 @@ class ETracImporter(Importer):
             vessel_name = self.name_for(comp_name_token)
 
             if len(date_token) != 12:
-                print(len(date_token))
-                print(
-                    f"Line {line_number}. Error in Date format {date_token}. Should be 10 figure data"
+                self.errors.append(
+                    {
+                        error_message: f"{len(date_token)}\nLine {line_number}. Error in Date format {date_token}. "
+                        f"Should be 10 figure data"
+                    }
                 )
                 continue
 
             # Times always in Zulu/GMT
             if len(time_token) != 8:
-                print(
-                    f"Line {line_number}. Error in Date format {time_token}. Should be HH:mm:ss"
+                self.errors.append(
+                    {
+                        error_message: f"Line {line_number}. Error in Date format {time_token}. Should be HH:mm:ss"
+                    }
                 )
                 continue
 
