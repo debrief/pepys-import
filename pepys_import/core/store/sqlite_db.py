@@ -219,27 +219,27 @@ class Datafile(BaseSpatiaLite):
         self._measurements.append(comment)
         return comment
 
-    def validate(self, validation_level="NONE"):
-        # TODO: not working yet
+    # TODO: not working yet
+    def validate(self, validation_level="NONE", errors=None):
+        # If there is no parsing error, it will return None.If that's the case, create a new list for validation errors.
+        if errors is None:
+            errors = list()
         if validation_level == validation_constants.NONE_LEVEL:
             return True
         elif validation_level == validation_constants.BASIC_LEVEL:
             for measurement in self._measurements:
-                basic_validation(measurement)
-            # TODO: if there is no error, return True. Return False otherwise
-            return True
+                basic_validation(measurement, errors)
+            if not errors:
+                return True
+            return False
         elif validation_level == validation_constants.ENHANCED_LEVEL:
+            # TODO: find prev_location
             for measurement in self._measurements:
-                basic_validation(measurement)
-                enhanced_validation(
-                    measurement.course,
-                    measurement.heading,
-                    measurement.speed,
-                    measurement.prev_loc,
-                    measurement.current_loc,
-                )
-            # TODO: if there is no error, return True. Return False otherwise
-            return True
+                basic_validation(measurement, errors)
+                enhanced_validation(measurement, prev_location, errors)
+            if not errors:
+                return True
+            return False
 
     def commit(self, session):
         for file in self._measurements:
