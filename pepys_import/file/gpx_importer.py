@@ -5,10 +5,12 @@ from dateutil.parser import parse
 from .importer import Importer
 from pepys_import.core.formats import unit_registry
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+from pepys_import.core.validators import constants
 
 
 class GPXImporter(Importer):
     name = "GPX Format Importer"
+    validation_level = constants.BASIC_LEVEL
 
     def __init__(self, separator=" "):
         super().__init__()
