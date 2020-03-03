@@ -14,7 +14,7 @@ def main(path=DIRECTORY_PATH, db=DEFAULT_DATABASE):
     data_store = DataStore("", "", "", 0, db_name=db, db_type="sqlite")
     data_store.initialise()
 
-    processor = FileProcessor("descending.db")
+    processor = FileProcessor()
 
     importers = get_importers()
     processor.register_importers(importers)
