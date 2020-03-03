@@ -226,6 +226,8 @@ class Datafile(BaseSpatiaLite):
         elif validation_level == validation_constants.BASIC_LEVEL:
             for measurement in self._measurements:
                 basic_validation(measurement)
+            # TODO: if there is no error, return True. Return False otherwise
+            return True
         elif validation_level == validation_constants.ENHANCED_LEVEL:
             for measurement in self._measurements:
                 basic_validation(measurement)
@@ -236,6 +238,8 @@ class Datafile(BaseSpatiaLite):
                     measurement.prev_loc,
                     measurement.current_loc,
                 )
+            # TODO: if there is no error, return True. Return False otherwise
+            return True
 
     def commit(self, session):
         for file in self._measurements:
