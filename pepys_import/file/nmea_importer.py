@@ -1,7 +1,7 @@
 from .importer import Importer
 from datetime import datetime
 
-from pepys_import.utils.unit_utils import convert_heading, convert_speed
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 
 class NMEAImporter(Importer):
@@ -121,7 +121,7 @@ class NMEAImporter(Importer):
                     )
                     state.location = location
 
-                    heading = convert_heading(self.heading, line_number)
+                    heading = convert_absolute_angle(self.heading, line_number)
                     if heading:
                         state.heading = heading
 
