@@ -10,7 +10,10 @@ class BasicValidator:
         if measurement_object.location is not None:
             self.longitude, self.latitude = measurement_object.location[6:-1].split()
 
-        self.basic_validation()
+        self.validate_longitude()
+        self.validate_latitude()
+        self.validate_heading()
+        self.validate_course()
 
     def validate_longitude(self):
         # if longitude is none, there is nothing to validate, return True
@@ -48,11 +51,3 @@ class BasicValidator:
             {self.error_message: "Course is not between 0 and 360 degrees!"}
         )
         return False
-
-    def basic_validation(self):
-        return (
-            self.validate_longitude()
-            and self.validate_latitude()
-            and self.validate_heading()
-            and self.validate_course()
-        )
