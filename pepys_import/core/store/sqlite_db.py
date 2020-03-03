@@ -11,7 +11,7 @@ from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 
 from pepys_import.core.validators.basic_validator import BasicValidator
-from pepys_import.core.validators.enhanced_validator import enhanced_validation
+from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 
 
 # Metadata Tables
@@ -238,7 +238,7 @@ class Datafile(BaseSpatiaLite):
             # TODO: find prev_location
             for measurement in self._measurements:
                 BasicValidator(measurement, errors, message)
-                enhanced_validation(measurement, prev_location, errors, message)
+                EnhancedValidator(measurement, errors, message, prev_location)
             if not errors:
                 return True
             return False

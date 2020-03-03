@@ -37,7 +37,7 @@ class ReplayImporter(Importer):
             else:
                 # create state, to store the data
                 rep_line = REPLine(line_number, line, self.separator)
-                # Store parsing errors in self._error list
+                # Store parsing errors in self.errors list
                 if not rep_line.parse(self.errors, error_message):
                     continue
 
