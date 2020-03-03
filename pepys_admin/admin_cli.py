@@ -4,11 +4,11 @@ import sys
 
 sys.path.append(".")
 
-import argparse     # noqa: E402
-import cmd          # noqa: E402
-from iterfzf import iterfzf      # noqa: E402
-import os                        # noqa: E402
-from pepys_import.core.store.data_store import DataStore   # noqa: E402
+import argparse  # noqa: E402
+import cmd  # noqa: E402
+from iterfzf import iterfzf  # noqa: E402
+import os  # noqa: E402
+from pepys_import.core.store.data_store import DataStore  # noqa: E402
 
 dirpath = os.path.dirname(os.path.abspath(__file__))
 

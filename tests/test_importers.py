@@ -7,8 +7,10 @@ from pepys_import.file.importer import Importer
 from pepys_import.file.replay_importer import ReplayImporter
 from pepys_import.file.nmea_importer import NMEAImporter
 from pepys_import.file.file_processor import FileProcessor
+from pepys_import.file.get_importers import get_importers
 
 FILE_PATH = os.path.dirname(__file__)
+CURRENT_DIR = os.getcwd()
 BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
 DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 
@@ -18,11 +20,11 @@ class SampleImporterTests(unittest.TestCase):
         pass
 
     def tearDown(self) -> None:
-        single_level_file = os.path.join(FILE_PATH, "single_level.db")
+        single_level_file = os.path.join(CURRENT_DIR, "single_level.db")
         if os.path.exists(single_level_file):
             os.remove(single_level_file)
 
-        descending_file = os.path.join(FILE_PATH, "descending.db")
+        descending_file = os.path.join(CURRENT_DIR, "descending.db")
         if os.path.exists(descending_file):
             os.remove(descending_file)
 
@@ -30,8 +32,8 @@ class SampleImporterTests(unittest.TestCase):
         """Test whether single level processing works for the given path"""
         processor = FileProcessor("single_level.db")
 
-        processor.register_importer(ReplayImporter())
-        processor.register_importer(NMEAImporter())
+        importers = get_importers()
+        processor.register_importers(importers)
 
         # try bad file
         exception = False
@@ -48,8 +50,8 @@ class SampleImporterTests(unittest.TestCase):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("descending.db")
 
-        processor.register_importer(ReplayImporter())
-        processor.register_importer(NMEAImporter())
+        importers = get_importers()
+        processor.register_importers(importers)
 
         # try bad file
         exception = False
@@ -66,8 +68,8 @@ class SampleImporterTests(unittest.TestCase):
         """Test whether :memory: is used when no filename is given"""
         processor = FileProcessor()
 
-        processor.register_importer(ReplayImporter())
-        processor.register_importer(NMEAImporter())
+        importers = get_importers()
+        processor.register_importers(importers)
 
         # try bad file
         exception = False
@@ -91,8 +93,8 @@ class SampleImporterTests(unittest.TestCase):
         """Test whether process method works when a file path is given"""
         processor = FileProcessor()
 
-        processor.register_importer(ReplayImporter())
-        processor.register_importer(NMEAImporter())
+        importers = get_importers()
+        processor.register_importers(importers)
 
         file_path = os.path.join(DATA_PATH, "test_importers.csv")
 

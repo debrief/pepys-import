@@ -1,7 +1,7 @@
 from datetime import datetime
 from .location import Location
 from . import unit_registry
-from pepys_import.utils.unit_utils import convert_heading, convert_speed
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 
 def parse_timestamp(date, time):
@@ -161,7 +161,7 @@ class REPLine:
             print(f"Line {self.line_num}. Error in longitude parsing")
             return False
 
-        heading = convert_heading(heading_token, self.line_num)
+        heading = convert_absolute_angle(heading_token, self.line_num)
         if not heading:
             return False
 
