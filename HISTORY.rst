@@ -2,6 +2,12 @@
 History
 =======
 
+0.0.6 (2020-03-03)
+------------------
+
+* Fix for loading folder twice
+* Incorporate all current parsers
+
 0.0.5 (2020-03-02)
 ------------------
 
