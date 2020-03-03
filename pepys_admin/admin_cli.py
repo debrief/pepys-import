@@ -171,20 +171,13 @@ class AdminShell(cmd.Cmd):
     def do_exit(self, arg):
         "Exit the application"
         print("Thank you for using Pepys Admin")
-        self.close()
         return True
-
-    def close(self):
-        if self.file:
-            self.file.close()
-            self.file = None
 
     def default(self, line):
         cmd, arg, line = self.parseline(line)
         if cmd in self.aliases:
             self.aliases[cmd](arg)
             if cmd == "0":
-                self.close()
                 return True
         else:
             print("*** Unknown syntax: %s" % line)
