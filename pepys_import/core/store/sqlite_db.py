@@ -225,20 +225,10 @@ class Datafile(BaseSpatiaLite):
             return True
         elif validation_level == validation_constants.BASIC_LEVEL:
             for measurement in self._measurements:
-                basic_validation(
-                    measurement.longitude,
-                    measurement.latitude,
-                    measurement.heading,
-                    measurement.course,
-                )
+                basic_validation(measurement)
         elif validation_level == validation_constants.ENHANCED_LEVEL:
             for measurement in self._measurements:
-                basic_validation(
-                    measurement.longitude,
-                    measurement.latitude,
-                    measurement.heading,
-                    measurement.course,
-                )
+                basic_validation(measurement)
                 enhanced_validation(
                     measurement.course,
                     measurement.heading,

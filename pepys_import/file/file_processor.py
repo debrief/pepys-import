@@ -148,12 +148,15 @@ class FileProcessor:
             # ok, let these importers handle the file
             datafile = data_store.get_datafile(filename, file_extension)
 
+            # Run all parsers
             for importer in good_importers:
                 processed_ctr += 1
                 importer.load_this_file(data_store, full_path, file_contents, datafile)
 
-            if datafile.validate():
-                datafile.commit(data_store.session)
+            # Run all validation tests
+            for importer in good_importers:
+                if datafile.validate(validation_level=importer.validation_level):
+                    datafile.commit(data_store.session)
 
         return processed_ctr
 
