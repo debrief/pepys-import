@@ -8,6 +8,10 @@ from geoalchemy2 import Geometry
 from pepys_import.core.store.db_base import BaseSpatiaLite
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.store import constants
+from pepys_import.core.validators import constants as validation_constants
+
+from pepys_import.core.validators.basic_validator import basic_validation
+from pepys_import.core.validators.enhanced_validator import enhanced_validation
 
 
 # Metadata Tables
@@ -215,8 +219,33 @@ class Datafile(BaseSpatiaLite):
         self._measurements.append(comment)
         return comment
 
-    def validate(self):
-        return True
+    def validate(self, validation_level):
+        # TODO: not working yet
+        if validation_level == validation_constants.NONE_LEVEL:
+            return True
+        elif validation_level == validation_constants.BASIC_LEVEL:
+            for measurement in self._measurements:
+                basic_validation(
+                    measurement.longitude,
+                    measurement.latitude,
+                    measurement.heading,
+                    measurement.course,
+                )
+        elif validation_level == validation_constants.ENHANCED_LEVEL:
+            for measurement in self._measurements:
+                basic_validation(
+                    measurement.longitude,
+                    measurement.latitude,
+                    measurement.heading,
+                    measurement.course,
+                )
+                enhanced_validation(
+                    measurement.course,
+                    measurement.heading,
+                    measurement.speed,
+                    measurement.prev_loc,
+                    measurement.current_loc,
+                )
 
     def commit(self, session):
         for file in self._measurements:
