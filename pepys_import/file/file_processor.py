@@ -155,7 +155,9 @@ class FileProcessor:
 
             # Run all validation tests
             for importer in good_importers:
-                if datafile.validate(validation_level=importer.validation_level):
+                if datafile.validate(
+                    validation_level=importer.validation_level, errors=importer.errors
+                ):
                     datafile.commit(data_store.session)
 
         return processed_ctr
