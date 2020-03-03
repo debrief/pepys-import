@@ -13,6 +13,7 @@ class ReplayImporter(Importer):
         self.separator = separator
         self.text_label = None
         self.depth = 0.0
+        self._error = list()
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".REP" or suffix.upper() == ".DSF"
@@ -28,13 +29,15 @@ class ReplayImporter(Importer):
 
     def load_this_file(self, data_store, path, file_contents, datafile):
         print("Rep parser working on " + path)
+        error_message = f"REP Importer - Parsing error on {path}"
         for line_number, line in enumerate(file_contents, 1):
             if line.startswith(";"):
                 continue
             else:
                 # create state, to store the data
                 rep_line = REPLine(line_number, line, self.separator)
-                if not rep_line.parse():
+                # Store parsing errors in self._error list
+                if not rep_line.parse(self._error, error_message):
                     continue
 
                 # and finally store it
@@ -60,6 +63,9 @@ class ReplayImporter(Importer):
 
                 state.speed = rep_line.speed
                 state.privacy = privacy.privacy_id
+
+        # TODO: Temporary objects created, loop through tests now
+        # if self.validation_level == "NONE":
 
     # def requires_user_review(self) -> bool:
     #     """
