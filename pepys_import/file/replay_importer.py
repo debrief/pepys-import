@@ -7,6 +7,7 @@ from pepys_import.core.validators import constants
 class ReplayImporter(Importer):
     name = "Replay File Format Importer"
     validation_level = constants.BASIC_LEVEL
+    short_name = "REP Importer"
 
     def __init__(self, separator=" "):
         super().__init__()
@@ -14,7 +15,6 @@ class ReplayImporter(Importer):
         self.text_label = None
         self.depth = 0.0
         self.errors = list()
-        self.error_message = "REP Importer"
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".REP" or suffix.upper() == ".DSF"
@@ -30,7 +30,7 @@ class ReplayImporter(Importer):
 
     def load_this_file(self, data_store, path, file_contents, datafile):
         print("Rep parser working on " + path)
-        error_message = self.error_message + f" - Parsing error on {path}"
+        error_message = self.short_name + f" - Parsing error on {path}"
         for line_number, line in enumerate(file_contents, 1):
             if line.startswith(";"):
                 continue

@@ -159,7 +159,7 @@ class FileProcessor:
                 if not datafile.validate(
                     validation_level=importer.validation_level,
                     errors=importer.errors,
-                    message=importer.error_message,
+                    message=importer.short_name,
                 ):
                     errors.append(importer.errors)
 

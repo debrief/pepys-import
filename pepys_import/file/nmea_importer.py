@@ -9,6 +9,7 @@ from pepys_import.core.validators import constants
 class NMEAImporter(Importer):
     name = "NMEA File Format Importer"
     validation_level = constants.BASIC_LEVEL
+    short_name = "NMEA Importer"
 
     def __init__(self, separator=","):
         super().__init__()
