@@ -14,6 +14,7 @@ class ReplayImporter(Importer):
         self.text_label = None
         self.depth = 0.0
         self.errors = list()
+        self.error_message = "REP Importer"
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".REP" or suffix.upper() == ".DSF"
@@ -29,7 +30,7 @@ class ReplayImporter(Importer):
 
     def load_this_file(self, data_store, path, file_contents, datafile):
         print("Rep parser working on " + path)
-        error_message = f"REP Importer - Parsing error on {path}"
+        error_message = self.error_message + f" - Parsing error on {path}"
         for line_number, line in enumerate(file_contents, 1):
             if line.startswith(";"):
                 continue
