@@ -8,6 +8,8 @@ MESSAGE = f"Enhanced Validation Error"
 def course_heading_loose_match_with_location(
     course, heading, prev_location, current_location, errors
 ):
+    # TODO: calculate current location, put prev and curr location to ST_Distance,
+    #  compare it with course and heading
     """
     :param course:
     :param heading:
@@ -19,6 +21,8 @@ def course_heading_loose_match_with_location(
 
 
 def speed_loose_match_with_location(speed, prev_location, current_location, errors):
+    # TODO: calculate current location, put prev and curr location to ST_Distance,
+    #  compare it with speed
     """
     :param speed:
     :param prev_location:
