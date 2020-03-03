@@ -161,12 +161,16 @@ class FileProcessor:
                     errors=importer.errors,
                     message=importer.short_name,
                 ):
-                    errors.append(importer.errors)
+                    errors.extend(importer.errors)
 
             # If all tests pass for all parsers, commit datafile
             if not errors:
                 datafile.commit(data_store.session)
-
+                # TODO: write extraction log to output folder
+                # TODO: move original file to output folder
+            else:
+                # TODO: write errors to output folder
+                print(errors)
         return processed_ctr
 
     def register_importer(self, importer):
