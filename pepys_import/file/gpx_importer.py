@@ -12,6 +12,7 @@ class GPXImporter(Importer):
 
     def __init__(self, separator=" "):
         super().__init__()
+        self.errors = list()
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".GPX"

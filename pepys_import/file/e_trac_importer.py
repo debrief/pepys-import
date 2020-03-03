@@ -12,6 +12,8 @@ class ETracImporter(Importer):
     def __init__(self, separator=" "):
         super().__init__()
         self.separator = separator
+        self.errors = list()
+
         self.text_label = None
         self.depth = 0.0
 

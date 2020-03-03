@@ -13,7 +13,7 @@ class ReplayImporter(Importer):
         self.separator = separator
         self.text_label = None
         self.depth = 0.0
-        self.error = list()
+        self.errors = list()
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".REP" or suffix.upper() == ".DSF"
@@ -37,7 +37,7 @@ class ReplayImporter(Importer):
                 # create state, to store the data
                 rep_line = REPLine(line_number, line, self.separator)
                 # Store parsing errors in self._error list
-                if not rep_line.parse(self.error, error_message):
+                if not rep_line.parse(self.errors, error_message):
                     continue
 
                 # and finally store it

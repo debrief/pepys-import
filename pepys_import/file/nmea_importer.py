@@ -13,6 +13,7 @@ class NMEAImporter(Importer):
     def __init__(self, separator=","):
         super().__init__()
         self.separator = separator
+        self.errors = list()
 
         self.latitude = None
         self.latitude_hem = None
