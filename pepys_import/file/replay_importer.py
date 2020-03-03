@@ -65,9 +65,6 @@ class ReplayImporter(Importer):
                 state.speed = rep_line.speed
                 state.privacy = privacy.privacy_id
 
-        # TODO: Temporary objects created, loop through tests now
-        # if self.validation_level == "NONE":
-
     # def requires_user_review(self) -> bool:
     #     """
     #     Whether this importer requires user review of the loaded intermediate data
