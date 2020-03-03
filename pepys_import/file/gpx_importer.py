@@ -35,6 +35,7 @@ class GPXImporter(Importer):
 
     def load_this_file(self, data_store, path, file_contents, datafile):
         print("GPX parser working on ", path)
+        error_message = self.short_name + f" - Parsing error on {path}"
 
         # Parse XML file from the full path of the file
         # Note: we can't use the file_contents variable passed in, as lxml refuses
@@ -42,7 +43,11 @@ class GPXImporter(Importer):
         try:
             doc = etree.parse(path)
         except Exception as e:
-            print(f'Invalid GPX file at {path}\nError from parsing was "{str(e)}"')
+            self.errors.append(
+                {
+                    error_message: f'Invalid GPX file at {path}\nError from parsing was "{str(e)}"'
+                }
+            )
             return
 
         # Iterate through <trk> elements - these should correspond to
@@ -79,8 +84,11 @@ class GPXImporter(Importer):
                 timestamp_str = self.get_child_text_if_exists(tpt, "{*}time")
 
                 if timestamp_str is None:
-                    print(
-                        f"Line {tpt.sourceline}. Error: <trkpt> element must have child <time> element"
+                    self.errors.append(
+                        {
+                            error_message: f"Line {tpt.sourceline}. "
+                            f"Error: <trkpt> element must have child <time> element"
+                        }
                     )
                     continue
 
@@ -105,8 +113,11 @@ class GPXImporter(Importer):
                     try:
                         speed = float(speed_str)
                     except ValueError:
-                        print(
-                            f"Line {tpt.sourceline}. Error in speed value {speed_str}. Couldn't convert to number"
+                        self.errors.append(
+                            {
+                                error_message: f"Line {tpt.sourceline}. Error in speed value {speed_str}. "
+                                f"Couldn't convert to number"
+                            }
                         )
                     state.speed = speed
 
@@ -114,8 +125,11 @@ class GPXImporter(Importer):
                     try:
                         elevation = float(elevation_str)
                     except ValueError:
-                        print(
-                            f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. Couldn't convert to number"
+                        self.errors.append(
+                            {
+                                error_message: f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. "
+                                f"Couldn't convert to number"
+                            }
                         )
                     state.elevation = elevation
 
