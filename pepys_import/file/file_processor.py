@@ -163,7 +163,7 @@ class FileProcessor:
                 ):
                     errors.append(importer.errors)
 
-            # If all tests passes for all parsers, commit datafile
+            # If all tests pass for all parsers, commit datafile
             if not errors:
                 datafile.commit(data_store.session)
 
