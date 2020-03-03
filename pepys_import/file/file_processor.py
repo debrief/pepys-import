@@ -154,11 +154,18 @@ class FileProcessor:
                 importer.load_this_file(data_store, full_path, file_contents, datafile)
 
             # Run all validation tests
+            errors = list()
             for importer in good_importers:
-                if datafile.validate(
-                    validation_level=importer.validation_level, errors=importer.errors
+                if not datafile.validate(
+                    validation_level=importer.validation_level,
+                    errors=importer.errors,
+                    message=importer.error_message,
                 ):
-                    datafile.commit(data_store.session)
+                    errors.append(importer.errors)
+
+            # If all tests passes for all parsers, commit datafile
+            if not errors:
+                datafile.commit(data_store.session)
 
         return processed_ctr
 
