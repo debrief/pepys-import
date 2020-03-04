@@ -169,7 +169,7 @@ class NMEAImporter(Importer):
         if long_hem == "W":
             lon_degrees = -1 * lon_degrees
 
-        return f"POINT({lat_degrees} {lon_degrees})"
+        return f"POINT({lon_degrees} {lat_degrees})"
 
     @staticmethod
     def parse_timestamp(date, time):
