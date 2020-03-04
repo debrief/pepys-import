@@ -126,7 +126,7 @@ class NMEAImporter(Importer):
 
                     heading = convert_absolute_angle(self.heading, line_number)
                     if heading:
-                        state.heading = heading
+                        state.heading = heading.magnitude
 
                     speed = convert_speed(self.speed, line_number)
                     if speed:
@@ -154,14 +154,12 @@ class NMEAImporter(Importer):
     @staticmethod
     def parse_location(lat, lat_hem, lon, long_hem):
         lat_degrees = float(lat[0:2])
-        lat_minutes = float(lat[2:4])
-        lat_seconds = float(lat[4:])
-        lat_degrees = lat_degrees + lat_minutes / 60 + lat_seconds / 60 / 60
+        lat_minutes = float(lat[2:])
+        lat_degrees = lat_degrees + lat_minutes / 60
 
         lon_degrees = float(lon[0:3])
-        lon_minutes = float(lon[3:5])
-        lon_seconds = float(lon[5:])
-        lon_degrees = lon_degrees + lon_minutes / 60 + lon_seconds / 60 / 60
+        lon_minutes = float(lon[3:])
+        lon_degrees = lon_degrees + lon_minutes / 60
 
         if lat_hem == "S":
             lat_degrees = -1 * lat_degrees
@@ -169,7 +167,7 @@ class NMEAImporter(Importer):
         if long_hem == "W":
             lon_degrees = -1 * lon_degrees
 
-        return f"({lat_degrees} {lon_degrees})"
+        return f"POINT({lon_degrees} {lat_degrees})"
 
     @staticmethod
     def parse_timestamp(date, time):
