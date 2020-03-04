@@ -19,7 +19,6 @@ class ETracTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    # TODO: fails because it throws validation errors
     def test_process_e_trac_data(self):
         processor = FileProcessor()
         processor.register_importer(ETracImporter())

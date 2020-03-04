@@ -232,7 +232,6 @@ class Datafile(BaseSpatiaLite):
             self.measurements[parser].append(comment)
             return comment
 
-    # TODO: not working yet
     def validate(
         self,
         validation_level=validation_constants.NONE_LEVEL,
