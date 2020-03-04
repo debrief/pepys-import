@@ -235,10 +235,10 @@ class Datafile(BaseSpatiaLite):
                 return True
             return False
         elif validation_level == validation_constants.ENHANCED_LEVEL:
-            # TODO: find prev_location
+            # TODO: find prev_location, engine or session is also necessary
             for measurement in self._measurements:
                 BasicValidator(measurement, errors, message)
-                EnhancedValidator(measurement, errors, message, prev_location)
+                EnhancedValidator(measurement, errors, message, prev_location, engine)
             if not errors:
                 return True
             return False
