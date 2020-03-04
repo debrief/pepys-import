@@ -245,7 +245,7 @@ class Datafile(BaseSpatiaLite):
             return False
 
     def commit(self, session):
-        for file in self._measurements:
+        for file in self.measurements:
             file.submit(session)
 
     # def verify(self):
