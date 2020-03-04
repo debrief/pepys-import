@@ -2,6 +2,7 @@ from .importer import Importer
 from datetime import datetime
 
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+from pepys_import.core.formats import unit_registry
 
 
 class NMEAImporter(Importer):
@@ -126,7 +127,7 @@ class NMEAImporter(Importer):
 
                     heading = convert_absolute_angle(self.heading, line_number)
                     if heading:
-                        state.heading = heading.magnitude
+                        state.heading = heading.to(unit_registry.radians).magnitude
 
                     speed = convert_speed(self.speed, line_number)
                     if speed:
