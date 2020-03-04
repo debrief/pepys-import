@@ -23,16 +23,29 @@ class EnhancedValidator:
             self.speed_loose_match_with_location()
 
     def course_heading_loose_match_with_location(self):
+        number_of_errors = len(self.errors)
         bearing = bearing_between_two_points(self.location, self.prev_location)
-        heading_in_degrees = degrees(self.heading)
-        if -90 <= heading_in_degrees - bearing <= 90:
+        if self.heading:
+            heading_in_degrees = degrees(self.heading)
+            if not -90 <= heading_in_degrees - bearing <= 90:
+                self.errors.append(
+                    {
+                        self.error_type: f"Difference between Bearing ({bearing:.3f}) and "
+                        f"Heading ({heading_in_degrees:.3f}) is more than 90 degrees!"
+                    }
+                )
+        if self.course:
+            course_in_degrees = degrees(self.course)
+            if not -90 <= course_in_degrees - bearing <= 90:
+                self.errors.append(
+                    {
+                        self.error_type: f"Difference between Bearing ({bearing:.3f}) and "
+                        f"Course ({course_in_degrees:.3f}) is more than 90 degrees!"
+                    }
+                )
+        # if not an error appended to the list, its length will be the same
+        if number_of_errors == len(self.errors):
             return True
-        self.errors.append(
-            {
-                self.error_type: f"Difference between Bearing ({bearing:.3f}) and Heading ({heading_in_degrees:.3f})"
-                f" is more than 90 degrees!"
-            }
-        )
         return False
 
     def speed_loose_match_with_location(self):
