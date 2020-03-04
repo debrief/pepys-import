@@ -6,8 +6,7 @@ from pepys_import.file.highlighter.support.combine import combine_tokens
 
 path = os.path.abspath(__file__)
 dir_path = os.path.dirname(path)
-TEST_FILE = os.path.join(dir_path, "reptest1.rep")
-ERROR_TEST_FILE = os.path.join(dir_path, "reptest2.rep")
+TEST_FILE = os.path.join(dir_path, "sample_files/reptest1.rep")
 
 DATA_FILE = os.path.join(dir_path, "sample_files/file.txt")
 

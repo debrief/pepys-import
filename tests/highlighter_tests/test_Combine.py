@@ -8,8 +8,8 @@ from pepys_import.file.highlighter.support.export import export_report
 
 path = os.path.abspath(__file__)
 dir_path = os.path.dirname(path)
-TEST_FILE = os.path.join(dir_path, "reptest1.rep")
-NMEA_FILE = os.path.join(dir_path, "NMEA_out.txt")
+TEST_FILE = os.path.join(dir_path, "sample_files/reptest1.rep")
+NMEA_FILE = os.path.join(dir_path, "sample_files/NMEA_out.txt")
 
 DATA_FILE = os.path.join(dir_path, "sample_files/file.txt")
 
