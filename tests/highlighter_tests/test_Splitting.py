@@ -50,9 +50,7 @@ class SimpleTests(unittest.TestCase):
         assert first_line is not None
 
         # FixMe - this next constant should be declared in class module
-        csv_delim = (
-            '(?:,"|^")(""|[\w\W]*?)(?=",|"$)|(?:,(?!")|^(?!"))([^,]*?)(?=$|,)|(\r\n|\n)'
-        )
+        csv_delim = r'(?:,"|^")(""|[\w\W]*?)(?=",|"$)|(?:,(?!")|^(?!"))([^,]*?)(?=$|,)|(\r\n|\n)'
 
         tokens = first_line.tokens(csv_delim, ",")
         self.assertEqual(7, len(tokens))
