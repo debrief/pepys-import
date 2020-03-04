@@ -154,14 +154,12 @@ class NMEAImporter(Importer):
     @staticmethod
     def parse_location(lat, lat_hem, lon, long_hem):
         lat_degrees = float(lat[0:2])
-        lat_minutes = float(lat[2:4])
-        lat_seconds = float(lat[4:])
-        lat_degrees = lat_degrees + lat_minutes / 60 + lat_seconds / 60 / 60
+        lat_minutes = float(lat[2:])
+        lat_degrees = lat_degrees + lat_minutes / 60
 
         lon_degrees = float(lon[0:3])
-        lon_minutes = float(lon[3:5])
-        lon_seconds = float(lon[5:])
-        lon_degrees = lon_degrees + lon_minutes / 60 + lon_seconds / 60 / 60
+        lon_minutes = float(lon[3:])
+        lon_degrees = lon_degrees + lon_minutes / 60
 
         if lat_hem == "S":
             lat_degrees = -1 * lat_degrees
