@@ -158,7 +158,12 @@ class REPLine:
         self.symbology = symbology_token
 
         self.latitude = Location(
-            lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token
+            lat_degrees_token,
+            lat_mins_token,
+            lat_secs_token,
+            lat_hemi_token,
+            error,
+            error_type,
         )
         if not self.latitude.parse():
             error.append(
@@ -167,7 +172,12 @@ class REPLine:
             return False
 
         self.longitude = Location(
-            long_degrees_token, long_mins_token, long_secs_token, long_hemi_token
+            long_degrees_token,
+            long_mins_token,
+            long_secs_token,
+            long_hemi_token,
+            error,
+            error_type,
         )
         if not self.longitude.parse():
             error.append(

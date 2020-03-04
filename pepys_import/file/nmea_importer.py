@@ -125,7 +125,9 @@ class NMEAImporter(Importer):
                     state = datafile.create_state(sensor, timestamp)
 
                     self.latitude = Location(
-                        *self.parse_location(self.latitude, self.latitude_hem)
+                        *self.parse_location(self.latitude, self.latitude_hem),
+                        self.errors,
+                        error_type,
                     )
                     if not self.latitude.parse():
                         self.errors.append(
@@ -136,7 +138,9 @@ class NMEAImporter(Importer):
                         continue
 
                     self.longitude = Location(
-                        *self.parse_location(self.longitude, self.longitude_hem)
+                        *self.parse_location(self.longitude, self.longitude_hem),
+                        self.errors,
+                        error_type,
                     )
                     if not self.longitude.parse():
                         self.errors.append(
