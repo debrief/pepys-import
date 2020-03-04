@@ -63,7 +63,8 @@ class NMEAImporter(Importer):
 
     def load_this_file(self, data_store, path, file_contents, datafile):
         print("NMEA parser working on " + path)
-
+        # keep track of generated platform name
+        platform_name = None
         for line_number, line in enumerate(file_contents):
             if line_number > 5000:
                 break
@@ -95,11 +96,13 @@ class NMEAImporter(Importer):
 
                     # and finally store it
                     platform = data_store.get_platform(
-                        platform_name=None,
+                        platform_name=platform_name,
                         platform_type="Ferry",
                         nationality="FR",
                         privacy="Public",
                     )
+                    # capture the name
+                    platform_name = platform.name
                     sensor_type = data_store.add_to_sensor_types("_GPS")
                     privacy = data_store.missing_data_resolver.resolve_privacy(
                         data_store
