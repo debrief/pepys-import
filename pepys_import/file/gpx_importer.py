@@ -1,3 +1,5 @@
+import os
+
 from lxml import etree
 from datetime import datetime
 from dateutil.parser import parse
@@ -34,8 +36,9 @@ class GPXImporter(Importer):
         return True
 
     def load_this_file(self, data_store, path, file_contents, datafile):
-        print("GPX parser working on ", path)
-        error_message = self.short_name + f" - Parsing error on {path}"
+        basename = os.path.basename(path)
+        print(f"GPX parser working on {basename}")
+        error_message = self.short_name + f" - Parsing error on {basename}"
         prev_location = None
         datafile.measurements[self.short_name] = list()
 

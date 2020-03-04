@@ -1,3 +1,5 @@
+import os
+
 from .importer import Importer
 from datetime import datetime
 from pepys_import.core.formats import unit_registry
@@ -31,8 +33,9 @@ class ETracImporter(Importer):
         return True
 
     def load_this_file(self, data_store, path, file_contents, datafile):
-        print("E-trac parser working on ", path)
-        error_message = self.short_name + f" - Parsing error on {path}"
+        basename = os.path.basename(path)
+        print(f"E-trac parser working on {basename}")
+        error_message = self.short_name + f" - Parsing error on {basename}"
         prev_location = None
         datafile.measurements[self.short_name] = list()
         for line_number, line in enumerate(file_contents, 1):
@@ -47,7 +50,7 @@ class ETracImporter(Importer):
             elif len(tokens) < 17:
                 self.errors.append(
                     {
-                        error_message: f"Error on line {line_number} not enough tokens: {line}\n{len(tokens)}"
+                        error_message: f"Error on line {line_number}. Not enough tokens: {line}"
                     }
                 )
                 continue
@@ -65,8 +68,8 @@ class ETracImporter(Importer):
             if len(date_token) != 12:
                 self.errors.append(
                     {
-                        error_message: f"{len(date_token)}\nLine {line_number}. Error in Date format {date_token}. "
-                        f"Should be 10 figure data"
+                        error_message: f"Error on line {line_number}. Date format '{date_token}' "
+                        f"should be 10 figure data"
                     }
                 )
                 continue
@@ -75,7 +78,7 @@ class ETracImporter(Importer):
             if len(time_token) != 8:
                 self.errors.append(
                     {
-                        error_message: f"Line {line_number}. Error in Date format {time_token}. Should be HH:mm:ss"
+                        error_message: f"Line {line_number}. Error in Date format '{time_token}'. Should be HH:mm:ss"
                     }
                 )
                 continue
