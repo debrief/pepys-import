@@ -68,7 +68,7 @@ class NMEAImporter(Importer):
 
     def load_this_file(self, data_store, path, file_contents, datafile):
         print("NMEA parser working on " + path)
-        error_message = self.short_name + f" - Parsing error on {path}"
+        error_type = self.short_name + f" - Parsing error on {path}"
         prev_location = None
         datafile.measurements[self.short_name] = list()
         for line_number, line in enumerate(file_contents):
@@ -130,7 +130,7 @@ class NMEAImporter(Importer):
                     if not self.latitude.parse():
                         self.errors.append(
                             {
-                                error_message: f"Line {line_number}. Error in latitude parsing"
+                                error_type: f"Line {line_number}. Error in latitude parsing"
                             }
                         )
                         continue
@@ -141,7 +141,7 @@ class NMEAImporter(Importer):
                     if not self.longitude.parse():
                         self.errors.append(
                             {
-                                error_message: f"Line {line_number}. Error in longitude parsing"
+                                error_type: f"Line {line_number}. Error in longitude parsing"
                             }
                         )
                         continue
@@ -150,11 +150,15 @@ class NMEAImporter(Importer):
                     state.location = f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
                     prev_location = state.location
 
-                    heading = convert_absolute_angle(self.heading, line_number)
+                    heading = convert_absolute_angle(
+                        self.heading, line_number, self.errors, error_type
+                    )
                     if heading:
                         state.heading = heading
 
-                    speed = convert_speed(self.speed, line_number)
+                    speed = convert_speed(
+                        self.speed, line_number, self.errors, error_type
+                    )
                     if speed:
                         state.speed = speed
 

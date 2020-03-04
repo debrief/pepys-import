@@ -10,7 +10,7 @@ class EnhancedValidator:
     """Enhanced validator serve to verify the lat/long, in addition to the course/speed/heading"""
 
     def __init__(self, measurement_object, errors, parser_name):
-        self.error_message = parser_name + f" - Enhanced Validation Error"
+        self.error_type = parser_name + f" - Enhanced Validation Error"
         self.errors = errors
         self.location = measurement_object.location
         self.speed = measurement_object.speed
@@ -29,7 +29,7 @@ class EnhancedValidator:
             return True
         self.errors.append(
             {
-                self.error_message: f"Difference between Bearing ({bearing:.3f}) and Heading ({heading_in_degrees:.3f})"
+                self.error_type: f"Difference between Bearing ({bearing:.3f}) and Heading ({heading_in_degrees:.3f})"
                 f" is more than 90 degrees!"
             }
         )
@@ -43,7 +43,7 @@ class EnhancedValidator:
             return True
         self.errors.append(
             {
-                self.error_message: f"Calculate speed ({calculated_speed:.3f} m/s) is more than "
+                self.error_type: f"Calculate speed ({calculated_speed:.3f} m/s) is more than "
                 f"the measured speed * 10 ({self.speed * 10:.3f} m/s)!"
             }
         )

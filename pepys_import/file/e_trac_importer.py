@@ -35,7 +35,7 @@ class ETracImporter(Importer):
     def load_this_file(self, data_store, path, file_contents, datafile):
         basename = os.path.basename(path)
         print(f"E-trac parser working on {basename}")
-        error_message = self.short_name + f" - Parsing error on {basename}"
+        error_type = self.short_name + f" - Parsing error on {basename}"
         prev_location = None
         datafile.measurements[self.short_name] = list()
         for line_number, line in enumerate(file_contents, 1):
@@ -50,7 +50,7 @@ class ETracImporter(Importer):
             elif len(tokens) < 17:
                 self.errors.append(
                     {
-                        error_message: f"Error on line {line_number}. Not enough tokens: {line}"
+                        error_type: f"Error on line {line_number}. Not enough tokens: {line}"
                     }
                 )
                 continue
@@ -68,7 +68,7 @@ class ETracImporter(Importer):
             if len(date_token) != 12:
                 self.errors.append(
                     {
-                        error_message: f"Error on line {line_number}. Date format '{date_token}' "
+                        error_type: f"Error on line {line_number}. Date format '{date_token}' "
                         f"should be 10 figure data"
                     }
                 )
@@ -78,7 +78,7 @@ class ETracImporter(Importer):
             if len(time_token) != 8:
                 self.errors.append(
                     {
-                        error_message: f"Line {line_number}. Error in Date format '{time_token}'. Should be HH:mm:ss"
+                        error_type: f"Line {line_number}. Error in Date format '{time_token}'. Should be HH:mm:ss"
                     }
                 )
                 continue
@@ -109,10 +109,12 @@ class ETracImporter(Importer):
 
             state.elevation = -1 * self.depth
 
-            heading = convert_absolute_angle(heading_token, line_number)
+            heading = convert_absolute_angle(
+                heading_token, line_number, self.errors, error_type
+            )
             state.heading = heading.to(unit_registry.radians).magnitude
 
-            speed = convert_speed(speed_token, line_number)
+            speed = convert_speed(speed_token, line_number, self.errors, error_type)
             state.speed = speed
 
     @staticmethod

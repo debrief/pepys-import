@@ -33,7 +33,7 @@ class ReplayImporter(Importer):
     def load_this_file(self, data_store, path, file_contents, datafile):
         basename = os.path.basename(path)
         print(f"Rep parser working on '{basename}'")
-        error_message = self.short_name + f" - Parsing error on '{basename}'"
+        error_type = self.short_name + f" - Parsing error on '{basename}'"
         prev_location = None
         datafile.measurements[self.short_name] = list()
         for line_number, line in enumerate(file_contents, 1):
@@ -43,7 +43,7 @@ class ReplayImporter(Importer):
                 # create state, to store the data
                 rep_line = REPLine(line_number, line, self.separator)
                 # Store parsing errors in self.errors list
-                if not rep_line.parse(self.errors, error_message):
+                if not rep_line.parse(self.errors, error_type):
                     continue
 
                 # and finally store it

@@ -38,7 +38,7 @@ class GPXImporter(Importer):
     def load_this_file(self, data_store, path, file_contents, datafile):
         basename = os.path.basename(path)
         print(f"GPX parser working on {basename}")
-        error_message = self.short_name + f" - Parsing error on {basename}"
+        error_type = self.short_name + f" - Parsing error on {basename}"
         prev_location = None
         datafile.measurements[self.short_name] = list()
 
@@ -50,7 +50,7 @@ class GPXImporter(Importer):
         except Exception as e:
             self.errors.append(
                 {
-                    error_message: f'Invalid GPX file at {path}\nError from parsing was "{str(e)}"'
+                    error_type: f'Invalid GPX file at {path}\nError from parsing was "{str(e)}"'
                 }
             )
             return
@@ -91,7 +91,7 @@ class GPXImporter(Importer):
                 if timestamp_str is None:
                     self.errors.append(
                         {
-                            error_message: f"Line {tpt.sourceline}. "
+                            error_type: f"Line {tpt.sourceline}. "
                             f"Error: <trkpt> element must have child <time> element"
                         }
                     )
@@ -112,7 +112,9 @@ class GPXImporter(Importer):
 
                 # Add course
                 if course_str is not None:
-                    course = convert_absolute_angle(course_str, tpt.sourceline)
+                    course = convert_absolute_angle(
+                        course_str, tpt.sourceline, self.errors, error_type
+                    )
                     state.course = course.to(unit_registry.radians).magnitude
 
                 # Add speed
@@ -122,7 +124,7 @@ class GPXImporter(Importer):
                     except ValueError:
                         self.errors.append(
                             {
-                                error_message: f"Line {tpt.sourceline}. Error in speed value {speed_str}. "
+                                error_type: f"Line {tpt.sourceline}. Error in speed value {speed_str}. "
                                 f"Couldn't convert to number"
                             }
                         )
@@ -134,7 +136,7 @@ class GPXImporter(Importer):
                     except ValueError:
                         self.errors.append(
                             {
-                                error_message: f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. "
+                                error_type: f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. "
                                 f"Couldn't convert to number"
                             }
                         )
