@@ -234,7 +234,10 @@ class Datafile(BaseSpatiaLite):
 
     # TODO: not working yet
     def validate(
-        self, validation_level=validation_constants.NONE_LEVEL, errors=None, parser=None
+        self,
+        validation_level=validation_constants.NONE_LEVEL,
+        errors=None,
+        parser="Default",
     ):
         # If there is no parsing error, it will return None.If that's the case, create a new list for validation errors.
         if errors is None:
