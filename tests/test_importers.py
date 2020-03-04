@@ -260,7 +260,7 @@ class NMEAImporterTestCase(unittest.TestCase):
     def test_parse_location(self):
         """Test whether the method correctly converts the given string location"""
         location = self.nmea_importer.parse_location("01603600", "S", "001603600", "W")
-        self.assertEqual("(-3.0 -3.0)", location)
+        self.assertEqual("POINT(-3.0 -3.0)", location)
 
     def test_tokens(self):
         """Test whether the method correctly tokenize the given string"""
