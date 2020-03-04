@@ -182,6 +182,7 @@ class Datafile(BaseSpatiaLite):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.measurements = dict()
+        self.measurements["Default"] = list()
 
     __tablename__ = constants.DATAFILE
     table_type = TableTypes.METADATA
@@ -195,29 +196,41 @@ class Datafile(BaseSpatiaLite):
     url = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    def create_state(self, sensor, timestamp, parser):
+    def create_state(self, sensor, timestamp, parser=None):
         state = State(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
-        self.measurements[parser].append(state)
-        return state
+        if parser is None:
+            self.measurements["Default"].append(state)
+            return state
+        else:
+            self.measurements[parser].append(state)
+            return state
 
-    def create_contact(self, sensor, timestamp, parser):
+    def create_contact(self, sensor, timestamp, parser=None):
         contact = Contact(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
-        self.measurements[parser].append(contact)
-        return contact
+        if parser is None:
+            self.measurements["Default"].append(contact)
+            return contact
+        else:
+            self.measurements[parser].append(contact)
+            return contact
 
-    def create_comment(self, sensor, timestamp, comment, comment_type, parser):
+    def create_comment(self, sensor, timestamp, comment, comment_type, parser=None):
         comment = Comment(
             time=timestamp,
             content=comment,
             comment_type_id=comment_type.comment_type_id,
             source_id=self.datafile_id,
         )
-        self.measurements[parser].append(comment)
-        return comment
+        if parser is None:
+            self.measurements["Default"].append(comment)
+            return comment
+        else:
+            self.measurements[parser].append(comment)
+            return comment
 
     # TODO: not working yet
     def validate(
@@ -245,8 +258,9 @@ class Datafile(BaseSpatiaLite):
             return False
 
     def commit(self, session):
-        for file in self.measurements:
-            file.submit(session)
+        for key in self.measurements.keys():
+            for file in self.measurements[key]:
+                file.submit(session)
 
     # def verify(self):
     #     pass
