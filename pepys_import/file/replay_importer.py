@@ -32,6 +32,7 @@ class ReplayImporter(Importer):
         print("Rep parser working on " + path)
         error_message = self.short_name + f" - Parsing error on {path}"
         prev_location = None
+        datafile.measurements[self.short_name] = list()
         for line_number, line in enumerate(file_contents, 1):
             if line.startswith(";"):
                 continue
@@ -58,7 +59,9 @@ class ReplayImporter(Importer):
                     sensor_type=sensor_type,
                     privacy=privacy.name,
                 )
-                state = datafile.create_state(sensor, rep_line.timestamp)
+                state = datafile.create_state(
+                    sensor, rep_line.timestamp, self.short_name
+                )
                 state.elevation = -1 * rep_line.depth
                 state.heading = rep_line.heading.to(unit_registry.radians).magnitude
                 state.speed = rep_line.speed

@@ -181,7 +181,7 @@ class Participant(BaseSpatiaLite):
 class Datafile(BaseSpatiaLite):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._measurements = []
+        self.measurements = dict()
 
     __tablename__ = constants.DATAFILE
     table_type = TableTypes.METADATA
@@ -195,32 +195,34 @@ class Datafile(BaseSpatiaLite):
     url = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    def create_state(self, sensor, timestamp):
+    def create_state(self, sensor, timestamp, parser):
         state = State(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
-        self._measurements.append(state)
+        self.measurements[parser].append(state)
         return state
 
-    def create_contact(self, sensor, timestamp):
+    def create_contact(self, sensor, timestamp, parser):
         contact = Contact(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
-        self._measurements.append(contact)
+        self.measurements[parser].append(contact)
         return contact
 
-    def create_comment(self, sensor, timestamp, comment, comment_type):
+    def create_comment(self, sensor, timestamp, comment, comment_type, parser):
         comment = Comment(
             time=timestamp,
             content=comment,
             comment_type_id=comment_type.comment_type_id,
             source_id=self.datafile_id,
         )
-        self._measurements.append(comment)
+        self.measurements[parser].append(comment)
         return comment
 
     # TODO: not working yet
-    def validate(self, validation_level="NONE", errors=None, message=None):
+    def validate(
+        self, validation_level=validation_constants.NONE_LEVEL, errors=None, parser=None
+    ):
         # If there is no parsing error, it will return None.If that's the case, create a new list for validation errors.
         if errors is None:
             errors = list()
@@ -229,16 +231,15 @@ class Datafile(BaseSpatiaLite):
         if validation_level == validation_constants.NONE_LEVEL:
             return True
         elif validation_level == validation_constants.BASIC_LEVEL:
-            for measurement in self._measurements:
-                BasicValidator(measurement, errors, message)
+            for measurement in self.measurements[parser]:
+                BasicValidator(measurement, errors, parser)
             if not errors:
                 return True
             return False
         elif validation_level == validation_constants.ENHANCED_LEVEL:
-            # TODO: find prev_location
-            for measurement in self._measurements:
-                BasicValidator(measurement, errors, message)
-                EnhancedValidator(measurement, errors, message)
+            for measurement in self.measurements[parser]:
+                BasicValidator(measurement, errors, parser)
+                EnhancedValidator(measurement, errors, parser)
             if not errors:
                 return True
             return False
