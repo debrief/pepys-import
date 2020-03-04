@@ -68,7 +68,7 @@ Remove-Item get-pip.py
 Write-Output "INFO: Finished cleanup"
 
 # Zip up whole folder into a zip-file with the current date in the filename
-$date_str = Get-Date -Format "yyyymmdd"
+$date_str = Get-Date -Format "yyyyMMdd"
 $output_filename = $date_str + "_pepys-import.zip"
 Compress-Archive -Path .\* -DestinationPath $output_filename
 
