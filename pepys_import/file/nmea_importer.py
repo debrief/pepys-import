@@ -123,7 +123,7 @@ class NMEAImporter(Importer):
                     )
                     timestamp = self.parse_timestamp(self.date, self.time)
 
-                    state = datafile.create_state(sensor, timestamp)
+                    state = datafile.create_state(sensor, timestamp, self.short_name)
 
                     self.latitude = Location(
                         *self.parse_location(self.latitude, self.latitude_hem),

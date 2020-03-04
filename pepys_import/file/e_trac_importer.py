@@ -101,7 +101,7 @@ class ETracImporter(Importer):
                 sensor_type=sensor_type,
                 privacy=privacy.name,
             )
-            state = datafile.create_state(sensor, timestamp)
+            state = datafile.create_state(sensor, timestamp, self.short_name)
             state.privacy = privacy.privacy_id
 
             state.prev_location = prev_location
