@@ -238,7 +238,7 @@ class Datafile(BaseSpatiaLite):
             # TODO: find prev_location
             for measurement in self._measurements:
                 BasicValidator(measurement, errors, message)
-                EnhancedValidator(measurement, errors, message, (45.000, 26.000))
+                EnhancedValidator(measurement, errors, message)
             if not errors:
                 return True
             return False
@@ -484,6 +484,10 @@ class ConfidenceLevel(BaseSpatiaLite):
 
 # Measurements Tables
 class State(BaseSpatiaLite):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.prev_location = None
+
     __tablename__ = constants.STATE
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28

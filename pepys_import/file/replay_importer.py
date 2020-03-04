@@ -31,6 +31,7 @@ class ReplayImporter(Importer):
     def load_this_file(self, data_store, path, file_contents, datafile):
         print("Rep parser working on " + path)
         error_message = self.short_name + f" - Parsing error on {path}"
+        prev_location = None
         for line_number, line in enumerate(file_contents, 1):
             if line.startswith(";"):
                 continue
@@ -58,12 +59,14 @@ class ReplayImporter(Importer):
                     privacy=privacy.name,
                 )
                 state = datafile.create_state(sensor, rep_line.timestamp)
-                state.location = rep_line.get_location()
                 state.elevation = -1 * rep_line.depth
                 state.heading = rep_line.heading.to(unit_registry.radians).magnitude
-
                 state.speed = rep_line.speed
                 state.privacy = privacy.privacy_id
+
+                state.prev_location = prev_location
+                state.location = rep_line.get_location()
+                prev_location = state.location
 
     # def requires_user_review(self) -> bool:
     #     """
