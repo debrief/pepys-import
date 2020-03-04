@@ -1,1 +1,1 @@
-call pepys_import %1 --db %~dp1\pepys.db
+call pepys_import %1 --db "%~dp1\pepys.db"
