@@ -67,6 +67,7 @@ class NMEAImporter(Importer):
         """
 
     def load_this_file(self, data_store, path, file_contents, datafile):
+        self.errors = list()
         print("NMEA parser working on " + path)
         error_type = self.short_name + f" - Parsing error on {path}"
         prev_location = None

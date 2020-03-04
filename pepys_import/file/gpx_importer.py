@@ -36,6 +36,7 @@ class GPXImporter(Importer):
         return True
 
     def load_this_file(self, data_store, path, file_contents, datafile):
+        self.errors = list()
         basename = os.path.basename(path)
         print(f"GPX parser working on {basename}")
         error_type = self.short_name + f" - Parsing error on {basename}"

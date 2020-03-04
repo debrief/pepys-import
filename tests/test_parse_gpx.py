@@ -43,7 +43,7 @@ class GPXTests(unittest.TestCase):
         with self.store.session_scope():
             # there must be states after the import
             states = self.store.session.query(self.store.db_classes.State).all()
-            assert len(states) == 36
+            assert len(states) == 27
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -57,16 +57,16 @@ class GPXTests(unittest.TestCase):
             # Test the actual values that are imported
             #
 
-            # there should be 5 States with a speed of 4.5m/s
+            # there should be 3 States with a speed of 4.5m/s
             # as the first <trkpt> element in gpx_1_0.gpx has been imported
-            # 5 times based on the multiple modified versions of that file used
+            # 3 times based on the multiple modified versions of that file used
             # for testing
             speed_states = (
                 self.store.session.query(self.store.db_classes.State)
                 .filter(self.store.db_classes.State.speed == 4.5)
                 .all()
             )
-            assert len(speed_states) == 5
+            assert len(speed_states) == 3
 
             # there should be one point with an elevation of 2372m
             elev_states = (
