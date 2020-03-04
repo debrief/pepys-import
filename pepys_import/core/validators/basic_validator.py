@@ -1,3 +1,6 @@
+from math import degrees
+
+
 class BasicValidator:
     def __init__(self, measurement_object, errors, message):
         self.error_message = message + f" - Basic Validation Error"
@@ -36,7 +39,8 @@ class BasicValidator:
 
     def validate_heading(self):
         # if heading is none, there is nothing to validate, return True
-        if self.heading is None or 0 <= self.heading <= 360:
+        # if heading exists, convert it from radians to degrees and check if it's between 0 and 360.
+        if self.heading is None or 0 <= degrees(self.heading) <= 360:
             return True
         self.errors.append(
             {self.error_message: "Heading is not between 0 and 360 degrees!"}
@@ -45,7 +49,8 @@ class BasicValidator:
 
     def validate_course(self):
         # if course is none, there is nothing to validate, return True
-        if self.course is None or 0 <= self.course <= 360:
+        # if course exists, convert it from radians to degrees and check if it's between 0 and 360.
+        if self.course is None or 0 <= degrees(self.course) <= 360:
             return True
         self.errors.append(
             {self.error_message: "Course is not between 0 and 360 degrees!"}
