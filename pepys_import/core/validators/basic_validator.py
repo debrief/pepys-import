@@ -1,5 +1,7 @@
 from math import degrees
 
+from pepys_import.utils.unit_utils import convert_string_location_to_degrees
+
 
 class BasicValidator:
     def __init__(self, measurement_object, errors, message):
@@ -11,7 +13,9 @@ class BasicValidator:
         self.course = measurement_object.course
 
         if measurement_object.location is not None:
-            self.longitude, self.latitude = measurement_object.location[6:-1].split()
+            self.longitude, self.latitude = convert_string_location_to_degrees(
+                measurement_object.location
+            )
 
         self.validate_longitude()
         self.validate_latitude()
@@ -20,7 +24,7 @@ class BasicValidator:
 
     def validate_longitude(self):
         # if longitude is none, there is nothing to validate, return True
-        if self.longitude is None or -90 <= float(self.longitude) <= 90:
+        if self.longitude is None or -90 <= self.longitude <= 90:
             return True
 
         self.errors.append(
@@ -30,7 +34,7 @@ class BasicValidator:
 
     def validate_latitude(self):
         # if latitude is none, there is nothing to validate, return True
-        if self.latitude is None or -180 <= float(self.latitude) <= 180:
+        if self.latitude is None or -180 <= self.latitude <= 180:
             return True
         self.errors.append(
             {self.error_message: "Latitude is not between -180 and 180 degrees!"}
