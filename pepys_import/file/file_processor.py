@@ -156,10 +156,11 @@ class FileProcessor:
             # Run all validation tests
             errors = list()
             for importer in good_importers:
+                # Call related validation tests, extend global errors lists if the importer has errors
                 if not datafile.validate(
                     validation_level=importer.validation_level,
                     errors=importer.errors,
-                    message=importer.short_name,
+                    parser=importer.short_name,
                 ):
                     errors.extend(importer.errors)
 
