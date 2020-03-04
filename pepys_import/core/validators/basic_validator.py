@@ -4,8 +4,8 @@ from pepys_import.utils.unit_utils import convert_string_location_to_degrees
 
 
 class BasicValidator:
-    def __init__(self, measurement_object, errors, message):
-        self.error_message = message + f" - Basic Validation Error"
+    def __init__(self, measurement_object, errors, parser_name):
+        self.error_message = parser_name + f" - Basic Validation Error"
         self.errors = errors
         self.longitude = None
         self.latitude = None

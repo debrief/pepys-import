@@ -9,8 +9,8 @@ from pepys_import.utils.unit_utils import (
 class EnhancedValidator:
     """Enhanced validator serve to verify the lat/long, in addition to the course/speed/heading"""
 
-    def __init__(self, measurement_object, errors, message):
-        self.error_message = message + f" - Enhanced Validation Error"
+    def __init__(self, measurement_object, errors, parser_name):
+        self.error_message = parser_name + f" - Enhanced Validation Error"
         self.errors = errors
         self.location = measurement_object.location
         self.speed = measurement_object.speed
