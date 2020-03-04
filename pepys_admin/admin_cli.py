@@ -146,7 +146,6 @@ class AdminShell(cmd.Cmd):
 
     def do_initialise(self, arg):
         "Allow the currently connected database to be configured"
-        print(self.csv_path)
         initialise = InitialiseShell(self.datastore, self, self.csv_path)
         initialise.cmdloop()
 
