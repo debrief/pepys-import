@@ -69,6 +69,8 @@ class NMEAImporter(Importer):
     def load_this_file(self, data_store, path, file_contents, datafile):
         print("NMEA parser working on " + path)
         error_message = self.short_name + f" - Parsing error on {path}"
+        prev_location = None
+        datafile.measurements[self.short_name] = list()
         for line_number, line in enumerate(file_contents):
             if line_number > 5000:
                 break
@@ -144,7 +146,9 @@ class NMEAImporter(Importer):
                         )
                         continue
 
+                    state.prev_location = prev_location
                     state.location = f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
+                    prev_location = state.location
 
                     heading = convert_absolute_angle(self.heading, line_number)
                     if heading:

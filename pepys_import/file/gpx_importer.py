@@ -36,6 +36,8 @@ class GPXImporter(Importer):
     def load_this_file(self, data_store, path, file_contents, datafile):
         print("GPX parser working on ", path)
         error_message = self.short_name + f" - Parsing error on {path}"
+        prev_location = None
+        datafile.measurements[self.short_name] = list()
 
         # Parse XML file from the full path of the file
         # Note: we can't use the file_contents variable passed in, as lxml refuses
@@ -101,7 +103,9 @@ class GPXImporter(Importer):
                 state = datafile.create_state(sensor, timestamp)
 
                 # Add location (no need to convert as it requires a string)
+                state.prev_location = prev_location
                 state.location = f"POINT({longitude_str} {latitude_str})"
+                prev_location = state.location
 
                 # Add course
                 if course_str is not None:

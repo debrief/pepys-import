@@ -1,3 +1,5 @@
+import os
+
 from .importer import Importer
 from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.formats import unit_registry
@@ -29,8 +31,9 @@ class ReplayImporter(Importer):
         return True
 
     def load_this_file(self, data_store, path, file_contents, datafile):
-        print("Rep parser working on " + path)
-        error_message = self.short_name + f" - Parsing error on {path}"
+        basename = os.path.basename(path)
+        print(f"Rep parser working on '{basename}'")
+        error_message = self.short_name + f" - Parsing error on '{basename}'"
         prev_location = None
         datafile.measurements[self.short_name] = list()
         for line_number, line in enumerate(file_contents, 1):

@@ -33,6 +33,8 @@ class ETracImporter(Importer):
     def load_this_file(self, data_store, path, file_contents, datafile):
         print("E-trac parser working on ", path)
         error_message = self.short_name + f" - Parsing error on {path}"
+        prev_location = None
+        datafile.measurements[self.short_name] = list()
         for line_number, line in enumerate(file_contents, 1):
             # Skip the header
             if line_number == 1:
@@ -98,7 +100,9 @@ class ETracImporter(Importer):
             state = datafile.create_state(sensor, timestamp)
             state.privacy = privacy.privacy_id
 
+            state.prev_location = prev_location
             state.location = f"POINT({long_degrees_token} {lat_degrees_token})"
+            prev_location = state.location
 
             state.elevation = -1 * self.depth
 
