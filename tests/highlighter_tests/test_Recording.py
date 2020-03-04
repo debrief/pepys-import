@@ -6,9 +6,9 @@ from pepys_import.file.highlighter.support.combine import combine_tokens
 
 path = os.path.abspath(__file__)
 dir_path = os.path.dirname(path)
-TEST_FILE = os.path.join(dir_path, "sample_files/reptest1.rep")
 
 DATA_FILE = os.path.join(dir_path, "sample_files/file.txt")
+OUTPUT_FOLDER = os.path.join(dir_path, "sample_files/")
 
 
 class UsageRecordingTests(unittest.TestCase):
@@ -21,7 +21,8 @@ class UsageRecordingTests(unittest.TestCase):
         pass
 
     def tearDown(self):
-        pass
+        if os.path.exists(os.path.join(OUTPUT_FOLDER, "track_lines.html")):
+            os.remove(os.path.join(OUTPUT_FOLDER, "track_lines.html"))
 
     ####################
     #### file tests ####
@@ -147,7 +148,7 @@ class UsageRecordingTests(unittest.TestCase):
                     "Third Party Temp Tracker", "Env Tmp", tempToken.text(), "Deg C"
                 )
 
-        dataFile.export("track_lines.html", True)
+        dataFile.export(os.path.join(OUTPUT_FOLDER, "track_lines.html"), True)
 
 
 if __name__ == "__main__":

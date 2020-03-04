@@ -12,6 +12,7 @@ TEST_FILE = os.path.join(dir_path, "sample_files/reptest1.rep")
 NMEA_FILE = os.path.join(dir_path, "sample_files/NMEA_out.txt")
 
 DATA_FILE = os.path.join(dir_path, "sample_files/file.txt")
+OUTPUT_FOLDER = os.path.join(dir_path, "sample_files/")
 
 
 class CombineTokenTests(unittest.TestCase):
@@ -24,7 +25,11 @@ class CombineTokenTests(unittest.TestCase):
         pass
 
     def tearDown(self):
-        pass
+        files_to_delete = ["nmea.html", "nmea2.html"]
+
+        for f in files_to_delete:
+            if os.path.exists(os.path.join(OUTPUT_FOLDER, f)):
+                os.remove(os.path.join(OUTPUT_FOLDER, f))
 
     ####################
     #### file tests ####
@@ -185,7 +190,7 @@ class CombineTokenTests(unittest.TestCase):
                     hdg_tok = None
                     lat_tok = None
 
-        dataFile.export("nmea.html")
+        dataFile.export(os.path.join(OUTPUT_FOLDER, "nmea.html"))
 
     def test_CombineLinesOnMultipleLines(self):
         dataFile = HighlightedFile(NMEA_FILE, 50)
@@ -274,7 +279,7 @@ class CombineTokenTests(unittest.TestCase):
                     hdg_tok = None
                     lat_tok = None
 
-        dataFile.export("nmea2.html")
+        dataFile.export(os.path.join(OUTPUT_FOLDER, "nmea2.html"))
 
 
 if __name__ == "__main__":
