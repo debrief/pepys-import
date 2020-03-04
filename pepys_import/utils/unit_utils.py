@@ -3,7 +3,7 @@ from math import radians, cos, sin, asin, sqrt, atan2, degrees
 from pepys_import.core.formats import unit_registry
 
 
-def convert_absolute_angle(angle, line_number):
+def convert_absolute_angle(angle, line_number, errors, error_type):
     """
     Converts given absolute angle value to degree and does sanity checks
 
@@ -11,14 +11,20 @@ def convert_absolute_angle(angle, line_number):
     :type angle: String
     :param line_number: Line number
     :type line_number: String
+    :param errors: Error List to save value error if it raises
+    :type errors: List
+    :param error_type: Type of error
+    :type error_type: String
     :return: returns the converted angle value
     """
     try:
         valid_angle = float(angle)
     except ValueError:
-        print(
-            f"Line {line_number}. Error in angle value {angle}. "
-            f"Couldn't convert to a number"
+        errors.append(
+            {
+                error_type: f"Line {line_number}. Error in angle value {angle}. "
+                f"Couldn't convert to a number"
+            }
         )
         return False
     if valid_angle < 0:
@@ -28,21 +34,27 @@ def convert_absolute_angle(angle, line_number):
     return valid_angle * unit_registry.degree
 
 
-def convert_speed(speed, line_number):
+def convert_speed(speed, line_number, errors, error_type):
     """
     Converts the given speed value in knots to meter/seconds format.
     :param speed: Speed value in string format
     :type speed: String
     :param line_number: Line number
     :type line_number: String
+    :param errors: Error List to save value error if it raises
+    :type errors: List
+    :param error_type: Type of error
+    :type error_type: String
     :return: return the converted speed value
     """
     try:
         valid_speed = float(speed)
     except ValueError:
-        print(
-            f"Line {line_number}. Error in speed value {speed}. "
-            f"Couldn't convert to a number"
+        errors.append(
+            {
+                error_type: f"Line {line_number}. Error in speed value {speed}. "
+                f"Couldn't convert to a number"
+            }
         )
         return False
     speed = (
