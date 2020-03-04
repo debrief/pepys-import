@@ -89,7 +89,7 @@ class REPLine:
         if len(tokens) < 15:
             error.append(
                 {
-                    message: f"Error on line {self.line_num} not enough tokens: {self.line}"
+                    message: f"Error on line {self.line_num}. Not enough tokens: {self.line}"
                 }
             )
             return False
@@ -117,8 +117,8 @@ class REPLine:
         if len(date_token) != 6 and len(date_token) != 8:
             error.append(
                 {
-                    message: f"Line {self.line_num}. Error in Date format {date_token}. "
-                    f"Should be either 2 of 4 figure date, followed by month then date"
+                    message: f"Error on line {self.line_num}. Date format {date_token} "
+                    f"should be either 2 of 4 figure date, followed by month then date"
                 }
             )
             return False
