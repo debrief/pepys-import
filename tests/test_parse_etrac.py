@@ -1,6 +1,6 @@
 import os
 import unittest
-from sqlite3 import OperationalError
+import shutil
 
 from pepys_import.file.e_trac_importer import ETracImporter
 from pepys_import.file.file_processor import FileProcessor
@@ -8,7 +8,7 @@ from pepys_import.core.store.data_store import DataStore
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data")
-TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
+OUTPUT_PATH = os.path.join(DATA_PATH, "output")
 
 
 class ETracTests(unittest.TestCase):
@@ -16,8 +16,32 @@ class ETracTests(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
+        # add paths of the current files to a list
+        self.before_file_paths = list()
+        for current_path, folders, files in os.walk(DATA_PATH):
+            for file in files:
+                self.before_file_paths.append(os.path.join(current_path, file))
+
     def tearDown(self):
-        pass
+        # find parsed and moved files
+        output_file_paths = list()
+        for current_path, folders, files in os.walk(OUTPUT_PATH):
+            for file in files:
+                output_file_paths.append(os.path.join(current_path, file))
+
+        after_file_paths = list()
+        for current_path, folders, files in os.walk(DATA_PATH):
+            for file in files:
+                after_file_paths.append(os.path.join(current_path, file))
+
+        for path in self.before_file_paths:
+            # if file is moved, it is not in after_file_paths
+            if path not in after_file_paths:
+                abs_path, file = os.path.split(path)
+                source = os.path.join(OUTPUT_PATH, file)
+                shutil.move(source, path)
+
+        shutil.rmtree(OUTPUT_PATH)
 
     def test_process_e_trac_data(self):
         processor = FileProcessor()

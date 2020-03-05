@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
@@ -13,6 +14,7 @@ FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
 BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
 DATA_PATH = os.path.join(FILE_PATH, "sample_data")
+OUTPUT_PATH = os.path.join(DATA_PATH, "output")
 
 
 class SampleImporterTests(unittest.TestCase):
@@ -45,6 +47,67 @@ class SampleImporterTests(unittest.TestCase):
 
         # now good one
         processor.process(DATA_PATH, None, False)
+
+    def test_class_name(self):
+        """Test whether class names are correct"""
+        replay_importer = ReplayImporter()
+        self.assertEqual(str(replay_importer), "Replay File Format Importer")
+        nmea_importer = NMEAImporter()
+        self.assertEqual(str(nmea_importer), "NMEA File Format Importer")
+
+    def test_giving_file_path_only(self):
+        """Test whether process method works when a file path is given"""
+        processor = FileProcessor()
+
+        importers = get_importers()
+        processor.register_importers(importers)
+
+        file_path = os.path.join(DATA_PATH, "test_importers.csv")
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            processor.process(file_path, None, False)
+        output = temp_output.getvalue()
+
+        self.assertIn("Files got processed: 0 times", output)
+
+
+class DescendingFoldersTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        # add paths of the current files to a list
+        self.before_file_paths = list()
+        for current_path, folders, files in os.walk(DATA_PATH):
+            for file in files:
+                self.before_file_paths.append(os.path.join(current_path, file))
+
+    def tearDown(self) -> None:
+        single_level_file = os.path.join(CURRENT_DIR, "single_level.db")
+        if os.path.exists(single_level_file):
+            os.remove(single_level_file)
+
+        descending_file = os.path.join(CURRENT_DIR, "descending.db")
+        if os.path.exists(descending_file):
+            os.remove(descending_file)
+
+        # find parsed and moved files
+        output_file_paths = list()
+        for current_path, folders, files in os.walk(OUTPUT_PATH):
+            for file in files:
+                output_file_paths.append(os.path.join(current_path, file))
+
+        after_file_paths = list()
+        for current_path, folders, files in os.walk(DATA_PATH):
+            for file in files:
+                after_file_paths.append(os.path.join(current_path, file))
+
+        for path in self.before_file_paths:
+            # if file is moved, it is not in after_file_paths
+            if path not in after_file_paths:
+                abs_path, file = os.path.split(path)
+                source = os.path.join(OUTPUT_PATH, file)
+                shutil.move(source, path)
+
+        shutil.rmtree(OUTPUT_PATH)
 
     def test_process_folders_descending(self):
         """Test whether descending processing works for the given path"""
@@ -81,29 +144,6 @@ class SampleImporterTests(unittest.TestCase):
 
         # now good one
         processor.process(DATA_PATH, None, True)
-
-    def test_class_name(self):
-        """Test whether class names are correct"""
-        replay_importer = ReplayImporter()
-        self.assertEqual(str(replay_importer), "Replay File Format Importer")
-        nmea_importer = NMEAImporter()
-        self.assertEqual(str(nmea_importer), "NMEA File Format Importer")
-
-    def test_giving_file_path_only(self):
-        """Test whether process method works when a file path is given"""
-        processor = FileProcessor()
-
-        importers = get_importers()
-        processor.register_importers(importers)
-
-        file_path = os.path.join(DATA_PATH, "test_importers.csv")
-
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            processor.process(file_path, None, False)
-        output = temp_output.getvalue()
-
-        self.assertIn("Files got processed: 0 times", output)
 
 
 class ImporterRemoveTestCase(unittest.TestCase):
