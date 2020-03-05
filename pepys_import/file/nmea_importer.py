@@ -141,13 +141,13 @@ class NMEAImporter(Importer):
                             errors=self.errors,
                             error_type=error_type,
                         )
-                        if not self.latitude.parse():
-                            self.errors.append(
-                                {
-                                    error_type: f"Line {line_number}. Error in latitude parsing"
-                                }
-                            )
-                            continue
+                    if not self.latitude.parse():
+                        self.errors.append(
+                            {
+                                error_type: f"Line {line_number}. Error in latitude parsing"
+                            }
+                        )
+                        continue
                     if not isinstance(self.longitude, Location):
                         self.longitude = Location(
                             degrees=self.longitude[:3],
@@ -157,13 +157,13 @@ class NMEAImporter(Importer):
                             errors=self.errors,
                             error_type=error_type,
                         )
-                        if not self.longitude.parse():
-                            self.errors.append(
-                                {
-                                    error_type: f"Line {line_number}. Error in longitude parsing"
-                                }
-                            )
-                            continue
+                    if not self.longitude.parse():
+                        self.errors.append(
+                            {
+                                error_type: f"Line {line_number}. Error in longitude parsing"
+                            }
+                        )
+                        continue
 
                     state.prev_location = prev_location
                     state.location = f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
