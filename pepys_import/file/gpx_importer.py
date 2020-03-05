@@ -11,12 +11,14 @@ from pepys_import.core.validators import constants
 
 
 class GPXImporter(Importer):
-    name = "GPX Format Importer"
-    validation_level = constants.BASIC_LEVEL
-    short_name = "GPX Importer"
-
-    def __init__(self, separator=" "):
-        super().__init__()
+    def __init__(
+        self,
+        name="GPX Format Importer",
+        validation_level=constants.BASIC_LEVEL,
+        short_name="GPX Importer",
+        separator=" ",
+    ):
+        super().__init__(name, validation_level, short_name)
         self.errors = list()
 
     def can_load_this_type(self, suffix):

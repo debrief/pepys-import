@@ -8,12 +8,14 @@ from pepys_import.core.validators import constants
 
 
 class ETracImporter(Importer):
-    name = "E-Trac Format Importer"
-    validation_level = constants.BASIC_LEVEL
-    short_name = "E-Trac Importer"
-
-    def __init__(self, separator=" "):
-        super().__init__()
+    def __init__(
+        self,
+        name="E-Trac Format Importer",
+        validation_level=constants.BASIC_LEVEL,
+        short_name="E-Trac Importer",
+        separator=" ",
+    ):
+        super().__init__(name, validation_level, short_name)
         self.separator = separator
         self.errors = list()
 
