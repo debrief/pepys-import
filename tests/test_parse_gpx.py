@@ -1,6 +1,7 @@
 import os
 import unittest
-import shutil
+
+from unittest.mock import patch, mock_open
 
 from pepys_import.file.gpx_importer import GPXImporter
 from pepys_import.file.file_processor import FileProcessor
@@ -10,6 +11,7 @@ FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/gpx")
 
 
+@patch("pepys_import.file.file_processor.open", new=mock_open())
 class GPXTests(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")

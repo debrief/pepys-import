@@ -1,6 +1,5 @@
 import os
 import unittest
-import shutil
 
 from pepys_import.file.e_trac_importer import ETracImporter
 from pepys_import.file.file_processor import FileProcessor
