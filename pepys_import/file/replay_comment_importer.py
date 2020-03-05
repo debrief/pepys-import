@@ -57,29 +57,49 @@ class ReplayCommentImporter(Importer):
                     time_token = tokens[2]
                     vessel_name_token = tokens[3]
                     message_token = tokens[4]
+                    comment_type = "None"
+                elif line.startswith(";NARRATIVE2:"):
+                    # ok for for it
+                    tokens = line.split(" ")
 
-                    privacy = data_store.missing_data_resolver.resolve_privacy(
-                        data_store
-                    )
-                    platform = data_store.get_platform(
-                        platform_name=vessel_name_token,
-                        nationality="UK",
-                        platform_type="Fisher",
-                        privacy="Public",
-                    )
-                    sensor_type = data_store.add_to_sensor_types("Human")
-                    sensor = platform.get_sensor(
-                        data_store=data_store,
-                        sensor_name=platform.name,
-                        sensor_type=sensor_type,
-                        privacy=privacy.name,
-                    )
-                    comment_type = data_store.add_to_comment_types("NONE")
-                    comment = datafile.create_comment(
-                        sensor=sensor,
-                        timestamp=parse_timestamp(date_token, time_token),
-                        comment=message_token,
-                        comment_type=comment_type,
-                        parser_name=self.short_name,
-                    )
-                    comment.privacy = privacy
+                    if len(tokens) < 6:
+                        self.errors.append(
+                            {
+                                error_type: f"Error on line {line_number}. "
+                                "Not enough tokens: {line}"
+                            }
+                        )
+                        return False
+
+                    # separate token strings
+                    date_token = tokens[1]
+                    time_token = tokens[2]
+                    vessel_name_token = tokens[3]
+                    comment_type = tokens[4]
+                    message_token = tokens[5]
+                else:
+                    continue
+
+                privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
+                platform = data_store.get_platform(
+                    platform_name=vessel_name_token,
+                    nationality="UK",
+                    platform_type="Fisher",
+                    privacy="Public",
+                )
+                sensor_type = data_store.add_to_sensor_types("Human")
+                sensor = platform.get_sensor(
+                    data_store=data_store,
+                    sensor_name=platform.name,
+                    sensor_type=sensor_type,
+                    privacy=privacy.name,
+                )
+                comment_type = data_store.add_to_comment_types(comment_type)
+                comment = datafile.create_comment(
+                    sensor=sensor,
+                    timestamp=parse_timestamp(date_token, time_token),
+                    comment=message_token,
+                    comment_type=comment_type,
+                    parser_name=self.short_name,
+                )
+                comment.privacy = privacy
