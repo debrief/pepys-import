@@ -9,6 +9,12 @@ class Char:
     highlighted file.
     """
 
+    # For efficiency, define the attributes that are allowed to be used on this
+    # object here - so Python uses a list not a dict to store the attributes, and
+    # is more efficient
+    # (We may potentially have millions of Char objects for a long file)
+    __slots__ = ["letter", "usages"]
+
     def __init__(self, letter):
         self.letter = letter
         self.usages = []
