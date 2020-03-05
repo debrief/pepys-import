@@ -687,6 +687,32 @@ class MeasurementsTestCase(TestCase):
                 contacts = self.store.session.query(self.store.db_classes.Contact).all()
                 self.assertEqual(len(contacts), 1)
 
+    def test_new_contact_with_parser_name_created_successfully(self):
+        """Test whether a new contact is created"""
+
+        with self.store.session_scope() as session:
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+
+            # there must be no entry at the beginning
+            self.assertEqual(len(contacts), 0)
+
+            self.file.measurements["Test"] = list()
+            contact = self.file.create_contact(
+                self.sensor, self.current_time, parser="Test"
+            )
+
+            # there must be no entry because it's kept in-memory
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
+
+            # Fill null constraint field
+            contact.name = "TEST"
+            contact.subject_id = self.platform.platform_id
+            if self.file.validate():
+                self.file.commit(self.store.session)
+                contacts = self.store.session.query(self.store.db_classes.Contact).all()
+                self.assertEqual(len(contacts), 1)
+
     def test_new_comment_created_successfully(self):
         """Test whether a new comment is created"""
 
@@ -698,6 +724,35 @@ class MeasurementsTestCase(TestCase):
 
             comment = self.file.create_comment(
                 self.sensor, self.current_time, "Comment", self.comment_type,
+            )
+
+            # there must be no entry because it's kept in-memory
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
+            self.assertEqual(len(comments), 0)
+
+            # Fill null constraint field
+            comment.platform_id = self.platform.platform_id
+            if self.file.validate():
+                self.file.commit(self.store.session)
+                comments = self.store.session.query(self.store.db_classes.Comment).all()
+                self.assertEqual(len(comments), 1)
+
+    def test_new_comment_with_parser_name_created_successfully(self):
+        """Test whether a new comment is created"""
+
+        with self.store.session_scope() as session:
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
+
+            # there must be no entry at the beginning
+            self.assertEqual(len(comments), 0)
+
+            self.file.measurements["Test"] = list()
+            comment = self.file.create_comment(
+                self.sensor,
+                self.current_time,
+                "Comment",
+                self.comment_type,
+                parser="Test",
             )
 
             # there must be no entry because it's kept in-memory
