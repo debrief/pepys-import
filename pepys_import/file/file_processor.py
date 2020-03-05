@@ -187,7 +187,8 @@ class FileProcessor:
                 ) as f:
                     f.write("\n".join(log))
                 # move original file to output folder
-                shutil.move(full_path, os.path.join(self.output_path, file))
+                # TODO: Skip for now
+                # shutil.move(full_path, os.path.join(self.output_path, file))
             else:
                 # write error log to the output folder
                 with open(
