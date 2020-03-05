@@ -2,6 +2,7 @@ from .importer import Importer
 from datetime import datetime
 
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
 
@@ -72,6 +73,8 @@ class NMEAImporter(Importer):
         error_type = self.short_name + f" - Parsing error on {path}"
         prev_location = None
         datafile.measurements[self.short_name] = list()
+        # keep track of generated platform name
+        platform_name = None
         for line_number, line in enumerate(file_contents):
             if line_number > 5000:
                 break
@@ -106,11 +109,13 @@ class NMEAImporter(Importer):
 
                     # and finally store it
                     platform = data_store.get_platform(
-                        platform_name=None,
+                        platform_name=platform_name,
                         platform_type="Ferry",
                         nationality="FR",
                         privacy="Public",
                     )
+                    # capture the name
+                    platform_name = platform.name
                     sensor_type = data_store.add_to_sensor_types("_GPS")
                     privacy = data_store.missing_data_resolver.resolve_privacy(
                         data_store
@@ -159,7 +164,7 @@ class NMEAImporter(Importer):
                         self.heading, line_number, self.errors, error_type
                     )
                     if heading:
-                        state.heading = heading
+                        state.heading = heading.to(unit_registry.radians).magnitude
 
                     speed = convert_speed(
                         self.speed, line_number, self.errors, error_type
