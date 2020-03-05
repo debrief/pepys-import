@@ -83,11 +83,11 @@ class REPLine:
         :return: Nothing
         """
 
-    def parse(self, error, error_type):
+    def parse(self, errors, error_type):
         tokens = self.tokens()
 
         if len(tokens) < 15:
-            error.append(
+            errors.append(
                 {
                     error_type: f"Error on line {self.line_num}. Not enough tokens: {self.line}"
                 }
@@ -115,7 +115,7 @@ class REPLine:
             self.text_label = " ".join(tokens[15:])
 
         if len(date_token) != 6 and len(date_token) != 8:
-            error.append(
+            errors.append(
                 {
                     error_type: f"Error on line {self.line_num}. Date format {date_token} "
                     f"should be either 2 of 4 figure date, followed by month then date"
@@ -125,7 +125,7 @@ class REPLine:
 
         # Times always in Zulu/GMT
         if len(time_token) != 6 and len(time_token) != 10:
-            error.append(
+            errors.append(
                 {
                     error_type: f"Line {self.line_num}. Error in Time format {time_token}. "
                     f"Should be HHMMSS[.SSS]"
@@ -140,7 +140,7 @@ class REPLine:
         symbology_values = symbology_token.split("[")
         if len(symbology_values) >= 1:
             if len(symbology_values[0]) != 2 and len(symbology_values[0]) != 5:
-                error.append(
+                errors.append(
                     {
                         error_type: f"Line {self.line_num}. Error in Symbology format "
                         f"{symbology_token}. Should be 2 or 5 chars"
@@ -148,7 +148,7 @@ class REPLine:
                 )
                 return False
         if len(symbology_values) != 1 and len(symbology_values) != 2:
-            error.append(
+            errors.append(
                 {
                     error_type: f"Line {self.line_num}. Error in Symbology format {symbology_token}"
                 }
@@ -162,11 +162,11 @@ class REPLine:
             lat_mins_token,
             lat_secs_token,
             lat_hemi_token,
-            error,
+            errors,
             error_type,
         )
         if not self.latitude.parse():
-            error.append(
+            errors.append(
                 {error_type: f"Line {self.line_num}. Error in latitude parsing"}
             )
             return False
@@ -176,24 +176,24 @@ class REPLine:
             long_mins_token,
             long_secs_token,
             long_hemi_token,
-            error,
+            errors,
             error_type,
         )
         if not self.longitude.parse():
-            error.append(
+            errors.append(
                 {error_type: f"Line {self.line_num}. Error in longitude parsing"}
             )
             return False
 
         heading = convert_absolute_angle(
-            heading_token, self.line_num, error, error_type
+            heading_token, self.line_num, errors, error_type
         )
         if not heading:
             return False
 
         self.heading = heading
 
-        speed = convert_speed(speed_token, self.line_num, error, error_type)
+        speed = convert_speed(speed_token, self.line_num, errors, error_type)
         if not speed:
             return False
         # Set speed as knots(quantity-with-unit) object
@@ -205,7 +205,7 @@ class REPLine:
             else:
                 self.depth = float(depth_token)
         except ValueError:
-            error.append(
+            errors.append(
                 {
                     error_type: f"Line {self.line_num}. Error in depth value {depth_token}. "
                     f"Couldn't convert to a number"
