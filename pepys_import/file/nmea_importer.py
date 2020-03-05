@@ -42,7 +42,7 @@ class NMEAImporter(Importer):
         for line_number, line in enumerate(file_object.lines()):
             tokens = line.tokens(line.CSV_DELIM, ",")
 
-            if len(tokens) > 0:
+            if len(tokens) > 1:
 
                 msg_type = tokens[1].text
                 if msg_type == "DZA":
