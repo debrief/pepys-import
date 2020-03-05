@@ -3,6 +3,7 @@ from datetime import datetime
 
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 from pepys_import.file.highlighter.support.combine import combine_tokens
+from pepys_import.core.formats import unit_registry
 
 
 class NMEAImporter(Importer):
@@ -35,6 +36,9 @@ class NMEAImporter(Importer):
 
     def load_this_file(self, data_store, path, file_object, datafile):
         print("NMEA parser working on " + path)
+
+        # keep track of generated platform name
+        platform_name = None
 
         for line_number, line in enumerate(file_object.lines()):
             tokens = line.tokens()
@@ -71,11 +75,13 @@ class NMEAImporter(Importer):
 
                     # and finally store it
                     platform = data_store.get_platform(
-                        platform_name=None,
+                        platform_name=platform_name,
                         platform_type="Ferry",
                         nationality="FR",
                         privacy="Public",
                     )
+                    # capture the name
+                    platform_name = platform.name
                     sensor_type = data_store.add_to_sensor_types("_GPS")
                     privacy = data_store.missing_data_resolver.resolve_privacy(
                         data_store
@@ -105,7 +111,7 @@ class NMEAImporter(Importer):
 
                     heading = convert_absolute_angle(self.heading, line_number)
                     if heading:
-                        state.heading = heading
+                        state.heading = heading.to(unit_registry.radians).magnitude
                     heading_token.record(self.name, "heading", heading, "degrees")
 
                     speed = convert_speed(self.speed, line_number)
@@ -135,14 +141,12 @@ class NMEAImporter(Importer):
     @staticmethod
     def parse_location(lat, lat_hem, lon, long_hem):
         lat_degrees = float(lat[0:2])
-        lat_minutes = float(lat[2:4])
-        lat_seconds = float(lat[4:])
-        lat_degrees = lat_degrees + lat_minutes / 60 + lat_seconds / 60 / 60
+        lat_minutes = float(lat[2:])
+        lat_degrees = lat_degrees + lat_minutes / 60
 
         lon_degrees = float(lon[0:3])
-        lon_minutes = float(lon[3:5])
-        lon_seconds = float(lon[5:])
-        lon_degrees = lon_degrees + lon_minutes / 60 + lon_seconds / 60 / 60
+        lon_minutes = float(lon[3:])
+        lon_degrees = lon_degrees + lon_minutes / 60
 
         if lat_hem == "S":
             lat_degrees = -1 * lat_degrees
@@ -150,7 +154,7 @@ class NMEAImporter(Importer):
         if long_hem == "W":
             lon_degrees = -1 * lon_degrees
 
-        return f"({lat_degrees} {lon_degrees})"
+        return f"POINT({lon_degrees} {lat_degrees})"
 
     @staticmethod
     def parse_timestamp(date, time):
