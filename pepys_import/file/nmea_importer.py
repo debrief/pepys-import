@@ -131,7 +131,7 @@ class NMEAImporter(Importer):
                     state = datafile.create_state(sensor, timestamp, self.short_name)
 
                     self.latitude = Location(
-                        *self.parse_location(self.latitude, self.latitude_hem),
+                        *self.split_location(self.latitude, self.latitude_hem),
                         self.errors,
                         error_type,
                     )
@@ -144,7 +144,7 @@ class NMEAImporter(Importer):
                         continue
 
                     self.longitude = Location(
-                        *self.parse_location(self.longitude, self.longitude_hem),
+                        *self.split_location(self.longitude, self.longitude_hem),
                         self.errors,
                         error_type,
                     )
@@ -195,7 +195,7 @@ class NMEAImporter(Importer):
     #     pass
 
     @staticmethod
-    def parse_location(location, hemisphere):
+    def split_location(location, hemisphere):
         return location[:2], location[2:4], location[4:], hemisphere
 
     @staticmethod
