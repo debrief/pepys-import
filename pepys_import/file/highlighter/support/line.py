@@ -11,6 +11,9 @@ class Line:
     """
 
     WHITESPACE_DELIM = "\\S+"
+    CSV_DELIM = (
+        r'(?:,"|^")(""|[\w\W]*?)(?=",|"$)|(?:,(?!")|^(?!"))([^,]*?)(?=$|,)|(\r\n|\n)'
+    )
 
     def __init__(self, list_of_subtokens):
         """
