@@ -52,11 +52,11 @@ class EnhancedValidator:
         calculated_speed = distance_between_two_points_haversine(
             self.location, self.prev_location
         )
-        if calculated_speed <= self.speed * 10:
+        if self.speed is None or calculated_speed <= self.speed * 10:
             return True
         self.errors.append(
             {
-                self.error_type: f"Calculate speed ({calculated_speed:.3f} m/s) is more than "
+                self.error_type: f"Calculated speed ({calculated_speed:.3f} m/s) is more than "
                 f"the measured speed * 10 ({self.speed * 10:.3f} m/s)!"
             }
         )
