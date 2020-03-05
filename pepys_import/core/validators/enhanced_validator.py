@@ -27,16 +27,14 @@ class EnhancedValidator:
             self.speed = None
 
         if hasattr(measurement_object, "location"):
-            if measurement_object.location is not None:
-                self.longitude, self.latitude = convert_string_location_to_degrees(
-                    measurement_object.location
-                )
-                self.prev_location = measurement_object.prev_location
-            else:
-                self.location = None
-                self.prev_location = None
+            self.location = measurement_object.location
         else:
             self.location = None
+
+        if hasattr(measurement_object, "prev_location"):
+            self.prev_location = measurement_object.prev_location
+        else:
+            self.prev_location = None
 
         if self.location and self.prev_location:
             self.course_heading_loose_match_with_location()
