@@ -63,7 +63,7 @@ class REPLine:
         if len(tokens) < 15:
             print(
                 "Error on line {} not enough tokens: {}".format(
-                    self.line_num, self.line
+                    self.line_num, self.line.text
                 )
             )
             return False
