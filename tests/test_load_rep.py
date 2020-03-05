@@ -1,15 +1,15 @@
 import os
 import unittest
 
-from pepys_import.file.e_trac_importer import ETracImporter
+from pepys_import.file.replay_importer import ReplayImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
 
 FILE_PATH = os.path.dirname(__file__)
-DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data")
+DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/rep_data")
 
 
-class ETracTests(unittest.TestCase):
+class TestLoadREP(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -19,7 +19,7 @@ class ETracTests(unittest.TestCase):
 
     def test_process_e_trac_data(self):
         processor = FileProcessor()
-        processor.register_importer(ETracImporter())
+        processor.register_importer(ReplayImporter())
 
         # check states empty
         with self.store.session_scope():
@@ -42,15 +42,15 @@ class ETracTests(unittest.TestCase):
         with self.store.session_scope():
             # there must be states after the import
             states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 85)
+            self.assertEqual(len(states), 738)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 18)
+            self.assertEqual(len(platforms), 5)
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 2)
+            self.assertEqual(len(datafiles), 6)
 
 
 if __name__ == "__main__":
