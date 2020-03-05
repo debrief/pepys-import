@@ -53,7 +53,9 @@ class ETracImporter(Importer):
             heading_token = tokens[8]
             speed_token = tokens[6]
             comp_name_token = tokens[18]
+
             vessel_name = self.name_for(comp_name_token.text)
+            comp_name_token.record(self.name, "vessel name", vessel_name, "n/a")
 
             if len(date_token.text) != 10:
                 print(len(date_token.text))
@@ -70,9 +72,9 @@ class ETracImporter(Importer):
                 continue
 
             timestamp = self.parse_timestamp(date_token.text, time_token.text)
-
-            timestamp_combined_token = combine_tokens(date_token, time_token)
-            timestamp_combined_token.record(self.name, "timestamp", timestamp, "n/a")
+            combine_tokens(date_token, time_token).record(
+                self.name, "timestamp", timestamp, "n/a"
+            )
 
             # and finally store it
             platform = data_store.get_platform(
@@ -92,8 +94,10 @@ class ETracImporter(Importer):
             state = datafile.create_state(sensor, timestamp)
             state.privacy = privacy.privacy_id
 
-            state.location = (
-                f"POINT({long_degrees_token.text} {lat_degrees_token.text})"
+            location = f"POINT({long_degrees_token.text} {lat_degrees_token.text})"
+            state.location = location
+            combine_tokens(long_degrees_token, lat_degrees_token).record(
+                self.name, "location", location, "decimal degrees"
             )
 
             # TODO: Depth is currently set to a constant value of 0.0
@@ -102,9 +106,11 @@ class ETracImporter(Importer):
 
             heading = convert_absolute_angle(heading_token.text, line_number)
             state.heading = heading.to(unit_registry.radians).magnitude
+            heading_token.record(self.name, "heading", heading, "degrees")
 
             speed = convert_speed(speed_token.text, line_number)
             state.speed = speed
+            speed_token.record(self.name, "speed", speed, "knots")
 
     @staticmethod
     def name_for(token):
