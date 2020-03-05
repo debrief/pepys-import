@@ -182,7 +182,6 @@ class Datafile(BaseSpatiaLite):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.measurements = dict()
-        self.measurements["Default"] = list()
 
     __tablename__ = constants.DATAFILE
     table_type = TableTypes.METADATA
@@ -196,41 +195,29 @@ class Datafile(BaseSpatiaLite):
     url = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    def create_state(self, sensor, timestamp, parser=None):
+    def create_state(self, sensor, timestamp, parser_name):
         state = State(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
-        if parser is None:
-            self.measurements["Default"].append(state)
-            return state
-        else:
-            self.measurements[parser].append(state)
-            return state
+        self.measurements[parser_name].append(state)
+        return state
 
-    def create_contact(self, sensor, timestamp, parser=None):
+    def create_contact(self, sensor, timestamp, parser_name):
         contact = Contact(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
-        if parser is None:
-            self.measurements["Default"].append(contact)
-            return contact
-        else:
-            self.measurements[parser].append(contact)
-            return contact
+        self.measurements[parser_name].append(contact)
+        return contact
 
-    def create_comment(self, sensor, timestamp, comment, comment_type, parser=None):
+    def create_comment(self, sensor, timestamp, comment, comment_type, parser_name):
         comment = Comment(
             time=timestamp,
             content=comment,
             comment_type_id=comment_type.comment_type_id,
             source_id=self.datafile_id,
         )
-        if parser is None:
-            self.measurements["Default"].append(comment)
-            return comment
-        else:
-            self.measurements[parser].append(comment)
-            return comment
+        self.measurements[parser_name].append(comment)
+        return comment
 
     def validate(
         self,
