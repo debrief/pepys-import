@@ -49,7 +49,8 @@ class HighlightedFile:
             include_key (bool): Whether to include a key at the bottom of the output
             showing what each colour refers to
         """
-        export_report(filename, self.chars, self.dict_color, include_key)
+        if len(self.chars) > 0:
+            export_report(filename, self.chars, self.dict_color, include_key)
 
     def limited_lines(self):
         """
