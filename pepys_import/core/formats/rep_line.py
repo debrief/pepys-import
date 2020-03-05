@@ -2,6 +2,7 @@ from datetime import datetime
 from .location import Location
 from . import unit_registry
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+from pepys_import.file.highlighter.support.combine import combine_tokens
 
 
 def parse_timestamp(date, time):
@@ -20,6 +21,8 @@ def parse_timestamp(date, time):
 
 class REPLine:
     def __init__(self, line_number, line, separator):
+        self.importer_name = "Replay File Format Importer"
+
         self.line_num = line_number
         self.line = line
         self.separator = separator
@@ -54,37 +57,8 @@ class REPLine:
             )
         )
 
-    def tokens(self):
-        """
-        Tokenize parsed line.
-
-        :return: A series of Token object from this line of text, separated according to
-         the FieldSeparator specified by this importer.
-        """
-        if self.separator == " ":
-            return self.line.split()
-        else:
-            return self.line.split(self.separator)
-
-    # TODO: does nothing now
-    def record(self, importer, record_type, measurement_object) -> None:
-        """
-        Log the fact that this set of characters was loaded by the specified importer.
-        After the intermediate objects have been imported into the database,
-        it is possible to modify the import record to include a URL to a browser-based
-        view of that imported row.
-
-        :param importer: Name of the import library that loaded this line
-        :type importer: String
-        :param record_type: Description of the type of data that was loaded
-        :type record_type: String
-        :param measurement_object: Intermediate object for the line that was imported.
-        :type measurement_object: Measurement
-        :return: Nothing
-        """
-
     def parse(self):
-        tokens = self.tokens()
+        tokens = self.line.tokens()
 
         if len(tokens) < 15:
             print(
@@ -112,78 +86,101 @@ class REPLine:
         depth_token = tokens[14]
 
         if len(tokens) >= 16:
-            self.text_label = " ".join(tokens[15:])
+            self.text_label = " ".join(lambda: tok.text for tok in tokens[15:])
 
-        if len(date_token) != 6 and len(date_token) != 8:
+        if len(date_token.text) != 6 and len(date_token.text) != 8:
             print(
-                f"Line {self.line_num}. Error in Date format {date_token}. "
-                f"Should be either 2 of 4 figure date, followed by month then date"
+                f"Line {self.line_num}. Error in Date format {date_token.text}. "
+                f"Should be either 2 of 4 figure year, followed by month then day"
             )
             return False
 
         # Times always in Zulu/GMT
-        if len(time_token) != 6 and len(time_token) != 10:
+        if len(time_token.text) != 6 and len(time_token.text) != 10:
             print(
-                f"Line {self.line_num}. Error in Time format {time_token}. "
+                f"Line {self.line_num}. Error in Time format {time_token.text}. "
                 f"Should be HHMMSS[.SSS]"
             )
             return False
 
-        self.timestamp = parse_timestamp(date_token, time_token)
+        self.timestamp = parse_timestamp(date_token.text, time_token.text)
+        combine_tokens(date_token, time_token).record(
+            self.importer_name, "timestamp", self.timestamp, "n/a"
+        )
 
-        self.vessel = vessel_name_token.strip('"')
+        self.vessel = vessel_name_token.text.strip('"')
+        vessel_name_token.record(self.importer_name, "vessel name", self.vessel, "n/a")
 
-        symbology_values = symbology_token.split("[")
+        symbology_values = symbology_token.text.split("[")
         if len(symbology_values) >= 1:
             if len(symbology_values[0]) != 2 and len(symbology_values[0]) != 5:
                 print(
                     f"Line {self.line_num}. Error in Symbology format "
-                    f"{symbology_token}. Should be 2 or 5 chars"
+                    f"{symbology_token.text}. Should be 2 or 5 chars"
                 )
                 return False
         if len(symbology_values) != 1 and len(symbology_values) != 2:
-            print(f"Line {self.line_num}. Error in Symbology format {symbology_token}")
+            print(
+                f"Line {self.line_num}. Error in Symbology format {symbology_token.TextLabel}"
+            )
             return False
 
         self.symbology = symbology_token
 
         self.latitude = Location(
-            lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token
+            lat_degrees_token.text,
+            lat_mins_token.text,
+            lat_secs_token.text,
+            lat_hemi_token.text,
         )
+        combine_tokens(
+            lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token
+        ).record(self.importer_name, "latitude", self.latitude, "DMS")
+
         if not self.latitude.parse():
             print(f"Line {self.line_num}. Error in latitude parsing")
             return False
 
         self.longitude = Location(
-            long_degrees_token, long_mins_token, long_secs_token, long_hemi_token
+            long_degrees_token.text,
+            long_mins_token.text,
+            long_secs_token.text,
+            long_hemi_token.text,
         )
+        combine_tokens(
+            long_degrees_token, long_mins_token, long_secs_token, long_hemi_token
+        ).record(self.importer_name, "longitude", self.longitude, "DMS")
         if not self.longitude.parse():
             print(f"Line {self.line_num}. Error in longitude parsing")
             return False
 
-        heading = convert_absolute_angle(heading_token, self.line_num)
+        heading = convert_absolute_angle(heading_token.text, self.line_num)
         if not heading:
             return False
 
         self.heading = heading
+        heading_token.record(self.importer_name, "heading", self.heading, "degrees")
 
-        speed = convert_speed(speed_token, self.line_num)
+        speed = convert_speed(speed_token.text, self.line_num)
         if not speed:
             return False
         # Set speed as knots(quantity-with-unit) object
         self.speed = speed
+        speed_token.record(self.importer_name, "speed", self.speed, "knots")
 
         try:
             if depth_token == "NaN":
                 self.depth = 0.0
             else:
-                self.depth = float(depth_token)
+                self.depth = float(depth_token.text)
         except ValueError:
             print(
-                f"Line {self.line_num}. Error in depth value {depth_token}. "
+                f"Line {self.line_num}. Error in depth value {depth_token.text}. "
                 f"Couldn't convert to a number"
             )
             return False
+        # TODO: Are depths in REP files in metres?
+        depth_token.record(self.importer_name, "depth", self.depth, "metres")
 
         return True
 
