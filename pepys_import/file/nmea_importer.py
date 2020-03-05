@@ -132,37 +132,38 @@ class NMEAImporter(Importer):
 
                     state = datafile.create_state(sensor, timestamp, self.short_name)
 
-                    self.latitude = Location(
-                        degrees=self.latitude[:2],
-                        minutes=self.latitude[2:],
-                        seconds=0,
-                        hemisphere=self.latitude_hem,
-                        errors=self.errors,
-                        error_type=error_type,
-                    )
-                    if not self.latitude.parse():
-                        self.errors.append(
-                            {
-                                error_type: f"Line {line_number}. Error in latitude parsing"
-                            }
+                    if not isinstance(self.latitude, Location):
+                        self.latitude = Location(
+                            degrees=self.latitude[:2],
+                            minutes=self.latitude[2:],
+                            seconds=0,
+                            hemisphere=self.latitude_hem,
+                            errors=self.errors,
+                            error_type=error_type,
                         )
-                        continue
-
-                    self.longitude = Location(
-                        degrees=self.longitude[:3],
-                        minutes=self.longitude[3:],
-                        seconds=0,
-                        hemisphere=self.longitude_hem,
-                        errors=self.errors,
-                        error_type=error_type,
-                    )
-                    if not self.longitude.parse():
-                        self.errors.append(
-                            {
-                                error_type: f"Line {line_number}. Error in longitude parsing"
-                            }
+                        if not self.latitude.parse():
+                            self.errors.append(
+                                {
+                                    error_type: f"Line {line_number}. Error in latitude parsing"
+                                }
+                            )
+                            continue
+                    if not isinstance(self.longitude, Location):
+                        self.longitude = Location(
+                            degrees=self.longitude[:3],
+                            minutes=self.longitude[3:],
+                            seconds=0,
+                            hemisphere=self.longitude_hem,
+                            errors=self.errors,
+                            error_type=error_type,
                         )
-                        continue
+                        if not self.longitude.parse():
+                            self.errors.append(
+                                {
+                                    error_type: f"Line {line_number}. Error in longitude parsing"
+                                }
+                            )
+                            continue
 
                     state.prev_location = prev_location
                     state.location = f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"

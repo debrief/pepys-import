@@ -139,7 +139,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter())
+        processor.register_importer(TestImporter("", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -171,7 +171,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter())
+        processor.register_importer(TestImporter("", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -203,7 +203,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter())
+        processor.register_importer(TestImporter("", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -235,7 +235,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter())
+        processor.register_importer(TestImporter("", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
