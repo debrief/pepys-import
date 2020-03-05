@@ -38,6 +38,13 @@ class Line:
             )
         return res
 
+    @property
+    def text(self):
+        res = ""
+        for child in self.children:
+            res += child.text
+        return res
+
     def tokens(self, reg_exp=WHITESPACE_DELIM, strip_char=""):
         """
         Returns a list of Token objects for each token in the line.
