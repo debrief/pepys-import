@@ -1,6 +1,5 @@
 import os
 import unittest
-from sqlite3 import OperationalError
 
 from pepys_import.file.e_trac_importer import ETracImporter
 from pepys_import.file.file_processor import FileProcessor
@@ -8,7 +7,6 @@ from pepys_import.core.store.data_store import DataStore
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data")
-TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 
 
 class ETracTests(unittest.TestCase):
