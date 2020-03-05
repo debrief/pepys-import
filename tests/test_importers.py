@@ -49,37 +49,6 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, False)
 
-    def test_class_name(self):
-        """Test whether class names are correct"""
-        replay_importer = ReplayImporter()
-        self.assertEqual(str(replay_importer), "Replay File Format Importer")
-        nmea_importer = NMEAImporter()
-        self.assertEqual(str(nmea_importer), "NMEA File Format Importer")
-
-    def test_giving_file_path_only(self):
-        """Test whether process method works when a file path is given"""
-        processor = FileProcessor()
-
-        importers = get_importers()
-        processor.register_importers(importers)
-
-        file_path = os.path.join(DATA_PATH, "test_importers.csv")
-
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            processor.process(file_path, None, False)
-        output = temp_output.getvalue()
-
-        self.assertIn("Files got processed: 0 times", output)
-
-
-class DescendingFoldersTestCase(unittest.TestCase):
-    def setUp(self) -> None:
-        pass
-
-    def tearDown(self) -> None:
-        pass
-
     def test_process_folders_descending(self):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("descending.db")
@@ -115,6 +84,29 @@ class DescendingFoldersTestCase(unittest.TestCase):
 
         # now good one
         processor.process(DATA_PATH, None, True)
+
+    def test_class_name(self):
+        """Test whether class names are correct"""
+        replay_importer = ReplayImporter()
+        self.assertEqual(str(replay_importer), "Replay File Format Importer")
+        nmea_importer = NMEAImporter()
+        self.assertEqual(str(nmea_importer), "NMEA File Format Importer")
+
+    def test_giving_file_path_only(self):
+        """Test whether process method works when a file path is given"""
+        processor = FileProcessor()
+
+        importers = get_importers()
+        processor.register_importers(importers)
+
+        file_path = os.path.join(DATA_PATH, "test_importers.csv")
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            processor.process(file_path, None, False)
+        output = temp_output.getvalue()
+
+        self.assertIn("Files got processed: 0 times", output)
 
 
 class ImporterRemoveTestCase(unittest.TestCase):
