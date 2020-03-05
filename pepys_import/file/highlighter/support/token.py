@@ -69,6 +69,7 @@ class Token:
             res += "(" + str(child) + ")"
         return res
 
+    @property
     def text(self):
         res = ""
         for child in self.children:
