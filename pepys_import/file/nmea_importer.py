@@ -9,9 +9,8 @@ from pepys_import.core.formats import unit_registry
 class NMEAImporter(Importer):
     name = "NMEA File Format Importer"
 
-    def __init__(self, separator=","):
+    def __init__(self):
         super().__init__()
-        self.separator = separator
 
         self.latitude = None
         self.latitude_hem = None
@@ -41,7 +40,8 @@ class NMEAImporter(Importer):
         platform_name = None
 
         for line_number, line in enumerate(file_object.lines()):
-            tokens = line.tokens()
+            tokens = line.tokens(line.CSV_DELIM, ",")
+
             if len(tokens) > 0:
 
                 msg_type = tokens[1].text
