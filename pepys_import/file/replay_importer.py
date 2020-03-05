@@ -1,6 +1,7 @@
-from .importer import Importer
-from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.rep_line import REPLine
+
+from .importer import Importer
 
 
 class ReplayImporter(Importer):

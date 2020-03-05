@@ -1,7 +1,9 @@
-from .importer import Importer
 from datetime import datetime
+
 from pepys_import.core.formats import unit_registry
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+
+from .importer import Importer
 
 
 class ETracImporter(Importer):
@@ -39,8 +41,7 @@ class ETracImporter(Importer):
                 continue
             elif len(tokens) < 17:
                 print(
-                    "Error on line {} not enough tokens: {}".format(line_number, line),
-                    len(tokens),
+                    "Error on line {} not enough tokens: {}".format(line_number, line), len(tokens),
                 )
                 continue
 
@@ -57,15 +58,14 @@ class ETracImporter(Importer):
             if len(date_token) != 12:
                 print(len(date_token))
                 print(
-                    f"Line {line_number}. Error in Date format {date_token}. Should be 10 figure data"
+                    f"Line {line_number}. Error in Date format {date_token}. "
+                    f"Should be 10 figure data"
                 )
                 continue
 
             # Times always in Zulu/GMT
             if len(time_token) != 8:
-                print(
-                    f"Line {line_number}. Error in Date format {time_token}. Should be HH:mm:ss"
-                )
+                print(f"Line {line_number}. Error in Date format {time_token}. Should be HH:mm:ss")
                 continue
 
             timestamp = self.parse_timestamp(date_token, time_token)

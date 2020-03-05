@@ -1,7 +1,9 @@
 from datetime import datetime
-from .location import Location
-from . import unit_registry
+
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+
+from . import unit_registry
+from .location import Location
 
 
 def parse_timestamp(date, time):
@@ -87,11 +89,7 @@ class REPLine:
         tokens = self.tokens()
 
         if len(tokens) < 15:
-            print(
-                "Error on line {} not enough tokens: {}".format(
-                    self.line_num, self.line
-                )
-            )
+            print("Error on line {} not enough tokens: {}".format(self.line_num, self.line))
             return False
 
         # separate token strings
@@ -147,9 +145,7 @@ class REPLine:
 
         self.symbology = symbology_token
 
-        self.latitude = Location(
-            lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token
-        )
+        self.latitude = Location(lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token)
         if not self.latitude.parse():
             print(f"Line {self.line_num}. Error in latitude parsing")
             return False

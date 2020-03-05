@@ -15,7 +15,5 @@ class REPFile:
 
                 rep_line = REPLine(line_number, line, " ")
                 if not rep_line.parse():
-                    raise Exception(
-                        f"failed parsing REP file {filepath} line {line_number}"
-                    )
+                    raise Exception(f"failed parsing REP file {filepath} line {line_number}")
                 self.lines.append(rep_line)

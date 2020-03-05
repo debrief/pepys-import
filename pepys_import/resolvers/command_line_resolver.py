@@ -4,9 +4,9 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyWordCompleter
 from sqlalchemy import or_
 
-from pepys_import.resolvers.data_resolver import DataResolver
-from pepys_import.resolvers.command_line_input import create_menu, is_valid
 from pepys_import.core.store import constants
+from pepys_import.resolvers.command_line_input import create_menu, is_valid
+from pepys_import.resolvers.data_resolver import DataResolver
 
 
 class CommandLineResolver(DataResolver):
@@ -16,34 +16,22 @@ class CommandLineResolver(DataResolver):
     def resolve_datafile(self, data_store, datafile_name, datafile_type, privacy):
         choice = create_menu(
             f"Datafile '{datafile_name}' not found. Do you wish to: ",
-            [
-                f"Search for existing datafile",
-                f"Add a new datafile, titled '{datafile_name}'",
-            ],
+            [f"Search for existing datafile", f"Add a new datafile, titled '{datafile_name}'"],
             validate_method=is_valid,
         )
 
         if choice == str(1):
-            return self.fuzzy_search_datafile(
-                data_store, datafile_name, datafile_type, privacy
-            )
+            return self.fuzzy_search_datafile(data_store, datafile_name, datafile_type, privacy)
         elif choice == str(2):
-            return self.add_to_datafiles(
-                data_store, datafile_name, datafile_type, privacy
-            )
+            return self.add_to_datafiles(data_store, datafile_name, datafile_type, privacy)
         elif choice == ".":
             print("Quitting")
             sys.exit(1)
 
-    def resolve_platform(
-        self, data_store, platform_name, platform_type, nationality, privacy
-    ):
+    def resolve_platform(self, data_store, platform_name, platform_type, nationality, privacy):
         choice = create_menu(
             f"Platform '{platform_name}' not found. Do you wish to: ",
-            [
-                f"Search for existing platform",
-                f"Add a new platform, titled '{platform_name}'",
-            ],
+            [f"Search for existing platform", f"Add a new platform, titled '{platform_name}'"],
             validate_method=is_valid,
         )
 
@@ -62,17 +50,12 @@ class CommandLineResolver(DataResolver):
     def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy):
         choice = create_menu(
             f"Sensor '{sensor_name}' not found. Do you wish to: ",
-            [
-                f"Search for existing sensor",
-                f"Add a new sensor, titled '{sensor_name}'",
-            ],
+            [f"Search for existing sensor", f"Add a new sensor, titled '{sensor_name}'"],
             validate_method=is_valid,
         )
 
         if choice == str(1):
-            return self.fuzzy_search_sensor(
-                data_store, sensor_name, sensor_type, privacy
-            )
+            return self.fuzzy_search_sensor(data_store, sensor_name, sensor_type, privacy)
         elif choice == str(2):
             return self.add_to_sensors(data_store, sensor_name, sensor_type, privacy)
         elif choice == ".":
@@ -132,8 +115,7 @@ class CommandLineResolver(DataResolver):
         )
         if datafile_name and choice in completer:
             new_choice = create_menu(
-                f"Do you wish to keep {datafile_name} as synonym for {choice}?",
-                ["Yes", "No"],
+                f"Do you wish to keep {datafile_name} as synonym for {choice}?", ["Yes", "No"],
             )
             if new_choice == str(1):
                 datafile = (
@@ -142,32 +124,22 @@ class CommandLineResolver(DataResolver):
                     .first()
                 )
                 # Add it to synonyms and return existing datafile
-                data_store.add_to_synonyms(
-                    constants.DATAFILE, datafile_name, datafile.datafile_id
-                )
+                data_store.add_to_synonyms(constants.DATAFILE, datafile_name, datafile.datafile_id)
                 print(f"'{datafile_name}' added to Synonyms!")
                 return datafile
             elif new_choice == str(2):
-                return self.add_to_datafiles(
-                    data_store, datafile_name, datafile_type, privacy
-                )
+                return self.add_to_datafiles(data_store, datafile_name, datafile_type, privacy)
             elif new_choice == ".":
                 print("-" * 61, "\nReturning to the previous menu\n")
-                return self.fuzzy_search_datafile(
-                    data_store, datafile_name, datafile_type, privacy
-                )
+                return self.fuzzy_search_datafile(data_store, datafile_name, datafile_type, privacy)
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
-            return self.resolve_datafile(
-                data_store, datafile_name, datafile_type, privacy
-            )
+            return self.resolve_datafile(data_store, datafile_name, datafile_type, privacy)
         elif choice not in completer:
             print(f"'{choice}' could not found! Redirecting to adding a new datafile..")
             return self.add_to_datafiles(data_store, choice, datafile_type, privacy)
 
-    def fuzzy_search_platform(
-        self, data_store, platform_name, platform_type, nationality, privacy
-    ):
+    def fuzzy_search_platform(self, data_store, platform_name, platform_type, nationality, privacy):
         """
         This method parses all platforms in the DB, and uses fuzzy search when
         user is typing. If user enters a new value, it adds to Synonym or Platforms
@@ -219,9 +191,7 @@ class CommandLineResolver(DataResolver):
                     .first()
                 )
                 # Add it to synonyms and return existing platform
-                data_store.add_to_synonyms(
-                    constants.PLATFORM, platform_name, platform.platform_id
-                )
+                data_store.add_to_synonyms(constants.PLATFORM, platform_name, platform.platform_id)
                 print(f"'{platform_name}' added to Synonyms!")
                 return platform
             elif new_choice == str(2):
@@ -240,9 +210,7 @@ class CommandLineResolver(DataResolver):
             )
         elif choice not in completer:
             print(f"'{choice}' could not found! Redirecting to adding a new platform..")
-            return self.add_to_platforms(
-                data_store, choice, platform_type, nationality, privacy
-            )
+            return self.add_to_platforms(data_store, choice, platform_type, nationality, privacy)
 
     def fuzzy_search_sensor(self, data_store, sensor_name, sensor_type, privacy):
         """
@@ -282,20 +250,14 @@ class CommandLineResolver(DataResolver):
                     .first()
                 )
                 # Add it to synonyms and return existing sensor
-                data_store.add_to_synonyms(
-                    constants.SENSOR, sensor_name, sensor.sensor_id
-                )
+                data_store.add_to_synonyms(constants.SENSOR, sensor_name, sensor.sensor_id)
                 print(f"'{sensor_name}' added to Synonyms!")
                 return sensor
             elif new_choice == str(2):
-                return self.add_to_sensors(
-                    data_store, sensor_name, sensor_type, privacy
-                )
+                return self.add_to_sensors(data_store, sensor_name, sensor_type, privacy)
             elif new_choice == ".":
                 print("-" * 61, "\nReturning to the previous menu\n")
-                return self.fuzzy_search_sensor(
-                    data_store, sensor_name, sensor_type, privacy
-                )
+                return self.fuzzy_search_sensor(data_store, sensor_name, sensor_type, privacy)
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_sensor(data_store, sensor_name, sensor_type, privacy)
@@ -356,9 +318,7 @@ class CommandLineResolver(DataResolver):
         :return:
         """
 
-        datafile_types = data_store.session.query(
-            data_store.db_classes.DatafileType
-        ).all()
+        datafile_types = data_store.session.query(data_store.db_classes.DatafileType).all()
         completer = [p.name for p in datafile_types]
         choice = create_menu(
             "Please start typing to show suggested values",
@@ -371,8 +331,7 @@ class CommandLineResolver(DataResolver):
             self.resolve_datafile_type(data_store, datafile_name)
         elif choice not in completer:
             new_choice = create_menu(
-                f"You didn't select an existing datafile type. "
-                f"Do you want to add '{choice}' ?",
+                f"You didn't select an existing datafile type. " f"Do you want to add '{choice}' ?",
                 choices=["Yes", "No, I'd like to select an existing datafile type"],
                 validate_method=is_valid,
             )
@@ -402,9 +361,7 @@ class CommandLineResolver(DataResolver):
         :type data_store: DataStore
         :return:
         """
-        nationalities = data_store.session.query(
-            data_store.db_classes.Nationality
-        ).all()
+        nationalities = data_store.session.query(data_store.db_classes.Nationality).all()
         completer = [n.name for n in nationalities]
         choice = create_menu(
             "Please start typing to show suggested values",
@@ -417,8 +374,7 @@ class CommandLineResolver(DataResolver):
             return self.resolve_nationality(data_store, platform_name)
         elif choice not in completer:
             new_choice = create_menu(
-                f"You didn't select an existing nationality. "
-                f"Do you want to add '{choice}' ?",
+                f"You didn't select an existing nationality. " f"Do you want to add '{choice}' ?",
                 choices=["Yes", "No, I'd like to select an existing nationality"],
                 validate_method=is_valid,
             )
@@ -448,9 +404,7 @@ class CommandLineResolver(DataResolver):
         :type data_store: DataStore
         :return:
         """
-        platform_types = data_store.session.query(
-            data_store.db_classes.PlatformType
-        ).all()
+        platform_types = data_store.session.query(data_store.db_classes.PlatformType).all()
         completer = [p.name for p in platform_types]
         choice = create_menu(
             "Please start typing to show suggested values",
@@ -463,8 +417,7 @@ class CommandLineResolver(DataResolver):
             self.resolve_platform_type(data_store, platform_name)
         elif choice not in completer:
             new_choice = create_menu(
-                f"You didn't select an existing platform type. "
-                f"Do you want to add '{choice}' ?",
+                f"You didn't select an existing platform type. " f"Do you want to add '{choice}' ?",
                 choices=["Yes", "No, I'd like to select an existing platform type"],
                 validate_method=is_valid,
             )
@@ -507,8 +460,7 @@ class CommandLineResolver(DataResolver):
             self.resolve_nationality(data_store, sensor_name)
         elif choice not in completer:
             new_choice = create_menu(
-                f"You didn't select an existing sensor type. "
-                f"Do you want to add '{choice}' ?",
+                f"You didn't select an existing sensor type. " f"Do you want to add '{choice}' ?",
                 choices=["Yes", "No, I'd like to select a sensor type"],
                 validate_method=is_valid,
             )
@@ -561,9 +513,7 @@ class CommandLineResolver(DataResolver):
             "Add a new platform-type",
         ]
         choice = create_menu(
-            "Ok, please provide platform-type: ",
-            platform_type_names,
-            validate_method=is_valid,
+            "Ok, please provide platform-type: ", platform_type_names, validate_method=is_valid,
         )
         if choice == str(1):
             return self.fuzzy_search_platform_type(data_store, platform_name)
@@ -616,9 +566,7 @@ class CommandLineResolver(DataResolver):
             "Add a new datafile-type",
         ]
         choice = create_menu(
-            "Ok, please provide datafile-type: ",
-            datafile_type_names,
-            validate_method=is_valid,
+            "Ok, please provide datafile-type: ", datafile_type_names, validate_method=is_valid,
         )
         if choice == str(1):
             return self.fuzzy_search_datafile_type(data_store, datafile_name)
@@ -673,9 +621,7 @@ class CommandLineResolver(DataResolver):
         print(f"Classification: {chosen_privacy.name}")
 
         choice = create_menu(
-            "Create this datafile?: ",
-            ["Yes", "No, make further edits"],
-            validate_method=is_valid,
+            "Create this datafile?: ", ["Yes", "No, make further edits"], validate_method=is_valid,
         )
 
         if choice == str(1):
@@ -686,9 +632,7 @@ class CommandLineResolver(DataResolver):
             print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_datafile(data_store, datafile_name, None, None)
 
-    def add_to_platforms(
-        self, data_store, platform_name, platform_type, nationality, privacy
-    ):
+    def add_to_platforms(self, data_store, platform_name, platform_type, nationality, privacy):
         """
         This method resolves platform type, nationality and privacy. It asks user
         whether to create a platform with resolved values or not. If user enters Yes,
@@ -710,12 +654,8 @@ class CommandLineResolver(DataResolver):
         print("Ok, adding new platform.")
 
         platform_name = prompt("Please enter a name: ", default=platform_name)
-        trigraph = prompt(
-            "Please enter trigraph (optional): ", default=platform_name[:3]
-        )
-        quadgraph = prompt(
-            "Please enter quadgraph (optional): ", default=platform_name[:4]
-        )
+        trigraph = prompt("Please enter trigraph (optional): ", default=platform_name[:3])
+        quadgraph = prompt("Please enter quadgraph (optional): ", default=platform_name[:4])
         pennant_number = prompt("Please enter pennant number (optional): ", default="")
 
         # Choose Nationality
@@ -756,9 +696,7 @@ class CommandLineResolver(DataResolver):
         print(f"Classification: {chosen_privacy.name}")
 
         choice = create_menu(
-            "Create this platform?: ",
-            ["Yes", "No, make further edits"],
-            validate_method=is_valid,
+            "Create this platform?: ", ["Yes", "No, make further edits"], validate_method=is_valid,
         )
 
         if choice == str(1):
@@ -819,9 +757,7 @@ class CommandLineResolver(DataResolver):
         print(f"Classification: {privacy.name}")
 
         choice = create_menu(
-            "Create this sensor?: ",
-            ["Yes", "No, make further edits"],
-            validate_method=is_valid,
+            "Create this sensor?: ", ["Yes", "No, make further edits"], validate_method=is_valid,
         )
 
         if choice == str(1):

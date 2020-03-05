@@ -1,8 +1,9 @@
-from .importer import Importer
 from datetime import datetime
 
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 from pepys_import.core.formats import unit_registry
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+
+from .importer import Importer
 
 
 class NMEAImporter(Importer):
@@ -87,13 +88,7 @@ class NMEAImporter(Importer):
                     self.longitude_hem = tokens[6]
 
                 # do we have all we need?
-                if (
-                    self.date
-                    and self.time
-                    and self.speed
-                    and self.heading
-                    and self.latitude
-                ):
+                if self.date and self.time and self.speed and self.heading and self.latitude:
 
                     # and finally store it
                     platform = data_store.get_platform(
@@ -105,9 +100,7 @@ class NMEAImporter(Importer):
                     # capture the name
                     platform_name = platform.name
                     sensor_type = data_store.add_to_sensor_types("_GPS")
-                    privacy = data_store.missing_data_resolver.resolve_privacy(
-                        data_store
-                    )
+                    privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
                     sensor = platform.get_sensor(
                         data_store=data_store,
                         sensor_name=platform.name,
@@ -118,10 +111,7 @@ class NMEAImporter(Importer):
 
                     state = datafile.create_state(sensor, timestamp)
                     location = self.parse_location(
-                        self.latitude,
-                        self.latitude_hem,
-                        self.longitude,
-                        self.longitude_hem,
+                        self.latitude, self.latitude_hem, self.longitude, self.longitude_hem,
                     )
                     state.location = location
 

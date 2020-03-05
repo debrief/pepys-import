@@ -12,11 +12,9 @@ class FileProcessor:
         else:
             self.filename = filename
 
-    def process(
-        self, path: str, data_store: DataStore = None, descend_tree: bool = True
-    ):
+    def process(self, path: str, data_store: DataStore = None, descend_tree: bool = True):
         """Process the data in the given path
-        
+
         :param path: File/Folder path
         :type path: String
         :param data_store: Database
@@ -35,26 +33,16 @@ class FileProcessor:
         # check given path is a file
         if os.path.isfile(path):
             with data_store.session_scope():
-                states_sum = TableSummary(
-                    data_store.session, data_store.db_classes.State
-                )
-                platforms_sum = TableSummary(
-                    data_store.session, data_store.db_classes.Platform
-                )
+                states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+                platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
                 first_table_summary_set = TableSummarySet([states_sum, platforms_sum])
                 print(first_table_summary_set.report("==Before=="))
 
                 filename = os.path.abspath(path)
                 current_path = os.path.dirname(path)
-                processed_ctr = self.process_file(
-                    filename, current_path, data_store, processed_ctr
-                )
-                states_sum = TableSummary(
-                    data_store.session, data_store.db_classes.State
-                )
-                platforms_sum = TableSummary(
-                    data_store.session, data_store.db_classes.Platform
-                )
+                processed_ctr = self.process_file(filename, current_path, data_store, processed_ctr)
+                states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+                platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
                 second_table_summary_set = TableSummarySet([states_sum, platforms_sum])
                 print(second_table_summary_set.report("==After=="))
             print(f"Files got processed: {processed_ctr} times")
@@ -71,9 +59,7 @@ class FileProcessor:
         with data_store.session_scope():
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
-            platforms_sum = TableSummary(
-                data_store.session, data_store.db_classes.Platform
-            )
+            platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
             first_table_summary_set = TableSummarySet([states_sum, platforms_sum])
             print(first_table_summary_set.report("==Before=="))
 
@@ -94,9 +80,7 @@ class FileProcessor:
                         )
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
-            platforms_sum = TableSummary(
-                data_store.session, data_store.db_classes.Platform
-            )
+            platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
             second_table_summary_set = TableSummarySet([states_sum, platforms_sum])
             print(second_table_summary_set.report("==After=="))
 
@@ -159,7 +143,7 @@ class FileProcessor:
 
     def register_importer(self, importer):
         """Adds the supplied importer to the list of import modules
-        
+
         :param importer: An importer module that must define the functions defined
         in the Importer base class
         :type importer: Importer

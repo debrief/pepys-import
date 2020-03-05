@@ -1,10 +1,10 @@
-from lxml import etree
-from datetime import datetime
 from dateutil.parser import parse
+from lxml import etree
+
+from pepys_import.core.formats import unit_registry
+from pepys_import.utils.unit_utils import convert_absolute_angle
 
 from .importer import Importer
-from pepys_import.core.formats import unit_registry
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 
 class GPXImporter(Importer):
@@ -76,7 +76,8 @@ class GPXImporter(Importer):
 
                 if timestamp_str is None:
                     print(
-                        f"Line {tpt.sourceline}. Error: <trkpt> element must have child <time> element"
+                        f"Line {tpt.sourceline}. Error: <trkpt> element must have child <time> "
+                        f"element"
                     )
                     continue
 
@@ -102,7 +103,8 @@ class GPXImporter(Importer):
                         speed = float(speed_str)
                     except ValueError:
                         print(
-                            f"Line {tpt.sourceline}. Error in speed value {speed_str}. Couldn't convert to number"
+                            f"Line {tpt.sourceline}. Error in speed value {speed_str}. "
+                            f"Couldn't convert to number"
                         )
                     state.speed = speed
 
@@ -111,7 +113,8 @@ class GPXImporter(Importer):
                         elevation = float(elevation_str)
                     except ValueError:
                         print(
-                            f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. Couldn't convert to number"
+                            f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. "
+                            f"Couldn't convert to number"
                         )
                     state.elevation = elevation
 

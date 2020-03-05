@@ -3,9 +3,7 @@ from abc import ABC, abstractmethod
 
 class DataResolver(ABC):
     @abstractmethod
-    def resolve_platform(
-        self, data_store, platform_name, platform_type, nationality, privacy
-    ):
+    def resolve_platform(self, data_store, platform_name, platform_type, nationality, privacy):
         """
         Implementation method should return any data necessary to create a platform.
         Currently: platform_name, platform_type, nationality, privacy.

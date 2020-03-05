@@ -15,9 +15,7 @@ class DefaultResolver(DataResolver):
     default_datafile_name = "DATAFILE-1"
     default_datafile_type = "DATAFILE-TYPE-1"
 
-    def resolve_platform(
-        self, data_store, platform_name, platform_type, nationality, privacy
-    ):
+    def resolve_platform(self, data_store, platform_name, platform_type, nationality, privacy):
         # needs to establish defaults for platform_name, platform_type, nationality and privacy
         if not platform_name:
             platform_name = self.default_platform_name
@@ -25,9 +23,7 @@ class DefaultResolver(DataResolver):
         if not platform_type:
             platform_type = data_store.search_platform_type(self.default_platform_type)
             if not platform_type:
-                platform_type = data_store.add_to_platform_types(
-                    self.default_platform_type
-                )
+                platform_type = data_store.add_to_platform_types(self.default_platform_type)
 
         if not nationality:
             nationality = data_store.search_nationality(self.default_nationality)

@@ -1,13 +1,12 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Boolean, DATE, DateTime
-from sqlalchemy.dialects.sqlite import TIMESTAMP, REAL
-
 from geoalchemy2 import Geometry
+from sqlalchemy import DATE, Boolean, Column, DateTime, Integer, String
+from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
 
+from pepys_import.core.store import constants
 from pepys_import.core.store.db_base import BaseSpatiaLite
 from pepys_import.core.store.db_status import TableTypes
-from pepys_import.core.store import constants
 
 
 # Metadata Tables
@@ -192,16 +191,12 @@ class Datafile(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
     def create_state(self, sensor, timestamp):
-        state = State(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
-        )
+        state = State(sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id)
         self._measurements.append(state)
         return state
 
     def create_contact(self, sensor, timestamp):
-        contact = Contact(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
-        )
+        contact = Contact(sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id)
         self._measurements.append(contact)
         return contact
 
@@ -582,9 +577,7 @@ class Geometry1(BaseSpatiaLite):
     table_type_id = 33
 
     geometry_id = Column(Integer, primary_key=True)
-    geometry = Column(
-        Geometry(geometry_type="GEOMETRY", management=True), nullable=False
-    )
+    geometry = Column(Geometry(geometry_type="GEOMETRY", management=True), nullable=False)
     name = Column(String(150), nullable=False)
     geo_type_id = Column(Integer, nullable=False)
     geo_sub_type_id = Column(Integer, nullable=False)

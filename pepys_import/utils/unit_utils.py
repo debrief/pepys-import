@@ -14,10 +14,7 @@ def convert_absolute_angle(angle, line_number):
     try:
         valid_angle = float(angle)
     except ValueError:
-        print(
-            f"Line {line_number}. Error in angle value {angle}. "
-            f"Couldn't convert to a number"
-        )
+        print(f"Line {line_number}. Error in angle value {angle}. " f"Couldn't convert to a number")
         return False
     if valid_angle < 0:
         valid_angle += 360
@@ -38,14 +35,9 @@ def convert_speed(speed, line_number):
     try:
         valid_speed = float(speed)
     except ValueError:
-        print(
-            f"Line {line_number}. Error in speed value {speed}. "
-            f"Couldn't convert to a number"
-        )
+        print(f"Line {line_number}. Error in speed value {speed}. " f"Couldn't convert to a number")
         return False
     speed = (
-        (valid_speed * unit_registry.knot)
-        .to(unit_registry.meter / unit_registry.second)
-        .magnitude
+        (valid_speed * unit_registry.knot).to(unit_registry.meter / unit_registry.second).magnitude
     )
     return speed

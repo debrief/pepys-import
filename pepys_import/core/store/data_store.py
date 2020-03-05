@@ -1,28 +1,24 @@
 import csv
 import os
+from contextlib import contextmanager
+from datetime import datetime
+from importlib import import_module
 from pathlib import Path
 
-from datetime import datetime
 from sqlalchemy import create_engine, or_
 from sqlalchemy.event import listen
-from sqlalchemy.sql import select, func
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError
-from importlib import import_module
-from contextlib import contextmanager
-
-from pepys_import.resolvers.default_resolver import DefaultResolver
-from pepys_import.utils.data_store_utils import import_from_csv
-from pepys_import.utils.geoalchemy_utils import load_spatialite
-from .db_base import BasePostGIS, BaseSpatiaLite
-from .db_status import TableTypes
-from pepys_import.core.formats import unit_registry
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import func, select
 
 from pepys_import import __version__
-from pepys_import.utils.branding_util import (
-    show_welcome_banner,
-    show_software_meta_info,
-)
+from pepys_import.resolvers.default_resolver import DefaultResolver
+from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
+from pepys_import.utils.data_store_utils import import_from_csv
+from pepys_import.utils.geoalchemy_utils import load_spatialite
+
+from .db_base import BasePostGIS, BaseSpatiaLite
+from .db_status import TableTypes
 from .table_summary import TableSummary, TableSummarySet
 
 MAIN_DIRECTORY_PATH = Path(__file__).parent.parent.parent  # pepys_import/pepys_import
@@ -56,7 +52,8 @@ class DataStore(object):
             driver = "sqlite+pysqlite"
         else:
             raise Exception(
-                f"Unknown db_type {db_type} supplied, if specified should be one of 'postgres' or 'sqlite'"
+                f"Unknown db_type {db_type} supplied, if specified should be one of "
+                f"'postgres' or 'sqlite'"
             )
 
         # setup meta_class data
@@ -122,7 +119,8 @@ class DataStore(object):
                 BaseSpatiaLite.metadata.create_all(self.engine)
             except OperationalError:
                 raise Exception(
-                    f"Error creating database schema, possible invalid path? ('{self.db_name}'). Quitting"
+                    f"Error creating database schema, possible invalid path? "
+                    f"('{self.db_name}'). Quitting"
                 )
         elif self.db_type == "postgres":
             try:
@@ -168,9 +166,7 @@ class DataStore(object):
         )
         for table_type in TableTypes:
             self.meta_classes[table_type] = [
-                cls
-                for name, cls in db_classes.items()
-                if db_classes[name].table_type == table_type
+                cls for name, cls in db_classes.items() if db_classes[name].table_type == table_type
             ]
 
     def populate_reference(self, reference_data_folder=None):
@@ -189,9 +185,7 @@ class DataStore(object):
                 reference_tables.append(table_object.__tablename__)
 
         reference_files = [
-            file
-            for file in files
-            if os.path.splitext(file)[0].replace(" ", "") in reference_tables
+            file for file in files if os.path.splitext(file)[0].replace(" ", "") in reference_tables
         ]
         for file in reference_files:
             # split file into filename and extension
@@ -224,9 +218,7 @@ class DataStore(object):
             for table_object in list(metadata_table_objects):
                 metadata_tables.append(table_object.__tablename__)
 
-        metadata_files = [
-            file for file in files if os.path.splitext(file)[0] in metadata_tables
-        ]
+        metadata_files = [file for file in files if os.path.splitext(file)[0] in metadata_tables]
         for file in sorted(metadata_files):
             # split file into filename and extension
             table_name, _ = os.path.splitext(file)
@@ -363,9 +355,7 @@ class DataStore(object):
 
         return sensor_obj
 
-    def add_to_datafiles(
-        self, privacy, file_type, reference=None, simulated=False, url=None
-    ):
+    def add_to_datafiles(self, privacy, file_type, reference=None, simulated=False, url=None):
         """
         Adds the specified datafile to the Datafile table if not already present.
 
@@ -641,9 +631,7 @@ class DataStore(object):
         assert isinstance(
             datafile_type, self.db_classes.DatafileType
         ), "Type error for DatafileType entity"
-        assert isinstance(
-            privacy, self.db_classes.Privacy
-        ), "Type error for Privacy entity"
+        assert isinstance(privacy, self.db_classes.Privacy), "Type error for Privacy entity"
 
         return self.add_to_datafiles(
             simulated=False,
@@ -723,12 +711,7 @@ class DataStore(object):
         platform_type = self.search_platform_type(platform_type)
         privacy = self.search_privacy(privacy)
 
-        if (
-            platform_name is None
-            or nationality is None
-            or platform_type is None
-            or privacy is None
-        ):
+        if platform_name is None or nationality is None or platform_type is None or privacy is None:
             resolved_data = self.missing_data_resolver.resolve_platform(
                 self, platform_name, platform_type, nationality, privacy
             )
@@ -752,9 +735,7 @@ class DataStore(object):
         assert isinstance(
             platform_type, self.db_classes.PlatformType
         ), "Type error for PlatformType entity"
-        assert isinstance(
-            privacy, self.db_classes.Privacy
-        ), "Type error for Privacy entity"
+        assert isinstance(privacy, self.db_classes.Privacy), "Type error for Privacy entity"
 
         return self.add_to_platforms(
             name=platform_name,
