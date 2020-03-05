@@ -1,14 +1,16 @@
 # TODO: we have to keep these statements on top to load pepys_import.
 # We will see better approach to access modules inside the other module.
+import argparse  # noqa: E402
+import cmd  # noqa: E402
+import os  # noqa: E402
 import sys
+
+from iterfzf import iterfzf  # noqa: E402
+
+from pepys_import.core.store.data_store import DataStore  # noqa: E402
 
 sys.path.append(".")
 
-import argparse  # noqa: E402
-import cmd  # noqa: E402
-from iterfzf import iterfzf  # noqa: E402
-import os  # noqa: E402
-from pepys_import.core.store.data_store import DataStore  # noqa: E402
 
 dirpath = os.path.dirname(os.path.abspath(__file__))
 
@@ -134,9 +136,7 @@ class AdminShell(cmd.Cmd):
         if datafile_reference is None:
             return
 
-        export_flag = input(
-            "Do you want to export {} Datafile. (Y/n)\n".format(datafile_reference)
-        )
+        export_flag = input("Do you want to export {} Datafile. (Y/n)\n".format(datafile_reference))
         if export_flag in ["", "Y", "y"]:
             print("Exported Datafile is: {}.".format(datafile_reference))
 
