@@ -260,9 +260,16 @@ class Datafile(BaseSpatiaLite):
             return False
 
     def commit(self, session):
+        # Since measurements are saved by their importer names, iterate over each key
+        # and save its measurement objects.
+        extraction_log = list()
         for key in self.measurements.keys():
             for file in self.measurements[key]:
                 file.submit(session)
+            extraction_log.append(
+                f"{len(self.measurements[key])} measurement objects parsed by {key}."
+            )
+        return extraction_log
 
     # def verify(self):
     #     pass

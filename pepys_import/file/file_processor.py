@@ -1,4 +1,7 @@
+import json
 import os
+
+from datetime import datetime
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
@@ -16,7 +19,7 @@ class FileProcessor:
         self, path: str, data_store: DataStore = None, descend_tree: bool = True
     ):
         """Process the data in the given path
-        
+
         :param path: File/Folder path
         :type path: String
         :param data_store: Database
@@ -165,13 +168,24 @@ class FileProcessor:
                     errors.extend(importer.errors)
 
             # If all tests pass for all parsers, commit datafile
+            # get current time without milliseconds
+            timestamp = str(datetime.utcnow())[:-7]
             if not errors:
-                datafile.commit(data_store.session)
+                log = datafile.commit(data_store.session)
                 # TODO: write extraction log to output folder
+                with open(
+                    os.path.join(current_path, f"{filename}_output_{timestamp}.log"),
+                    "w",
+                ) as f:
+                    f.write("\n".join(log))
                 # TODO: move original file to output folder
             else:
-                # TODO: write errors to output folder
-                print(errors)
+                with open(
+                    os.path.join(current_path, f"{filename}_errors_{timestamp}.log"),
+                    "w",
+                ) as f:
+                    json.dump(errors, f, ensure_ascii=False, indent=4)
+
         return processed_ctr
 
     def register_importer(self, importer):
