@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 
 from datetime import datetime
 
@@ -14,6 +15,7 @@ class FileProcessor:
             self.filename = ":memory:"
         else:
             self.filename = filename
+        self.output_path = None
 
     def process(
         self, path: str, data_store: DataStore = None, descend_tree: bool = True
@@ -69,6 +71,10 @@ class FileProcessor:
 
         # capture path in absolute form
         abs_path = os.path.abspath(path)
+        # create output folder if not exists
+        self.output_path = os.path.join(abs_path, "output")
+        if not os.path.exists(self.output_path):
+            os.makedirs(self.output_path)
 
         # decide whether to descend tree, or just work on this folder
         with data_store.session_scope():
@@ -172,16 +178,22 @@ class FileProcessor:
             timestamp = str(datetime.utcnow())[:-7]
             if not errors:
                 log = datafile.commit(data_store.session)
-                # TODO: write extraction log to output folder
+                # write extraction log to output folder
                 with open(
-                    os.path.join(current_path, f"{filename}_output_{timestamp}.log"),
+                    os.path.join(
+                        self.output_path, f"{filename}_output_{timestamp}.log"
+                    ),
                     "w",
                 ) as f:
                     f.write("\n".join(log))
-                # TODO: move original file to output folder
+                # move original file to output folder
+                shutil.move(full_path, os.path.join(self.output_path, file))
             else:
+                # write error log to the output folder
                 with open(
-                    os.path.join(current_path, f"{filename}_errors_{timestamp}.log"),
+                    os.path.join(
+                        self.output_path, f"{filename}_errors_{timestamp}.log"
+                    ),
                     "w",
                 ) as f:
                     json.dump(errors, f, ensure_ascii=False, indent=4)
