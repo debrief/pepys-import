@@ -1,9 +1,10 @@
 import os
-import shutil
 import unittest
+
 from contextlib import redirect_stdout
 from io import StringIO
 from datetime import datetime
+
 from pepys_import.file.importer import Importer
 from pepys_import.file.replay_importer import ReplayImporter
 from pepys_import.file.nmea_importer import NMEAImporter
