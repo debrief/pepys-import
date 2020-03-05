@@ -2,6 +2,7 @@ import os
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
+from pepys_import.file.highlighter.highlighter import HighlightedFile
 
 
 class FileProcessor:
@@ -136,7 +137,10 @@ class FileProcessor:
                 if not importer.can_load_this_header(first_line):
                     good_importers.remove(importer)
 
-            # get the file contents
+            # Create a HighlightedFile instance for the file
+            highlighted_file = HighlightedFile(full_path)
+
+            # Get the file contents, for the final check
             file_contents = self.get_file_contents(full_path)
 
             # lastly the contents
@@ -150,7 +154,13 @@ class FileProcessor:
 
             for importer in good_importers:
                 processed_ctr += 1
-                importer.load_this_file(data_store, full_path, file_contents, datafile)
+                importer.load_this_file(
+                    data_store, full_path, highlighted_file, datafile
+                )
+
+            # Write highlighted output to file
+            path, ext = os.path.splitext(full_path)
+            highlighted_file.export(path + ".html")
 
             if datafile.validate():
                 datafile.commit(data_store.session)
