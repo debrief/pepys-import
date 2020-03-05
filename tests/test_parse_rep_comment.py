@@ -9,7 +9,7 @@ FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/rep_test1.rep")
 
 
-class ETracTests(unittest.TestCase):
+class RepCommentTests(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -24,8 +24,8 @@ class ETracTests(unittest.TestCase):
         # check states empty
         with self.store.session_scope():
             # there must be no states at the beginning
-            states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 0)
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
+            self.assertEqual(len(comments), 0)
 
             # there must be no platforms at the beginning
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -41,8 +41,13 @@ class ETracTests(unittest.TestCase):
         # check data got created
         with self.store.session_scope():
             # there must be states after the import
-            states = self.store.session.query(self.store.db_classes.Comment).all()
-            self.assertEqual(len(states), 7)
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
+            self.assertEqual(len(comments), 7)
+            # check the first two rows have different comment types
+            self.assertEqual(comments[0].comment_type_id, 1)
+            self.assertEqual(comments[0].comment_type_id, 1)
+            # and the last row has a different comment type
+            self.assertEqual(comments[6].comment_type_id, 2)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
