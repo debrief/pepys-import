@@ -9,13 +9,20 @@ class BasicValidator:
         self.errors = errors
         self.longitude = None
         self.latitude = None
-        self.heading = measurement_object.heading
-        self.course = measurement_object.course
+        if hasattr(measurement_object, "heading"):
+            self.heading = measurement_object.heading
+        else:
+            self.heading = None
+        if hasattr(measurement_object, "course"):
+            self.course = measurement_object.course
+        else:
+            self.course = None
 
-        if measurement_object.location is not None:
-            self.longitude, self.latitude = convert_string_location_to_degrees(
-                measurement_object.location
-            )
+        if hasattr(measurement_object, "location"):
+            if measurement_object.location is not None:
+                self.longitude, self.latitude = convert_string_location_to_degrees(
+                    measurement_object.location
+                )
 
         self.validate_longitude()
         self.validate_latitude()

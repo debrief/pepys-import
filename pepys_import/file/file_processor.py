@@ -1,9 +1,8 @@
 import json
 import os
-import shutil
 
 from datetime import datetime
-
+from pathvalidate import sanitize_filename
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 
@@ -39,6 +38,14 @@ class FileProcessor:
 
         # check given path is a file
         if os.path.isfile(path):
+
+            # capture path in absolute form
+            abs_path = os.path.dirname(path)
+            # create output folder if not exists
+            self.output_path = os.path.join(abs_path, "output")
+            if not os.path.exists(self.output_path):
+                os.makedirs(self.output_path)
+
             with data_store.session_scope():
                 states_sum = TableSummary(
                     data_store.session, data_store.db_classes.State
@@ -185,7 +192,8 @@ class FileProcessor:
             # Run all validation tests
             errors = list()
             for importer in good_importers:
-                # Call related validation tests, extend global errors lists if the importer has errors
+                # Call related validation tests, extend global errors lists if the
+                # importer has errors
                 if not datafile.validate(
                     validation_level=importer.validation_level,
                     errors=importer.errors,
@@ -195,7 +203,7 @@ class FileProcessor:
 
             # If all tests pass for all parsers, commit datafile
             # get current time without milliseconds
-            timestamp = str(datetime.utcnow())[:-7]
+            timestamp = sanitize_filename(str(datetime.utcnow())[:-7])
             if not errors:
                 log = datafile.commit(data_store.session)
                 # write extraction log to output folder
@@ -223,7 +231,7 @@ class FileProcessor:
 
     def register_importer(self, importer):
         """Adds the supplied importer to the list of import modules
-        
+
         :param importer: An importer module that must define the functions defined
         in the Importer base class
         :type importer: Importer
