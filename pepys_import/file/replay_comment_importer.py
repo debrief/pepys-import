@@ -41,7 +41,7 @@ class ReplayCommentImporter(Importer):
             if line.startswith(";"):
                 if line.startswith(";NARRATIVE:"):
                     # ok for for it
-                    tokens = line.split(" ")
+                    tokens = line.split()
 
                     if len(tokens) < 5:
                         self.errors.append(
