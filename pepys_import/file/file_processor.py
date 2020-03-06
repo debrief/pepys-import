@@ -5,7 +5,6 @@ import shutil
 from datetime import datetime
 from stat import S_IREAD
 
-from pathvalidate import sanitize_filename
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 
