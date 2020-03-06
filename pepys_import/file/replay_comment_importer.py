@@ -48,7 +48,7 @@ class ReplayCommentImporter(Importer):
                                 "Not enough tokens: {line}"
                             }
                         )
-                        return False
+                        continue
 
                     # separate token strings
                     date_token = tokens[1]
@@ -67,7 +67,7 @@ class ReplayCommentImporter(Importer):
                                 "Not enough tokens: {line}"
                             }
                         )
-                        return False
+                        continue
 
                     # separate token strings
                     date_token = tokens[1]
