@@ -37,11 +37,10 @@ class FileProcessor:
         :param descend_tree: Whether to recursively descend through the folder tree
         :type descend_tree: bool
         """
-        # capture path in absolute form
-        abs_path = os.path.dirname(path)
+        dir_path = os.path.dirname(path)
         # create output folder if not exists
         if not self.output_path:
-            self.output_path = os.path.join(abs_path, "output")
+            self.output_path = os.path.join(dir_path, "output")
             if not os.path.exists(self.output_path):
                 os.makedirs(self.output_path)
 
@@ -131,6 +130,8 @@ class FileProcessor:
             )
             print(first_table_summary_set.report("==Before=="))
 
+            # capture path in absolute form
+            abs_path = os.path.abspath(path)
             if descend_tree:
                 # loop through this folder and children
                 for current_path, folders, files in os.walk(abs_path):
