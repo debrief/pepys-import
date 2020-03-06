@@ -81,7 +81,8 @@ class ETracImporter(Importer):
             if len(time_token) != 8:
                 self.errors.append(
                     {
-                        error_type: f"Line {line_number}. Error in Date format '{time_token}'. Should be HH:mm:ss"
+                        error_type: f"Line {line_number}. Error in Date format '{time_token}'."
+                        "Should be HH:mm:ss"
                     }
                 )
                 continue

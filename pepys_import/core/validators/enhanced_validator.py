@@ -12,11 +12,29 @@ class EnhancedValidator:
     def __init__(self, measurement_object, errors, parser_name):
         self.error_type = parser_name + f" - Enhanced Validation Error"
         self.errors = errors
-        self.location = measurement_object.location
-        self.speed = measurement_object.speed
-        self.heading = measurement_object.heading
-        self.course = measurement_object.course
-        self.prev_location = measurement_object.prev_location
+
+        if hasattr(measurement_object, "heading"):
+            self.heading = measurement_object.heading
+        else:
+            self.heading = None
+        if hasattr(measurement_object, "course"):
+            self.course = measurement_object.course
+        else:
+            self.course = None
+        if hasattr(measurement_object, "speed"):
+            self.speed = measurement_object.speed
+        else:
+            self.speed = None
+
+        if hasattr(measurement_object, "location"):
+            self.location = measurement_object.location
+        else:
+            self.location = None
+
+        if hasattr(measurement_object, "prev_location"):
+            self.prev_location = measurement_object.prev_location
+        else:
+            self.prev_location = None
 
         if self.location and self.prev_location:
             self.course_heading_loose_match_with_location()

@@ -5,6 +5,7 @@ import shutil
 from datetime import datetime
 from stat import S_IREAD
 
+from pathvalidate import sanitize_filename
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 
@@ -223,7 +224,8 @@ class FileProcessor:
             # Run all validation tests
             errors = list()
             for importer in good_importers:
-                # Call related validation tests, extend global errors lists if the importer has errors
+                # Call related validation tests, extend global errors lists if the
+                # importer has errors
                 if not datafile.validate(
                     validation_level=importer.validation_level,
                     errors=importer.errors,
@@ -260,7 +262,7 @@ class FileProcessor:
 
     def register_importer(self, importer):
         """Adds the supplied importer to the list of import modules
-        
+
         :param importer: An importer module that must define the functions defined
         in the Importer base class
         :type importer: Importer
