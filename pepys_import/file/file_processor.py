@@ -17,6 +17,7 @@ class FileProcessor:
         else:
             self.filename = filename
         self.output_path = None
+        self.input_files_path = None
         self.directory_path = None
         # Check if archive location environment variable exists
         archive_path = os.getenv("PEPYS_ARCHIVE_LOCATION")
@@ -43,6 +44,10 @@ class FileProcessor:
             self.output_path = os.path.join(dir_path, "output")
             if not os.path.exists(self.output_path):
                 os.makedirs(self.output_path)
+        # create input_files folder if not exists
+        self.input_files_path = os.path.join(self.output_path, "input_files")
+        if not os.path.exists(self.input_files_path):
+            os.makedirs(self.input_files_path)
 
         # Take current timestamp without milliseconds
         now = datetime.utcnow()
@@ -238,14 +243,13 @@ class FileProcessor:
                     ) as f:
                         f.write("\n".join(log))
                     # move original file to output folder
-                    new_path = os.path.join(self.output_path, file)
+                    new_path = os.path.join(self.input_files_path, file)
                     shutil.move(full_path, new_path)
                     # make it read-only
                     os.chmod(new_path, S_IREAD)
 
                 else:
                     # write error log to the output folder
-                    a = os.path.join(self.directory_path, f"{filename}_errors.log")
                     with open(
                         os.path.join(self.directory_path, f"{filename}_errors.log"),
                         "w",
