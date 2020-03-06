@@ -20,7 +20,9 @@ class GPXTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_process_gpx_data(self):
+    @patch("shutil.move")
+    @patch("os.chmod")
+    def test_process_gpx_data(self, patched_move, patched_chmod):
         processor = FileProcessor()
         processor.register_importer(GPXImporter())
 
