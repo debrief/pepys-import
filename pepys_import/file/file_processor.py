@@ -50,10 +50,15 @@ class FileProcessor:
                 states_sum = TableSummary(
                     data_store.session, data_store.db_classes.State
                 )
+                comments_sum = TableSummary(
+                    data_store.session, data_store.db_classes.Comment
+                )
                 platforms_sum = TableSummary(
                     data_store.session, data_store.db_classes.Platform
                 )
-                first_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+                first_table_summary_set = TableSummarySet(
+                    [states_sum, comments_sum, platforms_sum]
+                )
                 print(first_table_summary_set.report("==Before=="))
 
                 filename = os.path.abspath(path)
@@ -64,10 +69,15 @@ class FileProcessor:
                 states_sum = TableSummary(
                     data_store.session, data_store.db_classes.State
                 )
+                comments_sum = TableSummary(
+                    data_store.session, data_store.db_classes.Comment
+                )
                 platforms_sum = TableSummary(
                     data_store.session, data_store.db_classes.Platform
                 )
-                second_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+                second_table_summary_set = TableSummarySet(
+                    [states_sum, comments_sum, platforms_sum]
+                )
                 print(second_table_summary_set.report("==After=="))
             print(f"Files got processed: {processed_ctr} times")
             return
@@ -87,10 +97,15 @@ class FileProcessor:
         with data_store.session_scope():
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            comments_sum = TableSummary(
+                data_store.session, data_store.db_classes.Comment
+            )
             platforms_sum = TableSummary(
                 data_store.session, data_store.db_classes.Platform
             )
-            first_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+            first_table_summary_set = TableSummarySet(
+                [states_sum, comments_sum, platforms_sum]
+            )
             print(first_table_summary_set.report("==Before=="))
 
             if descend_tree:
@@ -110,10 +125,15 @@ class FileProcessor:
                         )
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            comments_sum = TableSummary(
+                data_store.session, data_store.db_classes.Comment
+            )
             platforms_sum = TableSummary(
                 data_store.session, data_store.db_classes.Platform
             )
-            second_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+            second_table_summary_set = TableSummarySet(
+                [states_sum, comments_sum, platforms_sum]
+            )
             print(second_table_summary_set.report("==After=="))
 
         print(f"Files got processed: {processed_ctr} times")
