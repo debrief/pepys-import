@@ -181,16 +181,32 @@ class FileProcessor:
                     errors.extend(importer.errors)
 
             # If all tests pass for all parsers, commit datafile
-            # get current time without milliseconds
-            timestamp = str(datetime.utcnow())[:-7]
+            # Take current timestamp without milliseconds
+            now = datetime.utcnow()
+            # Create non existing directories in the following format:
+            # output_folder/YYYY/MM/DD/HH/mm/ss(_sss)
+            directory_path = os.path.join(
+                self.output_path,
+                str(now.year),
+                str(now.month).zfill(2),
+                str(now.day).zfill(2),
+                str(now.hour).zfill(2),
+                str(now.minute).zfill(2),
+                str(now.second).zfill(2),
+            )
+            if not os.path.isdir(directory_path):
+                os.makedirs(directory_path)
+            else:
+                directory_path = os.path.join(
+                    directory_path + "_" + str(now.microsecond).zfill(3)[:3]
+                )
+                os.makedirs(directory_path)
+
             if not errors:
                 log = datafile.commit(data_store.session)
                 # write extraction log to output folder
                 with open(
-                    os.path.join(
-                        self.output_path, f"{filename}_output_{timestamp}.log"
-                    ),
-                    "w",
+                    os.path.join(directory_path, f"{filename}_output.log"), "w",
                 ) as f:
                     f.write("\n".join(log))
                 # move original file to output folder
@@ -199,10 +215,7 @@ class FileProcessor:
             else:
                 # write error log to the output folder
                 with open(
-                    os.path.join(
-                        self.output_path, f"{filename}_errors_{timestamp}.log"
-                    ),
-                    "w",
+                    os.path.join(directory_path, f"{filename}_errors.log"), "w",
                 ) as f:
                     json.dump(errors, f, ensure_ascii=False, indent=4)
 
