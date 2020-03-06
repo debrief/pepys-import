@@ -60,7 +60,7 @@ class ReplayCommentImporter(Importer):
                     comment_type = "None"
                 elif line.startswith(";NARRATIVE2:"):
                     # ok for for it
-                    tokens = line.split(" ")
+                    tokens = line.split()
 
                     if len(tokens) < 6:
                         self.errors.append(
