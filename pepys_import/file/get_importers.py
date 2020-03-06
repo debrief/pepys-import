@@ -1,4 +1,5 @@
 from pepys_import.file.replay_importer import ReplayImporter
+from pepys_import.file.replay_comment_importer import ReplayCommentImporter
 from pepys_import.file.nmea_importer import NMEAImporter
 from pepys_import.file.gpx_importer import GPXImporter
 from pepys_import.file.e_trac_importer import ETracImporter
