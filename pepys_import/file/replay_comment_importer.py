@@ -45,7 +45,7 @@ class ReplayCommentImporter(Importer):
                         self.errors.append(
                             {
                                 error_type: f"Error on line {line_number}. "
-                                "Not enough tokens: {line}"
+                                f"Not enough tokens: {line}"
                             }
                         )
                         continue
@@ -64,7 +64,7 @@ class ReplayCommentImporter(Importer):
                         self.errors.append(
                             {
                                 error_type: f"Error on line {line_number}. "
-                                "Not enough tokens: {line}"
+                                f"Not enough tokens: {line}"
                             }
                         )
                         continue
