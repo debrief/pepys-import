@@ -38,7 +38,7 @@ class FileProcessor:
         :type descend_tree: bool
         """
         # capture path in absolute form
-        abs_path = os.path.abspath(path)
+        abs_path = os.path.dirname(path)
         # create output folder if not exists
         if not self.output_path:
             self.output_path = os.path.join(abs_path, "output")
