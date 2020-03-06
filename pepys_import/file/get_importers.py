@@ -15,6 +15,7 @@ def get_importers():
 
     STATIC_IMPORTERS = [
         ReplayImporter(),
+        ReplayCommentImporter(),
         NMEAImporter(),
         GPXImporter(),
         ETracImporter(),
