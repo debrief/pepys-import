@@ -16,6 +16,12 @@ class FileProcessor:
         else:
             self.filename = filename
         self.output_path = None
+        # Check if archive location environment variable exists
+        archive_path = os.getenv("PEPYS_ARCHIVE_LOCATION")
+        if archive_path:
+            if not os.path.exists(archive_path):
+                os.makedirs(archive_path)
+            self.output_path = archive_path
 
     def process(
         self, path: str, data_store: DataStore = None, descend_tree: bool = True
@@ -72,9 +78,10 @@ class FileProcessor:
         # capture path in absolute form
         abs_path = os.path.abspath(path)
         # create output folder if not exists
-        self.output_path = os.path.join(abs_path, "output")
-        if not os.path.exists(self.output_path):
-            os.makedirs(self.output_path)
+        if not self.output_path:
+            self.output_path = os.path.join(abs_path, "output")
+            if not os.path.exists(self.output_path):
+                os.makedirs(self.output_path)
 
         # decide whether to descend tree, or just work on this folder
         with data_store.session_scope():
