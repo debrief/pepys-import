@@ -163,7 +163,9 @@ class FileProcessor:
         print(f"Files got processed: {processed_ctr} times")
 
     def process_file(self, file, current_path, data_store, processed_ctr):
-        filename, file_extension = os.path.splitext(file)
+        # file may have full path, therefore extract basename and split it
+        basename = os.path.basename(file)
+        filename, file_extension = os.path.splitext(basename)
         # make copy of list of importers
         good_importers = self.importers.copy()
 
@@ -243,6 +245,7 @@ class FileProcessor:
 
                 else:
                     # write error log to the output folder
+                    a = os.path.join(self.directory_path, f"{filename}_errors.log")
                     with open(
                         os.path.join(self.directory_path, f"{filename}_errors.log"),
                         "w",
