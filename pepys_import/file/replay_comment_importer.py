@@ -11,10 +11,8 @@ class ReplayCommentImporter(Importer):
         name="Replay Comment Importer",
         validation_level=constants.ENHANCED_LEVEL,
         short_name="REP Comment Importer",
-        separator=" ",
     ):
         super().__init__(name, validation_level, short_name)
-        self.separator = separator
         self.text_label = None
         self.depth = 0.0
         self.errors = list()
