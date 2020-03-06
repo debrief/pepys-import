@@ -7,6 +7,8 @@ from testing.postgresql import Postgresql
 from datetime import datetime
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store import constants
+from pepys_import.core.validators import constants as validation_constants
+from pepys_import.file.importer import Importer
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -800,6 +802,38 @@ class MeasurementsTestCase(TestCase):
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 
+        class TestParser(Importer):
+            def __init__(
+                self,
+                name="Test Importer",
+                validation_level=validation_constants.NONE_LEVEL,
+                short_name="Test Importer",
+                separator=" ",
+            ):
+                super().__init__(name, validation_level, short_name)
+                self.separator = separator
+                self.text_label = None
+                self.depth = 0.0
+                self.errors = list()
+
+            def can_load_this_header(self, header) -> bool:
+                return True
+
+            def can_load_this_filename(self, filename):
+                return True
+
+            def can_load_this_type(self, suffix):
+                return True
+
+            def can_load_this_file(self, file_contents):
+                return True
+
+            def load_this_file(self, data_store, path, file_contents, datafile):
+                pass
+
+        self.parser = TestParser()
+        self.file.measurements[self.parser.short_name] = list()
+
     def tearDown(self) -> None:
         try:
             self.postgres.stop()
@@ -814,7 +848,9 @@ class MeasurementsTestCase(TestCase):
             # there must be no entry at the beginning
             self.assertEqual(len(states), 0)
 
-            state = self.file.create_state(self.sensor, self.current_time)
+            state = self.file.create_state(
+                self.sensor, self.current_time, parser_name=self.parser.short_name
+            )
 
             # there must be no entry because it's kept in-memory
             states = self.store.session.query(self.store.db_classes.State).all()
@@ -836,7 +872,9 @@ class MeasurementsTestCase(TestCase):
             # there must be no entry at the beginning
             self.assertEqual(len(contacts), 0)
 
-            contact = self.file.create_contact(self.sensor, self.current_time)
+            contact = self.file.create_contact(
+                self.sensor, self.current_time, parser_name=self.parser.short_name
+            )
 
             # there must be no entry because it's kept in-memory
             contacts = self.store.session.query(self.store.db_classes.Contact).all()
@@ -860,7 +898,11 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(len(comments), 0)
 
             comment = self.file.create_comment(
-                self.sensor, self.current_time, "Comment", self.comment_type,
+                self.sensor,
+                self.current_time,
+                "Comment",
+                self.comment_type,
+                parser_name=self.parser.short_name,
             )
 
             # there must be no entry because it's kept in-memory
