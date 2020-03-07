@@ -18,12 +18,15 @@ from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
 from pepys_import.core.formats import unit_registry
 
+from ..formats.rep_line import REPLine
+
 from pepys_import import __version__
 from pepys_import.utils.branding_util import (
     show_welcome_banner,
     show_software_meta_info,
 )
 from .table_summary import TableSummary, TableSummarySet
+from shapely import wkb
 
 MAIN_DIRECTORY_PATH = Path(__file__).parent.parent.parent  # pepys_import/pepys_import
 DEFAULT_DATA_PATH = os.path.join(MAIN_DIRECTORY_PATH, "database", "default_data")
@@ -1053,4 +1056,78 @@ class DataStore(object):
             .all()
         )
 
-        print(states, contacts, comments)
+        line_number = 1
+
+        for i, state in enumerate(states):
+            line_number += 1
+            sensor = state.sensor
+            point = wkb.loads(state.location.desc, hex=True)
+            microsecond_text = ""
+            if state.time.microsecond:
+                if state.time.microsecond > 9999:
+                    microsecond_text = ".9999"
+                else:
+                    microsecond_text = "." + str(state.time.microsecond).zfill(4)
+            state_rep_line = [
+                state.time.strftime("%Y%m%d"),
+                state.time.strftime("%H%M%S") + microsecond_text,
+                '"' + sensor.name + '"',
+                "AA",
+                str(abs(point.x)),
+                "0",
+                "0",
+                "S" if point.x < 0 else "N",
+                str(abs(point.y)),
+                "0",
+                "0",
+                "W" if point.y < 0 else "E",
+                str(
+                    (state.heading * unit_registry.radians)
+                    .to(unit_registry.degree)
+                    .magnitude
+                ),
+                str(
+                    (state.speed * unit_registry.meter / unit_registry.second)
+                    .to(unit_registry.knot)
+                    .magnitude
+                ),
+                str(abs(state.elevation)) if state.elevation else "NaN",
+            ]
+            print(" ".join(state_rep_line))
+
+        for contact in contacts:
+            sensor = (
+                self.session.query(self.db_classes.Sensor)
+                .filter(self.db_classes.Sensor.sensor_id == contact.sensor_id)
+                .first()
+            )
+            # print(sensor.name)
+
+        for i, comment in enumerate(comments):
+            platform = (
+                self.session.query(self.db_classes.Sensor)
+                .filter(self.db_classes.Platform.platform_id == comment.platform_id)
+                .first()
+            )
+            vessel_name = platform.name
+            comment_type = comment.comment_type_id
+            message = comment.content
+            if comment_type == "None":
+                name = ";NARRATIVE:"
+            else:
+                name = ";NARRATIVE2:"
+            microsecond_text = ""
+            if state.time.microsecond:
+                if comment.time.microsecond > 9999:
+                    microsecond_text = ".9999"
+                else:
+                    microsecond_text = "." + str(comment.time.microsecond).zfill(4)
+            comment_rep_line = [
+                name,
+                comment.time.strftime("%Y%m%d"),
+                comment.time.strftime("%H%M%S") + microsecond_text,
+                vessel_name,
+                comment_type,
+                message,
+            ]
+            print(" ".join(comment_rep_line))

@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, Integer, String, Boolean, DATE, ForeignKey, DateTime
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, DOUBLE_PRECISION
+from sqlalchemy.orm import relationship
 
 from geoalchemy2 import Geometry
 
@@ -586,6 +587,8 @@ class State(BasePostGIS):
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    sensor = relationship("Sensor")
 
     def submit(self, session):
         """Submit intermediate object to the DB"""
