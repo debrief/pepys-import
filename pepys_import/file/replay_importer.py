@@ -77,8 +77,6 @@ class ReplayImporter(Importer):
                 state.location = rep_line.get_location()
                 prev_location = state.location
 
-                print(len(datafile.measurements["REP Importer"]))
-
     @staticmethod
     def degrees_for(degs, mins, secs, hemi: str):
         if hemi.upper() == "S" or hemi.upper() == "W":

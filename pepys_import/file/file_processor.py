@@ -214,7 +214,7 @@ class FileProcessor:
             # If all tests pass for all parsers, commit datafile
             # get current time without milliseconds
             timestamp = sanitize_filename(str(datetime.utcnow())[:-7])
-            print(errors)
+
             if not errors:
                 log = datafile.commit(data_store.session)
                 # write extraction log to output folder

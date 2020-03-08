@@ -62,7 +62,6 @@ class GPXImporter(Importer):
         # a specific platform, with the platform name in the <name> element
         for track_element in doc.findall("//{*}trk"):
             track_name = track_element.find("{*}name").text
-            print(f"New track: {track_name}")
 
             # Get the platform and sensor details, as these will be the same for all
             # points in this track
