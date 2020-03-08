@@ -1,6 +1,7 @@
 import os
 import unittest
-from sqlite3 import OperationalError
+
+from unittest.mock import patch, mock_open
 
 from pepys_import.file.gpx_importer import GPXImporter
 from pepys_import.file.file_processor import FileProcessor
@@ -10,6 +11,7 @@ FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/gpx")
 
 
+@patch("pepys_import.file.file_processor.open", new=mock_open())
 class TestLoadGPX(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -43,7 +45,7 @@ class TestLoadGPX(unittest.TestCase):
         with self.store.session_scope():
             # there must be states after the import
             states = self.store.session.query(self.store.db_classes.State).all()
-            assert len(states) == 36
+            assert len(states) == 27
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -57,16 +59,16 @@ class TestLoadGPX(unittest.TestCase):
             # Test the actual values that are imported
             #
 
-            # there should be 5 States with a speed of 4.5m/s
+            # there should be 3 States with a speed of 4.5m/s
             # as the first <trkpt> element in gpx_1_0.gpx has been imported
-            # 5 times based on the multiple modified versions of that file used
+            # 3 times based on the multiple modified versions of that file used
             # for testing
             speed_states = (
                 self.store.session.query(self.store.db_classes.State)
                 .filter(self.store.db_classes.State.speed == 4.5)
                 .all()
             )
-            assert len(speed_states) == 5
+            assert len(speed_states) == 3
 
             # there should be one point with an elevation of 2372m
             elev_states = (

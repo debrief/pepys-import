@@ -1,16 +1,25 @@
+import os
+
 from .importer import Importer
 from datetime import datetime
 from pepys_import.core.formats import unit_registry
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 from pepys_import.file.highlighter.support.combine import combine_tokens
+from pepys_import.core.validators import constants
 
 
 class ETracImporter(Importer):
-    name = "E-Trac Format Importer"
-
-    def __init__(self, separator=" "):
-        super().__init__()
+    def __init__(
+        self,
+        name="E-Trac Format Importer",
+        validation_level=constants.BASIC_LEVEL,
+        short_name="E-Trac Importer",
+        separator=" ",
+    ):
+        super().__init__(name, validation_level, short_name)
         self.separator = separator
+        self.errors = list()
+
         self.text_label = None
         self.depth = 0.0
 
@@ -27,7 +36,12 @@ class ETracImporter(Importer):
         return True
 
     def load_this_file(self, data_store, path, file_object, datafile):
-        print("E-trac parser working on ", path)
+        self.errors = list()
+        basename = os.path.basename(path)
+        print(f"E-trac parser working on {basename}")
+        error_type = self.short_name + f" - Parsing error on {basename}"
+        prev_location = None
+        datafile.measurements[self.short_name] = list()
 
         for line_number, line in enumerate(file_object.lines(), 1):
             # Skip the header
@@ -39,9 +53,10 @@ class ETracImporter(Importer):
                 # the last line may be empty, don't worry
                 continue
             elif len(tokens) < 17:
-                print(
-                    "Error on line {} not enough tokens: {}".format(line_number, line),
-                    len(tokens),
+                self.errors.append(
+                    {
+                        error_type: f"Error on line {line_number}. Not enough tokens: {line}"
+                    }
                 )
                 continue
 
@@ -58,16 +73,21 @@ class ETracImporter(Importer):
             comp_name_token.record(self.name, "vessel name", vessel_name, "n/a")
 
             if len(date_token.text) != 10:
-                print(len(date_token.text))
-                print(
-                    f"Line {line_number}. Error in Date format '{date_token.text}'. Should be 10 figure data"
+                self.errors.append(
+                    {
+                        error_type: f"Error on line {line_number}. Date format '{date_token.text}' "
+                        f"should be 10 figure data"
+                    }
                 )
                 continue
 
             # Times always in Zulu/GMT
             if len(time_token.text) != 8:
-                print(
-                    f"Line {line_number}. Error in Date format {time_token.text}. Should be HH:mm:ss"
+                self.errors.append(
+                    {
+                        error_type: f"Line {line_number}. Error in Date format '{time_token.text}'."
+                        "Should be HH:mm:ss"
+                    }
                 )
                 continue
 
@@ -91,26 +111,36 @@ class ETracImporter(Importer):
                 sensor_type=sensor_type,
                 privacy=privacy.name,
             )
-            state = datafile.create_state(sensor, timestamp)
+            state = datafile.create_state(sensor, timestamp, self.short_name)
             state.privacy = privacy.privacy_id
 
-            location = f"POINT({long_degrees_token.text} {lat_degrees_token.text})"
-            state.location = location
+            state.prev_location = prev_location
+            state.location = (
+                f"POINT({long_degrees_token.text} {lat_degrees_token.text})"
+            )
+            prev_location = state.location
+
             combine_tokens(long_degrees_token, lat_degrees_token).record(
-                self.name, "location", location, "decimal degrees"
+                self.name, "location", state.location, "decimal degrees"
             )
 
             # TODO: Depth is currently set to a constant value of 0.0
             # Do we need to parse this from the file?
             state.elevation = -1 * self.depth
 
-            heading = convert_absolute_angle(heading_token.text, line_number)
+            heading = convert_absolute_angle(
+                heading_token.text, line_number, self.errors, error_type
+            )
             state.heading = heading.to(unit_registry.radians).magnitude
             heading_token.record(self.name, "heading", heading, "degrees")
 
-            speed = convert_speed(speed_token.text, line_number)
+            speed = convert_speed(
+                speed_token.text, line_number, self.errors, error_type
+            )
             state.speed = speed
             speed_token.record(self.name, "speed", speed, "knots")
+
+            print(datafile.measurements)
 
     @staticmethod
     def name_for(token):

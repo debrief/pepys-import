@@ -1,8 +1,10 @@
 import os
 import unittest
+
 from contextlib import redirect_stdout
 from io import StringIO
 from datetime import datetime
+
 from pepys_import.file.importer import Importer
 from pepys_import.file.replay_importer import ReplayImporter
 from pepys_import.file.nmea_importer import NMEAImporter
@@ -13,6 +15,7 @@ FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
 BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
 DATA_PATH = os.path.join(FILE_PATH, "sample_data")
+OUTPUT_PATH = os.path.join(DATA_PATH, "output")
 
 
 class SampleImporterTests(unittest.TestCase):
@@ -128,7 +131,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter())
+        processor.register_importer(TestImporter("", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -160,7 +163,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter())
+        processor.register_importer(TestImporter("", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -192,7 +195,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter())
+        processor.register_importer(TestImporter("", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -224,7 +227,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter())
+        processor.register_importer(TestImporter("", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -256,13 +259,6 @@ class NMEAImporterTestCase(unittest.TestCase):
         timestamp = self.nmea_importer.parse_timestamp("010101", "010101")
         self.assertEqual(type(timestamp), datetime)
         self.assertEqual(str(timestamp), "2001-01-01 01:01:01")
-
-    def test_parse_location(self):
-        """Test whether the method correctly converts the given string location"""
-        location = self.nmea_importer.parse_location(
-            "3030.3000", "S", "00154.5400", "W"
-        )
-        self.assertEqual("POINT(-1.909 -30.505)", location)
 
     def test_tokens(self):
         """Test whether the method correctly tokenize the given string"""

@@ -1,5 +1,8 @@
+import json
 import os
 
+from datetime import datetime
+from pathvalidate import sanitize_filename
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
@@ -12,12 +15,13 @@ class FileProcessor:
             self.filename = ":memory:"
         else:
             self.filename = filename
+        self.output_path = None
 
     def process(
         self, path: str, data_store: DataStore = None, descend_tree: bool = True
     ):
         """Process the data in the given path
-        
+
         :param path: File/Folder path
         :type path: String
         :param data_store: Database
@@ -35,14 +39,27 @@ class FileProcessor:
 
         # check given path is a file
         if os.path.isfile(path):
+
+            # capture path in absolute form
+            abs_path = os.path.dirname(path)
+            # create output folder if not exists
+            self.output_path = os.path.join(abs_path, "output")
+            if not os.path.exists(self.output_path):
+                os.makedirs(self.output_path)
+
             with data_store.session_scope():
                 states_sum = TableSummary(
                     data_store.session, data_store.db_classes.State
                 )
+                comments_sum = TableSummary(
+                    data_store.session, data_store.db_classes.Comment
+                )
                 platforms_sum = TableSummary(
                     data_store.session, data_store.db_classes.Platform
                 )
-                first_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+                first_table_summary_set = TableSummarySet(
+                    [states_sum, comments_sum, platforms_sum]
+                )
                 print(first_table_summary_set.report("==Before=="))
 
                 filename = os.path.abspath(path)
@@ -53,10 +70,15 @@ class FileProcessor:
                 states_sum = TableSummary(
                     data_store.session, data_store.db_classes.State
                 )
+                comments_sum = TableSummary(
+                    data_store.session, data_store.db_classes.Comment
+                )
                 platforms_sum = TableSummary(
                     data_store.session, data_store.db_classes.Platform
                 )
-                second_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+                second_table_summary_set = TableSummarySet(
+                    [states_sum, comments_sum, platforms_sum]
+                )
                 print(second_table_summary_set.report("==After=="))
             print(f"Files got processed: {processed_ctr} times")
             return
@@ -67,15 +89,24 @@ class FileProcessor:
 
         # capture path in absolute form
         abs_path = os.path.abspath(path)
+        # create output folder if not exists
+        self.output_path = os.path.join(abs_path, "output")
+        if not os.path.exists(self.output_path):
+            os.makedirs(self.output_path)
 
         # decide whether to descend tree, or just work on this folder
         with data_store.session_scope():
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            comments_sum = TableSummary(
+                data_store.session, data_store.db_classes.Comment
+            )
             platforms_sum = TableSummary(
                 data_store.session, data_store.db_classes.Platform
             )
-            first_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+            first_table_summary_set = TableSummarySet(
+                [states_sum, comments_sum, platforms_sum]
+            )
             print(first_table_summary_set.report("==Before=="))
 
             if descend_tree:
@@ -95,10 +126,15 @@ class FileProcessor:
                         )
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            comments_sum = TableSummary(
+                data_store.session, data_store.db_classes.Comment
+            )
             platforms_sum = TableSummary(
                 data_store.session, data_store.db_classes.Platform
             )
-            second_table_summary_set = TableSummarySet([states_sum, platforms_sum])
+            second_table_summary_set = TableSummarySet(
+                [states_sum, comments_sum, platforms_sum]
+            )
             print(second_table_summary_set.report("==After=="))
 
         print(f"Files got processed: {processed_ctr} times")
@@ -152,6 +188,7 @@ class FileProcessor:
             # ok, let these importers handle the file
             datafile = data_store.get_datafile(filename, file_extension)
 
+            # Run all parsers
             for importer in good_importers:
                 processed_ctr += 1
                 importer.load_this_file(
@@ -162,14 +199,50 @@ class FileProcessor:
             path, ext = os.path.splitext(full_path)
             highlighted_file.export(path + ".html")
 
-            if datafile.validate():
-                datafile.commit(data_store.session)
+            # Run all validation tests
+            errors = list()
+            for importer in good_importers:
+                # Call related validation tests, extend global errors lists if the
+                # importer has errors
+                if not datafile.validate(
+                    validation_level=importer.validation_level,
+                    errors=importer.errors,
+                    parser=importer.short_name,
+                ):
+                    errors.extend(importer.errors)
+
+            # If all tests pass for all parsers, commit datafile
+            # get current time without milliseconds
+            timestamp = sanitize_filename(str(datetime.utcnow())[:-7])
+            print(errors)
+            if not errors:
+                log = datafile.commit(data_store.session)
+                # write extraction log to output folder
+                with open(
+                    os.path.join(
+                        self.output_path, f"{filename}_output_{timestamp}.log"
+                    ),
+                    "w",
+                ) as f:
+                    f.write("\n".join(log))
+                # move original file to output folder
+                # TODO: Skip for now
+                # shutil.move(full_path, os.path.join(self.output_path, file))
+            else:
+                # write error log to the output folder
+                with open(
+                    os.path.join(
+                        self.output_path, f"{filename}_errors_{timestamp}.log"
+                    ),
+                    "w",
+                ) as f:
+                    json.dump(errors, f, ensure_ascii=False, indent=4)
 
         return processed_ctr
 
     def register_importer(self, importer):
         """Adds the supplied importer to the list of import modules
-        
+
         :param importer: An importer module that must define the functions defined
         in the Importer base class
         :type importer: Importer

@@ -42,7 +42,7 @@ class TestLoadEtrac(unittest.TestCase):
         with self.store.session_scope():
             # there must be states after the import
             states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 85)
+            self.assertEqual(len(states), 44)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()

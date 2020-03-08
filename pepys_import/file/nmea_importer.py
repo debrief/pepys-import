@@ -4,13 +4,21 @@ from datetime import datetime
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.location import Location
+from pepys_import.core.validators import constants
 
 
 class NMEAImporter(Importer):
-    name = "NMEA File Format Importer"
-
-    def __init__(self):
-        super().__init__()
+    def __init__(
+        self,
+        name="NMEA File Format Importer",
+        validation_level=constants.BASIC_LEVEL,
+        short_name="NMEA Importer",
+        separator=",",
+    ):
+        super().__init__(name, validation_level, short_name)
+        self.separator = separator
+        self.errors = list()
 
         self.latitude = None
         self.latitude_hem = None
@@ -34,8 +42,11 @@ class NMEAImporter(Importer):
         return True
 
     def load_this_file(self, data_store, path, file_object, datafile):
+        self.errors = list()
         print("NMEA parser working on " + path)
-
+        error_type = self.short_name + f" - Parsing error on {path}"
+        prev_location = None
+        datafile.measurements[self.short_name] = list()
         # keep track of generated platform name
         platform_name = None
 
@@ -71,6 +82,9 @@ class NMEAImporter(Importer):
                     and self.speed
                     and self.heading
                     and self.latitude
+                    and self.latitude_hem
+                    and self.longitude
+                    and self.longitude_hem
                 ):
 
                     # and finally store it
@@ -97,24 +111,63 @@ class NMEAImporter(Importer):
                         self.name, "timestamp", timestamp, "n/a"
                     )
 
-                    state = datafile.create_state(sensor, timestamp)
-                    location = self.parse_location(
-                        self.latitude,
-                        self.latitude_hem,
-                        self.longitude,
-                        self.longitude_hem,
+                    state = datafile.create_state(sensor, timestamp, self.short_name)
+
+                    if not isinstance(self.latitude, Location):
+                        self.latitude = Location(
+                            degrees=self.latitude[:2],
+                            minutes=self.latitude[2:],
+                            seconds=0,
+                            hemisphere=self.latitude_hem,
+                            errors=self.errors,
+                            error_type=error_type,
+                        )
+                    if not self.latitude.parse():
+                        self.errors.append(
+                            {
+                                error_type: f"Line {line_number}. Error in latitude parsing"
+                            }
+                        )
+                        continue
+                    if not isinstance(self.longitude, Location):
+                        self.longitude = Location(
+                            degrees=self.longitude[:3],
+                            minutes=self.longitude[3:],
+                            seconds=0,
+                            hemisphere=self.longitude_hem,
+                            errors=self.errors,
+                            error_type=error_type,
+                        )
+                    if not self.longitude.parse():
+                        self.errors.append(
+                            {
+                                error_type: f"Line {line_number}. Error in longitude parsing"
+                            }
+                        )
+                        continue
+
+                    state.prev_location = prev_location
+                    state.location = f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
+                    prev_location = state.location
+
+                    heading = convert_absolute_angle(
+                        self.heading, line_number, self.errors, error_type
                     )
-                    state.location = location
+                    state.location = state.location
                     combine_tokens(lat_token, lon_token).record(
-                        self.name, "location", location, "DMS"
+                        self.name, "location", state.location, "DMS"
                     )
 
-                    heading = convert_absolute_angle(self.heading, line_number)
+                    heading = convert_absolute_angle(
+                        self.heading, line_number, self.errors, error_type
+                    )
                     if heading:
                         state.heading = heading.to(unit_registry.radians).magnitude
                     heading_token.record(self.name, "heading", heading, "degrees")
 
-                    speed = convert_speed(self.speed, line_number)
+                    speed = convert_speed(
+                        self.speed, line_number, self.errors, error_type
+                    )
                     if speed:
                         state.speed = speed
                     speed_token.record(self.name, "speed", speed, "knots")
@@ -126,6 +179,9 @@ class NMEAImporter(Importer):
                     self.speed = None
                     self.heading = None
                     self.latitude = None
+                    self.latitude_hem = None
+                    self.longitude = None
+                    self.longitude_hem = None
 
     # def requires_user_review(self) -> bool:
     #     """
@@ -137,24 +193,6 @@ class NMEAImporter(Importer):
     #     :rtype: bool
     #     """
     #     pass
-
-    @staticmethod
-    def parse_location(lat, lat_hem, lon, long_hem):
-        lat_degrees = float(lat[0:2])
-        lat_minutes = float(lat[2:])
-        lat_degrees = lat_degrees + lat_minutes / 60
-
-        lon_degrees = float(lon[0:3])
-        lon_minutes = float(lon[3:])
-        lon_degrees = lon_degrees + lon_minutes / 60
-
-        if lat_hem == "S":
-            lat_degrees = -1 * lat_degrees
-
-        if long_hem == "W":
-            lon_degrees = -1 * lon_degrees
-
-        return f"POINT({lon_degrees} {lat_degrees})"
 
     @staticmethod
     def parse_timestamp(date, time):
