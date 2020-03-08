@@ -260,12 +260,6 @@ class NMEAImporterTestCase(unittest.TestCase):
         self.assertEqual(type(timestamp), datetime)
         self.assertEqual(str(timestamp), "2001-01-01 01:01:01")
 
-    def test_tokens(self):
-        """Test whether the method correctly tokenize the given string"""
-        tokens = self.nmea_importer.tokens("Test line")
-        self.assertEqual(tokens[0], "Test")
-        self.assertEqual(tokens[1], "line")
-
 
 if __name__ == "__main__":
     unittest.main()
