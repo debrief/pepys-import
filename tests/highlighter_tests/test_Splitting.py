@@ -54,7 +54,7 @@ class SimpleTests(unittest.TestCase):
         tokens = first_line.tokens(csv_delim, ",")
         self.assertEqual(7, len(tokens))
 
-        self.assertEqual("951212", tokens[0].text())
+        self.assertEqual("951212", tokens[0].text)
 
     def test_SplitTokens(self):
         data_file = HighlightedFile(DATA_FILE)
@@ -72,13 +72,13 @@ class SimpleTests(unittest.TestCase):
 
         assert first_token is not None
 
-        self.assertEqual("951212", tokens[0].text())
-        self.assertEqual("050000.000", tokens[1].text())
-        self.assertEqual("MONDEO_44", tokens[2].text())
-        self.assertEqual("@C", tokens[3].text())
-        self.assertEqual("269.7", tokens[4].text())
-        self.assertEqual("10.0", tokens[5].text())
-        self.assertEqual("10", tokens[6].text())
+        self.assertEqual("951212", tokens[0].text)
+        self.assertEqual("050000.000", tokens[1].text)
+        self.assertEqual("MONDEO_44", tokens[2].text)
+        self.assertEqual("@C", tokens[3].text)
+        self.assertEqual("269.7", tokens[4].text)
+        self.assertEqual("10.0", tokens[5].text)
+        self.assertEqual("10", tokens[6].text)
 
         second_line = lines[1]
         assert second_line is not None
@@ -86,8 +86,8 @@ class SimpleTests(unittest.TestCase):
         tokens = second_line.tokens()
         self.assertEqual(5, len(tokens))
 
-        self.assertEqual("//", tokens[0].text())
-        self.assertEqual("EVENT", tokens[1].text())
-        self.assertEqual("951212", tokens[2].text())
-        self.assertEqual("050300.000", tokens[3].text())
-        self.assertEqual("BRAVO", tokens[4].text())
+        self.assertEqual("//", tokens[0].text)
+        self.assertEqual("EVENT", tokens[1].text)
+        self.assertEqual("951212", tokens[2].text)
+        self.assertEqual("050300.000", tokens[3].text)
+        self.assertEqual("BRAVO", tokens[4].text)

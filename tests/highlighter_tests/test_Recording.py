@@ -117,16 +117,16 @@ class UsageRecordingTests(unittest.TestCase):
         for line in lines:
             tokens = line.tokens()
 
-            if tokens[0].text() == "//":
+            if tokens[0].text == "//":
                 dateToken = tokens[2]
                 timeToken = tokens[3]
                 messageToken = tokens[4]
 
-                dateVal = self.parse_timestamp(dateToken.text(), timeToken.text())
+                dateVal = self.parse_timestamp(dateToken.text, timeToken.text)
                 dateTimeToken = combine_tokens(dateToken, timeToken)
                 dateTimeToken.record(tool, "Event DTG", dateVal, "N/A")
 
-                messageToken.record(tool, "Message", messageToken.text(), "N/A")
+                messageToken.record(tool, "Message", messageToken.text, "N/A")
             else:
                 dateToken = tokens[0]
                 timeToken = tokens[1]
@@ -135,17 +135,17 @@ class UsageRecordingTests(unittest.TestCase):
                 speedToken = tokens[5]
                 tempToken = tokens[6]
 
-                dateVal = self.parse_timestamp(dateToken.text(), timeToken.text())
+                dateVal = self.parse_timestamp(dateToken.text, timeToken.text)
                 dateTimeToken = combine_tokens(dateToken, timeToken)
                 dateTimeToken.record(tool, "DTG", dateVal, "N/A")
-                vehicleToken.record(tool, "NAME", vehicleToken.text(), "N/A")
-                courseToken.record(tool, "Course", courseToken.text(), "Degs")
-                speedToken.record(tool, "Speed", speedToken.text(), "M/Sec")
-                tempToken.record(tool, "Temperature", tempToken.text(), "Deg C")
+                vehicleToken.record(tool, "NAME", vehicleToken.text, "N/A")
+                courseToken.record(tool, "Course", courseToken.text, "Degs")
+                speedToken.record(tool, "Speed", speedToken.text, "M/Sec")
+                tempToken.record(tool, "Temperature", tempToken.text, "Deg C")
 
                 # also send the temperature somewhewre else
                 tempToken.record(
-                    "Third Party Temp Tracker", "Env Tmp", tempToken.text(), "Deg C"
+                    "Third Party Temp Tracker", "Env Tmp", tempToken.text, "Deg C"
                 )
 
         dataFile.export(os.path.join(OUTPUT_FOLDER, "track_lines.html"), True)

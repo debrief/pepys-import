@@ -81,7 +81,7 @@ class CombineTokenTests(unittest.TestCase):
         timeToken = tokens[1]
         dateTimeToken = combine_tokens(dateToken, timeToken)
 
-        date_time = self.parse_timestamp(dateToken.text(), timeToken.text())
+        date_time = self.parse_timestamp(dateToken.text, timeToken.text)
 
         dateTimeToken.record("TOOL", "Date-Time", date_time, "N/A")
 
@@ -128,7 +128,7 @@ class CombineTokenTests(unittest.TestCase):
             tokens = line.tokens(nmea_delim, ",")
             if len(tokens) > 0:
 
-                msg_type = tokens[1].text()
+                msg_type = tokens[1].text
                 if msg_type == "DZA":
                     date_tok = tokens[2]
                     time_tok = tokens[3]
@@ -145,16 +145,16 @@ class CombineTokenTests(unittest.TestCase):
                 # do we have all we need?
                 if date_tok and spd_tok and hdg_tok and lat_tok:
 
-                    date_time = self.parse_timestamp(date_tok.text(), time_tok.text())
+                    date_time = self.parse_timestamp(date_tok.text, time_tok.text)
 
                     loc = self.parse_location(
-                        lat_tok.text(),
-                        lat_hem_tok.text(),
-                        long_tok.text(),
-                        long_hem_tok.text(),
+                        lat_tok.text,
+                        lat_hem_tok.text,
+                        long_tok.text,
+                        long_hem_tok.text,
                     )
-                    spd = float(spd_tok.text())
-                    hdg = float(hdg_tok.text())
+                    spd = float(spd_tok.text)
+                    hdg = float(hdg_tok.text)
 
                     fStr = "{:8.2f}"
 
@@ -218,7 +218,7 @@ class CombineTokenTests(unittest.TestCase):
             tokens = line.tokens(nmea_delim, ",")
             if len(tokens) > 0:
 
-                msg_type = tokens[1].text()
+                msg_type = tokens[1].text
 
                 if msg_type == "DZA":
                     date_tok = tokens[2]
@@ -240,16 +240,16 @@ class CombineTokenTests(unittest.TestCase):
                 # do we have all we need?
                 if date_tok and spd_tok and hdg_tok and lat_tok:
 
-                    date_time = self.parse_timestamp(date_tok.text(), time_tok.text())
+                    date_time = self.parse_timestamp(date_tok.text, time_tok.text)
 
                     loc = self.parse_location(
-                        lat_tok.text(),
-                        lat_hem_tok.text(),
-                        long_tok.text(),
-                        long_hem_tok.text(),
+                        lat_tok.text,
+                        lat_hem_tok.text,
+                        long_tok.text,
+                        long_hem_tok.text,
                     )
-                    spd = float(spd_tok.text())
-                    hdg = float(hdg_tok.text())
+                    spd = float(spd_tok.text)
+                    hdg = float(hdg_tok.text)
 
                     fStr = "{:8.2f}"
 
