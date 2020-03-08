@@ -196,8 +196,11 @@ class FileProcessor:
                 )
 
             # Write highlighted output to file
-            path, ext = os.path.splitext(full_path)
-            highlighted_file.export(path + ".html")
+            highlighted_output_path = os.path.join(
+                self.output_path, f"{filename}_highlighted.html"
+            )
+
+            highlighted_file.export(highlighted_output_path, include_key=True)
 
             # Run all validation tests
             errors = list()
