@@ -1,12 +1,11 @@
 import os
 
 from lxml import etree
-from datetime import datetime
 from dateutil.parser import parse
 
-from .importer import Importer
+from pepys_import.file.importer import Importer
 from pepys_import.core.formats import unit_registry
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+from pepys_import.utils.unit_utils import convert_absolute_angle
 from pepys_import.core.validators import constants
 
 
