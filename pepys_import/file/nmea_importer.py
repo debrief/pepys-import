@@ -45,7 +45,7 @@ class NMEAImporter(Importer):
         self.errors = list()
         print("NMEA parser working on " + path)
         error_type = self.short_name + f" - Parsing error on {path}"
-        prev_location = None
+        prev_location = dict()
         datafile.measurements[self.short_name] = list()
         # keep track of generated platform name
         platform_name = None
@@ -146,9 +146,11 @@ class NMEAImporter(Importer):
                         )
                         continue
 
-                    state.prev_location = prev_location
+                    if platform_name in prev_location:
+                        state.prev_location = prev_location[platform_name]
+
                     state.location = f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
-                    prev_location = state.location
+                    prev_location[platform_name] = state.location
 
                     heading = convert_absolute_angle(
                         self.heading, line_number, self.errors, error_type
