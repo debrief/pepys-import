@@ -4,6 +4,7 @@ import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from datetime import datetime
+from unittest.mock import patch
 
 from pepys_import.file.importer import Importer
 from pepys_import.file.replay_importer import ReplayImporter
@@ -18,6 +19,8 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 OUTPUT_PATH = os.path.join(DATA_PATH, "output")
 
 
+@patch("shutil.move")
+@patch("os.chmod")
 class SampleImporterTests(unittest.TestCase):
     def setUp(self) -> None:
         pass
@@ -31,7 +34,7 @@ class SampleImporterTests(unittest.TestCase):
         if os.path.exists(descending_file):
             os.remove(descending_file)
 
-    def test_process_folders_not_descending(self):
+    def test_process_folders_not_descending(self, patched_move, patched_chmod):
         """Test whether single level processing works for the given path"""
         processor = FileProcessor("single_level.db")
 
@@ -49,7 +52,7 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, False)
 
-    def test_process_folders_descending(self):
+    def test_process_folders_descending(self, patched_move, patched_chmod):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("descending.db")
 
@@ -67,7 +70,7 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, True)
 
-    def test_process_folders_descending_in_memory(self):
+    def test_process_folders_descending_in_memory(self, patched_move, patched_chmod):
         """Test whether :memory: is used when no filename is given"""
         processor = FileProcessor()
 
@@ -85,14 +88,14 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, True)
 
-    def test_class_name(self):
+    def test_class_name(self, patched_move, patched_chmod):
         """Test whether class names are correct"""
         replay_importer = ReplayImporter()
         self.assertEqual(str(replay_importer), "Replay File Format Importer")
         nmea_importer = NMEAImporter()
         self.assertEqual(str(nmea_importer), "NMEA File Format Importer")
 
-    def test_giving_file_path_only(self):
+    def test_giving_file_path_only(self, patched_move, patched_chmod):
         """Test whether process method works when a file path is given"""
         processor = FileProcessor()
 
