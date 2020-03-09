@@ -1,8 +1,10 @@
 import json
 import os
+import shutil
 
 from datetime import datetime
-from pathvalidate import sanitize_filename
+from stat import S_IREAD
+
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 
@@ -15,6 +17,14 @@ class FileProcessor:
         else:
             self.filename = filename
         self.output_path = None
+        self.input_files_path = None
+        self.directory_path = None
+        # Check if archive location environment variable exists
+        archive_path = os.getenv("PEPYS_ARCHIVE_LOCATION")
+        if archive_path:
+            if not os.path.exists(archive_path):
+                os.makedirs(archive_path)
+            self.output_path = archive_path
 
     def process(
         self, path: str, data_store: DataStore = None, descend_tree: bool = True
@@ -28,6 +38,38 @@ class FileProcessor:
         :param descend_tree: Whether to recursively descend through the folder tree
         :type descend_tree: bool
         """
+        dir_path = os.path.dirname(path)
+        # create output folder if not exists
+        if not self.output_path:
+            self.output_path = os.path.join(dir_path, "output")
+            if not os.path.exists(self.output_path):
+                os.makedirs(self.output_path)
+        # create input_files folder if not exists
+        self.input_files_path = os.path.join(self.output_path, "input_files")
+        if not os.path.exists(self.input_files_path):
+            os.makedirs(self.input_files_path)
+
+        # Take current timestamp without milliseconds
+        now = datetime.utcnow()
+        # Create non existing directories in the following format:
+        # output_folder/YYYY/MM/DD/HH/mm/ss(_sss)
+        directory_path = os.path.join(
+            self.output_path,
+            str(now.year),
+            str(now.month).zfill(2),
+            str(now.day).zfill(2),
+            str(now.hour).zfill(2),
+            str(now.minute).zfill(2),
+            str(now.second).zfill(2),
+        )
+        if not os.path.isdir(directory_path):
+            os.makedirs(directory_path)
+        else:
+            directory_path = os.path.join(
+                directory_path + "_" + str(now.microsecond).zfill(3)[:3]
+            )
+            os.makedirs(directory_path)
+        self.directory_path = directory_path
 
         processed_ctr = 0
 
@@ -38,14 +80,6 @@ class FileProcessor:
 
         # check given path is a file
         if os.path.isfile(path):
-
-            # capture path in absolute form
-            abs_path = os.path.dirname(path)
-            # create output folder if not exists
-            self.output_path = os.path.join(abs_path, "output")
-            if not os.path.exists(self.output_path):
-                os.makedirs(self.output_path)
-
             with data_store.session_scope():
                 states_sum = TableSummary(
                     data_store.session, data_store.db_classes.State
@@ -86,13 +120,6 @@ class FileProcessor:
         if not os.path.isdir(path):
             raise FileNotFoundError(f"Folder not found in the given path: {path}")
 
-        # capture path in absolute form
-        abs_path = os.path.abspath(path)
-        # create output folder if not exists
-        self.output_path = os.path.join(abs_path, "output")
-        if not os.path.exists(self.output_path):
-            os.makedirs(self.output_path)
-
         # decide whether to descend tree, or just work on this folder
         with data_store.session_scope():
 
@@ -108,6 +135,8 @@ class FileProcessor:
             )
             print(first_table_summary_set.report("==Before=="))
 
+            # capture path in absolute form
+            abs_path = os.path.abspath(path)
             if descend_tree:
                 # loop through this folder and children
                 for current_path, folders, files in os.walk(abs_path):
@@ -139,7 +168,9 @@ class FileProcessor:
         print(f"Files got processed: {processed_ctr} times")
 
     def process_file(self, file, current_path, data_store, processed_ctr):
-        filename, file_extension = os.path.splitext(file)
+        # file may have full path, therefore extract basename and split it
+        basename = os.path.basename(file)
+        filename, file_extension = os.path.splitext(basename)
         # make copy of list of importers
         good_importers = self.importers.copy()
 
@@ -201,31 +232,30 @@ class FileProcessor:
                 ):
                     errors.extend(importer.errors)
 
-            # If all tests pass for all parsers, commit datafile
-            # get current time without milliseconds
-            timestamp = sanitize_filename(str(datetime.utcnow())[:-7])
-            if not errors:
-                log = datafile.commit(data_store.session)
-                # write extraction log to output folder
-                with open(
-                    os.path.join(
-                        self.output_path, f"{filename}_output_{timestamp}.log"
-                    ),
-                    "w",
-                ) as f:
-                    f.write("\n".join(log))
-                # move original file to output folder
-                # TODO: Skip for now
-                # shutil.move(full_path, os.path.join(self.output_path, file))
-            else:
-                # write error log to the output folder
-                with open(
-                    os.path.join(
-                        self.output_path, f"{filename}_errors_{timestamp}.log"
-                    ),
-                    "w",
-                ) as f:
-                    json.dump(errors, f, ensure_ascii=False, indent=4)
+            # check errors only if there were any importers
+            if good_importers:
+                # If all tests pass for all parsers, commit datafile
+                if not errors:
+                    log = datafile.commit(data_store.session)
+                    # write extraction log to output folder
+                    with open(
+                        os.path.join(self.directory_path, f"{filename}_output.log"),
+                        "w",
+                    ) as f:
+                        f.write("\n".join(log))
+                    # move original file to output folder
+                    new_path = os.path.join(self.input_files_path, file)
+                    shutil.move(full_path, new_path)
+                    # make it read-only
+                    os.chmod(new_path, S_IREAD)
+
+                else:
+                    # write error log to the output folder
+                    with open(
+                        os.path.join(self.directory_path, f"{filename}_errors.log"),
+                        "w",
+                    ) as f:
+                        json.dump(errors, f, ensure_ascii=False, indent=4)
 
         return processed_ctr
 
