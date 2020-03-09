@@ -228,7 +228,7 @@ class FileProcessor:
 
             # Write highlighted output to file
             highlighted_output_path = os.path.join(
-                self.output_path, f"{filename}_highlighted.html"
+                self.directory_path, f"{filename}_highlighted.html"
             )
 
             highlighted_file.export(highlighted_output_path, include_key=True)
