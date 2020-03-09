@@ -37,7 +37,6 @@ class ReplayImporter(Importer):
         basename = os.path.basename(path)
         print(f"Rep parser working on '{basename}'")
         error_type = self.short_name + f" - Parsing error on '{basename}'"
-        # TODO: this should be a dictionary which holds locations according to platform names
         prev_location = dict()
         datafile.measurements[self.short_name] = list()
         for line_number, line in enumerate(file_contents, 1):
