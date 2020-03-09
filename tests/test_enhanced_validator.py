@@ -81,11 +81,11 @@ class EnhancedValidatorTestCase(unittest.TestCase):
         EnhancedValidator(state, self.errors, "Test Parser")
         assert len(self.errors) == 2
         assert (
-            "Difference between Bearing (137.243) and Heading (286.479) is more than 90 degrees!"
+            "Difference between Bearing (40.444) and Heading (286.479) is more than 90 degrees!"
             in str(self.errors[0])
         )
         assert (
-            "Difference between Bearing (137.243) and Course (286.479) is more than 90 degrees!"
+            "Difference between Bearing (40.444) and Course (286.479) is more than 90 degrees!"
             in str(self.errors[1])
         )
 

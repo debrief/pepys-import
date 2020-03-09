@@ -42,7 +42,7 @@ class EnhancedValidator:
 
     def course_heading_loose_match_with_location(self):
         number_of_errors = len(self.errors)
-        bearing = bearing_between_two_points(self.location, self.prev_location)
+        bearing = bearing_between_two_points(self.prev_location, self.location)
         if self.heading:
             heading_in_degrees = degrees(self.heading)
             if not -90 <= heading_in_degrees - bearing <= 90:
@@ -68,7 +68,7 @@ class EnhancedValidator:
 
     def speed_loose_match_with_location(self):
         calculated_speed = distance_between_two_points_haversine(
-            self.location, self.prev_location
+            self.prev_location, self.location
         )
         if self.speed is None or calculated_speed <= self.speed * 10:
             return True
