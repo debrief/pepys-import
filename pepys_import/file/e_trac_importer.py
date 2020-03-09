@@ -117,7 +117,7 @@ class ETracImporter(Importer):
             if vessel_name in prev_location:
                 state.prev_location = prev_location[vessel_name]
 
-            state.location = f"POINT({long_degrees_token} {lat_degrees_token})"
+            state.location = f"POINT({long_degrees_token.text} {lat_degrees_token.text})"
             prev_location[vessel_name] = state.location
 
             combine_tokens(long_degrees_token, lat_degrees_token).record(
