@@ -86,7 +86,7 @@ class REPLine:
         depth_token = tokens[14]
 
         if len(tokens) >= 16:
-            self.text_label = " ".join(lambda: tok.text for tok in tokens[15:])
+            self.text_label = " ".join([tok.text for tok in tokens[15:]])
 
         if len(date_token.text) != 6 and len(date_token.text) != 8:
             errors.append(
@@ -133,7 +133,7 @@ class REPLine:
             )
             return False
 
-        self.symbology = symbology_token
+        self.symbology = symbology_token.text
 
         self.latitude = Location(
             lat_degrees_token.text,
