@@ -67,7 +67,7 @@ class HighlightedFile:
         lines_list = lines_list[0 : self.number_of_lines]
         limited_contents = "\n".join(str(e) for e in lines_list)
 
-        lines = self.fill_char_array(limited_contents, lines_list)
+        lines = self.create_lines(limited_contents, lines_list)
         return lines
 
     def not_limited_lines(self):
@@ -78,25 +78,26 @@ class HighlightedFile:
             file_contents = file.read()
 
         lines_list = file_contents.splitlines()
-        lines = self.fill_char_array(file_contents, lines_list)
+        lines = self.create_lines(file_contents, lines_list)
 
         return lines
 
-    def fill_char_array(self, file_contents, lines_list):
-        """
-        Fill the array of characters and create individual Line objects
-        for each line, with appropriate references to the character array
-        """
-        # Keeps track of which character in the file a line starts on
-        line_start_counter = 0
-        lines = []
-
+    def fill_char_array(self, file_contents):
         # Initialise the char index (self.chars), with one Char entry for
         # each character in the file. (Note: a reference to this char array is
         # given to each SubToken)
         for char in file_contents:
             char_obj = Char(char)
             self.chars.append(char_obj)
+
+    def create_lines(self, file_contents, lines_list):
+        """
+        Create individual Line objects
+        for each line, with appropriate references to the character array
+        """
+        # Keeps track of which character in the file a line starts on
+        line_start_counter = 0
+        lines = []
 
         # For each line in the file create a Line object with a SubToken
         # object as its child, keeping track of the length of the line
