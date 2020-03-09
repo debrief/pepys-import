@@ -39,7 +39,7 @@ class ETracImporter(Importer):
         basename = os.path.basename(path)
         print(f"E-trac parser working on {basename}")
         error_type = self.short_name + f" - Parsing error on {basename}"
-        prev_location = None
+        prev_location = dict()
         datafile.measurements[self.short_name] = list()
         for line_number, line in enumerate(file_contents, 1):
             # Skip the header
@@ -107,9 +107,11 @@ class ETracImporter(Importer):
             state = datafile.create_state(sensor, timestamp, self.short_name)
             state.privacy = privacy.privacy_id
 
-            state.prev_location = prev_location
+            if vessel_name in prev_location:
+                state.prev_location = prev_location[vessel_name]
+
             state.location = f"POINT({long_degrees_token} {lat_degrees_token})"
-            prev_location = state.location
+            prev_location[vessel_name] = state.location
 
             state.elevation = -1 * self.depth
 
