@@ -61,6 +61,10 @@ class NMEAImporter(Importer):
                     self.date = date_token.text
                     time_token = tokens[3]
                     self.time = time_token.text
+                    timestamp = self.parse_timestamp(self.date, self.time)
+                    combine_tokens(date_token, time_token).record(
+                        self.name, "timestamp", timestamp, "n/a"
+                    )
                 elif msg_type == "VEL":
                     speed_token = tokens[6]
                     self.speed = speed_token.text
@@ -105,10 +109,6 @@ class NMEAImporter(Importer):
                         sensor_name=platform.name,
                         sensor_type=sensor_type,
                         privacy=privacy.name,
-                    )
-                    timestamp = self.parse_timestamp(self.date, self.time)
-                    combine_tokens(date_token, time_token).record(
-                        self.name, "timestamp", timestamp, "n/a"
                     )
 
                     state = datafile.create_state(sensor, timestamp, self.short_name)
