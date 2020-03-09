@@ -4,8 +4,8 @@ import colorsys
 
 def color_for(hash_code, color_dict):
     """
-    Get a color for a specific 'hash code' by either taking one we've already recorded for this hash code,
-    or generating a new random one.
+    Get a color for a specific 'hash code' by either taking one we've already recorded for
+    this hash code, or generating a new random one.
     """
     # do we have it already?
     if hash_code in color_dict:
