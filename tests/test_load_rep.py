@@ -6,7 +6,7 @@ from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
 
 FILE_PATH = os.path.dirname(__file__)
-DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/rep_test1.rep")
+DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/")
 
 
 class TestLoadREP(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestLoadREP(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_process_e_trac_data(self):
+    def test_load_rep_data(self):
         processor = FileProcessor()
         processor.register_importer(ReplayImporter())
 
