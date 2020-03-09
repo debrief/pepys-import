@@ -256,8 +256,11 @@ class Datafile(BasePostGIS):
         self.measurements[parser_name].append(contact)
         return contact
 
-    def create_comment(self, sensor, timestamp, comment, comment_type, parser_name):
+    def create_comment(
+        self, platform_id, timestamp, comment, comment_type, parser_name
+    ):
         comment = Comment(
+            platform_id=platform_id,
             time=timestamp,
             content=comment,
             comment_type_id=comment_type.comment_type_id,

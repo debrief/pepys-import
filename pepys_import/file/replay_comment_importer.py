@@ -112,7 +112,7 @@ class ReplayCommentImporter(Importer):
                 message_token.record(self.name, "message", message, "n/a")
 
                 comment = datafile.create_comment(
-                    sensor=sensor,
+                    platform_id=platform.platform_id,
                     timestamp=timestamp,
                     comment=message,
                     comment_type=comment_type,
