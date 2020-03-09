@@ -50,7 +50,7 @@ class TestLoadREP(unittest.TestCase):
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 6)
+            self.assertEqual(len(datafiles), 7)
 
 
 if __name__ == "__main__":
