@@ -92,11 +92,3 @@ class Line:
             for i in range(int(child.start()), int(child.end())):
                 usage = SingleUsage(tool, message)
                 child.chars[i].usages.append(usage)
-
-
-def create_test_line_object(line_str):
-    line_span = (0, len(line_str))
-    subToken = SubToken(line_span, line_str, 0, [])
-    new_line = Line([subToken])
-
-    return new_line
