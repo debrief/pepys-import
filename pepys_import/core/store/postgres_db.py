@@ -588,8 +588,6 @@ class State(BasePostGIS):
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    sensor = relationship("Sensor")
-
     def submit(self, session):
         """Submit intermediate object to the DB"""
         session.add(self)

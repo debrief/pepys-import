@@ -18,13 +18,13 @@ from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
 from pepys_import.core.formats import unit_registry
 
-from ..formats.rep_line import REPLine
-
 from pepys_import import __version__
 from pepys_import.utils.branding_util import (
     show_welcome_banner,
     show_software_meta_info,
 )
+import pepys_import.utils.value_transforming_utils as transformer
+import pepys_import.utils.unit_utils as unit_converter
 from .table_summary import TableSummary, TableSummarySet
 from shapely import wkb
 
@@ -101,6 +101,10 @@ class DataStore(object):
 
         # use session_scope() to create a new session
         self.session = None
+
+        # dictionaries, to cache platform name
+        self._platform_dict_on_sensor_id = dict()
+        self._platform_dict_on_platform_id = dict()
 
         # Branding Text
         if self.welcome_text:
@@ -1031,13 +1035,61 @@ class DataStore(object):
         datafiles = self.session.query(self.db_classes.Datafile).all()
         return datafiles
 
-    def export_datafile(self, datafile_id):
+    def get_cached_platform_name(self, sensor_id=None, platform_id=None):
+        """
+        Get platform name from cache on either "sensor_id" or "platform_id"
+        If name is not found in the cache, sytem will load from this data store,
+        and add it into cache.
+        """
+        # invalid parameter handling
+        if sensor_id is None and platform_id is None:
+            raise Exception(
+                'either "sensor_id" or "platform_id" has to be provided to get "platform name"'
+            )
+
+        if sensor_id:
+            # return from cache
+            if sensor_id in self._platform_dict_on_sensor_id:
+                return self._platform_dict_on_sensor_id[sensor_id]
+            sensor = (
+                self.session.query(self.db_classes.Sensor)
+                .filter(self.db_classes.Sensor.sensor_id == sensor_id)
+                .first()
+            )
+
+            if sensor:
+                platform_id = sensor.host
+            else:
+                raise Exception("No sensor found with sensor id: {}".format(sensor_id))
+
+        if platform_id:
+            # return from cache
+            if platform_id in self._platform_dict_on_platform_id:
+                return self._platform_dict_on_platform_id[platform_id]
+            platform = (
+                self.session.query(self.db_classes.Sensor)
+                .filter(self.db_classes.Sensor.sensor_id == sensor_id)
+                .first()
+            )
+
+            if platform:
+                self._platform_dict_on_platform_id[platform_id] = platform.name
+                if sensor_id:
+                    self._platform_dict_on_sensor_id[sensor_id] = platform.name
+            else:
+                raise Exception(
+                    "No Platform found with platform id: {}".format(platform_id)
+                )
+        return platform.name
+
+    def export_datafile(self, datafile_id, datafile):
         """
         Get states, contacts and comments based on Datafile ID.
 
         :param datafile_id:  ID of Datafile
         :type datafile_id: String
         """
+        f = open("{}.rep".format(datafile), "w+")
         states = (
             self.session.query(self.db_classes.State)
             .filter(self.db_classes.State.source_id == datafile_id)
@@ -1056,52 +1108,39 @@ class DataStore(object):
             .all()
         )
 
-        line_number = 1
-
+        line_number = 0
         for i, state in enumerate(states):
             line_number += 1
-            sensor = state.sensor
+            #  load platform name from cache.
+            try:
+                platform_name = self.get_cached_platform_name(sensor_id=state.sensor_id)
+            except Exception as ex:
+                print(str(ex))
+                platform_name = "[Not Found]"
+
+            # wkb hex conversion to "point"
             point = wkb.loads(state.location.desc, hex=True)
-            microsecond_text = ""
-            if state.time.microsecond:
-                if state.time.microsecond > 9999:
-                    microsecond_text = ".9999"
-                else:
-                    microsecond_text = "." + str(state.time.microsecond).zfill(4)
             state_rep_line = [
-                state.time.strftime("%Y%m%d"),
-                state.time.strftime("%H%M%S") + microsecond_text,
-                '"' + sensor.name + '"',
+                transformer.format_datatime(state.time),
+                '"' + platform_name + '"',
                 "AA",
-                str(abs(point.x)),
-                "0",
-                "0",
-                "S" if point.x < 0 else "N",
-                str(abs(point.y)),
-                "0",
-                "0",
-                "W" if point.y < 0 else "E",
-                str(
-                    (state.heading * unit_registry.radians)
-                    .to(unit_registry.degree)
-                    .magnitude
-                ),
-                str(
-                    (state.speed * unit_registry.meter / unit_registry.second)
-                    .to(unit_registry.knot)
-                    .magnitude
-                ),
+                transformer.format_point(point.x, point.y),
+                str(unit_converter.convert_radian_to_degree(state.heading))
+                if state.heading
+                else "0",
+                str(unit_converter.convert_mps_to_knot(state.speed))
+                if state.speed
+                else "0",
                 str(abs(state.elevation)) if state.elevation else "NaN",
             ]
-            print(" ".join(state_rep_line))
+            data = " ".join(state_rep_line)
+            f.write(data + "\r\n")
 
-        for contact in contacts:
-            sensor = (
-                self.session.query(self.db_classes.Sensor)
-                .filter(self.db_classes.Sensor.sensor_id == contact.sensor_id)
-                .first()
-            )
-            # print(sensor.name)
+        # for contact in contacts:
+        #     sensor = self.session.query(self.db_classes.Sensor).filter(
+        #         self.db_classes.Sensor.sensor_id == contact.sensor_id
+        #     ).first()
+        # print(sensor.name)
 
         for i, comment in enumerate(comments):
             platform = (
@@ -1130,4 +1169,6 @@ class DataStore(object):
                 comment_type,
                 message,
             ]
-            print(" ".join(comment_rep_line))
+            data = " ".join(comment_rep_line)
+            f.write(data + "\r\n")
+        f.close()

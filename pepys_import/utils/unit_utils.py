@@ -126,3 +126,16 @@ def distance_between_two_points_haversine(first_location, second_location):
         .to(unit_registry.meter / unit_registry.second)
         .magnitude
     )
+
+
+def convert_radian_to_degree(radian_value):
+    return (radian_value * unit_registry.radians).to(unit_registry.degree).magnitude
+
+
+def convert_mps_to_knot(mps_value):
+    return round(
+        (mps_value * unit_registry.meter / unit_registry.second)
+        .to(unit_registry.knot)
+        .magnitude,
+        3,
+    )
