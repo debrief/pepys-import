@@ -94,7 +94,7 @@ class ReplayCommentImporter(Importer):
                 )
                 comment_type = data_store.add_to_comment_types(comment_type)
                 comment = datafile.create_comment(
-                    sensor=sensor,
+                    platform_id=platform.platform_id,
                     timestamp=parse_timestamp(date_token, time_token),
                     comment=message_token,
                     comment_type=comment_type,
