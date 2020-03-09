@@ -735,7 +735,7 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(len(comments), 0)
 
             comment = self.file.create_comment(
-                self.sensor,
+                self.platform.platform_id,
                 self.current_time,
                 "Comment",
                 self.comment_type,

@@ -860,7 +860,11 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(len(comments), 0)
 
             comment = self.file.create_comment(
-                self.sensor, self.current_time, "Comment", self.comment_type,
+                self.platform.platform_id,
+                self.current_time,
+                "Comment",
+                self.comment_type,
+                parser_name=self.parser.short_name,
             )
 
             # there must be no entry because it's kept in-memory
