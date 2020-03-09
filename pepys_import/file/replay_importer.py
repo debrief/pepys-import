@@ -32,15 +32,16 @@ class ReplayImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def load_this_file(self, data_store, path, file_contents, datafile):
+    def load_this_file(self, data_store, path, file_object, datafile):
         self.errors = list()
         basename = os.path.basename(path)
         print(f"Rep parser working on '{basename}'")
         error_type = self.short_name + f" - Parsing error on '{basename}'"
-        prev_location = None
+        prev_location = dict()
         datafile.measurements[self.short_name] = list()
-        for line_number, line in enumerate(file_contents, 1):
-            if line.startswith(";"):
+
+        for line_number, line in enumerate(file_object.lines(), 1):
+            if line.text.startswith(";"):
                 continue
             else:
                 # create state, to store the data
@@ -48,10 +49,10 @@ class ReplayImporter(Importer):
                 # Store parsing errors in self.errors list
                 if not rep_line.parse(self.errors, error_type):
                     continue
-
                 # and finally store it
+                vessel_name = rep_line.get_platform()
                 platform = data_store.get_platform(
-                    platform_name=rep_line.get_platform(),
+                    platform_name=vessel_name,
                     nationality="UK",
                     platform_type="Fisher",
                     privacy="Public",
@@ -73,21 +74,12 @@ class ReplayImporter(Importer):
                 state.speed = rep_line.speed
                 state.privacy = privacy.privacy_id
 
-                state.prev_location = prev_location
-                state.location = rep_line.get_location()
-                prev_location = state.location
+                if vessel_name in prev_location:
+                    state.prev_location = prev_location[vessel_name]
 
-    # def requires_user_review(self) -> bool:
-    #     """
-    #     Whether this importer requires user review of the loaded intermediate data
-    #     before pushing to the database.  The review may be by viewing an HTML import
-    #     summary, or examining some statistical/graphical overview.
-    #
-    #     :return: True or False
-    #     :rtype: bool
-    #     """
-    #     pass
-    #
+                state.location = rep_line.get_location()
+                prev_location[vessel_name] = state.location
+
     @staticmethod
     def degrees_for(degs, mins, secs, hemi: str):
         if hemi.upper() == "S" or hemi.upper() == "W":

@@ -37,12 +37,12 @@ class GPXImporter(Importer):
         # won't parse a string with an encoding attribute - it requires bytes instead
         return True
 
-    def load_this_file(self, data_store, path, file_contents, datafile):
+    def load_this_file(self, data_store, path, file_object, datafile):
         self.errors = list()
         basename = os.path.basename(path)
         print(f"GPX parser working on {basename}")
         error_type = self.short_name + f" - Parsing error on {basename}"
-        prev_location = None
+        prev_location = dict()
         datafile.measurements[self.short_name] = list()
 
         # Parse XML file from the full path of the file
@@ -62,7 +62,6 @@ class GPXImporter(Importer):
         # a specific platform, with the platform name in the <name> element
         for track_element in doc.findall("//{*}trk"):
             track_name = track_element.find("{*}name").text
-            print(f"New track: {track_name}")
 
             # Get the platform and sensor details, as these will be the same for all
             # points in this track
@@ -109,9 +108,11 @@ class GPXImporter(Importer):
                 state = datafile.create_state(sensor, timestamp, self.short_name)
 
                 # Add location (no need to convert as it requires a string)
-                state.prev_location = prev_location
+                if track_name in prev_location:
+                    state.prev_location = prev_location[track_name]
+
                 state.location = f"POINT({longitude_str} {latitude_str})"
-                prev_location = state.location
+                prev_location[track_name] = state.location
 
                 # Add course
                 if course_str is not None:

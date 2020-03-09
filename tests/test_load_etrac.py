@@ -1,18 +1,16 @@
 import os
 import unittest
+from unittest.mock import patch
 
-from unittest.mock import patch, mock_open
-
-from pepys_import.file.gpx_importer import GPXImporter
+from pepys_import.file.e_trac_importer import ETracImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
 
 FILE_PATH = os.path.dirname(__file__)
-DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/gpx")
+DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data")
 
 
-@patch("pepys_import.file.file_processor.open", new=mock_open())
-class GPXTests(unittest.TestCase):
+class TestLoadEtrac(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -20,23 +18,25 @@ class GPXTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_process_gpx_data(self):
+    @patch("shutil.move")
+    @patch("os.chmod")
+    def test_process_e_trac_data(self, patched_move, patched_chmod):
         processor = FileProcessor()
-        processor.register_importer(GPXImporter())
+        processor.register_importer(ETracImporter())
 
         # check states empty
         with self.store.session_scope():
             # there must be no states at the beginning
             states = self.store.session.query(self.store.db_classes.State).all()
-            assert len(states) == 0
+            self.assertEqual(len(states), 0)
 
             # there must be no platforms at the beginning
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 0
+            self.assertEqual(len(platforms), 0)
 
             # there must be no datafiles at the beginning
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            assert len(datafiles) == 0
+            self.assertEqual(len(datafiles), 0)
 
         # parse the folder
         processor.process(DATA_PATH, self.store, False)
@@ -45,38 +45,15 @@ class GPXTests(unittest.TestCase):
         with self.store.session_scope():
             # there must be states after the import
             states = self.store.session.query(self.store.db_classes.State).all()
-            assert len(states) == 27
+            self.assertEqual(len(states), 44)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 3
+            self.assertEqual(len(platforms), 18)
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            assert len(datafiles) == 7
-
-            #
-            # Test the actual values that are imported
-            #
-
-            # there should be 3 States with a speed of 4.5m/s
-            # as the first <trkpt> element in gpx_1_0.gpx has been imported
-            # 3 times based on the multiple modified versions of that file used
-            # for testing
-            speed_states = (
-                self.store.session.query(self.store.db_classes.State)
-                .filter(self.store.db_classes.State.speed == 4.5)
-                .all()
-            )
-            assert len(speed_states) == 3
-
-            # there should be one point with an elevation of 2372m
-            elev_states = (
-                self.store.session.query(self.store.db_classes.State)
-                .filter(self.store.db_classes.State.elevation == 2372)
-                .all()
-            )
-            assert len(elev_states) == 1
+            self.assertEqual(len(datafiles), 2)
 
 
 if __name__ == "__main__":

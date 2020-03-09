@@ -2,6 +2,7 @@ from .importer import Importer
 from datetime import datetime
 
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
@@ -40,62 +41,39 @@ class NMEAImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def tokens(self, line):
-        """
-        Tokenize parsed line.
-
-        :return: A series of Token object from this line of text, separated according to
-         the FieldSeparator specified by this importer.
-        """
-        if self.separator == " ":
-            return line.split()
-        else:
-            return line.split(self.separator)
-
-    # TODO: does nothing now
-    def record(self, importer, record_type, measurement_object) -> None:
-        """
-        Log the fact that this set of characters was loaded by the specified importer.
-        After the intermediate objects have been imported into the database,
-        it is possible to modify the import record to include a URL to a browser-based
-        view of that imported row.
-
-        :param importer: Name of the import library that loaded this line
-        :type importer: String
-        :param record_type: Description of the type of data that was loaded
-        :type record_type: String
-        :param measurement_object: Intermediate object for the line that was imported.
-        :type measurement_object: Measurement
-        :return: Nothing
-        """
-
-    def load_this_file(self, data_store, path, file_contents, datafile):
+    def load_this_file(self, data_store, path, file_object, datafile):
         self.errors = list()
         print("NMEA parser working on " + path)
         error_type = self.short_name + f" - Parsing error on {path}"
-        prev_location = None
+        prev_location = dict()
         datafile.measurements[self.short_name] = list()
         # keep track of generated platform name
         platform_name = None
-        for line_number, line in enumerate(file_contents):
-            if line_number > 5000:
-                break
-            tokens = self.tokens(line)
-            if len(tokens) > 0:
 
-                msg_type = tokens[1]
+        for line_number, line in enumerate(file_object.lines()):
+            tokens = line.tokens(line.CSV_DELIM, ",")
+
+            if len(tokens) > 1:
+
+                msg_type = tokens[1].text
                 if msg_type == "DZA":
-                    self.date = tokens[2]
-                    self.time = tokens[3]
+                    self.date_token = tokens[2]
+                    self.date = self.date_token.text
+                    self.time_token = tokens[3]
+                    self.time = self.time_token.text
                 elif msg_type == "VEL":
-                    self.speed = tokens[6]
+                    self.speed_token = tokens[6]
+                    self.speed = self.speed_token.text
                 elif msg_type == "HDG":
-                    self.heading = tokens[2]
+                    self.heading_token = tokens[2]
+                    self.heading = self.heading_token.text
                 elif msg_type == "POS":
-                    self.latitude = tokens[3]
-                    self.latitude_hem = tokens[4]
-                    self.longitude = tokens[5]
-                    self.longitude_hem = tokens[6]
+                    self.latitude = tokens[3].text
+                    self.latitude_hem = tokens[4].text
+                    self.lat_token = combine_tokens(tokens[3], tokens[4])
+                    self.longitude = tokens[5].text
+                    self.longitude_hem = tokens[6].text
+                    self.lon_token = combine_tokens(tokens[5], tokens[6])
 
                 # do we have all we need?
                 if (
@@ -129,6 +107,9 @@ class NMEAImporter(Importer):
                         privacy=privacy.name,
                     )
                     timestamp = self.parse_timestamp(self.date, self.time)
+                    combine_tokens(self.date_token, self.time_token).record(
+                        self.name, "timestamp", timestamp, "n/a"
+                    )
 
                     state = datafile.create_state(sensor, timestamp, self.short_name)
 
@@ -165,21 +146,33 @@ class NMEAImporter(Importer):
                         )
                         continue
 
-                    state.prev_location = prev_location
+                    if platform_name in prev_location:
+                        state.prev_location = prev_location[platform_name]
+
                     state.location = f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
-                    prev_location = state.location
+                    prev_location[platform_name] = state.location
+
+                    heading = convert_absolute_angle(
+                        self.heading, line_number, self.errors, error_type
+                    )
+                    state.location = state.location
+                    combine_tokens(self.lat_token, self.lon_token).record(
+                        self.name, "location", state.location, "DMS"
+                    )
 
                     heading = convert_absolute_angle(
                         self.heading, line_number, self.errors, error_type
                     )
                     if heading:
                         state.heading = heading.to(unit_registry.radians).magnitude
+                    self.heading_token.record(self.name, "heading", heading, "degrees")
 
                     speed = convert_speed(
                         self.speed, line_number, self.errors, error_type
                     )
                     if speed:
                         state.speed = speed
+                    self.speed_token.record(self.name, "speed", speed, "knots")
 
                     state.privacy = privacy.privacy_id
 

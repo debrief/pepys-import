@@ -1,5 +1,6 @@
 import unittest
 import os
+from unittest.mock import patch
 
 from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
@@ -15,6 +16,8 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 OUTPUT_PATH = os.path.join(DATA_PATH, "output")
 
 
+@patch("shutil.move")
+@patch("os.chmod")
 class SampleImporterTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.postgres = None
@@ -48,7 +51,7 @@ class SampleImporterTestCase(unittest.TestCase):
         except AttributeError:
             return
 
-    def test_process_folders_not_descending(self):
+    def test_process_folders_not_descending(self, patched_move, patched_chmod):
         """Test whether single level processing works for the given path"""
         processor = FileProcessor("single_level.db")
 
@@ -66,7 +69,7 @@ class SampleImporterTestCase(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, self.store, False)
 
-    def test_process_folders_descending(self):
+    def test_process_folders_descending(self, patched_move, patched_chmod):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("descending.db")
 

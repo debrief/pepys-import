@@ -102,7 +102,8 @@ def bearing_between_two_points(first_location, second_location):
 
 def distance_between_two_points_haversine(first_location, second_location):
     """
-    Calculate the great circle distance between two points on the earth (specified in decimal degrees).
+    Calculate the great circle distance between two points on the earth (specified in
+    decimal degrees).
 
     :param first_location: First location point
     :param second_location: Second location point
