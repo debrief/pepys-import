@@ -53,15 +53,16 @@ class Importer(ABC):
         """
 
     @abstractmethod
-    def load_this_file(self, data_store, path, file_contents, datafile):
+    def load_this_file(self, data_store, path, file_object, datafile):
         """Process this data-file
         
         :param data_store: The data_store
         :type data_store: DataStore
         :param path: File File path
         :type path: String
-        :param file_contents: File contents
-        :type file_contents: String
+        :param file_object: HighlightedFile object, representing file contents and allowing
+        extraction of lines and tokens, and recording of tokens
+        :type file_object: HighlightedFile
         :param datafile: DataFile object
         :type datafile: DataFile
         """

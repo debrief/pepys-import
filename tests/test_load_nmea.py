@@ -1,16 +1,15 @@
 import os
 import unittest
-from unittest.mock import patch
 
-from pepys_import.file.e_trac_importer import ETracImporter
+from pepys_import.file.nmea_importer import NMEAImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
 
 FILE_PATH = os.path.dirname(__file__)
-DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data")
+DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/NMEA")
 
 
-class ETracTests(unittest.TestCase):
+class TestLoadNMEA(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -18,11 +17,9 @@ class ETracTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @patch("shutil.move")
-    @patch("os.chmod")
-    def test_process_e_trac_data(self, patched_move, patched_chmod):
+    def test_load_NMEA_data(self):
         processor = FileProcessor()
-        processor.register_importer(ETracImporter())
+        processor.register_importer(NMEAImporter())
 
         # check states empty
         with self.store.session_scope():
@@ -45,15 +42,15 @@ class ETracTests(unittest.TestCase):
         with self.store.session_scope():
             # there must be states after the import
             states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 44)
+            self.assertEqual(len(states), 11400)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 18)
+            self.assertEqual(len(platforms), 1)
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 2)
+            self.assertEqual(len(datafiles), 1)
 
 
 if __name__ == "__main__":

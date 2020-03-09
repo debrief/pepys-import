@@ -116,3 +116,6 @@ venv.bak/
 /7zip
 *.zip
 *.lnk
+
+# Log files produced by import code
+*.log

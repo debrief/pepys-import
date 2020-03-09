@@ -37,7 +37,7 @@ class GPXImporter(Importer):
         # won't parse a string with an encoding attribute - it requires bytes instead
         return True
 
-    def load_this_file(self, data_store, path, file_contents, datafile):
+    def load_this_file(self, data_store, path, file_object, datafile):
         self.errors = list()
         basename = os.path.basename(path)
         print(f"GPX parser working on {basename}")
@@ -62,7 +62,6 @@ class GPXImporter(Importer):
         # a specific platform, with the platform name in the <name> element
         for track_element in doc.findall("//{*}trk"):
             track_name = track_element.find("{*}name").text
-            print(f"New track: {track_name}")
 
             # Get the platform and sensor details, as these will be the same for all
             # points in this track
