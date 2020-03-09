@@ -96,7 +96,7 @@ def bearing_between_two_points(first_location, second_location):
         diff_longitude
     )
     bearing = degrees((atan2(y, x)))
-    bearing = 360 - ((bearing + 360) % 360)
+    bearing = (bearing + 360) % 360
     return bearing
 
 
