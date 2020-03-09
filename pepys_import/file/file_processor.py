@@ -1,6 +1,9 @@
+import inspect
+import importlib.util
 import json
 import os
 import shutil
+import sys
 
 from datetime import datetime
 from stat import S_IREAD
@@ -12,6 +15,26 @@ from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 class FileProcessor:
     def __init__(self, filename=None):
         self.importers = []
+        # Register local importers if any exists
+        local_importers_path = os.getenv("PEPYS_LOCAL_PARSERS")
+        if local_importers_path:
+            if not os.path.exists(local_importers_path):
+                print(
+                    f"No such file or directory: {local_importers_path}. Only core parsers are going to work."
+                )
+            else:
+                for file in os.scandir(local_importers_path):
+                    # find importer name from the file and add it to importers
+                    spec = importlib.util.spec_from_file_location(file.name, file.path)
+                    module = importlib.util.module_from_spec(spec)
+                    sys.modules[file.name] = module
+                    spec.loader.exec_module(module)
+                    clsmembers = inspect.getmembers(
+                        sys.modules[module.__name__], inspect.isclass
+                    )
+                    obj = clsmembers[0][1]()
+                    self.importers.append(obj)
+
         if filename is None:
             self.filename = ":memory:"
         else:
