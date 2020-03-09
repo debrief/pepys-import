@@ -288,7 +288,9 @@ class Datafile(BasePostGIS):
         elif validation_level == validation_constants.ENHANCED_LEVEL:
             for measurement in self.measurements[parser]:
                 BasicValidator(measurement, errors, parser)
-                EnhancedValidator(measurement, errors, parser)
+                # TODO: Commented out at the moment as there is a bug in the validator
+                # Need to bring this back in once that is fixed.
+                # EnhancedValidator(measurement, errors, parser)
             if not errors:
                 return True
             return False
