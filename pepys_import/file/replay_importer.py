@@ -37,7 +37,7 @@ class ReplayImporter(Importer):
         basename = os.path.basename(path)
         print(f"Rep parser working on '{basename}'")
         error_type = self.short_name + f" - Parsing error on '{basename}'"
-        prev_location = dict()
+        prev_location = None
         datafile.measurements[self.short_name] = list()
         for line_number, line in enumerate(file_contents, 1):
             if line.startswith(";"):
@@ -50,9 +50,8 @@ class ReplayImporter(Importer):
                     continue
 
                 # and finally store it
-                vessel_name = rep_line.get_platform()
                 platform = data_store.get_platform(
-                    platform_name=vessel_name,
+                    platform_name=rep_line.get_platform(),
                     nationality="UK",
                     platform_type="Fisher",
                     privacy="Public",
@@ -74,11 +73,9 @@ class ReplayImporter(Importer):
                 state.speed = rep_line.speed
                 state.privacy = privacy.privacy_id
 
-                if vessel_name in prev_location:
-                    state.prev_location = prev_location[vessel_name]
-
+                state.prev_location = prev_location
                 state.location = rep_line.get_location()
-                prev_location[vessel_name] = state.location
+                prev_location = state.location
 
     # def requires_user_review(self) -> bool:
     #     """
