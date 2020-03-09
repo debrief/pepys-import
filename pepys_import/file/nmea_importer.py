@@ -57,27 +57,23 @@ class NMEAImporter(Importer):
 
                 msg_type = tokens[1].text
                 if msg_type == "DZA":
-                    date_token = tokens[2]
-                    self.date = date_token.text
-                    time_token = tokens[3]
-                    self.time = time_token.text
-                    timestamp = self.parse_timestamp(self.date, self.time)
-                    combine_tokens(date_token, time_token).record(
-                        self.name, "timestamp", timestamp, "n/a"
-                    )
+                    self.date_token = tokens[2]
+                    self.date = self.date_token.text
+                    self.time_token = tokens[3]
+                    self.time = self.time_token.text
                 elif msg_type == "VEL":
-                    speed_token = tokens[6]
-                    self.speed = speed_token.text
+                    self.speed_token = tokens[6]
+                    self.speed = self.speed_token.text
                 elif msg_type == "HDG":
-                    heading_token = tokens[2]
-                    self.heading = heading_token.text
+                    self.heading_token = tokens[2]
+                    self.heading = self.heading_token.text
                 elif msg_type == "POS":
                     self.latitude = tokens[3].text
                     self.latitude_hem = tokens[4].text
-                    lat_token = combine_tokens(tokens[3], tokens[4])
+                    self.lat_token = combine_tokens(tokens[3], tokens[4])
                     self.longitude = tokens[5].text
                     self.longitude_hem = tokens[6].text
-                    lon_token = combine_tokens(tokens[5], tokens[6])
+                    self.lon_token = combine_tokens(tokens[5], tokens[6])
 
                 # do we have all we need?
                 if (
@@ -109,6 +105,10 @@ class NMEAImporter(Importer):
                         sensor_name=platform.name,
                         sensor_type=sensor_type,
                         privacy=privacy.name,
+                    )
+                    timestamp = self.parse_timestamp(self.date, self.time)
+                    combine_tokens(self.date_token, self.time_token).record(
+                        self.name, "timestamp", timestamp, "n/a"
                     )
 
                     state = datafile.create_state(sensor, timestamp, self.short_name)
@@ -154,7 +154,7 @@ class NMEAImporter(Importer):
                         self.heading, line_number, self.errors, error_type
                     )
                     state.location = state.location
-                    combine_tokens(lat_token, lon_token).record(
+                    combine_tokens(self.lat_token, self.lon_token).record(
                         self.name, "location", state.location, "DMS"
                     )
 
@@ -163,14 +163,14 @@ class NMEAImporter(Importer):
                     )
                     if heading:
                         state.heading = heading.to(unit_registry.radians).magnitude
-                    heading_token.record(self.name, "heading", heading, "degrees")
+                    self.heading_token.record(self.name, "heading", heading, "degrees")
 
                     speed = convert_speed(
                         self.speed, line_number, self.errors, error_type
                     )
                     if speed:
                         state.speed = speed
-                    speed_token.record(self.name, "speed", speed, "knots")
+                    self.speed_token.record(self.name, "speed", speed, "knots")
 
                     state.privacy = privacy.privacy_id
 
