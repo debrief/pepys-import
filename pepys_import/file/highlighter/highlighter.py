@@ -27,6 +27,7 @@ class HighlightedFile:
         """
         Debug method, to check contents of chars
         """
+        self.fill_char_array_if_needed()
         return self.chars
 
     def lines(self):
@@ -52,13 +53,7 @@ class HighlightedFile:
         if len(self.chars) > 0:
             export_report(filename, self.chars, self.dict_color, include_key)
 
-    def limited_lines(self):
-        """
-        Return a list of Line objects for each line in the file,
-        producing only self.number_of_lines objects (to limit length
-        of output for very large files)
-        """
-
+    def limited_contents(self):
         with open(self.filename, "r") as file:
             whole_file_contents = file.read()
 
@@ -66,6 +61,17 @@ class HighlightedFile:
 
         lines_list = lines_list[0 : self.number_of_lines]
         limited_contents = "\n".join(str(e) for e in lines_list)
+
+        return limited_contents, lines_list
+
+    def limited_lines(self):
+        """
+        Return a list of Line objects for each line in the file,
+        producing only self.number_of_lines objects (to limit length
+        of output for very large files)
+        """
+
+        limited_contents, lines_list = self.limited_contents()
 
         lines = self.create_lines(limited_contents, lines_list)
         return lines
@@ -82,7 +88,20 @@ class HighlightedFile:
 
         return lines
 
-    def fill_char_array(self, file_contents):
+    def fill_char_array_if_needed(self):
+        if len(self.chars) > 0:
+            # Char array already filled, so no need to do anything
+            return
+
+        if self.number_of_lines is None:
+            with open(self.filename, "r") as f:
+                file_contents = f.read()
+        elif self.number_of_lines <= 0:
+            print("Non-positive number of lines. Please provide positive number")
+            exit(1)
+        else:
+            file_contents, _ = self.limited_contents()
+
         # Initialise the char index (self.chars), with one Char entry for
         # each character in the file. (Note: a reference to this char array is
         # given to each SubToken)
@@ -111,7 +130,7 @@ class HighlightedFile:
             subToken = SubToken(
                 line_span, this_line, int(line_start_counter), self.chars
             )
-            new_l = Line([subToken])
+            new_l = Line([subToken], self)
             lines.append(new_l)
             # Update the starting character of the line ready for next time
             line_start_counter += line_length + 1

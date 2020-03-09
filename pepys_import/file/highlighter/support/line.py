@@ -15,7 +15,7 @@ class Line:
         r'(?:,"|^")(""|[\w\W]*?)(?=",|"$)|(?:,(?!")|^(?!"))([^,]*?)(?=$|,)|(\r\n|\n)'
     )
 
-    def __init__(self, list_of_subtokens):
+    def __init__(self, list_of_subtokens, hf_instance):
         """
         Create a new line, giving it a list of SubToken objects as children of the line
 
@@ -23,6 +23,7 @@ class Line:
         for composite tokens.
         """
         self.children = list_of_subtokens
+        self.highlighted_file = hf_instance
 
     def __repr__(self):
         res = "Line: "
@@ -74,7 +75,9 @@ class Line:
                 # a composite object
                 list_of_subtokens = [subtoken]
 
-                self.tokens_array.append(Token(list_of_subtokens))
+                self.tokens_array.append(
+                    Token(list_of_subtokens, self.highlighted_file)
+                )
 
         return self.tokens_array
 
@@ -83,7 +86,17 @@ class Line:
         Record a usage of the whole line, by adding a SingleUsage object to each of the
         relevant characters in the char array referenced by each SubToken child.
         """
+        self.highlighted_file.fill_char_array_if_needed()
+
         for child in self.children:
             for i in range(int(child.start()), int(child.end())):
                 usage = SingleUsage(tool, message)
                 child.chars[i].usages.append(usage)
+
+
+def create_test_line_object(line_str):
+    line_span = (0, len(line_str))
+    subToken = SubToken(line_span, line_str, 0, [])
+    new_line = Line([subToken])
+
+    return new_line

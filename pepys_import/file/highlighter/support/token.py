@@ -56,12 +56,13 @@ class Token:
     combined there can be multiple children.
     """
 
-    def __init__(self, list_of_subtokens):
+    def __init__(self, list_of_subtokens, hf_instance):
         """
         :param list_of_subtokens:  A list of SubToken objects
         to be kept as children of this object
         """
         self.children = list_of_subtokens
+        self.highlighted_file = hf_instance
 
     def __repr__(self):
         res = "Token: "
@@ -88,6 +89,8 @@ class Token:
         This adds SingleUsage objects to each of the relevant characters in the
         character array stored by the SubToken objects that are children of this object.
         """
+        self.highlighted_file.fill_char_array_if_needed()
+
         tool_field = tool + "/" + field
         message = "Value:" + str(value) + " Units:" + str(units)
 
