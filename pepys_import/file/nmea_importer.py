@@ -42,11 +42,8 @@ class NMEAImporter(Importer):
         return True
 
     def load_this_file(self, data_store, path, file_object, datafile):
-        self.errors = list()
-        print("NMEA parser working on " + path)
-        error_type = self.short_name + f" - Parsing error on {path}"
-        prev_location = dict()
-        datafile.measurements[self.short_name] = list()
+        super().load_this_file(data_store, path, file_object, datafile)
+
         # keep track of generated platform name
         platform_name = None
 
@@ -120,12 +117,12 @@ class NMEAImporter(Importer):
                             seconds=0,
                             hemisphere=self.latitude_hem,
                             errors=self.errors,
-                            error_type=error_type,
+                            error_type=self.error_type,
                         )
                     if not self.latitude.parse():
                         self.errors.append(
                             {
-                                error_type: f"Line {line_number}. Error in latitude parsing"
+                                self.error_type: f"Line {line_number}. Error in latitude parsing"
                             }
                         )
                         continue
@@ -136,24 +133,24 @@ class NMEAImporter(Importer):
                             seconds=0,
                             hemisphere=self.longitude_hem,
                             errors=self.errors,
-                            error_type=error_type,
+                            error_type=self.error_type,
                         )
                     if not self.longitude.parse():
                         self.errors.append(
                             {
-                                error_type: f"Line {line_number}. Error in longitude parsing"
+                                self.error_type: f"Line {line_number}. Error in longitude parsing"
                             }
                         )
                         continue
 
-                    if platform_name in prev_location:
-                        state.prev_location = prev_location[platform_name]
+                    if platform_name in self.prev_location:
+                        state.prev_location = self.prev_location[platform_name]
 
                     state.location = f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
-                    prev_location[platform_name] = state.location
+                    self.prev_location[platform_name] = state.location
 
                     heading = convert_absolute_angle(
-                        self.heading, line_number, self.errors, error_type
+                        self.heading, line_number, self.errors, self.error_type
                     )
                     state.location = state.location
                     combine_tokens(self.lat_token, self.lon_token).record(
@@ -161,14 +158,14 @@ class NMEAImporter(Importer):
                     )
 
                     heading = convert_absolute_angle(
-                        self.heading, line_number, self.errors, error_type
+                        self.heading, line_number, self.errors, self.error_type
                     )
                     if heading:
                         state.heading = heading.to(unit_registry.radians).magnitude
                     self.heading_token.record(self.name, "heading", heading, "degrees")
 
                     speed = convert_speed(
-                        self.speed, line_number, self.errors, error_type
+                        self.speed, line_number, self.errors, self.error_type
                     )
                     if speed:
                         state.speed = speed
@@ -184,17 +181,6 @@ class NMEAImporter(Importer):
                     self.latitude_hem = None
                     self.longitude = None
                     self.longitude_hem = None
-
-    # def requires_user_review(self) -> bool:
-    #     """
-    #     Whether this importer requires user review of the loaded intermediate data
-    #     before pushing to the database.  The review may be by viewing an HTML import
-    #     summary, or examining some statistical/graphical overview.
-    #
-    #     :return: True or False
-    #     :rtype: bool
-    #     """
-    #     pass
 
     @staticmethod
     def parse_timestamp(date, time):

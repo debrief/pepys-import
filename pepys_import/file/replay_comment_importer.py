@@ -1,5 +1,3 @@
-import os
-
 from .importer import Importer
 from pepys_import.core.validators import constants
 from pepys_import.core.formats.rep_line import parse_timestamp
@@ -31,11 +29,7 @@ class ReplayCommentImporter(Importer):
         return True
 
     def load_this_file(self, data_store, path, file_object, datafile):
-        self.errors = list()
-        basename = os.path.basename(path)
-        print(f"Rep Comment parser working on '{basename}'")
-        error_type = self.short_name + f" - Parsing error on '{basename}'"
-        datafile.measurements[self.short_name] = list()
+        super().load_this_file(data_store, path, file_object, datafile)
 
         for line_number, line in enumerate(file_object.lines(), 1):
             if line.text.startswith(";"):
@@ -46,7 +40,7 @@ class ReplayCommentImporter(Importer):
                     if len(tokens) < 5:
                         self.errors.append(
                             {
-                                error_type: f"Error on line {line_number}. "
+                                self.error_type: f"Error on line {line_number}. "
                                 f"Not enough tokens: {line.text}"
                             }
                         )
@@ -65,7 +59,7 @@ class ReplayCommentImporter(Importer):
                     if len(tokens) < 6:
                         self.errors.append(
                             {
-                                error_type: f"Error on line {line_number}. "
+                                self.error_type: f"Error on line {line_number}. "
                                 f"Not enough tokens: {line.text}"
                             }
                         )
