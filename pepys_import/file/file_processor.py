@@ -27,22 +27,25 @@ class FileProcessor:
             else:
                 for file in os.scandir(local_importers_path):
                     # import file using its name and full path
-                    spec = importlib.util.spec_from_file_location(file.name, file.path)
-                    module = importlib.util.module_from_spec(spec)
-                    sys.modules[file.name] = module
-                    spec.loader.exec_module(module)
-                    # extract classes with this format: (class name, class)
-                    classes = inspect.getmembers(
-                        sys.modules[module.__name__], inspect.isclass
-                    )
-                    for name, class_ in classes:
-                        # continue only if it's a concrete class that inherits Importers
-                        if issubclass(class_, Importer) and not inspect.isabstract(
-                            class_
-                        ):
-                            # Create an object of the class, add it to importers
-                            obj = class_()
-                            self.importers.append(obj)
+                    if file.is_file():
+                        spec = importlib.util.spec_from_file_location(
+                            file.name, file.path
+                        )
+                        module = importlib.util.module_from_spec(spec)
+                        sys.modules[file.name] = module
+                        spec.loader.exec_module(module)
+                        # extract classes with this format: (class name, class)
+                        classes = inspect.getmembers(
+                            sys.modules[module.__name__], inspect.isclass
+                        )
+                        for name, class_ in classes:
+                            # continue only if it's a concrete class that inherits Importer
+                            if issubclass(class_, Importer) and not inspect.isabstract(
+                                class_
+                            ):
+                                # Create an object of the class, add it to importers
+                                obj = class_()
+                                self.importers.append(obj)
 
         if filename is None:
             self.filename = ":memory:"
