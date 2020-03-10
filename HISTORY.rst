@@ -2,6 +2,14 @@
 History
 =======
 
+0.0.7 (2020-03-10)
+------------------
+
+* Support spaces in import path
+* Integrate Extraction Highlighter
+* Don't create new platform for every line of NMEA
+* Introduce Replay comment parser
+
 0.0.6 (2020-03-03)
 ------------------
 

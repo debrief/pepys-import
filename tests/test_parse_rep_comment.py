@@ -46,11 +46,14 @@ class RepCommentTests(unittest.TestCase):
             # there must be states after the import
             comments = self.store.session.query(self.store.db_classes.Comment).all()
             self.assertEqual(len(comments), 7)
-            # check the first two rows have different comment types
+            # check the first two rows have matching comment types (NULL)
             self.assertEqual(comments[0].comment_type_id, 1)
-            self.assertEqual(comments[0].comment_type_id, 1)
+            self.assertEqual(comments[1].comment_type_id, 1)
             # and the last row has a different comment type
             self.assertEqual(comments[6].comment_type_id, 2)
+            # and the full comments on some other rows
+            self.assertEqual(comments[0].content, "Contact detected on TA")
+            self.assertEqual(comments[6].content, "SUBJECT lost on TA")
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
