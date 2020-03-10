@@ -12,7 +12,6 @@ TEST_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "test_local_imports")
 class EnvironmentVariablesTestCase(unittest.TestCase):
     @patch.dict(os.environ, {"PEPYS_LOCAL_PARSERS": TEST_IMPORTER_PATH})
     def test_pepys_local_parsers(self):
-        print(DIRECTORY_PATH, TEST_IMPORTER_PATH)
         value = os.getenv("PEPYS_LOCAL_PARSERS")
         assert value == TEST_IMPORTER_PATH
 
