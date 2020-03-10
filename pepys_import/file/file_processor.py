@@ -251,7 +251,7 @@ class FileProcessor:
                     good_importers.remove(importer)
 
             # ok, let these importers handle the file
-            datafile = data_store.get_datafile(filename, file_extension)
+            datafile = data_store.get_datafile(basename, file_extension)
 
             # Run all parsers
             for importer in good_importers:
