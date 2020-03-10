@@ -10,6 +10,7 @@ from stat import S_IREAD
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
+from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
 
 
@@ -234,7 +235,10 @@ class FileProcessor:
                 if not importer.can_load_this_header(first_line):
                     good_importers.remove(importer)
 
-            # get the file contents
+            # Create a HighlightedFile instance for the file
+            highlighted_file = HighlightedFile(full_path)
+
+            # Get the file contents, for the final check
             file_contents = self.get_file_contents(full_path)
 
             # lastly the contents
@@ -249,7 +253,16 @@ class FileProcessor:
             # Run all parsers
             for importer in good_importers:
                 processed_ctr += 1
-                importer.load_this_file(data_store, full_path, file_contents, datafile)
+                importer.load_this_file(
+                    data_store, full_path, highlighted_file, datafile
+                )
+
+            # Write highlighted output to file
+            highlighted_output_path = os.path.join(
+                self.directory_path, f"{filename}_highlighted.html"
+            )
+
+            highlighted_file.export(highlighted_output_path, include_key=True)
 
             # Run all validation tests
             errors = list()
