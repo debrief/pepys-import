@@ -117,5 +117,6 @@ venv.bak/
 *.zip
 *.lnk
 
-# Log files produced by import code
-*.log
+# Any subfolders called 'output'
+# to ignore the output logs, error logs, highlighted files etc
+**/*output*/**
