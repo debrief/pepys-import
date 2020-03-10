@@ -216,6 +216,10 @@ class FileProcessor:
                 if not importer.can_load_this_file(file_contents):
                     good_importers.remove(importer)
 
+            # if good importers list is empty, return 0, which means the file is not processed
+            if not good_importers:
+                return 0
+
             # ok, let these importers handle the file
             datafile = data_store.get_datafile(basename, file_extension)
 
