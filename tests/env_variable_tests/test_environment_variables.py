@@ -5,12 +5,14 @@ from unittest.mock import patch
 
 from pepys_import.file.file_processor import FileProcessor
 
+TEST_IMPORTER_PATH = os.path.abspath("./test_local_imports")
+
 
 class EnvironmentVariablesTestCase(unittest.TestCase):
-    @patch.dict(os.environ, {"PEPYS_LOCAL_PARSERS": "./test_local_imports"})
+    @patch.dict(os.environ, {"PEPYS_LOCAL_PARSERS": TEST_IMPORTER_PATH})
     def test_pepys_local_parsers(self):
         value = os.getenv("PEPYS_LOCAL_PARSERS")
-        assert value == "./test_local_imports"
+        assert value == TEST_IMPORTER_PATH
 
         file_processor = FileProcessor()
         assert len(file_processor.importers) == 1
