@@ -56,7 +56,7 @@ class ReplayCommentImporter(Importer):
                     date_token = tokens[1]
                     time_token = tokens[2]
                     vessel_name_token = tokens[3]
-                    message_token = tokens[4]
+                    message_tokens = tokens[4:]
                     comment_type = "None"
                 elif line.text.startswith(";NARRATIVE2:"):
                     # ok for for it
@@ -80,7 +80,7 @@ class ReplayCommentImporter(Importer):
                     comment_type_token.record(
                         self.name, "comment type", comment_type, "n/a"
                     )
-                    message_token = tokens[5]
+                    message_tokens = tokens[5:]
                 else:
                     continue
 
@@ -108,8 +108,10 @@ class ReplayCommentImporter(Importer):
                     self.name, "timestamp", timestamp, "n/a"
                 )
 
-                message = message_token.text
-                message_token.record(self.name, "message", message, "n/a")
+                message = " ".join([t.text for t in message_tokens])
+                combine_tokens(*message_tokens).record(
+                    self.name, "message", message, "n/a"
+                )
 
                 comment = datafile.create_comment(
                     platform_id=platform.platform_id,

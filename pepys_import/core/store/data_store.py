@@ -136,7 +136,7 @@ class DataStore(object):
                 # Create schema pepys and extension for PostGIS first
                 query = """
                     CREATE SCHEMA IF NOT EXISTS pepys;
-                    CREATE EXTENSION IF NOT EXISTS postgis SCHEMA pepys;
+                    CREATE EXTENSION IF NOT EXISTS postgis;
                     SET search_path = pepys,public;
                 """
                 with self.engine.connect() as conn:
