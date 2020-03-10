@@ -5,7 +5,7 @@ from testing.postgresql import Postgresql
 from unittest import TestCase
 
 
-class DataStoreClearPostGISDBTestCase(TestCase):
+class DataStoreExportPostGISDBTestCase(TestCase):
     def setUp(self):
         self.store = None
         try:
@@ -61,7 +61,7 @@ class DataStoreClearPostGISDBTestCase(TestCase):
         # self.assertNotEqual(len(records), 0)
 
 
-class DataStoreClearSpatiaLiteTestCase(TestCase):
+class DataStoreExportSpatiaLiteTestCase(TestCase):
     def test_sqlite_cleardb(self):
         """Test whether all database tables are empty"""
         data_store_sqlite = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
