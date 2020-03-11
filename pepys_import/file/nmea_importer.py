@@ -146,7 +146,12 @@ class NMEAImporter(Importer):
                     if platform_name in self.prev_location:
                         state.prev_location = self.prev_location[platform_name]
 
-                    state.location = f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
+                    # note: the next line is split, to meet our formatter, the
+                    # 'f' commmand is deliberately placed on each block
+                    state.location = (
+                        f"POINT({self.longitude.as_degrees()} "
+                        f"{self.latitude.as_degrees()})"
+                    )
                     self.prev_location[platform_name] = state.location
 
                     combine_tokens(self.lat_token, self.lon_token).record(
