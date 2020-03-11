@@ -10,7 +10,11 @@ class EnhancedValidator:
     """Enhanced validator serve to verify the lat/long, in addition to the course/speed/heading"""
 
     def __init__(self, measurement_object, errors, parser_name):
-        self.error_type = parser_name + f" - Enhanced Validation Error"
+        self.error_type = (
+            parser_name + f"-Enhanced Validation Error on Timestamp:"
+            f"{str(measurement_object.time)}, Sensor:"
+            f"{measurement_object.sensor_name}, Platform:{measurement_object.platform_name}"
+        )
         self.errors = errors
 
         if hasattr(measurement_object, "heading"):
@@ -40,25 +44,44 @@ class EnhancedValidator:
             self.course_heading_loose_match_with_location()
             self.speed_loose_match_with_location()
 
+    @staticmethod
+    def acceptable_bearing_error(bearing1, bearing2, delta):
+        """Determines if the two bearings are more than a set angle apart, allowing
+        for angles that span zero (North)
+
+        :param bearing1: The first bearing
+        :type bearing1: number (degrees)
+        :param bearing2: The second bearing
+        :type bearing2: number (degrees)
+        :param delta: The acceptable separation
+        :type delta: number (degrees)
+        """
+
+        # note: compact test algorithm came from here:
+        #    https://gamedev.stackexchange.com/a/4472/8270
+        diff = 180 - abs(abs(bearing1 - bearing2) - 180)
+        return diff <= delta
+
     def course_heading_loose_match_with_location(self):
         number_of_errors = len(self.errors)
         bearing = bearing_between_two_points(self.prev_location, self.location)
+        delta = 90
         if self.heading:
             heading_in_degrees = degrees(self.heading)
-            if not -90 <= heading_in_degrees - bearing <= 90:
+            if not self.acceptable_bearing_error(heading_in_degrees, bearing, delta):
                 self.errors.append(
                     {
                         self.error_type: f"Difference between Bearing ({bearing:.3f}) and "
-                        f"Heading ({heading_in_degrees:.3f}) is more than 90 degrees!"
+                        f"Heading ({heading_in_degrees:.3f}) is more than {delta} degrees!"
                     }
                 )
         if self.course:
             course_in_degrees = degrees(self.course)
-            if not -90 <= course_in_degrees - bearing <= 90:
+            if not self.acceptable_bearing_error(course_in_degrees, bearing, delta):
                 self.errors.append(
                     {
                         self.error_type: f"Difference between Bearing ({bearing:.3f}) and "
-                        f"Course ({course_in_degrees:.3f}) is more than 90 degrees!"
+                        f"Course ({course_in_degrees:.3f}) is more than {delta} degrees!"
                     }
                 )
         # if not an error appended to the list, its length will be the same
