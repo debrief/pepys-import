@@ -71,6 +71,16 @@ class EnhancedValidatorTestCase(unittest.TestCase):
     def tearDown(self) -> None:
         pass
 
+    def test_bearing_error_calc(self):
+        assert EnhancedValidator.acceptable_bearing_error(0, 30, 90)
+        assert EnhancedValidator.acceptable_bearing_error(330, 30, 90)
+        assert EnhancedValidator.acceptable_bearing_error(330, 0, 90)
+        assert EnhancedValidator.acceptable_bearing_error(30, 330, 90)
+
+        assert EnhancedValidator.acceptable_bearing_error(330, 100, 90) is False
+        assert EnhancedValidator.acceptable_bearing_error(270, 10, 90) is False
+        assert EnhancedValidator.acceptable_bearing_error(10, 260, 90) is False
+
     def test_bearing_between_two_locations(self):
         state = self.file.create_state(
             self.store,
