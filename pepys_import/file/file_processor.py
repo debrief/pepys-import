@@ -216,8 +216,13 @@ class FileProcessor:
                 if not importer.can_load_this_file(file_contents):
                     good_importers.remove(importer)
 
+            # if good importers list is empty, return processed_ctr,
+            # which means the file is not processed
+            if not good_importers:
+                return processed_ctr
+
             # ok, let these importers handle the file
-            datafile = data_store.get_datafile(filename, file_extension)
+            datafile = data_store.get_datafile(basename, file_extension)
 
             # Run all parsers
             for importer in good_importers:
@@ -248,30 +253,26 @@ class FileProcessor:
                 ):
                     errors.extend(importer.errors)
 
-            # check errors only if there were any importers
-            if good_importers:
-                # If all tests pass for all parsers, commit datafile
-                if not errors:
-                    log = datafile.commit(data_store.session)
-                    # write extraction log to output folder
-                    with open(
-                        os.path.join(self.directory_path, f"{filename}_output.log"),
-                        "w",
-                    ) as f:
-                        f.write("\n".join(log))
-                    # move original file to output folder
-                    new_path = os.path.join(self.input_files_path, file)
-                    shutil.move(full_path, new_path)
-                    # make it read-only
-                    os.chmod(new_path, S_IREAD)
+            # If all tests pass for all parsers, commit datafile
+            if not errors:
+                log = datafile.commit(data_store.session)
+                # write extraction log to output folder
+                with open(
+                    os.path.join(self.directory_path, f"{filename}_output.log"), "w",
+                ) as f:
+                    f.write("\n".join(log))
+                # move original file to output folder
+                new_path = os.path.join(self.input_files_path, file)
+                shutil.move(full_path, new_path)
+                # make it read-only
+                os.chmod(new_path, S_IREAD)
 
-                else:
-                    # write error log to the output folder
-                    with open(
-                        os.path.join(self.directory_path, f"{filename}_errors.log"),
-                        "w",
-                    ) as f:
-                        json.dump(errors, f, ensure_ascii=False, indent=4)
+            else:
+                # write error log to the output folder
+                with open(
+                    os.path.join(self.directory_path, f"{filename}_errors.log"), "w",
+                ) as f:
+                    json.dump(errors, f, ensure_ascii=False, indent=4)
 
         return processed_ctr
 
