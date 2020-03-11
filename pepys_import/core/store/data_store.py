@@ -106,6 +106,9 @@ class DataStore(object):
         self._platform_dict_on_sensor_id = dict()
         self._platform_dict_on_platform_id = dict()
 
+        # dictionary, to cache comment type name
+        self._comment_type_name_dict_on_comment_type_id = dict()
+
         # Branding Text
         if self.welcome_text:
             show_welcome_banner(welcome_text)
@@ -1035,6 +1038,34 @@ class DataStore(object):
         datafiles = self.session.query(self.db_classes.Datafile).all()
         return datafiles
 
+    def get_cached_comment_type_name(self, comment_type_id):
+        """
+        Get comment type name from cache on either "comment_type_id"
+        If name is not found in the cache, sytem will load from the data store,
+        and add it into cache.
+        """
+        if comment_type_id:
+            # return from cache
+            if comment_type_id in self._comment_type_name_dict_on_comment_type_id:
+                return self._comment_type_name_dict_on_comment_type_id[comment_type_id]
+            comment_type = (
+                self.session.query(self.db_classes.CommentType)
+                .filter(self.db_classes.CommentType.comment_type_id == comment_type_id)
+                .first()
+            )
+
+            if comment_type:
+                self._comment_type_name_dict_on_comment_type_id[
+                    comment_type_id
+                ] = comment_type.name
+                return comment_type.name
+            else:
+                raise Exception(
+                    "No Comment Type found with Comment type id: {}".format(
+                        comment_type_id
+                    )
+                )
+
     def get_cached_platform_name(self, sensor_id=None, platform_id=None):
         """
         Get platform name from cache on either "sensor_id" or "platform_id"
@@ -1149,26 +1180,25 @@ class DataStore(object):
                 .first()
             )
             vessel_name = platform.name
-            comment_type = comment.comment_type_id
             message = comment.content
-            if comment_type == "None":
-                name = ";NARRATIVE:"
-            else:
-                name = ";NARRATIVE2:"
-            microsecond_text = ""
-            if state.time.microsecond:
-                if comment.time.microsecond > 9999:
-                    microsecond_text = ".9999"
-                else:
-                    microsecond_text = "." + str(comment.time.microsecond).zfill(4)
+            comment_type_name = self.get_cached_comment_type_name(
+                comment.comment_type_id
+            )
+
             comment_rep_line = [
-                name,
-                comment.time.strftime("%Y%m%d"),
-                comment.time.strftime("%H%M%S") + microsecond_text,
+                transformer.format_datatime(comment.time),
                 vessel_name,
-                comment_type,
+                comment_type_name,
                 message,
             ]
+
+            if comment_type_name == "None":
+                comment_rep_line.insert(0, ";NARRATIVE:")
+                del comment_rep_line[3]
+            else:
+                comment_rep_line.insert(0, ";NARRATIVE2:")
+
+            print(comment_rep_line)
             data = " ".join(comment_rep_line)
             f.write(data + "\r\n")
         f.close()
