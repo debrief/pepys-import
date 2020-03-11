@@ -14,6 +14,7 @@ from pepys_import.core.store.common_db import (
     PlatformMixin,
     DatafileMixin,
     SensorTypeMixin,
+    StateMixin,
 )
 
 
@@ -336,7 +337,7 @@ class ConfidenceLevel(BaseSpatiaLite):
 
 
 # Measurements Tables
-class State(BaseSpatiaLite):
+class State(BaseSpatiaLite, StateMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prev_location = None
@@ -356,13 +357,6 @@ class State(BaseSpatiaLite):
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def submit(self, session):
-        """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-
-        return self
 
 
 class Contact(BaseSpatiaLite):

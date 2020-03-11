@@ -185,3 +185,12 @@ class SensorTypeMixin:
             .filter(data_store.db_classes.SensorType.name == name)
             .first()
         )
+
+
+class StateMixin:
+    def submit(self, session):
+        """Submit intermediate object to the DB"""
+        session.add(self)
+        session.flush()
+
+        return self

@@ -14,6 +14,7 @@ from pepys_import.core.store.common_db import (
     PlatformMixin,
     DatafileMixin,
     SensorTypeMixin,
+    StateMixin,
 )
 
 from uuid import uuid4
@@ -409,7 +410,7 @@ class ConfidenceLevel(BasePostGIS):
 
 
 # Measurements Tables
-class State(BasePostGIS):
+class State(BasePostGIS, StateMixin):
     __tablename__ = constants.STATE
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
@@ -430,13 +431,6 @@ class State(BasePostGIS):
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def submit(self, session):
-        """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-
-        return self
 
 
 class Contact(BasePostGIS):
