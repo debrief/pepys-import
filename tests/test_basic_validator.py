@@ -20,16 +20,17 @@ class BasicValidatorTestCase(unittest.TestCase):
             sensor_type = self.store.add_to_sensor_types("test_sensor_type")
             privacy = self.store.add_to_privacies("test_privacy").name
 
-            platform = self.store.get_platform(
+            self.platform = self.store.get_platform(
                 platform_name="Test Platform",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
             )
-            self.sensor = platform.get_sensor(self.store, "gps", sensor_type)
+            self.sensor = self.platform.get_sensor(self.store, "gps", sensor_type)
             self.current_time = datetime.utcnow()
             self.file = self.store.get_datafile("test_file", "csv")
 
+            self.store.session.expunge(self.platform)
             self.store.session.expunge(self.sensor)
             self.store.session.expunge(self.file)
 
@@ -73,6 +74,7 @@ class BasicValidatorTestCase(unittest.TestCase):
     def test_validate_longitude(self):
         state = self.file.create_state(
             self.store,
+            self.platform,
             self.sensor,
             self.current_time,
             parser_name=self.parser.short_name,
@@ -85,6 +87,7 @@ class BasicValidatorTestCase(unittest.TestCase):
     def test_validate_latitude(self):
         state = self.file.create_state(
             self.store,
+            self.platform,
             self.sensor,
             self.current_time,
             parser_name=self.parser.short_name,
@@ -97,6 +100,7 @@ class BasicValidatorTestCase(unittest.TestCase):
     def test_validate_heading(self):
         state = self.file.create_state(
             self.store,
+            self.platform,
             self.sensor,
             self.current_time,
             parser_name=self.parser.short_name,
@@ -109,6 +113,7 @@ class BasicValidatorTestCase(unittest.TestCase):
     def test_validate_course(self):
         state = self.file.create_state(
             self.store,
+            self.platform,
             self.sensor,
             self.current_time,
             parser_name=self.parser.short_name,

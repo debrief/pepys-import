@@ -96,7 +96,7 @@ class GPXImporter(Importer):
                 # Parse timestamp and create state
                 timestamp = parse(timestamp_str)
                 state = datafile.create_state(
-                    data_store, sensor, timestamp, self.short_name
+                    data_store, platform, sensor, timestamp, self.short_name
                 )
 
                 # Add location (no need to convert as it requires a string)
