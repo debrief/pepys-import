@@ -1,6 +1,3 @@
-from pepys_import.core.store.sqlite_db import Platform, Sensor, SensorType
-
-
 class SensorMixin:
     @classmethod
     def find_sensor(cls, data_store, sensor_name, platform_id):
@@ -33,11 +30,14 @@ class SensorMixin:
         )
 
     @classmethod
-    def add_to_sensors(cls, session, name, sensor_type, host):
-        sensor_type = SensorType().search_sensor_type(session, sensor_type)
-        host = Platform().search_platform(session, host)
+    def add_to_sensors(cls, data_store, name, sensor_type, host):
+        session = data_store.session
+        sensor_type = data_store.db_classes.SensorType().search_sensor_type(
+            session, sensor_type
+        )
+        host = data_store.db_classes.Platform().search_platform(session, host)
 
-        sensor_obj = Sensor(
+        sensor_obj = data_store.db_classes.Sensor(
             name=name, sensor_type_id=sensor_type.sensor_type_id, host=host.platform_id,
         )
         session.add(sensor_obj)

@@ -99,7 +99,7 @@ class Platform(BaseSpatiaLite):
         # assert isinstance(privacy, Privacy), "Type error for Privacy entity"
 
         return Sensor().add_to_sensors(
-            session=data_store.session,
+            data_store=data_store,
             name=sensor_name,
             sensor_type=sensor_type.name,
             host=self.name,
