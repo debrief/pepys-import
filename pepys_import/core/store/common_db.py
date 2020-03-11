@@ -194,3 +194,12 @@ class StateMixin:
         session.flush()
 
         return self
+
+
+class ContactMixin:
+    def submit(self, session):
+        """Submit intermediate object to the DB"""
+        session.add(self)
+        session.flush()
+
+        return self
