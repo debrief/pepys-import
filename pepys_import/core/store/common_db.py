@@ -126,14 +126,7 @@ class DatafileMixin:
         return contact
 
     def create_comment(
-        self,
-        data_store,
-        platform,
-        sensor,
-        timestamp,
-        comment,
-        comment_type,
-        parser_name,
+        self, data_store, platform, timestamp, comment, comment_type, parser_name,
     ):
         comment = data_store.db_classes.Comment(
             platform_id=platform.platform_id,
@@ -143,7 +136,7 @@ class DatafileMixin:
             source_id=self.datafile_id,
         )
         comment.platform_name = platform.name
-        comment.sensor_name = sensor.name
+        comment.sensor_name = "N/A"
         self.measurements[parser_name].append(comment)
         return comment
 

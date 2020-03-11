@@ -908,7 +908,6 @@ class MeasurementsTestCase(TestCase):
             comment = self.file.create_comment(
                 self.store,
                 self.platform,
-                self.sensor,
                 self.current_time,
                 "Comment",
                 self.comment_type,
