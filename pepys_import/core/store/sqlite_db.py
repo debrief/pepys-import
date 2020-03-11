@@ -364,6 +364,11 @@ class State(BaseSpatiaLite, StateMixin):
 
 
 class Contact(BaseSpatiaLite, ContactMixin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sensor_name = None
+        self.platform_name = None
+
     __tablename__ = constants.CONTACT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
