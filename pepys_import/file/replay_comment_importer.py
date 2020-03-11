@@ -29,8 +29,6 @@ class ReplayCommentImporter(Importer):
         return True
 
     def load_this_file(self, data_store, path, file_object, datafile):
-        super().load_this_file(data_store, path, file_object, datafile)
-
         for line_number, line in enumerate(file_object.lines(), 1):
             if line.text.startswith(";"):
                 if line.text.startswith(";NARRATIVE:"):

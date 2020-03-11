@@ -52,6 +52,21 @@ class Importer(ABC):
         :rtype: bool
         """
 
+    def init_load_this_file(self, data_store, path, file_object, datafile):
+        """Initialises the loading of this data file
+
+        Performs the common operations that must be performed before the
+        load_this_file method is called. This *must* be called immediately
+        before load_this_file is called, and with the same arguments
+        """
+        self.errors = list()
+        basename = os.path.basename(path)
+        print(f"{self.short_name} working on {basename}")
+        self.error_type = f"{self.short_name} - Parsing error on {basename}"
+        self.prev_location = dict()
+        datafile.measurements[self.short_name] = list()
+
+    @abstractmethod
     def load_this_file(self, data_store, path, file_object, datafile):
         """Process this data-file
         
@@ -65,9 +80,3 @@ class Importer(ABC):
         :param datafile: DataFile object
         :type datafile: DataFile
         """
-        self.errors = list()
-        basename = os.path.basename(path)
-        print(f"{self.short_name} working on {basename}")
-        self.error_type = f"{self.short_name} - Parsing error on {basename}"
-        self.prev_location = dict()
-        datafile.measurements[self.short_name] = list()
