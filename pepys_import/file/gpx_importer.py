@@ -1,12 +1,9 @@
-import os
-
 from lxml import etree
-from datetime import datetime
 from dateutil.parser import parse
 
 from .importer import Importer
 from pepys_import.core.formats import unit_registry
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+from pepys_import.utils.unit_utils import convert_absolute_angle
 from pepys_import.core.validators import constants
 
 
@@ -37,14 +34,7 @@ class GPXImporter(Importer):
         # won't parse a string with an encoding attribute - it requires bytes instead
         return True
 
-    def load_this_file(self, data_store, path, file_object, datafile):
-        self.errors = list()
-        basename = os.path.basename(path)
-        print(f"GPX parser working on {basename}")
-        error_type = self.short_name + f" - Parsing error on {basename}"
-        prev_location = dict()
-        datafile.measurements[self.short_name] = list()
-
+    def _load_this_file(self, data_store, path, file_object, datafile):
         # Parse XML file from the full path of the file
         # Note: we can't use the file_contents variable passed in, as lxml refuses
         # to parse a string that has an encoding attribute in the XML - it requires bytes instead
@@ -53,7 +43,7 @@ class GPXImporter(Importer):
         except Exception as e:
             self.errors.append(
                 {
-                    error_type: f'Invalid GPX file at {path}\nError from parsing was "{str(e)}"'
+                    self.error_type: f'Invalid GPX file at {path}\nError from parsing was "{str(e)}"'
                 }
             )
             return
@@ -93,7 +83,7 @@ class GPXImporter(Importer):
                 if timestamp_str is None:
                     self.errors.append(
                         {
-                            error_type: f"Line {tpt.sourceline}. "
+                            self.error_type: f"Line {tpt.sourceline}. "
                             f"Error: <trkpt> element must have child <time> element"
                         }
                     )
@@ -108,16 +98,16 @@ class GPXImporter(Importer):
                 state = datafile.create_state(sensor, timestamp, self.short_name)
 
                 # Add location (no need to convert as it requires a string)
-                if track_name in prev_location:
-                    state.prev_location = prev_location[track_name]
+                if track_name in self.prev_location:
+                    state.prev_location = self.prev_location[track_name]
 
                 state.location = f"POINT({longitude_str} {latitude_str})"
-                prev_location[track_name] = state.location
+                self.prev_location[track_name] = state.location
 
                 # Add course
                 if course_str is not None:
                     course = convert_absolute_angle(
-                        course_str, tpt.sourceline, self.errors, error_type
+                        course_str, tpt.sourceline, self.errors, self.error_type
                     )
                     state.course = course.to(unit_registry.radians).magnitude
 
@@ -128,7 +118,7 @@ class GPXImporter(Importer):
                     except ValueError:
                         self.errors.append(
                             {
-                                error_type: f"Line {tpt.sourceline}. Error in speed value {speed_str}. "
+                                self.error_type: f"Line {tpt.sourceline}. Error in speed value {speed_str}. "
                                 f"Couldn't convert to number"
                             }
                         )
@@ -140,7 +130,7 @@ class GPXImporter(Importer):
                     except ValueError:
                         self.errors.append(
                             {
-                                error_type: f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. "
+                                self.error_type: f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. "
                                 f"Couldn't convert to number"
                             }
                         )
