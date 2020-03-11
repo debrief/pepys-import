@@ -45,7 +45,7 @@ class NMEAImporter(Importer):
         # keep track of generated platform name
         platform_name = None
 
-        for line_number, line in enumerate(file_object.lines()):
+        for line_number, line in enumerate(file_object.lines(), 1):
             tokens = line.tokens(line.CSV_DELIM, ",")
 
             if len(tokens) > 1:
