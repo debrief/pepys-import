@@ -7,11 +7,15 @@ import sys
 
 from datetime import datetime
 from stat import S_IREAD
+from pathlib import Path
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
+
+ROOT_PATH = Path(__file__).parent.parent.parent  # Main directory
+CORE_IMPORTERS_PATH = os.path.join(ROOT_PATH, "importers")
 
 
 class FileProcessor:
@@ -325,6 +329,27 @@ class FileProcessor:
         """
         for importer in importers:
             self.importers.append(importer)
+
+    def load_importers_dynamically(self):
+        """Dynamically adds all the importers in importers folder."""
+        # Register core importers
+        for file in os.scandir(CORE_IMPORTERS_PATH):
+            # import file using its name and full path
+            if file.is_file():
+                spec = importlib.util.spec_from_file_location(file.name, file.path)
+                module = importlib.util.module_from_spec(spec)
+                sys.modules[file.name] = module
+                spec.loader.exec_module(module)
+                # extract classes with this format: (class name, class)
+                classes = inspect.getmembers(
+                    sys.modules[module.__name__], inspect.isclass
+                )
+                for name, class_ in classes:
+                    # continue only if it's a concrete class that inherits Importer
+                    if issubclass(class_, Importer) and not inspect.isabstract(class_):
+                        # Create an object of the class, add it to importers
+                        obj = class_()
+                        self.importers.append(obj)
 
     @staticmethod
     def get_first_line(file_path: str):
