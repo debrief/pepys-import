@@ -111,6 +111,7 @@ class Datafile(BaseSpatiaLite, DatafileMixin):
     url = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
 
+
 class Synonym(BaseSpatiaLite):
     __tablename__ = constants.SYNONYM
     table_type = TableTypes.METADATA
