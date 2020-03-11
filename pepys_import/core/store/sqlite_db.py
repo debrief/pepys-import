@@ -9,7 +9,12 @@ from pepys_import.core.store.db_base import BaseSpatiaLite
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.store import constants
 
-from pepys_import.core.store.common_db import SensorMixin, PlatformMixin, DatafileMixin
+from pepys_import.core.store.common_db import (
+    SensorMixin,
+    PlatformMixin,
+    DatafileMixin,
+    SensorTypeMixin,
+)
 
 
 # Metadata Tables
@@ -260,7 +265,7 @@ class ContactType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class SensorType(BaseSpatiaLite):
+class SensorType(BaseSpatiaLite, SensorTypeMixin):
     __tablename__ = constants.SENSOR_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 21
@@ -268,11 +273,6 @@ class SensorType(BaseSpatiaLite):
     sensor_type_id = Column(Integer, primary_key=True)
     name = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    @classmethod
-    def search_sensor_type(cls, session, name):
-        # search for any sensor type featuring this name
-        return session.query(SensorType).filter(SensorType.name == name).first()
 
 
 class Privacy(BaseSpatiaLite):

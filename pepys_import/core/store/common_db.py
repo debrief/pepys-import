@@ -174,3 +174,14 @@ class DatafileMixin:
                 f"{len(self.measurements[key])} measurement objects parsed by {key}."
             )
         return extraction_log
+
+
+class SensorTypeMixin:
+    @classmethod
+    def search_sensor_type(cls, data_store, name):
+        # search for any sensor type featuring this name
+        return (
+            data_store.session.query(data_store.db_classes.SensorType)
+            .filter(data_store.db_classes.SensorType.name == name)
+            .first()
+        )
