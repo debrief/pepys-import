@@ -41,7 +41,7 @@ class NMEAImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def load_this_file(self, data_store, path, file_object, datafile):
+    def _load_this_file(self, data_store, path, file_object, datafile):
         # keep track of generated platform name
         platform_name = None
 

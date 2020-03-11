@@ -227,7 +227,7 @@ class FileProcessor:
             # Run all parsers
             for importer in good_importers:
                 processed_ctr += 1
-                importer.core_load_this_file(
+                importer.load_this_file(
                     data_store, full_path, highlighted_file, datafile
                 )
 

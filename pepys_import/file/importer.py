@@ -52,7 +52,7 @@ class Importer(ABC):
         :rtype: bool
         """
 
-    def core_load_this_file(self, data_store, path, file_object, datafile):
+    def load_this_file(self, data_store, path, file_object, datafile):
         """Handles the loading of this data file
 
         Performs the common operations that must be performed before the
@@ -66,10 +66,10 @@ class Importer(ABC):
         datafile.measurements[self.short_name] = list()
 
         # perform load
-        self.load_this_file(self, data_store, path, file_object, datafile)
+        self._load_this_file(self, data_store, path, file_object, datafile)
 
     @abstractmethod
-    def load_this_file(self, data_store, path, file_object, datafile):
+    def _load_this_file(self, data_store, path, file_object, datafile):
         """Process this data-file
 
         :param data_store: The data_store

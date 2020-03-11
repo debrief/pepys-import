@@ -34,7 +34,7 @@ class GPXImporter(Importer):
         # won't parse a string with an encoding attribute - it requires bytes instead
         return True
 
-    def load_this_file(self, data_store, path, file_object, datafile):
+    def _load_this_file(self, data_store, path, file_object, datafile):
         # Parse XML file from the full path of the file
         # Note: we can't use the file_contents variable passed in, as lxml refuses
         # to parse a string that has an encoding attribute in the XML - it requires bytes instead
