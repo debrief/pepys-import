@@ -66,7 +66,7 @@ class Importer(ABC):
         datafile.measurements[self.short_name] = list()
 
         # perform load
-        self._load_this_file(self, data_store, path, file_object, datafile)
+        self._load_this_file(data_store, path, file_object, datafile)
 
     @abstractmethod
     def _load_this_file(self, data_store, path, file_object, datafile):
