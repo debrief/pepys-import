@@ -4,7 +4,7 @@ import os
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary
 from pepys_import.file.file_processor import FileProcessor
-from pepys_import.file.replay_importer import ReplayImporter
+from importers.replay_importer import ReplayImporter
 
 DIRECTORY_PATH = os.path.dirname(__file__)
 REP_FILE_PATH = os.path.join(

@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from pepys_import.file.replay_comment_importer import ReplayCommentImporter
+from importers.replay_comment_importer import ReplayCommentImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
 

@@ -7,10 +7,10 @@ from datetime import datetime
 from unittest.mock import patch
 
 from pepys_import.file.importer import Importer
-from pepys_import.file.replay_importer import ReplayImporter
-from pepys_import.file.nmea_importer import NMEAImporter
 from pepys_import.file.file_processor import FileProcessor
-from pepys_import.file.get_importers import get_importers
+from importers.get_importers import get_importers
+from importers.replay_importer import ReplayImporter
+from importers.nmea_importer import NMEAImporter
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()

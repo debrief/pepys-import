@@ -7,7 +7,7 @@ from testing.postgresql import Postgresql
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
-from pepys_import.file.get_importers import get_importers
+from importers.get_importers import get_importers
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()

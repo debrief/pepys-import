@@ -1,8 +1,8 @@
-from pepys_import.file.replay_importer import ReplayImporter
-from pepys_import.file.replay_comment_importer import ReplayCommentImporter
-from pepys_import.file.nmea_importer import NMEAImporter
-from pepys_import.file.gpx_importer import GPXImporter
-from pepys_import.file.e_trac_importer import ETracImporter
+from importers.replay_importer import ReplayImporter
+from importers.replay_comment_importer import ReplayCommentImporter
+from importers.nmea_importer import NMEAImporter
+from importers.gpx_importer import GPXImporter
+from importers.e_trac_importer import ETracImporter
 
 
 def get_importers():
