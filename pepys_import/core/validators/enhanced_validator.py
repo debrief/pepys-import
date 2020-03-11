@@ -10,7 +10,11 @@ class EnhancedValidator:
     """Enhanced validator serve to verify the lat/long, in addition to the course/speed/heading"""
 
     def __init__(self, measurement_object, errors, parser_name):
-        self.error_type = parser_name + f" - Enhanced Validation Error"
+        self.error_type = (
+            parser_name + f"-Enhanced Validation Error on Timestamp:"
+            f"{str(measurement_object.time)}, Sensor:"
+            f"{measurement_object.sensor_name}, Platform:{measurement_object.platform_name}"
+        )
         self.errors = errors
 
         if hasattr(measurement_object, "heading"):
