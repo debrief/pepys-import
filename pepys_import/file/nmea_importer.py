@@ -45,7 +45,7 @@ class NMEAImporter(Importer):
         # keep track of generated platform name
         platform_name = None
 
-        for line_number, line in enumerate(file_object.lines()):
+        for line_number, line in enumerate(file_object.lines(), 1):
             tokens = line.tokens(line.CSV_DELIM, ",")
 
             if len(tokens) > 1:
@@ -149,10 +149,6 @@ class NMEAImporter(Importer):
                     state.location = f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
                     self.prev_location[platform_name] = state.location
 
-                    heading = convert_absolute_angle(
-                        self.heading, line_number, self.errors, self.error_type
-                    )
-                    state.location = state.location
                     combine_tokens(self.lat_token, self.lon_token).record(
                         self.name, "location", state.location, "DMS"
                     )
