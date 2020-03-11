@@ -1,5 +1,3 @@
-import os
-
 from .importer import Importer
 from datetime import datetime
 from pepys_import.core.formats import unit_registry
@@ -34,14 +32,7 @@ class ETracImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def load_this_file(self, data_store, path, file_object, datafile):
-        self.errors = list()
-        basename = os.path.basename(path)
-        print(f"E-trac parser working on {basename}")
-        error_type = self.short_name + f" - Parsing error on {basename}"
-        prev_location = dict()
-        datafile.measurements[self.short_name] = list()
-
+    def _load_this_file(self, data_store, path, file_object, datafile):
         for line_number, line in enumerate(file_object.lines(), 1):
             # Skip the header
             if line_number == 1:
@@ -54,7 +45,7 @@ class ETracImporter(Importer):
             elif len(tokens) < 17:
                 self.errors.append(
                     {
-                        error_type: f"Error on line {line_number}. Not enough tokens: {line}"
+                        self.error_type: f"Error on line {line_number}. Not enough tokens: {line}"
                     }
                 )
                 continue
@@ -75,7 +66,7 @@ class ETracImporter(Importer):
             if len(date_token.text) != 10:
                 self.errors.append(
                     {
-                        error_type: f"Error on line {line_number}. Date format '{date_token.text}' "
+                        self.error_type: f"Error on line {line_number}. Date format '{date_token.text}' "
                         f"should be 10 figure data"
                     }
                 )
@@ -85,7 +76,7 @@ class ETracImporter(Importer):
             if len(time_token.text) != 8:
                 self.errors.append(
                     {
-                        error_type: f"Line {line_number}. Error in Date format '{time_token.text}'."
+                        self.error_type: f"Line {line_number}. Error in Date format '{time_token.text}'."
                         "Should be HH:mm:ss"
                     }
                 )
@@ -114,13 +105,13 @@ class ETracImporter(Importer):
             state = datafile.create_state(sensor, timestamp, self.short_name)
             state.privacy = privacy.privacy_id
 
-            if vessel_name in prev_location:
-                state.prev_location = prev_location[vessel_name]
+            if vessel_name in self.prev_location:
+                state.prev_location = self.prev_location[vessel_name]
 
             state.location = (
                 f"POINT({long_degrees_token.text} {lat_degrees_token.text})"
             )
-            prev_location[vessel_name] = state.location
+            self.prev_location[vessel_name] = state.location
 
             combine_tokens(long_degrees_token, lat_degrees_token).record(
                 self.name, "location", state.location, "decimal degrees"
@@ -130,13 +121,13 @@ class ETracImporter(Importer):
             altitude_token.record(self.name, "altitude", state.elevation, "metres")
 
             heading = convert_absolute_angle(
-                heading_token.text, line_number, self.errors, error_type
+                heading_token.text, line_number, self.errors, self.error_type
             )
             state.heading = heading.to(unit_registry.radians).magnitude
             heading_token.record(self.name, "heading", heading, "degrees")
 
             speed = convert_speed(
-                speed_token.text, line_number, self.errors, error_type
+                speed_token.text, line_number, self.errors, self.error_type
             )
             state.speed = speed
             speed_token.record(self.name, "speed", speed, "knots")
