@@ -16,6 +16,14 @@ def export_report(filename, chars, dict_colors, include_key=False):
 
     f_out = open(filename, "w")
 
+    html_header = """<html>
+    <head>
+    </head>
+    <body style="font-family: Courier">
+    """
+
+    f_out.write(html_header)
+
     last_hash = ""
 
     for char in chars:
@@ -91,5 +99,10 @@ def export_report(filename, chars, dict_colors, include_key=False):
                 + "</span></li>"
             )
         f_out.write("</ul>")
+
+    html_footer = """</body>
+    </html>"""
+
+    f_out.write(html_footer)
 
     f_out.close()
