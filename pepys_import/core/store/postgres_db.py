@@ -8,7 +8,17 @@ from geoalchemy2 import Geometry
 from pepys_import.core.store.db_base import BasePostGIS
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.store import constants
-from pepys_import.core.validators import constants as validation_constants
+
+from pepys_import.core.store.common_db import (
+    SensorMixin,
+    PlatformMixin,
+    DatafileMixin,
+    SensorTypeMixin,
+    StateMixin,
+    ContactMixin,
+    CommentMixin,
+)
+
 from uuid import uuid4
 
 
@@ -38,7 +48,7 @@ class HostedBy(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Sensor(BasePostGIS):
+class Sensor(BasePostGIS, SensorMixin):
     __tablename__ = constants.SENSOR
     table_type = TableTypes.METADATA
     table_type_id = 2
@@ -56,51 +66,8 @@ class Sensor(BasePostGIS):
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    @classmethod
-    def find_sensor(cls, data_store, sensor_name, platform_id):
-        """
-        This method tries to find a Sensor entity with the given sensor_name. If it
-        finds, it returns the entity. If it is not found, it searches synonyms.
 
-        :param data_store: A :class:`DataStore` object
-        :type data_store: DataStore
-        :param sensor_name: Name of :class:`Sensor`
-        :type sensor_name: String
-        :param platform_id:  Primary key of the Platform that Sensor belongs to
-        :type platform_id: UUID
-        :return:
-        """
-        sensor = (
-            data_store.session.query(data_store.db_classes.Sensor)
-            .filter(data_store.db_classes.Sensor.name == sensor_name)
-            .filter(data_store.db_classes.Sensor.host == platform_id)
-            .first()
-        )
-        if sensor:
-            return sensor
-
-        # Sensor is not found, try to find a synonym
-        return data_store.synonym_search(
-            name=sensor_name,
-            table=data_store.db_classes.Sensor,
-            pk_field=data_store.db_classes.Sensor.sensor_id,
-        )
-
-    @classmethod
-    def add_to_sensors(cls, session, name, sensor_type, host):
-        sensor_type = SensorType().search_sensor_type(session, sensor_type)
-        host = Platform().search_platform(session, host)
-
-        sensor_obj = Sensor(
-            name=name, sensor_type_id=sensor_type.sensor_type_id, host=host.platform_id,
-        )
-        session.add(sensor_obj)
-        session.flush()
-
-        return sensor_obj
-
-
-class Platform(BasePostGIS):
+class Platform(BasePostGIS, PlatformMixin):
     __tablename__ = constants.PLATFORM
     table_type = TableTypes.METADATA
     table_type_id = 3
@@ -125,55 +92,6 @@ class Platform(BasePostGIS):
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"), nullable=False
     )
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    @classmethod
-    def search_platform(cls, session, name):
-        # search for any platform with this name
-        return session.query(Platform).filter(Platform.name == name).first()
-
-    def get_sensor(self, data_store, sensor_name=None, sensor_type=None, privacy=None):
-        """
-        Lookup or create a sensor of this name for this :class:`Platform`.
-        Specified sensor will be added to the :class:`Sensor` table.
-        It uses find_sensor method to search existing sensors.
-
-        :param data_store: DataStore object to to query DB and use missing data resolver
-        :type data_store: DataStore
-        :param sensor_name: Name of :class:`Sensor`
-        :type sensor_name: String
-        :param sensor_type: Type of :class:`Sensor`
-        :type sensor_type: SensorType
-        :param privacy: Privacy of :class:`Sensor`
-        :type privacy: Privacy
-        :return: Created :class:`Sensor` entity
-        :rtype: Sensor
-        """
-
-        # Check for name match in Sensor and Synonym Tables
-        sensor = Sensor().find_sensor(data_store, sensor_name, self.platform_id)
-        if sensor:
-            return sensor
-
-        if sensor_type is None or privacy is None:
-            resolved_data = data_store.missing_data_resolver.resolve_sensor(
-                data_store, sensor_name, sensor_type, privacy
-            )
-            # It means that new sensor added as a synonym and existing sensor returned
-            if isinstance(resolved_data, Sensor):
-                return resolved_data
-            elif len(resolved_data) == 3:
-                (sensor_name, sensor_type, privacy,) = resolved_data
-
-        assert isinstance(sensor_type, SensorType), "Type error for Sensor Type entity"
-        # TODO: we don't use privacy for sensor. Is it necessary to resolve it?
-        # assert isinstance(privacy, Privacy), "Type error for Privacy entity"
-
-        return Sensor().add_to_sensors(
-            session=data_store.session,
-            name=sensor_name,
-            sensor_type=sensor_type.name,
-            host=self.name,
-        )
 
 
 class Task(BasePostGIS):
@@ -218,7 +136,7 @@ class Participant(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Datafile(BasePostGIS):
+class Datafile(BasePostGIS, DatafileMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.measurements = dict()
@@ -241,76 +159,6 @@ class Datafile(BasePostGIS):
     reference = Column(String(150))
     url = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def create_state(self, sensor, timestamp, parser_name):
-        state = State(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
-        )
-        self.measurements[parser_name].append(state)
-        return state
-
-    def create_contact(self, sensor, timestamp, parser_name):
-        contact = Contact(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
-        )
-        self.measurements[parser_name].append(contact)
-        return contact
-
-    def create_comment(
-        self, platform_id, timestamp, comment, comment_type, parser_name
-    ):
-        comment = Comment(
-            platform_id=platform_id,
-            time=timestamp,
-            content=comment,
-            comment_type_id=comment_type.comment_type_id,
-            source_id=self.datafile_id,
-        )
-        self.measurements[parser_name].append(comment)
-        return comment
-
-    def validate(
-        self,
-        validation_level=validation_constants.NONE_LEVEL,
-        errors=None,
-        parser="Default",
-    ):
-        # If there is no parsing error, it will return None.If that's the case, create a new list for validation errors.
-        if errors is None:
-            errors = list()
-        assert isinstance(errors, list), "Type error for errors!"
-
-        if validation_level == validation_constants.NONE_LEVEL:
-            return True
-        elif validation_level == validation_constants.BASIC_LEVEL:
-            for measurement in self.measurements[parser]:
-                BasicValidator(measurement, errors, parser)
-            if not errors:
-                return True
-            return False
-        elif validation_level == validation_constants.ENHANCED_LEVEL:
-            for measurement in self.measurements[parser]:
-                BasicValidator(measurement, errors, parser)
-                EnhancedValidator(measurement, errors, parser)
-            if not errors:
-                return True
-            return False
-
-    def commit(self, session):
-        # Since measurements are saved by their importer names, iterate over each key
-        # and save its measurement objects.
-        extraction_log = list()
-        for key in self.measurements.keys():
-            for file in self.measurements[key]:
-                file.submit(session)
-            extraction_log.append(
-                f"{len(self.measurements[key])} measurement objects parsed by {key}."
-            )
-        return extraction_log
-
-    # def verify(self):
-    #     pass
-
 
 class Synonym(BasePostGIS):
     __tablename__ = constants.SYNONYM
@@ -485,7 +333,7 @@ class ContactType(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class SensorType(BasePostGIS):
+class SensorType(BasePostGIS, SensorTypeMixin):
     __tablename__ = constants.SENSOR_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 21
@@ -494,11 +342,6 @@ class SensorType(BasePostGIS):
     sensor_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    @classmethod
-    def search_sensor_type(cls, session, name):
-        # search for any sensor type featuring this name
-        return session.query(SensorType).filter(SensorType.name == name).first()
 
 
 class Privacy(BasePostGIS):
@@ -568,7 +411,7 @@ class ConfidenceLevel(BasePostGIS):
 
 
 # Measurements Tables
-class State(BasePostGIS):
+class State(BasePostGIS, StateMixin):
     __tablename__ = constants.STATE
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
@@ -590,15 +433,8 @@ class State(BasePostGIS):
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    def submit(self, session):
-        """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
 
-        return self
-
-
-class Contact(BasePostGIS):
+class Contact(BasePostGIS, ContactMixin):
     __tablename__ = constants.CONTACT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
@@ -631,13 +467,6 @@ class Contact(BasePostGIS):
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def submit(self, session):
-        """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-
-        return self
 
 
 class Activation(BasePostGIS):
@@ -687,7 +516,7 @@ class LogsHolding(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Comment(BasePostGIS):
+class Comment(BasePostGIS, CommentMixin):
     __tablename__ = constants.COMMENT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 32
@@ -705,13 +534,6 @@ class Comment(BasePostGIS):
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def submit(self, session):
-        """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-
-        return self
 
 
 class Geometry1(BasePostGIS):
