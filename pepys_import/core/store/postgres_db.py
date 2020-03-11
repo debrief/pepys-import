@@ -160,6 +160,7 @@ class Datafile(BasePostGIS, DatafileMixin):
     url = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
 
+
 class Synonym(BasePostGIS):
     __tablename__ = constants.SYNONYM
     table_type = TableTypes.METADATA
