@@ -3,7 +3,6 @@ import argparse
 
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
-from importers.get_importers import get_importers
 
 FILE_PATH = os.path.abspath(__file__)
 DIRECTORY_PATH = os.path.dirname(FILE_PATH)
@@ -16,8 +15,7 @@ def main(path=DIRECTORY_PATH, db=DEFAULT_DATABASE):
 
     processor = FileProcessor()
 
-    importers = get_importers()
-    processor.register_importers(importers)
+    processor.load_importers_dynamically()
 
     processor.process(path, data_store, True)
 
