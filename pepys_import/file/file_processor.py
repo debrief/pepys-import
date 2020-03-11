@@ -300,16 +300,6 @@ class FileProcessor:
         """
         self.importers.append(importer)
 
-    def register_importers(self, importers):
-        """Adds all the importers in the supplied list to the list of import modules
-
-        :param importers: A list of importers, each of which is an Importer class that inherits
-        from the Importer base class
-        :type importers: list
-        """
-        for importer in importers:
-            self.importers.append(importer)
-
     def load_importers_dynamically(self, path=CORE_IMPORTERS_PATH):
         """Dynamically adds all the importers in the given path.
         It registers core importers by default."""
