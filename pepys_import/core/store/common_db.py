@@ -1,3 +1,9 @@
+from pepys_import.core.validators import constants as validation_constants
+
+from pepys_import.core.validators.basic_validator import BasicValidator
+from pepys_import.core.validators.enhanced_validator import EnhancedValidator
+
+
 class SensorMixin:
     @classmethod
     def find_sensor(cls, data_store, sensor_name, platform_id):
@@ -98,3 +104,73 @@ class PlatformMixin:
             sensor_type=sensor_type.name,
             host=self.name,
         )
+
+
+class DatafileMixin:
+    def create_state(self, data_store, sensor, timestamp, parser_name):
+        state = data_store.db_classes.State(
+            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
+        )
+        self.measurements[parser_name].append(state)
+        return state
+
+    def create_contact(self, data_store, sensor, timestamp, parser_name):
+        contact = data_store.db_classes.Contact(
+            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
+        )
+        self.measurements[parser_name].append(contact)
+        return contact
+
+    def create_comment(
+        self, data_store, platform_id, timestamp, comment, comment_type, parser_name
+    ):
+        comment = data_store.db_classes.Comment(
+            platform_id=platform_id,
+            time=timestamp,
+            content=comment,
+            comment_type_id=comment_type.comment_type_id,
+            source_id=self.datafile_id,
+        )
+        self.measurements[parser_name].append(comment)
+        return comment
+
+    def validate(
+        self,
+        validation_level=validation_constants.NONE_LEVEL,
+        errors=None,
+        parser="Default",
+    ):
+        # If there is no parsing error, it will return None.If that's the case, create a new list for validation errors.
+        if errors is None:
+            errors = list()
+        assert isinstance(errors, list), "Type error for errors!"
+
+        if validation_level == validation_constants.NONE_LEVEL:
+            return True
+        elif validation_level == validation_constants.BASIC_LEVEL:
+            for measurement in self.measurements[parser]:
+                BasicValidator(measurement, errors, parser)
+            if not errors:
+                return True
+            return False
+        elif validation_level == validation_constants.ENHANCED_LEVEL:
+            for measurement in self.measurements[parser]:
+                BasicValidator(measurement, errors, parser)
+                # TODO: Commented out at the moment as there is a bug in the validator
+                # Need to bring this back in once that is fixed.
+                # EnhancedValidator(measurement, errors, parser)
+            if not errors:
+                return True
+            return False
+
+    def commit(self, session):
+        # Since measurements are saved by their importer names, iterate over each key
+        # and save its measurement objects.
+        extraction_log = list()
+        for key in self.measurements.keys():
+            for file in self.measurements[key]:
+                file.submit(session)
+            extraction_log.append(
+                f"{len(self.measurements[key])} measurement objects parsed by {key}."
+            )
+        return extraction_log

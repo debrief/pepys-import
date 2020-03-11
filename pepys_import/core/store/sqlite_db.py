@@ -8,12 +8,8 @@ from geoalchemy2 import Geometry
 from pepys_import.core.store.db_base import BaseSpatiaLite
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.store import constants
-from pepys_import.core.validators import constants as validation_constants
 
-from pepys_import.core.store.common_db import SensorMixin, PlatformMixin
-
-from pepys_import.core.validators.basic_validator import BasicValidator
-from pepys_import.core.validators.enhanced_validator import EnhancedValidator
+from pepys_import.core.store.common_db import SensorMixin, PlatformMixin, DatafileMixin
 
 
 # Metadata Tables
@@ -90,7 +86,7 @@ class Participant(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Datafile(BaseSpatiaLite):
+class Datafile(BaseSpatiaLite, DatafileMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.measurements = dict()
@@ -106,77 +102,6 @@ class Datafile(BaseSpatiaLite):
     reference = Column(String(150))
     url = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def create_state(self, sensor, timestamp, parser_name):
-        state = State(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
-        )
-        self.measurements[parser_name].append(state)
-        return state
-
-    def create_contact(self, sensor, timestamp, parser_name):
-        contact = Contact(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
-        )
-        self.measurements[parser_name].append(contact)
-        return contact
-
-    def create_comment(
-        self, platform_id, timestamp, comment, comment_type, parser_name
-    ):
-        comment = Comment(
-            platform_id=platform_id,
-            time=timestamp,
-            content=comment,
-            comment_type_id=comment_type.comment_type_id,
-            source_id=self.datafile_id,
-        )
-        self.measurements[parser_name].append(comment)
-        return comment
-
-    def validate(
-        self,
-        validation_level=validation_constants.NONE_LEVEL,
-        errors=None,
-        parser="Default",
-    ):
-        # If there is no parsing error, it will return None.If that's the case, create a new list for validation errors.
-        if errors is None:
-            errors = list()
-        assert isinstance(errors, list), "Type error for errors!"
-
-        if validation_level == validation_constants.NONE_LEVEL:
-            return True
-        elif validation_level == validation_constants.BASIC_LEVEL:
-            for measurement in self.measurements[parser]:
-                BasicValidator(measurement, errors, parser)
-            if not errors:
-                return True
-            return False
-        elif validation_level == validation_constants.ENHANCED_LEVEL:
-            for measurement in self.measurements[parser]:
-                BasicValidator(measurement, errors, parser)
-                # TODO: Commented out at the moment as there is a bug in the validator
-                # Need to bring this back in once that is fixed.
-                # EnhancedValidator(measurement, errors, parser)
-            if not errors:
-                return True
-            return False
-
-    def commit(self, session):
-        # Since measurements are saved by their importer names, iterate over each key
-        # and save its measurement objects.
-        extraction_log = list()
-        for key in self.measurements.keys():
-            for file in self.measurements[key]:
-                file.submit(session)
-            extraction_log.append(
-                f"{len(self.measurements[key])} measurement objects parsed by {key}."
-            )
-        return extraction_log
-
-    # def verify(self):
-    #     pass
 
 
 class Synonym(BaseSpatiaLite):

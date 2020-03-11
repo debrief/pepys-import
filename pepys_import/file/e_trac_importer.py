@@ -111,7 +111,9 @@ class ETracImporter(Importer):
                 sensor_type=sensor_type,
                 privacy=privacy.name,
             )
-            state = datafile.create_state(sensor, timestamp, self.short_name)
+            state = datafile.create_state(
+                data_store, sensor, timestamp, self.short_name
+            )
             state.privacy = privacy.privacy_id
 
             if vessel_name in prev_location:

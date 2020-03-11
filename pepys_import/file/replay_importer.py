@@ -67,7 +67,7 @@ class ReplayImporter(Importer):
                     privacy=privacy.name,
                 )
                 state = datafile.create_state(
-                    sensor, rep_line.timestamp, self.short_name
+                    data_store, sensor, rep_line.timestamp, self.short_name
                 )
                 state.elevation = -1 * rep_line.depth
                 state.heading = rep_line.heading.to(unit_registry.radians).magnitude

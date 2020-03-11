@@ -114,6 +114,7 @@ class ReplayCommentImporter(Importer):
                 )
 
                 comment = datafile.create_comment(
+                    data_store=data_store,
                     platform_id=platform.platform_id,
                     timestamp=timestamp,
                     comment=message,

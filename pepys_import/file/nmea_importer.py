@@ -111,7 +111,9 @@ class NMEAImporter(Importer):
                         self.name, "timestamp", timestamp, "n/a"
                     )
 
-                    state = datafile.create_state(sensor, timestamp, self.short_name)
+                    state = datafile.create_state(
+                        data_store, sensor, timestamp, self.short_name
+                    )
 
                     if not isinstance(self.latitude, Location):
                         self.latitude = Location(
