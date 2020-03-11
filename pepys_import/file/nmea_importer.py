@@ -147,10 +147,6 @@ class NMEAImporter(Importer):
                     state.location = f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
                     self.prev_location[platform_name] = state.location
 
-                    heading = convert_absolute_angle(
-                        self.heading, line_number, self.errors, self.error_type
-                    )
-                    state.location = state.location
                     combine_tokens(self.lat_token, self.lon_token).record(
                         self.name, "location", state.location, "DMS"
                     )
