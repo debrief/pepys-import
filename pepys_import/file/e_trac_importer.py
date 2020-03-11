@@ -19,7 +19,6 @@ class ETracImporter(Importer):
         self.errors = list()
 
         self.text_label = None
-        self.depth = 0.0
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".TXT"
@@ -57,6 +56,7 @@ class ETracImporter(Importer):
             lat_degrees_token = tokens[4]
             long_degrees_token = tokens[5]
             heading_token = tokens[8]
+            altitude_token = tokens[10]
             speed_token = tokens[6]
             comp_name_token = tokens[18]
 
@@ -117,9 +117,8 @@ class ETracImporter(Importer):
                 self.name, "location", state.location, "decimal degrees"
             )
 
-            # TODO: Depth is currently set to a constant value of 0.0
-            # Do we need to parse this from the file?
-            state.elevation = -1 * self.depth
+            state.elevation = altitude_token.text
+            altitude_token.record(self.name, "altitude", state.elevation, "metres")
 
             heading = convert_absolute_angle(
                 heading_token.text, line_number, self.errors, self.error_type
