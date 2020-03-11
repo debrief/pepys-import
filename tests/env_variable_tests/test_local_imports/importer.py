@@ -13,16 +13,16 @@ class TestImporter(Importer):
         self.errors = list()
 
     def can_load_this_header(self, header) -> bool:
-        return True
+        """"""
 
     def can_load_this_filename(self, filename):
-        return True
+        """"""
 
     def can_load_this_type(self, suffix):
-        return True
+        """"""
 
     def can_load_this_file(self, file_contents):
-        return True
+        """"""
 
     def _load_this_file(self, data_store, path, file_contents, data_file):
-        pass
+        """"""
