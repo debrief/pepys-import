@@ -73,6 +73,9 @@ class ReplayImporter(Importer):
                 state.location = rep_line.get_location()
                 self.prev_location[vessel_name] = state.location
 
+                state.platform_name = platform.name
+                state.sensor_name = platform.name
+
     @staticmethod
     def degrees_for(degs, mins, secs, hemi: str):
         if hemi.upper() == "S" or hemi.upper() == "W":

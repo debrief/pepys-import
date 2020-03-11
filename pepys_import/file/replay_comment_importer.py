@@ -113,3 +113,6 @@ class ReplayCommentImporter(Importer):
                     parser_name=self.short_name,
                 )
                 comment.privacy = privacy
+
+                comment.platform_name = platform.name
+                comment.sensor_name = platform.name

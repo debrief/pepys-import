@@ -132,6 +132,9 @@ class ETracImporter(Importer):
             state.speed = speed
             speed_token.record(self.name, "speed", speed, "knots")
 
+            state.platform_name = vessel_name
+            state.sensor_name = "E-Trac"
+
     @staticmethod
     def name_for(token):
         # split into two

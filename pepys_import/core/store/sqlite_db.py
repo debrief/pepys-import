@@ -244,9 +244,7 @@ class Datafile(BaseSpatiaLite):
         elif validation_level == validation_constants.ENHANCED_LEVEL:
             for measurement in self.measurements[parser]:
                 BasicValidator(measurement, errors, parser)
-                # TODO: Commented out at the moment as there is a bug in the validator
-                # Need to bring this back in once that is fixed.
-                # EnhancedValidator(measurement, errors, parser)
+                EnhancedValidator(measurement, errors, parser)
             if not errors:
                 return True
             return False
@@ -503,6 +501,8 @@ class State(BaseSpatiaLite):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prev_location = None
+        self.sensor_name = None
+        self.platform_name = None
 
     __tablename__ = constants.STATE
     table_type = TableTypes.MEASUREMENT
@@ -600,6 +600,11 @@ class LogsHolding(BaseSpatiaLite):
 
 
 class Comment(BaseSpatiaLite):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sensor_name = None
+        self.platform_name = None
+
     __tablename__ = constants.COMMENT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 32

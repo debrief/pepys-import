@@ -171,6 +171,9 @@ class NMEAImporter(Importer):
 
                     state.privacy = privacy.privacy_id
 
+                    state.platform_name = platform.name
+                    state.sensor_name = platform.name
+
                     self.date = None
                     self.time = None
                     self.speed = None

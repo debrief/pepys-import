@@ -138,6 +138,9 @@ class GPXImporter(Importer):
 
                 state.privacy = privacy.privacy_id
 
+                state.platform_name = track_name
+                state.sensor_name = "GPX"
+
     def get_child_text_if_exists(self, element, search_string):
         child = element.find(search_string)
         if child is not None:
