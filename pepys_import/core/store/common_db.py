@@ -203,3 +203,12 @@ class ContactMixin:
         session.flush()
 
         return self
+
+
+class CommentMixin:
+    def submit(self, session):
+        """Submit intermediate object to the DB"""
+        session.add(self)
+        session.flush()
+
+        return self

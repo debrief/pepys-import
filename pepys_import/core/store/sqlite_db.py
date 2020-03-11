@@ -16,6 +16,7 @@ from pepys_import.core.store.common_db import (
     SensorTypeMixin,
     StateMixin,
     ContactMixin,
+    CommentMixin,
 )
 
 
@@ -424,7 +425,7 @@ class LogsHolding(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Comment(BaseSpatiaLite):
+class Comment(BaseSpatiaLite, CommentMixin):
     __tablename__ = constants.COMMENT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 32
@@ -437,13 +438,6 @@ class Comment(BaseSpatiaLite):
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def submit(self, session):
-        """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-
-        return self
 
 
 class Geometry1(BaseSpatiaLite):
