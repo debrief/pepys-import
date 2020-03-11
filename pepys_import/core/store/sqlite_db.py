@@ -10,7 +10,7 @@ from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 
-from pepys_import.core.store.common_db import SensorMixin
+from pepys_import.core.store.common_db import SensorMixin, PlatformMixin
 
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
@@ -43,7 +43,7 @@ class Sensor(BaseSpatiaLite, SensorMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Platform(BaseSpatiaLite):
+class Platform(BaseSpatiaLite, PlatformMixin):
     __tablename__ = constants.PLATFORM
     table_type = TableTypes.METADATA
     table_type_id = 3
@@ -57,53 +57,6 @@ class Platform(BaseSpatiaLite):
     platform_type_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    @classmethod
-    def search_platform(cls, session, name):
-        # search for any platform with this name
-        return session.query(Platform).filter(Platform.name == name).first()
-
-    def get_sensor(self, data_store, sensor_name=None, sensor_type=None, privacy=None):
-        """
-         Lookup or create a sensor of this name for this :class:`Platform`.
-         Specified sensor will be added to the :class:`Sensor` table.
-         It uses find_sensor method to search existing sensors.
-
-        :param data_store: DataStore object to to query DB and use missing data resolver
-        :type data_store: DataStore
-        :param sensor_name: Name of :class:`Sensor`
-        :type sensor_name: String
-        :param sensor_type: Type of :class:`Sensor`
-        :type sensor_type: SensorType
-        :param privacy: Privacy of :class:`Sensor`
-        :type privacy: Privacy
-        :return: Created :class:`Sensor` entity
-        :rtype: Sensor
-        """
-        sensor = Sensor().find_sensor(data_store, sensor_name, self.platform_id)
-        if sensor:
-            return sensor
-
-        if sensor_type is None or privacy is None:
-            resolved_data = data_store.missing_data_resolver.resolve_sensor(
-                data_store, sensor_name, sensor_type, privacy
-            )
-            # It means that new sensor added as a synonym and existing sensor returned
-            if isinstance(resolved_data, Sensor):
-                return resolved_data
-            elif len(resolved_data) == 3:
-                (sensor_name, sensor_type, privacy,) = resolved_data
-
-        assert isinstance(sensor_type, SensorType), "Type error for Sensor Type entity"
-        # TODO: we don't use privacy for sensor. Is it necessary to resolve it?
-        # assert isinstance(privacy, Privacy), "Type error for Privacy entity"
-
-        return Sensor().add_to_sensors(
-            data_store=data_store,
-            name=sensor_name,
-            sensor_type=sensor_type.name,
-            host=self.name,
-        )
 
 
 class Task(BaseSpatiaLite):
