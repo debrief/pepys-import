@@ -39,7 +39,7 @@ class SensorMixin:
     def add_to_sensors(cls, data_store, name, sensor_type, host):
         session = data_store.session
         sensor_type = data_store.db_classes.SensorType().search_sensor_type(
-            session, sensor_type
+            data_store, sensor_type
         )
         host = data_store.db_classes.Platform().search_platform(data_store, host)
 
