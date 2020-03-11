@@ -413,6 +413,12 @@ class ConfidenceLevel(BasePostGIS):
 
 # Measurements Tables
 class State(BasePostGIS, StateMixin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.prev_location = None
+        self.sensor_name = None
+        self.platform_name = None
+
     __tablename__ = constants.STATE
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
@@ -436,6 +442,11 @@ class State(BasePostGIS, StateMixin):
 
 
 class Contact(BasePostGIS, ContactMixin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sensor_name = None
+        self.platform_name = None
+
     __tablename__ = constants.CONTACT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
@@ -518,6 +529,11 @@ class LogsHolding(BasePostGIS):
 
 
 class Comment(BasePostGIS, CommentMixin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sensor_name = None
+        self.platform_name = None
+
     __tablename__ = constants.COMMENT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 32
