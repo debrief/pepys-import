@@ -61,7 +61,7 @@ class BasicValidatorTestCase(unittest.TestCase):
             def can_load_this_file(self, file_contents):
                 return True
 
-            def load_this_file(self, data_store, path, file_contents, datafile):
+            def _load_this_file(self, data_store, path, file_contents, datafile):
                 pass
 
         self.parser = TestParser()
@@ -72,7 +72,10 @@ class BasicValidatorTestCase(unittest.TestCase):
 
     def test_validate_longitude(self):
         state = self.file.create_state(
-            self.sensor, self.current_time, parser_name=self.parser.short_name
+            self.store,
+            self.sensor,
+            self.current_time,
+            parser_name=self.parser.short_name,
         )
         state.location = "POINT(180.0 25.0)"
         BasicValidator(state, self.errors, "Test Parser")
@@ -81,7 +84,10 @@ class BasicValidatorTestCase(unittest.TestCase):
 
     def test_validate_latitude(self):
         state = self.file.create_state(
-            self.sensor, self.current_time, parser_name=self.parser.short_name
+            self.store,
+            self.sensor,
+            self.current_time,
+            parser_name=self.parser.short_name,
         )
         state.location = "POINT(25.0 300.0)"
         BasicValidator(state, self.errors, "Test Parser")
@@ -90,7 +96,10 @@ class BasicValidatorTestCase(unittest.TestCase):
 
     def test_validate_heading(self):
         state = self.file.create_state(
-            self.sensor, self.current_time, parser_name=self.parser.short_name
+            self.store,
+            self.sensor,
+            self.current_time,
+            parser_name=self.parser.short_name,
         )
         state.heading = 10.0  # 10 radians is approximately 572 degrees
         BasicValidator(state, self.errors, "Test Parser")
@@ -99,7 +108,10 @@ class BasicValidatorTestCase(unittest.TestCase):
 
     def test_validate_course(self):
         state = self.file.create_state(
-            self.sensor, self.current_time, parser_name=self.parser.short_name
+            self.store,
+            self.sensor,
+            self.current_time,
+            parser_name=self.parser.short_name,
         )
         state.course = 10.0  # 10 radians is approximately 572 degrees
         BasicValidator(state, self.errors, "Test Parser")

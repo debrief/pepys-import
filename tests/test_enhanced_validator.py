@@ -61,7 +61,7 @@ class EnhancedValidatorTestCase(unittest.TestCase):
             def can_load_this_file(self, file_contents):
                 return True
 
-            def load_this_file(self, data_store, path, file_contents, datafile):
+            def _load_this_file(self, data_store, path, file_contents, datafile):
                 pass
 
         self.parser = TestParser()
@@ -72,7 +72,10 @@ class EnhancedValidatorTestCase(unittest.TestCase):
 
     def test_bearing_between_two_locations(self):
         state = self.file.create_state(
-            self.sensor, self.current_time, parser_name=self.parser.short_name
+            self.store,
+            self.sensor,
+            self.current_time,
+            parser_name=self.parser.short_name,
         )
         state.prev_location = "POINT(75.0 25.0)"
         state.location = "POINT(80.0 30.0)"
@@ -91,7 +94,10 @@ class EnhancedValidatorTestCase(unittest.TestCase):
 
     def test_distance_between_two_locations(self):
         state = self.file.create_state(
-            self.sensor, self.current_time, parser_name=self.parser.short_name
+            self.store,
+            self.sensor,
+            self.current_time,
+            parser_name=self.parser.short_name,
         )
         state.prev_location = "POINT(75.0 25.0)"
         state.location = "POINT(80.0 30.0)"
