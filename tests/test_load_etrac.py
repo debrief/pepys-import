@@ -55,6 +55,15 @@ class TestLoadEtrac(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 2)
 
+            # Check that there is an elevation of 147 reported (test file was manually edited
+            # to contain an elevation of 147m)
+            results = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(self.store.db_classes.State.elevation == 147)
+                .all()
+            )
+            assert len(results) == 1
+
 
 if __name__ == "__main__":
     unittest.main()

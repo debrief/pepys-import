@@ -129,7 +129,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
             def can_load_this_file(self, file_contents):
                 return True
 
-            def load_this_file(self, data_store, path, file_contents, data_file):
+            def _load_this_file(self, data_store, path, file_contents, data_file):
                 pass
 
         processor = FileProcessor()
@@ -161,7 +161,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
             def can_load_this_file(self, file_contents):
                 return True
 
-            def load_this_file(self, data_store, path, file_contents, data_file):
+            def _load_this_file(self, data_store, path, file_contents, data_file):
                 pass
 
         processor = FileProcessor()
@@ -193,7 +193,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
             def can_load_this_file(self, file_contents):
                 return True
 
-            def load_this_file(self, data_store, path, file_contents, data_file):
+            def _load_this_file(self, data_store, path, file_contents, data_file):
                 pass
 
         processor = FileProcessor()
@@ -225,7 +225,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
             def can_load_this_file(self, file_contents):
                 return False
 
-            def load_this_file(self, data_store, path, file_contents, data_file):
+            def _load_this_file(self, data_store, path, file_contents, data_file):
                 pass
 
         processor = FileProcessor()

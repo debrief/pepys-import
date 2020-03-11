@@ -668,7 +668,7 @@ class MeasurementsTestCase(TestCase):
             def can_load_this_file(self, file_contents):
                 return True
 
-            def load_this_file(self, data_store, path, file_contents, datafile):
+            def _load_this_file(self, data_store, path, file_contents, datafile):
                 pass
 
         self.parser = TestParser()

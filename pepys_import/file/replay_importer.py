@@ -32,14 +32,7 @@ class ReplayImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def load_this_file(self, data_store, path, file_object, datafile):
-        self.errors = list()
-        basename = os.path.basename(path)
-        print(f"Rep parser working on '{basename}'")
-        error_type = self.short_name + f" - Parsing error on '{basename}'"
-        prev_location = dict()
-        datafile.measurements[self.short_name] = list()
-
+    def _load_this_file(self, data_store, path, file_object, datafile):
         for line_number, line in enumerate(file_object.lines(), 1):
             if line.text.startswith(";"):
                 continue
@@ -47,7 +40,7 @@ class ReplayImporter(Importer):
                 # create state, to store the data
                 rep_line = REPLine(line_number, line, self.separator)
                 # Store parsing errors in self.errors list
-                if not rep_line.parse(self.errors, error_type):
+                if not rep_line.parse(self.errors, self.error_type):
                     continue
                 # and finally store it
                 vessel_name = rep_line.get_platform()
@@ -74,11 +67,11 @@ class ReplayImporter(Importer):
                 state.speed = rep_line.speed
                 state.privacy = privacy.privacy_id
 
-                if vessel_name in prev_location:
-                    state.prev_location = prev_location[vessel_name]
+                if vessel_name in self.prev_location:
+                    state.prev_location = self.prev_location[vessel_name]
 
                 state.location = rep_line.get_location()
-                prev_location[vessel_name] = state.location
+                self.prev_location[vessel_name] = state.location
 
     @staticmethod
     def degrees_for(degs, mins, secs, hemi: str):
