@@ -15,7 +15,7 @@ class Importer(ABC):
     @abstractmethod
     def can_load_this_type(self, suffix) -> bool:
         """Whether this importer can load files with the specified suffix.
-        
+
         :param suffix: File suffix (e.g. ".doc")
         :type suffix: String
         :return: Yes/No
@@ -25,7 +25,7 @@ class Importer(ABC):
     @abstractmethod
     def can_load_this_filename(self, filename) -> bool:
         """Whether this importer can load a file with the provided filename
-        
+
         :param filename: Full filename
         :type filename: String
         :return: Yes/No
@@ -35,7 +35,7 @@ class Importer(ABC):
     @abstractmethod
     def can_load_this_header(self, header) -> bool:
         """Whether this importer can load a file with this first line of text
-        
+
         :param header: The initial line of text
         :type header: String
         :return: Yes/No
@@ -45,19 +45,18 @@ class Importer(ABC):
     @abstractmethod
     def can_load_this_file(self, file_contents) -> bool:
         """Whether this parser can handle this whole file
-        
+
         :param file_contents: Whole file contents
         :type file_contents: String
         :return: Yes/No
         :rtype: bool
         """
 
-    def init_load_this_file(self, data_store, path, file_object, datafile):
-        """Initialises the loading of this data file
+    def core_load_this_file(self, data_store, path, file_object, datafile):
+        """Handles the loading of this data file
 
         Performs the common operations that must be performed before the
-        load_this_file method is called. This *must* be called immediately
-        before load_this_file is called, and with the same arguments
+        load_this_file method is called, then performs the load
         """
         self.errors = list()
         basename = os.path.basename(path)
@@ -66,10 +65,13 @@ class Importer(ABC):
         self.prev_location = dict()
         datafile.measurements[self.short_name] = list()
 
+        # perform load
+        self.load_this_file(self, data_store, path, file_object, datafile)
+
     @abstractmethod
     def load_this_file(self, data_store, path, file_object, datafile):
         """Process this data-file
-        
+
         :param data_store: The data_store
         :type data_store: DataStore
         :param path: File File path
