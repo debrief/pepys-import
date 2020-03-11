@@ -52,6 +52,9 @@ class EnhancedValidator:
         :param delta: The acceptable separation
         :type delta: number (degrees)
         """
+
+        # note: compact test algorithm came from here:
+        #    https://gamedev.stackexchange.com/a/4472/8270
         diff = 180 - abs(abs(bearing1 - bearing2) - 180)
         return diff <= delta
 
