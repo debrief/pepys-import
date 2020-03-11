@@ -26,7 +26,7 @@ class EnhancedValidatorTestCase(unittest.TestCase):
                 platform_type=platform_type,
                 privacy=privacy,
             )
-            self.sensor = platform.get_sensor(self.store, "gps", sensor_type)
+            self.sensor = self.platform.get_sensor(self.store, "gps", sensor_type)
             self.current_time = datetime.utcnow()
             self.file = self.store.get_datafile("test_file", "csv")
 
