@@ -849,7 +849,10 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(len(states), 0)
 
             state = self.file.create_state(
-                self.sensor, self.current_time, parser_name=self.parser.short_name
+                self.store,
+                self.sensor,
+                self.current_time,
+                parser_name=self.parser.short_name,
             )
 
             # there must be no entry because it's kept in-memory
@@ -873,7 +876,10 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(len(contacts), 0)
 
             contact = self.file.create_contact(
-                self.sensor, self.current_time, parser_name=self.parser.short_name
+                self.store,
+                self.sensor,
+                self.current_time,
+                parser_name=self.parser.short_name,
             )
 
             # there must be no entry because it's kept in-memory
@@ -898,6 +904,7 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(len(comments), 0)
 
             comment = self.file.create_comment(
+                self.store,
                 self.platform.platform_id,
                 self.current_time,
                 "Comment",
