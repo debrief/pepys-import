@@ -8,6 +8,9 @@ class Importer(ABC):
         self.name = name
         self.validation_level = validation_level
         self.short_name = short_name
+        self.errors = list()
+        self.prev_location = dict()
+        self.error_type = None
 
     def __str__(self):
         return self.name
@@ -58,11 +61,9 @@ class Importer(ABC):
         Performs the common operations that must be performed before the
         load_this_file method is called, then performs the load
         """
-        self.errors = list()
         basename = os.path.basename(path)
         print(f"{self.short_name} working on {basename}")
         self.error_type = f"{self.short_name} - Parsing error on {basename}"
-        self.prev_location = dict()
         datafile.measurements[self.short_name] = list()
 
         # perform load
