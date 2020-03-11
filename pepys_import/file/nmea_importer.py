@@ -107,7 +107,7 @@ class NMEAImporter(Importer):
                     )
 
                     state = datafile.create_state(
-                        data_store, sensor, timestamp, self.short_name
+                        data_store, platform, sensor, timestamp, self.short_name
                     )
 
                     if not isinstance(self.latitude, Location):
@@ -168,9 +168,6 @@ class NMEAImporter(Importer):
                     self.speed_token.record(self.name, "speed", speed, "knots")
 
                     state.privacy = privacy.privacy_id
-
-                    state.platform_name = platform.name
-                    state.sensor_name = platform.name
 
                     self.date = None
                     self.time = None

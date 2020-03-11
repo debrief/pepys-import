@@ -60,7 +60,7 @@ class ReplayImporter(Importer):
                     privacy=privacy.name,
                 )
                 state = datafile.create_state(
-                    data_store, sensor, rep_line.timestamp, self.short_name
+                    data_store, platform, sensor, rep_line.timestamp, self.short_name
                 )
                 state.elevation = -1 * rep_line.depth
                 state.heading = rep_line.heading.to(unit_registry.radians).magnitude
@@ -72,9 +72,6 @@ class ReplayImporter(Importer):
 
                 state.location = rep_line.get_location()
                 self.prev_location[vessel_name] = state.location
-
-                state.platform_name = platform.name
-                state.sensor_name = platform.name
 
     @staticmethod
     def degrees_for(degs, mins, secs, hemi: str):

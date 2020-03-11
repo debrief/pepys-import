@@ -103,7 +103,7 @@ class ETracImporter(Importer):
                 privacy=privacy.name,
             )
             state = datafile.create_state(
-                data_store, sensor, timestamp, self.short_name
+                data_store, platform, sensor, timestamp, self.short_name
             )
             state.privacy = privacy.privacy_id
 
@@ -133,9 +133,6 @@ class ETracImporter(Importer):
             )
             state.speed = speed
             speed_token.record(self.name, "speed", speed, "knots")
-
-            state.platform_name = vessel_name
-            state.sensor_name = "E-Trac"
 
     @staticmethod
     def name_for(token):

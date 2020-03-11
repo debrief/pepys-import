@@ -107,30 +107,43 @@ class PlatformMixin:
 
 
 class DatafileMixin:
-    def create_state(self, data_store, sensor, timestamp, parser_name):
+    def create_state(self, data_store, platform, sensor, timestamp, parser_name):
         state = data_store.db_classes.State(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
+        state.platform_name = platform.name
+        state.sensor_name = sensor.name
         self.measurements[parser_name].append(state)
         return state
 
-    def create_contact(self, data_store, sensor, timestamp, parser_name):
+    def create_contact(self, data_store, platform, sensor, timestamp, parser_name):
         contact = data_store.db_classes.Contact(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
+        contact.platform_name = platform.name
+        contact.sensor_name = sensor.name
         self.measurements[parser_name].append(contact)
         return contact
 
     def create_comment(
-        self, data_store, platform_id, timestamp, comment, comment_type, parser_name
+        self,
+        data_store,
+        platform,
+        sensor,
+        timestamp,
+        comment,
+        comment_type,
+        parser_name,
     ):
         comment = data_store.db_classes.Comment(
-            platform_id=platform_id,
+            platform_id=platform.platform_id,
             time=timestamp,
             content=comment,
             comment_type_id=comment_type.comment_type_id,
             source_id=self.datafile_id,
         )
+        comment.platform_name = platform.name
+        comment.sensor_name = sensor.name
         self.measurements[parser_name].append(comment)
         return comment
 

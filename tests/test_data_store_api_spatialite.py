@@ -687,6 +687,7 @@ class MeasurementsTestCase(TestCase):
 
             state = self.file.create_state(
                 self.store,
+                self.platform,
                 self.sensor,
                 self.current_time,
                 parser_name=self.parser.short_name,
@@ -714,6 +715,7 @@ class MeasurementsTestCase(TestCase):
 
             contact = self.file.create_contact(
                 self.store,
+                self.platform,
                 self.sensor,
                 self.current_time,
                 parser_name=self.parser.short_name,
@@ -742,7 +744,8 @@ class MeasurementsTestCase(TestCase):
 
             comment = self.file.create_comment(
                 self.store,
-                self.platform.platform_id,
+                self.platform,
+                self.sensor,
                 self.current_time,
                 "Comment",
                 self.comment_type,
