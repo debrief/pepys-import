@@ -82,19 +82,23 @@ class Line:
 
         return self.tokens_array
 
-    def record(self, tool, message):
+    def record(self, tool: str, field: str, value: str, units: str = "n/a"):
         """
         Record a usage of the whole line, by adding a SingleUsage object to each of the
         relevant characters in the char array referenced by each SubToken child.
 
         Args:
-            tool (str): The name of the parser tool that has identified the field
-            message (str): A description of how the data has been interpreted, and
-            what will represent it in the database
+            tool(str):  name of the module handling the import
+            field(str): what the token is being interpreted as
+            value(str): what value the token provided
+            units(str): the units of the token
         """
         self.highlighted_file.fill_char_array_if_needed()
 
+        tool_field = tool + "/" + field
+        message = "Value:" + str(value) + " Units:" + str(units)
+
         for child in self.children:
             for i in range(int(child.start()), int(child.end())):
-                usage = SingleUsage(tool, message)
+                usage = SingleUsage(tool_field, message)
                 child.chars[i].usages.append(usage)
