@@ -92,12 +92,12 @@ class UsageRecordingTests(unittest.TestCase):
         self.assertEqual("Value:VALUE Units:UNITS", first_usage.message)
 
         # make another recordd
-        firstLine.record(field, value)
+        firstLine.record(tool, field, value, units)
         self.assertEqual(2, len(first_entry.usages))
         second_usage = first_entry.usages[1]
         self.assertTrue(second_usage is not None, "should have a usage")
-        self.assertEqual("FIELD", second_usage.tool_field)
-        self.assertEqual("VALUE", second_usage.message)
+        self.assertEqual("TOOL/FIELD", second_usage.tool_field)
+        self.assertEqual("Value:VALUE Units:UNITS", second_usage.message)
 
     def test_multi_lines(self):
         dataFile = HighlightedFile(DATA_FILE)
