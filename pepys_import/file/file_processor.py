@@ -29,27 +29,7 @@ class FileProcessor:
                     f"No such file or directory: {local_importers_path}. Only core parsers are going to work."
                 )
             else:
-                for file in os.scandir(local_importers_path):
-                    # import file using its name and full path
-                    if file.is_file():
-                        spec = importlib.util.spec_from_file_location(
-                            file.name, file.path
-                        )
-                        module = importlib.util.module_from_spec(spec)
-                        sys.modules[file.name] = module
-                        spec.loader.exec_module(module)
-                        # extract classes with this format: (class name, class)
-                        classes = inspect.getmembers(
-                            sys.modules[module.__name__], inspect.isclass
-                        )
-                        for name, class_ in classes:
-                            # continue only if it's a concrete class that inherits Importer
-                            if issubclass(class_, Importer) and not inspect.isabstract(
-                                class_
-                            ):
-                                # Create an object of the class, add it to importers
-                                obj = class_()
-                                self.importers.append(obj)
+                self.load_importers_dynamically(local_importers_path)
 
         if filename is None:
             self.filename = ":memory:"
@@ -330,26 +310,29 @@ class FileProcessor:
         for importer in importers:
             self.importers.append(importer)
 
-    def load_importers_dynamically(self):
-        """Dynamically adds all the importers in importers folder."""
-        # Register core importers
-        for file in os.scandir(CORE_IMPORTERS_PATH):
-            # import file using its name and full path
-            if file.is_file():
-                spec = importlib.util.spec_from_file_location(file.name, file.path)
-                module = importlib.util.module_from_spec(spec)
-                sys.modules[file.name] = module
-                spec.loader.exec_module(module)
-                # extract classes with this format: (class name, class)
-                classes = inspect.getmembers(
-                    sys.modules[module.__name__], inspect.isclass
-                )
-                for name, class_ in classes:
-                    # continue only if it's a concrete class that inherits Importer
-                    if issubclass(class_, Importer) and not inspect.isabstract(class_):
-                        # Create an object of the class, add it to importers
-                        obj = class_()
-                        self.importers.append(obj)
+    def load_importers_dynamically(self, path=CORE_IMPORTERS_PATH):
+        """Dynamically adds all the importers in the given path.
+        It registers core importers by default."""
+        if os.path.exists(path):
+            for file in os.scandir(path):
+                # import file using its name and full path
+                if file.is_file():
+                    spec = importlib.util.spec_from_file_location(file.name, file.path)
+                    module = importlib.util.module_from_spec(spec)
+                    sys.modules[file.name] = module
+                    spec.loader.exec_module(module)
+                    # extract classes with this format: (class name, class)
+                    classes = inspect.getmembers(
+                        sys.modules[module.__name__], inspect.isclass
+                    )
+                    for name, class_ in classes:
+                        # continue only if it's a concrete class that inherits Importer
+                        if issubclass(class_, Importer) and not inspect.isabstract(
+                            class_
+                        ):
+                            # Create an object of the class, add it to importers
+                            obj = class_()
+                            self.importers.append(obj)
 
     @staticmethod
     def get_first_line(file_path: str):
