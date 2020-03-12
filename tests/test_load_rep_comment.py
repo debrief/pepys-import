@@ -1,6 +1,8 @@
 import os
 import unittest
 
+from unittest.mock import patch
+
 from importers.replay_comment_importer import ReplayCommentImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
@@ -12,6 +14,8 @@ DATA_PATH2 = os.path.join(
 )
 
 
+@patch("shutil.move")
+@patch("os.chmod")
 class RepCommentTests(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -20,7 +24,7 @@ class RepCommentTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_process_rep_comments(self):
+    def test_process_rep_comments(self, patched_move, patched_chmod):
         processor = FileProcessor()
         processor.register_importer(ReplayCommentImporter())
 
@@ -63,7 +67,7 @@ class RepCommentTests(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
 
-    def test_process_rep_comment_errors(self):
+    def test_process_rep_comment_errors(self, patched_move, patched_chmod):
         processor = FileProcessor()
         processor.register_importer(ReplayCommentImporter())
 
