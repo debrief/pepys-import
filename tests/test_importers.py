@@ -7,10 +7,9 @@ from datetime import datetime
 from unittest.mock import patch
 
 from pepys_import.file.importer import Importer
-from pepys_import.file.replay_importer import ReplayImporter
-from pepys_import.file.nmea_importer import NMEAImporter
 from pepys_import.file.file_processor import FileProcessor
-from pepys_import.file.get_importers import get_importers
+from importers.replay_importer import ReplayImporter
+from importers.nmea_importer import NMEAImporter
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
@@ -38,8 +37,7 @@ class SampleImporterTests(unittest.TestCase):
         """Test whether single level processing works for the given path"""
         processor = FileProcessor("single_level.db")
 
-        importers = get_importers()
-        processor.register_importers(importers)
+        processor.load_importers_dynamically()
 
         # try bad file
         exception = False
@@ -56,8 +54,7 @@ class SampleImporterTests(unittest.TestCase):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("descending.db")
 
-        importers = get_importers()
-        processor.register_importers(importers)
+        processor.load_importers_dynamically()
 
         # try bad file
         exception = False
@@ -74,8 +71,7 @@ class SampleImporterTests(unittest.TestCase):
         """Test whether :memory: is used when no filename is given"""
         processor = FileProcessor()
 
-        importers = get_importers()
-        processor.register_importers(importers)
+        processor.load_importers_dynamically()
 
         # try bad file
         exception = False
@@ -99,8 +95,7 @@ class SampleImporterTests(unittest.TestCase):
         """Test whether process method works when a file path is given"""
         processor = FileProcessor()
 
-        importers = get_importers()
-        processor.register_importers(importers)
+        processor.load_importers_dynamically()
 
         file_path = os.path.join(DATA_PATH, "test_importers.csv")
 

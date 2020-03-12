@@ -38,7 +38,7 @@ setup(
     include_package_data=True,
     keywords="pepys_import",
     name="pepys_import",
-    packages=find_packages(include=["pepys_import", "pepys_import.*"]),
+    packages=find_packages(include=["pepys_import", "pepys_import.*", "importers"]),
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,

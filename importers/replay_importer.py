@@ -1,9 +1,9 @@
 import os
 
-from .importer import Importer
 from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.validators import constants
+from pepys_import.file.importer import Importer
 
 
 class ReplayImporter(Importer):

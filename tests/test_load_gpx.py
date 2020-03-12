@@ -3,7 +3,7 @@ import unittest
 
 from unittest.mock import patch
 
-from pepys_import.file.gpx_importer import GPXImporter
+from importers.gpx_importer import GPXImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
 
