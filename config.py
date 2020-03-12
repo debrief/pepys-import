@@ -2,7 +2,7 @@ import os
 
 from configparser import ConfigParser
 
-config = ConfigParser()
+config = ConfigParser(allow_no_value=True)
 DEFAULT_CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), "default_config.ini")
 CONFIG_FILE_PATH = os.getenv("PEPYS_CONFIG_FILE", DEFAULT_CONFIG_FILE_PATH)
 
@@ -25,6 +25,7 @@ DB_HOST = config.get("database", "db_host", fallback="localhost")
 DB_PORT = config.getint("database", "db_port", fallback="5432")
 DB_NAME = config.get("database", "db_name", fallback="pepys")
 
+# TODO: decrypt method is not implemented yet
 # Decrypt username and password if necessary
 if DB_USERNAME.startswith("_") and DB_USERNAME.endswith("_"):
     DB_USERNAME = decrypt(DB_USERNAME)
