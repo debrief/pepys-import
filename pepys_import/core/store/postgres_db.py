@@ -472,9 +472,7 @@ class Contact(BasePostGIS, ContactMixin):
     contact_type = Column(String(150))
     mla = Column(DOUBLE_PRECISION)
     sla = Column(DOUBLE_PRECISION)
-    subject_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False
-    )
+    subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )
