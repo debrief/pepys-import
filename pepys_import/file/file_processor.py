@@ -5,6 +5,7 @@ import shutil
 from datetime import datetime
 from stat import S_IREAD
 
+from config import ARCHIVE_PATH
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
@@ -21,11 +22,10 @@ class FileProcessor:
         self.input_files_path = None
         self.directory_path = None
         # Check if archive location environment variable exists
-        archive_path = os.getenv("PEPYS_ARCHIVE_LOCATION")
-        if archive_path:
-            if not os.path.exists(archive_path):
-                os.makedirs(archive_path)
-            self.output_path = archive_path
+        if ARCHIVE_PATH:
+            if not os.path.exists(ARCHIVE_PATH):
+                os.makedirs(ARCHIVE_PATH)
+            self.output_path = ARCHIVE_PATH
 
     def process(
         self, path: str, data_store: DataStore = None, descend_tree: bool = True
@@ -149,9 +149,8 @@ class FileProcessor:
                 # loop through this path
                 for file in os.scandir(abs_path):
                     if file.is_file():
-                        current_path = os.path.join(abs_path, file)
                         processed_ctr = self.process_file(
-                            file, current_path, data_store, processed_ctr
+                            file, abs_path, data_store, processed_ctr
                         )
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
@@ -175,7 +174,7 @@ class FileProcessor:
         # make copy of list of importers
         good_importers = self.importers.copy()
 
-        full_path = os.path.join(current_path, file)
+        full_path = os.path.join(current_path, basename)
         # print("Checking:" + str(full_path))
 
         # start with file suffixes
@@ -259,7 +258,7 @@ class FileProcessor:
                 ) as f:
                     f.write("\n".join(log))
                 # move original file to output folder
-                new_path = os.path.join(self.input_files_path, file)
+                new_path = os.path.join(self.input_files_path, basename)
                 shutil.move(full_path, new_path)
                 # make it read-only
                 os.chmod(new_path, S_IREAD)
