@@ -94,7 +94,7 @@ class RepCommentTests(unittest.TestCase):
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             self.assertEqual(len(platforms), 2)
 
-            # there must be one datafile afterward
+            # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
 
