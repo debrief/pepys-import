@@ -34,6 +34,35 @@ def convert_absolute_angle(angle, line_number, errors, error_type):
     return valid_angle * unit_registry.degree
 
 
+def convert_distance(distance, units, line_number, errors, error_type):
+    """
+    Converts the given distance value in supplied units to metres formsat
+    :param distance: distance value in string format
+    :type distance: String
+    :param units: units of distance for supplied measurement
+    :type units: String
+    :param line_number: Line number
+    :type line_number: String
+    :param errors: Error List to save value error if it raises
+    :type errors: List
+    :param error_type: Type of error
+    :type error_type: String
+    :return: return the converted speed value
+    """
+    try:
+        valid_distance = float(distance)
+    except ValueError:
+        errors.append(
+            {
+                error_type: f"Line {line_number}. Error in distance value {distance}. "
+                f"Couldn't convert to a number"
+            }
+        )
+        return False
+    distance = (valid_distance * units).to(unit_registry.meter).magnitude
+    return distance
+
+
 def convert_speed(speed, line_number, errors, error_type):
     """
     Converts the given speed value in knots to meter/seconds format.
