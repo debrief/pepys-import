@@ -1198,7 +1198,6 @@ class DataStore(object):
             else:
                 comment_rep_line.insert(0, ";NARRATIVE2:")
 
-            print(comment_rep_line)
             data = " ".join(comment_rep_line)
             f.write(data + "\r\n")
         f.close()
