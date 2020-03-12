@@ -304,6 +304,9 @@ class FileProcessor:
         """Dynamically adds all the importers in the given path.
 
         It loads core importers by default.
+
+        :param path: Path of a folder that has importers
+        :type path: String
         """
         if os.path.exists(path):
             for file in os.scandir(path):
