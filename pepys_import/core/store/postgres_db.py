@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, Integer, String, Boolean, DATE, ForeignKey, DateTime
 from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, DOUBLE_PRECISION
+from sqlalchemy.orm import relationship
 
 from geoalchemy2 import Geometry
 
