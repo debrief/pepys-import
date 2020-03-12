@@ -1,3 +1,7 @@
+from sqlalchemy.ext.hybrid import hybrid_property
+
+from pepys_import.core.formats import unit_registry
+
 from pepys_import.core.validators import constants as validation_constants
 
 from pepys_import.core.validators.basic_validator import BasicValidator
@@ -198,6 +202,38 @@ class StateMixin:
         session.flush()
 
         return self
+
+    @hybrid_property
+    def speed(self):
+        # Return all speeds as metres per second
+        if self._speed is None:
+            return None
+        else:
+            return self._speed * (unit_registry.metre / unit_registry.second)
+
+    @speed.setter
+    def speed(self, speed):
+        if speed is None:
+            self._speed = None
+            return
+
+        # Check the given speed is a Quantity with a dimension of 'length / time'
+        try:
+            if not speed.check("[length]/[time]"):
+                raise ValueError(
+                    "Speed must be a Quantity with a dimensionality of [length]/[time]"
+                )
+        except AttributeError:
+            raise TypeError("Speed must be a Quantity")
+
+        # Set the actual speed attribute to the given value converted to metres per second
+        self._speed = speed.to(unit_registry.metre / unit_registry.second).magnitude
+
+    @speed.expression
+    def speed(self):
+        # We need a separate @speed.expression function to return a float rather than a
+        # Quantity object, as otherwise this won't work in the SQLAlchemy filtering functions
+        return self._speed
 
 
 class ContactMixin:

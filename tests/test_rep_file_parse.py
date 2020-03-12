@@ -3,6 +3,7 @@ import datetime
 
 from pepys_import.core.formats.location import Location
 from pepys_import.core.formats.rep_line import REPLine
+from pepys_import.core.formats import unit_registry
 from pepys_import.file.highlighter.support.test_utils import create_test_line_object
 from contextlib import redirect_stdout
 from io import StringIO
@@ -157,7 +158,7 @@ class BasicTests(unittest.TestCase):
         self.assertEqual(Location(60.0, 23.0, 40.25, "S"), rep_line.latitude)
         self.assertEqual(Location(0.0, 1.0, 25.86, "E"), rep_line.longitude)
         self.assertAlmostEqual(1.9038051480754146, rep_line.heading)
-        self.assertAlmostEqual(3.086666666666667, rep_line.speed)
+        self.assertAlmostEqual(6 * unit_registry.knot, rep_line.speed)
         self.assertEqual(0.0, rep_line.depth)
         self.assertEqual("Label", rep_line.text_label)
 

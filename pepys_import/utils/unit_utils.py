@@ -34,11 +34,13 @@ def convert_absolute_angle(angle, line_number, errors, error_type):
     return valid_angle * unit_registry.degree
 
 
-def convert_speed(speed, line_number, errors, error_type):
+def convert_speed(speed, units, line_number, errors, error_type):
     """
-    Converts the given speed value in knots to meter/seconds format.
+    Parses the given speed value into a float and assigns the given units
     :param speed: Speed value in string format
     :type speed: String
+    :param units: Units of the speed (as a pint unit instance)
+    :type units: pint unit
     :param line_number: Line number
     :type line_number: String
     :param errors: Error List to save value error if it raises
@@ -57,11 +59,7 @@ def convert_speed(speed, line_number, errors, error_type):
             }
         )
         return False
-    speed = (
-        (valid_speed * unit_registry.knot)
-        .to(unit_registry.meter / unit_registry.second)
-        .magnitude
-    )
+    speed = valid_speed * units
     return speed
 
 
@@ -122,10 +120,8 @@ def distance_between_two_points_haversine(first_location, second_location):
     c = 2 * asin(sqrt(a))
     radius = 6371  # Radius of earth in kilometers. Use 3956 for miles
     distance = c * radius
-    return (
-        (distance * unit_registry.kilometers / unit_registry.hour)
-        .to(unit_registry.meter / unit_registry.second)
-        .magnitude
+    return (distance * unit_registry.kilometers / unit_registry.hour).to(
+        unit_registry.meter / unit_registry.second
     )
 
 
@@ -134,9 +130,4 @@ def convert_radian_to_degree(radian_value):
 
 
 def convert_mps_to_knot(mps_value):
-    return round(
-        (mps_value * unit_registry.meter / unit_registry.second)
-        .to(unit_registry.knot)
-        .magnitude,
-        3,
-    )
+    return round(mps_value.to(unit_registry.knot).magnitude, 3,)

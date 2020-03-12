@@ -179,10 +179,11 @@ class REPLine:
         self.heading = heading
         heading_token.record(self.importer_name, "heading", self.heading, "degrees")
 
-        speed = convert_speed(speed_token.text, self.line_num, errors, error_type)
+        speed = convert_speed(
+            speed_token.text, unit_registry.knots, self.line_num, errors, error_type
+        )
         if not speed:
             return False
-        # Set speed as knots(quantity-with-unit) object
         self.speed = speed
         speed_token.record(self.importer_name, "speed", self.speed, "knots")
 

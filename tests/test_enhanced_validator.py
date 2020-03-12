@@ -2,6 +2,7 @@ import unittest
 
 from datetime import datetime
 
+from pepys_import.core.formats import unit_registry
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 from pepys_import.core.validators import constants
@@ -114,10 +115,10 @@ class EnhancedValidatorTestCase(unittest.TestCase):
         )
         state.prev_location = "POINT(75.0 25.0)"
         state.location = "POINT(80.0 30.0)"
-        state.speed = 10.0
+        state.speed = 10.0 * (unit_registry.metre / unit_registry.second)
         EnhancedValidator(state, self.errors, "Test Parser")
         assert len(self.errors) == 1
         assert (
-            "Calculated speed (206.379 m/s) is more than the measured speed * 10 (100.000 m/s)"
+            "Calculated speed (206.379 meter / second) is more than the measured speed * 10 (100.000 meter / second)"
             in str(self.errors[0])
         )

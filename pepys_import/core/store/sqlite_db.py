@@ -357,7 +357,7 @@ class State(BaseSpatiaLite, StateMixin):
     elevation = Column(REAL)
     heading = Column(REAL)
     course = Column(REAL)
-    speed = Column(REAL)
+    _speed = Column("speed", REAL)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)

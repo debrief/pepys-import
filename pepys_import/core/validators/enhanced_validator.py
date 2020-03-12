@@ -97,8 +97,8 @@ class EnhancedValidator:
             return True
         self.errors.append(
             {
-                self.error_type: f"Calculated speed ({calculated_speed:.3f} m/s) is more than "
-                f"the measured speed * 10 ({self.speed * 10:.3f} m/s)!"
+                self.error_type: f"Calculated speed ({calculated_speed:.3f}) is more than "
+                f"the measured speed * 10 ({self.speed * 10:.3f})!"
             }
         )
         return False

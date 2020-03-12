@@ -3,7 +3,7 @@ from dateutil.parser import parse
 
 from pepys_import.file.importer import Importer
 from pepys_import.core.formats import unit_registry
-from pepys_import.utils.unit_utils import convert_absolute_angle
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 from pepys_import.core.validators import constants
 
 
@@ -113,18 +113,17 @@ class GPXImporter(Importer):
                     )
                     state.course = course.to(unit_registry.radians).magnitude
 
-                # Add speed
+                # Add speed (specified in metres per second in the file)
                 if speed_str is not None:
-                    try:
-                        speed = float(speed_str)
-                    except ValueError:
-                        self.errors.append(
-                            {
-                                self.error_type: f"Line {tpt.sourceline}. Error in speed value {speed_str}. "
-                                f"Couldn't convert to number"
-                            }
-                        )
-                    state.speed = speed
+                    speed = convert_speed(
+                        speed_str,
+                        (unit_registry.metre / unit_registry.second),
+                        None,
+                        self.errors,
+                        self.error_type,
+                    )
+                    if speed:
+                        state.speed = speed
 
                 if elevation_str is not None:
                     try:

@@ -434,7 +434,7 @@ class State(BasePostGIS, StateMixin):
     elevation = Column(DOUBLE_PRECISION)
     heading = Column(DOUBLE_PRECISION)
     course = Column(DOUBLE_PRECISION)
-    speed = Column(DOUBLE_PRECISION)
+    _speed = Column("speed", DOUBLE_PRECISION)
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )

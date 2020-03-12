@@ -130,9 +130,14 @@ class ETracImporter(Importer):
             heading_token.record(self.name, "heading", heading, "degrees")
 
             speed = convert_speed(
-                speed_token.text, line_number, self.errors, self.error_type
+                speed_token.text,
+                unit_registry.knots,
+                line_number,
+                self.errors,
+                self.error_type,
             )
-            state.speed = speed
+            if speed:
+                state.speed = speed
             speed_token.record(self.name, "speed", speed, "knots")
 
     @staticmethod
