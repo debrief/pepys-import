@@ -1,18 +1,33 @@
+import inspect
+import importlib.util
 import json
 import os
 import shutil
+import sys
 
 from datetime import datetime
 from stat import S_IREAD
 
+from paths import IMPORTERS_DIRECTORY
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
+from pepys_import.file.importer import Importer
 
 
 class FileProcessor:
     def __init__(self, filename=None):
         self.importers = []
+        # Register local importers if any exists
+        local_importers_path = os.getenv("PEPYS_LOCAL_PARSERS")
+        if local_importers_path:
+            if not os.path.exists(local_importers_path):
+                print(
+                    f"No such file or directory: {local_importers_path}. Only core parsers are going to work."
+                )
+            else:
+                self.load_importers_dynamically(local_importers_path)
+
         if filename is None:
             self.filename = ":memory:"
         else:
@@ -282,15 +297,34 @@ class FileProcessor:
         """
         self.importers.append(importer)
 
-    def register_importers(self, importers):
-        """Adds all the importers in the supplied list to the list of import modules
+    def load_importers_dynamically(self, path=IMPORTERS_DIRECTORY):
+        """Dynamically adds all the importers in the given path.
 
-        :param importers: A list of importers, each of which is an Importer class that inherits
-        from the Importer base class
-        :type importers: list
+        It loads core importers by default.
+
+        :param path: Path of a folder that has importers
+        :type path: String
         """
-        for importer in importers:
-            self.importers.append(importer)
+        if os.path.exists(path):
+            for file in os.scandir(path):
+                # import file using its name and full path
+                if file.is_file():
+                    spec = importlib.util.spec_from_file_location(file.name, file.path)
+                    module = importlib.util.module_from_spec(spec)
+                    sys.modules[file.name] = module
+                    spec.loader.exec_module(module)
+                    # extract classes with this format: (class name, class)
+                    classes = inspect.getmembers(
+                        sys.modules[module.__name__], inspect.isclass
+                    )
+                    for name, class_ in classes:
+                        # continue only if it's a concrete class that inherits Importer
+                        if issubclass(class_, Importer) and not inspect.isabstract(
+                            class_
+                        ):
+                            # Create an object of the class, add it to importers
+                            obj = class_()
+                            self.importers.append(obj)
 
     @staticmethod
     def get_first_line(file_path: str):

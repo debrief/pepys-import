@@ -7,7 +7,6 @@ from testing.postgresql import Postgresql
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
-from pepys_import.file.get_importers import get_importers
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
@@ -55,8 +54,7 @@ class SampleImporterTestCase(unittest.TestCase):
         """Test whether single level processing works for the given path"""
         processor = FileProcessor("single_level.db")
 
-        importers = get_importers()
-        processor.register_importers(importers)
+        processor.load_importers_dynamically()
 
         # try bad file
         exception = False
@@ -73,8 +71,7 @@ class SampleImporterTestCase(unittest.TestCase):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("descending.db")
 
-        importers = get_importers()
-        processor.register_importers(importers)
+        processor.load_importers_dynamically()
 
         # try bad file
         exception = False
