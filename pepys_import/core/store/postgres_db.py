@@ -453,7 +453,7 @@ class Contact(BasePostGIS, ContactMixin):
     __table_args__ = {"schema": "pepys"}
 
     contact_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150))
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )

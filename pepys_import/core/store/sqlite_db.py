@@ -374,7 +374,7 @@ class Contact(BaseSpatiaLite, ContactMixin):
     table_type_id = 29
 
     contact_id = Column(Integer, primary_key=True)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150))
     sensor_id = Column(Integer, nullable=False)
     time = Column(TIMESTAMP, nullable=False)
     bearing = Column(REAL)
