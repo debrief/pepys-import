@@ -1,7 +1,8 @@
 import os
 import unittest
+import math
 
-from pepys_import.file.replay_comment_importer import ReplayCommentImporter
+from pepys_import.file.replay_contact_importer import ReplayContactImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
 
@@ -12,7 +13,7 @@ DATA_PATH2 = os.path.join(
 )
 
 
-class RepCommentTests(unittest.TestCase):
+class RepContactTests(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -20,15 +21,15 @@ class RepCommentTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_process_rep_comments(self):
+    def test_process_rep_contacts(self):
         processor = FileProcessor()
-        processor.register_importer(ReplayCommentImporter())
+        processor.register_importer(ReplayContactImporter())
 
         # check states empty
         with self.store.session_scope():
             # there must be no states at the beginning
-            comments = self.store.session.query(self.store.db_classes.Comment).all()
-            self.assertEqual(len(comments), 0)
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
 
             # there must be no platforms at the beginning
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -44,16 +45,14 @@ class RepCommentTests(unittest.TestCase):
         # check data got created
         with self.store.session_scope():
             # there must be states after the import
-            comments = self.store.session.query(self.store.db_classes.Comment).all()
-            self.assertEqual(len(comments), 7)
-            # check the first two rows have matching comment types (NULL)
-            self.assertEqual(comments[0].comment_type_id, 1)
-            self.assertEqual(comments[1].comment_type_id, 1)
-            # and the last row has a different comment type
-            self.assertEqual(comments[6].comment_type_id, 2)
-            # and the full comments on some other rows
-            self.assertEqual(comments[0].content, "Contact detected on TA")
-            self.assertEqual(comments[6].content, "SUBJECT lost on TA")
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 7)
+
+            # check the data contents
+            self.assertEqual(contacts[0].bearing, math.radians(252.85))
+            self.assertEqual(contacts[1].bearing, math.radians(251.33))
+
+            self.assertEqual(contacts[0].freq, 123.4)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -63,15 +62,16 @@ class RepCommentTests(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
 
-    def test_process_rep_comment_errors(self):
+    @unittest.skip("do successful parse first")
+    def test_process_rep_contact_errors(self):
         processor = FileProcessor()
-        processor.register_importer(ReplayCommentImporter())
+        processor.register_importer(ReplayContactImporter())
 
         # check states empty
         with self.store.session_scope():
             # there must be no states at the beginning
-            comments = self.store.session.query(self.store.db_classes.Comment).all()
-            self.assertEqual(len(comments), 0)
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
 
             # there must be no platforms at the beginning
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -87,8 +87,8 @@ class RepCommentTests(unittest.TestCase):
         # check data got created
         with self.store.session_scope():
             # there must be states after the import
-            comments = self.store.session.query(self.store.db_classes.Comment).all()
-            self.assertEqual(len(comments), 0)
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
