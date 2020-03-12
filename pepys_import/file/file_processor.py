@@ -14,6 +14,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
+from pepys_import.utils.import_utils import import_module_
 
 
 class FileProcessor:
@@ -307,14 +308,7 @@ class FileProcessor:
             for file in os.scandir(path):
                 # import file using its name and full path
                 if file.is_file():
-                    spec = importlib.util.spec_from_file_location(file.name, file.path)
-                    module = importlib.util.module_from_spec(spec)
-                    sys.modules[file.name] = module
-                    spec.loader.exec_module(module)
-                    # extract classes with this format: (class name, class)
-                    classes = inspect.getmembers(
-                        sys.modules[module.__name__], inspect.isclass
-                    )
+                    classes = import_module_(file)
                     for name, class_ in classes:
                         # continue only if it's a concrete class that inherits Importer
                         if issubclass(class_, Importer) and not inspect.isabstract(
