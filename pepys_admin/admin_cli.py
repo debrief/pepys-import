@@ -141,9 +141,9 @@ class AdminShell(cmd.Cmd):
             datafilename = datafile_reference.replace(".", "_")
             print("Exported Datafile is: {}.rep.".format(datafilename))
 
-        selected_datafile_id = datafiles_dict[datafile_reference]
-        with self.datastore.session_scope():
-            self.datastore.export_datafile(selected_datafile_id, datafile_reference)
+            selected_datafile_id = datafiles_dict[datafile_reference]
+            with self.datastore.session_scope():
+                self.datastore.export_datafile(selected_datafile_id, datafilename)
 
     def do_initialise(self, arg):
         "Allow the currently connected database to be configured"
