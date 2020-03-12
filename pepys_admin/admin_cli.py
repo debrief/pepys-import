@@ -138,7 +138,8 @@ class AdminShell(cmd.Cmd):
             "Do you want to export {} Datafile. (Y/n)\n".format(datafile_reference)
         )
         if export_flag in ["", "Y", "y"]:
-            print("Exported Datafile is: {}.rep.".format(datafile_reference))
+            datafilename = datafile_reference.replace(".", "_")
+            print("Exported Datafile is: {}.rep.".format(datafilename))
 
         selected_datafile_id = datafiles_dict[datafile_reference]
         with self.datastore.session_scope():
