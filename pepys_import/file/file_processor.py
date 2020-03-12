@@ -302,7 +302,9 @@ class FileProcessor:
 
     def load_importers_dynamically(self, path=CORE_IMPORTERS_PATH):
         """Dynamically adds all the importers in the given path.
-        It registers core importers by default."""
+
+        It loads core importers by default.
+        """
         if os.path.exists(path):
             for file in os.scandir(path):
                 # import file using its name and full path
