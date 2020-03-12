@@ -1,4 +1,3 @@
-from .importer import Importer
 from datetime import datetime
 
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
@@ -6,6 +5,7 @@ from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
+from pepys_import.file.importer import Importer
 
 
 class NMEAImporter(Importer):
