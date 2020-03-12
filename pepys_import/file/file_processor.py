@@ -23,7 +23,8 @@ class FileProcessor:
         if local_importers_path:
             if not os.path.exists(local_importers_path):
                 print(
-                    f"No such file or directory: {local_importers_path}. Only core parsers are going to work."
+                    f"No such file or directory: {local_importers_path}. Only core "
+                    "parsers are going to work."
                 )
             else:
                 self.load_importers_dynamically(local_importers_path)
@@ -146,6 +147,9 @@ class FileProcessor:
         with data_store.session_scope():
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            contacts_sum = TableSummary(
+                data_store.session, data_store.db_classes.Contact
+            )
             comments_sum = TableSummary(
                 data_store.session, data_store.db_classes.Comment
             )
@@ -153,7 +157,7 @@ class FileProcessor:
                 data_store.session, data_store.db_classes.Platform
             )
             first_table_summary_set = TableSummarySet(
-                [states_sum, comments_sum, platforms_sum]
+                [states_sum, contacts_sum, comments_sum, platforms_sum]
             )
             print(first_table_summary_set.report("==Before=="))
 
@@ -176,6 +180,9 @@ class FileProcessor:
                         )
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            contacts_sum = TableSummary(
+                data_store.session, data_store.db_classes.Contact
+            )
             comments_sum = TableSummary(
                 data_store.session, data_store.db_classes.Comment
             )
@@ -183,7 +190,7 @@ class FileProcessor:
                 data_store.session, data_store.db_classes.Platform
             )
             second_table_summary_set = TableSummarySet(
-                [states_sum, comments_sum, platforms_sum]
+                [states_sum, contacts_sum, comments_sum, platforms_sum]
             )
             print(second_table_summary_set.report("==After=="))
 
@@ -270,8 +277,6 @@ class FileProcessor:
                     parser=importer.short_name,
                 ):
                     errors.extend(importer.errors)
-
-            print("FILE PROCESSOR &&&&&&&&&&&&", errors)
 
             # If all tests pass for all parsers, commit datafile
             if not errors:
