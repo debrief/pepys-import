@@ -1,6 +1,5 @@
 import csv
 import os
-from pathlib import Path
 
 from datetime import datetime
 from sqlalchemy import create_engine, or_
@@ -11,6 +10,7 @@ from sqlalchemy.exc import OperationalError
 from importlib import import_module
 from contextlib import contextmanager
 
+from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
@@ -28,8 +28,7 @@ import pepys_import.utils.unit_utils as unit_converter
 from .table_summary import TableSummary, TableSummarySet
 from shapely import wkb
 
-MAIN_DIRECTORY_PATH = Path(__file__).parent.parent.parent  # pepys_import/pepys_import
-DEFAULT_DATA_PATH = os.path.join(MAIN_DIRECTORY_PATH, "database", "default_data")
+DEFAULT_DATA_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "default_data")
 
 
 class DataStore(object):

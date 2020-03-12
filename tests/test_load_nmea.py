@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from pepys_import.file.nmea_importer import NMEAImporter
+from importers.nmea_importer import NMEAImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
 

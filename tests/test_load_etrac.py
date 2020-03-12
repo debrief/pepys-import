@@ -2,7 +2,7 @@ import os
 import unittest
 from unittest.mock import patch
 
-from pepys_import.file.e_trac_importer import ETracImporter
+from importers.e_trac_importer import ETracImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
 

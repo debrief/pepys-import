@@ -1,7 +1,7 @@
-from .importer import Importer
 from pepys_import.core.validators import constants
 from pepys_import.core.formats.rep_line import parse_timestamp
 from pepys_import.file.highlighter.support.combine import combine_tokens
+from pepys_import.file.importer import Importer
 
 
 class ReplayCommentImporter(Importer):
