@@ -7,15 +7,12 @@ import sys
 
 from datetime import datetime
 from stat import S_IREAD
-from pathlib import Path
 
+from paths import IMPORTERS_DIRECTORY
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
-
-ROOT_PATH = Path(__file__).parent.parent.parent  # Main directory
-CORE_IMPORTERS_PATH = os.path.join(ROOT_PATH, "importers")
 
 
 class FileProcessor:
@@ -300,7 +297,7 @@ class FileProcessor:
         """
         self.importers.append(importer)
 
-    def load_importers_dynamically(self, path=CORE_IMPORTERS_PATH):
+    def load_importers_dynamically(self, path=IMPORTERS_DIRECTORY):
         """Dynamically adds all the importers in the given path.
 
         It loads core importers by default.
