@@ -9,7 +9,7 @@ from datetime import datetime
 from stat import S_IREAD
 
 from paths import IMPORTERS_DIRECTORY
-from config import ARCHIVE_PATH
+from config import ARCHIVE_PATH, LOCAL_PARSERS
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
@@ -20,14 +20,13 @@ class FileProcessor:
     def __init__(self, filename=None):
         self.importers = []
         # Register local importers if any exists
-        local_importers_path = os.getenv("PEPYS_LOCAL_PARSERS")
-        if local_importers_path:
-            if not os.path.exists(local_importers_path):
+        if LOCAL_PARSERS:
+            if not os.path.exists(LOCAL_PARSERS):
                 print(
-                    f"No such file or directory: {local_importers_path}. Only core parsers are going to work."
+                    f"No such file or directory: {LOCAL_PARSERS}. Only core parsers are going to work."
                 )
             else:
-                self.load_importers_dynamically(local_importers_path)
+                self.load_importers_dynamically(LOCAL_PARSERS)
 
         if filename is None:
             self.filename = ":memory:"

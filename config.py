@@ -44,6 +44,6 @@ if ARCHIVE_PASSWORD.startswith("_") and ARCHIVE_PASSWORD.endswith("_"):
     ARCHIVE_PASSWORD = decrypt(ARCHIVE_PASSWORD)
 
 # Fetch local section
-PARSERS = config.get("local", "parsers")
-BASIC_TESTS = config.get("local", "basic_tests")
-ENHANCED_TESTS = config.get("local", "enhanced_tests")
+LOCAL_PARSERS = config.get("local", "parsers")
+LOCAL_BASIC_TESTS = config.get("local", "basic_tests")
+LOCAL_ENHANCED_TESTS = config.get("local", "enhanced_tests")
