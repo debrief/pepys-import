@@ -41,6 +41,8 @@ assert config.has_section(
 ), f"'archive' section couldn't find in '{CONFIG_FILE_PATH}'!"
 
 # Fetch archive section
+# TODO: The following username and password might be necessary when files are tried to be moved to
+# the archive path
 ARCHIVE_USER = config.get("archive", "user")
 ARCHIVE_PASSWORD = config.get("archive", "password")
 ARCHIVE_PATH = config.get("archive", "path")
