@@ -23,7 +23,10 @@ from pepys_import.utils.branding_util import (
     show_welcome_banner,
     show_software_meta_info,
 )
+import pepys_import.utils.value_transforming_utils as transformer
+import pepys_import.utils.unit_utils as unit_converter
 from .table_summary import TableSummary, TableSummarySet
+from shapely import wkb
 
 DEFAULT_DATA_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "default_data")
 
@@ -97,6 +100,13 @@ class DataStore(object):
 
         # use session_scope() to create a new session
         self.session = None
+
+        # dictionaries, to cache platform name
+        self._platform_dict_on_sensor_id = dict()
+        self._platform_dict_on_platform_id = dict()
+
+        # dictionary, to cache comment type name
+        self._comment_type_name_dict_on_comment_type_id = dict()
 
         # Branding Text
         if self.welcome_text:
@@ -1027,13 +1037,89 @@ class DataStore(object):
         datafiles = self.session.query(self.db_classes.Datafile).all()
         return datafiles
 
-    def export_datafile(self, datafile_id):
+    def get_cached_comment_type_name(self, comment_type_id):
+        """
+        Get comment type name from cache on either "comment_type_id"
+        If name is not found in the cache, sytem will load from the data store,
+        and add it into cache.
+        """
+        if comment_type_id:
+            # return from cache
+            if comment_type_id in self._comment_type_name_dict_on_comment_type_id:
+                return self._comment_type_name_dict_on_comment_type_id[comment_type_id]
+            comment_type = (
+                self.session.query(self.db_classes.CommentType)
+                .filter(self.db_classes.CommentType.comment_type_id == comment_type_id)
+                .first()
+            )
+
+            if comment_type:
+                self._comment_type_name_dict_on_comment_type_id[
+                    comment_type_id
+                ] = comment_type.name
+                return comment_type.name
+            else:
+                raise Exception(
+                    "No Comment Type found with Comment type id: {}".format(
+                        comment_type_id
+                    )
+                )
+
+    def get_cached_platform_name(self, sensor_id=None, platform_id=None):
+        """
+        Get platform name from cache on either "sensor_id" or "platform_id"
+        If name is not found in the cache, sytem will load from this data store,
+        and add it into cache.
+        """
+        # invalid parameter handling
+        if sensor_id is None and platform_id is None:
+            raise Exception(
+                'either "sensor_id" or "platform_id" has to be provided to get "platform name"'
+            )
+
+        if sensor_id:
+            # return from cache
+            if sensor_id in self._platform_dict_on_sensor_id:
+                return self._platform_dict_on_sensor_id[sensor_id]
+            sensor = (
+                self.session.query(self.db_classes.Sensor)
+                .filter(self.db_classes.Sensor.sensor_id == sensor_id)
+                .first()
+            )
+
+            if sensor:
+                platform_id = sensor.host
+            else:
+                raise Exception("No sensor found with sensor id: {}".format(sensor_id))
+
+        if platform_id:
+            # return from cache
+            if platform_id in self._platform_dict_on_platform_id:
+                return self._platform_dict_on_platform_id[platform_id]
+            platform = (
+                self.session.query(self.db_classes.Sensor)
+                .filter(self.db_classes.Sensor.sensor_id == sensor_id)
+                .first()
+            )
+
+            if platform:
+                self._platform_dict_on_platform_id[platform_id] = platform.name
+                if sensor_id:
+                    self._platform_dict_on_sensor_id[sensor_id] = platform.name
+            else:
+                raise Exception(
+                    "No Platform found with platform id: {}".format(platform_id)
+                )
+        return platform.name
+
+    def export_datafile(self, datafile_id, datafile):
         """
         Get states, contacts and comments based on Datafile ID.
 
         :param datafile_id:  ID of Datafile
         :type datafile_id: String
         """
+        f = open("{}.rep".format(datafile), "w+")
         states = (
             self.session.query(self.db_classes.State)
             .filter(self.db_classes.State.source_id == datafile_id)
@@ -1052,4 +1138,65 @@ class DataStore(object):
             .all()
         )
 
-        print(states, contacts, comments)
+        line_number = 0
+        for i, state in enumerate(states):
+            line_number += 1
+            #  load platform name from cache.
+            try:
+                platform_name = self.get_cached_platform_name(sensor_id=state.sensor_id)
+            except Exception as ex:
+                print(str(ex))
+                platform_name = "[Not Found]"
+
+            # wkb hex conversion to "point"
+            point = wkb.loads(state.location.desc, hex=True)
+            state_rep_line = [
+                transformer.format_datatime(state.time),
+                '"' + platform_name + '"',
+                "AA",
+                transformer.format_point(point.x, point.y),
+                str(unit_converter.convert_radian_to_degree(state.heading))
+                if state.heading
+                else "0",
+                str(unit_converter.convert_mps_to_knot(state.speed))
+                if state.speed
+                else "0",
+                str(abs(state.elevation)) if state.elevation else "NaN",
+            ]
+            data = " ".join(state_rep_line)
+            f.write(data + "\r\n")
+
+        # for contact in contacts:
+        #     sensor = self.session.query(self.db_classes.Sensor).filter(
+        #         self.db_classes.Sensor.sensor_id == contact.sensor_id
+        #     ).first()
+        # print(sensor.name)
+
+        for i, comment in enumerate(comments):
+            platform = (
+                self.session.query(self.db_classes.Sensor)
+                .filter(self.db_classes.Platform.platform_id == comment.platform_id)
+                .first()
+            )
+            vessel_name = platform.name
+            message = comment.content
+            comment_type_name = self.get_cached_comment_type_name(
+                comment.comment_type_id
+            )
+
+            comment_rep_line = [
+                transformer.format_datatime(comment.time),
+                vessel_name,
+                comment_type_name,
+                message,
+            ]
+
+            if comment_type_name == "None":
+                comment_rep_line.insert(0, ";NARRATIVE:")
+                del comment_rep_line[3]
+            else:
+                comment_rep_line.insert(0, ";NARRATIVE2:")
+
+            data = " ".join(comment_rep_line)
+            f.write(data + "\r\n")
+        f.close()

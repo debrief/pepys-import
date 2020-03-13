@@ -138,11 +138,12 @@ class AdminShell(cmd.Cmd):
             "Do you want to export {} Datafile. (Y/n)\n".format(datafile_reference)
         )
         if export_flag in ["", "Y", "y"]:
-            print("Exported Datafile is: {}.".format(datafile_reference))
+            datafilename = datafile_reference.replace(".", "_")
+            print("Exported Datafile is: {}.rep.".format(datafilename))
 
-        selected_datafile_id = datafiles_dict[datafile_reference]
-        with self.datastore.session_scope():
-            self.datastore.export_datafile(selected_datafile_id)
+            selected_datafile_id = datafiles_dict[datafile_reference]
+            with self.datastore.session_scope():
+                self.datastore.export_datafile(selected_datafile_id, datafilename)
 
     def do_initialise(self, arg):
         "Allow the currently connected database to be configured"

@@ -102,7 +102,8 @@ def bearing_between_two_points(first_location, second_location):
 
 def distance_between_two_points_haversine(first_location, second_location):
     """
-    Calculate the great circle distance between two points on the earth (specified in decimal degrees).
+    Calculate the great circle distance between two points on the earth (specified in
+    decimal degrees).
 
     :param first_location: First location point
     :param second_location: Second location point
@@ -125,4 +126,17 @@ def distance_between_two_points_haversine(first_location, second_location):
         (distance * unit_registry.kilometers / unit_registry.hour)
         .to(unit_registry.meter / unit_registry.second)
         .magnitude
+    )
+
+
+def convert_radian_to_degree(radian_value):
+    return (radian_value * unit_registry.radians).to(unit_registry.degree).magnitude
+
+
+def convert_mps_to_knot(mps_value):
+    return round(
+        (mps_value * unit_registry.meter / unit_registry.second)
+        .to(unit_registry.knot)
+        .magnitude,
+        3,
     )
