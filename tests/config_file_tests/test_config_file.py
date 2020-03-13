@@ -1,9 +1,12 @@
+import config
 import unittest
 import os
+import pytest
 
 from contextlib import redirect_stdout
 from io import StringIO
 from unittest.mock import patch
+from importlib import reload
 
 from pepys_import.file.file_processor import FileProcessor
 
@@ -11,6 +14,36 @@ DIRECTORY_PATH = os.path.dirname(__file__)
 TEST_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "samples")
 BAD_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "bad_path")
 OUTPUT_PATH = os.path.join(DIRECTORY_PATH, "output")
+CONFIG_FILE_PATH = os.path.join(DIRECTORY_PATH, "samples", "config.ini")
+
+
+class ConfigVariablesTestCase(unittest.TestCase):
+    @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH})
+    def test_config_variables(self):
+        reload(config)
+        assert config.DB_USERNAME == "Grfg Hfre"
+        assert config.DB_PASSWORD == "123456"
+        assert config.DB_HOST == "localhost"
+        assert config.DB_PORT == 5432
+        assert config.DB_NAME == "test"
+        assert config.ARCHIVE_USER == "hfre"
+        assert config.ARCHIVE_PASSWORD == "cnffjbeq"
+        assert config.ARCHIVE_PATH == "path/to/archive"
+        assert config.LOCAL_PARSERS == "path/to/parser"
+        assert config.LOCAL_BASIC_TESTS == "path/to/basic/tests"
+        assert config.LOCAL_ENHANCED_TESTS == "path/to/enhanced/tests"
+
+    @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": BAD_IMPORTER_PATH})
+    def test_wrong_file_path(self):
+        # No such file exception
+        with pytest.raises(Exception):
+            reload(config)
+
+    @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": TEST_IMPORTER_PATH})
+    def test_wrong_file_path_2(self):
+        # Your environment variable doesn't point to a file exception
+        with pytest.raises(Exception):
+            reload(config)
 
 
 class EnvironmentVariablesTestCase(unittest.TestCase):
