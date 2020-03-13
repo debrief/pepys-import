@@ -9,12 +9,15 @@ from unittest.mock import patch
 from importlib import reload
 
 from pepys_import.file.file_processor import FileProcessor
+from pepys_import.core.store import common_db
 
 DIRECTORY_PATH = os.path.dirname(__file__)
 TEST_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "samples")
 BAD_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "bad_path")
 OUTPUT_PATH = os.path.join(DIRECTORY_PATH, "output")
 CONFIG_FILE_PATH = os.path.join(DIRECTORY_PATH, "samples", "config.ini")
+BASIC_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "basic_parsers")
+ENHANCED_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "enhanced_parsers")
 
 
 class ConfigVariablesTestCase(unittest.TestCase):
@@ -46,7 +49,7 @@ class ConfigVariablesTestCase(unittest.TestCase):
             reload(config)
 
 
-class EnvironmentVariablesTestCase(unittest.TestCase):
+class FileProcessorVariablesTestCase(unittest.TestCase):
     @patch("pepys_import.file.file_processor.LOCAL_PARSERS", TEST_IMPORTER_PATH)
     def test_pepys_local_parsers(self):
         file_processor = FileProcessor()
@@ -74,6 +77,19 @@ class EnvironmentVariablesTestCase(unittest.TestCase):
         assert file_processor.output_path == OUTPUT_PATH
         # Remove the test_output directory
         os.rmdir(OUTPUT_PATH)
+
+
+class CommonDBVariablesTestCase(unittest.TestCase):
+    @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_PATH)
+    @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_PATH)
+    def test_local_parser_tests(self):
+        assert not common_db.LOCAL_BASIC_VALIDATORS
+        assert not common_db.LOCAL_ENHANCED_VALIDATORS
+
+        # reload common_db module
+        reload(common_db)
+        assert len(common_db.LOCAL_BASIC_VALIDATORS) == 1
+        assert len(common_db.LOCAL_ENHANCED_VALIDATORS) == 1
 
 
 if __name__ == "__main__":
