@@ -11,6 +11,9 @@ def import_module_(file):
     :type file: File
     """
     spec = importlib.util.spec_from_file_location(file.name, file.path)
+    # If spec is none, it means that it is not a module, return an empty list
+    if spec is None:
+        return list()
     module = importlib.util.module_from_spec(spec)
     sys.modules[file.name] = module
     spec.loader.exec_module(module)
