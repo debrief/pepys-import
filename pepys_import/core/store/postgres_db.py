@@ -197,9 +197,9 @@ class Log(BasePostGIS):
     log_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
     id = Column(UUID(as_uuid=True), ForeignKey("pepys.Logs.log_id"), nullable=False)
-    field = Column(String(150), nullable=False)
-    new_value = Column(String(150), nullable=False)
-    change_id = Column(UUID, nullable=False)
+    field = Column(String(150))
+    new_value = Column(String(150))
+    change_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Changes.change_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
