@@ -64,7 +64,7 @@ class ReplayContactImporter(Importer):
                         location = None
                         token_ctr = 5
                     else:
-                        token_ctr = 13
+                        token_ctr = 12
                         lat_degrees_token = tokens[5]
                         lat_mins_token = tokens[6]
                         lat_secs_token = tokens[7]
@@ -113,7 +113,7 @@ class ReplayContactImporter(Importer):
                         location = None
                         token_ctr = 5
                     else:
-                        token_ctr = 13
+                        token_ctr = 12
                         lat_degrees_token = tokens[5]
                         lat_mins_token = tokens[6]
                         lat_secs_token = tokens[7]
@@ -158,12 +158,20 @@ class ReplayContactImporter(Importer):
                         self.errors,
                         self.error_type,
                     )
+                    if not latitude.parse():
+                        self.errors.append(
+                            {
+                                self.error_type: f"Line {line_number}. Error in latitude parsing"
+                            }
+                        )
+                        continue
+
                     combine_tokens(
                         lat_degrees_token,
                         lat_mins_token,
                         lat_secs_token,
                         lat_hemi_token,
-                    ).record(self.importer_name, "latitude", self.latitude, "DMS")
+                    ).record(self.name, "latitude", latitude, "DMS")
 
                     longitude = Location(
                         long_degrees_token.text,
@@ -173,12 +181,20 @@ class ReplayContactImporter(Importer):
                         self.errors,
                         self.error_type,
                     )
+                    if not longitude.parse():
+                        self.errors.append(
+                            {
+                                self.error_type: f"Line {line_number}. Error in longitude parsing"
+                            }
+                        )
+                        continue
+
                     combine_tokens(
                         long_degrees_token,
                         long_mins_token,
                         long_secs_token,
                         long_hemi_token,
-                    ).record(self.importer_name, "longitude", self.longitude, "DMS")
+                    ).record(self.name, "longitude", longitude, "DMS")
 
                     location = (
                         f"POINT({longitude.as_degrees()} " f"{latitude.as_degrees()})"
