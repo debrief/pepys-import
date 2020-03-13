@@ -267,7 +267,7 @@ class FileProcessor:
 
             # If all tests pass for all parsers, commit datafile
             if not errors:
-                log = datafile.commit(data_store.session)
+                log = datafile.commit(data_store)
                 # write extraction log to output folder
                 with open(
                     os.path.join(self.directory_path, f"{filename}_output.log"), "w",

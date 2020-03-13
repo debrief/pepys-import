@@ -345,14 +345,9 @@ class DataStore(object):
         self.session.flush()
 
         # State object created, log it to Logs table
-        # TODO: It should comment out when change id is known
-        # self.add_to_logs(
-        #     table=constants.STATE,
-        #     row_id=state_obj.state_id,
-        #     field="-",
-        #     new_value="-",
-        #     change_id="XXX",  # TODO: Does it mean that we should create an entry in Changes first?
-        # )
+        self.add_to_logs(
+            table=constants.STATE, row_id=state_obj.state_id,
+        )
 
         return state_obj
 
@@ -379,6 +374,11 @@ class DataStore(object):
         )
         self.session.add(sensor_obj)
         self.session.flush()
+
+        # Sensor object created, log it to Logs table
+        self.add_to_logs(
+            table=constants.SENSOR, row_id=sensor_obj.sensor_id,
+        )
 
         return sensor_obj
 
@@ -418,6 +418,11 @@ class DataStore(object):
         print(f"'{reference}' added to Datafile!")
         # add to cache and return created datafile
         self.datafiles[reference] = datafile_obj
+
+        # Datafile object created, log it to Logs table
+        self.add_to_logs(
+            table=constants.DATAFILE, row_id=datafile_obj.datafile_id,
+        )
 
         return datafile_obj
 
@@ -472,6 +477,12 @@ class DataStore(object):
         # add to cache and return created platform
         self.platforms[name] = platform_obj
         # should return DB type or something else decoupled from DB?
+
+        # Platform object created, log it to Logs table
+        self.add_to_logs(
+            table=constants.PLATFORM, row_id=platform_obj.platform_id,
+        )
+
         return platform_obj
 
     def add_to_synonyms(self, table, name, entity):
@@ -479,6 +490,11 @@ class DataStore(object):
         synonym = self.db_classes.Synonym(table=table, synonym=name, entity=entity)
         self.session.add(synonym)
         self.session.flush()
+
+        # Synonym object created, log it to Logs table
+        self.add_to_logs(
+            table=constants.SYNONYM, row_id=synonym.synonym_id,
+        )
 
         return synonym
 
@@ -867,6 +883,11 @@ class DataStore(object):
         # add to cache and return created platform type
         self.comment_types[name] = comment_type
         # should return DB type or something else decoupled from DB?
+
+        # Comment Type object created, log it to Logs table
+        self.add_to_logs(
+            table=constants.COMMENT_TYPE, row_id=comment_type.comment_type_id,
+        )
         return comment_type
 
     # End of Measurements
@@ -902,6 +923,11 @@ class DataStore(object):
         # add to cache and return created platform type
         self.platform_types[platform_type_name] = platform_type
         # should return DB type or something else decoupled from DB?
+
+        # Platform Type object created, log it to Logs table
+        self.add_to_logs(
+            table=constants.PLATFORM_TYPE, row_id=platform_type.platform_type_id,
+        )
         return platform_type
 
     def add_to_nationalities(self, nationality_name):
@@ -932,6 +958,11 @@ class DataStore(object):
         # add to cache and return created platform
         self.nationalities[nationality_name] = nationality
         # should return DB type or something else decoupled from DB?
+
+        # Comment Type object created, log it to Logs table
+        self.add_to_logs(
+            table=constants.NATIONALITY, row_id=nationality.nationality_id,
+        )
         return nationality
 
     def add_to_privacies(self, privacy_name):
@@ -962,6 +993,11 @@ class DataStore(object):
         # add to cache and return created platform
         self.privacies[privacy_name] = privacy
         # should return DB type or something else decoupled from DB?
+
+        # Privacy object created, log it to Logs table
+        self.add_to_logs(
+            table=constants.PRIVACY, row_id=privacy.privacy_id,
+        )
         return privacy
 
     def add_to_datafile_types(self, datafile_type):
@@ -994,6 +1030,11 @@ class DataStore(object):
         # add to cache and return created datafile type
         self.datafile_types[datafile_type] = datafile_type_obj
         # should return DB type or something else decoupled from DB?
+
+        # Datafile Type object created, log it to Logs table
+        self.add_to_logs(
+            table=constants.DATAFILE_TYPE, row_id=datafile_type_obj.datafile_type_id,
+        )
         return datafile_type_obj
 
     def add_to_sensor_types(self, sensor_type_name):
@@ -1024,13 +1065,18 @@ class DataStore(object):
         # add to cache and return created sensor type
         self.sensor_types[sensor_type_name] = sensor_type
         # should return DB type or something else decoupled from DB?
+
+        # Sensor Type object created, log it to Logs table
+        self.add_to_logs(
+            table=constants.SENSOR_TYPE, row_id=sensor_type.sensor_type_id,
+        )
         return sensor_type
 
     # End of References
     #############################################################
     # Metadata Maintenance
 
-    def add_to_logs(self, table, row_id, field, new_value, change_id):
+    def add_to_logs(self, table, row_id, field=None, new_value=None, change_id=None):
         """
         Adds the specified event to the :class:`Logs`table if not already present.
 

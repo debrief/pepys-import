@@ -2,6 +2,7 @@ from pepys_import.core.validators import constants as validation_constants
 
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
+from pepys_import.core.store import constants
 
 
 class SensorMixin:
@@ -167,13 +168,13 @@ class DatafileMixin:
                 return True
             return False
 
-    def commit(self, session):
+    def commit(self, data_store):
         # Since measurements are saved by their importer names, iterate over each key
         # and save its measurement objects.
         extraction_log = list()
         for key in self.measurements.keys():
             for file in self.measurements[key]:
-                file.submit(session)
+                file.submit(data_store)
             extraction_log.append(
                 f"{len(self.measurements[key])} measurement objects parsed by {key}."
             )
@@ -192,27 +193,36 @@ class SensorTypeMixin:
 
 
 class StateMixin:
-    def submit(self, session):
+    def submit(self, data_store):
         """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-
+        data_store.session.add(self)
+        data_store.session.flush()
+        # Log new State object creation
+        data_store.add_to_logs(
+            table=constants.STATE, row_id=self.state_id,
+        )
         return self
 
 
 class ContactMixin:
-    def submit(self, session):
+    def submit(self, data_store):
         """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-
+        data_store.session.add(self)
+        data_store.session.flush()
+        # Log new Contact object creation
+        data_store.add_to_logs(
+            table=constants.CONTACT, row_id=self.contact_id,
+        )
         return self
 
 
 class CommentMixin:
-    def submit(self, session):
+    def submit(self, data_store):
         """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-
+        data_store.session.add(self)
+        data_store.session.flush()
+        # Log new Comment object creation
+        data_store.add_to_logs(
+            table=constants.COMMENT, row_id=self.comment_id,
+        )
         return self
