@@ -2,6 +2,7 @@ import unittest
 
 from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.formats import unit_registry, quantity
+from pepys_import.file.highlighter.support.test_utils import create_test_line_object
 
 
 class UnitsTests(unittest.TestCase):
@@ -62,10 +63,12 @@ class UnitsTests(unittest.TestCase):
     def test_state_conversion(self):
         state = REPLine(
             1,
-            "100112 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 ",
+            create_test_line_object(
+                "100112 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
+            ),
             " ",
         )
-        self.assertTrue(state.parse())
+        self.assertTrue(state.parse(list(), "test"))
 
         # Speed and Heading from state
         # heading -> 109.08 (degrees)

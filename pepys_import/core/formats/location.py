@@ -1,9 +1,20 @@
 class Location:
-    def __init__(self, degrees, minutes, seconds, hemisphere):
+    def __init__(
+        self, degrees, minutes, seconds, hemisphere, errors=None, error_type=None
+    ):
         self.degrees = degrees
         self.minutes = minutes
         self.seconds = seconds
         self.hemisphere = hemisphere
+
+        if errors is None:
+            self.errors = list()
+        else:
+            self.errors = errors
+        if error_type is None:
+            self.error_type = "Location Parsing Error"
+        else:
+            self.error_type = error_type
 
     def __repr__(self):
         return (
@@ -41,31 +52,39 @@ class Location:
         try:
             self.degrees = float(self.degrees)
         except ValueError:
-            print(
-                f"Error in degrees value {self.degrees}. Couldn't convert to a number"
+            self.errors.append(
+                {
+                    self.error_type: f"Error in degrees value {self.degrees}. Couldn't convert to a number"
+                }
             )
             return False
 
         try:
             self.minutes = float(self.minutes)
         except ValueError:
-            print(
-                f"Error in minutes value {self.minutes}. Couldn't convert to a number"
+            self.errors.append(
+                {
+                    self.error_type: f"Error in minutes value {self.minutes}. Couldn't convert to a number"
+                }
             )
             return False
 
         try:
             self.seconds = float(self.seconds)
         except ValueError:
-            print(
-                f"Error in seconds value {self.seconds}. Couldn't convert to a number"
+            self.errors.append(
+                {
+                    self.error_type: f"Error in seconds value {self.seconds}. Couldn't convert to a number"
+                }
             )
             return False
 
         if self.hemisphere not in ("N", "S", "E", "W"):
-            print(
-                f"Error in hemisphere value {self.hemisphere}. "
-                f"Should be one of N, S, E or W"
+            self.errors.append(
+                {
+                    self.error_type: f"Error in hemisphere value {self.hemisphere}. "
+                    f"Should be one of N, S, E or W"
+                }
             )
             return False
 

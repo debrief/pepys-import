@@ -4,11 +4,11 @@ import sys
 
 sys.path.append(".")
 
-import argparse     # noqa: E402
-import cmd          # noqa: E402
-from iterfzf import iterfzf      # noqa: E402
-import os                        # noqa: E402
-from pepys_import.core.store.data_store import DataStore   # noqa: E402
+import argparse  # noqa: E402
+import cmd  # noqa: E402
+from iterfzf import iterfzf  # noqa: E402
+import os  # noqa: E402
+from pepys_import.core.store.data_store import DataStore  # noqa: E402
 
 dirpath = os.path.dirname(os.path.abspath(__file__))
 
@@ -54,9 +54,10 @@ class InitialiseShell(cmd.Cmd):
     )
     prompt = "(initialise) "
 
-    def __init__(self, datastore, parentShell):
+    def __init__(self, datastore, parentShell, csv_path):
         super(InitialiseShell, self).__init__()
         self.datastore = datastore
+        self.csv_path = csv_path
         self.aliases = {
             "0": self.do_cancel,
             "1": self.do_cleardb,
@@ -76,13 +77,13 @@ class InitialiseShell(cmd.Cmd):
         self.datastore.initialise()
 
     def do_import_reference_data(self, args):
-        self.datastore.populate_reference(dirpath)
+        self.datastore.populate_reference(self.csv_path)
 
     def do_import_metadata(self, args):
-        self.datastore.populate_metadata(dirpath)
+        self.datastore.populate_metadata(self.csv_path)
 
     def do_import_sample_measurements(self, args):
-        self.datastore.populate_measurement(dirpath)
+        self.datastore.populate_measurement(self.csv_path)
 
     def do_cancel(self, *args):
         return True
@@ -109,9 +110,10 @@ class AdminShell(cmd.Cmd):
     intro = "\n--- Menu --- \n (1) Export\n " "(2) Initialise\n (3) Status\n (0) Exit\n"
     prompt = "(pepys-admin) "
 
-    def __init__(self, datastore):
+    def __init__(self, datastore, csv_path=dirpath):
         super(AdminShell, self).__init__()
         self.datastore = datastore
+        self.csv_path = csv_path
         self.aliases = {
             "0": self.do_exit,
             "1": self.do_export,
@@ -136,15 +138,16 @@ class AdminShell(cmd.Cmd):
             "Do you want to export {} Datafile. (Y/n)\n".format(datafile_reference)
         )
         if export_flag in ["", "Y", "y"]:
-            print("Exported Datafile is: {}.".format(datafile_reference))
+            datafilename = datafile_reference.replace(".", "_")
+            print("Exported Datafile is: {}.rep.".format(datafilename))
 
-        selected_datafile_id = datafiles_dict[datafile_reference]
-        with self.datastore.session_scope():
-            self.datastore.export_datafile(selected_datafile_id)
+            selected_datafile_id = datafiles_dict[datafile_reference]
+            with self.datastore.session_scope():
+                self.datastore.export_datafile(selected_datafile_id, datafilename)
 
     def do_initialise(self, arg):
         "Allow the currently connected database to be configured"
-        initialise = InitialiseShell(self.datastore, self)
+        initialise = InitialiseShell(self.datastore, self, self.csv_path)
         initialise.cmdloop()
 
     def do_status(self, arg):
@@ -171,20 +174,13 @@ class AdminShell(cmd.Cmd):
     def do_exit(self, arg):
         "Exit the application"
         print("Thank you for using Pepys Admin")
-        self.close()
         return True
-
-    def close(self):
-        if self.file:
-            self.file.close()
-            self.file = None
 
     def default(self, line):
         cmd, arg, line = self.parseline(line)
         if cmd in self.aliases:
             self.aliases[cmd](arg)
             if cmd == "0":
-                self.close()
                 return True
         else:
             print("*** Unknown syntax: %s" % line)
@@ -196,8 +192,9 @@ class AdminShell(cmd.Cmd):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="SQLite file path!")
+    parser = argparse.ArgumentParser(description="Pepys Admin CLI")
     parser.add_argument("--db", type=str, help="Db Path")
+    parser.add_argument("--path", type=str, help="CSV files path")
 
     args = parser.parse_args()
     db_file = args.db
@@ -207,4 +204,4 @@ if __name__ == "__main__":
     else:
         datastore = create_postgres_data_store()
 
-    AdminShell(datastore).cmdloop()
+    AdminShell(datastore, args.path).cmdloop()

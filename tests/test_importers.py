@@ -1,37 +1,43 @@
 import os
 import unittest
+
 from contextlib import redirect_stdout
 from io import StringIO
 from datetime import datetime
+from unittest.mock import patch
+
 from pepys_import.file.importer import Importer
-from pepys_import.file.replay_importer import ReplayImporter
-from pepys_import.file.nmea_importer import NMEAImporter
 from pepys_import.file.file_processor import FileProcessor
+from importers.replay_importer import ReplayImporter
+from importers.nmea_importer import NMEAImporter
 
 FILE_PATH = os.path.dirname(__file__)
+CURRENT_DIR = os.getcwd()
 BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
 DATA_PATH = os.path.join(FILE_PATH, "sample_data")
+OUTPUT_PATH = os.path.join(DATA_PATH, "output")
 
 
+@patch("shutil.move")
+@patch("os.chmod")
 class SampleImporterTests(unittest.TestCase):
     def setUp(self) -> None:
         pass
 
     def tearDown(self) -> None:
-        single_level_file = os.path.join(FILE_PATH, "single_level.db")
+        single_level_file = os.path.join(CURRENT_DIR, "single_level.db")
         if os.path.exists(single_level_file):
             os.remove(single_level_file)
 
-        descending_file = os.path.join(FILE_PATH, "descending.db")
+        descending_file = os.path.join(CURRENT_DIR, "descending.db")
         if os.path.exists(descending_file):
             os.remove(descending_file)
 
-    def test_process_folders_not_descending(self):
+    def test_process_folders_not_descending(self, patched_move, patched_chmod):
         """Test whether single level processing works for the given path"""
         processor = FileProcessor("single_level.db")
 
-        processor.register_importer(ReplayImporter())
-        processor.register_importer(NMEAImporter())
+        processor.load_importers_dynamically()
 
         # try bad file
         exception = False
@@ -44,12 +50,11 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, False)
 
-    def test_process_folders_descending(self):
+    def test_process_folders_descending(self, patched_move, patched_chmod):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("descending.db")
 
-        processor.register_importer(ReplayImporter())
-        processor.register_importer(NMEAImporter())
+        processor.load_importers_dynamically()
 
         # try bad file
         exception = False
@@ -62,12 +67,11 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, True)
 
-    def test_process_folders_descending_in_memory(self):
+    def test_process_folders_descending_in_memory(self, patched_move, patched_chmod):
         """Test whether :memory: is used when no filename is given"""
         processor = FileProcessor()
 
-        processor.register_importer(ReplayImporter())
-        processor.register_importer(NMEAImporter())
+        processor.load_importers_dynamically()
 
         # try bad file
         exception = False
@@ -80,19 +84,18 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, True)
 
-    def test_class_name(self):
+    def test_class_name(self, patched_move, patched_chmod):
         """Test whether class names are correct"""
         replay_importer = ReplayImporter()
         self.assertEqual(str(replay_importer), "Replay File Format Importer")
         nmea_importer = NMEAImporter()
         self.assertEqual(str(nmea_importer), "NMEA File Format Importer")
 
-    def test_giving_file_path_only(self):
+    def test_giving_file_path_only(self, patched_move, patched_chmod):
         """Test whether process method works when a file path is given"""
         processor = FileProcessor()
 
-        processor.register_importer(ReplayImporter())
-        processor.register_importer(NMEAImporter())
+        processor.load_importers_dynamically()
 
         file_path = os.path.join(DATA_PATH, "test_importers.csv")
 
@@ -121,12 +124,12 @@ class ImporterRemoveTestCase(unittest.TestCase):
             def can_load_this_file(self, file_contents):
                 return True
 
-            def load_this_file(self, data_store, path, file_contents, data_file):
+            def _load_this_file(self, data_store, path, file_contents, data_file):
                 pass
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter())
+        processor.register_importer(TestImporter("", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -153,12 +156,12 @@ class ImporterRemoveTestCase(unittest.TestCase):
             def can_load_this_file(self, file_contents):
                 return True
 
-            def load_this_file(self, data_store, path, file_contents, data_file):
+            def _load_this_file(self, data_store, path, file_contents, data_file):
                 pass
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter())
+        processor.register_importer(TestImporter("", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -185,12 +188,12 @@ class ImporterRemoveTestCase(unittest.TestCase):
             def can_load_this_file(self, file_contents):
                 return True
 
-            def load_this_file(self, data_store, path, file_contents, data_file):
+            def _load_this_file(self, data_store, path, file_contents, data_file):
                 pass
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter())
+        processor.register_importer(TestImporter("", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -217,12 +220,12 @@ class ImporterRemoveTestCase(unittest.TestCase):
             def can_load_this_file(self, file_contents):
                 return False
 
-            def load_this_file(self, data_store, path, file_contents, data_file):
+            def _load_this_file(self, data_store, path, file_contents, data_file):
                 pass
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter())
+        processor.register_importer(TestImporter("", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -254,17 +257,6 @@ class NMEAImporterTestCase(unittest.TestCase):
         timestamp = self.nmea_importer.parse_timestamp("010101", "010101")
         self.assertEqual(type(timestamp), datetime)
         self.assertEqual(str(timestamp), "2001-01-01 01:01:01")
-
-    def test_parse_location(self):
-        """Test whether the method correctly converts the given string location"""
-        location = self.nmea_importer.parse_location("01603600", "S", "001603600", "W")
-        self.assertEqual("(-3.0 -3.0)", location)
-
-    def test_tokens(self):
-        """Test whether the method correctly tokenize the given string"""
-        tokens = self.nmea_importer.tokens("Test line")
-        self.assertEqual(tokens[0], "Test")
-        self.assertEqual(tokens[1], "line")
 
 
 if __name__ == "__main__":

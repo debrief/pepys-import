@@ -58,17 +58,20 @@ class DataStoreInitialisePostGISTestCase(TestCase):
         table_names = inspector.get_table_names(schema="pepys")
         schema_names = inspector.get_schema_names()
 
-        # 36 tables and 1 table for spatial objects (spatial_ref_sys) must be created to default schema
-        self.assertEqual(len(table_names), 37)
-        self.assertIn("Entry", table_names)
+        # 34 tables must be created to default schema
+        self.assertEqual(len(table_names), 34)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
         self.assertIn("Datafiles", table_names)
         self.assertIn("Nationalities", table_names)
-        self.assertIn("spatial_ref_sys", table_names)
 
         # pepys must be created
         self.assertIn("pepys", schema_names)
+
+        # 1 table for spatial objects (spatial_ref_sys) must be created to default schema
+        table_names = inspector.get_table_names()
+        self.assertEqual(len(table_names), 1)
+        self.assertIn("spatial_ref_sys", table_names)
 
 
 class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
@@ -93,13 +96,12 @@ class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
         SYSTEM = platform.system()
 
         if SYSTEM == "Windows":
-            correct_n_tables = 74
-        else:
             correct_n_tables = 72
+        else:
+            correct_n_tables = 70
 
         # 36 tables + 36 spatial tables must be created. A few of them tested
         self.assertEqual(len(table_names), correct_n_tables)
-        self.assertIn("Entry", table_names)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
         self.assertIn("Datafiles", table_names)

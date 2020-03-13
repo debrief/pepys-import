@@ -9,57 +9,15 @@ from pepys_import.core.store.db_base import BaseSpatiaLite
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.store import constants
 
-
-class Entry(BaseSpatiaLite):
-    __tablename__ = constants.ENTRY
-    table_type = TableTypes.METADATA
-
-    entry_id = Column(Integer, primary_key=True)
-    table_type_id = Column(Integer, nullable=False)
-    created_user = Column(Integer)
-    created_date = Column(DateTime, default=datetime.utcnow)
-
-    @classmethod
-    def add_to_entries(cls, session, table_type_id, table_name):
-        # ensure table type exists to satisfy foreign key constraint
-        TableType().add_to_table_types(session, table_type_id, table_name)
-
-        # No cache for entries, just add new one when called
-        entry_obj = Entry(table_type_id=table_type_id, created_user=1)
-
-        session.add(entry_obj)
-        session.flush()
-
-        return entry_obj.entry_id
-
-
-class TableType(BaseSpatiaLite):
-    __tablename__ = constants.TABLE_TYPE
-    table_type = TableTypes.METADATA
-
-    table_type_id = Column(Integer, nullable=False, primary_key=True)
-    name = Column(String(150))
-    created_date = Column(DateTime, default=datetime.utcnow)
-
-    @classmethod
-    def search_table_type(cls, session, table_type_id):
-        # search for any table type with this id
-        return (
-            session.query(TableType)
-            .filter(TableType.table_type_id == table_type_id)
-            .first()
-        )
-
-    @classmethod
-    def add_to_table_types(cls, session, table_type_id, table_name):
-        table_type = cls.search_table_type(session, table_type_id)
-        if table_type is None:
-            # enough info to proceed and create entry
-            table_type = TableType(table_type_id=table_type_id, name=table_name)
-            session.add(table_type)
-            session.flush()
-
-        return table_type
+from pepys_import.core.store.common_db import (
+    SensorMixin,
+    PlatformMixin,
+    DatafileMixin,
+    SensorTypeMixin,
+    StateMixin,
+    ContactMixin,
+    CommentMixin,
+)
 
 
 # Metadata Tables
@@ -77,7 +35,7 @@ class HostedBy(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Sensor(BaseSpatiaLite):
+class Sensor(BaseSpatiaLite, SensorMixin):
     __tablename__ = constants.SENSOR
     table_type = TableTypes.METADATA
     table_type_id = 2
@@ -88,58 +46,8 @@ class Sensor(BaseSpatiaLite):
     host = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    @classmethod
-    def find_sensor(cls, data_store, sensor_name, platform_id):
-        """
-        This method tries to find a Sensor entity with the given sensor_name. If it
-        finds, it returns the entity. If it is not found, it searches synonyms.
 
-        :param data_store: A :class:`DataStore` object
-        :type data_store: DataStore
-        :param sensor_name: Name of :class:`Sensor`
-        :type sensor_name: String
-        :param platform_id:  Primary key of the Platform that Sensor belongs to
-        :type platform_id: int
-        :return:
-        """
-        sensor = (
-            data_store.session.query(data_store.db_classes.Sensor)
-            .filter(data_store.db_classes.Sensor.name == sensor_name)
-            .filter(data_store.db_classes.Sensor.host == platform_id)
-            .first()
-        )
-        if sensor:
-            return sensor
-
-        # Sensor is not found, try to find a synonym
-        return data_store.synonym_search(
-            name=sensor_name,
-            table=data_store.db_classes.Sensor,
-            pk_field=data_store.db_classes.Sensor.sensor_id,
-        )
-
-    @classmethod
-    def add_to_sensors(cls, session, name, sensor_type, host):
-        sensor_type = SensorType().search_sensor_type(session, sensor_type)
-        host = Platform().search_platform(session, host)
-
-        entry_id = Entry().add_to_entries(
-            session, Sensor.table_type_id, Sensor.__tablename__
-        )
-
-        sensor_obj = Sensor(
-            sensor_id=entry_id,
-            name=name,
-            sensor_type_id=sensor_type.sensor_type_id,
-            host=host.platform_id,
-        )
-        session.add(sensor_obj)
-        session.flush()
-
-        return sensor_obj
-
-
-class Platform(BaseSpatiaLite):
+class Platform(BaseSpatiaLite, PlatformMixin):
     __tablename__ = constants.PLATFORM
     table_type = TableTypes.METADATA
     table_type_id = 3
@@ -153,53 +61,6 @@ class Platform(BaseSpatiaLite):
     platform_type_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    @classmethod
-    def search_platform(cls, session, name):
-        # search for any platform with this name
-        return session.query(Platform).filter(Platform.name == name).first()
-
-    def get_sensor(self, data_store, sensor_name=None, sensor_type=None, privacy=None):
-        """
-         Lookup or create a sensor of this name for this :class:`Platform`.
-         Specified sensor will be added to the :class:`Sensor` table.
-         It uses find_sensor method to search existing sensors.
-
-        :param data_store: DataStore object to to query DB and use missing data resolver
-        :type data_store: DataStore
-        :param sensor_name: Name of :class:`Sensor`
-        :type sensor_name: String
-        :param sensor_type: Type of :class:`Sensor`
-        :type sensor_type: SensorType
-        :param privacy: Privacy of :class:`Sensor`
-        :type privacy: Privacy
-        :return: Created :class:`Sensor` entity
-        :rtype: Sensor
-        """
-        sensor = Sensor().find_sensor(data_store, sensor_name, self.platform_id)
-        if sensor:
-            return sensor
-
-        if sensor_type is None or privacy is None:
-            resolved_data = data_store.missing_data_resolver.resolve_sensor(
-                data_store, sensor_name, sensor_type, privacy
-            )
-            # It means that new sensor added as a synonym and existing sensor returned
-            if isinstance(resolved_data, Sensor):
-                return resolved_data
-            elif len(resolved_data) == 3:
-                (sensor_name, sensor_type, privacy,) = resolved_data
-
-        assert isinstance(sensor_type, SensorType), "Type error for Sensor Type entity"
-        # TODO: we don't use privacy for sensor. Is it necessary to resolve it?
-        # assert isinstance(privacy, Privacy), "Type error for Privacy entity"
-
-        return Sensor().add_to_sensors(
-            session=data_store.session,
-            name=sensor_name,
-            sensor_type=sensor_type.name,
-            host=self.name,
-        )
 
 
 class Task(BaseSpatiaLite):
@@ -233,10 +94,10 @@ class Participant(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Datafile(BaseSpatiaLite):
+class Datafile(BaseSpatiaLite, DatafileMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._measurements = []
+        self.measurements = dict()
 
     __tablename__ = constants.DATAFILE
     table_type = TableTypes.METADATA
@@ -249,40 +110,6 @@ class Datafile(BaseSpatiaLite):
     reference = Column(String(150))
     url = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def create_state(self, sensor, timestamp):
-        state = State(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
-        )
-        self._measurements.append(state)
-        return state
-
-    def create_contact(self, sensor, timestamp):
-        contact = Contact(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
-        )
-        self._measurements.append(contact)
-        return contact
-
-    def create_comment(self, sensor, timestamp, comment, comment_type):
-        comment = Comment(
-            time=timestamp,
-            content=comment,
-            comment_type_id=comment_type.comment_type_id,
-            source_id=self.datafile_id,
-        )
-        self._measurements.append(comment)
-        return comment
-
-    def validate(self):
-        return True
-
-    def commit(self, session):
-        for file in self._measurements:
-            file.submit(session)
-
-    # def verify(self):
-    #     pass
 
 
 class Synonym(BaseSpatiaLite):
@@ -441,7 +268,7 @@ class ContactType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class SensorType(BaseSpatiaLite):
+class SensorType(BaseSpatiaLite, SensorTypeMixin):
     __tablename__ = constants.SENSOR_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 21
@@ -449,11 +276,6 @@ class SensorType(BaseSpatiaLite):
     sensor_type_id = Column(Integer, primary_key=True)
     name = Column(String(150))
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    @classmethod
-    def search_sensor_type(cls, session, name):
-        # search for any sensor type featuring this name
-        return session.query(SensorType).filter(SensorType.name == name).first()
 
 
 class Privacy(BaseSpatiaLite):
@@ -517,7 +339,13 @@ class ConfidenceLevel(BaseSpatiaLite):
 
 
 # Measurements Tables
-class State(BaseSpatiaLite):
+class State(BaseSpatiaLite, StateMixin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.prev_location = None
+        self.sensor_name = None
+        self.platform_name = None
+
     __tablename__ = constants.STATE
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
@@ -526,6 +354,7 @@ class State(BaseSpatiaLite):
     time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(Integer, nullable=False)
     location = Column(Geometry(geometry_type="POINT", management=True))
+    elevation = Column(REAL)
     heading = Column(REAL)
     course = Column(REAL)
     speed = Column(REAL)
@@ -533,16 +362,13 @@ class State(BaseSpatiaLite):
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    def submit(self, session):
-        """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-        # TODO: create one Log entry for table and row id
 
-        return self
+class Contact(BaseSpatiaLite, ContactMixin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sensor_name = None
+        self.platform_name = None
 
-
-class Contact(BaseSpatiaLite):
     __tablename__ = constants.CONTACT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
@@ -555,6 +381,7 @@ class Contact(BaseSpatiaLite):
     rel_bearing = Column(REAL)
     freq = Column(REAL)
     location = Column(Geometry(geometry_type="POINT", management=True))
+    elevation = Column(REAL)
     major = Column(REAL)
     minor = Column(REAL)
     orientation = Column(REAL)
@@ -567,14 +394,6 @@ class Contact(BaseSpatiaLite):
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def submit(self, session):
-        """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-        # TODO: create one Log entry for table and row id
-
-        return self
 
 
 class Activation(BaseSpatiaLite):
@@ -613,7 +432,12 @@ class LogsHolding(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Comment(BaseSpatiaLite):
+class Comment(BaseSpatiaLite, CommentMixin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sensor_name = None
+        self.platform_name = None
+
     __tablename__ = constants.COMMENT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 32
@@ -626,14 +450,6 @@ class Comment(BaseSpatiaLite):
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    def submit(self, session):
-        """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-        # TODO: create one Log entry for table and row id
-
-        return self
 
 
 class Geometry1(BaseSpatiaLite):
@@ -668,6 +484,7 @@ class Media(BaseSpatiaLite):
     subject_id = Column(Integer)
     sensor_id = Column(Integer)
     location = Column(Geometry(geometry_type="POINT", management=True))
+    elevation = Column(REAL)
     time = Column(TIMESTAMP)
     media_type_id = Column(Integer, nullable=False)
     url = Column(String(150), nullable=False)

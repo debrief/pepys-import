@@ -106,6 +106,9 @@ venv.bak/
 *.iml
 *.DS_Store
 
+# Editor files
+*.code-workspace
+
 
 # binaries for distribution
 /python/*
@@ -113,3 +116,7 @@ venv.bak/
 /7zip
 *.zip
 *.lnk
+
+# Any subfolders called 'output'
+# to ignore the output logs, error logs, highlighted files etc
+**/*output*/**
