@@ -197,7 +197,8 @@ class ReplayContactImporter(Importer):
                     ).record(self.name, "longitude", longitude, "DMS")
 
                     location = (
-                        f"POINT({longitude.as_degrees()} " f"{latitude.as_degrees()})"
+                        f"SRID=4326;POINT({longitude.as_degrees()} "
+                        f"{latitude.as_degrees()})"
                     )
 
                 if bearing_token.text.upper() == "NULL":

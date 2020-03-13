@@ -66,7 +66,7 @@ class RepContactTests(unittest.TestCase):
             self.assertFalse(isinstance(location1, str))
             self.assertTrue(isinstance(location1, WKBElement))
             self.assertEqual(
-                point1[0], "POINT(16.75 60.25)",
+                point1[0], "SRID=4326;POINT(16.75 60.25)",
             )
 
             # Check location point's type and value
@@ -75,7 +75,7 @@ class RepContactTests(unittest.TestCase):
             self.assertFalse(isinstance(location2, str))
             self.assertTrue(isinstance(location2, WKBElement))
             self.assertEqual(
-                point2[0], "POINT(30.75 16.25)",
+                point2[0], "SRID=4326;POINT(30.75 16.25)",
             )
 
             # there must be platforms after the import

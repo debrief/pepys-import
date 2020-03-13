@@ -95,7 +95,7 @@ def convert_distance(distance, units, line_number, errors, error_type):
 
 
 def convert_string_location_to_degrees(first_location):
-    longitude, latitude = first_location[6:-1].split()
+    longitude, latitude = first_location[16:-1].split()
     return float(longitude), float(latitude)
 
 
