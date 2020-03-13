@@ -199,7 +199,6 @@ class REPLine:
                 }
             )
             return False
-        # TODO: Are depths in REP files in metres?
         depth_token.record(self.importer_name, "depth", self.depth, "metres")
 
         return True
