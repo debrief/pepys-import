@@ -26,6 +26,7 @@ DB_PASSWORD = config.get("database", "db_password", fallback="postgres")
 DB_HOST = config.get("database", "db_host", fallback="localhost")
 DB_PORT = config.getint("database", "db_port", fallback="5432")
 DB_NAME = config.get("database", "db_name", fallback="pepys")
+DB_TYPE = config.get("database", "db_type", fallback="postgres")
 
 # Process username and password if necessary
 if DB_USERNAME.startswith("_") and DB_USERNAME.endswith("_"):

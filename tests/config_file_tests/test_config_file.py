@@ -29,6 +29,7 @@ class ConfigVariablesTestCase(unittest.TestCase):
         assert config.DB_HOST == "localhost"
         assert config.DB_PORT == 5432
         assert config.DB_NAME == "test"
+        assert config.DB_TYPE == "postgres"
         assert config.ARCHIVE_USER == "hfre"
         assert config.ARCHIVE_PASSWORD == "cnffjbeq"
         assert config.ARCHIVE_PATH == "path/to/archive"
