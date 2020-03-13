@@ -2,6 +2,9 @@ import os
 import unittest
 import math
 
+from sqlalchemy import func
+from geoalchemy2 import WKBElement, WKTElement
+
 from importers.replay_contact_importer import ReplayContactImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
@@ -54,41 +57,26 @@ class RepContactTests(unittest.TestCase):
 
             self.assertEqual(contacts[0].freq, 123.4)
 
-            # there must be platforms after the import
-            platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 2)
+            self.assertEqual(contacts[0].location, None)
+            self.assertEqual(contacts[3].location, None)
 
-            # there must be one datafile afterwards
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 1)
+            # Check location point's type and value
+            location1 = contacts[1].location
+            point1 = self.store.session.query(func.ST_AsText(location1)).one()
+            self.assertFalse(isinstance(location1, str))
+            self.assertTrue(isinstance(location1, WKBElement))
+            self.assertEqual(
+                point1[0], "POINT(16.75 60.25)",
+            )
 
-    @unittest.skip("do successful parse first")
-    def test_process_rep_contact_errors(self):
-        processor = FileProcessor()
-        processor.register_importer(ReplayContactImporter())
-
-        # check states empty
-        with self.store.session_scope():
-            # there must be no states at the beginning
-            contacts = self.store.session.query(self.store.db_classes.Contact).all()
-            self.assertEqual(len(contacts), 0)
-
-            # there must be no platforms at the beginning
-            platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 0)
-
-            # there must be no datafiles at the beginning
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 0)
-
-        # parse the folder
-        processor.process(DATA_PATH2, self.store, False)
-
-        # check data got created
-        with self.store.session_scope():
-            # there must be states after the import
-            contacts = self.store.session.query(self.store.db_classes.Contact).all()
-            self.assertEqual(len(contacts), 0)
+            # Check location point's type and value
+            location2 = contacts[4].location
+            point2 = self.store.session.query(func.ST_AsText(location2)).one()
+            self.assertFalse(isinstance(location2, str))
+            self.assertTrue(isinstance(location2, WKBElement))
+            self.assertEqual(
+                point2[0], "POINT(30.75 16.25)",
+            )
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
