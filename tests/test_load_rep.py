@@ -1,6 +1,8 @@
 import os
 import unittest
 
+from unittest.mock import patch
+
 from importers.replay_importer import ReplayImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
@@ -17,7 +19,9 @@ class TestLoadREP(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_load_rep_data(self):
+    @patch("shutil.move")
+    @patch("os.chmod")
+    def test_load_rep_data(self, patched_move, patched_chmod):
         processor = FileProcessor()
         processor.register_importer(ReplayImporter())
 
