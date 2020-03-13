@@ -223,7 +223,7 @@ class ReplayContactImporter(Importer):
                     parser_name=self.short_name,
                 )
                 contact.privacy = privacy
-                contact.bearing = bearing.to(unit_registry.radian)
+                contact.bearing = bearing.to(unit_registry.radian).magnitude
                 contact.location = location
 
                 # sort out the optional fields
