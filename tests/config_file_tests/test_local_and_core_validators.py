@@ -17,8 +17,8 @@ REP_DATA_PATH = os.path.join(
 OTHER_DATA_PATH = os.path.join(
     DIRECTORY_PATH, "../sample_data/track_files/other_data/e_trac.txt"
 )
-BASIC_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "basic_parsers")
-ENHANCED_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "enhanced_parsers")
+BASIC_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "basic_tests")
+ENHANCED_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "enhanced_tests")
 
 
 class TestLocalTests(unittest.TestCase):

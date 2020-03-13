@@ -12,12 +12,12 @@ from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store import common_db
 
 DIRECTORY_PATH = os.path.dirname(__file__)
-TEST_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "samples")
+TEST_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "parsers")
 BAD_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "bad_path")
 OUTPUT_PATH = os.path.join(DIRECTORY_PATH, "output")
-CONFIG_FILE_PATH = os.path.join(DIRECTORY_PATH, "samples", "config.ini")
-BASIC_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "basic_parsers")
-ENHANCED_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "enhanced_parsers")
+CONFIG_FILE_PATH = os.path.join(DIRECTORY_PATH, "example_config", "config.ini")
+BASIC_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "basic_tests")
+ENHANCED_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "enhanced_tests")
 
 
 class ConfigVariablesTestCase(unittest.TestCase):
