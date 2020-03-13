@@ -18,7 +18,7 @@ elif not os.path.isfile(CONFIG_FILE_PATH):
 # Read the config file
 config.read(CONFIG_FILE_PATH)
 
-assert config.has_section("database"), "'database' section couldn't find."
+assert config.has_section("database"), "'database' section couldn't find!"
 
 # Fetch database section
 DB_USERNAME = config.get("database", "db_username", fallback="postgres")
@@ -33,6 +33,8 @@ if DB_USERNAME.startswith("_") and DB_USERNAME.endswith("_"):
 if DB_PASSWORD.startswith("_") and DB_PASSWORD.startswith("_"):
     DB_PASSWORD = process(DB_PASSWORD[1:-1])
 
+assert config.has_section("archive"), "'archive' section couldn't find!"
+
 # Fetch archive section
 ARCHIVE_USER = config.get("archive", "user")
 ARCHIVE_PASSWORD = config.get("archive", "password")
@@ -43,6 +45,8 @@ if ARCHIVE_USER.startswith("_") and ARCHIVE_USER.endswith("_"):
     ARCHIVE_USER = process(ARCHIVE_USER[1:-1])
 if ARCHIVE_PASSWORD.startswith("_") and ARCHIVE_PASSWORD.endswith("_"):
     ARCHIVE_PASSWORD = process(ARCHIVE_PASSWORD[1:-1])
+
+assert config.has_section("local"), "'local' section couldn't find!"
 
 # Fetch local section
 LOCAL_PARSERS = config.get("local", "parsers")
