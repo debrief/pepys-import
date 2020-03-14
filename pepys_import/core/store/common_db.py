@@ -203,6 +203,7 @@ class StateMixin:
         data_store.session.add(self)
         data_store.session.flush()
         # Log new State object creation
+        # TODO: include change id
         data_store.add_to_logs(
             table=constants.STATE, row_id=self.state_id,
         )
@@ -215,6 +216,7 @@ class ContactMixin:
         data_store.session.add(self)
         data_store.session.flush()
         # Log new Contact object creation
+        # TODO: include change id
         data_store.add_to_logs(
             table=constants.CONTACT, row_id=self.contact_id,
         )
@@ -227,6 +229,7 @@ class CommentMixin:
         data_store.session.add(self)
         data_store.session.flush()
         # Log new Comment object creation
+        # TODO: include change id
         data_store.add_to_logs(
             table=constants.COMMENT, row_id=self.comment_id,
         )

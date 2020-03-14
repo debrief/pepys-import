@@ -237,6 +237,7 @@ class FileProcessor:
                 return processed_ctr
 
             # ok, let these importers handle the file
+            # TODO: it might return change object's id as well
             datafile = data_store.get_datafile(basename, file_extension)
 
             # Run all parsers
@@ -267,6 +268,7 @@ class FileProcessor:
 
             # If all tests pass for all parsers, commit datafile
             if not errors:
+                # TODO: commit can take change_id and send submits
                 log = datafile.commit(data_store)
                 # write extraction log to output folder
                 with open(
