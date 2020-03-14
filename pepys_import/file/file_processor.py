@@ -6,6 +6,7 @@ import shutil
 import sys
 
 from datetime import datetime
+from getpass import getuser
 from stat import S_IREAD
 
 from paths import IMPORTERS_DIRECTORY
@@ -15,6 +16,8 @@ from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
 from pepys_import.utils.import_utils import import_module_
+
+USER = getuser()
 
 
 class FileProcessor:
@@ -236,8 +239,7 @@ class FileProcessor:
                 return processed_ctr
 
             # ok, let these importers handle the file
-            # TODO: it might return change object's id as well
-            datafile = data_store.get_datafile(basename, file_extension)
+            datafile, change_id = data_store.get_datafile(basename, file_extension)
 
             # Run all parsers
             for importer in good_importers:
@@ -267,8 +269,12 @@ class FileProcessor:
 
             # If all tests pass for all parsers, commit datafile
             if not errors:
-                # TODO: commit can take change_id and send submits
-                log = datafile.commit(data_store)
+                log = datafile.commit(data_store, change_id)
+                # Create a new row in Changes table about the successful import
+                reason = "\n".join(log)
+                data_store.add_to_changes(
+                    user=USER, modified=datetime.utcnow(), reason=reason
+                )
                 # write extraction log to output folder
                 with open(
                     os.path.join(self.directory_path, f"{filename}_output.log"), "w",
@@ -281,6 +287,14 @@ class FileProcessor:
                 os.chmod(new_path, S_IREAD)
 
             else:
+                # Create a new row in Changes table about the unsuccessful import
+                reason = (
+                    f"Error(s) occurred during the import of '{datafile.reference}'! "
+                    f"Please check the error log file."
+                )
+                data_store.add_to_changes(
+                    user=USER, modified=datetime.utcnow(), reason=reason
+                )
                 # write error log to the output folder
                 with open(
                     os.path.join(self.directory_path, f"{filename}_errors.log"), "w",

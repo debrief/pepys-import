@@ -55,9 +55,9 @@ class SensorMixin:
         session.flush()
 
         # Log new Sensor object creation
-        data_store.add_to_logs(
-            table=constants.SENSOR, row_id=sensor_obj.sensor_id,
-        )
+        # data_store.add_to_logs(
+        #     table=constants.SENSOR, row_id=sensor_obj.sensor_id,
+        # )
 
         return sensor_obj
 
@@ -183,13 +183,13 @@ class DatafileMixin:
                 return True
             return False
 
-    def commit(self, data_store):
+    def commit(self, data_store, change_id):
         # Since measurements are saved by their importer names, iterate over each key
         # and save its measurement objects.
         extraction_log = list()
         for key in self.measurements.keys():
             for file in self.measurements[key]:
-                file.submit(data_store)
+                file.submit(data_store, change_id)
             extraction_log.append(
                 f"{len(self.measurements[key])} measurement objects parsed by {key}."
             )
@@ -208,39 +208,36 @@ class SensorTypeMixin:
 
 
 class StateMixin:
-    def submit(self, data_store):
+    def submit(self, data_store, change_id):
         """Submit intermediate object to the DB"""
         data_store.session.add(self)
         data_store.session.flush()
         # Log new State object creation
-        # TODO: include change id
         data_store.add_to_logs(
-            table=constants.STATE, row_id=self.state_id,
+            table=constants.STATE, row_id=self.state_id, change_id=change_id
         )
         return self
 
 
 class ContactMixin:
-    def submit(self, data_store):
+    def submit(self, data_store, change_id):
         """Submit intermediate object to the DB"""
         data_store.session.add(self)
         data_store.session.flush()
         # Log new Contact object creation
-        # TODO: include change id
         data_store.add_to_logs(
-            table=constants.CONTACT, row_id=self.contact_id,
+            table=constants.CONTACT, row_id=self.contact_id, change_id=change_id
         )
         return self
 
 
 class CommentMixin:
-    def submit(self, data_store):
+    def submit(self, data_store, change_id):
         """Submit intermediate object to the DB"""
         data_store.session.add(self)
         data_store.session.flush()
         # Log new Comment object creation
-        # TODO: include change id
         data_store.add_to_logs(
-            table=constants.COMMENT, row_id=self.comment_id,
+            table=constants.COMMENT, row_id=self.comment_id, change_id=change_id
         )
         return self
