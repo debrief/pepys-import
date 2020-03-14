@@ -633,7 +633,7 @@ class MeasurementsTestCase(TestCase):
             )
             self.sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
             self.comment_type = self.store.add_to_comment_types("test_type")
-            self.file, _ = self.store.get_datafile("test_file", "csv")
+            self.file, self.change_id = self.store.get_datafile("test_file", "csv")
             self.current_time = datetime.utcnow()
 
             self.store.session.expunge(self.sensor)
@@ -700,7 +700,7 @@ class MeasurementsTestCase(TestCase):
             self.assertEqual(state.time, self.current_time)
 
             if self.file.validate():
-                self.file.commit(self.store.session)
+                self.file.commit(self.store, self.change_id)
                 states = self.store.session.query(self.store.db_classes.State).all()
             self.assertEqual(len(states), 1)
 
@@ -729,7 +729,7 @@ class MeasurementsTestCase(TestCase):
             contact.name = "TEST"
             contact.subject_id = self.platform.platform_id
             if self.file.validate():
-                self.file.commit(self.store.session)
+                self.file.commit(self.store, self.change_id)
                 contacts = self.store.session.query(self.store.db_classes.Contact).all()
                 self.assertEqual(len(contacts), 1)
 
@@ -758,7 +758,7 @@ class MeasurementsTestCase(TestCase):
             # Fill null constraint field
             comment.platform_id = self.platform.platform_id
             if self.file.validate():
-                self.file.commit(self.store.session)
+                self.file.commit(self.store, self.change_id)
                 comments = self.store.session.query(self.store.db_classes.Comment).all()
                 self.assertEqual(len(comments), 1)
 

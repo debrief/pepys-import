@@ -730,7 +730,7 @@ class DatafileTestCase(unittest.TestCase):
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1")
             datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1")
-            datafile = self.store.add_to_datafiles(
+            datafile, _ = self.store.add_to_datafiles(
                 file_type=datafile_type.name,
                 privacy=privacy.name,
                 reference="DATAFILE-1",
