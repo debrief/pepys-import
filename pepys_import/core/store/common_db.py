@@ -1,3 +1,6 @@
+from datetime import datetime
+from getpass import getuser
+
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
 from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
@@ -54,10 +57,16 @@ class SensorMixin:
         session.add(sensor_obj)
         session.flush()
 
-        # Log new Sensor object creation
-        # data_store.add_to_logs(
-        #     table=constants.SENSOR, row_id=sensor_obj.sensor_id,
-        # )
+        # Log new Sensor object creation to Changes and Logs tables
+        reason = f"Adding new Sensor object for Platform ({host.name})."
+        change = data_store.add_to_changes(
+            user=getuser(), modified=datetime.utcnow(), reason=reason
+        )
+        data_store.add_to_logs(
+            table=constants.SENSOR,
+            row_id=sensor_obj.sensor_id,
+            change_id=change.change_id,
+        )
 
         return sensor_obj
 
