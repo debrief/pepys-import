@@ -347,9 +347,9 @@ class DataStore(object):
         self.session.flush()
 
         # State object created, log it to Logs table
-        self.add_to_logs(
-            table=constants.STATE, row_id=state_obj.state_id,
-        )
+        # self.add_to_logs(
+        #     table=constants.STATE, row_id=state_obj.state_id,
+        # )
 
         return state_obj
 
