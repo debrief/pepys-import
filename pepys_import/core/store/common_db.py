@@ -1,8 +1,12 @@
+from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
+from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
-
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
-from pepys_import.core.store import constants
+from pepys_import.utils.import_utils import import_validators
+
+LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
+LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
 
 
 class SensorMixin:
@@ -162,13 +166,19 @@ class DatafileMixin:
         elif validation_level == validation_constants.BASIC_LEVEL:
             for measurement in self.measurements[parser]:
                 BasicValidator(measurement, errors, parser)
+                for basic_validator in LOCAL_BASIC_VALIDATORS:
+                    basic_validator(measurement, errors, parser)
             if not errors:
                 return True
             return False
         elif validation_level == validation_constants.ENHANCED_LEVEL:
             for measurement in self.measurements[parser]:
                 BasicValidator(measurement, errors, parser)
+                for basic_validator in LOCAL_BASIC_VALIDATORS:
+                    basic_validator(measurement, errors, parser)
                 EnhancedValidator(measurement, errors, parser)
+                for enhanced_validator in LOCAL_ENHANCED_VALIDATORS:
+                    enhanced_validator(measurement, errors, parser)
             if not errors:
                 return True
             return False

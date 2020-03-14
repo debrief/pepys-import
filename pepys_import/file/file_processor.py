@@ -9,24 +9,25 @@ from datetime import datetime
 from stat import S_IREAD
 
 from paths import IMPORTERS_DIRECTORY
+from config import ARCHIVE_PATH, LOCAL_PARSERS
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
+from pepys_import.utils.import_utils import import_module_
 
 
 class FileProcessor:
     def __init__(self, filename=None):
         self.importers = []
         # Register local importers if any exists
-        local_importers_path = os.getenv("PEPYS_LOCAL_PARSERS")
-        if local_importers_path:
-            if not os.path.exists(local_importers_path):
+        if LOCAL_PARSERS:
+            if not os.path.exists(LOCAL_PARSERS):
                 print(
-                    f"No such file or directory: {local_importers_path}. Only core parsers are going to work."
+                    f"No such file or directory: {LOCAL_PARSERS}. Only core parsers are going to work."
                 )
             else:
-                self.load_importers_dynamically(local_importers_path)
+                self.load_importers_dynamically(LOCAL_PARSERS)
 
         if filename is None:
             self.filename = ":memory:"
@@ -36,11 +37,10 @@ class FileProcessor:
         self.input_files_path = None
         self.directory_path = None
         # Check if archive location environment variable exists
-        archive_path = os.getenv("PEPYS_ARCHIVE_LOCATION")
-        if archive_path:
-            if not os.path.exists(archive_path):
-                os.makedirs(archive_path)
-            self.output_path = archive_path
+        if ARCHIVE_PATH:
+            if not os.path.exists(ARCHIVE_PATH):
+                os.makedirs(ARCHIVE_PATH)
+            self.output_path = ARCHIVE_PATH
 
     def process(
         self, path: str, data_store: DataStore = None, descend_tree: bool = True
@@ -164,9 +164,8 @@ class FileProcessor:
                 # loop through this path
                 for file in os.scandir(abs_path):
                     if file.is_file():
-                        current_path = os.path.join(abs_path, file)
                         processed_ctr = self.process_file(
-                            file, current_path, data_store, processed_ctr
+                            file, abs_path, data_store, processed_ctr
                         )
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
@@ -190,7 +189,7 @@ class FileProcessor:
         # make copy of list of importers
         good_importers = self.importers.copy()
 
-        full_path = os.path.join(current_path, file)
+        full_path = os.path.join(current_path, basename)
         # print("Checking:" + str(full_path))
 
         # start with file suffixes
@@ -276,7 +275,7 @@ class FileProcessor:
                 ) as f:
                     f.write("\n".join(log))
                 # move original file to output folder
-                new_path = os.path.join(self.input_files_path, file)
+                new_path = os.path.join(self.input_files_path, basename)
                 shutil.move(full_path, new_path)
                 # make it read-only
                 os.chmod(new_path, S_IREAD)
@@ -311,14 +310,7 @@ class FileProcessor:
             for file in os.scandir(path):
                 # import file using its name and full path
                 if file.is_file():
-                    spec = importlib.util.spec_from_file_location(file.name, file.path)
-                    module = importlib.util.module_from_spec(spec)
-                    sys.modules[file.name] = module
-                    spec.loader.exec_module(module)
-                    # extract classes with this format: (class name, class)
-                    classes = inspect.getmembers(
-                        sys.modules[module.__name__], inspect.isclass
-                    )
+                    classes = import_module_(file)
                     for name, class_ in classes:
                         # continue only if it's a concrete class that inherits Importer
                         if issubclass(class_, Importer) and not inspect.isabstract(
