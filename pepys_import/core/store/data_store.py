@@ -555,14 +555,6 @@ class DataStore(object):
             .first()
         )
 
-    # def search_datafile_by_id(self, id):
-    #     # search for any datafile with this id
-    #     return (
-    #         self.session.query(self.db_classes.Datafile)
-    #         .filter(self.db_classes.Datafile.datafile_id == str(id))
-    #         .first()
-    #     )
-
     def search_platform(self, name):
         """Search for any platform with this name"""
         return (
@@ -608,14 +600,6 @@ class DataStore(object):
         return (
             self.session.query(self.db_classes.Privacy)
             .filter(self.db_classes.Privacy.name == name)
-            .first()
-        )
-
-    def search_table_type(self, table_type_id):
-        """Search for any table type with this id"""
-        return (
-            self.session.query(self.db_classes.TableType)
-            .filter(self.db_classes.TableType.table_type_id == table_type_id)
             .first()
         )
 
