@@ -432,7 +432,7 @@ class State(BasePostGIS, StateMixin):
     )
     location = Column(Geometry(geometry_type="POINT", srid=0))
     _elevation = Column(DOUBLE_PRECISION)
-    heading = Column(DOUBLE_PRECISION)
+    _heading = Column(DOUBLE_PRECISION)
     course = Column(DOUBLE_PRECISION)
     _speed = Column("speed", DOUBLE_PRECISION)
     source_id = Column(

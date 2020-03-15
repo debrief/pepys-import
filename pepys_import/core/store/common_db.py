@@ -213,6 +213,10 @@ class StateMixin:
 
         return self
 
+    #
+    # Speed properties
+    #
+
     @hybrid_property
     def speed(self):
         # Return all speeds as metres per second
@@ -245,9 +249,13 @@ class StateMixin:
         # Quantity object, as otherwise this won't work in the SQLAlchemy filtering functions
         return self._speed
 
+    #
+    # Elevation properties
+    #
+
     @hybrid_property
     def elevation(self):
-        # Return all speeds as metres per second
+        # Return all elevations as metres
         if self._elevation is None:
             return None
         else:
@@ -259,7 +267,7 @@ class StateMixin:
             self._elevation = None
             return
 
-        # Check the given elevation is a Quantity with a dimension of 'length / time'
+        # Check the given elevation is a Quantity with a dimension of 'length'
         try:
             if not elevation.check("[length]"):
                 raise ValueError(
@@ -268,14 +276,54 @@ class StateMixin:
         except AttributeError:
             raise TypeError("Elevation must be a Quantity")
 
-        # Set the actual elevation attribute to the given value converted to metres per second
+        # Set the actual elevation attribute to the given value converted to metres
         self._elevation = elevation.to(unit_registry.metre).magnitude
 
     @elevation.expression
     def elevation(self):
-        # We need a separate @speed.expression function to return a float rather than a
-        # Quantity object, as otherwise this won't work in the SQLAlchemy filtering functions
         return self._elevation
+
+    #
+    # Heading properties
+    #
+
+    @hybrid_property
+    def heading(self):
+        # Return all headings as degrees
+        if self._heading is None:
+            return None
+        else:
+            return (self._heading * unit_registry.radian).to(unit_registry.degree)
+
+    @heading.setter
+    def heading(self, heading):
+        if heading is None:
+            self._heading = None
+            return
+
+        # Check the given heading is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not heading.check(""):
+                raise ValueError(
+                    "Heading must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                heading.units == unit_registry.degree
+                or heading.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "Heading must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("Heading must be a Quantity")
+
+        # Set the actual heading attribute to the given value converted to radians
+        self._heading = heading.to(unit_registry.radian).magnitude
+
+    @heading.expression
+    def heading(self):
+        return self._heading
 
 
 class ContactMixin:
