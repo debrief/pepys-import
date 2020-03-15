@@ -1,22 +1,27 @@
 import os
 import unittest
 
+from importlib import reload
 from unittest.mock import patch
 
-from importers.replay_comment_importer import ReplayCommentImporter
+from importers.e_trac_importer import ETracImporter
+from importers.replay_importer import ReplayImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store import common_db
 
-FILE_PATH = os.path.dirname(__file__)
-DATA_PATH1 = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/rep_test1.rep")
-DATA_PATH2 = os.path.join(
-    FILE_PATH, "sample_data/track_files/rep_data/rep_test1_bad.rep"
+DIRECTORY_PATH = os.path.dirname(__file__)
+REP_DATA_PATH = os.path.join(
+    DIRECTORY_PATH, "../sample_data/track_files/rep_data/rep_test1.rep"
 )
+OTHER_DATA_PATH = os.path.join(
+    DIRECTORY_PATH, "../sample_data/track_files/other_data/e_trac.txt"
+)
+BASIC_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "basic_tests")
+ENHANCED_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "enhanced_tests")
 
 
-@patch("shutil.move")
-@patch("os.chmod")
-class RepCommentTests(unittest.TestCase):
+class TestLocalTests(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -24,15 +29,18 @@ class RepCommentTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_process_rep_comments(self, patched_move, patched_chmod):
-        processor = FileProcessor()
-        processor.register_importer(ReplayCommentImporter())
+    @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_PATH)
+    @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_PATH)
+    @patch("shutil.move")
+    @patch("os.chmod")
+    def test_local_basic_tests(self, patched_move, patched_chmod):
+        reload(common_db)
 
         # check states empty
         with self.store.session_scope():
             # there must be no states at the beginning
-            comments = self.store.session.query(self.store.db_classes.Comment).all()
-            self.assertEqual(len(comments), 0)
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 0)
 
             # there must be no platforms at the beginning
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -42,40 +50,50 @@ class RepCommentTests(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 0)
 
+        processor = FileProcessor()
+        processor.register_importer(ETracImporter())
+
         # parse the folder
-        processor.process(DATA_PATH1, self.store, False)
+        processor.process(OTHER_DATA_PATH, self.store, False)
 
         # check data got created
         with self.store.session_scope():
             # there must be states after the import
-            comments = self.store.session.query(self.store.db_classes.Comment).all()
-            self.assertEqual(len(comments), 7)
-            # check the first two rows have matching comment types (NULL)
-            self.assertEqual(comments[0].comment_type_id, 1)
-            self.assertEqual(comments[1].comment_type_id, 1)
-            # and the last row has a different comment type
-            self.assertEqual(comments[6].comment_type_id, 2)
-            # and the full comments on some other rows
-            self.assertEqual(comments[0].content, "Contact detected on TA")
-            self.assertEqual(comments[6].content, "SUBJECT lost on TA")
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 44)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 2)
+            self.assertEqual(len(platforms), 18)
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
 
-    def test_process_rep_comment_errors(self, patched_move, patched_chmod):
+            # Check that there is an elevation of 147 reported (test file was manually edited
+            # to contain an elevation of 147m)
+            results = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(self.store.db_classes.State.elevation == 147)
+                .all()
+            )
+            assert len(results) == 1
+
+    @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_PATH)
+    @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_PATH)
+    @patch("shutil.move")
+    @patch("os.chmod")
+    def test_local_basic_and_enhanced_tests(self, patched_move, patched_chmod):
+        reload(common_db)
+
         processor = FileProcessor()
-        processor.register_importer(ReplayCommentImporter())
+        processor.register_importer(ReplayImporter())
 
         # check states empty
         with self.store.session_scope():
             # there must be no states at the beginning
-            comments = self.store.session.query(self.store.db_classes.Comment).all()
-            self.assertEqual(len(comments), 0)
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 0)
 
             # there must be no platforms at the beginning
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -86,13 +104,13 @@ class RepCommentTests(unittest.TestCase):
             self.assertEqual(len(datafiles), 0)
 
         # parse the folder
-        processor.process(DATA_PATH2, self.store, False)
+        processor.process(REP_DATA_PATH, self.store, False)
 
         # check data got created
         with self.store.session_scope():
             # there must be states after the import
-            comments = self.store.session.query(self.store.db_classes.Comment).all()
-            self.assertEqual(len(comments), 0)
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 8)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
