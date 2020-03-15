@@ -296,7 +296,7 @@ class DataStore(object):
         :type datafile: Datafile
         :param location: Location of :class:`State`
         :type location: Point
-        :param elevation: Elevation of :class:`State` (use negative for depth)
+        :param elevation: Elevation of :class:`State` in metres (use negative for depth)
         :type elevation: String
         :param heading: Heading of :class:`State` (Which converted to radians)
         :type heading: String
@@ -329,6 +329,8 @@ class DataStore(object):
             course = None
         if speed == "":
             speed = None
+
+        elevation = elevation * unit_registry.metre
 
         state_obj = self.db_classes.State(
             time=time,
@@ -1161,7 +1163,7 @@ class DataStore(object):
                 str(unit_converter.convert_mps_to_knot(state.speed))
                 if state.speed
                 else "0",
-                str(abs(state.elevation)) if state.elevation else "NaN",
+                str(abs(state.elevation.magnitude)) if state.elevation else "NaN",
             ]
             data = " ".join(state_rep_line)
             f.write(data + "\r\n")
