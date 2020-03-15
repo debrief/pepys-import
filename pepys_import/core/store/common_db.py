@@ -245,6 +245,38 @@ class StateMixin:
         # Quantity object, as otherwise this won't work in the SQLAlchemy filtering functions
         return self._speed
 
+    @hybrid_property
+    def elevation(self):
+        # Return all speeds as metres per second
+        if self._elevation is None:
+            return None
+        else:
+            return self._elevation * unit_registry.metre
+
+    @elevation.setter
+    def elevation(self, elevation):
+        if elevation is None:
+            self._elevation = None
+            return
+
+        # Check the given elevation is a Quantity with a dimension of 'length / time'
+        try:
+            if not elevation.check("[length]"):
+                raise ValueError(
+                    "Elevation must be a Quantity with a dimensionality of [length]"
+                )
+        except AttributeError:
+            raise TypeError("Elevation must be a Quantity")
+
+        # Set the actual elevation attribute to the given value converted to metres per second
+        self._elevation = elevation.to(unit_registry.metre).magnitude
+
+    @elevation.expression
+    def elevation(self):
+        # We need a separate @speed.expression function to return a float rather than a
+        # Quantity object, as otherwise this won't work in the SQLAlchemy filtering functions
+        return self._elevation
+
 
 class ContactMixin:
     def submit(self, session):
