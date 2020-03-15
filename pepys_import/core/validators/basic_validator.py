@@ -1,6 +1,7 @@
 from math import degrees
 
 from pepys_import.utils.unit_utils import convert_string_location_to_degrees
+from pepys_import.core.formats import unit_registry
 
 
 class BasicValidator:
@@ -51,7 +52,10 @@ class BasicValidator:
     def validate_heading(self):
         # if heading is none, there is nothing to validate, return True
         # if heading exists, convert it from radians to degrees and check if it's between 0 and 360.
-        if self.heading is None or 0 <= degrees(self.heading) <= 360:
+        if (
+            self.heading is None
+            or 0 <= self.heading.to(unit_registry.degree).magnitude <= 360
+        ):
             return True
         self.errors.append(
             {self.error_type: "Heading is not between 0 and 360 degrees!"}

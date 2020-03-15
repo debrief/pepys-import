@@ -126,7 +126,7 @@ class ETracImporter(Importer):
             heading = convert_absolute_angle(
                 heading_token.text, line_number, self.errors, self.error_type
             )
-            state.heading = heading.to(unit_registry.radians).magnitude
+            state.heading = heading
             heading_token.record(self.name, "heading", heading, "degrees")
 
             speed = convert_speed(

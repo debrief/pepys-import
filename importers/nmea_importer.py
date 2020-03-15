@@ -162,7 +162,7 @@ class NMEAImporter(Importer):
                         self.heading, line_number, self.errors, self.error_type
                     )
                     if heading:
-                        state.heading = heading.to(unit_registry.radians).magnitude
+                        state.heading = heading
                     self.heading_token.record(self.name, "heading", heading, "degrees")
 
                     speed = convert_speed(

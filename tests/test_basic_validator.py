@@ -6,6 +6,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
+from pepys_import.core.formats import unit_registry
 
 
 class BasicValidatorTestCase(unittest.TestCase):
@@ -105,7 +106,9 @@ class BasicValidatorTestCase(unittest.TestCase):
             self.current_time,
             parser_name=self.parser.short_name,
         )
-        state.heading = 10.0  # 10 radians is approximately 572 degrees
+        state.heading = (
+            10.0 * unit_registry.radian
+        )  # 10 radians is approximately 572 degrees
         BasicValidator(state, self.errors, "Test Parser")
         assert len(self.errors) == 1
         assert "Heading is not between 0 and 360 degrees!" in str(self.errors[0])
