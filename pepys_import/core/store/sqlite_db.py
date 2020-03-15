@@ -17,6 +17,7 @@ from pepys_import.core.store.common_db import (
     StateMixin,
     ContactMixin,
     CommentMixin,
+    MediaMixin,
 )
 
 
@@ -474,7 +475,7 @@ class Geometry1(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Media(BaseSpatiaLite):
+class Media(BaseSpatiaLite, MediaMixin):
     __tablename__ = constants.MEDIA
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34
@@ -484,7 +485,7 @@ class Media(BaseSpatiaLite):
     subject_id = Column(Integer)
     sensor_id = Column(Integer)
     location = Column(Geometry(geometry_type="POINT", management=True))
-    elevation = Column(REAL)
+    _elevation = Column(REAL)
     time = Column(TIMESTAMP)
     media_type_id = Column(Integer, nullable=False)
     url = Column(String(150), nullable=False)

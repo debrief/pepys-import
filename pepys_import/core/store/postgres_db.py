@@ -18,6 +18,7 @@ from pepys_import.core.store.common_db import (
     StateMixin,
     ContactMixin,
     CommentMixin,
+    MediaMixin,
 )
 
 from uuid import uuid4
@@ -589,7 +590,7 @@ class Geometry1(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Media(BasePostGIS):
+class Media(BasePostGIS, MediaMixin):
     __tablename__ = constants.MEDIA
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34
@@ -600,7 +601,7 @@ class Media(BasePostGIS):
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"))
     location = Column(Geometry(geometry_type="POINT", srid=4326))
-    elevation = Column(DOUBLE_PRECISION)
+    _elevation = Column(DOUBLE_PRECISION)
     time = Column(TIMESTAMP)
     media_type_id = Column(UUID(as_uuid=True), nullable=False)
     url = Column(String(150), nullable=False)
