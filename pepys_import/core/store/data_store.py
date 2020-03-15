@@ -1161,7 +1161,7 @@ class DataStore(object):
                 str(unit_converter.convert_mps_to_knot(state.speed))
                 if state.speed
                 else "0",
-                str(abs(state.elevation)) if state.elevation else "NaN",
+                str(-1 * state.elevation) if state.elevation else "NaN",
             ]
             data = " ".join(state_rep_line)
             f.write(data + "\r\n")
