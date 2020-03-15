@@ -5,7 +5,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats import unit_registry
 
 
-class TestProperties(unittest.TestCase):
+class TestStateSpeedProperty(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -51,3 +51,50 @@ class TestProperties(unittest.TestCase):
 
         assert state.speed == 10 * (unit_registry.metre / unit_registry.second)
         assert state.speed.check("[length]/[time]")
+
+
+class TestStateElevationProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_state_elevation_scalar(self):
+        state = self.store.db_classes.State()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            state.elevation = 5
+
+        assert "Elevation must be a Quantity" in str(exception.value)
+
+    def test_state_elevation_wrong_units(self):
+        state = self.store.db_classes.State()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            state.elevation = 5 * unit_registry.second
+
+        assert "Elevation must be a Quantity with a dimensionality of [length]" in str(
+            exception.value
+        )
+
+    def test_state_elevation_right_units(self):
+        state = self.store.db_classes.State()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        state.elevation = 5 * unit_registry.metre
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        state.elevation = 5 * unit_registry.angstrom
+
+    def test_state_elevation_roundtrip(self):
+        state = self.store.db_classes.State()
+
+        # Check setting and retrieving field works, and gives units as a result
+        state.elevation = 10 * unit_registry.metre
+
+        assert state.elevation == 10 * unit_registry.metre
+        assert state.elevation.check("[length]")
