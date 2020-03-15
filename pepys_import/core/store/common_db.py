@@ -325,6 +325,48 @@ class StateMixin:
     def heading(self):
         return self._heading
 
+    #
+    # Course properties
+    #
+
+    @hybrid_property
+    def course(self):
+        # Return all courses as degrees
+        if self._course is None:
+            return None
+        else:
+            return (self._course * unit_registry.radian).to(unit_registry.degree)
+
+    @course.setter
+    def course(self, course):
+        if course is None:
+            self._course = None
+            return
+
+        # Check the given course is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not course.check(""):
+                raise ValueError(
+                    "Course must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                course.units == unit_registry.degree
+                or course.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "Course must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("Course must be a Quantity")
+
+        # Set the actual course attribute to the given value converted to radians
+        self._course = course.to(unit_registry.radian).magnitude
+
+    @course.expression
+    def course(self):
+        return self._course
+
 
 class ContactMixin:
     def submit(self, session):

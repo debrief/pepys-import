@@ -356,7 +356,7 @@ class State(BaseSpatiaLite, StateMixin):
     location = Column(Geometry(geometry_type="POINT", management=True))
     _elevation = Column(REAL)
     _heading = Column(REAL)
-    course = Column(REAL)
+    _course = Column(REAL)
     _speed = Column("speed", REAL)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
