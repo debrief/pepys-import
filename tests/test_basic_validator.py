@@ -121,7 +121,9 @@ class BasicValidatorTestCase(unittest.TestCase):
             self.current_time,
             parser_name=self.parser.short_name,
         )
-        state.course = 10.0  # 10 radians is approximately 572 degrees
+        state.course = (
+            10.0 * unit_registry.radian
+        )  # 10 radians is approximately 572 degrees
         BasicValidator(state, self.errors, "Test Parser")
         assert len(self.errors) == 1
         assert "Course is not between 0 and 360 degrees!" in str(self.errors[0])

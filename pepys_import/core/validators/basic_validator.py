@@ -65,7 +65,10 @@ class BasicValidator:
     def validate_course(self):
         # if course is none, there is nothing to validate, return True
         # if course exists, convert it from radians to degrees and check if it's between 0 and 360.
-        if self.course is None or 0 <= degrees(self.course) <= 360:
+        if (
+            self.course is None
+            or 0 <= self.course.to(unit_registry.degree).magnitude <= 360
+        ):
             return True
         self.errors.append(
             {self.error_type: "Course is not between 0 and 360 degrees!"}

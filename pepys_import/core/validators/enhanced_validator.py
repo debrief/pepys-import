@@ -90,7 +90,7 @@ class EnhancedValidator:
                     }
                 )
         if self.course:
-            course_in_degrees = degrees(self.course)
+            course_in_degrees = self.course.to(unit_registry.degree)
             if not self.acceptable_bearing_error(course_in_degrees, bearing, delta):
                 self.errors.append(
                     {

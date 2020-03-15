@@ -111,7 +111,7 @@ class GPXImporter(Importer):
                     course = convert_absolute_angle(
                         course_str, tpt.sourceline, self.errors, self.error_type
                     )
-                    state.course = course.to(unit_registry.radians).magnitude
+                    state.course = course
 
                 # Add speed (specified in metres per second in the file)
                 if speed_str is not None:
