@@ -135,7 +135,7 @@ class GPXImporter(Importer):
                                 f"Couldn't convert to number"
                             }
                         )
-                    state.elevation = elevation
+                    state.elevation = elevation * unit_registry.metre
 
                 state.privacy = privacy.privacy_id
 

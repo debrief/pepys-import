@@ -120,7 +120,7 @@ class ETracImporter(Importer):
                 self.name, "location", state.location, "decimal degrees"
             )
 
-            state.elevation = altitude_token.text
+            state.elevation = altitude_token.text * unit_registry.metre
             altitude_token.record(self.name, "altitude", state.elevation, "metres")
 
             heading = convert_absolute_angle(
