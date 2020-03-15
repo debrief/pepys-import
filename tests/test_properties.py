@@ -13,7 +13,7 @@ class TestProperties(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_state_speed_property(self):
+    def test_state_speed_scalar(self):
         state = self.store.db_classes.State()
 
         # Check setting with a scalar (float) gives error
@@ -21,6 +21,9 @@ class TestProperties(unittest.TestCase):
             state.speed = 5
 
         assert "Speed must be a Quantity" in str(exception.value)
+
+    def test_state_speed_wrong_units(self):
+        state = self.store.db_classes.State()
 
         # Check setting with a Quantity of the wrong units gives error
         with pytest.raises(ValueError) as exception:
@@ -31,11 +34,17 @@ class TestProperties(unittest.TestCase):
             in str(exception.value)
         )
 
+    def test_state_speed_right_units(self):
+        state = self.store.db_classes.State()
+
         # Check setting with a Quantity of the right SI units succeeds
         state.speed = 5 * (unit_registry.metre / unit_registry.second)
 
         # Check setting with a Quantity of strange but valid units succeeds
         state.speed = 5 * (unit_registry.angstrom / unit_registry.day)
+
+    def test_state_speed_roundtrip(self):
+        state = self.store.db_classes.State()
 
         # Check setting and retrieving field works, and gives units as a result
         state.speed = 10 * (unit_registry.metre / unit_registry.second)
