@@ -192,3 +192,50 @@ class TestStateCourseProperty(unittest.TestCase):
 
         assert state.course == 157 * unit_registry.degree
         assert state.course.check("")
+
+
+class TestMediaElevationProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_media_elevation_scalar(self):
+        media = self.store.db_classes.Media()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            media.elevation = 5
+
+        assert "Elevation must be a Quantity" in str(exception.value)
+
+    def test_media_elevation_wrong_units(self):
+        media = self.store.db_classes.Media()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            media.elevation = 5 * unit_registry.second
+
+        assert "Elevation must be a Quantity with a dimensionality of [length]" in str(
+            exception.value
+        )
+
+    def test_media_elevation_right_units(self):
+        media = self.store.db_classes.Media()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        media.elevation = 5 * unit_registry.metre
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        media.elevation = 5 * unit_registry.angstrom
+
+    def test_media_elevation_roundtrip(self):
+        media = self.store.db_classes.Media()
+
+        # Check setting and retrieving field works, and gives units as a result
+        media.elevation = 10 * unit_registry.metre
+
+        assert media.elevation == 10 * unit_registry.metre
+        assert media.elevation.check("[length]")
