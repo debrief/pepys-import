@@ -59,12 +59,21 @@ class EnhancedValidator:
         :type delta: number (degrees)
         """
 
-        bearing1 = bearing1.magnitude
-        bearing2 = bearing2.magnitude
+        try:
+            # Try treating it as a Quantity
+            bearing1_mag = bearing1.magnitude
+        except AttributeError:
+            # Otherwise just a normal float
+            bearing1_mag = float(bearing1)
+
+        try:
+            bearing2_mag = bearing2.magnitude
+        except AttributeError:
+            bearing2_mag = float(bearing2)
 
         # note: compact test algorithm came from here:
         #    https://gamedev.stackexchange.com/a/4472/8270
-        diff = 180 - abs(abs(bearing1 - bearing2) - 180)
+        diff = 180 - abs(abs(bearing1_mag - bearing2_mag) - 180)
         return diff <= delta
 
     def course_heading_loose_match_with_location(self):

@@ -92,12 +92,12 @@ class EnhancedValidatorTestCase(unittest.TestCase):
         )
         state.prev_location = "POINT(75.0 25.0)"
         state.location = "POINT(80.0 30.0)"
-        state.heading = 5.0 * unit_registry.degree
+        state.heading = 5.0 * unit_registry.radian
         state.course = 5.0
         EnhancedValidator(state, self.errors, "Test Parser")
         assert len(self.errors) == 2
         assert (
-            "Difference between Bearing (40.444) and Heading (286.479) is more than 90 degrees!"
+            "Difference between Bearing (40.444) and Heading (286.479 degree) is more than 90 degrees!"
             in str(self.errors[0])
         )
         assert (
