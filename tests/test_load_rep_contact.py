@@ -2,6 +2,7 @@ import os
 import unittest
 import math
 
+from unittest.mock import patch
 from sqlalchemy import func
 from geoalchemy2 import WKBElement
 
@@ -19,6 +20,8 @@ DATA_PATH3 = os.path.join(
 )
 
 
+@patch("shutil.move")
+@patch("os.chmod")
 class RepContactTests(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -27,7 +30,7 @@ class RepContactTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_process_rep_contacts(self):
+    def test_process_rep_contacts(self, patched_move, patched_chmod):
         processor = FileProcessor()
         processor.register_importer(ReplayContactImporter())
 
@@ -91,7 +94,7 @@ class RepContactTests(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
 
-    def test_process_dsf_contacts(self):
+    def test_process_dsf_contacts(self, patched_move, patched_chmod):
         processor = FileProcessor()
         processor.register_importer(ReplayContactImporter())
 
