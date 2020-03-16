@@ -28,7 +28,7 @@ class EnhancedValidatorTestCase(unittest.TestCase):
             )
             self.sensor = self.platform.get_sensor(self.store, "gps", sensor_type)
             self.current_time = datetime.utcnow()
-            self.file, _ = self.store.get_datafile("test_file", "csv")
+            self.file = self.store.get_datafile("test_file", "csv")
 
             self.store.session.expunge(self.platform)
             self.store.session.expunge(self.sensor)
