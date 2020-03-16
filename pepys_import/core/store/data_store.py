@@ -1052,7 +1052,7 @@ class DataStore(object):
         self.sensor_types[sensor_type_name] = sensor_type
 
         self.add_to_logs(
-            table=constants.COMMENT_TYPE,
+            table=constants.SENSOR_TYPE,
             row_id=sensor_type.sensor_type_id,
             change_id=change_id,
         )
