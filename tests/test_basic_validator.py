@@ -80,7 +80,7 @@ class BasicValidatorTestCase(unittest.TestCase):
             self.current_time,
             parser_name=self.parser.short_name,
         )
-        state.location = "POINT(180.0 25.0)"
+        state.location = "SRID=4326;POINT(180.0 25.0)"
         BasicValidator(state, self.errors, "Test Parser")
         assert len(self.errors) == 1
         assert "Longitude is not between -90 and 90 degrees!" in str(self.errors[0])
@@ -93,7 +93,7 @@ class BasicValidatorTestCase(unittest.TestCase):
             self.current_time,
             parser_name=self.parser.short_name,
         )
-        state.location = "POINT(25.0 300.0)"
+        state.location = "SRID=4326;POINT(25.0 300.0)"
         BasicValidator(state, self.errors, "Test Parser")
         assert len(self.errors) == 1
         assert "Latitude is not between -180 and 180 degrees!" in str(self.errors[0])

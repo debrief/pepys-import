@@ -431,7 +431,7 @@ class State(BasePostGIS, StateMixin):
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )
-    location = Column(Geometry(geometry_type="POINT", srid=0))
+    location = Column(Geometry(geometry_type="POINT", srid=4326))
     _elevation = Column(DOUBLE_PRECISION)
     _heading = Column(DOUBLE_PRECISION)
     _course = Column(DOUBLE_PRECISION)
@@ -455,7 +455,7 @@ class Contact(BasePostGIS, ContactMixin):
     __table_args__ = {"schema": "pepys"}
 
     contact_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150))
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )
@@ -473,9 +473,7 @@ class Contact(BasePostGIS, ContactMixin):
     contact_type = Column(String(150))
     mla = Column(DOUBLE_PRECISION)
     sla = Column(DOUBLE_PRECISION)
-    subject_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False
-    )
+    subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )

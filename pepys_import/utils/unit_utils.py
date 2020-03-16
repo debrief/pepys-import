@@ -64,7 +64,7 @@ def convert_speed(speed, units, line_number, errors, error_type):
 
 
 def convert_string_location_to_degrees(first_location):
-    longitude, latitude = first_location[6:-1].split()
+    longitude, latitude = first_location[16:-1].split()
     return float(longitude), float(latitude)
 
 
@@ -123,6 +123,35 @@ def distance_between_two_points_haversine(first_location, second_location):
     return (distance * unit_registry.kilometers / unit_registry.hour).to(
         unit_registry.meter / unit_registry.second
     )
+
+
+def convert_distance(distance, units, line_number, errors, error_type):
+    """
+    Converts the given distance value in supplied units to metres formsat
+    :param distance: distance value in string format
+    :type distance: String
+    :param units: units of distance for supplied measurement
+    :type units: String
+    :param line_number: Line number
+    :type line_number: String
+    :param errors: Error List to save value error if it raises
+    :type errors: List
+    :param error_type: Type of error
+    :type error_type: String
+    :return: return the converted speed value
+    """
+    try:
+        valid_distance = float(distance)
+    except ValueError:
+        errors.append(
+            {
+                error_type: f"Line {line_number}. Error in distance value {distance}. "
+                f"Couldn't convert to a number"
+            }
+        )
+        return False
+    distance = (valid_distance * units).to(unit_registry.meter).magnitude
+    return distance
 
 
 def convert_radian_to_degree(radian_value):

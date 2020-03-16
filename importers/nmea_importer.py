@@ -149,7 +149,7 @@ class NMEAImporter(Importer):
                     # note: the next line is split, to meet our formatter, the
                     # 'f' commmand is deliberately placed on each block
                     state.location = (
-                        f"POINT({self.longitude.as_degrees()} "
+                        f"SRID=4326;POINT({self.longitude.as_degrees()} "
                         f"{self.latitude.as_degrees()})"
                     )
                     self.prev_location[platform_name] = state.location
