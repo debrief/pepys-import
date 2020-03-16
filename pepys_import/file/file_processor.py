@@ -239,7 +239,11 @@ class FileProcessor:
                 return processed_ctr
 
             # ok, let these importers handle the file
-            datafile, change_id = data_store.get_datafile(basename, file_extension)
+            datafile = data_store.get_datafile(basename, file_extension)
+            reason = f"Importing '{datafile.reference}'."
+            change = data_store.add_to_changes(
+                user=USER, modified=datetime.utcnow(), reason=reason
+            )
 
             # Run all parsers
             for importer in good_importers:
@@ -269,7 +273,7 @@ class FileProcessor:
 
             # If all tests pass for all parsers, commit datafile
             if not errors:
-                log = datafile.commit(data_store, change_id)
+                log = datafile.commit(data_store, change.change_id)
                 # Create a new row in Changes table about the successful import
                 reason = "\n".join(log)
                 data_store.add_to_changes(
