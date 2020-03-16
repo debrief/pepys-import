@@ -116,7 +116,7 @@ class ETracImporter(Importer):
                 state.prev_location = self.prev_location[vessel_name]
 
             state.location = (
-                f"POINT({long_degrees_token.text} {lat_degrees_token.text})"
+                f"SRID=4326;POINT({long_degrees_token.text} {lat_degrees_token.text})"
             )
             self.prev_location[vessel_name] = state.location
 

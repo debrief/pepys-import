@@ -199,7 +199,6 @@ class REPLine:
                 }
             )
             return False
-        # TODO: Are depths in REP files in metres?
         depth_token.record(self.importer_name, "depth", self.depth, "metres")
 
         return True
@@ -208,4 +207,4 @@ class REPLine:
         return self.vessel
 
     def get_location(self):
-        return f"POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
+        return f"SRID=4326;POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"

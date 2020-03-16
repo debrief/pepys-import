@@ -107,7 +107,7 @@ class GPXImporter(Importer):
                 if track_name in self.prev_location:
                     state.prev_location = self.prev_location[track_name]
 
-                state.location = f"POINT({longitude_str} {latitude_str})"
+                state.location = f"SRID=4326;POINT({longitude_str} {latitude_str})"
                 self.prev_location[track_name] = state.location
 
                 # Add course

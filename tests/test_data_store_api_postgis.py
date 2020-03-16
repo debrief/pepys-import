@@ -466,10 +466,8 @@ class PlatformAndDatafileTestCase(TestCase):
         """Test whether find_datafile method returns the correct Datafile entity"""
         with self.store.session_scope():
             # Create a datafile
-            datafile = self.store.get_datafile("test_file.csv", "csv", self.change_id)
-            datafile_2 = self.store.get_datafile(
-                "test_file_2.csv", "csv", self.change_id
-            )
+            datafile = self.store.get_datafile("test_file.csv", "csv")
+            self.store.get_datafile("test_file_2.csv", "csv", self.change_id)
             found_datafile = self.store.find_datafile("test_file.csv")
 
             self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
@@ -479,9 +477,7 @@ class PlatformAndDatafileTestCase(TestCase):
         """Test whether find_datafile method finds the correct Datafile entity from Synonyms table"""
         with self.store.session_scope():
             datafile = self.store.get_datafile("test_file.csv", "csv", self.change_id)
-            datafile_2 = self.store.get_datafile(
-                "test_file_2.csv", "csv", self.change_id
-            )
+            self.store.get_datafile("test_file_2.csv", "csv", self.change_id)
             self.store.add_to_synonyms(
                 table=constants.DATAFILE,
                 name="TEST",

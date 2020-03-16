@@ -27,7 +27,8 @@ class FileProcessor:
         if LOCAL_PARSERS:
             if not os.path.exists(LOCAL_PARSERS):
                 print(
-                    f"No such file or directory: {LOCAL_PARSERS}. Only core parsers are going to work."
+                    f"No such file or directory: {local_importers_path}. Only core "
+                    "parsers are going to work."
                 )
             else:
                 self.load_importers_dynamically(LOCAL_PARSERS)
@@ -103,6 +104,9 @@ class FileProcessor:
                 states_sum = TableSummary(
                     data_store.session, data_store.db_classes.State
                 )
+                contacts_sum = TableSummary(
+                    data_store.session, data_store.db_classes.Contact
+                )
                 comments_sum = TableSummary(
                     data_store.session, data_store.db_classes.Comment
                 )
@@ -110,7 +114,7 @@ class FileProcessor:
                     data_store.session, data_store.db_classes.Platform
                 )
                 first_table_summary_set = TableSummarySet(
-                    [states_sum, comments_sum, platforms_sum]
+                    [states_sum, contacts_sum, comments_sum, platforms_sum]
                 )
                 print(first_table_summary_set.report("==Before=="))
 
@@ -122,6 +126,9 @@ class FileProcessor:
                 states_sum = TableSummary(
                     data_store.session, data_store.db_classes.State
                 )
+                contacts_sum = TableSummary(
+                    data_store.session, data_store.db_classes.Contact
+                )
                 comments_sum = TableSummary(
                     data_store.session, data_store.db_classes.Comment
                 )
@@ -129,7 +136,7 @@ class FileProcessor:
                     data_store.session, data_store.db_classes.Platform
                 )
                 second_table_summary_set = TableSummarySet(
-                    [states_sum, comments_sum, platforms_sum]
+                    [states_sum, contacts_sum, comments_sum, platforms_sum]
                 )
                 print(second_table_summary_set.report("==After=="))
             print(f"Files got processed: {processed_ctr} times")
@@ -143,6 +150,9 @@ class FileProcessor:
         with data_store.session_scope():
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            contacts_sum = TableSummary(
+                data_store.session, data_store.db_classes.Contact
+            )
             comments_sum = TableSummary(
                 data_store.session, data_store.db_classes.Comment
             )
@@ -150,7 +160,7 @@ class FileProcessor:
                 data_store.session, data_store.db_classes.Platform
             )
             first_table_summary_set = TableSummarySet(
-                [states_sum, comments_sum, platforms_sum]
+                [states_sum, contacts_sum, comments_sum, platforms_sum]
             )
             print(first_table_summary_set.report("==Before=="))
 
@@ -172,6 +182,9 @@ class FileProcessor:
                         )
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+            contacts_sum = TableSummary(
+                data_store.session, data_store.db_classes.Contact
+            )
             comments_sum = TableSummary(
                 data_store.session, data_store.db_classes.Comment
             )
@@ -179,7 +192,7 @@ class FileProcessor:
                 data_store.session, data_store.db_classes.Platform
             )
             second_table_summary_set = TableSummarySet(
-                [states_sum, comments_sum, platforms_sum]
+                [states_sum, contacts_sum, comments_sum, platforms_sum]
             )
             print(second_table_summary_set.report("==After=="))
 
