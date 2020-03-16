@@ -17,6 +17,10 @@ class DataStoreCacheTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
+        with self.store.session_scope():
+            self.change_id = self.store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
 
     def tearDown(self):
         pass
@@ -31,9 +35,13 @@ class DataStoreCacheTestCase(TestCase):
             # there must be no entity at the beginning
             self.assertEqual(len(comment_types), 0)
 
-            comment_type_1 = self.store.add_to_comment_types("Comment-1")
+            comment_type_1 = self.store.add_to_comment_types(
+                "Comment-1", self.change_id
+            )
             # This one shouldn't duplicate, it must return existing entity
-            comment_type_2 = self.store.add_to_comment_types("Comment-1")
+            comment_type_2 = self.store.add_to_comment_types(
+                "Comment-1", self.change_id
+            )
 
             # objects must be the same since the second object
             # is cached of first the one
@@ -56,11 +64,11 @@ class DataStoreCacheTestCase(TestCase):
             self.assertEqual(len(platform_types), 0)
 
             platform_type_1 = self.store.add_to_platform_types(
-                platform_type_name="test"
+                platform_type_name="test", change_id=self.change_id
             )
             # This one shouldn't duplicate, it should return existing entity
             platform_type_2 = self.store.add_to_platform_types(
-                platform_type_name="test"
+                platform_type_name="test", change_id=self.change_id
             )
 
             # objects must be the same
@@ -82,9 +90,13 @@ class DataStoreCacheTestCase(TestCase):
             # there must be no entity at the beginning
             self.assertEqual(len(nationalities), 0)
 
-            nationality_1 = self.store.add_to_nationalities(nationality_name="test")
+            nationality_1 = self.store.add_to_nationalities(
+                nationality_name="test", change_id=self.change_id
+            )
             # This one shouldn't duplicate, it should return existing entity
-            nationality_2 = self.store.add_to_nationalities(nationality_name="test")
+            nationality_2 = self.store.add_to_nationalities(
+                nationality_name="test", change_id=self.change_id
+            )
 
             # objects must be the same
             self.assertEqual(nationality_1, nationality_2)
@@ -103,9 +115,13 @@ class DataStoreCacheTestCase(TestCase):
             # there must be no entity at the beginning
             self.assertEqual(len(privacies), 0)
 
-            privacy_1 = self.store.add_to_privacies(privacy_name="test")
+            privacy_1 = self.store.add_to_privacies(
+                privacy_name="test", change_id=self.change_id
+            )
             # This one shouldn't duplicate, it should return existing entity
-            privacy_2 = self.store.add_to_privacies(privacy_name="test")
+            privacy_2 = self.store.add_to_privacies(
+                privacy_name="test", change_id=self.change_id
+            )
 
             # objects must be the same
             self.assertEqual(privacy_1, privacy_2)
@@ -124,9 +140,13 @@ class DataStoreCacheTestCase(TestCase):
             # there must be no entity at the beginning
             self.assertEqual(len(datafile_types), 0)
 
-            datafile_type_1 = self.store.add_to_datafile_types(datafile_type="test")
+            datafile_type_1 = self.store.add_to_datafile_types(
+                datafile_type="test", change_id=self.change_id
+            )
             # This one shouldn't duplicate, it should return existing entity
-            datafile_type_2 = self.store.add_to_datafile_types(datafile_type="test")
+            datafile_type_2 = self.store.add_to_datafile_types(
+                datafile_type="test", change_id=self.change_id
+            )
 
             # objects must be the same
             self.assertEqual(datafile_type_1, datafile_type_2)
@@ -147,9 +167,13 @@ class DataStoreCacheTestCase(TestCase):
             # there must be no entity at the beginning
             self.assertEqual(len(sensor_types), 0)
 
-            sensor_type_1 = self.store.add_to_sensor_types(sensor_type_name="test")
+            sensor_type_1 = self.store.add_to_sensor_types(
+                sensor_type_name="test", change_id=self.change_id
+            )
             # This one shouldn't duplicate, it should return existing entity
-            sensor_type_2 = self.store.add_to_sensor_types(sensor_type_name="test")
+            sensor_type_2 = self.store.add_to_sensor_types(
+                sensor_type_name="test", change_id=self.change_id
+            )
 
             # objects must be the same
             self.assertEqual(sensor_type_1, sensor_type_2)
@@ -168,6 +192,10 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
+        with self.store.session_scope():
+            self.change_id = self.store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
 
     def tearDown(self):
         pass
@@ -185,7 +213,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             # there must be one entity at the beginning
             self.assertEqual(len(comment_types), 1)
 
-            self.store.add_to_comment_types("test")
+            self.store.add_to_comment_types("test", self.change_id)
 
             comment_types = self.store.session.query(
                 self.store.db_classes.CommentType
@@ -207,7 +235,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             # there must be one entity at the beginning
             self.assertEqual(len(platform_types), 1)
 
-            self.store.add_to_platform_types("test")
+            self.store.add_to_platform_types("test", self.change_id)
 
             platform_types = self.store.session.query(
                 self.store.db_classes.PlatformType
@@ -229,7 +257,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             # there must be one entity at the beginning
             self.assertEqual(len(nationalities), 1)
 
-            self.store.add_to_nationalities("test")
+            self.store.add_to_nationalities("test", self.change_id)
 
             nationalities = self.store.session.query(
                 self.store.db_classes.Nationality
@@ -249,7 +277,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             # there must be one entity at the beginning
             self.assertEqual(len(privacies), 1)
 
-            self.store.add_to_privacies("test")
+            self.store.add_to_privacies("test", self.change_id)
 
             privacies = self.store.session.query(self.store.db_classes.Privacy).all()
 
@@ -269,7 +297,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             # there must be one entity at the beginning
             self.assertEqual(len(datafile_types), 1)
 
-            self.store.add_to_datafile_types("test")
+            self.store.add_to_datafile_types("test", self.change_id)
 
             datafile_types = self.store.session.query(
                 self.store.db_classes.DatafileType
@@ -291,7 +319,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             # there must be one entity at the beginning
             self.assertEqual(len(sensor_types), 1)
 
-            self.store.add_to_sensor_types("test")
+            self.store.add_to_sensor_types("test", self.change_id)
 
             sensor_types = self.store.session.query(
                 self.store.db_classes.SensorType
@@ -306,11 +334,18 @@ class PlatformAndDatafileTestCase(TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
         with self.store.session_scope():
-            self.nationality = self.store.add_to_nationalities("test_nationality").name
-            self.platform_type = self.store.add_to_platform_types(
-                "test_platform_type"
+            self.change_id = self.store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
+            self.nationality = self.store.add_to_nationalities(
+                "test_nationality", self.change_id
             ).name
-            self.privacy = self.store.add_to_privacies("test_privacy").name
+            self.platform_type = self.store.add_to_platform_types(
+                "test_platform_type", self.change_id
+            ).name
+            self.privacy = self.store.add_to_privacies(
+                "test_privacy", self.change_id
+            ).name
 
     def tearDown(self):
         pass
@@ -325,7 +360,7 @@ class PlatformAndDatafileTestCase(TestCase):
         self.assertEqual(len(datafiles), 0)
 
         with self.store.session_scope():
-            self.store.get_datafile("test_file.csv", "csv")
+            self.store.get_datafile("test_file.csv", "csv", self.change_id)
 
         # there must be one entry
         with self.store.session_scope():
@@ -343,8 +378,8 @@ class PlatformAndDatafileTestCase(TestCase):
         self.assertEqual(len(datafiles), 0)
 
         with self.store.session_scope():
-            self.store.get_datafile("test_file.csv", "csv")
-            self.store.get_datafile("test_file.csv", "csv")
+            self.store.get_datafile("test_file.csv", "csv", self.change_id)
+            self.store.get_datafile("test_file.csv", "csv", self.change_id)
 
             # there must be one entry
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
@@ -355,8 +390,10 @@ class PlatformAndDatafileTestCase(TestCase):
         """Test whether find_datafile method returns the correct Datafile entity"""
         with self.store.session_scope():
             # Create a datafile
-            datafile = self.store.get_datafile("test_file.csv", "csv")
-            datafile_2 = self.store.get_datafile("test_file_2.csv", "csv")
+            datafile = self.store.get_datafile("test_file.csv", "csv", self.change_id)
+            datafile_2 = self.store.get_datafile(
+                "test_file_2.csv", "csv", self.change_id
+            )
             found_datafile = self.store.find_datafile("test_file.csv")
 
             self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
@@ -365,10 +402,15 @@ class PlatformAndDatafileTestCase(TestCase):
     def test_find_datafile_synonym(self):
         """Test whether find_datafile method finds the correct Datafile entity from Synonyms table"""
         with self.store.session_scope():
-            datafile = self.store.get_datafile("test_file.csv", "csv")
-            datafile_2 = self.store.get_datafile("test_file_2.csv", "csv")
+            datafile = self.store.get_datafile("test_file.csv", "csv", self.change_id)
+            datafile_2 = self.store.get_datafile(
+                "test_file_2.csv", "csv", self.change_id
+            )
             self.store.add_to_synonyms(
-                table=constants.DATAFILE, name="TEST", entity=datafile.datafile_id
+                table=constants.DATAFILE,
+                name="TEST",
+                entity=datafile.datafile_id,
+                change_id=self.change_id,
             )
 
             found_datafile = self.store.find_datafile("TEST")
@@ -389,6 +431,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
+                change_id=self.change_id,
             )
 
         # there must be one entry
@@ -413,12 +456,14 @@ class PlatformAndDatafileTestCase(TestCase):
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
+                change_id=self.change_id,
             )
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
+                change_id=self.change_id,
             )
 
         # there must be one entry
@@ -437,12 +482,14 @@ class PlatformAndDatafileTestCase(TestCase):
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
+                change_id=self.change_id,
             )
             platform_2 = self.store.get_platform(
                 platform_name="Test Platform 2",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
+                change_id=self.change_id,
             )
 
             found_platform = self.store.find_platform("Test Platform")
@@ -458,15 +505,20 @@ class PlatformAndDatafileTestCase(TestCase):
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
+                change_id=self.change_id,
             )
             platform_2 = self.store.get_platform(
                 platform_name="Test Platform 2",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
+                change_id=self.change_id,
             )
             self.store.add_to_synonyms(
-                table=constants.PLATFORM, name="TEST", entity=platform.platform_id
+                table=constants.PLATFORM,
+                name="TEST",
+                entity=platform.platform_id,
+                change_id=self.change_id,
             )
 
             found_platform = self.store.find_platform("TEST")
@@ -525,18 +577,28 @@ class SensorTestCase(TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
         with self.store.session_scope() as session:
-            self.nationality = self.store.add_to_nationalities("test_nationality").name
-            self.platform_type = self.store.add_to_platform_types(
-                "test_platform_type"
+            self.change_id = self.store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
+            self.nationality = self.store.add_to_nationalities(
+                "test_nationality", self.change_id
             ).name
-            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type")
-            self.privacy = self.store.add_to_privacies("test_privacy").name
+            self.platform_type = self.store.add_to_platform_types(
+                "test_platform_type", self.change_id
+            ).name
+            self.sensor_type = self.store.add_to_sensor_types(
+                "test_sensor_type", self.change_id
+            )
+            self.privacy = self.store.add_to_privacies(
+                "test_privacy", self.change_id
+            ).name
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
+                change_id=self.change_id,
             )
             self.store.session.expunge(self.platform)
             self.store.session.expunge(self.sensor_type)
@@ -552,7 +614,9 @@ class SensorTestCase(TestCase):
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(self.store, "gps", self.sensor_type)
+            self.platform.get_sensor(
+                self.store, "gps", self.sensor_type, change_id=self.change_id
+            )
 
             # there must be one entry
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
@@ -567,10 +631,14 @@ class SensorTestCase(TestCase):
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(self.store, "gps", self.sensor_type)
+            self.platform.get_sensor(
+                self.store, "gps", self.sensor_type, change_id=self.change_id
+            )
 
             # try to add the same entity
-            self.platform.get_sensor(self.store, "gps", self.sensor_type)
+            self.platform.get_sensor(
+                self.store, "gps", self.sensor_type, change_id=self.change_id
+            )
 
             # there must be one entry
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
@@ -585,8 +653,12 @@ class SensorTestCase(TestCase):
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
-            sensor_2 = self.platform.get_sensor(self.store, "gps_2", self.sensor_type)
+            sensor = self.platform.get_sensor(
+                self.store, "gps", self.sensor_type, change_id=self.change_id
+            )
+            sensor_2 = self.platform.get_sensor(
+                self.store, "gps_2", self.sensor_type, change_id=self.change_id
+            )
 
             found_sensor = self.store.db_classes.Sensor().find_sensor(
                 self.store, "gps", self.platform.platform_id
@@ -601,10 +673,17 @@ class SensorTestCase(TestCase):
         # there must be no entry at the beginning
         self.assertEqual(len(sensors), 0)
 
-        sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
-        sensor_2 = self.platform.get_sensor(self.store, "gps_2", self.sensor_type)
+        sensor = self.platform.get_sensor(
+            self.store, "gps", self.sensor_type, change_id=self.change_id
+        )
+        sensor_2 = self.platform.get_sensor(
+            self.store, "gps_2", self.sensor_type, change_id=self.change_id
+        )
         self.store.add_to_synonyms(
-            table=constants.SENSOR, name="TEST", entity=sensor.sensor_id
+            table=constants.SENSOR,
+            name="TEST",
+            entity=sensor.sensor_id,
+            change_id=self.change_id,
         )
 
         found_sensor = self.store.db_classes.Sensor().find_sensor(
@@ -619,26 +698,37 @@ class MeasurementsTestCase(TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
         with self.store.session_scope() as session:
-            self.nationality = self.store.add_to_nationalities("test_nationality").name
-            self.platform_type = self.store.add_to_platform_types(
-                "test_platform_type"
+            self.current_time = datetime.utcnow()
+            self.change_id = self.store.add_to_changes(
+                "TEST", self.current_time, "TEST"
+            ).change_id
+            self.nationality = self.store.add_to_nationalities(
+                "test_nationality", self.change_id
             ).name
-            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type")
-            self.privacy = self.store.add_to_privacies("test_privacy").name
+            self.platform_type = self.store.add_to_platform_types(
+                "test_platform_type", self.change_id
+            ).name
+            self.sensor_type = self.store.add_to_sensor_types(
+                "test_sensor_type", self.change_id
+            )
+            self.privacy = self.store.add_to_privacies(
+                "test_privacy", self.change_id
+            ).name
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
+                change_id=self.change_id,
             )
-            self.sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
-            self.comment_type = self.store.add_to_comment_types("test_type")
-            self.file = self.store.get_datafile("test_file", "csv")
-            self.current_time = datetime.utcnow()
-            self.change_id = self.store.add_to_changes(
-                "TEST", self.current_time, "TEST"
-            ).change_id
+            self.sensor = self.platform.get_sensor(
+                self.store, "gps", self.sensor_type, change_id=self.change_id
+            )
+            self.comment_type = self.store.add_to_comment_types(
+                "test_type", self.change_id
+            )
+            self.file = self.store.get_datafile("test_file", "csv", self.change_id)
 
             self.store.session.expunge(self.sensor)
             self.store.session.expunge(self.platform)

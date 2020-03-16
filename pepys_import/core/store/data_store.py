@@ -186,7 +186,7 @@ class DataStore(object):
 
     def populate_reference(self, reference_data_folder=None):
         """Import given CSV file to the given reference table"""
-        self.add_to_changes(
+        change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason="Importing reference data"
         )
 
@@ -207,11 +207,11 @@ class DataStore(object):
             for file in files
             if os.path.splitext(file)[0].replace(" ", "") in reference_tables
         ]
-        import_from_csv(self, reference_data_folder, reference_files)
+        import_from_csv(self, reference_data_folder, reference_files, change.change_id)
 
     def populate_metadata(self, sample_data_folder=None):
         """Import CSV files from the given folder to the related Metadata Tables"""
-        self.add_to_changes(
+        change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason="Importing metadata data"
         )
         if sample_data_folder is None:
@@ -229,11 +229,11 @@ class DataStore(object):
         metadata_files = [
             file for file in files if os.path.splitext(file)[0] in metadata_tables
         ]
-        import_from_csv(self, sample_data_folder, metadata_files)
+        import_from_csv(self, sample_data_folder, metadata_files, change.change_id)
 
     def populate_measurement(self, sample_data_folder=None):
         """Import CSV files from the given folder to the related Measurement Tables"""
-        self.add_to_changes(
+        change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason="Importing measurement data"
         )
         if sample_data_folder is None:
@@ -250,7 +250,7 @@ class DataStore(object):
         measurement_files = [
             file for file in files if os.path.splitext(file)[0] in measurement_tables
         ]
-        import_from_csv(self, sample_data_folder, measurement_files)
+        import_from_csv(self, sample_data_folder, measurement_files, change.change_id)
 
     # End of Data Store methods
     #############################################################
@@ -266,6 +266,7 @@ class DataStore(object):
         course=None,
         speed=None,
         privacy=None,
+        change_id=None,
     ):
         """
         Adds the specified state to the :class:`State` table if not already present.
@@ -326,9 +327,12 @@ class DataStore(object):
         self.session.add(state_obj)
         self.session.flush()
 
+        self.add_to_logs(
+            table=constants.STATE, row_id=state_obj.state_id, change_id=change_id
+        )
         return state_obj
 
-    def add_to_sensors(self, name, sensor_type, host):
+    def add_to_sensors(self, name, sensor_type, host, change_id):
         """
         Adds the specified sensor to the :class:`Sensor` table if not already present.
 
@@ -352,10 +356,19 @@ class DataStore(object):
         self.session.add(sensor_obj)
         self.session.flush()
 
+        self.add_to_logs(
+            table=constants.SENSOR, row_id=sensor_obj.sensor_id, change_id=change_id
+        )
         return sensor_obj
 
     def add_to_datafiles(
-        self, privacy, file_type, reference=None, simulated=False, url=None
+        self,
+        privacy,
+        file_type,
+        reference=None,
+        simulated=False,
+        url=None,
+        change_id=None,
     ):
         """
         Adds the specified datafile to the Datafile table if not already present.
@@ -391,6 +404,11 @@ class DataStore(object):
         # add to cache and return created datafile
         self.datafiles[reference] = datafile_obj
 
+        self.add_to_logs(
+            table=constants.DATAFILE,
+            row_id=datafile_obj.datafile_id,
+            change_id=change_id,
+        )
         return datafile_obj
 
     def add_to_platforms(
@@ -402,6 +420,7 @@ class DataStore(object):
         trigraph=None,
         quadgraph=None,
         pennant_number=None,
+        change_id=None,
     ):
         """
         Adds the specified platform to the Platform table if not already present.
@@ -444,14 +463,22 @@ class DataStore(object):
         # add to cache and return created platform
         self.platforms[name] = platform_obj
 
+        self.add_to_logs(
+            table=constants.PLATFORM,
+            row_id=platform_obj.platform_id,
+            change_id=change_id,
+        )
         return platform_obj
 
-    def add_to_synonyms(self, table, name, entity):
+    def add_to_synonyms(self, table, name, entity, change_id):
         # enough info to proceed and create entry
         synonym = self.db_classes.Synonym(table=table, synonym=name, entity=entity)
         self.session.add(synonym)
         self.session.flush()
 
+        self.add_to_logs(
+            table=constants.SYNONYM, row_id=synonym.synonym_id, change_id=change_id
+        )
         return synonym
 
     #############################################################
@@ -575,7 +602,7 @@ class DataStore(object):
             pk_field=self.db_classes.Datafile.datafile_id,
         )
 
-    def get_datafile(self, datafile_name=None, datafile_type=None):
+    def get_datafile(self, datafile_name=None, datafile_type=None, change_id=None):
         """
         Adds an entry to the datafiles table of the specified name (path)
         and type if not already present. It uses find_datafile method to search existing datafiles.
@@ -597,7 +624,7 @@ class DataStore(object):
                 return datafile
 
         resolved_data = self.missing_data_resolver.resolve_datafile(
-            self, datafile_name, datafile_type, None
+            self, datafile_name, datafile_type, None, change_id=change_id
         )
         # It means that new datafile added as a synonym and existing datafile returned
         if isinstance(resolved_data, self.db_classes.Datafile):
@@ -617,6 +644,7 @@ class DataStore(object):
             privacy=privacy.name,
             file_type=datafile_type.name,
             reference=datafile_name,
+            change_id=change_id,
         )
 
     def find_platform(self, platform_name):
@@ -658,6 +686,7 @@ class DataStore(object):
         trigraph=None,
         quadgraph=None,
         pennant_number=None,
+        change_id=None,
     ):
         """
         Adds an entry to the platforms table for the specified platform
@@ -697,7 +726,7 @@ class DataStore(object):
             or privacy is None
         ):
             resolved_data = self.missing_data_resolver.resolve_platform(
-                self, platform_name, platform_type, nationality, privacy
+                self, platform_name, platform_type, nationality, privacy, change_id
             )
             # It means that new platform added as a synonym and existing platform returned
             if isinstance(resolved_data, self.db_classes.Platform):
@@ -731,6 +760,7 @@ class DataStore(object):
             nationality=nationality.name,
             platform_type=platform_type.name,
             privacy=privacy.name,
+            change_id=change_id,
         )
 
     def get_status(
@@ -786,7 +816,7 @@ class DataStore(object):
             .first()
         )
 
-    def add_to_comment_types(self, name):
+    def add_to_comment_types(self, name, change_id):
         """
         Adds the specified comment type to the CommentType table if not already present
 
@@ -815,13 +845,19 @@ class DataStore(object):
         # add to cache and return created platform type
         self.comment_types[name] = comment_type
 
+        self.add_to_logs(
+            table=constants.COMMENT_TYPE,
+            row_id=comment_type.comment_type_id,
+            change_id=change_id,
+        )
+
         return comment_type
 
     # End of Measurements
     #############################################################
     # Reference Type Maintenance
 
-    def add_to_platform_types(self, platform_type_name):
+    def add_to_platform_types(self, platform_type_name, change_id):
         """
         Adds the specified platform type to the platform types table if not already
         present.
@@ -850,9 +886,15 @@ class DataStore(object):
         # add to cache and return created platform type
         self.platform_types[platform_type_name] = platform_type
 
+        self.add_to_logs(
+            table=constants.PLATFORM_TYPE,
+            row_id=platform_type.platform_type_id,
+            change_id=change_id,
+        )
+
         return platform_type
 
-    def add_to_nationalities(self, nationality_name):
+    def add_to_nationalities(self, nationality_name, change_id):
         """
         Adds the specified nationality to the nationalities table if not already present
 
@@ -880,9 +922,14 @@ class DataStore(object):
         # add to cache and return created platform
         self.nationalities[nationality_name] = nationality
 
+        self.add_to_logs(
+            table=constants.NATIONALITY,
+            row_id=nationality.nationality_id,
+            change_id=change_id,
+        )
         return nationality
 
-    def add_to_privacies(self, privacy_name):
+    def add_to_privacies(self, privacy_name, change_id):
         """
         Adds the specified privacy entry to the :class:`Privacy` table if not already present.
 
@@ -910,9 +957,12 @@ class DataStore(object):
         # add to cache and return created platform
         self.privacies[privacy_name] = privacy
 
+        self.add_to_logs(
+            table=constants.PRIVACY, row_id=privacy.privacy_id, change_id=change_id
+        )
         return privacy
 
-    def add_to_datafile_types(self, datafile_type):
+    def add_to_datafile_types(self, datafile_type, change_id):
         """
         Adds the specified datafile type to the datafile types table if not already
         present.
@@ -942,9 +992,14 @@ class DataStore(object):
         # add to cache and return created datafile type
         self.datafile_types[datafile_type] = datafile_type_obj
 
+        self.add_to_logs(
+            table=constants.DATAFILE_TYPE,
+            row_id=datafile_type_obj.datafile_type_id,
+            change_id=change_id,
+        )
         return datafile_type_obj
 
-    def add_to_sensor_types(self, sensor_type_name):
+    def add_to_sensor_types(self, sensor_type_name, change_id):
         """
         Adds the specified sensor type to the :class:`SensorType` table if not already present.
 
@@ -972,6 +1027,11 @@ class DataStore(object):
         # add to cache and return created sensor type
         self.sensor_types[sensor_type_name] = sensor_type
 
+        self.add_to_logs(
+            table=constants.COMMENT_TYPE,
+            row_id=sensor_type.sensor_type_id,
+            change_id=change_id,
+        )
         return sensor_type
 
     # End of References

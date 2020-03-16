@@ -28,7 +28,7 @@ class ReplayCommentImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def _load_this_file(self, data_store, path, file_object, datafile):
+    def _load_this_file(self, data_store, path, file_object, datafile, change_id):
         for line_number, line in enumerate(file_object.lines(), 1):
             if line.text.startswith(";"):
                 if line.text.startswith(";NARRATIVE:"):
@@ -76,24 +76,30 @@ class ReplayCommentImporter(Importer):
                 else:
                     continue
 
-                privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
+                privacy = data_store.missing_data_resolver.resolve_privacy(
+                    data_store, change_id
+                )
                 platform = data_store.get_platform(
                     platform_name=vessel_name_token.text,
                     nationality="UK",
                     platform_type="Fisher",
                     privacy="Public",
+                    change_id=change_id,
                 )
                 vessel_name_token.record(
                     self.name, "vessel name", vessel_name_token.text, "n/a"
                 )
-                sensor_type = data_store.add_to_sensor_types("Human")
+                sensor_type = data_store.add_to_sensor_types(
+                    "Human", change_id=change_id
+                )
                 sensor = platform.get_sensor(
                     data_store=data_store,
                     sensor_name=platform.name,
                     sensor_type=sensor_type,
                     privacy=privacy.name,
+                    change_id=change_id,
                 )
-                comment_type = data_store.add_to_comment_types(comment_type)
+                comment_type = data_store.add_to_comment_types(comment_type, change_id)
 
                 timestamp = parse_timestamp(date_token.text, time_token.text)
                 combine_tokens(date_token, time_token).record(

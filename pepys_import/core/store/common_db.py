@@ -44,7 +44,7 @@ class SensorMixin:
         )
 
     @classmethod
-    def add_to_sensors(cls, data_store, name, sensor_type, host):
+    def add_to_sensors(cls, data_store, name, sensor_type, host, change_id):
         session = data_store.session
         sensor_type = data_store.db_classes.SensorType().search_sensor_type(
             data_store, sensor_type
@@ -57,6 +57,9 @@ class SensorMixin:
         session.add(sensor_obj)
         session.flush()
 
+        data_store.add_to_logs(
+            table=constants.SENSOR, row_id=sensor_obj.sensor_id, change_id=change_id
+        )
         return sensor_obj
 
 
@@ -67,7 +70,14 @@ class PlatformMixin:
         Platform = data_store.db_classes.Platform
         return data_store.session.query(Platform).filter(Platform.name == name).first()
 
-    def get_sensor(self, data_store, sensor_name=None, sensor_type=None, privacy=None):
+    def get_sensor(
+        self,
+        data_store,
+        sensor_name=None,
+        sensor_type=None,
+        privacy=None,
+        change_id=None,
+    ):
         """
          Lookup or create a sensor of this name for this :class:`Platform`.
          Specified sensor will be added to the :class:`Sensor` table.
@@ -92,7 +102,7 @@ class PlatformMixin:
 
         if sensor_type is None or privacy is None:
             resolved_data = data_store.missing_data_resolver.resolve_sensor(
-                data_store, sensor_name, sensor_type, privacy
+                data_store, sensor_name, sensor_type, privacy, change_id
             )
             # It means that new sensor added as a synonym and existing sensor returned
             if isinstance(resolved_data, Sensor):
@@ -111,6 +121,7 @@ class PlatformMixin:
             name=sensor_name,
             sensor_type=sensor_type.name,
             host=self.name,
+            change_id=change_id,
         )
 
 
