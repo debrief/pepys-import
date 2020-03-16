@@ -91,6 +91,8 @@ class PlatformMixin:
         :type sensor_type: SensorType
         :param privacy: Privacy of :class:`Sensor`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`Sensor` entity
         :rtype: Sensor
         """

@@ -84,4 +84,6 @@ class Importer(ABC):
         :type file_object: HighlightedFile
         :param datafile: DataFile object
         :type datafile: DataFile
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         """

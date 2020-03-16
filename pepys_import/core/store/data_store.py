@@ -289,6 +289,8 @@ class DataStore(object):
         :type speed: String
         :param privacy: :class:`Privacy` of :class:`State`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`State` entity
         :rtype: State
         """
@@ -342,6 +344,8 @@ class DataStore(object):
         :type sensor_type: :class:`SensorType`
         :param host: Platform of sensor
         :type host: Platform
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created Sensor entity
         """
         sensor_type = self.search_sensor_type(sensor_type)
@@ -383,6 +387,8 @@ class DataStore(object):
         :type reference: String
         :param url: URL of datafile
         :type url: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`Datafile` entity
         :rtype: Datafile
         """
@@ -439,6 +445,8 @@ class DataStore(object):
         :type quadgraph: String
         :param pennant_number: Pennant number of :class:`Platform`
         :type pennant_number: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created Platform entity
         :rtype: Platform
         """
@@ -611,6 +619,8 @@ class DataStore(object):
         :type datafile_name: String
         :param datafile_type: Type of Datafile
         :type datafile_type: DatafileType
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:  Created Datafile entity
         :rtype: Datafile
         """
@@ -706,6 +716,8 @@ class DataStore(object):
         :type quadgraph: String
         :param pennant_number: Pennant number of :class:`Platform`
         :type pennant_number: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created Platform entity
         """
 
@@ -822,6 +834,8 @@ class DataStore(object):
 
         :param name: Name of :class:`CommentType`
         :type name: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created entity of :class:`CommentType` table
         :rtype: CommentType
         """
@@ -864,6 +878,8 @@ class DataStore(object):
 
         :param platform_type_name: Name of :class:`PlatformType`
         :type platform_type_name: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`PlatformType` entity
         :rtype: PlatformType
         """
@@ -900,6 +916,8 @@ class DataStore(object):
 
         :param nationality_name: Name of :class:`Nationality`
         :type nationality_name: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`Nationality` entity
         :rtype: Nationality
         """
@@ -935,6 +953,8 @@ class DataStore(object):
 
         :param privacy_name: Name of :class:`Privacy`
         :type privacy_name: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`Privacy` entity
         :rtype: Privacy
         """
@@ -969,6 +989,8 @@ class DataStore(object):
 
         :param datafile_type: Name of :class:`DatafileType`
         :type datafile_type: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Wrapped database entity for :class:`DatafileType`
         :rtype: DatafileType
         """
@@ -1005,6 +1027,8 @@ class DataStore(object):
 
         :param sensor_type_name: Name of :class:`SensorType`
         :type sensor_type_name: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`SensorType` entity
         :rtype: SensorType
         """
@@ -1046,6 +1070,8 @@ class DataStore(object):
         :param row_id: Entity ID of the tale
         :param field:  Name of the field
         :param new_value:  New value of the field
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :param change_id:  Row ID of entity of :class:`Changes` about the change
         :return: Created :class:`Logs` entity
         """

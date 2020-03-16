@@ -136,6 +136,8 @@ class CommandLineResolver(DataResolver):
         :type datafile_type: DatafileType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
         datafiles = data_store.session.query(data_store.db_classes.Datafile).all()
@@ -202,6 +204,8 @@ class CommandLineResolver(DataResolver):
         :type platform_type: PlatformType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
         completer = list()
@@ -294,6 +298,8 @@ class CommandLineResolver(DataResolver):
         :type sensor_type: SensorType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
         sensors = data_store.session.query(data_store.db_classes.Sensor).all()
@@ -351,6 +357,8 @@ class CommandLineResolver(DataResolver):
 
         :param data_store: A :class:`DataStore` object
         :type data_store: DataStore
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
 
@@ -392,6 +400,10 @@ class CommandLineResolver(DataResolver):
 
         :param data_store: A :class:`DataStore` object
         :type data_store: DataStore
+        :param datafile_name: Name of the Datafile
+        :type datafile_name: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
 
@@ -441,6 +453,8 @@ class CommandLineResolver(DataResolver):
         :param platform_name:
         :param data_store: A :class:`DataStore` object
         :type data_store: DataStore
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
         nationalities = data_store.session.query(
@@ -489,6 +503,8 @@ class CommandLineResolver(DataResolver):
         :param platform_name:
         :param data_store: A :class:`DataStore` object
         :type data_store: DataStore
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
         platform_types = data_store.session.query(
@@ -537,6 +553,8 @@ class CommandLineResolver(DataResolver):
         :param sensor_name:
         :param data_store: A :class:`DataStore` object
         :type data_store: DataStore
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
         sensor_types = data_store.session.query(data_store.db_classes.SensorType).all()
@@ -582,6 +600,8 @@ class CommandLineResolver(DataResolver):
         :param platform_name:
         :param data_store: A :class:`DataStore` object
         :type data_store: DataStore
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
         nationality_names = [
@@ -630,6 +650,8 @@ class CommandLineResolver(DataResolver):
         :param sensor_name:
         :param data_store: A :class:`DataStore` object
         :type data_store: DataStore
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
         sensor_type_names = [
@@ -654,6 +676,8 @@ class CommandLineResolver(DataResolver):
 
         :param data_store:
         :param datafile_name:
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
         datafile_type_names = [
@@ -690,6 +714,8 @@ class CommandLineResolver(DataResolver):
         :type datafile_type: DatafileType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
         print("Ok, adding new datafile.")
@@ -764,6 +790,8 @@ class CommandLineResolver(DataResolver):
         :type platform_type: PlatformType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
         print("Ok, adding new platform.")
@@ -865,6 +893,8 @@ class CommandLineResolver(DataResolver):
         :type sensor_type: SensorType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
         # Choose Sensor Type

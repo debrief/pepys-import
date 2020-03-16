@@ -20,6 +20,8 @@ class DataResolver(ABC):
         :type platform_type: PlatformType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
 
@@ -37,6 +39,8 @@ class DataResolver(ABC):
         :type sensor_type: SensorType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
 
@@ -48,6 +52,8 @@ class DataResolver(ABC):
 
         :param data_store: A :class:`DataStore` object
         :type data_store: DataStore
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
 
@@ -67,5 +73,7 @@ class DataResolver(ABC):
         :type datafile_type: DatafileType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
