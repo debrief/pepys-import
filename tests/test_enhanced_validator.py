@@ -132,3 +132,7 @@ class EnhancedValidatorTestCase(unittest.TestCase):
             "Calculated speed (206.379 m/s) is more than the measured speed * 10 (100.000 m/s)"
             in str(self.errors[0])
         )
+
+
+if __name__ == "__main__":
+    unittest.main()
