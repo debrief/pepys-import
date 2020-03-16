@@ -89,8 +89,8 @@ class EnhancedValidatorTestCase(unittest.TestCase):
             self.current_time,
             parser_name=self.parser.short_name,
         )
-        state.prev_location = "POINT(75.0 25.0)"
-        state.location = "POINT(80.0 30.0)"
+        state.prev_location = "SRID=4326;POINT(75.0 25.0)"
+        state.location = "SRID=4326;POINT(80.0 30.0)"
         state.heading = 5.0
         state.course = 5.0
         EnhancedValidator(state, self.errors, "Test Parser")
@@ -112,8 +112,8 @@ class EnhancedValidatorTestCase(unittest.TestCase):
             self.current_time,
             parser_name=self.parser.short_name,
         )
-        state.prev_location = "POINT(75.0 25.0)"
-        state.location = "POINT(80.0 30.0)"
+        state.prev_location = "SRID=4326;POINT(75.0 25.0)"
+        state.location = "SRID=4326;POINT(80.0 30.0)"
         state.speed = 10.0
         EnhancedValidator(state, self.errors, "Test Parser")
         assert len(self.errors) == 1

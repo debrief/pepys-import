@@ -430,7 +430,7 @@ class State(BasePostGIS, StateMixin):
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )
-    location = Column(Geometry(geometry_type="POINT", srid=0))
+    location = Column(Geometry(geometry_type="POINT", srid=4326))
     elevation = Column(DOUBLE_PRECISION)
     heading = Column(DOUBLE_PRECISION)
     course = Column(DOUBLE_PRECISION)
