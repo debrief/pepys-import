@@ -466,7 +466,7 @@ class PlatformAndDatafileTestCase(TestCase):
         """Test whether find_datafile method returns the correct Datafile entity"""
         with self.store.session_scope():
             # Create a datafile
-            datafile = self.store.get_datafile("test_file.csv", "csv")
+            datafile = self.store.get_datafile("test_file.csv", "csv", self.change_id)
             self.store.get_datafile("test_file_2.csv", "csv", self.change_id)
             found_datafile = self.store.find_datafile("test_file.csv")
 
