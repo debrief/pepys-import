@@ -19,6 +19,7 @@ from pepys_import.core.store.common_db import (
     ContactMixin,
     CommentMixin,
     MediaMixin,
+    ElevationPropertyMixin,
 )
 
 from uuid import uuid4
@@ -414,7 +415,7 @@ class ConfidenceLevel(BasePostGIS):
 
 
 # Measurements Tables
-class State(BasePostGIS, StateMixin):
+class State(BasePostGIS, StateMixin, ElevationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prev_location = None
@@ -588,7 +589,7 @@ class Geometry1(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Media(BasePostGIS, MediaMixin):
+class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin):
     __tablename__ = constants.MEDIA
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34
