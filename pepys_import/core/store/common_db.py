@@ -58,7 +58,7 @@ class SensorMixin:
         session.flush()
 
         # Log new Sensor object creation to Changes and Logs tables
-        reason = f"Adding new Sensor object for Platform ({host.name})."
+        reason = f"A new Sensor object named '{sensor_obj.name}' for Platform ({host.name}) added."
         change = data_store.add_to_changes(
             user=getuser(), modified=datetime.utcnow(), reason=reason
         )

@@ -347,7 +347,7 @@ class DataStore(object):
         self.session.flush()
 
         # State object created, log it to Changes and Logs tables
-        reason = f"Adding a new State object for Sensor ({sensor.name})."
+        reason = f"A new State object for Sensor ({sensor.name}) added."
         change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason=reason
         )
@@ -382,7 +382,7 @@ class DataStore(object):
         self.session.flush()
 
         # Sensor object created, log it to Changes and Logs tables
-        reason = f"Adding a new Sensor object for Platform ({host.name})."
+        reason = f"A new Sensor object names '{sensor_obj.name}' for Platform ({host.name}) added."
         change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason=reason
         )
@@ -432,7 +432,7 @@ class DataStore(object):
         self.datafiles[reference] = datafile_obj
 
         # Datafile object created, log it to Changes and Logs tables
-        reason = f"Importing '{reference}'."
+        reason = f"A new Datafile object named '{reference}' added."
         change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason=reason
         )
@@ -442,7 +442,7 @@ class DataStore(object):
             change_id=change.change_id,
         )
 
-        return datafile_obj, change.change_id
+        return datafile_obj
 
     def add_to_platforms(
         self,
@@ -497,7 +497,7 @@ class DataStore(object):
         # should return DB type or something else decoupled from DB?
 
         # Platform object created, log it to Changes and Logs tables
-        reason = f"Adding a new Platform object named {name}."
+        reason = f"A new Platform object named '{name}' added."
         change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason=reason
         )
@@ -516,7 +516,7 @@ class DataStore(object):
         self.session.flush()
 
         # Synonym object created, log it to Changes and Logs tables
-        reason = f"Adding a new Synonym object ({name}) for Table ({table})."
+        reason = f"A new Synonym object ({name}) for Table ({table}) added."
         change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason=reason
         )
@@ -899,7 +899,7 @@ class DataStore(object):
         # should return DB type or something else decoupled from DB?
 
         # Comment Type object created, log it to Changes and Logs tables
-        reason = f"Adding an new Comment Type object named {name}."
+        reason = f"A new Comment Type object named {name} added."
         change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason=reason
         )
@@ -945,7 +945,7 @@ class DataStore(object):
         # should return DB type or something else decoupled from DB?
 
         # Platform Type object created, log it to Changes and Logs tables
-        reason = f"Adding an new Platform Type object named {platform_type_name}."
+        reason = f"A new Platform Type object named '{platform_type_name}' added."
         change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason=reason
         )
@@ -986,7 +986,7 @@ class DataStore(object):
         # should return DB type or something else decoupled from DB?
 
         # Nationality object created, log it to Changes and Logs tables
-        reason = f"Adding an new Nationality object named {nationality_name}."
+        reason = f"A new Nationality object named '{nationality_name}' added."
         change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason=reason
         )
@@ -1027,7 +1027,7 @@ class DataStore(object):
         # should return DB type or something else decoupled from DB?
 
         # Privacy object created, log it to Changes and Logs table
-        reason = f"Adding an new Classification object named {privacy_name}."
+        reason = f"A new Classification object named '{privacy_name}' added."
         change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason=reason
         )
@@ -1070,7 +1070,7 @@ class DataStore(object):
         # should return DB type or something else decoupled from DB?
 
         # Datafile Type object created, log it to Logs table
-        reason = f"Adding an new Datafile Type object named {datafile_type}."
+        reason = f"A new Datafile Type object named '{datafile_type}' added."
         change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason=reason
         )
@@ -1111,7 +1111,7 @@ class DataStore(object):
         # should return DB type or something else decoupled from DB?
 
         # Sensor Type object created, log it to Logs table
-        reason = f"Adding an new Sensor Type object named {sensor_type_name}."
+        reason = f"A new Sensor Type object named '{sensor_type_name}' added."
         change = self.add_to_changes(
             user=USER, modified=datetime.utcnow(), reason=reason
         )
