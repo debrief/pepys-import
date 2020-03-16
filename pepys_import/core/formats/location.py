@@ -1,11 +1,7 @@
 class Location:
-    def __init__(
-        self, degrees, minutes, seconds, hemisphere, errors=None, error_type=None
-    ):
-        self.degrees = degrees
-        self.minutes = minutes
-        self.seconds = seconds
-        self.hemisphere = hemisphere
+    def __init__(self, errors=None, error_type=None):
+        self._latitude = None
+        self._longitude = None
 
         if errors is None:
             self.errors = list()
@@ -16,76 +12,149 @@ class Location:
         else:
             self.error_type = error_type
 
-    def __repr__(self):
-        return (
-            "("
-            + str(self.degrees)
-            + ", "
-            + str(self.minutes)
-            + ", "
-            + str(self.seconds)
-            + ", "
-            + self.hemisphere
-            + ")"
+    # Property to make a read-only .latitude property
+    # that mirrors the hidden _latitude attribute
+    @property
+    def latitude(self):
+        return self._latitude
+
+    @latitude.setter
+    def latitude(self, value):
+        raise AttributeError(
+            "Cannot set latitude directly. Use set_latitude_decimal_degrees or set_latitude_dms"
         )
 
-    def __eq__(self, other):
-        if not isinstance(other, Location):
-            # don't attempt to compare against unrelated types
-            return NotImplemented
+    # Property to make a read-only .longitude property
+    # that mirrors the hidden _longitude attribute
+    @property
+    def longitude(self):
+        return self._longitude
 
-        return (
-            self.degrees == other.degrees
-            and self.minutes == other.minutes
-            and self.seconds == other.seconds
-            and self.hemisphere == other.hemisphere
+    @longitude.setter
+    def longitude(self, value):
+        raise AttributeError(
+            "Cannot set longitude directly. Use set_longitude_decimal_degrees or set_longitude_dms"
         )
 
-    # provide representation of this location element in whole degrees
-    def as_degrees(self):
-        degs = self.degrees + self.minutes / 60 + self.seconds / 3600
-        if self.hemisphere.upper() in ("S", "W"):
-            degs *= -1
-        return degs
-
-    def parse(self):
+    def convert_and_check_degrees(self, degrees, lat_or_lon):
         try:
-            self.degrees = float(self.degrees)
+            degrees = float(degrees)
         except ValueError:
             self.errors.append(
                 {
-                    self.error_type: f"Error in degrees value {self.degrees}. Couldn't convert to a number"
+                    self.error_type: f"Error in {lat_or_lon} decimal degrees value {degrees}. Couldn't convert to a number"
                 }
             )
             return False
 
+        if lat_or_lon == "latitude":
+            max_value = 90
+        elif lat_or_lon == "longitude":
+            max_value = 360
+        if degrees < 0 or degrees > max_value:
+            self.errors.append(
+                {
+                    self.error_type: f"Error in {lat_or_lon} degrees value {degrees}. Must be between 0 and 90"
+                }
+            )
+            return False
+
+        return degrees
+
+    def convert_and_check_minutes(self, minutes, lat_or_lon):
         try:
-            self.minutes = float(self.minutes)
+            minutes = float(minutes)
         except ValueError:
             self.errors.append(
                 {
-                    self.error_type: f"Error in minutes value {self.minutes}. Couldn't convert to a number"
+                    self.error_type: f"Error in {lat_or_lon} minutes value {minutes}. Couldn't convert to a number"
                 }
             )
             return False
 
+        if minutes < 0 or minutes > 60:
+            self.errors.append(
+                {
+                    self.error_type: f"Error in {lat_or_lon} minutes value {minutes}. Must be between 0 and 90"
+                }
+            )
+            return False
+
+        return minutes
+
+    def convert_and_check_seconds(self, seconds, lat_or_lon):
         try:
-            self.seconds = float(self.seconds)
+            seconds = float(seconds)
         except ValueError:
             self.errors.append(
                 {
-                    self.error_type: f"Error in seconds value {self.seconds}. Couldn't convert to a number"
+                    self.error_type: f"Error in {lat_or_lon} seconds value {seconds}. Couldn't convert to a number"
                 }
             )
             return False
 
-        if self.hemisphere not in ("N", "S", "E", "W"):
+        if seconds < 0 or seconds > 60:
             self.errors.append(
                 {
-                    self.error_type: f"Error in hemisphere value {self.hemisphere}. "
-                    f"Should be one of N, S, E or W"
+                    self.error_type: f"Error in {lat_or_lon} seconds value {seconds}. Must be between 0 and 90"
                 }
             )
             return False
 
+        return seconds
+
+    def convert_and_check_hemisphere(self, hemisphere, lat_or_lon):
+        hemisphere = hemisphere.upper()
+
+        if hemisphere not in ("N", "S", "E", "W"):
+            self.errors.append(
+                {
+                    self.error_type: f"Error in {lat_or_lon} hemisphere value {hemisphere}. Must be N, S, E or W"
+                }
+            )
+            return False
+
+        return hemisphere
+
+    def set_latitude_decimal_degrees(self, latitude):
+        latitude = self.convert_and_check_degrees(latitude, "latitude")
+
+        if not latitude:
+            return False
+        else:
+            self._latitude = latitude
+            return True
+
+    def set_longitude_decimal_degrees(self, longitude):
+        longitude = self.convert_and_check_degrees(longitude, "longitude")
+
+        if not longitude:
+            return False
+        else:
+            self._longitude = longitude
+            return True
+
+    def set_latitude_dms(self, degrees, minutes, seconds, hemisphere):
+        degrees = self.convert_and_check_degrees(degrees, "latitude")
+        if not degrees:
+            return False
+
+        minutes = self.convert_and_check_minutes(minutes, "latitude")
+        if not minutes:
+            return False
+
+        seconds = self.convert_and_check_minutes(seconds, "latitude")
+        if not seconds:
+            return False
+
+        hemisphere = self.convert_and_check_hemisphere(hemisphere, "latitude")
+        if not hemisphere:
+            return False
+
+        decimal_degrees = degrees + (minutes / 60) + (seconds / 3600)
+
+        if hemisphere in ("S", "W"):
+            decimal_degrees *= -1
+
+        self._latitude = decimal_degrees
         return True
