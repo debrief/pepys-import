@@ -27,7 +27,7 @@ class FileProcessor:
         if LOCAL_PARSERS:
             if not os.path.exists(LOCAL_PARSERS):
                 print(
-                    f"No such file or directory: {local_importers_path}. Only core "
+                    f"No such file or directory: {LOCAL_PARSERS}. Only core "
                     "parsers are going to work."
                 )
             else:
