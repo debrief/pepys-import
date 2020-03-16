@@ -207,20 +207,7 @@ class DataStore(object):
             for file in files
             if os.path.splitext(file)[0].replace(" ", "") in reference_tables
         ]
-        for file in reference_files:
-            # split file into filename and extension
-            table_name, _ = os.path.splitext(file)
-            possible_method = "add_to_" + table_name.lower().replace(" ", "_")
-            method_to_call = getattr(self, possible_method, None)
-            if method_to_call:
-                with open(os.path.join(reference_data_folder, file), "r") as f:
-                    reader = csv.reader(f)
-                    # skip header
-                    _ = next(reader)
-                    for row in reader:
-                        method_to_call(*row)
-            else:
-                print(f"Method({possible_method}) not found!")
+        import_from_csv(self, reference_data_folder, reference_files)
 
     def populate_metadata(self, sample_data_folder=None):
         """Import CSV files from the given folder to the related Metadata Tables"""
@@ -242,20 +229,7 @@ class DataStore(object):
         metadata_files = [
             file for file in files if os.path.splitext(file)[0] in metadata_tables
         ]
-        for file in sorted(metadata_files):
-            # split file into filename and extension
-            table_name, _ = os.path.splitext(file)
-            possible_method = "add_to_" + table_name.lower().replace(" ", "_")
-            method_to_call = getattr(self, possible_method, None)
-            if method_to_call:
-                with open(os.path.join(sample_data_folder, file), "r") as f:
-                    reader = csv.reader(f)
-                    # skip header
-                    _ = next(reader)
-                    for row in reader:
-                        method_to_call(*row)
-            else:
-                print(f"Method({possible_method}) not found!")
+        import_from_csv(self, sample_data_folder, metadata_files)
 
     def populate_measurement(self, sample_data_folder=None):
         """Import CSV files from the given folder to the related Measurement Tables"""
