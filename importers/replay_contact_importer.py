@@ -202,12 +202,12 @@ class ReplayContactImporter(Importer):
                     )
 
                 if bearing_token.text.upper() == "NULL":
-                    bearing = 0
+                    bearing = None
                 else:
                     bearing = convert_absolute_angle(
                         bearing_token.text, line, self.errors, self.error_type
                     )
-                bearing_token.record(self.name, "bearing", bearing, "degs")
+                    bearing_token.record(self.name, "bearing", bearing, "degs")
 
                 privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
                 platform = data_store.get_platform(
@@ -240,10 +240,12 @@ class ReplayContactImporter(Importer):
                     parser_name=self.short_name,
                 )
                 contact.privacy = privacy
-                contact.bearing = bearing.to(unit_registry.radian).magnitude
                 contact.location = location
 
                 # sort out the optional fields
+                if bearing is not None:
+                    contact.bearing = bearing.to(unit_registry.radian).magnitude
+
                 if range_token.text.upper() != "NULL":
                     range_val = convert_distance(
                         range_token.text,
