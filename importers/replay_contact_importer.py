@@ -21,7 +21,7 @@ class ReplayContactImporter(Importer):
         self.errors = list()
 
     def can_load_this_type(self, suffix):
-        return suffix.upper() == ".REP"
+        return suffix.upper() in [".REP", ".DSF"]
 
     def can_load_this_filename(self, filename):
         return True
