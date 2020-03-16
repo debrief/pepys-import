@@ -13,8 +13,7 @@ def import_from_csv(data_store, path, files):
                 reader = csv.reader(f)
                 # skip header
                 _ = next(reader)
-                with data_store.session_scope():
-                    for row in reader:
-                        method_to_call(*row)
+                for row in reader:
+                    method_to_call(*row)
         else:
             print(f"Method({possible_method}) not found!")

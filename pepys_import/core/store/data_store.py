@@ -186,6 +186,10 @@ class DataStore(object):
 
     def populate_reference(self, reference_data_folder=None):
         """Import given CSV file to the given reference table"""
+        self.add_to_changes(
+            user=USER, modified=datetime.utcnow(), reason="Importing reference data"
+        )
+
         if reference_data_folder is None:
             reference_data_folder = os.path.join(DEFAULT_DATA_PATH)
 
@@ -193,11 +197,10 @@ class DataStore(object):
 
         reference_tables = []
         # Create reference table list
-        with self.session_scope():
-            self.setup_table_type_mapping()
-            reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
-            for table_object in list(reference_table_objects):
-                reference_tables.append(table_object.__tablename__)
+        self.setup_table_type_mapping()
+        reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
+        for table_object in list(reference_table_objects):
+            reference_tables.append(table_object.__tablename__)
 
         reference_files = [
             file
@@ -214,14 +217,16 @@ class DataStore(object):
                     reader = csv.reader(f)
                     # skip header
                     _ = next(reader)
-                    with self.session_scope():
-                        for row in reader:
-                            method_to_call(*row)
+                    for row in reader:
+                        method_to_call(*row)
             else:
                 print(f"Method({possible_method}) not found!")
 
     def populate_metadata(self, sample_data_folder=None):
         """Import CSV files from the given folder to the related Metadata Tables"""
+        self.add_to_changes(
+            user=USER, modified=datetime.utcnow(), reason="Importing metadata data"
+        )
         if sample_data_folder is None:
             sample_data_folder = os.path.join(DEFAULT_DATA_PATH)
 
@@ -229,11 +234,10 @@ class DataStore(object):
 
         metadata_tables = []
         # Create metadata table list
-        with self.session_scope():
-            self.setup_table_type_mapping()
-            metadata_table_objects = self.meta_classes[TableTypes.METADATA]
-            for table_object in list(metadata_table_objects):
-                metadata_tables.append(table_object.__tablename__)
+        self.setup_table_type_mapping()
+        metadata_table_objects = self.meta_classes[TableTypes.METADATA]
+        for table_object in list(metadata_table_objects):
+            metadata_tables.append(table_object.__tablename__)
 
         metadata_files = [
             file for file in files if os.path.splitext(file)[0] in metadata_tables
@@ -248,14 +252,16 @@ class DataStore(object):
                     reader = csv.reader(f)
                     # skip header
                     _ = next(reader)
-                    with self.session_scope():
-                        for row in reader:
-                            method_to_call(*row)
+                    for row in reader:
+                        method_to_call(*row)
             else:
                 print(f"Method({possible_method}) not found!")
 
     def populate_measurement(self, sample_data_folder=None):
         """Import CSV files from the given folder to the related Measurement Tables"""
+        self.add_to_changes(
+            user=USER, modified=datetime.utcnow(), reason="Importing measurement data"
+        )
         if sample_data_folder is None:
             sample_data_folder = DEFAULT_DATA_PATH
 
@@ -346,15 +352,6 @@ class DataStore(object):
         self.session.add(state_obj)
         self.session.flush()
 
-        # State object created, log it to Changes and Logs tables
-        reason = f"A new State object for Sensor ({sensor.name}) added."
-        change = self.add_to_changes(
-            user=USER, modified=datetime.utcnow(), reason=reason
-        )
-        self.add_to_logs(
-            table=constants.STATE, row_id=state_obj.state_id, change_id=change.change_id
-        )
-
         return state_obj
 
     def add_to_sensors(self, name, sensor_type, host):
@@ -380,17 +377,6 @@ class DataStore(object):
         )
         self.session.add(sensor_obj)
         self.session.flush()
-
-        # Sensor object created, log it to Changes and Logs tables
-        reason = f"A new Sensor object names '{sensor_obj.name}' for Platform ({host.name}) added."
-        change = self.add_to_changes(
-            user=USER, modified=datetime.utcnow(), reason=reason
-        )
-        self.add_to_logs(
-            table=constants.SENSOR,
-            row_id=sensor_obj.sensor_id,
-            change_id=change.change_id,
-        )
 
         return sensor_obj
 
@@ -430,17 +416,6 @@ class DataStore(object):
         print(f"'{reference}' added to Datafile!")
         # add to cache and return created datafile
         self.datafiles[reference] = datafile_obj
-
-        # Datafile object created, log it to Changes and Logs tables
-        reason = f"A new Datafile object named '{reference}' added."
-        change = self.add_to_changes(
-            user=USER, modified=datetime.utcnow(), reason=reason
-        )
-        self.add_to_logs(
-            table=constants.DATAFILE,
-            row_id=datafile_obj.datafile_id,
-            change_id=change.change_id,
-        )
 
         return datafile_obj
 
@@ -494,18 +469,6 @@ class DataStore(object):
         print(f"'{name}' added to Platform!")
         # add to cache and return created platform
         self.platforms[name] = platform_obj
-        # should return DB type or something else decoupled from DB?
-
-        # Platform object created, log it to Changes and Logs tables
-        reason = f"A new Platform object named '{name}' added."
-        change = self.add_to_changes(
-            user=USER, modified=datetime.utcnow(), reason=reason
-        )
-        self.add_to_logs(
-            table=constants.PLATFORM,
-            row_id=platform_obj.platform_id,
-            change_id=change.change_id,
-        )
 
         return platform_obj
 
@@ -514,17 +477,6 @@ class DataStore(object):
         synonym = self.db_classes.Synonym(table=table, synonym=name, entity=entity)
         self.session.add(synonym)
         self.session.flush()
-
-        # Synonym object created, log it to Changes and Logs tables
-        reason = f"A new Synonym object ({name}) for Table ({table}) added."
-        change = self.add_to_changes(
-            user=USER, modified=datetime.utcnow(), reason=reason
-        )
-        self.add_to_logs(
-            table=constants.SYNONYM,
-            row_id=synonym.synonym_id,
-            change_id=change.change_id,
-        )
 
         return synonym
 
@@ -896,18 +848,7 @@ class DataStore(object):
 
         # add to cache and return created platform type
         self.comment_types[name] = comment_type
-        # should return DB type or something else decoupled from DB?
 
-        # Comment Type object created, log it to Changes and Logs tables
-        reason = f"A new Comment Type object named {name} added."
-        change = self.add_to_changes(
-            user=USER, modified=datetime.utcnow(), reason=reason
-        )
-        self.add_to_logs(
-            table=constants.COMMENT_TYPE,
-            row_id=comment_type.comment_type_id,
-            change_id=change.change_id,
-        )
         return comment_type
 
     # End of Measurements
@@ -942,18 +883,7 @@ class DataStore(object):
 
         # add to cache and return created platform type
         self.platform_types[platform_type_name] = platform_type
-        # should return DB type or something else decoupled from DB?
 
-        # Platform Type object created, log it to Changes and Logs tables
-        reason = f"A new Platform Type object named '{platform_type_name}' added."
-        change = self.add_to_changes(
-            user=USER, modified=datetime.utcnow(), reason=reason
-        )
-        self.add_to_logs(
-            table=constants.PLATFORM_TYPE,
-            row_id=platform_type.platform_type_id,
-            change_id=change.change_id,
-        )
         return platform_type
 
     def add_to_nationalities(self, nationality_name):
@@ -983,18 +913,7 @@ class DataStore(object):
 
         # add to cache and return created platform
         self.nationalities[nationality_name] = nationality
-        # should return DB type or something else decoupled from DB?
 
-        # Nationality object created, log it to Changes and Logs tables
-        reason = f"A new Nationality object named '{nationality_name}' added."
-        change = self.add_to_changes(
-            user=USER, modified=datetime.utcnow(), reason=reason
-        )
-        self.add_to_logs(
-            table=constants.NATIONALITY,
-            row_id=nationality.nationality_id,
-            change_id=change.change_id,
-        )
         return nationality
 
     def add_to_privacies(self, privacy_name):
@@ -1024,18 +943,7 @@ class DataStore(object):
 
         # add to cache and return created platform
         self.privacies[privacy_name] = privacy
-        # should return DB type or something else decoupled from DB?
 
-        # Privacy object created, log it to Changes and Logs table
-        reason = f"A new Classification object named '{privacy_name}' added."
-        change = self.add_to_changes(
-            user=USER, modified=datetime.utcnow(), reason=reason
-        )
-        self.add_to_logs(
-            table=constants.PRIVACY,
-            row_id=privacy.privacy_id,
-            change_id=change.change_id,
-        )
         return privacy
 
     def add_to_datafile_types(self, datafile_type):
@@ -1067,18 +975,7 @@ class DataStore(object):
 
         # add to cache and return created datafile type
         self.datafile_types[datafile_type] = datafile_type_obj
-        # should return DB type or something else decoupled from DB?
 
-        # Datafile Type object created, log it to Logs table
-        reason = f"A new Datafile Type object named '{datafile_type}' added."
-        change = self.add_to_changes(
-            user=USER, modified=datetime.utcnow(), reason=reason
-        )
-        self.add_to_logs(
-            table=constants.DATAFILE_TYPE,
-            row_id=datafile_type_obj.datafile_type_id,
-            change_id=change.change_id,
-        )
         return datafile_type_obj
 
     def add_to_sensor_types(self, sensor_type_name):
@@ -1108,18 +1005,7 @@ class DataStore(object):
 
         # add to cache and return created sensor type
         self.sensor_types[sensor_type_name] = sensor_type
-        # should return DB type or something else decoupled from DB?
 
-        # Sensor Type object created, log it to Logs table
-        reason = f"A new Sensor Type object named '{sensor_type_name}' added."
-        change = self.add_to_changes(
-            user=USER, modified=datetime.utcnow(), reason=reason
-        )
-        self.add_to_logs(
-            table=constants.SENSOR_TYPE,
-            row_id=sensor_type.sensor_type_id,
-            change_id=change.change_id,
-        )
         return sensor_type
 
     # End of References
