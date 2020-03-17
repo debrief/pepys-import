@@ -1,4 +1,3 @@
-import csv
 import os
 
 from datetime import datetime
@@ -60,7 +59,8 @@ class DataStore(object):
             driver = "sqlite+pysqlite"
         else:
             raise Exception(
-                f"Unknown db_type {db_type} supplied, if specified should be one of 'postgres' or 'sqlite'"
+                f"Unknown db_type {db_type} supplied, if specified should be "
+                "one of 'postgres' or 'sqlite'"
             )
 
         # setup meta_class data
@@ -133,7 +133,8 @@ class DataStore(object):
                 BaseSpatiaLite.metadata.create_all(self.engine)
             except OperationalError:
                 raise Exception(
-                    f"Error creating database schema, possible invalid path? ('{self.db_name}'). Quitting"
+                    "Error creating database schema, possible invalid path?"
+                    f" ('{self.db_name}'). Quitting"
                 )
         elif self.db_type == "postgres":
             try:
