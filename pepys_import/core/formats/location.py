@@ -203,6 +203,12 @@ class Location:
         self.set_longitude_decimal_degrees(point.x)
         self.set_latitude_decimal_degrees(point.y)
 
+    def set_from_wkt_string(self, wkt_string):
+        longitude, latitude = wkt_string[16:-1].split()
+
+        self.set_latitude_decimal_degrees(latitude)
+        self.set_longitude_decimal_degrees(longitude)
+
     def check_valid(self):
         if self._latitude is None:
             return False
