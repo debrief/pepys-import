@@ -116,8 +116,8 @@ def test_setting_dms_latitude_invalid(degrees, minutes, seconds, hemisphere):
 def test_setting_dms_longitude_valid():
     loc = Location()
 
-    assert loc.set_longitude_dms(50, 32, 14, "W")
-    assert loc.longitude == -50.53722222222222
+    assert loc.set_longitude_dms(132, 43, 19, "W")
+    assert loc.longitude == -132.72194444444446
 
 
 dms_longitude_invalid_tests = [
