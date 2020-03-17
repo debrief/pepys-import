@@ -33,8 +33,7 @@ def test_setting_longitude_fails():
 
 @pytest.mark.parametrize(
     "latitude",
-    pytest.param(50.23, id="valid float"),
-    pytest.param("23.07", id="valid string"),
+    [pytest.param(50.23, id="valid float"), pytest.param("23.07", id="valid string")],
 )
 def test_setting_latitude_valid(latitude):
     loc = Location()
@@ -98,7 +97,8 @@ dms_latitude_invalid_tests = [
     pytest.param(50, 80, 14, "N", id="invalid numeric minutes"),
     pytest.param(50, 32, "Blah", "N", id="invalid string seconds"),
     pytest.param(50, 32, 80, "N", id="invalid numeric seconds"),
-    pytest.param(50, 32, 80, "R", id="invalid hemisphere"),
+    pytest.param(50, 32, 80, "R", id="invalid hemisphere - R"),
+    pytest.param(50, 32, 80, "E", id="invalid hemisphere - E"),
 ]
 
 
@@ -109,4 +109,34 @@ def test_setting_dms_latitude_invalid(degrees, minutes, seconds, hemisphere):
     loc = Location()
 
     assert not loc.set_latitude_dms(degrees, minutes, seconds, hemisphere)
+    assert len(loc.errors) == 1
+
+
+# DMS longitude tests
+def test_setting_dms_longitude_valid():
+    loc = Location()
+
+    assert loc.set_longitude_dms(50, 32, 14, "W")
+    assert loc.longitude == -50.53722222222222
+
+
+dms_longitude_invalid_tests = [
+    pytest.param("Blah", 32, 14, "E", id="invalid string degrees"),
+    pytest.param(400, 32, 14, "E", id="invalid numeric degrees"),
+    pytest.param(50, "Blah", 14, "E", id="invalid string minutes"),
+    pytest.param(50, 400, 14, "E", id="invalid numeric minutes"),
+    pytest.param(50, 32, "Blah", "E", id="invalid string seconds"),
+    pytest.param(50, 32, 400, "E", id="invalid numeric seconds"),
+    pytest.param(50, 32, 80, "R", id="invalid hemisphere - R"),
+    pytest.param(50, 32, 80, "N", id="invalid hemisphere - N"),
+]
+
+
+@pytest.mark.parametrize(
+    "degrees,minutes,seconds,hemisphere", dms_longitude_invalid_tests
+)
+def test_setting_dms_longitude_invalid(degrees, minutes, seconds, hemisphere):
+    loc = Location()
+
+    assert not loc.set_longitude_dms(degrees, minutes, seconds, hemisphere)
     assert len(loc.errors) == 1

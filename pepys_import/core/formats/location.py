@@ -106,10 +106,15 @@ class Location:
     def convert_and_check_hemisphere(self, hemisphere, lat_or_lon):
         hemisphere = hemisphere.upper()
 
-        if hemisphere not in ("N", "S", "E", "W"):
+        if lat_or_lon == "latitude":
+            valid_hemisphere_values = ("N", "S")
+        elif lat_or_lon == "longitude":
+            valid_hemisphere_values = ("E", "W")
+
+        if hemisphere not in valid_hemisphere_values:
             self.errors.append(
                 {
-                    self.error_type: f"Error in {lat_or_lon} hemisphere value {hemisphere}. Must be N, S, E or W"
+                    self.error_type: f"Error in {lat_or_lon} hemisphere value {hemisphere}. Must be {' or '.join(valid_hemisphere_values)}"
                 }
             )
             return False
@@ -153,8 +158,33 @@ class Location:
 
         decimal_degrees = degrees + (minutes / 60) + (seconds / 3600)
 
-        if hemisphere in ("S", "W"):
+        if hemisphere == "S":
             decimal_degrees *= -1
 
         self._latitude = decimal_degrees
+        return True
+
+    def set_longitude_dms(self, degrees, minutes, seconds, hemisphere):
+        degrees = self.convert_and_check_degrees(degrees, "longitude")
+        if not degrees:
+            return False
+
+        minutes = self.convert_and_check_minutes(minutes, "longitude")
+        if not minutes:
+            return False
+
+        seconds = self.convert_and_check_minutes(seconds, "longitude")
+        if not seconds:
+            return False
+
+        hemisphere = self.convert_and_check_hemisphere(hemisphere, "longitude")
+        if not hemisphere:
+            return False
+
+        decimal_degrees = degrees + (minutes / 60) + (seconds / 3600)
+
+        if hemisphere == "W":
+            decimal_degrees *= -1
+
+        self._longitude = decimal_degrees
         return True
