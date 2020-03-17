@@ -21,9 +21,8 @@ class BasicValidator:
 
         if hasattr(measurement_object, "location"):
             if measurement_object.location is not None:
-                self.longitude, self.latitude = convert_string_location_to_degrees(
-                    measurement_object.location
-                )
+                self.longitude = measurement_object.location.longitude
+                self.latitude = measurement_object.location.latitude
 
         self.validate_longitude()
         self.validate_latitude()

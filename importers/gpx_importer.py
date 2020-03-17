@@ -5,6 +5,7 @@ from pepys_import.file.importer import Importer
 from pepys_import.core.formats import unit_registry
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 from pepys_import.core.validators import constants
+from pepys_import.core.formats.location import Location
 
 
 class GPXImporter(Importer):
@@ -103,7 +104,11 @@ class GPXImporter(Importer):
                 if track_name in self.prev_location:
                     state.prev_location = self.prev_location[track_name]
 
-                state.location = f"SRID=4326;POINT({longitude_str} {latitude_str})"
+                location = Location()
+                location.set_latitude_decimal_degrees(latitude_str)
+                location.set_longitude_decimal_degrees(longitude_str)
+
+                state.location = location
                 self.prev_location[track_name] = state.location
 
                 # Add course
