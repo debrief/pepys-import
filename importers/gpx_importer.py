@@ -108,7 +108,7 @@ class GPXImporter(Importer):
                 if track_name in self.prev_location:
                     state.prev_location = self.prev_location[track_name]
 
-                location = Location()
+                location = Location(errors=self.errors, error_type=self.error_type)
                 location.set_latitude_decimal_degrees(latitude_str)
                 location.set_longitude_decimal_degrees(longitude_str)
 
