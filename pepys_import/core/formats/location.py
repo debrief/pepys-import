@@ -49,9 +49,11 @@ class Location:
 
         if lat_or_lon == "latitude":
             max_value = 90
+            min_value = -90
         elif lat_or_lon == "longitude":
             max_value = 360
-        if degrees < 0 or degrees > max_value:
+            min_value = -360
+        if degrees < min_value or degrees > max_value:
             self.errors.append(
                 {
                     self.error_type: f"Error in {lat_or_lon} degrees value {degrees}. Must be between 0 and 90"
@@ -188,3 +190,6 @@ class Location:
 
         self._longitude = decimal_degrees
         return True
+
+    def to_wkt(self):
+        return f"SRID=4326;POINT({self.longitude} {self.latitude})"

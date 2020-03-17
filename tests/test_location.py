@@ -140,3 +140,12 @@ def test_setting_dms_longitude_invalid(degrees, minutes, seconds, hemisphere):
 
     assert not loc.set_longitude_dms(degrees, minutes, seconds, hemisphere)
     assert len(loc.errors) == 1
+
+
+def test_as_wkt():
+    loc = Location()
+
+    loc.set_latitude_decimal_degrees(50.2)
+    loc.set_longitude_decimal_degrees(-1.34)
+
+    assert loc.to_wkt() == "SRID=4326;POINT(-1.34 50.2)"
