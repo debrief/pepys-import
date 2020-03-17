@@ -1,6 +1,3 @@
-from datetime import datetime
-from getpass import getuser
-
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
 from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
@@ -167,7 +164,8 @@ class DatafileMixin:
         errors=None,
         parser="Default",
     ):
-        # If there is no parsing error, it will return None.If that's the case, create a new list for validation errors.
+        # If there is no parsing error, it will return None. If that's the case,
+        # create a new list for validation errors.
         if errors is None:
             errors = list()
         assert isinstance(errors, list), "Type error for errors!"
