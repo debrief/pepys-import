@@ -213,7 +213,7 @@ class StateMixin:
         """Submit intermediate object to the DB"""
         session.add(self)
         session.flush()
-        session.expire(self, ["location"])
+        session.expire(self, ["_location"])
 
         return self
 
