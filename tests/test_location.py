@@ -31,32 +31,29 @@ def test_setting_longitude_fails():
 # Decimal latitude tests
 
 
-def test_setting_latitude_valid_float():
+@pytest.mark.parametrize(
+    "latitude",
+    pytest.param(50.23, id="valid float"),
+    pytest.param("23.07", id="valid string"),
+)
+def test_setting_latitude_valid(latitude):
     loc = Location()
 
-    assert loc.set_latitude_decimal_degrees(50.23)
-    assert loc.latitude == 50.23
+    assert loc.set_latitude_decimal_degrees(latitude)
+    assert loc.latitude == float(latitude)
 
 
-def test_setting_latitude_invalid_float():
+@pytest.mark.parametrize(
+    "latitude",
+    [
+        pytest.param("Blah", id="invalid string"),
+        pytest.param(5323.21, id="invalid float"),
+    ],
+)
+def test_setting_latitude_invalid(latitude):
     loc = Location()
 
-    # Assert false
-    assert not loc.set_latitude_decimal_degrees(5673.563)
-    assert len(loc.errors) == 1
-
-
-def test_setting_latitude_valid_string():
-    loc = Location()
-
-    assert loc.set_latitude_decimal_degrees("23.67")
-    assert loc.latitude == 23.67
-
-
-def test_setting_latitude_invalid_string():
-    loc = Location()
-
-    assert not loc.set_latitude_decimal_degrees("Blah")
+    assert not loc.set_latitude_decimal_degrees(latitude)
     assert len(loc.errors) == 1
 
 
