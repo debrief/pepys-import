@@ -391,7 +391,7 @@ class Contact(BaseSpatiaLite, ContactMixin):
     mla = Column(REAL)
     sla = Column(REAL)
     subject_id = Column(Integer)
-    source_id = Column(Integer, nullable=False)
+    source_id = Column(Integer, nullable=True)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
