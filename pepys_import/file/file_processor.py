@@ -6,6 +6,7 @@ import shutil
 import sys
 
 from datetime import datetime
+from getpass import getuser
 from stat import S_IREAD
 
 from paths import IMPORTERS_DIRECTORY
@@ -15,6 +16,8 @@ from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
 from pepys_import.utils.import_utils import import_module_
+
+USER = getuser()
 
 
 class FileProcessor:
@@ -249,13 +252,19 @@ class FileProcessor:
                 return processed_ctr
 
             # ok, let these importers handle the file
-            datafile = data_store.get_datafile(basename, file_extension)
+            reason = f"Importing '{basename}'."
+            change = data_store.add_to_changes(
+                user=USER, modified=datetime.utcnow(), reason=reason
+            )
+            datafile = data_store.get_datafile(
+                basename, file_extension, change.change_id
+            )
 
             # Run all parsers
             for importer in good_importers:
                 processed_ctr += 1
                 importer.load_this_file(
-                    data_store, full_path, highlighted_file, datafile
+                    data_store, full_path, highlighted_file, datafile, change.change_id
                 )
 
             # Write highlighted output to file
@@ -279,7 +288,7 @@ class FileProcessor:
 
             # If all tests pass for all parsers, commit datafile
             if not errors:
-                log = datafile.commit(data_store.session)
+                log = datafile.commit(data_store, change.change_id)
                 # write extraction log to output folder
                 with open(
                     os.path.join(self.directory_path, f"{filename}_output.log"), "w",

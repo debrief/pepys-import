@@ -38,13 +38,13 @@ class DataStoreClearPostGISDBTestCase(TestCase):
             db_name="test",
         )
 
-        # creating database from schema
-        data_store_postgres.initialise()
-
-        # populate Nationality Table
-        data_store_postgres.populate_reference()
-
         with data_store_postgres.session_scope():
+            # creating database from schema
+            data_store_postgres.initialise()
+
+            # populate reference tables
+            data_store_postgres.populate_reference()
+
             records = data_store_postgres.session.query(
                 data_store_postgres.db_classes.Nationality
             ).all()
@@ -67,13 +67,13 @@ class DataStoreClearSpatiaLiteTestCase(TestCase):
         """Test whether all database tables are empty"""
         data_store_sqlite = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
 
-        # creating database from schema
-        data_store_sqlite.initialise()
-
-        # populate Nationality Table
-        data_store_sqlite.populate_reference()
-
         with data_store_sqlite.session_scope():
+            # creating database from schema
+            data_store_sqlite.initialise()
+
+            # populate Nationality Table
+            data_store_sqlite.populate_reference()
+
             records = data_store_sqlite.session.query(
                 data_store_sqlite.db_classes.Nationality
             ).all()

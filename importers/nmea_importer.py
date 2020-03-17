@@ -41,7 +41,7 @@ class NMEAImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def _load_this_file(self, data_store, path, file_object, datafile):
+    def _load_this_file(self, data_store, path, file_object, datafile, change_id):
         # keep track of generated platform name
         platform_name = None
 
@@ -88,18 +88,22 @@ class NMEAImporter(Importer):
                         platform_type="Ferry",
                         nationality="FR",
                         privacy="Public",
+                        change_id=change_id,
                     )
                     # capture the name
                     platform_name = platform.name
-                    sensor_type = data_store.add_to_sensor_types("_GPS")
+                    sensor_type = data_store.add_to_sensor_types(
+                        "_GPS", change_id=change_id
+                    )
                     privacy = data_store.missing_data_resolver.resolve_privacy(
-                        data_store
+                        data_store, change_id
                     )
                     sensor = platform.get_sensor(
                         data_store=data_store,
                         sensor_name=platform.name,
                         sensor_type=sensor_type,
                         privacy=privacy.name,
+                        change_id=change_id,
                     )
                     timestamp = self.parse_timestamp(self.date, self.time)
                     combine_tokens(self.date_token, self.time_token).record(

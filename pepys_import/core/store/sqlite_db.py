@@ -144,8 +144,8 @@ class Log(BaseSpatiaLite):
     log_id = Column(Integer, primary_key=True)
     table = Column(String(150), nullable=False)
     id = Column(Integer, nullable=False)
-    field = Column(String(150), nullable=False)
-    new_value = Column(String(150), nullable=False)
+    field = Column(String(150))
+    new_value = Column(String(150))
     change_id = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 

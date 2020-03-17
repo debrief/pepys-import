@@ -55,7 +55,7 @@ class Importer(ABC):
         :rtype: bool
         """
 
-    def load_this_file(self, data_store, path, file_object, datafile):
+    def load_this_file(self, data_store, path, file_object, datafile, change_id):
         """Handles the loading of this data file
 
         Performs the common operations that must be performed before the
@@ -69,10 +69,10 @@ class Importer(ABC):
         self.prev_location = dict()
 
         # perform load
-        self._load_this_file(data_store, path, file_object, datafile)
+        self._load_this_file(data_store, path, file_object, datafile, change_id)
 
     @abstractmethod
-    def _load_this_file(self, data_store, path, file_object, datafile):
+    def _load_this_file(self, data_store, path, file_object, datafile, change_id):
         """Process this data-file
 
         :param data_store: The data_store
@@ -84,4 +84,6 @@ class Importer(ABC):
         :type file_object: HighlightedFile
         :param datafile: DataFile object
         :type datafile: DataFile
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         """
