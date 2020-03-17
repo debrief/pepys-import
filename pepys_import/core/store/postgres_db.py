@@ -20,6 +20,7 @@ from pepys_import.core.store.common_db import (
     CommentMixin,
     MediaMixin,
     ElevationPropertyMixin,
+    LocationPropertyMixin,
 )
 
 from uuid import uuid4
@@ -415,7 +416,7 @@ class ConfidenceLevel(BasePostGIS):
 
 
 # Measurements Tables
-class State(BasePostGIS, StateMixin, ElevationPropertyMixin):
+class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prev_location = None
@@ -432,7 +433,7 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin):
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )
-    location = Column(Geometry(geometry_type="POINT", srid=4326))
+    _location = Column(Geometry(geometry_type="POINT", srid=4326))
     _elevation = Column(DOUBLE_PRECISION)
     _heading = Column(DOUBLE_PRECISION)
     _course = Column(DOUBLE_PRECISION)

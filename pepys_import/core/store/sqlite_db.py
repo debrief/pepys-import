@@ -19,6 +19,7 @@ from pepys_import.core.store.common_db import (
     CommentMixin,
     MediaMixin,
     ElevationPropertyMixin,
+    LocationPropertyMixin,
 )
 
 
@@ -341,7 +342,7 @@ class ConfidenceLevel(BaseSpatiaLite):
 
 
 # Measurements Tables
-class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin):
+class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prev_location = None
@@ -355,7 +356,7 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin):
     state_id = Column(Integer, primary_key=True)
     time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(Integer, nullable=False)
-    location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
+    _location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
     _elevation = Column(REAL)
     _heading = Column(REAL)
     _course = Column(REAL)

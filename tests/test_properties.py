@@ -1,8 +1,15 @@
 import unittest
 import pytest
 
+from datetime import datetime
+
+
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.validators import constants as validation_constants
+from pepys_import.file.importer import Importer
 from pepys_import.core.formats import unit_registry
+
+from pepys_import.core.formats.location import Location
 
 
 class TestStateSpeedProperty(unittest.TestCase):
@@ -239,3 +246,161 @@ class TestMediaElevationProperty(unittest.TestCase):
 
         assert media.elevation == 10 * unit_registry.metre
         assert media.elevation.check("[length]")
+
+
+class TestStateLocationProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_state_location_property_invalid_type(self):
+        state = self.store.db_classes.State()
+
+        with pytest.raises(TypeError) as exception:
+            state.location = (50, -1)
+
+        assert "location value must be an instance of the Location class" in str(
+            exception.value
+        )
+
+    def test_state_location_invalid_location(self):
+        state = self.store.db_classes.State()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            state.location = Location()
+
+        assert "location object does not have valid values" in str(exception.value)
+
+    def test_state_location_valid_location(self):
+        state = self.store.db_classes.State()
+
+        loc = Location()
+        loc.set_latitude_decimal_degrees(50.23)
+        loc.set_longitude_decimal_degrees(-1.34)
+
+        state.location = loc
+
+    def test_state_location_roundtrip_not_to_db(self):
+        # Tests a roundtrip of a Location object, but without
+        # actually committing to the DB - so the Location object
+        # is converted to and from a string, but not actually stored
+        # in the database as a WKBElement.
+        state = self.store.db_classes.State()
+
+        loc = Location()
+        loc.set_latitude_decimal_degrees(50.23)
+        loc.set_longitude_decimal_degrees(-1.34)
+
+        state.location = loc
+
+        assert state.location.latitude == 50.23
+        assert state.location.longitude == -1.34
+
+
+class TestLocationRoundtripToDB(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+        with self.store.session_scope() as session:
+            self.nationality = self.store.add_to_nationalities("test_nationality").name
+            self.platform_type = self.store.add_to_platform_types(
+                "test_platform_type"
+            ).name
+            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type")
+            self.privacy = self.store.add_to_privacies("test_privacy").name
+
+            self.platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+            )
+
+            self.sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
+            self.file = self.store.get_datafile("test_file", "csv")
+            self.current_time = datetime.utcnow()
+
+            self.store.session.expunge(self.sensor)
+            self.store.session.expunge(self.platform)
+            self.store.session.expunge(self.file)
+            self.store.session.expunge(self.sensor_type)
+
+        class TestParser(Importer):
+            def __init__(
+                self,
+                name="Test Importer",
+                validation_level=validation_constants.NONE_LEVEL,
+                short_name="Test Importer",
+                separator=" ",
+            ):
+                super().__init__(name, validation_level, short_name)
+                self.separator = separator
+                self.text_label = None
+                self.depth = 0.0
+                self.errors = list()
+
+            def can_load_this_header(self, header) -> bool:
+                return True
+
+            def can_load_this_filename(self, filename):
+                return True
+
+            def can_load_this_type(self, suffix):
+                return True
+
+            def can_load_this_file(self, file_contents):
+                return True
+
+            def _load_this_file(self, data_store, path, file_contents, datafile):
+                pass
+
+        self.parser = TestParser()
+        self.file.measurements[self.parser.short_name] = list()
+
+    def tearDown(self):
+        pass
+
+    def test_new_state_created_successfully(self):
+        """Test whether a new state is created"""
+        with self.store.session_scope() as session:
+            states = self.store.session.query(self.store.db_classes.State).all()
+
+            # there must be no entry at the beginning
+            self.assertEqual(len(states), 0)
+
+            state = self.file.create_state(
+                self.store,
+                self.platform,
+                self.sensor,
+                self.current_time,
+                parser_name=self.parser.short_name,
+            )
+
+            loc = Location()
+            loc.set_latitude_decimal_degrees(50.23)
+            loc.set_longitude_decimal_degrees(-1.35)
+            state.location = loc
+
+            # there must be no entry because it's kept in-memory
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 0)
+
+            self.assertEqual(state.time, self.current_time)
+
+            # Commit to the DB
+            if self.file.validate():
+                self.file.commit(self.store.session)
+
+        # In a separate session, check that we get a Location class with the right
+        # lat and lon
+        with self.store.session_scope() as session:
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 1)
+            loc = states[0].location
+
+            assert loc.latitude == 50.23
+            assert loc.longitude == -1.35

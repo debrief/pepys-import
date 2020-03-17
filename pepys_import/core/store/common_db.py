@@ -8,6 +8,9 @@ from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 from pepys_import.utils.import_utils import import_validators
 
+from pepys_import.core.formats.location import Location
+
+
 LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
 LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
 
@@ -386,3 +389,36 @@ class ElevationPropertyMixin:
     @elevation.expression
     def elevation(self):
         return self._elevation
+
+
+class LocationPropertyMixin:
+    @hybrid_property
+    def location(self):
+        if self._location is None:
+            return None
+        else:
+            loc = Location()
+            if isinstance(self._location, str):
+                loc.set_from_wkt_string(self._location)
+            else:
+                loc.set_from_wkb(self._location.desc)
+
+            return loc
+
+    @location.setter
+    def location(self, location):
+        if location is None:
+            self._location = None
+            return
+
+        if not isinstance(location, Location):
+            raise TypeError("location value must be an instance of the Location class")
+
+        if not location.check_valid():
+            raise ValueError("location object does not have valid values")
+
+        self._location = location.to_wkt()
+
+    @location.expression
+    def location(self):
+        return self._location
