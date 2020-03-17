@@ -54,8 +54,8 @@ class Location:
             max_value = 90
             min_value = -90
         elif lat_or_lon == "longitude":
-            max_value = 360
-            min_value = -360
+            max_value = 180
+            min_value = -180
         if degrees < min_value or degrees > max_value:
             self.errors.append(
                 {
