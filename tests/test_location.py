@@ -163,3 +163,15 @@ def test_set_from_wkb():
 
     assert loc.latitude == 50.23
     assert loc.longitude == -1.35
+
+
+def test_check_valid():
+    loc = Location()
+
+    assert loc.check_valid() == False
+
+    loc.set_latitude_decimal_degrees(50.23)
+    assert loc.check_valid() == False
+
+    loc.set_longitude_decimal_degrees(-1.34)
+    assert loc.check_valid()
