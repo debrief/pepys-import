@@ -32,7 +32,7 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
                 .filter(
                     func.ST_Contains(
                         self.store.db_classes.State.location,
-                        WKTElement("POINT(46.000 32.000)"),
+                        WKTElement("POINT(46.000 32.000)", srid=4326),
                     )
                 )
                 .one()
@@ -56,7 +56,7 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
                 .filter(
                     func.ST_Contains(
                         self.store.db_classes.State.location,
-                        WKTElement("POINT(123456 123456)"),
+                        WKTElement("POINT(123456 123456)", srid=4326),
                     )
                 )
                 .one_or_none()
@@ -113,7 +113,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
                 .filter(
                     func.ST_Contains(
                         self.store.db_classes.State.location,
-                        WKTElement("POINT(46.000 32.000)"),
+                        WKTElement("POINT(46.000 32.000)", srid=4326),
                     )
                 )
                 .one()
@@ -140,7 +140,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
                 .filter(
                     func.ST_Contains(
                         self.store.db_classes.State.location,
-                        WKTElement("POINT(123456 123456)"),
+                        WKTElement("POINT(123456 123456)", srid=4326),
                     )
                 )
                 .one_or_none()
