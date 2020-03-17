@@ -328,6 +328,7 @@ class DataStore(object):
         )
         self.session.add(state_obj)
         self.session.flush()
+        self.session.expire(state_obj, ["location"])
 
         self.add_to_logs(
             table=constants.STATE, row_id=state_obj.state_id, change_id=change_id

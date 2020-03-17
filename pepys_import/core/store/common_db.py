@@ -223,6 +223,7 @@ class StateMixin:
         """Submit intermediate object to the DB"""
         data_store.session.add(self)
         data_store.session.flush()
+        data_store.session.expire(self, ["location"])
         # Log new State object creation
         data_store.add_to_logs(
             table=constants.STATE, row_id=self.state_id, change_id=change_id
@@ -235,6 +236,7 @@ class ContactMixin:
         """Submit intermediate object to the DB"""
         data_store.session.add(self)
         data_store.session.flush()
+        data_store.session.expire(self, ["location"])
         # Log new Contact object creation
         data_store.add_to_logs(
             table=constants.CONTACT, row_id=self.contact_id, change_id=change_id
