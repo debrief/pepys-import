@@ -77,13 +77,16 @@ class InitialiseShell(cmd.Cmd):
         self.datastore.initialise()
 
     def do_import_reference_data(self, args):
-        self.datastore.populate_reference(self.csv_path)
+        with self.datastore.session_scope():
+            self.datastore.populate_reference(self.csv_path)
 
     def do_import_metadata(self, args):
-        self.datastore.populate_metadata(self.csv_path)
+        with self.datastore.session_scope():
+            self.datastore.populate_metadata(self.csv_path)
 
     def do_import_sample_measurements(self, args):
-        self.datastore.populate_measurement(self.csv_path)
+        with self.datastore.session_scope():
+            self.datastore.populate_measurement(self.csv_path)
 
     def do_cancel(self, *args):
         return True

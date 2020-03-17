@@ -3,6 +3,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from pepys_import.core.formats import unit_registry
 
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
+from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
@@ -47,7 +48,7 @@ class SensorMixin:
         )
 
     @classmethod
-    def add_to_sensors(cls, data_store, name, sensor_type, host):
+    def add_to_sensors(cls, data_store, name, sensor_type, host, change_id):
         session = data_store.session
         sensor_type = data_store.db_classes.SensorType().search_sensor_type(
             data_store, sensor_type
@@ -60,6 +61,9 @@ class SensorMixin:
         session.add(sensor_obj)
         session.flush()
 
+        data_store.add_to_logs(
+            table=constants.SENSOR, row_id=sensor_obj.sensor_id, change_id=change_id
+        )
         return sensor_obj
 
 
@@ -70,7 +74,14 @@ class PlatformMixin:
         Platform = data_store.db_classes.Platform
         return data_store.session.query(Platform).filter(Platform.name == name).first()
 
-    def get_sensor(self, data_store, sensor_name=None, sensor_type=None, privacy=None):
+    def get_sensor(
+        self,
+        data_store,
+        sensor_name=None,
+        sensor_type=None,
+        privacy=None,
+        change_id=None,
+    ):
         """
          Lookup or create a sensor of this name for this :class:`Platform`.
          Specified sensor will be added to the :class:`Sensor` table.
@@ -84,6 +95,8 @@ class PlatformMixin:
         :type sensor_type: SensorType
         :param privacy: Privacy of :class:`Sensor`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`Sensor` entity
         :rtype: Sensor
         """
@@ -95,7 +108,7 @@ class PlatformMixin:
 
         if sensor_type is None or privacy is None:
             resolved_data = data_store.missing_data_resolver.resolve_sensor(
-                data_store, sensor_name, sensor_type, privacy
+                data_store, sensor_name, sensor_type, privacy, change_id
             )
             # It means that new sensor added as a synonym and existing sensor returned
             if isinstance(resolved_data, Sensor):
@@ -114,6 +127,7 @@ class PlatformMixin:
             name=sensor_name,
             sensor_type=sensor_type.name,
             host=self.name,
+            change_id=change_id,
         )
 
 
@@ -157,7 +171,8 @@ class DatafileMixin:
         errors=None,
         parser="Default",
     ):
-        # If there is no parsing error, it will return None.If that's the case, create a new list for validation errors.
+        # If there is no parsing error, it will return None. If that's the case,
+        # create a new list for validation errors.
         if errors is None:
             errors = list()
         assert isinstance(errors, list), "Type error for errors!"
@@ -184,13 +199,13 @@ class DatafileMixin:
                 return True
             return False
 
-    def commit(self, session):
+    def commit(self, data_store, change_id):
         # Since measurements are saved by their importer names, iterate over each key
         # and save its measurement objects.
         extraction_log = list()
         for key in self.measurements.keys():
             for file in self.measurements[key]:
-                file.submit(session)
+                file.submit(data_store, change_id)
             extraction_log.append(
                 f"{len(self.measurements[key])} measurement objects parsed by {key}."
             )
@@ -209,12 +224,15 @@ class SensorTypeMixin:
 
 
 class StateMixin:
-    def submit(self, session):
+    def submit(self, data_store, change_id):
         """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-        session.expire(self, ["_location"])
-
+        data_store.session.add(self)
+        data_store.session.flush()
+        data_store.session.expire(self, ["_location"])
+        # Log new State object creation
+        data_store.add_to_logs(
+            table=constants.STATE, row_id=self.state_id, change_id=change_id
+        )
         return self
 
     #
@@ -339,21 +357,27 @@ class StateMixin:
 
 
 class ContactMixin:
-    def submit(self, session):
+    def submit(self, data_store, change_id):
         """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-        session.expire(self, ["location"])
-
+        data_store.session.add(self)
+        data_store.session.flush()
+        data_store.session.expire(self, ["location"])
+        # Log new Contact object creation
+        data_store.add_to_logs(
+            table=constants.CONTACT, row_id=self.contact_id, change_id=change_id
+        )
         return self
 
 
 class CommentMixin:
-    def submit(self, session):
+    def submit(self, data_store, change_id):
         """Submit intermediate object to the DB"""
-        session.add(self)
-        session.flush()
-
+        data_store.session.add(self)
+        data_store.session.flush()
+        # Log new Comment object creation
+        data_store.add_to_logs(
+            table=constants.COMMENT, row_id=self.comment_id, change_id=change_id
+        )
         return self
 
 

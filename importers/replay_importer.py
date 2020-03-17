@@ -32,7 +32,7 @@ class ReplayImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def _load_this_file(self, data_store, path, file_object, datafile):
+    def _load_this_file(self, data_store, path, file_object, datafile, change_id):
         for line_number, line in enumerate(file_object.lines(), 1):
             if line.text.startswith(";"):
                 continue
@@ -49,15 +49,21 @@ class ReplayImporter(Importer):
                     nationality="UK",
                     platform_type="Fisher",
                     privacy="Public",
+                    change_id=change_id,
                 )
 
-                sensor_type = data_store.add_to_sensor_types("_GPS")
-                privacy = data_store.missing_data_resolver.resolve_privacy(data_store)
+                sensor_type = data_store.add_to_sensor_types(
+                    "_GPS", change_id=change_id
+                )
+                privacy = data_store.missing_data_resolver.resolve_privacy(
+                    data_store, change_id
+                )
                 sensor = platform.get_sensor(
                     data_store=data_store,
                     sensor_name=platform.name,
                     sensor_type=sensor_type,
                     privacy=privacy.name,
+                    change_id=change_id,
                 )
                 state = datafile.create_state(
                     data_store, platform, sensor, rep_line.timestamp, self.short_name

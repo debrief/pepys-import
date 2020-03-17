@@ -2,7 +2,7 @@ import os
 import csv
 
 
-def import_from_csv(data_store, path, files):
+def import_from_csv(data_store, path, files, change_id):
     for file in sorted(files):
         # split file into filename and extension
         table_name, _ = os.path.splitext(file)
@@ -13,8 +13,7 @@ def import_from_csv(data_store, path, files):
                 reader = csv.reader(f)
                 # skip header
                 _ = next(reader)
-                with data_store.session_scope():
-                    for row in reader:
-                        method_to_call(*row)
+                for row in reader:
+                    method_to_call(*row, change_id=change_id)
         else:
             print(f"Method({possible_method}) not found!")

@@ -1,7 +1,7 @@
-import csv
 import os
 
 from datetime import datetime
+from getpass import getuser
 from sqlalchemy import create_engine, or_
 from sqlalchemy.event import listen
 from sqlalchemy.sql import select, func
@@ -14,9 +14,9 @@ from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
+from pepys_import.core.store import constants
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
-from pepys_import.core.formats import unit_registry
 
 from pepys_import import __version__
 from pepys_import.utils.branding_util import (
@@ -29,6 +29,7 @@ from .table_summary import TableSummary, TableSummarySet
 from shapely import wkb
 
 DEFAULT_DATA_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "default_data")
+USER = getuser()  # Login name of the current user
 
 
 class DataStore(object):
@@ -58,7 +59,8 @@ class DataStore(object):
             driver = "sqlite+pysqlite"
         else:
             raise Exception(
-                f"Unknown db_type {db_type} supplied, if specified should be one of 'postgres' or 'sqlite'"
+                f"Unknown db_type {db_type} supplied, if specified should be "
+                "one of 'postgres' or 'sqlite'"
             )
 
         # setup meta_class data
@@ -131,7 +133,8 @@ class DataStore(object):
                 BaseSpatiaLite.metadata.create_all(self.engine)
             except OperationalError:
                 raise Exception(
-                    f"Error creating database schema, possible invalid path? ('{self.db_name}'). Quitting"
+                    "Error creating database schema, possible invalid path?"
+                    f" ('{self.db_name}'). Quitting"
                 )
         elif self.db_type == "postgres":
             try:
@@ -184,6 +187,10 @@ class DataStore(object):
 
     def populate_reference(self, reference_data_folder=None):
         """Import given CSV file to the given reference table"""
+        change = self.add_to_changes(
+            user=USER, modified=datetime.utcnow(), reason="Importing reference data"
+        )
+
         if reference_data_folder is None:
             reference_data_folder = os.path.join(DEFAULT_DATA_PATH)
 
@@ -191,35 +198,23 @@ class DataStore(object):
 
         reference_tables = []
         # Create reference table list
-        with self.session_scope():
-            self.setup_table_type_mapping()
-            reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
-            for table_object in list(reference_table_objects):
-                reference_tables.append(table_object.__tablename__)
+        self.setup_table_type_mapping()
+        reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
+        for table_object in list(reference_table_objects):
+            reference_tables.append(table_object.__tablename__)
 
         reference_files = [
             file
             for file in files
             if os.path.splitext(file)[0].replace(" ", "") in reference_tables
         ]
-        for file in reference_files:
-            # split file into filename and extension
-            table_name, _ = os.path.splitext(file)
-            possible_method = "add_to_" + table_name.lower().replace(" ", "_")
-            method_to_call = getattr(self, possible_method, None)
-            if method_to_call:
-                with open(os.path.join(reference_data_folder, file), "r") as f:
-                    reader = csv.reader(f)
-                    # skip header
-                    _ = next(reader)
-                    with self.session_scope():
-                        for row in reader:
-                            method_to_call(*row)
-            else:
-                print(f"Method({possible_method}) not found!")
+        import_from_csv(self, reference_data_folder, reference_files, change.change_id)
 
     def populate_metadata(self, sample_data_folder=None):
         """Import CSV files from the given folder to the related Metadata Tables"""
+        change = self.add_to_changes(
+            user=USER, modified=datetime.utcnow(), reason="Importing metadata data"
+        )
         if sample_data_folder is None:
             sample_data_folder = os.path.join(DEFAULT_DATA_PATH)
 
@@ -227,33 +222,21 @@ class DataStore(object):
 
         metadata_tables = []
         # Create metadata table list
-        with self.session_scope():
-            self.setup_table_type_mapping()
-            metadata_table_objects = self.meta_classes[TableTypes.METADATA]
-            for table_object in list(metadata_table_objects):
-                metadata_tables.append(table_object.__tablename__)
+        self.setup_table_type_mapping()
+        metadata_table_objects = self.meta_classes[TableTypes.METADATA]
+        for table_object in list(metadata_table_objects):
+            metadata_tables.append(table_object.__tablename__)
 
         metadata_files = [
             file for file in files if os.path.splitext(file)[0] in metadata_tables
         ]
-        for file in sorted(metadata_files):
-            # split file into filename and extension
-            table_name, _ = os.path.splitext(file)
-            possible_method = "add_to_" + table_name.lower().replace(" ", "_")
-            method_to_call = getattr(self, possible_method, None)
-            if method_to_call:
-                with open(os.path.join(sample_data_folder, file), "r") as f:
-                    reader = csv.reader(f)
-                    # skip header
-                    _ = next(reader)
-                    with self.session_scope():
-                        for row in reader:
-                            method_to_call(*row)
-            else:
-                print(f"Method({possible_method}) not found!")
+        import_from_csv(self, sample_data_folder, metadata_files, change.change_id)
 
     def populate_measurement(self, sample_data_folder=None):
         """Import CSV files from the given folder to the related Measurement Tables"""
+        change = self.add_to_changes(
+            user=USER, modified=datetime.utcnow(), reason="Importing measurement data"
+        )
         if sample_data_folder is None:
             sample_data_folder = DEFAULT_DATA_PATH
 
@@ -268,7 +251,7 @@ class DataStore(object):
         measurement_files = [
             file for file in files if os.path.splitext(file)[0] in measurement_tables
         ]
-        import_from_csv(self, sample_data_folder, measurement_files)
+        import_from_csv(self, sample_data_folder, measurement_files, change.change_id)
 
     # End of Data Store methods
     #############################################################
@@ -284,6 +267,7 @@ class DataStore(object):
         course=None,
         speed=None,
         privacy=None,
+        change_id=None,
     ):
         """
         Adds the specified state to the :class:`State` table if not already present.
@@ -306,6 +290,8 @@ class DataStore(object):
         :type speed: String
         :param privacy: :class:`Privacy` of :class:`State`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`State` entity
         :rtype: State
         """
@@ -347,9 +333,12 @@ class DataStore(object):
         self.session.flush()
         self.session.expire(state_obj, ["location"])
 
+        self.add_to_logs(
+            table=constants.STATE, row_id=state_obj.state_id, change_id=change_id
+        )
         return state_obj
 
-    def add_to_sensors(self, name, sensor_type, host):
+    def add_to_sensors(self, name, sensor_type, host, change_id):
         """
         Adds the specified sensor to the :class:`Sensor` table if not already present.
 
@@ -359,6 +348,8 @@ class DataStore(object):
         :type sensor_type: :class:`SensorType`
         :param host: Platform of sensor
         :type host: Platform
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created Sensor entity
         """
         sensor_type = self.search_sensor_type(sensor_type)
@@ -373,10 +364,19 @@ class DataStore(object):
         self.session.add(sensor_obj)
         self.session.flush()
 
+        self.add_to_logs(
+            table=constants.SENSOR, row_id=sensor_obj.sensor_id, change_id=change_id
+        )
         return sensor_obj
 
     def add_to_datafiles(
-        self, privacy, file_type, reference=None, simulated=False, url=None
+        self,
+        privacy,
+        file_type,
+        reference=None,
+        simulated=False,
+        url=None,
+        change_id=None,
     ):
         """
         Adds the specified datafile to the Datafile table if not already present.
@@ -391,6 +391,8 @@ class DataStore(object):
         :type reference: String
         :param url: URL of datafile
         :type url: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`Datafile` entity
         :rtype: Datafile
         """
@@ -412,6 +414,11 @@ class DataStore(object):
         # add to cache and return created datafile
         self.datafiles[reference] = datafile_obj
 
+        self.add_to_logs(
+            table=constants.DATAFILE,
+            row_id=datafile_obj.datafile_id,
+            change_id=change_id,
+        )
         return datafile_obj
 
     def add_to_platforms(
@@ -423,6 +430,7 @@ class DataStore(object):
         trigraph=None,
         quadgraph=None,
         pennant_number=None,
+        change_id=None,
     ):
         """
         Adds the specified platform to the Platform table if not already present.
@@ -441,6 +449,8 @@ class DataStore(object):
         :type quadgraph: String
         :param pennant_number: Pennant number of :class:`Platform`
         :type pennant_number: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created Platform entity
         :rtype: Platform
         """
@@ -464,27 +474,27 @@ class DataStore(object):
         print(f"'{name}' added to Platform!")
         # add to cache and return created platform
         self.platforms[name] = platform_obj
-        # should return DB type or something else decoupled from DB?
+
+        self.add_to_logs(
+            table=constants.PLATFORM,
+            row_id=platform_obj.platform_id,
+            change_id=change_id,
+        )
         return platform_obj
 
-    def add_to_synonyms(self, table, name, entity):
+    def add_to_synonyms(self, table, name, entity, change_id):
         # enough info to proceed and create entry
         synonym = self.db_classes.Synonym(table=table, synonym=name, entity=entity)
         self.session.add(synonym)
         self.session.flush()
 
+        self.add_to_logs(
+            table=constants.SYNONYM, row_id=synonym.synonym_id, change_id=change_id
+        )
         return synonym
 
     #############################################################
     # Search/lookup functions
-
-    def get_datafile_from_id(self, datafile_id):
-        """Search for datafile with this id"""
-        return (
-            self.session.query(self.db_classes.Datafile)
-            .filter(self.db_classes.Datafile.datafile_id == datafile_id)
-            .first()
-        )
 
     def search_datafile_type(self, name):
         """Search for any datafile type with this name"""
@@ -501,14 +511,6 @@ class DataStore(object):
             .filter(self.db_classes.Datafile.reference == name)
             .first()
         )
-
-    # def search_datafile_by_id(self, id):
-    #     # search for any datafile with this id
-    #     return (
-    #         self.session.query(self.db_classes.Datafile)
-    #         .filter(self.db_classes.Datafile.datafile_id == str(id))
-    #         .first()
-    #     )
 
     def search_platform(self, name):
         """Search for any platform with this name"""
@@ -555,14 +557,6 @@ class DataStore(object):
         return (
             self.session.query(self.db_classes.Privacy)
             .filter(self.db_classes.Privacy.name == name)
-            .first()
-        )
-
-    def search_table_type(self, table_type_id):
-        """Search for any table type with this id"""
-        return (
-            self.session.query(self.db_classes.TableType)
-            .filter(self.db_classes.TableType.table_type_id == table_type_id)
             .first()
         )
 
@@ -620,7 +614,7 @@ class DataStore(object):
             pk_field=self.db_classes.Datafile.datafile_id,
         )
 
-    def get_datafile(self, datafile_name=None, datafile_type=None):
+    def get_datafile(self, datafile_name=None, datafile_type=None, change_id=None):
         """
         Adds an entry to the datafiles table of the specified name (path)
         and type if not already present. It uses find_datafile method to search existing datafiles.
@@ -629,6 +623,8 @@ class DataStore(object):
         :type datafile_name: String
         :param datafile_type: Type of Datafile
         :type datafile_type: DatafileType
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:  Created Datafile entity
         :rtype: Datafile
         """
@@ -642,7 +638,7 @@ class DataStore(object):
                 return datafile
 
         resolved_data = self.missing_data_resolver.resolve_datafile(
-            self, datafile_name, datafile_type, None
+            self, datafile_name, datafile_type, None, change_id=change_id
         )
         # It means that new datafile added as a synonym and existing datafile returned
         if isinstance(resolved_data, self.db_classes.Datafile):
@@ -662,6 +658,7 @@ class DataStore(object):
             privacy=privacy.name,
             file_type=datafile_type.name,
             reference=datafile_name,
+            change_id=change_id,
         )
 
     def find_platform(self, platform_name):
@@ -703,6 +700,7 @@ class DataStore(object):
         trigraph=None,
         quadgraph=None,
         pennant_number=None,
+        change_id=None,
     ):
         """
         Adds an entry to the platforms table for the specified platform
@@ -722,6 +720,8 @@ class DataStore(object):
         :type quadgraph: String
         :param pennant_number: Pennant number of :class:`Platform`
         :type pennant_number: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created Platform entity
         """
 
@@ -742,7 +742,7 @@ class DataStore(object):
             or privacy is None
         ):
             resolved_data = self.missing_data_resolver.resolve_platform(
-                self, platform_name, platform_type, nationality, privacy
+                self, platform_name, platform_type, nationality, privacy, change_id
             )
             # It means that new platform added as a synonym and existing platform returned
             if isinstance(resolved_data, self.db_classes.Platform):
@@ -776,6 +776,7 @@ class DataStore(object):
             nationality=nationality.name,
             platform_type=platform_type.name,
             privacy=privacy.name,
+            change_id=change_id,
         )
 
     def get_status(
@@ -831,12 +832,14 @@ class DataStore(object):
             .first()
         )
 
-    def add_to_comment_types(self, name):
+    def add_to_comment_types(self, name, change_id):
         """
         Adds the specified comment type to the CommentType table if not already present
 
         :param name: Name of :class:`CommentType`
         :type name: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created entity of :class:`CommentType` table
         :rtype: CommentType
         """
@@ -859,20 +862,28 @@ class DataStore(object):
 
         # add to cache and return created platform type
         self.comment_types[name] = comment_type
-        # should return DB type or something else decoupled from DB?
+
+        self.add_to_logs(
+            table=constants.COMMENT_TYPE,
+            row_id=comment_type.comment_type_id,
+            change_id=change_id,
+        )
+
         return comment_type
 
     # End of Measurements
     #############################################################
     # Reference Type Maintenance
 
-    def add_to_platform_types(self, platform_type_name):
+    def add_to_platform_types(self, platform_type_name, change_id):
         """
         Adds the specified platform type to the platform types table if not already
         present.
 
         :param platform_type_name: Name of :class:`PlatformType`
         :type platform_type_name: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`PlatformType` entity
         :rtype: PlatformType
         """
@@ -894,15 +905,23 @@ class DataStore(object):
 
         # add to cache and return created platform type
         self.platform_types[platform_type_name] = platform_type
-        # should return DB type or something else decoupled from DB?
+
+        self.add_to_logs(
+            table=constants.PLATFORM_TYPE,
+            row_id=platform_type.platform_type_id,
+            change_id=change_id,
+        )
+
         return platform_type
 
-    def add_to_nationalities(self, nationality_name):
+    def add_to_nationalities(self, nationality_name, change_id):
         """
         Adds the specified nationality to the nationalities table if not already present
 
         :param nationality_name: Name of :class:`Nationality`
         :type nationality_name: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`Nationality` entity
         :rtype: Nationality
         """
@@ -924,15 +943,22 @@ class DataStore(object):
 
         # add to cache and return created platform
         self.nationalities[nationality_name] = nationality
-        # should return DB type or something else decoupled from DB?
+
+        self.add_to_logs(
+            table=constants.NATIONALITY,
+            row_id=nationality.nationality_id,
+            change_id=change_id,
+        )
         return nationality
 
-    def add_to_privacies(self, privacy_name):
+    def add_to_privacies(self, privacy_name, change_id):
         """
         Adds the specified privacy entry to the :class:`Privacy` table if not already present.
 
         :param privacy_name: Name of :class:`Privacy`
         :type privacy_name: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`Privacy` entity
         :rtype: Privacy
         """
@@ -954,16 +980,21 @@ class DataStore(object):
 
         # add to cache and return created platform
         self.privacies[privacy_name] = privacy
-        # should return DB type or something else decoupled from DB?
+
+        self.add_to_logs(
+            table=constants.PRIVACY, row_id=privacy.privacy_id, change_id=change_id
+        )
         return privacy
 
-    def add_to_datafile_types(self, datafile_type):
+    def add_to_datafile_types(self, datafile_type, change_id):
         """
         Adds the specified datafile type to the datafile types table if not already
         present.
 
         :param datafile_type: Name of :class:`DatafileType`
         :type datafile_type: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Wrapped database entity for :class:`DatafileType`
         :rtype: DatafileType
         """
@@ -986,15 +1017,22 @@ class DataStore(object):
 
         # add to cache and return created datafile type
         self.datafile_types[datafile_type] = datafile_type_obj
-        # should return DB type or something else decoupled from DB?
+
+        self.add_to_logs(
+            table=constants.DATAFILE_TYPE,
+            row_id=datafile_type_obj.datafile_type_id,
+            change_id=change_id,
+        )
         return datafile_type_obj
 
-    def add_to_sensor_types(self, sensor_type_name):
+    def add_to_sensor_types(self, sensor_type_name, change_id):
         """
         Adds the specified sensor type to the :class:`SensorType` table if not already present.
 
         :param sensor_type_name: Name of :class:`SensorType`
         :type sensor_type_name: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return: Created :class:`SensorType` entity
         :rtype: SensorType
         """
@@ -1016,8 +1054,60 @@ class DataStore(object):
 
         # add to cache and return created sensor type
         self.sensor_types[sensor_type_name] = sensor_type
-        # should return DB type or something else decoupled from DB?
+
+        self.add_to_logs(
+            table=constants.SENSOR_TYPE,
+            row_id=sensor_type.sensor_type_id,
+            change_id=change_id,
+        )
         return sensor_type
+
+    # End of References
+    #############################################################
+    # Metadata Maintenance
+
+    def add_to_logs(self, table, row_id, field=None, new_value=None, change_id=None):
+        """
+        Adds the specified event to the :class:`Logs`table if not already present.
+
+        :param table: Name of the table
+        :param row_id: Entity ID of the tale
+        :param field:  Name of the field
+        :param new_value:  New value of the field
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
+        :param change_id:  Row ID of entity of :class:`Changes` about the change
+        :return: Created :class:`Logs` entity
+        """
+        log = self.db_classes.Log(
+            table=table,
+            id=row_id,
+            field=field,
+            new_value=new_value,
+            change_id=change_id,
+        )
+        self.session.add(log)
+        self.session.flush()
+
+        return log
+
+    def add_to_changes(self, user, modified, reason):
+        """
+        Adds the specified event to the :class:`Change`table if not already present.
+
+        :param user: Username of the current login
+        :param modified: Change date
+        :param reason:  Reason of the change
+        :return: Created :class:`Change` entity
+        """
+        change = self.db_classes.Change(user=user, modified=modified, reason=reason,)
+        self.session.add(change)
+        self.session.flush()
+
+        return change
+
+    # End of Metadata Maintenance
+    #############################################################
 
     def clear_db(self):
         """Delete records of all database tables"""

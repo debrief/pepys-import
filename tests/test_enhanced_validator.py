@@ -13,23 +13,34 @@ class EnhancedValidatorTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
-
         with self.store.session_scope():
+            self.change_id = self.store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
             # Create a platform, a sensor, a datafile and finally a state object respectively
-            nationality = self.store.add_to_nationalities("test_nationality").name
-            platform_type = self.store.add_to_platform_types("test_platform_type").name
-            sensor_type = self.store.add_to_sensor_types("test_sensor_type")
-            privacy = self.store.add_to_privacies("test_privacy").name
+            nationality = self.store.add_to_nationalities(
+                "test_nationality", self.change_id
+            ).name
+            platform_type = self.store.add_to_platform_types(
+                "test_platform_type", self.change_id
+            ).name
+            sensor_type = self.store.add_to_sensor_types(
+                "test_sensor_type", self.change_id
+            )
+            privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
+                change_id=self.change_id,
             )
-            self.sensor = self.platform.get_sensor(self.store, "gps", sensor_type)
+            self.sensor = self.platform.get_sensor(
+                self.store, "gps", sensor_type, change_id=self.change_id
+            )
             self.current_time = datetime.utcnow()
-            self.file = self.store.get_datafile("test_file", "csv")
+            self.file = self.store.get_datafile("test_file", "csv", self.change_id)
 
             self.store.session.expunge(self.platform)
             self.store.session.expunge(self.sensor)
@@ -122,3 +133,7 @@ class EnhancedValidatorTestCase(unittest.TestCase):
             "Calculated speed (206.379 meter / second) is more than the measured speed * 10 (100.000 meter / second)"
             in str(self.errors[0])
         )
+
+
+if __name__ == "__main__":
+    unittest.main()
