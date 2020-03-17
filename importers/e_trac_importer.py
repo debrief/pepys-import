@@ -5,6 +5,7 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
+from pepys_import.core.formats.location import Location
 
 
 class ETracImporter(Importer):
@@ -115,9 +116,11 @@ class ETracImporter(Importer):
             if vessel_name in self.prev_location:
                 state.prev_location = self.prev_location[vessel_name]
 
-            state.location = (
-                f"SRID=4326;POINT({long_degrees_token.text} {lat_degrees_token.text})"
-            )
+            location = Location()
+            location.set_latitude_decimal_degrees(lat_degrees_token.text)
+            location.set_longitude_decimal_degrees(long_degrees_token.text)
+
+            state.location = location
             self.prev_location[vessel_name] = state.location
 
             combine_tokens(long_degrees_token, lat_degrees_token).record(
