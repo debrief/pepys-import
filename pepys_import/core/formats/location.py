@@ -1,3 +1,6 @@
+from shapely import wkb
+
+
 class Location:
     def __init__(self, errors=None, error_type=None):
         self._latitude = None
@@ -193,3 +196,18 @@ class Location:
 
     def to_wkt(self):
         return f"SRID=4326;POINT({self.longitude} {self.latitude})"
+
+    def set_from_wkb(self, wkb_string):
+        point = wkb.loads(wkb_string, hex=True)
+
+        self.set_longitude_decimal_degrees(point.x)
+        self.set_latitude_decimal_degrees(point.y)
+
+    def check_valid(self):
+        if self._latitude is None:
+            return False
+
+        if self._longitude is None:
+            return False
+
+        return True
