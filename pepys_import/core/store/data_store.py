@@ -343,6 +343,7 @@ class DataStore(object):
         )
         self.session.add(state_obj)
         self.session.flush()
+        self.session.expire(self, ["location"])
 
         return state_obj
 
