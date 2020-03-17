@@ -10,6 +10,8 @@ def test_initial_value_none():
     assert loc.latitude is None
     assert loc.longitude is None
 
+    assert loc.check_valid() == False
+
 
 # Read-only attribute tests
 
@@ -80,6 +82,7 @@ def test_setting_longitude_invalid(longitude):
     # Assert false
     assert not loc.set_longitude_decimal_degrees(longitude)
     assert len(loc.errors) == 1
+    assert loc.check_valid() == False
 
 
 # DMS latitude tests
@@ -110,6 +113,7 @@ def test_setting_dms_latitude_invalid(degrees, minutes, seconds, hemisphere):
 
     assert not loc.set_latitude_dms(degrees, minutes, seconds, hemisphere)
     assert len(loc.errors) == 1
+    assert loc.check_valid() == False
 
 
 # DMS longitude tests
@@ -141,6 +145,8 @@ def test_setting_dms_longitude_invalid(degrees, minutes, seconds, hemisphere):
     assert not loc.set_longitude_dms(degrees, minutes, seconds, hemisphere)
     assert len(loc.errors) == 1
 
+    assert loc.check_valid() == False
+
 
 def test_as_wkt():
     loc = Location()
@@ -149,3 +155,11 @@ def test_as_wkt():
     loc.set_longitude_decimal_degrees(-1.34)
 
     assert loc.to_wkt() == "SRID=4326;POINT(-1.34 50.2)"
+
+
+def test_set_from_wkb():
+    loc = Location()
+    loc.set_from_wkb("0101000020E61000009A9999999999F5BF3D0AD7A3701D4940")
+
+    assert loc.latitude == 50.23
+    assert loc.longitude == -1.35
