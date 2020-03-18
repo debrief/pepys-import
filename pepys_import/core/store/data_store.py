@@ -1314,6 +1314,16 @@ class DataStore(object):
         f.close()
 
     def is_datafile_loaded_before(self, file_size, file_hash):
+        """
+        Queries the Datafile table to check whether the given file is loaded before or not.
+
+        :param file_size: Size of the file (in bytes)
+        :type file_size: Integer
+        :param file_hash: Hashed value of the file
+        :type file_hash: String
+        :return: True if the datafile is loaded before, False otherwise
+        :rtype: bool
+        """
         is_loaded_before = (
             self.session.query(self.db_classes.Datafile)
             .filter(self.db_classes.Datafile.size == file_size)
