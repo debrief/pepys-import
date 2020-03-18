@@ -1,4 +1,6 @@
 import os
+import stat
+import shutil
 import unittest
 
 from contextlib import redirect_stdout
@@ -16,6 +18,7 @@ CURRENT_DIR = os.getcwd()
 BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
 DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 OUTPUT_PATH = os.path.join(DATA_PATH, "output")
+REP_DATA_PATH = os.path.join(DATA_PATH, "track_files", "rep_data")
 
 
 class SampleImporterTests(unittest.TestCase):
@@ -103,6 +106,35 @@ class SampleImporterTests(unittest.TestCase):
         output = temp_output.getvalue()
 
         self.assertIn("Files got processed: 0 times", output)
+
+    @patch("pepys_import.file.file_processor.ARCHIVE_PATH", OUTPUT_PATH)
+    def test_archiving_files(self):
+        """Test whether archive flag correctly works for File Processor"""
+        names = list()
+        processor = FileProcessor(archive=True)
+        processor.register_importer(ReplayImporter())
+        processor.process(REP_DATA_PATH, None, False)
+
+        moved_files_path = os.path.join(OUTPUT_PATH, "input_files")
+        assert os.path.exists(moved_files_path) is True
+
+        # Scan the files in input_files folder
+        for file in os.scandir(moved_files_path):
+            # Append the name of the file to test it later on
+            names.append(file.name)
+            # Move files back
+            source_path = os.path.join(REP_DATA_PATH, file.name)
+            shutil.move(file.path, source_path)
+            # Change file permission to -rw-r--r--
+            os.chmod(
+                source_path, stat.S_IWRITE | stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH
+            )
+
+        # Assert that only correctly imported files were moved to the output folder
+        assert "rep_test1.rep" in names
+        assert "sen_ssk_freq.dsf" in names
+        assert "sen_tracks.rep" in names
+        assert "uk_track.rep" in names
 
 
 class ImporterRemoveTestCase(unittest.TestCase):
