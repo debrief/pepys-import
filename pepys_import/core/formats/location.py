@@ -18,6 +18,13 @@ class Location:
     def __repr__(self):
         return f"Location(lon={self.longitude}, lat={self.latitude})"
 
+    def __eq__(self, other):
+        if not isinstance(other, Location):
+            # don't attempt to compare against unrelated types
+            return NotImplemented
+
+        return self.latitude == other.latitude and self.longitude == other.longitude
+
     # Property to make a read-only .latitude property
     # that mirrors the hidden _latitude attribute
     @property
