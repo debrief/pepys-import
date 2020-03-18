@@ -30,8 +30,7 @@ class REPLine:
         self.timestamp = None
         self.vessel = None
         self.symbology = None
-        self.latitude = None
-        self.longitude = None
+        self.location = None
         self.heading = None
         self.speed = None
         self.depth = None
@@ -42,14 +41,13 @@ class REPLine:
 
     def print(self):
         print(
-            "REP Line {} - Timestamp: {} Vessel: {} Symbology: {} Latitude: {} "
-            "Longitude: {} Heading: {} Speed: {} Depth: {} TextLabel: {}".format(
+            "REP Line {} - Timestamp: {} Vessel: {} Symbology: {} Location: {} "
+            "Heading: {} Speed: {} Depth: {} TextLabel: {}".format(
                 self.line_num,
                 self.timestamp,
                 self.vessel,
                 self.symbology,
-                self.latitude,
-                self.longitude,
+                self.location,
                 self.heading,
                 self.speed,
                 self.depth,
@@ -135,40 +133,28 @@ class REPLine:
 
         self.symbology = symbology_token.text
 
-        self.latitude = Location(
+        self.location = Location(errors, error_type)
+        if not self.location.set_latitude_dms(
             lat_degrees_token.text,
             lat_mins_token.text,
             lat_secs_token.text,
             lat_hemi_token.text,
-            errors,
-            error_type,
-        )
+        ):
+            return False
         combine_tokens(
             lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token
-        ).record(self.importer_name, "latitude", self.latitude, "DMS")
+        ).record(self.importer_name, "latitude", self.location, "DMS")
 
-        if not self.latitude.parse():
-            errors.append(
-                {error_type: f"Line {self.line_num}. Error in latitude parsing"}
-            )
-            return False
-
-        self.longitude = Location(
+        if not self.location.set_longitude_dms(
             long_degrees_token.text,
             long_mins_token.text,
             long_secs_token.text,
             long_hemi_token.text,
-            errors,
-            error_type,
-        )
+        ):
+            return False
         combine_tokens(
             long_degrees_token, long_mins_token, long_secs_token, long_hemi_token
-        ).record(self.importer_name, "longitude", self.longitude, "DMS")
-        if not self.longitude.parse():
-            errors.append(
-                {error_type: f"Line {self.line_num}. Error in longitude parsing"}
-            )
-            return False
+        ).record(self.importer_name, "longitude", self.location, "DMS")
 
         heading = convert_absolute_angle(
             heading_token.text, self.line_num, errors, error_type
@@ -208,4 +194,4 @@ class REPLine:
         return self.vessel
 
     def get_location(self):
-        return f"SRID=4326;POINT({self.longitude.as_degrees()} {self.latitude.as_degrees()})"
+        return self.location
