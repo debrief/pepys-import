@@ -306,22 +306,37 @@ class TestLocationRoundtripToDB(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
         with self.store.session_scope() as session:
-            self.nationality = self.store.add_to_nationalities("test_nationality").name
-            self.platform_type = self.store.add_to_platform_types(
-                "test_platform_type"
+            self.change_id = self.store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
+            print(self.change_id)
+            self.nationality = self.store.add_to_nationalities(
+                "test_nationality", self.change_id
             ).name
-            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type")
-            self.privacy = self.store.add_to_privacies("test_privacy").name
+            self.platform_type = self.store.add_to_platform_types(
+                "test_platform_type", self.change_id
+            ).name
+            self.sensor_type = self.store.add_to_sensor_types(
+                "test_sensor_type", self.change_id
+            )
+            self.privacy = self.store.add_to_privacies(
+                "test_privacy", self.change_id
+            ).name
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
                 privacy=self.privacy,
+                change_id=self.change_id,
             )
 
-            self.sensor = self.platform.get_sensor(self.store, "gps", self.sensor_type)
-            self.file = self.store.get_datafile("test_file", "csv")
+            self.sensor = self.platform.get_sensor(
+                self.store, "gps", self.sensor_type, change_id=self.change_id
+            )
+            self.file = self.store.get_datafile(
+                "test_file", "csv", change_id=self.change_id
+            )
             self.current_time = datetime.utcnow()
 
             self.store.session.expunge(self.sensor)
@@ -393,7 +408,7 @@ class TestLocationRoundtripToDB(unittest.TestCase):
 
             # Commit to the DB
             if self.file.validate():
-                self.file.commit(self.store.session)
+                self.file.commit(self.store, change_id=self.change_id)
 
         # In a separate session, check that we get a Location class with the right
         # lat and lon
