@@ -16,7 +16,7 @@ class Location:
             self.error_type = error_type
 
     def __repr__(self):
-        return f"Location({self.longitude}, {self.latitude})"
+        return f"Location(lon={self.longitude}, lat={self.latitude})"
 
     # Property to make a read-only .latitude property
     # that mirrors the hidden _latitude attribute
