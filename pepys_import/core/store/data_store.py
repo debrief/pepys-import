@@ -1204,7 +1204,7 @@ class DataStore(object):
 
             # wkb hex conversion to "point"
             point = None
-            if contact.location:
+            if contact.location is not None:
                 point = wkb.loads(contact.location.desc, hex=True)
 
             contact_rep_line = [
@@ -1215,6 +1215,7 @@ class DataStore(object):
                 str(contact.bearing) if contact.bearing else "NULL",
                 "NULL",  # unit_converter.convert_meter_to_yard(contact.range) if contact.range else "NULL",
                 sensor_name,
+                "N/A",
             ]
 
             ambigous_bearing = None  # TODO: ambigous bearing.
