@@ -39,9 +39,7 @@ class TestLocalTests(unittest.TestCase):
 
     @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_PATH)
     @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_PATH)
-    @patch("shutil.move")
-    @patch("os.chmod")
-    def test_local_basic_tests(self, patched_move, patched_chmod):
+    def test_local_basic_tests(self):
         reload(common_db)
 
         # check states empty
@@ -58,7 +56,7 @@ class TestLocalTests(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 0)
 
-        processor = FileProcessor()
+        processor = FileProcessor(archive=False)
         processor.register_importer(ETracImporter())
 
         # parse the folder
@@ -89,12 +87,10 @@ class TestLocalTests(unittest.TestCase):
 
     @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_PATH)
     @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_PATH)
-    @patch("shutil.move")
-    @patch("os.chmod")
-    def test_local_basic_and_enhanced_tests(self, patched_move, patched_chmod):
+    def test_local_basic_and_enhanced_tests(self):
         reload(common_db)
 
-        processor = FileProcessor()
+        processor = FileProcessor(archive=False)
         processor.register_importer(ReplayImporter())
 
         # check states empty

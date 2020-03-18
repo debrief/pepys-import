@@ -1,6 +1,5 @@
 import os
 import unittest
-from unittest.mock import patch
 
 from importers.e_trac_importer import ETracImporter
 from pepys_import.file.file_processor import FileProcessor
@@ -18,10 +17,8 @@ class TestLoadEtrac(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @patch("shutil.move")
-    @patch("os.chmod")
-    def test_process_e_trac_data(self, patched_move, patched_chmod):
-        processor = FileProcessor()
+    def test_process_e_trac_data(self):
+        processor = FileProcessor(archive=False)
         processor.register_importer(ETracImporter())
 
         # check states empty
