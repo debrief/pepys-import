@@ -109,6 +109,8 @@ class Datafile(BaseSpatiaLite, DatafileMixin):
     datafile_type_id = Column(Integer, nullable=False)
     reference = Column(String(150))
     url = Column(String(150))
+    size = Column(Integer, nullable=False)
+    hash = Column(String(32), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
