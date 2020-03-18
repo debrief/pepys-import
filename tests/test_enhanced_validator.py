@@ -7,6 +7,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
+from pepys_import.core.formats.location import Location
 
 
 class EnhancedValidatorTestCase(unittest.TestCase):
@@ -101,8 +102,17 @@ class EnhancedValidatorTestCase(unittest.TestCase):
             self.current_time,
             parser_name=self.parser.short_name,
         )
-        state.prev_location = "SRID=4326;POINT(75.0 25.0)"
-        state.location = "SRID=4326;POINT(80.0 30.0)"
+
+        prev_loc = Location()
+        prev_loc.set_latitude_decimal_degrees(25)
+        prev_loc.set_longitude_decimal_degrees(75)
+        state.prev_location = prev_loc
+
+        loc = Location()
+        loc.set_latitude_decimal_degrees(30)
+        loc.set_longitude_decimal_degrees(80)
+        state.location = loc
+
         state.heading = 5.0 * unit_registry.radian
         state.course = 5.0 * unit_registry.radian
         EnhancedValidator(state, self.errors, "Test Parser")
@@ -124,8 +134,16 @@ class EnhancedValidatorTestCase(unittest.TestCase):
             self.current_time,
             parser_name=self.parser.short_name,
         )
-        state.prev_location = "SRID=4326;POINT(75.0 25.0)"
-        state.location = "SRID=4326;POINT(80.0 30.0)"
+        prev_loc = Location()
+        prev_loc.set_latitude_decimal_degrees(25)
+        prev_loc.set_longitude_decimal_degrees(75)
+        state.prev_location = prev_loc
+
+        loc = Location()
+        loc.set_latitude_decimal_degrees(30)
+        loc.set_longitude_decimal_degrees(80)
+        state.location = loc
+
         state.speed = 10.0 * (unit_registry.metre / unit_registry.second)
         EnhancedValidator(state, self.errors, "Test Parser")
         assert len(self.errors) == 1
