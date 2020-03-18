@@ -122,6 +122,10 @@ class SampleImporterTests(unittest.TestCase):
         for file in os.scandir(moved_files_path):
             # Append the name of the file to test it later on
             names.append(file.name)
+            # Assert that the moved file is read-only
+            # Convert file permission to octal and keep only the last three bits
+            file_mode = oct(os.stat(file.path).st_mode & 0o777)
+            assert file_mode == oct(stat.S_IREAD)
             # Move files back
             source_path = os.path.join(REP_DATA_PATH, file.name)
             shutil.move(file.path, source_path)
@@ -135,6 +139,9 @@ class SampleImporterTests(unittest.TestCase):
         assert "sen_ssk_freq.dsf" in names
         assert "sen_tracks.rep" in names
         assert "uk_track.rep" in names
+
+        # Assert that there is no file in the input_files folder anymore
+        assert len(os.listdir(moved_files_path)) == 0
 
 
 class ImporterRemoveTestCase(unittest.TestCase):
