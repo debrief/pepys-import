@@ -8,6 +8,8 @@ from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
 from pepys_import.core.formats import unit_registry
 
+from pepys_import.core.formats.location import Location
+
 
 class BasicValidatorTestCase(unittest.TestCase):
     def setUp(self) -> None:
@@ -82,19 +84,6 @@ class BasicValidatorTestCase(unittest.TestCase):
     def tearDown(self) -> None:
         pass
 
-    def test_validate_longitude(self):
-        state = self.file.create_state(
-            self.store,
-            self.platform,
-            self.sensor,
-            self.current_time,
-            parser_name=self.parser.short_name,
-        )
-        state.location = "SRID=4326;POINT(180.0 25.0)"
-        BasicValidator(state, self.errors, "Test Parser")
-        assert len(self.errors) == 1
-        assert "Longitude is not between -90 and 90 degrees!" in str(self.errors[0])
-
     def test_validate_latitude(self):
         state = self.file.create_state(
             self.store,
@@ -103,10 +92,37 @@ class BasicValidatorTestCase(unittest.TestCase):
             self.current_time,
             parser_name=self.parser.short_name,
         )
-        state.location = "SRID=4326;POINT(25.0 300.0)"
+        # Normally the Location class stops us setting
+        # values that are out of range
+        # so we hack it here, by setting the hidden attributes
+        # directly
+        loc = Location()
+        loc._latitude = 180
+        loc._longitude = 25
+        state.location = loc
         BasicValidator(state, self.errors, "Test Parser")
         assert len(self.errors) == 1
-        assert "Latitude is not between -180 and 180 degrees!" in str(self.errors[0])
+        assert "Latitude is not between -90 and 90 degrees!" in str(self.errors[0])
+
+    def test_validate_longitude(self):
+        state = self.file.create_state(
+            self.store,
+            self.platform,
+            self.sensor,
+            self.current_time,
+            parser_name=self.parser.short_name,
+        )
+        # Normally the Location class stops us setting
+        # values that are out of range
+        # so we hack it here, by setting the hidden attributes
+        # directly
+        loc = Location()
+        loc._latitude = 25
+        loc._longitude = 250
+        state.location = loc
+        BasicValidator(state, self.errors, "Test Parser")
+        assert len(self.errors) == 1
+        assert "Longitude is not between -180 and 180 degrees!" in str(self.errors[0])
 
     def test_validate_heading(self):
         state = self.file.create_state(

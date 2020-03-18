@@ -35,7 +35,7 @@ class BasicValidator:
             return True
 
         self.errors.append(
-            {self.error_type: "Longitude is not between -90 and 90 degrees!"}
+            {self.error_type: "Longitude is not between -180 and 180 degrees!"}
         )
         return False
 
@@ -44,7 +44,7 @@ class BasicValidator:
         if self.latitude is None or -90 <= self.latitude <= 90:
             return True
         self.errors.append(
-            {self.error_type: "Latitude is not between -180 and 180 degrees!"}
+            {self.error_type: "Latitude is not between -90 and 90 degrees!"}
         )
         return False
 
