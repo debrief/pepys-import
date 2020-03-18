@@ -64,11 +64,11 @@ class DataStoreCacheTestCase(TestCase):
             self.assertEqual(len(platform_types), 0)
 
             platform_type_1 = self.store.add_to_platform_types(
-                platform_type_name="test", change_id=self.change_id
+                name="test", change_id=self.change_id
             )
             # This one shouldn't duplicate, it should return existing entity
             platform_type_2 = self.store.add_to_platform_types(
-                platform_type_name="test", change_id=self.change_id
+                name="test", change_id=self.change_id
             )
 
             # objects must be the same
@@ -91,11 +91,11 @@ class DataStoreCacheTestCase(TestCase):
             self.assertEqual(len(nationalities), 0)
 
             nationality_1 = self.store.add_to_nationalities(
-                nationality_name="test", change_id=self.change_id
+                name="test", change_id=self.change_id
             )
             # This one shouldn't duplicate, it should return existing entity
             nationality_2 = self.store.add_to_nationalities(
-                nationality_name="test", change_id=self.change_id
+                name="test", change_id=self.change_id
             )
 
             # objects must be the same
@@ -116,11 +116,11 @@ class DataStoreCacheTestCase(TestCase):
             self.assertEqual(len(privacies), 0)
 
             privacy_1 = self.store.add_to_privacies(
-                privacy_name="test", change_id=self.change_id
+                name="test", change_id=self.change_id
             )
             # This one shouldn't duplicate, it should return existing entity
             privacy_2 = self.store.add_to_privacies(
-                privacy_name="test", change_id=self.change_id
+                name="test", change_id=self.change_id
             )
 
             # objects must be the same
@@ -141,11 +141,11 @@ class DataStoreCacheTestCase(TestCase):
             self.assertEqual(len(datafile_types), 0)
 
             datafile_type_1 = self.store.add_to_datafile_types(
-                datafile_type="test", change_id=self.change_id
+                name="test", change_id=self.change_id
             )
             # This one shouldn't duplicate, it should return existing entity
             datafile_type_2 = self.store.add_to_datafile_types(
-                datafile_type="test", change_id=self.change_id
+                name="test", change_id=self.change_id
             )
 
             # objects must be the same
@@ -168,11 +168,11 @@ class DataStoreCacheTestCase(TestCase):
             self.assertEqual(len(sensor_types), 0)
 
             sensor_type_1 = self.store.add_to_sensor_types(
-                sensor_type_name="test", change_id=self.change_id
+                name="test", change_id=self.change_id
             )
             # This one shouldn't duplicate, it should return existing entity
             sensor_type_2 = self.store.add_to_sensor_types(
-                sensor_type_name="test", change_id=self.change_id
+                name="test", change_id=self.change_id
             )
 
             # objects must be the same
