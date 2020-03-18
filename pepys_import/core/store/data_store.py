@@ -1327,12 +1327,7 @@ class DataStore(object):
             f.write(data + "\r\n")
 
         for i, comment in enumerate(comments):
-            platform = (
-                self.session.query(self.db_classes.Platform)
-                .filter(self.db_classes.Platform.platform_id == comment.platform_id)
-                .first()
-            )
-            vessel_name = platform.name
+            vessel_name = self.get_cached_platform_name(platform_id=comment.platform_id)
             message = comment.content
             comment_type_name = self.get_cached_comment_type_name(
                 comment.comment_type_id
