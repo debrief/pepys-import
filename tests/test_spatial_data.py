@@ -7,6 +7,8 @@ from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
 
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.formats.location import Location
+
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -38,14 +40,11 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
                 )
                 .one()
             )
-            point = self.store.session.query(func.ST_AsText(first_state.location)).one()
+            correct_loc = Location()
+            correct_loc.set_latitude_decimal_degrees(32)
+            correct_loc.set_longitude_decimal_degrees(46)
 
-            # Check location point's type and value
-            self.assertFalse(isinstance(first_state.location, str))
-            self.assertTrue(isinstance(first_state.location, WKBElement))
-            self.assertEqual(
-                point[0], "POINT(46 32)",
-            )
+            assert first_state.location == correct_loc
 
     def test_non_existing_location(self):
         """Test filtering State objects by non existing point returns None on SpatiaLite"""
@@ -120,14 +119,12 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
                 )
                 .one()
             )
-            point = self.store.session.query(func.ST_AsText(first_state.location)).one()
 
-            # Check location point's type and value
-            self.assertFalse(isinstance(first_state.location, str))
-            self.assertTrue(isinstance(first_state.location, WKBElement))
-            self.assertEqual(
-                point[0], "POINT(46 32)",
-            )
+            correct_loc = Location()
+            correct_loc.set_latitude_decimal_degrees(32)
+            correct_loc.set_longitude_decimal_degrees(46)
+
+            assert first_state.location == correct_loc
 
     def test_non_existing_location(self):
         """Test filtering State objects by non existing point returns None on PostGIS"""
