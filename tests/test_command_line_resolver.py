@@ -788,6 +788,8 @@ class DatafileTestCase(unittest.TestCase):
                 file_type=datafile_type.name,
                 privacy=privacy.name,
                 reference="DATAFILE-1",
+                file_size=0,
+                file_hash="HASHED-1",
                 change_id=self.change_id,
             )
             synonym_datafile = self.resolver.resolve_datafile(
@@ -820,6 +822,8 @@ class DatafileTestCase(unittest.TestCase):
                 file_type=datafile_type,
                 privacy=privacy,
                 reference="DATAFILE-1",
+                file_size=0,
+                file_hash="HASHED-1",
                 change_id=self.change_id,
             )
 
@@ -1083,6 +1087,8 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
                 file_type=datafile_type.name,
                 privacy=privacy.name,
                 reference="DATAFILE-1",
+                file_size=0,
+                file_hash="HASHED-1",
                 change_id=self.change_id,
             )
             with self.assertRaises(SystemExit):
@@ -1347,7 +1353,7 @@ class GetMethodsTestCase(unittest.TestCase):
             # there must be 2 entities at the beginning
             self.assertEqual(len(datafiles), 2)
 
-            self.store.get_datafile("test", change_id=self.change_id)
+            self.store.get_datafile("test", None, 0, "hashed", change_id=self.change_id)
 
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 3)

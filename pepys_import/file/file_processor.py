@@ -15,6 +15,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
+from pepys_import.utils.datafile_utils import hash_file
 from pepys_import.utils.import_utils import import_module_
 
 USER = getuser()
@@ -256,8 +257,10 @@ class FileProcessor:
             change = data_store.add_to_changes(
                 user=USER, modified=datetime.utcnow(), reason=reason
             )
+            file_size = os.path.getsize(full_path)
+            file_hash = hash_file(full_path)
             datafile = data_store.get_datafile(
-                basename, file_extension, change.change_id
+                basename, file_extension, file_size, file_hash, change.change_id
             )
 
             # Run all parsers
