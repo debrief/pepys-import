@@ -31,7 +31,7 @@ class BasicValidator:
 
     def validate_longitude(self):
         # if longitude is none, there is nothing to validate, return True
-        if self.longitude is None or -90 <= self.longitude <= 90:
+        if self.longitude is None or -180 <= self.longitude <= 180:
             return True
 
         self.errors.append(
@@ -41,7 +41,7 @@ class BasicValidator:
 
     def validate_latitude(self):
         # if latitude is none, there is nothing to validate, return True
-        if self.latitude is None or -180 <= self.latitude <= 180:
+        if self.latitude is None or -90 <= self.latitude <= 90:
             return True
         self.errors.append(
             {self.error_type: "Latitude is not between -180 and 180 degrees!"}
