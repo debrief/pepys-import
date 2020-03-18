@@ -5,8 +5,6 @@ import math
 from sqlalchemy import func
 from geoalchemy2 import WKBElement
 
-from unittest.mock import patch
-
 from importers.replay_contact_importer import ReplayContactImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
@@ -29,10 +27,8 @@ class RepContactTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @patch("shutil.move")
-    @patch("os.chmod")
-    def test_process_rep_contacts(self, patched_move, patched_chmod):
-        processor = FileProcessor()
+    def test_process_rep_contacts(self):
+        processor = FileProcessor(archive=False)
         processor.register_importer(ReplayContactImporter())
 
         # check states empty
@@ -95,10 +91,8 @@ class RepContactTests(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
 
-    @patch("shutil.move")
-    @patch("os.chmod")
-    def test_process_dsf_contacts(self, patched_move, patched_chmod):
-        processor = FileProcessor()
+    def test_process_dsf_contacts(self):
+        processor = FileProcessor(archive=False)
         processor.register_importer(ReplayContactImporter())
 
         # check states empty

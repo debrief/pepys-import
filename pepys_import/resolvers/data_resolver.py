@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 class DataResolver(ABC):
     @abstractmethod
     def resolve_platform(
-        self, data_store, platform_name, platform_type, nationality, privacy
+        self, data_store, platform_name, platform_type, nationality, privacy, change_id
     ):
         """
         Implementation method should return any data necessary to create a platform.
@@ -20,11 +20,13 @@ class DataResolver(ABC):
         :type platform_type: PlatformType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
 
     @abstractmethod
-    def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy):
+    def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy, change_id):
         """
         Implementation method should return any data necessary to create a sensor.
         Currently: sensor_name, sensor_type.
@@ -37,22 +39,28 @@ class DataResolver(ABC):
         :type sensor_type: SensorType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
 
     @abstractmethod
-    def resolve_privacy(self, data_store):
+    def resolve_privacy(self, data_store, change_id):
         """
         Implementation method should return any data necessary to create a privacy.
         Currently: name
 
         :param data_store: A :class:`DataStore` object
         :type data_store: DataStore
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """
 
     @abstractmethod
-    def resolve_datafile(self, data_store, datafile_name, datafile_type, privacy):
+    def resolve_datafile(
+        self, data_store, datafile_name, datafile_type, privacy, change_id
+    ):
         """
         Implementation method should return any data necessary to create a datafile.
         Currently: datafile_type, privacy
@@ -65,5 +73,7 @@ class DataResolver(ABC):
         :type datafile_type: DatafileType
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
         :return:
         """

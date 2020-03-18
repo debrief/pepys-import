@@ -1,4 +1,6 @@
 import os
+import stat
+import shutil
 import unittest
 
 from contextlib import redirect_stdout
@@ -16,10 +18,9 @@ CURRENT_DIR = os.getcwd()
 BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
 DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 OUTPUT_PATH = os.path.join(DATA_PATH, "output")
+REP_DATA_PATH = os.path.join(DATA_PATH, "track_files", "rep_data")
 
 
-@patch("shutil.move")
-@patch("os.chmod")
 class SampleImporterTests(unittest.TestCase):
     def setUp(self) -> None:
         pass
@@ -33,9 +34,9 @@ class SampleImporterTests(unittest.TestCase):
         if os.path.exists(descending_file):
             os.remove(descending_file)
 
-    def test_process_folders_not_descending(self, patched_move, patched_chmod):
+    def test_process_folders_not_descending(self):
         """Test whether single level processing works for the given path"""
-        processor = FileProcessor("single_level.db")
+        processor = FileProcessor("single_level.db", archive=False)
 
         processor.load_importers_dynamically()
 
@@ -50,9 +51,9 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, False)
 
-    def test_process_folders_descending(self, patched_move, patched_chmod):
+    def test_process_folders_descending(self):
         """Test whether descending processing works for the given path"""
-        processor = FileProcessor("descending.db")
+        processor = FileProcessor("descending.db", archive=False)
 
         processor.load_importers_dynamically()
 
@@ -67,9 +68,9 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, True)
 
-    def test_process_folders_descending_in_memory(self, patched_move, patched_chmod):
+    def test_process_folders_descending_in_memory(self):
         """Test whether :memory: is used when no filename is given"""
-        processor = FileProcessor()
+        processor = FileProcessor(archive=False)
 
         processor.load_importers_dynamically()
 
@@ -84,16 +85,16 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, True)
 
-    def test_class_name(self, patched_move, patched_chmod):
+    def test_class_name(self):
         """Test whether class names are correct"""
         replay_importer = ReplayImporter()
         self.assertEqual(str(replay_importer), "Replay File Format Importer")
         nmea_importer = NMEAImporter()
         self.assertEqual(str(nmea_importer), "NMEA File Format Importer")
 
-    def test_giving_file_path_only(self, patched_move, patched_chmod):
+    def test_giving_file_path_only(self):
         """Test whether process method works when a file path is given"""
-        processor = FileProcessor()
+        processor = FileProcessor(archive=False)
 
         processor.load_importers_dynamically()
 
@@ -105,6 +106,56 @@ class SampleImporterTests(unittest.TestCase):
         output = temp_output.getvalue()
 
         self.assertIn("Files got processed: 0 times", output)
+
+    @patch("pepys_import.file.file_processor.ARCHIVE_PATH", OUTPUT_PATH)
+    def test_archiving_files(self):
+        """Test whether archive flag correctly works for File Processor"""
+        # Assert that REP files exist in the original location
+        input_files = os.listdir(REP_DATA_PATH)
+        assert "rep_test1.rep" in input_files
+        assert "sen_ssk_freq.dsf" in input_files
+        assert "sen_tracks.rep" in input_files
+        assert "uk_track.rep" in input_files
+
+        names = list()
+        processor = FileProcessor(archive=True)
+        processor.register_importer(ReplayImporter())
+        processor.process(REP_DATA_PATH, None, False)
+
+        # Assert that successfully imported files are not in the original location
+        input_files = os.listdir(REP_DATA_PATH)
+        assert "rep_test1.rep" not in input_files
+        assert "sen_ssk_freq.dsf" not in input_files
+        assert "sen_tracks.rep" not in input_files
+        assert "uk_track.rep" not in input_files
+
+        moved_files_path = os.path.join(OUTPUT_PATH, "input_files")
+        assert os.path.exists(moved_files_path) is True
+
+        # Scan the files in input_files folder
+        for file in os.scandir(moved_files_path):
+            # Append the name of the file to test it later on
+            names.append(file.name)
+            # Assert that the moved file is read-only
+            # Convert file permission to octal and keep only the last three bits
+            file_mode = oct(os.stat(file.path).st_mode & 0o777)
+            assert file_mode == oct(stat.S_IREAD)
+            # Move files back
+            source_path = os.path.join(REP_DATA_PATH, file.name)
+            shutil.move(file.path, source_path)
+            # Change file permission to -rw-r--r--
+            os.chmod(
+                source_path, stat.S_IWRITE | stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH
+            )
+
+        # Assert that only correctly imported files were moved to the output folder
+        assert "rep_test1.rep" in names
+        assert "sen_ssk_freq.dsf" in names
+        assert "sen_tracks.rep" in names
+        assert "uk_track.rep" in names
+
+        # Assert that there is no file in the input_files folder anymore
+        assert len(os.listdir(moved_files_path)) == 0
 
 
 class ImporterRemoveTestCase(unittest.TestCase):

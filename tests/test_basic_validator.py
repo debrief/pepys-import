@@ -15,20 +15,30 @@ class BasicValidatorTestCase(unittest.TestCase):
 
         with self.store.session_scope():
             # Create a platform, a sensor, a datafile and finally a state object respectively
-            nationality = self.store.add_to_nationalities("test_nationality").name
-            platform_type = self.store.add_to_platform_types("test_platform_type").name
-            sensor_type = self.store.add_to_sensor_types("test_sensor_type")
-            privacy = self.store.add_to_privacies("test_privacy").name
+            self.current_time = datetime.utcnow()
+            change_id = self.store.add_to_changes(
+                "TEST", self.current_time, "TEST"
+            ).change_id
+            nationality = self.store.add_to_nationalities(
+                "test_nationality", change_id
+            ).name
+            platform_type = self.store.add_to_platform_types(
+                "test_platform_type", change_id
+            ).name
+            sensor_type = self.store.add_to_sensor_types("test_sensor_type", change_id)
+            privacy = self.store.add_to_privacies("test_privacy", change_id).name
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
+                change_id=change_id,
             )
-            self.sensor = self.platform.get_sensor(self.store, "gps", sensor_type)
-            self.current_time = datetime.utcnow()
-            self.file = self.store.get_datafile("test_file", "csv")
+            self.sensor = self.platform.get_sensor(
+                self.store, "gps", sensor_type, change_id=change_id
+            )
+            self.file = self.store.get_datafile("test_file", "csv", change_id)
 
             self.store.session.expunge(self.platform)
             self.store.session.expunge(self.sensor)

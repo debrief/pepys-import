@@ -15,10 +15,11 @@ TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 class SpatialDataSpatialiteTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
-        self.store.initialise()
-        self.store.populate_reference(TEST_DATA_PATH)
-        self.store.populate_metadata(TEST_DATA_PATH)
-        self.store.populate_measurement(TEST_DATA_PATH)
+        with self.store.session_scope():
+            self.store.initialise()
+            self.store.populate_reference(TEST_DATA_PATH)
+            self.store.populate_metadata(TEST_DATA_PATH)
+            self.store.populate_measurement(TEST_DATA_PATH)
 
     def tearDown(self) -> None:
         pass
@@ -88,10 +89,11 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
                 db_password="postgres",
                 db_port=55527,
             )
-            self.store.initialise()
-            self.store.populate_reference(TEST_DATA_PATH)
-            self.store.populate_metadata(TEST_DATA_PATH)
-            self.store.populate_measurement(TEST_DATA_PATH)
+            with self.store.session_scope():
+                self.store.initialise()
+                self.store.populate_reference(TEST_DATA_PATH)
+                self.store.populate_metadata(TEST_DATA_PATH)
+                self.store.populate_measurement(TEST_DATA_PATH)
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 

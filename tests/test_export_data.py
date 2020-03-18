@@ -41,12 +41,12 @@ class DataStoreExportPostGISDBTestCase(TestCase):
         # creating database from schema
         data_store_postgres.initialise()
 
-        # populate data
-        data_store_postgres.populate_reference()
-        data_store_postgres.populate_metadata()
-        data_store_postgres.populate_measurement()
-
         with data_store_postgres.session_scope():
+            # populate data
+            data_store_postgres.populate_reference()
+            data_store_postgres.populate_metadata()
+            data_store_postgres.populate_measurement()
+
             datafiles = data_store_postgres.get_all_datafiles()
             datafiles_dict = {}
             for datafile in datafiles:
@@ -69,10 +69,11 @@ class DataStoreExportSpatiaLiteTestCase(TestCase):
         # creating database from schema
         data_store_sqlite.initialise()
 
-        # populate data
-        data_store_sqlite.populate_reference()
-        data_store_sqlite.populate_metadata()
-        data_store_sqlite.populate_measurement()
+        with data_store_sqlite.session_scope():
+            # populate data
+            data_store_sqlite.populate_reference()
+            data_store_sqlite.populate_metadata()
+            data_store_sqlite.populate_measurement()
 
         with data_store_sqlite.session_scope():
             datafiles = data_store_sqlite.get_all_datafiles()
