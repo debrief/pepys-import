@@ -248,57 +248,76 @@ class TestMediaElevationProperty(unittest.TestCase):
         assert media.elevation.check("[length]")
 
 
-class TestStateLocationProperty(unittest.TestCase):
-    def setUp(self):
+CLASSES_WITH_LOCATION = [
+    pytest.param("State", id="state"),
+    pytest.param("Media", id="media"),
+]
+
+
+class TestLocationProperty:
+    def setup_class(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
     def tearDown(self):
         pass
 
-    def test_state_location_property_invalid_type(self):
-        state = self.store.db_classes.State()
-
+    @pytest.mark.parametrize(
+        "class_name", CLASSES_WITH_LOCATION,
+    )
+    def test_location_property_invalid_type(self, class_name):
+        obj = eval(f"self.store.db_classes.{class_name}()")
+        print(type(obj))
         with pytest.raises(TypeError) as exception:
-            state.location = (50, -1)
+            obj.location = (50, -1)
 
         assert "location value must be an instance of the Location class" in str(
             exception.value
         )
 
-    def test_state_location_invalid_location(self):
-        state = self.store.db_classes.State()
+    @pytest.mark.parametrize(
+        "class_name", CLASSES_WITH_LOCATION,
+    )
+    def test_location_invalid_location(self, class_name):
+        obj = eval(f"self.store.db_classes.{class_name}()")
 
         # Check setting with a Quantity of the wrong units gives error
         with pytest.raises(ValueError) as exception:
-            state.location = Location()
+            obj.location = Location()
 
         assert "location object does not have valid values" in str(exception.value)
 
-    def test_state_location_valid_location(self):
-        state = self.store.db_classes.State()
+    @pytest.mark.parametrize(
+        "class_name", CLASSES_WITH_LOCATION,
+    )
+    def test_location_valid_location(self, class_name):
+        obj = eval(f"self.store.db_classes.{class_name}()")
 
         loc = Location()
         loc.set_latitude_decimal_degrees(50.23)
         loc.set_longitude_decimal_degrees(-1.34)
 
-        state.location = loc
+        obj.location = loc
 
-    def test_state_location_roundtrip_not_to_db(self):
+    @pytest.mark.parametrize(
+        "class_name", CLASSES_WITH_LOCATION,
+    )
+    def test_location_roundtrip_not_to_db(self, class_name):
         # Tests a roundtrip of a Location object, but without
         # actually committing to the DB - so the Location object
         # is converted to and from a string, but not actually stored
         # in the database as a WKBElement.
-        state = self.store.db_classes.State()
+
+        obj = eval(f"self.store.db_classes.{class_name}()")
 
         loc = Location()
         loc.set_latitude_decimal_degrees(50.23)
         loc.set_longitude_decimal_degrees(-1.34)
 
-        state.location = loc
+        obj.location = loc
 
-        assert state.location.latitude == 50.23
-        assert state.location.longitude == -1.34
+        assert obj.location.latitude == 50.23
+        assert obj.location.longitude == -1.34
 
 
 class TestLocationRoundtripToDB(unittest.TestCase):
@@ -379,8 +398,7 @@ class TestLocationRoundtripToDB(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_new_state_created_successfully(self):
-        """Test whether a new state is created"""
+    def test_location_roundtrip_to_db(self):
         with self.store.session_scope() as session:
             states = self.store.session.query(self.store.db_classes.State).all()
 
