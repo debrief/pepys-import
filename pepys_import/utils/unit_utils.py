@@ -69,12 +69,8 @@ def convert_string_location_to_degrees(first_location):
 
 
 def extract_points(location):
-    # convert string point to float point
-    if isinstance(location, str):
-        location = convert_string_location_to_degrees(location)
-    longitude, latitude = location
     # convert decimal degrees to radians and return
-    return radians(longitude), radians(latitude)
+    return radians(location.longitude), radians(location.latitude)
 
 
 def bearing_between_two_points(first_location, second_location):
