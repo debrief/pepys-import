@@ -1320,6 +1320,9 @@ class DataStore(object):
             .filter(self.db_classes.Datafile.hash == file_hash)
             .first()
         )
-        print(f"'{is_loaded_before.reference}' is already loaded! Skipping the file.")
-
-        return True if is_loaded_before else False
+        if is_loaded_before:
+            print(
+                f"'{is_loaded_before.reference}' is already loaded! Skipping the file."
+            )
+            return True
+        return False
