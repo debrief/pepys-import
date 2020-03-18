@@ -477,7 +477,7 @@ class Geometry1(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin):
+class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationPropertyMixin):
     __tablename__ = constants.MEDIA
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34
@@ -486,7 +486,7 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin):
     platform_id = Column(Integer)
     subject_id = Column(Integer)
     sensor_id = Column(Integer)
-    location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
+    _location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
     _elevation = Column(REAL)
     time = Column(TIMESTAMP)
     media_type_id = Column(Integer, nullable=False)

@@ -592,7 +592,7 @@ class Geometry1(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin):
+class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin, LocationPropertyMixin):
     __tablename__ = constants.MEDIA
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34
@@ -602,7 +602,7 @@ class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin):
     platform_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"))
-    location = Column(Geometry(geometry_type="POINT", srid=4326))
+    _location = Column(Geometry(geometry_type="POINT", srid=4326))
     _elevation = Column(DOUBLE_PRECISION)
     time = Column(TIMESTAMP)
     media_type_id = Column(UUID(as_uuid=True), nullable=False)
