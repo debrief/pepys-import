@@ -1312,3 +1312,14 @@ class DataStore(object):
             data = " ".join(comment_rep_line)
             f.write(data + "\r\n")
         f.close()
+
+    def is_datafile_loaded_before(self, file_size, file_hash):
+        is_loaded_before = (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.size == file_size)
+            .filter(self.db_classes.Datafile.hash == file_hash)
+            .first()
+        )
+        print(f"'{is_loaded_before.reference}' is already loaded! Skipping the file.")
+
+        return True if is_loaded_before else False

@@ -252,13 +252,18 @@ class FileProcessor:
             if not good_importers:
                 return processed_ctr
 
+            # If the file is loaded before, return processed_ctr,
+            # which means the file is not processed again
+            file_size = os.path.getsize(full_path)
+            file_hash = hash_file(full_path)
+            if data_store.is_datafile_loaded_before(file_size, file_hash):
+                return processed_ctr
+
             # ok, let these importers handle the file
             reason = f"Importing '{basename}'."
             change = data_store.add_to_changes(
                 user=USER, modified=datetime.utcnow(), reason=reason
             )
-            file_size = os.path.getsize(full_path)
-            file_hash = hash_file(full_path)
             datafile = data_store.get_datafile(
                 basename, file_extension, file_size, file_hash, change.change_id
             )
