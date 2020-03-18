@@ -361,7 +361,7 @@ class ContactMixin:
         """Submit intermediate object to the DB"""
         data_store.session.add(self)
         data_store.session.flush()
-        data_store.session.expire(self, ["location"])
+        data_store.session.expire(self, ["_location"])
         # Log new Contact object creation
         data_store.add_to_logs(
             table=constants.CONTACT, row_id=self.contact_id, change_id=change_id

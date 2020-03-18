@@ -9,6 +9,7 @@ from geoalchemy2 import WKBElement
 from importers.replay_contact_importer import ReplayContactImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.formats.location import Location
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH1 = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/rep_test1.rep")
@@ -70,21 +71,17 @@ class RepContactTests(unittest.TestCase):
 
             # Check location point's type and value
             location1 = contacts[1].location
-            point1 = self.store.session.query(func.ST_AsText(location1)).one()
-            self.assertFalse(isinstance(location1, str))
-            self.assertTrue(isinstance(location1, WKBElement))
-            self.assertEqual(
-                point1[0], "POINT(16.75 60.25)",
-            )
+            correct_loc = Location()
+            correct_loc.set_longitude_decimal_degrees(16.75)
+            correct_loc.set_latitude_decimal_degrees(60.25)
+            assert location1 == correct_loc
 
             # Check location point's type and value
             location2 = contacts[4].location
-            point2 = self.store.session.query(func.ST_AsText(location2)).one()
-            self.assertFalse(isinstance(location2, str))
-            self.assertTrue(isinstance(location2, WKBElement))
-            self.assertEqual(
-                point2[0], "POINT(30.75 16.25)",
-            )
+            correct_loc = Location()
+            correct_loc.set_longitude_decimal_degrees(30.75)
+            correct_loc.set_latitude_decimal_degrees(16.25)
+            assert location2 == correct_loc
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
