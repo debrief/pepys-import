@@ -21,7 +21,7 @@ USER = getuser()
 
 
 class FileProcessor:
-    def __init__(self, filename=None, archive=True):
+    def __init__(self, filename=None, archive=False):
         self.importers = []
         # Register local importers if any exists
         if LOCAL_PARSERS:
