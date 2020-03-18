@@ -216,14 +216,14 @@ class Location:
     def set_from_wkb(self, wkb_string):
         point = wkb.loads(wkb_string, hex=True)
 
-        self.set_longitude_decimal_degrees(point.x)
-        self.set_latitude_decimal_degrees(point.y)
+        self._longitude = point.x
+        self._latitude = point.y
 
     def set_from_wkt_string(self, wkt_string):
         longitude, latitude = wkt_string[16:-1].split()
 
-        self.set_latitude_decimal_degrees(latitude)
-        self.set_longitude_decimal_degrees(longitude)
+        self._latitude = float(latitude)
+        self._longitude = float(longitude)
 
     def check_valid(self):
         if self._latitude is None:
