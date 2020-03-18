@@ -6,6 +6,7 @@ from io import StringIO
 from datetime import datetime
 from unittest.mock import patch
 
+from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.importer import Importer
 from pepys_import.file.file_processor import FileProcessor
 from importers.replay_importer import ReplayImporter
@@ -16,6 +17,7 @@ CURRENT_DIR = os.getcwd()
 BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
 DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 OUTPUT_PATH = os.path.join(DATA_PATH, "output")
+REP_FILE_PATH = os.path.join(DATA_PATH, "track_files", "rep_data", "rep_test1.rep")
 
 
 @patch("shutil.move")
@@ -105,6 +107,25 @@ class SampleImporterTests(unittest.TestCase):
         output = temp_output.getvalue()
 
         self.assertIn("Files got processed: 0 times", output)
+
+    def test_importing_the_same_file_twice(self, patched_move, patched_chmod):
+        """Test whether process method runs only once when the same datafile is given"""
+        data_store = DataStore("", "", "", 0, "test.db", db_type="sqlite")
+        data_store.initialise()
+
+        processor = FileProcessor()
+        processor.register_importer(ReplayImporter())
+        # Process the rep file
+        processor.process(REP_FILE_PATH, data_store, False)
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            # Try to process the same file again
+            processor.process(REP_FILE_PATH, data_store, False)
+        output = temp_output.getvalue()
+
+        assert "Files got processed: 0 times" in output
+        assert "'rep_test1.rep' is already loaded! Skipping the file." in output
 
 
 class ImporterRemoveTestCase(unittest.TestCase):
