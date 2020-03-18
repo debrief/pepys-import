@@ -40,8 +40,9 @@ class FileProcessor:
         self.output_path = None
         self.input_files_path = None
         self.directory_path = None
-        # Check if archive location environment variable exists
+        # Check if ARCHIVE_PATH is given in the config file
         if ARCHIVE_PATH:
+            # Create the path if it doesn't exist
             if not os.path.exists(ARCHIVE_PATH):
                 os.makedirs(ARCHIVE_PATH)
             self.output_path = ARCHIVE_PATH
