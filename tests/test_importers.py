@@ -110,10 +110,24 @@ class SampleImporterTests(unittest.TestCase):
     @patch("pepys_import.file.file_processor.ARCHIVE_PATH", OUTPUT_PATH)
     def test_archiving_files(self):
         """Test whether archive flag correctly works for File Processor"""
+        # Assert that REP files exist in the original location
+        input_files = os.listdir(REP_DATA_PATH)
+        assert "rep_test1.rep" in input_files
+        assert "sen_ssk_freq.dsf" in input_files
+        assert "sen_tracks.rep" in input_files
+        assert "uk_track.rep" in input_files
+
         names = list()
         processor = FileProcessor(archive=True)
         processor.register_importer(ReplayImporter())
         processor.process(REP_DATA_PATH, None, False)
+
+        # Assert that successfully imported files are not in the original location
+        input_files = os.listdir(REP_DATA_PATH)
+        assert "rep_test1.rep" not in input_files
+        assert "sen_ssk_freq.dsf" not in input_files
+        assert "sen_tracks.rep" not in input_files
+        assert "uk_track.rep" not in input_files
 
         moved_files_path = os.path.join(OUTPUT_PATH, "input_files")
         assert os.path.exists(moved_files_path) is True
