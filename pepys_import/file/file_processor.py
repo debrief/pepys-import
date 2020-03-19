@@ -21,7 +21,7 @@ USER = getuser()
 
 
 class FileProcessor:
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, archive=False):
         self.importers = []
         # Register local importers if any exists
         if LOCAL_PARSERS:
@@ -40,11 +40,13 @@ class FileProcessor:
         self.output_path = None
         self.input_files_path = None
         self.directory_path = None
-        # Check if archive location environment variable exists
+        # Check if ARCHIVE_PATH is given in the config file
         if ARCHIVE_PATH:
+            # Create the path if it doesn't exist
             if not os.path.exists(ARCHIVE_PATH):
                 os.makedirs(ARCHIVE_PATH)
             self.output_path = ARCHIVE_PATH
+        self.archive = archive
 
     def process(
         self, path: str, data_store: DataStore = None, descend_tree: bool = True
@@ -294,12 +296,12 @@ class FileProcessor:
                     os.path.join(self.directory_path, f"{filename}_output.log"), "w",
                 ) as f:
                     f.write("\n".join(log))
-                # move original file to output folder
-                new_path = os.path.join(self.input_files_path, basename)
-                shutil.move(full_path, new_path)
-                # make it read-only
-                os.chmod(new_path, S_IREAD)
-
+                if self.archive is True:
+                    # move original file to output folder
+                    new_path = os.path.join(self.input_files_path, basename)
+                    shutil.move(full_path, new_path)
+                    # make it read-only
+                    os.chmod(new_path, S_IREAD)
             else:
                 # write error log to the output folder
                 with open(
