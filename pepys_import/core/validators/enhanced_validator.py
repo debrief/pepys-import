@@ -5,6 +5,8 @@ from pepys_import.utils.unit_utils import (
     distance_between_two_points_haversine,
 )
 
+from pepys_import.core.formats import unit_registry
+
 
 class EnhancedValidator:
     """Enhanced validator serve to verify the lat/long, in addition to the course/speed/heading"""
@@ -57,9 +59,21 @@ class EnhancedValidator:
         :type delta: number (degrees)
         """
 
+        try:
+            # Try treating it as a Quantity
+            bearing1_mag = bearing1.magnitude
+        except AttributeError:
+            # Otherwise just a normal float
+            bearing1_mag = float(bearing1)
+
+        try:
+            bearing2_mag = bearing2.magnitude
+        except AttributeError:
+            bearing2_mag = float(bearing2)
+
         # note: compact test algorithm came from here:
         #    https://gamedev.stackexchange.com/a/4472/8270
-        diff = 180 - abs(abs(bearing1 - bearing2) - 180)
+        diff = 180 - abs(abs(bearing1_mag - bearing2_mag) - 180)
         return diff <= delta
 
     def course_heading_loose_match_with_location(self):
@@ -67,7 +81,7 @@ class EnhancedValidator:
         bearing = bearing_between_two_points(self.prev_location, self.location)
         delta = 90
         if self.heading:
-            heading_in_degrees = degrees(self.heading)
+            heading_in_degrees = self.heading.to(unit_registry.degree)
             if not self.acceptable_bearing_error(heading_in_degrees, bearing, delta):
                 self.errors.append(
                     {
@@ -76,7 +90,7 @@ class EnhancedValidator:
                     }
                 )
         if self.course:
-            course_in_degrees = degrees(self.course)
+            course_in_degrees = self.course.to(unit_registry.degree)
             if not self.acceptable_bearing_error(course_in_degrees, bearing, delta):
                 self.errors.append(
                     {
@@ -97,8 +111,8 @@ class EnhancedValidator:
             return True
         self.errors.append(
             {
-                self.error_type: f"Calculated speed ({calculated_speed:.3f} m/s) is more than "
-                f"the measured speed * 10 ({self.speed * 10:.3f} m/s)!"
+                self.error_type: f"Calculated speed ({calculated_speed:.3f}) is more than "
+                f"the measured speed * 10 ({self.speed * 10:.3f})!"
             }
         )
         return False

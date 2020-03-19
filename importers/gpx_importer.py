@@ -3,8 +3,9 @@ from dateutil.parser import parse
 
 from pepys_import.file.importer import Importer
 from pepys_import.core.formats import unit_registry
-from pepys_import.utils.unit_utils import convert_absolute_angle
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 from pepys_import.core.validators import constants
+from pepys_import.core.formats.location import Location
 
 
 class GPXImporter(Importer):
@@ -107,7 +108,11 @@ class GPXImporter(Importer):
                 if track_name in self.prev_location:
                     state.prev_location = self.prev_location[track_name]
 
-                state.location = f"SRID=4326;POINT({longitude_str} {latitude_str})"
+                location = Location(errors=self.errors, error_type=self.error_type)
+                location.set_latitude_decimal_degrees(latitude_str)
+                location.set_longitude_decimal_degrees(longitude_str)
+
+                state.location = location
                 self.prev_location[track_name] = state.location
 
                 # Add course
@@ -115,20 +120,19 @@ class GPXImporter(Importer):
                     course = convert_absolute_angle(
                         course_str, tpt.sourceline, self.errors, self.error_type
                     )
-                    state.course = course.to(unit_registry.radians).magnitude
+                    state.course = course
 
-                # Add speed
+                # Add speed (specified in metres per second in the file)
                 if speed_str is not None:
-                    try:
-                        speed = float(speed_str)
-                    except ValueError:
-                        self.errors.append(
-                            {
-                                self.error_type: f"Line {tpt.sourceline}. Error in speed value {speed_str}. "
-                                f"Couldn't convert to number"
-                            }
-                        )
-                    state.speed = speed
+                    speed = convert_speed(
+                        speed_str,
+                        (unit_registry.metre / unit_registry.second),
+                        None,
+                        self.errors,
+                        self.error_type,
+                    )
+                    if speed:
+                        state.speed = speed
 
                 if elevation_str is not None:
                     try:
@@ -140,7 +144,7 @@ class GPXImporter(Importer):
                                 f"Couldn't convert to number"
                             }
                         )
-                    state.elevation = elevation
+                    state.elevation = elevation * unit_registry.metre
 
                 state.privacy = privacy.privacy_id
 

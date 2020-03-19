@@ -1,6 +1,7 @@
 from math import degrees
 
 from pepys_import.utils.unit_utils import convert_string_location_to_degrees
+from pepys_import.core.formats import unit_registry
 
 
 class BasicValidator:
@@ -20,9 +21,8 @@ class BasicValidator:
 
         if hasattr(measurement_object, "location"):
             if measurement_object.location is not None:
-                self.longitude, self.latitude = convert_string_location_to_degrees(
-                    measurement_object.location
-                )
+                self.longitude = measurement_object.location.longitude
+                self.latitude = measurement_object.location.latitude
 
         self.validate_longitude()
         self.validate_latitude()
@@ -31,27 +31,30 @@ class BasicValidator:
 
     def validate_longitude(self):
         # if longitude is none, there is nothing to validate, return True
-        if self.longitude is None or -90 <= self.longitude <= 90:
+        if self.longitude is None or -180 <= self.longitude <= 180:
             return True
 
         self.errors.append(
-            {self.error_type: "Longitude is not between -90 and 90 degrees!"}
+            {self.error_type: "Longitude is not between -180 and 180 degrees!"}
         )
         return False
 
     def validate_latitude(self):
         # if latitude is none, there is nothing to validate, return True
-        if self.latitude is None or -180 <= self.latitude <= 180:
+        if self.latitude is None or -90 <= self.latitude <= 90:
             return True
         self.errors.append(
-            {self.error_type: "Latitude is not between -180 and 180 degrees!"}
+            {self.error_type: "Latitude is not between -90 and 90 degrees!"}
         )
         return False
 
     def validate_heading(self):
         # if heading is none, there is nothing to validate, return True
         # if heading exists, convert it from radians to degrees and check if it's between 0 and 360.
-        if self.heading is None or 0 <= degrees(self.heading) <= 360:
+        if (
+            self.heading is None
+            or 0 <= self.heading.to(unit_registry.degree).magnitude <= 360
+        ):
             return True
         self.errors.append(
             {self.error_type: "Heading is not between 0 and 360 degrees!"}
@@ -61,7 +64,10 @@ class BasicValidator:
     def validate_course(self):
         # if course is none, there is nothing to validate, return True
         # if course exists, convert it from radians to degrees and check if it's between 0 and 360.
-        if self.course is None or 0 <= degrees(self.course) <= 360:
+        if (
+            self.course is None
+            or 0 <= self.course.to(unit_registry.degree).magnitude <= 360
+        ):
             return True
         self.errors.append(
             {self.error_type: "Course is not between 0 and 360 degrees!"}

@@ -18,6 +18,9 @@ from pepys_import.core.store.common_db import (
     StateMixin,
     ContactMixin,
     CommentMixin,
+    MediaMixin,
+    ElevationPropertyMixin,
+    LocationPropertyMixin,
 )
 
 from uuid import uuid4
@@ -417,7 +420,7 @@ class ConfidenceLevel(BasePostGIS):
 
 
 # Measurements Tables
-class State(BasePostGIS, StateMixin):
+class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prev_location = None
@@ -434,11 +437,11 @@ class State(BasePostGIS, StateMixin):
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )
-    location = Column(Geometry(geometry_type="POINT", srid=4326))
-    elevation = Column(DOUBLE_PRECISION)
-    heading = Column(DOUBLE_PRECISION)
-    course = Column(DOUBLE_PRECISION)
-    speed = Column(DOUBLE_PRECISION)
+    _location = Column(Geometry(geometry_type="POINT", srid=4326))
+    _elevation = Column(DOUBLE_PRECISION)
+    _heading = Column(DOUBLE_PRECISION)
+    _course = Column(DOUBLE_PRECISION)
+    _speed = Column("speed", DOUBLE_PRECISION)
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )
@@ -446,7 +449,7 @@ class State(BasePostGIS, StateMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Contact(BasePostGIS, ContactMixin):
+class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sensor_name = None
@@ -466,7 +469,7 @@ class Contact(BasePostGIS, ContactMixin):
     bearing = Column(DOUBLE_PRECISION)
     rel_bearing = Column(DOUBLE_PRECISION)
     freq = Column(DOUBLE_PRECISION)
-    location = Column(Geometry(geometry_type="POINT", srid=4326))
+    _location = Column(Geometry(geometry_type="POINT", srid=4326))
     elevation = Column(DOUBLE_PRECISION)
     major = Column(DOUBLE_PRECISION)
     minor = Column(DOUBLE_PRECISION)
@@ -591,7 +594,7 @@ class Geometry1(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Media(BasePostGIS):
+class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin, LocationPropertyMixin):
     __tablename__ = constants.MEDIA
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34
@@ -601,8 +604,8 @@ class Media(BasePostGIS):
     platform_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"))
-    location = Column(Geometry(geometry_type="POINT", srid=4326))
-    elevation = Column(DOUBLE_PRECISION)
+    _location = Column(Geometry(geometry_type="POINT", srid=4326))
+    _elevation = Column(DOUBLE_PRECISION)
     time = Column(TIMESTAMP)
     media_type_id = Column(UUID(as_uuid=True), nullable=False)
     url = Column(String(150), nullable=False)

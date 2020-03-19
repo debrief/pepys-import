@@ -54,6 +54,9 @@ class RepCommentTests(unittest.TestCase):
             # and the full comments on some other rows
             self.assertEqual(comments[0].content, "Contact detected on TA")
             self.assertEqual(comments[6].content, "SUBJECT lost on TA")
+            # check the source
+            self.assertEqual(comments[0].platform_id, 1)
+            self.assertEqual(comments[6].platform_id, 2)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()

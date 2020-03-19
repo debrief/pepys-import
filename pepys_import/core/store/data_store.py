@@ -1,4 +1,5 @@
 import os
+import math
 
 from datetime import datetime
 from getpass import getuser
@@ -15,6 +16,7 @@ from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
 from pepys_import.core.store import constants
+from pepys_import.core.formats import unit_registry
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
 
@@ -27,6 +29,7 @@ import pepys_import.utils.value_transforming_utils as transformer
 import pepys_import.utils.unit_utils as unit_converter
 from .table_summary import TableSummary, TableSummarySet
 from shapely import wkb
+from pepys_import.core.formats.location import Location
 
 DEFAULT_DATA_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "default_data")
 USER = getuser()  # Login name of the current user
@@ -106,6 +109,9 @@ class DataStore(object):
         # dictionaries, to cache platform name
         self._platform_dict_on_sensor_id = dict()
         self._platform_dict_on_platform_id = dict()
+
+        # dictionaries, to cache sensor name
+        self._sensor_dict_on_sensor_id = dict()
 
         # dictionary, to cache comment type name
         self._comment_type_name_dict_on_comment_type_id = dict()
@@ -280,7 +286,7 @@ class DataStore(object):
         :type datafile: Datafile
         :param location: Location of :class:`State`
         :type location: Point
-        :param elevation: Elevation of :class:`State` (use negative for depth)
+        :param elevation: Elevation of :class:`State` in metres (use negative for depth)
         :type elevation: String
         :param heading: Heading of :class:`State` (Which converted to radians)
         :type heading: String
@@ -316,6 +322,12 @@ class DataStore(object):
         if speed == "":
             speed = None
 
+        elevation = elevation * unit_registry.metre
+
+        loc = Location()
+        loc.set_from_wkt_string(location)
+        location = loc
+
         state_obj = self.db_classes.State(
             time=time,
             sensor_id=sensor.sensor_id,
@@ -329,7 +341,7 @@ class DataStore(object):
         )
         self.session.add(state_obj)
         self.session.flush()
-        self.session.expire(state_obj, ["location"])
+        self.session.expire(state_obj, ["_location"])
 
         self.add_to_logs(
             table=constants.STATE, row_id=state_obj.state_id, change_id=change_id
@@ -1177,6 +1189,22 @@ class DataStore(object):
                     )
                 )
 
+    def get_cached_sensor_name(self, sensor_id):
+        # return from cache
+        if sensor_id in self._sensor_dict_on_sensor_id:
+            return self._sensor_dict_on_sensor_id[sensor_id]
+        sensor = (
+            self.session.query(self.db_classes.Sensor)
+            .filter(self.db_classes.Sensor.sensor_id == sensor_id)
+            .first()
+        )
+
+        if sensor:
+            self._sensor_dict_on_sensor_id[sensor_id] = sensor.name
+            return sensor.name
+        else:
+            raise Exception("No sensor found with sensor id: {}".format(sensor_id))
+
     def get_cached_platform_name(self, sensor_id=None, platform_id=None):
         """
         Get platform name from cache on either "sensor_id" or "platform_id"
@@ -1251,6 +1279,8 @@ class DataStore(object):
         )
 
         line_number = 0
+
+        # export states
         for i, state in enumerate(states):
             line_number += 1
             #  load platform name from cache.
@@ -1260,37 +1290,81 @@ class DataStore(object):
                 print(str(ex))
                 platform_name = "[Not Found]"
 
-            # wkb hex conversion to "point"
-            point = wkb.loads(state.location.desc, hex=True)
+            if state.elevation is None:
+                depthStr = "NaN"
+            elif state.elevation == 0.0:
+                depthStr = "0.0"
+            else:
+                depthStr = -1 * state.elevation.magnitude
+
             state_rep_line = [
                 transformer.format_datatime(state.time),
                 '"' + platform_name + '"',
                 "AA",
-                transformer.format_point(point.x, point.y),
+                transformer.format_point(
+                    state.location.longitude, state.location.latitude
+                ),
                 str(unit_converter.convert_radian_to_degree(state.heading))
                 if state.heading
                 else "0",
                 str(unit_converter.convert_mps_to_knot(state.speed))
                 if state.speed
                 else "0",
-                str(abs(state.elevation)) if state.elevation else "NaN",
+                depthStr,
             ]
             data = " ".join(state_rep_line)
             f.write(data + "\r\n")
 
-        # for contact in contacts:
-        #     sensor = self.session.query(self.db_classes.Sensor).filter(
-        #         self.db_classes.Sensor.sensor_id == contact.sensor_id
-        #     ).first()
-        # print(sensor.name)
+        # Export contacts
+        for i, contact in enumerate(contacts):
+            line_number += 1
+            #  load platform name from cache.
+            platform_name = "[Not Found]"
+            sensor_name = "[Not Found]"
+            try:
+                platform_name = self.get_cached_platform_name(
+                    sensor_id=contact.sensor_id
+                )
+                sensor_name = self.get_cached_sensor_name(sensor_id=contact.sensor_id)
+            except Exception as ex:
+                print(str(ex))
+
+            # wkb hex conversion to "point"
+            point = None
+            if contact.location is not None:
+                point = wkb.loads(contact.location.desc, hex=True)
+
+            contact_rep_line = [
+                transformer.format_datatime(contact.time),
+                platform_name,
+                "@@",
+                transformer.format_point(point.y, point.x) if point else "NULL",
+                str(math.degrees(contact.bearing)) if contact.bearing else "NULL",
+                "NULL",  # unit_converter.convert_meter_to_yard(contact.range) if contact.range else "NULL",
+                sensor_name,
+                "N/A",
+            ]
+
+            ambigous_bearing = None  # TODO: ambigous bearing.
+            if ambigous_bearing or contact.freq:
+                contact_rep_line.insert(0, ";SENSOR2:")
+
+                contact_rep_line.insert(
+                    6, str(ambigous_bearing) if ambigous_bearing else "NULL",
+                )
+
+                contact_rep_line.insert(
+                    7, str(contact.freq) if contact.freq else "NULL",
+                )
+            else:
+                contact_rep_line.insert(0, ";SENSOR:")
+            print(contact_rep_line)
+            data = " ".join(contact_rep_line)
+            print(data)
+            f.write(data + "\r\n")
 
         for i, comment in enumerate(comments):
-            platform = (
-                self.session.query(self.db_classes.Sensor)
-                .filter(self.db_classes.Platform.platform_id == comment.platform_id)
-                .first()
-            )
-            vessel_name = platform.name
+            vessel_name = self.get_cached_platform_name(platform_id=comment.platform_id)
             message = comment.content
             comment_type_name = self.get_cached_comment_type_name(
                 comment.comment_type_id
