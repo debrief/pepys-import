@@ -1,4 +1,5 @@
 import os
+import math
 
 from datetime import datetime
 from getpass import getuser
@@ -1260,20 +1261,27 @@ class DataStore(object):
                 print(str(ex))
                 platform_name = "[Not Found]"
 
+            if state.elevation is None:
+                depthStr = "NaN"
+            elif state.elevation == 0.0:
+                depthStr = "0.0"
+            else:
+                depthStr = -1 * state.elevation
+
             # wkb hex conversion to "point"
             point = wkb.loads(state.location.desc, hex=True)
             state_rep_line = [
                 transformer.format_datatime(state.time),
                 '"' + platform_name + '"',
                 "AA",
-                transformer.format_point(point.x, point.y),
+                transformer.format_point(point.y, point.x),
                 str(unit_converter.convert_radian_to_degree(state.heading))
                 if state.heading
                 else "0",
                 str(unit_converter.convert_mps_to_knot(state.speed))
                 if state.speed
                 else "0",
-                str(-1 * state.elevation) if state.elevation else "NaN",
+                depthStr,
             ]
             data = " ".join(state_rep_line)
             f.write(data + "\r\n")
@@ -1301,8 +1309,8 @@ class DataStore(object):
                 transformer.format_datatime(contact.time),
                 platform_name,
                 "@@",
-                transformer.format_point(point.x, point.y) if point else "NULL",
-                str(contact.bearing) if contact.bearing else "NULL",
+                transformer.format_point(point.y, point.x) if point else "NULL",
+                str(math.degrees(contact.bearing)) if contact.bearing else "NULL",
                 "NULL",  # unit_converter.convert_meter_to_yard(contact.range) if contact.range else "NULL",
                 sensor_name,
                 "N/A",
