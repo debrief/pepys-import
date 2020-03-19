@@ -1,8 +1,6 @@
 import unittest
 import os
 
-from unittest.mock import patch
-
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary
 from pepys_import.file.file_processor import FileProcessor
@@ -19,10 +17,8 @@ class ReferenceTestCase(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    @patch("shutil.move")
-    @patch("os.chmod")
-    def test_filename_is_correct(self, patched_move, patched_chmod):
-        processor = FileProcessor()
+    def test_filename_is_correct(self):
+        processor = FileProcessor(archive=False)
         processor.register_importer(ReplayImporter())
 
         with self.store.session_scope():
