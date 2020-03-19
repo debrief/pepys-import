@@ -154,5 +154,9 @@ def convert_radian_to_degree(radian_value):
     return (radian_value * unit_registry.radians).to(unit_registry.degree).magnitude
 
 
+def convert_meter_to_yard(meters):
+    return (meters * unit_registry.meter).to(unit_registry.yard).magnitude
+
+
 def convert_mps_to_knot(mps_value):
     return round(mps_value.to(unit_registry.knot).magnitude, 3,)

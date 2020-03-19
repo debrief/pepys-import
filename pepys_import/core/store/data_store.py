@@ -1,4 +1,5 @@
 import os
+import math
 
 from datetime import datetime
 from getpass import getuser
@@ -108,6 +109,9 @@ class DataStore(object):
         # dictionaries, to cache platform name
         self._platform_dict_on_sensor_id = dict()
         self._platform_dict_on_platform_id = dict()
+
+        # dictionaries, to cache sensor name
+        self._sensor_dict_on_sensor_id = dict()
 
         # dictionary, to cache comment type name
         self._comment_type_name_dict_on_comment_type_id = dict()
@@ -1164,6 +1168,22 @@ class DataStore(object):
                     )
                 )
 
+    def get_cached_sensor_name(self, sensor_id):
+        # return from cache
+        if sensor_id in self._sensor_dict_on_sensor_id:
+            return self._sensor_dict_on_sensor_id[sensor_id]
+        sensor = (
+            self.session.query(self.db_classes.Sensor)
+            .filter(self.db_classes.Sensor.sensor_id == sensor_id)
+            .first()
+        )
+
+        if sensor:
+            self._sensor_dict_on_sensor_id[sensor_id] = sensor.name
+            return sensor.name
+        else:
+            raise Exception("No sensor found with sensor id: {}".format(sensor_id))
+
     def get_cached_platform_name(self, sensor_id=None, platform_id=None):
         """
         Get platform name from cache on either "sensor_id" or "platform_id"
@@ -1238,6 +1258,8 @@ class DataStore(object):
         )
 
         line_number = 0
+
+        # export states
         for i, state in enumerate(states):
             line_number += 1
             #  load platform name from cache.
@@ -1246,6 +1268,13 @@ class DataStore(object):
             except Exception as ex:
                 print(str(ex))
                 platform_name = "[Not Found]"
+
+            if state.elevation is None:
+                depthStr = "NaN"
+            elif state.elevation == 0.0:
+                depthStr = "0.0"
+            else:
+                depthStr = -1 * state.elevation.magnitude
 
             state_rep_line = [
                 transformer.format_datatime(state.time),
@@ -1260,24 +1289,61 @@ class DataStore(object):
                 str(unit_converter.convert_mps_to_knot(state.speed))
                 if state.speed
                 else "0",
-                str(abs(state.elevation.magnitude)) if state.elevation else "NaN",
+                depthStr,
             ]
             data = " ".join(state_rep_line)
             f.write(data + "\r\n")
 
-        # for contact in contacts:
-        #     sensor = self.session.query(self.db_classes.Sensor).filter(
-        #         self.db_classes.Sensor.sensor_id == contact.sensor_id
-        #     ).first()
-        # print(sensor.name)
+        # Export contacts
+        for i, contact in enumerate(contacts):
+            line_number += 1
+            #  load platform name from cache.
+            platform_name = "[Not Found]"
+            sensor_name = "[Not Found]"
+            try:
+                platform_name = self.get_cached_platform_name(
+                    sensor_id=contact.sensor_id
+                )
+                sensor_name = self.get_cached_sensor_name(sensor_id=contact.sensor_id)
+            except Exception as ex:
+                print(str(ex))
+
+            # wkb hex conversion to "point"
+            point = None
+            if contact.location is not None:
+                point = wkb.loads(contact.location.desc, hex=True)
+
+            contact_rep_line = [
+                transformer.format_datatime(contact.time),
+                platform_name,
+                "@@",
+                transformer.format_point(point.y, point.x) if point else "NULL",
+                str(math.degrees(contact.bearing)) if contact.bearing else "NULL",
+                "NULL",  # unit_converter.convert_meter_to_yard(contact.range) if contact.range else "NULL",
+                sensor_name,
+                "N/A",
+            ]
+
+            ambigous_bearing = None  # TODO: ambigous bearing.
+            if ambigous_bearing or contact.freq:
+                contact_rep_line.insert(0, ";SENSOR2:")
+
+                contact_rep_line.insert(
+                    6, str(ambigous_bearing) if ambigous_bearing else "NULL",
+                )
+
+                contact_rep_line.insert(
+                    7, str(contact.freq) if contact.freq else "NULL",
+                )
+            else:
+                contact_rep_line.insert(0, ";SENSOR:")
+            print(contact_rep_line)
+            data = " ".join(contact_rep_line)
+            print(data)
+            f.write(data + "\r\n")
 
         for i, comment in enumerate(comments):
-            platform = (
-                self.session.query(self.db_classes.Sensor)
-                .filter(self.db_classes.Platform.platform_id == comment.platform_id)
-                .first()
-            )
-            vessel_name = platform.name
+            vessel_name = self.get_cached_platform_name(platform_id=comment.platform_id)
             message = comment.content
             comment_type_name = self.get_cached_comment_type_name(
                 comment.comment_type_id
