@@ -5,6 +5,7 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
+from pepys_import.core.formats.location import Location
 
 
 class ETracImporter(Importer):
@@ -115,28 +116,35 @@ class ETracImporter(Importer):
             if vessel_name in self.prev_location:
                 state.prev_location = self.prev_location[vessel_name]
 
-            state.location = (
-                f"SRID=4326;POINT({long_degrees_token.text} {lat_degrees_token.text})"
-            )
+            location = Location(errors=self.errors, error_type=self.error_type)
+            location.set_latitude_decimal_degrees(lat_degrees_token.text)
+            location.set_longitude_decimal_degrees(long_degrees_token.text)
+
+            state.location = location
             self.prev_location[vessel_name] = state.location
 
             combine_tokens(long_degrees_token, lat_degrees_token).record(
                 self.name, "location", state.location, "decimal degrees"
             )
 
-            state.elevation = altitude_token.text
+            state.elevation = altitude_token.text * unit_registry.metre
             altitude_token.record(self.name, "altitude", state.elevation, "metres")
 
             heading = convert_absolute_angle(
                 heading_token.text, line_number, self.errors, self.error_type
             )
-            state.heading = heading.to(unit_registry.radians).magnitude
+            state.heading = heading
             heading_token.record(self.name, "heading", heading, "degrees")
 
             speed = convert_speed(
-                speed_token.text, line_number, self.errors, self.error_type
+                speed_token.text,
+                unit_registry.knots,
+                line_number,
+                self.errors,
+                self.error_type,
             )
-            state.speed = speed
+            if speed:
+                state.speed = speed
             speed_token.record(self.name, "speed", speed, "knots")
 
     @staticmethod

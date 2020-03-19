@@ -17,6 +17,9 @@ from pepys_import.core.store.common_db import (
     StateMixin,
     ContactMixin,
     CommentMixin,
+    MediaMixin,
+    ElevationPropertyMixin,
+    LocationPropertyMixin,
 )
 
 
@@ -339,7 +342,7 @@ class ConfidenceLevel(BaseSpatiaLite):
 
 
 # Measurements Tables
-class State(BaseSpatiaLite, StateMixin):
+class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.prev_location = None
@@ -353,17 +356,17 @@ class State(BaseSpatiaLite, StateMixin):
     state_id = Column(Integer, primary_key=True)
     time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(Integer, nullable=False)
-    location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
-    elevation = Column(REAL)
-    heading = Column(REAL)
-    course = Column(REAL)
-    speed = Column(REAL)
+    _location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
+    _elevation = Column(REAL)
+    _heading = Column(REAL)
+    _course = Column(REAL)
+    _speed = Column("speed", REAL)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Contact(BaseSpatiaLite, ContactMixin):
+class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sensor_name = None
@@ -380,7 +383,7 @@ class Contact(BaseSpatiaLite, ContactMixin):
     bearing = Column(REAL)
     rel_bearing = Column(REAL)
     freq = Column(REAL)
-    location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
+    _location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
     elevation = Column(REAL)
     major = Column(REAL)
     minor = Column(REAL)
@@ -474,7 +477,7 @@ class Geometry1(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Media(BaseSpatiaLite):
+class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationPropertyMixin):
     __tablename__ = constants.MEDIA
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34
@@ -483,8 +486,8 @@ class Media(BaseSpatiaLite):
     platform_id = Column(Integer)
     subject_id = Column(Integer)
     sensor_id = Column(Integer)
-    location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
-    elevation = Column(REAL)
+    _location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
+    _elevation = Column(REAL)
     time = Column(TIMESTAMP)
     media_type_id = Column(Integer, nullable=False)
     url = Column(String(150), nullable=False)

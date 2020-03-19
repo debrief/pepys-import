@@ -1,9 +1,16 @@
+from sqlalchemy.ext.hybrid import hybrid_property
+
+from pepys_import.core.formats import unit_registry
+
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
 from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 from pepys_import.utils.import_utils import import_validators
+
+from pepys_import.core.formats.location import Location
+
 
 LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
 LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
@@ -221,12 +228,132 @@ class StateMixin:
         """Submit intermediate object to the DB"""
         data_store.session.add(self)
         data_store.session.flush()
-        data_store.session.expire(self, ["location"])
+        data_store.session.expire(self, ["_location"])
         # Log new State object creation
         data_store.add_to_logs(
             table=constants.STATE, row_id=self.state_id, change_id=change_id
         )
         return self
+
+    #
+    # Speed properties
+    #
+
+    @hybrid_property
+    def speed(self):
+        # Return all speeds as metres per second
+        if self._speed is None:
+            return None
+        else:
+            return self._speed * (unit_registry.metre / unit_registry.second)
+
+    @speed.setter
+    def speed(self, speed):
+        if speed is None:
+            self._speed = None
+            return
+
+        # Check the given speed is a Quantity with a dimension of 'length / time'
+        try:
+            if not speed.check("[length]/[time]"):
+                raise ValueError(
+                    "Speed must be a Quantity with a dimensionality of [length]/[time]"
+                )
+        except AttributeError:
+            raise TypeError("Speed must be a Quantity")
+
+        # Set the actual speed attribute to the given value converted to metres per second
+        self._speed = speed.to(unit_registry.metre / unit_registry.second).magnitude
+
+    @speed.expression
+    def speed(self):
+        # We need a separate @speed.expression function to return a float rather than a
+        # Quantity object, as otherwise this won't work in the SQLAlchemy filtering functions
+        return self._speed
+
+    #
+    # Heading properties
+    #
+
+    @hybrid_property
+    def heading(self):
+        # Return all headings as degrees
+        if self._heading is None:
+            return None
+        else:
+            return (self._heading * unit_registry.radian).to(unit_registry.degree)
+
+    @heading.setter
+    def heading(self, heading):
+        if heading is None:
+            self._heading = None
+            return
+
+        # Check the given heading is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not heading.check(""):
+                raise ValueError(
+                    "Heading must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                heading.units == unit_registry.degree
+                or heading.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "Heading must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("Heading must be a Quantity")
+
+        # Set the actual heading attribute to the given value converted to radians
+        self._heading = heading.to(unit_registry.radian).magnitude
+
+    @heading.expression
+    def heading(self):
+        return self._heading
+
+    #
+    # Course properties
+    #
+
+    @hybrid_property
+    def course(self):
+        # Return all courses as degrees
+        if self._course is None:
+            return None
+        else:
+            return (self._course * unit_registry.radian).to(unit_registry.degree)
+
+    @course.setter
+    def course(self, course):
+        if course is None:
+            self._course = None
+            return
+
+        # Check the given course is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not course.check(""):
+                raise ValueError(
+                    "Course must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                course.units == unit_registry.degree
+                or course.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "Course must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("Course must be a Quantity")
+
+        # Set the actual course attribute to the given value converted to radians
+        self._course = course.to(unit_registry.radian).magnitude
+
+    @course.expression
+    def course(self):
+        return self._course
 
 
 class ContactMixin:
@@ -234,7 +361,7 @@ class ContactMixin:
         """Submit intermediate object to the DB"""
         data_store.session.add(self)
         data_store.session.flush()
-        data_store.session.expire(self, ["location"])
+        data_store.session.expire(self, ["_location"])
         # Log new Contact object creation
         data_store.add_to_logs(
             table=constants.CONTACT, row_id=self.contact_id, change_id=change_id
@@ -252,3 +379,72 @@ class CommentMixin:
             table=constants.COMMENT, row_id=self.comment_id, change_id=change_id
         )
         return self
+
+
+class MediaMixin:
+    pass
+
+
+class ElevationPropertyMixin:
+    @hybrid_property
+    def elevation(self):
+        # Return all elevations as metres
+        if self._elevation is None:
+            return None
+        else:
+            return self._elevation * unit_registry.metre
+
+    @elevation.setter
+    def elevation(self, elevation):
+        if elevation is None:
+            self._elevation = None
+            return
+
+        # Check the given elevation is a Quantity with a dimension of 'length'
+        try:
+            if not elevation.check("[length]"):
+                raise ValueError(
+                    "Elevation must be a Quantity with a dimensionality of [length]"
+                )
+        except AttributeError:
+            raise TypeError("Elevation must be a Quantity")
+
+        # Set the actual elevation attribute to the given value converted to metres
+        self._elevation = elevation.to(unit_registry.metre).magnitude
+
+    @elevation.expression
+    def elevation(self):
+        return self._elevation
+
+
+class LocationPropertyMixin:
+    @hybrid_property
+    def location(self):
+        if self._location is None:
+            return None
+        else:
+            loc = Location()
+            if isinstance(self._location, str):
+                loc.set_from_wkt_string(self._location)
+            else:
+                loc.set_from_wkb(self._location.desc)
+
+            return loc
+
+    @location.setter
+    def location(self, location):
+        if location is None:
+            self._location = None
+            return
+
+        if not isinstance(location, Location):
+            raise TypeError("location value must be an instance of the Location class")
+
+        if not location.check_valid():
+            raise ValueError("location object does not have valid values")
+
+        self._location = location.to_wkt()
+
+    @location.expression
+    def location(self):
+        return self._location

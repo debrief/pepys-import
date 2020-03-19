@@ -150,15 +150,14 @@ class ReplayContactImporter(Importer):
                 if lat_degrees_token is None:
                     location = None
                 else:
-                    latitude = Location(
+                    loc = Location(self.errors, self.error_type,)
+
+                    if not loc.set_latitude_dms(
                         lat_degrees_token.text,
                         lat_mins_token.text,
                         lat_secs_token.text,
                         lat_hemi_token.text,
-                        self.errors,
-                        self.error_type,
-                    )
-                    if not latitude.parse():
+                    ):
                         self.errors.append(
                             {
                                 self.error_type: f"Line {line_number}. Error in latitude parsing"
@@ -171,17 +170,14 @@ class ReplayContactImporter(Importer):
                         lat_mins_token,
                         lat_secs_token,
                         lat_hemi_token,
-                    ).record(self.name, "latitude", latitude, "DMS")
+                    ).record(self.name, "latitude", loc, "DMS")
 
-                    longitude = Location(
+                    if not loc.set_longitude_dms(
                         long_degrees_token.text,
                         long_mins_token.text,
                         long_secs_token.text,
                         long_hemi_token.text,
-                        self.errors,
-                        self.error_type,
-                    )
-                    if not longitude.parse():
+                    ):
                         self.errors.append(
                             {
                                 self.error_type: f"Line {line_number}. Error in longitude parsing"
@@ -194,12 +190,9 @@ class ReplayContactImporter(Importer):
                         long_mins_token,
                         long_secs_token,
                         long_hemi_token,
-                    ).record(self.name, "longitude", longitude, "DMS")
+                    ).record(self.name, "longitude", loc, "DMS")
 
-                    location = (
-                        f"SRID=4326;POINT({longitude.as_degrees()} "
-                        f"{latitude.as_degrees()})"
-                    )
+                    location = loc
 
                 if bearing_token.text.upper() == "NULL":
                     bearing = None

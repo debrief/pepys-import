@@ -34,11 +34,13 @@ def convert_absolute_angle(angle, line_number, errors, error_type):
     return valid_angle * unit_registry.degree
 
 
-def convert_speed(speed, line_number, errors, error_type):
+def convert_speed(speed, units, line_number, errors, error_type):
     """
-    Converts the given speed value in knots to meter/seconds format.
+    Parses the given speed value into a float and assigns the given units
     :param speed: Speed value in string format
     :type speed: String
+    :param units: Units of the speed (as a pint unit instance)
+    :type units: pint unit
     :param line_number: Line number
     :type line_number: String
     :param errors: Error List to save value error if it raises
@@ -57,41 +59,8 @@ def convert_speed(speed, line_number, errors, error_type):
             }
         )
         return False
-    speed = (
-        (valid_speed * unit_registry.knot)
-        .to(unit_registry.meter / unit_registry.second)
-        .magnitude
-    )
+    speed = valid_speed * units
     return speed
-
-
-def convert_distance(distance, units, line_number, errors, error_type):
-    """
-    Converts the given distance value in supplied units to metres formsat
-    :param distance: distance value in string format
-    :type distance: String
-    :param units: units of distance for supplied measurement
-    :type units: String
-    :param line_number: Line number
-    :type line_number: String
-    :param errors: Error List to save value error if it raises
-    :type errors: List
-    :param error_type: Type of error
-    :type error_type: String
-    :return: return the converted speed value
-    """
-    try:
-        valid_distance = float(distance)
-    except ValueError:
-        errors.append(
-            {
-                error_type: f"Line {line_number}. Error in distance value {distance}. "
-                f"Couldn't convert to a number"
-            }
-        )
-        return False
-    distance = (valid_distance * units).to(unit_registry.meter).magnitude
-    return distance
 
 
 def convert_string_location_to_degrees(first_location):
@@ -100,12 +69,8 @@ def convert_string_location_to_degrees(first_location):
 
 
 def extract_points(location):
-    # convert string point to float point
-    if isinstance(location, str):
-        location = convert_string_location_to_degrees(location)
-    longitude, latitude = location
     # convert decimal degrees to radians and return
-    return radians(longitude), radians(latitude)
+    return radians(location.longitude), radians(location.latitude)
 
 
 def bearing_between_two_points(first_location, second_location):
@@ -151,11 +116,38 @@ def distance_between_two_points_haversine(first_location, second_location):
     c = 2 * asin(sqrt(a))
     radius = 6371  # Radius of earth in kilometers. Use 3956 for miles
     distance = c * radius
-    return (
-        (distance * unit_registry.kilometers / unit_registry.hour)
-        .to(unit_registry.meter / unit_registry.second)
-        .magnitude
+    return (distance * unit_registry.kilometers / unit_registry.hour).to(
+        unit_registry.meter / unit_registry.second
     )
+
+
+def convert_distance(distance, units, line_number, errors, error_type):
+    """
+    Converts the given distance value in supplied units to metres formsat
+    :param distance: distance value in string format
+    :type distance: String
+    :param units: units of distance for supplied measurement
+    :type units: String
+    :param line_number: Line number
+    :type line_number: String
+    :param errors: Error List to save value error if it raises
+    :type errors: List
+    :param error_type: Type of error
+    :type error_type: String
+    :return: return the converted speed value
+    """
+    try:
+        valid_distance = float(distance)
+    except ValueError:
+        errors.append(
+            {
+                error_type: f"Line {line_number}. Error in distance value {distance}. "
+                f"Couldn't convert to a number"
+            }
+        )
+        return False
+    distance = (valid_distance * units).to(unit_registry.meter).magnitude
+    return distance
 
 
 def convert_radian_to_degree(radian_value):
@@ -167,9 +159,4 @@ def convert_meter_to_yard(meters):
 
 
 def convert_mps_to_knot(mps_value):
-    return round(
-        (mps_value * unit_registry.meter / unit_registry.second)
-        .to(unit_registry.knot)
-        .magnitude,
-        3,
-    )
+    return round(mps_value.to(unit_registry.knot).magnitude, 3,)
