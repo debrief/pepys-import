@@ -179,7 +179,9 @@ class SampleImporterTests(unittest.TestCase):
         assert "Files got processed: 0 times" in output
         assert "'rep_test1.rep' is already loaded! Skipping the file." in output
 
-        os.remove(os.path.join(FILE_PATH, "test.db"))
+        test_db = os.path.join(CURRENT_DIR, "test.db")
+        if os.path.exists(test_db):
+            os.remove(test_db)
 
 
 class ImporterRemoveTestCase(unittest.TestCase):
