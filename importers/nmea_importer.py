@@ -18,7 +18,6 @@ class NMEAImporter(Importer):
     ):
         super().__init__(name, validation_level, short_name)
         self.separator = separator
-        self.errors = list()
 
         self.latitude = None
         self.latitude_hem = None
@@ -114,48 +113,30 @@ class NMEAImporter(Importer):
                         data_store, platform, sensor, timestamp, self.short_name
                     )
 
-                    if not isinstance(self.latitude, Location):
-                        self.latitude = Location(
-                            degrees=self.latitude[:2],
-                            minutes=self.latitude[2:],
-                            seconds=0,
-                            hemisphere=self.latitude_hem,
-                            errors=self.errors,
-                            error_type=self.error_type,
-                        )
-                    if not self.latitude.parse():
-                        self.errors.append(
-                            {
-                                self.error_type: f"Line {line_number}. Error in latitude parsing"
-                            }
-                        )
+                    self.location = Location(
+                        errors=self.errors, error_type=self.error_type,
+                    )
+
+                    if not self.location.set_latitude_dms(
+                        degrees=self.latitude[:2],
+                        minutes=self.latitude[2:],
+                        seconds=0,
+                        hemisphere=self.latitude_hem,
+                    ):
                         continue
-                    if not isinstance(self.longitude, Location):
-                        self.longitude = Location(
-                            degrees=self.longitude[:3],
-                            minutes=self.longitude[3:],
-                            seconds=0,
-                            hemisphere=self.longitude_hem,
-                            errors=self.errors,
-                            error_type=self.error_type,
-                        )
-                    if not self.longitude.parse():
-                        self.errors.append(
-                            {
-                                self.error_type: f"Line {line_number}. Error in longitude parsing"
-                            }
-                        )
+
+                    if not self.location.set_longitude_dms(
+                        degrees=self.longitude[:3],
+                        minutes=self.longitude[3:],
+                        seconds=0,
+                        hemisphere=self.longitude_hem,
+                    ):
                         continue
 
                     if platform_name in self.prev_location:
                         state.prev_location = self.prev_location[platform_name]
 
-                    # note: the next line is split, to meet our formatter, the
-                    # 'f' commmand is deliberately placed on each block
-                    state.location = (
-                        f"SRID=4326;POINT({self.longitude.as_degrees()} "
-                        f"{self.latitude.as_degrees()})"
-                    )
+                    state.location = self.location
                     self.prev_location[platform_name] = state.location
 
                     combine_tokens(self.lat_token, self.lon_token).record(
@@ -166,11 +147,15 @@ class NMEAImporter(Importer):
                         self.heading, line_number, self.errors, self.error_type
                     )
                     if heading:
-                        state.heading = heading.to(unit_registry.radians).magnitude
+                        state.heading = heading
                     self.heading_token.record(self.name, "heading", heading, "degrees")
 
                     speed = convert_speed(
-                        self.speed, line_number, self.errors, self.error_type
+                        self.speed,
+                        unit_registry.knots,
+                        line_number,
+                        self.errors,
+                        self.error_type,
                     )
                     if speed:
                         state.speed = speed
@@ -186,6 +171,7 @@ class NMEAImporter(Importer):
                     self.latitude_hem = None
                     self.longitude = None
                     self.longitude_hem = None
+                    self.location = None
 
     @staticmethod
     def parse_timestamp(date, time):

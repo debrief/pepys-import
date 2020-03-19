@@ -15,6 +15,7 @@ from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
 from pepys_import.core.store import constants
+from pepys_import.core.formats import unit_registry
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
 
@@ -27,6 +28,7 @@ import pepys_import.utils.value_transforming_utils as transformer
 import pepys_import.utils.unit_utils as unit_converter
 from .table_summary import TableSummary, TableSummarySet
 from shapely import wkb
+from pepys_import.core.formats.location import Location
 
 DEFAULT_DATA_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "default_data")
 USER = getuser()  # Login name of the current user
@@ -280,7 +282,7 @@ class DataStore(object):
         :type datafile: Datafile
         :param location: Location of :class:`State`
         :type location: Point
-        :param elevation: Elevation of :class:`State` (use negative for depth)
+        :param elevation: Elevation of :class:`State` in metres (use negative for depth)
         :type elevation: String
         :param heading: Heading of :class:`State` (Which converted to radians)
         :type heading: String
@@ -316,6 +318,12 @@ class DataStore(object):
         if speed == "":
             speed = None
 
+        elevation = elevation * unit_registry.metre
+
+        loc = Location()
+        loc.set_from_wkt_string(location)
+        location = loc
+
         state_obj = self.db_classes.State(
             time=time,
             sensor_id=sensor.sensor_id,
@@ -329,7 +337,7 @@ class DataStore(object):
         )
         self.session.add(state_obj)
         self.session.flush()
-        self.session.expire(state_obj, ["location"])
+        self.session.expire(state_obj, ["_location"])
 
         self.add_to_logs(
             table=constants.STATE, row_id=state_obj.state_id, change_id=change_id
@@ -1239,20 +1247,20 @@ class DataStore(object):
                 print(str(ex))
                 platform_name = "[Not Found]"
 
-            # wkb hex conversion to "point"
-            point = wkb.loads(state.location.desc, hex=True)
             state_rep_line = [
                 transformer.format_datatime(state.time),
                 '"' + platform_name + '"',
                 "AA",
-                transformer.format_point(point.x, point.y),
+                transformer.format_point(
+                    state.location.longitude, state.location.latitude
+                ),
                 str(unit_converter.convert_radian_to_degree(state.heading))
                 if state.heading
                 else "0",
                 str(unit_converter.convert_mps_to_knot(state.speed))
                 if state.speed
                 else "0",
-                str(abs(state.elevation)) if state.elevation else "NaN",
+                str(abs(state.elevation.magnitude)) if state.elevation else "NaN",
             ]
             data = " ".join(state_rep_line)
             f.write(data + "\r\n")
