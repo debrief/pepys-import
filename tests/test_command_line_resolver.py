@@ -1353,7 +1353,7 @@ class GetMethodsTestCase(unittest.TestCase):
             # there must be 2 entities at the beginning
             self.assertEqual(len(datafiles), 2)
 
-            self.store.get_datafile("test", None, 0, "hashed", change_id=self.change_id)
+            self.store.get_datafile("test", None, 0, "HASHED", change_id=self.change_id)
 
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 3)

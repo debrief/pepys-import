@@ -360,7 +360,7 @@ class PlatformAndDatafileTestCase(TestCase):
         self.assertEqual(len(datafiles), 0)
 
         with self.store.session_scope():
-            self.store.get_datafile("test_file.csv", "csv", 0, "hashed", self.change_id)
+            self.store.get_datafile("test_file.csv", "csv", 0, "HASHED", self.change_id)
 
         # there must be one entry
         with self.store.session_scope():
@@ -378,8 +378,12 @@ class PlatformAndDatafileTestCase(TestCase):
         self.assertEqual(len(datafiles), 0)
 
         with self.store.session_scope():
-            self.store.get_datafile("test_file.csv", "csv", 0, "hashed", self.change_id)
-            self.store.get_datafile("test_file.csv", "csv", 0, "hashed", self.change_id)
+            self.store.get_datafile(
+                "test_file.csv", "csv", 0, "HASHED-1", self.change_id
+            )
+            self.store.get_datafile(
+                "test_file.csv", "csv", 0, "HASHED-2", self.change_id
+            )
 
             # there must be one entry
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
@@ -391,10 +395,10 @@ class PlatformAndDatafileTestCase(TestCase):
         with self.store.session_scope():
             # Create a datafile
             datafile = self.store.get_datafile(
-                "test_file.csv", "csv", 0, "hashed", self.change_id
+                "test_file.csv", "csv", 0, "HASHED-1", self.change_id
             )
             datafile_2 = self.store.get_datafile(
-                "test_file_2.csv", "csv", 0, "hashed", self.change_id
+                "test_file_2.csv", "csv", 0, "HASHED-2", self.change_id
             )
             found_datafile = self.store.find_datafile("test_file.csv")
 
@@ -405,10 +409,10 @@ class PlatformAndDatafileTestCase(TestCase):
         """Test whether find_datafile method finds the correct Datafile entity from Synonyms table"""
         with self.store.session_scope():
             datafile = self.store.get_datafile(
-                "test_file.csv", "csv", 0, "hashed", self.change_id
+                "test_file.csv", "csv", 0, "HASHED-1", self.change_id
             )
             datafile_2 = self.store.get_datafile(
-                "test_file_2.csv", "csv", 0, "hashed", self.change_id
+                "test_file_2.csv", "csv", 0, "HASHED-2", self.change_id
             )
             self.store.add_to_synonyms(
                 table=constants.DATAFILE,
@@ -733,7 +737,7 @@ class MeasurementsTestCase(TestCase):
                 "test_type", self.change_id
             )
             self.file = self.store.get_datafile(
-                "test_file", "csv", 0, "hashed", self.change_id
+                "test_file", "csv", 0, "HASHED", self.change_id
             )
 
             self.store.session.expunge(self.sensor)
