@@ -88,8 +88,7 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         os.remove(copied_file_path)
 
     def test_importing_modified_file(self):
-        """Test whether process method imports the datafile
-        when the size of datafile is changed"""
+        """Test whether process method imports the datafile when some lines removed from it"""
         copied_file_path = os.path.join(REP_DATA_PATH, "modified_rep_test1.rep")
         # Copy file
         shutil.copyfile(REP_FILE_PATH, copied_file_path)
@@ -106,7 +105,7 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         # Process the rep file
         self.processor.process(REP_FILE_PATH, self.store, False)
 
-        # Query Datafile table, it should have one entity now
+        # Query Datafile table, it should have one entity
         datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
         assert len(datafiles) == 1
         assert datafiles[0].reference == "rep_test1.rep"
@@ -127,7 +126,8 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         os.remove(copied_file_path)
 
     def test_importing_modified_file_alternative(self):
-        """Test whether process method runs only once when the same datafile is given"""
+        """Test whether process method imports the datafile
+        when some characters of datafile is changed"""
         copied_file_path = os.path.join(REP_DATA_PATH, "modified_rep_test1.rep")
         # Copy file
         shutil.copyfile(REP_FILE_PATH, copied_file_path)
@@ -148,7 +148,7 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         # Process the rep file
         self.processor.process(REP_FILE_PATH, self.store, False)
 
-        # Query Datafile table, it should have one entity now
+        # Query Datafile table, it should have one entity
         datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
         assert len(datafiles) == 1
         assert datafiles[0].reference == "rep_test1.rep"
