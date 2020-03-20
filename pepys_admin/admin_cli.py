@@ -26,7 +26,7 @@ def create_postgres_data_store():
         db_password="postgres",
         db_host="localhost",
         db_port=5432,
-        db_name="pepys3",
+        db_name="pepys",
         welcome_text="Pepys_Admin",
     )
 
@@ -166,7 +166,7 @@ class AdminShell(cmd.Cmd):
                         break
                 else:
                     folder_name = datetime.datetime.now().strftime(
-                        "exported_datafiles_%Y-%m-%d_%H:%M:%S"
+                        "exported_datafiles_%Y%m%d_%H%M%S"
                     )
                     os.mkdir(folder_name)
                     break
