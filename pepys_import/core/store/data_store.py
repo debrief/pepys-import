@@ -93,7 +93,6 @@ class DataStore(object):
         self.platform_types = {}
         self.platforms = {}
         self.sensor_types = {}
-        self.sensors = {}
         self.comment_types = {}
 
         # TEMP list of values for defaulted IDs, to be replaced by missing info lookup mechanism
@@ -1238,6 +1237,7 @@ class DataStore(object):
         :param datafile_id:  ID of Datafile
         :type datafile_id: String
         """
+
         f = open("{}.rep".format(datafile), "w+")
         states = (
             self.session.query(self.db_classes.State)
@@ -1337,9 +1337,7 @@ class DataStore(object):
                 )
             else:
                 contact_rep_line.insert(0, ";SENSOR:")
-            print(contact_rep_line)
             data = " ".join(contact_rep_line)
-            print(data)
             f.write(data + "\r\n")
 
         for i, comment in enumerate(comments):
