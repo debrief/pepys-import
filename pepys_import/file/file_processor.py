@@ -15,6 +15,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
+from pepys_import.utils.datafile_utils import hash_file
 from pepys_import.utils.import_utils import import_module_
 
 USER = getuser()
@@ -253,13 +254,20 @@ class FileProcessor:
             if not good_importers:
                 return processed_ctr
 
+            # If the file is loaded before, return processed_ctr,
+            # which means the file is not processed again
+            file_size = os.path.getsize(full_path)
+            file_hash = hash_file(full_path)
+            if data_store.is_datafile_loaded_before(file_size, file_hash):
+                return processed_ctr
+
             # ok, let these importers handle the file
             reason = f"Importing '{basename}'."
             change = data_store.add_to_changes(
                 user=USER, modified=datetime.utcnow(), reason=reason
             )
             datafile = data_store.get_datafile(
-                basename, file_extension, change.change_id
+                basename, file_extension, file_size, file_hash, change.change_id
             )
 
             # Run all parsers

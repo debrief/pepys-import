@@ -354,7 +354,7 @@ class TestLocationRoundtripToDB(unittest.TestCase):
                 self.store, "gps", self.sensor_type, change_id=self.change_id
             )
             self.file = self.store.get_datafile(
-                "test_file", "csv", change_id=self.change_id
+                "test_file", "csv", 0, "HASHED-1", change_id=self.change_id
             )
             self.current_time = datetime.utcnow()
 

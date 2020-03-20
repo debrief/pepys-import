@@ -162,6 +162,8 @@ class Datafile(BasePostGIS, DatafileMixin):
     )
     reference = Column(String(150))
     url = Column(String(150))
+    size = Column(Integer, nullable=False)
+    hash = Column(String(32), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
