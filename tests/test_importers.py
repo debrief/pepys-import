@@ -8,7 +8,6 @@ from io import StringIO
 from datetime import datetime
 from unittest.mock import patch
 
-from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.importer import Importer
 from pepys_import.file.file_processor import FileProcessor
 from importers.replay_importer import ReplayImporter
@@ -157,31 +156,6 @@ class SampleImporterTests(unittest.TestCase):
 
         # Assert that there is no file in the input_files folder anymore
         assert len(os.listdir(moved_files_path)) == 0
-
-    def test_importing_the_same_file_twice(self):
-        """Test whether process method runs only once when the same datafile is given"""
-        data_store = DataStore("", "", "", 0, "test.db", db_type="sqlite")
-        data_store.initialise()
-
-        processor = FileProcessor()
-        processor.register_importer(ReplayImporter())
-        # Process the rep file
-        rep_file = os.path.join(REP_DATA_PATH, "rep_test1.rep")
-
-        processor.process(rep_file, data_store, False)
-
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            # Try to process the same file again
-            processor.process(rep_file, data_store, False)
-        output = temp_output.getvalue()
-
-        assert "Files got processed: 0 times" in output
-        assert "'rep_test1.rep' is already loaded! Skipping the file." in output
-
-        test_db = os.path.join(CURRENT_DIR, "test.db")
-        if os.path.exists(test_db):
-            os.remove(test_db)
 
 
 class ImporterRemoveTestCase(unittest.TestCase):
