@@ -384,6 +384,8 @@ class DataStore(object):
         file_type,
         reference=None,
         simulated=False,
+        file_size=None,
+        file_hash=None,
         url=None,
         change_id=None,
     ):
@@ -398,6 +400,10 @@ class DataStore(object):
         :type file_type: String
         :param reference: Reference of :class:`Datafile`
         :type reference: String
+        :param file_size: Size of the file (in bytes)
+        :type file_size: Integer
+        :param file_hash: Hashed value of the file
+        :type file_hash: String
         :param url: URL of datafile
         :type url: String
         :param change_id: ID of the :class:`Change` object
@@ -413,6 +419,8 @@ class DataStore(object):
             privacy_id=privacy.privacy_id,
             datafile_type_id=datafile_type.datafile_type_id,
             reference=reference,
+            size=file_size,
+            hash=file_hash,
             url=url,
         )
 
@@ -623,7 +631,14 @@ class DataStore(object):
             pk_field=self.db_classes.Datafile.datafile_id,
         )
 
-    def get_datafile(self, datafile_name=None, datafile_type=None, change_id=None):
+    def get_datafile(
+        self,
+        datafile_name=None,
+        datafile_type=None,
+        file_size=None,
+        file_hash=None,
+        change_id=None,
+    ):
         """
         Adds an entry to the datafiles table of the specified name (path)
         and type if not already present. It uses find_datafile method to search existing datafiles.
@@ -632,6 +647,10 @@ class DataStore(object):
         :type datafile_name: String
         :param datafile_type: Type of Datafile
         :type datafile_type: DatafileType
+        :param file_size: Size of the file (in bytes)
+        :type file_size: Integer
+        :param file_hash: Hashed value of the file
+        :type file_hash: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return:  Created Datafile entity
@@ -667,6 +686,8 @@ class DataStore(object):
             privacy=privacy.name,
             file_type=datafile_type.name,
             reference=datafile_name,
+            file_size=file_size,
+            file_hash=file_hash,
             change_id=change_id,
         )
 
@@ -884,36 +905,36 @@ class DataStore(object):
     #############################################################
     # Reference Type Maintenance
 
-    def add_to_platform_types(self, platform_type_name, change_id):
+    def add_to_platform_types(self, name, change_id):
         """
         Adds the specified platform type to the platform types table if not already
         present.
 
-        :param platform_type_name: Name of :class:`PlatformType`
-        :type platform_type_name: String
+        :param name: Name of :class:`PlatformType`
+        :type name: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created :class:`PlatformType` entity
         :rtype: PlatformType
         """
         # check in cache for nationality
-        if platform_type_name in self.platform_types:
-            return self.platform_types[platform_type_name]
+        if name in self.platform_types:
+            return self.platform_types[name]
 
         # doesn't exist in cache, try to lookup in DB
-        platform_types = self.search_platform_type(platform_type_name)
+        platform_types = self.search_platform_type(name)
         if platform_types:
             # add to cache and return looked up platform type
-            self.platform_types[platform_type_name] = platform_types
+            self.platform_types[name] = platform_types
             return platform_types
 
         # enough info to proceed and create entry
-        platform_type = self.db_classes.PlatformType(name=platform_type_name)
+        platform_type = self.db_classes.PlatformType(name=name)
         self.session.add(platform_type)
         self.session.flush()
 
         # add to cache and return created platform type
-        self.platform_types[platform_type_name] = platform_type
+        self.platform_types[name] = platform_type
 
         self.add_to_logs(
             table=constants.PLATFORM_TYPE,
@@ -923,35 +944,35 @@ class DataStore(object):
 
         return platform_type
 
-    def add_to_nationalities(self, nationality_name, change_id):
+    def add_to_nationalities(self, name, change_id):
         """
         Adds the specified nationality to the nationalities table if not already present
 
-        :param nationality_name: Name of :class:`Nationality`
-        :type nationality_name: String
+        :param name: Name of :class:`Nationality`
+        :type name: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created :class:`Nationality` entity
         :rtype: Nationality
         """
         # check in cache for nationality
-        if nationality_name in self.nationalities:
-            return self.nationalities[nationality_name]
+        if name in self.nationalities:
+            return self.nationalities[name]
 
         # doesn't exist in cache, try to lookup in DB
-        nationalities = self.search_nationality(nationality_name)
+        nationalities = self.search_nationality(name)
         if nationalities:
             # add to cache and return looked up nationality
-            self.nationalities[nationality_name] = nationalities
+            self.nationalities[name] = nationalities
             return nationalities
 
         # enough info to proceed and create entry
-        nationality = self.db_classes.Nationality(name=nationality_name)
+        nationality = self.db_classes.Nationality(name=name)
         self.session.add(nationality)
         self.session.flush()
 
         # add to cache and return created platform
-        self.nationalities[nationality_name] = nationality
+        self.nationalities[name] = nationality
 
         self.add_to_logs(
             table=constants.NATIONALITY,
@@ -960,72 +981,72 @@ class DataStore(object):
         )
         return nationality
 
-    def add_to_privacies(self, privacy_name, change_id):
+    def add_to_privacies(self, name, change_id):
         """
         Adds the specified privacy entry to the :class:`Privacy` table if not already present.
 
-        :param privacy_name: Name of :class:`Privacy`
-        :type privacy_name: String
+        :param name: Name of :class:`Privacy`
+        :type name: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created :class:`Privacy` entity
         :rtype: Privacy
         """
         # check in cache for privacy
-        if privacy_name in self.privacies:
-            return self.privacies[privacy_name]
+        if name in self.privacies:
+            return self.privacies[name]
 
         # doesn't exist in cache, try to lookup in DB
-        privacies = self.search_privacy(privacy_name)
+        privacies = self.search_privacy(name)
         if privacies:
             # add to cache and return looked up platform
-            self.privacies[privacy_name] = privacies
+            self.privacies[name] = privacies
             return privacies
 
         # enough info to proceed and create entry
-        privacy = self.db_classes.Privacy(name=privacy_name)
+        privacy = self.db_classes.Privacy(name=name)
         self.session.add(privacy)
         self.session.flush()
 
         # add to cache and return created platform
-        self.privacies[privacy_name] = privacy
+        self.privacies[name] = privacy
 
         self.add_to_logs(
             table=constants.PRIVACY, row_id=privacy.privacy_id, change_id=change_id
         )
         return privacy
 
-    def add_to_datafile_types(self, datafile_type, change_id):
+    def add_to_datafile_types(self, name, change_id):
         """
         Adds the specified datafile type to the datafile types table if not already
         present.
 
-        :param datafile_type: Name of :class:`DatafileType`
-        :type datafile_type: String
+        :param name: Name of :class:`DatafileType`
+        :type name: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Wrapped database entity for :class:`DatafileType`
         :rtype: DatafileType
         """
         # check in cache for datafile type
-        if datafile_type in self.datafile_types:
-            return self.datafile_types[datafile_type]
+        if name in self.datafile_types:
+            return self.datafile_types[name]
 
         # doesn't exist in cache, try to lookup in DB
-        datafile_types = self.search_datafile_type(datafile_type)
+        datafile_types = self.search_datafile_type(name)
         if datafile_types:
             # add to cache and return looked up datafile type
-            self.datafile_types[datafile_type] = datafile_types
+            self.datafile_types[name] = datafile_types
             return datafile_types
 
         # proceed and create entry
-        datafile_type_obj = self.db_classes.DatafileType(name=datafile_type)
+        datafile_type_obj = self.db_classes.DatafileType(name=name)
 
         self.session.add(datafile_type_obj)
         self.session.flush()
 
         # add to cache and return created datafile type
-        self.datafile_types[datafile_type] = datafile_type_obj
+        self.datafile_types[name] = datafile_type_obj
 
         self.add_to_logs(
             table=constants.DATAFILE_TYPE,
@@ -1034,35 +1055,35 @@ class DataStore(object):
         )
         return datafile_type_obj
 
-    def add_to_sensor_types(self, sensor_type_name, change_id):
+    def add_to_sensor_types(self, name, change_id):
         """
         Adds the specified sensor type to the :class:`SensorType` table if not already present.
 
-        :param sensor_type_name: Name of :class:`SensorType`
-        :type sensor_type_name: String
+        :param name: Name of :class:`SensorType`
+        :type name: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created :class:`SensorType` entity
         :rtype: SensorType
         """
         # check in cache for sensor type
-        if sensor_type_name in self.sensor_types:
-            return self.sensor_types[sensor_type_name]
+        if name in self.sensor_types:
+            return self.sensor_types[name]
 
         # doesn't exist in cache, try to lookup in DB
-        sensor_types = self.search_sensor_type(sensor_type_name)
+        sensor_types = self.search_sensor_type(name)
         if sensor_types:
             # add to cache and return looked up sensor type
-            self.sensor_types[sensor_type_name] = sensor_types
+            self.sensor_types[name] = sensor_types
             return sensor_types
 
         # enough info to proceed and create entry
-        sensor_type = self.db_classes.SensorType(name=sensor_type_name)
+        sensor_type = self.db_classes.SensorType(name=name)
         self.session.add(sensor_type)
         self.session.flush()
 
         # add to cache and return created sensor type
-        self.sensor_types[sensor_type_name] = sensor_type
+        self.sensor_types[name] = sensor_type
 
         self.add_to_logs(
             table=constants.SENSOR_TYPE,
@@ -1363,3 +1384,27 @@ class DataStore(object):
             data = " ".join(comment_rep_line)
             f.write(data + "\r\n")
         f.close()
+
+    def is_datafile_loaded_before(self, file_size, file_hash):
+        """
+        Queries the Datafile table to check whether the given file is loaded before or not.
+
+        :param file_size: Size of the file (in bytes)
+        :type file_size: Integer
+        :param file_hash: Hashed value of the file
+        :type file_hash: String
+        :return: True if the datafile is loaded before, False otherwise
+        :rtype: bool
+        """
+        is_loaded_before = (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.size == file_size)
+            .filter(self.db_classes.Datafile.hash == file_hash)
+            .first()
+        )
+        if is_loaded_before:
+            print(
+                f"'{is_loaded_before.reference}' is already loaded! Skipping the file."
+            )
+            return True
+        return False

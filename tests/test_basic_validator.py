@@ -41,7 +41,9 @@ class BasicValidatorTestCase(unittest.TestCase):
             self.sensor = self.platform.get_sensor(
                 self.store, "gps", sensor_type, change_id=change_id
             )
-            self.file = self.store.get_datafile("test_file", "csv", change_id)
+            self.file = self.store.get_datafile(
+                "test_file", "csv", 0, "HASHED", change_id
+            )
 
             self.store.session.expunge(self.platform)
             self.store.session.expunge(self.sensor)

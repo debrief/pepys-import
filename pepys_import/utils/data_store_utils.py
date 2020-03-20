@@ -11,9 +11,10 @@ def import_from_csv(data_store, path, files, change_id):
         if method_to_call:
             with open(os.path.join(path, file), "r") as f:
                 reader = csv.reader(f)
-                # skip header
-                _ = next(reader)
+                # extract header
+                header = next(reader)
                 for row in reader:
-                    method_to_call(*row, change_id=change_id)
+                    keyword_arguments = dict(zip(header, row))
+                    method_to_call(**keyword_arguments, change_id=change_id)
         else:
             print(f"Method({possible_method}) not found!")
