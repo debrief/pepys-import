@@ -7,20 +7,11 @@ from pepys_import.file.highlighter.support.color_picker import (
 
 
 class ColorTests(unittest.TestCase):
-
-    ############################
-    #### setup and teardown ####
-    ############################
-
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
-
-    ####################
-    #### file tests ####
-    ####################
 
     def test_ColorFor(self):
         color_dict = {}

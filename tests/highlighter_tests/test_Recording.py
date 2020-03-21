@@ -12,21 +12,12 @@ OUTPUT_FOLDER = os.path.join(dir_path, "sample_files/")
 
 
 class UsageRecordingTests(unittest.TestCase):
-
-    ############################
-    #### setup and teardown ####
-    ############################
-
     def setUp(self):
         pass
 
     def tearDown(self):
         if os.path.exists(os.path.join(OUTPUT_FOLDER, "track_lines.html")):
             os.remove(os.path.join(OUTPUT_FOLDER, "track_lines.html"))
-
-    ####################
-    #### file tests ####
-    ####################
 
     def parse_timestamp(self, date, time):
         if len(date) == 6:

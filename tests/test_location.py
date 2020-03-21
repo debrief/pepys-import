@@ -9,7 +9,7 @@ def test_initial_value_none():
     assert loc.latitude is None
     assert loc.longitude is None
 
-    assert loc.check_valid() == False
+    assert loc.check_valid() is False
 
 
 # Read-only attribute tests

@@ -1,7 +1,4 @@
-from math import degrees
-
 from pepys_import.core.formats import unit_registry
-from pepys_import.utils.unit_utils import convert_string_location_to_degrees
 
 
 class BasicValidator:

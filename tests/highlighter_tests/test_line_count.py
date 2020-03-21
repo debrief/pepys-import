@@ -8,19 +8,11 @@ DATA_FILE = os.path.join(dir_path, "sample_files/file.txt")
 
 
 class SimpleTest(unittest.TestCase):
-    ############################
-    #### setup and teardown ####
-    ############################
-
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
-
-    ####################
-    #### file tests ####
-    ####################
 
     def test_number_of_lines(self):
         data_file = HighlightedFile(DATA_FILE, 2)

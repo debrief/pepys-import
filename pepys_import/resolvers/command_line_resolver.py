@@ -16,7 +16,7 @@ class CommandLineResolver(DataResolver):
     def resolve_datafile(self, data_store, datafile_name, datafile_type, privacy, change_id):
         choice = create_menu(
             f"Datafile '{datafile_name}' not found. Do you wish to: ",
-            [f"Search for existing datafile", f"Add a new datafile, titled '{datafile_name}'",],
+            [f"Search for existing datafile", f"Add a new datafile, titled '{datafile_name}'"],
             validate_method=is_valid,
         )
 
@@ -37,7 +37,7 @@ class CommandLineResolver(DataResolver):
     ):
         choice = create_menu(
             f"Platform '{platform_name}' not found. Do you wish to: ",
-            [f"Search for existing platform", f"Add a new platform, titled '{platform_name}'",],
+            [f"Search for existing platform", f"Add a new platform, titled '{platform_name}'"],
             validate_method=is_valid,
         )
 
@@ -56,7 +56,7 @@ class CommandLineResolver(DataResolver):
     def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy, change_id):
         choice = create_menu(
             f"Sensor '{sensor_name}' not found. Do you wish to: ",
-            [f"Search for existing sensor", f"Add a new sensor, titled '{sensor_name}'",],
+            [f"Search for existing sensor", f"Add a new sensor, titled '{sensor_name}'"],
             validate_method=is_valid,
         )
 

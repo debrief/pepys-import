@@ -1,7 +1,6 @@
 import os
 import unittest
 from pepys_import.file.highlighter.highlighter import HighlightedFile
-from pepys_import.file.highlighter.highlighter import Char
 
 path = os.path.abspath(__file__)
 dir_path = os.path.dirname(path)
@@ -12,20 +11,11 @@ COMMA_FILE = os.path.join(dir_path, "sample_files/file_comma.txt")
 
 
 class SimpleTests(unittest.TestCase):
-
-    ############################
-    #### setup and teardown ####
-    ############################
-
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
-
-    ####################
-    #### file tests ####
-    ####################
 
     def test_SplitLoadFile(self):
         data_file = HighlightedFile(DATA_FILE)

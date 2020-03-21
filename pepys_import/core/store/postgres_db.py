@@ -4,7 +4,6 @@ from uuid import uuid4
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
-from sqlalchemy.orm import relationship
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
@@ -22,11 +21,8 @@ from pepys_import.core.store.common_db import (
 from pepys_import.core.store.db_base import BasePostGIS
 from pepys_import.core.store.db_status import TableTypes
 
+
 # Metadata Tables
-from pepys_import.core.validators.basic_validator import BasicValidator
-from pepys_import.core.validators.enhanced_validator import EnhancedValidator
-
-
 class HostedBy(BasePostGIS):
     __tablename__ = constants.HOSTED_BY
     table_type = TableTypes.METADATA

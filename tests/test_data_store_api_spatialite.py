@@ -329,9 +329,7 @@ class PlatformAndDatafileTestCase(TestCase):
             datafile = self.store.get_datafile(
                 "test_file.csv", "csv", 0, "HASHED-1", self.change_id
             )
-            datafile_2 = self.store.get_datafile(
-                "test_file_2.csv", "csv", 0, "HASHED-2", self.change_id
-            )
+            self.store.get_datafile("test_file_2.csv", "csv", 0, "HASHED-2", self.change_id)
             found_datafile = self.store.find_datafile("test_file.csv")
 
             self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
@@ -343,9 +341,7 @@ class PlatformAndDatafileTestCase(TestCase):
             datafile = self.store.get_datafile(
                 "test_file.csv", "csv", 0, "HASHED-1", self.change_id
             )
-            datafile_2 = self.store.get_datafile(
-                "test_file_2.csv", "csv", 0, "HASHED-2", self.change_id
-            )
+            self.store.get_datafile("test_file_2.csv", "csv", 0, "HASHED-2", self.change_id)
             self.store.add_to_synonyms(
                 table=constants.DATAFILE,
                 name="TEST",
@@ -424,7 +420,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 privacy=self.privacy,
                 change_id=self.change_id,
             )
-            platform_2 = self.store.get_platform(
+            self.store.get_platform(
                 platform_name="Test Platform 2",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
@@ -447,7 +443,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 privacy=self.privacy,
                 change_id=self.change_id,
             )
-            platform_2 = self.store.get_platform(
+            self.store.get_platform(
                 platform_name="Test Platform 2",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
@@ -584,7 +580,7 @@ class SensorTestCase(TestCase):
             sensor = self.platform.get_sensor(
                 self.store, "gps", self.sensor_type, change_id=self.change_id
             )
-            sensor_2 = self.platform.get_sensor(
+            self.platform.get_sensor(
                 self.store, "gps_2", self.sensor_type, change_id=self.change_id
             )
 
@@ -604,9 +600,7 @@ class SensorTestCase(TestCase):
         sensor = self.platform.get_sensor(
             self.store, "gps", self.sensor_type, change_id=self.change_id
         )
-        sensor_2 = self.platform.get_sensor(
-            self.store, "gps_2", self.sensor_type, change_id=self.change_id
-        )
+        self.platform.get_sensor(self.store, "gps_2", self.sensor_type, change_id=self.change_id)
         self.store.add_to_synonyms(
             table=constants.SENSOR, name="TEST", entity=sensor.sensor_id, change_id=self.change_id,
         )

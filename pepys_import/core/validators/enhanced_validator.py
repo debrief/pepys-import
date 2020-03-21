@@ -1,5 +1,3 @@
-from math import degrees
-
 from pepys_import.core.formats import unit_registry
 from pepys_import.utils.unit_utils import (
     bearing_between_two_points,

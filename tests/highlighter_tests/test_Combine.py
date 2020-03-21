@@ -3,7 +3,6 @@ import unittest
 from datetime import datetime
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.highlighter.support.combine import combine_tokens
-from pepys_import.file.highlighter.support.export import export_report
 
 
 path = os.path.abspath(__file__)
@@ -16,11 +15,6 @@ OUTPUT_FOLDER = os.path.join(dir_path, "sample_files/")
 
 
 class CombineTokenTests(unittest.TestCase):
-
-    ############################
-    #### setup and teardown ####
-    ############################
-
     def setUp(self):
         pass
 
@@ -30,10 +24,6 @@ class CombineTokenTests(unittest.TestCase):
         for f in files_to_delete:
             if os.path.exists(os.path.join(OUTPUT_FOLDER, f)):
                 os.remove(os.path.join(OUTPUT_FOLDER, f))
-
-    ####################
-    #### file tests ####
-    ####################
 
     def parse_timestamp(self, date, time):
         if len(date) == 6:

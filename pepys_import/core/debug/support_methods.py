@@ -70,9 +70,7 @@ def list_platforms(data_store):
 
     rows = []
     for row in result:
-        rows.append(
-            [row.platform_id, row.name, row.platform_type_id, row.nationality_id,]
-        )
+        rows.append([row.platform_id, row.name, row.platform_type_id, row.nationality_id])
     res = tabulate(rows, headers=headers)
 
     return res
