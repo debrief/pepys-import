@@ -1,6 +1,7 @@
 import os
 import argparse
 
+from config import DB_USERNAME, DB_PASSWORD, DB_HOST, DB_NAME, DB_PORT, DB_TYPE
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
 
@@ -9,8 +10,15 @@ DIRECTORY_PATH = os.path.dirname(FILE_PATH)
 DEFAULT_DATABASE = ":memory:"
 
 
-def main(path=DIRECTORY_PATH, db=DEFAULT_DATABASE, archive=False):
-    data_store = DataStore("", "", "", 0, db_name=db, db_type="sqlite")
+def main(path=DIRECTORY_PATH, archive=False):
+    data_store = DataStore(
+        db_username=DB_USERNAME,
+        db_password=DB_PASSWORD,
+        db_host=DB_HOST,
+        db_port=DB_PORT,
+        db_name=DB_NAME,
+        db_type=DB_TYPE,
+    )
     data_store.initialise()
 
     processor = FileProcessor(archive=archive)
@@ -36,4 +44,4 @@ if __name__ == "__main__":
         default=False,
     )
     args = parser.parse_args()
-    main(path=args.path, db=args.db, archive=args.archive)
+    main(path=args.path, archive=args.archive)
