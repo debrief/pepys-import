@@ -1,9 +1,8 @@
 import unittest
-
 from datetime import datetime
 
-from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.resolvers.default_resolver import DefaultResolver
 
 
 class DefaultResolverTestCase(unittest.TestCase):

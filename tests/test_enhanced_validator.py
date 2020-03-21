@@ -1,13 +1,12 @@
 import unittest
-
 from datetime import datetime
 
 from pepys_import.core.formats import unit_registry
-from pepys_import.core.store.data_store import DataStore
-from pepys_import.core.validators.enhanced_validator import EnhancedValidator
-from pepys_import.core.validators import constants
-from pepys_import.file.importer import Importer
 from pepys_import.core.formats.location import Location
+from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.validators import constants
+from pepys_import.core.validators.enhanced_validator import EnhancedValidator
+from pepys_import.file.importer import Importer
 
 
 class EnhancedValidatorTestCase(unittest.TestCase):

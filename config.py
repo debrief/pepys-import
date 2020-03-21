@@ -1,5 +1,4 @@
 import os
-
 from configparser import ConfigParser
 
 from pepys_import.utils.config_utils import process

@@ -1,8 +1,9 @@
 import unittest
+from unittest import TestCase
+
+from testing.postgresql import Postgresql
 
 from pepys_import.core.store.data_store import DataStore
-from testing.postgresql import Postgresql
-from unittest import TestCase
 
 
 class DataStoreClearPostGISDBTestCase(TestCase):

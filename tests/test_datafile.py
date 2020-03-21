@@ -1,14 +1,13 @@
+import os
 import shutil
 import unittest
-import os
-
 from contextlib import redirect_stdout
 from io import StringIO
 
+from importers.replay_importer import ReplayImporter
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary
 from pepys_import.file.file_processor import FileProcessor
-from importers.replay_importer import ReplayImporter
 from pepys_import.utils.datafile_utils import hash_file
 
 DIRECTORY_PATH = os.path.dirname(__file__)

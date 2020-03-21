@@ -1,6 +1,6 @@
 import unittest
-
 from unittest import TestCase
+
 from pepys_import.core.store.data_store import DataStore
 
 

@@ -1,4 +1,5 @@
 import unittest
+
 from pepys_import.file.highlighter.support.color_picker import (
     color_for,
     hex_color_for,

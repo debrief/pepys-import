@@ -1,11 +1,11 @@
+import platform
 import unittest
-
-from pepys_import.core.store.data_store import DataStore
-from testing.postgresql import Postgresql
-from sqlalchemy import inspect
 from unittest import TestCase
 
-import platform
+from sqlalchemy import inspect
+from testing.postgresql import Postgresql
+
+from pepys_import.core.store.data_store import DataStore
 
 
 class DataStoreInitialisePostGISTestCase(TestCase):

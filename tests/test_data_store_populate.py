@@ -1,15 +1,14 @@
-import unittest
 import os
-
-from datetime import datetime
-from unittest import TestCase
-from testing.postgresql import Postgresql
-from sqlalchemy.exc import OperationalError
-from pepys_import.core.store.data_store import DataStore
-
+import unittest
 from contextlib import redirect_stdout
+from datetime import datetime
 from io import StringIO
+from unittest import TestCase
 
+from sqlalchemy.exc import OperationalError
+from testing.postgresql import Postgresql
+
+from pepys_import.core.store.data_store import DataStore
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")

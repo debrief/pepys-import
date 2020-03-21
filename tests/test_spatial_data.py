@@ -1,14 +1,13 @@
-import unittest
 import os
+import unittest
 
 from geoalchemy2 import WKTElement
 from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
 
-from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats.location import Location
-
+from pepys_import.core.store.data_store import DataStore
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")

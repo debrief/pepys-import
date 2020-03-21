@@ -1,15 +1,15 @@
-import config
-import unittest
 import os
-import pytest
-
+import unittest
 from contextlib import redirect_stdout
+from importlib import reload
 from io import StringIO
 from unittest.mock import patch
-from importlib import reload
 
-from pepys_import.file.file_processor import FileProcessor
+import pytest
+
+import config
 from pepys_import.core.store import common_db
+from pepys_import.file.file_processor import FileProcessor
 
 DIRECTORY_PATH = os.path.dirname(__file__)
 TEST_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "parsers")

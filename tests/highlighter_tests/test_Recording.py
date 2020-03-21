@@ -1,6 +1,7 @@
 import os
 import unittest
 from datetime import datetime
+
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.highlighter.support.combine import combine_tokens
 

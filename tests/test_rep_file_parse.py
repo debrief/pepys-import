@@ -1,12 +1,12 @@
-import unittest
 import datetime
-
-from pepys_import.core.formats.location import Location
-from pepys_import.core.formats.rep_line import REPLine
-from pepys_import.core.formats import unit_registry
-from pepys_import.file.highlighter.support.test_utils import create_test_line_object
+import unittest
 from contextlib import redirect_stdout
 from io import StringIO
+
+from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.location import Location
+from pepys_import.core.formats.rep_line import REPLine
+from pepys_import.file.highlighter.support.test_utils import create_test_line_object
 
 
 class BasicTests(unittest.TestCase):

@@ -1,7 +1,7 @@
 import unittest
 
+from pepys_import.core.formats import quantity, unit_registry
 from pepys_import.core.formats.rep_line import REPLine
-from pepys_import.core.formats import unit_registry, quantity
 from pepys_import.file.highlighter.support.test_utils import create_test_line_object
 
 

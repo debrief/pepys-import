@@ -5,8 +5,8 @@ from datetime import datetime
 from io import StringIO
 from unittest.mock import patch
 
-from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 
 DIR_PATH = os.path.dirname(__file__)
 

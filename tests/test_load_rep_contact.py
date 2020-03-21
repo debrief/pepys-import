@@ -1,11 +1,11 @@
+import math
 import os
 import unittest
-import math
 
 from importers.replay_contact_importer import ReplayContactImporter
-from pepys_import.file.file_processor import FileProcessor
-from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats.location import Location
+from pepys_import.core.store.data_store import DataStore
+from pepys_import.file.file_processor import FileProcessor
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH1 = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/rep_test1.rep")

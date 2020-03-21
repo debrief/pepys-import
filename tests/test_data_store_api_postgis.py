@@ -1,12 +1,13 @@
-import unittest
 import os
-from sqlite3 import OperationalError
-
-from unittest import TestCase
-from testing.postgresql import Postgresql
+import unittest
 from datetime import datetime
-from pepys_import.core.store.data_store import DataStore
+from sqlite3 import OperationalError
+from unittest import TestCase
+
+from testing.postgresql import Postgresql
+
 from pepys_import.core.store import constants
+from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.importer import Importer
 

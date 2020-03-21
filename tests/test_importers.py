@@ -1,17 +1,16 @@
 import os
-import stat
 import shutil
+import stat
 import unittest
-
 from contextlib import redirect_stdout
-from io import StringIO
 from datetime import datetime
+from io import StringIO
 from unittest.mock import patch
 
-from pepys_import.file.importer import Importer
-from pepys_import.file.file_processor import FileProcessor
-from importers.replay_importer import ReplayImporter
 from importers.nmea_importer import NMEAImporter
+from importers.replay_importer import ReplayImporter
+from pepys_import.file.file_processor import FileProcessor
+from pepys_import.file.importer import Importer
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()

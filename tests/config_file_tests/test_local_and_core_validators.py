@@ -1,14 +1,13 @@
 import os
 import unittest
-
 from importlib import reload
 from unittest.mock import patch
 
 from importers.e_trac_importer import ETracImporter
 from importers.replay_importer import ReplayImporter
-from pepys_import.file.file_processor import FileProcessor
-from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store import common_db
+from pepys_import.core.store.data_store import DataStore
+from pepys_import.file.file_processor import FileProcessor
 
 DIRECTORY_PATH = os.path.dirname(__file__)
 REP_DATA_PATH = os.path.join(

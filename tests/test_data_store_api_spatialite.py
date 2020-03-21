@@ -1,8 +1,7 @@
-import unittest
 import os
-
-from unittest import TestCase
+import unittest
 from datetime import datetime
+from unittest import TestCase
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import DataStore

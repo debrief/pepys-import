@@ -1,5 +1,5 @@
-import unittest
 import os
+import unittest
 
 from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
