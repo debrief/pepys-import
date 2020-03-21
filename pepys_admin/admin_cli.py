@@ -1,16 +1,10 @@
-# TODO: we have to keep these statements on top to load pepys_import.
-# We will see better approach to access modules inside the other module.
-import argparse  # noqa: E402
-import cmd  # noqa: E402
-import os  # noqa: E402
-import sys
+import argparse
+import cmd
+import os
 
-from iterfzf import iterfzf  # noqa: E402
+from iterfzf import iterfzf
 
-from pepys_import.core.store.data_store import DataStore  # noqa: E402
-
-sys.path.append(".")
-
+from pepys_import.core.store.data_store import DataStore
 
 dirpath = os.path.dirname(os.path.abspath(__file__))
 
