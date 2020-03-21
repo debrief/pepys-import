@@ -1,5 +1,5 @@
-import random
 import colorsys
+import random
 
 
 def color_for(hash_code, color_dict):

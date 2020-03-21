@@ -1,11 +1,10 @@
 from math import degrees
 
+from pepys_import.core.formats import unit_registry
 from pepys_import.utils.unit_utils import (
     bearing_between_two_points,
     distance_between_two_points_haversine,
 )
-
-from pepys_import.core.formats import unit_registry
 
 
 class EnhancedValidator:
@@ -104,9 +103,7 @@ class EnhancedValidator:
         return False
 
     def speed_loose_match_with_location(self):
-        calculated_speed = distance_between_two_points_haversine(
-            self.prev_location, self.location
-        )
+        calculated_speed = distance_between_two_points_haversine(self.prev_location, self.location)
         if self.speed is None or calculated_speed <= self.speed * 10:
             return True
         self.errors.append(

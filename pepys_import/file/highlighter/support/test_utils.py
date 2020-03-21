@@ -1,7 +1,7 @@
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.highlighter.support.char import Char
-from pepys_import.file.highlighter.support.token import SubToken
 from pepys_import.file.highlighter.support.line import Line
+from pepys_import.file.highlighter.support.token import SubToken
 
 
 def create_test_line_object(line_str):

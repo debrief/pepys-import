@@ -1,11 +1,11 @@
 from datetime import datetime
 
 from pepys_import.core.formats import unit_registry
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
-from pepys_import.file.highlighter.support.combine import combine_tokens
-from pepys_import.core.validators import constants
-from pepys_import.file.importer import Importer
 from pepys_import.core.formats.location import Location
+from pepys_import.core.validators import constants
+from pepys_import.file.highlighter.support.combine import combine_tokens
+from pepys_import.file.importer import Importer
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 
 class ETracImporter(Importer):
@@ -46,9 +46,7 @@ class ETracImporter(Importer):
                 continue
             elif len(tokens) < 17:
                 self.errors.append(
-                    {
-                        self.error_type: f"Error on line {line_number}. Not enough tokens: {line}"
-                    }
+                    {self.error_type: f"Error on line {line_number}. Not enough tokens: {line}"}
                 )
                 continue
 
@@ -85,9 +83,7 @@ class ETracImporter(Importer):
                 continue
 
             timestamp = self.parse_timestamp(date_token.text, time_token.text)
-            combine_tokens(date_token, time_token).record(
-                self.name, "timestamp", timestamp, "n/a"
-            )
+            combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp, "n/a")
 
             # and finally store it
             platform = data_store.get_platform(
@@ -98,9 +94,7 @@ class ETracImporter(Importer):
                 change_id=change_id,
             )
             sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id)
-            privacy = data_store.missing_data_resolver.resolve_privacy(
-                data_store, change_id
-            )
+            privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
             sensor = platform.get_sensor(
                 data_store=data_store,
                 sensor_name="E-Trac",
@@ -108,9 +102,7 @@ class ETracImporter(Importer):
                 privacy=privacy.name,
                 change_id=change_id,
             )
-            state = datafile.create_state(
-                data_store, platform, sensor, timestamp, self.short_name
-            )
+            state = datafile.create_state(data_store, platform, sensor, timestamp, self.short_name)
             state.privacy = privacy.privacy_id
 
             if vessel_name in self.prev_location:
@@ -137,11 +129,7 @@ class ETracImporter(Importer):
             heading_token.record(self.name, "heading", heading, "degrees")
 
             speed = convert_speed(
-                speed_token.text,
-                unit_registry.knots,
-                line_number,
-                self.errors,
-                self.error_type,
+                speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type,
             )
             if speed:
                 state.speed = speed

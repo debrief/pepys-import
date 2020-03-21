@@ -97,15 +97,11 @@ class CombineTokenTests(unittest.TestCase):
             if ctr > 0 and ctr <= 6:
                 usages = char.usages
                 self.assertEqual(1, len(usages))
-                self.assertEqual(
-                    "Value:1995-12-12 05:00:00 Units:N/A", usages[0].message
-                )
+                self.assertEqual("Value:1995-12-12 05:00:00 Units:N/A", usages[0].message)
             elif ctr > 7 and ctr <= 17:
                 usages = char.usages
                 self.assertEqual(1, len(usages))
-                self.assertEqual(
-                    "Value:1995-12-12 05:00:00 Units:N/A", usages[0].message
-                )
+                self.assertEqual("Value:1995-12-12 05:00:00 Units:N/A", usages[0].message)
 
     def test_CombineTokensOnMultipleLines(self):
         dataFile = HighlightedFile(NMEA_FILE, 50)
@@ -148,10 +144,7 @@ class CombineTokenTests(unittest.TestCase):
                     date_time = self.parse_timestamp(date_tok.text, time_tok.text)
 
                     loc = self.parse_location(
-                        lat_tok.text,
-                        lat_hem_tok.text,
-                        long_tok.text,
-                        long_hem_tok.text,
+                        lat_tok.text, lat_hem_tok.text, long_tok.text, long_hem_tok.text,
                     )
                     spd = float(spd_tok.text)
                     hdg = float(hdg_tok.text)
@@ -181,9 +174,7 @@ class CombineTokenTests(unittest.TestCase):
                         date_tok,
                         time_tok,
                     )
-                    big_token.record(
-                        "NMEA Import", "Date:" + str(date_time), msg, "N/A"
-                    )
+                    big_token.record("NMEA Import", "Date:" + str(date_time), msg, "N/A")
 
                     date_tok = None
                     spd_tok = None
@@ -243,10 +234,7 @@ class CombineTokenTests(unittest.TestCase):
                     date_time = self.parse_timestamp(date_tok.text, time_tok.text)
 
                     loc = self.parse_location(
-                        lat_tok.text,
-                        lat_hem_tok.text,
-                        long_tok.text,
-                        long_hem_tok.text,
+                        lat_tok.text, lat_hem_tok.text, long_tok.text, long_hem_tok.text,
                     )
                     spd = float(spd_tok.text)
                     hdg = float(hdg_tok.text)
@@ -266,13 +254,9 @@ class CombineTokenTests(unittest.TestCase):
                         + fStr.format(hdg)
                     )
 
-                    line_composite = combine_tokens(
-                        date_line, loc_line, spd_line, hdg_line
-                    )
+                    line_composite = combine_tokens(date_line, loc_line, spd_line, hdg_line)
 
-                    line_composite.record(
-                        "NMEA Import", "Date:" + str(date_time), msg, "N/A"
-                    )
+                    line_composite.record("NMEA Import", "Date:" + str(date_time), msg, "N/A")
 
                     date_tok = None
                     spd_tok = None

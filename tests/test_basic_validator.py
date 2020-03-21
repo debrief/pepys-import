@@ -19,15 +19,9 @@ class BasicValidatorTestCase(unittest.TestCase):
         with self.store.session_scope():
             # Create a platform, a sensor, a datafile and finally a state object respectively
             self.current_time = datetime.utcnow()
-            change_id = self.store.add_to_changes(
-                "TEST", self.current_time, "TEST"
-            ).change_id
-            nationality = self.store.add_to_nationalities(
-                "test_nationality", change_id
-            ).name
-            platform_type = self.store.add_to_platform_types(
-                "test_platform_type", change_id
-            ).name
+            change_id = self.store.add_to_changes("TEST", self.current_time, "TEST").change_id
+            nationality = self.store.add_to_nationalities("test_nationality", change_id).name
+            platform_type = self.store.add_to_platform_types("test_platform_type", change_id).name
             sensor_type = self.store.add_to_sensor_types("test_sensor_type", change_id)
             privacy = self.store.add_to_privacies("test_privacy", change_id).name
 
@@ -41,9 +35,7 @@ class BasicValidatorTestCase(unittest.TestCase):
             self.sensor = self.platform.get_sensor(
                 self.store, "gps", sensor_type, change_id=change_id
             )
-            self.file = self.store.get_datafile(
-                "test_file", "csv", 0, "HASHED", change_id
-            )
+            self.file = self.store.get_datafile("test_file", "csv", 0, "HASHED", change_id)
 
             self.store.session.expunge(self.platform)
             self.store.session.expunge(self.sensor)
@@ -134,9 +126,7 @@ class BasicValidatorTestCase(unittest.TestCase):
             self.current_time,
             parser_name=self.parser.short_name,
         )
-        state.heading = (
-            10.0 * unit_registry.radian
-        )  # 10 radians is approximately 572 degrees
+        state.heading = 10.0 * unit_registry.radian  # 10 radians is approximately 572 degrees
         BasicValidator(state, self.errors, "Test Parser")
         assert len(self.errors) == 1
         assert "Heading is not between 0 and 360 degrees!" in str(self.errors[0])
@@ -149,9 +139,7 @@ class BasicValidatorTestCase(unittest.TestCase):
             self.current_time,
             parser_name=self.parser.short_name,
         )
-        state.course = (
-            10.0 * unit_registry.radian
-        )  # 10 radians is approximately 572 degrees
+        state.course = 10.0 * unit_registry.radian  # 10 radians is approximately 572 degrees
         BasicValidator(state, self.errors, "Test Parser")
         assert len(self.errors) == 1
         assert "Course is not between 0 and 360 degrees!" in str(self.errors[0])

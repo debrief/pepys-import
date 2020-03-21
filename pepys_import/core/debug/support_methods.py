@@ -2,12 +2,12 @@ from sqlalchemy.orm import Session
 from tabulate import tabulate
 
 from pepys_import.core.store.sqlite_db import (
-    State,
-    Platform,
-    Sensor,
-    Nationality,
-    PlatformType,
     Datafile,
+    Nationality,
+    Platform,
+    PlatformType,
+    Sensor,
+    State,
 )
 
 

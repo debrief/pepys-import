@@ -1,16 +1,15 @@
-import inspect
 import importlib.util
+import inspect
 import json
 import os
 import shutil
 import sys
-
 from datetime import datetime
 from getpass import getuser
 from stat import S_IREAD
 
-from paths import IMPORTERS_DIRECTORY
 from config import ARCHIVE_PATH, LOCAL_PARSERS
+from paths import IMPORTERS_DIRECTORY
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
@@ -49,9 +48,7 @@ class FileProcessor:
             self.output_path = ARCHIVE_PATH
         self.archive = archive
 
-    def process(
-        self, path: str, data_store: DataStore = None, descend_tree: bool = True
-    ):
+    def process(self, path: str, data_store: DataStore = None, descend_tree: bool = True):
         """Process the data in the given path
 
         :param path: File/Folder path
@@ -88,9 +85,7 @@ class FileProcessor:
         if not os.path.isdir(directory_path):
             os.makedirs(directory_path)
         else:
-            directory_path = os.path.join(
-                directory_path + "_" + str(now.microsecond).zfill(3)[:3]
-            )
+            directory_path = os.path.join(directory_path + "_" + str(now.microsecond).zfill(3)[:3])
             os.makedirs(directory_path)
         self.directory_path = directory_path
 
@@ -104,18 +99,10 @@ class FileProcessor:
         # check given path is a file
         if os.path.isfile(path):
             with data_store.session_scope():
-                states_sum = TableSummary(
-                    data_store.session, data_store.db_classes.State
-                )
-                contacts_sum = TableSummary(
-                    data_store.session, data_store.db_classes.Contact
-                )
-                comments_sum = TableSummary(
-                    data_store.session, data_store.db_classes.Comment
-                )
-                platforms_sum = TableSummary(
-                    data_store.session, data_store.db_classes.Platform
-                )
+                states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+                contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
+                comments_sum = TableSummary(data_store.session, data_store.db_classes.Comment)
+                platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
                 first_table_summary_set = TableSummarySet(
                     [states_sum, contacts_sum, comments_sum, platforms_sum]
                 )
@@ -123,21 +110,11 @@ class FileProcessor:
 
                 filename = os.path.abspath(path)
                 current_path = os.path.dirname(path)
-                processed_ctr = self.process_file(
-                    filename, current_path, data_store, processed_ctr
-                )
-                states_sum = TableSummary(
-                    data_store.session, data_store.db_classes.State
-                )
-                contacts_sum = TableSummary(
-                    data_store.session, data_store.db_classes.Contact
-                )
-                comments_sum = TableSummary(
-                    data_store.session, data_store.db_classes.Comment
-                )
-                platforms_sum = TableSummary(
-                    data_store.session, data_store.db_classes.Platform
-                )
+                processed_ctr = self.process_file(filename, current_path, data_store, processed_ctr)
+                states_sum = TableSummary(data_store.session, data_store.db_classes.State)
+                contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
+                comments_sum = TableSummary(data_store.session, data_store.db_classes.Comment)
+                platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
                 second_table_summary_set = TableSummarySet(
                     [states_sum, contacts_sum, comments_sum, platforms_sum]
                 )
@@ -153,15 +130,9 @@ class FileProcessor:
         with data_store.session_scope():
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
-            contacts_sum = TableSummary(
-                data_store.session, data_store.db_classes.Contact
-            )
-            comments_sum = TableSummary(
-                data_store.session, data_store.db_classes.Comment
-            )
-            platforms_sum = TableSummary(
-                data_store.session, data_store.db_classes.Platform
-            )
+            contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
+            comments_sum = TableSummary(data_store.session, data_store.db_classes.Comment)
+            platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
             first_table_summary_set = TableSummarySet(
                 [states_sum, contacts_sum, comments_sum, platforms_sum]
             )
@@ -180,20 +151,12 @@ class FileProcessor:
                 # loop through this path
                 for file in os.scandir(abs_path):
                     if file.is_file():
-                        processed_ctr = self.process_file(
-                            file, abs_path, data_store, processed_ctr
-                        )
+                        processed_ctr = self.process_file(file, abs_path, data_store, processed_ctr)
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
-            contacts_sum = TableSummary(
-                data_store.session, data_store.db_classes.Contact
-            )
-            comments_sum = TableSummary(
-                data_store.session, data_store.db_classes.Comment
-            )
-            platforms_sum = TableSummary(
-                data_store.session, data_store.db_classes.Platform
-            )
+            contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
+            comments_sum = TableSummary(data_store.session, data_store.db_classes.Comment)
+            platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
             second_table_summary_set = TableSummarySet(
                 [states_sum, contacts_sum, comments_sum, platforms_sum]
             )
@@ -263,9 +226,7 @@ class FileProcessor:
 
             # ok, let these importers handle the file
             reason = f"Importing '{basename}'."
-            change = data_store.add_to_changes(
-                user=USER, modified=datetime.utcnow(), reason=reason
-            )
+            change = data_store.add_to_changes(user=USER, modified=datetime.utcnow(), reason=reason)
             datafile = data_store.get_datafile(
                 basename, file_extension, file_size, file_hash, change.change_id
             )
@@ -300,9 +261,7 @@ class FileProcessor:
             if not errors:
                 log = datafile.commit(data_store, change.change_id)
                 # write extraction log to output folder
-                with open(
-                    os.path.join(self.directory_path, f"{filename}_output.log"), "w",
-                ) as f:
+                with open(os.path.join(self.directory_path, f"{filename}_output.log"), "w",) as f:
                     f.write("\n".join(log))
                 if self.archive is True:
                     # move original file to output folder
@@ -312,9 +271,7 @@ class FileProcessor:
                     os.chmod(new_path, S_IREAD)
             else:
                 # write error log to the output folder
-                with open(
-                    os.path.join(self.directory_path, f"{filename}_errors.log"), "w",
-                ) as f:
+                with open(os.path.join(self.directory_path, f"{filename}_errors.log"), "w",) as f:
                     json.dump(errors, f, ensure_ascii=False, indent=4)
 
         return processed_ctr
@@ -343,9 +300,7 @@ class FileProcessor:
                     classes = import_module_(file)
                     for name, class_ in classes:
                         # continue only if it's a concrete class that inherits Importer
-                        if issubclass(class_, Importer) and not inspect.isabstract(
-                            class_
-                        ):
+                        if issubclass(class_, Importer) and not inspect.isabstract(class_):
                             # Create an object of the class, add it to importers
                             obj = class_()
                             self.importers.append(obj)

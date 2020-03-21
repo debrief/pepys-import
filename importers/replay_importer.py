@@ -1,7 +1,5 @@
-import os
-
-from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
 
@@ -52,12 +50,8 @@ class ReplayImporter(Importer):
                     change_id=change_id,
                 )
 
-                sensor_type = data_store.add_to_sensor_types(
-                    "_GPS", change_id=change_id
-                )
-                privacy = data_store.missing_data_resolver.resolve_privacy(
-                    data_store, change_id
-                )
+                sensor_type = data_store.add_to_sensor_types("_GPS", change_id=change_id)
+                privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
                 sensor = platform.get_sensor(
                     data_store=data_store,
                     sensor_name=platform.name,

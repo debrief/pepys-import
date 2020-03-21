@@ -12,9 +12,7 @@ class TableSummarySetTestCase(TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
         with self.store.session_scope():
-            self.change_id = self.store.add_to_changes(
-                "TEST", datetime.utcnow(), "TEST"
-            ).change_id
+            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
             self.store.add_to_privacies("TEST-1", self.change_id)
             self.store.add_to_privacies("TEST-2", self.change_id)
 
@@ -41,19 +39,13 @@ class TableSummaryTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
-        with self.store.session_scope() as session:
-            self.change_id = self.store.add_to_changes(
-                "TEST", datetime.utcnow(), "TEST"
-            ).change_id
+        with self.store.session_scope():
+            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
             self.store.add_to_privacies("TEST-1", self.change_id)
             self.store.add_to_nationalities("NAT-1", self.change_id)
             self.store.add_to_nationalities("NAT-2", self.change_id)
-            privacy_sum = TableSummary(
-                self.store.session, self.store.db_classes.Privacy
-            )
-            nationality_sum = TableSummary(
-                self.store.session, self.store.db_classes.Nationality
-            )
+            privacy_sum = TableSummary(self.store.session, self.store.db_classes.Privacy)
+            nationality_sum = TableSummary(self.store.session, self.store.db_classes.Nationality)
         self.summaries = [privacy_sum, nationality_sum]
 
     def tearDown(self):
@@ -72,15 +64,11 @@ class TableSummaryTestCase(TestCase):
         """Test whether compare_to method returns correct values or not"""
         first_table_summary_set = TableSummarySet(self.summaries)
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             self.store.add_to_privacies("TEST-2", self.change_id)
             self.store.add_to_privacies("TEST-3", self.change_id)
-            privacy_sum = TableSummary(
-                self.store.session, self.store.db_classes.Privacy
-            )
-            nationality_sum = TableSummary(
-                self.store.session, self.store.db_classes.Nationality
-            )
+            privacy_sum = TableSummary(self.store.session, self.store.db_classes.Privacy)
+            nationality_sum = TableSummary(self.store.session, self.store.db_classes.Nationality)
         second_summary = [privacy_sum, nationality_sum]
         second_table_summary_set = TableSummarySet(second_summary)
         diff = second_table_summary_set.compare_to(first_table_summary_set)

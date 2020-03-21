@@ -1,5 +1,5 @@
-import os
 import csv
+import os
 
 
 def import_from_csv(data_store, path, files, change_id):

@@ -1,5 +1,5 @@
-from pepys_import.core.validators import constants
 from pepys_import.core.formats.rep_line import parse_timestamp
+from pepys_import.core.validators import constants
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
 
@@ -69,16 +69,12 @@ class ReplayCommentImporter(Importer):
                     vessel_name_token = tokens[3]
                     comment_type_token = tokens[4]
                     comment_type = comment_type_token.text
-                    comment_type_token.record(
-                        self.name, "comment type", comment_type, "n/a"
-                    )
+                    comment_type_token.record(self.name, "comment type", comment_type, "n/a")
                     message_tokens = tokens[5:]
                 else:
                     continue
 
-                privacy = data_store.missing_data_resolver.resolve_privacy(
-                    data_store, change_id
-                )
+                privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
                 platform = data_store.get_platform(
                     platform_name=vessel_name_token.text,
                     nationality="UK",
@@ -86,13 +82,9 @@ class ReplayCommentImporter(Importer):
                     privacy="Public",
                     change_id=change_id,
                 )
-                vessel_name_token.record(
-                    self.name, "vessel name", vessel_name_token.text, "n/a"
-                )
-                sensor_type = data_store.add_to_sensor_types(
-                    "Human", change_id=change_id
-                )
-                sensor = platform.get_sensor(
+                vessel_name_token.record(self.name, "vessel name", vessel_name_token.text, "n/a")
+                sensor_type = data_store.add_to_sensor_types("Human", change_id=change_id)
+                platform.get_sensor(
                     data_store=data_store,
                     sensor_name=platform.name,
                     sensor_type=sensor_type,
@@ -107,9 +99,7 @@ class ReplayCommentImporter(Importer):
                 )
 
                 message = " ".join([t.text for t in message_tokens])
-                combine_tokens(*message_tokens).record(
-                    self.name, "message", message, "n/a"
-                )
+                combine_tokens(*message_tokens).record(self.name, "message", message, "n/a")
 
                 comment = datafile.create_comment(
                     data_store=data_store,

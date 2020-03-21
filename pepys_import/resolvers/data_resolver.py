@@ -58,9 +58,7 @@ class DataResolver(ABC):
         """
 
     @abstractmethod
-    def resolve_datafile(
-        self, data_store, datafile_name, datafile_type, privacy, change_id
-    ):
+    def resolve_datafile(self, data_store, datafile_name, datafile_type, privacy, change_id):
         """
         Implementation method should return any data necessary to create a datafile.
         Currently: datafile_type, privacy

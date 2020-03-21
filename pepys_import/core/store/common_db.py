@@ -1,16 +1,13 @@
 from sqlalchemy.ext.hybrid import hybrid_property
 
-from pepys_import.core.formats import unit_registry
-
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
+from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 from pepys_import.utils.import_utils import import_validators
-
-from pepys_import.core.formats.location import Location
-
 
 LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
 LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
@@ -50,9 +47,7 @@ class SensorMixin:
     @classmethod
     def add_to_sensors(cls, data_store, name, sensor_type, host, change_id):
         session = data_store.session
-        sensor_type = data_store.db_classes.SensorType().search_sensor_type(
-            data_store, sensor_type
-        )
+        sensor_type = data_store.db_classes.SensorType().search_sensor_type(data_store, sensor_type)
         host = data_store.db_classes.Platform().search_platform(data_store, host)
 
         sensor_obj = data_store.db_classes.Sensor(
@@ -75,12 +70,7 @@ class PlatformMixin:
         return data_store.session.query(Platform).filter(Platform.name == name).first()
 
     def get_sensor(
-        self,
-        data_store,
-        sensor_name=None,
-        sensor_type=None,
-        privacy=None,
-        change_id=None,
+        self, data_store, sensor_name=None, sensor_type=None, privacy=None, change_id=None,
     ):
         """
          Lookup or create a sensor of this name for this :class:`Platform`.
@@ -166,10 +156,7 @@ class DatafileMixin:
         return comment
 
     def validate(
-        self,
-        validation_level=validation_constants.NONE_LEVEL,
-        errors=None,
-        parser="Default",
+        self, validation_level=validation_constants.NONE_LEVEL, errors=None, parser="Default",
     ):
         # If there is no parsing error, it will return None. If that's the case,
         # create a new list for validation errors.
@@ -230,9 +217,7 @@ class StateMixin:
         data_store.session.flush()
         data_store.session.expire(self, ["_location"])
         # Log new State object creation
-        data_store.add_to_logs(
-            table=constants.STATE, row_id=self.state_id, change_id=change_id
-        )
+        data_store.add_to_logs(table=constants.STATE, row_id=self.state_id, change_id=change_id)
         return self
 
     #
@@ -296,13 +281,8 @@ class StateMixin:
                 raise ValueError(
                     "Heading must be a Quantity with a dimensionality of '' (ie. nothing)"
                 )
-            if not (
-                heading.units == unit_registry.degree
-                or heading.units == unit_registry.radian
-            ):
-                raise ValueError(
-                    "Heading must be a Quantity with angular units (degree or radian)"
-                )
+            if not (heading.units == unit_registry.degree or heading.units == unit_registry.radian):
+                raise ValueError("Heading must be a Quantity with angular units (degree or radian)")
         except AttributeError:
             raise TypeError("Heading must be a Quantity")
 
@@ -338,13 +318,8 @@ class StateMixin:
                 raise ValueError(
                     "Course must be a Quantity with a dimensionality of '' (ie. nothing)"
                 )
-            if not (
-                course.units == unit_registry.degree
-                or course.units == unit_registry.radian
-            ):
-                raise ValueError(
-                    "Course must be a Quantity with angular units (degree or radian)"
-                )
+            if not (course.units == unit_registry.degree or course.units == unit_registry.radian):
+                raise ValueError("Course must be a Quantity with angular units (degree or radian)")
         except AttributeError:
             raise TypeError("Course must be a Quantity")
 
@@ -363,9 +338,7 @@ class ContactMixin:
         data_store.session.flush()
         data_store.session.expire(self, ["_location"])
         # Log new Contact object creation
-        data_store.add_to_logs(
-            table=constants.CONTACT, row_id=self.contact_id, change_id=change_id
-        )
+        data_store.add_to_logs(table=constants.CONTACT, row_id=self.contact_id, change_id=change_id)
         return self
 
 
@@ -375,9 +348,7 @@ class CommentMixin:
         data_store.session.add(self)
         data_store.session.flush()
         # Log new Comment object creation
-        data_store.add_to_logs(
-            table=constants.COMMENT, row_id=self.comment_id, change_id=change_id
-        )
+        data_store.add_to_logs(table=constants.COMMENT, row_id=self.comment_id, change_id=change_id)
         return self
 
 
@@ -403,9 +374,7 @@ class ElevationPropertyMixin:
         # Check the given elevation is a Quantity with a dimension of 'length'
         try:
             if not elevation.check("[length]"):
-                raise ValueError(
-                    "Elevation must be a Quantity with a dimensionality of [length]"
-                )
+                raise ValueError("Elevation must be a Quantity with a dimensionality of [length]")
         except AttributeError:
             raise TypeError("Elevation must be a Quantity")
 

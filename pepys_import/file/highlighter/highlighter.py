@@ -1,5 +1,6 @@
-from .support.char import Char
 from pepys_import.file.highlighter.support.line import Line
+
+from .support.char import Char
 from .support.export import export_report
 from .support.token import SubToken
 
@@ -127,9 +128,7 @@ class HighlightedFile:
             # Create SubToken object to keep track of the line length, the line itself
             # the start character of the line in the file, and a reference to the overall
             # list of characters
-            subToken = SubToken(
-                line_span, this_line, int(line_start_counter), self.chars
-            )
+            subToken = SubToken(line_span, this_line, int(line_start_counter), self.chars)
             new_l = Line([subToken], self)
             lines.append(new_l)
             # Update the starting character of the line ready for next time

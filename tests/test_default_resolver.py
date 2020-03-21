@@ -10,19 +10,11 @@ class DefaultResolverTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = DefaultResolver()
         self.store = DataStore(
-            "",
-            "",
-            "",
-            0,
-            ":memory:",
-            db_type="sqlite",
-            missing_data_resolver=self.resolver,
+            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
-            self.change_id = self.store.add_to_changes(
-                "TEST", datetime.utcnow(), "TEST"
-            ).change_id
+            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
     def test_resolver_privacy(self):
         with self.store.session_scope():

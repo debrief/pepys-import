@@ -144,9 +144,7 @@ class SampleImporterTests(unittest.TestCase):
             source_path = os.path.join(REP_DATA_PATH, file.name)
             shutil.move(file.path, source_path)
             # Change file permission to -rw-r--r--
-            os.chmod(
-                source_path, stat.S_IWRITE | stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH
-            )
+            os.chmod(source_path, stat.S_IWRITE | stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
 
         # Assert that only correctly imported files were moved to the output folder
         assert "rep_test1.rep" in names

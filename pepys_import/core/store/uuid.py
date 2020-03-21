@@ -1,6 +1,7 @@
+import uuid
+
 from sqlalchemy import types
 from sqlalchemy.types import Binary
-import uuid
 
 
 class UUID(types.TypeDecorator):

@@ -7,9 +7,7 @@ from pepys_import.core.store.data_store import DataStore
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH1 = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/rep_test1.rep")
-DATA_PATH2 = os.path.join(
-    FILE_PATH, "sample_data/track_files/rep_data/rep_test1_bad.rep"
-)
+DATA_PATH2 = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/rep_test1_bad.rep")
 
 
 class RepCommentTests(unittest.TestCase):

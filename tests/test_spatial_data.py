@@ -1,7 +1,7 @@
 import unittest
 import os
 
-from geoalchemy2 import WKBElement, WKTElement
+from geoalchemy2 import WKTElement
 from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
@@ -71,11 +71,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")

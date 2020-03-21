@@ -110,8 +110,7 @@ class UsageRecordingTests(unittest.TestCase):
         # check the contents of hte print statement
         lineStr = str(lines[0])
         self.assertEqual(
-            "Line: (0+(0, 55), 951212 050000.000 MONDEO_44   @C   269.7   10.0      10)",
-            lineStr,
+            "Line: (0+(0, 55), 951212 050000.000 MONDEO_44   @C   269.7   10.0      10)", lineStr,
         )
 
         for line in lines:
@@ -144,9 +143,7 @@ class UsageRecordingTests(unittest.TestCase):
                 tempToken.record(tool, "Temperature", tempToken.text, "Deg C")
 
                 # also send the temperature somewhewre else
-                tempToken.record(
-                    "Third Party Temp Tracker", "Env Tmp", tempToken.text, "Deg C"
-                )
+                tempToken.record("Third Party Temp Tracker", "Env Tmp", tempToken.text, "Deg C")
 
         dataFile.export(os.path.join(OUTPUT_FOLDER, "track_lines.html"), True)
 

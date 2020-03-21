@@ -1,4 +1,3 @@
-import unittest
 import pytest
 
 from pepys_import.core.formats.location import Location
@@ -34,8 +33,7 @@ def test_setting_longitude_fails():
 
 
 @pytest.mark.parametrize(
-    "latitude",
-    [pytest.param(50.23, id="valid float"), pytest.param("23.07", id="valid string")],
+    "latitude", [pytest.param(50.23, id="valid float"), pytest.param("23.07", id="valid string")],
 )
 def test_setting_latitude_valid(latitude):
     loc = Location()
@@ -46,10 +44,7 @@ def test_setting_latitude_valid(latitude):
 
 @pytest.mark.parametrize(
     "latitude",
-    [
-        pytest.param("Blah", id="invalid string"),
-        pytest.param(5323.21, id="invalid float"),
-    ],
+    [pytest.param("Blah", id="invalid string"), pytest.param(5323.21, id="invalid float")],
 )
 def test_setting_latitude_invalid(latitude):
     loc = Location()
@@ -59,8 +54,7 @@ def test_setting_latitude_invalid(latitude):
 
 
 @pytest.mark.parametrize(
-    "longitude",
-    [pytest.param(50.23, id="valid float"), pytest.param("23.67", id="valid string")],
+    "longitude", [pytest.param(50.23, id="valid float"), pytest.param("23.67", id="valid string")],
 )
 def test_setting_longitude_valid(longitude):
     loc = Location()
@@ -71,10 +65,7 @@ def test_setting_longitude_valid(longitude):
 
 @pytest.mark.parametrize(
     "longitude",
-    [
-        pytest.param(50543.23, id="invalid float"),
-        pytest.param("blah", id="invalid string"),
-    ],
+    [pytest.param(50543.23, id="invalid float"), pytest.param("blah", id="invalid string")],
 )
 def test_setting_longitude_invalid(longitude):
     loc = Location()
@@ -82,7 +73,7 @@ def test_setting_longitude_invalid(longitude):
     # Assert false
     assert not loc.set_longitude_decimal_degrees(longitude)
     assert len(loc.errors) == 1
-    assert loc.check_valid() == False
+    assert loc.check_valid() is False
 
 
 # DMS latitude tests
@@ -105,15 +96,13 @@ dms_latitude_invalid_tests = [
 ]
 
 
-@pytest.mark.parametrize(
-    "degrees,minutes,seconds,hemisphere", dms_latitude_invalid_tests
-)
+@pytest.mark.parametrize("degrees,minutes,seconds,hemisphere", dms_latitude_invalid_tests)
 def test_setting_dms_latitude_invalid(degrees, minutes, seconds, hemisphere):
     loc = Location()
 
     assert not loc.set_latitude_dms(degrees, minutes, seconds, hemisphere)
     assert len(loc.errors) == 1
-    assert loc.check_valid() == False
+    assert loc.check_valid() is False
 
 
 # DMS longitude tests
@@ -136,16 +125,14 @@ dms_longitude_invalid_tests = [
 ]
 
 
-@pytest.mark.parametrize(
-    "degrees,minutes,seconds,hemisphere", dms_longitude_invalid_tests
-)
+@pytest.mark.parametrize("degrees,minutes,seconds,hemisphere", dms_longitude_invalid_tests)
 def test_setting_dms_longitude_invalid(degrees, minutes, seconds, hemisphere):
     loc = Location()
 
     assert not loc.set_longitude_dms(degrees, minutes, seconds, hemisphere)
     assert len(loc.errors) == 1
 
-    assert loc.check_valid() == False
+    assert loc.check_valid() is False
 
 
 def test_as_wkt():
@@ -168,10 +155,10 @@ def test_set_from_wkb():
 def test_check_valid():
     loc = Location()
 
-    assert loc.check_valid() == False
+    assert loc.check_valid() is False
 
     loc.set_latitude_decimal_degrees(50.23)
-    assert loc.check_valid() == False
+    assert loc.check_valid() is False
 
     loc.set_longitude_decimal_degrees(-1.34)
     assert loc.check_valid()

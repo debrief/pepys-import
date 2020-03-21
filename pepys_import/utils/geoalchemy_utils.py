@@ -1,5 +1,5 @@
-import platform
 import os
+import platform
 
 SYSTEM = platform.system()
 if SYSTEM == "Linux":

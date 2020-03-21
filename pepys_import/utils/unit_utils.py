@@ -1,4 +1,4 @@
-from math import radians, cos, sin, asin, sqrt, atan2, degrees
+from math import asin, atan2, cos, degrees, radians, sin, sqrt
 
 from pepys_import.core.formats import unit_registry
 
@@ -86,9 +86,7 @@ def bearing_between_two_points(first_location, second_location):
     diff_longitude = longitude_2 - longitude_1
 
     y = sin(diff_longitude) * cos(latitude_2)
-    x = cos(latitude_1) * sin(latitude_2) - sin(latitude_1) * cos(latitude_2) * cos(
-        diff_longitude
-    )
+    x = cos(latitude_1) * sin(latitude_2) - sin(latitude_1) * cos(latitude_2) * cos(diff_longitude)
     bearing = degrees((atan2(y, x)))
     bearing = (bearing + 360) % 360
     return bearing

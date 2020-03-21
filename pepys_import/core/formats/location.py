@@ -196,9 +196,7 @@ class Location:
         if not is_valid:
             return False
 
-        hemisphere, is_valid = self.convert_and_check_hemisphere(
-            hemisphere, "longitude"
-        )
+        hemisphere, is_valid = self.convert_and_check_hemisphere(hemisphere, "longitude")
         if not is_valid:
             return False
 

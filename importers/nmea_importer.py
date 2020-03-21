@@ -1,11 +1,11 @@
 from datetime import datetime
 
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
-from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
+from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 
 class NMEAImporter(Importer):
@@ -91,9 +91,7 @@ class NMEAImporter(Importer):
                     )
                     # capture the name
                     platform_name = platform.name
-                    sensor_type = data_store.add_to_sensor_types(
-                        "_GPS", change_id=change_id
-                    )
+                    sensor_type = data_store.add_to_sensor_types("_GPS", change_id=change_id)
                     privacy = data_store.missing_data_resolver.resolve_privacy(
                         data_store, change_id
                     )
@@ -113,9 +111,7 @@ class NMEAImporter(Importer):
                         data_store, platform, sensor, timestamp, self.short_name
                     )
 
-                    self.location = Location(
-                        errors=self.errors, error_type=self.error_type,
-                    )
+                    self.location = Location(errors=self.errors, error_type=self.error_type,)
 
                     if not self.location.set_latitude_dms(
                         degrees=self.latitude[:2],
@@ -151,11 +147,7 @@ class NMEAImporter(Importer):
                     self.heading_token.record(self.name, "heading", heading, "degrees")
 
                     speed = convert_speed(
-                        self.speed,
-                        unit_registry.knots,
-                        line_number,
-                        self.errors,
-                        self.error_type,
+                        self.speed, unit_registry.knots, line_number, self.errors, self.error_type,
                     )
                     if speed:
                         state.speed = speed

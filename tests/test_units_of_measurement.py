@@ -38,9 +38,7 @@ class UnitsTests(unittest.TestCase):
         self.assertEqual("<Quantity(180.0, 'degree')>", repr(heading_degrees))
 
         heading_radians = heading_degrees.to(self.unit_reg.radians)
-        self.assertEqual(
-            "<Quantity(3.141592653589793, 'radian')>", repr(heading_radians)
-        )
+        self.assertEqual("<Quantity(3.141592653589793, 'radian')>", repr(heading_radians))
 
         back_to_degree = heading_radians.to(self.unit_reg.degrees)
         self.assertEqual("<Quantity(180.0, 'degree')>", repr(back_to_degree))
@@ -50,14 +48,10 @@ class UnitsTests(unittest.TestCase):
         self.assertEqual("<Quantity(20, 'knot')>", repr(speed_kilometers))
 
         speed_meters = speed_kilometers.to(self.unit_reg.meter / self.unit_reg.second)
-        self.assertEqual(
-            "<Quantity(10.28888888888889, 'meter / second')>", repr(speed_meters)
-        )
+        self.assertEqual("<Quantity(10.28888888888889, 'meter / second')>", repr(speed_meters))
 
         back_to_kilometes = speed_meters.to(self.unit_reg.knot)
-        self.assertEqual(
-            "<Quantity(20.000000000000004, 'knot')>", repr(back_to_kilometes)
-        )
+        self.assertEqual("<Quantity(20.000000000000004, 'knot')>", repr(back_to_kilometes))
         self.assertAlmostEqual(20, back_to_kilometes.magnitude)
 
     def test_state_conversion(self):
