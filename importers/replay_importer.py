@@ -1,5 +1,7 @@
 import os
 
+from prompt_toolkit.shortcuts.progress_bar import ProgressBar
+
 from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.validators import constants
@@ -33,51 +35,56 @@ class ReplayImporter(Importer):
         return True
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
-        for line_number, line in enumerate(file_object.lines(), 1):
-            if line.text.startswith(";"):
-                continue
-            else:
-                # create state, to store the data
-                rep_line = REPLine(line_number, line, self.separator)
-                # Store parsing errors in self.errors list
-                if not rep_line.parse(self.errors, self.error_type):
+        with ProgressBar() as pb:
+            for line_number, line in enumerate(pb(file_object.lines()), 1):
+                if line.text.startswith(";"):
                     continue
-                # and finally store it
-                vessel_name = rep_line.get_platform()
-                platform = data_store.get_platform(
-                    platform_name=vessel_name,
-                    nationality="UK",
-                    platform_type="Fisher",
-                    privacy="Public",
-                    change_id=change_id,
-                )
+                else:
+                    # create state, to store the data
+                    rep_line = REPLine(line_number, line, self.separator)
+                    # Store parsing errors in self.errors list
+                    if not rep_line.parse(self.errors, self.error_type):
+                        continue
+                    # and finally store it
+                    vessel_name = rep_line.get_platform()
+                    platform = data_store.get_platform(
+                        platform_name=vessel_name,
+                        nationality="UK",
+                        platform_type="Fisher",
+                        privacy="Public",
+                        change_id=change_id,
+                    )
 
-                sensor_type = data_store.add_to_sensor_types(
-                    "_GPS", change_id=change_id
-                )
-                privacy = data_store.missing_data_resolver.resolve_privacy(
-                    data_store, change_id
-                )
-                sensor = platform.get_sensor(
-                    data_store=data_store,
-                    sensor_name=platform.name,
-                    sensor_type=sensor_type,
-                    privacy=privacy.name,
-                    change_id=change_id,
-                )
-                state = datafile.create_state(
-                    data_store, platform, sensor, rep_line.timestamp, self.short_name
-                )
-                state.elevation = (-1 * rep_line.depth) * unit_registry.metre
-                state.heading = rep_line.heading
-                state.speed = rep_line.speed
-                state.privacy = privacy.privacy_id
+                    sensor_type = data_store.add_to_sensor_types(
+                        "_GPS", change_id=change_id
+                    )
+                    privacy = data_store.missing_data_resolver.resolve_privacy(
+                        data_store, change_id
+                    )
+                    sensor = platform.get_sensor(
+                        data_store=data_store,
+                        sensor_name=platform.name,
+                        sensor_type=sensor_type,
+                        privacy=privacy.name,
+                        change_id=change_id,
+                    )
+                    state = datafile.create_state(
+                        data_store,
+                        platform,
+                        sensor,
+                        rep_line.timestamp,
+                        self.short_name,
+                    )
+                    state.elevation = (-1 * rep_line.depth) * unit_registry.metre
+                    state.heading = rep_line.heading
+                    state.speed = rep_line.speed
+                    state.privacy = privacy.privacy_id
 
-                if vessel_name in self.prev_location:
-                    state.prev_location = self.prev_location[vessel_name]
+                    if vessel_name in self.prev_location:
+                        state.prev_location = self.prev_location[vessel_name]
 
-                state.location = rep_line.get_location()
-                self.prev_location[vessel_name] = state.location
+                    state.location = rep_line.get_location()
+                    self.prev_location[vessel_name] = state.location
 
     @staticmethod
     def degrees_for(degs, mins, secs, hemi: str):
