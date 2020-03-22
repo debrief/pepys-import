@@ -466,7 +466,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin):
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )
     time = Column(TIMESTAMP, nullable=False)
-    bearing = Column(DOUBLE_PRECISION)
+    _bearing = Column(DOUBLE_PRECISION)
     rel_bearing = Column(DOUBLE_PRECISION)
     freq = Column(DOUBLE_PRECISION)
     _location = Column(Geometry(geometry_type="POINT", srid=4326))

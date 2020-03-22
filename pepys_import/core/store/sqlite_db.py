@@ -382,7 +382,7 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin):
     name = Column(String(150))
     sensor_id = Column(Integer, nullable=False)
     time = Column(TIMESTAMP, nullable=False)
-    bearing = Column(REAL)
+    _bearing = Column(REAL)
     rel_bearing = Column(REAL)
     freq = Column(REAL)
     _location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
