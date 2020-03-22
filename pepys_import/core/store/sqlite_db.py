@@ -393,7 +393,7 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin):
     classification = Column(String(150))
     confidence = Column(String(150))
     contact_type = Column(String(150))
-    mla = Column(REAL)
+    _mla = Column(REAL)
     sla = Column(REAL)
     subject_id = Column(Integer)
     source_id = Column(Integer, nullable=False)

@@ -477,7 +477,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin):
     classification = Column(String(150))
     confidence = Column(String(150))
     contact_type = Column(String(150))
-    mla = Column(DOUBLE_PRECISION)
+    _mla = Column(DOUBLE_PRECISION)
     sla = Column(DOUBLE_PRECISION)
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     source_id = Column(

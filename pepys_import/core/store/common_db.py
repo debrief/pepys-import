@@ -452,6 +452,47 @@ class ContactMixin:
     def rel_bearing(self):
         return self._rel_bearing
 
+    #
+    # MLA properties
+    #
+
+    @hybrid_property
+    def mla(self):
+        # Return all MLA's as degrees
+        if self._mla is None:
+            return None
+        else:
+            return (self._mla * unit_registry.radian).to(unit_registry.degree)
+
+    @mla.setter
+    def mla(self, mla):
+        if mla is None:
+            self._mla = None
+            return
+
+        # Check the given bearing is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not mla.check(""):
+                raise ValueError(
+                    "MLA must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                mla.units == unit_registry.degree or mla.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "MLA must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("MLA must be a Quantity")
+
+        # Set the actual bearing attribute to the given value converted to radians
+        self._mla = mla.to(unit_registry.radian).magnitude
+
+    @mla.expression
+    def mla(self):
+        return self._mla
+
 
 class CommentMixin:
     def submit(self, data_store, change_id):
