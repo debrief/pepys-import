@@ -449,7 +449,7 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin):
+class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sensor_name = None
@@ -470,7 +470,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin):
     _rel_bearing = Column(DOUBLE_PRECISION)
     freq = Column(DOUBLE_PRECISION)
     _location = Column(Geometry(geometry_type="POINT", srid=4326))
-    elevation = Column(DOUBLE_PRECISION)
+    _elevation = Column(DOUBLE_PRECISION)
     major = Column(DOUBLE_PRECISION)
     minor = Column(DOUBLE_PRECISION)
     orientation = Column(DOUBLE_PRECISION)
