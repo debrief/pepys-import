@@ -69,7 +69,7 @@ class RepContactTests(unittest.TestCase):
             self.assertEqual(contacts[0].location, None)
             self.assertEqual(contacts[3].location, None)
 
-            # todo, also test that the correct range is being stored
+            self.assertAlmostEqual(contacts[0].range, 395.11224 * unit_registry.metre)
 
             # Check location point's type and value
             location1 = contacts[1].location

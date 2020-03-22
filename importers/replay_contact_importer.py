@@ -254,7 +254,6 @@ class ReplayContactImporter(Importer):
                         self.error_type,
                     )
                     range_token.record(self.name, "range", range_val, "yds")
-                    # TODO add range field to schema
                     contact.range = range_val
 
                 if freq_token is not None:
