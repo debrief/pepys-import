@@ -383,10 +383,57 @@ class TestContactMLAProperty(unittest.TestCase):
         contact = self.store.db_classes.Contact()
 
         # Check setting and retrieving field works, and gives units as a result
-        contact.mla = 157 * unit_registry.degree
+        contact.mla = 234 * unit_registry.degree
 
-        assert contact.mla == 157 * unit_registry.degree
+        assert contact.mla == 234 * unit_registry.degree
         assert contact.mla.check("")
+
+
+class TestContactSLAProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_contact_sla_scalar(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            contact.sla = 5
+
+        assert "SLA must be a Quantity" in str(exception.value)
+
+    def test_contact_sla_wrong_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.sla = 5 * unit_registry.second
+
+        assert "SLA must be a Quantity with a dimensionality of ''" in str(
+            exception.value
+        )
+
+    def test_contact_sla_right_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        contact.sla = 57 * unit_registry.degree
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        contact.sla = 0.784 * unit_registry.radian
+
+    def test_contact_sla_roundtrip(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting and retrieving field works, and gives units as a result
+        contact.sla = 198 * unit_registry.degree
+
+        assert contact.sla == 198 * unit_registry.degree
+        assert contact.sla.check("")
 
 
 CLASSES_WITH_LOCATION = [

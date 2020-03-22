@@ -493,6 +493,47 @@ class ContactMixin:
     def mla(self):
         return self._mla
 
+    #
+    # SLA properties
+    #
+
+    @hybrid_property
+    def sla(self):
+        # Return all SLA's as degrees
+        if self._sla is None:
+            return None
+        else:
+            return (self._sla * unit_registry.radian).to(unit_registry.degree)
+
+    @sla.setter
+    def sla(self, sla):
+        if sla is None:
+            self._sla = None
+            return
+
+        # Check the given bearing is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not sla.check(""):
+                raise ValueError(
+                    "SLA must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                sla.units == unit_registry.degree or sla.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "SLA must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("SLA must be a Quantity")
+
+        # Set the actual bearing attribute to the given value converted to radians
+        self._sla = sla.to(unit_registry.radian).magnitude
+
+    @sla.expression
+    def sla(self):
+        return self._sla
+
 
 class CommentMixin:
     def submit(self, data_store, change_id):

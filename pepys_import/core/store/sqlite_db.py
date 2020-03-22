@@ -394,7 +394,7 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin):
     confidence = Column(String(150))
     contact_type = Column(String(150))
     _mla = Column(REAL)
-    sla = Column(REAL)
+    _sla = Column(REAL)
     subject_id = Column(Integer)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
