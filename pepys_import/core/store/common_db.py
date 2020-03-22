@@ -410,6 +410,48 @@ class ContactMixin:
     def bearing(self):
         return self._bearing
 
+    #
+    # Rel Bearing properties
+    #
+
+    @hybrid_property
+    def rel_bearing(self):
+        # Return all rel_bearings as degrees
+        if self._rel_bearing is None:
+            return None
+        else:
+            return (self._rel_bearing * unit_registry.radian).to(unit_registry.degree)
+
+    @rel_bearing.setter
+    def rel_bearing(self, rel_bearing):
+        if rel_bearing is None:
+            self._rel_bearing = None
+            return
+
+        # Check the given bearing is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not rel_bearing.check(""):
+                raise ValueError(
+                    "Relative Bearing must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                rel_bearing.units == unit_registry.degree
+                or rel_bearing.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "Relative Bearing must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("Relative Bearing must be a Quantity")
+
+        # Set the actual bearing attribute to the given value converted to radians
+        self._rel_bearing = rel_bearing.to(unit_registry.radian).magnitude
+
+    @rel_bearing.expression
+    def rel_bearing(self):
+        return self._rel_bearing
+
 
 class CommentMixin:
     def submit(self, data_store, change_id):

@@ -289,10 +289,57 @@ class TestContactBearingProperty(unittest.TestCase):
         contact = self.store.db_classes.Contact()
 
         # Check setting and retrieving field works, and gives units as a result
-        contact.heading = 157 * unit_registry.degree
+        contact.bearing = 157 * unit_registry.degree
 
-        assert contact.heading == 157 * unit_registry.degree
-        assert contact.heading.check("")
+        assert contact.bearing == 157 * unit_registry.degree
+        assert contact.bearing.check("")
+
+
+class TestContactRelBearingProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_contact_rel_bearing_scalar(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            contact.rel_bearing = 5
+
+        assert "Relative Bearing must be a Quantity" in str(exception.value)
+
+    def test_contact_rel_bearing_wrong_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.rel_bearing = 5 * unit_registry.second
+
+        assert "Relative Bearing must be a Quantity with a dimensionality of ''" in str(
+            exception.value
+        )
+
+    def test_contact_rel_bearing_right_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        contact.rel_bearing = 57 * unit_registry.degree
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        contact.rel_bearing = 0.784 * unit_registry.radian
+
+    def test_contact_rel_bearing_roundtrip(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting and retrieving field works, and gives units as a result
+        contact.rel_bearing = 157 * unit_registry.degree
+
+        assert contact.rel_bearing == 157 * unit_registry.degree
+        assert contact.rel_bearing.check("")
 
 
 CLASSES_WITH_LOCATION = [

@@ -467,7 +467,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin):
     )
     time = Column(TIMESTAMP, nullable=False)
     _bearing = Column(DOUBLE_PRECISION)
-    rel_bearing = Column(DOUBLE_PRECISION)
+    _rel_bearing = Column(DOUBLE_PRECISION)
     freq = Column(DOUBLE_PRECISION)
     _location = Column(Geometry(geometry_type="POINT", srid=4326))
     elevation = Column(DOUBLE_PRECISION)
