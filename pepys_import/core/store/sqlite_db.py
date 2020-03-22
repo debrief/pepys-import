@@ -390,7 +390,7 @@ class Contact(
     _location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
     _elevation = Column(REAL)
     _major = Column(REAL)
-    minor = Column(REAL)
+    _minor = Column(REAL)
     _orientation = Column(REAL)
     classification = Column(String(150))
     confidence = Column(String(150))

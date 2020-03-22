@@ -606,6 +606,40 @@ class ContactMixin:
     def major(self):
         return self._major
 
+    #
+    # Minor property
+    #
+
+    @hybrid_property
+    def minor(self):
+        # Return all minors as metres
+        if self._minor is None:
+            return None
+        else:
+            return self._minor * unit_registry.metre
+
+    @minor.setter
+    def minor(self, minor):
+        if minor is None:
+            self._minor = None
+            return
+
+        # Check the given minor is a Quantity with a dimension of 'length'
+        try:
+            if not minor.check("[length]"):
+                raise ValueError(
+                    "Minor must be a Quantity with a dimensionality of [length]"
+                )
+        except AttributeError:
+            raise TypeError("Minor must be a Quantity")
+
+        # Set the actual minor attribute to the given value converted to metres
+        self._minor = minor.to(unit_registry.metre).magnitude
+
+    @minor.expression
+    def minor(self):
+        return self._minor
+
 
 class CommentMixin:
     def submit(self, data_store, change_id):

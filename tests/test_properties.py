@@ -436,6 +436,53 @@ class TestContactMajorProperty(unittest.TestCase):
         assert contact.major.check("[length]")
 
 
+class TestContactMinorProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_contact_minor_scalar(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            contact.minor = 5
+
+        assert "Minor must be a Quantity" in str(exception.value)
+
+    def test_contact_minor_wrong_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.minor = 5 * unit_registry.second
+
+        assert "Minor must be a Quantity with a dimensionality of [length]" in str(
+            exception.value
+        )
+
+    def test_contact_minor_right_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        contact.minor = 32 * unit_registry.kilometre
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        contact.minor = 1943 * unit_registry.angstrom
+
+    def test_contact_minor_roundtrip(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting and retrieving field works, and gives units as a result
+        contact.minor = 1023 * unit_registry.metre
+
+        assert contact.minor == 1023 * unit_registry.metre
+        assert contact.minor.check("[length]")
+
+
 CLASSES_WITH_ELEVATION = [
     pytest.param("State", id="state"),
     pytest.param("Media", id="media"),
