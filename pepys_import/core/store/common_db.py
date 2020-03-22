@@ -640,6 +640,40 @@ class ContactMixin:
     def minor(self):
         return self._minor
 
+    #
+    # Freq property
+    #
+
+    @hybrid_property
+    def freq(self):
+        # Return all freqs as Hz
+        if self._freq is None:
+            return None
+        else:
+            return self._freq * unit_registry.hertz
+
+    @freq.setter
+    def freq(self, freq):
+        if freq is None:
+            self._freq = None
+            return
+
+        # Check the given freq is a Quantity with a dimension of 'time^-1' (ie. 'per unit time')
+        try:
+            if not freq.check("[time]^-1"):
+                raise ValueError(
+                    "Freq must be a Quantity with a dimensionality of [time]^-1"
+                )
+        except AttributeError:
+            raise TypeError("Freq must be a Quantity")
+
+        # Set the actual freq attribute to the given value converted to hertz
+        self._freq = freq.to(unit_registry.hertz).magnitude
+
+    @freq.expression
+    def freq(self):
+        return self._freq
+
 
 class CommentMixin:
     def submit(self, data_store, change_id):

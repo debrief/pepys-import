@@ -483,6 +483,50 @@ class TestContactMinorProperty(unittest.TestCase):
         assert contact.minor.check("[length]")
 
 
+class TestContactFreqProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_contact_freq_scalar(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            contact.freq = 5
+
+        assert "Freq must be a Quantity" in str(exception.value)
+
+    def test_contact_freq_wrong_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.freq = 5 * unit_registry.kilogram
+
+        assert "Freq must be a Quantity with a dimensionality of [time]^-1" in str(
+            exception.value
+        )
+
+    def test_contact_freq_right_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        contact.freq = 32 * unit_registry.hertz
+
+    def test_contact_freq_roundtrip(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting and retrieving field works, and gives units as a result
+        contact.freq = 567 * unit_registry.hertz
+
+        assert contact.freq == 567 * unit_registry.hertz
+        assert contact.freq.check("[time]^-1")
+
+
 CLASSES_WITH_ELEVATION = [
     pytest.param("State", id="state"),
     pytest.param("Media", id="media"),

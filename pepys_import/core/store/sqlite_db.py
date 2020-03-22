@@ -386,7 +386,7 @@ class Contact(
     time = Column(TIMESTAMP, nullable=False)
     _bearing = Column(REAL)
     _rel_bearing = Column(REAL)
-    freq = Column(REAL)
+    _freq = Column(REAL)
     _location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
     _elevation = Column(REAL)
     _major = Column(REAL)
