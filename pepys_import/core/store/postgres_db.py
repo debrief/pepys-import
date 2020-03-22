@@ -471,7 +471,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     freq = Column(DOUBLE_PRECISION)
     _location = Column(Geometry(geometry_type="POINT", srid=4326))
     _elevation = Column(DOUBLE_PRECISION)
-    major = Column(DOUBLE_PRECISION)
+    _major = Column(DOUBLE_PRECISION)
     minor = Column(DOUBLE_PRECISION)
     _orientation = Column(DOUBLE_PRECISION)
     classification = Column(String(150))

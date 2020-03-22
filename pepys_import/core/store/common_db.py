@@ -572,6 +572,40 @@ class ContactMixin:
     def orientation(self):
         return self._orientation
 
+    #
+    # Major property
+    #
+
+    @hybrid_property
+    def major(self):
+        # Return all majors as metres
+        if self._major is None:
+            return None
+        else:
+            return self._major * unit_registry.metre
+
+    @major.setter
+    def major(self, major):
+        if major is None:
+            self._major = None
+            return
+
+        # Check the given major is a Quantity with a dimension of 'length'
+        try:
+            if not major.check("[length]"):
+                raise ValueError(
+                    "Major must be a Quantity with a dimensionality of [length]"
+                )
+        except AttributeError:
+            raise TypeError("Major must be a Quantity")
+
+        # Set the actual major attribute to the given value converted to metres
+        self._major = major.to(unit_registry.metre).magnitude
+
+    @major.expression
+    def major(self):
+        return self._major
+
 
 class CommentMixin:
     def submit(self, data_store, change_id):

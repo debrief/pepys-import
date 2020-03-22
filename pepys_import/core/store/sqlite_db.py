@@ -389,7 +389,7 @@ class Contact(
     freq = Column(REAL)
     _location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
     _elevation = Column(REAL)
-    major = Column(REAL)
+    _major = Column(REAL)
     minor = Column(REAL)
     _orientation = Column(REAL)
     classification = Column(String(150))
