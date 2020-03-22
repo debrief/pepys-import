@@ -1304,12 +1304,8 @@ class DataStore(object):
                 transformer.format_point(
                     state.location.longitude, state.location.latitude
                 ),
-                str(unit_converter.convert_radian_to_degree(state.heading))
-                if state.heading
-                else "0",
-                str(unit_converter.convert_mps_to_knot(state.speed))
-                if state.speed
-                else "0",
+                str(state.heading.to(unit_registry.degrees)) if state.heading else "0",
+                str(state.speed.to(unit_registry.knot)) if state.speed else "0",
                 depthStr,
             ]
             data = " ".join(state_rep_line)
