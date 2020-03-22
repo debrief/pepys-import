@@ -20,6 +20,13 @@ class TestStateSpeedProperty(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_state_speed_none(self):
+        state = self.store.db_classes.State()
+
+        state.speed = None
+
+        assert state.speed is None
+
     def test_state_speed_scalar(self):
         state = self.store.db_classes.State()
 
@@ -68,6 +75,13 @@ class TestStateHeadingProperty(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_state_heading_none(self):
+        state = self.store.db_classes.State()
+
+        state.heading = None
+
+        assert state.heading is None
+
     def test_state_heading_scalar(self):
         state = self.store.db_classes.State()
 
@@ -114,6 +128,13 @@ class TestStateCourseProperty(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_state_course_none(self):
+        state = self.store.db_classes.State()
+
+        state.course = None
+
+        assert state.course is None
 
     def test_state_course_scalar(self):
         state = self.store.db_classes.State()
@@ -162,6 +183,13 @@ class TestContactBearingProperty(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_contact_bearing_none(self):
+        contact = self.store.db_classes.Contact()
+
+        contact.bearing = None
+
+        assert contact.bearing is None
+
     def test_contact_bearing_scalar(self):
         contact = self.store.db_classes.Contact()
 
@@ -208,6 +236,13 @@ class TestContactRelBearingProperty(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_contact_rel_bearing_none(self):
+        contact = self.store.db_classes.Contact()
+
+        contact.rel_bearing = None
+
+        assert contact.rel_bearing is None
 
     def test_contact_rel_bearing_scalar(self):
         contact = self.store.db_classes.Contact()
@@ -256,6 +291,13 @@ class TestContactMLAProperty(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_contact_mla_none(self):
+        contact = self.store.db_classes.Contact()
+
+        contact.mla = None
+
+        assert contact.mla is None
+
     def test_contact_mla_scalar(self):
         contact = self.store.db_classes.Contact()
 
@@ -302,6 +344,13 @@ class TestContactSLAProperty(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_contact_sla_none(self):
+        contact = self.store.db_classes.Contact()
+
+        contact.sla = None
+
+        assert contact.sla is None
 
     def test_contact_sla_scalar(self):
         contact = self.store.db_classes.Contact()
@@ -350,6 +399,13 @@ class TestContactOrientationProperty(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_contact_orientation_none(self):
+        contact = self.store.db_classes.Contact()
+
+        contact.orientation = None
+
+        assert contact.orientation is None
+
     def test_contact_orientation_scalar(self):
         contact = self.store.db_classes.Contact()
 
@@ -396,6 +452,13 @@ class TestContactMajorProperty(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_contact_major_none(self):
+        contact = self.store.db_classes.Contact()
+
+        contact.major = None
+
+        assert contact.major is None
 
     def test_contact_major_scalar(self):
         contact = self.store.db_classes.Contact()
@@ -444,6 +507,13 @@ class TestContactMinorProperty(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_contact_minor_none(self):
+        contact = self.store.db_classes.Contact()
+
+        contact.minor = None
+
+        assert contact.minor is None
+
     def test_contact_minor_scalar(self):
         contact = self.store.db_classes.Contact()
 
@@ -491,6 +561,13 @@ class TestContactRangeProperty(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_contact_range_none(self):
+        contact = self.store.db_classes.Contact()
+
+        contact.range = None
+
+        assert contact.range is None
+
     def test_contact_range_scalar(self):
         contact = self.store.db_classes.Contact()
 
@@ -537,6 +614,13 @@ class TestContactFreqProperty(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_contact_freq_none(self):
+        contact = self.store.db_classes.Contact()
+
+        contact.freq = None
+
+        assert contact.freq is None
 
     def test_contact_freq_scalar(self):
         contact = self.store.db_classes.Contact()
@@ -588,6 +672,16 @@ class TestElevationProperty:
 
     def tearDown(self):
         pass
+
+    @pytest.mark.parametrize(
+        "class_name", CLASSES_WITH_ELEVATION,
+    )
+    def test_elevation_none(self, class_name):
+        obj = eval(f"self.store.db_classes.{class_name}()")
+
+        obj.elevation = None
+
+        assert obj.elevation is None
 
     @pytest.mark.parametrize(
         "class_name", CLASSES_WITH_ELEVATION,
@@ -654,6 +748,16 @@ class TestLocationProperty:
 
     def tearDown(self):
         pass
+
+    @pytest.mark.parametrize(
+        "class_name", CLASSES_WITH_LOCATION,
+    )
+    def test_location_property_none(self, class_name):
+        obj = eval(f"self.store.db_classes.{class_name}()")
+
+        obj.location = None
+
+        assert obj.location is None
 
     @pytest.mark.parametrize(
         "class_name", CLASSES_WITH_LOCATION,
