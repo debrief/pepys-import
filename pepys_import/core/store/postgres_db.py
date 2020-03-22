@@ -473,7 +473,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     _elevation = Column(DOUBLE_PRECISION)
     major = Column(DOUBLE_PRECISION)
     minor = Column(DOUBLE_PRECISION)
-    orientation = Column(DOUBLE_PRECISION)
+    _orientation = Column(DOUBLE_PRECISION)
     classification = Column(String(150))
     confidence = Column(String(150))
     contact_type = Column(String(150))

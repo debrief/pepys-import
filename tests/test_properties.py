@@ -342,6 +342,53 @@ class TestContactSLAProperty(unittest.TestCase):
         assert contact.sla.check("")
 
 
+class TestContactOrientationProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_contact_orientation_scalar(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            contact.orientation = 5
+
+        assert "Orientation must be a Quantity" in str(exception.value)
+
+    def test_contact_orientation_wrong_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.orientation = 5 * unit_registry.second
+
+        assert "Orientation must be a Quantity with a dimensionality of ''" in str(
+            exception.value
+        )
+
+    def test_contact_orientation_right_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        contact.orientation = 57 * unit_registry.degree
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        contact.orientation = 0.784 * unit_registry.radian
+
+    def test_contact_orientation_roundtrip(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting and retrieving field works, and gives units as a result
+        contact.orientation = 53 * unit_registry.degree
+
+        assert contact.orientation == 53 * unit_registry.degree
+        assert contact.orientation.check("")
+
+
 CLASSES_WITH_ELEVATION = [
     pytest.param("State", id="state"),
     pytest.param("Media", id="media"),

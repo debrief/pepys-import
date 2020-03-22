@@ -530,9 +530,47 @@ class ContactMixin:
         # Set the actual bearing attribute to the given value converted to radians
         self._sla = sla.to(unit_registry.radian).magnitude
 
-    @sla.expression
-    def sla(self):
-        return self._sla
+    #
+    # Orientation properties
+    #
+
+    @hybrid_property
+    def orientation(self):
+        # Return all orientation's as degrees
+        if self._orientation is None:
+            return None
+        else:
+            return (self._orientation * unit_registry.radian).to(unit_registry.degree)
+
+    @orientation.setter
+    def orientation(self, orientation):
+        if orientation is None:
+            self._orientation = None
+            return
+
+        # Check the given orientation is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not orientation.check(""):
+                raise ValueError(
+                    "Orientation must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                orientation.units == unit_registry.degree
+                or orientation.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "Orientation must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("Orientation must be a Quantity")
+
+        # Set the actual bearing attribute to the given value converted to radians
+        self._orientation = orientation.to(unit_registry.radian).magnitude
+
+    @orientation.expression
+    def orientation(self):
+        return self._orientation
 
 
 class CommentMixin:

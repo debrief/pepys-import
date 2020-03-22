@@ -391,7 +391,7 @@ class Contact(
     _elevation = Column(REAL)
     major = Column(REAL)
     minor = Column(REAL)
-    orientation = Column(REAL)
+    _orientation = Column(REAL)
     classification = Column(String(150))
     confidence = Column(String(150))
     contact_type = Column(String(150))
