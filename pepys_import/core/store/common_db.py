@@ -641,6 +641,40 @@ class ContactMixin:
         return self._minor
 
     #
+    # Range property
+    #
+
+    @hybrid_property
+    def range(self):
+        # Return all ranges as metres
+        if self._range is None:
+            return None
+        else:
+            return self._range * unit_registry.metre
+
+    @range.setter
+    def range(self, range):
+        if range is None:
+            self._range = None
+            return
+
+        # Check the given range is a Quantity with a dimension of 'length'
+        try:
+            if not range.check("[length]"):
+                raise ValueError(
+                    "Range must be a Quantity with a dimensionality of [length]"
+                )
+        except AttributeError:
+            raise TypeError("Range must be a Quantity")
+
+        # Set the actual range attribute to the given value converted to metres
+        self._range = range.to(unit_registry.metre).magnitude
+
+    @range.expression
+    def range(self):
+        return self._range
+
+    #
     # Freq property
     #
 

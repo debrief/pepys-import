@@ -483,6 +483,53 @@ class TestContactMinorProperty(unittest.TestCase):
         assert contact.minor.check("[length]")
 
 
+class TestContactRangeProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_contact_range_scalar(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            contact.range = 5
+
+        assert "Range must be a Quantity" in str(exception.value)
+
+    def test_contact_range_wrong_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.range = 5 * unit_registry.second
+
+        assert "Range must be a Quantity with a dimensionality of [length]" in str(
+            exception.value
+        )
+
+    def test_contact_range_right_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        contact.range = 19 * unit_registry.yard
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        contact.range = 2341 * unit_registry.angstrom
+
+    def test_contact_range_roundtrip(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting and retrieving field works, and gives units as a result
+        contact.range = 976 * unit_registry.metre
+
+        assert contact.range == 976 * unit_registry.metre
+        assert contact.range.check("[length]")
+
+
 class TestContactFreqProperty(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")

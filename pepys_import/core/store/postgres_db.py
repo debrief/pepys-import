@@ -469,6 +469,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     _bearing = Column(DOUBLE_PRECISION)
     _rel_bearing = Column(DOUBLE_PRECISION)
     _freq = Column(DOUBLE_PRECISION)
+    _range = Column(DOUBLE_PRECISION)
     _location = Column(Geometry(geometry_type="POINT", srid=4326))
     _elevation = Column(DOUBLE_PRECISION)
     _major = Column(DOUBLE_PRECISION)
