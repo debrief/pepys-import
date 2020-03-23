@@ -7,6 +7,7 @@ from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
+    ActivationMixin,
     CommentMixin,
     ContactMixin,
     DatafileMixin,
@@ -17,7 +18,6 @@ from pepys_import.core.store.common_db import (
     SensorMixin,
     SensorTypeMixin,
     StateMixin,
-    ActivationMixin,
 )
 from pepys_import.core.store.db_base import BasePostGIS
 from pepys_import.core.store.db_status import TableTypes

@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from config import DB_USERNAME, DB_PASSWORD, DB_HOST, DB_NAME, DB_PORT, DB_TYPE
+from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 
