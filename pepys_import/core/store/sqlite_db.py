@@ -368,7 +368,9 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin):
+class Contact(
+    BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin
+):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sensor_name = None
@@ -382,19 +384,20 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin):
     name = Column(String(150))
     sensor_id = Column(Integer, nullable=False)
     time = Column(TIMESTAMP, nullable=False)
-    bearing = Column(REAL)
-    rel_bearing = Column(REAL)
-    freq = Column(REAL)
+    _bearing = Column(REAL)
+    _rel_bearing = Column(REAL)
+    _freq = Column(REAL)
+    _range = Column(REAL)
     _location = Column(Geometry(geometry_type="POINT", srid=4326, management=True))
-    elevation = Column(REAL)
-    major = Column(REAL)
-    minor = Column(REAL)
-    orientation = Column(REAL)
+    _elevation = Column(REAL)
+    _major = Column(REAL)
+    _minor = Column(REAL)
+    _orientation = Column(REAL)
     classification = Column(String(150))
     confidence = Column(String(150))
     contact_type = Column(String(150))
-    mla = Column(REAL)
-    sla = Column(REAL)
+    _mla = Column(REAL)
+    _sla = Column(REAL)
     subject_id = Column(Integer)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)

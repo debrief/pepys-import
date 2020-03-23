@@ -1304,12 +1304,8 @@ class DataStore(object):
                 transformer.format_point(
                     state.location.longitude, state.location.latitude
                 ),
-                str(unit_converter.convert_radian_to_degree(state.heading))
-                if state.heading
-                else "0",
-                str(unit_converter.convert_mps_to_knot(state.speed))
-                if state.speed
-                else "0",
+                str(state.heading.to(unit_registry.degrees)) if state.heading else "0",
+                str(state.speed.to(unit_registry.knot)) if state.speed else "0",
                 depthStr,
             ]
             data = " ".join(state_rep_line)
@@ -1329,18 +1325,19 @@ class DataStore(object):
             except Exception as ex:
                 print(str(ex))
 
-            # wkb hex conversion to "point"
-            point = None
-            if contact.location is not None:
-                point = wkb.loads(contact.location.desc, hex=True)
-
             contact_rep_line = [
                 transformer.format_datatime(contact.time),
                 platform_name,
                 "@@",
-                transformer.format_point(point.y, point.x) if point else "NULL",
-                str(math.degrees(contact.bearing)) if contact.bearing else "NULL",
-                "NULL",  # unit_converter.convert_meter_to_yard(contact.range) if contact.range else "NULL",
+                transformer.format_point(
+                    state.location.longitude, state.location.latitude
+                )
+                if state.location
+                else "NULL",
+                contact.bearing.to(unit_registry.degrees).magnitude
+                if contact.bearing
+                else "NULL",
+                contact.range.to(unit_registry.yard) if contact.range else "NULL",
                 sensor_name,
                 "N/A",
             ]

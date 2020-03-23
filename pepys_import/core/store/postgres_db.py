@@ -449,7 +449,7 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin):
+class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sensor_name = None
@@ -466,19 +466,20 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin):
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )
     time = Column(TIMESTAMP, nullable=False)
-    bearing = Column(DOUBLE_PRECISION)
-    rel_bearing = Column(DOUBLE_PRECISION)
-    freq = Column(DOUBLE_PRECISION)
+    _bearing = Column(DOUBLE_PRECISION)
+    _rel_bearing = Column(DOUBLE_PRECISION)
+    _freq = Column(DOUBLE_PRECISION)
+    _range = Column(DOUBLE_PRECISION)
     _location = Column(Geometry(geometry_type="POINT", srid=4326))
-    elevation = Column(DOUBLE_PRECISION)
-    major = Column(DOUBLE_PRECISION)
-    minor = Column(DOUBLE_PRECISION)
-    orientation = Column(DOUBLE_PRECISION)
+    _elevation = Column(DOUBLE_PRECISION)
+    _major = Column(DOUBLE_PRECISION)
+    _minor = Column(DOUBLE_PRECISION)
+    _orientation = Column(DOUBLE_PRECISION)
     classification = Column(String(150))
     confidence = Column(String(150))
     contact_type = Column(String(150))
-    mla = Column(DOUBLE_PRECISION)
-    sla = Column(DOUBLE_PRECISION)
+    _mla = Column(DOUBLE_PRECISION)
+    _sla = Column(DOUBLE_PRECISION)
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
