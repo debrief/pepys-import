@@ -825,3 +825,36 @@ class ActivationMixin:
     @min_range.expression
     def min_range(self):
         return self._min_range
+
+    #
+    # max_range property
+    #
+    @hybrid_property
+    def max_range(self):
+        # Return all max_ranges as metres
+        if self._max_range is None:
+            return None
+        else:
+            return self._max_range * unit_registry.metre
+
+    @max_range.setter
+    def max_range(self, max_range):
+        if max_range is None:
+            self._max_range = None
+            return
+
+        # Check the given max_range is a Quantity with a dimension of 'length'
+        try:
+            if not max_range.check("[length]"):
+                raise ValueError(
+                    "max_range must be a Quantity with a dimensionality of [length]"
+                )
+        except AttributeError:
+            raise TypeError("max_range must be a Quantity")
+
+        # Set the actual max_range attribute to the given value converted to metres
+        self._max_range = max_range.to(unit_registry.metre).magnitude
+
+    @max_range.expression
+    def max_range(self):
+        return self._max_range

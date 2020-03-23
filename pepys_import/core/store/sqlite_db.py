@@ -416,7 +416,7 @@ class Activation(BaseSpatiaLite, ActivationMixin):
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     _min_range = Column(REAL)
-    max_range = Column(REAL)
+    _max_range = Column(REAL)
     left_arc = Column(REAL)
     right_arc = Column(REAL)
     source_id = Column(Integer, nullable=False)

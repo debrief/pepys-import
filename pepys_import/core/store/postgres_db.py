@@ -503,7 +503,7 @@ class Activation(BasePostGIS, ActivationMixin):
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     _min_range = Column(DOUBLE_PRECISION)
-    max_range = Column(DOUBLE_PRECISION)
+    _max_range = Column(DOUBLE_PRECISION)
     left_arc = Column(DOUBLE_PRECISION)
     right_arc = Column(DOUBLE_PRECISION)
     source_id = Column(

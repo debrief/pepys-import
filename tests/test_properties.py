@@ -870,6 +870,60 @@ class TestActivationMinRangeProperty(unittest.TestCase):
         assert activation.min_range.check("[length]")
 
 
+class TestActivationMaxRangeProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_activation_max_range_none(self):
+        activation = self.store.db_classes.Activation()
+
+        activation.max_range = None
+
+        assert activation.max_range is None
+
+    def test_activation_max_range_scalar(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            activation.max_range = 5
+
+        assert "max_range must be a Quantity" in str(exception.value)
+
+    def test_activation_max_range_wrong_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.max_range = 5 * unit_registry.second
+
+        assert "max_range must be a Quantity with a dimensionality of [length]" in str(
+            exception.value
+        )
+
+    def test_activation_max_range_right_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        activation.max_range = 23 * unit_registry.kilometre
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        activation.max_range = 978 * unit_registry.angstrom
+
+    def test_activation_max_range_roundtrip(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting and retrieving field works, and gives units as a result
+        activation.max_range = 143 * unit_registry.metre
+
+        assert activation.max_range == 143 * unit_registry.metre
+        assert activation.max_range.check("[length]")
+
+
 class TestLocationRoundtripToDB(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
