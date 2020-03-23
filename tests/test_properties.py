@@ -368,7 +368,7 @@ class TestContactSLAProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.soa = 5 * unit_registry.second
 
-        assert "SOA must be a Quantity with a dimensionality of ''" in str(
+        assert "SOA must be a Quantity with a dimensionality of [length]/[time]" in str(
             exception.value
         )
 
@@ -376,19 +376,19 @@ class TestContactSLAProperty(unittest.TestCase):
         contact = self.store.db_classes.Contact()
 
         # Check setting with a Quantity of the right SI units succeeds
-        contact.soa = 57 * unit_registry.degree
+        contact.soa = 57 * (unit_registry.metre / unit_registry.second)
 
         # Check setting with a Quantity of strange but valid units succeeds
-        contact.soa = 0.784 * unit_registry.radian
+        contact.soa = 0.784 * (unit_registry.angstrom / unit_registry.day)
 
     def test_contact_soa_roundtrip(self):
         contact = self.store.db_classes.Contact()
 
         # Check setting and retrieving field works, and gives units as a result
-        contact.soa = 198 * unit_registry.degree
+        contact.soa = 19 * unit_registry.knot
 
-        assert contact.soa == 198 * unit_registry.degree
-        assert contact.soa.check("")
+        assert contact.soa == 19 * unit_registry.knot
+        assert contact.soa.check("[length]/[time]")
 
 
 class TestContactOrientationProperty(unittest.TestCase):

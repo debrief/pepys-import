@@ -501,11 +501,11 @@ class ContactMixin:
 
     @hybrid_property
     def soa(self):
-        # Return all soa's as degrees
+        # Return all soas as metres per second
         if self._soa is None:
             return None
         else:
-            return (self._soa * unit_registry.radian).to(unit_registry.degree)
+            return self._soa * (unit_registry.metre / unit_registry.second)
 
     @soa.setter
     def soa(self, soa):
@@ -513,24 +513,21 @@ class ContactMixin:
             self._soa = None
             return
 
-        # Check the given bearing is a Quantity with a dimension of '' and units of
-        # degrees or radians
+        # Check the given soa is a Quantity with a dimension of 'length / time'
         try:
-            if not soa.check(""):
+            if not soa.check("[length]/[time]"):
                 raise ValueError(
-                    "SOA must be a Quantity with a dimensionality of '' (ie. nothing)"
-                )
-            if not (
-                soa.units == unit_registry.degree or soa.units == unit_registry.radian
-            ):
-                raise ValueError(
-                    "SOA must be a Quantity with angular units (degree or radian)"
+                    "SOA must be a Quantity with a dimensionality of [length]/[time]"
                 )
         except AttributeError:
             raise TypeError("SOA must be a Quantity")
 
-        # Set the actual bearing attribute to the given value converted to radians
-        self._soa = soa.to(unit_registry.radian).magnitude
+        # Set the actual soa attribute to the given value converted to metres per second
+        self._soa = soa.to(unit_registry.metre / unit_registry.second).magnitude
+
+    @soa.expression
+    def soa(self):
+        return self._soa
 
     #
     # Orientation properties
