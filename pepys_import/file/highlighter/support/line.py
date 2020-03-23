@@ -96,7 +96,10 @@ class Line:
         self.highlighted_file.fill_char_array_if_needed()
 
         tool_field = tool + "/" + field
-        message = "Value:" + str(value) + " Units:" + str(units)
+        if units is not None:
+            message = "Value:" + str(value) + " Units:" + str(units)
+        else:
+            message = "Value:" + str(value)
 
         for child in self.children:
             for i in range(int(child.start()), int(child.end())):
