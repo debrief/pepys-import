@@ -1,6 +1,7 @@
 # TODO: we have to keep these statements on top to load pepys_import.
 # We will see better approach to access modules inside the other module.
 import sys
+import datetime
 
 sys.path.append(".")
 
@@ -91,6 +92,7 @@ class AdminShell(cmd.Cmd):
             "1": self.do_export,
             "2": self.do_initialise,
             "3": self.do_status,
+            "9": self.do_export_all,
         }
 
     def do_export(self, arg):
@@ -116,6 +118,40 @@ class AdminShell(cmd.Cmd):
             selected_datafile_id = datafiles_dict[datafile_reference]
             with self.datastore.session_scope():
                 self.datastore.export_datafile(selected_datafile_id, datafilename)
+
+    def do_export_all(self, arg):
+        "Start the export all datafiles process"
+        export_flag = input("Do you want to export all Datafiles. (Y/n)\n")
+        if export_flag in ["", "Y", "y"]:
+            while True:
+                folder_name = input(
+                    "Please provide folder name (Press Enter for auto generated folder):"
+                )
+                if folder_name:
+                    if os.path.isdir(folder_name):
+                        print("{} already exists.\n".format(folder_name))
+                    else:
+                        os.mkdir(folder_name)
+                        break
+                else:
+                    folder_name = datetime.datetime.now().strftime(
+                        "exported_datafiles_%Y%m%d_%H%M%S"
+                    )
+                    os.mkdir(folder_name)
+                    break
+
+            print(
+                "Datafiles are going to be exported in '{}' folder.".format(folder_name)
+            )
+
+            with self.datastore.session_scope():
+                datafiles = self.datastore.get_all_datafiles()
+                for datafile in datafiles:
+                    datafile_id = datafile.datafile_id
+                    datafile_filename = os.path.join(
+                        folder_name, datafile.reference.replace(".", "_")
+                    )
+                    self.datastore.export_datafile(datafile_id, datafile_filename)
 
     def do_initialise(self, arg):
         "Allow the currently connected database to be configured"
