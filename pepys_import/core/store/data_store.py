@@ -428,7 +428,7 @@ class DataStore(object):
         self.session.add(datafile_obj)
         self.session.flush()
 
-        print(f"'{reference}' added to Datafile!")
+        # print(f"'{reference}' added to Datafile!")
         # add to cache and return created datafile
         self.datafiles[reference] = datafile_obj
 
@@ -489,7 +489,7 @@ class DataStore(object):
         self.session.add(platform_obj)
         self.session.flush()
 
-        print(f"'{name}' added to Platform!")
+        # print(f"'{name}' added to Platform!")
         # add to cache and return created platform
         self.platforms[name] = platform_obj
 
