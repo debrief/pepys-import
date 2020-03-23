@@ -6,8 +6,6 @@
 Welcome to pepys-import
 =======================
 
-.. include:: ../README.rst
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -15,6 +13,8 @@ Welcome to pepys-import
    README.rst
    installation
    usage
+   developer_guide
+   deployment
    Source documentation <modules>
    contributing
    documentation

@@ -1,12 +1,9 @@
-###############
-Developer Guide
-###############
+===============
+Developer Setup
+===============
 
 This document provides instructions for setting up pepys-import for development, along with contributers
 guidance on code style, testing and so on.
-
-Setup
-=====
 
 To prepare for running ensure Python 3.6 or later is installed on your system.
 You can check your Python 3 version with the following command::
@@ -181,112 +178,3 @@ leaving off the .py file extension
 For example, to run the importer command-line interface, run::
 
     python -m pepys_import.import --path /path/to/file/to/import
-
-
-Contributing Notes
-==================
-
-Code coverage
--------------
-
-We're aiming for 100% code coverage on the project, track our progress
-here: |code_cov|
-
-.. |code_cov| image:: https://codecov.io/gh/debrief/pepys-import/branch/develop/graph/badge.svg
-   :target: https://codecov.io/gh/debrief/pepys-import/branch/develop
-
-Upstream security
------------------
-
-We have continuous vulnerability testing on the Open Source libraries
-we depend upon for development: |dev_req| and production: |plain_req|
-
-.. |plain_req| image:: https://snyk.io/test/github/debrief/pepys-import/badge.svg?targetFile=requirements.txt
-   :target: https://snyk.io/test/github/debrief/pepys-import?targetFile=requirements.txt
-
-.. |dev_req| image:: https://snyk.io/test/github/debrief/pepys-import/badge.svg?targetFile=requirements_dev.txt
-   :target: https://snyk.io/test/github/debrief/pepys-import?targetFile=requirements_dev.txt
-
-Code Style
-----------
-Black is used on the project: |black|
-
-.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
- :target: https://github.com/python/black
-
-It is suggested to install a pre-commit hook in order to apply Black before pushing commits::
-
-    $ pip install pre-commit
-    $ pre-commit install
-
-
-Windows-specific pre-commit instructions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-There are some minor issues with the pre-commit library on Windows. If you run into errors Installing
-the pre-commit hook, the follow the instructions at `this Github issue <https://github.com/pre-commit/pre-commit/issues/891>`_,
-by loading a Command Prompt with administrator permissions and running::
-
-    $ pre-commit clean
-    $ pre-commit run black --all-files
-
-Online documentation
-====================
-
-User-focused API documentation is available in the full documentation: |docs|
-
-.. |docs| image:: https://readthedocs.org/projects/pepys-import/badge/?version=latest
-  :target:  https://pepys-import.readthedocs.io/
-
-
-
-Project Progress
-================
-
-View the project Kanban board `here <https://github.com/debrief/pepys-import/projects/3>`_
-
-Creating a deployable release
-=============================
-
-For significant releases, the `pepys-import` version should be incremented,
-using:
-```
-bumpversion patch
-```
-
-Note 1: once the version has been incremented, a new entry should be
-included in `History.rst`.
-
-Note 2: _currently_ the substitution files on `pepys_import/__init__.py` and `setup.py`,
-and will need to be tidied manually.
-
-Pepys-import is deployed by providing a zip file to the client containing everything necessary to run
-pepys-import on a Windows 10 computer. For instructions on how to install from a deployable zip file,
-see `the user-focused README <https://github.com/debrief/pepys-import/blob/develop/README.rst>`_.
-
-To create a deployable release, follow the instructions below on a Windows 10 machine (this *cannot* be
-done from any other sort of computer):
-
-1. Clone a new copy of the `pepys-import repository <https://github.com/debrief/pepys-import/>`_, and make sure
-it is at the relevant commit for the version you want to release (we recommend creating a git tag for the commit
-you use as the basis for a release). (**Note:** Do not create a deployable release from a previously-cloned
-version of the repository that you have developed in - always clone a clean copy, otherwise extraneous files
-will be included in the release).
-
-2. Run the ``create_deployment.bat`` file in the root of the cloned repository. This will run the ``create_deployment.ps1``
-Powershell script. This script obtains all the required binary dependencies (including a standalone
-version of Python) and places them in the correct place in the folder hierarchy, and then zips up the
-entire folder, resulting in a file in the root of the cloned repository called ``pepys-import_HASH.zip``,
-where ``HASH`` is the git commit hash that the release was created from.
-
-3. Upload the resulting zip file to the Github Releases page.
-
-IntelliJ Instructions
-=====================
-
-To run from inside IntelliJ open the project
-Mark the :code:`Store` package as source by right clicking on
-the directory and selecting :code:`Mark Directory as -> Source Root`
-
-Open any python module you want to run in the main editor
-window, right click anywhere in the editor and choose the
-:code:`Run` or :code:`Debug` option

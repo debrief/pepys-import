@@ -37,6 +37,7 @@ def convert_absolute_angle(angle, line_number, errors, error_type):
 def convert_speed(speed, units, line_number, errors, error_type):
     """
     Parses the given speed value into a float and assigns the given units
+    
     :param speed: Speed value in string format
     :type speed: String
     :param units: Units of the speed (as a pint unit instance)

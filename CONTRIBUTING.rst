@@ -53,74 +53,45 @@ If you are proposing a feature:
 * Keep the scope as narrow as possible, to make it easier to implement.
 * Contributions are always welcome :)
 
-Get Started!
-------------
+Code coverage
+-------------
 
-Ready to contribute? Here's how to set up `pepys_import` for local development.
+We're aiming for 100% code coverage on the project, track our progress
+here: |code_cov|
 
-1. Fork the `pepys_import` repo on GitHub.
-2. Clone your fork locally::
+.. |code_cov| image:: https://codecov.io/gh/debrief/pepys-import/branch/develop/graph/badge.svg
+   :target: https://codecov.io/gh/debrief/pepys-import/branch/develop
 
-    $ git clone git@github.com:your_name_here/pepys_import.git
+Upstream security
+-----------------
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
+We have continuous vulnerability testing on the Open Source libraries
+we depend upon for development: |dev_req| and production: |plain_req|
 
-    $ mkvirtualenv pepys_import
-    $ cd pepys_import/
-    $ python setup.py develop
+.. |plain_req| image:: https://snyk.io/test/github/debrief/pepys-import/badge.svg?targetFile=requirements.txt
+   :target: https://snyk.io/test/github/debrief/pepys-import?targetFile=requirements.txt
 
-4. Create a branch for local development::
+.. |dev_req| image:: https://snyk.io/test/github/debrief/pepys-import/badge.svg?targetFile=requirements_dev.txt
+   :target: https://snyk.io/test/github/debrief/pepys-import?targetFile=requirements_dev.txt
 
-    $ git checkout -b name-of-your-bugfix-or-feature
+Code Style
+----------
+Black is used on the project: |black|
 
-   Now you can make your changes locally.
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+ :target: https://github.com/python/black
 
-5. When you're done making changes, check that your changes pass flake8 and the
-   tests, including testing other Python versions with tox::
+It is suggested to install a pre-commit hook in order to apply Black before pushing commits::
 
-    $ flake8 pepys_import tests
-    $ python setup.py test or pytest
-    $ tox
+    $ pip install pre-commit
+    $ pre-commit install
 
-   To get flake8 and tox, just pip install them into your virtualenv.
 
-6. Commit your changes and push your branch to GitHub::
+Windows-specific pre-commit instructions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+There are some minor issues with the pre-commit library on Windows. If you run into errors Installing
+the pre-commit hook, the follow the instructions at `this Github issue <https://github.com/pre-commit/pre-commit/issues/891>`_,
+by loading a Command Prompt with administrator permissions and running::
 
-    $ git add .
-    $ git commit -m "Your detailed description of your changes."
-    $ git push origin name-of-your-bugfix-or-feature
-
-7. Submit a pull request through the GitHub website.
-
-Pull Request Guidelines
------------------------
-
-Before you submit a pull request, check that it meets these guidelines:
-
-1. The pull request should include tests.
-2. If the pull request adds functionality, the docs should be updated. Put
-   your new functionality into a function with a docstring, and add the
-   feature to the list in README.rst.
-3. The pull request should work for Python 3.5, 3.6, 3.7 and 3.8, and for PyPy. Check
-   https://travis-ci.org/pepys_import/pull_requests
-   and make sure that the tests pass for all supported Python versions.
-
-Tips
-----
-
-To run all the tests::
-
-    $ python -m unittest discover tests
-
-Deploying
----------
-
-A reminder for the maintainers on how to deploy.
-Make sure all your changes are committed (including an entry in HISTORY.rst).
-Then run::
-
-$ bump2version patch # possible: major / minor / patch
-$ git push
-$ git push --tags
-
-Travis will then deploy to PyPI if tests pass.
+    $ pre-commit clean
+    $ pre-commit run black --all-files
