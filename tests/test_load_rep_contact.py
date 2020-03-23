@@ -1,8 +1,8 @@
-import math
 import os
 import unittest
 
 from importers.replay_contact_importer import ReplayContactImporter
+from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
@@ -49,15 +49,18 @@ class RepContactTests(unittest.TestCase):
             self.assertEqual(len(contacts), 7)
 
             # check the data contents
-            self.assertEqual(contacts[0].bearing, math.radians(252.85))
-            self.assertEqual(contacts[1].bearing, math.radians(251.33))
+            self.assertEqual(contacts[0].bearing, 252.85 * unit_registry.degree)
 
-            self.assertEqual(contacts[0].freq, 123.4)
+            # Has to be almost equal as we get a number very slightly different to 251.33
+            # due to floating point precision issues
+            self.assertAlmostEqual(contacts[1].bearing, 251.33 * unit_registry.degree)
+
+            self.assertEqual(contacts[0].freq, 123.4 * unit_registry.hertz)
 
             self.assertEqual(contacts[0].location, None)
             self.assertEqual(contacts[3].location, None)
 
-            # todo, also test that the correct range is being stored
+            self.assertAlmostEqual(contacts[0].range, 395.11224 * unit_registry.metre)
 
             # Check location point's type and value
             location1 = contacts[1].location
@@ -109,8 +112,8 @@ class RepContactTests(unittest.TestCase):
             self.assertEqual(len(contacts), 95)
 
             # check the data contents
-            self.assertEqual(contacts[0].bearing, math.radians(80))
-            self.assertEqual(contacts[1].bearing, math.radians(78))
+            self.assertEqual(contacts[0].bearing, 80 * unit_registry.degree)
+            self.assertEqual(contacts[1].bearing, 78 * unit_registry.degree)
 
             self.assertEqual(contacts[0].location, None)
             self.assertEqual(contacts[3].location, None)

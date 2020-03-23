@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from tqdm import tqdm
+
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
@@ -35,7 +37,7 @@ class ETracImporter(Importer):
         return True
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
-        for line_number, line in enumerate(file_object.lines(), 1):
+        for line_number, line in enumerate(tqdm(file_object.lines()), 1):
             # Skip the header
             if line_number == 1:
                 continue

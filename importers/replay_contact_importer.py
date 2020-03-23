@@ -1,10 +1,16 @@
+from tqdm import tqdm
+
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.formats.rep_line import parse_timestamp
 from pepys_import.core.validators import constants
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance
+from pepys_import.utils.unit_utils import (
+    convert_absolute_angle,
+    convert_distance,
+    convert_frequency,
+)
 
 
 class ReplayContactImporter(Importer):
@@ -32,7 +38,7 @@ class ReplayContactImporter(Importer):
         return True
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
-        for line_number, line in enumerate(file_object.lines(), 1):
+        for line_number, line in enumerate(tqdm(file_object.lines()), 1):
             if line.text.startswith(";"):
                 # we'll be using this value to determine if we have location
                 lat_degrees_token = None
@@ -149,7 +155,7 @@ class ReplayContactImporter(Importer):
                 if lat_degrees_token is None:
                     location = None
                 else:
-                    loc = Location(self.errors, self.error_type,)
+                    loc = Location(self.errors, self.error_type)
 
                     if not loc.set_latitude_dms(
                         lat_degrees_token.text,
@@ -226,21 +232,26 @@ class ReplayContactImporter(Importer):
 
                 # sort out the optional fields
                 if bearing is not None:
-                    contact.bearing = bearing.to(unit_registry.radian).magnitude
+                    contact.bearing = bearing
 
                 if range_token.text.upper() != "NULL":
                     range_val = convert_distance(
                         range_token.text, unit_registry.yard, line, self.errors, self.error_type,
                     )
                     range_token.record(self.name, "range", range_val, "yds")
-                    # TODO add range field to schema
                     contact.range = range_val
 
                 if freq_token is not None:
                     if freq_token.text.upper() != "NULL":
-                        freq = float(freq_token.text)
-                        freq_token.record(self.name, "frequency", freq, "Hz")
-                        contact.freq = freq
+                        freq_val = convert_frequency(
+                            freq_token.text,
+                            unit_registry.hertz,
+                            line,
+                            self.errors,
+                            self.error_type,
+                        )
+                        freq_token.record(self.name, "frequency", freq_val, "Hz")
+                        contact.freq = freq_val
 
                 if ambig_bearing_token is not None:
                     if ambig_bearing_token.text.upper() == "NULL":

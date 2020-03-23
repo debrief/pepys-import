@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from tqdm import tqdm
+
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
@@ -44,7 +46,7 @@ class NMEAImporter(Importer):
         # keep track of generated platform name
         platform_name = None
 
-        for line_number, line in enumerate(file_object.lines(), 1):
+        for line_number, line in enumerate(tqdm(file_object.lines()), 1):
             tokens = line.tokens(line.CSV_DELIM, ",")
 
             if len(tokens) > 1:
