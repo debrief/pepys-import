@@ -479,7 +479,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     confidence = Column(String(150))
     contact_type = Column(String(150))
     _mla = Column(DOUBLE_PRECISION)
-    _sla = Column(DOUBLE_PRECISION)
+    _soa = Column(DOUBLE_PRECISION)
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
