@@ -1,5 +1,7 @@
 import os
 
+from tqdm import tqdm
+
 from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.validators import constants
@@ -33,7 +35,7 @@ class ReplayImporter(Importer):
         return True
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
-        for line_number, line in enumerate(file_object.lines(), 1):
+        for line_number, line in enumerate(tqdm(file_object.lines()), 1):
             if line.text.startswith(";"):
                 continue
             else:
@@ -66,7 +68,7 @@ class ReplayImporter(Importer):
                     change_id=change_id,
                 )
                 state = datafile.create_state(
-                    data_store, platform, sensor, rep_line.timestamp, self.short_name
+                    data_store, platform, sensor, rep_line.timestamp, self.short_name,
                 )
                 state.elevation = (-1 * rep_line.depth) * unit_registry.metre
                 state.heading = rep_line.heading

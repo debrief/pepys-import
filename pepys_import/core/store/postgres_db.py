@@ -21,6 +21,7 @@ from pepys_import.core.store.common_db import (
     MediaMixin,
     ElevationPropertyMixin,
     LocationPropertyMixin,
+    ActivationMixin,
 )
 
 from uuid import uuid4
@@ -449,7 +450,7 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin):
+class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sensor_name = None
@@ -466,19 +467,20 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin):
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )
     time = Column(TIMESTAMP, nullable=False)
-    bearing = Column(DOUBLE_PRECISION)
-    rel_bearing = Column(DOUBLE_PRECISION)
-    freq = Column(DOUBLE_PRECISION)
+    _bearing = Column(DOUBLE_PRECISION)
+    _rel_bearing = Column(DOUBLE_PRECISION)
+    _freq = Column(DOUBLE_PRECISION)
+    _range = Column(DOUBLE_PRECISION)
     _location = Column(Geometry(geometry_type="POINT", srid=4326))
-    elevation = Column(DOUBLE_PRECISION)
-    major = Column(DOUBLE_PRECISION)
-    minor = Column(DOUBLE_PRECISION)
-    orientation = Column(DOUBLE_PRECISION)
+    _elevation = Column(DOUBLE_PRECISION)
+    _major = Column(DOUBLE_PRECISION)
+    _minor = Column(DOUBLE_PRECISION)
+    _orientation = Column(DOUBLE_PRECISION)
     classification = Column(String(150))
     confidence = Column(String(150))
     contact_type = Column(String(150))
-    mla = Column(DOUBLE_PRECISION)
-    sla = Column(DOUBLE_PRECISION)
+    _mla = Column(DOUBLE_PRECISION)
+    _sla = Column(DOUBLE_PRECISION)
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
@@ -487,7 +489,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Activation(BasePostGIS):
+class Activation(BasePostGIS, ActivationMixin):
     __tablename__ = constants.ACTIVATION
     table_type = TableTypes.MEASUREMENT
     table_type_id = 30
@@ -500,10 +502,10 @@ class Activation(BasePostGIS):
     )
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
-    min_range = Column(DOUBLE_PRECISION)
-    max_range = Column(DOUBLE_PRECISION)
-    left_arc = Column(DOUBLE_PRECISION)
-    right_arc = Column(DOUBLE_PRECISION)
+    _min_range = Column(DOUBLE_PRECISION)
+    _max_range = Column(DOUBLE_PRECISION)
+    _left_arc = Column(DOUBLE_PRECISION)
+    _right_arc = Column(DOUBLE_PRECISION)
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )

@@ -1,3 +1,4 @@
+from tqdm import tqdm
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from pepys_import.core.formats import unit_registry
@@ -204,10 +205,11 @@ class DatafileMixin:
         # and save its measurement objects.
         extraction_log = list()
         for key in self.measurements.keys():
-            for file in self.measurements[key]:
+            print(f"Submitting measurements extracted by {key}.")
+            for file in tqdm(self.measurements[key]):
                 file.submit(data_store, change_id)
             extraction_log.append(
-                f"{len(self.measurements[key])} measurement objects parsed by {key}."
+                f"{len(self.measurements[key])} measurements extracted by {key}."
             )
         return extraction_log
 
@@ -368,6 +370,346 @@ class ContactMixin:
         )
         return self
 
+    #
+    # Bearing properties
+    #
+
+    @hybrid_property
+    def bearing(self):
+        # Return all bearings as degrees
+        if self._bearing is None:
+            return None
+        else:
+            return (self._bearing * unit_registry.radian).to(unit_registry.degree)
+
+    @bearing.setter
+    def bearing(self, bearing):
+        if bearing is None:
+            self._bearing = None
+            return
+
+        # Check the given bearing is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not bearing.check(""):
+                raise ValueError(
+                    "Bearing must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                bearing.units == unit_registry.degree
+                or bearing.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "Bearing must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("Bearing must be a Quantity")
+
+        # Set the actual bearing attribute to the given value converted to radians
+        self._bearing = bearing.to(unit_registry.radian).magnitude
+
+    @bearing.expression
+    def bearing(self):
+        return self._bearing
+
+    #
+    # Rel Bearing properties
+    #
+
+    @hybrid_property
+    def rel_bearing(self):
+        # Return all rel_bearings as degrees
+        if self._rel_bearing is None:
+            return None
+        else:
+            return (self._rel_bearing * unit_registry.radian).to(unit_registry.degree)
+
+    @rel_bearing.setter
+    def rel_bearing(self, rel_bearing):
+        if rel_bearing is None:
+            self._rel_bearing = None
+            return
+
+        # Check the given bearing is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not rel_bearing.check(""):
+                raise ValueError(
+                    "Relative Bearing must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                rel_bearing.units == unit_registry.degree
+                or rel_bearing.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "Relative Bearing must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("Relative Bearing must be a Quantity")
+
+        # Set the actual bearing attribute to the given value converted to radians
+        self._rel_bearing = rel_bearing.to(unit_registry.radian).magnitude
+
+    @rel_bearing.expression
+    def rel_bearing(self):
+        return self._rel_bearing
+
+    #
+    # MLA properties
+    #
+
+    @hybrid_property
+    def mla(self):
+        # Return all MLA's as degrees
+        if self._mla is None:
+            return None
+        else:
+            return (self._mla * unit_registry.radian).to(unit_registry.degree)
+
+    @mla.setter
+    def mla(self, mla):
+        if mla is None:
+            self._mla = None
+            return
+
+        # Check the given bearing is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not mla.check(""):
+                raise ValueError(
+                    "MLA must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                mla.units == unit_registry.degree or mla.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "MLA must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("MLA must be a Quantity")
+
+        # Set the actual bearing attribute to the given value converted to radians
+        self._mla = mla.to(unit_registry.radian).magnitude
+
+    @mla.expression
+    def mla(self):
+        return self._mla
+
+    #
+    # SLA properties
+    #
+
+    @hybrid_property
+    def sla(self):
+        # Return all SLA's as degrees
+        if self._sla is None:
+            return None
+        else:
+            return (self._sla * unit_registry.radian).to(unit_registry.degree)
+
+    @sla.setter
+    def sla(self, sla):
+        if sla is None:
+            self._sla = None
+            return
+
+        # Check the given bearing is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not sla.check(""):
+                raise ValueError(
+                    "SLA must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                sla.units == unit_registry.degree or sla.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "SLA must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("SLA must be a Quantity")
+
+        # Set the actual bearing attribute to the given value converted to radians
+        self._sla = sla.to(unit_registry.radian).magnitude
+
+    #
+    # Orientation properties
+    #
+
+    @hybrid_property
+    def orientation(self):
+        # Return all orientation's as degrees
+        if self._orientation is None:
+            return None
+        else:
+            return (self._orientation * unit_registry.radian).to(unit_registry.degree)
+
+    @orientation.setter
+    def orientation(self, orientation):
+        if orientation is None:
+            self._orientation = None
+            return
+
+        # Check the given orientation is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not orientation.check(""):
+                raise ValueError(
+                    "Orientation must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                orientation.units == unit_registry.degree
+                or orientation.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "Orientation must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("Orientation must be a Quantity")
+
+        # Set the actual bearing attribute to the given value converted to radians
+        self._orientation = orientation.to(unit_registry.radian).magnitude
+
+    @orientation.expression
+    def orientation(self):
+        return self._orientation
+
+    #
+    # Major property
+    #
+
+    @hybrid_property
+    def major(self):
+        # Return all majors as metres
+        if self._major is None:
+            return None
+        else:
+            return self._major * unit_registry.metre
+
+    @major.setter
+    def major(self, major):
+        if major is None:
+            self._major = None
+            return
+
+        # Check the given major is a Quantity with a dimension of 'length'
+        try:
+            if not major.check("[length]"):
+                raise ValueError(
+                    "Major must be a Quantity with a dimensionality of [length]"
+                )
+        except AttributeError:
+            raise TypeError("Major must be a Quantity")
+
+        # Set the actual major attribute to the given value converted to metres
+        self._major = major.to(unit_registry.metre).magnitude
+
+    @major.expression
+    def major(self):
+        return self._major
+
+    #
+    # Minor property
+    #
+
+    @hybrid_property
+    def minor(self):
+        # Return all minors as metres
+        if self._minor is None:
+            return None
+        else:
+            return self._minor * unit_registry.metre
+
+    @minor.setter
+    def minor(self, minor):
+        if minor is None:
+            self._minor = None
+            return
+
+        # Check the given minor is a Quantity with a dimension of 'length'
+        try:
+            if not minor.check("[length]"):
+                raise ValueError(
+                    "Minor must be a Quantity with a dimensionality of [length]"
+                )
+        except AttributeError:
+            raise TypeError("Minor must be a Quantity")
+
+        # Set the actual minor attribute to the given value converted to metres
+        self._minor = minor.to(unit_registry.metre).magnitude
+
+    @minor.expression
+    def minor(self):
+        return self._minor
+
+    #
+    # Range property
+    #
+
+    @hybrid_property
+    def range(self):
+        # Return all ranges as metres
+        if self._range is None:
+            return None
+        else:
+            return self._range * unit_registry.metre
+
+    @range.setter
+    def range(self, range):
+        if range is None:
+            self._range = None
+            return
+
+        # Check the given range is a Quantity with a dimension of 'length'
+        try:
+            if not range.check("[length]"):
+                raise ValueError(
+                    "Range must be a Quantity with a dimensionality of [length]"
+                )
+        except AttributeError:
+            raise TypeError("Range must be a Quantity")
+
+        # Set the actual range attribute to the given value converted to metres
+        self._range = range.to(unit_registry.metre).magnitude
+
+    @range.expression
+    def range(self):
+        return self._range
+
+    #
+    # Freq property
+    #
+
+    @hybrid_property
+    def freq(self):
+        # Return all freqs as Hz
+        if self._freq is None:
+            return None
+        else:
+            return self._freq * unit_registry.hertz
+
+    @freq.setter
+    def freq(self, freq):
+        if freq is None:
+            self._freq = None
+            return
+
+        # Check the given freq is a Quantity with a dimension of 'time^-1' (ie. 'per unit time')
+        try:
+            if not freq.check("[time]^-1"):
+                raise ValueError(
+                    "Freq must be a Quantity with a dimensionality of [time]^-1"
+                )
+        except AttributeError:
+            raise TypeError("Freq must be a Quantity")
+
+        # Set the actual freq attribute to the given value converted to hertz
+        self._freq = freq.to(unit_registry.hertz).magnitude
+
+    @freq.expression
+    def freq(self):
+        return self._freq
+
 
 class CommentMixin:
     def submit(self, data_store, change_id):
@@ -448,3 +790,155 @@ class LocationPropertyMixin:
     @location.expression
     def location(self):
         return self._location
+
+
+class ActivationMixin:
+    #
+    # min_range property
+    #
+    @hybrid_property
+    def min_range(self):
+        # Return all min_ranges as metres
+        if self._min_range is None:
+            return None
+        else:
+            return self._min_range * unit_registry.metre
+
+    @min_range.setter
+    def min_range(self, min_range):
+        if min_range is None:
+            self._min_range = None
+            return
+
+        # Check the given min_range is a Quantity with a dimension of 'length'
+        try:
+            if not min_range.check("[length]"):
+                raise ValueError(
+                    "min_range must be a Quantity with a dimensionality of [length]"
+                )
+        except AttributeError:
+            raise TypeError("min_range must be a Quantity")
+
+        # Set the actual min_range attribute to the given value converted to metres
+        self._min_range = min_range.to(unit_registry.metre).magnitude
+
+    @min_range.expression
+    def min_range(self):
+        return self._min_range
+
+    #
+    # max_range property
+    #
+    @hybrid_property
+    def max_range(self):
+        # Return all max_ranges as metres
+        if self._max_range is None:
+            return None
+        else:
+            return self._max_range * unit_registry.metre
+
+    @max_range.setter
+    def max_range(self, max_range):
+        if max_range is None:
+            self._max_range = None
+            return
+
+        # Check the given max_range is a Quantity with a dimension of 'length'
+        try:
+            if not max_range.check("[length]"):
+                raise ValueError(
+                    "max_range must be a Quantity with a dimensionality of [length]"
+                )
+        except AttributeError:
+            raise TypeError("max_range must be a Quantity")
+
+        # Set the actual max_range attribute to the given value converted to metres
+        self._max_range = max_range.to(unit_registry.metre).magnitude
+
+    @max_range.expression
+    def max_range(self):
+        return self._max_range
+
+    #
+    # left_arc properties
+    #
+
+    @hybrid_property
+    def left_arc(self):
+        # Return all left_arcs as degrees
+        if self._left_arc is None:
+            return None
+        else:
+            return (self._left_arc * unit_registry.radian).to(unit_registry.degree)
+
+    @left_arc.setter
+    def left_arc(self, left_arc):
+        if left_arc is None:
+            self._left_arc = None
+            return
+
+        # Check the given left_arc is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not left_arc.check(""):
+                raise ValueError(
+                    "left_arc must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                left_arc.units == unit_registry.degree
+                or left_arc.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "left_arc must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("left_arc must be a Quantity")
+
+        # Set the actual left_arc attribute to the given value converted to radians
+        self._left_arc = left_arc.to(unit_registry.radian).magnitude
+
+    @left_arc.expression
+    def left_arc(self):
+        return self._left_arc
+
+    #
+    # right_arc properties
+    #
+
+    @hybrid_property
+    def right_arc(self):
+        # Return all right_arcs as degrees
+        if self._right_arc is None:
+            return None
+        else:
+            return (self._right_arc * unit_registry.radian).to(unit_registry.degree)
+
+    @right_arc.setter
+    def right_arc(self, right_arc):
+        if right_arc is None:
+            self._right_arc = None
+            return
+
+        # Check the given right_arc is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not right_arc.check(""):
+                raise ValueError(
+                    "right_arc must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                right_arc.units == unit_registry.degree
+                or right_arc.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "right_arc must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("right_arc must be a Quantity")
+
+        # Set the actual right_arc attribute to the given value converted to radians
+        self._right_arc = right_arc.to(unit_registry.radian).magnitude
+
+    @right_arc.expression
+    def right_arc(self):
+        return self._right_arc

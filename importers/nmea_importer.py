@@ -1,4 +1,5 @@
 from datetime import datetime
+from tqdm import tqdm
 
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 from pepys_import.file.highlighter.support.combine import combine_tokens
@@ -44,7 +45,7 @@ class NMEAImporter(Importer):
         # keep track of generated platform name
         platform_name = None
 
-        for line_number, line in enumerate(file_object.lines(), 1):
+        for line_number, line in enumerate(tqdm(file_object.lines()), 1):
             tokens = line.tokens(line.CSV_DELIM, ",")
 
             if len(tokens) > 1:
