@@ -4,49 +4,15 @@
 Installation
 ============
 
+Deployable releases of pepys-import are available on the `Releases
+<https://github.com/debrief/pepys-import/releases>`_ page. Download the latest release and follow the
+instructions below to install:
 
-Stable release
---------------
+1. Extract the contents of the downloaded zip file into a folder of your choice (note, this can be
+anywhere, including on a shared network drive). This zip file contains everything that is needed
+to run pepys-import - including a standalone installation of Python, all of the Python dependencies,
+various required DLLs and the pepys-import code itself.
 
-To install pepys-import, run this command in your terminal:
-
-.. code-block:: console
-
-    $ pip install pepys_import
-
-This is the preferred method to install pepys-import, as it will
-always install the most recent stable release.
-
-If you don't have `pip`_ installed, this `Python installation guide`_ can guide
-you through the process.
-
-.. _pip: https://pip.pypa.io
-.. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
-
-
-From sources
-------------
-
-The sources for pepys-import can be downloaded from the `Github repo`_.
-
-You can either clone the public repository:
-
-.. code-block:: console
-
-    $ git clone git://github.com/debrief/pepys-import
-
-Or download the `tarball`_:
-
-.. code-block:: console
-
-    $ curl -OJL https://github.com/debrief/pepys-import/tarball/master
-
-Once you have a copy of the source, you can install it with:
-
-.. code-block:: console
-
-    $ python setup.py install
-
-
-.. _Github repo: https://github.com/debrief/pepys-import
-.. _tarball: https://github.com/debrief/pepys-import/tarball/master
+2. Once for each user who will use pepys-import, run ``create_shortcuts.bat`` in the ``bin`` directory.
+This will create shortcuts to the relevant pepys-import batch files (from the ``bin`` directory) and copy
+them to the user's *Send To* folder.

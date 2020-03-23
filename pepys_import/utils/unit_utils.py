@@ -37,6 +37,7 @@ def convert_absolute_angle(angle, line_number, errors, error_type):
 def convert_speed(speed, units, line_number, errors, error_type):
     """
     Parses the given speed value into a float and assigns the given units
+    
     :param speed: Speed value in string format
     :type speed: String
     :param units: Units of the speed (as a pint unit instance)
@@ -61,11 +62,6 @@ def convert_speed(speed, units, line_number, errors, error_type):
         return False
     speed = valid_speed * units
     return speed
-
-
-def convert_string_location_to_degrees(first_location):
-    longitude, latitude = first_location[16:-1].split()
-    return float(longitude), float(latitude)
 
 
 def extract_points(location):

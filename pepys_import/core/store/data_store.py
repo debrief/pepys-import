@@ -1099,7 +1099,7 @@ class DataStore(object):
 
     def add_to_logs(self, table, row_id, field=None, new_value=None, change_id=None):
         """
-        Adds the specified event to the :class:`Logs`table if not already present.
+        Adds the specified event to the :class:`Logs` table if not already present.
 
         :param table: Name of the table
         :param row_id: Entity ID of the tale
@@ -1124,7 +1124,7 @@ class DataStore(object):
 
     def add_to_changes(self, user, modified, reason):
         """
-        Adds the specified event to the :class:`Change`table if not already present.
+        Adds the specified event to the :class:`Change` table if not already present.
 
         :param user: Username of the current login
         :param modified: Change date

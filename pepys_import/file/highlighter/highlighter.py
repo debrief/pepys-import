@@ -46,9 +46,9 @@ class HighlightedFile:
         """
         Provide highlighted summary for this file
         Args:
-            filename (str): The name of the destination for the HTML output
-            include_key (bool): Whether to include a key at the bottom of the output
-            showing what each colour refers to
+        filename (str): The name of the destination for the HTML output
+        include_key (bool): Whether to include a key at the bottom of the output
+        showing what each colour refers to
         """
         if len(self.chars) > 0:
             export_report(filename, self.chars, self.dict_color, include_key)
