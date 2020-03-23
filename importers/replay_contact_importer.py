@@ -1,3 +1,5 @@
+from tqdm import tqdm
+
 from pepys_import.core.validators import constants
 from pepys_import.core.formats.rep_line import parse_timestamp
 from pepys_import.file.highlighter.support.combine import combine_tokens
@@ -33,7 +35,7 @@ class ReplayContactImporter(Importer):
         return True
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
-        for line_number, line in enumerate(file_object.lines(), 1):
+        for line_number, line in enumerate(tqdm(file_object.lines()), 1):
             if line.text.startswith(";"):
                 # we'll be using this value to determine if we have location
                 lat_degrees_token = None

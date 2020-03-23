@@ -1,5 +1,6 @@
 from lxml import etree
 from dateutil.parser import parse
+from tqdm import tqdm
 
 from pepys_import.file.importer import Importer
 from pepys_import.core.formats import unit_registry
@@ -51,7 +52,7 @@ class GPXImporter(Importer):
 
         # Iterate through <trk> elements - these should correspond to
         # a specific platform, with the platform name in the <name> element
-        for track_element in doc.findall("//{*}trk"):
+        for track_element in tqdm(doc.findall("//{*}trk")):
             track_name = track_element.find("{*}name").text
 
             # Get the platform and sensor details, as these will be the same for all
