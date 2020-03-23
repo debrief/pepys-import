@@ -154,7 +154,7 @@ def convert_distance(distance, units, line_number, errors, error_type):
     """
     Converts the given distance string to a Quantity consisting of a
     float value and the given units.
-    
+
     :param distance: distance value in string format
     :type distance: String
     :param units: units of distance for supplied measurement

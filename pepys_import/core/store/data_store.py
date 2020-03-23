@@ -1,18 +1,15 @@
-import math
 import os
 from contextlib import contextmanager
 from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from shapely import wkb
 from sqlalchemy import create_engine, or_
 from sqlalchemy.event import listen
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func, select
 
-import pepys_import.utils.unit_utils as unit_converter
 import pepys_import.utils.value_transforming_utils as transformer
 from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import import __version__
