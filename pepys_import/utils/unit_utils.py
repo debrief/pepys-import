@@ -63,11 +63,6 @@ def convert_speed(speed, units, line_number, errors, error_type):
     return speed
 
 
-def convert_string_location_to_degrees(first_location):
-    longitude, latitude = first_location[16:-1].split()
-    return float(longitude), float(latitude)
-
-
 def extract_points(location):
     # convert decimal degrees to radians and return
     return radians(location.longitude), radians(location.latitude)
