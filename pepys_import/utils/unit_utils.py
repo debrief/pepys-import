@@ -121,9 +121,42 @@ def distance_between_two_points_haversine(first_location, second_location):
     )
 
 
+def convert_frequency(frequency, units, line_number, errors, error_type):
+    """
+    Converts the given frequency string to a Quantity containing a float
+    value and the given units
+
+    :param frequency: frequency value in string format
+    :type frequency: String
+    :param units: units of frequency for supplied measurement
+    :type units: String
+    :param line_number: Line number
+    :type line_number: String
+    :param errors: Error List to save value error if it raises
+    :type errors: List
+    :param error_type: Type of error
+    :type error_type: String
+    :return: return the converted speed value
+    """
+    try:
+        valid_frequency = float(frequency)
+    except ValueError:
+        errors.append(
+            {
+                error_type: f"Line {line_number}. Error in frequency value {frequency}. "
+                f"Couldn't convert to a number"
+            }
+        )
+        return False
+    frequency = valid_frequency * units
+    return frequency
+
+
 def convert_distance(distance, units, line_number, errors, error_type):
     """
-    Converts the given distance value in supplied units to metres formsat
+    Converts the given distance string to a Quantity consisting of a
+    float value and the given units.
+    
     :param distance: distance value in string format
     :type distance: String
     :param units: units of distance for supplied measurement
@@ -146,17 +179,5 @@ def convert_distance(distance, units, line_number, errors, error_type):
             }
         )
         return False
-    distance = (valid_distance * units).to(unit_registry.meter).magnitude
+    distance = valid_distance * units
     return distance
-
-
-def convert_radian_to_degree(radian_value):
-    return (radian_value * unit_registry.radians).to(unit_registry.degree).magnitude
-
-
-def convert_meter_to_yard(meters):
-    return (meters * unit_registry.meter).to(unit_registry.yard).magnitude
-
-
-def convert_mps_to_knot(mps_value):
-    return round(mps_value.to(unit_registry.knot).magnitude, 3,)
