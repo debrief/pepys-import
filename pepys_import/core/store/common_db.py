@@ -858,3 +858,45 @@ class ActivationMixin:
     @max_range.expression
     def max_range(self):
         return self._max_range
+
+    #
+    # left_arc properties
+    #
+
+    @hybrid_property
+    def left_arc(self):
+        # Return all left_arcs as degrees
+        if self._left_arc is None:
+            return None
+        else:
+            return (self._left_arc * unit_registry.radian).to(unit_registry.degree)
+
+    @left_arc.setter
+    def left_arc(self, left_arc):
+        if left_arc is None:
+            self._left_arc = None
+            return
+
+        # Check the given left_arc is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not left_arc.check(""):
+                raise ValueError(
+                    "left_arc must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                left_arc.units == unit_registry.degree
+                or left_arc.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "left_arc must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("left_arc must be a Quantity")
+
+        # Set the actual left_arc attribute to the given value converted to radians
+        self._left_arc = left_arc.to(unit_registry.radian).magnitude
+
+    @left_arc.expression
+    def left_arc(self):
+        return self._left_arc

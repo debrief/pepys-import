@@ -924,6 +924,60 @@ class TestActivationMaxRangeProperty(unittest.TestCase):
         assert activation.max_range.check("[length]")
 
 
+class TestActivationLeftArcProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_activation_left_arc_none(self):
+        activation = self.store.db_classes.Activation()
+
+        activation.left_arc = None
+
+        assert activation.left_arc is None
+
+    def test_activation_left_arc_scalar(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            activation.left_arc = 5
+
+        assert "left_arc must be a Quantity" in str(exception.value)
+
+    def test_activation_left_arc_wrong_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.left_arc = 5 * unit_registry.second
+
+        assert "left_arc must be a Quantity with a dimensionality of ''" in str(
+            exception.value
+        )
+
+    def test_activation_left_arc_right_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        activation.left_arc = 57 * unit_registry.degree
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        activation.left_arc = 0.784 * unit_registry.radian
+
+    def test_activation_left_arc_roundtrip(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting and retrieving field works, and gives units as a result
+        activation.left_arc = 157 * unit_registry.degree
+
+        assert activation.left_arc == 157 * unit_registry.degree
+        assert activation.left_arc.check("")
+
+
 class TestLocationRoundtripToDB(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
