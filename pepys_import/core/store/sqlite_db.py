@@ -418,7 +418,7 @@ class Activation(BaseSpatiaLite, ActivationMixin):
     _min_range = Column(REAL)
     _max_range = Column(REAL)
     _left_arc = Column(REAL)
-    right_arc = Column(REAL)
+    _right_arc = Column(REAL)
     source_id = Column(Integer, nullable=False)
     privacy_id = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)

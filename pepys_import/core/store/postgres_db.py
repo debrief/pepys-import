@@ -505,7 +505,7 @@ class Activation(BasePostGIS, ActivationMixin):
     _min_range = Column(DOUBLE_PRECISION)
     _max_range = Column(DOUBLE_PRECISION)
     _left_arc = Column(DOUBLE_PRECISION)
-    right_arc = Column(DOUBLE_PRECISION)
+    _right_arc = Column(DOUBLE_PRECISION)
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )

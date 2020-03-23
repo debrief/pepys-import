@@ -900,3 +900,45 @@ class ActivationMixin:
     @left_arc.expression
     def left_arc(self):
         return self._left_arc
+
+    #
+    # right_arc properties
+    #
+
+    @hybrid_property
+    def right_arc(self):
+        # Return all right_arcs as degrees
+        if self._right_arc is None:
+            return None
+        else:
+            return (self._right_arc * unit_registry.radian).to(unit_registry.degree)
+
+    @right_arc.setter
+    def right_arc(self, right_arc):
+        if right_arc is None:
+            self._right_arc = None
+            return
+
+        # Check the given right_arc is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not right_arc.check(""):
+                raise ValueError(
+                    "right_arc must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                right_arc.units == unit_registry.degree
+                or right_arc.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "right_arc must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("right_arc must be a Quantity")
+
+        # Set the actual right_arc attribute to the given value converted to radians
+        self._right_arc = right_arc.to(unit_registry.radian).magnitude
+
+    @right_arc.expression
+    def right_arc(self):
+        return self._right_arc
