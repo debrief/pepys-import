@@ -1,4 +1,4 @@
-from prompt_toolkit.shortcuts import ProgressBar
+from tqdm import tqdm
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from pepys_import.core.formats import unit_registry
@@ -204,15 +204,14 @@ class DatafileMixin:
         # Since measurements are saved by their importer names, iterate over each key
         # and save its measurement objects.
         extraction_log = list()
-        with ProgressBar() as pb:
-            for key in self.measurements.keys():
-                print(f"Submitting the measurement objects that parsed by {key}.")
-                for file in pb(self.measurements[key]):
-                    file.submit(data_store, change_id)
-                extraction_log.append(
-                    f"{len(self.measurements[key])} measurement objects parsed by {key}."
-                )
-            return extraction_log
+        for key in self.measurements.keys():
+            print(f"Submitting the measurement objects that parsed by {key}.")
+            for file in tqdm(self.measurements[key]):
+                file.submit(data_store, change_id)
+            extraction_log.append(
+                f"{len(self.measurements[key])} measurement objects parsed by {key}."
+            )
+        return extraction_log
 
 
 class SensorTypeMixin:
