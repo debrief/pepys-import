@@ -816,6 +816,60 @@ class TestLocationProperty:
         assert obj.location.longitude == -1.34
 
 
+class TestActivationMinRangeProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_activation_min_range_none(self):
+        activation = self.store.db_classes.Activation()
+
+        activation.min_range = None
+
+        assert activation.min_range is None
+
+    def test_activation_min_range_scalar(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            activation.min_range = 5
+
+        assert "min_range must be a Quantity" in str(exception.value)
+
+    def test_activation_min_range_wrong_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.min_range = 5 * unit_registry.second
+
+        assert "min_range must be a Quantity with a dimensionality of [length]" in str(
+            exception.value
+        )
+
+    def test_activation_min_range_right_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        activation.min_range = 57 * unit_registry.kilometre
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        activation.min_range = 1523 * unit_registry.angstrom
+
+    def test_activation_min_range_roundtrip(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting and retrieving field works, and gives units as a result
+        activation.min_range = 99 * unit_registry.metre
+
+        assert activation.min_range == 99 * unit_registry.metre
+        assert activation.min_range.check("[length]")
+
+
 class TestLocationRoundtripToDB(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")

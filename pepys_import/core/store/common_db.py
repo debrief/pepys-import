@@ -790,3 +790,38 @@ class LocationPropertyMixin:
     @location.expression
     def location(self):
         return self._location
+
+
+class ActivationMixin:
+    #
+    # min_range property
+    #
+    @hybrid_property
+    def min_range(self):
+        # Return all min_ranges as metres
+        if self._min_range is None:
+            return None
+        else:
+            return self._min_range * unit_registry.metre
+
+    @min_range.setter
+    def min_range(self, min_range):
+        if min_range is None:
+            self._min_range = None
+            return
+
+        # Check the given min_range is a Quantity with a dimension of 'length'
+        try:
+            if not min_range.check("[length]"):
+                raise ValueError(
+                    "min_range must be a Quantity with a dimensionality of [length]"
+                )
+        except AttributeError:
+            raise TypeError("min_range must be a Quantity")
+
+        # Set the actual min_range attribute to the given value converted to metres
+        self._min_range = min_range.to(unit_registry.metre).magnitude
+
+    @min_range.expression
+    def min_range(self):
+        return self._min_range

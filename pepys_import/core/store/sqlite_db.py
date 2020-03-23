@@ -20,6 +20,7 @@ from pepys_import.core.store.common_db import (
     MediaMixin,
     ElevationPropertyMixin,
     LocationPropertyMixin,
+    ActivationMixin,
 )
 
 
@@ -404,7 +405,7 @@ class Contact(
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Activation(BaseSpatiaLite):
+class Activation(BaseSpatiaLite, ActivationMixin):
     __tablename__ = constants.ACTIVATION
     table_type = TableTypes.MEASUREMENT
     table_type_id = 30
@@ -414,7 +415,7 @@ class Activation(BaseSpatiaLite):
     sensor_id = Column(Integer, nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
-    min_range = Column(REAL)
+    _min_range = Column(REAL)
     max_range = Column(REAL)
     left_arc = Column(REAL)
     right_arc = Column(REAL)

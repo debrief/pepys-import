@@ -21,6 +21,7 @@ from pepys_import.core.store.common_db import (
     MediaMixin,
     ElevationPropertyMixin,
     LocationPropertyMixin,
+    ActivationMixin,
 )
 
 from uuid import uuid4
@@ -488,7 +489,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Activation(BasePostGIS):
+class Activation(BasePostGIS, ActivationMixin):
     __tablename__ = constants.ACTIVATION
     table_type = TableTypes.MEASUREMENT
     table_type_id = 30
@@ -501,7 +502,7 @@ class Activation(BasePostGIS):
     )
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
-    min_range = Column(DOUBLE_PRECISION)
+    _min_range = Column(DOUBLE_PRECISION)
     max_range = Column(DOUBLE_PRECISION)
     left_arc = Column(DOUBLE_PRECISION)
     right_arc = Column(DOUBLE_PRECISION)
