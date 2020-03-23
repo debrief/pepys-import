@@ -496,41 +496,38 @@ class ContactMixin:
         return self._mla
 
     #
-    # SLA properties
+    # SOA properties
     #
 
     @hybrid_property
-    def sla(self):
-        # Return all SLA's as degrees
-        if self._sla is None:
+    def soa(self):
+        # Return all soas as metres per second
+        if self._soa is None:
             return None
         else:
-            return (self._sla * unit_registry.radian).to(unit_registry.degree)
+            return self._soa * (unit_registry.metre / unit_registry.second)
 
-    @sla.setter
-    def sla(self, sla):
-        if sla is None:
-            self._sla = None
+    @soa.setter
+    def soa(self, soa):
+        if soa is None:
+            self._soa = None
             return
 
-        # Check the given bearing is a Quantity with a dimension of '' and units of
-        # degrees or radians
+        # Check the given soa is a Quantity with a dimension of 'length / time'
         try:
-            if not sla.check(""):
+            if not soa.check("[length]/[time]"):
                 raise ValueError(
-                    "SLA must be a Quantity with a dimensionality of '' (ie. nothing)"
-                )
-            if not (
-                sla.units == unit_registry.degree or sla.units == unit_registry.radian
-            ):
-                raise ValueError(
-                    "SLA must be a Quantity with angular units (degree or radian)"
+                    "SOA must be a Quantity with a dimensionality of [length]/[time]"
                 )
         except AttributeError:
-            raise TypeError("SLA must be a Quantity")
+            raise TypeError("SOA must be a Quantity")
 
-        # Set the actual bearing attribute to the given value converted to radians
-        self._sla = sla.to(unit_registry.radian).magnitude
+        # Set the actual soa attribute to the given value converted to metres per second
+        self._soa = soa.to(unit_registry.metre / unit_registry.second).magnitude
+
+    @soa.expression
+    def soa(self):
+        return self._soa
 
     #
     # Orientation properties

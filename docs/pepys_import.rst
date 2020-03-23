@@ -12,6 +12,18 @@ Subpackages
    pepys_import.resolvers
    pepys_import.utils
 
+Submodules
+----------
+
+pepys\_import.import module
+---------------------------
+
+.. automodule:: pepys_import.import
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 Module contents
 ---------------
 
