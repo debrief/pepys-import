@@ -17,6 +17,7 @@ from pepys_import.core.store.common_db import (
     SensorMixin,
     SensorTypeMixin,
     StateMixin,
+    ActivationMixin,
 )
 from pepys_import.core.store.db_base import BasePostGIS
 from pepys_import.core.store.db_status import TableTypes
@@ -456,7 +457,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Activation(BasePostGIS):
+class Activation(BasePostGIS, ActivationMixin):
     __tablename__ = constants.ACTIVATION
     table_type = TableTypes.MEASUREMENT
     table_type_id = 30
@@ -467,10 +468,10 @@ class Activation(BasePostGIS):
     sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
-    min_range = Column(DOUBLE_PRECISION)
-    max_range = Column(DOUBLE_PRECISION)
-    left_arc = Column(DOUBLE_PRECISION)
-    right_arc = Column(DOUBLE_PRECISION)
+    _min_range = Column(DOUBLE_PRECISION)
+    _max_range = Column(DOUBLE_PRECISION)
+    _left_arc = Column(DOUBLE_PRECISION)
+    _right_arc = Column(DOUBLE_PRECISION)
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )

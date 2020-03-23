@@ -791,6 +791,218 @@ class TestLocationProperty:
         assert obj.location.longitude == -1.34
 
 
+class TestActivationMinRangeProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_activation_min_range_none(self):
+        activation = self.store.db_classes.Activation()
+
+        activation.min_range = None
+
+        assert activation.min_range is None
+
+    def test_activation_min_range_scalar(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            activation.min_range = 5
+
+        assert "min_range must be a Quantity" in str(exception.value)
+
+    def test_activation_min_range_wrong_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.min_range = 5 * unit_registry.second
+
+        assert "min_range must be a Quantity with a dimensionality of [length]" in str(
+            exception.value
+        )
+
+    def test_activation_min_range_right_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        activation.min_range = 57 * unit_registry.kilometre
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        activation.min_range = 1523 * unit_registry.angstrom
+
+    def test_activation_min_range_roundtrip(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting and retrieving field works, and gives units as a result
+        activation.min_range = 99 * unit_registry.metre
+
+        assert activation.min_range == 99 * unit_registry.metre
+        assert activation.min_range.check("[length]")
+
+
+class TestActivationMaxRangeProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_activation_max_range_none(self):
+        activation = self.store.db_classes.Activation()
+
+        activation.max_range = None
+
+        assert activation.max_range is None
+
+    def test_activation_max_range_scalar(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            activation.max_range = 5
+
+        assert "max_range must be a Quantity" in str(exception.value)
+
+    def test_activation_max_range_wrong_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.max_range = 5 * unit_registry.second
+
+        assert "max_range must be a Quantity with a dimensionality of [length]" in str(
+            exception.value
+        )
+
+    def test_activation_max_range_right_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        activation.max_range = 23 * unit_registry.kilometre
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        activation.max_range = 978 * unit_registry.angstrom
+
+    def test_activation_max_range_roundtrip(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting and retrieving field works, and gives units as a result
+        activation.max_range = 143 * unit_registry.metre
+
+        assert activation.max_range == 143 * unit_registry.metre
+        assert activation.max_range.check("[length]")
+
+
+class TestActivationLeftArcProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_activation_left_arc_none(self):
+        activation = self.store.db_classes.Activation()
+
+        activation.left_arc = None
+
+        assert activation.left_arc is None
+
+    def test_activation_left_arc_scalar(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            activation.left_arc = 5
+
+        assert "left_arc must be a Quantity" in str(exception.value)
+
+    def test_activation_left_arc_wrong_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.left_arc = 5 * unit_registry.second
+
+        assert "left_arc must be a Quantity with a dimensionality of ''" in str(exception.value)
+
+    def test_activation_left_arc_right_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        activation.left_arc = 57 * unit_registry.degree
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        activation.left_arc = 0.784 * unit_registry.radian
+
+    def test_activation_left_arc_roundtrip(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting and retrieving field works, and gives units as a result
+        activation.left_arc = 157 * unit_registry.degree
+
+        assert activation.left_arc == 157 * unit_registry.degree
+        assert activation.left_arc.check("")
+
+
+class TestActivationRightArcProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_activation_right_arc_none(self):
+        activation = self.store.db_classes.Activation()
+
+        activation.right_arc = None
+
+        assert activation.right_arc is None
+
+    def test_activation_right_arc_scalar(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            activation.right_arc = 5
+
+        assert "right_arc must be a Quantity" in str(exception.value)
+
+    def test_activation_right_arc_wrong_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.right_arc = 5 * unit_registry.second
+
+        assert "right_arc must be a Quantity with a dimensionality of ''" in str(exception.value)
+
+    def test_activation_right_arc_right_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        activation.right_arc = 98 * unit_registry.degree
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        activation.right_arc = 0.523 * unit_registry.radian
+
+    def test_activation_right_arc_roundtrip(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting and retrieving field works, and gives units as a result
+        activation.right_arc = 121 * unit_registry.degree
+
+        assert activation.right_arc == 121 * unit_registry.degree
+        assert activation.right_arc.check("")
+
+
 class TestLocationRoundtripToDB(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
