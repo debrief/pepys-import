@@ -345,50 +345,50 @@ class TestContactSLAProperty(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_contact_sla_none(self):
+    def test_contact_soa_none(self):
         contact = self.store.db_classes.Contact()
 
-        contact.sla = None
+        contact.soa = None
 
-        assert contact.sla is None
+        assert contact.soa is None
 
-    def test_contact_sla_scalar(self):
+    def test_contact_soa_scalar(self):
         contact = self.store.db_classes.Contact()
 
         # Check setting with a scalar (float) gives error
         with pytest.raises(TypeError) as exception:
-            contact.sla = 5
+            contact.soa = 5
 
-        assert "SLA must be a Quantity" in str(exception.value)
+        assert "SOA must be a Quantity" in str(exception.value)
 
-    def test_contact_sla_wrong_units(self):
+    def test_contact_soa_wrong_units(self):
         contact = self.store.db_classes.Contact()
 
         # Check setting with a Quantity of the wrong units gives error
         with pytest.raises(ValueError) as exception:
-            contact.sla = 5 * unit_registry.second
+            contact.soa = 5 * unit_registry.second
 
-        assert "SLA must be a Quantity with a dimensionality of ''" in str(
+        assert "SOA must be a Quantity with a dimensionality of ''" in str(
             exception.value
         )
 
-    def test_contact_sla_right_units(self):
+    def test_contact_soa_right_units(self):
         contact = self.store.db_classes.Contact()
 
         # Check setting with a Quantity of the right SI units succeeds
-        contact.sla = 57 * unit_registry.degree
+        contact.soa = 57 * unit_registry.degree
 
         # Check setting with a Quantity of strange but valid units succeeds
-        contact.sla = 0.784 * unit_registry.radian
+        contact.soa = 0.784 * unit_registry.radian
 
-    def test_contact_sla_roundtrip(self):
+    def test_contact_soa_roundtrip(self):
         contact = self.store.db_classes.Contact()
 
         # Check setting and retrieving field works, and gives units as a result
-        contact.sla = 198 * unit_registry.degree
+        contact.soa = 198 * unit_registry.degree
 
-        assert contact.sla == 198 * unit_registry.degree
-        assert contact.sla.check("")
+        assert contact.soa == 198 * unit_registry.degree
+        assert contact.soa.check("")
 
 
 class TestContactOrientationProperty(unittest.TestCase):
