@@ -205,11 +205,11 @@ class DatafileMixin:
         # and save its measurement objects.
         extraction_log = list()
         for key in self.measurements.keys():
-            print(f"Submitting the measurement objects that parsed by {key}.")
+            print(f"Submitting measurements extracted by {key}.")
             for file in tqdm(self.measurements[key]):
                 file.submit(data_store, change_id)
             extraction_log.append(
-                f"{len(self.measurements[key])} measurement objects parsed by {key}."
+                f"{len(self.measurements[key])} measurements extracted by {key}."
             )
         return extraction_log
 
