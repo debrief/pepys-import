@@ -104,9 +104,13 @@ class EnhancedValidator:
         return False
 
     def speed_loose_match_with_location(self):
-        calculated_speed = distance_between_two_points_haversine(
+        calculated_distance = distance_between_two_points_haversine(
             self.prev_location, self.location
         )
+        # BREAKING. We don't store self.prev_time
+        time_delta = (self.time - self.prev_time) * unit_registry.second
+        calculated_distance_m = calculated_distance.to(unit_registry.metre)
+        calculated_speed = calculated_distance_m / time_delta
         if self.speed is None or calculated_speed <= self.speed * 10:
             return True
         self.errors.append(
