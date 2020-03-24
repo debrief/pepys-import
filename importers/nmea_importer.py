@@ -107,7 +107,7 @@ class NMEAImporter(Importer):
                     )
                     timestamp = self.parse_timestamp(self.date, self.time)
                     combine_tokens(self.date_token, self.time_token).record(
-                        self.name, "timestamp", timestamp, "n/a"
+                        self.name, "timestamp", timestamp
                     )
 
                     state = datafile.create_state(
@@ -145,7 +145,7 @@ class NMEAImporter(Importer):
                     )
                     if heading:
                         state.heading = heading
-                    self.heading_token.record(self.name, "heading", heading, "degrees")
+                    self.heading_token.record(self.name, "heading", heading)
 
                     speed = convert_speed(
                         self.speed,
@@ -156,7 +156,7 @@ class NMEAImporter(Importer):
                     )
                     if speed:
                         state.speed = speed
-                    self.speed_token.record(self.name, "speed", speed, "knots")
+                    self.speed_token.record(self.name, "speed", speed)
 
                     state.privacy = privacy.privacy_id
 
