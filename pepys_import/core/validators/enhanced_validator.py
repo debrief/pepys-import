@@ -37,10 +37,11 @@ class EnhancedValidator:
             )
             self.prev_time = prev_object.time if hasattr(prev_object, "time") else None
 
-            self.course_heading_loose_match_with_location()
-            self.calculated_time = self.calculate_time()
-            if self.calculated_time != 0:
-                self.speed_loose_match_with_location()
+            if self.location and self.prev_location:
+                self.course_heading_loose_match_with_location()
+                self.calculated_time = self.calculate_time()
+                if self.calculated_time != 0:
+                    self.speed_loose_match_with_location()
 
     @staticmethod
     def acceptable_bearing_error(bearing1, bearing2, delta):
