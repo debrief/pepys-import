@@ -85,7 +85,7 @@ class ReplayContactImporter(Importer):
                     token_ctr += 1
                     sensor_name = tokens[token_ctr]
 
-                    sensor_name.record(self.name, "sensor", sensor_name.text, "N/A")
+                    sensor_name.record(self.name, "sensor", sensor_name.text)
 
                     token_ctr += 1
                     # label = tokens[token_ctr:]
@@ -140,7 +140,7 @@ class ReplayContactImporter(Importer):
                     token_ctr += 1
                     sensor_name = tokens[token_ctr]
 
-                    sensor_name.record(self.name, "sensor", sensor_name.text, "N/A")
+                    sensor_name.record(self.name, "sensor", sensor_name.text)
 
                     token_ctr += 1
                     # label = tokens[token_ctr:]
@@ -215,7 +215,7 @@ class ReplayContactImporter(Importer):
                     change_id=change_id,
                 )
                 vessel_name_token.record(
-                    self.name, "vessel name", vessel_name_token.text, "n/a"
+                    self.name, "vessel name", vessel_name_token.text
                 )
                 sensor_type = data_store.add_to_sensor_types(
                     sensor_name.text, change_id
@@ -230,7 +230,7 @@ class ReplayContactImporter(Importer):
 
                 timestamp = parse_timestamp(date_token.text, time_token.text)
                 combine_tokens(date_token, time_token).record(
-                    self.name, "timestamp", timestamp, "n/a"
+                    self.name, "timestamp", timestamp
                 )
 
                 contact = datafile.create_contact(
@@ -255,7 +255,7 @@ class ReplayContactImporter(Importer):
                         self.errors,
                         self.error_type,
                     )
-                    range_token.record(self.name, "range", range_val, "yds")
+                    range_token.record(self.name, "range", range_val)
                     contact.range = range_val
 
                 if freq_token is not None:
@@ -267,7 +267,7 @@ class ReplayContactImporter(Importer):
                             self.errors,
                             self.error_type,
                         )
-                        freq_token.record(self.name, "frequency", freq_val, "Hz")
+                        freq_token.record(self.name, "frequency", freq_val)
                         contact.freq = freq_val
 
                 if ambig_bearing_token is not None:
@@ -278,6 +278,6 @@ class ReplayContactImporter(Importer):
                             bearing_token.text, line, self.errors, self.error_type
                         )
                         ambig_bearing_token.record(
-                            self.name, "ambig bearing", ambig_bearing, "degs"
+                            self.name, "ambig bearing", ambig_bearing
                         )
                         # TODO - add ambiguous bearing to schema

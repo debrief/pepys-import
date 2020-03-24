@@ -82,7 +82,7 @@ class Line:
 
         return self.tokens_array
 
-    def record(self, tool: str, field: str, value: str, units: str = "n/a"):
+    def record(self, tool: str, field: str, value: str, units: str = None):
         """
         Record a usage of the whole line, by adding a SingleUsage object to each of the
         relevant characters in the char array referenced by each SubToken child.
@@ -96,7 +96,10 @@ class Line:
         self.highlighted_file.fill_char_array_if_needed()
 
         tool_field = tool + "/" + field
-        message = "Value:" + str(value) + " Units:" + str(units)
+        if units is not None:
+            message = "Value:" + str(value) + " Units:" + str(units)
+        else:
+            message = "Value:" + str(value)
 
         for child in self.children:
             for i in range(int(child.start()), int(child.end())):
