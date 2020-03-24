@@ -42,26 +42,21 @@ class InitialiseShell(cmd.Cmd):
 
     def do_cleardb(self, args):
         self.datastore.clear_db()
-        print("Cleared database")
 
     def do_create_pepys_schema(self, args):
         self.datastore.initialise()
-        print("Initialised database")
 
     def do_import_reference_data(self, args):
         with self.datastore.session_scope():
             self.datastore.populate_reference(self.csv_path)
-        print("Reference data imported")
 
     def do_import_metadata(self, args):
         with self.datastore.session_scope():
             self.datastore.populate_metadata(self.csv_path)
-        print("Metadata imported")
 
     def do_import_sample_measurements(self, args):
         with self.datastore.session_scope():
             self.datastore.populate_measurement(self.csv_path)
-        print("Sample measurements imported")
 
     def do_cancel(self, *args):
         return True
