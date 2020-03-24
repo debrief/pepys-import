@@ -196,18 +196,18 @@ class DatafileMixin:
                 return True
             return False
         elif validation_level == validation_constants.ENHANCED_LEVEL:
-            for key, values in self.measurements[parser].items():
-                for index, measurement in enumerate(values):
+            for key, objects in self.measurements[parser].items():
+                for index, curr_object in enumerate(objects):
                     prev_object = None
                     if index >= 1:
-                        prev_object = values[index - 1]
+                        prev_object = objects[index - 1]
 
-                    BasicValidator(measurement, errors, parser)
+                    BasicValidator(curr_object, errors, parser)
                     for basic_validator in LOCAL_BASIC_VALIDATORS:
-                        basic_validator(measurement, errors, parser)
-                    EnhancedValidator(measurement, errors, parser, prev_object)
+                        basic_validator(curr_object, errors, parser)
+                    EnhancedValidator(curr_object, errors, parser, prev_object)
                     for enhanced_validator in LOCAL_ENHANCED_VALIDATORS:
-                        enhanced_validator(measurement, errors, parser, prev_object)
+                        enhanced_validator(curr_object, errors, parser, prev_object)
             if not errors:
                 return True
             return False
@@ -217,13 +217,13 @@ class DatafileMixin:
         # and save its measurement objects.
         extraction_log = list()
         for key in self.measurements:
-            total_values = 0
-            for platform, values in self.measurements[key].items():
-                total_values += len(values)
+            total_objects = 0
+            for platform, objects in self.measurements[key].items():
+                total_objects += len(objects)
                 print(f"Submitting measurements extracted by {key}.")
-                for file in tqdm(values):
-                    file.submit(data_store, change_id)
-            extraction_log.append(f"{total_values} measurements extracted by {key}.")
+                for obj in tqdm(objects):
+                    obj.submit(data_store, change_id)
+            extraction_log.append(f"{total_objects} measurements extracted by {key}.")
         return extraction_log
 
 
