@@ -216,14 +216,16 @@ class DatafileMixin:
         # Since measurements are saved by their importer names, iterate over each key
         # and save its measurement objects.
         extraction_log = list()
-        for key in self.measurements:
+        for parser in self.measurements:
             total_objects = 0
-            for platform, objects in self.measurements[key].items():
+            for platform, objects in self.measurements[parser].items():
                 total_objects += len(objects)
-                print(f"Submitting measurements extracted by {key}.")
+                print(f"Submitting measurements extracted by {parser}.")
                 for obj in tqdm(objects):
                     obj.submit(data_store, change_id)
-            extraction_log.append(f"{total_objects} measurements extracted by {key}.")
+            extraction_log.append(
+                f"{total_objects} measurements extracted by {parser}."
+            )
         return extraction_log
 
 
