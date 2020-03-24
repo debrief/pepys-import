@@ -13,6 +13,7 @@ Welcome to pepys-import
    README.rst
    installation
    usage
+   configuration
    developer_guide
    deployment
    Source documentation <modules>
