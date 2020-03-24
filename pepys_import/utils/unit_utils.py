@@ -112,9 +112,7 @@ def distance_between_two_points_haversine(first_location, second_location):
     c = 2 * asin(sqrt(a))
     radius = 6371  # Radius of earth in kilometers. Use 3956 for miles
     distance = c * radius
-    return (distance * unit_registry.kilometers / unit_registry.hour).to(
-        unit_registry.meter / unit_registry.second
-    )
+    return (distance * unit_registry.kilometer).to(unit_registry.meter)
 
 
 def convert_frequency(frequency, units, line_number, errors, error_type):

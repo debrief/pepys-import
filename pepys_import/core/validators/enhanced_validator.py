@@ -11,40 +11,46 @@ from pepys_import.core.formats import unit_registry
 class EnhancedValidator:
     """Enhanced validator serve to verify the lat/long, in addition to the course/speed/heading"""
 
-    def __init__(self, measurement_object, errors, parser_name):
+    def __init__(self, current_object, errors, parser_name, prev_object=None):
         self.error_type = (
             parser_name + f"-Enhanced Validation Error on Timestamp:"
-            f"{str(measurement_object.time)}, Sensor:"
-            f"{measurement_object.sensor_name}, Platform:{measurement_object.platform_name}"
+            f"{str(current_object.time)}, Sensor:"
+            f"{current_object.sensor_name}, Platform:{current_object.platform_name}"
         )
         self.errors = errors
 
-        if hasattr(measurement_object, "heading"):
-            self.heading = measurement_object.heading
+        if hasattr(current_object, "heading"):
+            self.heading = current_object.heading
         else:
             self.heading = None
-        if hasattr(measurement_object, "course"):
-            self.course = measurement_object.course
+        if hasattr(current_object, "course"):
+            self.course = current_object.course
         else:
             self.course = None
-        if hasattr(measurement_object, "speed"):
-            self.speed = measurement_object.speed
+        if hasattr(current_object, "speed"):
+            self.speed = current_object.speed
         else:
             self.speed = None
 
-        if hasattr(measurement_object, "location"):
-            self.location = measurement_object.location
+        if hasattr(current_object, "location"):
+            self.location = current_object.location
         else:
             self.location = None
 
-        if hasattr(measurement_object, "prev_location"):
-            self.prev_location = measurement_object.prev_location
+        if prev_object:
+            self.prev_location = prev_object.prev_location
+            self.prev_time = prev_object.time
         else:
             self.prev_location = None
+            self.prev_time = None
 
+        # Every object has this field, therefore, directly assign
+        self.time = current_object.time
         if self.location and self.prev_location:
             self.course_heading_loose_match_with_location()
-            self.speed_loose_match_with_location()
+            self.calculated_time = self.calculate_time()
+            if self.calculated_time != 0:
+                self.speed_loose_match_with_location()
 
     @staticmethod
     def acceptable_bearing_error(bearing1, bearing2, delta):
@@ -103,11 +109,16 @@ class EnhancedValidator:
             return True
         return False
 
+    def calculate_time(self):
+        diff = self.time - self.prev_time
+        return diff.seconds
+
     def speed_loose_match_with_location(self):
-        calculated_speed = distance_between_two_points_haversine(
+        distance = distance_between_two_points_haversine(
             self.prev_location, self.location
         )
-        if self.speed is None or calculated_speed <= self.speed * 10:
+        calculated_speed = distance.magnitude / self.calculated_time
+        if self.speed is None or calculated_speed <= self.speed.magnitude * 10:
             return True
         self.errors.append(
             {
