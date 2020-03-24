@@ -175,3 +175,33 @@ def convert_distance(distance, units, line_number, errors, error_type):
         return False
     distance = valid_distance * units
     return distance
+
+
+def acceptable_bearing_error(bearing1, bearing2, delta):
+    """Determines if the two bearings are more than a set angle apart, allowing
+    for angles that span zero (North)
+
+    :param bearing1: The first bearing
+    :type bearing1: number (degrees)
+    :param bearing2: The second bearing
+    :type bearing2: number (degrees)
+    :param delta: The acceptable separation
+    :type delta: number (degrees)
+    """
+
+    try:
+        # Try treating it as a Quantity
+        bearing1_mag = bearing1.magnitude
+    except AttributeError:
+        # Otherwise just a normal float
+        bearing1_mag = float(bearing1)
+
+    try:
+        bearing2_mag = bearing2.magnitude
+    except AttributeError:
+        bearing2_mag = float(bearing2)
+
+    # note: compact test algorithm came from here:
+    #    https://gamedev.stackexchange.com/a/4472/8270
+    diff = 180 - abs(abs(bearing1_mag - bearing2_mag) - 180)
+    return diff <= delta
