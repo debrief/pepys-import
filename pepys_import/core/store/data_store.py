@@ -1147,8 +1147,7 @@ class DataStore(object):
             meta = BasePostGIS.metadata
 
         with self.session_scope():
-            for table in reversed(meta.sorted_tables):
-                self.session.execute(table.delete())
+            meta.drop_all()
 
     def get_all_datafiles(self):
         """
