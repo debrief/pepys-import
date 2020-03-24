@@ -93,7 +93,6 @@ class DataStore(object):
         self.platform_types = {}
         self.platforms = {}
         self.sensor_types = {}
-        self.sensors = {}
         self.comment_types = {}
 
         # TEMP list of values for defaulted IDs, to be replaced by missing info lookup mechanism
@@ -1099,7 +1098,7 @@ class DataStore(object):
 
     def add_to_logs(self, table, row_id, field=None, new_value=None, change_id=None):
         """
-        Adds the specified event to the :class:`Logs`table if not already present.
+        Adds the specified event to the :class:`Logs` table if not already present.
 
         :param table: Name of the table
         :param row_id: Entity ID of the tale
@@ -1124,7 +1123,7 @@ class DataStore(object):
 
     def add_to_changes(self, user, modified, reason):
         """
-        Adds the specified event to the :class:`Change`table if not already present.
+        Adds the specified event to the :class:`Change` table if not already present.
 
         :param user: Username of the current login
         :param modified: Change date
@@ -1259,6 +1258,7 @@ class DataStore(object):
         :param datafile_id:  ID of Datafile
         :type datafile_id: String
         """
+
         f = open("{}.rep".format(datafile), "w+")
         states = (
             self.session.query(self.db_classes.State)
@@ -1355,9 +1355,7 @@ class DataStore(object):
                 )
             else:
                 contact_rep_line.insert(0, ";SENSOR:")
-            print(contact_rep_line)
             data = " ".join(contact_rep_line)
-            print(data)
             f.write(data + "\r\n")
 
         for i, comment in enumerate(comments):

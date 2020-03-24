@@ -21,6 +21,7 @@ from pepys_import.core.store.common_db import (
     MediaMixin,
     ElevationPropertyMixin,
     LocationPropertyMixin,
+    ActivationMixin,
 )
 
 from uuid import uuid4
@@ -437,10 +438,10 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     sensor_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )
-    _location = Column(Geometry(geometry_type="POINT", srid=4326))
-    _elevation = Column(DOUBLE_PRECISION)
-    _heading = Column(DOUBLE_PRECISION)
-    _course = Column(DOUBLE_PRECISION)
+    _location = Column("location", Geometry(geometry_type="POINT", srid=4326))
+    _elevation = Column("elevation", DOUBLE_PRECISION)
+    _heading = Column("heading", DOUBLE_PRECISION)
+    _course = Column("course", DOUBLE_PRECISION)
     _speed = Column("speed", DOUBLE_PRECISION)
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
@@ -466,20 +467,20 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
         UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
     )
     time = Column(TIMESTAMP, nullable=False)
-    _bearing = Column(DOUBLE_PRECISION)
-    _rel_bearing = Column(DOUBLE_PRECISION)
-    _freq = Column(DOUBLE_PRECISION)
-    _range = Column(DOUBLE_PRECISION)
-    _location = Column(Geometry(geometry_type="POINT", srid=4326))
-    _elevation = Column(DOUBLE_PRECISION)
-    _major = Column(DOUBLE_PRECISION)
-    _minor = Column(DOUBLE_PRECISION)
-    _orientation = Column(DOUBLE_PRECISION)
+    _bearing = Column("bearing", DOUBLE_PRECISION)
+    _rel_bearing = Column("rel_bearing", DOUBLE_PRECISION)
+    _freq = Column("freq", DOUBLE_PRECISION)
+    _range = Column("range", DOUBLE_PRECISION)
+    _location = Column("location", Geometry(geometry_type="POINT", srid=4326))
+    _elevation = Column("elevation", DOUBLE_PRECISION)
+    _major = Column("major", DOUBLE_PRECISION)
+    _minor = Column("minor", DOUBLE_PRECISION)
+    _orientation = Column("orientation", DOUBLE_PRECISION)
     classification = Column(String(150))
     confidence = Column(String(150))
     contact_type = Column(String(150))
-    _mla = Column(DOUBLE_PRECISION)
-    _sla = Column(DOUBLE_PRECISION)
+    _mla = Column("mla", DOUBLE_PRECISION)
+    _soa = Column("soa", DOUBLE_PRECISION)
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
@@ -488,7 +489,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Activation(BasePostGIS):
+class Activation(BasePostGIS, ActivationMixin):
     __tablename__ = constants.ACTIVATION
     table_type = TableTypes.MEASUREMENT
     table_type_id = 30
@@ -501,10 +502,10 @@ class Activation(BasePostGIS):
     )
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
-    min_range = Column(DOUBLE_PRECISION)
-    max_range = Column(DOUBLE_PRECISION)
-    left_arc = Column(DOUBLE_PRECISION)
-    right_arc = Column(DOUBLE_PRECISION)
+    _min_range = Column("min_range", DOUBLE_PRECISION)
+    _max_range = Column("max_range", DOUBLE_PRECISION)
+    _left_arc = Column("left_arc", DOUBLE_PRECISION)
+    _right_arc = Column("right_arc", DOUBLE_PRECISION)
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )
@@ -605,8 +606,8 @@ class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin, LocationPropertyMix
     platform_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"))
-    _location = Column(Geometry(geometry_type="POINT", srid=4326))
-    _elevation = Column(DOUBLE_PRECISION)
+    _location = Column("location", Geometry(geometry_type="POINT", srid=4326))
+    _elevation = Column("elevation", DOUBLE_PRECISION)
     time = Column(TIMESTAMP)
     media_type_id = Column(UUID(as_uuid=True), nullable=False)
     url = Column(String(150), nullable=False)

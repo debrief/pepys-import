@@ -1,6 +1,7 @@
 # TODO: we have to keep these statements on top to load pepys_import.
 # We will see better approach to access modules inside the other module.
 import sys
+import datetime
 
 sys.path.append(".")
 
@@ -8,42 +9,11 @@ import argparse  # noqa: E402
 import cmd  # noqa: E402
 from iterfzf import iterfzf  # noqa: E402
 import os  # noqa: E402
+
+from config import DB_USERNAME, DB_PASSWORD, DB_HOST, DB_NAME, DB_PORT, DB_TYPE
 from pepys_import.core.store.data_store import DataStore  # noqa: E402
 
 dirpath = os.path.dirname(os.path.abspath(__file__))
-
-
-def create_postgres_data_store():
-    """
-    Create configured PostgresSQL data store.
-
-    :return: Postgres data store
-    :rtype: DataStore
-    """
-    return DataStore(
-        db_username="postgres",
-        db_password="postgres",
-        db_host="localhost",
-        db_port=5432,
-        db_name="pepys",
-        welcome_text="Pepys_Admin",
-    )
-
-
-def create_sqlite_data_store(file):
-    """
-    Create and Initialise SQLite data store at provided location (file).
-
-    :param file:  absolute/relative file path
-    :type file: String
-
-    :return:  Created Datafile entity
-    :rtype: Datafile
-    """
-    store = DataStore("", "", "", 0, file, db_type="sqlite")
-    if not os.path.isfile(file):
-        store.initialise()
-    return store
 
 
 class InitialiseShell(cmd.Cmd):
@@ -122,6 +92,7 @@ class AdminShell(cmd.Cmd):
             "1": self.do_export,
             "2": self.do_initialise,
             "3": self.do_status,
+            "9": self.do_export_all,
         }
 
     def do_export(self, arg):
@@ -147,6 +118,40 @@ class AdminShell(cmd.Cmd):
             selected_datafile_id = datafiles_dict[datafile_reference]
             with self.datastore.session_scope():
                 self.datastore.export_datafile(selected_datafile_id, datafilename)
+
+    def do_export_all(self, arg):
+        "Start the export all datafiles process"
+        export_flag = input("Do you want to export all Datafiles. (Y/n)\n")
+        if export_flag in ["", "Y", "y"]:
+            while True:
+                folder_name = input(
+                    "Please provide folder name (Press Enter for auto generated folder):"
+                )
+                if folder_name:
+                    if os.path.isdir(folder_name):
+                        print("{} already exists.\n".format(folder_name))
+                    else:
+                        os.mkdir(folder_name)
+                        break
+                else:
+                    folder_name = datetime.datetime.now().strftime(
+                        "exported_datafiles_%Y%m%d_%H%M%S"
+                    )
+                    os.mkdir(folder_name)
+                    break
+
+            print(
+                "Datafiles are going to be exported in '{}' folder.".format(folder_name)
+            )
+
+            with self.datastore.session_scope():
+                datafiles = self.datastore.get_all_datafiles()
+                for datafile in datafiles:
+                    datafile_id = datafile.datafile_id
+                    datafile_filename = os.path.join(
+                        folder_name, datafile.reference.replace(".", "_")
+                    )
+                    self.datastore.export_datafile(datafile_id, datafile_filename)
 
     def do_initialise(self, arg):
         "Allow the currently connected database to be configured"
@@ -196,15 +201,16 @@ class AdminShell(cmd.Cmd):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pepys Admin CLI")
-    parser.add_argument("--db", type=str, help="Db Path")
     parser.add_argument("--path", type=str, help="CSV files path")
-
     args = parser.parse_args()
-    db_file = args.db
 
-    if db_file:
-        datastore = create_sqlite_data_store(db_file)
-    else:
-        datastore = create_postgres_data_store()
+    data_store = DataStore(
+        db_username=DB_USERNAME,
+        db_password=DB_PASSWORD,
+        db_host=DB_HOST,
+        db_port=DB_PORT,
+        db_name=DB_NAME,
+        db_type=DB_TYPE,
+    )
 
-    AdminShell(datastore, args.path).cmdloop()
+    AdminShell(data_store, args.path).cmdloop()

@@ -24,8 +24,8 @@ $Shortcut.IconLocation = $icon_string
 $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
 $Shortcut.Save()
 
-$Shortcut = $WshShell.CreateShortcut($sendto_location + "\Pepys Import (persist).lnk")
-$Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_persist.bat")
+$Shortcut = $WshShell.CreateShortcut($sendto_location + "\Pepys Import (no archive).lnk")
+$Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_no_archive.bat")
 $Shortcut.IconLocation = $icon_string
 $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
 $Shortcut.Save()
