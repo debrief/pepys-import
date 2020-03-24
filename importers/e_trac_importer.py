@@ -64,7 +64,7 @@ class ETracImporter(Importer):
             comp_name_token = tokens[18]
 
             vessel_name = self.name_for(comp_name_token.text)
-            comp_name_token.record(self.name, "vessel name", vessel_name, "n/a")
+            comp_name_token.record(self.name, "vessel name", vessel_name)
 
             if len(date_token.text) != 10:
                 self.errors.append(
@@ -87,7 +87,7 @@ class ETracImporter(Importer):
 
             timestamp = self.parse_timestamp(date_token.text, time_token.text)
             combine_tokens(date_token, time_token).record(
-                self.name, "timestamp", timestamp, "n/a"
+                self.name, "timestamp", timestamp
             )
 
             # and finally store it
@@ -129,13 +129,13 @@ class ETracImporter(Importer):
             )
 
             state.elevation = altitude_token.text * unit_registry.metre
-            altitude_token.record(self.name, "altitude", state.elevation, "metres")
+            altitude_token.record(self.name, "altitude", state.elevation)
 
             heading = convert_absolute_angle(
                 heading_token.text, line_number, self.errors, self.error_type
             )
             state.heading = heading
-            heading_token.record(self.name, "heading", heading, "degrees")
+            heading_token.record(self.name, "heading", heading)
 
             speed = convert_speed(
                 speed_token.text,
@@ -146,7 +146,7 @@ class ETracImporter(Importer):
             )
             if speed:
                 state.speed = speed
-            speed_token.record(self.name, "speed", speed, "knots")
+            speed_token.record(self.name, "speed", speed)
 
     @staticmethod
     def name_for(token):
