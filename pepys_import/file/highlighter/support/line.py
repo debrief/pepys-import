@@ -82,7 +82,7 @@ class Line:
 
         return self.tokens_array
 
-    def record(self, tool: str, field: str, value: str, units: str = "n/a"):
+    def record(self, tool: str, field: str, value: str, units: str = None):
         """
         Record a usage of the whole line, by adding a SingleUsage object to each of the
         relevant characters in the char array referenced by each SubToken child.
