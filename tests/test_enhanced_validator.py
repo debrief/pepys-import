@@ -4,7 +4,10 @@ from datetime import datetime, timedelta
 
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.core.validators.enhanced_validator import EnhancedValidator
+from pepys_import.core.validators.enhanced_validator import (
+    EnhancedValidator,
+    acceptable_bearing_error,
+)
 from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
 from pepys_import.core.formats.location import Location
@@ -87,14 +90,14 @@ class EnhancedValidatorTestCase(unittest.TestCase):
         pass
 
     def test_bearing_error_calc(self):
-        assert EnhancedValidator.acceptable_bearing_error(0, 30, 90)
-        assert EnhancedValidator.acceptable_bearing_error(330, 30, 90)
-        assert EnhancedValidator.acceptable_bearing_error(330, 0, 90)
-        assert EnhancedValidator.acceptable_bearing_error(30, 330, 90)
+        assert acceptable_bearing_error(0, 30, 90)
+        assert acceptable_bearing_error(330, 30, 90)
+        assert acceptable_bearing_error(330, 0, 90)
+        assert acceptable_bearing_error(30, 330, 90)
 
-        assert EnhancedValidator.acceptable_bearing_error(330, 100, 90) is False
-        assert EnhancedValidator.acceptable_bearing_error(270, 10, 90) is False
-        assert EnhancedValidator.acceptable_bearing_error(10, 260, 90) is False
+        assert acceptable_bearing_error(330, 100, 90) is False
+        assert acceptable_bearing_error(270, 10, 90) is False
+        assert acceptable_bearing_error(10, 260, 90) is False
 
     def test_bearing_between_two_locations(self):
         prev_state = self.file.create_state(
