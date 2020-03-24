@@ -10,7 +10,6 @@ class Importer(ABC):
         self.short_name = short_name
         self.errors = None
         self.error_type = None
-        self.prev_location = None
 
     def __str__(self):
         return self.name
@@ -66,7 +65,6 @@ class Importer(ABC):
         self.errors = list()
         self.error_type = f"{self.short_name} - Parsing error on {basename}"
         datafile.measurements[self.short_name] = dict()
-        self.prev_location = dict()
 
         # perform load
         self._load_this_file(data_store, path, file_object, datafile, change_id)

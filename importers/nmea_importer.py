@@ -134,11 +134,7 @@ class NMEAImporter(Importer):
                     ):
                         continue
 
-                    if platform_name in self.prev_location:
-                        state.prev_location = self.prev_location[platform_name]
-
                     state.location = self.location
-                    self.prev_location[platform_name] = state.location
 
                     combine_tokens(self.lat_token, self.lon_token).record(
                         self.name, "location", state.location, "DMS"
