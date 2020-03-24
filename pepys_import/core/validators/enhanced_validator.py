@@ -102,18 +102,18 @@ class EnhancedValidator:
 
     def calculate_time(self):
         diff = self.time - self.prev_time
-        return diff.seconds
+        return diff.seconds * unit_registry.seconds
 
     def speed_loose_match_with_location(self):
         distance = distance_between_two_points_haversine(
             self.prev_location, self.location
         )
-        calculated_speed = distance.magnitude / self.calculated_time
-        if self.speed is None or calculated_speed <= self.speed.magnitude * 10:
+        calculated_speed = distance / self.calculated_time
+        if self.speed is None or calculated_speed <= self.speed * 10:
             return True
         self.errors.append(
             {
-                self.error_type: f"Calculated speed ({calculated_speed:.3f} meter / second) is more than "
+                self.error_type: f"Calculated speed ({calculated_speed:.3f}) is more than "
                 f"the measured speed * 10 ({self.speed * 10:.3f})!"
             }
         )
