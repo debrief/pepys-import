@@ -139,7 +139,7 @@ class DatafileMixin:
         )
         state.platform_name = platform.name
         state.sensor_name = sensor.name
-        self.measurements[parser_name].append(state)
+        self.add_measurement_to_dict(state, parser_name)
         return state
 
     def create_contact(self, data_store, platform, sensor, timestamp, parser_name):
@@ -148,7 +148,7 @@ class DatafileMixin:
         )
         contact.platform_name = platform.name
         contact.sensor_name = sensor.name
-        self.measurements[parser_name].append(contact)
+        self.add_measurement_to_dict(contact, parser_name)
         return contact
 
     def create_comment(
@@ -163,8 +163,15 @@ class DatafileMixin:
         )
         comment.platform_name = platform.name
         comment.sensor_name = "N/A"
-        self.measurements[parser_name].append(comment)
+        self.add_measurement_to_dict(comment, parser_name)
         return comment
+
+    def add_measurement_to_dict(self, measurement, parser_name):
+        # Cache objects according to their platform
+        if measurement.platform_name not in self.measurements[parser_name]:
+            self.measurements[parser_name][measurement.platform_name] = list()
+
+        self.measurements[parser_name][measurement.platform_name].append(measurement)
 
     def validate(
         self,
@@ -189,22 +196,18 @@ class DatafileMixin:
                 return True
             return False
         elif validation_level == validation_constants.ENHANCED_LEVEL:
-            objects = dict()
-            for measurement in self.measurements[parser]:
-                # Cache objects according to their source id
-                if measurement.source_id not in objects:
-                    objects[measurement.source_id] = list()
-                prev_object = None
-                if objects[measurement.source_id]:
-                    prev_object = objects[measurement.source_id][-1]
-                objects[measurement.source_id].append(measurement)
+            for key, values in self.measurements[parser].items():
+                for index, measurement in enumerate(values):
+                    prev_object = None
+                    if index >= 1:
+                        prev_object = values[index - 1]
 
-                BasicValidator(measurement, errors, parser)
-                for basic_validator in LOCAL_BASIC_VALIDATORS:
-                    basic_validator(measurement, errors, parser)
-                EnhancedValidator(measurement, errors, parser, prev_object)
-                for enhanced_validator in LOCAL_ENHANCED_VALIDATORS:
-                    enhanced_validator(measurement, errors, parser, prev_object)
+                    BasicValidator(measurement, errors, parser)
+                    for basic_validator in LOCAL_BASIC_VALIDATORS:
+                        basic_validator(measurement, errors, parser)
+                    EnhancedValidator(measurement, errors, parser, prev_object)
+                    for enhanced_validator in LOCAL_ENHANCED_VALIDATORS:
+                        enhanced_validator(measurement, errors, parser, prev_object)
             if not errors:
                 return True
             return False
@@ -213,13 +216,14 @@ class DatafileMixin:
         # Since measurements are saved by their importer names, iterate over each key
         # and save its measurement objects.
         extraction_log = list()
-        for key in self.measurements.keys():
-            print(f"Submitting measurements extracted by {key}.")
-            for file in tqdm(self.measurements[key]):
-                file.submit(data_store, change_id)
-            extraction_log.append(
-                f"{len(self.measurements[key])} measurements extracted by {key}."
-            )
+        for key in self.measurements:
+            total_values = 0
+            for platform, values in self.measurements[key].items():
+                total_values += len(values)
+                print(f"Submitting measurements extracted by {key}.")
+                for file in tqdm(values):
+                    file.submit(data_store, change_id)
+            extraction_log.append(f"{total_values} measurements extracted by {key}.")
         return extraction_log
 
 

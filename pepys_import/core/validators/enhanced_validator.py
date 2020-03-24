@@ -38,11 +38,16 @@ class EnhancedValidator:
             self.location = None
 
         if prev_object:
-            self.prev_location = prev_object.prev_location
-            self.prev_time = prev_object.time
-        else:
-            self.prev_location = None
-            self.prev_time = None
+            # Assign location only if the attribute exists
+            if hasattr(prev_object, "location"):
+                self.prev_location = prev_object.location
+            else:
+                self.prev_location = None
+            # Assign time only if the attribute exists
+            if hasattr(prev_object, "time"):
+                self.prev_time = prev_object.time
+            else:
+                self.prev_time = None
 
         # Every object has this field, therefore, directly assign
         self.time = current_object.time
@@ -122,7 +127,7 @@ class EnhancedValidator:
             return True
         self.errors.append(
             {
-                self.error_type: f"Calculated speed ({calculated_speed:.3f}) is more than "
+                self.error_type: f"Calculated speed ({calculated_speed:.3f} meter / second) is more than "
                 f"the measured speed * 10 ({self.speed * 10:.3f})!"
             }
         )

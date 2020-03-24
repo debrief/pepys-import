@@ -65,7 +65,7 @@ class Importer(ABC):
         print(f"{self.short_name} working on {basename}")
         self.errors = list()
         self.error_type = f"{self.short_name} - Parsing error on {basename}"
-        datafile.measurements[self.short_name] = list()
+        datafile.measurements[self.short_name] = dict()
         self.prev_location = dict()
 
         # perform load
