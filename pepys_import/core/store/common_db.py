@@ -196,9 +196,9 @@ class DatafileMixin:
                 return True
             return False
         elif validation_level == validation_constants.ENHANCED_LEVEL:
-            for parser, objects in self.measurements[parser].items():
+            for objects in self.measurements[parser].values():
                 prev_object_dict = dict()
-                for index, curr_object in enumerate(objects):
+                for curr_object in objects:
                     BasicValidator(curr_object, errors, parser)
                     for basic_validator in LOCAL_BASIC_VALIDATORS:
                         basic_validator(curr_object, errors, parser)
