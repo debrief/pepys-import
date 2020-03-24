@@ -19,39 +19,24 @@ class EnhancedValidator:
         )
         self.errors = errors
 
-        if hasattr(current_object, "heading"):
-            self.heading = current_object.heading
-        else:
-            self.heading = None
-        if hasattr(current_object, "course"):
-            self.course = current_object.course
-        else:
-            self.course = None
-        if hasattr(current_object, "speed"):
-            self.speed = current_object.speed
-        else:
-            self.speed = None
-
-        if hasattr(current_object, "location"):
-            self.location = current_object.location
-        else:
-            self.location = None
+        self.heading = (
+            current_object.heading if hasattr(current_object, "heading") else None
+        )
+        self.course = (
+            current_object.course if hasattr(current_object, "course") else None
+        )
+        self.speed = current_object.speed if hasattr(current_object, "speed") else None
+        self.location = (
+            current_object.location if hasattr(current_object, "location") else None
+        )
+        self.time = current_object.time if hasattr(current_object, "time") else None
 
         if prev_object:
-            # Assign location only if the attribute exists
-            if hasattr(prev_object, "location"):
-                self.prev_location = prev_object.location
-            else:
-                self.prev_location = None
-            # Assign time only if the attribute exists
-            if hasattr(prev_object, "time"):
-                self.prev_time = prev_object.time
-            else:
-                self.prev_time = None
+            self.prev_location = (
+                prev_object.location if hasattr(prev_object, "location") else None
+            )
+            self.prev_time = prev_object.time if hasattr(prev_object, "time") else None
 
-        # Every object has this field, therefore, directly assign
-        self.time = current_object.time
-        if self.location and self.prev_location:
             self.course_heading_loose_match_with_location()
             self.calculated_time = self.calculate_time()
             if self.calculated_time != 0:
