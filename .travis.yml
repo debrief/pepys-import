@@ -20,6 +20,7 @@ install:
 script:
   - coverage3 run -m pytest tests
   - black --check --diff pepys_import
+  - isort --check-only --diff --recursive importers pepys_import pepys_admin
 after_success:
   - coverage3 report
   # Push the results back to codecov
