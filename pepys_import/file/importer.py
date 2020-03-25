@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 
-import tqdm
+from tqdm import tqdm
 
 
 class Importer(ABC):
@@ -89,14 +89,16 @@ class Importer(ABC):
         for line_number, line in enumerate(tqdm(file_object.lines()), 1):
             self._load_this_line(data_store, line_number, line, datafile, change_id)
 
-    def _load_this_line(self, data_store, line_number, line_object, datafile, change_id):
+    def _load_this_line(self, data_store, line_number, line, datafile, change_id):
         """Process a line from this data-file
 
         :param data_store: The data_store
         :type data_store: DataStore
-        :param file_object: A Line object, representing a line from a file and allowing
+        :param line_number: The number of the line in the file (starting from 1)
+        :type line_number: Integer
+        :param line: A Line object, representing a line from a file and allowing
         extraction of tokens, and recording of tokens
-        :type file_object: Line
+        :type line: Line
         :param datafile: DataFile object
         :type datafile: DataFile
         :param change_id: ID of the :class:`Change` object
