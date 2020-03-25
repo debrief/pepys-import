@@ -114,15 +114,10 @@ class ETracImporter(Importer):
             )
             state.privacy = privacy.privacy_id
 
-            if vessel_name in self.prev_location:
-                state.prev_location = self.prev_location[vessel_name]
-
             location = Location(errors=self.errors, error_type=self.error_type)
             location.set_latitude_decimal_degrees(lat_degrees_token.text)
             location.set_longitude_decimal_degrees(long_degrees_token.text)
-
             state.location = location
-            self.prev_location[vessel_name] = state.location
 
             combine_tokens(long_degrees_token, lat_degrees_token).record(
                 self.name, "location", state.location, "decimal degrees"

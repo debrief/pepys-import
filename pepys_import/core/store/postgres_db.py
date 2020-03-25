@@ -424,7 +424,6 @@ class ConfidenceLevel(BasePostGIS):
 class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.prev_location = None
         self.sensor_name = None
         self.platform_name = None
 
