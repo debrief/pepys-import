@@ -1,6 +1,8 @@
 import os
 from abc import ABC, abstractmethod
 
+from tqdm import tqdm
+
 
 class Importer(ABC):
     def __init__(self, name, validation_level, short_name):
@@ -69,13 +71,12 @@ class Importer(ABC):
         # perform load
         self._load_this_file(data_store, path, file_object, datafile, change_id)
 
-    @abstractmethod
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
         """Process this data-file
 
         :param data_store: The data_store
         :type data_store: DataStore
-        :param path: File File path
+        :param path: File path
         :type path: String
         :param file_object: HighlightedFile object, representing file contents and allowing
         extraction of lines and tokens, and recording of tokens
@@ -85,3 +86,22 @@ class Importer(ABC):
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         """
+        for line_number, line in enumerate(tqdm(file_object.lines()), 1):
+            self._load_this_line(data_store, line_number, line, datafile, change_id)
+
+    def _load_this_line(self, data_store, line_number, line, datafile, change_id):
+        """Process a line from this data-file
+
+        :param data_store: The data_store
+        :type data_store: DataStore
+        :param line_number: The number of the line in the file (starting from 1)
+        :type line_number: Integer
+        :param line: A Line object, representing a line from a file and allowing
+        extraction of tokens, and recording of tokens
+        :type line: Line
+        :param datafile: DataFile object
+        :type datafile: DataFile
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
+        """
+        raise NotImplementedError
