@@ -676,7 +676,7 @@ class MeasurementsTestCase(TestCase):
                 pass
 
         self.parser = TestParser()
-        self.file.measurements[self.parser.short_name] = list()
+        self.file.measurements[self.parser.short_name] = dict()
 
     def tearDown(self):
         pass

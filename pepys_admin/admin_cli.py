@@ -1,5 +1,6 @@
 import argparse
 import cmd
+import datetime
 import os
 
 from iterfzf import iterfzf
@@ -11,11 +12,15 @@ dirpath = os.path.dirname(os.path.abspath(__file__))
 
 
 class InitialiseShell(cmd.Cmd):
-    intro = (
-        "\n--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n"
-        " (3) Import Reference data\n (4) Import Metadata\n "
-        "(5) Import Sample Measurements\n (0) Exit\n"
-    )
+    intro = """--- Menu ---
+(1) Clear database contents
+(2) Clear database schema
+(3) Create Pepys schema
+(4) Import Reference data
+(5) Import Metadata
+(6) Import Sample Measurements
+(0) Exit
+"""
     prompt = "(initialise) "
 
     def __init__(self, datastore, parentShell, csv_path):
@@ -24,33 +29,43 @@ class InitialiseShell(cmd.Cmd):
         self.csv_path = csv_path
         self.aliases = {
             "0": self.do_cancel,
-            "1": self.do_cleardb,
-            "2": self.do_create_pepys_schema,
-            "3": self.do_import_reference_data,
-            "4": self.do_import_metadata,
-            "5": self.do_import_sample_measurements,
+            "1": self.do_cleardb_contents,
+            "2": self.do_cleardb_schema,
+            "3": self.do_create_pepys_schema,
+            "4": self.do_import_reference_data,
+            "5": self.do_import_metadata,
+            "6": self.do_import_sample_measurements,
         }
 
         if parentShell:
             self.prompt = parentShell.prompt.strip() + "/" + self.prompt
 
-    def do_cleardb(self, args):
-        self.datastore.clear_db()
+    def do_cleardb_contents(self, args):
+        self.datastore.clear_db_contents()
+        print("Cleared database contents")
+
+    def do_cleardb_schema(self, args):
+        self.datastore.clear_db_schema()
+        print("Cleared database schema")
 
     def do_create_pepys_schema(self, args):
         self.datastore.initialise()
+        print("Initialised database")
 
     def do_import_reference_data(self, args):
         with self.datastore.session_scope():
             self.datastore.populate_reference(self.csv_path)
+        print("Reference data imported")
 
     def do_import_metadata(self, args):
         with self.datastore.session_scope():
             self.datastore.populate_metadata(self.csv_path)
+        print("Metadata imported")
 
     def do_import_sample_measurements(self, args):
         with self.datastore.session_scope():
             self.datastore.populate_measurement(self.csv_path)
+        print("Sample measurements imported")
 
     def do_cancel(self, *args):
         return True
@@ -74,7 +89,12 @@ class InitialiseShell(cmd.Cmd):
 
 
 class AdminShell(cmd.Cmd):
-    intro = "\n--- Menu --- \n (1) Export\n " "(2) Initialise\n (3) Status\n (0) Exit\n"
+    intro = """--- Menu ---
+(1) Export
+(2) Initialise/Clear
+(3) Status
+(0) Exit
+"""
     prompt = "(pepys-admin) "
 
     def __init__(self, datastore, csv_path=dirpath):
@@ -86,6 +106,7 @@ class AdminShell(cmd.Cmd):
             "1": self.do_export,
             "2": self.do_initialise,
             "3": self.do_status,
+            "9": self.do_export_all,
         }
 
     def do_export(self, arg):
@@ -109,6 +130,38 @@ class AdminShell(cmd.Cmd):
             selected_datafile_id = datafiles_dict[datafile_reference]
             with self.datastore.session_scope():
                 self.datastore.export_datafile(selected_datafile_id, datafilename)
+
+    def do_export_all(self, arg):
+        "Start the export all datafiles process"
+        export_flag = input("Do you want to export all Datafiles. (Y/n)\n")
+        if export_flag in ["", "Y", "y"]:
+            while True:
+                folder_name = input(
+                    "Please provide folder name (Press Enter for auto generated folder):"
+                )
+                if folder_name:
+                    if os.path.isdir(folder_name):
+                        print("{} already exists.\n".format(folder_name))
+                    else:
+                        os.mkdir(folder_name)
+                        break
+                else:
+                    folder_name = datetime.datetime.now().strftime(
+                        "exported_datafiles_%Y%m%d_%H%M%S"
+                    )
+                    os.mkdir(folder_name)
+                    break
+
+            print("Datafiles are going to be exported in '{}' folder.".format(folder_name))
+
+            with self.datastore.session_scope():
+                datafiles = self.datastore.get_all_datafiles()
+                for datafile in datafiles:
+                    datafile_id = datafile.datafile_id
+                    datafile_filename = os.path.join(
+                        folder_name, datafile.reference.replace(".", "_")
+                    )
+                    self.datastore.export_datafile(datafile_id, datafile_filename)
 
     def do_initialise(self, arg):
         "Allow the currently connected database to be configured"

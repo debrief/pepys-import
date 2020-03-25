@@ -69,11 +69,7 @@ class ReplayImporter(Importer):
                 state.speed = rep_line.speed
                 state.privacy = privacy.privacy_id
 
-                if vessel_name in self.prev_location:
-                    state.prev_location = self.prev_location[vessel_name]
-
                 state.location = rep_line.get_location()
-                self.prev_location[vessel_name] = state.location
 
     @staticmethod
     def degrees_for(degs, mins, secs, hemi: str):

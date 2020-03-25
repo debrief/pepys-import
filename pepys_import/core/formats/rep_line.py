@@ -107,11 +107,11 @@ class REPLine:
 
         self.timestamp = parse_timestamp(date_token.text, time_token.text)
         combine_tokens(date_token, time_token).record(
-            self.importer_name, "timestamp", self.timestamp, "n/a"
+            self.importer_name, "timestamp", self.timestamp
         )
 
         self.vessel = vessel_name_token.text.strip('"')
-        vessel_name_token.record(self.importer_name, "vessel name", self.vessel, "n/a")
+        vessel_name_token.record(self.importer_name, "vessel name", self.vessel)
 
         symbology_values = symbology_token.text.split("[")
         if len(symbology_values) >= 1:
@@ -158,7 +158,7 @@ class REPLine:
             return False
 
         self.heading = heading
-        heading_token.record(self.importer_name, "heading", self.heading, "degrees")
+        heading_token.record(self.importer_name, "heading", self.heading)
 
         speed = convert_speed(
             speed_token.text, unit_registry.knots, self.line_num, errors, error_type
@@ -166,7 +166,7 @@ class REPLine:
         if not speed:
             return False
         self.speed = speed
-        speed_token.record(self.importer_name, "speed", self.speed, "knots")
+        speed_token.record(self.importer_name, "speed", self.speed)
 
         try:
             if depth_token == "NaN":
@@ -181,7 +181,7 @@ class REPLine:
                 }
             )
             return False
-        depth_token.record(self.importer_name, "depth", self.depth, "metres")
+        depth_token.record(self.importer_name, "depth", self.depth)
 
         return True
 

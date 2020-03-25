@@ -63,7 +63,7 @@ class ETracImporter(Importer):
             comp_name_token = tokens[18]
 
             vessel_name = self.name_for(comp_name_token.text)
-            comp_name_token.record(self.name, "vessel name", vessel_name, "n/a")
+            comp_name_token.record(self.name, "vessel name", vessel_name)
 
             if len(date_token.text) != 10:
                 self.errors.append(
@@ -85,7 +85,7 @@ class ETracImporter(Importer):
                 continue
 
             timestamp = self.parse_timestamp(date_token.text, time_token.text)
-            combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp, "n/a")
+            combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp)
 
             # and finally store it
             platform = data_store.get_platform(
@@ -107,35 +107,30 @@ class ETracImporter(Importer):
             state = datafile.create_state(data_store, platform, sensor, timestamp, self.short_name)
             state.privacy = privacy.privacy_id
 
-            if vessel_name in self.prev_location:
-                state.prev_location = self.prev_location[vessel_name]
-
             location = Location(errors=self.errors, error_type=self.error_type)
             location.set_latitude_decimal_degrees(lat_degrees_token.text)
             location.set_longitude_decimal_degrees(long_degrees_token.text)
-
             state.location = location
-            self.prev_location[vessel_name] = state.location
 
             combine_tokens(long_degrees_token, lat_degrees_token).record(
                 self.name, "location", state.location, "decimal degrees"
             )
 
             state.elevation = altitude_token.text * unit_registry.metre
-            altitude_token.record(self.name, "altitude", state.elevation, "metres")
+            altitude_token.record(self.name, "altitude", state.elevation)
 
             heading = convert_absolute_angle(
                 heading_token.text, line_number, self.errors, self.error_type
             )
             state.heading = heading
-            heading_token.record(self.name, "heading", heading, "degrees")
+            heading_token.record(self.name, "heading", heading)
 
             speed = convert_speed(
                 speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type,
             )
             if speed:
                 state.speed = speed
-            speed_token.record(self.name, "speed", speed, "knots")
+            speed_token.record(self.name, "speed", speed)
 
     @staticmethod
     def name_for(token):

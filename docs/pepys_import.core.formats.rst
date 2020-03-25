@@ -20,18 +20,10 @@ pepys\_import.core.formats.location module
    :undoc-members:
    :show-inheritance:
 
-pepys\_import.core.formats.repl\_file module
---------------------------------------------
+pepys\_import.core.formats.rep\_line module
+-------------------------------------------
 
-.. automodule:: pepys_import.core.formats.repl_file
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pepys\_import.core.formats.state module
----------------------------------------
-
-.. automodule:: pepys_import.core.formats.state
+.. automodule:: pepys_import.core.formats.rep_line
    :members:
    :undoc-members:
    :show-inheritance:

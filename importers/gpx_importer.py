@@ -101,16 +101,10 @@ class GPXImporter(Importer):
                     data_store, platform, sensor, timestamp, self.short_name
                 )
 
-                # Add location (no need to convert as it requires a string)
-                if track_name in self.prev_location:
-                    state.prev_location = self.prev_location[track_name]
-
                 location = Location(errors=self.errors, error_type=self.error_type)
                 location.set_latitude_decimal_degrees(latitude_str)
                 location.set_longitude_decimal_degrees(longitude_str)
-
                 state.location = location
-                self.prev_location[track_name] = state.location
 
                 # Add course
                 if course_str is not None:

@@ -1,5 +1,6 @@
 from pepys_import.core.formats import unit_registry
 from pepys_import.utils.unit_utils import (
+    acceptable_bearing_error,
     bearing_between_two_points,
     distance_between_two_points_haversine,
 )
@@ -8,106 +9,123 @@ from pepys_import.utils.unit_utils import (
 class EnhancedValidator:
     """Enhanced validator serve to verify the lat/long, in addition to the course/speed/heading"""
 
-    def __init__(self, measurement_object, errors, parser_name):
-        self.error_type = (
+    def __init__(self, current_object, errors, parser_name, prev_object=None):
+        error_type = (
             parser_name + f"-Enhanced Validation Error on Timestamp:"
-            f"{str(measurement_object.time)}, Sensor:"
-            f"{measurement_object.sensor_name}, Platform:{measurement_object.platform_name}"
+            f"{str(current_object.time)}, Sensor:"
+            f"{current_object.sensor_name}, Platform:{current_object.platform_name}"
         )
-        self.errors = errors
+        heading = current_object.heading if hasattr(current_object, "heading") else None
+        course = current_object.course if hasattr(current_object, "course") else None
+        speed = current_object.speed if hasattr(current_object, "speed") else None
+        location = current_object.location if hasattr(current_object, "location") else None
+        time = current_object.time if hasattr(current_object, "time") else None
 
-        if hasattr(measurement_object, "heading"):
-            self.heading = measurement_object.heading
-        else:
-            self.heading = None
-        if hasattr(measurement_object, "course"):
-            self.course = measurement_object.course
-        else:
-            self.course = None
-        if hasattr(measurement_object, "speed"):
-            self.speed = measurement_object.speed
-        else:
-            self.speed = None
+        if prev_object:
+            prev_location = prev_object.location if hasattr(prev_object, "location") else None
+            prev_time = prev_object.time if hasattr(prev_object, "time") else None
 
-        if hasattr(measurement_object, "location"):
-            self.location = measurement_object.location
-        else:
-            self.location = None
-
-        if hasattr(measurement_object, "prev_location"):
-            self.prev_location = measurement_object.prev_location
-        else:
-            self.prev_location = None
-
-        if self.location and self.prev_location:
-            self.course_heading_loose_match_with_location()
-            self.speed_loose_match_with_location()
+            if location and prev_location:
+                self.course_heading_loose_match_with_location(
+                    location, prev_location, heading, course, errors, error_type
+                )
+                calculated_time = self.calculate_time(time, prev_time)
+                if calculated_time != 0:
+                    self.speed_loose_match_with_location(
+                        location, prev_location, speed, calculated_time, errors, error_type,
+                    )
 
     @staticmethod
-    def acceptable_bearing_error(bearing1, bearing2, delta):
-        """Determines if the two bearings are more than a set angle apart, allowing
-        for angles that span zero (North)
+    def course_heading_loose_match_with_location(
+        curr_location, prev_location, heading, course, errors, error_type
+    ):
+        """Loosely matches the course and heading values with the bearing between two location
+        points.
 
-        :param bearing1: The first bearing
-        :type bearing1: number (degrees)
-        :param bearing2: The second bearing
-        :type bearing2: number (degrees)
-        :param delta: The acceptable separation
-        :type delta: number (degrees)
+        :param curr_location: Point of the current location of the object
+        :type curr_location: Location
+        :param prev_location: Point o the previous location of the object
+        :type prev_location: Location
+        :param heading: Heading of the object (In degrees)
+        :type heading: Quantity
+        :param course: Course of the object (In degrees)
+        :type course: Quantity
+        :param errors: Error List to save value error if it raises
+        :type errors: List
+        :param error_type: Type of error
+        :type error_type: String
+        :return: True if there is no error, False otherwise
+        :rtype: bool
         """
-
-        try:
-            # Try treating it as a Quantity
-            bearing1_mag = bearing1.magnitude
-        except AttributeError:
-            # Otherwise just a normal float
-            bearing1_mag = float(bearing1)
-
-        try:
-            bearing2_mag = bearing2.magnitude
-        except AttributeError:
-            bearing2_mag = float(bearing2)
-
-        # note: compact test algorithm came from here:
-        #    https://gamedev.stackexchange.com/a/4472/8270
-        diff = 180 - abs(abs(bearing1_mag - bearing2_mag) - 180)
-        return diff <= delta
-
-    def course_heading_loose_match_with_location(self):
-        number_of_errors = len(self.errors)
-        bearing = bearing_between_two_points(self.prev_location, self.location)
+        number_of_errors = len(errors)
+        bearing = bearing_between_two_points(prev_location, curr_location)
         delta = 90
-        if self.heading:
-            heading_in_degrees = self.heading.to(unit_registry.degree)
-            if not self.acceptable_bearing_error(heading_in_degrees, bearing, delta):
-                self.errors.append(
+        if heading:
+            heading_in_degrees = heading.to(unit_registry.degree)
+            if not acceptable_bearing_error(heading_in_degrees, bearing, delta):
+                errors.append(
                     {
-                        self.error_type: f"Difference between Bearing ({bearing:.3f}) and "
+                        error_type: f"Difference between Bearing ({bearing:.3f}) and "
                         f"Heading ({heading_in_degrees:.3f}) is more than {delta} degrees!"
                     }
                 )
-        if self.course:
-            course_in_degrees = self.course.to(unit_registry.degree)
-            if not self.acceptable_bearing_error(course_in_degrees, bearing, delta):
-                self.errors.append(
+        if course:
+            course_in_degrees = course.to(unit_registry.degree)
+            if not acceptable_bearing_error(course_in_degrees, bearing, delta):
+                errors.append(
                     {
-                        self.error_type: f"Difference between Bearing ({bearing:.3f}) and "
+                        error_type: f"Difference between Bearing ({bearing:.3f}) and "
                         f"Course ({course_in_degrees:.3f}) is more than {delta} degrees!"
                     }
                 )
         # if not an error appended to the list, its length will be the same
-        if number_of_errors == len(self.errors):
+        if number_of_errors == len(errors):
             return True
         return False
 
-    def speed_loose_match_with_location(self):
-        calculated_speed = distance_between_two_points_haversine(self.prev_location, self.location)
-        if self.speed is None or calculated_speed <= self.speed * 10:
+    @staticmethod
+    def calculate_time(curr_time, prev_time):
+        """Finds the difference between two Datetime objects, converts it to Quantity seconds
+
+        :param curr_time: Timestamp of the current measurement object
+        :type curr_time: Datetime
+        :param prev_time: Timestamp of the previous measurement object
+        :type prev_time: Datetime
+        :return: Time difference (In seconds)
+        :rtype: Quantity
+        """
+        diff = curr_time - prev_time
+        return diff.seconds * unit_registry.seconds
+
+    @staticmethod
+    def speed_loose_match_with_location(
+        curr_location, prev_location, speed, time, errors, error_type
+    ):
+        """Loosely matches the recorded speed with the calculated speed.
+
+        :param curr_location: Point of the current location of the object
+        :type curr_location: Location
+        :param prev_location: Point of the previous location of the object
+        :type prev_location: Location
+        :param speed: Speed the object
+        :type speed: Quantity
+        :param time: Timestamp of the object
+        :type time: Datetime
+        :param errors: Error List to save value error if it raises
+        :type errors: List
+        :param error_type: Type of error
+        :type error_type: String
+        :return: True if there is no error, False otherwise
+        :rtype: bool
+        """
+        distance = distance_between_two_points_haversine(prev_location, curr_location)
+        calculated_speed = distance / time
+        if speed is None or calculated_speed <= speed * 10:
             return True
-        self.errors.append(
+        errors.append(
             {
-                self.error_type: f"Calculated speed ({calculated_speed:.3f}) is more than "
-                f"the measured speed * 10 ({self.speed * 10:.3f})!"
+                error_type: f"Calculated speed ({calculated_speed:.3f}) is more than "
+                f"the measured speed * 10 ({speed * 10:.3f})!"
             }
         )
         return False

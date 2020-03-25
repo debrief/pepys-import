@@ -71,7 +71,7 @@ class ReplayCommentImporter(Importer):
                     vessel_name_token = tokens[3]
                     comment_type_token = tokens[4]
                     comment_type = comment_type_token.text
-                    comment_type_token.record(self.name, "comment type", comment_type, "n/a")
+                    comment_type_token.record(self.name, "comment type", comment_type)
                     message_tokens = tokens[5:]
                 else:
                     continue
@@ -84,7 +84,7 @@ class ReplayCommentImporter(Importer):
                     privacy="Public",
                     change_id=change_id,
                 )
-                vessel_name_token.record(self.name, "vessel name", vessel_name_token.text, "n/a")
+                vessel_name_token.record(self.name, "vessel name", vessel_name_token.text)
                 sensor_type = data_store.add_to_sensor_types("Human", change_id=change_id)
                 platform.get_sensor(
                     data_store=data_store,
@@ -96,12 +96,10 @@ class ReplayCommentImporter(Importer):
                 comment_type = data_store.add_to_comment_types(comment_type, change_id)
 
                 timestamp = parse_timestamp(date_token.text, time_token.text)
-                combine_tokens(date_token, time_token).record(
-                    self.name, "timestamp", timestamp, "n/a"
-                )
+                combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp)
 
                 message = " ".join([t.text for t in message_tokens])
-                combine_tokens(*message_tokens).record(self.name, "message", message, "n/a")
+                combine_tokens(*message_tokens).record(self.name, "message", message)
 
                 comment = datafile.create_comment(
                     data_store=data_store,

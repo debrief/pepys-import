@@ -280,6 +280,7 @@ class FileProcessor:
         :param importer: An importer module that must define the functions defined
         in the Importer base class
         :type importer: Importer
+
         """
         self.importers.append(importer)
 

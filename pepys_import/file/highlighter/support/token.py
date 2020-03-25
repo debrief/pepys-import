@@ -69,7 +69,7 @@ class Token:
             res += child.text
         return res
 
-    def record(self, tool: str, field: str, value: str, units: str = "n/a"):
+    def record(self, tool: str, field: str, value: str, units: str = None):
         """
         Record the usage of this token for a specific purpose
         Args:
@@ -84,7 +84,10 @@ class Token:
         self.highlighted_file.fill_char_array_if_needed()
 
         tool_field = tool + "/" + field
-        message = "Value:" + str(value) + " Units:" + str(units)
+        if units is not None:
+            message = "Value:" + str(value) + " Units:" + str(units)
+        else:
+            message = "Value:" + str(value)
 
         # This loop gives us each SubToken that is a child of this Token
         for subtoken in self.children:
