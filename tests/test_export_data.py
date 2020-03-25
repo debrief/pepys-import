@@ -33,6 +33,7 @@ class DataStoreExportPostGISDBTestCase(TestCase):
             db_host="localhost",
             db_port=55527,
             db_name="test",
+            db_type="postgres",
         )
 
         # creating database from schema
