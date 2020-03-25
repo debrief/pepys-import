@@ -19,7 +19,7 @@ install:
   - pip install codecov
 script:
   - coverage3 run -m pytest tests
-  - black --check --diff pepys_import
+  - black --check --diff importers pepys_import pepys_admin
   - isort --check-only --diff --recursive importers pepys_import pepys_admin
 after_success:
   - coverage3 report
