@@ -82,6 +82,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
                 db_username="postgres",
                 db_password="postgres",
                 db_port=55527,
+                db_type="postgres",
             )
             with self.store.session_scope():
                 self.store.initialise()
