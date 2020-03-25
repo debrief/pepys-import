@@ -32,44 +32,43 @@ class ReplayImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def _load_this_file(self, data_store, path, file_object, datafile, change_id):
-        for line_number, line in enumerate(tqdm(file_object.lines()), 1):
-            if line.text.startswith(";"):
-                continue
+    def _load_this_line(self, data_store, line_number, line, datafile, change_id):
+        if line.text.startswith(";"):
+            return
 
-            # create state, to store the data
-            rep_line = REPLine(line_number, line, self.separator)
-            # Store parsing errors in self.errors list
-            if not rep_line.parse(self.errors, self.error_type):
-                continue
-            # and finally store it
-            vessel_name = rep_line.get_platform()
-            platform = data_store.get_platform(
-                platform_name=vessel_name,
-                nationality="UK",
-                platform_type="Fisher",
-                privacy="Public",
-                change_id=change_id,
-            )
+        # create state, to store the data
+        rep_line = REPLine(line_number, line, self.separator)
+        # Store parsing errors in self.errors list
+        if not rep_line.parse(self.errors, self.error_type):
+            return
+        # and finally store it
+        vessel_name = rep_line.get_platform()
+        platform = data_store.get_platform(
+            platform_name=vessel_name,
+            nationality="UK",
+            platform_type="Fisher",
+            privacy="Public",
+            change_id=change_id,
+        )
 
-            sensor_type = data_store.add_to_sensor_types("_GPS", change_id=change_id)
-            privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
-            sensor = platform.get_sensor(
-                data_store=data_store,
-                sensor_name=platform.name,
-                sensor_type=sensor_type,
-                privacy=privacy.name,
-                change_id=change_id,
-            )
-            state = datafile.create_state(
-                data_store, platform, sensor, rep_line.timestamp, self.short_name,
-            )
-            state.elevation = (-1 * rep_line.depth) * unit_registry.metre
-            state.heading = rep_line.heading
-            state.speed = rep_line.speed
-            state.privacy = privacy.privacy_id
+        sensor_type = data_store.add_to_sensor_types("_GPS", change_id=change_id)
+        privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
+        sensor = platform.get_sensor(
+            data_store=data_store,
+            sensor_name=platform.name,
+            sensor_type=sensor_type,
+            privacy=privacy.name,
+            change_id=change_id,
+        )
+        state = datafile.create_state(
+            data_store, platform, sensor, rep_line.timestamp, self.short_name,
+        )
+        state.elevation = (-1 * rep_line.depth) * unit_registry.metre
+        state.heading = rep_line.heading
+        state.speed = rep_line.speed
+        state.privacy = privacy.privacy_id
 
-            state.location = rep_line.get_location()
+        state.location = rep_line.get_location()
 
     @staticmethod
     def degrees_for(degs, mins, secs, hemi: str):

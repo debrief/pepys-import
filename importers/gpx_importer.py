@@ -37,7 +37,7 @@ class GPXImporter(Importer):
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
         # Parse XML file from the full path of the file
-        # Note: we can't use the file_contents variable passed in, as lxml refuses
+        # Note: we can't use the file_object variable passed in, as lxml refuses
         # to parse a string that has an encoding attribute in the XML - it requires bytes instead
         try:
             doc = etree.parse(path)
