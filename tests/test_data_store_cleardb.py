@@ -35,6 +35,7 @@ class DataStoreClearContentsPostGISDBTestCase(TestCase):
             db_host="localhost",
             db_port=55527,
             db_name="test",
+            db_type="postgres",
         )
 
         with data_store_postgres.session_scope():
@@ -116,6 +117,7 @@ class DataStoreClearSchemaPostGISTestCase(TestCase):
             db_host="localhost",
             db_port=55527,
             db_name="test",
+            db_type="postgres",
         )
 
         # inspector makes it possible to load lists of schema, table, column

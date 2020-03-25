@@ -35,6 +35,7 @@ class DataStoreInitialisePostGISTestCase(TestCase):
             db_host="localhost",
             db_port=55527,
             db_name="test",
+            db_type="postgres",
         )
 
         # inspector makes it possible to load lists of schema, table, column

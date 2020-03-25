@@ -32,6 +32,7 @@ class SampleImporterTestCase(unittest.TestCase):
                 db_username="postgres",
                 db_password="postgres",
                 db_port=55527,
+                db_type="postgres",
             )
             self.store.initialise()
         except OperationalError:

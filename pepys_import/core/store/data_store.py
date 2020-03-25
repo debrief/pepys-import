@@ -43,7 +43,7 @@ class DataStore:
         db_host,
         db_port,
         db_name,
-        db_type="postgres",
+        db_type,
         missing_data_resolver=DefaultResolver(),
         welcome_text="Pepys_import",
         show_status=True,
