@@ -18,12 +18,12 @@ config.read(CONFIG_FILE_PATH)
 assert config.has_section("database"), f"'database' section couldn't find in '{CONFIG_FILE_PATH}'!"
 
 # Fetch database section
-DB_USERNAME = config.get("database", "db_username", fallback="postgres")
-DB_PASSWORD = config.get("database", "db_password", fallback="postgres")
-DB_HOST = config.get("database", "db_host", fallback="localhost")
-DB_PORT = config.getint("database", "db_port", fallback="5432")
-DB_NAME = config.get("database", "db_name", fallback="pepys")
-DB_TYPE = config.get("database", "db_type", fallback="postgres")
+DB_USERNAME = config.get("database", "db_username")
+DB_PASSWORD = config.get("database", "db_password")
+DB_HOST = config.get("database", "db_host")
+DB_PORT = config.getint("database", "db_port")
+DB_NAME = config.get("database", "db_name")
+DB_TYPE = config.get("database", "db_type")
 
 # Process username and password if necessary
 if DB_USERNAME.startswith("_") and DB_USERNAME.endswith("_"):

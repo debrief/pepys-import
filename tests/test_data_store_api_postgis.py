@@ -33,6 +33,7 @@ class DataStoreCacheTestCase(TestCase):
                 db_username="postgres",
                 db_password="postgres",
                 db_port=55527,
+                db_type="postgres",
             )
             self.store.initialise()
             with self.store.session_scope():
@@ -193,6 +194,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
                 db_username="postgres",
                 db_password="postgres",
                 db_port=55527,
+                db_type="postgres",
             )
             self.store.initialise()
             with self.store.session_scope():
@@ -335,6 +337,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 db_username="postgres",
                 db_password="postgres",
                 db_port=55527,
+                db_type="postgres",
             )
             self.store.initialise()
             with self.store.session_scope():
@@ -551,6 +554,7 @@ class DataStoreStatusTestCase(TestCase):
                 db_username="postgres",
                 db_password="postgres",
                 db_port=55527,
+                db_type="postgres",
             )
             self.store.initialise()
             with self.store.session_scope():
@@ -621,6 +625,7 @@ class SensorTestCase(TestCase):
                 db_username="postgres",
                 db_password="postgres",
                 db_port=55527,
+                db_type="postgres",
             )
             self.store.initialise()
             with self.store.session_scope():
@@ -756,6 +761,7 @@ class MeasurementsTestCase(TestCase):
                 db_username="postgres",
                 db_password="postgres",
                 db_port=55527,
+                db_type="postgres",
             )
             self.store.initialise()
             with self.store.session_scope():
