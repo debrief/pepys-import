@@ -1139,8 +1139,8 @@ class DataStore(object):
     # End of Metadata Maintenance
     #############################################################
 
-    def clear_db(self):
-        """Delete records of all database tables"""
+    def clear_db_contents(self):
+        """Delete contents of all database tables"""
         if self.db_type == "sqlite":
             meta = BaseSpatiaLite.metadata
         else:
@@ -1149,6 +1149,16 @@ class DataStore(object):
         with self.session_scope():
             for table in reversed(meta.sorted_tables):
                 self.session.execute(table.delete())
+
+    def clear_db_schema(self):
+        """Delete the database schema (ie all of the tables)"""
+        if self.db_type == "sqlite":
+            meta = BaseSpatiaLite.metadata
+        else:
+            meta = BasePostGIS.metadata
+
+        with self.session_scope():
+            meta.drop_all()
 
     def get_all_datafiles(self):
         """
