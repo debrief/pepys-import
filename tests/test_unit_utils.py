@@ -6,7 +6,7 @@ from pepys_import.utils import unit_utils
 
 
 @pytest.mark.parametrize(
-    "input,actual_result",
+    "input_,actual_result",
     [
         pytest.param(50, 50, id="float"),
         pytest.param("75", 75, id="string"),
@@ -14,11 +14,11 @@ from pepys_import.utils import unit_utils
         pytest.param(500, 140, id="angle above 360"),
     ],
 )
-def test_convert_abs_angle_valid(input, actual_result):
+def test_convert_abs_angle_valid(input_, actual_result):
     errors = []
     error_type = "test"
 
-    result = unit_utils.convert_absolute_angle(input, 0, errors, error_type)
+    result = unit_utils.convert_absolute_angle(input_, 0, errors, error_type)
 
     assert result == actual_result * unit_registry.degree
 
@@ -35,7 +35,7 @@ def test_convert_abs_angle_invalid():
 
 
 @pytest.mark.parametrize(
-    "input,units,actual_result",
+    "input_,units,actual_result",
     [
         pytest.param(20, unit_registry.knots, 20 * unit_registry.knots, id="float knots"),
         pytest.param("50", unit_registry.knots, 50 * unit_registry.knots, id="string knots"),
@@ -47,11 +47,11 @@ def test_convert_abs_angle_invalid():
         ),
     ],
 )
-def test_convert_speed_valid(input, units, actual_result):
+def test_convert_speed_valid(input_, units, actual_result):
     errors = []
     error_type = "test"
 
-    result = unit_utils.convert_speed(input, units, 0, errors, error_type)
+    result = unit_utils.convert_speed(input_, units, 0, errors, error_type)
 
     assert result == actual_result
 
@@ -79,17 +79,17 @@ def test_extract_points():
 
 
 @pytest.mark.parametrize(
-    "input,units,actual_result",
+    "input_,units,actual_result",
     [
         pytest.param(340, unit_registry.hertz, 340 * unit_registry.hertz, id="float hertz"),
         pytest.param("50", unit_registry.hertz, 50 * unit_registry.hertz, id="string hertz"),
     ],
 )
-def test_convert_frequency_valid(input, units, actual_result):
+def test_convert_frequency_valid(input_, units, actual_result):
     errors = []
     error_type = "test"
 
-    result = unit_utils.convert_frequency(input, units, 0, errors, error_type)
+    result = unit_utils.convert_frequency(input_, units, 0, errors, error_type)
 
     assert result == actual_result
 
@@ -106,17 +106,17 @@ def test_convert_frequency_invalid():
 
 
 @pytest.mark.parametrize(
-    "input,units,actual_result",
+    "input_,units,actual_result",
     [
         pytest.param(2.5, unit_registry.kilometre, 2.5 * unit_registry.kilometre, id="float km"),
         pytest.param("50", unit_registry.metre, 50 * unit_registry.metre, id="string metre"),
     ],
 )
-def test_convert_distance_valid(input, units, actual_result):
+def test_convert_distance_valid(input_, units, actual_result):
     errors = []
     error_type = "test"
 
-    result = unit_utils.convert_distance(input, units, 0, errors, error_type)
+    result = unit_utils.convert_distance(input_, units, 0, errors, error_type)
 
     assert result == actual_result
 

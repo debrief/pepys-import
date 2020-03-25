@@ -1,7 +1,7 @@
 from tabulate import tabulate
 
 
-class TableSummary(object):
+class TableSummary:
     """
     A summary of the contents of a table, which sends query to DB and finds
     number of rows and creation date of last item added.
@@ -45,7 +45,7 @@ def table_delta(first_summary, second_summary):
     return differences
 
 
-class TableSummarySet(object):
+class TableSummarySet:
     """A collection of TableSummary elements."""
 
     def __init__(self, table_summaries):

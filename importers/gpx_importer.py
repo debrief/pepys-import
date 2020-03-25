@@ -15,7 +15,6 @@ class GPXImporter(Importer):
         name="GPX Format Importer",
         validation_level=constants.BASIC_LEVEL,
         short_name="GPX Importer",
-        separator=" ",
     ):
         super().__init__(name, validation_level, short_name)
         self.errors = list()
@@ -26,7 +25,7 @@ class GPXImporter(Importer):
     def can_load_this_filename(self, filename):
         return True
 
-    def can_load_this_header(self, first_line):
+    def can_load_this_header(self, header):
         # Can't tell from first line only whether file is a valid GPX file
         return True
 
@@ -131,8 +130,8 @@ class GPXImporter(Importer):
                     except ValueError:
                         self.errors.append(
                             {
-                                self.error_type: f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. "
-                                f"Couldn't convert to number"
+                                self.error_type: f"Line {tpt.sourceline}. Error in elevation value "
+                                f"{elevation_str}. Couldn't convert to number"
                             }
                         )
                     state.elevation = elevation * unit_registry.metre
@@ -143,5 +142,4 @@ class GPXImporter(Importer):
         child = element.find(search_string)
         if child is not None:
             return child.text
-        else:
-            return None
+        return None

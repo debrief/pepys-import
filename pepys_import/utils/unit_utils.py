@@ -65,7 +65,11 @@ def convert_speed(speed, units, line_number, errors, error_type):
 
 
 def extract_points(location):
-    # convert decimal degrees to radians and return
+    """Convert decimal degrees to radians and return
+
+    :param location: A point of location
+    :type location: Location
+    """
     return radians(location.longitude), radians(location.latitude)
 
 

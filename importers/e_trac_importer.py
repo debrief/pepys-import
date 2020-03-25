@@ -30,8 +30,8 @@ class ETracImporter(Importer):
     def can_load_this_filename(self, filename):
         return True
 
-    def can_load_this_header(self, first_line):
-        return first_line.startswith("!Target,MMSI")
+    def can_load_this_header(self, header):
+        return header.startswith("!Target,MMSI")
 
     def can_load_this_file(self, file_contents):
         return True
@@ -46,7 +46,7 @@ class ETracImporter(Importer):
             if len(tokens) <= 1:
                 # the last line may be empty, don't worry
                 continue
-            elif len(tokens) < 17:
+            if len(tokens) < 17:
                 self.errors.append(
                     {self.error_type: f"Error on line {line_number}. Not enough tokens: {line}"}
                 )

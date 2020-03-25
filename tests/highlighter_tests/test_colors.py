@@ -14,7 +14,7 @@ class ColorTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_ColorFor(self):
+    def test_color_for(self):
         color_dict = {}
         color1 = color_for("aaa", color_dict)
         assert color1 is not None
@@ -29,11 +29,11 @@ class ColorTests(unittest.TestCase):
         self.assertEqual(2, len(color_dict), "Should not have created new dict entry")
         self.assertEqual(color1, color3)
 
-    def test_HexConversion(self):
+    def test_hex_conversion(self):
         red = (255, 0, 0)
         self.assertEqual("rgba(255,0,0,0.300000)", hex_color_for(red))
 
-    def test_MeanColor(self):
+    def test_mean_color(self):
         color1 = (100, 50, 200)
         color2 = (50, 0, 150)
         color3 = (150, 100, 250)

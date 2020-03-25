@@ -55,7 +55,8 @@ class Location:
         except ValueError:
             self.errors.append(
                 {
-                    self.error_type: f"Error in {lat_or_lon} decimal degrees value {degrees}. Couldn't convert to a number"
+                    self.error_type: f"Error in {lat_or_lon} decimal degrees value {degrees}. "
+                    f"Couldn't convert to a number"
                 }
             )
 
@@ -70,7 +71,8 @@ class Location:
         if degrees < min_value or degrees > max_value:
             self.errors.append(
                 {
-                    self.error_type: f"Error in {lat_or_lon} degrees value {degrees}. Must be between 0 and 90"
+                    self.error_type: f"Error in {lat_or_lon} degrees value {degrees}. "
+                    f"Must be between 0 and 90"
                 }
             )
 
@@ -84,7 +86,8 @@ class Location:
         except ValueError:
             self.errors.append(
                 {
-                    self.error_type: f"Error in {lat_or_lon} minutes value {minutes}. Couldn't convert to a number"
+                    self.error_type: f"Error in {lat_or_lon} minutes value {minutes}. "
+                    f"Couldn't convert to a number"
                 }
             )
             return None, False
@@ -92,7 +95,8 @@ class Location:
         if minutes < 0 or minutes > 60:
             self.errors.append(
                 {
-                    self.error_type: f"Error in {lat_or_lon} minutes value {minutes}. Must be between 0 and 90"
+                    self.error_type: f"Error in {lat_or_lon} minutes value {minutes}. "
+                    f"Must be between 0 and 90"
                 }
             )
             return None, False
@@ -106,7 +110,8 @@ class Location:
 
             self.errors.append(
                 {
-                    self.error_type: f"Error in {lat_or_lon} seconds value {seconds}. Couldn't convert to a number"
+                    self.error_type: f"Error in {lat_or_lon} seconds value {seconds}. "
+                    f"Couldn't convert to a number"
                 }
             )
             return None, False
@@ -115,7 +120,8 @@ class Location:
 
             self.errors.append(
                 {
-                    self.error_type: f"Error in {lat_or_lon} seconds value {seconds}. Must be between 0 and 90"
+                    self.error_type: f"Error in {lat_or_lon} seconds value {seconds}. "
+                    f"Must be between 0 and 90"
                 }
             )
             return None, False
@@ -133,7 +139,8 @@ class Location:
         if hemisphere not in valid_hemisphere_values:
             self.errors.append(
                 {
-                    self.error_type: f"Error in {lat_or_lon} hemisphere value {hemisphere}. Must be {' or '.join(valid_hemisphere_values)}"
+                    self.error_type: f"Error in {lat_or_lon} hemisphere value {hemisphere}. "
+                    f"Must be {' or '.join(valid_hemisphere_values)}"
                 }
             )
             return None, False

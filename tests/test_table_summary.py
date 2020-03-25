@@ -22,16 +22,16 @@ class TableSummarySetTestCase(TestCase):
         """Test whether Table Summary class returns correct values or not """
 
         with self.store.session_scope():
-            ts = TableSummary(self.store.session, self.store.db_classes.Privacy)
+            summary = TableSummary(self.store.session, self.store.db_classes.Privacy)
 
             # Two entities created, created_date can't be null
-            self.assertEqual(ts.number_of_rows, 2)
-            self.assertNotEqual(ts.created_date, "-")
+            self.assertEqual(summary.number_of_rows, 2)
+            self.assertNotEqual(summary.created_date, "-")
 
             # There is no entity in State table
-            ts = TableSummary(self.store.session, self.store.db_classes.State)
-            self.assertEqual(ts.number_of_rows, 0)
-            self.assertEqual(ts.created_date, "-")
+            summary = TableSummary(self.store.session, self.store.db_classes.State)
+            self.assertEqual(summary.number_of_rows, 0)
+            self.assertEqual(summary.created_date, "-")
 
 
 class TableSummaryTestCase(TestCase):

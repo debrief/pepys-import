@@ -10,9 +10,6 @@ from pepys_import.resolvers.data_resolver import DataResolver
 
 
 class CommandLineResolver(DataResolver):
-    def __init__(self):
-        super().__init__()
-
     def resolve_datafile(self, data_store, datafile_name, datafile_type, privacy, change_id):
         choice = create_menu(
             f"Datafile '{datafile_name}' not found. Do you wish to: ",

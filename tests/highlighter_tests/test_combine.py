@@ -5,13 +5,13 @@ from datetime import datetime
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.highlighter.support.combine import combine_tokens
 
-path = os.path.abspath(__file__)
-dir_path = os.path.dirname(path)
-TEST_FILE = os.path.join(dir_path, "sample_files/reptest1.rep")
-NMEA_FILE = os.path.join(dir_path, "sample_files/NMEA_out.txt")
+PATH = os.path.abspath(__file__)
+DIR_PATH = os.path.dirname(PATH)
+TEST_FILE = os.path.join(DIR_PATH, "sample_files/reptest1.rep")
+NMEA_FILE = os.path.join(DIR_PATH, "sample_files/NMEA_out.txt")
 
-DATA_FILE = os.path.join(dir_path, "sample_files/file.txt")
-OUTPUT_FOLDER = os.path.join(dir_path, "sample_files/")
+DATA_FILE = os.path.join(DIR_PATH, "sample_files/file.txt")
+OUTPUT_FOLDER = os.path.join(DIR_PATH, "sample_files/")
 
 
 class CombineTokenTests(unittest.TestCase):
@@ -27,55 +27,55 @@ class CombineTokenTests(unittest.TestCase):
 
     def parse_timestamp(self, date, time):
         if len(date) == 6:
-            formatStr = "%y%m%d"
+            format_str = "%y%m%d"
         else:
-            formatStr = "%Y%m%d"
+            format_str = "%Y%m%d"
 
         if len(time) == 6:
-            formatStr += "%H%M%S"
+            format_str += "%H%M%S"
         else:
-            formatStr += "%H%M%S.%f"
+            format_str += "%H%M%S.%f"
 
-        return datetime.strptime(date + time, formatStr)
+        return datetime.strptime(date + time, format_str)
 
     def parse_location(self, lat, lat_hem, lon, long_hem):
-        latDegs = float(lat[0:2])
-        latMins = float(lat[2:4])
-        latSecs = float(lat[4:])
-        latDegs = latDegs + latMins / 60 + latSecs / 60 / 60
+        lat_degs = float(lat[0:2])
+        lat_mins = float(lat[2:4])
+        lat_secs = float(lat[4:])
+        lat_degs = lat_degs + lat_mins / 60 + lat_secs / 60 / 60
 
-        lonDegs = float(lon[0:3])
-        lonMins = float(lon[3:5])
-        lonSecs = float(lon[5:])
-        lonDegs = lonDegs + lonMins / 60 + lonSecs / 60 / 60
+        lon_degs = float(lon[0:3])
+        lon_mins = float(lon[3:5])
+        lon_secs = float(lon[5:])
+        lon_degs = lon_degs + lon_mins / 60 + lon_secs / 60 / 60
 
         if lat_hem == "S":
-            latDegs = -1 * latDegs
+            lat_degs = -1 * lat_degs
 
         if lat_hem == "W":
-            lonDegs = -1 * lonDegs
+            lon_degs = -1 * lon_degs
 
-        return (latDegs, lonDegs)
+        return lat_degs, lon_degs
 
-    def test_CombineSingleLine(self):
-        dataFile = HighlightedFile(DATA_FILE, 1)
+    def test_combine_single_line(self):
+        data_file = HighlightedFile(DATA_FILE, 1)
 
         # get the set of self-describing lines
-        lines = dataFile.lines()
+        lines = data_file.lines()
 
         tokens = lines[0].tokens()
 
         self.assertEqual(7, len(tokens))
 
-        dateToken = tokens[0]
-        timeToken = tokens[1]
-        dateTimeToken = combine_tokens(dateToken, timeToken)
+        date_token = tokens[0]
+        time_token = tokens[1]
+        date_time_token = combine_tokens(date_token, time_token)
 
-        date_time = self.parse_timestamp(dateToken.text, timeToken.text)
+        date_time = self.parse_timestamp(date_token.text, time_token.text)
 
-        dateTimeToken.record("TOOL", "Date-Time", date_time, "N/A")
+        date_time_token.record("TOOL", "Date-Time", date_time, "N/A")
 
-        chars = dataFile.chars_debug()
+        chars = data_file.chars_debug()
         assert chars is not None
 
         ctr = 0
@@ -84,20 +84,20 @@ class CombineTokenTests(unittest.TestCase):
                 break
             ctr = ctr + 1
 
-            if ctr > 0 and ctr <= 6:
+            if 0 < ctr <= 6:
                 usages = char.usages
                 self.assertEqual(1, len(usages))
                 self.assertEqual("Value:1995-12-12 05:00:00 Units:N/A", usages[0].message)
-            elif ctr > 7 and ctr <= 17:
+            elif 7 < ctr <= 17:
                 usages = char.usages
                 self.assertEqual(1, len(usages))
                 self.assertEqual("Value:1995-12-12 05:00:00 Units:N/A", usages[0].message)
 
-    def test_CombineTokensOnMultipleLines(self):
-        dataFile = HighlightedFile(NMEA_FILE, 50)
+    def test_combine_tokens_on_multiple_lines(self):
+        data_file = HighlightedFile(NMEA_FILE, 50)
 
         # get the set of self-describing lines
-        lines = dataFile.lines()
+        lines = data_file.lines()
 
         nmea_delim = "([^,]+|(?<=,)(?=,)|^(?=,)|(?<=,)$)"
 
@@ -171,13 +171,13 @@ class CombineTokenTests(unittest.TestCase):
                     hdg_tok = None
                     lat_tok = None
 
-        dataFile.export(os.path.join(OUTPUT_FOLDER, "nmea.html"))
+        data_file.export(os.path.join(OUTPUT_FOLDER, "nmea.html"))
 
-    def test_CombineLinesOnMultipleLines(self):
-        dataFile = HighlightedFile(NMEA_FILE, 50)
+    def test_combine_lines_on_multiple_lines(self):
+        data_file = HighlightedFile(NMEA_FILE, 50)
 
         # get the set of self-describing lines
-        lines = dataFile.lines()
+        lines = data_file.lines()
 
         nmea_delim = "([^,]+|(?<=,)(?=,)|^(?=,)|(?<=,)$)"
 
@@ -253,7 +253,7 @@ class CombineTokenTests(unittest.TestCase):
                     hdg_tok = None
                     lat_tok = None
 
-        dataFile.export(os.path.join(OUTPUT_FOLDER, "nmea2.html"))
+        data_file.export(os.path.join(OUTPUT_FOLDER, "nmea2.html"))
 
 
 if __name__ == "__main__":

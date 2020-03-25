@@ -29,6 +29,13 @@ class NMEAImporter(Importer):
         self.time = None
         self.heading = None
         self.speed = None
+        self.date_token = None
+        self.time_token = None
+        self.speed_token = None
+        self.heading_token = None
+        self.lat_token = None
+        self.lon_token = None
+        self.location = None
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".LOG" or suffix.upper() == ".TXT"
@@ -36,8 +43,8 @@ class NMEAImporter(Importer):
     def can_load_this_filename(self, filename):
         return True
 
-    def can_load_this_header(self, first_line):
-        return "$POSL" in first_line
+    def can_load_this_header(self, header):
+        return "$POSL" in header
 
     def can_load_this_file(self, file_contents):
         return True

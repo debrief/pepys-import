@@ -478,12 +478,13 @@ class PlatformTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_platform_with_fuzzy_searches(self, resolver_platform, menu_prompt):
-        """Test whether correct entities return when fuzzy search for platform type, nationality and privacy are
-        called"""
+        """Test whether correct entities return when fuzzy search for platform type, nationality
+        and privacy are called"""
 
-        # Select "Search for existing platform"->Type "TEST"->Type name/trigraph/quadgraph/pennant number->Select
-        # "Search for an existing nationality"->Select "UK"->Select "Search for an existing platform type"->Select
-        # "Warship"->Select "Search for an existing classification"->Select "PRIVACY-1"->Select "Yes"
+        # Select "Search for existing platform"->Type "TEST"->Type name/trigraph/quadgraph/pennant number
+        # ->Select "Search for an existing nationality"->Select "UK"->Select "Search for an existing
+        # platform type"->Select "Warship"->Select "Search for an existing classification"->Select
+        # "PRIVACY-1"->Select "Yes"
         menu_prompt.side_effect = [
             "1",
             "TEST",
@@ -527,11 +528,12 @@ class PlatformTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_platform_with_new_values(self, resolver_prompt, menu_prompt):
-        """Test whether new platform type, nationality and privacy entities are created for Platform or not"""
+        """Test whether new platform type, nationality and privacy entities are created for Platform
+         or not"""
 
-        # Select "Add a new platform"->Type name/trigraph/quadgraph/pennant number->Select "Add a new nationality"->
-        # Select "UK"->Select "Add a new platform type"->Select "Warship"->Select "Add a new classification"->Select
-        # "PRIVACY-1"->Select "Yes"
+        # Select "Add a new platform"->Type name/trigraph/quadgraph/pennant number->Select
+        # "Add a new nationality"->Select "UK"->Select "Add a new platform type"->Select "Warship
+        # ->Select "Add a new classification"->Select "PRIVACY-1"->Select "Yes"
         menu_prompt.side_effect = ["2", "2", "2", "2", "1"]
         resolver_prompt.side_effect = [
             "TEST",
@@ -573,9 +575,9 @@ class PlatformTestCase(unittest.TestCase):
         """Test a new platform is created after make further edits option is selected"""
 
         # Select "Add a new platform"->Type name/trigraph/quadgraph/pennant number->Select "No"->
-        # Type name/trigraph/quadgraph/pennant number->Select "Search for an existing nationality"->Select
-        # "UK"->Select "Search for an existing platform type"->Select "Warship"->Select "Search for an existing
-        # classification"->Select "PRIVACY-1"->Select "Yes"
+        # Type name/trigraph/quadgraph/pennant number->Select "Search for an existing nationality"
+        # ->Select "UK"->Select "Search for an existing platform type"->Select "Warship"->Select
+        # "Search for an existing classification"->Select "PRIVACY-1"->Select "Yes"
         menu_prompt.side_effect = [
             "2",
             "2",
@@ -673,8 +675,8 @@ class DatafileTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_datafile_add_new_datafile(self, resolver_prompt, menu_prompt):
-        """Test whether the correct datafile type and privacy entities are returned after searched and not found in
-        Datafile Table."""
+        """Test whether the correct datafile type and privacy entities are returned after searched
+        and not found in Datafile Table."""
 
         # Select "Search for an existing Datafile"->Search "DATAFILE-1"->Type "TEST"->
         # Select "Search for an existing datafile type"->Search "DATAFILE-TYPE-1"->
@@ -732,7 +734,8 @@ class DatafileTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_fuzzy_search_datafile_add_new_datafile(self, resolver_prompt, menu_prompt):
-        """Test whether a new datafile is created or not after searched and not founded in Datafile Table."""
+        """Test whether a new datafile is created or not after searched and not founded in Datafile
+        Table."""
 
         # Search "DATAFILE-1"->Type "TEST"->Select "No"->Select "Yes"
         menu_prompt.side_effect = [
@@ -1053,16 +1056,17 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             "PRIVACY-1",
         ]
         with self.store.session_scope():
-            # Type name/trigraph/quadgraph/pennant number->Select "Cancel nationality search"->Select "Cancel import"
-            with self.assertRaises(SystemExit):
-                self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
-            # Type name/trigraph/quadgraph/pennant number->Select "Add new nationality"->Type "UK"->Select
-            # "Cancel platform type search"->Select "Cancel import"
+            # Type name/trigraph/quadgraph/pennant number->Select "Cancel nationality search"->
+            # Select "Cancel import"
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
             # Type name/trigraph/quadgraph/pennant number->Select "Add new nationality"->Type "UK"->
-            # Select "Add a new platform type"->Type "TYPE-1"->Select "Cancel classification search"->Select "Cancel
-            # import"
+            # Select "Cancel platform type search"->Select "Cancel import"
+            with self.assertRaises(SystemExit):
+                self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
+            # Type name/trigraph/quadgraph/pennant number->Select "Add new nationality"->Type "UK"->
+            # Select "Add a new platform type"->Type "TYPE-1"->Select "Cancel classification search"->
+            # Select "Cancel import"
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
             # Type name/trigraph/quadgraph/pennant number->Select "Add new nationality"->Type "UK"->
@@ -1092,7 +1096,8 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_datafiles(self.store, "DATAFILE-1", "", "", self.change_id)
             # Type "TEST"->Select "Add a new datafile type"->Type "DATAFILE-TYPE-1->
-            # Select "Add a new classification"->Type "PRIVACY-1"->Select "Cancel import"->Select "Cancel import"
+            # Select "Add a new classification"->Type "PRIVACY-1"->Select "Cancel import"->
+            # Select "Cancel import"
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_datafiles(self.store, "DATAFILE-1", "", "", self.change_id)
 
@@ -1117,7 +1122,8 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_sensors(self.store, "SENSOR-1", "", "", self.change_id)
             # Type "TEST"->Select "Add a new sensor type"->Type "SENSOR-TYPE-1->
-            # Select "Add a new classification"->Type "PRIVACY-1"->Select "Cancel import"->Select "Cancel import"
+            # Select "Add a new classification"->Type "PRIVACY-1"->Select "Cancel import"->
+            # Select "Cancel import"
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_sensors(self.store, "SENSOR-1", "", "", self.change_id)
 

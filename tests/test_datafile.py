@@ -92,11 +92,11 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         # Copy file
         shutil.copyfile(REP_FILE_PATH, copied_file_path)
         # Delete characters from the copy file
-        with open(copied_file_path, "r") as f:
-            lines = f.readlines()
+        with open(copied_file_path, "r") as file:
+            lines = file.readlines()
         # Strip first and last two lines, write it to the same file
-        with open(copied_file_path, "w") as f:
-            f.writelines(lines[2:-2])
+        with open(copied_file_path, "w") as file:
+            file.writelines(lines[2:-2])
 
         # Assert that file size is changed
         assert os.stat(copied_file_path).st_size != os.stat(REP_FILE_PATH).st_size
@@ -131,14 +131,14 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         # Copy file
         shutil.copyfile(REP_FILE_PATH, copied_file_path)
         # Delete characters from the copy file
-        with open(copied_file_path, "r") as f:
-            lines = f.readlines()
+        with open(copied_file_path, "r") as file:
+            lines = file.readlines()
         # Change characters
         lines[0] = lines[0].replace("A", "x")
         lines[0] = lines[0].replace("B", "y")
         # Strip first and last two lines, write it to the same file
-        with open(copied_file_path, "w") as f:
-            f.writelines(lines)
+        with open(copied_file_path, "w") as file:
+            file.writelines(lines)
 
         # Assert that file hash is changed and file size is the same
         assert os.stat(copied_file_path).st_size == os.stat(REP_FILE_PATH).st_size

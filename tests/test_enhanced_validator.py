@@ -69,7 +69,7 @@ class EnhancedValidatorTestCase(unittest.TestCase):
             def can_load_this_file(self, file_contents):
                 return True
 
-            def _load_this_file(self, data_store, path, file_contents, datafile):
+            def _load_this_file(self, data_store, path, file_contents, datafile, change_id):
                 pass
 
         self.parser = TestParser()
@@ -155,8 +155,8 @@ class EnhancedValidatorTestCase(unittest.TestCase):
         EnhancedValidator(current_state, self.errors, "Test Parser", prev_state)
         assert len(self.errors) == 1
         assert (
-            "Calculated speed (12382.753 meter / second) is more than the measured speed * 10 (100.000 meter / second)"
-            in str(self.errors[0])
+            "Calculated speed (12382.753 meter / second) is more than the measured speed * 10 "
+            "(100.000 meter / second)" in str(self.errors[0])
         )
 
 

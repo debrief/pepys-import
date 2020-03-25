@@ -29,7 +29,7 @@ DEFAULT_DATA_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "default_da
 USER = getuser()  # Login name of the current user
 
 
-class DataStore(object):
+class DataStore:
     """ Representation of database
 
     :returns: :class:`DataStore`
@@ -288,7 +288,7 @@ class DataStore(object):
         :return: Created :class:`State` entity
         :rtype: State
         """
-        if type(time) == str:
+        if isinstance(time, str):
             # TODO we can't assume the time is in this format. We should throw
             # exception if time isn't of type datetime
             time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
@@ -802,22 +802,22 @@ class DataStore(object):
             # Create measurement table list
             measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
             for table_object in list(measurement_table_objects):
-                ts = TableSummary(self.session, table_object)
-                table_summaries.append(ts)
+                summary = TableSummary(self.session, table_object)
+                table_summaries.append(summary)
 
         if report_metadata:
             # Create metadata table list
             metadata_table_objects = self.meta_classes[TableTypes.METADATA]
             for table_object in list(metadata_table_objects):
-                ts = TableSummary(self.session, table_object)
-                table_summaries.append(ts)
+                summary = TableSummary(self.session, table_object)
+                table_summaries.append(summary)
 
         if report_reference:
             # Create reference table list
             reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
             for table_object in list(reference_table_objects):
-                ts = TableSummary(self.session, table_object)
-                table_summaries.append(ts)
+                summary = TableSummary(self.session, table_object)
+                table_summaries.append(summary)
 
         table_summaries_set = TableSummarySet(table_summaries)
 
@@ -1220,7 +1220,7 @@ class DataStore(object):
         :type datafile_id: String
         """
 
-        f = open("{}.rep".format(datafile), "w+")
+        file = open("{}.rep".format(datafile), "w+")
         states = (
             self.session.query(self.db_classes.State)
             .filter(self.db_classes.State.source_id == datafile_id)
@@ -1242,7 +1242,7 @@ class DataStore(object):
         line_number = 0
 
         # export states
-        for i, state in enumerate(states):
+        for state in states:
             line_number += 1
             #  load platform name from cache.
             try:
@@ -1252,11 +1252,11 @@ class DataStore(object):
                 platform_name = "[Not Found]"
 
             if state.elevation is None:
-                depthStr = "NaN"
+                depth_str = "NaN"
             elif state.elevation == 0.0:
-                depthStr = "0.0"
+                depth_str = "0.0"
             else:
-                depthStr = -1 * state.elevation.magnitude
+                depth_str = -1 * state.elevation.magnitude
 
             state_rep_line = [
                 transformer.format_datatime(state.time),
@@ -1265,13 +1265,13 @@ class DataStore(object):
                 transformer.format_point(state.location.longitude, state.location.latitude),
                 str(state.heading.to(unit_registry.degrees)) if state.heading else "0",
                 str(state.speed.to(unit_registry.knot)) if state.speed else "0",
-                depthStr,
+                depth_str,
             ]
             data = " ".join(state_rep_line)
-            f.write(data + "\r\n")
+            file.write(data + "\r\n")
 
         # Export contacts
-        for i, contact in enumerate(contacts):
+        for contact in contacts:
             line_number += 1
             #  load platform name from cache.
             platform_name = "[Not Found]"
@@ -1309,9 +1309,9 @@ class DataStore(object):
             else:
                 contact_rep_line.insert(0, ";SENSOR:")
             data = " ".join(contact_rep_line)
-            f.write(data + "\r\n")
+            file.write(data + "\r\n")
 
-        for i, comment in enumerate(comments):
+        for comment in comments:
             vessel_name = self.get_cached_platform_name(platform_id=comment.platform_id)
             message = comment.content
             comment_type_name = self.get_cached_comment_type_name(comment.comment_type_id)
@@ -1330,8 +1330,8 @@ class DataStore(object):
                 comment_rep_line.insert(0, ";NARRATIVE2:")
 
             data = " ".join(comment_rep_line)
-            f.write(data + "\r\n")
-        f.close()
+            file.write(data + "\r\n")
+        file.close()
 
     def is_datafile_loaded_before(self, file_size, file_hash):
         """

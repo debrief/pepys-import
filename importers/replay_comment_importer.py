@@ -24,7 +24,7 @@ class ReplayCommentImporter(Importer):
     def can_load_this_filename(self, filename):
         return True
 
-    def can_load_this_header(self, first_line):
+    def can_load_this_header(self, header):
         return True
 
     def can_load_this_file(self, file_contents):

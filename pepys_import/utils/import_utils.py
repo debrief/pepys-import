@@ -35,7 +35,7 @@ def import_validators(path):
             # import file using its name and full path
             if file.is_file():
                 classes = import_module_(file)
-                for name, class_ in classes:
+                for _, class_ in classes:
                     print(inspect.signature(class_))
                     validators.append(class_)
     return validators

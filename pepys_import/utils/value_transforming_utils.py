@@ -12,12 +12,12 @@ def format_datatime(datetime):
 def break_point_dimention_to_sub_units(val):
     degree = int(val)
 
-    minutesFloat = (val - degree) * 60
-    minutes = int(minutesFloat)
+    minutes_float = (val - degree) * 60
+    minutes = int(minutes_float)
 
-    secondsFloat = (minutesFloat - minutes) * 60
+    seconds_float = (minutes_float - minutes) * 60
 
-    return [degree, minutes, secondsFloat]
+    return [degree, minutes, seconds_float]
 
 
 def format_point_dimention(val, hemisphere_pair):

@@ -89,9 +89,9 @@ class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
         inspector = inspect(data_store_sqlite.engine)
         table_names = inspector.get_table_names()
 
-        SYSTEM = platform.system()
+        system = platform.system()
 
-        if SYSTEM == "Windows":
+        if system == "Windows":
             correct_n_tables = 72
         else:
             correct_n_tables = 70
