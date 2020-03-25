@@ -1,37 +1,28 @@
 import os
 import unittest
+
 from pepys_import.file.highlighter.highlighter import HighlightedFile
-from pepys_import.file.highlighter.highlighter import Char
 
-path = os.path.abspath(__file__)
-dir_path = os.path.dirname(path)
-TEST_FILE = os.path.join(dir_path, "sample_files/reptest1.rep")
+PATH = os.path.abspath(__file__)
+DIR_PATH = os.path.dirname(PATH)
+TEST_FILE = os.path.join(DIR_PATH, "sample_files/reptest1.rep")
 
-DATA_FILE = os.path.join(dir_path, "sample_files/file.txt")
-COMMA_FILE = os.path.join(dir_path, "sample_files/file_comma.txt")
+DATA_FILE = os.path.join(DIR_PATH, "sample_files/file.txt")
+COMMA_FILE = os.path.join(DIR_PATH, "sample_files/file_comma.txt")
 
 
 class SimpleTests(unittest.TestCase):
-
-    ############################
-    #### setup and teardown ####
-    ############################
-
     def setUp(self):
         pass
 
     def tearDown(self):
         pass
 
-    ####################
-    #### file tests ####
-    ####################
-
-    def test_SplitLoadFile(self):
+    def test_split_load_file(self):
         data_file = HighlightedFile(DATA_FILE)
         assert data_file is not None
 
-    def test_SplitLines(self):
+    def test_split_lines(self):
         data_file = HighlightedFile(DATA_FILE)
 
         # get the set of self-describing lines
@@ -39,7 +30,7 @@ class SimpleTests(unittest.TestCase):
 
         self.assertEqual(7, len(lines))
 
-    def test_SplitCommaTokens(self):
+    def test_split_comma_tokens(self):
         data_file = HighlightedFile(COMMA_FILE)
 
         # get the set of self-describing lines
@@ -56,7 +47,7 @@ class SimpleTests(unittest.TestCase):
 
         self.assertEqual("951212", tokens[0].text)
 
-    def test_SplitTokens(self):
+    def test_split_tokens(self):
         data_file = HighlightedFile(DATA_FILE)
 
         # get the set of self-describing lines

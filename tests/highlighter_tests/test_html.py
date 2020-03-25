@@ -1,5 +1,6 @@
 import os
 import unittest
+
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 
 path = os.path.abspath(__file__)

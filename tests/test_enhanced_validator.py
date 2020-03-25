@@ -1,13 +1,12 @@
 import unittest
-
 from datetime import datetime, timedelta
 
 from pepys_import.core.formats import unit_registry
-from pepys_import.core.store.data_store import DataStore
-from pepys_import.core.validators.enhanced_validator import EnhancedValidator
-from pepys_import.core.validators import constants
-from pepys_import.file.importer import Importer
 from pepys_import.core.formats.location import Location
+from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.validators import constants
+from pepys_import.core.validators.enhanced_validator import EnhancedValidator
+from pepys_import.file.importer import Importer
 from pepys_import.utils.unit_utils import acceptable_bearing_error
 
 
@@ -16,19 +15,13 @@ class EnhancedValidatorTestCase(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
         with self.store.session_scope():
-            self.change_id = self.store.add_to_changes(
-                "TEST", datetime.utcnow(), "TEST"
-            ).change_id
+            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
             # Create a platform, a sensor, a datafile and finally a state object respectively
-            nationality = self.store.add_to_nationalities(
-                "test_nationality", self.change_id
-            ).name
+            nationality = self.store.add_to_nationalities("test_nationality", self.change_id).name
             platform_type = self.store.add_to_platform_types(
                 "test_platform_type", self.change_id
             ).name
-            sensor_type = self.store.add_to_sensor_types(
-                "test_sensor_type", self.change_id
-            )
+            sensor_type = self.store.add_to_sensor_types("test_sensor_type", self.change_id)
             privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
 
             self.platform = self.store.get_platform(
@@ -42,9 +35,7 @@ class EnhancedValidatorTestCase(unittest.TestCase):
                 self.store, "gps", sensor_type, change_id=self.change_id
             )
             self.current_time = datetime.utcnow()
-            self.file = self.store.get_datafile(
-                "test_file", "csv", 0, "hashed", self.change_id
-            )
+            self.file = self.store.get_datafile("test_file", "csv", 0, "hashed", self.change_id)
 
             self.store.session.expunge(self.platform)
             self.store.session.expunge(self.sensor)
@@ -78,7 +69,7 @@ class EnhancedValidatorTestCase(unittest.TestCase):
             def can_load_this_file(self, file_contents):
                 return True
 
-            def _load_this_file(self, data_store, path, file_contents, datafile):
+            def _load_this_file(self, data_store, path, file_contents, datafile, change_id):
                 pass
 
         self.parser = TestParser()
@@ -164,8 +155,8 @@ class EnhancedValidatorTestCase(unittest.TestCase):
         EnhancedValidator(current_state, self.errors, "Test Parser", prev_state)
         assert len(self.errors) == 1
         assert (
-            "Calculated speed (12382.753 meter / second) is more than the measured speed * 10 (100.000 meter / second)"
-            in str(self.errors[0])
+            "Calculated speed (12382.753 meter / second) is more than the measured speed * 10 "
+            "(100.000 meter / second)" in str(self.errors[0])
         )
 
 

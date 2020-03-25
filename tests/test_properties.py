@@ -1,15 +1,13 @@
 import unittest
-import pytest
-
 from datetime import datetime
 
+import pytest
 
+from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.location import Location
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.importer import Importer
-from pepys_import.core.formats import unit_registry
-
-from pepys_import.core.formats.location import Location
 
 
 class TestStateSpeedProperty(unittest.TestCase):
@@ -43,9 +41,8 @@ class TestStateSpeedProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             state.speed = 5 * unit_registry.metre
 
-        assert (
-            "Speed must be a Quantity with a dimensionality of [length]/[time]"
-            in str(exception.value)
+        assert "Speed must be a Quantity with a dimensionality of [length]/[time]" in str(
+            exception.value
         )
 
     def test_state_speed_right_units(self):
@@ -98,9 +95,7 @@ class TestStateHeadingProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             state.heading = 5 * unit_registry.second
 
-        assert "Heading must be a Quantity with a dimensionality of ''" in str(
-            exception.value
-        )
+        assert "Heading must be a Quantity with a dimensionality of ''" in str(exception.value)
 
     def test_state_heading_right_units(self):
         state = self.store.db_classes.State()
@@ -152,9 +147,7 @@ class TestStateCourseProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             state.course = 5 * unit_registry.second
 
-        assert "Course must be a Quantity with a dimensionality of ''" in str(
-            exception.value
-        )
+        assert "Course must be a Quantity with a dimensionality of ''" in str(exception.value)
 
     def test_state_course_right_units(self):
         state = self.store.db_classes.State()
@@ -206,9 +199,7 @@ class TestContactBearingProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.bearing = 5 * unit_registry.second
 
-        assert "Bearing must be a Quantity with a dimensionality of ''" in str(
-            exception.value
-        )
+        assert "Bearing must be a Quantity with a dimensionality of ''" in str(exception.value)
 
     def test_contact_bearing_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -314,9 +305,7 @@ class TestContactMLAProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.mla = 5 * unit_registry.second
 
-        assert "MLA must be a Quantity with a dimensionality of ''" in str(
-            exception.value
-        )
+        assert "MLA must be a Quantity with a dimensionality of ''" in str(exception.value)
 
     def test_contact_mla_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -422,9 +411,7 @@ class TestContactOrientationProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.orientation = 5 * unit_registry.second
 
-        assert "Orientation must be a Quantity with a dimensionality of ''" in str(
-            exception.value
-        )
+        assert "Orientation must be a Quantity with a dimensionality of ''" in str(exception.value)
 
     def test_contact_orientation_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -476,9 +463,7 @@ class TestContactMajorProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.major = 5 * unit_registry.second
 
-        assert "Major must be a Quantity with a dimensionality of [length]" in str(
-            exception.value
-        )
+        assert "Major must be a Quantity with a dimensionality of [length]" in str(exception.value)
 
     def test_contact_major_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -530,9 +515,7 @@ class TestContactMinorProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.minor = 5 * unit_registry.second
 
-        assert "Minor must be a Quantity with a dimensionality of [length]" in str(
-            exception.value
-        )
+        assert "Minor must be a Quantity with a dimensionality of [length]" in str(exception.value)
 
     def test_contact_minor_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -584,9 +567,7 @@ class TestContactRangeProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.range = 5 * unit_registry.second
 
-        assert "Range must be a Quantity with a dimensionality of [length]" in str(
-            exception.value
-        )
+        assert "Range must be a Quantity with a dimensionality of [length]" in str(exception.value)
 
     def test_contact_range_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -638,9 +619,7 @@ class TestContactFreqProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.freq = 5 * unit_registry.kilogram
 
-        assert "Freq must be a Quantity with a dimensionality of [time]^-1" in str(
-            exception.value
-        )
+        assert "Freq must be a Quantity with a dimensionality of [time]^-1" in str(exception.value)
 
     def test_contact_freq_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -767,9 +746,7 @@ class TestLocationProperty:
         with pytest.raises(TypeError) as exception:
             obj.location = (50, -1)
 
-        assert "location value must be an instance of the Location class" in str(
-            exception.value
-        )
+        assert "location value must be an instance of the Location class" in str(exception.value)
 
     @pytest.mark.parametrize(
         "class_name", CLASSES_WITH_LOCATION,
@@ -955,9 +932,7 @@ class TestActivationLeftArcProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             activation.left_arc = 5 * unit_registry.second
 
-        assert "left_arc must be a Quantity with a dimensionality of ''" in str(
-            exception.value
-        )
+        assert "left_arc must be a Quantity with a dimensionality of ''" in str(exception.value)
 
     def test_activation_left_arc_right_units(self):
         activation = self.store.db_classes.Activation()
@@ -1009,9 +984,7 @@ class TestActivationRightArcProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             activation.right_arc = 5 * unit_registry.second
 
-        assert "right_arc must be a Quantity with a dimensionality of ''" in str(
-            exception.value
-        )
+        assert "right_arc must be a Quantity with a dimensionality of ''" in str(exception.value)
 
     def test_activation_right_arc_right_units(self):
         activation = self.store.db_classes.Activation()
@@ -1036,10 +1009,8 @@ class TestLocationRoundtripToDB(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
-        with self.store.session_scope() as session:
-            self.change_id = self.store.add_to_changes(
-                "TEST", datetime.utcnow(), "TEST"
-            ).change_id
+        with self.store.session_scope():
+            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
             print(self.change_id)
             self.nationality = self.store.add_to_nationalities(
                 "test_nationality", self.change_id
@@ -1047,12 +1018,8 @@ class TestLocationRoundtripToDB(unittest.TestCase):
             self.platform_type = self.store.add_to_platform_types(
                 "test_platform_type", self.change_id
             ).name
-            self.sensor_type = self.store.add_to_sensor_types(
-                "test_sensor_type", self.change_id
-            )
-            self.privacy = self.store.add_to_privacies(
-                "test_privacy", self.change_id
-            ).name
+            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type", self.change_id)
+            self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -1111,7 +1078,7 @@ class TestLocationRoundtripToDB(unittest.TestCase):
         pass
 
     def test_location_roundtrip_to_db(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             states = self.store.session.query(self.store.db_classes.State).all()
 
             # there must be no entry at the beginning
@@ -1142,7 +1109,7 @@ class TestLocationRoundtripToDB(unittest.TestCase):
 
         # In a separate session, check that we get a Location class with the right
         # lat and lon
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             states = self.store.session.query(self.store.db_classes.State).all()
             self.assertEqual(len(states), 1)
             loc = states[0].location

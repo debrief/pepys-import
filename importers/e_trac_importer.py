@@ -1,12 +1,13 @@
 from datetime import datetime
+
 from tqdm import tqdm
 
 from pepys_import.core.formats import unit_registry
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
-from pepys_import.file.highlighter.support.combine import combine_tokens
-from pepys_import.core.validators import constants
-from pepys_import.file.importer import Importer
 from pepys_import.core.formats.location import Location
+from pepys_import.core.validators import constants
+from pepys_import.file.highlighter.support.combine import combine_tokens
+from pepys_import.file.importer import Importer
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 
 class ETracImporter(Importer):
@@ -29,8 +30,8 @@ class ETracImporter(Importer):
     def can_load_this_filename(self, filename):
         return True
 
-    def can_load_this_header(self, first_line):
-        return first_line.startswith("!Target,MMSI")
+    def can_load_this_header(self, header):
+        return header.startswith("!Target,MMSI")
 
     def can_load_this_file(self, file_contents):
         return True
@@ -45,11 +46,9 @@ class ETracImporter(Importer):
             if len(tokens) <= 1:
                 # the last line may be empty, don't worry
                 continue
-            elif len(tokens) < 17:
+            if len(tokens) < 17:
                 self.errors.append(
-                    {
-                        self.error_type: f"Error on line {line_number}. Not enough tokens: {line}"
-                    }
+                    {self.error_type: f"Error on line {line_number}. Not enough tokens: {line}"}
                 )
                 continue
 
@@ -86,9 +85,7 @@ class ETracImporter(Importer):
                 continue
 
             timestamp = self.parse_timestamp(date_token.text, time_token.text)
-            combine_tokens(date_token, time_token).record(
-                self.name, "timestamp", timestamp
-            )
+            combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp)
 
             # and finally store it
             platform = data_store.get_platform(
@@ -99,9 +96,7 @@ class ETracImporter(Importer):
                 change_id=change_id,
             )
             sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id)
-            privacy = data_store.missing_data_resolver.resolve_privacy(
-                data_store, change_id
-            )
+            privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
             sensor = platform.get_sensor(
                 data_store=data_store,
                 sensor_name="E-Trac",
@@ -109,9 +104,7 @@ class ETracImporter(Importer):
                 privacy=privacy.name,
                 change_id=change_id,
             )
-            state = datafile.create_state(
-                data_store, platform, sensor, timestamp, self.short_name
-            )
+            state = datafile.create_state(data_store, platform, sensor, timestamp, self.short_name)
             state.privacy = privacy.privacy_id
 
             location = Location(errors=self.errors, error_type=self.error_type)
@@ -133,11 +126,7 @@ class ETracImporter(Importer):
             heading_token.record(self.name, "heading", heading)
 
             speed = convert_speed(
-                speed_token.text,
-                unit_registry.knots,
-                line_number,
-                self.errors,
-                self.error_type,
+                speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type,
             )
             if speed:
                 state.speed = speed

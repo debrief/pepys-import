@@ -1,0 +1,6 @@
+[tool.black]
+line-length = 100
+target-version = ['py37']
+
+[tool.isort]
+multi_line_output = 3  # Vertical Hanging Indent, which is supported by Black

@@ -1,11 +1,9 @@
-from math import degrees
-
+from pepys_import.core.formats import unit_registry
 from pepys_import.utils.unit_utils import (
+    acceptable_bearing_error,
     bearing_between_two_points,
     distance_between_two_points_haversine,
-    acceptable_bearing_error,
 )
-from pepys_import.core.formats import unit_registry
 
 
 class EnhancedValidator:
@@ -20,15 +18,11 @@ class EnhancedValidator:
         heading = current_object.heading if hasattr(current_object, "heading") else None
         course = current_object.course if hasattr(current_object, "course") else None
         speed = current_object.speed if hasattr(current_object, "speed") else None
-        location = (
-            current_object.location if hasattr(current_object, "location") else None
-        )
+        location = current_object.location if hasattr(current_object, "location") else None
         time = current_object.time if hasattr(current_object, "time") else None
 
         if prev_object:
-            prev_location = (
-                prev_object.location if hasattr(prev_object, "location") else None
-            )
+            prev_location = prev_object.location if hasattr(prev_object, "location") else None
             prev_time = prev_object.time if hasattr(prev_object, "time") else None
 
             if location and prev_location:
@@ -38,12 +32,7 @@ class EnhancedValidator:
                 calculated_time = self.calculate_time(time, prev_time)
                 if calculated_time != 0:
                     self.speed_loose_match_with_location(
-                        location,
-                        prev_location,
-                        speed,
-                        calculated_time,
-                        errors,
-                        error_type,
+                        location, prev_location, speed, calculated_time, errors, error_type,
                     )
 
     @staticmethod
@@ -52,7 +41,7 @@ class EnhancedValidator:
     ):
         """Loosely matches the course and heading values with the bearing between two location
         points.
-        
+
         :param curr_location: Point of the current location of the object
         :type curr_location: Location
         :param prev_location: Point o the previous location of the object

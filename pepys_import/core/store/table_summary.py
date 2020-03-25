@@ -1,7 +1,7 @@
 from tabulate import tabulate
 
 
-class TableSummary(object):
+class TableSummary:
     """
     A summary of the contents of a table, which sends query to DB and finds
     number of rows and creation date of last item added.
@@ -22,11 +22,7 @@ class TableSummary(object):
 
     def table_summary(self):
         number_of_rows = self.session.query(self.table).count()
-        last_row = (
-            self.session.query(self.table)
-            .order_by(self.table.created_date.desc())
-            .first()
-        )
+        last_row = self.session.query(self.table).order_by(self.table.created_date.desc()).first()
         created_date = "-"
         if last_row:
             created_date = str(last_row.created_date)
@@ -49,7 +45,7 @@ def table_delta(first_summary, second_summary):
     return differences
 
 
-class TableSummarySet(object):
+class TableSummarySet:
     """A collection of TableSummary elements."""
 
     def __init__(self, table_summaries):

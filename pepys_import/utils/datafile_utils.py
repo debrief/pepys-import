@@ -13,7 +13,7 @@ def hash_file(path):
     :rtype: String
     """
     md5 = hashlib.md5()
-    with open(path, "rb") as f:
-        data = f.read(BUFFER_SIZE)
+    with open(path, "rb") as file:
+        data = file.read(BUFFER_SIZE)
         md5.update(data)
     return md5.hexdigest()
