@@ -17,11 +17,15 @@ dirpath = os.path.dirname(os.path.abspath(__file__))
 
 
 class InitialiseShell(cmd.Cmd):
-    intro = (
-        "\n--- Menu --- \n (1) Clear database\n (2) Create Pepys schema\n"
-        " (3) Import Reference data\n (4) Import Metadata\n "
-        "(5) Import Sample Measurements\n (0) Exit\n"
-    )
+    intro = """--- Menu ---
+(1) Clear database contents
+(2) Clear database schema
+(3) Create Pepys schema
+(4) Import Reference data
+(5) Import Metadata
+(6) Import Sample Measurements
+(0) Exit
+"""
     prompt = "(initialise) "
 
     def __init__(self, datastore, parentShell, csv_path):
@@ -30,33 +34,43 @@ class InitialiseShell(cmd.Cmd):
         self.csv_path = csv_path
         self.aliases = {
             "0": self.do_cancel,
-            "1": self.do_cleardb,
-            "2": self.do_create_pepys_schema,
-            "3": self.do_import_reference_data,
-            "4": self.do_import_metadata,
-            "5": self.do_import_sample_measurements,
+            "1": self.do_cleardb_contents,
+            "2": self.do_cleardb_schema,
+            "3": self.do_create_pepys_schema,
+            "4": self.do_import_reference_data,
+            "5": self.do_import_metadata,
+            "6": self.do_import_sample_measurements,
         }
 
         if parentShell:
             self.prompt = parentShell.prompt.strip() + "/" + self.prompt
 
-    def do_cleardb(self, args):
-        self.datastore.clear_db()
+    def do_cleardb_contents(self, args):
+        self.datastore.clear_db_contents()
+        print("Cleared database contents")
+
+    def do_cleardb_schema(self, args):
+        self.datastore.clear_db_schema()
+        print("Cleared database schema")
 
     def do_create_pepys_schema(self, args):
         self.datastore.initialise()
+        print("Initialised database")
 
     def do_import_reference_data(self, args):
         with self.datastore.session_scope():
             self.datastore.populate_reference(self.csv_path)
+        print("Reference data imported")
 
     def do_import_metadata(self, args):
         with self.datastore.session_scope():
             self.datastore.populate_metadata(self.csv_path)
+        print("Metadata imported")
 
     def do_import_sample_measurements(self, args):
         with self.datastore.session_scope():
             self.datastore.populate_measurement(self.csv_path)
+        print("Sample measurements imported")
 
     def do_cancel(self, *args):
         return True
@@ -80,7 +94,12 @@ class InitialiseShell(cmd.Cmd):
 
 
 class AdminShell(cmd.Cmd):
-    intro = "\n--- Menu --- \n (1) Export\n " "(2) Initialise\n (3) Status\n (0) Exit\n"
+    intro = """--- Menu ---
+(1) Export
+(2) Initialise/Clear
+(3) Status
+(0) Exit
+"""
     prompt = "(pepys-admin) "
 
     def __init__(self, datastore, csv_path=dirpath):
