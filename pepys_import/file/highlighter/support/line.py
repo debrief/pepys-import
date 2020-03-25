@@ -1,5 +1,6 @@
 from re import finditer
-from .token import Token, SubToken
+
+from .token import SubToken, Token
 from .usages import SingleUsage
 
 
@@ -11,9 +12,7 @@ class Line:
     """
 
     WHITESPACE_DELIM = "\\S+"
-    CSV_DELIM = (
-        r'(?:,"|^")(""|[\w\W]*?)(?=",|"$)|(?:,(?!")|^(?!"))([^,]*?)(?=$|,)|(\r\n|\n)'
-    )
+    CSV_DELIM = r'(?:,"|^")(""|[\w\W]*?)(?=",|"$)|(?:,(?!")|^(?!"))([^,]*?)(?=$|,)|(\r\n|\n)'
 
     def __init__(self, list_of_subtokens, hf_instance):
         """
@@ -28,15 +27,7 @@ class Line:
     def __repr__(self):
         res = "Line: "
         for child in self.children:
-            res += (
-                "("
-                + str(child.line_start)
-                + "+"
-                + repr(child.span)
-                + ", "
-                + child.text
-                + ")"
-            )
+            res += "(" + str(child.line_start) + "+" + repr(child.span) + ", " + child.text + ")"
         return res
 
     @property
@@ -68,17 +59,13 @@ class Line:
                         # and ditch any new whitespace
                     token_str = token_str.strip()
 
-                subtoken = SubToken(
-                    match.span(), token_str, int(child.line_start), child.chars
-                )
+                subtoken = SubToken(match.span(), token_str, int(child.line_start), child.chars)
 
                 # the token object expects an array of SubTokens, as it could be
                 # a composite object
                 list_of_subtokens = [subtoken]
 
-                self.tokens_array.append(
-                    Token(list_of_subtokens, self.highlighted_file)
-                )
+                self.tokens_array.append(Token(list_of_subtokens, self.highlighted_file))
 
         return self.tokens_array
 

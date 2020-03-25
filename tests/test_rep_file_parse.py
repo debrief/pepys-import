@@ -1,12 +1,12 @@
-import unittest
 import datetime
-
-from pepys_import.core.formats.location import Location
-from pepys_import.core.formats.rep_line import REPLine
-from pepys_import.core.formats import unit_registry
-from pepys_import.file.highlighter.support.test_utils import create_test_line_object
+import unittest
 from contextlib import redirect_stdout
 from io import StringIO
+
+from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.location import Location
+from pepys_import.core.formats.rep_line import REPLine
+from pepys_import.file.highlighter.support.test_utils import create_test_line_object
 
 
 class BasicTests(unittest.TestCase):
@@ -40,9 +40,7 @@ class BasicTests(unittest.TestCase):
     def test_error_reports(self):
         # too few fields
         rep_line = REPLine(
-            1,
-            create_test_line_object(" 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "),
-            " ",
+            1, create_test_line_object(" 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "), " ",
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 

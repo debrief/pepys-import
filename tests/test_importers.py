@@ -1,17 +1,16 @@
 import os
-import stat
 import shutil
+import stat
 import unittest
-
 from contextlib import redirect_stdout
-from io import StringIO
 from datetime import datetime
+from io import StringIO
 from unittest.mock import patch
 
-from pepys_import.file.importer import Importer
-from pepys_import.file.file_processor import FileProcessor
-from importers.replay_importer import ReplayImporter
 from importers.nmea_importer import NMEAImporter
+from importers.replay_importer import ReplayImporter
+from pepys_import.file.file_processor import FileProcessor
+from pepys_import.file.importer import Importer
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
@@ -144,9 +143,7 @@ class SampleImporterTests(unittest.TestCase):
             source_path = os.path.join(REP_DATA_PATH, file.name)
             shutil.move(file.path, source_path)
             # Change file permission to -rw-r--r--
-            os.chmod(
-                source_path, stat.S_IWRITE | stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH
-            )
+            os.chmod(source_path, stat.S_IWRITE | stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
 
         # Assert that only correctly imported files were moved to the output folder
         assert "rep_test1.rep" in names

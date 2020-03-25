@@ -1,5 +1,5 @@
-import unittest
 import os
+import unittest
 
 from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
@@ -20,11 +20,7 @@ class SampleImporterTestCase(unittest.TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -36,6 +32,7 @@ class SampleImporterTestCase(unittest.TestCase):
                 db_username="postgres",
                 db_password="postgres",
                 db_port=55527,
+                db_type="postgres",
             )
             self.store.initialise()
         except OperationalError:

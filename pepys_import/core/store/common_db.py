@@ -1,17 +1,14 @@
-from tqdm import tqdm
 from sqlalchemy.ext.hybrid import hybrid_property
-
-from pepys_import.core.formats import unit_registry
+from tqdm import tqdm
 
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
+from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 from pepys_import.utils.import_utils import import_validators
-
-from pepys_import.core.formats.location import Location
-
 
 LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
 LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
@@ -51,9 +48,7 @@ class SensorMixin:
     @classmethod
     def add_to_sensors(cls, data_store, name, sensor_type, host, change_id):
         session = data_store.session
-        sensor_type = data_store.db_classes.SensorType().search_sensor_type(
-            data_store, sensor_type
-        )
+        sensor_type = data_store.db_classes.SensorType().search_sensor_type(data_store, sensor_type)
         host = data_store.db_classes.Platform().search_platform(data_store, host)
 
         sensor_obj = data_store.db_classes.Sensor(
@@ -76,12 +71,7 @@ class PlatformMixin:
         return data_store.session.query(Platform).filter(Platform.name == name).first()
 
     def get_sensor(
-        self,
-        data_store,
-        sensor_name=None,
-        sensor_type=None,
-        privacy=None,
-        change_id=None,
+        self, data_store, sensor_name=None, sensor_type=None, privacy=None, change_id=None,
     ):
         """
          Lookup or create a sensor of this name for this :class:`Platform`.
@@ -174,10 +164,7 @@ class DatafileMixin:
         self.measurements[parser_name][measurement.platform_name].append(measurement)
 
     def validate(
-        self,
-        validation_level=validation_constants.NONE_LEVEL,
-        errors=None,
-        parser="Default",
+        self, validation_level=validation_constants.NONE_LEVEL, errors=None, parser="Default",
     ):
         # If there is no parsing error, it will return None. If that's the case,
         # create a new list for validation errors.
@@ -226,9 +213,7 @@ class DatafileMixin:
                 print(f"Submitting measurements extracted by {parser}.")
                 for obj in tqdm(objects):
                     obj.submit(data_store, change_id)
-            extraction_log.append(
-                f"{total_objects} measurements extracted by {parser}."
-            )
+            extraction_log.append(f"{total_objects} measurements extracted by {parser}.")
         return extraction_log
 
 
@@ -250,9 +235,7 @@ class StateMixin:
         data_store.session.flush()
         data_store.session.expire(self, ["_location"])
         # Log new State object creation
-        data_store.add_to_logs(
-            table=constants.STATE, row_id=self.state_id, change_id=change_id
-        )
+        data_store.add_to_logs(table=constants.STATE, row_id=self.state_id, change_id=change_id)
         return self
 
     #
@@ -316,13 +299,8 @@ class StateMixin:
                 raise ValueError(
                     "Heading must be a Quantity with a dimensionality of '' (ie. nothing)"
                 )
-            if not (
-                heading.units == unit_registry.degree
-                or heading.units == unit_registry.radian
-            ):
-                raise ValueError(
-                    "Heading must be a Quantity with angular units (degree or radian)"
-                )
+            if not (heading.units == unit_registry.degree or heading.units == unit_registry.radian):
+                raise ValueError("Heading must be a Quantity with angular units (degree or radian)")
         except AttributeError:
             raise TypeError("Heading must be a Quantity")
 
@@ -358,13 +336,8 @@ class StateMixin:
                 raise ValueError(
                     "Course must be a Quantity with a dimensionality of '' (ie. nothing)"
                 )
-            if not (
-                course.units == unit_registry.degree
-                or course.units == unit_registry.radian
-            ):
-                raise ValueError(
-                    "Course must be a Quantity with angular units (degree or radian)"
-                )
+            if not (course.units == unit_registry.degree or course.units == unit_registry.radian):
+                raise ValueError("Course must be a Quantity with angular units (degree or radian)")
         except AttributeError:
             raise TypeError("Course must be a Quantity")
 
@@ -383,9 +356,7 @@ class ContactMixin:
         data_store.session.flush()
         data_store.session.expire(self, ["_location"])
         # Log new Contact object creation
-        data_store.add_to_logs(
-            table=constants.CONTACT, row_id=self.contact_id, change_id=change_id
-        )
+        data_store.add_to_logs(table=constants.CONTACT, row_id=self.contact_id, change_id=change_id)
         return self
 
     #
@@ -413,13 +384,8 @@ class ContactMixin:
                 raise ValueError(
                     "Bearing must be a Quantity with a dimensionality of '' (ie. nothing)"
                 )
-            if not (
-                bearing.units == unit_registry.degree
-                or bearing.units == unit_registry.radian
-            ):
-                raise ValueError(
-                    "Bearing must be a Quantity with angular units (degree or radian)"
-                )
+            if not (bearing.units == unit_registry.degree or bearing.units == unit_registry.radian):
+                raise ValueError("Bearing must be a Quantity with angular units (degree or radian)")
         except AttributeError:
             raise TypeError("Bearing must be a Quantity")
 
@@ -494,15 +460,9 @@ class ContactMixin:
         # degrees or radians
         try:
             if not mla.check(""):
-                raise ValueError(
-                    "MLA must be a Quantity with a dimensionality of '' (ie. nothing)"
-                )
-            if not (
-                mla.units == unit_registry.degree or mla.units == unit_registry.radian
-            ):
-                raise ValueError(
-                    "MLA must be a Quantity with angular units (degree or radian)"
-                )
+                raise ValueError("MLA must be a Quantity with a dimensionality of '' (ie. nothing)")
+            if not (mla.units == unit_registry.degree or mla.units == unit_registry.radian):
+                raise ValueError("MLA must be a Quantity with angular units (degree or radian)")
         except AttributeError:
             raise TypeError("MLA must be a Quantity")
 
@@ -534,9 +494,7 @@ class ContactMixin:
         # Check the given soa is a Quantity with a dimension of 'length / time'
         try:
             if not soa.check("[length]/[time]"):
-                raise ValueError(
-                    "SOA must be a Quantity with a dimensionality of [length]/[time]"
-                )
+                raise ValueError("SOA must be a Quantity with a dimensionality of [length]/[time]")
         except AttributeError:
             raise TypeError("SOA must be a Quantity")
 
@@ -610,9 +568,7 @@ class ContactMixin:
         # Check the given major is a Quantity with a dimension of 'length'
         try:
             if not major.check("[length]"):
-                raise ValueError(
-                    "Major must be a Quantity with a dimensionality of [length]"
-                )
+                raise ValueError("Major must be a Quantity with a dimensionality of [length]")
         except AttributeError:
             raise TypeError("Major must be a Quantity")
 
@@ -644,9 +600,7 @@ class ContactMixin:
         # Check the given minor is a Quantity with a dimension of 'length'
         try:
             if not minor.check("[length]"):
-                raise ValueError(
-                    "Minor must be a Quantity with a dimensionality of [length]"
-                )
+                raise ValueError("Minor must be a Quantity with a dimensionality of [length]")
         except AttributeError:
             raise TypeError("Minor must be a Quantity")
 
@@ -678,9 +632,7 @@ class ContactMixin:
         # Check the given range is a Quantity with a dimension of 'length'
         try:
             if not range.check("[length]"):
-                raise ValueError(
-                    "Range must be a Quantity with a dimensionality of [length]"
-                )
+                raise ValueError("Range must be a Quantity with a dimensionality of [length]")
         except AttributeError:
             raise TypeError("Range must be a Quantity")
 
@@ -712,9 +664,7 @@ class ContactMixin:
         # Check the given freq is a Quantity with a dimension of 'time^-1' (ie. 'per unit time')
         try:
             if not freq.check("[time]^-1"):
-                raise ValueError(
-                    "Freq must be a Quantity with a dimensionality of [time]^-1"
-                )
+                raise ValueError("Freq must be a Quantity with a dimensionality of [time]^-1")
         except AttributeError:
             raise TypeError("Freq must be a Quantity")
 
@@ -732,9 +682,7 @@ class CommentMixin:
         data_store.session.add(self)
         data_store.session.flush()
         # Log new Comment object creation
-        data_store.add_to_logs(
-            table=constants.COMMENT, row_id=self.comment_id, change_id=change_id
-        )
+        data_store.add_to_logs(table=constants.COMMENT, row_id=self.comment_id, change_id=change_id)
         return self
 
 
@@ -760,9 +708,7 @@ class ElevationPropertyMixin:
         # Check the given elevation is a Quantity with a dimension of 'length'
         try:
             if not elevation.check("[length]"):
-                raise ValueError(
-                    "Elevation must be a Quantity with a dimensionality of [length]"
-                )
+                raise ValueError("Elevation must be a Quantity with a dimensionality of [length]")
         except AttributeError:
             raise TypeError("Elevation must be a Quantity")
 
@@ -828,9 +774,7 @@ class ActivationMixin:
         # Check the given min_range is a Quantity with a dimension of 'length'
         try:
             if not min_range.check("[length]"):
-                raise ValueError(
-                    "min_range must be a Quantity with a dimensionality of [length]"
-                )
+                raise ValueError("min_range must be a Quantity with a dimensionality of [length]")
         except AttributeError:
             raise TypeError("min_range must be a Quantity")
 
@@ -861,9 +805,7 @@ class ActivationMixin:
         # Check the given max_range is a Quantity with a dimension of 'length'
         try:
             if not max_range.check("[length]"):
-                raise ValueError(
-                    "max_range must be a Quantity with a dimensionality of [length]"
-                )
+                raise ValueError("max_range must be a Quantity with a dimensionality of [length]")
         except AttributeError:
             raise TypeError("max_range must be a Quantity")
 
@@ -900,8 +842,7 @@ class ActivationMixin:
                     "left_arc must be a Quantity with a dimensionality of '' (ie. nothing)"
                 )
             if not (
-                left_arc.units == unit_registry.degree
-                or left_arc.units == unit_registry.radian
+                left_arc.units == unit_registry.degree or left_arc.units == unit_registry.radian
             ):
                 raise ValueError(
                     "left_arc must be a Quantity with angular units (degree or radian)"
@@ -942,8 +883,7 @@ class ActivationMixin:
                     "right_arc must be a Quantity with a dimensionality of '' (ie. nothing)"
                 )
             if not (
-                right_arc.units == unit_registry.degree
-                or right_arc.units == unit_registry.radian
+                right_arc.units == unit_registry.degree or right_arc.units == unit_registry.radian
             ):
                 raise ValueError(
                     "right_arc must be a Quantity with angular units (degree or radian)"

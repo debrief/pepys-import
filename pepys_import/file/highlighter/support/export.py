@@ -1,4 +1,4 @@
-from .color_picker import hex_color_for, mean_color_for, color_for
+from .color_picker import color_for, hex_color_for, mean_color_for
 
 
 def export_report(filename, chars, dict_colors, include_key=False):
@@ -92,11 +92,7 @@ def export_report(filename, chars, dict_colors, include_key=False):
             color = dict_colors[key]
             hex_color = hex_color_for(color)
             f_out.write(
-                '<li><span style="background-color:'
-                + hex_color
-                + '">'
-                + key
-                + "</span></li>"
+                '<li><span style="background-color:' + hex_color + '">' + key + "</span></li>"
             )
         f_out.write("</ul>")
 

@@ -1,37 +1,29 @@
 from datetime import datetime
-
-from sqlalchemy import Column, Integer, String, Boolean, DATE, ForeignKey, DateTime
-from sqlalchemy.dialects.postgresql import UUID, TIMESTAMP, DOUBLE_PRECISION
-from sqlalchemy.orm import relationship
+from uuid import uuid4
 
 from geoalchemy2 import Geometry
+from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
 
-from pepys_import.core.store.db_base import BasePostGIS
-from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.store import constants
-
 from pepys_import.core.store.common_db import (
-    SensorMixin,
-    PlatformMixin,
-    DatafileMixin,
-    SensorTypeMixin,
-    StateMixin,
-    ContactMixin,
+    ActivationMixin,
     CommentMixin,
-    MediaMixin,
+    ContactMixin,
+    DatafileMixin,
     ElevationPropertyMixin,
     LocationPropertyMixin,
-    ActivationMixin,
+    MediaMixin,
+    PlatformMixin,
+    SensorMixin,
+    SensorTypeMixin,
+    StateMixin,
 )
-
-from uuid import uuid4
+from pepys_import.core.store.db_base import BasePostGIS
+from pepys_import.core.store.db_status import TableTypes
 
 
 # Metadata Tables
-from pepys_import.core.validators.basic_validator import BasicValidator
-from pepys_import.core.validators.enhanced_validator import EnhancedValidator
-
-
 class HostedBy(BasePostGIS):
     __tablename__ = constants.HOSTED_BY
     table_type = TableTypes.METADATA
@@ -42,9 +34,7 @@ class HostedBy(BasePostGIS):
     subject_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False
     )
-    host_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False
-    )
+    host_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False)
     hosted_from = Column(DATE, nullable=False)
     host_to = Column(DATE, nullable=False)
     privacy_id = Column(
@@ -62,13 +52,9 @@ class Sensor(BasePostGIS, SensorMixin):
     sensor_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     sensor_type_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("pepys.SensorTypes.sensor_type_id"),
-        nullable=False,
+        UUID(as_uuid=True), ForeignKey("pepys.SensorTypes.sensor_type_id"), nullable=False,
     )
-    host = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False
-    )
+    host = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -84,14 +70,10 @@ class Platform(BasePostGIS, PlatformMixin):
     trigraph = Column(String(3))
     quadgraph = Column(String(4))
     nationality_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("pepys.Nationalities.nationality_id"),
-        nullable=False,
+        UUID(as_uuid=True), ForeignKey("pepys.Nationalities.nationality_id"), nullable=False,
     )
     platform_type_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("pepys.PlatformTypes.platform_type_id"),
-        nullable=False,
+        UUID(as_uuid=True), ForeignKey("pepys.PlatformTypes.platform_type_id"), nullable=False,
     )
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"), nullable=False
@@ -106,9 +88,7 @@ class Task(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     task_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    parent_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Tasks.task_id"), nullable=False
-    )
+    parent_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Tasks.task_id"), nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     environment = Column(String(150))
@@ -129,9 +109,7 @@ class Participant(BasePostGIS):
     platform_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False
     )
-    task_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Tasks.task_id"), nullable=False
-    )
+    task_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Tasks.task_id"), nullable=False)
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     force = Column(String(150))
@@ -157,9 +135,7 @@ class Datafile(BasePostGIS, DatafileMixin):
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"), nullable=False
     )
     datafile_type_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("pepys.DatafileTypes.datafile_type_id"),
-        nullable=False,
+        UUID(as_uuid=True), ForeignKey("pepys.DatafileTypes.datafile_type_id"), nullable=False,
     )
     reference = Column(String(150))
     url = Column(String(150))
@@ -205,9 +181,7 @@ class Log(BasePostGIS):
     id = Column(UUID(as_uuid=True), nullable=False)
     field = Column(String(150))
     new_value = Column(String(150))
-    change_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Changes.change_id"), nullable=False
-    )
+    change_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Changes.change_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -244,9 +218,7 @@ class TaggedItem(BasePostGIS):
     tagged_item_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     tag_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Tags.tag_id"), nullable=False)
     item_id = Column(UUID(as_uuid=True), nullable=False)
-    tagged_by_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Users.user_id"), nullable=False
-    )
+    tagged_by_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Users.user_id"), nullable=False)
     private = Column(Boolean, nullable=False)
     tagged_on = Column(DATE, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -434,9 +406,7 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
 
     state_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     time = Column(TIMESTAMP, nullable=False)
-    sensor_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
-    )
+    sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False)
     _location = Column("location", Geometry(geometry_type="POINT", srid=4326))
     _elevation = Column("elevation", DOUBLE_PRECISION)
     _heading = Column("heading", DOUBLE_PRECISION)
@@ -462,9 +432,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
 
     contact_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150))
-    sensor_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
-    )
+    sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False)
     time = Column(TIMESTAMP, nullable=False)
     _bearing = Column("bearing", DOUBLE_PRECISION)
     _rel_bearing = Column("rel_bearing", DOUBLE_PRECISION)
@@ -496,9 +464,7 @@ class Activation(BasePostGIS, ActivationMixin):
 
     activation_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
-    sensor_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False
-    )
+    sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     _min_range = Column("min_range", DOUBLE_PRECISION)
@@ -570,24 +536,16 @@ class Geometry1(BasePostGIS):
     geometry = Column(Geometry, nullable=False)
     name = Column(String(150), nullable=False)
     geo_type_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("pepys.GeometryTypes.geo_type_id"),
-        nullable=False,
+        UUID(as_uuid=True), ForeignKey("pepys.GeometryTypes.geo_type_id"), nullable=False,
     )
     geo_sub_type_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("pepys.GeometrySubTypes.geo_sub_type_id"),
-        nullable=False,
+        UUID(as_uuid=True), ForeignKey("pepys.GeometrySubTypes.geo_sub_type_id"), nullable=False,
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     task_id = Column(UUID(as_uuid=True))
-    subject_platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id")
-    )
-    sensor_platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id")
-    )
+    subject_platform_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
+    sensor_platform_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )

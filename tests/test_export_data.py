@@ -1,8 +1,9 @@
 import unittest
+from unittest import TestCase
+
+from testing.postgresql import Postgresql
 
 from pepys_import.core.store.data_store import DataStore
-from testing.postgresql import Postgresql
-from unittest import TestCase
 
 
 class DataStoreExportPostGISDBTestCase(TestCase):
@@ -10,11 +11,7 @@ class DataStoreExportPostGISDBTestCase(TestCase):
         self.store = None
         try:
             self.store = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -36,6 +33,7 @@ class DataStoreExportPostGISDBTestCase(TestCase):
             db_host="localhost",
             db_port=55527,
             db_name="test",
+            db_type="postgres",
         )
 
         # creating database from schema
@@ -54,9 +52,7 @@ class DataStoreExportPostGISDBTestCase(TestCase):
         datafile_reference = "DATAFILE-1"
         selected_datafile_id = datafiles_dict[datafile_reference]
         with data_store_postgres.session_scope():
-            data_store_postgres.export_datafile(
-                selected_datafile_id, datafile_reference
-            )
+            data_store_postgres.export_datafile(selected_datafile_id, datafile_reference)
 
         # self.assertNotEqual(len(records), 0)
 

@@ -1,7 +1,6 @@
 class BasicValidator:
     def __init__(self, object_, errors, parser_name):
         error_type = parser_name + f" - Basic Validation Error"
-        errors = errors
         longitude = None
         latitude = None
 

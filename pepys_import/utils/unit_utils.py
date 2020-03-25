@@ -1,4 +1,4 @@
-from math import radians, cos, sin, asin, sqrt, atan2, degrees
+from math import asin, atan2, cos, degrees, radians, sin, sqrt
 
 from pepys_import.core.formats import unit_registry
 
@@ -37,7 +37,7 @@ def convert_absolute_angle(angle, line_number, errors, error_type):
 def convert_speed(speed, units, line_number, errors, error_type):
     """
     Parses the given speed value into a float and assigns the given units
-    
+
     :param speed: Speed value in string format
     :type speed: String
     :param units: Units of the speed (as a pint unit instance)
@@ -65,7 +65,11 @@ def convert_speed(speed, units, line_number, errors, error_type):
 
 
 def extract_points(location):
-    # convert decimal degrees to radians and return
+    """Convert decimal degrees to radians and return
+
+    :param location: A point of location
+    :type location: Location
+    """
     return radians(location.longitude), radians(location.latitude)
 
 
@@ -82,9 +86,7 @@ def bearing_between_two_points(first_location, second_location):
     diff_longitude = longitude_2 - longitude_1
 
     y = sin(diff_longitude) * cos(latitude_2)
-    x = cos(latitude_1) * sin(latitude_2) - sin(latitude_1) * cos(latitude_2) * cos(
-        diff_longitude
-    )
+    x = cos(latitude_1) * sin(latitude_2) - sin(latitude_1) * cos(latitude_2) * cos(diff_longitude)
     bearing = degrees((atan2(y, x)))
     bearing = (bearing + 360) % 360
     return bearing
@@ -150,7 +152,7 @@ def convert_distance(distance, units, line_number, errors, error_type):
     """
     Converts the given distance string to a Quantity consisting of a
     float value and the given units.
-    
+
     :param distance: distance value in string format
     :type distance: String
     :param units: units of distance for supplied measurement

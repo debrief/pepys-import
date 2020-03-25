@@ -12,30 +12,21 @@ def format_datatime(datetime):
 def break_point_dimention_to_sub_units(val):
     degree = int(val)
 
-    minutesFloat = (val - degree) * 60
-    minutes = int(minutesFloat)
+    minutes_float = (val - degree) * 60
+    minutes = int(minutes_float)
 
-    secondsFloat = (minutesFloat - minutes) * 60
+    seconds_float = (minutes_float - minutes) * 60
 
-    return [degree, minutes, secondsFloat]
+    return [degree, minutes, seconds_float]
 
 
 def format_point_dimention(val, hemisphere_pair):
     [degree, minutes, seconds] = break_point_dimention_to_sub_units(abs(val))
     [positive, negative] = hemisphere_pair
     return " ".join(
-        [
-            str(degree),
-            str(minutes),
-            str(round(seconds, 3)),
-            negative if val < 0 else positive,
-        ]
+        [str(degree), str(minutes), str(round(seconds, 3)), negative if val < 0 else positive]
     )
 
 
 def format_point(x, y):
-    return (
-        format_point_dimention(x, ["N", "S"])
-        + " "
-        + format_point_dimention(y, ["E", "W"])
-    )
+    return format_point_dimention(x, ["N", "S"]) + " " + format_point_dimention(y, ["E", "W"])
