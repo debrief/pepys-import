@@ -1,5 +1,5 @@
-import os
 import csv
+import os
 
 
 def import_from_csv(data_store, path, files, change_id):
@@ -9,8 +9,8 @@ def import_from_csv(data_store, path, files, change_id):
         possible_method = "add_to_" + table_name.lower().replace(" ", "_")
         method_to_call = getattr(data_store, possible_method, None)
         if method_to_call:
-            with open(os.path.join(path, file), "r") as f:
-                reader = csv.reader(f)
+            with open(os.path.join(path, file), "r") as file_object:
+                reader = csv.reader(file_object)
                 # extract header
                 header = next(reader)
                 for row in reader:

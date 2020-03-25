@@ -1,41 +1,35 @@
 import os
-import math
-
+from contextlib import contextmanager
 from datetime import datetime
 from getpass import getuser
+from importlib import import_module
+
 from sqlalchemy import create_engine, or_
 from sqlalchemy.event import listen
-from sqlalchemy.sql import select, func
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import OperationalError
-from importlib import import_module
-from contextlib import contextmanager
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import func, select
 
+import pepys_import.utils.value_transforming_utils as transformer
 from paths import PEPYS_IMPORT_DIRECTORY
+from pepys_import import __version__
+from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.location import Location
+from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
+from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
 from pepys_import.utils.data_store_utils import import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
-from pepys_import.core.store import constants
-from pepys_import.core.formats import unit_registry
+
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
-
-from pepys_import import __version__
-from pepys_import.utils.branding_util import (
-    show_welcome_banner,
-    show_software_meta_info,
-)
-import pepys_import.utils.value_transforming_utils as transformer
-import pepys_import.utils.unit_utils as unit_converter
 from .table_summary import TableSummary, TableSummarySet
-from shapely import wkb
-from pepys_import.core.formats.location import Location
 
 DEFAULT_DATA_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "default_data")
 USER = getuser()  # Login name of the current user
 
 
-class DataStore(object):
+class DataStore:
     """ Representation of database
 
     :returns: :class:`DataStore`
@@ -185,9 +179,7 @@ class DataStore(object):
         )
         for table_type in TableTypes:
             self.meta_classes[table_type] = [
-                cls
-                for name, cls in db_classes.items()
-                if db_classes[name].table_type == table_type
+                cls for name, cls in db_classes.items() if db_classes[name].table_type == table_type
             ]
 
     def populate_reference(self, reference_data_folder=None):
@@ -209,9 +201,7 @@ class DataStore(object):
             reference_tables.append(table_object.__tablename__)
 
         reference_files = [
-            file
-            for file in files
-            if os.path.splitext(file)[0].replace(" ", "") in reference_tables
+            file for file in files if os.path.splitext(file)[0].replace(" ", "") in reference_tables
         ]
         import_from_csv(self, reference_data_folder, reference_files, change.change_id)
 
@@ -232,9 +222,7 @@ class DataStore(object):
         for table_object in list(metadata_table_objects):
             metadata_tables.append(table_object.__tablename__)
 
-        metadata_files = [
-            file for file in files if os.path.splitext(file)[0] in metadata_tables
-        ]
+        metadata_files = [file for file in files if os.path.splitext(file)[0] in metadata_tables]
         import_from_csv(self, sample_data_folder, metadata_files, change.change_id)
 
     def populate_measurement(self, sample_data_folder=None):
@@ -300,7 +288,7 @@ class DataStore(object):
         :return: Created :class:`State` entity
         :rtype: State
         """
-        if type(time) == str:
+        if isinstance(time, str):
             # TODO we can't assume the time is in this format. We should throw
             # exception if time isn't of type datetime
             time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
@@ -342,9 +330,7 @@ class DataStore(object):
         self.session.flush()
         self.session.expire(state_obj, ["_location"])
 
-        self.add_to_logs(
-            table=constants.STATE, row_id=state_obj.state_id, change_id=change_id
-        )
+        self.add_to_logs(table=constants.STATE, row_id=state_obj.state_id, change_id=change_id)
         return state_obj
 
     def add_to_sensors(self, name, sensor_type, host, change_id):
@@ -373,9 +359,7 @@ class DataStore(object):
         self.session.add(sensor_obj)
         self.session.flush()
 
-        self.add_to_logs(
-            table=constants.SENSOR, row_id=sensor_obj.sensor_id, change_id=change_id
-        )
+        self.add_to_logs(table=constants.SENSOR, row_id=sensor_obj.sensor_id, change_id=change_id)
         return sensor_obj
 
     def add_to_datafiles(
@@ -432,9 +416,7 @@ class DataStore(object):
         self.datafiles[reference] = datafile_obj
 
         self.add_to_logs(
-            table=constants.DATAFILE,
-            row_id=datafile_obj.datafile_id,
-            change_id=change_id,
+            table=constants.DATAFILE, row_id=datafile_obj.datafile_id, change_id=change_id,
         )
         return datafile_obj
 
@@ -493,9 +475,7 @@ class DataStore(object):
         self.platforms[name] = platform_obj
 
         self.add_to_logs(
-            table=constants.PLATFORM,
-            row_id=platform_obj.platform_id,
-            change_id=change_id,
+            table=constants.PLATFORM, row_id=platform_obj.platform_id, change_id=change_id,
         )
         return platform_obj
 
@@ -505,9 +485,7 @@ class DataStore(object):
         self.session.add(synonym)
         self.session.flush()
 
-        self.add_to_logs(
-            table=constants.SYNONYM, row_id=synonym.synonym_id, change_id=change_id
-        )
+        self.add_to_logs(table=constants.SYNONYM, row_id=synonym.synonym_id, change_id=change_id)
         return synonym
 
     #############################################################
@@ -677,9 +655,7 @@ class DataStore(object):
         assert isinstance(
             datafile_type, self.db_classes.DatafileType
         ), "Type error for DatafileType entity"
-        assert isinstance(
-            privacy, self.db_classes.Privacy
-        ), "Type error for Privacy entity"
+        assert isinstance(privacy, self.db_classes.Privacy), "Type error for Privacy entity"
 
         return self.add_to_datafiles(
             simulated=False,
@@ -765,12 +741,7 @@ class DataStore(object):
         platform_type = self.search_platform_type(platform_type)
         privacy = self.search_privacy(privacy)
 
-        if (
-            platform_name is None
-            or nationality is None
-            or platform_type is None
-            or privacy is None
-        ):
+        if platform_name is None or nationality is None or platform_type is None or privacy is None:
             resolved_data = self.missing_data_resolver.resolve_platform(
                 self, platform_name, platform_type, nationality, privacy, change_id
             )
@@ -794,9 +765,7 @@ class DataStore(object):
         assert isinstance(
             platform_type, self.db_classes.PlatformType
         ), "Type error for PlatformType entity"
-        assert isinstance(
-            privacy, self.db_classes.Privacy
-        ), "Type error for Privacy entity"
+        assert isinstance(privacy, self.db_classes.Privacy), "Type error for Privacy entity"
 
         return self.add_to_platforms(
             name=platform_name,
@@ -833,22 +802,22 @@ class DataStore(object):
             # Create measurement table list
             measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
             for table_object in list(measurement_table_objects):
-                ts = TableSummary(self.session, table_object)
-                table_summaries.append(ts)
+                summary = TableSummary(self.session, table_object)
+                table_summaries.append(summary)
 
         if report_metadata:
             # Create metadata table list
             metadata_table_objects = self.meta_classes[TableTypes.METADATA]
             for table_object in list(metadata_table_objects):
-                ts = TableSummary(self.session, table_object)
-                table_summaries.append(ts)
+                summary = TableSummary(self.session, table_object)
+                table_summaries.append(summary)
 
         if report_reference:
             # Create reference table list
             reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
             for table_object in list(reference_table_objects):
-                ts = TableSummary(self.session, table_object)
-                table_summaries.append(ts)
+                summary = TableSummary(self.session, table_object)
+                table_summaries.append(summary)
 
         table_summaries_set = TableSummarySet(table_summaries)
 
@@ -894,9 +863,7 @@ class DataStore(object):
         self.comment_types[name] = comment_type
 
         self.add_to_logs(
-            table=constants.COMMENT_TYPE,
-            row_id=comment_type.comment_type_id,
-            change_id=change_id,
+            table=constants.COMMENT_TYPE, row_id=comment_type.comment_type_id, change_id=change_id,
         )
 
         return comment_type
@@ -975,9 +942,7 @@ class DataStore(object):
         self.nationalities[name] = nationality
 
         self.add_to_logs(
-            table=constants.NATIONALITY,
-            row_id=nationality.nationality_id,
-            change_id=change_id,
+            table=constants.NATIONALITY, row_id=nationality.nationality_id, change_id=change_id,
         )
         return nationality
 
@@ -1011,9 +976,7 @@ class DataStore(object):
         # add to cache and return created platform
         self.privacies[name] = privacy
 
-        self.add_to_logs(
-            table=constants.PRIVACY, row_id=privacy.privacy_id, change_id=change_id
-        )
+        self.add_to_logs(table=constants.PRIVACY, row_id=privacy.privacy_id, change_id=change_id)
         return privacy
 
     def add_to_datafile_types(self, name, change_id):
@@ -1086,9 +1049,7 @@ class DataStore(object):
         self.sensor_types[name] = sensor_type
 
         self.add_to_logs(
-            table=constants.SENSOR_TYPE,
-            row_id=sensor_type.sensor_type_id,
-            change_id=change_id,
+            table=constants.SENSOR_TYPE, row_id=sensor_type.sensor_type_id, change_id=change_id,
         )
         return sensor_type
 
@@ -1110,11 +1071,7 @@ class DataStore(object):
         :return: Created :class:`Logs` entity
         """
         log = self.db_classes.Log(
-            table=table,
-            id=row_id,
-            field=field,
-            new_value=new_value,
-            change_id=change_id,
+            table=table, id=row_id, field=field, new_value=new_value, change_id=change_id,
         )
         self.session.add(log)
         self.session.flush()
@@ -1139,8 +1096,8 @@ class DataStore(object):
     # End of Metadata Maintenance
     #############################################################
 
-    def clear_db(self):
-        """Delete records of all database tables"""
+    def clear_db_contents(self):
+        """Delete contents of all database tables"""
         if self.db_type == "sqlite":
             meta = BaseSpatiaLite.metadata
         else:
@@ -1149,6 +1106,16 @@ class DataStore(object):
         with self.session_scope():
             for table in reversed(meta.sorted_tables):
                 self.session.execute(table.delete())
+
+    def clear_db_schema(self):
+        """Delete the database schema (ie all of the tables)"""
+        if self.db_type == "sqlite":
+            meta = BaseSpatiaLite.metadata
+        else:
+            meta = BasePostGIS.metadata
+
+        with self.session_scope():
+            meta.drop_all()
 
     def get_all_datafiles(self):
         """
@@ -1177,15 +1144,11 @@ class DataStore(object):
             )
 
             if comment_type:
-                self._comment_type_name_dict_on_comment_type_id[
-                    comment_type_id
-                ] = comment_type.name
+                self._comment_type_name_dict_on_comment_type_id[comment_type_id] = comment_type.name
                 return comment_type.name
             else:
                 raise Exception(
-                    "No Comment Type found with Comment type id: {}".format(
-                        comment_type_id
-                    )
+                    "No Comment Type found with Comment type id: {}".format(comment_type_id)
                 )
 
     def get_cached_sensor_name(self, sensor_id):
@@ -1246,9 +1209,7 @@ class DataStore(object):
                 if sensor_id:
                     self._platform_dict_on_sensor_id[sensor_id] = platform.name
             else:
-                raise Exception(
-                    "No Platform found with platform id: {}".format(platform_id)
-                )
+                raise Exception("No Platform found with platform id: {}".format(platform_id))
         return platform.name
 
     def export_datafile(self, datafile_id, datafile):
@@ -1259,7 +1220,7 @@ class DataStore(object):
         :type datafile_id: String
         """
 
-        f = open("{}.rep".format(datafile), "w+")
+        file = open("{}.rep".format(datafile), "w+")
         states = (
             self.session.query(self.db_classes.State)
             .filter(self.db_classes.State.source_id == datafile_id)
@@ -1281,7 +1242,7 @@ class DataStore(object):
         line_number = 0
 
         # export states
-        for i, state in enumerate(states):
+        for state in states:
             line_number += 1
             #  load platform name from cache.
             try:
@@ -1291,36 +1252,32 @@ class DataStore(object):
                 platform_name = "[Not Found]"
 
             if state.elevation is None:
-                depthStr = "NaN"
+                depth_str = "NaN"
             elif state.elevation == 0.0:
-                depthStr = "0.0"
+                depth_str = "0.0"
             else:
-                depthStr = -1 * state.elevation.magnitude
+                depth_str = -1 * state.elevation.magnitude
 
             state_rep_line = [
                 transformer.format_datatime(state.time),
                 '"' + platform_name + '"',
                 "AA",
-                transformer.format_point(
-                    state.location.longitude, state.location.latitude
-                ),
+                transformer.format_point(state.location.longitude, state.location.latitude),
                 str(state.heading.to(unit_registry.degrees)) if state.heading else "0",
                 str(state.speed.to(unit_registry.knot)) if state.speed else "0",
-                depthStr,
+                depth_str,
             ]
             data = " ".join(state_rep_line)
-            f.write(data + "\r\n")
+            file.write(data + "\r\n")
 
         # Export contacts
-        for i, contact in enumerate(contacts):
+        for contact in contacts:
             line_number += 1
             #  load platform name from cache.
             platform_name = "[Not Found]"
             sensor_name = "[Not Found]"
             try:
-                platform_name = self.get_cached_platform_name(
-                    sensor_id=contact.sensor_id
-                )
+                platform_name = self.get_cached_platform_name(sensor_id=contact.sensor_id)
                 sensor_name = self.get_cached_sensor_name(sensor_id=contact.sensor_id)
             except Exception as ex:
                 print(str(ex))
@@ -1329,14 +1286,10 @@ class DataStore(object):
                 transformer.format_datatime(contact.time),
                 platform_name,
                 "@@",
-                transformer.format_point(
-                    state.location.longitude, state.location.latitude
-                )
+                transformer.format_point(state.location.longitude, state.location.latitude)
                 if state.location
                 else "NULL",
-                contact.bearing.to(unit_registry.degrees).magnitude
-                if contact.bearing
-                else "NULL",
+                contact.bearing.to(unit_registry.degrees).magnitude if contact.bearing else "NULL",
                 contact.range.to(unit_registry.yard) if contact.range else "NULL",
                 sensor_name,
                 "N/A",
@@ -1356,14 +1309,12 @@ class DataStore(object):
             else:
                 contact_rep_line.insert(0, ";SENSOR:")
             data = " ".join(contact_rep_line)
-            f.write(data + "\r\n")
+            file.write(data + "\r\n")
 
-        for i, comment in enumerate(comments):
+        for comment in comments:
             vessel_name = self.get_cached_platform_name(platform_id=comment.platform_id)
             message = comment.content
-            comment_type_name = self.get_cached_comment_type_name(
-                comment.comment_type_id
-            )
+            comment_type_name = self.get_cached_comment_type_name(comment.comment_type_id)
 
             comment_rep_line = [
                 transformer.format_datatime(comment.time),
@@ -1379,8 +1330,8 @@ class DataStore(object):
                 comment_rep_line.insert(0, ";NARRATIVE2:")
 
             data = " ".join(comment_rep_line)
-            f.write(data + "\r\n")
-        f.close()
+            file.write(data + "\r\n")
+        file.close()
 
     def is_datafile_loaded_before(self, file_size, file_hash):
         """
@@ -1400,8 +1351,6 @@ class DataStore(object):
             .first()
         )
         if is_loaded_before:
-            print(
-                f"'{is_loaded_before.reference}' is already loaded! Skipping the file."
-            )
+            print(f"'{is_loaded_before.reference}' is already loaded! Skipping the file.")
             return True
         return False

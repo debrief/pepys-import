@@ -1,14 +1,13 @@
-import unittest
 import os
+import unittest
 
-from geoalchemy2 import WKBElement, WKTElement
+from geoalchemy2 import WKTElement
 from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
 
-from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.formats.location import Location
-
+from pepys_import.core.store.data_store import DataStore
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -71,11 +70,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")

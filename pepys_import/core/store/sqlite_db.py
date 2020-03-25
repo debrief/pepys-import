@@ -1,27 +1,25 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Boolean, DATE, DateTime
-from sqlalchemy.dialects.sqlite import TIMESTAMP, REAL
-
 from geoalchemy2 import Geometry
+from sqlalchemy import DATE, Boolean, Column, DateTime, Integer, String
+from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
 
-from pepys_import.core.store.db_base import BaseSpatiaLite
-from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.store import constants
-
 from pepys_import.core.store.common_db import (
-    SensorMixin,
-    PlatformMixin,
-    DatafileMixin,
-    SensorTypeMixin,
-    StateMixin,
-    ContactMixin,
+    ActivationMixin,
     CommentMixin,
-    MediaMixin,
+    ContactMixin,
+    DatafileMixin,
     ElevationPropertyMixin,
     LocationPropertyMixin,
-    ActivationMixin,
+    MediaMixin,
+    PlatformMixin,
+    SensorMixin,
+    SensorTypeMixin,
+    StateMixin,
 )
+from pepys_import.core.store.db_base import BaseSpatiaLite
+from pepys_import.core.store.db_status import TableTypes
 
 
 # Metadata Tables
@@ -358,9 +356,7 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     state_id = Column(Integer, primary_key=True)
     time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(Integer, nullable=False)
-    _location = Column(
-        "location", Geometry(geometry_type="POINT", srid=4326, management=True)
-    )
+    _location = Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
     _elevation = Column("elevation", REAL)
     _heading = Column("heading", REAL)
     _course = Column("course", REAL)
@@ -370,9 +366,7 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Contact(
-    BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin
-):
+class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sensor_name = None
@@ -390,9 +384,7 @@ class Contact(
     _rel_bearing = Column("rel_bearing", REAL)
     _freq = Column("freq", REAL)
     _range = Column("range", REAL)
-    _location = Column(
-        "location", Geometry(geometry_type="POINT", srid=4326, management=True)
-    )
+    _location = Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
     _elevation = Column("elevation", REAL)
     _major = Column("major", REAL)
     _minor = Column("minor", REAL)
@@ -470,9 +462,7 @@ class Geometry1(BaseSpatiaLite):
     table_type_id = 33
 
     geometry_id = Column(Integer, primary_key=True)
-    geometry = Column(
-        Geometry(geometry_type="GEOMETRY", management=True), nullable=False
-    )
+    geometry = Column(Geometry(geometry_type="GEOMETRY", management=True), nullable=False)
     name = Column(String(150), nullable=False)
     geo_type_id = Column(Integer, nullable=False)
     geo_sub_type_id = Column(Integer, nullable=False)
@@ -495,9 +485,7 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
     platform_id = Column(Integer)
     subject_id = Column(Integer)
     sensor_id = Column(Integer)
-    _location = Column(
-        "location", Geometry(geometry_type="POINT", srid=4326, management=True)
-    )
+    _location = Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
     _elevation = Column("elevation", REAL)
     time = Column(TIMESTAMP)
     media_type_id = Column(Integer, nullable=False)

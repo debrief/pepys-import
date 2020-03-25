@@ -1,13 +1,16 @@
 from tqdm import tqdm
 
-from pepys_import.core.validators import constants
-from pepys_import.core.formats.rep_line import parse_timestamp
-from pepys_import.file.highlighter.support.combine import combine_tokens
-from pepys_import.utils.unit_utils import convert_absolute_angle
-from pepys_import.utils.unit_utils import convert_distance, convert_frequency
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
+from pepys_import.core.formats.rep_line import parse_timestamp
+from pepys_import.core.validators import constants
+from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
+from pepys_import.utils.unit_utils import (
+    convert_absolute_angle,
+    convert_distance,
+    convert_frequency,
+)
 
 
 class ReplayContactImporter(Importer):
@@ -28,7 +31,7 @@ class ReplayContactImporter(Importer):
     def can_load_this_filename(self, filename):
         return True
 
-    def can_load_this_header(self, first_line):
+    def can_load_this_header(self, header):
         return True
 
     def can_load_this_file(self, file_contents):
@@ -161,17 +164,12 @@ class ReplayContactImporter(Importer):
                         lat_hemi_token.text,
                     ):
                         self.errors.append(
-                            {
-                                self.error_type: f"Line {line_number}. Error in latitude parsing"
-                            }
+                            {self.error_type: f"Line {line_number}. Error in latitude parsing"}
                         )
                         continue
 
                     combine_tokens(
-                        lat_degrees_token,
-                        lat_mins_token,
-                        lat_secs_token,
-                        lat_hemi_token,
+                        lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token,
                     ).record(self.name, "latitude", loc, "DMS")
 
                     if not loc.set_longitude_dms(
@@ -181,17 +179,12 @@ class ReplayContactImporter(Importer):
                         long_hemi_token.text,
                     ):
                         self.errors.append(
-                            {
-                                self.error_type: f"Line {line_number}. Error in longitude parsing"
-                            }
+                            {self.error_type: f"Line {line_number}. Error in longitude parsing"}
                         )
                         continue
 
                     combine_tokens(
-                        long_degrees_token,
-                        long_mins_token,
-                        long_secs_token,
-                        long_hemi_token,
+                        long_degrees_token, long_mins_token, long_secs_token, long_hemi_token,
                     ).record(self.name, "longitude", loc, "DMS")
 
                     location = loc
@@ -204,9 +197,7 @@ class ReplayContactImporter(Importer):
                     )
                     bearing_token.record(self.name, "bearing", bearing, "degs")
 
-                privacy = data_store.missing_data_resolver.resolve_privacy(
-                    data_store, change_id
-                )
+                privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
                 platform = data_store.get_platform(
                     platform_name=vessel_name_token.text,
                     nationality="UK",
@@ -214,12 +205,8 @@ class ReplayContactImporter(Importer):
                     privacy="Public",
                     change_id=change_id,
                 )
-                vessel_name_token.record(
-                    self.name, "vessel name", vessel_name_token.text
-                )
-                sensor_type = data_store.add_to_sensor_types(
-                    sensor_name.text, change_id
-                )
+                vessel_name_token.record(self.name, "vessel name", vessel_name_token.text)
+                sensor_type = data_store.add_to_sensor_types(sensor_name.text, change_id)
                 sensor = platform.get_sensor(
                     data_store=data_store,
                     sensor_name=platform.name,
@@ -229,9 +216,7 @@ class ReplayContactImporter(Importer):
                 )
 
                 timestamp = parse_timestamp(date_token.text, time_token.text)
-                combine_tokens(date_token, time_token).record(
-                    self.name, "timestamp", timestamp
-                )
+                combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp)
 
                 contact = datafile.create_contact(
                     data_store=data_store,
@@ -249,11 +234,7 @@ class ReplayContactImporter(Importer):
 
                 if range_token.text.upper() != "NULL":
                     range_val = convert_distance(
-                        range_token.text,
-                        unit_registry.yard,
-                        line,
-                        self.errors,
-                        self.error_type,
+                        range_token.text, unit_registry.yard, line, self.errors, self.error_type,
                     )
                     range_token.record(self.name, "range", range_val)
                     contact.range = range_val
@@ -277,7 +258,5 @@ class ReplayContactImporter(Importer):
                         ambig_bearing = convert_absolute_angle(
                             bearing_token.text, line, self.errors, self.error_type
                         )
-                        ambig_bearing_token.record(
-                            self.name, "ambig bearing", ambig_bearing
-                        )
+                        ambig_bearing_token.record(self.name, "ambig bearing", ambig_bearing)
                         # TODO - add ambiguous bearing to schema

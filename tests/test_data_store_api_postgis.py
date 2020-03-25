@@ -1,12 +1,13 @@
-import unittest
 import os
-from sqlite3 import OperationalError
-
-from unittest import TestCase
-from testing.postgresql import Postgresql
+import unittest
 from datetime import datetime
-from pepys_import.core.store.data_store import DataStore
+from sqlite3 import OperationalError
+from unittest import TestCase
+
+from testing.postgresql import Postgresql
+
 from pepys_import.core.store import constants
+from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.importer import Importer
 
@@ -20,11 +21,7 @@ class DataStoreCacheTestCase(TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -54,37 +51,27 @@ class DataStoreCacheTestCase(TestCase):
     def test_cached_comment_types(self):
         """Test whether a new comment type entity cached and returned"""
         with self.store.session_scope():
-            comment_types = self.store.session.query(
-                self.store.db_classes.CommentType
-            ).all()
+            comment_types = self.store.session.query(self.store.db_classes.CommentType).all()
 
             # there must be no entity at the beginning
             self.assertEqual(len(comment_types), 0)
 
-            comment_type_1 = self.store.add_to_comment_types(
-                "Comment-1", self.change_id
-            )
+            comment_type_1 = self.store.add_to_comment_types("Comment-1", self.change_id)
             # This one shouldn't duplicate, it must return existing entity
-            comment_type_2 = self.store.add_to_comment_types(
-                "Comment-1", self.change_id
-            )
+            comment_type_2 = self.store.add_to_comment_types("Comment-1", self.change_id)
 
             # objects must be the same since the second object
             # is cached of first the one
             self.assertEqual(comment_type_1, comment_type_2)
 
-            comment_types = self.store.session.query(
-                self.store.db_classes.CommentType
-            ).all()
+            comment_types = self.store.session.query(self.store.db_classes.CommentType).all()
             # there must be only one entity at the beginning
             self.assertEqual(len(comment_types), 1)
 
     def test_cached_platform_types(self):
         """Test whether a new platform type entity cached and returned"""
         with self.store.session_scope():
-            platform_types = self.store.session.query(
-                self.store.db_classes.PlatformType
-            ).all()
+            platform_types = self.store.session.query(self.store.db_classes.PlatformType).all()
 
             # there must be no entity at the beginning
             self.assertEqual(len(platform_types), 0)
@@ -99,9 +86,7 @@ class DataStoreCacheTestCase(TestCase):
 
             # objects must be the same
             self.assertEqual(platform_type_1, platform_type_2)
-            platform_types = self.store.session.query(
-                self.store.db_classes.PlatformType
-            ).all()
+            platform_types = self.store.session.query(self.store.db_classes.PlatformType).all()
 
             # there must be only one entity at the beginning
             self.assertEqual(len(platform_types), 1)
@@ -109,26 +94,18 @@ class DataStoreCacheTestCase(TestCase):
     def test_cached_nationalities(self):
         """Test whether a new nationality entity cached and returned"""
         with self.store.session_scope():
-            nationalities = self.store.session.query(
-                self.store.db_classes.Nationality
-            ).all()
+            nationalities = self.store.session.query(self.store.db_classes.Nationality).all()
 
             # there must be no entity at the beginning
             self.assertEqual(len(nationalities), 0)
 
-            nationality_1 = self.store.add_to_nationalities(
-                name="test", change_id=self.change_id
-            )
+            nationality_1 = self.store.add_to_nationalities(name="test", change_id=self.change_id)
             # This one shouldn't duplicate, it should return existing entity
-            nationality_2 = self.store.add_to_nationalities(
-                name="test", change_id=self.change_id
-            )
+            nationality_2 = self.store.add_to_nationalities(name="test", change_id=self.change_id)
 
             # objects must be the same
             self.assertEqual(nationality_1, nationality_2)
-            nationalities = self.store.session.query(
-                self.store.db_classes.Nationality
-            ).all()
+            nationalities = self.store.session.query(self.store.db_classes.Nationality).all()
 
             # there must be only one entity at the beginning
             self.assertEqual(len(nationalities), 1)
@@ -141,13 +118,9 @@ class DataStoreCacheTestCase(TestCase):
             # there must be no entity at the beginning
             self.assertEqual(len(privacies), 0)
 
-            privacy_1 = self.store.add_to_privacies(
-                name="test", change_id=self.change_id
-            )
+            privacy_1 = self.store.add_to_privacies(name="test", change_id=self.change_id)
             # This one shouldn't duplicate, it should return existing entity
-            privacy_2 = self.store.add_to_privacies(
-                name="test", change_id=self.change_id
-            )
+            privacy_2 = self.store.add_to_privacies(name="test", change_id=self.change_id)
 
             # objects must be the same
             self.assertEqual(privacy_1, privacy_2)
@@ -159,9 +132,7 @@ class DataStoreCacheTestCase(TestCase):
     def test_cached_datafile_types(self):
         """Test whether a new datafile type entity cached and returned"""
         with self.store.session_scope():
-            datafile_types = self.store.session.query(
-                self.store.db_classes.DatafileType
-            ).all()
+            datafile_types = self.store.session.query(self.store.db_classes.DatafileType).all()
 
             # there must be no entity at the beginning
             self.assertEqual(len(datafile_types), 0)
@@ -176,9 +147,7 @@ class DataStoreCacheTestCase(TestCase):
 
             # objects must be the same
             self.assertEqual(datafile_type_1, datafile_type_2)
-            datafile_types = self.store.session.query(
-                self.store.db_classes.DatafileType
-            ).all()
+            datafile_types = self.store.session.query(self.store.db_classes.DatafileType).all()
 
             # there must be only one entity at the beginning
             self.assertEqual(len(datafile_types), 1)
@@ -186,26 +155,18 @@ class DataStoreCacheTestCase(TestCase):
     def test_cached_sensor_types(self):
         """Test whether a new sensor type entity cached and returned"""
         with self.store.session_scope():
-            sensor_types = self.store.session.query(
-                self.store.db_classes.SensorType
-            ).all()
+            sensor_types = self.store.session.query(self.store.db_classes.SensorType).all()
 
             # there must be no entity at the beginning
             self.assertEqual(len(sensor_types), 0)
 
-            sensor_type_1 = self.store.add_to_sensor_types(
-                name="test", change_id=self.change_id
-            )
+            sensor_type_1 = self.store.add_to_sensor_types(name="test", change_id=self.change_id)
             # This one shouldn't duplicate, it should return existing entity
-            sensor_type_2 = self.store.add_to_sensor_types(
-                name="test", change_id=self.change_id
-            )
+            sensor_type_2 = self.store.add_to_sensor_types(name="test", change_id=self.change_id)
 
             # objects must be the same
             self.assertEqual(sensor_type_1, sensor_type_2)
-            sensor_types = self.store.session.query(
-                self.store.db_classes.SensorType
-            ).all()
+            sensor_types = self.store.session.query(self.store.db_classes.SensorType).all()
 
             # there must be only one entity at the beginning
             self.assertEqual(len(sensor_types), 1)
@@ -220,11 +181,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -257,18 +214,14 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.store.session.add(comment_type)
             self.store.session.flush()
 
-            comment_types = self.store.session.query(
-                self.store.db_classes.CommentType
-            ).all()
+            comment_types = self.store.session.query(self.store.db_classes.CommentType).all()
 
             # there must be one entity at the beginning
             self.assertEqual(len(comment_types), 1)
 
             self.store.add_to_comment_types("test", self.change_id)
 
-            comment_types = self.store.session.query(
-                self.store.db_classes.CommentType
-            ).all()
+            comment_types = self.store.session.query(self.store.db_classes.CommentType).all()
 
             # there must be only one entity again
             self.assertEqual(len(comment_types), 1)
@@ -279,18 +232,14 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.store.session.add(platform_type)
             self.store.session.flush()
 
-            platform_types = self.store.session.query(
-                self.store.db_classes.PlatformType
-            ).all()
+            platform_types = self.store.session.query(self.store.db_classes.PlatformType).all()
 
             # there must be one entity at the beginning
             self.assertEqual(len(platform_types), 1)
 
             self.store.add_to_platform_types("test", self.change_id)
 
-            platform_types = self.store.session.query(
-                self.store.db_classes.PlatformType
-            ).all()
+            platform_types = self.store.session.query(self.store.db_classes.PlatformType).all()
 
             # there must be only one entity again
             self.assertEqual(len(platform_types), 1)
@@ -301,18 +250,14 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.store.session.add(nationality)
             self.store.session.flush()
 
-            nationalities = self.store.session.query(
-                self.store.db_classes.Nationality
-            ).all()
+            nationalities = self.store.session.query(self.store.db_classes.Nationality).all()
 
             # there must be one entity at the beginning
             self.assertEqual(len(nationalities), 1)
 
             self.store.add_to_nationalities("test", self.change_id)
 
-            nationalities = self.store.session.query(
-                self.store.db_classes.Nationality
-            ).all()
+            nationalities = self.store.session.query(self.store.db_classes.Nationality).all()
 
             # there must be only one entity again
             self.assertEqual(len(nationalities), 1)
@@ -341,18 +286,14 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.store.session.add(datafile_type)
             self.store.session.flush()
 
-            datafile_types = self.store.session.query(
-                self.store.db_classes.DatafileType
-            ).all()
+            datafile_types = self.store.session.query(self.store.db_classes.DatafileType).all()
 
             # there must be one entity at the beginning
             self.assertEqual(len(datafile_types), 1)
 
             self.store.add_to_datafile_types("test", self.change_id)
 
-            datafile_types = self.store.session.query(
-                self.store.db_classes.DatafileType
-            ).all()
+            datafile_types = self.store.session.query(self.store.db_classes.DatafileType).all()
 
             # there must be only one entity again
             self.assertEqual(len(datafile_types), 1)
@@ -363,18 +304,14 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.store.session.add(sensor_type)
             self.store.session.flush()
 
-            sensor_types = self.store.session.query(
-                self.store.db_classes.SensorType
-            ).all()
+            sensor_types = self.store.session.query(self.store.db_classes.SensorType).all()
 
             # there must be one entity at the beginning
             self.assertEqual(len(sensor_types), 1)
 
             self.store.add_to_sensor_types("test", self.change_id)
 
-            sensor_types = self.store.session.query(
-                self.store.db_classes.SensorType
-            ).all()
+            sensor_types = self.store.session.query(self.store.db_classes.SensorType).all()
 
             # there must be only one entity again
             self.assertEqual(len(sensor_types), 1)
@@ -386,11 +323,7 @@ class PlatformAndDatafileTestCase(TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -414,9 +347,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 self.platform_type = self.store.add_to_platform_types(
                     "test_platform_type", self.change_id
                 ).name
-                self.privacy = self.store.add_to_privacies(
-                    "test_privacy", self.change_id
-                ).name
+                self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 
@@ -454,12 +385,8 @@ class PlatformAndDatafileTestCase(TestCase):
         self.assertEqual(len(datafiles), 0)
 
         with self.store.session_scope():
-            self.store.get_datafile(
-                "test_file.csv", "csv", 0, "HASHED-1", self.change_id
-            )
-            self.store.get_datafile(
-                "test_file.csv", "csv", 0, "HASHED-2", self.change_id
-            )
+            self.store.get_datafile("test_file.csv", "csv", 0, "HASHED-1", self.change_id)
+            self.store.get_datafile("test_file.csv", "csv", 0, "HASHED-2", self.change_id)
 
             # there must be one entry
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
@@ -473,9 +400,7 @@ class PlatformAndDatafileTestCase(TestCase):
             datafile = self.store.get_datafile(
                 "test_file.csv", "csv", 0, "HASHED-1", self.change_id
             )
-            self.store.get_datafile(
-                "test_file_2.csv", "csv", 0, "HASHED-2", self.change_id
-            )
+            self.store.get_datafile("test_file_2.csv", "csv", 0, "HASHED-2", self.change_id)
             found_datafile = self.store.find_datafile("test_file.csv")
 
             self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
@@ -487,9 +412,7 @@ class PlatformAndDatafileTestCase(TestCase):
             datafile = self.store.get_datafile(
                 "test_file.csv", "csv", 0, "HASHED-1", self.change_id
             )
-            self.store.get_datafile(
-                "test_file_2.csv", "csv", 0, "HASHED-2", self.change_id
-            )
+            self.store.get_datafile("test_file_2.csv", "csv", 0, "HASHED-2", self.change_id)
             self.store.add_to_synonyms(
                 table=constants.DATAFILE,
                 name="TEST",
@@ -559,7 +482,7 @@ class PlatformAndDatafileTestCase(TestCase):
 
     def test_find_platform(self):
         """Test whether find_platform method returns the correct Platform entity"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             # Create two platforms
             platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -568,7 +491,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 privacy=self.privacy,
                 change_id=self.change_id,
             )
-            platform_2 = self.store.get_platform(
+            self.store.get_platform(
                 platform_name="Test Platform 2",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
@@ -582,7 +505,7 @@ class PlatformAndDatafileTestCase(TestCase):
 
     def test_find_platform_synonym(self):
         """Test whether find_platform method finds the correct Platform entity from Synonyms table"""
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             # Create two platforms
             platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -591,7 +514,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 privacy=self.privacy,
                 change_id=self.change_id,
             )
-            platform_2 = self.store.get_platform(
+            self.store.get_platform(
                 platform_name="Test Platform 2",
                 nationality=self.nationality,
                 platform_type=self.platform_type,
@@ -616,11 +539,7 @@ class DataStoreStatusTestCase(TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -690,11 +609,7 @@ class SensorTestCase(TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -721,9 +636,7 @@ class SensorTestCase(TestCase):
                 self.sensor_type = self.store.add_to_sensor_types(
                     "test_sensor_type", self.change_id
                 )
-                self.privacy = self.store.add_to_privacies(
-                    "test_privacy", self.change_id
-                ).name
+                self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
 
                 self.platform = self.store.get_platform(
                     platform_name="Test Platform",
@@ -751,9 +664,7 @@ class SensorTestCase(TestCase):
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(
-                self.store, "gps", self.sensor_type, change_id=self.change_id
-            )
+            self.platform.get_sensor(self.store, "gps", self.sensor_type, change_id=self.change_id)
 
             # there must be one entry
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
@@ -768,14 +679,10 @@ class SensorTestCase(TestCase):
             # there must be no entry at the beginning
             self.assertEqual(len(sensors), 0)
 
-            self.platform.get_sensor(
-                self.store, "gps", self.sensor_type, change_id=self.change_id
-            )
+            self.platform.get_sensor(self.store, "gps", self.sensor_type, change_id=self.change_id)
 
             # try to add the same entity
-            self.platform.get_sensor(
-                self.store, "gps", self.sensor_type, change_id=self.change_id
-            )
+            self.platform.get_sensor(self.store, "gps", self.sensor_type, change_id=self.change_id)
 
             # there must be one entry
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
@@ -793,7 +700,7 @@ class SensorTestCase(TestCase):
             sensor = self.platform.get_sensor(
                 self.store, "gps", self.sensor_type, change_id=self.change_id
             )
-            sensor_2 = self.platform.get_sensor(
+            self.platform.get_sensor(
                 self.store, "gps_2", self.sensor_type, change_id=self.change_id
             )
 
@@ -814,7 +721,7 @@ class SensorTestCase(TestCase):
             sensor = self.platform.get_sensor(
                 self.store, "gps", self.sensor_type, change_id=self.change_id
             )
-            sensor_2 = self.platform.get_sensor(
+            self.platform.get_sensor(
                 self.store, "gps_2", self.sensor_type, change_id=self.change_id
             )
             self.store.add_to_synonyms(
@@ -837,11 +744,7 @@ class MeasurementsTestCase(TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -869,9 +772,7 @@ class MeasurementsTestCase(TestCase):
                 self.sensor_type = self.store.add_to_sensor_types(
                     "test_sensor_type", self.change_id
                 )
-                self.privacy = self.store.add_to_privacies(
-                    "test_privacy", self.change_id
-                ).name
+                self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
 
                 self.platform = self.store.get_platform(
                     platform_name="Test Platform",
@@ -883,9 +784,7 @@ class MeasurementsTestCase(TestCase):
                 self.sensor = self.platform.get_sensor(
                     self.store, "gps", self.sensor_type, change_id=self.change_id
                 )
-                self.comment_type = self.store.add_to_comment_types(
-                    "test_type", self.change_id
-                )
+                self.comment_type = self.store.add_to_comment_types("test_type", self.change_id)
                 self.file = self.store.get_datafile(
                     "test_file", "csv", 0, "HASHED-1", self.change_id
                 )
@@ -965,7 +864,7 @@ class MeasurementsTestCase(TestCase):
     def test_new_contact_created_successfully(self):
         """Test whether a new contact is created"""
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             contacts = self.store.session.query(self.store.db_classes.Contact).all()
 
             # there must be no entry at the beginning
@@ -994,7 +893,7 @@ class MeasurementsTestCase(TestCase):
     def test_new_comment_created_successfully(self):
         """Test whether a new comment is created"""
 
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             comments = self.store.session.query(self.store.db_classes.Comment).all()
 
             # there must be no entry at the beginning

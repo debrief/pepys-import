@@ -1,7 +1,7 @@
 from tqdm import tqdm
 
-from pepys_import.core.validators import constants
 from pepys_import.core.formats.rep_line import parse_timestamp
+from pepys_import.core.validators import constants
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
 
@@ -24,7 +24,7 @@ class ReplayCommentImporter(Importer):
     def can_load_this_filename(self, filename):
         return True
 
-    def can_load_this_header(self, first_line):
+    def can_load_this_header(self, header):
         return True
 
     def can_load_this_file(self, file_contents):
@@ -76,9 +76,7 @@ class ReplayCommentImporter(Importer):
                 else:
                     continue
 
-                privacy = data_store.missing_data_resolver.resolve_privacy(
-                    data_store, change_id
-                )
+                privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
                 platform = data_store.get_platform(
                     platform_name=vessel_name_token.text,
                     nationality="UK",
@@ -86,13 +84,9 @@ class ReplayCommentImporter(Importer):
                     privacy="Public",
                     change_id=change_id,
                 )
-                vessel_name_token.record(
-                    self.name, "vessel name", vessel_name_token.text
-                )
-                sensor_type = data_store.add_to_sensor_types(
-                    "Human", change_id=change_id
-                )
-                sensor = platform.get_sensor(
+                vessel_name_token.record(self.name, "vessel name", vessel_name_token.text)
+                sensor_type = data_store.add_to_sensor_types("Human", change_id=change_id)
+                platform.get_sensor(
                     data_store=data_store,
                     sensor_name=platform.name,
                     sensor_type=sensor_type,
@@ -102,9 +96,7 @@ class ReplayCommentImporter(Importer):
                 comment_type = data_store.add_to_comment_types(comment_type, change_id)
 
                 timestamp = parse_timestamp(date_token.text, time_token.text)
-                combine_tokens(date_token, time_token).record(
-                    self.name, "timestamp", timestamp
-                )
+                combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp)
 
                 message = " ".join([t.text for t in message_tokens])
                 combine_tokens(*message_tokens).record(self.name, "message", message)

@@ -1,15 +1,14 @@
-import unittest
 import os
-
-from datetime import datetime
-from unittest import TestCase
-from testing.postgresql import Postgresql
-from sqlalchemy.exc import OperationalError
-from pepys_import.core.store.data_store import DataStore
-
+import unittest
 from contextlib import redirect_stdout
+from datetime import datetime
 from io import StringIO
+from unittest import TestCase
 
+from sqlalchemy.exc import OperationalError
+from testing.postgresql import Postgresql
+
+from pepys_import.core.store.data_store import DataStore
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -31,12 +30,8 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         # Check tables are created but empty
         with self.store.session_scope():
-            nationalities = self.store.session.query(
-                self.store.db_classes.Nationality
-            ).all()
-            platform_types = self.store.session.query(
-                self.store.db_classes.PlatformType
-            ).all()
+            nationalities = self.store.session.query(self.store.db_classes.Nationality).all()
+            platform_types = self.store.session.query(self.store.db_classes.PlatformType).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(nationalities), 0)
@@ -48,12 +43,8 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         # Check tables filled with correct data
         with self.store.session_scope():
-            nationalities = self.store.session.query(
-                self.store.db_classes.Nationality
-            ).all()
-            platform_types = self.store.session.query(
-                self.store.db_classes.PlatformType
-            ).all()
+            nationalities = self.store.session.query(self.store.db_classes.Nationality).all()
+            platform_types = self.store.session.query(self.store.db_classes.PlatformType).all()
             nationality_object = self.store.search_nationality("UNITED KINGDOM")
             platform_type_object = self.store.search_platform_type("TYPE-1")
 
@@ -175,8 +166,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
             # first_state = 2019-01-12 12:10:00, SENSOR-1, DATAFILE-1,46.000 32.000,,,,
             # PRIVACY-1
             self.assertEqual(
-                first_state.time,
-                datetime.strptime("2019-01-12 12:10:00", "%Y-%m-%d %H:%M:%S"),
+                first_state.time, datetime.strptime("2019-01-12 12:10:00", "%Y-%m-%d %H:%M:%S"),
             )
 
             privacy = (
@@ -205,11 +195,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -237,12 +223,8 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         # Check tables are created but empty
         with self.store.session_scope():
-            nationalities = self.store.session.query(
-                self.store.db_classes.Nationality
-            ).all()
-            platform_types = self.store.session.query(
-                self.store.db_classes.PlatformType
-            ).all()
+            nationalities = self.store.session.query(self.store.db_classes.Nationality).all()
+            platform_types = self.store.session.query(self.store.db_classes.PlatformType).all()
 
         # There must be no entities at the beginning
         self.assertEqual(len(nationalities), 0)
@@ -254,12 +236,8 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         # Check tables filled with correct data
         with self.store.session_scope():
-            nationalities = self.store.session.query(
-                self.store.db_classes.Nationality
-            ).all()
-            platform_types = self.store.session.query(
-                self.store.db_classes.PlatformType
-            ).all()
+            nationalities = self.store.session.query(self.store.db_classes.Nationality).all()
+            platform_types = self.store.session.query(self.store.db_classes.PlatformType).all()
             nationality_object = self.store.search_nationality("UNITED KINGDOM")
             platform_type_object = self.store.search_platform_type("TYPE-1")
 
@@ -381,8 +359,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
             # first_state = 2019-01-12 12:10:00, SENSOR-1, DATAFILE-1,46.000 32.000,,,,
             # PRIVACY-1
             self.assertEqual(
-                first_state.time,
-                datetime.strptime("2019-01-12 12:10:00", "%Y-%m-%d %H:%M:%S"),
+                first_state.time, datetime.strptime("2019-01-12 12:10:00", "%Y-%m-%d %H:%M:%S"),
             )
 
             privacy = (

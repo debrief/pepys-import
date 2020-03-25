@@ -1,12 +1,12 @@
-from lxml import etree
 from dateutil.parser import parse
+from lxml import etree
 from tqdm import tqdm
 
-from pepys_import.file.importer import Importer
 from pepys_import.core.formats import unit_registry
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
-from pepys_import.core.validators import constants
 from pepys_import.core.formats.location import Location
+from pepys_import.core.validators import constants
+from pepys_import.file.importer import Importer
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 
 class GPXImporter(Importer):
@@ -15,7 +15,6 @@ class GPXImporter(Importer):
         name="GPX Format Importer",
         validation_level=constants.BASIC_LEVEL,
         short_name="GPX Importer",
-        separator=" ",
     ):
         super().__init__(name, validation_level, short_name)
         self.errors = list()
@@ -26,7 +25,7 @@ class GPXImporter(Importer):
     def can_load_this_filename(self, filename):
         return True
 
-    def can_load_this_header(self, first_line):
+    def can_load_this_header(self, header):
         # Can't tell from first line only whether file is a valid GPX file
         return True
 
@@ -44,9 +43,7 @@ class GPXImporter(Importer):
             doc = etree.parse(path)
         except Exception as e:
             self.errors.append(
-                {
-                    self.error_type: f'Invalid GPX file at {path}\nError from parsing was "{str(e)}"'
-                }
+                {self.error_type: f'Invalid GPX file at {path}\nError from parsing was "{str(e)}"'}
             )
             return
 
@@ -65,9 +62,7 @@ class GPXImporter(Importer):
                 change_id=change_id,
             )
             sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id)
-            privacy = data_store.missing_data_resolver.resolve_privacy(
-                data_store, change_id
-            )
+            privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
             sensor = platform.get_sensor(
                 data_store=data_store,
                 sensor_name="GPX",
@@ -135,8 +130,8 @@ class GPXImporter(Importer):
                     except ValueError:
                         self.errors.append(
                             {
-                                self.error_type: f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. "
-                                f"Couldn't convert to number"
+                                self.error_type: f"Line {tpt.sourceline}. Error in elevation value "
+                                f"{elevation_str}. Couldn't convert to number"
                             }
                         )
                     state.elevation = elevation * unit_registry.metre
@@ -147,5 +142,4 @@ class GPXImporter(Importer):
         child = element.find(search_string)
         if child is not None:
             return child.text
-        else:
-            return None
+        return None

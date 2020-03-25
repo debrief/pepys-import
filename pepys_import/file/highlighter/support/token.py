@@ -33,15 +33,7 @@ class SubToken:
         return self.line_start + int(self.span[1])
 
     def __repr__(self):
-        return (
-            "SubToken: ("
-            + str(self.line_start)
-            + "+"
-            + repr(self.span)
-            + ", "
-            + self.text
-            + ")"
-        )
+        return "SubToken: (" + str(self.line_start) + "+" + repr(self.span) + ", " + self.text + ")"
 
 
 class Token:

@@ -2,8 +2,8 @@ from pyfiglet import Figlet
 
 
 def render_text(font, text):
-    f = Figlet(font=font)
-    print(f.renderText(text))
+    figlet = Figlet(font=font)
+    print(figlet.renderText(text))
 
 
 def show_welcome_banner(banner_text):
