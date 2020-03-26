@@ -1287,7 +1287,9 @@ class DataStore:
                     "@@",
                     contact.location.convert_point() if contact.location else "NULL",
                     f"{contact.bearing.magnitude:.2f}" if contact.bearing else "NULL",
-                    f"{contact.range.to(unit_registry.yard).magnitude:.2f}" if contact.range else "NULL",
+                    f"{contact.range.to(unit_registry.yard).magnitude:.2f}"
+                    if contact.range
+                    else "NULL",
                     sensor_name,
                     "N/A",
                 ]
