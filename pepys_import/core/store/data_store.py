@@ -1255,7 +1255,7 @@ class DataStore:
                 elif state.elevation == 0.0:
                     depth_str = "0.0"
                 else:
-                    depth_str = -1 * state.elevation.magnitude
+                    depth_str = str(-1 * state.elevation.magnitude)
 
                 state_rep_line = [
                     format_datetime(state.time),
@@ -1266,7 +1266,7 @@ class DataStore:
                     f"{state.speed.to(unit_registry.knot).magnitude:.2f}" if state.speed else "0",
                     depth_str,
                 ]
-                data = " ".join(state_rep_line)
+                data = "\t".join(state_rep_line)
                 file.write(data + "\r\n")
 
             # Export contacts
@@ -1305,7 +1305,7 @@ class DataStore:
                     )
                 else:
                     contact_rep_line.insert(0, ";SENSOR:")
-                data = " ".join(contact_rep_line)
+                data = "\t".join(contact_rep_line)
                 file.write(data + "\r\n")
 
             for comment in comments:
@@ -1326,7 +1326,7 @@ class DataStore:
                 else:
                     comment_rep_line.insert(0, ";NARRATIVE2:")
 
-                data = " ".join(comment_rep_line)
+                data = "\t".join(comment_rep_line)
                 file.write(data + "\r\n")
 
     def is_datafile_loaded_before(self, file_size, file_hash):
@@ -1352,7 +1352,7 @@ class DataStore:
         return False
 
     def is_schema_created(self):
-        """Returns True if 'pepys' schema exists in the DB, False otherwise."""
+        """Returns True if Pepys Tables are created, False otherwise."""
         inspector = inspect(self.engine)
         if self.db_type == "sqlite":
             table_names = inspector.get_table_names()

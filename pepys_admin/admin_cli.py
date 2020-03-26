@@ -4,7 +4,6 @@ import datetime
 import os
 
 from iterfzf import iterfzf
-from sqlalchemy import inspect
 
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from pepys_import.core.store.data_store import DataStore
