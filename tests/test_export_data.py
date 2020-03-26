@@ -31,7 +31,7 @@ class DataStoreExportPostGISDBTestCase(TestCase):
         except AttributeError:
             return
 
-    def test_postgres_clear_db(self):
+    def test_postgres_export_datafile(self):
         if self.store is None:
             self.skipTest("Postgres is not available. Test is skipping")
 
@@ -96,7 +96,7 @@ class DataStoreExportSpatiaLiteTestCase(TestCase):
         if os.path.exists(self.path):
             os.remove(self.path)
 
-    def test_sqlite_clear_db(self):
+    def test_sqlite_export_datafile(self):
         with self.store.session_scope():
             datafiles = self.store.get_all_datafiles()
             selected_datafile_id = datafiles[0].datafile_id
