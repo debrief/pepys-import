@@ -29,8 +29,8 @@ class InitialiseShell(cmd.Cmd):
         self.csv_path = csv_path
         self.aliases = {
             "0": self.do_cancel,
-            "1": self.do_cleardb_contents,
-            "2": self.do_cleardb_schema,
+            "1": self.do_clear_db_contents,
+            "2": self.do_clear_db_schema,
             "3": self.do_create_pepys_schema,
             "4": self.do_import_reference_data,
             "5": self.do_import_metadata,
@@ -40,11 +40,11 @@ class InitialiseShell(cmd.Cmd):
         if parent_shell:
             self.prompt = parent_shell.prompt.strip() + "/" + self.prompt
 
-    def do_cleardb_contents(self):
+    def do_clear_db_contents(self):
         self.data_store.clear_db_contents()
         print("Cleared database contents")
 
-    def do_cleardb_schema(self):
+    def do_clear_db_schema(self):
         self.data_store.clear_db_schema()
         print("Cleared database schema")
 
@@ -74,9 +74,9 @@ class InitialiseShell(cmd.Cmd):
     do_EOF = do_cancel
 
     def default(self, line):
-        cmd, arg, line = self.parseline(line)
-        if cmd in self.aliases:
-            self.aliases[cmd](arg)
+        cmd_, arg, line = self.parseline(line)
+        if cmd_ in self.aliases:
+            self.aliases[cmd_]()
             if cmd == "0":
                 self.do_cancel()
                 return True
@@ -111,29 +111,27 @@ class AdminShell(cmd.Cmd):
         }
 
     def do_export(self):
-        "Start the export process"
+        """Start the export process"""
         with self.data_store.session_scope():
             datafiles = self.data_store.get_all_datafiles()
-            datafiles_dict = {}
-            for datafile in datafiles:
-                datafiles_dict[datafile.reference] = datafile.datafile_id
-        datafile_references = datafiles_dict.keys()
-        datafile_reference = iterfzf(datafile_references)
+            datafiles_dict = {d.reference: d.datafile_id for d in datafiles}
+        selected_datafile = iterfzf(datafiles_dict.keys())
 
-        if datafile_reference is None:
+        if selected_datafile is None:
             return
 
-        export_flag = input("Do you want to export {} Datafile. (Y/n)\n".format(datafile_reference))
+        export_flag = input(f"Do you want to export {selected_datafile}? (Y/n)\n")
         if export_flag in ["", "Y", "y"]:
-            datafilename = datafile_reference.replace(".", "_")
-            print("Exported Datafile is: {}.rep.".format(datafilename))
+            datafile_name = selected_datafile.replace(".", "_")
+            print(f"'{datafile_name}' is going to be exported.")
 
-            selected_datafile_id = datafiles_dict[datafile_reference]
+            selected_datafile_id = datafiles_dict[selected_datafile]
             with self.data_store.session_scope():
-                self.data_store.export_datafile(selected_datafile_id, datafilename)
+                self.data_store.export_datafile(selected_datafile_id, datafile_name)
+            print(f"Datafile successfully exported to {datafile_name}.")
 
     def do_export_all(self):
-        "Start the export all datafiles process"
+        """Start the export all datafiles process"""
         export_flag = input("Do you want to export all Datafiles. (Y/n)\n")
         if export_flag in ["", "Y", "y"]:
             while True:
@@ -142,7 +140,7 @@ class AdminShell(cmd.Cmd):
                 )
                 if folder_name:
                     if os.path.isdir(folder_name):
-                        print("{} already exists.\n".format(folder_name))
+                        print(f"{folder_name} already exists.")
                     else:
                         os.mkdir(folder_name)
                         break
@@ -153,7 +151,7 @@ class AdminShell(cmd.Cmd):
                     os.mkdir(folder_name)
                     break
 
-            print("Datafiles are going to be exported in '{}' folder.".format(folder_name))
+            print(f"Datafiles are going to be exported in '{folder_name}' folder.")
 
             with self.data_store.session_scope():
                 datafiles = self.data_store.get_all_datafiles()
@@ -165,12 +163,12 @@ class AdminShell(cmd.Cmd):
                     self.data_store.export_datafile(datafile_id, datafile_filename)
 
     def do_initialise(self):
-        "Allow the currently connected database to be configured"
+        """Allow the currently connected database to be configured"""
         initialise = InitialiseShell(self.data_store, self, self.csv_path)
         initialise.cmdloop()
 
     def do_status(self):
-        "Report on the database contents"
+        """Report on the database contents"""
         with self.data_store.session_scope():
             measurement_summary = self.data_store.get_status(report_measurement=True)
             report = measurement_summary.report()
@@ -194,16 +192,15 @@ class AdminShell(cmd.Cmd):
     def do_exit():
         """Exit the application"""
         print("Thank you for using Pepys Admin")
+        exit()
         return True
 
     def default(self, line):
-        cmd, arg, line = self.parseline(line)
-        if cmd in self.aliases:
-            self.aliases[cmd](arg)
-            if cmd == "0":
-                return True
+        command, arg, line = self.parseline(line)
+        if command in self.aliases:
+            self.aliases[command]()
         else:
-            print("*** Unknown syntax: %s" % line)
+            print(f"*** Unknown syntax: {line}")
 
     def postcmd(self, stop, line):
         if line != "0":

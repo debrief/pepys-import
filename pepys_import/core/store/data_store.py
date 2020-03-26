@@ -10,7 +10,6 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func, select
 
-import pepys_import.utils.value_transforming_utils as transformer
 from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import import __version__
 from pepys_import.core.formats import unit_registry
@@ -20,6 +19,7 @@ from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
 from pepys_import.utils.data_store_utils import import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
+from pepys_import.utils.value_transforming_utils import format_datetime
 
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
@@ -1118,11 +1118,10 @@ class DataStore:
             meta.drop_all()
 
     def get_all_datafiles(self):
-        """
-        Gets all datafiles.
+        """Returns all datafiles.
 
-        :return: Datafile entity
-        :rtype: Datafile
+        :return: All Datafile entities in the DB
+        :rtype: List
         """
         datafiles = self.session.query(self.db_classes.Datafile).all()
         return datafiles
@@ -1165,18 +1164,23 @@ class DataStore:
             self._sensor_dict_on_sensor_id[sensor_id] = sensor.name
             return sensor.name
         else:
-            raise Exception("No sensor found with sensor id: {}".format(sensor_id))
+            raise Exception(f"No sensor found with sensor id: {sensor_id}")
 
     def get_cached_platform_name(self, sensor_id=None, platform_id=None):
         """
         Get platform name from cache on either "sensor_id" or "platform_id"
-        If name is not found in the cache, sytem will load from this data store,
-        and add it into cache.
+        If name is not found in the cache, system will load from this data store,
+        and cache it.
+
+        :param sensor_id: ID of the :class:`Sensor`
+        :type sensor_id: Integer or UUID
+        :param platform_id: ID of the :class:`Platform`
+        :type platform_id: Integer or UUID
         """
         # invalid parameter handling
         if sensor_id is None and platform_id is None:
             raise Exception(
-                'either "sensor_id" or "platform_id" has to be provided to get "platform name"'
+                "either 'sensor_id' or 'platform_id' has to be provided to get 'platform name'"
             )
 
         if sensor_id:
@@ -1192,15 +1196,15 @@ class DataStore:
             if sensor:
                 platform_id = sensor.host
             else:
-                raise Exception("No sensor found with sensor id: {}".format(sensor_id))
+                raise Exception(f"No sensor found with sensor id: {sensor_id}")
 
         if platform_id:
             # return from cache
             if platform_id in self._platform_dict_on_platform_id:
                 return self._platform_dict_on_platform_id[platform_id]
             platform = (
-                self.session.query(self.db_classes.Sensor)
-                .filter(self.db_classes.Sensor.sensor_id == sensor_id)
+                self.session.query(self.db_classes.Platform)
+                .filter(self.db_classes.Platform.platform_id == platform_id)
                 .first()
             )
 
@@ -1208,130 +1212,121 @@ class DataStore:
                 self._platform_dict_on_platform_id[platform_id] = platform.name
                 if sensor_id:
                     self._platform_dict_on_sensor_id[sensor_id] = platform.name
+                return platform.name
             else:
-                raise Exception("No Platform found with platform id: {}".format(platform_id))
-        return platform.name
+                raise Exception(f"No Platform found with platform id: {platform_id}")
 
-    def export_datafile(self, datafile_id, datafile):
-        """
-        Get states, contacts and comments based on Datafile ID.
+    def export_datafile(self, datafile_id, file_name):
+        """Gets states, contacts and comments of a Datafile.
 
         :param datafile_id:  ID of Datafile
-        :type datafile_id: String
+        :type datafile_id: Integer or UUID
+        :param file_name: Name of the file to export
+        :type file_name: String
         """
 
-        file = open("{}.rep".format(datafile), "w+")
-        states = (
-            self.session.query(self.db_classes.State)
-            .filter(self.db_classes.State.source_id == datafile_id)
-            .all()
-        )
+        with open(f"{file_name}", "w+") as file:
+            states = (
+                self.session.query(self.db_classes.State)
+                .filter(self.db_classes.State.source_id == datafile_id)
+                .all()
+            )
+            contacts = (
+                self.session.query(self.db_classes.Contact)
+                .filter(self.db_classes.Contact.source_id == datafile_id)
+                .all()
+            )
+            comments = (
+                self.session.query(self.db_classes.Comment)
+                .filter(self.db_classes.Comment.source_id == datafile_id)
+                .all()
+            )
 
-        contacts = (
-            self.session.query(self.db_classes.Contact)
-            .filter(self.db_classes.Contact.source_id == datafile_id)
-            .all()
-        )
+            # export states
+            for state in states:
+                #  load platform name from cache.
+                try:
+                    platform_name = self.get_cached_platform_name(sensor_id=state.sensor_id)
+                except Exception as ex:
+                    print(str(ex))
+                    platform_name = "[Not Found]"
 
-        comments = (
-            self.session.query(self.db_classes.Comment)
-            .filter(self.db_classes.Comment.source_id == datafile_id)
-            .all()
-        )
+                if state.elevation is None:
+                    depth_str = "NaN"
+                elif state.elevation == 0.0:
+                    depth_str = "0.0"
+                else:
+                    depth_str = -1 * state.elevation.magnitude
 
-        line_number = 0
+                state_rep_line = [
+                    format_datetime(state.time),
+                    platform_name,
+                    "AA",
+                    state.location.convert_point(),
+                    f"{state.heading.magnitude:.2f}" if state.heading else "0",
+                    f"{state.speed.to(unit_registry.knot).magnitude:.2f}" if state.speed else "0",
+                    depth_str,
+                ]
+                data = " ".join(state_rep_line)
+                file.write(data + "\r\n")
 
-        # export states
-        for state in states:
-            line_number += 1
-            #  load platform name from cache.
-            try:
-                platform_name = self.get_cached_platform_name(sensor_id=state.sensor_id)
-            except Exception as ex:
-                print(str(ex))
+            # Export contacts
+            for contact in contacts:
+                #  load platform name from cache.
                 platform_name = "[Not Found]"
+                sensor_name = "[Not Found]"
+                try:
+                    platform_name = self.get_cached_platform_name(sensor_id=contact.sensor_id)
+                    sensor_name = self.get_cached_sensor_name(sensor_id=contact.sensor_id)
+                except Exception as ex:
+                    print(str(ex))
 
-            if state.elevation is None:
-                depth_str = "NaN"
-            elif state.elevation == 0.0:
-                depth_str = "0.0"
-            else:
-                depth_str = -1 * state.elevation.magnitude
+                contact_rep_line = [
+                    format_datetime(contact.time),
+                    platform_name,
+                    "@@",
+                    contact.location.convert_point() if contact.location else "NULL",
+                    f"{contact.bearing.magnitude:.2f}" if contact.bearing else "NULL",
+                    f"{contact.range.to(unit_registry.yard).magnitude:.2f}" if contact.range else "NULL",
+                    sensor_name,
+                    "N/A",
+                ]
 
-            state_rep_line = [
-                transformer.format_datatime(state.time),
-                '"' + platform_name + '"',
-                "AA",
-                transformer.format_point(state.location.longitude, state.location.latitude),
-                str(state.heading.to(unit_registry.degrees)) if state.heading else "0",
-                str(state.speed.to(unit_registry.knot)) if state.speed else "0",
-                depth_str,
-            ]
-            data = " ".join(state_rep_line)
-            file.write(data + "\r\n")
+                ambiguous_bearing = None  # TODO: ambiguous_bearing.
+                if ambiguous_bearing or contact.freq:
+                    contact_rep_line.insert(0, ";SENSOR2:")
 
-        # Export contacts
-        for contact in contacts:
-            line_number += 1
-            #  load platform name from cache.
-            platform_name = "[Not Found]"
-            sensor_name = "[Not Found]"
-            try:
-                platform_name = self.get_cached_platform_name(sensor_id=contact.sensor_id)
-                sensor_name = self.get_cached_sensor_name(sensor_id=contact.sensor_id)
-            except Exception as ex:
-                print(str(ex))
+                    contact_rep_line.insert(
+                        6, str(ambiguous_bearing) if ambiguous_bearing else "NULL",
+                    )
+                    contact_rep_line.insert(
+                        7, str(contact.freq) if contact.freq else "NULL",
+                    )
+                else:
+                    contact_rep_line.insert(0, ";SENSOR:")
+                data = " ".join(contact_rep_line)
+                file.write(data + "\r\n")
 
-            contact_rep_line = [
-                transformer.format_datatime(contact.time),
-                platform_name,
-                "@@",
-                transformer.format_point(state.location.longitude, state.location.latitude)
-                if state.location
-                else "NULL",
-                contact.bearing.to(unit_registry.degrees).magnitude if contact.bearing else "NULL",
-                contact.range.to(unit_registry.yard) if contact.range else "NULL",
-                sensor_name,
-                "N/A",
-            ]
+            for comment in comments:
+                vessel_name = self.get_cached_platform_name(platform_id=comment.platform_id)
+                message = comment.content
+                comment_type_name = self.get_cached_comment_type_name(comment.comment_type_id)
 
-            ambigous_bearing = None  # TODO: ambigous bearing.
-            if ambigous_bearing or contact.freq:
-                contact_rep_line.insert(0, ";SENSOR2:")
+                comment_rep_line = [
+                    format_datetime(comment.time),
+                    vessel_name,
+                    comment_type_name,
+                    message,
+                ]
 
-                contact_rep_line.insert(
-                    6, str(ambigous_bearing) if ambigous_bearing else "NULL",
-                )
+                if comment_type_name == "None":
+                    comment_rep_line.insert(0, ";NARRATIVE:")
+                    del comment_rep_line[3]
+                else:
+                    comment_rep_line.insert(0, ";NARRATIVE2:")
 
-                contact_rep_line.insert(
-                    7, str(contact.freq) if contact.freq else "NULL",
-                )
-            else:
-                contact_rep_line.insert(0, ";SENSOR:")
-            data = " ".join(contact_rep_line)
-            file.write(data + "\r\n")
-
-        for comment in comments:
-            vessel_name = self.get_cached_platform_name(platform_id=comment.platform_id)
-            message = comment.content
-            comment_type_name = self.get_cached_comment_type_name(comment.comment_type_id)
-
-            comment_rep_line = [
-                transformer.format_datatime(comment.time),
-                vessel_name,
-                comment_type_name,
-                message,
-            ]
-
-            if comment_type_name == "None":
-                comment_rep_line.insert(0, ";NARRATIVE:")
-                del comment_rep_line[3]
-            else:
-                comment_rep_line.insert(0, ";NARRATIVE2:")
-
-            data = " ".join(comment_rep_line)
-            file.write(data + "\r\n")
-        file.close()
+                data = " ".join(comment_rep_line)
+                file.write(data + "\r\n")
 
     def is_datafile_loaded_before(self, file_size, file_hash):
         """
