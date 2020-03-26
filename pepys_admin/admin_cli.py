@@ -94,6 +94,7 @@ class AdminShell(cmd.Cmd):
 (1) Export
 (2) Initialise/Clear
 (3) Status
+(9) Export All
 (0) Exit
 """
     prompt = "(pepys-admin) "
@@ -118,6 +119,7 @@ class AdminShell(cmd.Cmd):
         selected_datafile = iterfzf(datafiles_dict.keys())
 
         if selected_datafile is None:
+            print(f"You haven't selected a valid option!")
             return
 
         export_flag = input(f"Do you want to export {selected_datafile}? (Y/n)\n")
@@ -129,6 +131,8 @@ class AdminShell(cmd.Cmd):
             with self.data_store.session_scope():
                 self.data_store.export_datafile(selected_datafile_id, datafile_name)
             print(f"Datafile successfully exported to {datafile_name}.")
+        else:
+            print(f"Please enter a valid input.")
 
     def do_export_all(self):
         """Start the export all datafiles process"""
