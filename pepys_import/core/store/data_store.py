@@ -1216,16 +1216,16 @@ class DataStore:
             else:
                 raise Exception(f"No Platform found with platform id: {platform_id}")
 
-    def export_datafile(self, datafile_id, file_name):
+    def export_datafile(self, datafile_id, file_path):
         """Gets states, contacts and comments of a Datafile.
 
         :param datafile_id:  ID of Datafile
         :type datafile_id: Integer or UUID
-        :param file_name: Name of the file to export
-        :type file_name: String
+        :param file_path: Path of a file to export
+        :type file_path: String
         """
 
-        with open(f"{file_name}", "w+") as file:
+        with open(f"{file_path}", "w+") as file:
             states = (
                 self.session.query(self.db_classes.State)
                 .filter(self.db_classes.State.source_id == datafile_id)
