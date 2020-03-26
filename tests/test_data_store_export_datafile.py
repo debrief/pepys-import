@@ -60,7 +60,8 @@ class DataStoreExportPostGISDBTestCase(unittest.TestCase):
                 data = file.read().split("\n")
 
             assert (
-                "100112 115800.000\tSUBJECT\tAA\t60 23 40.25 N\t000 01 25.86 E\t109.08\t6.00\t0.0" in data
+                "100112 115800.000\tSUBJECT\tAA\t60 23 40.25 N\t000 01 25.86 E\t109.08\t6.00\t0.0"
+                in data
             )
             assert (
                 "100112 115800.000\tSEARCH_PLATFORM\tAA\t60 28 56.02 N\t000 35 59.68 E\t179.84\t8.00\t0.0"
@@ -76,8 +77,7 @@ class DataStoreExportPostGISDBTestCase(unittest.TestCase):
                 in data
             )
             assert (
-                ";SENSOR:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\tNULL\tSENSOR\tN/A"
-                in data
+                ";SENSOR:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\tNULL\tSENSOR\tN/A" in data
             )
 
 
@@ -107,7 +107,8 @@ class DataStoreExportSpatiaLiteTestCase(unittest.TestCase):
                 data = file.read().split("\n")
 
             assert (
-                "100112 115800.000\tSUBJECT\tAA\t60 23 40.25 N\t000 01 25.86 E\t109.08\t6.00\t0.0" in data
+                "100112 115800.000\tSUBJECT\tAA\t60 23 40.25 N\t000 01 25.86 E\t109.08\t6.00\t0.0"
+                in data
             )
             assert (
                 "100112 115800.000\tSEARCH_PLATFORM\tAA\t60 28 56.02 N\t000 35 59.68 E\t179.84\t8.00\t0.0"
@@ -123,8 +124,7 @@ class DataStoreExportSpatiaLiteTestCase(unittest.TestCase):
                 in data
             )
             assert (
-                ";SENSOR:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\tNULL\tSENSOR\tN/A"
-                in data
+                ";SENSOR:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\tNULL\tSENSOR\tN/A" in data
             )
 
 
