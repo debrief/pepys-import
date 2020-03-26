@@ -1,4 +1,5 @@
 import os
+import platform
 from contextlib import contextmanager
 from datetime import datetime
 from getpass import getuser
@@ -1353,8 +1354,14 @@ class DataStore:
     def is_schema_created(self):
         """Returns True if 'pepys' schema exists in the DB, False otherwise."""
         inspector = inspect(self.engine)
-        schema_names = inspector.get_schema_names()
-        if "pepys" not in schema_names:
-            print(f"'pepys' schema is not found! (Hint: Did you initialise the DataStore?)")
+        if self.db_type == "sqlite":
+            table_names = inspector.get_table_names()
+            number_of_tables = 72 if platform.system() == "Windows" else 70
+        else:
+            table_names = inspector.get_table_names(schema="pepys")
+            number_of_tables = 34
+
+        if len(table_names) != number_of_tables:
+            print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
             return False
         return True
