@@ -4,7 +4,7 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from sqlalchemy import create_engine, or_, inspect
+from sqlalchemy import create_engine, inspect, or_
 from sqlalchemy.event import listen
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
@@ -1353,7 +1353,7 @@ class DataStore:
         return False
 
     def is_schema_created(self):
-        """"""
+        """Returns True if 'pepys' schema exists in the DB, False otherwise."""
         inspector = inspect(self.engine)
         schema_names = inspector.get_schema_names()
         if "pepys" not in schema_names:

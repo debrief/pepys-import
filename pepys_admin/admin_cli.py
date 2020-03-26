@@ -98,6 +98,7 @@ class InitialiseShell(cmd.Cmd):
 
     def postcmd(self, stop, line):
         if line != "0":
+            print("-" * 61)
             print(self.intro)
         return cmd.Cmd.postcmd(self, stop, line)
 
@@ -186,6 +187,7 @@ class AdminShell(cmd.Cmd):
 
     def do_initialise(self):
         """Allow the currently connected database to be configured"""
+        print("-" * 61)
         initialise = InitialiseShell(self.data_store, self, self.csv_path)
         initialise.cmdloop()
 
@@ -229,6 +231,7 @@ class AdminShell(cmd.Cmd):
 
     def postcmd(self, stop, line):
         if line != "0":
+            print("-" * 61)
             print(self.intro)
         return cmd.Cmd.postcmd(self, stop, line)
 
