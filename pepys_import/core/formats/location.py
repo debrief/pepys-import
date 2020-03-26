@@ -267,4 +267,4 @@ class Location:
         latitude_hemisphere = "N" if self.latitude >= 0 else "S"
         longitude = f"{dms_values[3]:03g} {dms_values[4]:02g} {dms_values[5]:02g}"
         longitude_hemisphere = "E" if self.longitude >= 0 else "W"
-        return f"{latitude} {latitude_hemisphere} {longitude} {longitude_hemisphere}"
+        return f"{latitude} {latitude_hemisphere}\t{longitude} {longitude_hemisphere}"

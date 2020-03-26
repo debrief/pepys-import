@@ -60,23 +60,23 @@ class DataStoreExportPostGISDBTestCase(unittest.TestCase):
                 data = file.read().split("\n")
 
             assert (
-                "100112 115800.000 SUBJECT AA 60 23 40.25 N 000 01 25.86 E 109.08 6.00 0.0" in data
+                "100112 115800.000\tSUBJECT\tAA\t60 23 40.25 N\t000 01 25.86 E\t109.08\t6.00\t0.0" in data
             )
             assert (
-                "100112 121400.000 SEARCH_PLATFORM AA 60 28 8.02 N 000 35 59.95 E 179.84 8.00 0.0"
+                "100112 115800.000\tSEARCH_PLATFORM\tAA\t60 28 56.02 N\t000 35 59.68 E\t179.84\t8.00\t0.0"
                 in data
             )
-            assert ";NARRATIVE: 100112 115800.000 SENSOR Contact detected on TA" in data
+            assert ";NARRATIVE:\t100112 115800.000\tSENSOR\tContact detected on TA" in data
             assert (
-                ";NARRATIVE2: 100112 121200.000 SEARCH_PLATFORM OBSERVATION SUBJECT lost on TA"
-                in data
-            )
-            assert (
-                ";SENSOR2: 100112 115800.000 SENSOR @@ NULL 252.85 NULL 123.4 hertz 432.10 SENSOR N/A"
+                ";NARRATIVE2:\t100112 121200.000\tSEARCH_PLATFORM\tOBSERVATION\tSUBJECT lost on TA"
                 in data
             )
             assert (
-                ";SENSOR: 100112 120000.000 SENSOR @@ 60 15 00 N 016 45 00 E 251.33 NULL SENSOR N/A"
+                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\tNULL\t123.4\t432.10\tSENSOR\tN/A"
+                in data
+            )
+            assert (
+                ";SENSOR:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\tNULL\tSENSOR\tN/A"
                 in data
             )
 
@@ -107,23 +107,23 @@ class DataStoreExportSpatiaLiteTestCase(unittest.TestCase):
                 data = file.read().split("\n")
 
             assert (
-                "100112 115800.000 SUBJECT AA 60 23 40.25 N 000 01 25.86 E 109.08 6.00 0.0" in data
+                "100112 115800.000\tSUBJECT\tAA\t60 23 40.25 N\t000 01 25.86 E\t109.08\t6.00\t0.0" in data
             )
             assert (
-                "100112 121400.000 SEARCH_PLATFORM AA 60 28 8.02 N 000 35 59.95 E 179.84 8.00 0.0"
+                "100112 115800.000\tSEARCH_PLATFORM\tAA\t60 28 56.02 N\t000 35 59.68 E\t179.84\t8.00\t0.0"
                 in data
             )
-            assert ";NARRATIVE: 100112 115800.000 SENSOR Contact detected on TA" in data
+            assert ";NARRATIVE:\t100112 115800.000\tSENSOR\tContact detected on TA" in data
             assert (
-                ";NARRATIVE2: 100112 121200.000 SEARCH_PLATFORM OBSERVATION SUBJECT lost on TA"
-                in data
-            )
-            assert (
-                ";SENSOR2: 100112 115800.000 SENSOR @@ NULL 252.85 NULL 123.4 hertz 432.10 SENSOR N/A"
+                ";NARRATIVE2:\t100112 121200.000\tSEARCH_PLATFORM\tOBSERVATION\tSUBJECT lost on TA"
                 in data
             )
             assert (
-                ";SENSOR: 100112 120000.000 SENSOR @@ 60 15 00 N 016 45 00 E 251.33 NULL SENSOR N/A"
+                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\tNULL\t123.4\t432.10\tSENSOR\tN/A"
+                in data
+            )
+            assert (
+                ";SENSOR:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\tNULL\tSENSOR\tN/A"
                 in data
             )
 
