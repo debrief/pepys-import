@@ -4,6 +4,7 @@ import datetime
 import os
 
 from iterfzf import iterfzf
+from sqlalchemy import inspect
 
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from pepys_import.core.store.data_store import DataStore
@@ -41,10 +42,16 @@ class InitialiseShell(cmd.Cmd):
             self.prompt = parent_shell.prompt.strip() + "/" + self.prompt
 
     def do_clear_db_contents(self):
+        if self.data_store.is_schema_created() is False:
+            return
+
         self.data_store.clear_db_contents()
         print("Cleared database contents")
 
     def do_clear_db_schema(self):
+        if self.data_store.is_schema_created() is False:
+            return
+
         self.data_store.clear_db_schema()
         print("Cleared database schema")
 
@@ -53,16 +60,25 @@ class InitialiseShell(cmd.Cmd):
         print("Initialised database")
 
     def do_import_reference_data(self):
+        if self.data_store.is_schema_created() is False:
+            return
+
         with self.data_store.session_scope():
             self.data_store.populate_reference(self.csv_path)
         print("Reference data imported")
 
     def do_import_metadata(self):
+        if self.data_store.is_schema_created() is False:
+            return
+
         with self.data_store.session_scope():
             self.data_store.populate_metadata(self.csv_path)
         print("Metadata imported")
 
     def do_import_sample_measurements(self):
+        if self.data_store.is_schema_created() is False:
+            return
+
         with self.data_store.session_scope():
             self.data_store.populate_measurement(self.csv_path)
         print("Sample measurements imported")
@@ -71,17 +87,14 @@ class InitialiseShell(cmd.Cmd):
     def do_cancel():
         return True
 
-    do_EOF = do_cancel
-
     def default(self, line):
         cmd_, arg, line = self.parseline(line)
         if cmd_ in self.aliases:
             self.aliases[cmd_]()
-            if cmd == "0":
-                self.do_cancel()
-                return True
+            if cmd_ == "0":
+                return self.do_cancel()
         else:
-            print("*** Unknown syntax: %s" % line)
+            print(f"*** Unknown syntax: {line}")
 
     def postcmd(self, stop, line):
         if line != "0":
@@ -113,6 +126,9 @@ class AdminShell(cmd.Cmd):
 
     def do_export(self):
         """Start the export process"""
+        if self.data_store.is_schema_created() is False:
+            return
+
         with self.data_store.session_scope():
             datafiles = self.data_store.get_all_datafiles()
             datafiles_dict = {d.reference: d.datafile_id for d in datafiles}
@@ -136,6 +152,8 @@ class AdminShell(cmd.Cmd):
 
     def do_export_all(self):
         """Start the export all datafiles process"""
+        if self.data_store.is_schema_created() is False:
+            return
         export_flag = input("Do you want to export all Datafiles. (Y/n)\n")
         if export_flag in ["", "Y", "y"]:
             while True:
@@ -173,6 +191,9 @@ class AdminShell(cmd.Cmd):
 
     def do_status(self):
         """Report on the database contents"""
+        if self.data_store.is_schema_created() is False:
+            return
+
         with self.data_store.session_scope():
             measurement_summary = self.data_store.get_status(report_measurement=True)
             report = measurement_summary.report()

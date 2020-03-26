@@ -4,7 +4,7 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from sqlalchemy import create_engine, or_
+from sqlalchemy import create_engine, or_, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import sessionmaker
@@ -1351,3 +1351,12 @@ class DataStore:
             print(f"'{is_loaded_before.reference}' is already loaded! Skipping the file.")
             return True
         return False
+
+    def is_schema_created(self):
+        """"""
+        inspector = inspect(self.engine)
+        schema_names = inspector.get_schema_names()
+        if "pepys" not in schema_names:
+            print(f"'pepys' schema is not found! (Hint: Did you initialise the DataStore?)")
+            return False
+        return True
