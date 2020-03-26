@@ -1,7 +1,7 @@
 import os
 import unittest
-from unittest import TestCase
 
+import pytest
 from testing.postgresql import Postgresql
 
 from pepys_import.core.store.data_store import DataStore
@@ -12,7 +12,7 @@ CURRENT_DIR = os.getcwd()
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/rep_test1.rep")
 
 
-class DataStoreExportPostGISDBTestCase(TestCase):
+class DataStoreExportPostGISDBTestCase(unittest.TestCase):
     def setUp(self):
         self.path = os.path.join(CURRENT_DIR, "export_test.rep")
         self.store = None
@@ -81,7 +81,7 @@ class DataStoreExportPostGISDBTestCase(TestCase):
             )
 
 
-class DataStoreExportSpatiaLiteTestCase(TestCase):
+class DataStoreExportSpatiaLiteTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.path = os.path.join(CURRENT_DIR, "export_test.rep")
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -126,6 +126,45 @@ class DataStoreExportSpatiaLiteTestCase(TestCase):
                 ";SENSOR: 100112 120000.000 SENSOR @@ 60 15 00 N 016 45 00 E 251.33 NULL SENSOR N/A"
                 in data
             )
+
+
+class CachePlatformAndSensorNamesTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.path = os.path.join(CURRENT_DIR, "export_test.rep")
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+        # Parse the file
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(DATA_PATH, self.store, False)
+
+    def test_cached_comment_type_exception(self):
+        with self.store.session_scope():
+            with pytest.raises(Exception) as exception:
+                self.store.get_cached_comment_type_name(comment_type_id=123456789)
+            assert f"No Comment Type found with Comment type id: 123456789" in str(exception.value)
+
+    def test_cached_sensor_name_exception(self):
+        with self.store.session_scope():
+            with pytest.raises(Exception) as exception:
+                self.store.get_cached_sensor_name(sensor_id=123456789)
+            assert f"No Sensor found with sensor id: 123456789" in str(exception.value)
+
+    def test_cached_platform_name_exceptions(self):
+        with self.store.session_scope():
+            with pytest.raises(Exception) as exception:
+                self.store.get_cached_platform_name()
+            assert (
+                f"Either 'sensor_id' or 'platform_id' has to be provided to get 'platform name'"
+                in str(exception.value)
+            )
+            with pytest.raises(Exception) as exception:
+                self.store.get_cached_platform_name(sensor_id=123456789)
+            assert f"No Sensor found with sensor id: 123456789" in str(exception.value)
+            with pytest.raises(Exception) as exception:
+                self.store.get_cached_platform_name(platform_id=123456789)
+            assert f"No Platform found with platform id: 123456789" in str(exception.value)
 
 
 if __name__ == "__main__":

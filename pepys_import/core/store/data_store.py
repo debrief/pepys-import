@@ -1146,9 +1146,7 @@ class DataStore:
                 self._comment_type_name_dict_on_comment_type_id[comment_type_id] = comment_type.name
                 return comment_type.name
             else:
-                raise Exception(
-                    "No Comment Type found with Comment type id: {}".format(comment_type_id)
-                )
+                raise Exception(f"No Comment Type found with Comment type id: {comment_type_id}")
 
     def get_cached_sensor_name(self, sensor_id):
         # return from cache
@@ -1164,7 +1162,7 @@ class DataStore:
             self._sensor_dict_on_sensor_id[sensor_id] = sensor.name
             return sensor.name
         else:
-            raise Exception(f"No sensor found with sensor id: {sensor_id}")
+            raise Exception(f"No Sensor found with sensor id: {sensor_id}")
 
     def get_cached_platform_name(self, sensor_id=None, platform_id=None):
         """
@@ -1180,7 +1178,7 @@ class DataStore:
         # invalid parameter handling
         if sensor_id is None and platform_id is None:
             raise Exception(
-                "either 'sensor_id' or 'platform_id' has to be provided to get 'platform name'"
+                "Either 'sensor_id' or 'platform_id' has to be provided to get 'platform name'"
             )
 
         if sensor_id:
@@ -1196,7 +1194,7 @@ class DataStore:
             if sensor:
                 platform_id = sensor.host
             else:
-                raise Exception(f"No sensor found with sensor id: {sensor_id}")
+                raise Exception(f"No Sensor found with sensor id: {sensor_id}")
 
         if platform_id:
             # return from cache
