@@ -2,6 +2,7 @@ import datetime
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
+from math import isnan
 
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
@@ -191,6 +192,18 @@ class BasicTests(unittest.TestCase):
         correct_loc.set_latitude_dms(53, 45.32, 0, "S")
         correct_loc.set_longitude_dms(23, 56.23, 0, "E")
         assert correct_loc == rep_line.location
+
+    def test_nan_depth(self):
+        rep_line = REPLine(
+            line_number=1,
+            line=create_test_line_object(
+                "100112\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\tNaN\tLabel"
+            ),
+            separator="\t",
+        )
+        assert rep_line.parse(self.error, self.message)
+
+        assert isnan(rep_line.depth)
 
 
 if __name__ == "__main__":
