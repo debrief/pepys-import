@@ -13,6 +13,7 @@ from pepys_import.file.file_processor import FileProcessor
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
+CSV_PATH = os.path.join(FILE_PATH, "sample_data/csv_files")
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/rep_data")
 
 
@@ -83,7 +84,63 @@ class AdminCLITestCase(unittest.TestCase):
 
 
 class InitialiseShellTestCase(unittest.TestCase):
-    pass
+    def setUp(self) -> None:
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+        self.admin_shell = AdminShell(self.store, csv_path=CSV_PATH)
+        self.initialise_shell = InitialiseShell(self.store, self.admin_shell, CSV_PATH)
+
+    def test_do_clear_db_contents(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.do_import_reference_data()
+            self.initialise_shell.do_import_metadata()
+            self.initialise_shell.do_import_sample_measurements()
+            # Clear imported default entities
+            self.initialise_shell.do_clear_db_contents()
+        output = temp_output.getvalue()
+        assert "Cleared database contents" in output
+
+    def test_do_clear_db_schema(self):
+        assert self.store.is_schema_created() is True
+
+        self.initialise_shell.do_clear_db_schema()
+        assert self.store.is_schema_created() is False
+
+    def test_do_create_pepys_schema(self):
+        new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        assert new_data_store.is_schema_created() is False
+
+        new_shell = InitialiseShell(new_data_store, None, None)
+        new_shell.do_create_pepys_schema()
+        assert new_data_store.is_schema_created() is True
+
+    def test_do_import_reference_data(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.do_import_reference_data()
+        output = temp_output.getvalue()
+        assert "Reference data imported" in output
+
+    def test_do_import_metadata(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.do_import_reference_data()
+            self.initialise_shell.do_import_metadata()
+        output = temp_output.getvalue()
+        assert "Reference data imported" in output
+        assert "Metadata imported" in output
+
+    def test_do_import_sample_measurements(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.do_import_reference_data()
+            self.initialise_shell.do_import_metadata()
+            self.initialise_shell.do_import_sample_measurements()
+        output = temp_output.getvalue()
+        assert "Reference data imported" in output
+        assert "Metadata imported" in output
+        assert "Sample measurements imported" in output
 
 
 class NotInitialisedDBTestCase(unittest.TestCase):
