@@ -13,8 +13,9 @@ from pepys_import.file.file_processor import FileProcessor
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
-CSV_PATH = os.path.join(FILE_PATH, "sample_data/csv_files")
-DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/rep_data")
+SAMPLE_DATA_PATH = os.path.join(FILE_PATH, "sample_data")
+CSV_PATH = os.path.join(SAMPLE_DATA_PATH, "csv_files")
+DATA_PATH = os.path.join(SAMPLE_DATA_PATH, "track_files/rep_data")
 MODULE_PATH = os.path.abspath(cli.__file__)
 
 
@@ -87,12 +88,12 @@ class AdminCLITestCase(unittest.TestCase):
 
     @patch("pepys_admin.admin_cli.input")
     def test_do_export_all_to_existing_folder(self, patched_input):
-        patched_input.side_effect = ["Y", "sample_data", "export_test"]
+        patched_input.side_effect = ["Y", SAMPLE_DATA_PATH, "export_test"]
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.admin_shell.do_export_all()
         output = temp_output.getvalue()
-        assert "sample_data already exists."
+        assert f"{SAMPLE_DATA_PATH} already exists." in output
         assert "Datafiles are going to be exported to 'export_test' folder" in output
         assert "All datafiles are successfully exported!" in output
 
