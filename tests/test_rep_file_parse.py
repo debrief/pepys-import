@@ -162,6 +162,21 @@ class BasicTests(unittest.TestCase):
         self.assertEqual(0.0, rep_line.depth)
         self.assertEqual("Label", rep_line.text_label)
 
+    def test_zero_mins_secs(self):
+        rep_line = REPLine(
+            line_number=1,
+            line=create_test_line_object(
+                "100112\t120800\tSUBJECT\tVC\t53.243\t0\t0\tS\t23.495\t00\t0\tE\t109.08\t6.00\t0.00\tLabel"
+            ),
+            separator="\t",
+        )
+        assert rep_line.parse(self.error, self.message)
+
+        correct_loc = Location()
+        correct_loc.set_latitude_decimal_degrees(-53.243)
+        correct_loc.set_longitude_decimal_degrees(23.495)
+        assert correct_loc == rep_line.location
+
 
 if __name__ == "__main__":
     unittest.main()
