@@ -1244,11 +1244,7 @@ class DataStore:
             # export states
             for state in states:
                 #  load platform name from cache.
-                try:
-                    platform_name = self.get_cached_platform_name(sensor_id=state.sensor_id)
-                except Exception as ex:
-                    print(str(ex))
-                    platform_name = "[Not Found]"
+                platform_name = self.get_cached_platform_name(sensor_id=state.sensor_id)
 
                 if state.elevation is None:
                     depth_str = "NaN"
@@ -1272,13 +1268,8 @@ class DataStore:
             # Export contacts
             for contact in contacts:
                 #  load platform name from cache.
-                platform_name = "[Not Found]"
-                sensor_name = "[Not Found]"
-                try:
-                    platform_name = self.get_cached_platform_name(sensor_id=contact.sensor_id)
-                    sensor_name = self.get_cached_sensor_name(sensor_id=contact.sensor_id)
-                except Exception as ex:
-                    print(str(ex))
+                platform_name = self.get_cached_platform_name(sensor_id=contact.sensor_id)
+                sensor_name = self.get_cached_sensor_name(sensor_id=contact.sensor_id)
 
                 contact_rep_line = [
                     format_datetime(contact.time),
