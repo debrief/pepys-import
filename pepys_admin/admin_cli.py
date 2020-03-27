@@ -3,9 +3,8 @@ import cmd
 import datetime
 import os
 
-from iterfzf import iterfzf
-
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
+from iterfzf import iterfzf
 from pepys_import.core.store.data_store import DataStore
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -173,16 +172,17 @@ class AdminShell(cmd.Cmd):
                     os.mkdir(folder_name)
                     break
 
-            print(f"Datafiles are going to be exported in '{folder_name}' folder.")
+            print(f"Datafiles are going to be exported to '{folder_name}' folder.")
 
             with self.data_store.session_scope():
                 datafiles = self.data_store.get_all_datafiles()
                 for datafile in datafiles:
+                    datafile_name = f"exported_{datafile.reference.replace('.', '_')}.rep"
+                    print(f"'{datafile_name}' is going to be exported.")
+                    datafile_filename = os.path.join(folder_name, datafile_name)
                     datafile_id = datafile.datafile_id
-                    datafile_filename = os.path.join(
-                        folder_name, datafile.reference.replace(".", "_")
-                    )
                     self.data_store.export_datafile(datafile_id, datafile_filename)
+                    print(f"Datafile successfully exported to {datafile_name}.")
 
     def do_initialise(self):
         """Allow the currently connected database to be configured"""
