@@ -1,7 +1,7 @@
 import argparse
 import cmd
-import datetime
 import os
+from datetime import datetime
 
 from iterfzf import iterfzf
 
@@ -84,6 +84,7 @@ class InitialiseShell(cmd.Cmd):
 
     @staticmethod
     def do_cancel():
+        print("Returning to the previous menu...")
         return True
 
     def default(self, line):
@@ -134,7 +135,7 @@ class AdminShell(cmd.Cmd):
             datafiles_dict = {d.reference: d.datafile_id for d in datafiles}
         selected_datafile = iterfzf(datafiles_dict.keys())
 
-        if selected_datafile is None:
+        if selected_datafile is None or selected_datafile not in datafiles_dict.keys():
             print(f"You haven't selected a valid option!")
             return
 
@@ -167,9 +168,7 @@ class AdminShell(cmd.Cmd):
                         os.mkdir(folder_name)
                         break
                 else:
-                    folder_name = datetime.datetime.now().strftime(
-                        "exported_datafiles_%Y%m%d_%H%M%S"
-                    )
+                    folder_name = datetime.utcnow().strftime("exported_datafiles_%Y%m%d_%H%M%S")
                     os.mkdir(folder_name)
                     break
 
@@ -214,7 +213,6 @@ class AdminShell(cmd.Cmd):
         """Exit the application"""
         print("Thank you for using Pepys Admin")
         exit()
-        return True
 
     def default(self, line):
         command, arg, line = self.parseline(line)
