@@ -205,6 +205,16 @@ class BasicTests(unittest.TestCase):
 
         assert isnan(rep_line.depth)
 
+    def test_extended_symbology(self):
+        rep_line = REPLine(
+            line_number=1,
+            line=create_test_line_object(
+                "100112\t120800\tSUBJECT\t@C[SYMBOL=torpedo,LAYER=Support]\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.0\tLabel"
+            ),
+            separator="\t",
+        )
+        assert rep_line.parse(self.error, self.message)
+
 
 if __name__ == "__main__":
     unittest.main()
