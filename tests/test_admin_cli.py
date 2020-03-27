@@ -95,8 +95,9 @@ class AdminCLITestCase(unittest.TestCase):
         assert "Datafiles are going to be exported to 'exported_datafiles_" in output
         assert "All datafiles are successfully exported!" in output
 
-        folders = [folder for folder in os.listdir(CURRENT_DIR) if folder.startswith(
-            "exported_datafiles")]
+        folders = [
+            folder for folder in os.listdir(CURRENT_DIR) if folder.startswith("exported_datafiles")
+        ]
         for folder in folders:
             shutil.rmtree(folder)
 
