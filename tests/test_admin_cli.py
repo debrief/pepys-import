@@ -61,13 +61,44 @@ class AdminCLITestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.admin_shell.do_export_all()
         output = temp_output.getvalue()
-        assert "Datafiles are going to be exported to" in output
+        assert "Datafiles are going to be exported to 'export_test' folder" in output
         assert "All datafiles are successfully exported!" in output
 
         folder_path = os.path.join(CURRENT_DIR, "export_test")
         assert os.path.exists(folder_path) is True
 
         shutil.rmtree(folder_path)
+
+    @patch("pepys_admin.admin_cli.input")
+    def test_do_export_all_to_existing_folder(self, patched_input):
+        patched_input.side_effect = ["Y", "sample_data", "export_test"]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_all()
+        output = temp_output.getvalue()
+        assert "sample_data already exists."
+        assert "Datafiles are going to be exported to 'export_test' folder" in output
+        assert "All datafiles are successfully exported!" in output
+
+        folder_path = os.path.join(CURRENT_DIR, "export_test")
+        assert os.path.exists(folder_path) is True
+
+        shutil.rmtree(folder_path)
+
+    @patch("pepys_admin.admin_cli.input")
+    def test_do_export_all_to_default_folder(self, patched_input):
+        patched_input.side_effect = ["Y", None]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_all()
+        output = temp_output.getvalue()
+        assert "Datafiles are going to be exported to 'exported_datafiles_" in output
+        assert "All datafiles are successfully exported!" in output
+
+        folders = [folder for folder in os.listdir(CURRENT_DIR) if folder.startswith(
+            "exported_datafiles")]
+        for folder in folders:
+            shutil.rmtree(folder)
 
     @patch("cmd.input", return_value="0")
     def test_do_initialise(self, patched_input):
