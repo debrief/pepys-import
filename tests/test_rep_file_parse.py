@@ -177,6 +177,21 @@ class BasicTests(unittest.TestCase):
         correct_loc.set_longitude_decimal_degrees(23.495)
         assert correct_loc == rep_line.location
 
+    def test_zero_secs(self):
+        rep_line = REPLine(
+            line_number=1,
+            line=create_test_line_object(
+                "100112\t120800\tSUBJECT\tVC\t53\t45.32\t0\tS\t23\t56.23\t0\tE\t109.08\t6.00\t0.00\tLabel"
+            ),
+            separator="\t",
+        )
+        assert rep_line.parse(self.error, self.message)
+
+        correct_loc = Location()
+        correct_loc.set_latitude_dms(53, 45.32, 0, "S")
+        correct_loc.set_longitude_dms(23, 56.23, 0, "E")
+        assert correct_loc == rep_line.location
+
 
 if __name__ == "__main__":
     unittest.main()
