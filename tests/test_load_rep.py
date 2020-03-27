@@ -6,7 +6,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 
 FILE_PATH = os.path.dirname(__file__)
-DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/")
+DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/rep_test1_bad.rep")
 
 
 class TestLoadREP(unittest.TestCase):

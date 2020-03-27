@@ -54,6 +54,22 @@ class AdminCLITestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "You haven't selected a valid option!" in output
 
+    @patch("pepys_admin.admin_cli.iterfzf")
+    @patch("pepys_admin.admin_cli.input")
+    def test_do_export_other_options(self, patched_input, patched_iterfzf):
+        patched_iterfzf.side_effect = ["rep_test1.rep", "rep_test1.rep"]
+        patched_input.side_effect = ["n", "RANDOM-INPUT"]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export()
+        output = temp_output.getvalue()
+        assert "You selected not to export!" in output
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export()
+        output = temp_output.getvalue()
+        assert "Please enter a valid input." in output
+
     @patch("pepys_admin.admin_cli.input")
     def test_do_export_all(self, patched_input):
         patched_input.side_effect = ["Y", "export_test"]
@@ -100,6 +116,20 @@ class AdminCLITestCase(unittest.TestCase):
         ]
         for folder in folders:
             shutil.rmtree(folder)
+
+    @patch("pepys_admin.admin_cli.input")
+    def test_do_export_all_other_options(self, patched_input):
+        patched_input.side_effect = ["n", "RANDOM-INPUT"]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_all()
+        output = temp_output.getvalue()
+        assert "You selected not to export!" in output
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_all()
+        output = temp_output.getvalue()
+        assert "Please enter a valid input." in output
 
     @patch("cmd.input", return_value="0")
     def test_do_initialise(self, patched_input):

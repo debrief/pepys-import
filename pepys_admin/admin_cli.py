@@ -148,6 +148,8 @@ class AdminShell(cmd.Cmd):
             with self.data_store.session_scope():
                 self.data_store.export_datafile(selected_datafile_id, datafile_name)
             print(f"Datafile successfully exported to {datafile_name}.")
+        elif export_flag in ["N", "n"]:
+            print("You selected not to export!")
         else:
             print(f"Please enter a valid input.")
 
@@ -183,6 +185,10 @@ class AdminShell(cmd.Cmd):
                     self.data_store.export_datafile(datafile_id, datafile_filename)
                     print(f"Datafile successfully exported to {datafile_name}.")
             print("All datafiles are successfully exported!")
+        elif export_flag in ["N", "n"]:
+            print("You selected not to export!")
+        else:
+            print(f"Please enter a valid input.")
 
     def do_initialise(self):
         """Allow the currently connected database to be configured"""
