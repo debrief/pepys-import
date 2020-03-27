@@ -18,7 +18,6 @@ class ReplayImporter(Importer):
         self.separator = separator
         self.text_label = None
         self.depth = 0.0
-        self.errors = list()
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".REP" or suffix.upper() == ".DSF"
