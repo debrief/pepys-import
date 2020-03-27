@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from pepys_admin.admin_cli import AdminShell
+from pepys_admin.admin_cli import AdminShell, InitialiseShell
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 
@@ -80,6 +80,68 @@ class AdminCLITestCase(unittest.TestCase):
             self.admin_shell.do_exit()
         output = temp_output.getvalue()
         assert "Thank you for using Pepys Admin" in output
+
+
+class InitialiseShellTestCase(unittest.TestCase):
+    pass
+
+
+class NotInitialisedDBTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.admin_shell = AdminShell(self.store)
+        self.initialise_shell = InitialiseShell(
+            self.store, self.admin_shell, self.admin_shell.csv_path
+        )
+
+    def test_not_initialised_db(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_all()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_status()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.do_clear_db_contents()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.do_clear_db_schema()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.do_import_reference_data()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.do_import_metadata()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.do_import_sample_measurements()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
 
 
 if __name__ == "__main__":
