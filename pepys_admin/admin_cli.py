@@ -3,8 +3,9 @@ import cmd
 import datetime
 import os
 
-from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from iterfzf import iterfzf
+
+from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from pepys_import.core.store.data_store import DataStore
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -140,7 +141,7 @@ class AdminShell(cmd.Cmd):
         export_flag = input(f"Do you want to export {selected_datafile}? (Y/n)\n")
         if export_flag in ["", "Y", "y"]:
             datafile_name = f"exported_{selected_datafile.replace('.', '_')}.rep"
-            print(f"'{datafile_name}' is going to be exported.")
+            print(f"'{selected_datafile}' is going to be exported.")
 
             selected_datafile_id = datafiles_dict[selected_datafile]
             with self.data_store.session_scope():
@@ -173,7 +174,6 @@ class AdminShell(cmd.Cmd):
                     break
 
             print(f"Datafiles are going to be exported to '{folder_name}' folder.")
-
             with self.data_store.session_scope():
                 datafiles = self.data_store.get_all_datafiles()
                 for datafile in datafiles:
@@ -183,6 +183,7 @@ class AdminShell(cmd.Cmd):
                     datafile_id = datafile.datafile_id
                     self.data_store.export_datafile(datafile_id, datafile_filename)
                     print(f"Datafile successfully exported to {datafile_name}.")
+            print("All datafiles are successfully exported!")
 
     def do_initialise(self):
         """Allow the currently connected database to be configured"""
@@ -198,21 +199,15 @@ class AdminShell(cmd.Cmd):
         with self.data_store.session_scope():
             measurement_summary = self.data_store.get_status(report_measurement=True)
             report = measurement_summary.report()
-            print("## Measurements")
-            print(report)
-            print("\n")
+            print(f"## Measurements\n{report}\n")
 
             metadata_summary = self.data_store.get_status(report_metadata=True)
             report = metadata_summary.report()
-            print("## Metadata")
-            print(report)
-            print("\n")
+            print(f"## Metadata\n{report}\n")
 
             reference_summary = self.data_store.get_status(report_reference=True)
             report = reference_summary.report()
-            print("## Reference")
-            print(report)
-            print("\n")
+            print(f"## Reference\n{report}\n")
 
     @staticmethod
     def do_exit():
