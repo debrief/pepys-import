@@ -140,7 +140,7 @@ class AdminShell(cmd.Cmd):
 
         export_flag = input(f"Do you want to export {selected_datafile}? (Y/n)\n")
         if export_flag in ["", "Y", "y"]:
-            datafile_name = selected_datafile.replace(".", "_")
+            datafile_name = f"exported_{selected_datafile.replace('.', '_')}.rep"
             print(f"'{datafile_name}' is going to be exported.")
 
             selected_datafile_id = datafiles_dict[selected_datafile]
