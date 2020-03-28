@@ -23,7 +23,6 @@ class ReplayContactImporter(Importer):
         super().__init__(name, validation_level, short_name)
         self.text_label = None
         self.depth = 0.0
-        self.errors = list()
 
     def can_load_this_type(self, suffix):
         return suffix.upper() in [".REP", ".DSF"]

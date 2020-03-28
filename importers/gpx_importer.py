@@ -17,7 +17,6 @@ class GPXImporter(Importer):
         short_name="GPX Importer",
     ):
         super().__init__(name, validation_level, short_name)
-        self.errors = list()
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".GPX"
