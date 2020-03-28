@@ -7,7 +7,8 @@ from unittest.mock import patch
 
 import pytest
 
-from pepys_admin import admin_cli as cli
+from pepys_admin.admin_cli import AdminShell
+from pepys_admin.initialise_cli import InitialiseShell
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 
@@ -16,7 +17,6 @@ CURRENT_DIR = os.getcwd()
 SAMPLE_DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 CSV_PATH = os.path.join(SAMPLE_DATA_PATH, "csv_files")
 DATA_PATH = os.path.join(SAMPLE_DATA_PATH, "track_files/rep_data")
-MODULE_PATH = os.path.abspath(cli.__file__)
 
 
 class AdminCLITestCase(unittest.TestCase):
@@ -29,7 +29,7 @@ class AdminCLITestCase(unittest.TestCase):
         processor.load_importers_dynamically()
         processor.process(DATA_PATH, self.store, False)
 
-        self.admin_shell = cli.AdminShell(self.store)
+        self.admin_shell = AdminShell(self.store)
 
     @patch("pepys_admin.admin_cli.iterfzf", return_value="rep_test1.rep")
     @patch("pepys_admin.admin_cli.input", return_value="Y")
@@ -75,7 +75,7 @@ class AdminCLITestCase(unittest.TestCase):
         # Create an empty database
         new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         new_data_store.initialise()
-        new_shell = cli.AdminShell(new_data_store)
+        new_shell = AdminShell(new_data_store)
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -149,7 +149,7 @@ class AdminCLITestCase(unittest.TestCase):
         # Create an empty database
         new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         new_data_store.initialise()
-        new_shell = cli.AdminShell(new_data_store)
+        new_shell = AdminShell(new_data_store)
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -159,7 +159,7 @@ class AdminCLITestCase(unittest.TestCase):
 
     @patch("cmd.input", return_value="0")
     def test_do_initialise(self, patched_input):
-        initialise_shell = cli.InitialiseShell(self.store, None, None)
+        initialise_shell = InitialiseShell(self.store, None, None)
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -229,8 +229,8 @@ class InitialiseShellTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
-        self.admin_shell = cli.AdminShell(self.store, csv_path=CSV_PATH)
-        self.initialise_shell = cli.InitialiseShell(self.store, self.admin_shell, CSV_PATH)
+        self.admin_shell = AdminShell(self.store, csv_path=CSV_PATH)
+        self.initialise_shell = InitialiseShell(self.store, self.admin_shell, CSV_PATH)
 
     def test_do_clear_db_contents(self):
         temp_output = StringIO()
@@ -253,7 +253,7 @@ class InitialiseShellTestCase(unittest.TestCase):
         new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         assert new_data_store.is_schema_created() is False
 
-        new_shell = cli.InitialiseShell(new_data_store, None, None)
+        new_shell = InitialiseShell(new_data_store, None, None)
         new_shell.do_create_pepys_schema()
         assert new_data_store.is_schema_created() is True
 
@@ -345,8 +345,8 @@ class InitialiseShellTestCase(unittest.TestCase):
 class NotInitialisedDBTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
-        self.admin_shell = cli.AdminShell(self.store)
-        self.initialise_shell = cli.InitialiseShell(
+        self.admin_shell = AdminShell(self.store)
+        self.initialise_shell = InitialiseShell(
             self.store, self.admin_shell, self.admin_shell.csv_path
         )
 
