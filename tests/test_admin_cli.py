@@ -198,9 +198,29 @@ class AdminCLITestCase(unittest.TestCase):
         assert "*** Unknown syntax: 123456789" in output
 
     def test_postcmd(self):
+        # postcmd method should print the menu again if the user didn't select exit ("0")
+        # Select Export
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.admin_shell.postcmd(stop=None, line="1")
+        output = temp_output.getvalue()
+        assert self.admin_shell.intro in output
+        # Select Initialise/Clear
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.postcmd(stop=None, line="2")
+        output = temp_output.getvalue()
+        assert self.admin_shell.intro in output
+        # Select Status
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.postcmd(stop=None, line="3")
+        output = temp_output.getvalue()
+        assert self.admin_shell.intro in output
+        # Select Export All
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.postcmd(stop=None, line="9")
         output = temp_output.getvalue()
         assert self.admin_shell.intro in output
 
@@ -283,9 +303,41 @@ class InitialiseShellTestCase(unittest.TestCase):
         assert "*** Unknown syntax: 123456789" in output
 
     def test_postcmd(self):
+        # postcmd method should print the menu again if the user didn't select cancel ("0")
+        # Select Clear database contents
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.initialise_shell.postcmd(stop=None, line="1")
+        output = temp_output.getvalue()
+        assert self.initialise_shell.intro in output
+        # Select Clear database schema
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.postcmd(stop=None, line="2")
+        output = temp_output.getvalue()
+        assert self.initialise_shell.intro in output
+        # Select Create Pepys schema
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.postcmd(stop=None, line="3")
+        output = temp_output.getvalue()
+        assert self.initialise_shell.intro in output
+        # Select Import Reference data
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.postcmd(stop=None, line="4")
+        output = temp_output.getvalue()
+        assert self.initialise_shell.intro in output
+        # Select Import Metadata
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.postcmd(stop=None, line="5")
+        output = temp_output.getvalue()
+        assert self.initialise_shell.intro in output
+        # Select Import Sample Measurements
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.postcmd(stop=None, line="6")
         output = temp_output.getvalue()
         assert self.initialise_shell.intro in output
 
