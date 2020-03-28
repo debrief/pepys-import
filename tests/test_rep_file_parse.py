@@ -215,6 +215,13 @@ class BasicTests(unittest.TestCase):
         )
         assert rep_line.parse(self.error, self.message)
 
+        correct_loc = Location()
+        correct_loc.set_latitude_dms(60.0, 23.0, 40.25, "S")
+        correct_loc.set_longitude_dms(0.0, 1.0, 25.86, "E")
+
+        assert rep_line.location == correct_loc
+        assert rep_line.get_platform() == "SUBJECT"
+
 
 if __name__ == "__main__":
     unittest.main()
