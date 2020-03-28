@@ -85,14 +85,13 @@ class InitialiseShell(cmd.Cmd):
     @staticmethod
     def do_cancel():
         print("Returning to the previous menu...")
-        return True
 
     def default(self, line):
         cmd_, arg, line = self.parseline(line)
         if cmd_ in self.aliases:
             self.aliases[cmd_]()
             if cmd_ == "0":
-                return self.do_cancel()
+                return True
         else:
             print(f"*** Unknown syntax: {line}")
 
@@ -132,6 +131,9 @@ class AdminShell(cmd.Cmd):
 
         with self.data_store.session_scope():
             datafiles = self.data_store.get_all_datafiles()
+            if not datafiles:
+                print("There is no datafile found in the database!")
+                return
             datafiles_dict = {d.reference: d.datafile_id for d in datafiles}
         selected_datafile = iterfzf(datafiles_dict.keys())
 
@@ -177,6 +179,9 @@ class AdminShell(cmd.Cmd):
             print(f"Datafiles are going to be exported to '{folder_name}' folder.")
             with self.data_store.session_scope():
                 datafiles = self.data_store.get_all_datafiles()
+                if not datafiles:
+                    print("There is no datafile found in the database!")
+                    return
                 for datafile in datafiles:
                     datafile_name = f"exported_{datafile.reference.replace('.', '_')}.rep"
                     print(f"'{datafile_name}' is going to be exported.")
