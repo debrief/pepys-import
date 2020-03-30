@@ -15,7 +15,10 @@ def main():
     parser = argparse.ArgumentParser()
     path_help = "The path to import data from (The default value is the directory of the script)"
     archive_help = " Instruction to archive (move) imported files to designated archive folder"
-    db_help = "SQLite database file to use (overrides config file database settings). Use `:memory:` for temporary in-memory instance"
+    db_help = (
+        "SQLite database file to use (overrides config file database settings). "
+        "Use `:memory:` for temporary in-memory instance"
+    )
     parser.add_argument("--path", help=path_help, required=False, default=DIRECTORY_PATH)
     parser.add_argument(
         "--archive", dest="archive", help=archive_help, action="store_true", default=False,
