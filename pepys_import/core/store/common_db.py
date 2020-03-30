@@ -124,6 +124,27 @@ class PlatformMixin:
 
 class DatafileMixin:
     def create_state(self, data_store, platform, sensor, timestamp, parser_name):
+        """Creates a new State object to record information on the state of a particular
+        platform at a specific time.
+        
+        :param data_store: DataStore connected to the database that the State object should be
+        created in
+        :type data_store: DataStore
+        :param platform: Platform that the State is recording information about
+        :type platform: Platform
+        :param sensor: Sensor used to record this state information
+        :type sensor: Sensor
+        :param timestamp: Timestamp of the State information
+        :type timestamp: datetime.datetime
+        :param parser_name: Name of parser used to import the data for this State
+        :type parser_name: String
+        :return: Newly-created State object
+        :rtype: State
+
+        Note: The State object will automatically be added to a list of pending
+        State objects (stored in Datafile.measurements) which will be committed to the database
+        later, if the full import succeeds.
+        """
         state = data_store.db_classes.State(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
@@ -133,6 +154,27 @@ class DatafileMixin:
         return state
 
     def create_contact(self, data_store, platform, sensor, timestamp, parser_name):
+        """Creates a new Contact object to record information on a Contact observed by a particular
+        platform at a specific time.
+        
+        :param data_store: DataStore connected to the database that the Contact object should be
+        created in
+        :type data_store: DataStore
+        :param platform: Platform that the Contact was observed from
+        :type platform: Platform
+        :param sensor: Sensor used to record this Contact information
+        :type sensor: Sensor
+        :param timestamp: Timestamp of the Contact information
+        :type timestamp: datetime.datetime
+        :param parser_name: Name of parser used to import the data for this Contact
+        :type parser_name: String
+        :return: Newly-created Contact object
+        :rtype: Contact
+
+        Note: The Contact object will automatically be added to a list of pending
+        Contact objects (stored in Datafile.measurements) which will be committed to the database
+        later, if the full import succeeds.
+        """
         contact = data_store.db_classes.Contact(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
@@ -144,6 +186,27 @@ class DatafileMixin:
     def create_comment(
         self, data_store, platform, timestamp, comment, comment_type, parser_name,
     ):
+        """Creates a new Comment object to record textual information logged by a particular
+        platform at a specific time.
+        
+        :param data_store: DataStore connected to the database that the Comment object should be
+        created in
+        :type data_store: DataStore
+        :param platform: Platform that the Comment was recorded from
+        :type platform: Platform
+        :param timestamp: Timestamp of the Comment information
+        :type timestamp: datetime.datetime
+        :param comment: Text of the comment
+        :type comment: String
+        :param comment_type: Type of the comment
+        :type comment_type: CommentType
+        :return: Newly-created Comment object
+        :rtype: Comment
+
+        Note: The Comment object will automatically be added to a list of pending
+        Comment objects (stored in Datafile.measurements) which will be committed to the database
+        later, if the full import succeeds.
+        """
         comment = data_store.db_classes.Comment(
             platform_id=platform.platform_id,
             time=timestamp,
