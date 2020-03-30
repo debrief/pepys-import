@@ -22,7 +22,7 @@ class Importer(ABC):
 
         :param suffix: File suffix (e.g. ".doc")
         :type suffix: String
-        :return: Yes/No
+        :return: True/False
         :rtype: bool
         """
 
@@ -32,7 +32,7 @@ class Importer(ABC):
 
         :param filename: Full filename
         :type filename: String
-        :return: Yes/No
+        :return: True/False
         :rtype: bool
         """
 
@@ -42,7 +42,7 @@ class Importer(ABC):
 
         :param header: The initial line of text
         :type header: String
-        :return: Yes/No
+        :return: True/False
         :rtype: bool
         """
 
@@ -52,15 +52,30 @@ class Importer(ABC):
 
         :param file_contents: Whole file contents
         :type file_contents: String
-        :return: Yes/No
+        :return: True/False
         :rtype: bool
         """
 
     def load_this_file(self, data_store, path, file_object, datafile, change_id):
-        """Handles the loading of this data file
+        """Loads the specified file.
 
-        Performs the common operations that must be performed before the
-        load_this_file method is called, then performs the load
+        Performs the common administrative operations that must be performed
+        before the _load_this_file method is called, then calls that function.
+
+        :param data_store: The DataStore object connected to the database into which the
+                           file should be loaded
+        :type data_store: DataStore
+        :param path: The full path to the file to import
+        :type path: String
+        :param file_object: The HighlightedFile object representing the file, allowing
+                            access to lines and tokens
+        :type file_object: HighlightedFile
+        :param datafile: The Datafile object referring to the file to be imported
+        :type datafile: Datafile
+        :param change_id: ID of the :class:`Change` object that represents the change
+                          which will occur when importing this file
+        :type change_id: Integer or UUID
+        
         """
         basename = os.path.basename(path)
         print(f"{self.short_name} working on {basename}")
@@ -74,17 +89,19 @@ class Importer(ABC):
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
         """Process this data-file
 
-        :param data_store: The data_store
+        :param data_store: The DataStore object connected to the database into which the
+        file should be loaded
         :type data_store: DataStore
-        :param path: File path
+        :param path: The full path to the file to import
         :type path: String
-        :param file_object: HighlightedFile object, representing file contents and allowing
-        extraction of lines and tokens, and recording of tokens
+        :param file_object: The HighlightedFile object representing the file, allowing
+        access to lines and tokens
         :type file_object: HighlightedFile
-        :param datafile: DataFile object
-        :type datafile: DataFile
-        :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
+        :param datafile: The Datafile object referring to the file to be imported
+        :type datafile: Datafile
+        :param change_id: ID of the :class:`Change` object that represents the change
+        which will occur when importing this file
+        :type change_id: integer or UUID
         """
         for line_number, line in enumerate(tqdm(file_object.lines()), 1):
             self._load_this_line(data_store, line_number, line, datafile, change_id)
@@ -98,10 +115,11 @@ class Importer(ABC):
         :type line_number: Integer
         :param line: A Line object, representing a line from a file and allowing
         extraction of tokens, and recording of tokens
-        :type line: Line
+        :type line: :class:`Line`
         :param datafile: DataFile object
         :type datafile: DataFile
-        :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
+        :param change_id: ID of the :class:`Change` object that represents the change
+        which will occur when importing this line
+        :type change_id: integer or UUID
         """
         raise NotImplementedError
