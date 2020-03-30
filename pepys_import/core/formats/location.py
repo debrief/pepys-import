@@ -311,3 +311,29 @@ class Location:
             return False
 
         return True
+
+    def decimal_degrees_to_degrees_minutes_seconds(self):
+        """Converts decimal degrees of latitude and longitude values to
+        degrees, minutes, and seconds"""
+
+        if self.check_valid():
+            latitude = abs(self.latitude)
+            lat_minutes, lat_seconds = divmod(latitude * 3600, 60)
+            lat_degrees, lat_minutes = divmod(lat_minutes, 60)
+
+            longitude = abs(self.longitude)
+            lon_minutes, lon_seconds = divmod(longitude * 3600, 60)
+            lon_degrees, lon_minutes = divmod(lon_minutes, 60)
+            return lat_degrees, lat_minutes, lat_seconds, lon_degrees, lon_minutes, lon_seconds
+
+    def convert_point(self):
+        """
+        Returns formatted latitude and longitude values. The format is as follows:
+            DD(D) MM SS.SS H (Degrees Minutes Seconds Hemisphere)
+        """
+        dms_values = self.decimal_degrees_to_degrees_minutes_seconds()
+        latitude = f"{dms_values[0]:02g} {dms_values[1]:02g} {dms_values[2]:02g}"
+        latitude_hemisphere = "N" if self.latitude >= 0 else "S"
+        longitude = f"{dms_values[3]:03g} {dms_values[4]:02g} {dms_values[5]:02g}"
+        longitude_hemisphere = "E" if self.longitude >= 0 else "W"
+        return f"{latitude} {latitude_hemisphere}\t{longitude} {longitude_hemisphere}"
