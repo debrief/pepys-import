@@ -8,12 +8,13 @@ from pepys_import.file.importer import Importer
 
 class ReplayImporter(Importer):
     def __init__(
-        self,
-        name="Replay File Format Importer",
-        validation_level=constants.ENHANCED_LEVEL,
-        short_name="REP Importer",
-        separator=" ",
+        self, separator=" ",
     ):
+
+        name = "Replay File Format Importer"
+        validation_level = constants.ENHANCED_LEVEL
+        short_name = "REP Importer"
+
         super().__init__(name, validation_level, short_name)
         self.separator = separator
         self.text_label = None

@@ -12,12 +12,13 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 class NMEAImporter(Importer):
     def __init__(
-        self,
-        name="NMEA File Format Importer",
-        validation_level=constants.BASIC_LEVEL,
-        short_name="NMEA Importer",
-        separator=",",
+        self, separator=",",
     ):
+
+        name = "NMEA File Format Importer"
+        validation_level = constants.BASIC_LEVEL
+        short_name = "NMEA Importer"
+
         super().__init__(name, validation_level, short_name)
         self.separator = separator
 

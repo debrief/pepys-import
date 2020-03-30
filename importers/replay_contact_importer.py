@@ -14,12 +14,11 @@ from pepys_import.utils.unit_utils import (
 
 
 class ReplayContactImporter(Importer):
-    def __init__(
-        self,
-        name="Replay Contact Importer",
-        validation_level=constants.ENHANCED_LEVEL,
-        short_name="REP Contact Importer",
-    ):
+    def __init__(self):
+        name = "Replay Contact Importer"
+        validation_level = constants.ENHANCED_LEVEL
+        short_name = "REP Contact Importer"
+
         super().__init__(name, validation_level, short_name)
         self.text_label = None
         self.depth = 0.0
