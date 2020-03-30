@@ -29,6 +29,11 @@ class Location:
     # that mirrors the hidden _latitude attribute
     @property
     def latitude(self):
+        """Returns the latitude of the Location object, in decimal degrees
+        
+        :return: Latitude
+        :rtype: float
+        """
         return self._latitude
 
     @latitude.setter
@@ -41,6 +46,11 @@ class Location:
     # that mirrors the hidden _longitude attribute
     @property
     def longitude(self):
+        """Returns the longitude of the Location object, in decimal degrees
+        
+        :return: Longitude
+        :rtype: float
+        """
         return self._longitude
 
     @longitude.setter
@@ -49,7 +59,7 @@ class Location:
             "Cannot set longitude directly. Use set_longitude_decimal_degrees or set_longitude_dms"
         )
 
-    def convert_and_check_degrees(self, degrees, lat_or_lon):
+    def _convert_and_check_degrees(self, degrees, lat_or_lon):
         try:
             degrees = float(degrees)
         except ValueError:
@@ -80,7 +90,7 @@ class Location:
 
         return degrees, True
 
-    def convert_and_check_minutes(self, minutes, lat_or_lon):
+    def _convert_and_check_minutes(self, minutes, lat_or_lon):
         try:
             minutes = float(minutes)
         except ValueError:
@@ -103,7 +113,7 @@ class Location:
 
         return minutes, True
 
-    def convert_and_check_seconds(self, seconds, lat_or_lon):
+    def _convert_and_check_seconds(self, seconds, lat_or_lon):
         try:
             seconds = float(seconds)
         except ValueError:
@@ -128,7 +138,7 @@ class Location:
 
         return seconds, True
 
-    def convert_and_check_hemisphere(self, hemisphere, lat_or_lon):
+    def _convert_and_check_hemisphere(self, hemisphere, lat_or_lon):
         hemisphere = hemisphere.upper()
 
         if lat_or_lon == "latitude":
@@ -148,7 +158,14 @@ class Location:
         return hemisphere, True
 
     def set_latitude_decimal_degrees(self, latitude):
-        latitude, is_valid = self.convert_and_check_degrees(latitude, "latitude")
+        """Sets the latitude of the Location object to a latitude given in decimal degrees
+        
+        :param latitude: Latitude to set to, in decimal degrees (use +/- values for North/South)
+        :type latitude: float
+        :return: Whether latitude was set successfully
+        :rtype: Boolean
+        """
+        latitude, is_valid = self._convert_and_check_degrees(latitude, "latitude")
 
         if not is_valid:
             return False
@@ -157,7 +174,14 @@ class Location:
             return True
 
     def set_longitude_decimal_degrees(self, longitude):
-        longitude, is_valid = self.convert_and_check_degrees(longitude, "longitude")
+        """Sets the longitude value of the Location object to a longitude given in decimal degrees
+        
+        :param longitude: Longitude to set to, in decimal degrees (use +/- values for East/West)
+        :type longitude: float
+        :return: Whether longitude was set successfully
+        :rtype: Boolean
+        """
+        longitude, is_valid = self._convert_and_check_degrees(longitude, "longitude")
 
         if not is_valid:
             return False
@@ -166,19 +190,33 @@ class Location:
             return True
 
     def set_latitude_dms(self, degrees, minutes, seconds, hemisphere):
-        degrees, is_valid = self.convert_and_check_degrees(degrees, "latitude")
+        """Sets the latitude value of the Location object to a latitude given in degrees, minutes
+        and seconds format.
+        
+        :param degrees: Degrees of latitude (must be positive float)
+        :type degrees: float
+        :param minutes: Minutes of latitude (must be positive float)
+        :type minutes: float
+        :param seconds: Seconds of latitude (must be positive float)
+        :type seconds: float
+        :param hemisphere: Hemisphere of latitude (must be "N" or "S")
+        :type hemisphere: String
+        :return: Whether latitude was set successfully
+        :rtype: Boolean
+        """
+        degrees, is_valid = self._convert_and_check_degrees(degrees, "latitude")
         if not is_valid:
             return False
 
-        minutes, is_valid = self.convert_and_check_minutes(minutes, "latitude")
+        minutes, is_valid = self._convert_and_check_minutes(minutes, "latitude")
         if not is_valid:
             return False
 
-        seconds, is_valid = self.convert_and_check_seconds(seconds, "latitude")
+        seconds, is_valid = self._convert_and_check_seconds(seconds, "latitude")
         if not is_valid:
             return False
 
-        hemisphere, is_valid = self.convert_and_check_hemisphere(hemisphere, "latitude")
+        hemisphere, is_valid = self._convert_and_check_hemisphere(hemisphere, "latitude")
         if not is_valid:
             return False
 
@@ -191,19 +229,33 @@ class Location:
         return True
 
     def set_longitude_dms(self, degrees, minutes, seconds, hemisphere):
-        degrees, is_valid = self.convert_and_check_degrees(degrees, "longitude")
+        """Sets the longitude value of the Location object to a longitude given in degrees, minutes
+        and seconds format.
+        
+        :param degrees: Degrees of longitude (must be positive float)
+        :type degrees: float
+        :param minutes: Minutes of longitude (must be positive float)
+        :type minutes: float
+        :param seconds: Seconds of longitude (must be positive float)
+        :type seconds: float
+        :param hemisphere: Hemisphere of longitude (must be "E" or "W")
+        :type hemisphere: String
+        :return: Whether longitude was set successfully
+        :rtype: Boolean
+        """
+        degrees, is_valid = self._convert_and_check_degrees(degrees, "longitude")
         if not is_valid:
             return False
 
-        minutes, is_valid = self.convert_and_check_minutes(minutes, "longitude")
+        minutes, is_valid = self._convert_and_check_minutes(minutes, "longitude")
         if not is_valid:
             return False
 
-        seconds, is_valid = self.convert_and_check_minutes(seconds, "longitude")
+        seconds, is_valid = self._convert_and_check_minutes(seconds, "longitude")
         if not is_valid:
             return False
 
-        hemisphere, is_valid = self.convert_and_check_hemisphere(hemisphere, "longitude")
+        hemisphere, is_valid = self._convert_and_check_hemisphere(hemisphere, "longitude")
         if not is_valid:
             return False
 
@@ -216,21 +268,42 @@ class Location:
         return True
 
     def to_wkt(self):
+        """Returns the location stored in the Location object in Well-Known Text format,
+        ready for assigning to the _location attribute of a SQLAlchemy/GeoAlchemy model
+        
+        :return: Well-Known Text of location
+        :rtype: String
+        """
         return f"SRID=4326;POINT({self.longitude} {self.latitude})"
 
     def set_from_wkb(self, wkb_string):
+        """Sets the location from a Well-Known Binary blob
+        
+        :param wkb_string: String containing Well-Known Binary blog in hex format
+        :type wkb_string: String
+        """
         point = wkb.loads(wkb_string, hex=True)
 
         self._longitude = point.x
         self._latitude = point.y
 
     def set_from_wkt_string(self, wkt_string):
+        """Sets the location from a Well-Known Text string
+        
+        :param wkt_string: Well-Known Text
+        :type wkt_string: String
+        """
         longitude, latitude = wkt_string[16:-1].split()
 
         self._latitude = float(latitude)
         self._longitude = float(longitude)
 
     def check_valid(self):
+        """Checks whether the location is valid (ie. has both a latitude and a longitude)
+        
+        :return: Validity
+        :rtype: Boolean
+        """
         if self._latitude is None:
             return False
 
