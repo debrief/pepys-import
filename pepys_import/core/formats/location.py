@@ -244,17 +244,13 @@ class Location:
         degrees, minutes, and seconds"""
 
         if self.check_valid():
-            is_positive = self.latitude >= 0
             latitude = abs(self.latitude)
             lat_minutes, lat_seconds = divmod(latitude * 3600, 60)
             lat_degrees, lat_minutes = divmod(lat_minutes, 60)
-            lat_degrees = lat_degrees if is_positive else -lat_degrees
 
-            is_positive = self.longitude >= 0
             longitude = abs(self.longitude)
             lon_minutes, lon_seconds = divmod(longitude * 3600, 60)
             lon_degrees, lon_minutes = divmod(lon_minutes, 60)
-            lon_degrees = lon_degrees if is_positive else -lon_degrees
             return lat_degrees, lat_minutes, lat_seconds, lon_degrees, lon_minutes, lon_seconds
 
     def convert_point(self):
