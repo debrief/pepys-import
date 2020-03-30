@@ -144,8 +144,9 @@ class AdminCLITestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Please enter a valid input." in output
 
-    @patch("pepys_admin.admin_cli.input", return_value="Y")
+    @patch("pepys_admin.admin_cli.input")
     def test_do_export_all_empty_database(self, patched_input):
+        patched_input.side_effect = ["Y", "export_test"]
         # Create an empty database
         new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         new_data_store.initialise()
@@ -156,6 +157,9 @@ class AdminCLITestCase(unittest.TestCase):
             new_shell.do_export_all()
         output = temp_output.getvalue()
         assert "There is no datafile found in the database!" in output
+
+        output_path = os.path.join(CURRENT_DIR, "export_test")
+        shutil.rmtree(output_path)
 
     @patch("cmd.input", return_value="0")
     def test_do_initialise(self, patched_input):
