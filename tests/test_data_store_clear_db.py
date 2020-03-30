@@ -24,7 +24,7 @@ class DataStoreClearContentsPostGISDBTestCase(TestCase):
         except AttributeError:
             return
 
-    def test_postgres_cleardb_contents(self):
+    def test_postgres_clear_db_contents(self):
         """Test whether all database tables are empty"""
         if self.store is None:
             self.skipTest("Postgres is not available. Test is skipping")
@@ -63,7 +63,7 @@ class DataStoreClearContentsPostGISDBTestCase(TestCase):
 
 
 class DataStoreClearContentsSpatiaLiteTestCase(TestCase):
-    def test_sqlite_cleardb_contents(self):
+    def test_sqlite_clear_db_contents(self):
         """Test whether all database tables are empty"""
         data_store_sqlite = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
 
