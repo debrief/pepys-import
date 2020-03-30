@@ -18,7 +18,6 @@ class ETracImporter(Importer):
     ):
         super().__init__(name, validation_level, short_name)
         self.separator = separator
-        self.errors = list()
 
         self.text_label = None
 
