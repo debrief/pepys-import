@@ -14,7 +14,6 @@ class AdminShell(cmd.Cmd):
 (1) Export
 (2) Initialise/Clear
 (3) Status
-(9) Export All
 (0) Exit
 """
     prompt = "(pepys-admin) "
