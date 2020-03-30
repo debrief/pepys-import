@@ -70,6 +70,23 @@ class DataStoreInitialisePostGISTestCase(TestCase):
         self.assertEqual(len(table_names), 1)
         self.assertIn("spatial_ref_sys", table_names)
 
+    def test_is_schema_created(self):
+        if self.store is None:
+            self.skipTest("Postgres is not available. Test is skipping")
+
+        data_store_postgres = DataStore(
+            db_username="postgres",
+            db_password="postgres",
+            db_host="localhost",
+            db_port=55527,
+            db_name="test",
+            db_type="postgres",
+        )
+        assert data_store_postgres.is_schema_created() is False
+
+        data_store_postgres.initialise()
+        assert data_store_postgres.is_schema_created() is True
+
 
 class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
     def test_sqlite_initialise(self):
@@ -109,6 +126,13 @@ class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
         self.assertIn("views_geometry_columns", table_names)
         self.assertIn("virts_geometry_columns", table_names)
         self.assertIn("spatialite_history", table_names)
+
+    def test_is_schema_created(self):
+        data_store_sqlite = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        assert data_store_sqlite.is_schema_created() is False
+
+        data_store_sqlite.initialise()
+        assert data_store_sqlite.is_schema_created() is True
 
 
 if __name__ == "__main__":
