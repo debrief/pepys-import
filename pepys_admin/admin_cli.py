@@ -4,6 +4,7 @@ from datetime import datetime
 
 from iterfzf import iterfzf
 
+from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -86,21 +87,16 @@ class AdminShell(cmd.Cmd):
         sensors_dict = {s.name: s.sensor_id for s in sensors}
         with self.data_store.session_scope():
             objects = self.data_store.find_related_datafile_objects(platform_id, sensors_dict)
-        print(objects)
-
-        # export_flag = input(f"Do you want to export {selected_platform}? (Y/n)\n")
-        # if export_flag in ["", "Y", "y"]:
-        #     datafile_name = f"exported_{selected_platform.replace('.', '_')}.rep"
-        #     print(f"'{selected_platform}' is going to be exported.")
-        #
-        #     selected_datafile_id = platforms_dict[selected_platform]
-        #     with self.data_store.session_scope():
-        #         self.data_store.export_datafile(selected_datafile_id, datafile_name)
-        #     print(f"Datafile successfully exported to {datafile_name}.")
-        # elif export_flag in ["N", "n"]:
-        #     print("You selected not to export!")
-        # else:
-        #     print(f"Please enter a valid input.")
+        # Create a dynamic menu for the found datafile objects
+        text = "--- Menu ---\n"
+        options = ["0", ]
+        for index, obj in enumerate(objects, 1):
+            text += f"({index}) {obj['name']} {obj['filename']} {obj['min']}-{obj['max']}\n"
+            options.append(str(index))
+        text += "(0) Cancel\n"
+        # Initialise a new menu
+        export_platform = ExportByPlatformNameShell(self.data_store, options, objects)
+        export_platform.cmdloop(intro=text)
 
     def do_export_all(self):
         """Start the export all datafiles process"""
