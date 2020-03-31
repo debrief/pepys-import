@@ -1,7 +1,5 @@
 from datetime import datetime
 
-from tqdm import tqdm
-
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
@@ -11,14 +9,12 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 
 class NMEAImporter(Importer):
-    def __init__(
-        self,
-        name="NMEA File Format Importer",
-        validation_level=constants.BASIC_LEVEL,
-        short_name="NMEA Importer",
-        separator=",",
-    ):
-        super().__init__(name, validation_level, short_name)
+    def __init__(self, separator=","):
+        super().__init__(
+            name="NMEA File Format Importer",
+            validation_level=constants.BASIC_LEVEL,
+            short_name="NMEA Importer",
+        )
         self.separator = separator
 
         self.latitude = None
