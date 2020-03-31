@@ -1,5 +1,7 @@
 import os
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 
 import pytest
 from testing.postgresql import Postgresql
@@ -165,6 +167,73 @@ class CachePlatformAndSensorNamesTestCase(unittest.TestCase):
             with pytest.raises(Exception) as exception:
                 self.store.get_cached_platform_name(platform_id=123456789)
             assert f"No Platform found with platform id: 123456789" in str(exception.value)
+
+
+class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+        # Parse the file
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(DATA_PATH, self.store, False)
+
+    def test_find_min_and_max_date_incorrect_table(self):
+        Datafile = self.store.db_classes.Datafile
+        with pytest.raises(ValueError):
+            self.store.find_min_and_max_date(Datafile, Datafile.reference, "TEST")
+
+    def test_find_min_and_max_date(self):
+        State = self.store.db_classes.State
+        Contact = self.store.db_classes.Contact
+        Comment = self.store.db_classes.Comment
+
+        with self.store.session_scope():
+            sensor_id = self.store.search_sensor("SEARCH_PLATFORM").sensor_id
+
+            state_values = self.store.find_min_and_max_date(State, State.sensor_id, sensor_id)
+            assert len(state_values) == 3
+            assert str(state_values[0]) == "2010-01-12 11:58:00"
+            assert str(state_values[1]) == "2010-01-12 12:14:00"
+
+            contact_values = self.store.find_min_and_max_date(Contact, Contact.sensor_id, sensor_id)
+            assert len(contact_values) == 3
+            assert str(contact_values[0]) == "2010-01-12 12:10:00"
+            assert str(contact_values[1]) == "2010-01-12 12:12:00"
+
+            platform_id = self.store.search_platform("SEARCH_PLATFORM").platform_id
+            comment_values = self.store.find_min_and_max_date(
+                Comment, Comment.platform_id, platform_id
+            )
+
+            assert len(comment_values) == 3
+            assert str(comment_values[0]) == "2010-01-12 12:10:00"
+            assert str(comment_values[1]) == "2010-01-12 12:12:00"
+
+            assert state_values[2] == contact_values[2] == comment_values[2]
+
+    def test_find_related_datafile_objects_of_comments(self):
+        with self.store.session_scope():
+            platform_id = self.store.search_platform("SEARCH_PLATFORM").platform_id
+            objects = self.store.find_related_datafile_objects(platform_id, sensors_dict={})
+            assert len(objects) == 1
+            assert objects[0]["name"] == "Comment"
+            assert objects[0]["filename"] == "rep_test1.rep"
+            assert str(objects[0]["min"]) == "2010-01-12 12:10:00"
+            assert str(objects[0]["max"]) == "2010-01-12 12:12:00"
+
+    def test_find_related_datafile_objects_of_states_and_contacts(self):
+        with self.store.session_scope():
+            sensors_dict = {
+                "SEARCH_PLATFORM": self.store.search_sensor("SEARCH_PLATFORM").sensor_id
+            }
+            objects = self.store.find_related_datafile_objects(123456789, sensors_dict=sensors_dict)
+            assert len(objects) == 1
+            assert objects[0]["name"] == "SEARCH_PLATFORM"
+            assert objects[0]["filename"] == "rep_test1.rep"
+            assert str(objects[0]["min"]) == "2010-01-12 11:58:00"
+            assert str(objects[0]["max"]) == "2010-01-12 12:14:00"
 
 
 if __name__ == "__main__":

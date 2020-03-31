@@ -1237,6 +1237,10 @@ class DataStore:
         :return: Minimum date, maximum date, and source_id
         :rtype: tuple
         """
+        if table.__tablename__ not in [constants.STATE, constants.CONTACT, constants.COMMENT]:
+            raise ValueError(
+                "Table should be one of the following classes: " "State, Contact, Comment"
+            )
         return (
             self.session.query(func.min(table.time), func.max(table.time), table.source_id)
             .filter(filter_by == value)
