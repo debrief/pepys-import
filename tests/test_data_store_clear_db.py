@@ -2,6 +2,7 @@ import platform
 import unittest
 from unittest import TestCase
 
+import pytest
 from sqlalchemy import inspect
 from testing.postgresql import Postgresql
 
