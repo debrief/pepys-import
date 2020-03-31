@@ -54,22 +54,25 @@ Lib\site-packages
 
 Write-Output "INFO: Set Python pth file"
 
-# Do a standard pip install of the requirements, not warning us that scripts will be unavailable
-.\python\python.exe -m pip install -r requirements.txt --no-warn-script-location
+# Do a standard pip install of the requirements and dev requirements, not warning us that scripts will be unavailable
+.\python\python.exe -m pip install -r requirements.txt -r requirements_dev.txt --no-warn-script-location
 
 Write-Output "INFO: Installed Python dependencies"
 
-# Remove folders/files that we don't need any more
-Remove-Item .\7zip -Recurse
-Remove-Item *.zip
-Remove-Item *.7z
-Remove-Item get-pip.py
-
-Write-Output "INFO: Finished cleanup"
 
 # Zip up whole folder into a zip-file with the current date in the filename
 $date_str = Get-Date -Format "yyyyMMdd"
 $output_filename = $date_str + "_pepys-import.zip"
-Compress-Archive -Path .\* -DestinationPath $output_filename
+.\7zip\7za.exe a .\$output_filename .\*
 
 Write-Output "INFO: Written zipped deployment file to $output_filename"
+
+# Remove folders/files that we don't need any more
+Remove-Item .\7zip -Recurse
+Remove-Item sqlite.zip
+Remove-Item python.zip
+Remove-Item 7zip.zip
+Remove-Item *.7z
+Remove-Item get-pip.py
+
+Write-Output "INFO: Finished cleanup"
