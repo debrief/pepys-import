@@ -11,10 +11,11 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 class GPXImporter(Importer):
     def __init__(self):
-        name = ("GPX Format Importer",)
-        validation_level = (constants.BASIC_LEVEL,)
-        short_name = ("GPX Importer",)
-        super().__init__(name, validation_level, short_name)
+        super().__init__(
+            name="GPX Format Importer",
+            validation_level=constants.BASIC_LEVEL,
+            short_name="GPX Importer",
+        )
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".GPX"

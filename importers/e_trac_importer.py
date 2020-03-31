@@ -10,11 +10,11 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 class ETracImporter(Importer):
     def __init__(self, separator=" "):
-        name = "E-Trac Format Importer"
-        validation_level = constants.BASIC_LEVEL
-        short_name = "E-Trac Importer"
-
-        super().__init__(name, validation_level, short_name)
+        super().__init__(
+            name="E-Trac Format Importer",
+            validation_level=constants.BASIC_LEVEL,
+            short_name="E-Trac Importer",
+        )
         self.separator = separator
 
         self.text_label = None

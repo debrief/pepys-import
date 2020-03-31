@@ -1,5 +1,3 @@
-from tqdm import tqdm
-
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.formats.rep_line import parse_timestamp
@@ -15,11 +13,11 @@ from pepys_import.utils.unit_utils import (
 
 class ReplayContactImporter(Importer):
     def __init__(self):
-        name = "Replay Contact Importer"
-        validation_level = constants.ENHANCED_LEVEL
-        short_name = "REP Contact Importer"
-
-        super().__init__(name, validation_level, short_name)
+        super().__init__(
+            name="Replay Contact Importer",
+            validation_level=constants.ENHANCED_LEVEL,
+            short_name="REP Contact Importer",
+        )
         self.text_label = None
         self.depth = 0.0
 

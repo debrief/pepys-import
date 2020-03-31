@@ -1,5 +1,3 @@
-from tqdm import tqdm
-
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.validators import constants
@@ -7,15 +5,12 @@ from pepys_import.file.importer import Importer
 
 
 class ReplayImporter(Importer):
-    def __init__(
-        self, separator=" ",
-    ):
-
-        name = "Replay File Format Importer"
-        validation_level = constants.ENHANCED_LEVEL
-        short_name = "REP Importer"
-
-        super().__init__(name, validation_level, short_name)
+    def __init__(self, separator=" "):
+        super().__init__(
+            name="Replay File Format Importer",
+            validation_level=constants.ENHANCED_LEVEL,
+            short_name="REP Importer",
+        )
         self.separator = separator
         self.text_label = None
         self.depth = 0.0

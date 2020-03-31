@@ -8,10 +8,11 @@ from pepys_import.file.importer import Importer
 
 class ReplayCommentImporter(Importer):
     def __init__(self):
-        name = "Replay Comment Importer"
-        validation_level = constants.ENHANCED_LEVEL
-        short_name = "REP Comment Importer"
-        super().__init__(name, validation_level, short_name)
+        super().__init__(
+            name="Replay Comment Importer",
+            validation_level=constants.ENHANCED_LEVEL,
+            short_name="REP Comment Importer",
+        )
         self.text_label = None
         self.depth = 0.0
 
