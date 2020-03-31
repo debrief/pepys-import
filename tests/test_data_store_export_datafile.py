@@ -12,6 +12,7 @@ CURRENT_DIR = os.getcwd()
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/rep_test1.rep")
 
 
+@pytest.mark.postgres
 class DataStoreExportPostGISDBTestCase(unittest.TestCase):
     def setUp(self):
         self.path = os.path.join(CURRENT_DIR, "export_test.rep")
@@ -31,7 +32,6 @@ class DataStoreExportPostGISDBTestCase(unittest.TestCase):
         except AttributeError:
             return
 
-    @pytest.mark.postgres
     def test_postgres_export_datafile(self):
         if self.store is None:
             self.skipTest("Postgres is not available. Test is skipping")

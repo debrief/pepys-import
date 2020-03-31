@@ -9,6 +9,7 @@ from testing.postgresql import Postgresql
 from pepys_import.core.store.data_store import DataStore
 
 
+@pytest.mark.postgres
 class DataStoreInitialisePostGISTestCase(TestCase):
     def setUp(self):
         self.store = None
@@ -25,7 +26,6 @@ class DataStoreInitialisePostGISTestCase(TestCase):
         except AttributeError:
             return
 
-    @pytest.mark.postgres
     def test_postgres_initialise(self):
         """Test whether schemas created successfully on PostgresSQL"""
         if self.store is None:
@@ -72,7 +72,6 @@ class DataStoreInitialisePostGISTestCase(TestCase):
         self.assertEqual(len(table_names), 1)
         self.assertIn("spatial_ref_sys", table_names)
 
-    @pytest.mark.postgres
     def test_is_schema_created(self):
         if self.store is None:
             self.skipTest("Postgres is not available. Test is skipping")

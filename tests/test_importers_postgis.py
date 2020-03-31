@@ -15,6 +15,7 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 OUTPUT_PATH = os.path.join(DATA_PATH, "output")
 
 
+@pytest.mark.postgres
 class SampleImporterTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.postgres = None
@@ -45,7 +46,6 @@ class SampleImporterTestCase(unittest.TestCase):
         except AttributeError:
             return
 
-    @pytest.mark.postgres
     def test_process_folders_not_descending(self):
         """Test whether single level processing works for the given path"""
         processor = FileProcessor("single_level.db", archive=False)
@@ -63,7 +63,6 @@ class SampleImporterTestCase(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, self.store, False)
 
-    @pytest.mark.postgres
     def test_process_folders_descending(self):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("descending.db", archive=False)
