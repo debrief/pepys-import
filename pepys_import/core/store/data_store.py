@@ -1239,7 +1239,7 @@ class DataStore:
 
         # Iterate over each sensor of the platform
         for sensor_name, sensor_id in sensors_dict.items():
-            datafile_name = None
+            datafile_name, datafile_id, datafile_id_2 = None, None, None
             # Find minimum date, maximum date, and datafile name of the filtered State objects
             result = self.find_min_and_max_date(State, State.sensor_id, sensor_id)
             min_time, max_time = datetime.utcnow(), datetime(day=1, month=1, year=1700)
@@ -1267,10 +1267,12 @@ class DataStore:
             if sensor_name and datafile_name and min_ and max_:
                 objects.append(
                     {
-                        "Name": sensor_name,
-                        "Filename": datafile_name,
-                        "Min": str(min_),
-                        "Max": str(max_),
+                        "name": sensor_name,
+                        "filename": datafile_name,
+                        "min": str(min_),
+                        "max": str(max_),
+                        "sensor_id": sensor_id,
+                        "datafile_id": datafile_id or datafile_id_2,
                     }
                 )
         # Find minimum date, maximum date, and datafile name of the filtered Comment objects
@@ -1279,8 +1281,16 @@ class DataStore:
             min_time, max_time, datafile_id = comment_objects
             datafile_name = self.get_datafile_from_id(datafile_id).reference
             objects.append(
-                {"Name": "Comment", "Filename": datafile_name, "Min": min_time, "Max": max_time}
+                {
+                    "name": "Comment",
+                    "filename": datafile_name,
+                    "min": min_time,
+                    "max": max_time,
+                    "platform_id": platform_id,
+                    "datafile_id": datafile_id,
+                }
             )
+
         return objects
 
     def export_datafile(self, datafile_id, file_path, sensor_id=None, platform_id=None):
@@ -1297,7 +1307,8 @@ class DataStore:
         """
 
         with open(f"{file_path}", "w+") as file:
-            if sensor_id and platform_id:
+            states, contacts, comments = list(), list(), list()
+            if sensor_id:
                 states = (
                     self.session.query(self.db_classes.State)
                     .filter(self.db_classes.State.source_id == datafile_id)
@@ -1310,6 +1321,7 @@ class DataStore:
                     .filter(self.db_classes.Contact.sensor_id == sensor_id)
                     .all()
                 )
+            elif platform_id:
                 comments = (
                     self.session.query(self.db_classes.Comment)
                     .filter(self.db_classes.Comment.source_id == datafile_id)
