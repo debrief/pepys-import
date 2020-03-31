@@ -14,7 +14,7 @@ class ExportByPlatformNameShell(cmd.Cmd):
     def do_cancel():
         print("Returning to the previous menu...")
 
-    def export(self, option):
+    def do_export(self, option):
         datafile_id = option["datafile_id"]
         sensor_id = option.get("sensor_id")  # May be missing if it's a Comment object
         platform_id = option.get("platform_id")  # May be missing if it's a State or Contact object
@@ -22,8 +22,10 @@ class ExportByPlatformNameShell(cmd.Cmd):
         file_name = input(
             f"Please provide a name (Press Enter for default value " f"({default_export_name})):"
         )
+        if file_name:
+            file_name += ".rep"
         export_file_name = file_name or default_export_name
-        print(f"Objects are going to be exported to '{export_file_name}' folder.")
+        print(f"Objects are going to be exported to '{export_file_name}'.")
         with self.data_store.session_scope():
             self.data_store.export_datafile(datafile_id, export_file_name, sensor_id, platform_id)
             print(f"Objects successfully exported to {export_file_name}.")
@@ -35,7 +37,7 @@ class ExportByPlatformNameShell(cmd.Cmd):
             if cmd_ == "0":
                 return True
             selected_option = self.objects[int(cmd_) - 1]
-            return self.export(selected_option)
+            return self.do_export(selected_option)
         else:
             print(f"*** Unknown syntax: {line}")
 

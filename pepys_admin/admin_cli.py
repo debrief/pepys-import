@@ -72,7 +72,7 @@ class AdminShell(cmd.Cmd):
         with self.data_store.session_scope():
             platforms = self.data_store.session.query(self.data_store.db_classes.Platform).all()
             if not platforms:
-                print("There is no datafile found in the database!")
+                print("There is no platform found in the database!")
                 return
             platforms_dict = {p.name: p.platform_id for p in platforms}
         selected_platform = iterfzf(platforms_dict.keys())
