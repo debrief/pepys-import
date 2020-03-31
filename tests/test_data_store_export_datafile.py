@@ -1,7 +1,5 @@
 import os
 import unittest
-from contextlib import redirect_stdout
-from io import StringIO
 
 import pytest
 from testing.postgresql import Postgresql
