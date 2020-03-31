@@ -4,6 +4,7 @@ import os
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 
 FILE_PATH = os.path.abspath(__file__)
 DIRECTORY_PATH = os.path.dirname(FILE_PATH)
@@ -37,10 +38,17 @@ def process(path=DIRECTORY_PATH, archive=False, db=None):
             db_port=DB_PORT,
             db_name=DB_NAME,
             db_type=DB_TYPE,
+            missing_data_resolver=CommandLineResolver(),
         )
     else:
         data_store = DataStore(
-            db_username="", db_password="", db_host="", db_port=0, db_name=db, db_type="sqlite"
+            db_username="",
+            db_password="",
+            db_host="",
+            db_port=0,
+            db_name=db,
+            db_type="sqlite",
+            missing_data_resolver=CommandLineResolver(),
         )
 
     data_store.initialise()
