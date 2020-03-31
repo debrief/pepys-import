@@ -1,15 +1,13 @@
 import unittest
-import pytest
-
 from datetime import datetime
 
+import pytest
 
+from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.location import Location
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.importer import Importer
-from pepys_import.core.formats import unit_registry
-
-from pepys_import.core.formats.location import Location
 
 
 class TestStateSpeedProperty(unittest.TestCase):
@@ -43,9 +41,8 @@ class TestStateSpeedProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             state.speed = 5 * unit_registry.metre
 
-        assert (
-            "Speed must be a Quantity with a dimensionality of [length]/[time]"
-            in str(exception.value)
+        assert "Speed must be a Quantity with a dimensionality of [length]/[time]" in str(
+            exception.value
         )
 
     def test_state_speed_right_units(self):
@@ -98,9 +95,7 @@ class TestStateHeadingProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             state.heading = 5 * unit_registry.second
 
-        assert "Heading must be a Quantity with a dimensionality of ''" in str(
-            exception.value
-        )
+        assert "Heading must be a Quantity with a dimensionality of ''" in str(exception.value)
 
     def test_state_heading_right_units(self):
         state = self.store.db_classes.State()
@@ -152,9 +147,7 @@ class TestStateCourseProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             state.course = 5 * unit_registry.second
 
-        assert "Course must be a Quantity with a dimensionality of ''" in str(
-            exception.value
-        )
+        assert "Course must be a Quantity with a dimensionality of ''" in str(exception.value)
 
     def test_state_course_right_units(self):
         state = self.store.db_classes.State()
@@ -206,9 +199,7 @@ class TestContactBearingProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.bearing = 5 * unit_registry.second
 
-        assert "Bearing must be a Quantity with a dimensionality of ''" in str(
-            exception.value
-        )
+        assert "Bearing must be a Quantity with a dimensionality of ''" in str(exception.value)
 
     def test_contact_bearing_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -314,9 +305,7 @@ class TestContactMLAProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.mla = 5 * unit_registry.second
 
-        assert "MLA must be a Quantity with a dimensionality of ''" in str(
-            exception.value
-        )
+        assert "MLA must be a Quantity with a dimensionality of ''" in str(exception.value)
 
     def test_contact_mla_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -345,50 +334,50 @@ class TestContactSLAProperty(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_contact_sla_none(self):
+    def test_contact_soa_none(self):
         contact = self.store.db_classes.Contact()
 
-        contact.sla = None
+        contact.soa = None
 
-        assert contact.sla is None
+        assert contact.soa is None
 
-    def test_contact_sla_scalar(self):
+    def test_contact_soa_scalar(self):
         contact = self.store.db_classes.Contact()
 
         # Check setting with a scalar (float) gives error
         with pytest.raises(TypeError) as exception:
-            contact.sla = 5
+            contact.soa = 5
 
-        assert "SLA must be a Quantity" in str(exception.value)
+        assert "SOA must be a Quantity" in str(exception.value)
 
-    def test_contact_sla_wrong_units(self):
+    def test_contact_soa_wrong_units(self):
         contact = self.store.db_classes.Contact()
 
         # Check setting with a Quantity of the wrong units gives error
         with pytest.raises(ValueError) as exception:
-            contact.sla = 5 * unit_registry.second
+            contact.soa = 5 * unit_registry.second
 
-        assert "SLA must be a Quantity with a dimensionality of ''" in str(
+        assert "SOA must be a Quantity with a dimensionality of [length]/[time]" in str(
             exception.value
         )
 
-    def test_contact_sla_right_units(self):
+    def test_contact_soa_right_units(self):
         contact = self.store.db_classes.Contact()
 
         # Check setting with a Quantity of the right SI units succeeds
-        contact.sla = 57 * unit_registry.degree
+        contact.soa = 57 * (unit_registry.metre / unit_registry.second)
 
         # Check setting with a Quantity of strange but valid units succeeds
-        contact.sla = 0.784 * unit_registry.radian
+        contact.soa = 0.784 * (unit_registry.angstrom / unit_registry.day)
 
-    def test_contact_sla_roundtrip(self):
+    def test_contact_soa_roundtrip(self):
         contact = self.store.db_classes.Contact()
 
         # Check setting and retrieving field works, and gives units as a result
-        contact.sla = 198 * unit_registry.degree
+        contact.soa = 19 * unit_registry.knot
 
-        assert contact.sla == 198 * unit_registry.degree
-        assert contact.sla.check("")
+        assert contact.soa == 19 * unit_registry.knot
+        assert contact.soa.check("[length]/[time]")
 
 
 class TestContactOrientationProperty(unittest.TestCase):
@@ -422,9 +411,7 @@ class TestContactOrientationProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.orientation = 5 * unit_registry.second
 
-        assert "Orientation must be a Quantity with a dimensionality of ''" in str(
-            exception.value
-        )
+        assert "Orientation must be a Quantity with a dimensionality of ''" in str(exception.value)
 
     def test_contact_orientation_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -476,9 +463,7 @@ class TestContactMajorProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.major = 5 * unit_registry.second
 
-        assert "Major must be a Quantity with a dimensionality of [length]" in str(
-            exception.value
-        )
+        assert "Major must be a Quantity with a dimensionality of [length]" in str(exception.value)
 
     def test_contact_major_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -530,9 +515,7 @@ class TestContactMinorProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.minor = 5 * unit_registry.second
 
-        assert "Minor must be a Quantity with a dimensionality of [length]" in str(
-            exception.value
-        )
+        assert "Minor must be a Quantity with a dimensionality of [length]" in str(exception.value)
 
     def test_contact_minor_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -584,9 +567,7 @@ class TestContactRangeProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.range = 5 * unit_registry.second
 
-        assert "Range must be a Quantity with a dimensionality of [length]" in str(
-            exception.value
-        )
+        assert "Range must be a Quantity with a dimensionality of [length]" in str(exception.value)
 
     def test_contact_range_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -638,9 +619,7 @@ class TestContactFreqProperty(unittest.TestCase):
         with pytest.raises(ValueError) as exception:
             contact.freq = 5 * unit_registry.kilogram
 
-        assert "Freq must be a Quantity with a dimensionality of [time]^-1" in str(
-            exception.value
-        )
+        assert "Freq must be a Quantity with a dimensionality of [time]^-1" in str(exception.value)
 
     def test_contact_freq_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -767,9 +746,7 @@ class TestLocationProperty:
         with pytest.raises(TypeError) as exception:
             obj.location = (50, -1)
 
-        assert "location value must be an instance of the Location class" in str(
-            exception.value
-        )
+        assert "location value must be an instance of the Location class" in str(exception.value)
 
     @pytest.mark.parametrize(
         "class_name", CLASSES_WITH_LOCATION,
@@ -816,14 +793,224 @@ class TestLocationProperty:
         assert obj.location.longitude == -1.34
 
 
+class TestActivationMinRangeProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_activation_min_range_none(self):
+        activation = self.store.db_classes.Activation()
+
+        activation.min_range = None
+
+        assert activation.min_range is None
+
+    def test_activation_min_range_scalar(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            activation.min_range = 5
+
+        assert "min_range must be a Quantity" in str(exception.value)
+
+    def test_activation_min_range_wrong_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.min_range = 5 * unit_registry.second
+
+        assert "min_range must be a Quantity with a dimensionality of [length]" in str(
+            exception.value
+        )
+
+    def test_activation_min_range_right_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        activation.min_range = 57 * unit_registry.kilometre
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        activation.min_range = 1523 * unit_registry.angstrom
+
+    def test_activation_min_range_roundtrip(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting and retrieving field works, and gives units as a result
+        activation.min_range = 99 * unit_registry.metre
+
+        assert activation.min_range == 99 * unit_registry.metre
+        assert activation.min_range.check("[length]")
+
+
+class TestActivationMaxRangeProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_activation_max_range_none(self):
+        activation = self.store.db_classes.Activation()
+
+        activation.max_range = None
+
+        assert activation.max_range is None
+
+    def test_activation_max_range_scalar(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            activation.max_range = 5
+
+        assert "max_range must be a Quantity" in str(exception.value)
+
+    def test_activation_max_range_wrong_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.max_range = 5 * unit_registry.second
+
+        assert "max_range must be a Quantity with a dimensionality of [length]" in str(
+            exception.value
+        )
+
+    def test_activation_max_range_right_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        activation.max_range = 23 * unit_registry.kilometre
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        activation.max_range = 978 * unit_registry.angstrom
+
+    def test_activation_max_range_roundtrip(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting and retrieving field works, and gives units as a result
+        activation.max_range = 143 * unit_registry.metre
+
+        assert activation.max_range == 143 * unit_registry.metre
+        assert activation.max_range.check("[length]")
+
+
+class TestActivationLeftArcProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_activation_left_arc_none(self):
+        activation = self.store.db_classes.Activation()
+
+        activation.left_arc = None
+
+        assert activation.left_arc is None
+
+    def test_activation_left_arc_scalar(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            activation.left_arc = 5
+
+        assert "left_arc must be a Quantity" in str(exception.value)
+
+    def test_activation_left_arc_wrong_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.left_arc = 5 * unit_registry.second
+
+        assert "left_arc must be a Quantity with a dimensionality of ''" in str(exception.value)
+
+    def test_activation_left_arc_right_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        activation.left_arc = 57 * unit_registry.degree
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        activation.left_arc = 0.784 * unit_registry.radian
+
+    def test_activation_left_arc_roundtrip(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting and retrieving field works, and gives units as a result
+        activation.left_arc = 157 * unit_registry.degree
+
+        assert activation.left_arc == 157 * unit_registry.degree
+        assert activation.left_arc.check("")
+
+
+class TestActivationRightArcProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_activation_right_arc_none(self):
+        activation = self.store.db_classes.Activation()
+
+        activation.right_arc = None
+
+        assert activation.right_arc is None
+
+    def test_activation_right_arc_scalar(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            activation.right_arc = 5
+
+        assert "right_arc must be a Quantity" in str(exception.value)
+
+    def test_activation_right_arc_wrong_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.right_arc = 5 * unit_registry.second
+
+        assert "right_arc must be a Quantity with a dimensionality of ''" in str(exception.value)
+
+    def test_activation_right_arc_right_units(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        activation.right_arc = 98 * unit_registry.degree
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        activation.right_arc = 0.523 * unit_registry.radian
+
+    def test_activation_right_arc_roundtrip(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting and retrieving field works, and gives units as a result
+        activation.right_arc = 121 * unit_registry.degree
+
+        assert activation.right_arc == 121 * unit_registry.degree
+        assert activation.right_arc.check("")
+
+
 class TestLocationRoundtripToDB(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
-        with self.store.session_scope() as session:
-            self.change_id = self.store.add_to_changes(
-                "TEST", datetime.utcnow(), "TEST"
-            ).change_id
+        with self.store.session_scope():
+            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
             print(self.change_id)
             self.nationality = self.store.add_to_nationalities(
                 "test_nationality", self.change_id
@@ -831,12 +1018,8 @@ class TestLocationRoundtripToDB(unittest.TestCase):
             self.platform_type = self.store.add_to_platform_types(
                 "test_platform_type", self.change_id
             ).name
-            self.sensor_type = self.store.add_to_sensor_types(
-                "test_sensor_type", self.change_id
-            )
-            self.privacy = self.store.add_to_privacies(
-                "test_privacy", self.change_id
-            ).name
+            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type", self.change_id)
+            self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -889,13 +1072,13 @@ class TestLocationRoundtripToDB(unittest.TestCase):
                 pass
 
         self.parser = TestParser()
-        self.file.measurements[self.parser.short_name] = list()
+        self.file.measurements[self.parser.short_name] = dict()
 
     def tearDown(self):
         pass
 
     def test_location_roundtrip_to_db(self):
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             states = self.store.session.query(self.store.db_classes.State).all()
 
             # there must be no entry at the beginning
@@ -926,7 +1109,7 @@ class TestLocationRoundtripToDB(unittest.TestCase):
 
         # In a separate session, check that we get a Location class with the right
         # lat and lon
-        with self.store.session_scope() as session:
+        with self.store.session_scope():
             states = self.store.session.query(self.store.db_classes.State).all()
             self.assertEqual(len(states), 1)
             loc = states[0].location

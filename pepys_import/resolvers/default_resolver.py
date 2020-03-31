@@ -32,9 +32,7 @@ class DefaultResolver(DataResolver):
         if not nationality:
             nationality = data_store.search_nationality(self.default_nationality)
             if not nationality:
-                nationality = data_store.add_to_nationalities(
-                    self.default_nationality, change_id
-                )
+                nationality = data_store.add_to_nationalities(self.default_nationality, change_id)
 
         if not privacy:
             privacy = data_store.search_privacy(self.default_privacy)
@@ -60,9 +58,7 @@ class DefaultResolver(DataResolver):
         if not sensor_type:
             sensor_type = data_store.search_sensor_type(self.default_sensor_type)
             if not sensor_type:
-                sensor_type = data_store.add_to_sensor_types(
-                    self.default_sensor_type, change_id
-                )
+                sensor_type = data_store.add_to_sensor_types(self.default_sensor_type, change_id)
 
         if not privacy:
             privacy = self.resolve_privacy(data_store, change_id)
@@ -77,18 +73,14 @@ class DefaultResolver(DataResolver):
 
         return privacy
 
-    def resolve_datafile(
-        self, data_store, datafile_name, datafile_type, privacy, change_id
-    ):
+    def resolve_datafile(self, data_store, datafile_name, datafile_type, privacy, change_id):
         # needs to establish defaults for datafile name, datafile type, and privacy
         if not datafile_name:
             datafile_name = self.default_datafile_name
 
         datafile_type = data_store.search_datafile_type(self.default_datafile_type)
         if not datafile_type:
-            datafile_type = data_store.add_to_datafile_types(
-                self.default_datafile_type, change_id
-            )
+            datafile_type = data_store.add_to_datafile_types(self.default_datafile_type, change_id)
 
         privacy = data_store.search_privacy(self.default_privacy)
         if not privacy:

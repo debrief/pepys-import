@@ -1,11 +1,11 @@
+import platform
 import unittest
-
-from pepys_import.core.store.data_store import DataStore
-from testing.postgresql import Postgresql
-from sqlalchemy import inspect
 from unittest import TestCase
 
-import platform
+from sqlalchemy import inspect
+from testing.postgresql import Postgresql
+
+from pepys_import.core.store.data_store import DataStore
 
 
 class DataStoreInitialisePostGISTestCase(TestCase):
@@ -13,11 +13,7 @@ class DataStoreInitialisePostGISTestCase(TestCase):
         self.store = None
         try:
             self.store = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -39,6 +35,7 @@ class DataStoreInitialisePostGISTestCase(TestCase):
             db_host="localhost",
             db_port=55527,
             db_name="test",
+            db_type="postgres",
         )
 
         # inspector makes it possible to load lists of schema, table, column
@@ -73,6 +70,23 @@ class DataStoreInitialisePostGISTestCase(TestCase):
         self.assertEqual(len(table_names), 1)
         self.assertIn("spatial_ref_sys", table_names)
 
+    def test_is_schema_created(self):
+        if self.store is None:
+            self.skipTest("Postgres is not available. Test is skipping")
+
+        data_store_postgres = DataStore(
+            db_username="postgres",
+            db_password="postgres",
+            db_host="localhost",
+            db_port=55527,
+            db_name="test",
+            db_type="postgres",
+        )
+        assert data_store_postgres.is_schema_created() is False
+
+        data_store_postgres.initialise()
+        assert data_store_postgres.is_schema_created() is True
+
 
 class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
     def test_sqlite_initialise(self):
@@ -93,9 +107,9 @@ class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
         inspector = inspect(data_store_sqlite.engine)
         table_names = inspector.get_table_names()
 
-        SYSTEM = platform.system()
+        system = platform.system()
 
-        if SYSTEM == "Windows":
+        if system == "Windows":
             correct_n_tables = 72
         else:
             correct_n_tables = 70
@@ -112,6 +126,13 @@ class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
         self.assertIn("views_geometry_columns", table_names)
         self.assertIn("virts_geometry_columns", table_names)
         self.assertIn("spatialite_history", table_names)
+
+    def test_is_schema_created(self):
+        data_store_sqlite = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        assert data_store_sqlite.is_schema_created() is False
+
+        data_store_sqlite.initialise()
+        assert data_store_sqlite.is_schema_created() is True
 
 
 if __name__ == "__main__":

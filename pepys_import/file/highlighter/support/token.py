@@ -33,15 +33,7 @@ class SubToken:
         return self.line_start + int(self.span[1])
 
     def __repr__(self):
-        return (
-            "SubToken: ("
-            + str(self.line_start)
-            + "+"
-            + repr(self.span)
-            + ", "
-            + self.text
-            + ")"
-        )
+        return "SubToken: (" + str(self.line_start) + "+" + repr(self.span) + ", " + self.text + ")"
 
 
 class Token:
@@ -72,27 +64,39 @@ class Token:
 
     @property
     def text(self):
+        """Returns the entire text of the Line
+        
+        :return: Entire text content of the Line
+        :rtype: String
+        """
         res = ""
         for child in self.children:
             res += child.text
         return res
 
-    def record(self, tool: str, field: str, value: str, units: str = "n/a"):
+    def record(self, tool: str, field: str, value: str, units: str = None):
         """
         Record the usage of this token for a specific purpose
-        Args:
-            tool(str):  name of the module handling the import
-            field(str): what the token is being interpreted as
-            value(str): what value the token provided
-            units(str): the units of the token
 
+        :param tool: Name of the importer handling the import (eg. "NMEA Importer")
+        :param field: The field that the token is being interpreted as (eg. "speed")
+        :param value: The parsed value of the token (eg. "5 knots") - where possible,
+                      pass a Quantity object with associated units
+        :param units: The units that the field was interpreted as using (optional - do not
+                      include if the value was a Quantity as that holds unit information itself
+
+        Technical details
+        -----------------
         This adds SingleUsage objects to each of the relevant characters in the
         character array stored by the SubToken objects that are children of this object.
         """
         self.highlighted_file.fill_char_array_if_needed()
 
         tool_field = tool + "/" + field
-        message = "Value:" + str(value) + " Units:" + str(units)
+        if units is not None:
+            message = "Value:" + str(value) + " Units:" + str(units)
+        else:
+            message = "Value:" + str(value)
 
         # This loop gives us each SubToken that is a child of this Token
         for subtoken in self.children:

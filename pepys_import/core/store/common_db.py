@@ -1,17 +1,14 @@
-from tqdm import tqdm
 from sqlalchemy.ext.hybrid import hybrid_property
-
-from pepys_import.core.formats import unit_registry
+from tqdm import tqdm
 
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
+from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 from pepys_import.utils.import_utils import import_validators
-
-from pepys_import.core.formats.location import Location
-
 
 LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
 LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
@@ -51,9 +48,7 @@ class SensorMixin:
     @classmethod
     def add_to_sensors(cls, data_store, name, sensor_type, host, change_id):
         session = data_store.session
-        sensor_type = data_store.db_classes.SensorType().search_sensor_type(
-            data_store, sensor_type
-        )
+        sensor_type = data_store.db_classes.SensorType().search_sensor_type(data_store, sensor_type)
         host = data_store.db_classes.Platform().search_platform(data_store, host)
 
         sensor_obj = data_store.db_classes.Sensor(
@@ -76,12 +71,7 @@ class PlatformMixin:
         return data_store.session.query(Platform).filter(Platform.name == name).first()
 
     def get_sensor(
-        self,
-        data_store,
-        sensor_name=None,
-        sensor_type=None,
-        privacy=None,
-        change_id=None,
+        self, data_store, sensor_name=None, sensor_type=None, privacy=None, change_id=None,
     ):
         """
          Lookup or create a sensor of this name for this :class:`Platform`.
@@ -134,26 +124,89 @@ class PlatformMixin:
 
 class DatafileMixin:
     def create_state(self, data_store, platform, sensor, timestamp, parser_name):
+        """Creates a new State object to record information on the state of a particular
+        platform at a specific time.
+        
+        :param data_store: DataStore connected to the database that the State object should be
+        created in
+        :type data_store: DataStore
+        :param platform: Platform that the State is recording information about
+        :type platform: Platform
+        :param sensor: Sensor used to record this state information
+        :type sensor: Sensor
+        :param timestamp: Timestamp of the State information
+        :type timestamp: datetime.datetime
+        :param parser_name: Name of parser used to import the data for this State
+        :type parser_name: String
+        :return: Newly-created State object
+        :rtype: State
+
+        Note: The State object will automatically be added to a list of pending
+        State objects (stored in Datafile.measurements) which will be committed to the database
+        later, if the full import succeeds.
+        """
         state = data_store.db_classes.State(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
         state.platform_name = platform.name
         state.sensor_name = sensor.name
-        self.measurements[parser_name].append(state)
+        self.add_measurement_to_dict(state, parser_name)
         return state
 
     def create_contact(self, data_store, platform, sensor, timestamp, parser_name):
+        """Creates a new Contact object to record information on a Contact observed by a particular
+        platform at a specific time.
+        
+        :param data_store: DataStore connected to the database that the Contact object should be
+        created in
+        :type data_store: DataStore
+        :param platform: Platform that the Contact was observed from
+        :type platform: Platform
+        :param sensor: Sensor used to record this Contact information
+        :type sensor: Sensor
+        :param timestamp: Timestamp of the Contact information
+        :type timestamp: datetime.datetime
+        :param parser_name: Name of parser used to import the data for this Contact
+        :type parser_name: String
+        :return: Newly-created Contact object
+        :rtype: Contact
+
+        Note: The Contact object will automatically be added to a list of pending
+        Contact objects (stored in Datafile.measurements) which will be committed to the database
+        later, if the full import succeeds.
+        """
         contact = data_store.db_classes.Contact(
             sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
         )
         contact.platform_name = platform.name
         contact.sensor_name = sensor.name
-        self.measurements[parser_name].append(contact)
+        self.add_measurement_to_dict(contact, parser_name)
         return contact
 
     def create_comment(
         self, data_store, platform, timestamp, comment, comment_type, parser_name,
     ):
+        """Creates a new Comment object to record textual information logged by a particular
+        platform at a specific time.
+        
+        :param data_store: DataStore connected to the database that the Comment object should be
+        created in
+        :type data_store: DataStore
+        :param platform: Platform that the Comment was recorded from
+        :type platform: Platform
+        :param timestamp: Timestamp of the Comment information
+        :type timestamp: datetime.datetime
+        :param comment: Text of the comment
+        :type comment: String
+        :param comment_type: Type of the comment
+        :type comment_type: CommentType
+        :return: Newly-created Comment object
+        :rtype: Comment
+
+        Note: The Comment object will automatically be added to a list of pending
+        Comment objects (stored in Datafile.measurements) which will be committed to the database
+        later, if the full import succeeds.
+        """
         comment = data_store.db_classes.Comment(
             platform_id=platform.platform_id,
             time=timestamp,
@@ -163,14 +216,18 @@ class DatafileMixin:
         )
         comment.platform_name = platform.name
         comment.sensor_name = "N/A"
-        self.measurements[parser_name].append(comment)
+        self.add_measurement_to_dict(comment, parser_name)
         return comment
 
+    def add_measurement_to_dict(self, measurement, parser_name):
+        # Cache objects according to their platform
+        if measurement.platform_name not in self.measurements[parser_name]:
+            self.measurements[parser_name][measurement.platform_name] = list()
+
+        self.measurements[parser_name][measurement.platform_name].append(measurement)
+
     def validate(
-        self,
-        validation_level=validation_constants.NONE_LEVEL,
-        errors=None,
-        parser="Default",
+        self, validation_level=validation_constants.NONE_LEVEL, errors=None, parser="Default",
     ):
         # If there is no parsing error, it will return None. If that's the case,
         # create a new list for validation errors.
@@ -189,13 +246,21 @@ class DatafileMixin:
                 return True
             return False
         elif validation_level == validation_constants.ENHANCED_LEVEL:
-            for measurement in self.measurements[parser]:
-                BasicValidator(measurement, errors, parser)
-                for basic_validator in LOCAL_BASIC_VALIDATORS:
-                    basic_validator(measurement, errors, parser)
-                EnhancedValidator(measurement, errors, parser)
-                for enhanced_validator in LOCAL_ENHANCED_VALIDATORS:
-                    enhanced_validator(measurement, errors, parser)
+            for objects in self.measurements[parser].values():
+                prev_object_dict = dict()
+                for curr_object in objects:
+                    BasicValidator(curr_object, errors, parser)
+                    for basic_validator in LOCAL_BASIC_VALIDATORS:
+                        basic_validator(curr_object, errors, parser)
+
+                    prev_object = None
+                    if curr_object.platform_name in prev_object_dict:
+                        prev_object = prev_object_dict[curr_object.platform_name]
+                    EnhancedValidator(curr_object, errors, parser, prev_object)
+                    for enhanced_validator in LOCAL_ENHANCED_VALIDATORS:
+                        enhanced_validator(curr_object, errors, parser, prev_object)
+                    prev_object_dict[curr_object.platform_name] = curr_object
+
             if not errors:
                 return True
             return False
@@ -204,13 +269,14 @@ class DatafileMixin:
         # Since measurements are saved by their importer names, iterate over each key
         # and save its measurement objects.
         extraction_log = list()
-        for key in self.measurements.keys():
-            print(f"Submitting measurements extracted by {key}.")
-            for file in tqdm(self.measurements[key]):
-                file.submit(data_store, change_id)
-            extraction_log.append(
-                f"{len(self.measurements[key])} measurements extracted by {key}."
-            )
+        for parser in self.measurements:
+            total_objects = 0
+            for platform, objects in self.measurements[parser].items():
+                total_objects += len(objects)
+                print(f"Submitting measurements extracted by {parser}.")
+                for obj in tqdm(objects):
+                    obj.submit(data_store, change_id)
+            extraction_log.append(f"{total_objects} measurements extracted by {parser}.")
         return extraction_log
 
 
@@ -232,9 +298,7 @@ class StateMixin:
         data_store.session.flush()
         data_store.session.expire(self, ["_location"])
         # Log new State object creation
-        data_store.add_to_logs(
-            table=constants.STATE, row_id=self.state_id, change_id=change_id
-        )
+        data_store.add_to_logs(table=constants.STATE, row_id=self.state_id, change_id=change_id)
         return self
 
     #
@@ -298,13 +362,8 @@ class StateMixin:
                 raise ValueError(
                     "Heading must be a Quantity with a dimensionality of '' (ie. nothing)"
                 )
-            if not (
-                heading.units == unit_registry.degree
-                or heading.units == unit_registry.radian
-            ):
-                raise ValueError(
-                    "Heading must be a Quantity with angular units (degree or radian)"
-                )
+            if not (heading.units == unit_registry.degree or heading.units == unit_registry.radian):
+                raise ValueError("Heading must be a Quantity with angular units (degree or radian)")
         except AttributeError:
             raise TypeError("Heading must be a Quantity")
 
@@ -340,13 +399,8 @@ class StateMixin:
                 raise ValueError(
                     "Course must be a Quantity with a dimensionality of '' (ie. nothing)"
                 )
-            if not (
-                course.units == unit_registry.degree
-                or course.units == unit_registry.radian
-            ):
-                raise ValueError(
-                    "Course must be a Quantity with angular units (degree or radian)"
-                )
+            if not (course.units == unit_registry.degree or course.units == unit_registry.radian):
+                raise ValueError("Course must be a Quantity with angular units (degree or radian)")
         except AttributeError:
             raise TypeError("Course must be a Quantity")
 
@@ -365,9 +419,7 @@ class ContactMixin:
         data_store.session.flush()
         data_store.session.expire(self, ["_location"])
         # Log new Contact object creation
-        data_store.add_to_logs(
-            table=constants.CONTACT, row_id=self.contact_id, change_id=change_id
-        )
+        data_store.add_to_logs(table=constants.CONTACT, row_id=self.contact_id, change_id=change_id)
         return self
 
     #
@@ -395,13 +447,8 @@ class ContactMixin:
                 raise ValueError(
                     "Bearing must be a Quantity with a dimensionality of '' (ie. nothing)"
                 )
-            if not (
-                bearing.units == unit_registry.degree
-                or bearing.units == unit_registry.radian
-            ):
-                raise ValueError(
-                    "Bearing must be a Quantity with angular units (degree or radian)"
-                )
+            if not (bearing.units == unit_registry.degree or bearing.units == unit_registry.radian):
+                raise ValueError("Bearing must be a Quantity with angular units (degree or radian)")
         except AttributeError:
             raise TypeError("Bearing must be a Quantity")
 
@@ -476,15 +523,9 @@ class ContactMixin:
         # degrees or radians
         try:
             if not mla.check(""):
-                raise ValueError(
-                    "MLA must be a Quantity with a dimensionality of '' (ie. nothing)"
-                )
-            if not (
-                mla.units == unit_registry.degree or mla.units == unit_registry.radian
-            ):
-                raise ValueError(
-                    "MLA must be a Quantity with angular units (degree or radian)"
-                )
+                raise ValueError("MLA must be a Quantity with a dimensionality of '' (ie. nothing)")
+            if not (mla.units == unit_registry.degree or mla.units == unit_registry.radian):
+                raise ValueError("MLA must be a Quantity with angular units (degree or radian)")
         except AttributeError:
             raise TypeError("MLA must be a Quantity")
 
@@ -496,41 +537,36 @@ class ContactMixin:
         return self._mla
 
     #
-    # SLA properties
+    # SOA properties
     #
 
     @hybrid_property
-    def sla(self):
-        # Return all SLA's as degrees
-        if self._sla is None:
+    def soa(self):
+        # Return all soas as metres per second
+        if self._soa is None:
             return None
         else:
-            return (self._sla * unit_registry.radian).to(unit_registry.degree)
+            return self._soa * (unit_registry.metre / unit_registry.second)
 
-    @sla.setter
-    def sla(self, sla):
-        if sla is None:
-            self._sla = None
+    @soa.setter
+    def soa(self, soa):
+        if soa is None:
+            self._soa = None
             return
 
-        # Check the given bearing is a Quantity with a dimension of '' and units of
-        # degrees or radians
+        # Check the given soa is a Quantity with a dimension of 'length / time'
         try:
-            if not sla.check(""):
-                raise ValueError(
-                    "SLA must be a Quantity with a dimensionality of '' (ie. nothing)"
-                )
-            if not (
-                sla.units == unit_registry.degree or sla.units == unit_registry.radian
-            ):
-                raise ValueError(
-                    "SLA must be a Quantity with angular units (degree or radian)"
-                )
+            if not soa.check("[length]/[time]"):
+                raise ValueError("SOA must be a Quantity with a dimensionality of [length]/[time]")
         except AttributeError:
-            raise TypeError("SLA must be a Quantity")
+            raise TypeError("SOA must be a Quantity")
 
-        # Set the actual bearing attribute to the given value converted to radians
-        self._sla = sla.to(unit_registry.radian).magnitude
+        # Set the actual soa attribute to the given value converted to metres per second
+        self._soa = soa.to(unit_registry.metre / unit_registry.second).magnitude
+
+    @soa.expression
+    def soa(self):
+        return self._soa
 
     #
     # Orientation properties
@@ -595,9 +631,7 @@ class ContactMixin:
         # Check the given major is a Quantity with a dimension of 'length'
         try:
             if not major.check("[length]"):
-                raise ValueError(
-                    "Major must be a Quantity with a dimensionality of [length]"
-                )
+                raise ValueError("Major must be a Quantity with a dimensionality of [length]")
         except AttributeError:
             raise TypeError("Major must be a Quantity")
 
@@ -629,9 +663,7 @@ class ContactMixin:
         # Check the given minor is a Quantity with a dimension of 'length'
         try:
             if not minor.check("[length]"):
-                raise ValueError(
-                    "Minor must be a Quantity with a dimensionality of [length]"
-                )
+                raise ValueError("Minor must be a Quantity with a dimensionality of [length]")
         except AttributeError:
             raise TypeError("Minor must be a Quantity")
 
@@ -663,9 +695,7 @@ class ContactMixin:
         # Check the given range is a Quantity with a dimension of 'length'
         try:
             if not range.check("[length]"):
-                raise ValueError(
-                    "Range must be a Quantity with a dimensionality of [length]"
-                )
+                raise ValueError("Range must be a Quantity with a dimensionality of [length]")
         except AttributeError:
             raise TypeError("Range must be a Quantity")
 
@@ -697,9 +727,7 @@ class ContactMixin:
         # Check the given freq is a Quantity with a dimension of 'time^-1' (ie. 'per unit time')
         try:
             if not freq.check("[time]^-1"):
-                raise ValueError(
-                    "Freq must be a Quantity with a dimensionality of [time]^-1"
-                )
+                raise ValueError("Freq must be a Quantity with a dimensionality of [time]^-1")
         except AttributeError:
             raise TypeError("Freq must be a Quantity")
 
@@ -717,9 +745,7 @@ class CommentMixin:
         data_store.session.add(self)
         data_store.session.flush()
         # Log new Comment object creation
-        data_store.add_to_logs(
-            table=constants.COMMENT, row_id=self.comment_id, change_id=change_id
-        )
+        data_store.add_to_logs(table=constants.COMMENT, row_id=self.comment_id, change_id=change_id)
         return self
 
 
@@ -745,9 +771,7 @@ class ElevationPropertyMixin:
         # Check the given elevation is a Quantity with a dimension of 'length'
         try:
             if not elevation.check("[length]"):
-                raise ValueError(
-                    "Elevation must be a Quantity with a dimensionality of [length]"
-                )
+                raise ValueError("Elevation must be a Quantity with a dimensionality of [length]")
         except AttributeError:
             raise TypeError("Elevation must be a Quantity")
 
@@ -790,3 +814,149 @@ class LocationPropertyMixin:
     @location.expression
     def location(self):
         return self._location
+
+
+class ActivationMixin:
+    #
+    # min_range property
+    #
+    @hybrid_property
+    def min_range(self):
+        # Return all min_ranges as metres
+        if self._min_range is None:
+            return None
+        else:
+            return self._min_range * unit_registry.metre
+
+    @min_range.setter
+    def min_range(self, min_range):
+        if min_range is None:
+            self._min_range = None
+            return
+
+        # Check the given min_range is a Quantity with a dimension of 'length'
+        try:
+            if not min_range.check("[length]"):
+                raise ValueError("min_range must be a Quantity with a dimensionality of [length]")
+        except AttributeError:
+            raise TypeError("min_range must be a Quantity")
+
+        # Set the actual min_range attribute to the given value converted to metres
+        self._min_range = min_range.to(unit_registry.metre).magnitude
+
+    @min_range.expression
+    def min_range(self):
+        return self._min_range
+
+    #
+    # max_range property
+    #
+    @hybrid_property
+    def max_range(self):
+        # Return all max_ranges as metres
+        if self._max_range is None:
+            return None
+        else:
+            return self._max_range * unit_registry.metre
+
+    @max_range.setter
+    def max_range(self, max_range):
+        if max_range is None:
+            self._max_range = None
+            return
+
+        # Check the given max_range is a Quantity with a dimension of 'length'
+        try:
+            if not max_range.check("[length]"):
+                raise ValueError("max_range must be a Quantity with a dimensionality of [length]")
+        except AttributeError:
+            raise TypeError("max_range must be a Quantity")
+
+        # Set the actual max_range attribute to the given value converted to metres
+        self._max_range = max_range.to(unit_registry.metre).magnitude
+
+    @max_range.expression
+    def max_range(self):
+        return self._max_range
+
+    #
+    # left_arc properties
+    #
+
+    @hybrid_property
+    def left_arc(self):
+        # Return all left_arcs as degrees
+        if self._left_arc is None:
+            return None
+        else:
+            return (self._left_arc * unit_registry.radian).to(unit_registry.degree)
+
+    @left_arc.setter
+    def left_arc(self, left_arc):
+        if left_arc is None:
+            self._left_arc = None
+            return
+
+        # Check the given left_arc is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not left_arc.check(""):
+                raise ValueError(
+                    "left_arc must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                left_arc.units == unit_registry.degree or left_arc.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "left_arc must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("left_arc must be a Quantity")
+
+        # Set the actual left_arc attribute to the given value converted to radians
+        self._left_arc = left_arc.to(unit_registry.radian).magnitude
+
+    @left_arc.expression
+    def left_arc(self):
+        return self._left_arc
+
+    #
+    # right_arc properties
+    #
+
+    @hybrid_property
+    def right_arc(self):
+        # Return all right_arcs as degrees
+        if self._right_arc is None:
+            return None
+        else:
+            return (self._right_arc * unit_registry.radian).to(unit_registry.degree)
+
+    @right_arc.setter
+    def right_arc(self, right_arc):
+        if right_arc is None:
+            self._right_arc = None
+            return
+
+        # Check the given right_arc is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not right_arc.check(""):
+                raise ValueError(
+                    "right_arc must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                right_arc.units == unit_registry.degree or right_arc.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "right_arc must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("right_arc must be a Quantity")
+
+        # Set the actual right_arc attribute to the given value converted to radians
+        self._right_arc = right_arc.to(unit_registry.radian).magnitude
+
+    @right_arc.expression
+    def right_arc(self):
+        return self._right_arc

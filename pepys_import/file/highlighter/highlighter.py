@@ -1,5 +1,6 @@
-from .support.char import Char
 from pepys_import.file.highlighter.support.line import Line
+
+from .support.char import Char
 from .support.export import export_report
 from .support.token import SubToken
 
@@ -46,9 +47,9 @@ class HighlightedFile:
         """
         Provide highlighted summary for this file
         Args:
-            filename (str): The name of the destination for the HTML output
-            include_key (bool): Whether to include a key at the bottom of the output
-            showing what each colour refers to
+        filename (str): The name of the destination for the HTML output
+        include_key (bool): Whether to include a key at the bottom of the output
+        showing what each colour refers to
         """
         if len(self.chars) > 0:
             export_report(filename, self.chars, self.dict_color, include_key)
@@ -94,8 +95,8 @@ class HighlightedFile:
             return
 
         if self.number_of_lines is None:
-            with open(self.filename, "r") as f:
-                file_contents = f.read()
+            with open(self.filename, "r") as file:
+                file_contents = file.read()
         elif self.number_of_lines <= 0:
             print("Non-positive number of lines. Please provide positive number")
             exit(1)
@@ -127,10 +128,8 @@ class HighlightedFile:
             # Create SubToken object to keep track of the line length, the line itself
             # the start character of the line in the file, and a reference to the overall
             # list of characters
-            subToken = SubToken(
-                line_span, this_line, int(line_start_counter), self.chars
-            )
-            new_l = Line([subToken], self)
+            sub_token = SubToken(line_span, this_line, int(line_start_counter), self.chars)
+            new_l = Line([sub_token], self)
             lines.append(new_l)
             # Update the starting character of the line ready for next time
             line_start_counter += line_length + 1

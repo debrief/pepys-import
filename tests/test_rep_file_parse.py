@@ -1,12 +1,13 @@
-import unittest
 import datetime
-
-from pepys_import.core.formats.location import Location
-from pepys_import.core.formats.rep_line import REPLine
-from pepys_import.core.formats import unit_registry
-from pepys_import.file.highlighter.support.test_utils import create_test_line_object
+import unittest
 from contextlib import redirect_stdout
 from io import StringIO
+from math import isnan
+
+from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.location import Location
+from pepys_import.core.formats.rep_line import REPLine
+from pepys_import.file.highlighter.support.test_utils import create_test_line_object
 
 
 class BasicTests(unittest.TestCase):
@@ -40,9 +41,7 @@ class BasicTests(unittest.TestCase):
     def test_error_reports(self):
         # too few fields
         rep_line = REPLine(
-            1,
-            create_test_line_object(" 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "),
-            " ",
+            1, create_test_line_object(" 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "), " ",
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
@@ -163,6 +162,65 @@ class BasicTests(unittest.TestCase):
         self.assertAlmostEqual(6 * unit_registry.knot, rep_line.speed)
         self.assertEqual(0.0, rep_line.depth)
         self.assertEqual("Label", rep_line.text_label)
+
+    def test_zero_mins_secs(self):
+        rep_line = REPLine(
+            line_number=1,
+            line=create_test_line_object(
+                "100112\t120800\tSUBJECT\tVC\t53.243\t0\t0\tS\t23.495\t00\t0\tE\t109.08\t6.00\t0.00\tLabel"
+            ),
+            separator="\t",
+        )
+        assert rep_line.parse(self.error, self.message)
+
+        correct_loc = Location()
+        correct_loc.set_latitude_decimal_degrees(-53.243)
+        correct_loc.set_longitude_decimal_degrees(23.495)
+        assert correct_loc == rep_line.location
+
+    def test_zero_secs(self):
+        rep_line = REPLine(
+            line_number=1,
+            line=create_test_line_object(
+                "100112\t120800\tSUBJECT\tVC\t53\t45.32\t0\tS\t23\t56.23\t0\tE\t109.08\t6.00\t0.00\tLabel"
+            ),
+            separator="\t",
+        )
+        assert rep_line.parse(self.error, self.message)
+
+        correct_loc = Location()
+        correct_loc.set_latitude_dms(53, 45.32, 0, "S")
+        correct_loc.set_longitude_dms(23, 56.23, 0, "E")
+        assert correct_loc == rep_line.location
+
+    def test_nan_depth(self):
+        rep_line = REPLine(
+            line_number=1,
+            line=create_test_line_object(
+                "100112\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\tNaN\tLabel"
+            ),
+            separator="\t",
+        )
+        assert rep_line.parse(self.error, self.message)
+
+        assert rep_line.depth is None
+
+    def test_extended_symbology(self):
+        rep_line = REPLine(
+            line_number=1,
+            line=create_test_line_object(
+                "100112\t120800\tSUBJECT\t@C[SYMBOL=torpedo,LAYER=Support]\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.0\tLabel"
+            ),
+            separator="\t",
+        )
+        assert rep_line.parse(self.error, self.message)
+
+        correct_loc = Location()
+        correct_loc.set_latitude_dms(60.0, 23.0, 40.25, "S")
+        correct_loc.set_longitude_dms(0.0, 1.0, 25.86, "E")
+
+        assert rep_line.location == correct_loc
+        assert rep_line.get_platform() == "SUBJECT"
 
 
 if __name__ == "__main__":

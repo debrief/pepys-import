@@ -4,10 +4,7 @@ from pepys_import.file.importer import Importer
 
 class TestImporter(Importer):
     def __init__(
-        self,
-        name="Test Importer",
-        validation_level=constants.BASIC_LEVEL,
-        short_name="Test",
+        self, name="Test Importer", validation_level=constants.BASIC_LEVEL, short_name="Test",
     ):
         super().__init__(name, validation_level, short_name)
         self.errors = list()

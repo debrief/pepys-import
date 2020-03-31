@@ -1,8 +1,11 @@
 from datetime import datetime
-from .location import Location
-from . import unit_registry
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+from math import isnan
+
 from pepys_import.file.highlighter.support.combine import combine_tokens
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+
+from . import unit_registry
+from .location import Location
 
 
 def parse_timestamp(date, time):
@@ -60,9 +63,7 @@ class REPLine:
 
         if len(tokens) < 15:
             errors.append(
-                {
-                    error_type: f"Error on line {self.line_num}. Not enough tokens: {self.line.text}"
-                }
+                {error_type: f"Error on line {self.line_num}. Not enough tokens: {self.line.text}"}
             )
             return False
 
@@ -107,11 +108,11 @@ class REPLine:
 
         self.timestamp = parse_timestamp(date_token.text, time_token.text)
         combine_tokens(date_token, time_token).record(
-            self.importer_name, "timestamp", self.timestamp, "n/a"
+            self.importer_name, "timestamp", self.timestamp
         )
 
         self.vessel = vessel_name_token.text.strip('"')
-        vessel_name_token.record(self.importer_name, "vessel name", self.vessel, "n/a")
+        vessel_name_token.record(self.importer_name, "vessel name", self.vessel)
 
         symbology_values = symbology_token.text.split("[")
         if len(symbology_values) >= 1:
@@ -135,15 +136,12 @@ class REPLine:
 
         self.location = Location(errors, error_type)
         if not self.location.set_latitude_dms(
-            lat_degrees_token.text,
-            lat_mins_token.text,
-            lat_secs_token.text,
-            lat_hemi_token.text,
+            lat_degrees_token.text, lat_mins_token.text, lat_secs_token.text, lat_hemi_token.text,
         ):
             return False
-        combine_tokens(
-            lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token
-        ).record(self.importer_name, "latitude", self.location, "DMS")
+        combine_tokens(lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token).record(
+            self.importer_name, "latitude", self.location, "DMS"
+        )
 
         if not self.location.set_longitude_dms(
             long_degrees_token.text,
@@ -156,14 +154,12 @@ class REPLine:
             long_degrees_token, long_mins_token, long_secs_token, long_hemi_token
         ).record(self.importer_name, "longitude", self.location, "DMS")
 
-        heading = convert_absolute_angle(
-            heading_token.text, self.line_num, errors, error_type
-        )
+        heading = convert_absolute_angle(heading_token.text, self.line_num, errors, error_type)
         if not heading:
             return False
 
         self.heading = heading
-        heading_token.record(self.importer_name, "heading", self.heading, "degrees")
+        heading_token.record(self.importer_name, "heading", self.heading)
 
         speed = convert_speed(
             speed_token.text, unit_registry.knots, self.line_num, errors, error_type
@@ -171,13 +167,12 @@ class REPLine:
         if not speed:
             return False
         self.speed = speed
-        speed_token.record(self.importer_name, "speed", self.speed, "knots")
+        speed_token.record(self.importer_name, "speed", self.speed)
 
         try:
-            if depth_token == "NaN":
-                self.depth = 0.0
-            else:
-                self.depth = float(depth_token.text)
+            self.depth = float(depth_token.text)
+            if isnan(self.depth):
+                self.depth = None
         except ValueError:
             errors.append(
                 {
@@ -186,7 +181,7 @@ class REPLine:
                 }
             )
             return False
-        depth_token.record(self.importer_name, "depth", self.depth, "metres")
+        depth_token.record(self.importer_name, "depth", self.depth)
 
         return True
 

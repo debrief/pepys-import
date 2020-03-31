@@ -2,8 +2,8 @@ import os
 import unittest
 
 from importers.replay_importer import ReplayImporter
-from pepys_import.file.file_processor import FileProcessor
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.file.file_processor import FileProcessor
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/")
@@ -51,6 +51,16 @@ class TestLoadREP(unittest.TestCase):
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 7)
+
+            # There should be one state with no elevation, which comes from the NaN
+            # in the elevation field in the first line of uk_track.rep
+            states_with_no_elevation = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(self.store.db_classes.State.elevation.is_(None))
+                .all()
+            )
+
+            assert len(states_with_no_elevation) == 1
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 import os
 import unittest
+
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 
 path = os.path.abspath(__file__)
@@ -23,6 +24,7 @@ class TestHTML(unittest.TestCase):
 
         lines = dataFile.lines()
         lines[0].record("Test Name", "Test Field", "Test Value", "Test Units")
+        lines[1].record("Test Name 2", "Test Field 2", "Test Value")
 
         output_file = os.path.join(OUTPUT_FOLDER, "test_highlighted.html")
 

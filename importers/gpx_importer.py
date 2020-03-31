@@ -1,24 +1,21 @@
-from lxml import etree
 from dateutil.parser import parse
+from lxml import etree
 from tqdm import tqdm
 
-from pepys_import.file.importer import Importer
 from pepys_import.core.formats import unit_registry
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
-from pepys_import.core.validators import constants
 from pepys_import.core.formats.location import Location
+from pepys_import.core.validators import constants
+from pepys_import.file.importer import Importer
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 
 class GPXImporter(Importer):
-    def __init__(
-        self,
-        name="GPX Format Importer",
-        validation_level=constants.BASIC_LEVEL,
-        short_name="GPX Importer",
-        separator=" ",
-    ):
-        super().__init__(name, validation_level, short_name)
-        self.errors = list()
+    def __init__(self):
+        super().__init__(
+            name="GPX Format Importer",
+            validation_level=constants.BASIC_LEVEL,
+            short_name="GPX Importer",
+        )
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".GPX"
@@ -26,7 +23,7 @@ class GPXImporter(Importer):
     def can_load_this_filename(self, filename):
         return True
 
-    def can_load_this_header(self, first_line):
+    def can_load_this_header(self, header):
         # Can't tell from first line only whether file is a valid GPX file
         return True
 
@@ -38,15 +35,13 @@ class GPXImporter(Importer):
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
         # Parse XML file from the full path of the file
-        # Note: we can't use the file_contents variable passed in, as lxml refuses
+        # Note: we can't use the file_object variable passed in, as lxml refuses
         # to parse a string that has an encoding attribute in the XML - it requires bytes instead
         try:
             doc = etree.parse(path)
         except Exception as e:
             self.errors.append(
-                {
-                    self.error_type: f'Invalid GPX file at {path}\nError from parsing was "{str(e)}"'
-                }
+                {self.error_type: f'Invalid GPX file at {path}\nError from parsing was "{str(e)}"'}
             )
             return
 
@@ -65,9 +60,7 @@ class GPXImporter(Importer):
                 change_id=change_id,
             )
             sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id)
-            privacy = data_store.missing_data_resolver.resolve_privacy(
-                data_store, change_id
-            )
+            privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
             sensor = platform.get_sensor(
                 data_store=data_store,
                 sensor_name="GPX",
@@ -105,16 +98,10 @@ class GPXImporter(Importer):
                     data_store, platform, sensor, timestamp, self.short_name
                 )
 
-                # Add location (no need to convert as it requires a string)
-                if track_name in self.prev_location:
-                    state.prev_location = self.prev_location[track_name]
-
                 location = Location(errors=self.errors, error_type=self.error_type)
                 location.set_latitude_decimal_degrees(latitude_str)
                 location.set_longitude_decimal_degrees(longitude_str)
-
                 state.location = location
-                self.prev_location[track_name] = state.location
 
                 # Add course
                 if course_str is not None:
@@ -141,8 +128,8 @@ class GPXImporter(Importer):
                     except ValueError:
                         self.errors.append(
                             {
-                                self.error_type: f"Line {tpt.sourceline}. Error in elevation value {elevation_str}. "
-                                f"Couldn't convert to number"
+                                self.error_type: f"Line {tpt.sourceline}. Error in elevation value "
+                                f"{elevation_str}. Couldn't convert to number"
                             }
                         )
                     state.elevation = elevation * unit_registry.metre
@@ -153,5 +140,4 @@ class GPXImporter(Importer):
         child = element.find(search_string)
         if child is not None:
             return child.text
-        else:
-            return None
+        return None

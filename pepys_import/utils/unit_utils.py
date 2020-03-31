@@ -1,4 +1,4 @@
-from math import radians, cos, sin, asin, sqrt, atan2, degrees
+from math import asin, atan2, cos, degrees, radians, sin, sqrt
 
 from pepys_import.core.formats import unit_registry
 
@@ -37,6 +37,7 @@ def convert_absolute_angle(angle, line_number, errors, error_type):
 def convert_speed(speed, units, line_number, errors, error_type):
     """
     Parses the given speed value into a float and assigns the given units
+
     :param speed: Speed value in string format
     :type speed: String
     :param units: Units of the speed (as a pint unit instance)
@@ -63,13 +64,12 @@ def convert_speed(speed, units, line_number, errors, error_type):
     return speed
 
 
-def convert_string_location_to_degrees(first_location):
-    longitude, latitude = first_location[16:-1].split()
-    return float(longitude), float(latitude)
-
-
 def extract_points(location):
-    # convert decimal degrees to radians and return
+    """Convert decimal degrees to radians and return
+
+    :param location: A point of location
+    :type location: Location
+    """
     return radians(location.longitude), radians(location.latitude)
 
 
@@ -86,9 +86,7 @@ def bearing_between_two_points(first_location, second_location):
     diff_longitude = longitude_2 - longitude_1
 
     y = sin(diff_longitude) * cos(latitude_2)
-    x = cos(latitude_1) * sin(latitude_2) - sin(latitude_1) * cos(latitude_2) * cos(
-        diff_longitude
-    )
+    x = cos(latitude_1) * sin(latitude_2) - sin(latitude_1) * cos(latitude_2) * cos(diff_longitude)
     bearing = degrees((atan2(y, x)))
     bearing = (bearing + 360) % 360
     return bearing
@@ -116,9 +114,7 @@ def distance_between_two_points_haversine(first_location, second_location):
     c = 2 * asin(sqrt(a))
     radius = 6371  # Radius of earth in kilometers. Use 3956 for miles
     distance = c * radius
-    return (distance * unit_registry.kilometers / unit_registry.hour).to(
-        unit_registry.meter / unit_registry.second
-    )
+    return (distance * unit_registry.kilometer).to(unit_registry.meter)
 
 
 def convert_frequency(frequency, units, line_number, errors, error_type):
@@ -156,7 +152,7 @@ def convert_distance(distance, units, line_number, errors, error_type):
     """
     Converts the given distance string to a Quantity consisting of a
     float value and the given units.
-    
+
     :param distance: distance value in string format
     :type distance: String
     :param units: units of distance for supplied measurement
@@ -181,3 +177,33 @@ def convert_distance(distance, units, line_number, errors, error_type):
         return False
     distance = valid_distance * units
     return distance
+
+
+def acceptable_bearing_error(bearing1, bearing2, delta):
+    """Determines if the two bearings are more than a set angle apart, allowing
+    for angles that span zero (North)
+
+    :param bearing1: The first bearing
+    :type bearing1: number (degrees)
+    :param bearing2: The second bearing
+    :type bearing2: number (degrees)
+    :param delta: The acceptable separation
+    :type delta: number (degrees)
+    """
+
+    try:
+        # Try treating it as a Quantity
+        bearing1_mag = bearing1.magnitude
+    except AttributeError:
+        # Otherwise just a normal float
+        bearing1_mag = float(bearing1)
+
+    try:
+        bearing2_mag = bearing2.magnitude
+    except AttributeError:
+        bearing2_mag = float(bearing2)
+
+    # note: compact test algorithm came from here:
+    #    https://gamedev.stackexchange.com/a/4472/8270
+    diff = 180 - abs(abs(bearing1_mag - bearing2_mag) - 180)
+    return diff <= delta

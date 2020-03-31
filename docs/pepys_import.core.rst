@@ -8,6 +8,7 @@ Subpackages
 
    pepys_import.core.formats
    pepys_import.core.store
+   pepys_import.core.validators
 
 Module contents
 ---------------
