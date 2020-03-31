@@ -20,8 +20,7 @@ class ExportByPlatformNameShell(cmd.Cmd):
         platform_id = option.get("platform_id")  # May be missing if it's a State or Contact object
         default_export_name = f"exported_{option['name']}.rep"
         file_name = input(
-            f"Please provide a name (Press Enter for default value "
-            f"({default_export_name})):"
+            f"Please provide a name (Press Enter for default value " f"({default_export_name})):"
         )
         export_file_name = file_name or default_export_name
         print(f"Objects are going to be exported to '{export_file_name}' folder.")
@@ -35,7 +34,7 @@ class ExportByPlatformNameShell(cmd.Cmd):
         if cmd_ in self.options:
             if cmd_ == "0":
                 return True
-            selected_option = self.objects[int(cmd_)-1]
+            selected_option = self.objects[int(cmd_) - 1]
             return self.export(selected_option)
         else:
             print(f"*** Unknown syntax: {line}")

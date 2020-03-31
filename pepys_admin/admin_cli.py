@@ -89,7 +89,9 @@ class AdminShell(cmd.Cmd):
             objects = self.data_store.find_related_datafile_objects(platform_id, sensors_dict)
         # Create a dynamic menu for the found datafile objects
         text = "--- Menu ---\n"
-        options = ["0", ]
+        options = [
+            "0",
+        ]
         for index, obj in enumerate(objects, 1):
             text += f"({index}) {obj['name']} {obj['filename']} {obj['min']}-{obj['max']}\n"
             options.append(str(index))
