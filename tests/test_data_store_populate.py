@@ -5,6 +5,7 @@ from datetime import datetime
 from io import StringIO
 from unittest import TestCase
 
+import pytest
 from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
 
@@ -189,6 +190,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
             self.assertEqual(sensor.name, "SENSOR-1")
 
 
+@pytest.mark.postgres
 class DataStorePopulatePostGISTestCase(TestCase):
     def setUp(self) -> None:
         self.postgres = None

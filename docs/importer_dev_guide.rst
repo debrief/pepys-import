@@ -369,14 +369,18 @@ the example below:
 Parser development environment and testing
 ------------------------------------------
 
-Create full development environment
-###################################
+Ensure development environment is set up correctly
+##################################################
+The deployed version of pepys-import contains all the development dependencies, except for a local
+install of PostgreSQL. To check everything is set up correctly, run all the tests _excluding_ those
+that require PostgreSQL by following these steps:
 
-Currently, the deployed version of pepys-import does not include the relevant libraries to be able
-to run the test framework (TODO: update this if/when this changes). Therefore, to develop parsers
-and run tests you will need to install a full development version following the instructions at
-`https://github.com/debrief/pepys-import/blob/develop/DeveloperGuide.rst
-<https://github.com/debrief/pepys-import/blob/develop/DeveloperGuide.rst>`__.
+1. Open a Windows Command Prompt
+2. Change to the directory containing the pepys-import installation
+3. Run :code:`cd bin` to change to the bin directory
+4. Run :code:`set_paths.bat` to set up the relevant paths to Python and its dependencies
+5. Run :code:`cd ..` to change back to the main directory
+6. Run :code:`python -m pytest tests/ -m "not postgres"` to run all tests excluding the PostgreSQL tests
 
 Start developing parser
 #######################

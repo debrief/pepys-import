@@ -2,12 +2,14 @@ import platform
 import unittest
 from unittest import TestCase
 
+import pytest
 from sqlalchemy import inspect
 from testing.postgresql import Postgresql
 
 from pepys_import.core.store.data_store import DataStore
 
 
+@pytest.mark.postgres
 class DataStoreInitialisePostGISTestCase(TestCase):
     def setUp(self):
         self.store = None
