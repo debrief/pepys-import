@@ -2,6 +2,7 @@ import platform
 import unittest
 from unittest import TestCase
 
+import pytest
 from sqlalchemy import inspect
 from testing.postgresql import Postgresql
 
@@ -91,6 +92,7 @@ class DataStoreClearContentsSpatiaLiteTestCase(TestCase):
         self.assertEqual(len(records), 0)
 
 
+@pytest.mark.postgres
 class DataStoreClearSchemaPostGISTestCase(TestCase):
     def setUp(self):
         self.store = None

@@ -158,6 +158,11 @@ To run the unittests run::
 
     $ pytest tests/
 
+To run the unittests excluding the tests that require PostgreSQL (for example, if you couldn't install
+PostgreSQL earlier)::
+
+    $ pytest tests/ -m "not postgres"
+
 To view the coverage of the test suite, run::
 
     $ coverage run -m pytest tests/
@@ -165,16 +170,3 @@ To view the coverage of the test suite, run::
 and then view the report with::
 
     $ coverage report
-
-Run pepys-import from the command-line
---------------------------------------
-
-To run from the command line go to the top level directory of the library in
-your terminal.
-
-Run by specifying the program as a module with :code:`-m` and
-leaving off the .py file extension
-
-For example, to run the importer command-line interface, run::
-
-    python -m pepys_import.import --path /path/to/file/to/import

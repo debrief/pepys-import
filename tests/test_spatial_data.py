@@ -1,6 +1,7 @@
 import os
 import unittest
 
+import pytest
 from geoalchemy2 import WKTElement
 from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
@@ -64,6 +65,7 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
             self.assertIsNone(first_state)
 
 
+@pytest.mark.postgres
 class SpatialDataPostGISTestCase(unittest.TestCase):
     def setUp(self):
         self.postgres = None
