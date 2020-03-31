@@ -1,4 +1,5 @@
 from datetime import datetime
+from math import isnan
 
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
@@ -169,10 +170,9 @@ class REPLine:
         speed_token.record(self.importer_name, "speed", self.speed)
 
         try:
-            if depth_token == "NaN":
-                self.depth = 0.0
-            else:
-                self.depth = float(depth_token.text)
+            self.depth = float(depth_token.text)
+            if isnan(self.depth):
+                self.depth = None
         except ValueError:
             errors.append(
                 {

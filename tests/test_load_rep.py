@@ -52,6 +52,16 @@ class TestLoadREP(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 7)
 
+            # There should be one state with no elevation, which comes from the NaN
+            # in the elevation field in the first line of uk_track.rep
+            states_with_no_elevation = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(self.store.db_classes.State.elevation.is_(None))
+                .all()
+            )
+
+            assert len(states_with_no_elevation) == 1
+
 
 if __name__ == "__main__":
     unittest.main()

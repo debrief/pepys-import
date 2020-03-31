@@ -203,7 +203,7 @@ class BasicTests(unittest.TestCase):
         )
         assert rep_line.parse(self.error, self.message)
 
-        assert isnan(rep_line.depth)
+        assert rep_line.depth is None
 
     def test_extended_symbology(self):
         rep_line = REPLine(
