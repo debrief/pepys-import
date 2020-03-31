@@ -59,6 +59,11 @@ Write-Output "INFO: Set Python pth file"
 
 Write-Output "INFO: Installed Python dependencies"
 
+Remove-Item *.zip
+Remove-Item *.7z
+Remove-Item get-pip.py
+
+Write-Output "INFO: Cleaned up all except 7zip"
 
 # Zip up whole folder into a zip-file with the current date in the filename
 $date_str = Get-Date -Format "yyyyMMdd"
@@ -69,10 +74,5 @@ Write-Output "INFO: Written zipped deployment file to $output_filename"
 
 # Remove folders/files that we don't need any more
 Remove-Item .\7zip -Recurse
-Remove-Item sqlite.zip
-Remove-Item python.zip
-Remove-Item 7zip.zip
-Remove-Item *.7z
-Remove-Item get-pip.py
 
 Write-Output "INFO: Finished cleanup"
