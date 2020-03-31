@@ -1,6 +1,7 @@
 import os
 import unittest
 
+import pytest
 from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
 
@@ -14,6 +15,7 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 OUTPUT_PATH = os.path.join(DATA_PATH, "output")
 
 
+@pytest.mark.postgres
 class SampleImporterTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.postgres = None

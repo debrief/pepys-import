@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlite3 import OperationalError
 from unittest import TestCase
 
+import pytest
 from testing.postgresql import Postgresql
 
 from pepys_import.core.store import constants
@@ -15,6 +16,7 @@ FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 
 
+@pytest.mark.postgres
 class DataStoreCacheTestCase(TestCase):
     def setUp(self) -> None:
         self.postgres = None
@@ -173,6 +175,7 @@ class DataStoreCacheTestCase(TestCase):
             self.assertEqual(len(sensor_types), 1)
 
 
+@pytest.mark.postgres
 class LookUpDBAndAddToCacheTestCase(TestCase):
     """Test searching functionality and adding existing DB entities to the cache of
     DataStore"""
@@ -319,6 +322,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             self.assertEqual(len(sensor_types), 1)
 
 
+@pytest.mark.postgres
 class PlatformAndDatafileTestCase(TestCase):
     def setUp(self) -> None:
         self.postgres = None
@@ -536,6 +540,7 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(found_platform.name, "Test Platform")
 
 
+@pytest.mark.postgres
 class DataStoreStatusTestCase(TestCase):
     def setUp(self) -> None:
         self.postgres = None
@@ -607,6 +612,7 @@ class DataStoreStatusTestCase(TestCase):
         self.assertIn("PlatformTypes", report)
 
 
+@pytest.mark.postgres
 class SensorTestCase(TestCase):
     def setUp(self) -> None:
         self.postgres = None
@@ -743,6 +749,7 @@ class SensorTestCase(TestCase):
             self.assertEqual(found_sensor.name, "gps")
 
 
+@pytest.mark.postgres
 class MeasurementsTestCase(TestCase):
     def setUp(self) -> None:
         self.postgres = None

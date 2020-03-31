@@ -14,6 +14,7 @@ CURRENT_DIR = os.getcwd()
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/rep_data/rep_test1.rep")
 
 
+@pytest.mark.postgres
 class DataStoreExportPostGISDBTestCase(unittest.TestCase):
     def setUp(self):
         self.path = os.path.join(CURRENT_DIR, "export_test.rep")
