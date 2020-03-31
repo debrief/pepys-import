@@ -17,6 +17,7 @@ Welcome to pepys-import
    developer_guide
    deployment
    Source documentation <modules>
+   importer_dev_guide
    contributing
    documentation
    history
