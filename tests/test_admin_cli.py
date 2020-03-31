@@ -514,6 +514,31 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
 
         os.remove(file_path)
 
+    def test_do_cancel(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_cancel()
+        output = temp_output.getvalue()
+        assert "Returning to the previous menu..." in output
+
+    def test_default(self):
+        result = self.shell.default("0")
+        assert result is True
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.default("123456789")
+        output = temp_output.getvalue()
+        assert "*** Unknown syntax: 123456789" in output
+
+    def test_postcmd(self):
+        # postcmd method should print the menu again if stop parameter is false
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.postcmd(stop=False, line="123456789")
+        output = temp_output.getvalue()
+        assert self.shell.intro in output
+
 
 if __name__ == "__main__":
     unittest.main()
