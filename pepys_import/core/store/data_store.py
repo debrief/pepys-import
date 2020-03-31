@@ -716,7 +716,7 @@ class DataStore:
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
         :param nationality: Name of :class:`Nationality`
-        :type nationality: Nationality
+        :type nationality: String
         :param platform_type: Name of :class:`PlatformType`
         :type platform_type: PlatformType
         :param privacy: Name of :class:`Privacy`
