@@ -66,9 +66,10 @@ Remove-Item get-pip.py
 Write-Output "INFO: Cleaned up all except 7zip"
 
 # Zip up whole folder into a zip-file with the current date in the filename
+# excluding the 7zip folder
 $date_str = Get-Date -Format "yyyyMMdd"
 $output_filename = $date_str + "_pepys-import.zip"
-.\7zip\7za.exe a .\$output_filename .\*
+.\7zip\7za.exe a .\$output_filename .\* -xr!7zip/
 
 Write-Output "INFO: Written zipped deployment file to $output_filename"
 
