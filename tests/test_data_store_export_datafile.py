@@ -31,6 +31,7 @@ class DataStoreExportPostGISDBTestCase(unittest.TestCase):
         except AttributeError:
             return
 
+    @pytest.mark.postgres
     def test_postgres_export_datafile(self):
         if self.store is None:
             self.skipTest("Postgres is not available. Test is skipping")

@@ -5,6 +5,7 @@ from datetime import datetime
 from io import StringIO
 from unittest import TestCase
 
+import pytest
 from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
 
@@ -219,6 +220,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
         except AttributeError:
             return
 
+    @pytest.mark.postgres
     def test_populate_reference(self):
         """Test whether CSVs successfully imported to PostGIS"""
 
@@ -249,6 +251,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
             self.assertIn(nationality_object.name, "UNITED KINGDOM")
             self.assertIn(platform_type_object.name, "TTYPE-1")
 
+    @pytest.mark.postgres
     def test_populate_metadata(self):
         # reference tables must be filled first
         with self.store.session_scope():
@@ -329,6 +332,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
             )
             self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
 
+    @pytest.mark.postgres
     def test_populate_measurement(self):
         # reference and metadata tables must be filled first
         with self.store.session_scope():

@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlite3 import OperationalError
 from unittest import TestCase
 
+import pytest
 from testing.postgresql import Postgresql
 
 from pepys_import.core.store import constants
@@ -49,6 +50,7 @@ class DataStoreCacheTestCase(TestCase):
         except AttributeError:
             return
 
+    @pytest.mark.postgres
     def test_cached_comment_types(self):
         """Test whether a new comment type entity cached and returned"""
         with self.store.session_scope():
@@ -69,6 +71,7 @@ class DataStoreCacheTestCase(TestCase):
             # there must be only one entity at the beginning
             self.assertEqual(len(comment_types), 1)
 
+    @pytest.mark.postgres
     def test_cached_platform_types(self):
         """Test whether a new platform type entity cached and returned"""
         with self.store.session_scope():
@@ -92,6 +95,7 @@ class DataStoreCacheTestCase(TestCase):
             # there must be only one entity at the beginning
             self.assertEqual(len(platform_types), 1)
 
+    @pytest.mark.postgres
     def test_cached_nationalities(self):
         """Test whether a new nationality entity cached and returned"""
         with self.store.session_scope():
@@ -111,6 +115,7 @@ class DataStoreCacheTestCase(TestCase):
             # there must be only one entity at the beginning
             self.assertEqual(len(nationalities), 1)
 
+    @pytest.mark.postgres
     def test_cached_privacies(self):
         """Test whether a new privacy entity cached and returned"""
         with self.store.session_scope():
@@ -130,6 +135,7 @@ class DataStoreCacheTestCase(TestCase):
             # there must be only one entity at the beginning
             self.assertEqual(len(privacies), 1)
 
+    @pytest.mark.postgres
     def test_cached_datafile_types(self):
         """Test whether a new datafile type entity cached and returned"""
         with self.store.session_scope():
@@ -153,6 +159,7 @@ class DataStoreCacheTestCase(TestCase):
             # there must be only one entity at the beginning
             self.assertEqual(len(datafile_types), 1)
 
+    @pytest.mark.postgres
     def test_cached_sensor_types(self):
         """Test whether a new sensor type entity cached and returned"""
         with self.store.session_scope():
@@ -210,6 +217,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
         except AttributeError:
             return
 
+    @pytest.mark.postgres
     def test_comment_types(self):
         with self.store.session_scope():
             comment_type = self.store.db_classes.CommentType(name="test")
@@ -228,6 +236,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             # there must be only one entity again
             self.assertEqual(len(comment_types), 1)
 
+    @pytest.mark.postgres
     def test_platform_types(self):
         with self.store.session_scope():
             platform_type = self.store.db_classes.PlatformType(name="test")
@@ -246,6 +255,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             # there must be only one entity again
             self.assertEqual(len(platform_types), 1)
 
+    @pytest.mark.postgres
     def test_nationalities(self):
         with self.store.session_scope():
             nationality = self.store.db_classes.Nationality(name="test")
@@ -264,6 +274,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             # there must be only one entity again
             self.assertEqual(len(nationalities), 1)
 
+    @pytest.mark.postgres
     def test_privacies(self):
         with self.store.session_scope():
             privacy = self.store.db_classes.Privacy(name="test")
@@ -282,6 +293,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             # there must be only one entity again
             self.assertEqual(len(privacies), 1)
 
+    @pytest.mark.postgres
     def test_datafile_types(self):
         with self.store.session_scope():
             datafile_type = self.store.db_classes.DatafileType(name="test")
@@ -300,6 +312,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             # there must be only one entity again
             self.assertEqual(len(datafile_types), 1)
 
+    @pytest.mark.postgres
     def test_sensor_types(self):
         with self.store.session_scope():
             sensor_type = self.store.db_classes.SensorType(name="test")
@@ -360,6 +373,7 @@ class PlatformAndDatafileTestCase(TestCase):
         except AttributeError:
             return
 
+    @pytest.mark.postgres
     def test_new_datafile_added_successfully(self):
         """Test whether a new datafile is created successfully or not"""
 
@@ -378,6 +392,7 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(len(datafiles), 1)
             self.assertEqual(datafiles[0].reference, "test_file.csv")
 
+    @pytest.mark.postgres
     def test_present_datafile_not_added(self):
         """Test whether present datafile is not created"""
 
@@ -396,6 +411,7 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(len(datafiles), 1)
             self.assertEqual(datafiles[0].reference, "test_file.csv")
 
+    @pytest.mark.postgres
     def test_find_datafile(self):
         """Test whether find_datafile method returns the correct Datafile entity"""
         with self.store.session_scope():
@@ -409,6 +425,7 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
             self.assertEqual(found_datafile.reference, "test_file.csv")
 
+    @pytest.mark.postgres
     def test_find_datafile_synonym(self):
         """Test whether find_datafile method finds the correct Datafile entity from Synonyms table"""
         with self.store.session_scope():
@@ -426,6 +443,7 @@ class PlatformAndDatafileTestCase(TestCase):
             found_datafile = self.store.find_datafile("TEST")
             self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
 
+    @pytest.mark.postgres
     def test_new_platform_added_successfully(self):
         """Test whether a new platform is created successfully or not"""
 
@@ -451,6 +469,7 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(len(platforms), 1)
             self.assertEqual(platforms[0].name, "Test Platform")
 
+    @pytest.mark.postgres
     def test_present_platform_not_added(self):
         """Test whether present platform is not created"""
 
@@ -483,6 +502,7 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(len(platforms), 1)
             self.assertEqual(platforms[0].name, "Test Platform")
 
+    @pytest.mark.postgres
     def test_find_platform(self):
         """Test whether find_platform method returns the correct Platform entity"""
         with self.store.session_scope():
@@ -506,6 +526,7 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(platform.platform_id, found_platform.platform_id)
             self.assertEqual(found_platform.name, "Test Platform")
 
+    @pytest.mark.postgres
     def test_find_platform_synonym(self):
         """Test whether find_platform method finds the correct Platform entity from Synonyms table"""
         with self.store.session_scope():
@@ -570,6 +591,7 @@ class DataStoreStatusTestCase(TestCase):
         except AttributeError:
             return
 
+    @pytest.mark.postgres
     def test_get_status_of_measurement(self):
         """Test whether summary contents correct for measurement tables"""
 
@@ -582,6 +604,7 @@ class DataStoreStatusTestCase(TestCase):
         self.assertIn("Contacts", report)
         self.assertIn("Activations", report)
 
+    @pytest.mark.postgres
     def test_get_status_of_metadata(self):
         """Test whether summary contents correct for metadata tables"""
 
@@ -594,6 +617,7 @@ class DataStoreStatusTestCase(TestCase):
         self.assertIn("Platforms", report)
         self.assertIn("Datafiles", report)
 
+    @pytest.mark.postgres
     def test_get_status_of_reference(self):
         """Test whether summary contents correct for reference tables"""
 
@@ -661,6 +685,7 @@ class SensorTestCase(TestCase):
         except AttributeError:
             return
 
+    @pytest.mark.postgres
     def test_new_sensor_added_successfully(self):
         """Test whether a new sensor is created"""
         with self.store.session_scope():
@@ -676,6 +701,7 @@ class SensorTestCase(TestCase):
             self.assertEqual(len(sensors), 1)
             self.assertEqual(sensors[0].name, "gps")
 
+    @pytest.mark.postgres
     def test_present_sensor_not_added(self):
         """Test whether present sensor is not created"""
         with self.store.session_scope():
@@ -694,6 +720,7 @@ class SensorTestCase(TestCase):
 
             self.assertEqual(len(sensors), 1)
 
+    @pytest.mark.postgres
     def test_find_sensor(self):
         """Test whether find_sensor method returns the correct Sensor entity"""
         with self.store.session_scope():
@@ -715,6 +742,7 @@ class SensorTestCase(TestCase):
             self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
             self.assertEqual(found_sensor.name, "gps")
 
+    @pytest.mark.postgres
     def test_find_sensor_synonym(self):
         """Test whether find_sensor method finds the correct Sensor entity from Synonyms table"""
         with self.store.session_scope():
@@ -840,6 +868,7 @@ class MeasurementsTestCase(TestCase):
         except AttributeError:
             return
 
+    @pytest.mark.postgres
     def test_new_state_created_successfully(self):
         """Test whether a new state is created"""
         with self.store.session_scope():
@@ -867,6 +896,7 @@ class MeasurementsTestCase(TestCase):
                 states = self.store.session.query(self.store.db_classes.State).all()
             self.assertEqual(len(states), 1)
 
+    @pytest.mark.postgres
     def test_new_contact_created_successfully(self):
         """Test whether a new contact is created"""
 
@@ -896,6 +926,7 @@ class MeasurementsTestCase(TestCase):
                 contacts = self.store.session.query(self.store.db_classes.Contact).all()
                 self.assertEqual(len(contacts), 1)
 
+    @pytest.mark.postgres
     def test_new_comment_created_successfully(self):
         """Test whether a new comment is created"""
 

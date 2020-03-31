@@ -1,6 +1,7 @@
 import os
 import unittest
 
+import pytest
 from geoalchemy2 import WKTElement
 from sqlalchemy import func
 from sqlalchemy.exc import OperationalError
@@ -98,6 +99,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
         except AttributeError:
             return
 
+    @pytest.mark.postgres
     def test_location(self):
         """Test location saved as Geo Point and it is possible to filter State objects on PostGIS"""
         if self.postgres is None:
@@ -122,6 +124,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
 
             assert first_state.location == correct_loc
 
+    @pytest.mark.postgres
     def test_non_existing_location(self):
         """Test filtering State objects by non existing point returns None on PostGIS"""
 

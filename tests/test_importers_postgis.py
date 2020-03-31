@@ -1,6 +1,7 @@
 import os
 import unittest
 
+import pytest
 from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
 
@@ -44,6 +45,7 @@ class SampleImporterTestCase(unittest.TestCase):
         except AttributeError:
             return
 
+    @pytest.mark.postgres
     def test_process_folders_not_descending(self):
         """Test whether single level processing works for the given path"""
         processor = FileProcessor("single_level.db", archive=False)
@@ -61,6 +63,7 @@ class SampleImporterTestCase(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, self.store, False)
 
+    @pytest.mark.postgres
     def test_process_folders_descending(self):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("descending.db", archive=False)
