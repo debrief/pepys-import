@@ -1,9 +1,24 @@
 from pyfiglet import Figlet
 
+PEPYS_PORTRAIT = [
+    "    `:ssoo+`      ",
+    "   /mdsohmMN+`    ",
+    "  .MM+-.-:MMMd`   ",
+    "  .NMs..`/NMMMy`  ",
+    "  +Mm/--../hNMMy. ",
+    "  yM:`::-.-/-NMMh ",
+    "  /o`....`.` :ooo`",
+]
+
 
 def render_text(font, text):
     figlet = Figlet(font=font)
-    print(figlet.renderText(text))
+    rendered_text = figlet.renderText(text)
+    text = list()
+    for index, line in enumerate(rendered_text.splitlines()):
+        if index < len(PEPYS_PORTRAIT):
+            text.append(f"{PEPYS_PORTRAIT[index]}\t\t{line}")
+    print("\n".join(text))
 
 
 def show_welcome_banner(banner_text):
