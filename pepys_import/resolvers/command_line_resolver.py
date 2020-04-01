@@ -713,7 +713,7 @@ class CommandLineResolver(DataResolver):
 
         # Choose Nationality
         if nationality:
-            chosen_nationality = data_store.add_to_nationalities(nationality.name, change_id)
+            chosen_nationality = data_store.add_to_nationalities(nationality, change_id)
         else:
             chosen_nationality = self.resolve_nationality(data_store, platform_name, change_id)
 
