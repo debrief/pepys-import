@@ -1330,7 +1330,8 @@ class DataStore:
         :type file_path: String
         :param sensor_id: ID of Sensor to export a specific sensor in the datafile, default is None
         :type sensor_id: Integer or UUID
-        :param platform_id: ID of Platform to export a specific platform in the datafile, default is None
+        :param platform_id: ID of Platform to export comments of a specific platform in the datafile,
+        default is None
         :type platform_id: Integer or UUID
         """
 
