@@ -304,9 +304,9 @@ class ImporterDisableRecordingTest(unittest.TestCase):
                 return True
 
             def can_load_this_file(self, file_contents):
-                return False
+                return True
 
-            def _load_this_file(self, data_store, path, file_object, data_file):
+            def _load_this_file(self, data_store, path, file_object, datafile, change_id):
                 assert file_object.ignored_importers == ["Test Importer"]
 
         processor = FileProcessor()
