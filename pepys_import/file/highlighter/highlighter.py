@@ -24,6 +24,9 @@ class HighlightedFile:
         self.dict_color = {}
         self.number_of_lines = number_of_lines
 
+        # List of importers to ignore record calls from
+        self.ignored_importers = []
+
     def chars_debug(self):
         """
         Debug method, to check contents of chars

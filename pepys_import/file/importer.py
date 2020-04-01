@@ -13,8 +13,13 @@ class Importer(ABC):
         self.errors = None
         self.error_type = None
 
+        self.do_recording = True
+
     def __str__(self):
         return self.name
+
+    def disable_recording(self):
+        self.do_recording = False
 
     @abstractmethod
     def can_load_this_type(self, suffix) -> bool:
@@ -82,6 +87,12 @@ class Importer(ABC):
         self.errors = list()
         self.error_type = f"{self.short_name} - Parsing error on {basename}"
         datafile.measurements[self.short_name] = dict()
+
+        # If we've turned off recording of extractions for this importer
+        # then add this to the list of ignored importers for this HighlightedFile
+        # object
+        if not self.do_recording:
+            file_object.ignored_importers.append(self.name)
 
         # perform load
         self._load_this_file(data_store, path, file_object, datafile, change_id)
