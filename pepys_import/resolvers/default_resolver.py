@@ -22,23 +22,20 @@ class DefaultResolver(DataResolver):
         if not platform_name:
             platform_name = self.default_platform_name
 
-        if not platform_type:
-            platform_type = data_store.search_platform_type(self.default_platform_type)
-            if not platform_type:
-                platform_type = data_store.add_to_platform_types(
-                    self.default_platform_type, change_id
-                )
+        if platform_type:
+            platform_type = data_store.add_to_platform_types(platform_type, change_id)
+        else:
+            platform_type = data_store.add_to_platform_types(self.default_platform_type, change_id)
 
-        if not nationality:
-            nationality = data_store.search_nationality(self.default_nationality)
-            if not nationality:
-                nationality = data_store.add_to_nationalities(self.default_nationality, change_id)
+        if nationality:
+            nationality = data_store.add_to_nationalities(nationality, change_id)
+        else:
+            nationality = data_store.add_to_nationalities(self.default_nationality, change_id)
 
-        if not privacy:
-            privacy = data_store.search_privacy(self.default_privacy)
-            if not privacy:
-                privacy = data_store.add_to_privacies(self.default_privacy, change_id)
-
+        if privacy:
+            privacy = data_store.add_to_privacies(privacy, change_id)
+        else:
+            privacy = data_store.add_to_privacies(self.default_privacy, change_id)
         return (
             platform_name,
             self.default_trigraph,
@@ -55,13 +52,15 @@ class DefaultResolver(DataResolver):
         if not sensor_name:
             sensor_name = self.default_sensor_name
 
-        if not sensor_type:
-            sensor_type = data_store.search_sensor_type(self.default_sensor_type)
-            if not sensor_type:
-                sensor_type = data_store.add_to_sensor_types(self.default_sensor_type, change_id)
+        if sensor_type:
+            sensor_type = data_store.add_to_sensor_types(sensor_type, change_id)
+        else:
+            sensor_type = data_store.add_to_sensor_types(self.default_sensor_type, change_id)
 
-        if not privacy:
-            privacy = self.resolve_privacy(data_store, change_id)
+        if privacy:
+            privacy = data_store.add_to_privacies(privacy, change_id)
+        else:
+            privacy = data_store.add_to_privacies(self.default_privacy, change_id)
 
         return sensor_name, sensor_type, privacy
 
@@ -78,12 +77,14 @@ class DefaultResolver(DataResolver):
         if not datafile_name:
             datafile_name = self.default_datafile_name
 
-        datafile_type = data_store.search_datafile_type(self.default_datafile_type)
-        if not datafile_type:
+        if datafile_type:
+            datafile_type = data_store.add_to_datafile_types(datafile_type, change_id)
+        else:
             datafile_type = data_store.add_to_datafile_types(self.default_datafile_type, change_id)
 
-        privacy = data_store.search_privacy(self.default_privacy)
-        if not privacy:
+        if privacy:
+            privacy = data_store.add_to_privacies(privacy, change_id)
+        else:
             privacy = data_store.add_to_privacies(self.default_privacy, change_id)
 
         return datafile_name, datafile_type, privacy
