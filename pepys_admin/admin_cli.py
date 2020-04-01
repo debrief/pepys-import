@@ -1,6 +1,5 @@
 import cmd
 import os
-import sys
 from datetime import datetime
 
 from iterfzf import iterfzf
@@ -169,7 +168,7 @@ class AdminShell(cmd.Cmd):
     def do_exit():
         """Exit the application"""
         print("Thank you for using Pepys Admin")
-        sys.exit()
+        exit()
 
     def default(self, line):
         command, arg, line = self.parseline(line)
