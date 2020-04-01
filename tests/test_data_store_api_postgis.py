@@ -646,7 +646,7 @@ class SensorTestCase(TestCase):
                 ).name
                 self.sensor_type = self.store.add_to_sensor_types(
                     "test_sensor_type", self.change_id
-                )
+                ).name
                 self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
 
                 self.platform = self.store.get_platform(
@@ -657,7 +657,6 @@ class SensorTestCase(TestCase):
                     change_id=self.change_id,
                 )
                 self.store.session.expunge(self.platform)
-                self.store.session.expunge(self.sensor_type)
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 
@@ -784,7 +783,7 @@ class MeasurementsTestCase(TestCase):
                 ).name
                 self.sensor_type = self.store.add_to_sensor_types(
                     "test_sensor_type", self.change_id
-                )
+                ).name
                 self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
 
                 self.platform = self.store.get_platform(

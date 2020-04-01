@@ -1018,7 +1018,9 @@ class TestLocationRoundtripToDB(unittest.TestCase):
             self.platform_type = self.store.add_to_platform_types(
                 "test_platform_type", self.change_id
             ).name
-            self.sensor_type = self.store.add_to_sensor_types("test_sensor_type", self.change_id)
+            self.sensor_type = self.store.add_to_sensor_types(
+                "test_sensor_type", self.change_id
+            ).name
             self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
 
             self.platform = self.store.get_platform(
@@ -1040,7 +1042,6 @@ class TestLocationRoundtripToDB(unittest.TestCase):
             self.store.session.expunge(self.sensor)
             self.store.session.expunge(self.platform)
             self.store.session.expunge(self.file)
-            self.store.session.expunge(self.sensor_type)
 
         class TestParser(Importer):
             def __init__(
