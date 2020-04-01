@@ -128,7 +128,7 @@ class SampleImporterTests(unittest.TestCase):
         assert "sen_tracks.rep" not in input_files
         assert "uk_track.rep" not in input_files
 
-        moved_files_path = os.path.join(OUTPUT_PATH, "input_files")
+        moved_files_path = os.path.join(OUTPUT_PATH, "sources")
         assert os.path.exists(moved_files_path) is True
 
         # Scan the files in input_files folder

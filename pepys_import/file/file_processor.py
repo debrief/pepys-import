@@ -63,7 +63,7 @@ class FileProcessor:
             if not os.path.exists(self.output_path):
                 os.makedirs(self.output_path)
         # create input_files folder if not exists
-        self.input_files_path = os.path.join(self.output_path, "input_files")
+        self.input_files_path = os.path.join(self.output_path, "sources")
         if not os.path.exists(self.input_files_path):
             os.makedirs(self.input_files_path)
 
@@ -73,6 +73,7 @@ class FileProcessor:
         # output_folder/YYYY/MM/DD/HH/mm/ss(_sss)
         directory_path = os.path.join(
             self.output_path,
+            "reports",
             str(now.year),
             str(now.month).zfill(2),
             str(now.day).zfill(2),
