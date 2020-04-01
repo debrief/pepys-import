@@ -80,16 +80,6 @@ class DataStore:
         self.welcome_text = welcome_text
         self.show_status = show_status
 
-        # caches of known data
-        self.privacies = {}
-        self.nationalities = {}
-        self.datafile_types = {}
-        self.datafiles = {}
-        self.platform_types = {}
-        self.platforms = {}
-        self.sensor_types = {}
-        self.comment_types = {}
-
         # TEMP list of values for defaulted IDs, to be replaced by missing info lookup mechanism
         self.default_user_id = 1  # DevUser
 
@@ -412,10 +402,6 @@ class DataStore:
         self.session.add(datafile_obj)
         self.session.flush()
 
-        # print(f"'{reference}' added to Datafile!")
-        # add to cache and return created datafile
-        self.datafiles[reference] = datafile_obj
-
         self.add_to_logs(
             table=constants.DATAFILE, row_id=datafile_obj.datafile_id, change_id=change_id,
         )
@@ -470,10 +456,6 @@ class DataStore:
 
         self.session.add(platform_obj)
         self.session.flush()
-
-        # print(f"'{name}' added to Platform!")
-        # add to cache and return created platform
-        self.platforms[name] = platform_obj
 
         self.add_to_logs(
             table=constants.PLATFORM, row_id=platform_obj.platform_id, change_id=change_id,
@@ -738,11 +720,16 @@ class DataStore:
             if platform:
                 return platform
 
-        nationality = self.search_nationality(nationality)
-        platform_type = self.search_platform_type(platform_type)
-        privacy = self.search_privacy(privacy)
+        nationality_obj = self.search_nationality(nationality)
+        platform_type_obj = self.search_platform_type(platform_type)
+        privacy_obj = self.search_privacy(privacy)
 
-        if platform_name is None or nationality is None or platform_type is None or privacy is None:
+        if (
+            platform_name is None
+            or nationality_obj is None
+            or platform_type_obj is None
+            or privacy_obj is None
+        ):
             resolved_data = self.missing_data_resolver.resolve_platform(
                 self, platform_name, platform_type, nationality, privacy, change_id
             )
@@ -755,27 +742,27 @@ class DataStore:
                     trigraph,
                     quadgraph,
                     pennant_number,
-                    platform_type,
-                    nationality,
-                    privacy,
+                    platform_type_obj,
+                    nationality_obj,
+                    privacy_obj,
                 ) = resolved_data
 
         assert isinstance(
-            nationality, self.db_classes.Nationality
+            nationality_obj, self.db_classes.Nationality
         ), "Type error for Nationality entity"
         assert isinstance(
-            platform_type, self.db_classes.PlatformType
+            platform_type_obj, self.db_classes.PlatformType
         ), "Type error for PlatformType entity"
-        assert isinstance(privacy, self.db_classes.Privacy), "Type error for Privacy entity"
+        assert isinstance(privacy_obj, self.db_classes.Privacy), "Type error for Privacy entity"
 
         return self.add_to_platforms(
             name=platform_name,
             trigraph=trigraph,
             quadgraph=quadgraph,
             pennant_number=pennant_number,
-            nationality=nationality.name,
-            platform_type=platform_type.name,
-            privacy=privacy.name,
+            nationality=nationality_obj.name,
+            platform_type=platform_type_obj.name,
+            privacy=privacy_obj.name,
             change_id=change_id,
         )
 
@@ -843,25 +830,14 @@ class DataStore:
         :return: Created entity of :class:`CommentType` table
         :rtype: CommentType
         """
-
-        # check in cache for comment type
-        if name in self.comment_types:
-            return self.comment_types[name]
-
-        # doesn't exist in cache, try to lookup in DB
         comment_types = self.search_comment_type(name)
         if comment_types:
-            # add to cache and return looked up platform type
-            self.comment_types[name] = comment_types
             return comment_types
 
         # enough info to proceed and create entry
         comment_type = self.db_classes.CommentType(name=name)
         self.session.add(comment_type)
         self.session.flush()
-
-        # add to cache and return created platform type
-        self.comment_types[name] = comment_type
 
         self.add_to_logs(
             table=constants.COMMENT_TYPE, row_id=comment_type.comment_type_id, change_id=change_id,
@@ -885,24 +861,14 @@ class DataStore:
         :return: Created :class:`PlatformType` entity
         :rtype: PlatformType
         """
-        # check in cache for nationality
-        if name in self.platform_types:
-            return self.platform_types[name]
-
-        # doesn't exist in cache, try to lookup in DB
         platform_types = self.search_platform_type(name)
         if platform_types:
-            # add to cache and return looked up platform type
-            self.platform_types[name] = platform_types
             return platform_types
 
         # enough info to proceed and create entry
         platform_type = self.db_classes.PlatformType(name=name)
         self.session.add(platform_type)
         self.session.flush()
-
-        # add to cache and return created platform type
-        self.platform_types[name] = platform_type
 
         self.add_to_logs(
             table=constants.PLATFORM_TYPE,
@@ -923,24 +889,14 @@ class DataStore:
         :return: Created :class:`Nationality` entity
         :rtype: Nationality
         """
-        # check in cache for nationality
-        if name in self.nationalities:
-            return self.nationalities[name]
-
-        # doesn't exist in cache, try to lookup in DB
         nationalities = self.search_nationality(name)
         if nationalities:
-            # add to cache and return looked up nationality
-            self.nationalities[name] = nationalities
             return nationalities
 
         # enough info to proceed and create entry
         nationality = self.db_classes.Nationality(name=name)
         self.session.add(nationality)
         self.session.flush()
-
-        # add to cache and return created platform
-        self.nationalities[name] = nationality
 
         self.add_to_logs(
             table=constants.NATIONALITY, row_id=nationality.nationality_id, change_id=change_id,
@@ -958,24 +914,14 @@ class DataStore:
         :return: Created :class:`Privacy` entity
         :rtype: Privacy
         """
-        # check in cache for privacy
-        if name in self.privacies:
-            return self.privacies[name]
-
-        # doesn't exist in cache, try to lookup in DB
         privacies = self.search_privacy(name)
         if privacies:
-            # add to cache and return looked up platform
-            self.privacies[name] = privacies
             return privacies
 
         # enough info to proceed and create entry
         privacy = self.db_classes.Privacy(name=name)
         self.session.add(privacy)
         self.session.flush()
-
-        # add to cache and return created platform
-        self.privacies[name] = privacy
 
         self.add_to_logs(table=constants.PRIVACY, row_id=privacy.privacy_id, change_id=change_id)
         return privacy
@@ -992,15 +938,8 @@ class DataStore:
         :return: Wrapped database entity for :class:`DatafileType`
         :rtype: DatafileType
         """
-        # check in cache for datafile type
-        if name in self.datafile_types:
-            return self.datafile_types[name]
-
-        # doesn't exist in cache, try to lookup in DB
         datafile_types = self.search_datafile_type(name)
         if datafile_types:
-            # add to cache and return looked up datafile type
-            self.datafile_types[name] = datafile_types
             return datafile_types
 
         # proceed and create entry
@@ -1008,9 +947,6 @@ class DataStore:
 
         self.session.add(datafile_type_obj)
         self.session.flush()
-
-        # add to cache and return created datafile type
-        self.datafile_types[name] = datafile_type_obj
 
         self.add_to_logs(
             table=constants.DATAFILE_TYPE,
@@ -1030,24 +966,14 @@ class DataStore:
         :return: Created :class:`SensorType` entity
         :rtype: SensorType
         """
-        # check in cache for sensor type
-        if name in self.sensor_types:
-            return self.sensor_types[name]
-
-        # doesn't exist in cache, try to lookup in DB
         sensor_types = self.search_sensor_type(name)
         if sensor_types:
-            # add to cache and return looked up sensor type
-            self.sensor_types[name] = sensor_types
             return sensor_types
 
         # enough info to proceed and create entry
         sensor_type = self.db_classes.SensorType(name=name)
         self.session.add(sensor_type)
         self.session.flush()
-
-        # add to cache and return created sensor type
-        self.sensor_types[name] = sensor_type
 
         self.add_to_logs(
             table=constants.SENSOR_TYPE, row_id=sensor_type.sensor_type_id, change_id=change_id,
