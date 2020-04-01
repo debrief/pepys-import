@@ -4,6 +4,7 @@ from datetime import datetime
 
 from iterfzf import iterfzf
 
+from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -12,8 +13,9 @@ DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 class AdminShell(cmd.Cmd):
     intro = """--- Menu ---
 (1) Export
-(2) Initialise/Clear
-(3) Status
+(2) Export by Platform and sensor
+(3) Initialise/Clear
+(4) Status
 (0) Exit
 """
     prompt = "(pepys-admin) "
@@ -25,8 +27,9 @@ class AdminShell(cmd.Cmd):
         self.aliases = {
             "0": self.do_exit,
             "1": self.do_export,
-            "2": self.do_initialise,
-            "3": self.do_status,
+            "2": self.do_export_by_platform_name,
+            "3": self.do_initialise,
+            "4": self.do_status,
             "9": self.do_export_all,
         }
 
@@ -60,6 +63,42 @@ class AdminShell(cmd.Cmd):
             print("You selected not to export!")
         else:
             print(f"Please enter a valid input.")
+
+    def do_export_by_platform_name(self):
+        if self.data_store.is_schema_created() is False:
+            return
+
+        Sensor = self.data_store.db_classes.Sensor
+        with self.data_store.session_scope():
+            platforms = self.data_store.session.query(self.data_store.db_classes.Platform).all()
+            if not platforms:
+                print("There is no platform found in the database!")
+                return
+            platforms_dict = {p.name: p.platform_id for p in platforms}
+        selected_platform = iterfzf(platforms_dict.keys())
+
+        if selected_platform is None or selected_platform not in platforms_dict.keys():
+            print(f"You haven't selected a valid option!")
+            return
+
+        # Find related sensors to the selected platform
+        platform_id = platforms_dict[selected_platform]
+        sensors = self.data_store.session.query(Sensor).filter(Sensor.host == platform_id).all()
+        sensors_dict = {s.name: s.sensor_id for s in sensors}
+        with self.data_store.session_scope():
+            objects = self.data_store.find_related_datafile_objects(platform_id, sensors_dict)
+        # Create a dynamic menu for the found datafile objects
+        text = "--- Menu ---\n"
+        options = [
+            "0",
+        ]
+        for index, obj in enumerate(objects, 1):
+            text += f"({index}) {obj['name']} {obj['filename']} {obj['min']}-{obj['max']}\n"
+            options.append(str(index))
+        text += "(0) Cancel\n"
+        # Initialise a new menu
+        export_platform = ExportByPlatformNameShell(self.data_store, options, objects)
+        export_platform.cmdloop(intro=text)
 
     def do_export_all(self):
         """Start the export all datafiles process"""
