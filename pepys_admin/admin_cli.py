@@ -13,7 +13,7 @@ DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 class AdminShell(cmd.Cmd):
     intro = """--- Menu ---
 (1) Export
-(2) Export by Platform name and date
+(2) Export by Platform and sensor
 (3) Initialise/Clear
 (4) Status
 (0) Exit
