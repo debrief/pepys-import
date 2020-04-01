@@ -5,7 +5,7 @@ from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
 
 
 class NMEAImporter(Importer):
@@ -25,6 +25,7 @@ class NMEAImporter(Importer):
         self.time = None
         self.heading = None
         self.speed = None
+        self.depth = None
         self.date_token = None
         self.time_token = None
         self.speed_token = None
@@ -73,6 +74,9 @@ class NMEAImporter(Importer):
                 self.longitude = tokens[5].text
                 self.longitude_hem = tokens[6].text
                 self.lon_token = combine_tokens(tokens[5], tokens[6])
+            elif msg_type == "PDS":
+                self.depth_token = tokens[2]
+                self.depth = self.depth_token.text
 
             # do we have all we need?
             if (
@@ -152,6 +156,14 @@ class NMEAImporter(Importer):
                     state.speed = speed
                 self.speed_token.record(self.name, "speed", speed)
 
+                if self.depth is not None:
+                    depth = convert_distance(
+                        self.depth, unit_registry.metre, line_number, self.errors, self.error_type
+                    )
+                    if depth:
+                        state.elevation = -1 * depth
+                    self.depth_token.record(self.name, "depth", depth)
+
                 state.privacy = privacy.privacy_id
 
                 self.date = None
@@ -163,6 +175,7 @@ class NMEAImporter(Importer):
                 self.longitude = None
                 self.longitude_hem = None
                 self.location = None
+                self.depth = None
 
     @staticmethod
     def parse_timestamp(date, time):
