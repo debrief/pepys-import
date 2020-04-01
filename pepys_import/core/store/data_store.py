@@ -556,6 +556,14 @@ class DataStore:
             .first()
         )
 
+    def get_datafile_from_id(self, datafile_id):
+        """Search for datafile with this id"""
+        return (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.datafile_id == datafile_id)
+            .first()
+        )
+
     #############################################################
     # New methods
     def synonym_search(self, name, table, pk_field):
@@ -1215,33 +1223,161 @@ class DataStore:
             else:
                 raise Exception(f"No Platform found with platform id: {platform_id}")
 
-    def export_datafile(self, datafile_id, file_path):
+    def find_min_and_max_date(self, table, filter_by, value):
+        """
+        Queries the given table, finds the minimum date and the maximum date. Returns these values
+        with including the source id.
+
+        :param table: A Base Database Class
+        :type table: State, Contact, or Comment
+        :param filter_by: Attribute of the DB class
+        :type filter_by:
+        :param value: Value (an ID, e.g. sensor_id) to filter the given table
+        :type value: Integer or UUID
+        :return: Minimum date, maximum date, and source_id
+        :rtype: tuple
+        """
+        if table.__tablename__ not in [constants.STATE, constants.CONTACT, constants.COMMENT]:
+            raise ValueError(
+                "Table should be one of the following classes: " "State, Contact, Comment"
+            )
+        return (
+            self.session.query(func.min(table.time), func.max(table.time), table.source_id)
+            .filter(filter_by == value)
+            .group_by(table.source_id)
+            .first()
+        )
+
+    def find_related_datafile_objects(self, platform_id, sensors_dict):
+        """
+        Finds all related datafile objects for the given platform ID and sensor IDs. Creates a list,
+        which has the information of the found objects, and returns it.
+
+        :param platform_id: ID of the :class:`Platform`
+        :type platform_id: Integer or UUID
+        :param sensors_dict: A dictionary that contains Sensor names and IDs of the given Platform
+        :type sensors_dict: dict
+        :return: Returns found State-Contact-Comment objects in a list form
+        :rtype: list
+        """
+        objects = list()
+        State = self.db_classes.State
+        Contact = self.db_classes.Contact
+        Comment = self.db_classes.Comment
+
+        # Iterate over each sensor of the platform
+        for sensor_name, sensor_id in sensors_dict.items():
+            datafile_name, datafile_id, datafile_id_2 = None, None, None
+            # Find minimum date, maximum date, and datafile name of the filtered State objects
+            result = self.find_min_and_max_date(State, State.sensor_id, sensor_id)
+            min_time, max_time = datetime.utcnow(), datetime(day=1, month=1, year=1700)
+            if result:
+                assert len(result) == 3, (
+                    "It should return minimum date, maximum date and datafile" " id in a row!"
+                )
+                min_time, max_time, datafile_id = result
+                # Extract datafile name from the given datafile id
+                datafile_name = self.get_datafile_from_id(datafile_id).reference
+
+            # Find minimum date, maximum date, and datafile name of the filtered Contact objects
+            result = self.find_min_and_max_date(Contact, Contact.sensor_id, sensor_id)
+            min_time_2, max_time_2 = datetime.utcnow(), datetime(day=1, month=1, year=1700)
+            if result:
+                assert len(result) == 3, (
+                    "It should return minimum date, maximum date and datafile" " id in a row!"
+                )
+                min_time_2, max_time_2, datafile_id_2 = result
+                if not datafile_name:
+                    datafile_name = self.get_datafile_from_id(datafile_id_2).reference
+            # Compare min and max dates of State and Contact objects
+            min_, max_ = min(min_time, min_time_2), max(max_time, max_time_2)
+            # Append to list if every value is assigned
+            if sensor_name and datafile_name and min_ and max_:
+                objects.append(
+                    {
+                        "name": sensor_name,
+                        "filename": datafile_name,
+                        "min": str(min_),
+                        "max": str(max_),
+                        "sensor_id": sensor_id,
+                        "datafile_id": datafile_id or datafile_id_2,
+                    }
+                )
+        # Find minimum date, maximum date, and datafile name of the filtered Comment objects
+        comment_objects = self.find_min_and_max_date(Comment, Comment.platform_id, platform_id)
+        if comment_objects:
+            min_time, max_time, datafile_id = comment_objects
+            datafile_name = self.get_datafile_from_id(datafile_id).reference
+            objects.append(
+                {
+                    "name": "Comment",
+                    "filename": datafile_name,
+                    "min": min_time,
+                    "max": max_time,
+                    "platform_id": platform_id,
+                    "datafile_id": datafile_id,
+                }
+            )
+
+        return objects
+
+    def export_datafile(self, datafile_id, file_path, sensor_id=None, platform_id=None):
         """Gets states, contacts and comments of a Datafile.
 
         :param datafile_id:  ID of Datafile
         :type datafile_id: Integer or UUID
         :param file_path: Path of a file to export
         :type file_path: String
+        :param sensor_id: ID of Sensor to export a specific sensor in the datafile, default is None
+        :type sensor_id: Integer or UUID
+        :param platform_id: ID of Platform to export comments of a specific platform in the datafile,
+        default is None
+        :type platform_id: Integer or UUID
         """
 
         with open(f"{file_path}", "w+") as file:
-            states = (
-                self.session.query(self.db_classes.State)
-                .filter(self.db_classes.State.source_id == datafile_id)
-                .all()
-            )
-            contacts = (
-                self.session.query(self.db_classes.Contact)
-                .filter(self.db_classes.Contact.source_id == datafile_id)
-                .all()
-            )
-            comments = (
-                self.session.query(self.db_classes.Comment)
-                .filter(self.db_classes.Comment.source_id == datafile_id)
-                .all()
-            )
+            states, contacts, comments = list(), list(), list()
+            # If States and Contacts are going to be exported
+            if sensor_id:
+                states = (
+                    self.session.query(self.db_classes.State)
+                    .filter(self.db_classes.State.source_id == datafile_id)
+                    .filter(self.db_classes.State.sensor_id == sensor_id)
+                    .all()
+                )
+                contacts = (
+                    self.session.query(self.db_classes.Contact)
+                    .filter(self.db_classes.Contact.source_id == datafile_id)
+                    .filter(self.db_classes.Contact.sensor_id == sensor_id)
+                    .all()
+                )
+            # If Comments are going to be exported
+            elif platform_id:
+                comments = (
+                    self.session.query(self.db_classes.Comment)
+                    .filter(self.db_classes.Comment.source_id == datafile_id)
+                    .filter(self.db_classes.Comment.platform_id == platform_id)
+                    .all()
+                )
+            # If all datafile are going to be exported
+            else:
+                states = (
+                    self.session.query(self.db_classes.State)
+                    .filter(self.db_classes.State.source_id == datafile_id)
+                    .all()
+                )
+                contacts = (
+                    self.session.query(self.db_classes.Contact)
+                    .filter(self.db_classes.Contact.source_id == datafile_id)
+                    .all()
+                )
+                comments = (
+                    self.session.query(self.db_classes.Comment)
+                    .filter(self.db_classes.Comment.source_id == datafile_id)
+                    .all()
+                )
 
-            # export states
+            # Export states
             for state in states:
                 #  load platform name from cache.
                 platform_name = self.get_cached_platform_name(sensor_id=state.sensor_id)
@@ -1299,6 +1435,7 @@ class DataStore:
                 data = "\t".join(contact_rep_line)
                 file.write(data + "\r\n")
 
+            # Export comments
             for comment in comments:
                 vessel_name = self.get_cached_platform_name(platform_id=comment.platform_id)
                 message = comment.content
