@@ -5,6 +5,7 @@ from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
+from pepys_import.resolvers.default_resolver import DefaultResolver
 
 FILE_PATH = os.path.abspath(__file__)
 DIRECTORY_PATH = os.path.dirname(FILE_PATH)
@@ -20,16 +21,30 @@ def main():
         "SQLite database file to use (overrides config file database settings). "
         "Use `:memory:` for temporary in-memory instance"
     )
+    resolver_help = (
+        "Resolver to use for unknown entities. Valid values: 'default' (resolves "
+        "using static default values), 'command-line' (resolves using interactive command-line interface, "
+        "default option)"
+    )
     parser.add_argument("--path", help=path_help, required=False, default=DIRECTORY_PATH)
     parser.add_argument(
         "--archive", dest="archive", help=archive_help, action="store_true", default=False,
     )
     parser.add_argument("--db", help=db_help, required=False, default=None)
+    parser.add_argument("--resolver", help=resolver_help, required=False, default="command-line")
     args = parser.parse_args()
-    process(path=args.path, archive=args.archive, db=args.db)
+    process(path=args.path, archive=args.archive, db=args.db, resolver=args.resolver)
 
 
-def process(path=DIRECTORY_PATH, archive=False, db=None):
+def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"):
+    if resolver == "command-line":
+        resolver_obj = CommandLineResolver()
+    elif resolver == "default":
+        resolver_obj = DefaultResolver()
+    else:
+        print(f"Invalid option '{resolver}' for --resolver.")
+        return
+
     if db is None:
         data_store = DataStore(
             db_username=DB_USERNAME,
@@ -38,7 +53,7 @@ def process(path=DIRECTORY_PATH, archive=False, db=None):
             db_port=DB_PORT,
             db_name=DB_NAME,
             db_type=DB_TYPE,
-            missing_data_resolver=CommandLineResolver(),
+            missing_data_resolver=resolver_obj,
         )
     else:
         data_store = DataStore(
@@ -48,7 +63,7 @@ def process(path=DIRECTORY_PATH, archive=False, db=None):
             db_port=0,
             db_name=db,
             db_type="sqlite",
-            missing_data_resolver=CommandLineResolver(),
+            missing_data_resolver=resolver_obj,
         )
 
     data_store.initialise()
