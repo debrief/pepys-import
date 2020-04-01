@@ -21,7 +21,7 @@ class EnhancedValidatorTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types(
                 "test_platform_type", self.change_id
             ).name
-            sensor_type = self.store.add_to_sensor_types("test_sensor_type", self.change_id)
+            sensor_type = self.store.add_to_sensor_types("test_sensor_type", self.change_id).name
             privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
 
             self.platform = self.store.get_platform(

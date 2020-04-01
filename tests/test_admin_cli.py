@@ -8,6 +8,7 @@ from unittest.mock import patch
 import pytest
 
 from pepys_admin.admin_cli import AdminShell
+from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
@@ -82,6 +83,46 @@ class AdminCLITestCase(unittest.TestCase):
             new_shell.do_export()
         output = temp_output.getvalue()
         assert "There is no datafile found in the database!" in output
+
+    @patch("pepys_admin.admin_cli.iterfzf", return_value="SEARCH_PLATFORM")
+    @patch("pepys_admin.export_by_platform_cli.input", return_value="")
+    @patch("cmd.input", return_value="1")
+    def test_do_export_by_platform_name(self, cmd_input, shell_input, patched_iterfzf):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_by_platform_name()
+        output = temp_output.getvalue()
+        assert "Objects are going to be exported to 'exported_SEARCH_PLATFORM.rep'." in output
+        assert "Objects successfully exported to exported_SEARCH_PLATFORM.rep." in output
+
+        file_path = os.path.join(CURRENT_DIR, "exported_SEARCH_PLATFORM.rep")
+        assert os.path.exists(file_path) is True
+
+        with open(file_path, "r") as file:
+            data = file.read().splitlines()
+        assert len(data) == 6  # 4 State, 2 Contact objects
+
+        os.remove(file_path)
+
+    @patch("pepys_admin.admin_cli.iterfzf", return_value="NOT_EXISTING_PLATFORM")
+    def test_do_export_by_platform_name_invalid_platform_name(self, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_by_platform_name()
+        output = temp_output.getvalue()
+        assert "You haven't selected a valid option!" in output
+
+    def test_do_export_by_platform_name_empty_database(self):
+        # Create an empty database
+        new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        new_data_store.initialise()
+        new_shell = AdminShell(new_data_store)
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            new_shell.do_export_by_platform_name()
+        output = temp_output.getvalue()
+        assert "There is no platform found in the database!" in output
 
     @patch("pepys_admin.admin_cli.input")
     def test_do_export_all(self, patched_input):
@@ -402,6 +443,101 @@ class NotInitialisedDBTestCase(unittest.TestCase):
             self.initialise_shell.do_import_sample_measurements()
         output = temp_output.getvalue()
         assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_by_platform_name()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+
+class ExportByPlatformNameShellTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+        # Parse the files
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(DATA_PATH, self.store, False)
+
+        Sensor = self.store.db_classes.Sensor
+        with self.store.session_scope():
+            platform_id = self.store.search_platform("SEARCH_PLATFORM").platform_id
+            sensors = self.store.session.query(Sensor).filter(Sensor.host == platform_id).all()
+            sensors_dict = {s.name: s.sensor_id for s in sensors}
+            self.objects = self.store.find_related_datafile_objects(platform_id, sensors_dict)
+        # Create a dynamic menu for the found datafile objects
+        self.text = "--- Menu ---\n"
+        self.options = [
+            "0",
+        ]
+        for index, obj in enumerate(self.objects, 1):
+            self.text += f"({index}) {obj['name']} {obj['filename']} {obj['min']}-{obj['max']}\n"
+            self.options.append(str(index))
+        self.text += "(0) Cancel\n"
+        # Initialise a new menu
+        self.shell = ExportByPlatformNameShell(self.store, self.options, self.objects)
+        self.shell.intro = self.text
+
+    @patch("pepys_admin.export_by_platform_cli.input", return_value="export_test")
+    def test_do_export(self, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export(self.objects[0])
+        output = temp_output.getvalue()
+        assert "Objects are going to be exported to 'export_test.rep'." in output
+        assert "Objects successfully exported to export_test.rep." in output
+
+        file_path = os.path.join(CURRENT_DIR, "export_test.rep")
+        assert os.path.exists(file_path) is True
+
+        with open(file_path, "r") as file:
+            data = file.read().splitlines()
+        assert len(data) == 6  # 4 State, 2 Contact objects
+        assert (
+            "100112 115800.000\tSEARCH_PLATFORM\tAA\t60 28 56.02 N\t000 35 59.68 E\t179.84\t8.00\t"
+            "0.0" in data
+        )
+        assert (
+            "100112 121400.000\tSEARCH_PLATFORM\tAA\t60 28 8.02 N\t000 35 59.95 E\t179.84\t8.00\t"
+            "0.0" in data
+        )
+        assert (
+            ";SENSOR:\t100112 121000.000\tSEARCH_PLATFORM\t@@\tNULL\t253.29\tNULL\tSEARCH_PLATFORM\tN/A"
+            in data
+        )
+        assert (
+            ";SENSOR:\t100112 121200.000\tSEARCH_PLATFORM\t@@\tNULL\t253.75\tNULL\tSEARCH_PLATFORM\tN/A"
+            in data
+        )
+
+        os.remove(file_path)
+
+    def test_do_cancel(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_cancel()
+        output = temp_output.getvalue()
+        assert "Returning to the previous menu..." in output
+
+    def test_default(self):
+        result = self.shell.default("0")
+        assert result is True
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.default("123456789")
+        output = temp_output.getvalue()
+        assert "*** Unknown syntax: 123456789" in output
+
+    def test_postcmd(self):
+        # postcmd method should print the menu again if stop parameter is false
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.postcmd(stop=False, line="123456789")
+        output = temp_output.getvalue()
+        assert self.shell.intro in output
 
 
 if __name__ == "__main__":
