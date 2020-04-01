@@ -285,6 +285,36 @@ class ImporterRemoveTestCase(unittest.TestCase):
         self.assertIn("Files got processed: 0 times", output)
 
 
+class ImporterDisableRecordingTest(unittest.TestCase):
+    def test_turn_off_recording(self):
+        class TestImporter(Importer):
+            def __init__(self):
+                super().__init__(
+                    name="Test Importer", validation_level=None, short_name="Test Importer"
+                )
+                self.disable_recording()
+
+            def can_load_this_header(self, header) -> bool:
+                return True
+
+            def can_load_this_filename(self, filename):
+                return True
+
+            def can_load_this_type(self, suffix):
+                return True
+
+            def can_load_this_file(self, file_contents):
+                return False
+
+            def _load_this_file(self, data_store, path, file_object, data_file):
+                assert file_object.ignored_importers == ["Test Importer"]
+
+        processor = FileProcessor()
+
+        processor.register_importer(TestImporter())
+        processor.process(DATA_PATH, None, False)
+
+
 class ReplayImporterTestCase(unittest.TestCase):
     def test_degrees_for(self):
         """Test whether the method correctly converts the given values to degree"""
