@@ -2,6 +2,10 @@
 # Windows Scripting Host COM object
 $WshShell = New-Object -comObject WScript.Shell
 
+#
+# Add shortcuts to Send To folder
+#
+
 # Get the User's Send To folder location
 # This is safer than using a hard-coded PATH as network/user settings may mean the folder
 # is in an unexpected place
@@ -26,6 +30,22 @@ $Shortcut.Save()
 
 $Shortcut = $WshShell.CreateShortcut($sendto_location + "\Pepys Import (no archive).lnk")
 $Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_no_archive.bat")
+$Shortcut.IconLocation = $icon_string
+$Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
+$Shortcut.Save()
+
+#
+# Add shortcut to Start Menu
+#
+
+# Get the User's Start Menu folder
+$startmenu_location = "$env:USERPROFILE\Start Menu\Programs\"
+
+# Create Pepys folder in Start Menu
+New-Item -Path $startmenu_location -Name "Pepys" -ItemType "directory"
+
+$Shortcut = $WshShell.CreateShortcut($startmenu_location + "Pepys\Pepys Admin.lnk")
+$Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_admin.bat")
 $Shortcut.IconLocation = $icon_string
 $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
 $Shortcut.Save()
