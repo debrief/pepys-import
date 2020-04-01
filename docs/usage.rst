@@ -20,14 +20,22 @@ Command-line options
 
 .. code-block:: none
 
-   usage: import.py [-h] [--path PATH] [--archive]
+  usage: import.py [-h] [--path PATH] [--archive] [--db DB]
+                  [--resolver RESOLVER]
 
-   optional arguments:
-   -h, --help   show this help message and exit
-   --path PATH  The path to import data from (The default value is the
-             directory of the script)
-   --archive    Instruction to archive (move) imported files to designated
-                archive folder
+  optional arguments:
+    -h, --help           show this help message and exit
+    --path PATH          The path to import data from (The default value is the
+                        directory of the script)
+    --archive            Instruction to archive (move) imported files to
+                        designated archive folder
+    --db DB              SQLite database file to use (overrides config file
+                        database settings). Use `:memory:` for temporary in-
+                        memory instance
+    --resolver RESOLVER  Resolver to use for unknown entities. Valid values:
+                        'default' (resolves using static default values),
+                        'command-line' (resolves using interactive command-line
+                        interface, default option)
 
 Pepys-Admin
 -----------
