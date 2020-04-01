@@ -1,5 +1,6 @@
 import os
 import unittest
+from datetime import datetime
 
 from importers.nmea_importer import NMEAImporter
 from pepys_import.core.store.data_store import DataStore
@@ -51,6 +52,15 @@ class TestLoadNMEA(unittest.TestCase):
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
+
+            # There should be one state with an elevation of -9.2
+            states = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(self.store.db_classes.State.elevation == -9.2)
+                .all()
+            )
+            assert len(states) == 1
+            assert states[0].time == datetime(2016, 11, 5, 15, 0, 2)
 
 
 if __name__ == "__main__":
