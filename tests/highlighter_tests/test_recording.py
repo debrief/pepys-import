@@ -139,6 +139,23 @@ class UsageRecordingTests(unittest.TestCase):
 
         data_file.export(os.path.join(OUTPUT_FOLDER, "track_lines.html"), True)
 
+    def test_ignored_importers(self):
+        data_file = HighlightedFile(DATA_FILE)
+
+        data_file.ignored_importers.append("Test Importer")
+
+        lines = data_file.lines()
+
+        lines[0].record("Test Importer", "Test", "Test")
+
+        tokens = lines[1].tokens()
+
+        tokens[0].record("Test Importer", "Test", "Test")
+
+        # Assert that no initialisation of the chars array took place
+        # and therefore the record calls did nothing
+        assert len(data_file.chars) == 0
+
 
 if __name__ == "__main__":
     unittest.main()
