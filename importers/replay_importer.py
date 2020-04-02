@@ -50,13 +50,12 @@ class ReplayImporter(Importer):
             change_id=change_id,
         )
 
-        sensor_type = data_store.add_to_sensor_types("_GPS", change_id=change_id)
-        privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
+        sensor_type = data_store.add_to_sensor_types("_GPS", change_id=change_id).name
         sensor = platform.get_sensor(
             data_store=data_store,
             sensor_name=platform.name,
             sensor_type=sensor_type,
-            privacy=privacy.name,
+            privacy=None,
             change_id=change_id,
         )
         state = datafile.create_state(
@@ -68,8 +67,6 @@ class ReplayImporter(Importer):
 
         state.heading = rep_line.heading
         state.speed = rep_line.speed
-        state.privacy = privacy.privacy_id
-
         state.location = rep_line.get_location()
 
     @staticmethod

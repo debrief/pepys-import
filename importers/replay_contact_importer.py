@@ -192,7 +192,6 @@ class ReplayContactImporter(Importer):
                 )
                 bearing_token.record(self.name, "bearing", bearing, "degs")
 
-            privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
             platform = data_store.get_platform(
                 platform_name=vessel_name_token.text,
                 nationality="UK",
@@ -201,12 +200,12 @@ class ReplayContactImporter(Importer):
                 change_id=change_id,
             )
             vessel_name_token.record(self.name, "vessel name", vessel_name_token.text)
-            sensor_type = data_store.add_to_sensor_types(sensor_name.text, change_id)
+            sensor_type = data_store.add_to_sensor_types(sensor_name.text, change_id).name
             sensor = platform.get_sensor(
                 data_store=data_store,
                 sensor_name=platform.name,
                 sensor_type=sensor_type,
-                privacy=privacy.name,
+                privacy=None,
                 change_id=change_id,
             )
 
@@ -220,7 +219,6 @@ class ReplayContactImporter(Importer):
                 timestamp=timestamp,
                 parser_name=self.short_name,
             )
-            contact.privacy = privacy
             contact.location = location
 
             # sort out the optional fields
