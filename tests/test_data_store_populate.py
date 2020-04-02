@@ -47,14 +47,14 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
             nationalities = self.store.session.query(self.store.db_classes.Nationality).all()
             platform_types = self.store.session.query(self.store.db_classes.PlatformType).all()
             nationality_object = self.store.search_nationality("UK")
-            platform_type_object = self.store.search_platform_type("Ferry")
+            platform_type_object = self.store.search_platform_type("PLATFORM-TYPE-1")
 
             # Check whether they are not empty anymore and filled with correct data
             self.assertNotEqual(len(nationalities), 0)
             self.assertNotEqual(len(platform_types), 0)
 
             self.assertIn(nationality_object.name, "UK")
-            self.assertIn(platform_type_object.name, "Ferry")
+            self.assertIn(platform_type_object.name, "PLATFORM-TYPE-1")
 
     def test_populate_metadata(self):
         # reference tables must be filled first
@@ -105,7 +105,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
                 .filter_by(platform_type_id=platform_object.platform_type_id)
                 .first()
             )
-            self.assertEqual(platform_type.name, "Fisher")
+            self.assertEqual(platform_type.name, "PLATFORM-TYPE-1")
             privacy = (
                 self.store.session.query(self.store.db_classes.Privacy)
                 .filter_by(privacy_id=platform_object.privacy_id)
@@ -242,14 +242,14 @@ class DataStorePopulatePostGISTestCase(TestCase):
             nationalities = self.store.session.query(self.store.db_classes.Nationality).all()
             platform_types = self.store.session.query(self.store.db_classes.PlatformType).all()
             nationality_object = self.store.search_nationality("UK")
-            platform_type_object = self.store.search_platform_type("Ferry")
+            platform_type_object = self.store.search_platform_type("PLATFORM-TYPE-1")
 
             # Check whether they are not empty anymore and filled with correct data
             self.assertNotEqual(len(nationalities), 0)
             self.assertNotEqual(len(platform_types), 0)
 
             self.assertIn(nationality_object.name, "UK")
-            self.assertIn(platform_type_object.name, "Ferry")
+            self.assertIn(platform_type_object.name, "PLATFORM-TYPE-1")
 
     def test_populate_metadata(self):
         # reference tables must be filled first
@@ -300,7 +300,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
                 .filter_by(platform_type_id=platform_object.platform_type_id)
                 .first()
             )
-            self.assertEqual(platform_type.name, "Fisher")
+            self.assertEqual(platform_type.name, "PLATFORM-TYPE-1")
             privacy = (
                 self.store.session.query(self.store.db_classes.Privacy)
                 .filter_by(privacy_id=platform_object.privacy_id)
