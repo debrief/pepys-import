@@ -1325,7 +1325,7 @@ class DataStore:
                     depth_str,
                 ]
                 data = "\t".join(state_rep_line)
-                file.write(data + "\r\n")
+                file.write(data + "\n")
 
             # Export contacts
             for contact in contacts:
@@ -1359,7 +1359,7 @@ class DataStore:
                 else:
                     contact_rep_line.insert(0, ";SENSOR:")
                 data = "\t".join(contact_rep_line)
-                file.write(data + "\r\n")
+                file.write(data + "\n")
 
             # Export comments
             for comment in comments:
@@ -1381,7 +1381,7 @@ class DataStore:
                     comment_rep_line.insert(0, ";NARRATIVE2:")
 
                 data = "\t".join(comment_rep_line)
-                file.write(data + "\r\n")
+                file.write(data + "\n")
 
     def is_datafile_loaded_before(self, file_size, file_hash):
         """
