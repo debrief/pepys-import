@@ -806,7 +806,7 @@ class CommandLineResolver(DataResolver):
             return self.resolve_sensor(data_store, sensor_name, None, None, change_id)
 
         print("-" * 61)
-        print("Input complete. About to create this platform:")
+        print("Input complete. About to create this sensor:")
         print(f"Name: {sensor_name}")
         print(f"Type: {sensor_type.name}")
         print(f"Classification: {privacy.name}")
