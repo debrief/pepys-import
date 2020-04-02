@@ -11,6 +11,7 @@ Welcome to pepys-import
    :caption: Contents:
 
    README.rst
+   getting_started
    installation
    usage
    configuration

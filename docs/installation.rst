@@ -15,4 +15,4 @@ various required DLLs and the pepys-import code itself.
 
 2. Once for each user who will use pepys-import, run ``create_shortcuts.bat`` in the ``bin`` directory.
 This will create shortcuts to the relevant pepys-import batch files (from the ``bin`` directory) and copy
-them to the user's *Send To* folder.
+them to the user's *Send To* folder, and their *Start Menu*.
