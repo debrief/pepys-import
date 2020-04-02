@@ -23,7 +23,8 @@ class ExportByPlatformNameShell(cmd.Cmd):
             f"Please provide a name (Press Enter for default value " f"({default_export_name})):"
         )
         if file_name:
-            file_name += ".rep"
+            if not file_name.endswith(".rep"):
+                file_name += ".rep"
         export_file_name = file_name or default_export_name
         print(f"Objects are going to be exported to '{export_file_name}'.")
         with self.data_store.session_scope():
