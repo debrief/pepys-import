@@ -11,9 +11,12 @@ from pepys_import.resolvers.data_resolver import DataResolver
 
 class CommandLineResolver(DataResolver):
     def resolve_datafile(self, data_store, datafile_name, datafile_type, privacy, change_id):
+        options = [f"Search for existing datafile", f"Add a new datafile"]
+        if datafile_name:
+            options[1] += f", titled '{datafile_name}'"
         choice = create_menu(
             f"Datafile '{datafile_name}' not found. Do you wish to: ",
-            [f"Search for existing datafile", f"Add a new datafile, titled '{datafile_name}'"],
+            options,
             validate_method=is_valid,
         )
 
@@ -32,9 +35,12 @@ class CommandLineResolver(DataResolver):
     def resolve_platform(
         self, data_store, platform_name, platform_type, nationality, privacy, change_id
     ):
+        options = [f"Search for existing platform", f"Add a new platform"]
+        if platform_name:
+            options[1] += f", titled '{platform_name}'"
         choice = create_menu(
             f"Platform '{platform_name}' not found. Do you wish to: ",
-            [f"Search for existing platform", f"Add a new platform, titled '{platform_name}'"],
+            options,
             validate_method=is_valid,
         )
 
@@ -51,9 +57,12 @@ class CommandLineResolver(DataResolver):
             sys.exit(1)
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy, change_id):
+        options = [f"Search for existing sensor", f"Add a new sensor"]
+        if sensor_name:
+            options[1] += f", titled '{sensor_name}'"
         choice = create_menu(
             f"Sensor '{sensor_name}' not found. Do you wish to: ",
-            [f"Search for existing sensor", f"Add a new sensor, titled '{sensor_name}'"],
+            options,
             validate_method=is_valid,
         )
 
@@ -705,11 +714,17 @@ class CommandLineResolver(DataResolver):
         :return:
         """
         print("Ok, adding new platform.")
-
-        platform_name = prompt("Please enter a name: ", default=platform_name)
-        trigraph = prompt("Please enter trigraph (optional): ", default=platform_name[:3])
-        quadgraph = prompt("Please enter quadgraph (optional): ", default=platform_name[:4])
-        pennant_number = prompt("Please enter pennant number (optional): ", default="")
+        if platform_name:
+            platform_name = prompt("Please enter a name: ", default=platform_name)
+            if len(platform_name) >= 3:
+                trigraph = prompt("Please enter trigraph (optional): ", default=platform_name[:3])
+            if len(platform_name) >= 4:
+                quadgraph = prompt("Please enter quadgraph (optional): ", default=platform_name[:4])
+        else:
+            platform_name = prompt("Please enter a name: ")
+            trigraph = prompt("Please enter trigraph (optional): ")
+            quadgraph = prompt("Please enter quadgraph (optional): ")
+        pennant_number = prompt("Please enter pennant number (optional): ")
 
         # Choose Nationality
         if nationality:
