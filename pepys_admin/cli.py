@@ -23,10 +23,17 @@ def main():
             db_port=DB_PORT,
             db_name=DB_NAME,
             db_type=DB_TYPE,
+            welcome_text="Pepys_admin",
         )
     else:
         data_store = DataStore(
-            db_username="", db_password="", db_host="", db_port=0, db_name=args.db, db_type="sqlite"
+            db_username="",
+            db_password="",
+            db_host="",
+            db_port=0,
+            db_name=args.db,
+            db_type="sqlite",
+            welcome_text="Pepys_admin",
         )
 
     AdminShell(data_store, args.path).cmdloop()
