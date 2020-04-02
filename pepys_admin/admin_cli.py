@@ -12,10 +12,10 @@ DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 class AdminShell(cmd.Cmd):
     intro = """--- Menu ---
-(1) Export
-(2) Export by Platform and sensor
-(3) Initialise/Clear
-(4) Status
+(1) Initialise/Clear
+(2) Status
+(3) Export
+(4) Export by Platform and sensor
 (0) Exit
 """
     prompt = "(pepys-admin) "
@@ -26,10 +26,10 @@ class AdminShell(cmd.Cmd):
         self.csv_path = csv_path
         self.aliases = {
             "0": self.do_exit,
-            "1": self.do_export,
-            "2": self.do_export_by_platform_name,
-            "3": self.do_initialise,
-            "4": self.do_status,
+            "1": self.do_initialise,
+            "2": self.do_status,
+            "3": self.do_export,
+            "4": self.do_export_by_platform_name,
             "9": self.do_export_all,
         }
 

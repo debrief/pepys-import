@@ -15,6 +15,10 @@ class ReplayImporter(Importer):
         self.text_label = None
         self.depth = 0.0
 
+        # Example: Uncomment this line to turn off recording of extractions
+        # for this importer
+        # self.disable_recording()
+
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".REP" or suffix.upper() == ".DSF"
 

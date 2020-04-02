@@ -5,6 +5,7 @@ import unittest
 from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
+from pathlib import Path
 from unittest.mock import patch
 
 from importers.nmea_importer import NMEAImporter
@@ -128,10 +129,10 @@ class SampleImporterTests(unittest.TestCase):
         assert "sen_tracks.rep" not in input_files
         assert "uk_track.rep" not in input_files
 
-        moved_files_path = os.path.join(OUTPUT_PATH, "input_files")
+        moved_files_path = str(list(Path(OUTPUT_PATH).rglob("sources"))[0])
         assert os.path.exists(moved_files_path) is True
 
-        # Scan the files in input_files folder
+        # Scan the files in sources folder
         for file in os.scandir(moved_files_path):
             # Append the name of the file to test it later on
             names.append(file.name)
@@ -151,7 +152,7 @@ class SampleImporterTests(unittest.TestCase):
         assert "sen_tracks.rep" in names
         assert "uk_track.rep" in names
 
-        # Assert that there is no file in the input_files folder anymore
+        # Assert that there is no file in the sources folder anymore
         assert len(os.listdir(moved_files_path)) == 0
 
 
@@ -283,6 +284,36 @@ class ImporterRemoveTestCase(unittest.TestCase):
         output = temp_output.getvalue()
 
         self.assertIn("Files got processed: 0 times", output)
+
+
+class ImporterDisableRecordingTest(unittest.TestCase):
+    def test_turn_off_recording(self):
+        class TestImporter(Importer):
+            def __init__(self):
+                super().__init__(
+                    name="Test Importer", validation_level=None, short_name="Test Importer"
+                )
+                self.disable_recording()
+
+            def can_load_this_header(self, header) -> bool:
+                return True
+
+            def can_load_this_filename(self, filename):
+                return True
+
+            def can_load_this_type(self, suffix):
+                return True
+
+            def can_load_this_file(self, file_contents):
+                return True
+
+            def _load_this_file(self, data_store, path, file_object, datafile, change_id):
+                assert file_object.ignored_importers == ["Test Importer"]
+
+        processor = FileProcessor()
+
+        processor.register_importer(TestImporter())
+        processor.process(DATA_PATH, None, False)
 
 
 class ReplayImporterTestCase(unittest.TestCase):
