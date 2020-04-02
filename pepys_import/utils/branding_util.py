@@ -1,13 +1,30 @@
 from pyfiglet import Figlet
 
 PEPYS_PORTRAIT = [
-    "    `:ssoo+`      ",
-    "   /mdsohmMN+`    ",
-    "  .MM+-.-:MMMd`   ",
-    "  .NMs..`/NMMMy`  ",
-    "  +Mm/--../hNMMy. ",
-    "  yM:`::-.-/-NMMh ",
-    "  /o`....`.` :ooo`",
+    # portrait 1
+    "   @@@@ @@@@@       ",
+    " @@@@@ @@..@@@@     ",
+    "  @@@     @@@@@@    ",
+    "  @@@     @@@@@@@@  ",
+    " @@@@.     @@@@@@@  ",
+    " @@ #@@ @   ...@@@@@",
+    " @@   &        @@@@@  ",
+    # portrait 2
+    # " `yMmysymMMN+`     ",
+    # ".NMM+:`//.NMMm.    ",
+    # ".MMM -. -.MMMMMd`   ",
+    # ".NMMo '-  mMMMMMs   ",
+    # "-NMMh -o- mMMMMMs  ",
+    # "mMMMM:....-dMMMNy.",
+    # "dMy` --/`  ...sMMMM:",
+    # portrait 3
+    # "    `:ssoo+`      ",
+    # "   /mdsohmMN+`    ",
+    # "  .MM+-.-:MMMd`   ",
+    # "  .NMs..`/NMMMy`  ",
+    # "  +Mm/--../hNMMy. ",
+    # "  yM:`::-.-/-NMMh ",
+    # "  /o`....`.` :ooo`",
 ]
 
 
@@ -17,7 +34,7 @@ def render_text(font, text):
     text = list()
     for index, line in enumerate(rendered_text.splitlines()):
         if index < len(PEPYS_PORTRAIT):
-            text.append(f"{PEPYS_PORTRAIT[index]}\t\t{line}")
+            text.append(f"{PEPYS_PORTRAIT[index]} {line}")
     print("\n".join(text))
 
 
