@@ -62,18 +62,13 @@ class FileProcessor:
             self.output_path = os.path.join(dir_path, "output")
             if not os.path.exists(self.output_path):
                 os.makedirs(self.output_path)
-        # create input_files folder if not exists
-        self.input_files_path = os.path.join(self.output_path, "sources")
-        if not os.path.exists(self.input_files_path):
-            os.makedirs(self.input_files_path)
 
         # Take current timestamp without milliseconds
         now = datetime.utcnow()
         # Create non existing directories in the following format:
         # output_folder/YYYY/MM/DD/HH/mm/ss(_sss)
-        directory_path = os.path.join(
+        self.output_path = os.path.join(
             self.output_path,
-            "reports",
             str(now.year),
             str(now.month).zfill(2),
             str(now.day).zfill(2),
@@ -81,12 +76,22 @@ class FileProcessor:
             str(now.minute).zfill(2),
             str(now.second).zfill(2),
         )
-        if not os.path.isdir(directory_path):
-            os.makedirs(directory_path)
+        if not os.path.isdir(self.output_path):
+            os.makedirs(self.output_path)
         else:
-            directory_path = os.path.join(directory_path + "_" + str(now.microsecond).zfill(3)[:3])
-            os.makedirs(directory_path)
-        self.directory_path = directory_path
+            self.output_path = os.path.join(
+                self.output_path + "_" + str(now.microsecond).zfill(3)[:3]
+            )
+            os.makedirs(self.output_path)
+
+        # create input_files folder if not exists
+        self.input_files_path = os.path.join(self.output_path, "sources")
+        if not os.path.exists(self.input_files_path):
+            os.makedirs(self.input_files_path)
+
+        self.directory_path = os.path.join(self.output_path, "reports")
+        if not os.path.isdir(self.directory_path):
+            os.makedirs(self.directory_path)
 
         processed_ctr = 0
 
