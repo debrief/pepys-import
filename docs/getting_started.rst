@@ -33,7 +33,8 @@ appropriately.
 
 Navigate to the :code:`tests/sample_data/track_files/gpx` folder inside the Pepys install
 folder. Right click on :code:`gpx_1_0.gpx` and in the *Send To* menu choose :code:`Pepys Import
-(no archive)`. This will tell Pepys to import this GPX file into the database.
+(no archive)`. This will tell Pepys to import this GPX file into the database. (If you don't have
+that item in your *Send To* menu, then make sure you ran Step 2 of the :doc:`Installation` instructions.
 
 A command-line window will open, showing the Pepys welcome banner, and then the 'resolver' will
 start asking you questions about bits of the data that it doesn't recognise. For example, it will
@@ -59,7 +60,8 @@ At the end of the import, a status table will be shown. It should look like this
 ----------------------------------------------
 
 Run *Pepys Admin* from the Start Menu (you can either navigate to the *Pepys* folder and choose
-*Pepys Admin* or just search for it and press enter).
+*Pepys Admin* or just search for it and press enter). If you can't find *Pepys Admin* in the Start
+Menu, then ensure you ran Step 2 of the :doc:`installation` instructions.
 
 The Pepys Admin command-line window will appear. Note that it shows the welcome banner, and states
 which database it is connecting to (this should be the same database that you configured in the
@@ -91,7 +93,8 @@ following:
 ----------------------------
 
 First, copy the entire :code:`track_files` folder from :code:`tests\sample_data` in the Pepys
-installation folder to a safe place - as the example we're going to run will move files.
+installation folder to a new folder in the root of the pepys installation folder, called
+:code:`track_files_test`.
 
 Open the Windows Command Prompt (open the *Start Menu* and type :code:`cmd` and press Enter) and
 use the :code:`cd` command to navigate to the Pepys install folder. Then navigate to the :code:`bin`
@@ -100,7 +103,7 @@ and run the following:
 
 .. code-block:: none
 
-    python -m pepys_import.import --path .\tests\sample_data\track_files\rep_data\rep_test1_bad.rep --resolver default --archive
+    python -m pepys_import.import --path .\track_files_test\rep_data\rep_test1_bad.rep --resolver default --archive
 
 This will run the Pepys Import command, telling it to import the :code:`rep_test1_bad.rep` file with
 the default resolver (so it doesn't ask you questions during import) and telling it to archive the file
@@ -137,7 +140,7 @@ processing to succeed.
 8. Fix the errors and re-import
 -------------------------------
 
-To fix the errors in the file, open :code:`tests\sample_data\track_files\rep_data\rep_test1_bad.rep`
+To fix the errors in the file, open :code:`track_files_test\rep_data\rep_test1_bad.rep`
 in a text editor and delete line 8 entirely, and add some text like :code:`Test observation` to the
 end of line 24 (which will be line 23 after you've deleted line 8!).
 
@@ -145,7 +148,7 @@ Try importing the file again, using exactly the same command as before:
 
 .. code-block:: none
 
-    python -m pepys_import.import --path .\tests\sample_data\track_files\rep_data\rep_test1_bad.rep --resolver default --archive
+    python -m pepys_import.import --path .\track_files_test\rep_data\rep_test1_bad.rep --resolver default --archive
 
 Now, if you look in the :code:`sources` directory under :code:`archive`, you will find a copy of the
 file that was imported - and this file will have been deleted from its original location.
@@ -180,6 +183,4 @@ and then look through the tables. An example of the States table is shown below:
 10. Clean up
 ------------
 
-Delete the :code:`track_files` folder inside :code:`tests\sample_data` and replace with the copy you
-created earlier: this will undo the moving of the input file that took place during the test. Delete
-the :code:`archive` folder in the root of the Pepys install folder.
+Delete the :code:`track_files_test` and :code:`archive` folders in the root of the Pepys install folder.
