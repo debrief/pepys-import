@@ -1,7 +1,7 @@
 from tabulate import tabulate
 
 
-class TableSummary(object):
+class TableSummary:
     """
     A summary of the contents of a table, which sends query to DB and finds
     number of rows and creation date of last item added.
@@ -22,11 +22,7 @@ class TableSummary(object):
 
     def table_summary(self):
         number_of_rows = self.session.query(self.table).count()
-        last_row = (
-            self.session.query(self.table)
-            .order_by(self.table.created_date.desc())
-            .first()
-        )
+        last_row = self.session.query(self.table).order_by(self.table.created_date.desc()).first()
         created_date = "-"
         if last_row:
             created_date = str(last_row.created_date)
@@ -49,30 +45,34 @@ def table_delta(first_summary, second_summary):
     return differences
 
 
-class TableSummarySet(object):
+class TableSummarySet:
     """A collection of TableSummary elements."""
 
     def __init__(self, table_summaries):
         self.table_summaries = table_summaries
         self.headers = ["Table name", "Number of rows", "Last item added"]
 
-    def report(self):
-        """Produce an HTML pretty-printed report of the contents of the summary.
+    def report(self, title=None):
+        """Produce an pretty-printed report of the contents of the summary.
 
-        :return: String of HTML
+        :return: String of text
         """
-
-        return tabulate(
+        res = ""
+        if title:
+            res += title + "\n"
+        res += tabulate(
             [
                 (table.table_name, table.number_of_rows, table.created_date)
                 for table in self.table_summaries
             ],
             headers=self.headers,
-            tablefmt="pretty",
+            tablefmt="github",
         )
+        res += "\n"
+        return res
 
     def compare_to(self, other: "TableSummarySet"):
-        """Produce an HTML pretty-printed report of the contents of the summary.
+        """Produce an pretty-printed report of the contents of the summary.
 
         :param other: A TableSummarySet object to compare
         :type other: TableSummarySet

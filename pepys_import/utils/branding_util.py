@@ -1,14 +1,46 @@
 from pyfiglet import Figlet
 
+PEPYS_PORTRAIT = [
+    # portrait 1
+    "   @@@@ @@@@@       ",
+    " @@@@@ @@..@@@@     ",
+    "  @@@     @@@@@@    ",
+    "  @@@     @@@@@@@@  ",
+    " @@@@.     @@@@@@@  ",
+    " @@ #@@ @   ...@@@@@",
+    " @@   &        @@@@@  ",
+    # portrait 2
+    # " `yMmysymMMN+`     ",
+    # ".NMM+:`//.NMMm.    ",
+    # ".MMM -. -.MMMMMd`   ",
+    # ".NMMo '-  mMMMMMs   ",
+    # "-NMMh -o- mMMMMMs  ",
+    # "mMMMM:....-dMMMNy.",
+    # "dMy` --/`  ...sMMMM:",
+    # portrait 3
+    # "    `:ssoo+`      ",
+    # "   /mdsohmMN+`    ",
+    # "  .MM+-.-:MMMd`   ",
+    # "  .NMs..`/NMMMy`  ",
+    # "  +Mm/--../hNMMy. ",
+    # "  yM:`::-.-/-NMMh ",
+    # "  /o`....`.` :ooo`",
+]
+
 
 def render_text(font, text):
-    f = Figlet(font=font)
-    print(f.renderText(text))
+    figlet = Figlet(font=font)
+    rendered_text = figlet.renderText(text)
+    text = list()
+    for index, line in enumerate(rendered_text.splitlines()):
+        if index < len(PEPYS_PORTRAIT):
+            text.append(f"{PEPYS_PORTRAIT[index]} {line}")
+    print("\n".join(text))
 
 
-def show_welcome_banner():
+def show_welcome_banner(banner_text):
     font = "doom"
-    text = "Pepys_import"
+    text = banner_text
     render_text(font, text)
 
 

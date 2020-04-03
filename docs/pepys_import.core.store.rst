@@ -4,6 +4,22 @@ pepys\_import.core.store package
 Submodules
 ----------
 
+pepys\_import.core.store.common\_db module
+------------------------------------------
+
+.. automodule:: pepys_import.core.store.common_db
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pepys\_import.core.store.constants module
+-----------------------------------------
+
+.. automodule:: pepys_import.core.store.constants
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pepys\_import.core.store.data\_store module
 -------------------------------------------
 
@@ -40,6 +56,14 @@ pepys\_import.core.store.sqlite\_db module
 ------------------------------------------
 
 .. automodule:: pepys_import.core.store.sqlite_db
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pepys\_import.core.store.table\_summary module
+----------------------------------------------
+
+.. automodule:: pepys_import.core.store.table_summary
    :members:
    :undoc-members:
    :show-inheritance:

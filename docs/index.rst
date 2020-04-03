@@ -6,16 +6,19 @@
 Welcome to pepys-import
 =======================
 
-.. include:: ../README.rst
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    README.rst
+   getting_started
    installation
    usage
+   configuration
+   developer_guide
+   deployment
    Source documentation <modules>
+   importer_dev_guide
    contributing
    documentation
    history

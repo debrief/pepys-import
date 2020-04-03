@@ -1,17 +1,19 @@
 import unittest
+from datetime import datetime
+from unittest import TestCase
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
-from unittest import TestCase
 
 
 class TableSummarySetTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
-        with self.store.session_scope() as session:
-            self.store.add_to_privacies("TEST-1")
-            self.store.add_to_privacies("TEST-2")
+        with self.store.session_scope():
+            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+            self.store.add_to_privacies("TEST-1", self.change_id)
+            self.store.add_to_privacies("TEST-2", self.change_id)
 
     def tearDown(self):
         pass
@@ -19,33 +21,30 @@ class TableSummarySetTestCase(TestCase):
     def test_table_summary_returns_correct_values(self):
         """Test whether Table Summary class returns correct values or not """
 
-        with self.store.session_scope() as session:
-            ts = TableSummary(self.store.session, self.store.db_classes.Privacy)
+        with self.store.session_scope():
+            summary = TableSummary(self.store.session, self.store.db_classes.Privacy)
 
             # Two entities created, created_date can't be null
-            self.assertEqual(ts.number_of_rows, 2)
-            self.assertNotEqual(ts.created_date, "-")
+            self.assertEqual(summary.number_of_rows, 2)
+            self.assertNotEqual(summary.created_date, "-")
 
             # There is no entity in State table
-            ts = TableSummary(self.store.session, self.store.db_classes.State)
-            self.assertEqual(ts.number_of_rows, 0)
-            self.assertEqual(ts.created_date, "-")
+            summary = TableSummary(self.store.session, self.store.db_classes.State)
+            self.assertEqual(summary.number_of_rows, 0)
+            self.assertEqual(summary.created_date, "-")
 
 
 class TableSummaryTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
-        with self.store.session_scope() as session:
-            self.store.add_to_privacies("TEST-1")
-            self.store.add_to_nationalities("NAT-1")
-            self.store.add_to_nationalities("NAT-2")
-            privacy_sum = TableSummary(
-                self.store.session, self.store.db_classes.Privacy
-            )
-            nationality_sum = TableSummary(
-                self.store.session, self.store.db_classes.Nationality
-            )
+        with self.store.session_scope():
+            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+            self.store.add_to_privacies("TEST-1", self.change_id)
+            self.store.add_to_nationalities("NAT-1", self.change_id)
+            self.store.add_to_nationalities("NAT-2", self.change_id)
+            privacy_sum = TableSummary(self.store.session, self.store.db_classes.Privacy)
+            nationality_sum = TableSummary(self.store.session, self.store.db_classes.Nationality)
         self.summaries = [privacy_sum, nationality_sum]
 
     def tearDown(self):
@@ -64,15 +63,11 @@ class TableSummaryTestCase(TestCase):
         """Test whether compare_to method returns correct values or not"""
         first_table_summary_set = TableSummarySet(self.summaries)
 
-        with self.store.session_scope() as session:
-            self.store.add_to_privacies("TEST-2")
-            self.store.add_to_privacies("TEST-3")
-            privacy_sum = TableSummary(
-                self.store.session, self.store.db_classes.Privacy
-            )
-            nationality_sum = TableSummary(
-                self.store.session, self.store.db_classes.Nationality
-            )
+        with self.store.session_scope():
+            self.store.add_to_privacies("TEST-2", self.change_id)
+            self.store.add_to_privacies("TEST-3", self.change_id)
+            privacy_sum = TableSummary(self.store.session, self.store.db_classes.Privacy)
+            nationality_sum = TableSummary(self.store.session, self.store.db_classes.Nationality)
         second_summary = [privacy_sum, nationality_sum]
         second_table_summary_set = TableSummarySet(second_summary)
         diff = second_table_summary_set.compare_to(first_table_summary_set)

@@ -1,15 +1,27 @@
+import os
 import platform
 
 SYSTEM = platform.system()
 if SYSTEM == "Linux":
-    EXTENSION_PATH = "/usr/lib/x86_64-linux-gnu/mod_spatialite.so"
+    PLATFORM_EXTENSION_PATH = "/usr/lib/x86_64-linux-gnu/mod_spatialite.so"
 elif SYSTEM == "Darwin":  # Darwin is MacOS
-    EXTENSION_PATH = "/usr/local/lib/mod_spatialite.dylib"
+    PLATFORM_EXTENSION_PATH = "/usr/local/lib/mod_spatialite.dylib"
 elif SYSTEM == "Windows":
-    # TODO: mod_spatialite path for Windows should be added
-    EXTENSION_PATH = None
+    PLATFORM_EXTENSION_PATH = "mod_spatialite"
 
 
 def load_spatialite(connection, connection_record):
+    """
+    Loads the spatialite library into the SQLite database
+
+    Tries to load the library located in the PEPYS_SPATIALITE_PATH environment variable first
+    and otherwise falls back to the platform-specific paths defined in this file
+    """
     connection.enable_load_extension(True)
-    connection.load_extension(EXTENSION_PATH)
+
+    environment_path = os.environ.get("PEPYS_SPATIALITE_PATH")
+
+    if environment_path:
+        connection.load_extension(environment_path)
+    else:
+        connection.load_extension(PLATFORM_EXTENSION_PATH)

@@ -1,16 +1,15 @@
 pepys\_import.file package
 ==========================
 
+Subpackages
+-----------
+
+.. toctree::
+
+   pepys_import.file.highlighter
+
 Submodules
 ----------
-
-pepys\_import.file.core\_parser module
---------------------------------------
-
-.. automodule:: pepys_import.file.core_parser
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 pepys\_import.file.file\_processor module
 -----------------------------------------
@@ -20,10 +19,10 @@ pepys\_import.file.file\_processor module
    :undoc-members:
    :show-inheritance:
 
-pepys\_import.file.sample\_parser module
-----------------------------------------
+pepys\_import.file.importer module
+----------------------------------
 
-.. automodule:: pepys_import.file.sample_parser
+.. automodule:: pepys_import.file.importer
    :members:
    :undoc-members:
    :show-inheritance:

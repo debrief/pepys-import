@@ -52,7 +52,6 @@ coverage.xml
 *.pot
 
 # Django stuff:
-*.log
 local_settings.py
 db.sqlite3
 
@@ -106,3 +105,18 @@ venv.bak/
 /.idea
 *.iml
 *.DS_Store
+
+# Editor files
+*.code-workspace
+
+
+# binaries for distribution
+/python/*
+/lib
+/7zip
+*.zip
+*.lnk
+
+# Any subfolders called 'output'
+# to ignore the output logs, error logs, highlighted files etc
+**/*output*/**

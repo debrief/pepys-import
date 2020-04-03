@@ -1,34 +1,27 @@
+import platform
 import unittest
-
-from sqlalchemy.sql.ddl import DropSchema
-
-from pepys_import.core.store.data_store import DataStore
-from testing.postgresql import Postgresql
-from sqlalchemy import inspect, event
 from unittest import TestCase
 
-from pepys_import.core.store.db_base import BasePostGIS
+import pytest
+from sqlalchemy import inspect
+from testing.postgresql import Postgresql
+
+from pepys_import.core.store.data_store import DataStore
 
 
+@pytest.mark.postgres
 class DataStoreInitialisePostGISTestCase(TestCase):
     def setUp(self):
         self.store = None
         try:
             self.store = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
 
     def tearDown(self):
         try:
-            event.listen(
-                BasePostGIS.metadata, "before_create", DropSchema("datastore_schema"),
-            )
             self.store.stop()
         except AttributeError:
             return
@@ -44,6 +37,7 @@ class DataStoreInitialisePostGISTestCase(TestCase):
             db_host="localhost",
             db_port=55527,
             db_name="test",
+            db_type="postgres",
         )
 
         # inspector makes it possible to load lists of schema, table, column
@@ -54,26 +48,64 @@ class DataStoreInitialisePostGISTestCase(TestCase):
 
         # there must be no table and no schema for datastore at the beginning
         self.assertEqual(len(table_names), 0)
-        self.assertNotIn("datastore_schema", schema_names)
+        self.assertNotIn("pepys", schema_names)
 
         # creating database from schema
         data_store_postgres.initialise()
 
         inspector = inspect(data_store_postgres.engine)
-        table_names = inspector.get_table_names()
+        table_names = inspector.get_table_names(schema="pepys")
         schema_names = inspector.get_schema_names()
 
-        # 36 tables and 1  table for spatial objects (spatial_ref_sys) must be created.
-        self.assertEqual(len(table_names), 37)
-        self.assertIn("Entry", table_names)
+        # 34 tables must be created to default schema
+        self.assertEqual(len(table_names), 34)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
         self.assertIn("Datafiles", table_names)
         self.assertIn("Nationalities", table_names)
+
+        # pepys must be created
+        self.assertIn("pepys", schema_names)
+
+        # 1 table for spatial objects (spatial_ref_sys) must be created to default schema
+        table_names = inspector.get_table_names()
+        self.assertEqual(len(table_names), 1)
         self.assertIn("spatial_ref_sys", table_names)
 
-        # datastore_schema must be created
-        self.assertIn("datastore_schema", schema_names)
+    def test_is_schema_created(self):
+        if self.store is None:
+            self.skipTest("Postgres is not available. Test is skipping")
+
+        data_store_postgres = DataStore(
+            db_username="postgres",
+            db_password="postgres",
+            db_host="localhost",
+            db_port=55527,
+            db_name="test",
+            db_type="postgres",
+        )
+        assert data_store_postgres.is_schema_created() is False
+
+        data_store_postgres.initialise()
+        assert data_store_postgres.is_schema_created() is True
+
+    def test_is_empty(self):
+        if self.store is None:
+            self.skipTest("Postgres is not available. Test is skipping")
+
+        data_store_postgres = DataStore(
+            db_username="postgres",
+            db_password="postgres",
+            db_host="localhost",
+            db_port=55527,
+            db_name="test",
+            db_type="postgres",
+        )
+        data_store_postgres.initialise()
+        with data_store_postgres.session_scope():
+            assert data_store_postgres.is_empty() is True
+            data_store_postgres.populate_reference()
+            assert data_store_postgres.is_empty() is False
 
 
 class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
@@ -95,9 +127,15 @@ class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
         inspector = inspect(data_store_sqlite.engine)
         table_names = inspector.get_table_names()
 
+        system = platform.system()
+
+        if system == "Windows":
+            correct_n_tables = 72
+        else:
+            correct_n_tables = 70
+
         # 36 tables + 36 spatial tables must be created. A few of them tested
-        self.assertEqual(len(table_names), 72)
-        self.assertIn("Entry", table_names)
+        self.assertEqual(len(table_names), correct_n_tables)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
         self.assertIn("Datafiles", table_names)
@@ -108,6 +146,22 @@ class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
         self.assertIn("views_geometry_columns", table_names)
         self.assertIn("virts_geometry_columns", table_names)
         self.assertIn("spatialite_history", table_names)
+
+    def test_is_schema_created(self):
+        data_store_sqlite = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        assert data_store_sqlite.is_schema_created() is False
+
+        data_store_sqlite.initialise()
+        assert data_store_sqlite.is_schema_created() is True
+
+    def test_is_empty(self):
+        data_store_sqlite = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        data_store_sqlite.initialise()
+
+        with data_store_sqlite.session_scope():
+            assert data_store_sqlite.is_empty() is True
+            data_store_sqlite.populate_reference()
+            assert data_store_sqlite.is_empty() is False
 
 
 if __name__ == "__main__":
