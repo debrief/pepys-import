@@ -1,11 +1,12 @@
 from dateutil.parser import parse
 from lxml import etree
+from tqdm import tqdm
+
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
-from tqdm import tqdm
 
 
 class GPXImporter(Importer):
