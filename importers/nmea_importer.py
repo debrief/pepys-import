@@ -100,7 +100,7 @@ class NMEAImporter(Importer):
                 )
                 # capture the name
                 self.platform_name = platform.name
-                sensor_type = data_store.add_to_sensor_types("_GPS", change_id=change_id)
+                sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id)
                 privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
                 sensor = platform.get_sensor(
                     data_store=data_store,

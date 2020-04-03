@@ -1421,7 +1421,7 @@ class DataStore:
         return True
 
     def is_empty(self):
-        """Returns True if all tables are empty, False otherwise."""
+        """ Returns True if sample table (Privacy) is empty, False otherwise"""
         reference = self.session.query(self.db_classes.Privacy).first()
         if reference:
             return False
