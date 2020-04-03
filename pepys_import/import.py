@@ -67,6 +67,9 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
         )
 
     data_store.initialise()
+    with data_store.session_scope():
+        if data_store.is_empty():
+            data_store.populate_reference()
 
     processor = FileProcessor(archive=archive)
     processor.load_importers_dynamically()

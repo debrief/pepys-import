@@ -1419,3 +1419,10 @@ class DataStore:
             print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
             return False
         return True
+
+    def is_empty(self):
+        """ Returns True if sample table (Privacy) is empty, False otherwise"""
+        reference = self.session.query(self.db_classes.Privacy).first()
+        if reference:
+            return False
+        return True
