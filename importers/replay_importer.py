@@ -50,7 +50,7 @@ class ReplayImporter(Importer):
             change_id=change_id,
         )
 
-        sensor_type = data_store.add_to_sensor_types("_GPS", change_id=change_id).name
+        sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
         sensor = platform.get_sensor(
             data_store=data_store,
             sensor_name=platform.name,

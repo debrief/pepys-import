@@ -1157,9 +1157,9 @@ class GetMethodsTestCase(unittest.TestCase):
         menu_prompt.side_effect = [
             "2",
             "1",
-            "NETHERLANDS",
+            "UK",
             "1",
-            "TYPE-1",
+            "Fisher",
             "1",
             "PRIVACY-1",
             "1",
