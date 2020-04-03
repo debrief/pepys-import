@@ -5,7 +5,7 @@ from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
 
 
 class ETracImporter(Importer):
@@ -79,7 +79,14 @@ class ETracImporter(Importer):
             return
 
         timestamp = self.parse_timestamp(date_token.text, time_token.text)
-        combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp)
+        if timestamp:
+            combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp)
+        else:
+            # Skip line if invalid timestamp
+            self.errors.append(
+                {self.error_type: f"Line {line_number}. Error in timestamp parsing."}
+            )
+            return
 
         # and finally store it
         platform = data_store.get_platform(
@@ -100,29 +107,33 @@ class ETracImporter(Importer):
         state = datafile.create_state(data_store, platform, sensor, timestamp, self.short_name)
 
         location = Location(errors=self.errors, error_type=self.error_type)
-        location.set_latitude_decimal_degrees(lat_degrees_token.text)
-        location.set_longitude_decimal_degrees(long_degrees_token.text)
-        state.location = location
+        lat_success = location.set_latitude_decimal_degrees(lat_degrees_token.text)
+        lon_success = location.set_longitude_decimal_degrees(long_degrees_token.text)
+        if lat_success and lon_success:
+            state.location = location
 
         combine_tokens(long_degrees_token, lat_degrees_token).record(
             self.name, "location", state.location, "decimal degrees"
         )
 
-        state.elevation = altitude_token.text * unit_registry.metre
-        altitude_token.record(self.name, "altitude", state.elevation)
+        elevation = convert_distance(altitude_token.text) * unit_registry.metre
+        if elevation:
+            state.elevation = elevation
+            altitude_token.record(self.name, "altitude", state.elevation)
 
         heading = convert_absolute_angle(
             heading_token.text, line_number, self.errors, self.error_type
         )
-        state.heading = heading
-        heading_token.record(self.name, "heading", heading)
+        if heading:
+            state.heading = heading
+            heading_token.record(self.name, "heading", heading)
 
         speed = convert_speed(
             speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type,
         )
         if speed:
             state.speed = speed
-        speed_token.record(self.name, "speed", speed)
+            speed_token.record(self.name, "speed", speed)
 
     @staticmethod
     def name_for(token):
@@ -135,6 +146,9 @@ class ETracImporter(Importer):
         format_str = "%Y/%m/%d "
         format_str += "%H:%M:%S"
 
-        res = datetime.strptime(date.strip() + " " + time.strip(), format_str)
+        try:
+            res = datetime.strptime(date.strip() + " " + time.strip(), format_str)
+        except ValueError:
+            return False
 
         return res
