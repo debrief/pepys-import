@@ -11,23 +11,60 @@ from pepys_import.resolvers.data_resolver import DataResolver
 
 class CommandLineResolver(DataResolver):
     def resolve_datafile(self, data_store, datafile_name, datafile_type, privacy, change_id):
-        options = [f"Search for existing datafile", f"Add a new datafile"]
-        if datafile_name:
-            options[1] += f", titled '{datafile_name}'"
+        """
+        This method resolves datafile type and privacy. It asks user whether to create
+        a datafile with resolved values or not. If user enters Yes, it returns all
+        necessary data to create a datafile. If user enters No, it resolves values again
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: DataStore
+        :param datafile_name:  Name of :class`Datafile`
+        :type datafile_name: String
+        :param datafile_type: Type of :class`Datafile`
+        :type datafile_type: DatafileType
+        :param privacy: Name of :class:`Privacy`
+        :type privacy: Privacy
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
+        :return:
+        """
+        print("Ok, adding new datafile.")
+
+        datafile_name = prompt("Please enter a name: ", default=datafile_name)
+        # Choose Datafile Type
+        if datafile_type:
+            chosen_datafile_type = data_store.add_to_datafile_types(datafile_type, change_id)
+        else:
+            chosen_datafile_type = self.resolve_datafile_type(data_store, datafile_name, change_id)
+
+        if chosen_datafile_type is None:
+            print("Quitting")
+            sys.exit(1)
+
+        # Choose Privacy
+        if privacy:
+            chosen_privacy = data_store.add_to_privacies(privacy, change_id)
+        else:
+            chosen_privacy = self.resolve_privacy(data_store, change_id)
+
+        if chosen_privacy is None:
+            print("Quitting")
+            sys.exit(1)
+
+        print("-" * 61)
+        print("Input complete. About to create this datafile:")
+        print(f"Name: {datafile_name}")
+        print(f"Type: {chosen_datafile_type.name}")
+        print(f"Classification: {chosen_privacy.name}")
+
         choice = create_menu(
-            f"Datafile '{datafile_name}' not found. Do you wish to: ",
-            options,
-            validate_method=is_valid,
+            "Create this datafile?: ", ["Yes", "No, make further edits"], validate_method=is_valid,
         )
 
         if choice == str(1):
-            return self.fuzzy_search_datafile(
-                data_store, datafile_name, datafile_type, privacy, change_id
-            )
+            return datafile_name, chosen_datafile_type, chosen_privacy
         elif choice == str(2):
-            return self.add_to_datafiles(
-                data_store, datafile_name, datafile_type, privacy, change_id=change_id
-            )
+            return self.resolve_datafile(data_store, datafile_name, None, None, change_id)
         elif choice == ".":
             print("Quitting")
             sys.exit(1)
@@ -102,67 +139,6 @@ class CommandLineResolver(DataResolver):
             return None
 
     # Helper methods
-    def fuzzy_search_datafile(self, data_store, datafile_name, datafile_type, privacy, change_id):
-        """
-        This method parses all datafiles in the DB, and uses fuzzy search when
-        user is typing. If user enters a new value, it adds to Synonym or Datafiles
-        according to user's choice. If user selects an existing value, it returns the
-        selected Datafile entity.
-
-        :param data_store: A :class:`DataStore` object
-        :type data_store: DataStore
-        :param datafile_name:  Name of :class`Datafile`
-        :type datafile_name: String
-        :param datafile_type: Type of :class`Datafile`
-        :type datafile_type: DatafileType
-        :param privacy: Name of :class:`Privacy`
-        :type privacy: Privacy
-        :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
-        :return:
-        """
-        datafiles = data_store.session.query(data_store.db_classes.Datafile).all()
-        completer = [datafile.reference for datafile in datafiles]
-        choice = create_menu(
-            "Please start typing to show suggested values",
-            cancel="datafile search",
-            choices=[],
-            completer=FuzzyWordCompleter(completer),
-        )
-        if datafile_name and choice in completer:
-            new_choice = create_menu(
-                f"Do you wish to keep {datafile_name} as synonym for {choice}?", ["Yes", "No"],
-            )
-            if new_choice == str(1):
-                datafile = (
-                    data_store.session.query(data_store.db_classes.Datafile)
-                    .filter(data_store.db_classes.Datafile.reference == choice)
-                    .first()
-                )
-                # Add it to synonyms and return existing datafile
-                data_store.add_to_synonyms(
-                    constants.DATAFILE, datafile_name, datafile.datafile_id, change_id
-                )
-                print(f"'{datafile_name}' added to Synonyms!")
-                return datafile
-            elif new_choice == str(2):
-                return self.add_to_datafiles(
-                    data_store, datafile_name, datafile_type, privacy, change_id
-                )
-            elif new_choice == ".":
-                print("-" * 61, "\nReturning to the previous menu\n")
-                return self.fuzzy_search_datafile(
-                    data_store, datafile_name, datafile_type, privacy, change_id
-                )
-        elif choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
-            return self.resolve_datafile(
-                data_store, datafile_name, datafile_type, privacy, change_id
-            )
-        elif choice not in completer:
-            print(f"'{choice}' could not found! Redirecting to adding a new datafile..")
-            return self.add_to_datafiles(data_store, choice, datafile_type, privacy, change_id)
-
     def fuzzy_search_platform(
         self, data_store, platform_name, platform_type, nationality, privacy, change_id
     ):
@@ -632,63 +608,6 @@ class CommandLineResolver(DataResolver):
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
-
-    def add_to_datafiles(self, data_store, datafile_name, datafile_type, privacy, change_id):
-        """
-        This method resolves datafile type and privacy. It asks user whether to create
-        a datafile with resolved values or not. If user enters Yes, it returns all
-        necessary data to create a datafile. If user enters No, it resolves values again
-
-        :param data_store: A :class:`DataStore` object
-        :type data_store: DataStore
-        :param datafile_name:  Name of :class`Datafile`
-        :type datafile_name: String
-        :param datafile_type: Type of :class`Datafile`
-        :type datafile_type: DatafileType
-        :param privacy: Name of :class:`Privacy`
-        :type privacy: Privacy
-        :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
-        :return:
-        """
-        print("Ok, adding new datafile.")
-
-        datafile_name = prompt("Please enter a name: ", default=datafile_name)
-        # Choose Datafile Type
-        if datafile_type:
-            chosen_datafile_type = data_store.add_to_datafile_types(datafile_type, change_id)
-        else:
-            chosen_datafile_type = self.resolve_datafile_type(data_store, datafile_name, change_id)
-
-        if chosen_datafile_type is None:
-            return self.resolve_datafile(data_store, datafile_name, None, None, change_id)
-
-        # Choose Privacy
-        if privacy:
-            chosen_privacy = data_store.add_to_privacies(privacy, change_id)
-        else:
-            chosen_privacy = self.resolve_privacy(data_store, change_id)
-
-        if chosen_privacy is None:
-            return self.resolve_datafile(data_store, datafile_name, None, None, change_id)
-
-        print("-" * 61)
-        print("Input complete. About to create this datafile:")
-        print(f"Name: {datafile_name}")
-        print(f"Type: {chosen_datafile_type.name}")
-        print(f"Classification: {chosen_privacy.name}")
-
-        choice = create_menu(
-            "Create this datafile?: ", ["Yes", "No, make further edits"], validate_method=is_valid,
-        )
-
-        if choice == str(1):
-            return datafile_name, chosen_datafile_type, chosen_privacy
-        elif choice == str(2):
-            return self.add_to_datafiles(data_store, datafile_name, None, None, change_id)
-        elif choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
-            return self.resolve_datafile(data_store, datafile_name, None, None, change_id)
 
     def add_to_platforms(
         self, data_store, platform_name, platform_type, nationality, privacy, change_id
