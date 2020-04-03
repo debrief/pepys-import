@@ -14,6 +14,7 @@ class NMEAImporter(Importer):
             name="NMEA File Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name="NMEA Importer",
+            default_privacy="Private",
         )
         self.separator = separator
 
