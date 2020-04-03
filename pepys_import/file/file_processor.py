@@ -231,10 +231,20 @@ class FileProcessor:
             # ok, let these importers handle the file
             reason = f"Importing '{basename}'."
             change = data_store.add_to_changes(user=USER, modified=datetime.utcnow(), reason=reason)
-            datafile = data_store.get_datafile(
-                basename, file_extension, file_size, file_hash, change.change_id
-            )
-
+            nmea = [True if i.short_name == "NMEA Importer" else False for i in good_importers]
+            if any(nmea):
+                datafile = data_store.get_datafile(
+                    basename,
+                    file_extension,
+                    file_size,
+                    file_hash,
+                    change.change_id,
+                    privacy="Private",
+                )
+            else:
+                datafile = data_store.get_datafile(
+                    basename, file_extension, file_size, file_hash, change.change_id
+                )
             # Run all parsers
             for importer in good_importers:
                 processed_ctr += 1

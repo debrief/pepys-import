@@ -607,6 +607,7 @@ class DataStore:
         file_size=None,
         file_hash=None,
         change_id=None,
+        privacy=None,
     ):
         """
         Adds an entry to the datafiles table of the specified name (path)
@@ -622,6 +623,8 @@ class DataStore:
         :type file_hash: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
+        :param privacy: Name of :class:`Privacy`
+        :type privacy: Privacy
         :return:  Created Datafile entity
         :rtype: Datafile
         """
@@ -634,24 +637,27 @@ class DataStore:
                 datafile.__init__()
                 return datafile
 
-        resolved_data = self.missing_data_resolver.resolve_datafile(
-            self, datafile_name, datafile_type, None, change_id=change_id
-        )
-        # It means that new datafile added as a synonym and existing datafile returned
-        if isinstance(resolved_data, self.db_classes.Datafile):
-            return resolved_data
+        datafile_type_obj = self.search_datafile_type(datafile_type)
+        privacy_obj = self.search_privacy(privacy)
+        if datafile_type_obj is None or privacy_obj is None:
+            resolved_data = self.missing_data_resolver.resolve_datafile(
+                self, datafile_name, datafile_type, privacy, change_id=change_id
+            )
+            # It means that new datafile added as a synonym and existing datafile returned
+            if isinstance(resolved_data, self.db_classes.Datafile):
+                return resolved_data
 
-        datafile_name, datafile_type, privacy = resolved_data
+            datafile_name, datafile_type_obj, privacy_obj = resolved_data
 
         assert isinstance(
-            datafile_type, self.db_classes.DatafileType
+            datafile_type_obj, self.db_classes.DatafileType
         ), "Type error for DatafileType entity"
-        assert isinstance(privacy, self.db_classes.Privacy), "Type error for Privacy entity"
+        assert isinstance(privacy_obj, self.db_classes.Privacy), "Type error for Privacy entity"
 
         return self.add_to_datafiles(
             simulated=False,
-            privacy=privacy.name,
-            file_type=datafile_type.name,
+            privacy=privacy_obj.name,
+            file_type=datafile_type_obj.name,
             reference=datafile_name,
             file_size=file_size,
             file_hash=file_hash,
