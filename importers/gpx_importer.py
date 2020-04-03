@@ -59,13 +59,12 @@ class GPXImporter(Importer):
                 privacy="Public",
                 change_id=change_id,
             )
-            sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id)
-            privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
+            sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
             sensor = platform.get_sensor(
                 data_store=data_store,
-                sensor_name="GPX",
+                sensor_name="GPS",
                 sensor_type=sensor_type,
-                privacy=privacy.name,
+                privacy=None,
                 change_id=change_id,
             )
 
@@ -133,8 +132,6 @@ class GPXImporter(Importer):
                             }
                         )
                     state.elevation = elevation * unit_registry.metre
-
-                state.privacy = privacy.privacy_id
 
     def get_child_text_if_exists(self, element, search_string):
         child = element.find(search_string)

@@ -643,11 +643,10 @@ class DatafileTestCase(unittest.TestCase):
     def test_resolver_datafile_edit_given_values(self, resolver_prompt, menu_prompt):
         """Test whether correct datafile type and privacy returns after resolver is further edited"""
 
-        # Select "Add a new datafile"->Type "TEST"->Select "No"->Type "TEST"->
-        # Select "Search for an existing datafile-type"->Search "DATAFILE-TYPE-2"->
-        # Select "Search for an existing classification"->Search "PRIVACY-2"->Select "Yes"
+        # Type "TEST"->Select "No"->Type "TEST"->Select "Search for an existing datafile-type"->
+        # Search "DATAFILE-TYPE-2"->Select "Search for an existing classification"->Search
+        # "PRIVACY-2"->Select "Yes"
         menu_prompt.side_effect = [
-            "2",
             "2",
             "1",
             "DATAFILE-TYPE-2",
@@ -678,12 +677,9 @@ class DatafileTestCase(unittest.TestCase):
         """Test whether the correct datafile type and privacy entities are returned after searched
         and not found in Datafile Table."""
 
-        # Select "Search for an existing Datafile"->Search "DATAFILE-1"->Type "TEST"->
-        # Select "Search for an existing datafile type"->Search "DATAFILE-TYPE-1"->
+        # Type "TEST"->Select "Search for an existing datafile type"->Search "DATAFILE-TYPE-1"->
         # Select "Search for an existing classification"->Search "PRIVACY-1->Select "Yes"
         menu_prompt.side_effect = [
-            "1",
-            "DATAFILE-1",
             "1",
             "DATAFILE-TYPE-1",
             "1",
@@ -696,7 +692,7 @@ class DatafileTestCase(unittest.TestCase):
             self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id)
             datafile_name, datafile_type, privacy = self.resolver.resolve_datafile(
                 data_store=self.store,
-                datafile_name="TEST",
+                datafile_name=None,
                 datafile_type=None,
                 privacy=None,
                 change_id=self.change_id,
@@ -706,66 +702,41 @@ class DatafileTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "PRIVACY-1")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_resolve_datafile_add_to_synonyms(self, menu_prompt):
-        """Test whether the given datafile name is correctly added to Synonyms table or not"""
-
-        # Select "Search an existing datafile"->Search "DATAFILE-1"->Select "Yes"
-        menu_prompt.side_effect = ["1", "DATAFILE-1", "1"]
-        with self.store.session_scope():
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id)
-            datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id)
-            datafile = self.store.add_to_datafiles(
-                file_type=datafile_type.name,
-                privacy=privacy.name,
-                reference="DATAFILE-1",
-                file_size=0,
-                file_hash="HASHED-1",
-                change_id=self.change_id,
-            )
-            synonym_datafile = self.resolver.resolve_datafile(
-                data_store=self.store,
-                datafile_name="TEST",
-                datafile_type=datafile_type.name,
-                privacy=privacy.name,
-                change_id=self.change_id,
-            )
-            self.assertEqual(synonym_datafile.datafile_id, datafile.datafile_id)
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_fuzzy_search_datafile_add_new_datafile(self, resolver_prompt, menu_prompt):
-        """Test whether a new datafile is created or not after searched and not founded in Datafile
-        Table."""
-
-        # Search "DATAFILE-1"->Type "TEST"->Select "No"->Select "Yes"
+    def test_quitting(self, resolver_prompt, menu_prompt):
         menu_prompt.side_effect = [
-            "DATAFILE-1",
-            "2",
-            "1",
+            ".",
+            ".",
+            ".",
         ]
-        resolver_prompt.side_effect = ["TEST"]
+        resolver_prompt.side_effect = ["TEST", "TEST", "TEST"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
             datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id).name
-            self.store.add_to_datafiles(
-                file_type=datafile_type,
-                privacy=privacy,
-                reference="DATAFILE-1",
-                file_size=0,
-                file_hash="HASHED-1",
-                change_id=self.change_id,
-            )
-
-            datafile_name, datafile_type, privacy = self.resolver.fuzzy_search_datafile(
-                data_store=self.store,
-                datafile_name="TEST",
-                datafile_type=datafile_type,
-                privacy=privacy,
-                change_id=self.change_id,
-            )
-            self.assertEqual(datafile_name, "TEST")
-            self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_datafile(
+                    data_store=self.store,
+                    datafile_name="TEST",
+                    datafile_type=datafile_type,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_datafile(
+                    data_store=self.store,
+                    datafile_name="TEST",
+                    datafile_type=None,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            with self.assertRaises(SystemExit):
+                self.resolver.resolve_datafile(
+                    data_store=self.store,
+                    datafile_name="TEST",
+                    datafile_type=datafile_type,
+                    privacy=None,
+                    change_id=self.change_id,
+                )
 
 
 class SensorTestCase(unittest.TestCase):
@@ -806,7 +777,7 @@ class SensorTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["1", "SENSOR-1", "1"]
         with self.store.session_scope():
             # Create platform first, then create a Sensor object
-            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
@@ -878,7 +849,7 @@ class SensorTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["SENSOR-TEST"]
         with self.store.session_scope():
             # Create platform first, then create a Sensor object
-            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
@@ -939,35 +910,13 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_top_level_quitting(self, menu_prompt):
-        """Test whether "." quits from the resolve platform/datafile/sensor"""
+        """Test whether "." quits from the resolve platform/sensor"""
         menu_prompt.side_effect = [".", ".", "."]
         with self.store.session_scope():
-            with self.assertRaises(SystemExit):
-                self.resolver.resolve_datafile(self.store, "", "", "", self.change_id),
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_platform(self.store, "", "", "", "", self.change_id)
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_sensor(self.store, "", "", "", self.change_id)
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_cancelling_fuzzy_search_datafile(self, menu_prompt):
-        """Test whether "." returns to resolve datafile"""
-
-        # Type "DATAFILE-1"->Select "."->Select "."->Select "."
-        menu_prompt.side_effect = ["DATAFILE-1", ".", ".", "."]
-        with self.store.session_scope():
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id)
-            datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id)
-            self.store.add_to_datafiles(
-                file_type=datafile_type.name,
-                privacy=privacy.name,
-                reference="DATAFILE-1",
-                file_size=0,
-                file_hash="HASHED-1",
-                change_id=self.change_id,
-            )
-            with self.assertRaises(SystemExit):
-                self.resolver.fuzzy_search_datafile(self.store, "TEST", "", "", self.change_id)
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_cancelling_fuzzy_search_platform(self, menu_prompt):
@@ -996,7 +945,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         # Type "SENSOR-1"->Select "."->Select "."->Select "."
         menu_prompt.side_effect = ["SENSOR-1", ".", ".", "."]
         with self.store.session_scope():
-            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
@@ -1077,32 +1026,6 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_cancelling_during_add_to_datafiles(self, resolver_prompt, menu_prompt):
-        menu_prompt.side_effect = [".", ".", "2", ".", ".", "2", "2", ".", "."]
-        resolver_prompt.side_effect = [
-            "TEST",
-            "TEST",
-            "DATAFILE-TYPE-1",
-            "TEST",
-            "DATAFILE-TYPE-1",
-            "PRIVACY-1",
-        ]
-        with self.store.session_scope():
-            # Type "TEST"->Select "Cancel datafile type search"->Select "Cancel import"
-            with self.assertRaises(SystemExit):
-                self.resolver.add_to_datafiles(self.store, "DATAFILE-1", "", "", self.change_id)
-            # Type "TEST"->Select "Add a new datafile type"->Type "DATAFILE-TYPE-1->
-            # Select "Cancel classification search" ->Select "Cancel import"
-            with self.assertRaises(SystemExit):
-                self.resolver.add_to_datafiles(self.store, "DATAFILE-1", "", "", self.change_id)
-            # Type "TEST"->Select "Add a new datafile type"->Type "DATAFILE-TYPE-1->
-            # Select "Add a new classification"->Type "PRIVACY-1"->Select "Cancel import"->
-            # Select "Cancel import"
-            with self.assertRaises(SystemExit):
-                self.resolver.add_to_datafiles(self.store, "DATAFILE-1", "", "", self.change_id)
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_cancelling_during_add_to_sensors(self, resolver_prompt, menu_prompt):
         menu_prompt.side_effect = [".", ".", "2", ".", ".", "2", "2", ".", "."]
         resolver_prompt.side_effect = [
@@ -1180,7 +1103,6 @@ class GetMethodsTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_get_datafile_adds_resolved_datafile_successfully(self, resolver_prompt, menu_prompt):
         menu_prompt.side_effect = [
-            "2",
             "1",
             "DATAFILE-TYPE-1",
             "1",

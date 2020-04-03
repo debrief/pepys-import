@@ -607,6 +607,7 @@ class DataStore:
         file_size=None,
         file_hash=None,
         change_id=None,
+        privacy=None,
     ):
         """
         Adds an entry to the datafiles table of the specified name (path)
@@ -615,13 +616,15 @@ class DataStore:
         :param datafile_name:  Name of Datafile
         :type datafile_name: String
         :param datafile_type: Type of Datafile
-        :type datafile_type: DatafileType
+        :type datafile_type: String
         :param file_size: Size of the file (in bytes)
         :type file_size: Integer
         :param file_hash: Hashed value of the file
         :type file_hash: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
+        :param privacy: Name of :class:`Privacy`
+        :type privacy: String
         :return:  Created Datafile entity
         :rtype: Datafile
         """
@@ -634,24 +637,27 @@ class DataStore:
                 datafile.__init__()
                 return datafile
 
-        resolved_data = self.missing_data_resolver.resolve_datafile(
-            self, datafile_name, datafile_type, None, change_id=change_id
-        )
-        # It means that new datafile added as a synonym and existing datafile returned
-        if isinstance(resolved_data, self.db_classes.Datafile):
-            return resolved_data
+        datafile_type_obj = self.search_datafile_type(datafile_type)
+        privacy_obj = self.search_privacy(privacy)
+        if datafile_type_obj is None or privacy_obj is None:
+            resolved_data = self.missing_data_resolver.resolve_datafile(
+                self, datafile_name, datafile_type, privacy, change_id=change_id
+            )
+            # It means that new datafile added as a synonym and existing datafile returned
+            if isinstance(resolved_data, self.db_classes.Datafile):
+                return resolved_data
 
-        datafile_name, datafile_type, privacy = resolved_data
+            datafile_name, datafile_type_obj, privacy_obj = resolved_data
 
         assert isinstance(
-            datafile_type, self.db_classes.DatafileType
+            datafile_type_obj, self.db_classes.DatafileType
         ), "Type error for DatafileType entity"
-        assert isinstance(privacy, self.db_classes.Privacy), "Type error for Privacy entity"
+        assert isinstance(privacy_obj, self.db_classes.Privacy), "Type error for Privacy entity"
 
         return self.add_to_datafiles(
             simulated=False,
-            privacy=privacy.name,
-            file_type=datafile_type.name,
+            privacy=privacy_obj.name,
+            file_type=datafile_type_obj.name,
             reference=datafile_name,
             file_size=file_size,
             file_hash=file_hash,
@@ -706,11 +712,11 @@ class DataStore:
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
         :param nationality: Name of :class:`Nationality`
-        :type nationality: Nationality
+        :type nationality: String
         :param platform_type: Name of :class:`PlatformType`
-        :type platform_type: PlatformType
+        :type platform_type: String
         :param privacy: Name of :class:`Privacy`
-        :type privacy: Privacy
+        :type privacy: String
         :param trigraph: Trigraph of :class:`Platform`
         :type trigraph: String
         :param quadgraph: Quadgraph of :class:`Platform`
