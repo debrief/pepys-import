@@ -14,6 +14,7 @@ class NMEAImporter(Importer):
             name="NMEA File Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name="NMEA Importer",
+            default_privacy="Private",
         )
         self.separator = separator
 
@@ -100,13 +101,12 @@ class NMEAImporter(Importer):
                 )
                 # capture the name
                 self.platform_name = platform.name
-                sensor_type = data_store.add_to_sensor_types("_GPS", change_id=change_id)
-                privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
+                sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
                 sensor = platform.get_sensor(
                     data_store=data_store,
                     sensor_name=platform.name,
                     sensor_type=sensor_type,
-                    privacy=privacy.name,
+                    privacy=None,
                     change_id=change_id,
                 )
                 timestamp = self.parse_timestamp(self.date, self.time)
@@ -163,8 +163,6 @@ class NMEAImporter(Importer):
                     if depth:
                         state.elevation = -1 * depth
                     self.depth_token.record(self.name, "depth", depth)
-
-                state.privacy = privacy.privacy_id
 
                 self.date = None
                 self.time = None

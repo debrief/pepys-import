@@ -231,8 +231,13 @@ class FileProcessor:
             # ok, let these importers handle the file
             reason = f"Importing '{basename}'."
             change = data_store.add_to_changes(user=USER, modified=datetime.utcnow(), reason=reason)
+            privacy = None
+            for importer in good_importers:
+                if importer.default_privacy:
+                    privacy = importer.default_privacy
+                    break
             datafile = data_store.get_datafile(
-                basename, file_extension, file_size, file_hash, change.change_id
+                basename, file_extension, file_size, file_hash, change.change_id, privacy=privacy,
             )
 
             # Run all parsers

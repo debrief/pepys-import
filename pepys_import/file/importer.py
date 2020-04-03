@@ -5,11 +5,12 @@ from tqdm import tqdm
 
 
 class Importer(ABC):
-    def __init__(self, name, validation_level, short_name):
+    def __init__(self, name, validation_level, short_name, default_privacy=None):
         super().__init__()
         self.name = name
         self.validation_level = validation_level
         self.short_name = short_name
+        self.default_privacy = default_privacy
         self.errors = None
         self.error_type = None
 

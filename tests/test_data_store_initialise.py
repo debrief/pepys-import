@@ -89,6 +89,24 @@ class DataStoreInitialisePostGISTestCase(TestCase):
         data_store_postgres.initialise()
         assert data_store_postgres.is_schema_created() is True
 
+    def test_is_empty(self):
+        if self.store is None:
+            self.skipTest("Postgres is not available. Test is skipping")
+
+        data_store_postgres = DataStore(
+            db_username="postgres",
+            db_password="postgres",
+            db_host="localhost",
+            db_port=55527,
+            db_name="test",
+            db_type="postgres",
+        )
+        data_store_postgres.initialise()
+        with data_store_postgres.session_scope():
+            assert data_store_postgres.is_empty() is True
+            data_store_postgres.populate_reference()
+            assert data_store_postgres.is_empty() is False
+
 
 class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
     def test_sqlite_initialise(self):
@@ -135,6 +153,15 @@ class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
 
         data_store_sqlite.initialise()
         assert data_store_sqlite.is_schema_created() is True
+
+    def test_is_empty(self):
+        data_store_sqlite = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        data_store_sqlite.initialise()
+
+        with data_store_sqlite.session_scope():
+            assert data_store_sqlite.is_empty() is True
+            data_store_sqlite.populate_reference()
+            assert data_store_sqlite.is_empty() is False
 
 
 if __name__ == "__main__":

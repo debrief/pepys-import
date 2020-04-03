@@ -15,11 +15,11 @@ class DataResolver(ABC):
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
         :param nationality: Name of :class:`Nationality`
-        :type nationality: Nationality
+        :type nationality: String
         :param platform_type: Name of :class:`PlatformType`
-        :type platform_type: PlatformType
+        :type platform_type: String
         :param privacy: Name of :class:`Privacy`
-        :type privacy: Privacy
+        :type privacy: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return:
@@ -36,9 +36,9 @@ class DataResolver(ABC):
         :param sensor_name: Name of :class:`Sensor`
         :type sensor_name: String
         :param sensor_type: Type of :class:`Sensor`
-        :type sensor_type: SensorType
+        :type sensor_type: String
         :param privacy: Name of :class:`Privacy`
-        :type privacy: Privacy
+        :type privacy: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return:
@@ -68,9 +68,9 @@ class DataResolver(ABC):
         :param datafile_name:  Name of :class`Datafile`
         :type datafile_name: String
         :param datafile_type: Type of :class`Datafile`
-        :type datafile_type: DatafileType
+        :type datafile_type: String
         :param privacy: Name of :class:`Privacy`
-        :type privacy: Privacy
+        :type privacy: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return:
