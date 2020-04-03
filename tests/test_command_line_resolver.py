@@ -777,7 +777,7 @@ class SensorTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["1", "SENSOR-1", "1"]
         with self.store.session_scope():
             # Create platform first, then create a Sensor object
-            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
@@ -849,7 +849,7 @@ class SensorTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["SENSOR-TEST"]
         with self.store.session_scope():
             # Create platform first, then create a Sensor object
-            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
@@ -945,7 +945,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         # Type "SENSOR-1"->Select "."->Select "."->Select "."
         menu_prompt.side_effect = ["SENSOR-1", ".", ".", "."]
         with self.store.session_scope():
-            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
