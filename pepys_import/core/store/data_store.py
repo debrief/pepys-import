@@ -616,7 +616,7 @@ class DataStore:
         :param datafile_name:  Name of Datafile
         :type datafile_name: String
         :param datafile_type: Type of Datafile
-        :type datafile_type: DatafileType
+        :type datafile_type: String
         :param file_size: Size of the file (in bytes)
         :type file_size: Integer
         :param file_hash: Hashed value of the file
@@ -624,7 +624,7 @@ class DataStore:
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :param privacy: Name of :class:`Privacy`
-        :type privacy: Privacy
+        :type privacy: String
         :return:  Created Datafile entity
         :rtype: Datafile
         """
@@ -712,11 +712,11 @@ class DataStore:
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
         :param nationality: Name of :class:`Nationality`
-        :type nationality: Nationality
+        :type nationality: String
         :param platform_type: Name of :class:`PlatformType`
-        :type platform_type: PlatformType
+        :type platform_type: String
         :param privacy: Name of :class:`Privacy`
-        :type privacy: Privacy
+        :type privacy: String
         :param trigraph: Trigraph of :class:`Platform`
         :type trigraph: String
         :param quadgraph: Quadgraph of :class:`Platform`

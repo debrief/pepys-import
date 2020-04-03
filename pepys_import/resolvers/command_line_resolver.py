@@ -21,9 +21,9 @@ class CommandLineResolver(DataResolver):
         :param datafile_name:  Name of :class`Datafile`
         :type datafile_name: String
         :param datafile_type: Type of :class`Datafile`
-        :type datafile_type: DatafileType
+        :type datafile_type: String
         :param privacy: Name of :class:`Privacy`
-        :type privacy: Privacy
+        :type privacy: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return:

@@ -83,9 +83,9 @@ class PlatformMixin:
         :param sensor_name: Name of :class:`Sensor`
         :type sensor_name: String
         :param sensor_type: Type of :class:`Sensor`
-        :type sensor_type: SensorType
+        :type sensor_type: String
         :param privacy: Privacy of :class:`Sensor`
-        :type privacy: Privacy
+        :type privacy: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created :class:`Sensor` entity
@@ -97,7 +97,9 @@ class PlatformMixin:
         if sensor:
             return sensor
 
-        if sensor_type is None or privacy is None:
+        sensor_type_obj = data_store.search_sensor_type(sensor_type)
+        privacy_obj = data_store.search_privacy(privacy)
+        if sensor_type_obj is None or privacy_obj is None:
             resolved_data = data_store.missing_data_resolver.resolve_sensor(
                 data_store, sensor_name, sensor_type, privacy, change_id
             )
@@ -105,18 +107,19 @@ class PlatformMixin:
             if isinstance(resolved_data, Sensor):
                 return resolved_data
             elif len(resolved_data) == 3:
-                (sensor_name, sensor_type, privacy,) = resolved_data
+                (sensor_name, sensor_type_obj, privacy_obj,) = resolved_data
 
         assert isinstance(
-            sensor_type, data_store.db_classes.SensorType
+            sensor_type_obj, data_store.db_classes.SensorType
         ), "Type error for Sensor Type entity"
-        # TODO: we don't use privacy for sensor. Is it necessary to resolve it?
-        # assert isinstance(privacy, Privacy), "Type error for Privacy entity"
+        assert isinstance(
+            privacy_obj, data_store.db_classes.Privacy
+        ), "Type error for Privacy entity"
 
         return Sensor().add_to_sensors(
             data_store=data_store,
             name=sensor_name,
-            sensor_type=sensor_type.name,
+            sensor_type=sensor_type_obj.name,
             host=self.name,
             change_id=change_id,
         )
