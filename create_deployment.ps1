@@ -66,7 +66,6 @@ Write-Output "INFO: Installed Python dependencies"
 Remove-Item *.zip
 Remove-Item *.7z
 Remove-Item get-pip.py
-Remove-Item .\bin\distlib-0.3.0-py2.py3-none-any.whl
 
 Write-Output "INFO: Cleaned up all except 7zip"
 
@@ -74,7 +73,7 @@ Write-Output "INFO: Cleaned up all except 7zip"
 # excluding the 7zip folder
 $date_str = Get-Date -Format "yyyyMMdd"
 $output_filename = $date_str + "_pepys-import.zip"
-.\7zip\7za.exe a .\$output_filename .\* -xr!7zip/
+.\7zip\7za.exe a .\$output_filename .\* -xr!7zip/ -xr!"bin\distlib-0.3.0-py2.py3-none-any.whl"
 
 Write-Output "INFO: Written zipped deployment file to $output_filename"
 
