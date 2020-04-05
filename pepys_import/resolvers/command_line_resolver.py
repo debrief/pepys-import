@@ -126,14 +126,21 @@ class CommandLineResolver(DataResolver):
         )
 
         if choice == str(1):
-            return self.fuzzy_search_privacy(data_store, change_id)
+            result = self.fuzzy_search_privacy(data_store, change_id)
+            if result is None:
+                return self.resolve_privacy(data_store, change_id)
+            else:
+                return result
         elif choice == str(2):
             new_privacy = prompt("Please type name of new classification: ")
             privacy = data_store.search_privacy(new_privacy)
             if privacy:
                 return privacy
-            else:
+            elif new_privacy:
                 return data_store.add_to_privacies(new_privacy, change_id)
+            else:
+                print("You haven't entered an input!")
+                return self.resolve_privacy(data_store, change_id)
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
@@ -301,7 +308,10 @@ class CommandLineResolver(DataResolver):
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
-        if choice not in completer:
+        if choice == ".":
+            print("-" * 61, "\nReturning to the previous menu\n")
+            return None
+        elif choice not in completer:
             new_choice = create_menu(
                 f"You didn't select an existing classification. "
                 f"Do you want to add '{choice}' ?",
@@ -652,6 +662,7 @@ class CommandLineResolver(DataResolver):
             chosen_nationality = self.resolve_nationality(data_store, platform_name, change_id)
 
         if chosen_nationality is None:
+            print("Nationality couldn't resolved. Returning to the previous menu!")
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
 
         # Choose Platform Type
@@ -661,6 +672,7 @@ class CommandLineResolver(DataResolver):
             chosen_platform_type = self.resolve_platform_type(data_store, platform_name, change_id)
 
         if chosen_platform_type is None:
+            print("Platform Type couldn't resolved. Returning to the previous menu!")
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
 
         # Choose Privacy
@@ -670,6 +682,7 @@ class CommandLineResolver(DataResolver):
             chosen_privacy = self.resolve_privacy(data_store, change_id)
 
         if chosen_privacy is None:
+            print("Classification couldn't resolved. Returning to the previous menu!")
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
 
         print("-" * 61)
@@ -729,6 +742,7 @@ class CommandLineResolver(DataResolver):
             sensor_type = self.resolve_sensor_type(data_store, sensor_name, change_id)
 
         if sensor_type is None:
+            print("Sensor Type couldn't resolved. Returning to the previous menu!")
             return self.resolve_sensor(data_store, sensor_name, None, None, change_id)
 
         if privacy:
@@ -737,6 +751,7 @@ class CommandLineResolver(DataResolver):
             privacy = self.resolve_privacy(data_store, change_id)
 
         if privacy is None:
+            print("Classification couldn't resolved. Returning to the previous menu!")
             return self.resolve_sensor(data_store, sensor_name, None, None, change_id)
 
         print("-" * 61)
