@@ -5,7 +5,7 @@ $url = 'https://www.python.org/ftp/python/3.7.6/python-3.7.6-embed-amd64.zip'
 (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\python.zip")
 
 # Extract zip file
-Expand-Archive -Path python.zip -DestinationPath .\python
+Expand-Archive -Path python.zip -DestinationPath .\python -Force
 Write-Output "INFO: Downloaded and extracted embedded Python"
 
 # Download and run get-pip to install pip
@@ -34,10 +34,10 @@ $url = 'http://www.gaia-gis.it/gaia-sins/windows-bin-NEXTGEN-amd64/mod_spatialit
 $url = 'http://www.7-zip.org/a/7za920.zip'
 (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\7zip.zip")
 # Put the 7zip exe in the .\7zip folder - we will delete this later
-Expand-Archive -Path 7zip.zip -DestinationPath .\7zip
+Expand-Archive -Path 7zip.zip -DestinationPath .\7zip -Force
 
 # Extract the mod_spatialite 7zip file into the lib folder (it creates its own subfolder in there)
-.\7zip\7za.exe x .\mod_spatialite.7z -olib
+.\7zip\7za.exe x .\mod_spatialite.7z -olib -y
 
 Write-Output "INFO: Downloaded and extracted mod_spatialite"
 
