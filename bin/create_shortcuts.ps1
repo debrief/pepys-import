@@ -17,8 +17,15 @@ $sendto_location = $WshShell.SpecialFolders("SendTo")
 $icon_path = [System.IO.Path]::GetFullPath(".\favicon.ico")
 $icon_string = "$icon_path,0"
 
+#
+# Add Pepys Import shortcut to Send To
+#
 
-$Shortcut = $WshShell.CreateShortcut($sendto_location + "\Pepys Import.lnk")
+$shortcut_loc = $sendto_location + "\Pepys Import.lnk"
+
+if (Test-Path $shortcut_loc) { Remove-Item $shortcut_loc; }
+
+$Shortcut = $WshShell.CreateShortcut($shortcut_loc)
 # We need to use full paths here or the shortcut will assume everything is relative to
 # C:\
 $Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import.bat")
@@ -28,7 +35,16 @@ $Shortcut.IconLocation = $icon_string
 $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
 $Shortcut.Save()
 
-$Shortcut = $WshShell.CreateShortcut($sendto_location + "\Pepys Import (no archive).lnk")
+
+#
+# Add Pepys Import (no archive) shortcut to Send To
+#
+
+$shortcut_loc = $sendto_location + "\Pepys Import (no archive).lnk"
+
+if (Test-Path $shortcut_loc) { Remove-Item $shortcut_loc; }
+
+$Shortcut = $WshShell.CreateShortcut($shortcut_loc)
 $Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_no_archive.bat")
 $Shortcut.IconLocation = $icon_string
 $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
@@ -40,6 +56,11 @@ $Shortcut.Save()
 
 # Get the User's Start Menu folder
 $startmenu_location = "$env:USERPROFILE\Start Menu\Programs\"
+
+# Delete Pepys folder in Start Menu if it exists
+$pepys_folder = $startmenu_location + "\Pepys"
+
+if (Test-Path $pepys_folder) { Remove-Item $pepys_folder -Recurse ; }
 
 # Create Pepys folder in Start Menu
 New-Item -Path $startmenu_location -Name "Pepys" -ItemType "directory"
