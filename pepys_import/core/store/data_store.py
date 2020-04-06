@@ -1078,7 +1078,7 @@ class DataStore:
 
     def get_cached_comment_type_name(self, comment_type_id):
         """
-        Get comment type name from cache on either "comment_type_id"
+        Get comment type name from cache on "comment_type_id"
         If name is not found in the cache, sytem will load from the data store,
         and add it into cache.
         """
