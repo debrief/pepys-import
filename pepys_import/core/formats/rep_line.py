@@ -27,7 +27,6 @@ def parse_timestamp(date, time):
     return parsed_timestamp
 
 
-
 class REPLine:
     def __init__(self, line_number, line, separator):
         self.importer_name = "Replay File Format Importer"
@@ -113,9 +112,17 @@ class REPLine:
             return False
 
         self.timestamp = parse_timestamp(date_token.text, time_token.text)
-        combine_tokens(date_token, time_token).record(
-            self.importer_name, "timestamp", self.timestamp
-        )
+        if self.timestamp:
+            combine_tokens(date_token, time_token).record(
+                self.importer_name, "timestamp", self.timestamp
+            )
+        else:
+            errors.append(
+                {
+                    error_type: f"Line {self.line_num}. Error in timestamp parsing {date_token.text} {time_token.text}."
+                }
+            )
+            return False
 
         self.vessel = vessel_name_token.text.strip('"')
         vessel_name_token.record(self.importer_name, "vessel name", self.vessel)
