@@ -2,7 +2,6 @@ import datetime
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
-from math import isnan
 
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
