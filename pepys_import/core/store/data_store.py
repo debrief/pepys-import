@@ -324,7 +324,7 @@ class DataStore:
         self.add_to_logs(table=constants.STATE, row_id=state_obj.state_id, change_id=change_id)
         return state_obj
 
-    def add_to_sensors(self, name, sensor_type, host, change_id):
+    def add_to_sensors(self, name, sensor_type, host, privacy, change_id):
         """
         Adds the specified sensor to the :class:`Sensor` table if not already present.
 
@@ -334,18 +334,24 @@ class DataStore:
         :type sensor_type: :class:`SensorType`
         :param host: Platform of sensor
         :type host: Platform
+        :param privacy: :class:`Privacy` of :class:`State`
+        :type privacy: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created Sensor entity
         """
         sensor_type = self.search_sensor_type(sensor_type)
         host = self.search_platform(host)
+        privacy = self.search_privacy(privacy)
 
-        if sensor_type is None or host is None:
-            raise Exception(f"There is missing value(s) in '{sensor_type}, {host}'!")
+        if sensor_type is None or host is None or privacy is None:
+            raise Exception(f"There is missing value(s) in '{sensor_type}, {host}, {privacy}'!")
 
         sensor_obj = self.db_classes.Sensor(
-            name=name, sensor_type_id=sensor_type.sensor_type_id, host=host.platform_id,
+            name=name,
+            sensor_type_id=sensor_type.sensor_type_id,
+            host=host.platform_id,
+            privacy_id=privacy.privacy_id,
         )
         self.session.add(sensor_obj)
         self.session.flush()
