@@ -46,6 +46,7 @@ class Sensor(BaseSpatiaLite, SensorMixin):
     name = Column(String(150), nullable=False)
     sensor_type_id = Column(Integer, nullable=False)
     host = Column(Integer, nullable=False)
+    privacy_id = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
