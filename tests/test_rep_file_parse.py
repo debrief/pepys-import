@@ -65,6 +65,26 @@ class BasicTests(unittest.TestCase):
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
+        # invalid date (but right length)
+        rep_line = REPLine(
+            1,
+            create_test_line_object(
+                "100143\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel"
+            ),
+            " ",
+        )
+        self.assertFalse(rep_line.parse(self.error, self.message))
+
+        # invalid time (but right length)
+        rep_line = REPLine(
+            1,
+            create_test_line_object(
+                "100112\t129800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel"
+            ),
+            " ",
+        )
+        self.assertFalse(rep_line.parse(self.error, self.message))
+
         # wrong length symbology
         rep_line = REPLine(
             1,
