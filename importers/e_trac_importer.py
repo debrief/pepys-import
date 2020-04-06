@@ -111,10 +111,9 @@ class ETracImporter(Importer):
         lon_success = location.set_longitude_decimal_degrees(long_degrees_token.text)
         if lat_success and lon_success:
             state.location = location
-
-        combine_tokens(long_degrees_token, lat_degrees_token).record(
-            self.name, "location", state.location, "decimal degrees"
-        )
+            combine_tokens(long_degrees_token, lat_degrees_token).record(
+                self.name, "location", state.location, "decimal degrees"
+            )
 
         elevation = convert_distance(altitude_token.text) * unit_registry.metre
         if elevation:
