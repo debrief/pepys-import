@@ -5,12 +5,6 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from sqlalchemy import create_engine, inspect, or_
-from sqlalchemy.event import listen
-from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import func, select
-
 from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import import __version__
 from pepys_import.core.formats import unit_registry
@@ -21,6 +15,11 @@ from pepys_import.utils.branding_util import show_software_meta_info, show_welco
 from pepys_import.utils.data_store_utils import import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
 from pepys_import.utils.value_transforming_utils import format_datetime
+from sqlalchemy import create_engine, inspect, or_
+from sqlalchemy.event import listen
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql import func, select
 
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
@@ -345,7 +344,10 @@ class DataStore:
         privacy = self.search_privacy(privacy)
 
         if sensor_type is None or host is None or privacy is None:
-            raise Exception(f"There is missing value(s) in '{sensor_type}, {host}, {privacy}'!")
+            raise Exception(
+                f"There are missing value(s) in 'Sensor:{sensor_type},"
+                f" Host:{host}, Privacy:{privacy}'!"
+            )
 
         sensor_obj = self.db_classes.Sensor(
             name=name,
