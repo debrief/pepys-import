@@ -18,10 +18,10 @@ config.read(CONFIG_FILE_PATH)
 assert config.has_section("database"), f"'database' section couldn't find in '{CONFIG_FILE_PATH}'!"
 
 # Fetch database section
-DB_USERNAME = config.get("database", "db_username")
-DB_PASSWORD = config.get("database", "db_password")
-DB_HOST = config.get("database", "db_host")
-DB_PORT = config.getint("database", "db_port")
+DB_USERNAME = config.get("database", "db_username", fallback="")
+DB_PASSWORD = config.get("database", "db_password", fallback="")
+DB_HOST = config.get("database", "db_host", fallback="")
+DB_PORT = config.getint("database", "db_port", fallback=0)
 DB_NAME = config.get("database", "db_name")
 DB_TYPE = config.get("database", "db_type")
 
@@ -36,9 +36,9 @@ assert config.has_section("archive"), f"'archive' section couldn't find in '{CON
 # Fetch archive section
 # TODO: The following username and password might be necessary when files are tried to be moved to
 # the archive path
-ARCHIVE_USER = config.get("archive", "user")
-ARCHIVE_PASSWORD = config.get("archive", "password")
-ARCHIVE_PATH = config.get("archive", "path")
+ARCHIVE_USER = config.get("archive", "user", fallback="")
+ARCHIVE_PASSWORD = config.get("archive", "password", fallback="")
+ARCHIVE_PATH = config.get("archive", "path", fallback=None)
 
 # Process user and password if necessary
 if ARCHIVE_USER.startswith("_") and ARCHIVE_USER.endswith("_"):
@@ -49,6 +49,6 @@ if ARCHIVE_PASSWORD.startswith("_") and ARCHIVE_PASSWORD.endswith("_"):
 assert config.has_section("local"), f"'local' section couldn't find in '{CONFIG_FILE_PATH}'!"
 
 # Fetch local section
-LOCAL_PARSERS = config.get("local", "parsers")
-LOCAL_BASIC_TESTS = config.get("local", "basic_tests")
-LOCAL_ENHANCED_TESTS = config.get("local", "enhanced_tests")
+LOCAL_PARSERS = config.get("local", "parsers", fallback="")
+LOCAL_BASIC_TESTS = config.get("local", "basic_tests", fallback="")
+LOCAL_ENHANCED_TESTS = config.get("local", "enhanced_tests", fallback="")
