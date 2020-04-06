@@ -19,7 +19,13 @@ def parse_timestamp(date, time):
     else:
         format_str += "%H%M%S.%f"
 
-    return datetime.strptime(date + time, format_str)
+    try:
+        parsed_timestamp = datetime.strptime(date + time, format_str)
+    except ValueError:
+        return False
+
+    return parsed_timestamp
+
 
 
 class REPLine:

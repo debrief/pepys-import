@@ -92,7 +92,8 @@ class ReplayCommentImporter(Importer):
             comment_type = data_store.add_to_comment_types(comment_type, change_id)
 
             timestamp = parse_timestamp(date_token.text, time_token.text)
-            combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp)
+            if timestamp:
+                combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp)
 
             message = " ".join([t.text for t in message_tokens])
             combine_tokens(*message_tokens).record(self.name, "message", message)
