@@ -5,7 +5,7 @@ $url = 'https://www.python.org/ftp/python/3.7.6/python-3.7.6-embed-amd64.zip'
 (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\python.zip")
 
 # Extract zip file
-Expand-Archive -Path python.zip -DestinationPath .\python
+Expand-Archive -Path python.zip -DestinationPath .\python -Force
 Write-Output "INFO: Downloaded and extracted embedded Python"
 
 # Download and run get-pip to install pip
@@ -34,10 +34,10 @@ $url = 'http://www.gaia-gis.it/gaia-sins/windows-bin-NEXTGEN-amd64/mod_spatialit
 $url = 'http://www.7-zip.org/a/7za920.zip'
 (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\7zip.zip")
 # Put the 7zip exe in the .\7zip folder - we will delete this later
-Expand-Archive -Path 7zip.zip -DestinationPath .\7zip
+Expand-Archive -Path 7zip.zip -DestinationPath .\7zip -Force
 
 # Extract the mod_spatialite 7zip file into the lib folder (it creates its own subfolder in there)
-.\7zip\7za.exe x .\mod_spatialite.7z -olib
+.\7zip\7za.exe x .\mod_spatialite.7z -olib -y
 
 Write-Output "INFO: Downloaded and extracted mod_spatialite"
 
@@ -66,7 +66,6 @@ Write-Output "INFO: Installed Python dependencies"
 Remove-Item *.zip
 Remove-Item *.7z
 Remove-Item get-pip.py
-Remove-Item .\bin\distlib-0.3.0-py2.py3-none-any.whl
 
 Write-Output "INFO: Cleaned up all except 7zip"
 
@@ -74,7 +73,7 @@ Write-Output "INFO: Cleaned up all except 7zip"
 # excluding the 7zip folder
 $date_str = Get-Date -Format "yyyyMMdd"
 $output_filename = $date_str + "_pepys-import.zip"
-.\7zip\7za.exe a .\$output_filename .\* -xr!7zip/
+.\7zip\7za.exe a .\$output_filename .\* -xr!7zip/ -xr!"bin\distlib-0.3.0-py2.py3-none-any.whl"
 
 Write-Output "INFO: Written zipped deployment file to $output_filename"
 
