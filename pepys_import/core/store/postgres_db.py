@@ -55,6 +55,9 @@ class Sensor(BasePostGIS, SensorMixin):
         UUID(as_uuid=True), ForeignKey("pepys.SensorTypes.sensor_type_id"), nullable=False,
     )
     host = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False)
+    privacy_id = Column(
+        UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"), nullable=False
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 

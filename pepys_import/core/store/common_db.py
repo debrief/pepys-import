@@ -46,13 +46,16 @@ class SensorMixin:
         )
 
     @classmethod
-    def add_to_sensors(cls, data_store, name, sensor_type, host, change_id):
+    def add_to_sensors(cls, data_store, name, sensor_type, host, privacy_id, change_id):
         session = data_store.session
         sensor_type = data_store.db_classes.SensorType().search_sensor_type(data_store, sensor_type)
         host = data_store.db_classes.Platform().search_platform(data_store, host)
 
         sensor_obj = data_store.db_classes.Sensor(
-            name=name, sensor_type_id=sensor_type.sensor_type_id, host=host.platform_id,
+            name=name,
+            sensor_type_id=sensor_type.sensor_type_id,
+            privacy_id=privacy_id,
+            host=host.platform_id,
         )
         session.add(sensor_obj)
         session.flush()
@@ -121,6 +124,7 @@ class PlatformMixin:
             name=sensor_name,
             sensor_type=sensor_type_obj.name,
             host=self.name,
+            privacy_id=privacy_obj.privacy_id,
             change_id=change_id,
         )
 
