@@ -85,11 +85,29 @@ class PrivacyTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_cancelling_resolver_privacy(self, menu_prompt):
         """Test whether "." cancels the resolve privacy and returns None"""
-        menu_prompt.side_effect = ["."]
+        menu_prompt.side_effect = [".", "1", ".", "."]
+        temp_output = StringIO()
         with self.store.session_scope():
             # Select "."
             privacy = self.resolver.resolve_privacy(self.store, self.change_id)
             self.assertIsNone(privacy)
+
+            with redirect_stdout(temp_output):
+                privacy = self.resolver.resolve_privacy(self.store, self.change_id)
+            assert privacy is None
+        output = temp_output.getvalue()
+        assert "Returning to the previous menu" in output
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolve_privacy_empty_input(self, resolver_prompt, menu_prompt):
+        resolver_prompt.side_effect = [""]
+        menu_prompt.side_effect = ["2", "."]
+        temp_output = StringIO()
+        with self.store.session_scope(), redirect_stdout(temp_output):
+            self.resolver.resolve_privacy(self.store, self.change_id)
+        output = temp_output.getvalue()
+        assert "You haven't entered an input!" in output
 
 
 class NationalityTestCase(unittest.TestCase):
