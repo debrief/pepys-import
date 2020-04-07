@@ -31,8 +31,6 @@ if DB_USERNAME.startswith("_") and DB_USERNAME.endswith("_"):
 if DB_PASSWORD.startswith("_") and DB_PASSWORD.startswith("_"):
     DB_PASSWORD = process(DB_PASSWORD[1:-1])
 
-assert config.has_section("archive"), f"'archive' section couldn't find in '{CONFIG_FILE_PATH}'!"
-
 # Fetch archive section
 # TODO: The following username and password might be necessary when files are tried to be moved to
 # the archive path
@@ -45,8 +43,6 @@ if ARCHIVE_USER.startswith("_") and ARCHIVE_USER.endswith("_"):
     ARCHIVE_USER = process(ARCHIVE_USER[1:-1])
 if ARCHIVE_PASSWORD.startswith("_") and ARCHIVE_PASSWORD.endswith("_"):
     ARCHIVE_PASSWORD = process(ARCHIVE_PASSWORD[1:-1])
-
-assert config.has_section("local"), f"'local' section couldn't find in '{CONFIG_FILE_PATH}'!"
 
 # Fetch local section
 LOCAL_PARSERS = config.get("local", "parsers", fallback="")
