@@ -45,7 +45,7 @@ class CommandLineResolver(DataResolver):
         if privacy:
             chosen_privacy = data_store.add_to_privacies(privacy, change_id)
         else:
-            chosen_privacy = self.resolve_privacy(data_store, change_id)
+            chosen_privacy = self.resolve_privacy(data_store, change_id, data_type="datafile")
 
         if chosen_privacy is None:
             print("Quitting")
@@ -113,22 +113,22 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
-    def resolve_privacy(self, data_store, change_id):
+    def resolve_privacy(self, data_store, change_id, data_type):
         # Choose Privacy
         privacy_names = [
             "Search an existing classification",
             "Add a new classification",
         ]
         choice = create_menu(
-            f"Ok, please provide classification for new entry: ",
+            f"Ok, please provide classification for new {data_type}: ",
             privacy_names,
             validate_method=is_valid,
         )
 
         if choice == str(1):
-            result = self.fuzzy_search_privacy(data_store, change_id)
+            result = self.fuzzy_search_privacy(data_store, change_id, data_type)
             if result is None:
-                return self.resolve_privacy(data_store, change_id)
+                return self.resolve_privacy(data_store, change_id, data_type)
             else:
                 return result
         elif choice == str(2):
@@ -140,7 +140,7 @@ class CommandLineResolver(DataResolver):
                 return data_store.add_to_privacies(new_privacy, change_id)
             else:
                 print("You haven't entered an input!")
-                return self.resolve_privacy(data_store, change_id)
+                return self.resolve_privacy(data_store, change_id, data_type)
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
@@ -286,7 +286,7 @@ class CommandLineResolver(DataResolver):
             print(f"'{choice}' could not found! Redirecting to adding a new sensor..")
             return self.add_to_sensors(data_store, sensor_name, sensor_type, privacy, change_id)
 
-    def fuzzy_search_privacy(self, data_store, change_id):
+    def fuzzy_search_privacy(self, data_store, change_id, data_type):
         """
         This method parses all privacies in the DB, and uses fuzzy search when
         user is typing. If user enters a new value, it adds to Privacy table or searches
@@ -297,6 +297,8 @@ class CommandLineResolver(DataResolver):
         :type data_store: DataStore
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
+        :param data_type: Type of the data: datafile, platform or sensor
+        :type data_type: String
         :return:
         """
 
@@ -321,10 +323,10 @@ class CommandLineResolver(DataResolver):
             if new_choice == str(1):
                 return data_store.add_to_privacies(choice, change_id)
             elif new_choice == str(2):
-                return self.fuzzy_search_privacy(data_store, change_id)
+                return self.fuzzy_search_privacy(data_store, change_id, data_type)
             elif new_choice == ".":
                 print("-" * 61, "\nReturning to the previous menu\n")
-                return self.resolve_privacy(data_store, change_id)
+                return self.resolve_privacy(data_store, change_id, data_type)
         else:
             return (
                 data_store.session.query(data_store.db_classes.Privacy)
@@ -679,7 +681,7 @@ class CommandLineResolver(DataResolver):
         if privacy:
             chosen_privacy = data_store.add_to_privacies(privacy, change_id)
         else:
-            chosen_privacy = self.resolve_privacy(data_store, change_id)
+            chosen_privacy = self.resolve_privacy(data_store, change_id, data_type="Platform")
 
         if chosen_privacy is None:
             print("Classification couldn't resolved. Returning to the previous menu!")
@@ -748,7 +750,7 @@ class CommandLineResolver(DataResolver):
         if privacy:
             privacy = data_store.add_to_privacies(privacy, change_id)
         else:
-            privacy = self.resolve_privacy(data_store, change_id)
+            privacy = self.resolve_privacy(data_store, change_id, data_type="Sensor")
 
         if privacy is None:
             print("Classification couldn't resolved. Returning to the previous menu!")

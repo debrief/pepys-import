@@ -30,7 +30,7 @@ class PrivacyTestCase(unittest.TestCase):
         # Select "Yes"
         menu_prompt.side_effect = ["1", "PRIVACY-TEST", "1"]
         with self.store.session_scope():
-            privacy = self.resolver.resolve_privacy(self.store, self.change_id)
+            privacy = self.resolver.resolve_privacy(self.store, self.change_id, "")
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -41,7 +41,7 @@ class PrivacyTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["1", "PRIVACY-TEST"]
         with self.store.session_scope():
             self.store.add_to_privacies("PRIVACY-TEST", self.change_id)
-            privacy = self.resolver.resolve_privacy(self.store, self.change_id)
+            privacy = self.resolver.resolve_privacy(self.store, self.change_id, "")
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -56,7 +56,7 @@ class PrivacyTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["PRIVACY-TEST"]
         with self.store.session_scope():
             self.store.add_to_privacies("PRIVACY-TEST", self.change_id)
-            privacy = self.resolver.resolve_privacy(self.store, self.change_id)
+            privacy = self.resolver.resolve_privacy(self.store, self.change_id, "")
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -69,7 +69,7 @@ class PrivacyTestCase(unittest.TestCase):
         with self.store.session_scope():
             self.store.add_to_privacies("PRIVACY-1", self.change_id)
             self.store.add_to_privacies("PRIVACY-2", self.change_id)
-            privacy = self.resolver.resolve_privacy(self.store, self.change_id)
+            privacy = self.resolver.resolve_privacy(self.store, self.change_id, "")
             self.assertEqual(privacy.name, "PRIVACY-1")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -79,7 +79,7 @@ class PrivacyTestCase(unittest.TestCase):
         # Search "TEST"->Select "."->Select "."
         menu_prompt.side_effect = ["TEST", ".", "."]
         with self.store.session_scope():
-            privacy = self.resolver.fuzzy_search_privacy(self.store, self.change_id)
+            privacy = self.resolver.fuzzy_search_privacy(self.store, self.change_id, "")
             self.assertIsNone(privacy)
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -89,11 +89,11 @@ class PrivacyTestCase(unittest.TestCase):
         temp_output = StringIO()
         with self.store.session_scope():
             # Select "."
-            privacy = self.resolver.resolve_privacy(self.store, self.change_id)
+            privacy = self.resolver.resolve_privacy(self.store, self.change_id, "")
             self.assertIsNone(privacy)
 
             with redirect_stdout(temp_output):
-                privacy = self.resolver.resolve_privacy(self.store, self.change_id)
+                privacy = self.resolver.resolve_privacy(self.store, self.change_id, "")
             assert privacy is None
         output = temp_output.getvalue()
         assert "Returning to the previous menu" in output
@@ -105,7 +105,7 @@ class PrivacyTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["2", "."]
         temp_output = StringIO()
         with self.store.session_scope(), redirect_stdout(temp_output):
-            self.resolver.resolve_privacy(self.store, self.change_id)
+            self.resolver.resolve_privacy(self.store, self.change_id, "")
         output = temp_output.getvalue()
         assert "You haven't entered an input!" in output
 
