@@ -33,9 +33,9 @@ them to the user's *Send To* folder.
 Usage
 -----
 To import datafiles using pepys-import, right-click on an individual datafile or a folder containing datafiles
-and choose either *Pepys Import* or *Pepys Import (persist)* from the *Send To* sub-menu.
+and choose either *Pepys Import* or *Pepys Import (No archive)* from the *Send To* sub-menu.
 
-*Pepys Import* will simply try importing the file and display any errors, whereas *Pepys Import (persist)* will
+*Pepys Import* will simply try importing the file and display any errors, whereas *Pepys Import (No archive)* will
 import into a SQLite database called ``pepys.db`` located in the same folder as the imported datafiles.
 
 To run the standalone Python distribution included with pepys-import, run the ``run_python.bat`` file in the
