@@ -115,7 +115,9 @@ class ETracImporter(Importer):
                 self.name, "location", state.location, "decimal degrees"
             )
 
-        elevation = convert_distance(altitude_token.text) * unit_registry.metre
+        elevation = convert_distance(
+            altitude_token.text, unit_registry.metre, self.errors, self.error_type
+        )
         if elevation:
             state.elevation = elevation
             altitude_token.record(self.name, "altitude", state.elevation)
