@@ -23,6 +23,6 @@ Use links on the left to learn about how to install and run Pepys-Import.
 More details on the structure and API of pepys-import is available in the full documentation: |docs|
 
 .. |docs| image:: https://readthedocs.org/projects/pepys-import/badge/?version=latest
-  :target:  https://pepys-import.readthedocs.io/modules.html
+  :target:  modules.html
 
 
