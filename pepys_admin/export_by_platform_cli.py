@@ -34,7 +34,7 @@ class ExportByPlatformNameShell(cmd.Cmd):
 
         folder_completer = PathCompleter(only_directories=True, expanduser=True)
         folder_path = prompt(
-            "Please provide a folder path for the exported file:",
+            "Please provide a folder path for the exported file: ",
             default="~/",
             completer=folder_completer,
         )
