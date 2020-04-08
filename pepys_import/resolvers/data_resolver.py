@@ -45,7 +45,7 @@ class DataResolver(ABC):
         """
 
     @abstractmethod
-    def resolve_privacy(self, data_store, change_id):
+    def resolve_privacy(self, data_store, change_id, data_type):
         """
         Implementation method should return any data necessary to create a privacy.
         Currently: name
@@ -54,6 +54,8 @@ class DataResolver(ABC):
         :type data_store: DataStore
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
+        :param data_type: Type of the data: datafile, platform or sensor
+        :type data_type: String
         :return:
         """
 

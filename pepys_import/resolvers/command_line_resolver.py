@@ -45,7 +45,7 @@ class CommandLineResolver(DataResolver):
         if privacy:
             chosen_privacy = data_store.add_to_privacies(privacy, change_id)
         else:
-            chosen_privacy = self.resolve_privacy(data_store, change_id)
+            chosen_privacy = self.resolve_privacy(data_store, change_id, data_type="datafile")
 
         if chosen_privacy is None:
             print("Quitting")
@@ -113,27 +113,34 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
-    def resolve_privacy(self, data_store, change_id):
+    def resolve_privacy(self, data_store, change_id, data_type):
         # Choose Privacy
         privacy_names = [
             "Search an existing classification",
             "Add a new classification",
         ]
         choice = create_menu(
-            f"Ok, please provide classification for new entry: ",
+            f"Ok, please provide classification for new {data_type}: ",
             privacy_names,
             validate_method=is_valid,
         )
 
         if choice == str(1):
-            return self.fuzzy_search_privacy(data_store, change_id)
+            result = self.fuzzy_search_privacy(data_store, change_id, data_type)
+            if result is None:
+                return self.resolve_privacy(data_store, change_id, data_type)
+            else:
+                return result
         elif choice == str(2):
             new_privacy = prompt("Please type name of new classification: ")
             privacy = data_store.search_privacy(new_privacy)
             if privacy:
                 return privacy
-            else:
+            elif new_privacy:
                 return data_store.add_to_privacies(new_privacy, change_id)
+            else:
+                print("You haven't entered an input!")
+                return self.resolve_privacy(data_store, change_id, data_type)
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
@@ -279,7 +286,7 @@ class CommandLineResolver(DataResolver):
             print(f"'{choice}' could not found! Redirecting to adding a new sensor..")
             return self.add_to_sensors(data_store, sensor_name, sensor_type, privacy, change_id)
 
-    def fuzzy_search_privacy(self, data_store, change_id):
+    def fuzzy_search_privacy(self, data_store, change_id, data_type):
         """
         This method parses all privacies in the DB, and uses fuzzy search when
         user is typing. If user enters a new value, it adds to Privacy table or searches
@@ -290,6 +297,8 @@ class CommandLineResolver(DataResolver):
         :type data_store: DataStore
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
+        :param data_type: Type of the data: datafile, platform or sensor
+        :type data_type: String
         :return:
         """
 
@@ -301,7 +310,10 @@ class CommandLineResolver(DataResolver):
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
-        if choice not in completer:
+        if choice == ".":
+            print("-" * 61, "\nReturning to the previous menu\n")
+            return None
+        elif choice not in completer:
             new_choice = create_menu(
                 f"You didn't select an existing classification. "
                 f"Do you want to add '{choice}' ?",
@@ -311,10 +323,10 @@ class CommandLineResolver(DataResolver):
             if new_choice == str(1):
                 return data_store.add_to_privacies(choice, change_id)
             elif new_choice == str(2):
-                return self.fuzzy_search_privacy(data_store, change_id)
+                return self.fuzzy_search_privacy(data_store, change_id, data_type)
             elif new_choice == ".":
                 print("-" * 61, "\nReturning to the previous menu\n")
-                return self.resolve_privacy(data_store, change_id)
+                return self.resolve_privacy(data_store, change_id, data_type)
         else:
             return (
                 data_store.session.query(data_store.db_classes.Privacy)
@@ -652,6 +664,7 @@ class CommandLineResolver(DataResolver):
             chosen_nationality = self.resolve_nationality(data_store, platform_name, change_id)
 
         if chosen_nationality is None:
+            print("Nationality couldn't resolved. Returning to the previous menu!")
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
 
         # Choose Platform Type
@@ -661,15 +674,17 @@ class CommandLineResolver(DataResolver):
             chosen_platform_type = self.resolve_platform_type(data_store, platform_name, change_id)
 
         if chosen_platform_type is None:
+            print("Platform Type couldn't resolved. Returning to the previous menu!")
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
 
         # Choose Privacy
         if privacy:
             chosen_privacy = data_store.add_to_privacies(privacy, change_id)
         else:
-            chosen_privacy = self.resolve_privacy(data_store, change_id)
+            chosen_privacy = self.resolve_privacy(data_store, change_id, data_type="Platform")
 
         if chosen_privacy is None:
+            print("Classification couldn't resolved. Returning to the previous menu!")
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
 
         print("-" * 61)
@@ -729,14 +744,16 @@ class CommandLineResolver(DataResolver):
             sensor_type = self.resolve_sensor_type(data_store, sensor_name, change_id)
 
         if sensor_type is None:
+            print("Sensor Type couldn't resolved. Returning to the previous menu!")
             return self.resolve_sensor(data_store, sensor_name, None, None, change_id)
 
         if privacy:
             privacy = data_store.add_to_privacies(privacy, change_id)
         else:
-            privacy = self.resolve_privacy(data_store, change_id)
+            privacy = self.resolve_privacy(data_store, change_id, data_type="Sensor")
 
         if privacy is None:
+            print("Classification couldn't resolved. Returning to the previous menu!")
             return self.resolve_sensor(data_store, sensor_name, None, None, change_id)
 
         print("-" * 61)
