@@ -81,7 +81,7 @@ class DataStoreExportPostGISDBTestCase(unittest.TestCase):
                 in data
             )
             assert (
-                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\t106.83\t123.4\t432.10\tSENSOR\tN/A"
+                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\t106.83\t123.40\t432.10\tSENSOR\tN/A"
                 in data
             )
             assert (
@@ -134,7 +134,7 @@ class DataStoreExportSpatiaLiteTestCase(unittest.TestCase):
                 in data
             )
             assert (
-                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\t106.83\t123.4\t432.10\tSENSOR\tN/A"
+                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\t106.83\t123.40\t432.10\tSENSOR\tN/A"
                 in data
             )
             assert (
