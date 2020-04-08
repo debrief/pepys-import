@@ -1366,10 +1366,12 @@ class DataStore:
 
                     contact_rep_line.insert(
                         6,
-                        f"contact.ambig_bearing.magnitude:.2f" if contact.ambig_bearing else "NULL",
+                        f"{contact.ambig_bearing.magnitude:.2f}"
+                        if contact.ambig_bearing
+                        else "NULL",
                     )
                     contact_rep_line.insert(
-                        7, f"contact.freq.magnitude:.2f" if contact.freq else "NULL",
+                        7, f"{contact.freq.magnitude:.2f}" if contact.freq else "NULL",
                     )
                 else:
                     contact_rep_line.insert(0, ";SENSOR:")
