@@ -18,7 +18,7 @@ getting started as a developer.
 Online documentation
 --------------------
 
-Use links on the left to learn about how to install and run Pepys-Import.
+Use the links on the left to learn about how to install and run Pepys-Import.
 
 More details on the structure and API of pepys-import is available in the full documentation: |docs|
 
