@@ -68,11 +68,12 @@ class DataStore:
         connection_string = "{}://{}:{}@{}:{}/{}".format(
             driver, db_username, db_password, db_host, db_port, db_name
         )
-        self.engine = create_engine(connection_string, echo=False)
 
         if db_type == "postgres":
+            self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
             BasePostGIS.metadata.bind = self.engine
         elif db_type == "sqlite":
+            self.engine = create_engine(connection_string, echo=False)
             listen(self.engine, "connect", load_spatialite)
             BaseSpatiaLite.metadata.bind = self.engine
 
