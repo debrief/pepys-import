@@ -1,7 +1,7 @@
 import cmd
 import os
 
-from prompt_toolkit import prompt
+from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion.filesystem import PathCompleter
 
 
@@ -33,10 +33,11 @@ class ExportByPlatformNameShell(cmd.Cmd):
         export_file_name = file_name or default_export_name
 
         folder_completer = PathCompleter(only_directories=True, expanduser=True)
-        folder_path = prompt(
+        folder_path = ptk_prompt(
             "Please provide a folder path for the exported file: ",
             default="~/",
             completer=folder_completer,
+            complete_while_typing=True,
         )
 
         export_file_full_path = os.path.expanduser(os.path.join(folder_path, export_file_name))

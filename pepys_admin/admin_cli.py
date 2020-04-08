@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 
 from iterfzf import iterfzf
-from prompt_toolkit import prompt
+from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion.filesystem import PathCompleter
 
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
@@ -56,10 +56,11 @@ class AdminShell(cmd.Cmd):
         export_flag = input(f"Do you want to export {selected_datafile}? (Y/n)\n")
         if export_flag in ["", "Y", "y"]:
             folder_completer = PathCompleter(only_directories=True, expanduser=True)
-            folder_path = prompt(
+            folder_path = ptk_prompt(
                 "Please provide a folder path for the exported file: ",
                 default="~/",
                 completer=folder_completer,
+                complete_while_typing=True,
             )
 
             datafile_name = f"exported_{selected_datafile.replace('.', '_')}.rep"
