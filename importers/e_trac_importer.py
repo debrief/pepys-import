@@ -116,7 +116,7 @@ class ETracImporter(Importer):
             )
 
         elevation = convert_distance(
-            altitude_token.text, unit_registry.metre, self.errors, self.error_type
+            altitude_token.text, unit_registry.metre, line_number, self.errors, self.error_type
         )
         if elevation:
             state.elevation = elevation
