@@ -110,9 +110,17 @@ class NMEAImporter(Importer):
                     change_id=change_id,
                 )
                 timestamp = self.parse_timestamp(self.date, self.time)
-                combine_tokens(self.date_token, self.time_token).record(
-                    self.name, "timestamp", timestamp
-                )
+                if timestamp:
+                    combine_tokens(self.date_token, self.time_token).record(
+                        self.name, "timestamp", timestamp
+                    )
+                else:
+                    self.errors.append(
+                        {
+                            self.error_type: f"Line {line_number}. Error in timestamp value {self.date} {self.time}. "
+                            f"Couldn't convert to a datetime"
+                        }
+                    )
 
                 state = datafile.create_state(
                     data_store, platform, sensor, timestamp, self.short_name
@@ -147,14 +155,14 @@ class NMEAImporter(Importer):
                 )
                 if heading:
                     state.heading = heading
-                self.heading_token.record(self.name, "heading", heading)
+                    self.heading_token.record(self.name, "heading", heading)
 
                 speed = convert_speed(
                     self.speed, unit_registry.knots, line_number, self.errors, self.error_type,
                 )
                 if speed:
                     state.speed = speed
-                self.speed_token.record(self.name, "speed", speed)
+                    self.speed_token.record(self.name, "speed", speed)
 
                 if self.depth is not None:
                     depth = convert_distance(
@@ -162,7 +170,7 @@ class NMEAImporter(Importer):
                     )
                     if depth:
                         state.elevation = -1 * depth
-                    self.depth_token.record(self.name, "depth", depth)
+                        self.depth_token.record(self.name, "depth", depth)
 
                 self.date = None
                 self.time = None
@@ -187,4 +195,9 @@ class NMEAImporter(Importer):
         else:
             format_str += "%H%M%S.%f"
 
-        return datetime.strptime(date + time, format_str)
+        try:
+            parsed_timestamp = datetime.strptime(date + time, format_str)
+        except ValueError:
+            return False
+
+        return parsed_timestamp
