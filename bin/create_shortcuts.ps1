@@ -70,3 +70,11 @@ $Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_admin.bat")
 $Shortcut.IconLocation = $icon_string
 $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
 $Shortcut.Save()
+
+#
+# Add Pepys bin folder to User's PATH variable
+#
+[Environment]::SetEnvironmentVariable(
+    "PATH",
+    [Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::User) + ";" + [System.IO.Path]::GetFullPath("."),
+    [EnvironmentVariableTarget]::User)
