@@ -60,6 +60,13 @@ class DataStoreExportPostGISDBTestCase(unittest.TestCase):
             with open(self.path, "r") as file:
                 data = file.read().split("\n")
 
+            print("-" * 80)
+            for line in data:
+                print(line)
+            print("-" * 80)
+            print(data)
+            print("-" * 80)
+
             assert (
                 "100112 115800.000\tSUBJECT\tAA\t60 23 40.25 N\t000 01 25.86 E\t109.08\t6.00\t0.0"
                 in data
