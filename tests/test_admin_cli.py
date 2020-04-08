@@ -504,11 +504,11 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
             "0.0" in data
         )
         assert (
-            ";SENSOR:\t100112 121000.000\tSEARCH_PLATFORM\t@@\tNULL\t253.29\tNULL\tSEARCH_PLATFORM\tN/A"
+            ";SENSOR2:\t100112 121000.000\tSEARCH_PLATFORM\t@@\tNULL\t253.29\t106.38\tNULL\tNULL\tSEARCH_PLATFORM\tN/A"
             in data
         )
         assert (
-            ";SENSOR:\t100112 121200.000\tSEARCH_PLATFORM\t@@\tNULL\t253.75\tNULL\tSEARCH_PLATFORM\tN/A"
+            ";SENSOR2:\t100112 121200.000\tSEARCH_PLATFORM\t@@\tNULL\t253.75\t105.92\tNULL\tNULL\tSEARCH_PLATFORM\tN/A"
             in data
         )
 
