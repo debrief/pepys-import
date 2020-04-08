@@ -64,7 +64,7 @@ class DefaultResolver(DataResolver):
 
         return sensor_name, sensor_type, privacy
 
-    def resolve_privacy(self, data_store, change_id):
+    def resolve_privacy(self, data_store, change_id, data_type=None):
         # needs to establish defaults for privacy
         privacy = data_store.search_privacy(self.default_privacy)
         if not privacy:
