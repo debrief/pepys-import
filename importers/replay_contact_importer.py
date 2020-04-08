@@ -184,14 +184,6 @@ class ReplayContactImporter(Importer):
 
                 location = loc
 
-            if bearing_token.text.upper() == "NULL":
-                bearing = None
-            else:
-                bearing = convert_absolute_angle(
-                    bearing_token.text, line, self.errors, self.error_type
-                )
-                bearing_token.record(self.name, "bearing", bearing, "degs")
-
             platform = data_store.get_platform(
                 platform_name=vessel_name_token.text,
                 nationality="UK",
@@ -221,24 +213,32 @@ class ReplayContactImporter(Importer):
             )
             contact.location = location
 
-            # sort out the optional fields
-            if bearing is not None:
-                contact.bearing = bearing
+            if bearing_token.text.upper() == "NULL":
+                bearing = None
+            else:
+                bearing = convert_absolute_angle(
+                    bearing_token.text, line, self.errors, self.error_type
+                )
+                if bearing:
+                    bearing_token.record(self.name, "bearing", bearing, "degs")
+                    contact.bearing = bearing
 
             if range_token.text.upper() != "NULL":
                 range_val = convert_distance(
                     range_token.text, unit_registry.yard, line, self.errors, self.error_type,
                 )
-                range_token.record(self.name, "range", range_val)
-                contact.range = range_val
+                if range_val:
+                    range_token.record(self.name, "range", range_val)
+                    contact.range = range_val
 
             if freq_token is not None:
                 if freq_token.text.upper() != "NULL":
                     freq_val = convert_frequency(
                         freq_token.text, unit_registry.hertz, line, self.errors, self.error_type,
                     )
-                    freq_token.record(self.name, "frequency", freq_val)
-                    contact.freq = freq_val
+                    if freq_val:
+                        freq_token.record(self.name, "frequency", freq_val)
+                        contact.freq = freq_val
 
             if ambig_bearing_token is not None:
                 if ambig_bearing_token.text.upper() == "NULL":
