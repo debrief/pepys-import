@@ -1,5 +1,7 @@
 import argparse
 
+import sqlalchemy
+
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from pepys_admin.admin_cli import AdminShell
 from pepys_import.core.store.data_store import DataStore
@@ -36,7 +38,16 @@ def main():
             welcome_text="Pepys_admin",
         )
 
-    AdminShell(data_store, args.path).cmdloop()
+    try:
+        AdminShell(data_store, args.path).cmdloop()
+    except sqlalchemy.exc.ProgrammingError as e:
+        print(
+            f"SQL Exception details: {e}\n\n"
+            "ERROR: SQL error when communicating with database\n"
+            "Please check your database structure is up-to-date with that expected "
+            "by the version of Pepys you have installed.\n"
+            "See above for the full error from SQLAlchemy."
+        )
 
 
 if __name__ == "__main__":
