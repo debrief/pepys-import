@@ -1,4 +1,8 @@
 import cmd
+import os
+
+from prompt_toolkit import prompt
+from prompt_toolkit.completion.filesystem import PathCompleter
 
 
 class ExportByPlatformNameShell(cmd.Cmd):
@@ -19,6 +23,7 @@ class ExportByPlatformNameShell(cmd.Cmd):
         sensor_id = option.get("sensor_id")  # May be missing if it's a Comment object
         platform_id = option.get("platform_id")  # May be missing if it's a State or Contact object
         default_export_name = f"exported_{option['name']}.rep"
+
         file_name = input(
             f"Please provide a name (Press Enter for default value " f"({default_export_name})):"
         )
@@ -26,10 +31,21 @@ class ExportByPlatformNameShell(cmd.Cmd):
             if not file_name.endswith(".rep"):
                 file_name += ".rep"
         export_file_name = file_name or default_export_name
-        print(f"Objects are going to be exported to '{export_file_name}'.")
+
+        folder_completer = PathCompleter(only_directories=True, expanduser=True)
+        folder_path = prompt(
+            "Please provide a folder path for the exported file:",
+            default="~/",
+            completer=folder_completer,
+        )
+
+        export_file_full_path = os.path.expanduser(os.path.join(folder_path, export_file_name))
+        print(f"Objects are going to be exported to '{export_file_full_path}'.")
         with self.data_store.session_scope():
-            self.data_store.export_datafile(datafile_id, export_file_name, sensor_id, platform_id)
-            print(f"Objects successfully exported to {export_file_name}.")
+            self.data_store.export_datafile(
+                datafile_id, export_file_full_path, sensor_id, platform_id
+            )
+            print(f"Objects successfully exported to {export_file_full_path}.")
         return True
 
     def default(self, line):
