@@ -6,7 +6,7 @@ from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
 
 
 class GPXImporter(Importer):
@@ -98,16 +98,19 @@ class GPXImporter(Importer):
                 )
 
                 location = Location(errors=self.errors, error_type=self.error_type)
-                location.set_latitude_decimal_degrees(latitude_str)
-                location.set_longitude_decimal_degrees(longitude_str)
-                state.location = location
+                lat_valid = location.set_latitude_decimal_degrees(latitude_str)
+                lon_valid = location.set_longitude_decimal_degrees(longitude_str)
+
+                if lat_valid and lon_valid:
+                    state.location = location
 
                 # Add course
                 if course_str is not None:
                     course = convert_absolute_angle(
                         course_str, tpt.sourceline, self.errors, self.error_type
                     )
-                    state.course = course
+                    if course:
+                        state.course = course
 
                 # Add speed (specified in metres per second in the file)
                 if speed_str is not None:
@@ -122,16 +125,11 @@ class GPXImporter(Importer):
                         state.speed = speed
 
                 if elevation_str is not None:
-                    try:
-                        elevation = float(elevation_str)
-                    except ValueError:
-                        self.errors.append(
-                            {
-                                self.error_type: f"Line {tpt.sourceline}. Error in elevation value "
-                                f"{elevation_str}. Couldn't convert to number"
-                            }
-                        )
-                    state.elevation = elevation * unit_registry.metre
+                    elevation = convert_distance(
+                        elevation_str, unit_registry.metre, None, self.errors, self.error_type
+                    )
+                    if elevation:
+                        state.elevation = elevation
 
     def get_child_text_if_exists(self, element, search_string):
         child = element.find(search_string)
