@@ -40,7 +40,11 @@ def main():
 
     try:
         AdminShell(data_store, args.path).cmdloop()
-    except sqlalchemy.exc.ProgrammingError as e:
+    except (
+        sqlalchemy.exc.ProgrammingError,
+        sqlalchemy.exc.OperationalError,
+        sqlalchemy.exc.InvalidRequestError,
+    ) as e:
         print(
             f"SQL Exception details: {e}\n\n"
             "ERROR: SQL error when communicating with database\n"
