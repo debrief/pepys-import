@@ -12,7 +12,7 @@ in two ways:
    file you want to import, and choose either :code:`Pepys Import` to import using the default settings
    or :code:`Pepys Import (no archive)` to import without archiving the imported files.
 
- - **Manually:** Run :code:`python -m pepys_import.import <options>` on the command-line, ensuring that the `python`
+ - **Manually:** Run :code:`python -m pepys_import.cli <options>` on the command-line, ensuring that the `python`
    executable on your PATH is the one for which pepys-import has been installed.
 
 Command-line options
@@ -20,7 +20,7 @@ Command-line options
 
 .. code-block:: none
 
-  usage: import.py [-h] [--path PATH] [--archive] [--db DB]
+  usage: cli.py [-h] [--path PATH] [--archive] [--db DB]
                   [--resolver RESOLVER]
 
   optional arguments:
