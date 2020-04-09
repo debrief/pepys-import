@@ -19,7 +19,12 @@ def parse_timestamp(date, time):
     else:
         format_str += "%H%M%S.%f"
 
-    return datetime.strptime(date + time, format_str)
+    try:
+        parsed_timestamp = datetime.strptime(date + time, format_str)
+    except ValueError:
+        return False
+
+    return parsed_timestamp
 
 
 class REPLine:
@@ -107,9 +112,17 @@ class REPLine:
             return False
 
         self.timestamp = parse_timestamp(date_token.text, time_token.text)
-        combine_tokens(date_token, time_token).record(
-            self.importer_name, "timestamp", self.timestamp
-        )
+        if self.timestamp:
+            combine_tokens(date_token, time_token).record(
+                self.importer_name, "timestamp", self.timestamp
+            )
+        else:
+            errors.append(
+                {
+                    error_type: f"Line {self.line_num}. Error in timestamp parsing {date_token.text} {time_token.text}."
+                }
+            )
+            return False
 
         self.vessel = vessel_name_token.text.strip('"')
         vessel_name_token.record(self.importer_name, "vessel name", self.vessel)
