@@ -57,6 +57,16 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
             db_type=DB_TYPE,
             missing_data_resolver=resolver_obj,
         )
+    elif type(db) is dict:
+        data_store = DataStore(
+            db_username=db["username"],
+            db_password=db["password"],
+            db_host=db["host"],
+            db_port=db["port"],
+            db_name=db["name"],
+            db_type=db["type"],
+            missing_data_resolver=resolver_obj,
+        )
     else:
         data_store = DataStore(
             db_username="",
@@ -78,7 +88,11 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
 
     try:
         processor.process(path, data_store, True)
-    except sqlalchemy.exc.ProgrammingError as e:
+    except (
+        sqlalchemy.exc.ProgrammingError,
+        sqlalchemy.exc.OperationalError,
+        sqlalchemy.exc.InvalidRequestError,
+    ) as e:
         print(
             f"SQL Exception details: {e}\n\n"
             "ERROR: SQL error when communicating with database\n"
