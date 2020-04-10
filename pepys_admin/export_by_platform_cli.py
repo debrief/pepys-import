@@ -4,6 +4,8 @@ import os
 from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion.filesystem import PathCompleter
 
+from pepys_admin.utils import get_default_export_folder
+
 
 class ExportByPlatformNameShell(cmd.Cmd):
     prompt = "(pepys-admin) (export by platform) "
@@ -35,7 +37,7 @@ class ExportByPlatformNameShell(cmd.Cmd):
         folder_completer = PathCompleter(only_directories=True, expanduser=True)
         folder_path = ptk_prompt(
             "Please provide a folder path for the exported file: ",
-            default="~/",
+            default=get_default_export_folder(),
             completer=folder_completer,
             complete_while_typing=True,
         )

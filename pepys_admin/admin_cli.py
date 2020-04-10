@@ -9,6 +9,7 @@ from prompt_toolkit.completion.filesystem import PathCompleter
 
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
+from pepys_admin.utils import get_default_export_folder
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -58,7 +59,7 @@ class AdminShell(cmd.Cmd):
             folder_completer = PathCompleter(only_directories=True, expanduser=True)
             folder_path = ptk_prompt(
                 "Please provide a folder path for the exported file: ",
-                default="~/",
+                default=get_default_export_folder(),
                 completer=folder_completer,
                 complete_while_typing=True,
             )
