@@ -14,6 +14,8 @@ class Line:
     WHITESPACE_DELIM = "\\S+"
     CSV_DELIM = r'(?:,"|^")(""|[\w\W]*?)(?=",|"$)|(?:,(?!")|^(?!"))([^,]*?)(?=$|,)|(\r\n|\n)'
 
+    __slots__ = ("children", "highlighted_file")
+
     def __init__(self, list_of_subtokens, hf_instance):
         """
         Create a new line, giving it a list of SubToken objects as children of the line
@@ -54,7 +56,7 @@ class Line:
         :return: List of Token objects
         :rtype: List
         """
-        self.tokens_array = []
+        tokens_array = []
 
         for child in self.children:
             for match in finditer(reg_exp, child.text):
@@ -73,9 +75,9 @@ class Line:
                 # a composite object
                 list_of_subtokens = [subtoken]
 
-                self.tokens_array.append(Token(list_of_subtokens, self.highlighted_file))
+                tokens_array.append(Token(list_of_subtokens, self.highlighted_file))
 
-        return self.tokens_array
+        return tokens_array
 
     def record(self, tool: str, field: str, value: str, units: str = None):
         """

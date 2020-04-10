@@ -14,6 +14,8 @@ class SubToken:
     and a reference to the overall character array created by HighlightedFile.
     """
 
+    __slots__ = ("span", "text", "line_start", "chars")
+
     def __init__(self, span, text, line_start, chars):
         self.span = span
         self.text = text
@@ -47,6 +49,8 @@ class Token:
     just be one SubToken object as a child of a Token object - however, when tokens are
     combined there can be multiple children.
     """
+
+    __slots__ = ("children", "highlighted_file")
 
     def __init__(self, list_of_subtokens, hf_instance):
         """
