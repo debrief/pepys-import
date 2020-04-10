@@ -2,7 +2,6 @@ import datetime
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
-from math import isnan
 
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
@@ -60,6 +59,26 @@ class BasicTests(unittest.TestCase):
             1,
             create_test_line_object(
                 "951212 12 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
+            ),
+            " ",
+        )
+        self.assertFalse(rep_line.parse(self.error, self.message))
+
+        # invalid date (but right length)
+        rep_line = REPLine(
+            1,
+            create_test_line_object(
+                "100143\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel"
+            ),
+            " ",
+        )
+        self.assertFalse(rep_line.parse(self.error, self.message))
+
+        # invalid time (but right length)
+        rep_line = REPLine(
+            1,
+            create_test_line_object(
+                "100112\t129800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel"
             ),
             " ",
         )
