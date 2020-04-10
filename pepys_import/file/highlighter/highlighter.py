@@ -1,3 +1,5 @@
+import time
+
 from pepys_import.file.highlighter.support.line import Line
 
 from .support.char import Char
@@ -54,8 +56,12 @@ class HighlightedFile:
         include_key (bool): Whether to include a key at the bottom of the output
         showing what each colour refers to
         """
+        print("Starting export of highlighted file")
+        start = time.time()
         if len(self.chars) > 0:
             export_report(filename, self.chars, self.dict_color, include_key)
+        end = time.time()
+        print(f"Time taken: {end-start}")
 
     def limited_contents(self):
         with open(self.filename, "r") as file:
@@ -93,6 +99,8 @@ class HighlightedFile:
         return lines
 
     def fill_char_array_if_needed(self):
+        start = time.time()
+
         if len(self.chars) > 0:
             # Char array already filled, so no need to do anything
             return
@@ -112,6 +120,9 @@ class HighlightedFile:
         for char in file_contents:
             char_obj = Char(char)
             self.chars.append(char_obj)
+
+        end = time.time()
+        print(f"Time taken for char array filling: {end-start}")
 
     def create_lines(self, file_contents, lines_list):
         """
