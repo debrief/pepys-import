@@ -2,6 +2,19 @@
 History
 =======
 
+0.0.9 (2020-04-04)
+------------------
+
+* Introduce getting started tutorial
+* Export datafiles by platform and sensor
+* Progress bar when importing data
+* Don't try to load a duplicate file
+* Enable/disable move (archive) of parsed files
+* Parse REPLAY sensor data
+* Log import process
+* Force use of quantities (value plus units) in importers
+* Introduce data validation tests 
+
 0.0.7 (2020-03-10)
 ------------------
 
