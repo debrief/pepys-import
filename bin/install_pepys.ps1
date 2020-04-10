@@ -74,7 +74,13 @@ $Shortcut.Save()
 #
 # Add Pepys bin folder to User's PATH variable
 #
-[Environment]::SetEnvironmentVariable(
-    "PATH",
-    [Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::User) + ";" + [System.IO.Path]::GetFullPath("."),
-    [EnvironmentVariableTarget]::User)
+$pepys_bin_path = [System.IO.Path]::GetFullPath(".")
+
+if (!($env:Path -split ';' -contains $pepys_bin_path)) {
+    [Environment]::SetEnvironmentVariable(
+        "PATH",
+        [Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::User) + ";" + $pepys_bin_path,
+        [EnvironmentVariableTarget]::User)
+}
+
+
