@@ -40,6 +40,9 @@ def mean_color_for(color_arr):
     Args:
         color_arr: three-element list of R, G and B components of color
     """
+    if len(color_arr) == 1:
+        return color_arr[0]
+
     r = 0
     g = 0
     b = 0
