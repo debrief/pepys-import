@@ -38,8 +38,12 @@ def main():
             welcome_text="Pepys_admin",
         )
 
+    run_admin_shell(data_store, args.path)
+
+
+def run_admin_shell(data_store, path):
     try:
-        AdminShell(data_store, args.path).cmdloop()
+        AdminShell(data_store, path).cmdloop()
     except (
         sqlalchemy.exc.ProgrammingError,
         sqlalchemy.exc.OperationalError,
