@@ -31,7 +31,7 @@ class ColorTests(unittest.TestCase):
 
     def test_hex_conversion(self):
         red = (255, 0, 0)
-        self.assertEqual("rgba(255,0,0,0.300000)", hex_color_for(red))
+        self.assertEqual("rgba(255,0,0,0.3)", hex_color_for(red))
 
     def test_mean_color(self):
         color1 = (100, 50, 200)
