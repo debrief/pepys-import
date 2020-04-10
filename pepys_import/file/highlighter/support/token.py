@@ -108,12 +108,14 @@ class Token:
         else:
             message = "Value:" + str(value)
 
+        usage = SingleUsage(tool_field, message)
+
         # This loop gives us each SubToken that is a child of this Token
         for subtoken in self.children:
             start = subtoken.start()
             end = subtoken.end()
+
             for i in range(start, end):
-                usage = SingleUsage(tool_field, message)
                 # Note: subtoken.chars is a reference to a single char array
                 # that was originally created by the HighlightedFile class
                 # So each time round the loop we're actually altering the same
