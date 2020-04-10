@@ -173,8 +173,8 @@ class CombineTokenTests(unittest.TestCase):
 
         data_file.export(os.path.join(OUTPUT_FOLDER, "nmea.html"))
 
-    def test_combine_lines_on_multiple_lines(self):
-        data_file = HighlightedFile(NMEA_FILE, 50)
+    def test_combine_lines_on_multiple_lines_2(self):
+        data_file = HighlightedFile(NMEA_FILE)
 
         # get the set of self-describing lines
         lines = data_file.lines()
