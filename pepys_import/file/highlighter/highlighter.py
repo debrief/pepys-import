@@ -1,5 +1,3 @@
-import time
-
 from pepys_import.file.highlighter.support.line import Line
 
 from .support.char import Char
