@@ -1,2 +1,2 @@
 ignore:
-  - "tests/**/*"  # ignore all tests
+  - "tests"  # ignore all tests
