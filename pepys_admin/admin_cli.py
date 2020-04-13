@@ -4,9 +4,12 @@ import sys
 from datetime import datetime
 
 from iterfzf import iterfzf
+from prompt_toolkit import prompt as ptk_prompt
+from prompt_toolkit.completion.filesystem import PathCompleter
 
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
+from pepys_admin.utils import get_default_export_folder
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -53,13 +56,23 @@ class AdminShell(cmd.Cmd):
 
         export_flag = input(f"Do you want to export {selected_datafile}? (Y/n)\n")
         if export_flag in ["", "Y", "y"]:
+            folder_completer = PathCompleter(only_directories=True, expanduser=True)
+            folder_path = ptk_prompt(
+                "Please provide a folder path for the exported file: ",
+                default=get_default_export_folder(),
+                completer=folder_completer,
+                complete_while_typing=True,
+            )
+
             datafile_name = f"exported_{selected_datafile.replace('.', '_')}.rep"
             print(f"'{selected_datafile}' is going to be exported.")
-
             selected_datafile_id = datafiles_dict[selected_datafile]
+
+            export_file_full_path = os.path.expanduser(os.path.join(folder_path, datafile_name))
+
             with self.data_store.session_scope():
-                self.data_store.export_datafile(selected_datafile_id, datafile_name)
-            print(f"Datafile successfully exported to {datafile_name}.")
+                self.data_store.export_datafile(selected_datafile_id, export_file_full_path)
+            print(f"Datafile successfully exported to {export_file_full_path}.")
         elif export_flag in ["N", "n"]:
             print("You selected not to export!")
         else:

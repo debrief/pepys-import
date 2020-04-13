@@ -1418,7 +1418,9 @@ class DataStore:
             .first()
         )
         if is_loaded_before:
-            print(f"'{is_loaded_before.reference}' is already loaded! Skipping the file.")
+            print(
+                f"'{is_loaded_before.reference}' was already loaded at {is_loaded_before.created_date:%Y-%m-%d %H:%M}! Skipping the file."
+            )
             return True
         return False
 
