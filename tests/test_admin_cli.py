@@ -40,13 +40,14 @@ class AdminCLITestCase(unittest.TestCase):
 
     @patch("pepys_admin.admin_cli.iterfzf", return_value="rep_test1.rep")
     @patch("pepys_admin.admin_cli.input", return_value="Y")
-    def test_do_export(self, patched_iterfzf, patched_input):
+    @patch("pepys_admin.admin_cli.ptk_prompt", return_value=".")
+    def test_do_export(self, patched_iterfzf, patched_input, patched_ptk_prompt):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.admin_shell.do_export()
         output = temp_output.getvalue()
         assert "'rep_test1.rep' is going to be exported." in output
-        assert "Datafile successfully exported to exported_rep_test1_rep.rep." in output
+        assert "Datafile successfully exported to ./exported_rep_test1_rep.rep." in output
 
         file_path = os.path.join(CURRENT_DIR, "exported_rep_test1_rep.rep")
         assert os.path.exists(file_path) is True
@@ -93,13 +94,16 @@ class AdminCLITestCase(unittest.TestCase):
     @patch("pepys_admin.admin_cli.iterfzf", return_value="SEARCH_PLATFORM")
     @patch("pepys_admin.export_by_platform_cli.input", return_value="")
     @patch("cmd.input", return_value="1")
-    def test_do_export_by_platform_name(self, cmd_input, shell_input, patched_iterfzf):
+    @patch("pepys_admin.export_by_platform_cli.ptk_prompt", return_value=".")
+    def test_do_export_by_platform_name(
+        self, cmd_input, shell_input, patched_iterfzf, patched_ptk_prompt
+    ):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.admin_shell.do_export_by_platform_name()
         output = temp_output.getvalue()
-        assert "Objects are going to be exported to 'exported_SEARCH_PLATFORM.rep'." in output
-        assert "Objects successfully exported to exported_SEARCH_PLATFORM.rep." in output
+        assert "Objects are going to be exported to './exported_SEARCH_PLATFORM.rep'." in output
+        assert "Objects successfully exported to ./exported_SEARCH_PLATFORM.rep." in output
 
         file_path = os.path.join(CURRENT_DIR, "exported_SEARCH_PLATFORM.rep")
         assert os.path.exists(file_path) is True
@@ -487,13 +491,14 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
         self.shell.intro = self.text
 
     @patch("pepys_admin.export_by_platform_cli.input", return_value="export_test")
-    def test_do_export(self, patched_input):
+    @patch("pepys_admin.export_by_platform_cli.ptk_prompt", return_value=".")
+    def test_do_export(self, patched_input, patched_ptk_prompt):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export(self.objects[0])
         output = temp_output.getvalue()
-        assert "Objects are going to be exported to 'export_test.rep'." in output
-        assert "Objects successfully exported to export_test.rep." in output
+        assert "Objects are going to be exported to './export_test.rep'." in output
+        assert "Objects successfully exported to ./export_test.rep." in output
 
         file_path = os.path.join(CURRENT_DIR, "export_test.rep")
         assert os.path.exists(file_path) is True
