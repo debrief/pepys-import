@@ -1,5 +1,11 @@
 @echo off
 
+REM Change to the directory that this batch file is in
+REM storing the original directory so we can get back to it
+set orig_path=%cd%
+cd /D "%~dp0"
+
+
 REM Get absolute path to folder with python executable in it
 set PEPYS_PATH_PYTHON=..\python
 pushd %PEPYS_PATH_PYTHON%
@@ -20,5 +26,8 @@ set PEPYS_PATH_PYTHON=
 set PEPYS_PATH_PYTHON_ABS=
 set PEPYS_PATH_SPATIALITE=
 set PEPYS_PATH_SPATIALITE_ABS=
+
+REM Go back to the directory the user was in before we ran this script
+cd %orig_path%
 
 echo Successfully set paths for pepys-import
