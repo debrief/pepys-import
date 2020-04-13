@@ -28,7 +28,7 @@ if (Test-Path $shortcut_loc) { Remove-Item $shortcut_loc; }
 $Shortcut = $WshShell.CreateShortcut($shortcut_loc)
 # We need to use full paths here or the shortcut will assume everything is relative to
 # C:\
-$Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import.bat")
+$Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_sendto.bat")
 $Shortcut.IconLocation = $icon_string
 # If we don't set the working directory then we won't be able to import other DLLs or use relative paths
 # to our Python executable
@@ -45,7 +45,7 @@ $shortcut_loc = $sendto_location + "\Pepys Import (no archive).lnk"
 if (Test-Path $shortcut_loc) { Remove-Item $shortcut_loc; }
 
 $Shortcut = $WshShell.CreateShortcut($shortcut_loc)
-$Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_no_archive.bat")
+$Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_no_archive_sendto.bat")
 $Shortcut.IconLocation = $icon_string
 $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
 $Shortcut.Save()
@@ -70,3 +70,17 @@ $Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_admin.bat")
 $Shortcut.IconLocation = $icon_string
 $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
 $Shortcut.Save()
+
+#
+# Add Pepys bin folder to User's PATH variable
+#
+$pepys_bin_path = [System.IO.Path]::GetFullPath(".")
+
+if (!($env:Path -split ';' -contains $pepys_bin_path)) {
+    [Environment]::SetEnvironmentVariable(
+        "PATH",
+        [Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::User) + ";" + $pepys_bin_path,
+        [EnvironmentVariableTarget]::User)
+}
+
+
