@@ -1,6 +1,11 @@
 class BasicValidator:
-    def __init__(self, object_, errors, parser_name):
-        error_type = parser_name + f" - Basic Validation Error"
+    def __init__(self, parser_name):
+        self.name = "Basic Validator"
+        self.error_type = f"{parser_name} - {self.name}"
+
+    def validate(self, object_, errors):
+        orig_errors_length = len(errors)
+
         longitude = None
         latitude = None
 
@@ -11,10 +16,15 @@ class BasicValidator:
                 longitude = object_.location.longitude
                 latitude = object_.location.latitude
 
-        self.validate_longitude(longitude, errors, error_type)
-        self.validate_latitude(latitude, errors, error_type)
-        self.validate_heading(heading, errors, error_type)
-        self.validate_course(course, errors, error_type)
+        self.validate_longitude(longitude, errors, self.error_type)
+        self.validate_latitude(latitude, errors, self.error_type)
+        self.validate_heading(heading, errors, self.error_type)
+        self.validate_course(course, errors, self.error_type)
+
+        if len(errors) > orig_errors_length:
+            return False
+        else:
+            return True
 
     @staticmethod
     def validate_longitude(longitude, errors, error_type):
