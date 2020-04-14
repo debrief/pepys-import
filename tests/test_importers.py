@@ -19,7 +19,8 @@ FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
 BAD_DATA_PATH = os.path.join(FILE_PATH, "sample_data_bad")
 DATA_PATH = os.path.join(FILE_PATH, "sample_data")
-OUTPUT_PATH = os.path.join(DATA_PATH, "output")
+OUTPUT_PATH = os.path.join(DATA_PATH, "output_test")
+
 REP_DATA_PATH = os.path.join(DATA_PATH, "track_files", "rep_data")
 
 
@@ -135,16 +136,16 @@ class SampleImporterTests(unittest.TestCase):
         assert os.path.exists(moved_files_path) is True
 
         # Scan the files in sources folder
-        for file in os.scandir(moved_files_path):
+        for f in os.scandir(moved_files_path):
             # Append the name of the file to test it later on
-            names.append(file.name)
+            names.append(f.name)
             # Assert that the moved file is read-only
             # Convert file permission to octal and keep only the last three bits
-            file_mode = oct(os.stat(file.path).st_mode & 0o777)
+            file_mode = oct(os.stat(f.path).st_mode & 0o777)
             assert file_mode == oct(stat.S_IREAD)
             # Move files back
-            source_path = os.path.join(REP_DATA_PATH, file.name)
-            shutil.move(file.path, source_path)
+            source_path = os.path.join(REP_DATA_PATH, f.name)
+            shutil.move(f.path, source_path)
             # Change file permission to -rw-r--r--
             os.chmod(source_path, stat.S_IWRITE | stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
 
@@ -157,6 +158,9 @@ class SampleImporterTests(unittest.TestCase):
         # Assert that there is no file in the sources folder anymore
         assert len(os.listdir(moved_files_path)) == 0
 
+        # Delete the output path
+        shutil.rmtree(OUTPUT_PATH)
+
 
 class ImporterSummaryTest(unittest.TestCase):
     def setUp(self) -> None:
@@ -164,6 +168,10 @@ class ImporterSummaryTest(unittest.TestCase):
 
     def tearDown(self) -> None:
         descending_file = os.path.join(CURRENT_DIR, "import_status_test.db")
+        if os.path.exists(descending_file):
+            os.remove(descending_file)
+
+        descending_file = os.path.join(CURRENT_DIR, "import_status_test2.db")
         if os.path.exists(descending_file):
             os.remove(descending_file)
 
@@ -177,6 +185,7 @@ class ImporterSummaryTest(unittest.TestCase):
         with redirect_stdout(temp_output):
             processor.process(os.path.join(DATA_PATH, "track_files/rep_data"), None, True)
         output = temp_output.getvalue()
+        print(output)
         
         assert """Import succeeded for:
   - sen_tracks.rep
@@ -200,9 +209,10 @@ class ImporterSummaryTest(unittest.TestCase):
     - Importers failing:
       - REP Importer""" in output
 
+    @patch("pepys_import.file.file_processor.ARCHIVE_PATH", OUTPUT_PATH)
     def test_summary_with_archive(self):
         """Test whether descending processing works for the given path"""
-        processor = FileProcessor("import_status_test.db", archive=True)
+        processor = FileProcessor("import_status_test2.db", archive=True)
 
         processor.load_importers_dynamically()
 
@@ -210,6 +220,7 @@ class ImporterSummaryTest(unittest.TestCase):
         with redirect_stdout(temp_output):
             processor.process(os.path.join(DATA_PATH, "track_files/rep_data"), None, True)
         output = temp_output.getvalue()
+        print(output)
         
         assert """Import succeeded for:
   - sen_tracks.rep
@@ -239,6 +250,24 @@ class ImporterSummaryTest(unittest.TestCase):
         assert """  - sen_frig_sensor.dsf
     - Importers failing:
       - REP Importer""" in output
+
+        moved_files_path = str(list(Path(OUTPUT_PATH).rglob("sources"))[0])
+        print(moved_files_path)
+        assert os.path.exists(moved_files_path) is True
+
+        print("For loop")
+        # Scan the files in sources folder
+        for f in os.scandir(moved_files_path):
+            print(f)
+            # Move files back
+            source_path = os.path.join(REP_DATA_PATH, f.name)
+            shutil.move(f.path, source_path)
+            # Change file permission to -rw-r--r--
+            os.chmod(source_path, stat.S_IWRITE | stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
+
+        # Delete the output path
+        shutil.rmtree(OUTPUT_PATH)
+
 
 class ImporterRemoveTestCase(unittest.TestCase):
     def test_can_load_this_header(self):
