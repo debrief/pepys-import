@@ -383,6 +383,7 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     time = Column(TIMESTAMP, nullable=False)
     _bearing = Column("bearing", REAL)
     _rel_bearing = Column("rel_bearing", REAL)
+    _ambig_bearing = Column("ambig_bearing", REAL)
     _freq = Column("freq", REAL)
     _range = Column("range", REAL)
     _location = Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))

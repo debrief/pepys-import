@@ -509,6 +509,48 @@ class ContactMixin:
         return self._rel_bearing
 
     #
+    # Ambig Bearing properties
+    #
+
+    @hybrid_property
+    def ambig_bearing(self):
+        # Return all ambig_bearings as degrees
+        if self._ambig_bearing is None:
+            return None
+        else:
+            return (self._ambig_bearing * unit_registry.radian).to(unit_registry.degree)
+
+    @ambig_bearing.setter
+    def ambig_bearing(self, ambig_bearing):
+        if ambig_bearing is None:
+            self._ambig_bearing = None
+            return
+
+        # Check the given bearing is a Quantity with a dimension of '' and units of
+        # degrees or radians
+        try:
+            if not ambig_bearing.check(""):
+                raise ValueError(
+                    "Ambig Bearing must be a Quantity with a dimensionality of '' (ie. nothing)"
+                )
+            if not (
+                ambig_bearing.units == unit_registry.degree
+                or ambig_bearing.units == unit_registry.radian
+            ):
+                raise ValueError(
+                    "Ambig Bearing must be a Quantity with angular units (degree or radian)"
+                )
+        except AttributeError:
+            raise TypeError("Ambig Bearing must be a Quantity")
+
+        # Set the actual bearing attribute to the given value converted to radians
+        self._ambig_bearing = ambig_bearing.to(unit_registry.radian).magnitude
+
+    @rel_bearing.expression
+    def rel_bearing(self):
+        return self._rel_bearing
+
+    #
     # MLA properties
     #
 
