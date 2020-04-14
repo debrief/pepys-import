@@ -439,6 +439,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     time = Column(TIMESTAMP, nullable=False)
     _bearing = Column("bearing", DOUBLE_PRECISION)
     _rel_bearing = Column("rel_bearing", DOUBLE_PRECISION)
+    _ambig_bearing = Column("ambig_bearing", DOUBLE_PRECISION)
     _freq = Column("freq", DOUBLE_PRECISION)
     _range = Column("range", DOUBLE_PRECISION)
     _location = Column("location", Geometry(geometry_type="POINT", srid=4326))

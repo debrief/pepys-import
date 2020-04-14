@@ -1,17 +1,23 @@
 import os
 import shutil
+import sqlite3
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
+from sqlite3 import OperationalError
 from unittest.mock import patch
 
+import pg8000
 import pytest
+from testing.postgresql import Postgresql
 
 from pepys_admin.admin_cli import AdminShell
+from pepys_admin.cli import run_admin_shell
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from pepys_import.utils.geoalchemy_utils import load_spatialite
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
@@ -34,13 +40,14 @@ class AdminCLITestCase(unittest.TestCase):
 
     @patch("pepys_admin.admin_cli.iterfzf", return_value="rep_test1.rep")
     @patch("pepys_admin.admin_cli.input", return_value="Y")
-    def test_do_export(self, patched_iterfzf, patched_input):
+    @patch("pepys_admin.admin_cli.ptk_prompt", return_value=".")
+    def test_do_export(self, patched_iterfzf, patched_input, patched_ptk_prompt):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.admin_shell.do_export()
         output = temp_output.getvalue()
         assert "'rep_test1.rep' is going to be exported." in output
-        assert "Datafile successfully exported to exported_rep_test1_rep.rep." in output
+        assert "Datafile successfully exported to ./exported_rep_test1_rep.rep." in output
 
         file_path = os.path.join(CURRENT_DIR, "exported_rep_test1_rep.rep")
         assert os.path.exists(file_path) is True
@@ -87,13 +94,16 @@ class AdminCLITestCase(unittest.TestCase):
     @patch("pepys_admin.admin_cli.iterfzf", return_value="SEARCH_PLATFORM")
     @patch("pepys_admin.export_by_platform_cli.input", return_value="")
     @patch("cmd.input", return_value="1")
-    def test_do_export_by_platform_name(self, cmd_input, shell_input, patched_iterfzf):
+    @patch("pepys_admin.export_by_platform_cli.ptk_prompt", return_value=".")
+    def test_do_export_by_platform_name(
+        self, cmd_input, shell_input, patched_iterfzf, patched_ptk_prompt
+    ):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.admin_shell.do_export_by_platform_name()
         output = temp_output.getvalue()
-        assert "Objects are going to be exported to 'exported_SEARCH_PLATFORM.rep'." in output
-        assert "Objects successfully exported to exported_SEARCH_PLATFORM.rep." in output
+        assert "Objects are going to be exported to './exported_SEARCH_PLATFORM.rep'." in output
+        assert "Objects successfully exported to ./exported_SEARCH_PLATFORM.rep." in output
 
         file_path = os.path.join(CURRENT_DIR, "exported_SEARCH_PLATFORM.rep")
         assert os.path.exists(file_path) is True
@@ -481,13 +491,14 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
         self.shell.intro = self.text
 
     @patch("pepys_admin.export_by_platform_cli.input", return_value="export_test")
-    def test_do_export(self, patched_input):
+    @patch("pepys_admin.export_by_platform_cli.ptk_prompt", return_value=".")
+    def test_do_export(self, patched_input, patched_ptk_prompt):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export(self.objects[0])
         output = temp_output.getvalue()
-        assert "Objects are going to be exported to 'export_test.rep'." in output
-        assert "Objects successfully exported to export_test.rep." in output
+        assert "Objects are going to be exported to './export_test.rep'." in output
+        assert "Objects successfully exported to ./export_test.rep." in output
 
         file_path = os.path.join(CURRENT_DIR, "export_test.rep")
         assert os.path.exists(file_path) is True
@@ -504,11 +515,11 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
             "0.0" in data
         )
         assert (
-            ";SENSOR:\t100112 121000.000\tSEARCH_PLATFORM\t@@\tNULL\t253.29\tNULL\tSEARCH_PLATFORM\tN/A"
+            ";SENSOR2:\t100112 121000.000\tSEARCH_PLATFORM\t@@\tNULL\t253.29\t106.38\tNULL\tNULL\tSEARCH_PLATFORM\tN/A"
             in data
         )
         assert (
-            ";SENSOR:\t100112 121200.000\tSEARCH_PLATFORM\t@@\tNULL\t253.75\tNULL\tSEARCH_PLATFORM\tN/A"
+            ";SENSOR2:\t100112 121200.000\tSEARCH_PLATFORM\t@@\tNULL\t253.75\t105.92\tNULL\tNULL\tSEARCH_PLATFORM\tN/A"
             in data
         )
 
@@ -538,6 +549,106 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
             self.shell.postcmd(stop=False, line="123456789")
         output = temp_output.getvalue()
         assert self.shell.intro in output
+
+
+class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
+    def setUp(self):
+        ds = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
+        ds.initialise()
+
+    def tearDown(self):
+        os.remove("cli_import_test.db")
+
+    @patch("cmd.input", return_value="2\n")
+    def test_missing_db_column_sqlite(self, patched_input):
+        conn = sqlite3.connect("cli_import_test.db")
+        load_spatialite(conn, None)
+
+        # We want to DROP a column from the States table, but SQLite doesn't support this
+        # so we drop the table and create a new table instead
+        conn.execute("DROP TABLE States")
+
+        # SQL to create a States table without a heading column
+        create_sql = """CREATE TABLE States (
+        state_id INTEGER NOT NULL, 
+        time TIMESTAMP NOT NULL, 
+        sensor_id INTEGER NOT NULL, 
+        elevation REAL, 
+        course REAL, 
+        speed REAL, 
+        source_id INTEGER NOT NULL, 
+        privacy_id INTEGER, 
+        created_date DATETIME, "location" POINT, 
+        PRIMARY KEY (state_id)
+        )"""
+
+        conn.execute(create_sql)
+        conn.close()
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            data_store = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
+            run_admin_shell(data_store, ".")
+        output = temp_output.getvalue()
+
+        assert "ERROR: SQL error when communicating with database" in output
+
+
+@pytest.mark.postgres
+class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
+    def setUp(self):
+        self.postgres = None
+        self.store = None
+        try:
+            self.postgres = Postgresql(
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+            )
+        except RuntimeError:
+            print("PostgreSQL database couldn't be created! Test is skipping.")
+            return
+        try:
+            self.store = DataStore(
+                db_name="test",
+                db_host="localhost",
+                db_username="postgres",
+                db_password="postgres",
+                db_port=55527,
+                db_type="postgres",
+            )
+            self.store.initialise()
+        except OperationalError:
+            print("Database schema and data population failed! Test is skipping.")
+
+    def tearDown(self):
+        try:
+            self.postgres.stop()
+        except AttributeError:
+            return
+
+    @patch("cmd.input", return_value="2\n")
+    def test_missing_db_column_postgres(self, patched_input):
+        conn = pg8000.connect(user="postgres", password="postgres", database="test", port=55527)
+        cursor = conn.cursor()
+        # Alter table to drop heading column
+        cursor.execute('ALTER TABLE pepys."States" DROP COLUMN heading CASCADE;')
+
+        conn.commit()
+        conn.close()
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            data_store = DataStore(
+                db_name="test",
+                db_host="localhost",
+                db_username="postgres",
+                db_password="postgres",
+                db_port=55527,
+                db_type="postgres",
+            )
+            run_admin_shell(data_store, ".")
+        output = temp_output.getvalue()
+
+        assert "ERROR: SQL error when communicating with database" in output
 
 
 if __name__ == "__main__":

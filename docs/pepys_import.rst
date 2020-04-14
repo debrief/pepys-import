@@ -18,7 +18,7 @@ Submodules
 pepys\_import.import module
 ---------------------------
 
-.. automodule:: pepys_import.import
+.. automodule:: pepys_import.cli
    :members:
    :undoc-members:
    :show-inheritance:

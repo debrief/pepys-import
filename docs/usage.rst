@@ -12,15 +12,15 @@ in two ways:
    file you want to import, and choose either :code:`Pepys Import` to import using the default settings
    or :code:`Pepys Import (no archive)` to import without archiving the imported files.
 
- - **Manually:** Run :code:`python -m pepys_import.import <options>` on the command-line, ensuring that the `python`
-   executable on your PATH is the one for which pepys-import has been installed.
+ - **Manually:** Run :code:`pepys_import <options>` on the command-line (this will call a batch file
+ which sets the relevant paths, and then calls the pepys_import CLI using Python)
 
 Command-line options
 ^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: none
 
-  usage: import.py [-h] [--path PATH] [--archive] [--db DB]
+  usage: cli.py [-h] [--path PATH] [--archive] [--db DB]
                   [--resolver RESOLVER]
 
   optional arguments:
@@ -44,8 +44,8 @@ database, and get database status. This can be run in two ways:
 
  - **Start Menu:** On a Windows deployment... **TODO: Not implemented yet**
 
- - **Manually:** Run :code:`python -m pepys_admin.cli <options>` on the command-line, ensuring that the `python`
-   executable on your PATH is the one for which pepys-import has been installed.
+ - **Manually:** Run :code:`pepys_admin <options>` on the command-line (this will call a batch file
+ which sets the relevant paths, and then calls the pepys_import CLI using Python)
 
 .. code-block:: none
 
@@ -65,9 +65,10 @@ On a Windows deployment, there are various batch files in the `bin` directory of
 installation. Some of these are run by the shortcuts in the *Send To* menu, and others are used
 to support these scripts, or for debugging/development purposes.
 
-  - :code:`create_shortcuts.bat` and :code:`create_shortcuts.ps1`: These create shortcuts to run
-    pepys-import in the user's *Send To* directory. The :code:`.bat` file runs the underlying
-    :code:`.ps1` file with the relevent permissions.
+  - :code:`install_pepys.bat` and :code:`install_pepys.ps1`: These create shortcuts to run
+    pepys-import in the user's *Send To* directory and the user's *Start Menu*, as well as adding
+    the `bin` directory of the Pepys installation to the user's PATH. The :code:`.bat` file runs the
+    underlying :code:`.ps1` file with the relevent permissions.
   - :code:`pepys_import.bat`: Runs the import CLI, passing the first argument received to the
     :code:`--path` argument of the CLI script. This is called by the shortcut in the *Send To* folder,
     where the first argument passed is automatically the full path to the file or folder to be sent.
@@ -83,10 +84,7 @@ to support these scripts, or for debugging/development purposes.
 For example, you can use the :code:`set_paths.bat` script in the following way:
 
 1. Open a Windows Command Prompt
-2. Change to the directory containing the pepys-import installation
-3. Run :code:`cd bin` to change to the bin directory
-4. Run :code:`set_paths.bat` to set up the relevant paths to Python and its dependencies
-5. Run :code:`cd ..` to change back to the main directory
+2. Run :code:`set_paths.bat` to set up the relevant paths to Python and its dependencies
 
 You can now run anything using the pepys-provided Python. For example:
 
@@ -94,4 +92,5 @@ You can now run anything using the pepys-provided Python. For example:
    allowing you to interactively try out parts of the pepys-import code
  - :code:`python -m pytest tests/ -m "not postgres"` will run all of the tests, excluding the PostgreSQL
    tests
- - :code:`python -m pepys_admin.cli <options>` will run the pepys-admin CLI.
+ - :code:`python -m pepys_admin.cli <options>` will run the pepys-admin CLI (the same as running the
+ :code:`pepys_admin.bat` script)

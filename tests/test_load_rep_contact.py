@@ -55,6 +55,8 @@ class RepContactTests(unittest.TestCase):
             # due to floating point precision issues
             self.assertAlmostEqual(contacts[1].bearing, 251.33 * unit_registry.degree)
 
+            self.assertAlmostEqual(contacts[0].ambig_bearing, 106.83 * unit_registry.degree)
+
             self.assertEqual(contacts[0].freq, 123.4 * unit_registry.hertz)
 
             self.assertEqual(contacts[0].location, None)

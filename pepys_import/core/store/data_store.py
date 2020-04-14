@@ -1362,15 +1362,17 @@ class DataStore:
                     "N/A",
                 ]
 
-                ambiguous_bearing = None  # TODO: ambiguous_bearing.
-                if ambiguous_bearing or contact.freq:
+                if contact.ambig_bearing or contact.freq:
                     contact_rep_line.insert(0, ";SENSOR2:")
 
                     contact_rep_line.insert(
-                        6, str(ambiguous_bearing.magnitude) if ambiguous_bearing else "NULL",
+                        6,
+                        f"{contact.ambig_bearing.magnitude:.2f}"
+                        if contact.ambig_bearing
+                        else "NULL",
                     )
                     contact_rep_line.insert(
-                        7, str(contact.freq.magnitude) if contact.freq else "NULL",
+                        7, f"{contact.freq.magnitude:.2f}" if contact.freq else "NULL",
                     )
                 else:
                     contact_rep_line.insert(0, ";SENSOR:")
@@ -1417,7 +1419,9 @@ class DataStore:
             .first()
         )
         if is_loaded_before:
-            print(f"'{is_loaded_before.reference}' is already loaded! Skipping the file.")
+            print(
+                f"'{is_loaded_before.reference}' was already loaded at {is_loaded_before.created_date:%Y-%m-%d %H:%M}! Skipping the file."
+            )
             return True
         return False
 
