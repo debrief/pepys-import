@@ -1,5 +1,6 @@
 import os
 import platform
+import sys
 from contextlib import contextmanager
 from datetime import datetime
 from getpass import getuser
@@ -7,7 +8,7 @@ from importlib import import_module
 
 from sqlalchemy import create_engine, inspect, or_
 from sqlalchemy.event import listen
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func, select
 
@@ -68,7 +69,16 @@ class DataStore:
         connection_string = "{}://{}:{}@{}:{}/{}".format(
             driver, db_username, db_password, db_host, db_port, db_name
         )
-        self.engine = create_engine(connection_string, echo=False)
+        try:
+            self.engine = create_engine(connection_string, echo=False)
+        except ArgumentError as e:
+            print(
+                f"SQL Exception details: {e}\n\n"
+                "ERROR: Invalid Connection URL Error!\n"
+                "Please check your config file. There might be missing/wrong values!\n"
+                "See above for the full error from SQLAlchemy."
+            )
+            sys.exit(1)
 
         if db_type == "postgres":
             BasePostGIS.metadata.bind = self.engine
@@ -121,11 +131,14 @@ class DataStore:
                         conn.execute(select([func.InitSpatialMetaData(1)]))
                 # Attempt to create schema if not present, to cope with fresh DB file
                 BaseSpatiaLite.metadata.create_all(self.engine)
-            except OperationalError:
-                raise Exception(
-                    "Error creating database schema, possible invalid path?"
-                    f" ('{self.db_name}'). Quitting"
+            except OperationalError as e:
+                print(
+                    f"SQL Exception details: {e}\n\n"
+                    "ERROR: Database Connection Error! The schema couldn't be created.\n"
+                    "Please check your config file. There might be missing/wrong values!\n"
+                    "See above for the full error from SQLAlchemy."
                 )
+                sys.exit(1)
         elif self.db_type == "postgres":
             try:
                 # Create schema pepys and extension for PostGIS first
@@ -137,8 +150,14 @@ class DataStore:
                 with self.engine.connect() as conn:
                     conn.execute(query)
                 BasePostGIS.metadata.create_all(self.engine)
-            except OperationalError:
-                raise Exception(f"Error creating database({self.db_name})! Quitting")
+            except OperationalError as e:
+                print(
+                    f"SQL Exception details: {e}\n\n"
+                    "ERROR: Database Connection Error! The schema couldn't be created.\n"
+                    "Please check your config file. There might be missing/wrong values!\n"
+                    "See above for the full error from SQLAlchemy."
+                )
+                sys.exit(1)
 
     @contextmanager
     def session_scope(self):
