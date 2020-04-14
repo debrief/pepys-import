@@ -285,6 +285,8 @@ class DatafileMixin:
             if not errors:
                 return (True, failed_validators)
             return (False, failed_validators)
+        else:
+            raise ValueError(f"Invalid Validation Level {validation_level}")
 
     def commit(self, data_store, change_id):
         # Since measurements are saved by their importer names, iterate over each key
