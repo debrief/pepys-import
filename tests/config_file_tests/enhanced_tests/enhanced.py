@@ -1,7 +1,6 @@
 class EnhancedTestValidator:
-    def __init__(self, current_object, errors, parser_name, prev_object):
-        self.error_type = parser_name + f" - Test Enhanced Validation Error"
-        self.errors = errors
+    def __init__(self):
+        self.name = "Test Enhanced Validator"
 
-    def validate(self):
+    def validate(self, current_object, errors, parser_name, prev_object):
         return True
