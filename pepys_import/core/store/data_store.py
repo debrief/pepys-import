@@ -134,7 +134,7 @@ class DataStore:
             except OperationalError as e:
                 print(
                     f"SQL Exception details: {e}\n\n"
-                    "ERROR: Creating Database Schema Error!\n"
+                    "ERROR: Database Connection Error! The schema couldn't be created.\n"
                     "Please check your config file. There might be missing/wrong values!\n"
                     "See above for the full error from SQLAlchemy."
                 )
@@ -153,7 +153,7 @@ class DataStore:
             except OperationalError as e:
                 print(
                     f"SQL Exception details: {e}\n\n"
-                    "ERROR: Creating Database Schema Error!\n"
+                    "ERROR: Database Connection Error! The schema couldn't be created.\n"
                     "Please check your config file. There might be missing/wrong values!\n"
                     "See above for the full error from SQLAlchemy."
                 )
