@@ -30,7 +30,7 @@ def hex_color_for(rgb):
     Convert a 3-element rgb structure to a HTML color definition
     """
     opacity_shade = 0.3
-    return "rgba(%d,%d,%d,%f)" % (rgb[0], rgb[1], rgb[2], opacity_shade)
+    return f"rgba({rgb[0]},{rgb[1]},{rgb[2]},{opacity_shade})"
 
 
 def mean_color_for(color_arr):
@@ -40,6 +40,9 @@ def mean_color_for(color_arr):
     Args:
         color_arr: three-element list of R, G and B components of color
     """
+    if len(color_arr) == 1:
+        return color_arr[0]
+
     r = 0
     g = 0
     b = 0
