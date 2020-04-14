@@ -103,7 +103,7 @@ and run the following:
 
 .. code-block:: none
 
-    python -m pepys_import.import --path .\track_files_test\rep_data\rep_test1_bad.rep --resolver default --archive
+    python -m pepys_import.cli --path .\track_files_test\rep_data\rep_test1_bad.rep --resolver default --archive
 
 This will run the Pepys Import command, telling it to import the :code:`rep_test1_bad.rep` file with
 the default resolver (so it doesn't ask you questions during import) and telling it to archive the file
@@ -148,7 +148,7 @@ Try importing the file again, using exactly the same command as before:
 
 .. code-block:: none
 
-    python -m pepys_import.import --path .\track_files_test\rep_data\rep_test1_bad.rep --resolver default --archive
+    python -m pepys_import.cli --path .\track_files_test\rep_data\rep_test1_bad.rep --resolver default --archive
 
 Now, if you look in the :code:`sources` directory under :code:`archive`, you will find a copy of the
 file that was imported - and this file will have been deleted from its original location.

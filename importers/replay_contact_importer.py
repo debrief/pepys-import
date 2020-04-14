@@ -242,11 +242,11 @@ class ReplayContactImporter(Importer):
 
             if ambig_bearing_token is not None:
                 if ambig_bearing_token.text.upper() == "NULL":
-                    bearing = 0
+                    ambig_bearing = 0
                 else:
                     ambig_bearing = convert_absolute_angle(
-                        bearing_token.text, line, self.errors, self.error_type
+                        ambig_bearing_token.text, line, self.errors, self.error_type
                     )
                     if ambig_bearing:
                         ambig_bearing_token.record(self.name, "ambig bearing", ambig_bearing)
-                        # TODO - add ambiguous bearing to schema
+                        contact.ambig_bearing = ambig_bearing

@@ -60,6 +60,13 @@ class DataStoreExportPostGISDBTestCase(unittest.TestCase):
             with open(self.path, "r") as file:
                 data = file.read().split("\n")
 
+            print("-" * 80)
+            for line in data:
+                print(line)
+            print("-" * 80)
+            print(data)
+            print("-" * 80)
+
             assert (
                 "100112 115800.000\tSUBJECT\tAA\t60 23 40.25 N\t000 01 25.86 E\t109.08\t6.00\t0.0"
                 in data
@@ -74,11 +81,16 @@ class DataStoreExportPostGISDBTestCase(unittest.TestCase):
                 in data
             )
             assert (
-                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\tNULL\t123.4\t432.10\tSENSOR\tN/A"
+                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\t106.83\t123.40\t432.10\tSENSOR\tN/A"
                 in data
             )
             assert (
-                ";SENSOR:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\tNULL\tSENSOR\tN/A" in data
+                ";SENSOR2:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\t108.42\tNULL\tNULL\tSENSOR\tN/A"
+                in data
+            )
+
+            assert (
+                ";SENSOR:\t100112 120400.000\tSENSOR\t@@\tNULL\t251.99\t107.69\tSENSOR\tN/A" in data
             )
 
 
@@ -106,6 +118,7 @@ class DataStoreExportSpatiaLiteTestCase(unittest.TestCase):
             # Fetch data from the exported file
             with open(self.path, "r") as file:
                 data = file.read().split("\n")
+                print(data)
 
             assert (
                 "100112 115800.000\tSUBJECT\tAA\t60 23 40.25 N\t000 01 25.86 E\t109.08\t6.00\t0.0"
@@ -121,11 +134,15 @@ class DataStoreExportSpatiaLiteTestCase(unittest.TestCase):
                 in data
             )
             assert (
-                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\tNULL\t123.4\t432.10\tSENSOR\tN/A"
+                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\t106.83\t123.40\t432.10\tSENSOR\tN/A"
                 in data
             )
             assert (
-                ";SENSOR:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\tNULL\tSENSOR\tN/A" in data
+                ";SENSOR2:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\t108.42\tNULL\tNULL\tSENSOR\tN/A"
+                in data
+            )
+            assert (
+                ";SENSOR:\t100112 120400.000\tSENSOR\t@@\tNULL\t251.99\t107.69\tSENSOR\tN/A" in data
             )
 
 

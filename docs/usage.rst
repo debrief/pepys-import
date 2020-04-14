@@ -20,7 +20,7 @@ Command-line options
 
 .. code-block:: none
 
-  usage: import.py [-h] [--path PATH] [--archive] [--db DB]
+  usage: cli.py [-h] [--path PATH] [--archive] [--db DB]
                   [--resolver RESOLVER]
 
   optional arguments:

@@ -1,6 +1,8 @@
 import argparse
 import os
 
+import sqlalchemy
+
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
@@ -55,6 +57,16 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
             db_type=DB_TYPE,
             missing_data_resolver=resolver_obj,
         )
+    elif type(db) is dict:
+        data_store = DataStore(
+            db_username=db["username"],
+            db_password=db["password"],
+            db_host=db["host"],
+            db_port=db["port"],
+            db_name=db["name"],
+            db_type=db["type"],
+            missing_data_resolver=resolver_obj,
+        )
     else:
         data_store = DataStore(
             db_username="",
@@ -73,7 +85,21 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
 
     processor = FileProcessor(archive=archive)
     processor.load_importers_dynamically()
-    processor.process(path, data_store, True)
+
+    try:
+        processor.process(path, data_store, True)
+    except (
+        sqlalchemy.exc.ProgrammingError,
+        sqlalchemy.exc.OperationalError,
+        sqlalchemy.exc.InvalidRequestError,
+    ) as e:
+        print(
+            f"SQL Exception details: {e}\n\n"
+            "ERROR: SQL error when communicating with database\n"
+            "Please check your database structure is up-to-date with that expected "
+            "by the version of Pepys you have installed.\n"
+            "See above for the full error from SQLAlchemy."
+        )
 
 
 if __name__ == "__main__":
