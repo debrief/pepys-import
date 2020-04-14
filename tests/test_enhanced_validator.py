@@ -115,7 +115,8 @@ class EnhancedValidatorTestCase(unittest.TestCase):
 
         current_state.heading = 5.0 * unit_registry.radian
         current_state.course = 5.0 * unit_registry.radian
-        EnhancedValidator(current_state, self.errors, "Test Parser", prev_state)
+        ev = EnhancedValidator()
+        ev.validate(current_state, self.errors, "Test Parser", prev_state)
         assert len(self.errors) == 2
         assert (
             "Difference between Bearing (40.444) and Heading (286.479 degree) is more than 90 degrees!"
@@ -152,7 +153,8 @@ class EnhancedValidatorTestCase(unittest.TestCase):
         current_state.location = loc
 
         current_state.speed = 10.0 * (unit_registry.metre / unit_registry.second)
-        EnhancedValidator(current_state, self.errors, "Test Parser", prev_state)
+        ev = EnhancedValidator()
+        ev.validate(current_state, self.errors, "Test Parser", prev_state)
         assert len(self.errors) == 1
         assert (
             "Calculated speed (12382.753 meter / second) is more than the measured speed * 10 "
