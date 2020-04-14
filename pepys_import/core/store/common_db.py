@@ -281,12 +281,17 @@ class DatafileMixin:
             for platform, objects in self.measurements[parser].items():
                 total_objects += len(objects)
                 print(f"Submitting measurements extracted by {parser}.")
-                # Commit files one by one
-                # for obj in tqdm(objects):
-                #     obj.submit(data_store, change_id)
-
                 # Bulk save table objects; state, etc.
                 data_store.session.bulk_save_objects(objects)
+
+                data_store.session.bulk_save_objects(
+                    [
+                        data_store.db_classes.Log(
+                            table=t.__tablename__, id=t.state_id, change_id=change_id
+                        )
+                        for t in objects
+                    ],
+                )
 
             extraction_log.append(f"{total_objects} measurements extracted by {parser}.")
         return extraction_log
