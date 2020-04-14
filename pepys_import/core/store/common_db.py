@@ -242,35 +242,49 @@ class DatafileMixin:
             errors = list()
         assert isinstance(errors, list), "Type error for errors!"
 
+        failed_validators = []
+
         if validation_level == validation_constants.NONE_LEVEL:
-            return True
+            return (True, failed_validators)
         elif validation_level == validation_constants.BASIC_LEVEL:
             for measurement in self.measurements[parser]:
-                BasicValidator(measurement, errors, parser)
+                bv = BasicValidator(parser)
+                if not bv.validate(measurement, errors):
+                    failed_validators.append(bv.name)
                 for basic_validator in LOCAL_BASIC_VALIDATORS:
-                    basic_validator(measurement, errors, parser)
+                    bv = basic_validator(parser)
+                    if not bv.validate(measurement, errors):
+                        failed_validators.append(bv.name)
             if not errors:
-                return True
-            return False
+                return (True, failed_validators)
+            return (False, failed_validators)
         elif validation_level == validation_constants.ENHANCED_LEVEL:
             for objects in self.measurements[parser].values():
                 prev_object_dict = dict()
                 for curr_object in objects:
-                    BasicValidator(curr_object, errors, parser)
+                    bv = BasicValidator(parser)
+                    if not bv.validate(curr_object, errors):
+                        failed_validators.append(bv.name)
                     for basic_validator in LOCAL_BASIC_VALIDATORS:
-                        basic_validator(curr_object, errors, parser)
+                        bv = basic_validator(parser)
+                        if not bv.validate(curr_object, errors):
+                            failed_validators.append(bv.name)
 
                     prev_object = None
                     if curr_object.platform_name in prev_object_dict:
                         prev_object = prev_object_dict[curr_object.platform_name]
-                    EnhancedValidator(curr_object, errors, parser, prev_object)
+                    ev = EnhancedValidator()
+                    if not ev.validate(curr_object, errors, parser, prev_object):
+                        failed_validators.append(ev.name)
                     for enhanced_validator in LOCAL_ENHANCED_VALIDATORS:
-                        enhanced_validator(curr_object, errors, parser, prev_object)
+                        ev = enhanced_validator()
+                        if not ev.validate(curr_object, errors, parser, prev_object):
+                            failed_validators.append(ev.name)
                     prev_object_dict[curr_object.platform_name] = curr_object
 
             if not errors:
-                return True
-            return False
+                return (True, failed_validators)
+            return (False, failed_validators)
 
     def commit(self, data_store, change_id):
         # Since measurements are saved by their importer names, iterate over each key
