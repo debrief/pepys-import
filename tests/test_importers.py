@@ -12,6 +12,8 @@ from importers.nmea_importer import NMEAImporter
 from importers.replay_importer import ReplayImporter
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.file.importer import Importer
+from pepys_import.core.validators import constants as validation_constants
+
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
@@ -291,7 +293,7 @@ class ImporterDisableRecordingTest(unittest.TestCase):
         class TestImporter(Importer):
             def __init__(self):
                 super().__init__(
-                    name="Test Importer", validation_level=None, short_name="Test Importer"
+                    name="Test Importer", validation_level=validation_constants.BASIC_LEVEL, short_name="Test Importer"
                 )
                 self.disable_recording()
 
