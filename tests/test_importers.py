@@ -158,6 +158,88 @@ class SampleImporterTests(unittest.TestCase):
         assert len(os.listdir(moved_files_path)) == 0
 
 
+class ImporterSummaryTest(unittest.TestCase):
+    def setUp(self) -> None:
+        pass
+
+    def tearDown(self) -> None:
+        descending_file = os.path.join(CURRENT_DIR, "import_status_test.db")
+        if os.path.exists(descending_file):
+            os.remove(descending_file)
+
+    def test_summary_no_archive(self):
+        """Test whether descending processing works for the given path"""
+        processor = FileProcessor("import_status_test.db", archive=False)
+
+        processor.load_importers_dynamically()
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            processor.process(os.path.join(DATA_PATH, "track_files/rep_data"), None, True)
+        output = temp_output.getvalue()
+        
+        assert """Import succeeded for:
+  - sen_tracks.rep
+  - sen_ssk_freq.dsf
+  - rep_test1.rep
+  - uk_track.rep""" in output
+
+        assert """  - uk_track_failing_enh_validation.rep
+    - Validators failing:
+      - Enhanced Validator""" in output
+
+        assert """  - rep_test1_bad.rep
+    - Importers failing:
+      - REP Comment Importer""" in output
+
+        assert """  - rep_test2.rep
+    - Importers failing:
+      - REP Importer""" in output
+
+        assert """  - sen_frig_sensor.dsf
+    - Importers failing:
+      - REP Importer""" in output
+
+    def test_summary_with_archive(self):
+        """Test whether descending processing works for the given path"""
+        processor = FileProcessor("import_status_test.db", archive=True)
+
+        processor.load_importers_dynamically()
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            processor.process(os.path.join(DATA_PATH, "track_files/rep_data"), None, True)
+        output = temp_output.getvalue()
+        
+        assert """Import succeeded for:
+  - sen_tracks.rep
+    - Archived to """ in output
+
+        assert """  - sen_ssk_freq.dsf
+    - Archived to """ in output
+
+        assert """  - rep_test1.rep
+    - Archived to """ in output
+
+        assert """  - uk_track.rep
+    - Archived to """ in output
+
+        assert """  - uk_track_failing_enh_validation.rep
+    - Validators failing:
+      - Enhanced Validator""" in output
+
+        assert """  - rep_test1_bad.rep
+    - Importers failing:
+      - REP Comment Importer""" in output
+
+        assert """  - rep_test2.rep
+    - Importers failing:
+      - REP Importer""" in output
+
+        assert """  - sen_frig_sensor.dsf
+    - Importers failing:
+      - REP Importer""" in output
+
 class ImporterRemoveTestCase(unittest.TestCase):
     def test_can_load_this_header(self):
         """Test whether can_load_this_header removes the importer from the importers"""
