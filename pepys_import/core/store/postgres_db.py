@@ -8,7 +8,6 @@ from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
     ActivationMixin,
-    CommentMixin,
     ContactMixin,
     DatafileMixin,
     ElevationPropertyMixin,
@@ -505,7 +504,7 @@ class LogsHolding(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Comment(BasePostGIS, CommentMixin):
+class Comment(BasePostGIS):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sensor_name = None

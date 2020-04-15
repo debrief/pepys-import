@@ -308,15 +308,6 @@ class SensorTypeMixin:
 
 
 class StateMixin:
-    def submit(self, data_store, change_id):
-        """Submit intermediate object to the DB"""
-        data_store.session.add(self)
-        data_store.session.flush()
-        data_store.session.expire(self, ["_location"])
-        # Log new State object creation
-        data_store.add_to_logs(table=constants.STATE, row_id=self.state_id, change_id=change_id)
-        return self
-
     #
     # Speed properties
     #
@@ -429,15 +420,6 @@ class StateMixin:
 
 
 class ContactMixin:
-    def submit(self, data_store, change_id):
-        """Submit intermediate object to the DB"""
-        data_store.session.add(self)
-        data_store.session.flush()
-        data_store.session.expire(self, ["_location"])
-        # Log new Contact object creation
-        data_store.add_to_logs(table=constants.CONTACT, row_id=self.contact_id, change_id=change_id)
-        return self
-
     #
     # Bearing properties
     #
@@ -795,16 +777,6 @@ class ContactMixin:
     @freq.expression
     def freq(self):
         return self._freq
-
-
-class CommentMixin:
-    def submit(self, data_store, change_id):
-        """Submit intermediate object to the DB"""
-        data_store.session.add(self)
-        data_store.session.flush()
-        # Log new Comment object creation
-        data_store.add_to_logs(table=constants.COMMENT, row_id=self.comment_id, change_id=change_id)
-        return self
 
 
 class MediaMixin:
