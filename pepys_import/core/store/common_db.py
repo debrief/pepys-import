@@ -1,5 +1,5 @@
 from sqlalchemy.ext.hybrid import hybrid_property
-from tqdm import tqdm
+from sqlalchemy.inspection import inspect
 
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
 from pepys_import.core.formats import unit_registry
@@ -282,13 +282,12 @@ class DatafileMixin:
                 total_objects += len(objects)
                 print(f"Submitting measurements extracted by {parser}.")
                 # Bulk save table objects; state, etc.
-                data_store.session.bulk_save_objects(objects)
-
-                data_store.session.bulk_save_objects(
+                data_store.session.bulk_save_objects(objects, return_defaults=True)
+                # Log saved objects
+                data_store.session.bulk_insert_mappings(
+                    data_store.db_classes.Log,
                     [
-                        data_store.db_classes.Log(
-                            table=t.__tablename__, id=t.state_id, change_id=change_id
-                        )
+                        dict(table=t.__tablename__, id=inspect(t).identity[0], change_id=change_id)
                         for t in objects
                     ],
                 )
