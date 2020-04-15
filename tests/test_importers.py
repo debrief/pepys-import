@@ -185,29 +185,61 @@ class ImporterSummaryTest(unittest.TestCase):
         with redirect_stdout(temp_output):
             processor.process(os.path.join(DATA_PATH, "track_files/rep_data"), None, True)
         output = temp_output.getvalue()
-        print(output)
-        
-        assert """Import succeeded for:
-  - sen_tracks.rep
-  - sen_ssk_freq.dsf
-  - rep_test1.rep
-  - uk_track.rep""" in output
 
-        assert """  - uk_track_failing_enh_validation.rep
-    - Validators failing:
-      - Enhanced Validator""" in output
+        lines = output.split("\n")
 
-        assert """  - rep_test1_bad.rep
-    - Importers failing:
-      - REP Comment Importer""" in output
+        # List of files which should be listed in the 'Import succeeded for' section
+        succeeded_files = ["sen_tracks.rep", "sen_ssk_freq.dsf", "rep_test1.rep", "uk_track.rep"]
 
-        assert """  - rep_test2.rep
-    - Importers failing:
-      - REP Importer""" in output
+        succeeded_index = lines.index("Import succeeded for:")
+        index = succeeded_index + 1
+        while lines[index] != "":
+            # First line is a filename
+            filename = lines[index].replace("  - ", "")
 
-        assert """  - sen_frig_sensor.dsf
-    - Importers failing:
-      - REP Importer""" in output
+            # Check the filename we've found is one that's supposed to be
+            # listed in this section
+            assert filename in succeeded_files
+
+            # Remove it from the list once we've seen it
+            succeeded_files.remove(filename)
+
+            index += 1
+
+        # Check there's nothing left in the list
+        assert len(succeeded_files) == 0
+
+        # List of details for files that should be in the 'import failed for' section
+        failed_files = {
+            "rep_test1_bad.rep": "REP Comment Importer",
+            "sen_frig_sensor.dsf": "REP Importer",
+            "rep_test2.rep": "REP Importer",
+            "uk_track_failing_enh_validation.rep": "Enhanced Validator",
+        }
+
+        failed_index = lines.index("Import failed for:")
+        index = failed_index + 1
+        while lines[index] != "":
+            # First line is a filename
+            filename = lines[index].replace("  - ", "")
+            # next line is Importers/Validators failing line
+            assert "failing" in lines[index + 1]
+
+            assert filename in failed_files.keys()
+
+            # Next line has type of importer that is failing
+            assert failed_files[filename] in lines[index + 2]
+            
+            # Remove it from the dict so we can check it's empty at the end
+            del failed_files[filename]
+
+            # Next line lists failure report
+            assert "Failure report" in lines[index + 3]
+
+            index += 4
+
+        # Check there's nothing left in the dict
+        assert len(failed_files) == 0
 
     @patch("pepys_import.file.file_processor.ARCHIVE_PATH", OUTPUT_PATH)
     def test_summary_with_archive(self):
@@ -220,45 +252,69 @@ class ImporterSummaryTest(unittest.TestCase):
         with redirect_stdout(temp_output):
             processor.process(os.path.join(DATA_PATH, "track_files/rep_data"), None, True)
         output = temp_output.getvalue()
-        print(output)
-        
-        assert """Import succeeded for:
-  - sen_tracks.rep
-    - Archived to """ in output
 
-        assert """  - sen_ssk_freq.dsf
-    - Archived to """ in output
+        lines = output.split("\n")
 
-        assert """  - rep_test1.rep
-    - Archived to """ in output
+        # List of files which should be listed in the 'Import succeeded for' section
+        succeeded_files = ["sen_tracks.rep", "sen_ssk_freq.dsf", "rep_test1.rep", "uk_track.rep"]
 
-        assert """  - uk_track.rep
-    - Archived to """ in output
+        succeeded_index = lines.index("Import succeeded for:")
+        index = succeeded_index + 1
+        while lines[index] != "":
+            # First line is a filename
+            filename = lines[index].replace("  - ", "")
+            # next line is 'Archived to' line
+            assert "Archived to" in lines[index + 1]
 
-        assert """  - uk_track_failing_enh_validation.rep
-    - Validators failing:
-      - Enhanced Validator""" in output
+            # Check the filename we've found is one that's supposed to be
+            # listed in this section
+            assert filename in succeeded_files
 
-        assert """  - rep_test1_bad.rep
-    - Importers failing:
-      - REP Comment Importer""" in output
+            # Remove it from the list once we've seen it
+            succeeded_files.remove(filename)
 
-        assert """  - rep_test2.rep
-    - Importers failing:
-      - REP Importer""" in output
+            index += 2
 
-        assert """  - sen_frig_sensor.dsf
-    - Importers failing:
-      - REP Importer""" in output
+        # Check there's nothing left in the list
+        assert len(succeeded_files) == 0
+
+        # List of details for files that should be in the 'import failed for' section
+        failed_files = {
+            "rep_test1_bad.rep": "REP Comment Importer",
+            "sen_frig_sensor.dsf": "REP Importer",
+            "rep_test2.rep": "REP Importer",
+            "uk_track_failing_enh_validation.rep": "Enhanced Validator",
+        }
+
+        failed_index = lines.index("Import failed for:")
+        index = failed_index + 1
+        while lines[index] != "":
+            # First line is a filename
+            filename = lines[index].replace("  - ", "")
+            # next line is Importers/Validators failing line
+            assert "failing" in lines[index + 1]
+
+            assert filename in failed_files.keys()
+
+            # Next line has type of importer that is failing
+            assert failed_files[filename] in lines[index + 2]
+            
+            # Remove it from the dict so we can check it's empty at the end
+            del failed_files[filename]
+
+            # Next line lists failure report
+            assert "Failure report" in lines[index + 3]
+
+            index += 4
+
+        # Check there's nothing left in the dict
+        assert len(failed_files) == 0
 
         moved_files_path = str(list(Path(OUTPUT_PATH).rglob("sources"))[0])
-        print(moved_files_path)
         assert os.path.exists(moved_files_path) is True
 
-        print("For loop")
         # Scan the files in sources folder
         for f in os.scandir(moved_files_path):
-            print(f)
             # Move files back
             source_path = os.path.join(REP_DATA_PATH, f.name)
             shutil.move(f.path, source_path)
@@ -404,7 +460,9 @@ class ImporterDisableRecordingTest(unittest.TestCase):
         class TestImporter(Importer):
             def __init__(self):
                 super().__init__(
-                    name="Test Importer", validation_level=validation_constants.BASIC_LEVEL, short_name="Test Importer"
+                    name="Test Importer",
+                    validation_level=validation_constants.BASIC_LEVEL,
+                    short_name="Test Importer",
                 )
                 self.disable_recording()
 
