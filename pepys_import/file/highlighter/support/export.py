@@ -14,7 +14,7 @@ def export_report(filename, chars, dict_colors, include_key=False):
     the relevant <span> tags for each character based on the usages stored for that character.
     """
 
-    f_out = open(filename, "w")
+    output_strings = []
 
     html_header = """<html>
     <head>
@@ -22,7 +22,7 @@ def export_report(filename, chars, dict_colors, include_key=False):
     <body style="font-family: Courier">
     """
 
-    f_out.write(html_header)
+    output_strings.append(html_header)
 
     last_hash = ""
 
@@ -53,52 +53,45 @@ def export_report(filename, chars, dict_colors, include_key=False):
                 # is it the different to this one?
                 if last_hash != this_hash:
                     # ok, close the span
-                    f_out.write("</span>")
+                    output_strings.append("</span>")
 
                     # start a new span
-                    f_out.write(
-                        "<span title='"
-                        + this_message
-                        + "' style=\"background-color:"
-                        + hex_color
-                        + '"a>'
+                    output_strings.append(
+                        f"<span title='{this_message}' style=\"background-color:{hex_color}\">"
                     )
             else:
-                f_out.write(
-                    "<span title='"
-                    + this_message
-                    + "' style=\"background-color:"
-                    + hex_color
-                    + '">'
+                output_strings.append(
+                    f"<span title='{this_message}' style=\"background-color:{hex_color}\">"
                 )
         elif last_hash != "":
-            f_out.write("</span>")
+            output_strings.append("</span>")
 
         # just check if it's newline
         if letter == "\n":
-            f_out.write("<br>")
+            output_strings.append("<br>")
         else:
-            f_out.write(letter)
+            output_strings.append(letter)
 
         last_hash = this_hash
 
     if last_hash != "":
-        f_out.write("</span>")
+        output_strings.append("</span>")
 
     # also provide a key
     if include_key:
-        f_out.write("<hr/><h3>Color Key</h3><ul>")
+        output_strings.append("<hr/><h3>Color Key</h3><ul>")
         for key in dict_colors:
             color = dict_colors[key]
             hex_color = hex_color_for(color)
-            f_out.write(
-                '<li><span style="background-color:' + hex_color + '">' + key + "</span></li>"
+            output_strings.append(
+                f'<li><span style="background-color:{hex_color}">{key}</span></li>'
             )
-        f_out.write("</ul>")
+        output_strings.append("</ul>")
 
     html_footer = """</body>
     </html>"""
 
-    f_out.write(html_footer)
+    output_strings.append(html_footer)
 
-    f_out.close()
+    with open(filename, "w") as f:
+        f.write("".join(output_strings))

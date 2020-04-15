@@ -13,7 +13,7 @@ class Char:
     # object here - so Python uses a list not a dict to store the attributes, and
     # is more efficient
     # (We may potentially have millions of Char objects for a long file)
-    __slots__ = ["letter", "usages"]
+    __slots__ = ("letter", "usages")
 
     def __init__(self, letter):
         self.letter = letter

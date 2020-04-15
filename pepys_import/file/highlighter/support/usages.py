@@ -8,6 +8,8 @@ class SingleUsage:
     on Char objects.
     """
 
+    __slots__ = ("tool_field", "message")
+
     def __init__(self, tool_field, message):
         self.tool_field = tool_field
         self.message = message

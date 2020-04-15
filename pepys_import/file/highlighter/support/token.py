@@ -14,6 +14,8 @@ class SubToken:
     and a reference to the overall character array created by HighlightedFile.
     """
 
+    __slots__ = ("span", "text", "line_start", "chars")
+
     def __init__(self, span, text, line_start, chars):
         self.span = span
         self.text = text
@@ -47,6 +49,8 @@ class Token:
     just be one SubToken object as a child of a Token object - however, when tokens are
     combined there can be multiple children.
     """
+
+    __slots__ = ("children", "highlighted_file")
 
     def __init__(self, list_of_subtokens, hf_instance):
         """
@@ -104,12 +108,14 @@ class Token:
         else:
             message = "Value:" + str(value)
 
+        usage = SingleUsage(tool_field, message)
+
         # This loop gives us each SubToken that is a child of this Token
         for subtoken in self.children:
             start = subtoken.start()
             end = subtoken.end()
+
             for i in range(start, end):
-                usage = SingleUsage(tool_field, message)
                 # Note: subtoken.chars is a reference to a single char array
                 # that was originally created by the HighlightedFile class
                 # So each time round the loop we're actually altering the same

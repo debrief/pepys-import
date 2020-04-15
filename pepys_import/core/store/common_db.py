@@ -1,5 +1,5 @@
 from sqlalchemy.ext.hybrid import hybrid_property
-from tqdm import tqdm
+from sqlalchemy.inspection import inspect
 
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
 from pepys_import.core.formats import unit_registry
@@ -297,8 +297,17 @@ class DatafileMixin:
             for platform, objects in self.measurements[parser].items():
                 total_objects += len(objects)
                 print(f"Submitting measurements extracted by {parser}.")
-                for obj in tqdm(objects):
-                    obj.submit(data_store, change_id)
+                # Bulk save table objects; state, etc.
+                data_store.session.bulk_save_objects(objects, return_defaults=True)
+                # Log saved objects
+                data_store.session.bulk_insert_mappings(
+                    data_store.db_classes.Log,
+                    [
+                        dict(table=t.__tablename__, id=inspect(t).identity[0], change_id=change_id)
+                        for t in objects
+                    ],
+                )
+
             extraction_log.append(f"{total_objects} measurements extracted by {parser}.")
         return extraction_log
 
@@ -315,15 +324,6 @@ class SensorTypeMixin:
 
 
 class StateMixin:
-    def submit(self, data_store, change_id):
-        """Submit intermediate object to the DB"""
-        data_store.session.add(self)
-        data_store.session.flush()
-        data_store.session.expire(self, ["_location"])
-        # Log new State object creation
-        data_store.add_to_logs(table=constants.STATE, row_id=self.state_id, change_id=change_id)
-        return self
-
     #
     # Speed properties
     #
@@ -436,15 +436,6 @@ class StateMixin:
 
 
 class ContactMixin:
-    def submit(self, data_store, change_id):
-        """Submit intermediate object to the DB"""
-        data_store.session.add(self)
-        data_store.session.flush()
-        data_store.session.expire(self, ["_location"])
-        # Log new Contact object creation
-        data_store.add_to_logs(table=constants.CONTACT, row_id=self.contact_id, change_id=change_id)
-        return self
-
     #
     # Bearing properties
     #
@@ -802,16 +793,6 @@ class ContactMixin:
     @freq.expression
     def freq(self):
         return self._freq
-
-
-class CommentMixin:
-    def submit(self, data_store, change_id):
-        """Submit intermediate object to the DB"""
-        data_store.session.add(self)
-        data_store.session.flush()
-        # Log new Comment object creation
-        data_store.add_to_logs(table=constants.COMMENT, row_id=self.comment_id, change_id=change_id)
-        return self
 
 
 class MediaMixin:
