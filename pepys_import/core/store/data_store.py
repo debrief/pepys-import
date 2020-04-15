@@ -70,7 +70,13 @@ class DataStore:
             driver, db_username, db_password, db_host, db_port, db_name
         )
         try:
-            self.engine = create_engine(connection_string, echo=False)
+            if db_type == "postgres":
+                self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
+                BasePostGIS.metadata.bind = self.engine
+            elif db_type == "sqlite":
+                self.engine = create_engine(connection_string, echo=False)
+                listen(self.engine, "connect", load_spatialite)
+                BaseSpatiaLite.metadata.bind = self.engine
         except ArgumentError as e:
             print(
                 f"SQL Exception details: {e}\n\n"
@@ -79,12 +85,6 @@ class DataStore:
                 "See above for the full error from SQLAlchemy."
             )
             sys.exit(1)
-
-        if db_type == "postgres":
-            BasePostGIS.metadata.bind = self.engine
-        elif db_type == "sqlite":
-            listen(self.engine, "connect", load_spatialite)
-            BaseSpatiaLite.metadata.bind = self.engine
 
         self.missing_data_resolver = missing_data_resolver
         self.welcome_text = welcome_text

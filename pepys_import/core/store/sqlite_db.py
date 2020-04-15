@@ -7,7 +7,6 @@ from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
     ActivationMixin,
-    CommentMixin,
     ContactMixin,
     DatafileMixin,
     ElevationPropertyMixin,
@@ -438,7 +437,7 @@ class LogsHolding(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Comment(BaseSpatiaLite, CommentMixin):
+class Comment(BaseSpatiaLite):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sensor_name = None
