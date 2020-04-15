@@ -34,9 +34,12 @@ def test_single_rep_file_import_short(benchmark):
 
 @pytest.mark.benchmark(min_rounds=1, max_time=2.0, warmup=False)
 def test_single_rep_file_import_long(benchmark):
+    processor = FileProcessor(archive=False)
+    processor.load_importers_dynamically()
+
     benchmark.pedantic(
         run_import,
-        args=(os.path.join(FILE_DIR, "benchmark_data/bulk_data.rep"),),
+        args=(processor, os.path.join(FILE_DIR, "benchmark_data/bulk_data.rep"),),
         iterations=1,
         rounds=1,
     )
