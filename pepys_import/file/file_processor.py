@@ -277,7 +277,6 @@ class FileProcessor:
                 if len(importer.errors) > 0:
                     importers_with_errors.append(importer.short_name)
 
-                
                 # Call related validation tests, extend global errors lists if the
                 # importer has errors
                 validation_errors = []

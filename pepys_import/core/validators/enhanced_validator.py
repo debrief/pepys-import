@@ -11,7 +11,7 @@ class EnhancedValidator:
 
     def __init__(self):
         self.name = "Enhanced Validator"
-    
+
     def validate(self, current_object, errors, parser_name, prev_object=None):
         orig_errors_length = len(errors)
 
@@ -39,7 +39,7 @@ class EnhancedValidator:
                     self.speed_loose_match_with_location(
                         location, prev_location, speed, calculated_time, errors, error_type,
                     )
-        
+
         if len(errors) > orig_errors_length:
             return False
         else:

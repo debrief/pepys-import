@@ -10,10 +10,9 @@ from unittest.mock import patch
 
 from importers.nmea_importer import NMEAImporter
 from importers.replay_importer import ReplayImporter
+from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.file.importer import Importer
-from pepys_import.core.validators import constants as validation_constants
-
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
@@ -229,7 +228,7 @@ class ImporterSummaryTest(unittest.TestCase):
 
             # Next line has type of importer that is failing
             assert failed_files[filename] in lines[index + 2]
-            
+
             # Remove it from the dict so we can check it's empty at the end
             del failed_files[filename]
 
@@ -298,7 +297,7 @@ class ImporterSummaryTest(unittest.TestCase):
 
             # Next line has type of importer that is failing
             assert failed_files[filename] in lines[index + 2]
-            
+
             # Remove it from the dict so we can check it's empty at the end
             del failed_files[filename]
 
