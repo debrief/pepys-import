@@ -4,15 +4,9 @@ import pytest
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from tests.benchmarks.benchmark_utils import running_on_travis
 
 FILE_DIR = os.path.dirname(__file__)
-
-
-def running_on_travis():
-    if os.getenv("travis") == "true":
-        return True
-    else:
-        return False
 
 
 def run_import(processor, file_path):
