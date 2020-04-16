@@ -17,6 +17,7 @@ from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.geoalchemy_utils import load_spatialite
 
 FILE_PATH = os.path.dirname(__file__)
@@ -299,18 +300,18 @@ class InitialiseShellTestCase(unittest.TestCase):
         assert "Cleared database contents" in output
 
     def test_do_clear_db_schema(self):
-        assert self.store.is_schema_created() is True
+        assert is_schema_created(self.store.engine, self.store.db_type) is True
 
         self.initialise_shell.do_clear_db_schema()
-        assert self.store.is_schema_created() is False
+        assert is_schema_created(self.store.engine, self.store.db_type) is False
 
     def test_do_create_pepys_schema(self):
         new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
-        assert new_data_store.is_schema_created() is False
+        assert is_schema_created(new_data_store.engine, new_data_store.db_type) is False
 
         new_shell = InitialiseShell(new_data_store, None, None)
         new_shell.do_create_pepys_schema()
-        assert new_data_store.is_schema_created() is True
+        assert is_schema_created(new_data_store.engine, new_data_store.db_type) is True
 
     def test_do_import_reference_data(self):
         temp_output = StringIO()

@@ -10,6 +10,7 @@ from prompt_toolkit.completion.filesystem import PathCompleter
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.utils import get_default_export_folder
+from pepys_import.utils.data_store_utils import is_schema_created
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -39,7 +40,7 @@ class AdminShell(cmd.Cmd):
 
     def do_export(self):
         """Start the export process"""
-        if self.data_store.is_schema_created() is False:
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
         with self.data_store.session_scope():
@@ -79,7 +80,7 @@ class AdminShell(cmd.Cmd):
             print(f"Please enter a valid input.")
 
     def do_export_by_platform_name(self):
-        if self.data_store.is_schema_created() is False:
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
         Sensor = self.data_store.db_classes.Sensor
@@ -116,7 +117,7 @@ class AdminShell(cmd.Cmd):
 
     def do_export_all(self):
         """Start the export all datafiles process"""
-        if self.data_store.is_schema_created() is False:
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
         export_flag = input("Do you want to export all Datafiles. (Y/n)\n")
         if export_flag in ["", "Y", "y"]:
@@ -162,7 +163,7 @@ class AdminShell(cmd.Cmd):
 
     def do_status(self):
         """Report on the database contents"""
-        if self.data_store.is_schema_created() is False:
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
         with self.data_store.session_scope():

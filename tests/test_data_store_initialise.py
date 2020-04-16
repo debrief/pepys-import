@@ -7,6 +7,7 @@ from sqlalchemy import inspect
 from testing.postgresql import Postgresql
 
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.utils.data_store_utils import is_schema_created
 
 
 @pytest.mark.postgres
@@ -84,10 +85,10 @@ class DataStoreInitialisePostGISTestCase(TestCase):
             db_name="test",
             db_type="postgres",
         )
-        assert data_store_postgres.is_schema_created() is False
+        assert is_schema_created(data_store_postgres.engine, data_store_postgres.db_type) is False
 
         data_store_postgres.initialise()
-        assert data_store_postgres.is_schema_created() is True
+        assert is_schema_created(data_store_postgres.engine, data_store_postgres.db_type) is True
 
     def test_is_empty(self):
         if self.store is None:
@@ -149,10 +150,10 @@ class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
 
     def test_is_schema_created(self):
         data_store_sqlite = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
-        assert data_store_sqlite.is_schema_created() is False
+        assert is_schema_created(data_store_sqlite.engine, data_store_sqlite.db_type) is False
 
         data_store_sqlite.initialise()
-        assert data_store_sqlite.is_schema_created() is True
+        assert is_schema_created(data_store_sqlite.engine, data_store_sqlite.db_type) is True
 
     def test_is_empty(self):
         data_store_sqlite = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
