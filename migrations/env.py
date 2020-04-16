@@ -1,13 +1,10 @@
-import sys
+import os
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
 from sqlalchemy.event import listen
 
-sys.path.append(".")
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from pepys_import.core.store import postgres_db, sqlite_db
 from pepys_import.core.store.db_base import BasePostGIS, BaseSpatiaLite
@@ -18,14 +15,22 @@ from pepys_import.utils.data_store_utils import (
 )
 from pepys_import.utils.geoalchemy_utils import load_spatialite
 
+DIR_PATH = os.path.dirname(__file__)
 
+# this is the Alembic Config object, which provides
+# access to the values within the .ini file in use.
 config = context.config
 
 driver = "sqlite"
+version_path = os.path.join(DIR_PATH, "versions")
 if DB_TYPE == "postgres":
     driver = "postgresql+psycopg2"
+    version_path = os.path.join(DIR_PATH, "postgres_versions")
 elif DB_TYPE == "sqlite":
+    version_path = os.path.join(DIR_PATH, "sqlite_versions")
     driver = "sqlite+pysqlite"
+config.set_main_option("version_locations", version_path)
+
 connection_string = "{}://{}:{}@{}:{}/{}".format(
     driver, DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 )
