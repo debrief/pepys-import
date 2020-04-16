@@ -1448,15 +1448,21 @@ class DataStore:
         inspector = inspect(self.engine)
         if self.db_type == "sqlite":
             table_names = inspector.get_table_names()
-            number_of_tables = 72 if platform.system() == "Windows" else 70
+            # SQLite can have either 72 tables (if on Windows, with the new version of mod_spatialite)
+            # or 70 if on another platform (with the stable release of mod_spatialite)
+            if len(table_names) == 72 or len(table_names) == 70:
+                return True
+            else:
+                print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
+                return False
         else:
             table_names = inspector.get_table_names(schema="pepys")
-            number_of_tables = 34
-
-        if len(table_names) != number_of_tables:
-            print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
-            return False
-        return True
+            # We expect 34 tables on Postgres
+            if len(table_names) == 34:
+                return True
+            else:
+                print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
+                return False
 
     def is_empty(self):
         """ Returns True if sample table (Privacy) is empty, False otherwise"""
