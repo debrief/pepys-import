@@ -4,4 +4,5 @@ class BasicTestValidator:
         self.error_type = f"{parser_name} - {self.name} Error"
 
     def validate(self, measurement, errors):
-        return True
+        errors.append({self.error_type: "Test Error"})
+        return False

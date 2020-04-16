@@ -9,9 +9,14 @@ from pepys_import.utils.unit_utils import (
 class EnhancedValidator:
     """Enhanced validator serve to verify the lat/long, in addition to the course/speed/heading"""
 
-    def __init__(self, current_object, errors, parser_name, prev_object=None):
+    def __init__(self):
+        self.name = "Enhanced Validator"
+
+    def validate(self, current_object, errors, parser_name, prev_object=None):
+        orig_errors_length = len(errors)
+
         error_type = (
-            parser_name + f"-Enhanced Validation Error on Timestamp:"
+            f"{parser_name} - {self.name} Error on Timestamp:"
             f"{str(current_object.time)}, Sensor:"
             f"{current_object.sensor_name}, Platform:{current_object.platform_name}"
         )
@@ -34,6 +39,11 @@ class EnhancedValidator:
                     self.speed_loose_match_with_location(
                         location, prev_location, speed, calculated_time, errors, error_type,
                     )
+
+        if len(errors) > orig_errors_length:
+            return False
+        else:
+            return True
 
     @staticmethod
     def course_heading_loose_match_with_location(

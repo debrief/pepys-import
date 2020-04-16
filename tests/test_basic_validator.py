@@ -92,7 +92,8 @@ class BasicValidatorTestCase(unittest.TestCase):
         loc._latitude = 180
         loc._longitude = 25
         state.location = loc
-        BasicValidator(state, self.errors, "Test Parser")
+        bv = BasicValidator("Test Parser")
+        bv.validate(state, self.errors)
         assert len(self.errors) == 1
         assert "Latitude is not between -90 and 90 degrees!" in str(self.errors[0])
 
@@ -112,7 +113,8 @@ class BasicValidatorTestCase(unittest.TestCase):
         loc._latitude = 25
         loc._longitude = 250
         state.location = loc
-        BasicValidator(state, self.errors, "Test Parser")
+        bv = BasicValidator("Test Parser")
+        bv.validate(state, self.errors)
         assert len(self.errors) == 1
         assert "Longitude is not between -180 and 180 degrees!" in str(self.errors[0])
 
@@ -125,7 +127,8 @@ class BasicValidatorTestCase(unittest.TestCase):
             parser_name=self.parser.short_name,
         )
         state.heading = 10.0 * unit_registry.radian  # 10 radians is approximately 572 degrees
-        BasicValidator(state, self.errors, "Test Parser")
+        bv = BasicValidator("Test Parser")
+        bv.validate(state, self.errors)
         assert len(self.errors) == 1
         assert "Heading is not between 0 and 360 degrees!" in str(self.errors[0])
 
@@ -138,7 +141,8 @@ class BasicValidatorTestCase(unittest.TestCase):
             parser_name=self.parser.short_name,
         )
         state.course = 10.0 * unit_registry.radian  # 10 radians is approximately 572 degrees
-        BasicValidator(state, self.errors, "Test Parser")
+        bv = BasicValidator("Test Parser")
+        bv.validate(state, self.errors)
         assert len(self.errors) == 1
         assert "Course is not between 0 and 360 degrees!" in str(self.errors[0])
 
