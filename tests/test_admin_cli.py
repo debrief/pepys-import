@@ -232,7 +232,7 @@ class AdminCLITestCase(unittest.TestCase):
         states_text = "| States       |              738 |"
         contacts_text = "| Contacts     |               15 |"
         comments_text = "| Comments     |                7 |"
-        datafiles_text = "| Datafiles    |                7 |"
+        datafiles_text = "| Datafiles    |                8 |"
         assert states_text in output
         assert contacts_text in output
         assert comments_text in output
