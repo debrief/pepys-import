@@ -63,6 +63,11 @@ class FileProcessor:
             if not os.path.exists(self.output_path):
                 os.makedirs(self.output_path)
 
+        # Create dict to store success/failures in
+        import_summary = {}
+        import_summary["succeeded"] = []
+        import_summary["failed"] = []
+
         # Take current timestamp without milliseconds
         now = datetime.utcnow()
         # Create non existing directories in the following format:
@@ -100,7 +105,7 @@ class FileProcessor:
             data_store = DataStore("", "", "", 0, self.filename, db_type="sqlite")
             data_store.initialise()
 
-        # check given path is a file
+        # If given path is a single file, then just process that file
         if os.path.isfile(path):
             with data_store.session_scope():
                 states_sum = TableSummary(data_store.session, data_store.db_classes.State)
@@ -114,7 +119,9 @@ class FileProcessor:
 
                 filename = os.path.abspath(path)
                 current_path = os.path.dirname(path)
-                processed_ctr = self.process_file(filename, current_path, data_store, processed_ctr)
+                processed_ctr = self.process_file(
+                    filename, current_path, data_store, processed_ctr, import_summary
+                )
                 states_sum = TableSummary(data_store.session, data_store.db_classes.State)
                 contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
                 comments_sum = TableSummary(data_store.session, data_store.db_classes.Comment)
@@ -123,8 +130,11 @@ class FileProcessor:
                     [states_sum, contacts_sum, comments_sum, platforms_sum]
                 )
                 print(second_table_summary_set.report("==After=="))
+            self.display_import_summary(import_summary)
             print(f"Files got processed: {processed_ctr} times")
             return
+
+        # If we've got to here then we're dealing with a folder
 
         # check folder exists
         if not os.path.isdir(path):
@@ -149,13 +159,15 @@ class FileProcessor:
                 for current_path, folders, files in os.walk(abs_path):
                     for file in files:
                         processed_ctr = self.process_file(
-                            file, current_path, data_store, processed_ctr
+                            file, current_path, data_store, processed_ctr, import_summary
                         )
             else:
                 # loop through this path
                 for file in os.scandir(abs_path):
                     if file.is_file():
-                        processed_ctr = self.process_file(file, abs_path, data_store, processed_ctr)
+                        processed_ctr = self.process_file(
+                            file, abs_path, data_store, processed_ctr, import_summary
+                        )
 
             states_sum = TableSummary(data_store.session, data_store.db_classes.State)
             contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
@@ -166,9 +178,10 @@ class FileProcessor:
             )
             print(second_table_summary_set.report("==After=="))
 
+        self.display_import_summary(import_summary)
         print(f"Files got processed: {processed_ctr} times")
 
-    def process_file(self, file_object, current_path, data_store, processed_ctr):
+    def process_file(self, file_object, current_path, data_store, processed_ctr, import_summary):
         # file may have full path, therefore extract basename and split it
         basename = os.path.basename(file_object)
         filename, file_extension = os.path.splitext(basename)
@@ -256,19 +269,39 @@ class FileProcessor:
 
             # Run all validation tests
             errors = list()
+            importers_with_errors = []
+            validators_with_errors = []
+
             for importer in good_importers:
+                # If the importer has errors then note this, so we can inform the user
+                if len(importer.errors) > 0:
+                    importers_with_errors.append(importer.short_name)
+
                 # Call related validation tests, extend global errors lists if the
                 # importer has errors
-                if not datafile.validate(
+                validation_errors = []
+                validated, failed_validators = datafile.validate(
                     validation_level=importer.validation_level,
-                    errors=importer.errors,
+                    errors=validation_errors,
                     parser=importer.short_name,
-                ):
-                    errors.extend(importer.errors)
+                )
+                # Add the list of failed validators from that importer to
+                # the overall list of validators with errors for this file
+                validators_with_errors.extend(failed_validators)
+
+                # Add the importer errors and the validation errors to the list
+                # of errors for this file
+                errors.extend(importer.errors)
+                errors.extend(validation_errors)
 
             # If all tests pass for all parsers, commit datafile
             if not errors:
                 log = datafile.commit(data_store, change.change_id)
+
+                # Keep track of some details for the import summary
+                summary_details = {}
+                summary_details["filename"] = basename
+
                 # write extraction log to output folder
                 with open(
                     os.path.join(self.directory_path, f"{filename}_output.log"), "w",
@@ -280,14 +313,55 @@ class FileProcessor:
                     shutil.move(full_path, new_path)
                     # make it read-only
                     os.chmod(new_path, S_IREAD)
+                    summary_details["archived_location"] = new_path
+                import_summary["succeeded"].append(summary_details)
+
             else:
+                failure_report_filename = os.path.join(
+                    self.directory_path, f"{filename}_errors.log"
+                )
                 # write error log to the output folder
-                with open(
-                    os.path.join(self.directory_path, f"{filename}_errors.log"), "w",
-                ) as file:
+                with open(failure_report_filename, "w") as file:
                     json.dump(errors, file, ensure_ascii=False, indent=4)
+                import_summary["failed"].append(
+                    {
+                        "filename": basename,
+                        "importers_with_errors": importers_with_errors,
+                        "validators_with_errors": validators_with_errors,
+                        "report_location": failure_report_filename,
+                    }
+                )
 
         return processed_ctr
+
+    def display_import_summary(self, import_summary):
+        if len(import_summary["succeeded"]) > 0:
+            print("Import succeeded for:")
+            for details in import_summary["succeeded"]:
+                if "archived_location" in details:
+                    print(f"  - {details['filename']}")
+                    print(f"    - Archived to {details['archived_location']}")
+                else:
+                    print(f"  - {details['filename']}")
+            print()
+        if len(import_summary["failed"]) > 0:
+            print("Import failed for:")
+            for details in import_summary["failed"]:
+                failed_importers_list = "\n".join(
+                    [f"      - {name}" for name in details["importers_with_errors"]]
+                )
+                failed_validators_list = "\n".join(
+                    [f"      - {name}" for name in set(details["validators_with_errors"])]
+                )
+                print(f"  - {details['filename']}")
+                if len(failed_importers_list) > 0:
+                    print("    - Importers failing:")
+                    print(failed_importers_list)
+                if len(failed_validators_list) > 0:
+                    print("    - Validators failing:")
+                    print(failed_validators_list)
+                print(f"    - Failure report at {details['report_location']}")
+            print()
 
     def register_importer(self, importer):
         """Adds the supplied importer to the list of import modules
