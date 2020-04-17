@@ -1,0 +1,3 @@
+# Post Build script file for Binder - this is nothing to do with building a standard deployment
+# for Pepys
+conda install -y -c conda-forge libspatialite
