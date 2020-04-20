@@ -30,4 +30,4 @@ set PEPYS_PATH_SPATIALITE_ABS=
 REM Go back to the directory the user was in before we ran this script
 cd %orig_path%
 
-echo Successfully set paths for pepys-import
+echo Successfully set paths for Pepys
