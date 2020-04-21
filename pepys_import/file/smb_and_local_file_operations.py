@@ -1,4 +1,6 @@
 import os
+import shutil
+from stat import S_IREAD
 
 import smbclient
 import smbclient.path
@@ -28,3 +30,19 @@ def makedirs(path):
         return smbclient.makedirs(path, **auth)
     else:
         return os.makedirs(path)
+
+
+def move(from_path, to_path):
+    if ARCHIVE_ON_SMB:
+        # No move function in smbclient, so copy then delete original copy
+        smbclient.shutil.copy(from_path, to_path, **auth)
+        os.remove(from_path)
+    else:
+        shutil.move(from_path, to_path)
+
+
+def set_read_only(path):
+    if ARCHIVE_ON_SMB:
+        smbclient.shutil._set_file_basic_info(path, read_only=True, **auth)
+    else:
+        os.chmod(path, S_IREAD)
