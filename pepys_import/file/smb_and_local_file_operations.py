@@ -20,15 +20,15 @@ def create_archive_path_if_not_exists():
             os.makedirs(ARCHIVE_PATH)
 
 
-def isdir(dir):
+def isdir(path):
     if ARCHIVE_ON_SMB:
-        return smbclient.path.isdir(dir)
+        return smbclient.path.isdir(path, **auth)
     else:
-        return os.path.isdir(dir)
+        return os.path.isdir(path)
 
 
 def makedirs(path):
     if ARCHIVE_ON_SMB:
-        return smbclient.makedirs(path)
+        return smbclient.makedirs(path, **auth)
     else:
         return os.makedirs(path)
