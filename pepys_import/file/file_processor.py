@@ -6,17 +6,13 @@ from datetime import datetime
 from getpass import getuser
 from stat import S_IREAD
 
+import pepys_import.file.smb_and_local_file_operations as smblocal
 from config import ARCHIVE_PATH, LOCAL_PARSERS
 from paths import IMPORTERS_DIRECTORY
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
-from pepys_import.file.smb_and_local_file_operations import (
-    create_archive_path_if_not_exists,
-    isdir,
-    makedirs,
-)
 from pepys_import.utils.datafile_utils import hash_file
 from pepys_import.utils.import_utils import import_module_
 
@@ -48,7 +44,8 @@ class FileProcessor:
         # Check if ARCHIVE_PATH is given in the config file
         if ARCHIVE_PATH:
             # Create the path if it doesn't exist
-            create_archive_path_if_not_exists()
+            if not smblocal.exists(ARCHIVE_PATH):
+                smblocal.makedirs(ARCHIVE_PATH)
             self.output_path = ARCHIVE_PATH
 
     def process(self, path: str, data_store: DataStore = None, descend_tree: bool = True):
@@ -86,13 +83,13 @@ class FileProcessor:
             str(now.minute).zfill(2),
             str(now.second).zfill(2),
         )
-        if not isdir(self.output_path):
-            makedirs(self.output_path)
+        if not smblocal.isdir(self.output_path):
+            smblocal.makedirs(self.output_path)
         else:
             self.output_path = os.path.join(
                 self.output_path + "_" + str(now.microsecond).zfill(3)[:3]
             )
-            makedirs(self.output_path)
+            smblocal.makedirs(self.output_path)
 
         # create input_files folder if not exists
         self.input_files_path = os.path.join(self.output_path, "sources")
