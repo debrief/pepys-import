@@ -117,7 +117,7 @@ def test_set_read_only_smb(archive_on_smb_true, archive_user_password, smbclient
     smblocal.set_read_only("path/to/file.txt")
 
     smbclient.shutil._set_file_basic_info.assert_called_once_with(
-        "path/to/file.txt", read_only=True, **AUTH_DETAILS
+        "path/to/file.txt", follow_symlinks=False, read_only=True, **AUTH_DETAILS
     )
 
 
