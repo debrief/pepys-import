@@ -4,20 +4,16 @@ import smbclient
 import smbclient.path
 import smbclient.shutil
 
-from config import ARCHIVE_ON_SMB, ARCHIVE_PASSWORD, ARCHIVE_PATH, ARCHIVE_USER
+from config import ARCHIVE_ON_SMB, ARCHIVE_PASSWORD, ARCHIVE_USER
 
 auth = {"username": ARCHIVE_USER, "password": ARCHIVE_PASSWORD}
 
 
-def create_archive_path_if_not_exists():
+def exists(path):
     if ARCHIVE_ON_SMB:
-        print(ARCHIVE_PATH)
-        print(auth)
-        if not smbclient.path.exists(ARCHIVE_PATH, **auth):
-            smbclient.makedirs(ARCHIVE_PATH, **auth)
+        return smbclient.path.exists(path, **auth)
     else:
-        if not os.path.exists(ARCHIVE_PATH):
-            os.makedirs(ARCHIVE_PATH)
+        return os.path.exists(path)
 
 
 def isdir(path):
