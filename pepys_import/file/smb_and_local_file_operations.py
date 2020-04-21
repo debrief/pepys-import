@@ -43,6 +43,6 @@ def move(from_path, to_path):
 
 def set_read_only(path):
     if ARCHIVE_ON_SMB:
-        smbclient.shutil._set_file_basic_info(path, read_only=True, **auth)
+        smbclient.shutil._set_file_basic_info(path, follow_symlinks=False, read_only=True, **auth)
     else:
         os.chmod(path, S_IREAD)
