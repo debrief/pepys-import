@@ -51,6 +51,12 @@ def shutil():
         yield p
 
 
+@pytest.fixture()
+def patched_open():
+    with patch("pepys_import.file.smb_and_local_file_operations.open", Mock()) as p:
+        yield p
+
+
 #
 # Tests
 #
@@ -119,3 +125,17 @@ def test_set_read_only_local(archive_on_smb_false, os):
     smblocal.set_read_only("path/to/file.txt")
 
     os.chmod.assert_called_once_with("path/to/file.txt", stat.S_IREAD)
+
+
+def test_open_file_smb(archive_on_smb_true, archive_user_password, smbclient):
+    f = smblocal.open_file("path/to/file.txt", "w")
+    f.close()
+
+    smbclient.open_file.assert_called_once_with("path/to/file.txt", "w", **AUTH_DETAILS)
+
+
+def test_open_file_local(archive_on_smb_false, patched_open):
+    f = smblocal.open_file("path/to/file.txt", "w")
+    f.close()
+
+    patched_open.assert_called_once_with("path/to/file.txt", "w")

@@ -1,3 +1,5 @@
+import pepys_import.file.smb_and_local_file_operations as smblocal
+
 from .color_picker import color_for, hex_color_for, mean_color_for
 
 
@@ -93,5 +95,5 @@ def export_report(filename, chars, dict_colors, include_key=False):
 
     output_strings.append(html_footer)
 
-    with open(filename, "w") as f:
+    with smblocal.open_file(filename, "w") as f:
         f.write("".join(output_strings))

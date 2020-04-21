@@ -46,3 +46,10 @@ def set_read_only(path):
         smbclient.shutil._set_file_basic_info(path, follow_symlinks=False, read_only=True, **auth)
     else:
         os.chmod(path, S_IREAD)
+
+
+def open_file(*args, **kwargs):
+    if ARCHIVE_ON_SMB:
+        return smbclient.open_file(*args, **kwargs, **auth)
+    else:
+        return open(*args, **kwargs)

@@ -306,7 +306,7 @@ class FileProcessor:
                 summary_details["filename"] = basename
 
                 # write extraction log to output folder
-                with open(
+                with smblocal.open_file(
                     os.path.join(self.output_files_path, f"{filename}_output.log"), "w",
                 ) as file:
                     file.write("\n".join(log))
@@ -324,7 +324,7 @@ class FileProcessor:
                     self.output_files_path, f"{filename}_errors.log"
                 )
                 # write error log to the output folder
-                with open(failure_report_filename, "w") as file:
+                with smblocal.open_file(failure_report_filename, "w") as file:
                     json.dump(errors, file, ensure_ascii=False, indent=4)
                 import_summary["failed"].append(
                     {
