@@ -10,3 +10,4 @@ prompt_toolkit
 iterfzf
 shapely
 tqdm
+smbprotocol
