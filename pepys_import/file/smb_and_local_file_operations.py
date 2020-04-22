@@ -11,7 +11,7 @@ from smbprotocol.exceptions import SMBAuthenticationError, SMBResponseException
 from config import ARCHIVE_ON_SMB, ARCHIVE_PASSWORD, ARCHIVE_USER
 
 SMB_ERROR_MESSAGE = (
-    "Error connecting to archive location on Windows shared folder (SMB share)."
+    "Error connecting to archive location on Windows shared folder (SMB share). "
     + "Check config file details are correct and server is accessible."
 )
 
