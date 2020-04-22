@@ -30,7 +30,15 @@ def is_schema_created(engine, db_type):
         table_names = inspector.get_table_names()
         # SQLite can have either 72 tables (if on Windows, with the new version of mod_spatialite)
         # or 70 if on another platform (with the stable release of mod_spatialite)
-        if len(table_names) == 72 or len(table_names) == 70:
+        if (
+            len(table_names) == 72
+            or len(table_names) == 70
+            or (
+                "alembic_version" in table_names
+                and len(table_names) == 73
+                or len(table_names) == 71
+            )
+        ):
             return True
         else:
             print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
@@ -38,7 +46,7 @@ def is_schema_created(engine, db_type):
     else:
         table_names = inspector.get_table_names(schema="pepys")
         # We expect 34 tables on Postgres
-        if len(table_names) == 34:
+        if len(table_names) == 34 or ("alembic_version" in table_names and len(table_names) == 35):
             return True
         else:
             print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
