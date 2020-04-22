@@ -23,20 +23,26 @@ def import_from_csv(data_store, path, files, change_id):
             print(f"Method({possible_method}) not found!")
 
 
-def is_schema_created(engine, db_type):
+def is_schema_created(self):
     """Returns True if Pepys Tables are created, False otherwise."""
-    inspector = inspect(engine)
-    if db_type == "sqlite":
+    inspector = inspect(self.engine)
+    if self.db_type == "sqlite":
         table_names = inspector.get_table_names()
-        number_of_tables = 72 if platform.system() == "Windows" else 70
+        # SQLite can have either 72 tables (if on Windows, with the new version of mod_spatialite)
+        # or 70 if on another platform (with the stable release of mod_spatialite)
+        if len(table_names) == 72 or len(table_names) == 70:
+            return True
+        else:
+            print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
+            return False
     else:
         table_names = inspector.get_table_names(schema="pepys")
-        number_of_tables = 34
-
-    if len(table_names) != number_of_tables:
-        print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
-        return False
-    return True
+        # We expect 34 tables on Postgres
+        if len(table_names) == 34:
+            return True
+        else:
+            print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
+            return False
 
 
 def create_spatialite_tables_for_sqlite(engine):
