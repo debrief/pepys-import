@@ -23,10 +23,10 @@ def import_from_csv(data_store, path, files, change_id):
             print(f"Method({possible_method}) not found!")
 
 
-def is_schema_created(self):
+def is_schema_created(engine, db_type):
     """Returns True if Pepys Tables are created, False otherwise."""
-    inspector = inspect(self.engine)
-    if self.db_type == "sqlite":
+    inspector = inspect(engine)
+    if db_type == "sqlite":
         table_names = inspector.get_table_names()
         # SQLite can have either 72 tables (if on Windows, with the new version of mod_spatialite)
         # or 70 if on another platform (with the stable release of mod_spatialite)
