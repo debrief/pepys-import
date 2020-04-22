@@ -81,7 +81,7 @@ class Importer(ABC):
         :param change_id: ID of the :class:`Change` object that represents the change
                           which will occur when importing this file
         :type change_id: Integer or UUID
-        
+
         """
         basename = os.path.basename(path)
         print(f"{self.short_name} working on {basename}")

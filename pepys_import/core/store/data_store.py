@@ -1,5 +1,4 @@
 import os
-import platform
 import sys
 from contextlib import contextmanager
 from datetime import datetime
@@ -167,7 +166,7 @@ class DataStore:
         try:
             yield self
             self.session.commit()
-        except:
+        except Exception:
             self.session.rollback()
             raise
         finally:
