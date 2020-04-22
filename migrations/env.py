@@ -25,12 +25,12 @@ driver = "sqlite"
 version_path = os.path.join(DIR_PATH, "versions")
 if DB_TYPE == "postgres":
     driver = "postgresql+psycopg2"
-    version_path = os.path.join(DIR_PATH, "postgres_versions")
+    # version_path = os.path.join(DIR_PATH, "postgres_versions")
 elif DB_TYPE == "sqlite":
-    version_path = os.path.join(DIR_PATH, "sqlite_versions")
     driver = "sqlite+pysqlite"
-config.set_main_option("version_locations", version_path)
+    # version_path = os.path.join(DIR_PATH, "sqlite_versions")
 
+config.set_main_option("version_locations", version_path)
 connection_string = "{}://{}:{}@{}:{}/{}".format(
     driver, DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 )
@@ -56,6 +56,19 @@ exclude_tables = exclude_tables_from_config(config.get_section("alembic:exclude"
 
 def include_object(object_, name, type_, reflected, compare_to):
     if type_ == "table" and name in exclude_tables:
+        return False
+    else:
+        return True
+
+
+def include_object_2(object_, name, type_, reflected, compare_to):
+
+    if type_ == "table" and (
+        name in exclude_tables
+        or name.startswith("idx_")
+        or name.startswith("virts_")
+        or "geometry_columns" in name
+    ):
         return False
     else:
         return True
@@ -104,11 +117,22 @@ def run_migrations_online():
                 create_spatialite_tables_for_sqlite(engine)
             elif DB_TYPE == "postgres":
                 create_spatialite_tables_for_postgres(engine)
-        context.configure(
-            connection=connection, target_metadata=target_metadata, include_object=include_object
-        )
+            context.configure(
+                connection=connection,
+                target_metadata=target_metadata,
+                # version_table_schema="pepys",
+                include_object=include_object_2,
+            )
+        else:
+            context.configure(
+                connection=connection,
+                target_metadata=target_metadata,
+                # version_table_schema="pepys",
+                include_object=include_object,
+            )
 
         with context.begin_transaction():
+            # context.execute('SET search_path TO public')
             context.run_migrations()
 
 
