@@ -12,7 +12,7 @@ from config import ARCHIVE_ON_SMB, ARCHIVE_PASSWORD, ARCHIVE_USER
 
 SMB_ERROR_MESSAGE = (
     "Error connecting to archive location on Windows shared folder (SMB share). "
-    + "Check config file details are correct and server is accessible."
+    + "Check config file details are correct and server is accessible. See full error above."
 )
 
 
@@ -23,7 +23,8 @@ def exists(path):
     if ARCHIVE_ON_SMB:
         try:
             return smbclient.path.exists(path, **auth)
-        except (SMBAuthenticationError, SMBResponseException, ValueError):
+        except (SMBAuthenticationError, SMBResponseException, ValueError) as e:
+            print(e)
             print(SMB_ERROR_MESSAGE)
             sys.exit()
     else:
@@ -34,7 +35,8 @@ def isdir(path):
     if ARCHIVE_ON_SMB:
         try:
             return smbclient.path.isdir(path, **auth)
-        except (SMBAuthenticationError, SMBResponseException, ValueError):
+        except (SMBAuthenticationError, SMBResponseException, ValueError) as e:
+            print(e)
             print(SMB_ERROR_MESSAGE)
             sys.exit()
     else:
@@ -45,7 +47,8 @@ def makedirs(path):
     if ARCHIVE_ON_SMB:
         try:
             return smbclient.makedirs(path, **auth)
-        except (SMBAuthenticationError, SMBResponseException, ValueError):
+        except (SMBAuthenticationError, SMBResponseException, ValueError) as e:
+            print(e)
             print(SMB_ERROR_MESSAGE)
             sys.exit()
     else:
@@ -58,7 +61,8 @@ def move(from_path, to_path):
             # No move function in smbclient, so copy then delete original copy
             smbclient.shutil.copy(from_path, to_path, **auth)
             os.remove(from_path)
-        except (SMBAuthenticationError, SMBResponseException, ValueError):
+        except (SMBAuthenticationError, SMBResponseException, ValueError) as e:
+            print(e)
             print(SMB_ERROR_MESSAGE)
             sys.exit()
     else:
@@ -71,7 +75,8 @@ def set_read_only(path):
             smbclient.shutil._set_file_basic_info(
                 path, follow_symlinks=False, read_only=True, **auth
             )
-        except (SMBAuthenticationError, SMBResponseException, ValueError):
+        except (SMBAuthenticationError, SMBResponseException, ValueError) as e:
+            print(e)
             print(SMB_ERROR_MESSAGE)
             sys.exit()
     else:
@@ -82,7 +87,8 @@ def open_file(*args, **kwargs):
     if ARCHIVE_ON_SMB:
         try:
             return smbclient.open_file(*args, **kwargs, **auth)
-        except (SMBAuthenticationError, SMBResponseException, ValueError):
+        except (SMBAuthenticationError, SMBResponseException, ValueError) as e:
+            print(e)
             print(SMB_ERROR_MESSAGE)
             sys.exit()
     else:
