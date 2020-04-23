@@ -127,6 +127,14 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
+    # This function prevents to create empty migration files when there is no change in the DB
+    # Please check: https://alembic.sqlalchemy.org/en/latest/cookbook.html#don-t-generate-empty-migrations-with-autogenerate
+    def process_revision_directives(context_, revision, directives):
+        if config.cmd_opts.autogenerate:
+            script = directives[0]
+            if script.upgrade_ops.is_empty():
+                directives[:] = []
+
     engine = engine_from_config(
         config.get_section(config.config_ini_section), prefix="sqlalchemy.",
     )
@@ -147,6 +155,7 @@ def run_migrations_online():
                 include_schemas=True,
                 include_object=include_object_postgres,
                 render_as_batch=True,
+                process_revision_directives=process_revision_directives,
             )
             with context.begin_transaction():
                 context.execute("SET search_path TO pepys,public")
@@ -157,6 +166,7 @@ def run_migrations_online():
                 target_metadata=target_metadata,
                 include_object=include_object_sqlite,
                 render_as_batch=True,
+                process_revision_directives=process_revision_directives,
             )
             with context.begin_transaction():
                 context.run_migrations()
