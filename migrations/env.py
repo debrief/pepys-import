@@ -2,6 +2,7 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
+from alembic.script import write_hooks
 from sqlalchemy import engine_from_config
 from sqlalchemy.event import listen
 
@@ -25,12 +26,14 @@ driver = "sqlite"
 version_path = os.path.join(DIR_PATH, "versions")
 if DB_TYPE == "postgres":
     driver = "postgresql+psycopg2"
-    # version_path = os.path.join(DIR_PATH, "postgres_versions")
+    version_path = os.path.join(DIR_PATH, "postgres_versions")
 elif DB_TYPE == "sqlite":
     driver = "sqlite+pysqlite"
-    # version_path = os.path.join(DIR_PATH, "sqlite_versions")
+    version_path = os.path.join(DIR_PATH, "sqlite_versions")
 
-config.set_main_option("version_locations", version_path)
+context.script.version_locations = [version_path]
+context.script.__dict__.pop("_version_locations", None)
+
 connection_string = "{}://{}:{}@{}:{}/{}".format(
     driver, DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 )
@@ -54,15 +57,21 @@ def exclude_tables_from_config(config_):
 exclude_tables = exclude_tables_from_config(config.get_section("alembic:exclude"))
 
 
-def include_object(object_, name, type_, reflected, compare_to):
-    if type_ == "table" and name in exclude_tables:
+def include_object_postgres(object_, name, type_, reflected, compare_to):
+    if type_ == "table" and (
+        name in exclude_tables
+        or name.startswith("idx_")
+        or name.startswith("virts_")
+        or "geometry_columns" in name
+    ):
+        return object_.schema == "pepys"
+    elif type_ == "index" and name.startswith("idx_"):
         return False
     else:
         return True
 
 
-def include_object_2(object_, name, type_, reflected, compare_to):
-
+def include_object_sqlite(object_, name, type_, reflected, compare_to):
     if type_ == "table" and (
         name in exclude_tables
         or name.startswith("idx_")
@@ -87,14 +96,26 @@ def run_migrations_offline():
 
     """
     url = config.get_main_option("sqlalchemy.url")
-    context.configure(
-        url=url,
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
-        include_object=include_object,
-    )
-
+    if DB_TYPE == "sqlite":
+        context.configure(
+            url=url,
+            target_metadata=target_metadata,
+            literal_binds=True,
+            dialect_opts={"paramstyle": "named"},
+            include_object=include_object_sqlite,
+            render_as_batch=True,
+        )
+    else:
+        context.configure(
+            url=url,
+            target_metadata=target_metadata,
+            literal_binds=True,
+            dialect_opts={"paramstyle": "named"},
+            version_table_schema="pepys",
+            include_schemas=True,
+            include_object=include_object_postgres,
+            render_as_batch=True,
+        )
     with context.begin_transaction():
         context.run_migrations()
 
@@ -117,26 +138,41 @@ def run_migrations_online():
                 create_spatialite_tables_for_sqlite(engine)
             elif DB_TYPE == "postgres":
                 create_spatialite_tables_for_postgres(engine)
+
+        if DB_TYPE == "postgres":
             context.configure(
                 connection=connection,
                 target_metadata=target_metadata,
-                # version_table_schema="pepys",
-                include_object=include_object_2,
+                version_table_schema="pepys",
+                include_schemas=True,
+                include_object=include_object_postgres,
+                render_as_batch=True,
             )
+            with context.begin_transaction():
+                context.execute("SET search_path TO pepys,public")
+                context.run_migrations()
         else:
             context.configure(
                 connection=connection,
                 target_metadata=target_metadata,
-                # version_table_schema="pepys",
-                include_object=include_object,
+                include_object=include_object_sqlite,
+                render_as_batch=True,
             )
-
-        with context.begin_transaction():
-            # context.execute('SET search_path TO public')
-            context.run_migrations()
+            with context.begin_transaction():
+                context.run_migrations()
 
 
 if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
+
+
+@write_hooks.register("include_geoalchemy2")
+def include_geoalchemy2(filename, options):
+    with open(filename) as file_:
+        lines = file_.readlines()
+    # insert geoalchemy clause to the imports, it will be reformatted with black and isort later on
+    lines.insert(10, "import geoalchemy2\n")
+    with open(filename, "w") as to_write:
+        to_write.writelines(lines)
