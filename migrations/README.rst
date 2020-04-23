@@ -7,9 +7,11 @@ Instructions
 ------------
 If this is your first time using Alembic, please do the followings:
 
-1. Alembic reads DB configurations from the repository's config file( :code:`config.py`). Please check your :code:`PEPYS_CONFIG`
+Alembic reads DB configurations from the repository's config file( :code:`config.py`). Please check your :code:`PEPYS_CONFIG`
 environment variable. If it doesn't exist, it means that :code:`default_config.ini` will be used to create a connection.
-2. If you have an existing DB with tables and values, you have two options:
+
+If you have an existing DB with tables and values, you have two options:
+
 - The easiest option is removing your schema (or entire DB for SQLite) completely and creating from the scratch.
     You might run :code:`alembic upgrade head` which is going to create all DB tables and :code:`alembic_version` table.
     It will *stamp* Alembic's head to the latest migration. You might see this migration revision ID in :code:`alembic_version` table.
