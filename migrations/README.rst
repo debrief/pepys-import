@@ -83,7 +83,15 @@ This batch operation successfully drops a table, creates a new one with arbitrar
 **Note-2:** If you would like to write your own migration script, you don't need to pass :code:`--autogenerate` flag. For example: :code:`alembic revision -m "add new column"`
 It will create a migration script with empty :code:`upgrade()`, :code:`downgrade() functions. You can fill them manually.
 
-Helpful Commands`
+When you have new migration scripts to migrate and the scripts are checked/corrected, you can upgrade your DB: :code:`alembic upgrade head`
+
+----
+
+It is also possible to downgrade migration scripts. You can give a revision ID to do that: :code:`alembic downgrade head REVISION_ID`.
+If you would like to use relative identifiers, such as :code:`alembic downgrade head -1`, you might check it out examples:
+`identifiers <https://alembic.sqlalchemy.org/en/latest/tutorial.html#relative-migration-identifiers>`_
+
+Helpful Commands
 ----------------
 If you would like to see the current head of Alembic: :code:`alembic current`
 
@@ -115,13 +123,13 @@ you should make this attribute nullable.
     from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
     ModuleNotFoundError: No module named 'config'
 
-If you face this error, it means that pepys-import repository should be added to :code:`PYTHONPATH. Please run the
+If you face this error, it means that the :code:`pepys-import` repository should be added to :code:`PYTHONPATH.` Please run the
 following command when you are at the root of the repository:
 
 .. code-block:: none
 
     export PYTHONPATH=.
 
-Error should be corrected now. Please try to run the same command again.
+The error should be corrected now. Please try to run the same command again.
 Alternatively, you can always add this command to your alembic command. For example: :code:`PYTHONPATH=. alembic current`
 
