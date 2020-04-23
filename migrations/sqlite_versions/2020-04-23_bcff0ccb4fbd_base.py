@@ -1,8 +1,8 @@
-"""empty message
+"""base
 
-Revision ID: e61c357b44bd
+Revision ID: bcff0ccb4fbd
 Revises: 
-Create Date: 2020-04-13 18:23:52.410441
+Create Date: 2020-04-23 12:25:08.210628
 
 """
 import geoalchemy2
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "e61c357b44bd"
+revision = "bcff0ccb4fbd"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -98,6 +98,7 @@ def upgrade():
         sa.Column("time", sa.TIMESTAMP(), nullable=False),
         sa.Column("bearing", sa.REAL(), nullable=True),
         sa.Column("rel_bearing", sa.REAL(), nullable=True),
+        sa.Column("ambig_bearing", sa.REAL(), nullable=True),
         sa.Column("freq", sa.REAL(), nullable=True),
         sa.Column("range", sa.REAL(), nullable=True),
         sa.Column(

@@ -1,8 +1,8 @@
 """base
 
-Revision ID: c5d6a22ce7df
+Revision ID: 5154f7db278d
 Revises: 
-Create Date: 2020-04-16 16:15:24.657100
+Create Date: 2020-04-23 12:23:01.219218
 
 """
 import geoalchemy2
@@ -11,7 +11,7 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "c5d6a22ce7df"
+revision = "5154f7db278d"
 down_revision = None
 branch_labels = None
 depends_on = None
