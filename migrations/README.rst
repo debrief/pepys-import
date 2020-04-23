@@ -38,6 +38,7 @@ SQLite
 ^^^^^^^
 
 .. code-block:: none
+
     CREATE TABLE alembic_version
     (
         version_num VARCHAR(32) NOT NULL,
@@ -51,6 +52,7 @@ Please try the same command as above and check if there is any error or not.
 **Note:** It should print the revision ID of the head with the context information:
 
 .. code-block:: none
+
     INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
     INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
     7df9dcbd47e7 (head)
