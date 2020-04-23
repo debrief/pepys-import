@@ -1,12 +1,12 @@
 BEGIN;
 
-CREATE TABLE alembic_version
+CREATE TABLE pepys.alembic_version
 (
     version_num VARCHAR(32) NOT NULL,
     CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
 );
 
--- Running upgrade  -> c5d6a22ce7df
+-- Running upgrade  -> 5154f7db278d
 
 CREATE TABLE pepys."Changes"
 (
@@ -446,8 +446,8 @@ CREATE TABLE pepys."States"
 
 CREATE INDEX "idx_States_location" ON "pepys"."States" USING GIST ("location");
 
-INSERT INTO alembic_version (version_num)
-VALUES ('c5d6a22ce7df');
+INSERT INTO pepys.alembic_version (version_num)
+VALUES ('5154f7db278d');
 
 COMMIT;
 

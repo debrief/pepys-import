@@ -4,7 +4,7 @@ CREATE TABLE alembic_version
     CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
 );
 
--- Running upgrade  -> e61c357b44bd
+-- Running upgrade  -> bcff0ccb4fbd
 
 CREATE TABLE "Activations"
 (
@@ -94,6 +94,7 @@ CREATE TABLE "Contacts"
     time           TIMESTAMP NOT NULL,
     bearing        REAL,
     rel_bearing    REAL,
+    ambig_bearing  REAL,
     freq           REAL,
     range          REAL,
     elevation      REAL,
@@ -405,5 +406,5 @@ CREATE TABLE "Users"
 );
 
 INSERT INTO alembic_version (version_num)
-VALUES ('e61c357b44bd');
+VALUES ('bcff0ccb4fbd');
 
