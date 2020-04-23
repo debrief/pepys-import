@@ -15,6 +15,7 @@ If you have an existing DB with tables and values, you have two options:
 1. The easiest option is removing your schema (or entire DB for SQLite) completely and creating from the scratch.
 You might run :code:`alembic upgrade head` which is going to create all DB tables and :code:`alembic_version` table.
 It will *stamp* Alembic's head to the latest migration. You might see this migration revision ID in :code:`alembic_version` table.
+
 2. (**NOT SUGGESTED!**) If you don't want to lose your values in the DB, you might create alembic_version table and stamp it manually.
 For doing that, please run the following commands:
 
@@ -75,10 +76,14 @@ the migration script. This command will create new_migration.sql file so that yo
 
 **Note:** Please keep in mind that you should consider *possible* failures before applying the migration.
 
-**Note-1:** SQLite doesn't support ALTER TABLE syntax. Therefore, :code:`render_as_batch=True` is passed to the context
+**Note-1:** SQLite doesn't support ALTER TABLE syntax. Therefore, :code:`render_as_batch=True` is passed to the Alembic's context
 and :code:`batch_alter_table` is used in migration scripts. For further information: `batch <https://alembic.sqlalchemy.org/en/latest/batch.html>`_
+This batch operation successfully drops a table, creates a new one with arbitrary name, adds the copied values from the dropped table.
 
-Helpful Commands
+**Note-2:** If you would like to write your own migration script, you don't need to pass :code:`--autogenerate` flag. For example: :code:`alembic revision -m "add new column"`
+It will create a migration script with empty :code:`upgrade()`, :code:`downgrade() functions. You can fill them manually.
+
+Helpful Commands`
 ----------------
 If you would like to see the current head of Alembic: :code:`alembic current`
 
