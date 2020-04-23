@@ -101,11 +101,13 @@ Possible Errors and Solutions
 -----------------------------
 
 .. code-block:: none
+
     sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) Cannot add a NOT NULL column with default value NULL
 
 If you have values in your DB and you try to add a new attribute to the filled table which can't be NULL,
 you should make this attribute nullable.
 
+------------
 
 .. code-block:: none
 
