@@ -12,11 +12,11 @@ environment variable. If it doesn't exist, it means that :code:`default_config.i
 
 If you have an existing DB with tables and values, you have two options:
 
-- The easiest option is removing your schema (or entire DB for SQLite) completely and creating from the scratch.
-    You might run :code:`alembic upgrade head` which is going to create all DB tables and :code:`alembic_version` table.
-    It will *stamp* Alembic's head to the latest migration. You might see this migration revision ID in :code:`alembic_version` table.
-- (**NOT SUGGESTED!**) If you don't want to lose your values in the DB, you might create alembic_version table and stamp it manually.
-    For doing that, please run the following commands:
+1. The easiest option is removing your schema (or entire DB for SQLite) completely and creating from the scratch.
+You might run :code:`alembic upgrade head` which is going to create all DB tables and :code:`alembic_version` table.
+It will *stamp* Alembic's head to the latest migration. You might see this migration revision ID in :code:`alembic_version` table.
+2. (**NOT SUGGESTED!**) If you don't want to lose your values in the DB, you might create alembic_version table and stamp it manually.
+For doing that, please run the following commands:
 
 Postgres
 ^^^^^^^^^
@@ -76,7 +76,7 @@ the migration script. This command will create new_migration.sql file so that yo
 **Note:** Please keep in mind that you should consider *possible* failures before applying the migration.
 
 **Note-1:** SQLite doesn't support ALTER TABLE syntax. Therefore, :code:`render_as_batch=True` is passed to the context
-and :code:`batch_alter_table` is used in migration scripts. For further information: `batch https://alembic.sqlalchemy.org/en/latest/batch.html`_
+and :code:`batch_alter_table` is used in migration scripts. For further information: `batch <https://alembic.sqlalchemy.org/en/latest/batch.html>`_
 
 Helpful Commands
 ----------------
@@ -86,10 +86,11 @@ If you would like to see the history of the migration: :code:`alembic history`
 
 If you have changed schema and want to create a migration script: :code:`alembic revision -m "YOUR MESSAGE" --autogenerate`
 
-If you would like to see SQL script of migration scripts: :code:`alembic upgrade START:END --sql`
+If you would like to see SQL script of migration scripts (Don't forget to change START and END values with the migration revision IDs):
+:code:`alembic upgrade START:END --sql`
 
-Please check the `cookbook https://alembic.sqlalchemy.org/en/latest/cookbook.html`_ and
-`documentation https://alembic.sqlalchemy.org/en/latest/index.html`_ of Alembic for further information.
+Please check the `cookbook <https://alembic.sqlalchemy.org/en/latest/cookbook.html>`_ and
+`documentation <https://alembic.sqlalchemy.org/en/latest/index.html>`_ of Alembic for further information.
 
 Possible Errors and Solutions
 -----------------------------
