@@ -72,8 +72,8 @@ SQLite
 
 | If it is working without any problem, you can use Alembic according to your needs.
 
-How to use it?
---------------
+How to use it? (For Developers)
+--------------------------------
 You can add/update/delete Base models (:code:`pepys_import.core.store.postgres_db` and :code:`pepys_import.core.store.sqlite_db`).
 If there is any change, Alembic might automatically generate a migration script:
 
@@ -93,21 +93,35 @@ For doing that the following command might be used:
 | **Note:** Please keep in mind that you should consider *possible* failures before applying the migration.
 |
 | **Note-1:** SQLite doesn't support ALTER TABLE syntax. Therefore, :code:`render_as_batch=True` is passed to the Alembic's context and :code:`batch_alter_table` is used in migration scripts. For further information: `Running Batch Migrations <https://alembic.sqlalchemy.org/en/latest/batch.html>`_
-| This batch operation successfully drops a table, creates a new one with arbitrary name, adds the copied values from the dropped table.
+| This batch operation successfully drops a table, creates a new one with an arbitrary name, adds the copied values from the dropped table, and finally renames the new table.
 |
 | **Note-2:** If you would like to write your own migration script, you don't need to pass :code:`--autogenerate` flag. For example:
 
-:code:`alembic revision -m "YOUR MESSAGE"`
+.. code-block:: none
+
+    alembic revision -m "YOUR MESSAGE"
 
 | It will create a migration script with empty :code:`upgrade()`, :code:`downgrade()` functions. You can fill them manually.
 |
-| When you have new migration scripts to migrate and the scripts are checked/corrected, you can upgrade your DB: :code:`alembic upgrade head`
+| When you have new migration scripts to migrate and the scripts are checked/corrected, you can upgrade your DB:
+
+.. code-block:: none
+
+    alembic upgrade head
 
 ----
 
-It is also possible to downgrade migration scripts. You can give a revision ID to do that: :code:`alembic downgrade head REVISION_ID`.
-If you would like to use relative identifiers, such as :code:`alembic downgrade head -1`, you might check it out
-`examples <https://alembic.sqlalchemy.org/en/latest/tutorial.html#relative-migration-identifiers>`_
+| It is also possible to downgrade migration scripts. You can give a revision ID to do that: :code:`alembic downgrade head REVISION_ID`.
+|
+| If you would like to use relative identifiers, such as :code:`alembic downgrade head -1`, you might check it out: `Relative Identifiers <https://alembic.sqlalchemy.org/en/latest/tutorial.html#relative-migration-identifiers>`_
+
+How to use it? (For Users)
+---------------------------
+Please ensure your **config file** points to the correct database. Afterward, run this command to upgrade your DB if there are any migrations:
+
+.. code-block:: none
+
+    alembic upgrade head
 
 Helpful Commands
 ----------------
@@ -150,5 +164,6 @@ If you face this error, it means that the :code:`pepys-import` repository should
 
 | The error should be corrected now. Please try to run the same command again.
 | Alternatively, you can always add the local project to your :code:`PYTHONPATH`. For example:
+|
 | :code:`PYTHONPATH=. alembic current`
 
