@@ -1,26 +1,34 @@
 Database Migration
 ==================
 
-Pepys repository uses `Alembic <https://github.com/alembic/alembic>`_ for data migration.
+Pepys-import repository uses `Alembic <https://github.com/alembic/alembic>`_ for data migration. Alembic is a database migration tool which is maintained by SQLAlchemy.
+
+Installation
+------------
+Alembic is in the requirements of the project. However, there is one post-installation step to run it without any problem. You should install the pepys-import project in an editable mode. The commands must be run are as follows:
+
+.. code-block:: none
+
+    source PATH/TO/YOUR/ENV/bin/activate
+    pip install -r requirements.txt
+    pip install -e .
 
 Instructions
 ------------
-If this is your first time using Alembic, please do the followings:
-
-Alembic reads DB configurations from the repository's config file( :code:`config.py`). Please check your :code:`PEPYS_CONFIG_FILE`
-environment variable. If it doesn't exist, it means that :code:`default_config.ini` will be used to create a connection.
-
-If you have an existing DB with tables and values, you have two options:
-
-1. The easiest option is removing your schema (or entire DB for SQLite) completely and creating from the scratch.
-You might run ":code:`alembic upgrade head`" which is going to create all DB tables and :code:`alembic_version` table.
-It will *stamp* Alembic's head to the latest migration. You might see this migration revision ID in :code:`alembic_version` table.
-
-2. (**NOT SUGGESTED!**) If you don't want to lose your values in the DB, you might create alembic_version table and stamp it manually.
-For doing that, please run the following commands:
+| If this is your first time using Alembic, please do the followings:
+|
+| Alembic reads DB configurations from the repository's config file( :code:`config.py`). Please check your :code:`PEPYS_CONFIG_FILE` environment variable. If it doesn't exist, it means that :code:`default_config.ini` will be used to create a connection.
+|
+| If you have an existing DB with tables and values, you have two options:
+|
+| 1. The easiest option is removing your schema (or entire DB for SQLite) completely and creating from the scratch.  You might run ":code:`alembic upgrade head`" which is going to create all DB tables and :code:`alembic_version` table.
+|
+| It will *stamp* Alembic's head to the latest migration. You might see this migration revision ID in :code:`alembic_version` table.
+|
+| 2. (**NOT SUGGESTED!**) If you don't want to lose your values in the DB, you might create :code:`alembic_version` table and *stamp* it manually. For doing that, please run the following commands:
 
 Postgres
-^^^^^^^^^
+""""""""
 
 .. code-block:: none
 
@@ -29,14 +37,18 @@ Postgres
         version_num VARCHAR(32) NOT NULL,
         CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
     );
+    INSERT INTO pepys.alembic_version VALUES ('5154f7db278d');
 
-INSERT INTO pepys.alembic_version VALUES ('5154f7db278d');
+| If you have the same schema with the base migration script, you won't have any problem. You can test it with this command:
 
-If you have the same schema with the base migration script, you won't have any problem. You can test it with this command:
-:code:`alembic current`. If it doesn't throw any error, it is okay to go!
+.. code-block:: none
+
+    alembic current
+
+| If it doesn't throw any error, it is okay to go!
 
 SQLite
-^^^^^^^
+"""""""
 
 .. code-block:: none
 
@@ -48,9 +60,9 @@ SQLite
     INSERT INTO alembic_version (version_num)
     VALUES ('7df9dcbd47e7');
 
-Please try the same command as above and check if there is any error or not.
-
-**Note:** It should print the revision ID of the head with the context information:
+| Please try the same command as above and check if there is any error or not.
+|
+| **Note:** It should print the revision ID of the head with the context information:
 
 .. code-block:: none
 
@@ -58,7 +70,7 @@ Please try the same command as above and check if there is any error or not.
     INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
     7df9dcbd47e7 (head)
 
-If it is working without any problem, you can use now Alembic according to your needs.
+| If it is working without any problem, you can use Alembic according to your needs.
 
 How to use it?
 --------------
@@ -66,24 +78,30 @@ You can add/update/delete Base models (:code:`pepys_import.core.store.postgres_d
 If there is any change, Alembic might automatically generate a migration script:
 
 .. code-block:: none
+
     alembic revision -m "YOUR MESSAGE" --autogenerate
 
 It will create a script under :code:`migrations/postgres_versions` or :code:`migrations/sqlite_versions` according to your configuration.
-Alembic assigns revision IDs using :code:`uuid.uuid4()`. When you open the created script, you can see the number (revision = XXXXXX)
+Alembic assigns revision IDs using :code:`uuid.uuid4()`. When you open the created script, you can see the number (*revision = XXXXXX*)
 It is strongly suggested to control the autogenerated script before DB migration. After the script is checked, you can also interpret SQL script of it.
-For doing that the following command might be used: :code:`alembic upgrade XXXXX --sql > new_migration.sql`. Please change XXXX with the revision ID of
-the migration script. This command will create new_migration.sql file so that you can play with it or run it in your DB's console.
+For doing that the following command might be used:
 
-**Note:** Please keep in mind that you should consider *possible* failures before applying the migration.
+:code:`alembic upgrade XXXXX --sql > new_migration.sql`. (Please change *XXXX* with the revision ID of the migration script.)
 
-**Note-1:** SQLite doesn't support ALTER TABLE syntax. Therefore, :code:`render_as_batch=True` is passed to the Alembic's context
-and :code:`batch_alter_table` is used in migration scripts. For further information: `batch <https://alembic.sqlalchemy.org/en/latest/batch.html>`_
-This batch operation successfully drops a table, creates a new one with arbitrary name, adds the copied values from the dropped table.
+| This command will create a new file named **new_migration.sql**, so that you can play with it or run it in your DB's console.
+|
+| **Note:** Please keep in mind that you should consider *possible* failures before applying the migration.
+|
+| **Note-1:** SQLite doesn't support ALTER TABLE syntax. Therefore, :code:`render_as_batch=True` is passed to the Alembic's context and :code:`batch_alter_table` is used in migration scripts. For further information: `Running Batch Migrations <https://alembic.sqlalchemy.org/en/latest/batch.html>`_
+| This batch operation successfully drops a table, creates a new one with arbitrary name, adds the copied values from the dropped table.
+|
+| **Note-2:** If you would like to write your own migration script, you don't need to pass :code:`--autogenerate` flag. For example:
 
-**Note-2:** If you would like to write your own migration script, you don't need to pass :code:`--autogenerate` flag. For example: :code:`alembic revision -m "add new column"`
-It will create a migration script with empty :code:`upgrade()`, :code:`downgrade()` functions. You can fill them manually.
+:code:`alembic revision -m "YOUR MESSAGE"`
 
-When you have new migration scripts to migrate and the scripts are checked/corrected, you can upgrade your DB: :code:`alembic upgrade head`
+| It will create a migration script with empty :code:`upgrade()`, :code:`downgrade()` functions. You can fill them manually.
+|
+| When you have new migration scripts to migrate and the scripts are checked/corrected, you can upgrade your DB: :code:`alembic upgrade head`
 
 ----
 
@@ -99,7 +117,7 @@ If you would like to see the history of the migration: :code:`alembic history`
 
 If you have changed schema and want to create a migration script: :code:`alembic revision -m "YOUR MESSAGE" --autogenerate`
 
-If you would like to see SQL script of migration scripts (Don't forget to change START and END values with the migration revision IDs):
+If you would like to see SQL script of migration scripts (Don't forget to change *START* and *END* values with the migration revision IDs):
 :code:`alembic upgrade START:END --sql`
 
 Please check the `cookbook <https://alembic.sqlalchemy.org/en/latest/cookbook.html>`_ and
@@ -123,13 +141,14 @@ you should make this attribute nullable.
     from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
     ModuleNotFoundError: No module named 'config'
 
-If you face this error, it means that the :code:`pepys-import` repository should be added to :code:`PYTHONPATH.` Please run the
-following command when you are at the root of the repository:
+If you face this error, it means that the :code:`pepys-import` repository should be installed in a development environment. Please run the following command when you are **at the root of the repository**:
 
 .. code-block:: none
 
-    export PYTHONPATH=.
+    source PATH/TO/YOUR/ENV/bin/activate
+    pip install -e .
 
-The error should be corrected now. Please try to run the same command again.
-Alternatively, you can always add this command to your alembic command. For example: :code:`PYTHONPATH=. alembic current`
+| The error should be corrected now. Please try to run the same command again.
+| Alternatively, you can always add the local project to your :code:`PYTHONPATH`. For example:
+| :code:`PYTHONPATH=. alembic current`
 
