@@ -3,12 +3,13 @@ Database Migration
 ==================
 
 Pepys-import repository uses `Alembic <https://github.com/alembic/alembic>`_ for data migration. Alembic is a database migration tool which is maintained by SQLAlchemy.
+:class:`.DataStore`'s initialisation method applies the existing migrations to the users' database. Don't forget to check your configuration file before running :code:`pepys_import` or :code:`pepys_admin`.
 
 Installation
 ------------
 Alembic is in the requirements of the project. However, there is one post-installation step to run it without any problem. You should install the pepys-import project in an editable mode. The commands must be run are as follows:
 
-.. code-block:: none
+.. code-block:: bash
 
     source PATH/TO/YOUR/ENV/bin/activate
     pip install -r requirements.txt
@@ -31,7 +32,7 @@ Instructions
 Postgres
 """"""""
 
-.. code-block:: none
+.. code-block:: postgresql
 
     CREATE TABLE pepys.alembic_version
     (
@@ -42,7 +43,7 @@ Postgres
 
 | If you have the same schema with the base migration script, you won't have any problem. You can test it with this command:
 
-.. code-block:: none
+.. code-block:: bash
 
     alembic current
 
@@ -51,7 +52,7 @@ Postgres
 SQLite
 """""""
 
-.. code-block:: none
+.. code-block:: sql
 
     CREATE TABLE alembic_version
     (
@@ -65,7 +66,7 @@ SQLite
 |
 | **Note:** It should print the revision ID of the head with the context information:
 
-.. code-block:: none
+.. code-block:: bash
 
     INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
     INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
@@ -78,7 +79,7 @@ How to use it? (For Developers)
 You can add/update/delete Base models (:code:`pepys_import.core.store.postgres_db` and :code:`pepys_import.core.store.sqlite_db`).
 If there is any change, Alembic might automatically generate a migration script:
 
-.. code-block:: none
+.. code-block:: bash
 
     alembic revision -m "YOUR MESSAGE" --autogenerate
 
@@ -89,7 +90,7 @@ For doing that the following command might be used:
 
 :code:`alembic upgrade XXXXX --sql > new_migration.sql`. (Please change *XXXX* with the revision ID of the migration script.)
 
-| This command will create a new file named **new_migration.sql**, so that you can play with it or run it in your DB's console.
+| This command will create a new file named **new_migration.sql**, so that you can play with it or run it in your DB's bash.
 |
 | **Note:** Please keep in mind that you should consider *possible* failures before applying the migration.
 |
@@ -98,7 +99,7 @@ For doing that the following command might be used:
 |
 | **Note-2:** If you would like to write your own migration script, you don't need to pass :code:`--autogenerate` flag. For example:
 
-.. code-block:: none
+.. code-block:: bash
 
     alembic revision -m "YOUR MESSAGE"
 
@@ -106,21 +107,26 @@ For doing that the following command might be used:
 |
 | When you have new migration scripts to migrate and the scripts are checked/corrected, you can upgrade your DB:
 
-.. code-block:: none
+.. code-block:: bash
 
     alembic upgrade head
 
 ----
 
-| It is also possible to downgrade migration scripts. You can give a revision ID to do that: :code:`alembic downgrade head REVISION_ID`.
-|
+| It is also possible to downgrade migration scripts. You can give a revision ID to do that:
+
+.. code-block::
+
+    alembic downgrade head REVISION_ID
+
 | If you would like to use relative identifiers, such as :code:`alembic downgrade head -1`, you might check it out: `Relative Identifiers <https://alembic.sqlalchemy.org/en/latest/tutorial.html#relative-migration-identifiers>`_
 
 How to use it? (For Users)
 ---------------------------
-Please ensure your **config file** points to the correct database. Afterward, run this command to upgrade your DB if there are any migrations:
+Migrations are applied when :code:`DataStore.initialise()` is called. So, the users might use :code:`pepys_import` and :code:`pepys_admin` without migrating manually.
+However, if they would like to check it, after ensuring their **config file** points to the correct database, they might run this command to upgrade their DB if there are any migrations:
 
-.. code-block:: none
+.. code-block:: bash
 
     alembic upgrade head
 
@@ -141,7 +147,7 @@ Please check the `cookbook <https://alembic.sqlalchemy.org/en/latest/cookbook.ht
 Possible Errors and Solutions
 -----------------------------
 
-.. code-block:: none
+.. code-block:: bash
 
     sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) Cannot add a NOT NULL column with default value NULL
 
@@ -150,7 +156,7 @@ you should make this attribute nullable.
 
 ------------
 
-.. code-block:: none
+.. code-block:: bash
 
     File "migrations/env.py", line 9, in <module>
     from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
@@ -158,13 +164,15 @@ you should make this attribute nullable.
 
 If you face this error, it means that the :code:`pepys-import` repository should be installed in a development environment. Please run the following command when you are **at the root of the repository**:
 
-.. code-block:: none
+.. code-block:: bash
 
     source PATH/TO/YOUR/ENV/bin/activate
     pip install -e .
 
 | The error should be corrected now. Please try to run the same command again.
 | Alternatively, you can always add the local project to your :code:`PYTHONPATH`. For example:
-|
-| :code:`PYTHONPATH=. alembic current`
+
+.. code-block:: bash
+
+    PYTHONPATH=. alembic current
 
