@@ -1,5 +1,4 @@
 import os
-import platform
 import sys
 from contextlib import contextmanager
 from datetime import datetime
@@ -8,11 +7,11 @@ from importlib import import_module
 
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, inspect, or_
+from sqlalchemy import create_engine, or_
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import func, select
+from sqlalchemy.sql import func
 
 from paths import PEPYS_IMPORT_DIRECTORY, ROOT_DIRECTORY
 from pepys_import import __version__
@@ -21,11 +20,7 @@ from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
-from pepys_import.utils.data_store_utils import (
-    create_spatialite_tables_for_postgres,
-    create_spatialite_tables_for_sqlite,
-    import_from_csv,
-)
+from pepys_import.utils.data_store_utils import import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
 from pepys_import.utils.value_transforming_utils import format_datetime
 
