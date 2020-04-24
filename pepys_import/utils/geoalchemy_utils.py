@@ -3,7 +3,7 @@ import platform
 
 SYSTEM = platform.system()
 if SYSTEM == "Linux":
-    PLATFORM_EXTENSION_PATH = "/usr/lib/x86_64-linux-gnu/mod_spatialite.so"
+    PLATFORM_EXTENSION_PATH = "mod_spatialite"
 elif SYSTEM == "Darwin":  # Darwin is MacOS
     PLATFORM_EXTENSION_PATH = "/usr/local/lib/mod_spatialite.dylib"
 elif SYSTEM == "Windows":
