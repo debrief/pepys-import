@@ -24,13 +24,14 @@ DIR_PATH = os.path.dirname(__file__)
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+db_type = config.attributes.get("db_type", DB_TYPE)
 
 driver = "sqlite"
 version_path = os.path.join(DIR_PATH, "versions")
-if DB_TYPE == "postgres":
+if db_type == "postgres":
     driver = "postgresql+psycopg2"
     version_path = os.path.join(DIR_PATH, "postgres_versions")
-elif DB_TYPE == "sqlite":
+elif db_type == "sqlite":
     driver = "sqlite+pysqlite"
     version_path = os.path.join(DIR_PATH, "sqlite_versions")
 
@@ -47,7 +48,7 @@ fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-target_metadata = BaseSpatiaLite.metadata if DB_TYPE == "sqlite" else BasePostGIS.metadata
+target_metadata = BaseSpatiaLite.metadata if db_type == "sqlite" else BasePostGIS.metadata
 
 
 def exclude_tables_from_config(config_):
@@ -99,7 +100,7 @@ def run_migrations_offline():
 
     """
     url = config.get_main_option("sqlalchemy.url")
-    if DB_TYPE == "sqlite":
+    if db_type == "sqlite":
         context.configure(
             url=url,
             target_metadata=target_metadata,
@@ -138,19 +139,24 @@ def run_migrations_online():
             if script.upgrade_ops.is_empty():
                 directives[:] = []
 
-    engine = engine_from_config(
-        config.get_section(config.config_ini_section), prefix="sqlalchemy.",
-    )
-    if DB_TYPE == "sqlite":
+    engine = config.attributes.get("connection", None)
+    if engine is None:
+        # only create Engine if we don't have a Connection
+        # from the outside
+        engine = engine_from_config(
+            config.get_section(config.config_ini_section), prefix="sqlalchemy.",
+        )
+
+    if db_type == "sqlite":
         listen(engine, "connect", load_spatialite)
     with engine.connect() as connection:
-        if not is_schema_created(engine, DB_TYPE):
-            if DB_TYPE == "sqlite":
+        if not is_schema_created(engine, db_type):
+            if db_type == "sqlite":
                 create_spatialite_tables_for_sqlite(engine)
-            elif DB_TYPE == "postgres":
+            elif db_type == "postgres":
                 create_spatialite_tables_for_postgres(engine)
 
-        if DB_TYPE == "postgres":
+        if db_type == "postgres":
             context.configure(
                 connection=connection,
                 target_metadata=target_metadata,

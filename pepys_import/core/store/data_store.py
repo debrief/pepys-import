@@ -6,13 +6,15 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
+from alembic import command
+from alembic.config import Config
 from sqlalchemy import create_engine, inspect, or_
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func, select
 
-from paths import PEPYS_IMPORT_DIRECTORY
+from paths import PEPYS_IMPORT_DIRECTORY, ROOT_DIRECTORY
 from pepys_import import __version__
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
@@ -126,32 +128,21 @@ class DataStore:
     def initialise(self):
         """Create schemas for the database
         """
-
-        if self.db_type == "sqlite":
-            try:
-                create_spatialite_tables_for_sqlite(self.engine)
-                # Attempt to create schema if not present, to cope with fresh DB file
-                BaseSpatiaLite.metadata.create_all(self.engine)
-            except OperationalError as e:
-                print(
-                    f"SQL Exception details: {e}\n\n"
-                    "ERROR: Database Connection Error! The schema couldn't be created.\n"
-                    "Please check your config file. There might be missing/wrong values!\n"
-                    "See above for the full error from SQLAlchemy."
-                )
-                sys.exit(1)
-        elif self.db_type == "postgres":
-            try:
-                create_spatialite_tables_for_postgres(self.engine)
-                BasePostGIS.metadata.create_all(self.engine)
-            except OperationalError as e:
-                print(
-                    f"SQL Exception details: {e}\n\n"
-                    "ERROR: Database Connection Error! The schema couldn't be created.\n"
-                    "Please check your config file. There might be missing/wrong values!\n"
-                    "See above for the full error from SQLAlchemy."
-                )
-                sys.exit(1)
+        config = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
+        script_location = os.path.join(ROOT_DIRECTORY, "migrations")
+        config.set_main_option("script_location", script_location)
+        config.attributes["connection"] = self.engine
+        config.attributes["db_type"] = self.db_type
+        try:
+            command.upgrade(config, "head")
+        except OperationalError as e:
+            print(
+                f"SQL Exception details: {e}\n\n"
+                "ERROR: Database Connection Error! The schema couldn't be created.\n"
+                "Please check your config file. There might be missing/wrong values!\n"
+                "See above for the full error from SQLAlchemy."
+            )
+            sys.exit(1)
 
     @contextmanager
     def session_scope(self):
@@ -1079,6 +1070,11 @@ class DataStore:
 
         with self.session_scope():
             meta.drop_all()
+        with self.engine.connect() as connection:
+            if self.db_type == "sqlite":
+                connection.execute("DROP TABLE alembic_version;")
+            else:
+                connection.execute('DROP TABLE pepys."alembic_version";')
 
     def get_all_datafiles(self):
         """Returns all datafiles.
