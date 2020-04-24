@@ -7,7 +7,10 @@ from sqlalchemy import engine_from_config
 from sqlalchemy.event import listen
 
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
-from pepys_import.core.store import postgres_db, sqlite_db
+from pepys_import.core.store import (  # Don't remove, they are necessary for the discovery of changes!
+    postgres_db,
+    sqlite_db,
+)
 from pepys_import.core.store.db_base import BasePostGIS, BaseSpatiaLite
 from pepys_import.utils.data_store_utils import (
     create_spatialite_tables_for_postgres,
