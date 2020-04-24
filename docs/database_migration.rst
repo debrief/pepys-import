@@ -1,1 +1,1 @@
-.. include::../migrations/README.rst
+.. include:: ../migrations/README.rst
