@@ -13,8 +13,8 @@ from pepys_import.core.store import (  # Don't remove, they are necessary for th
 )
 from pepys_import.core.store.db_base import BasePostGIS, BaseSpatiaLite
 from pepys_import.utils.data_store_utils import (
-    create_spatialite_tables_for_postgres,
-    create_spatialite_tables_for_sqlite,
+    create_spatial_tables_for_postgres,
+    create_spatial_tables_for_sqlite,
     is_schema_created,
 )
 from pepys_import.utils.geoalchemy_utils import load_spatialite
@@ -26,7 +26,6 @@ DIR_PATH = os.path.dirname(__file__)
 config = context.config
 db_type = config.attributes.get("db_type", DB_TYPE)
 
-driver = "sqlite"
 version_path = os.path.join(DIR_PATH, "versions")
 if db_type == "postgres":
     driver = "postgresql+psycopg2"
@@ -152,9 +151,9 @@ def run_migrations_online():
     with engine.connect() as connection:
         if not is_schema_created(engine, db_type):
             if db_type == "sqlite":
-                create_spatialite_tables_for_sqlite(engine)
+                create_spatial_tables_for_sqlite(engine)
             elif db_type == "postgres":
-                create_spatialite_tables_for_postgres(engine)
+                create_spatial_tables_for_postgres(engine)
 
         if db_type == "postgres":
             context.configure(

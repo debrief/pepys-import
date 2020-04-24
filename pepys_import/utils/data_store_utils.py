@@ -1,6 +1,5 @@
 import csv
 import os
-import platform
 
 from sqlalchemy import func, inspect, select
 
@@ -45,14 +44,14 @@ def is_schema_created(engine, db_type):
             return False
 
 
-def create_spatialite_tables_for_sqlite(engine):
+def create_spatial_tables_for_sqlite(engine):
     """Create geometry_columns and spatial_ref_sys metadata table"""
     if not engine.dialect.has_table(engine, "spatial_ref_sys"):
         with engine.connect() as conn:
             conn.execute(select([func.InitSpatialMetaData(1)]))
 
 
-def create_spatialite_tables_for_postgres(engine):
+def create_spatial_tables_for_postgres(engine):
     """Create schema pepys and extension for PostGIS"""
     query = """
         CREATE SCHEMA IF NOT EXISTS pepys;
