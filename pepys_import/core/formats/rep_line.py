@@ -63,6 +63,7 @@ class REPLine:
             )
         )
 
+    @profile
     def parse(self, errors, error_type):
         tokens = self.line.tokens()
 

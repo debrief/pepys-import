@@ -277,14 +277,18 @@ class FileProcessor:
                 if len(importer.errors) > 0:
                     importers_with_errors.append(importer.short_name)
 
+                import time
                 # Call related validation tests, extend global errors lists if the
                 # importer has errors
+                validation_start = time.time()
                 validation_errors = []
                 validated, failed_validators = datafile.validate(
                     validation_level=importer.validation_level,
                     errors=validation_errors,
                     parser=importer.short_name,
                 )
+                validation_end = time.time()
+                print(f"Validation time: {validation_end - validation_start}")
                 # Add the list of failed validators from that importer to
                 # the overall list of validators with errors for this file
                 validators_with_errors.extend(failed_validators)

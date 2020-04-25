@@ -13,6 +13,7 @@ from pepys_import.utils.import_utils import import_validators
 LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
 LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
 
+sensor_cache = {}
 
 class SensorMixin:
     @classmethod
@@ -29,6 +30,10 @@ class SensorMixin:
         :type platform_id: int
         :return:
         """
+        cached_sensor = sensor_cache.get((sensor_name, platform_id))
+        if cached_sensor:
+            return cached_sensor
+
         sensor = (
             data_store.session.query(data_store.db_classes.Sensor)
             .filter(data_store.db_classes.Sensor.name == sensor_name)
@@ -36,6 +41,7 @@ class SensorMixin:
             .first()
         )
         if sensor:
+            sensor_cache[(sensor_name, platform_id)] = sensor
             return sensor
 
         # Sensor is not found, try to find a synonym

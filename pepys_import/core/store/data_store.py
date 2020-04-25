@@ -30,6 +30,8 @@ from .table_summary import TableSummary, TableSummarySet
 DEFAULT_DATA_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "default_data")
 USER = getuser()  # Login name of the current user
 
+platform_dict = {}
+sensortype_cache = {}
 
 class DataStore:
     """ Representation of database
@@ -552,12 +554,20 @@ class DataStore:
 
     def search_sensor_type(self, name):
         """Search for any sensor type featuring this name"""
-        return (
+        cached_result = sensortype_cache.get(name)
+        if cached_result:
+            return cached_result
+
+        result = (
             self.session.query(self.db_classes.SensorType)
             .filter(self.db_classes.SensorType.name == name)
             .first()
         )
 
+        if result:
+            sensortype_cache[name] = result
+
+        return 
     def search_privacy(self, name):
         """Search for any privacy with this name"""
         return (
@@ -701,6 +711,10 @@ class DataStore:
         :type platform_name: String
         :return:
         """
+        cached_result = platform_dict.get(platform_name)
+        if cached_result:
+            return cached_result
+
         platform = (
             self.session.query(self.db_classes.Platform)
             .filter(
@@ -713,6 +727,7 @@ class DataStore:
             .first()
         )
         if platform:
+            platform_dict[platform_name] = platform
             return platform
 
         # Platform is not found, try to find a synonym

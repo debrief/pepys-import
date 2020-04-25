@@ -1,4 +1,5 @@
 from re import finditer
+import re
 
 from .token import SubToken, Token
 from .usages import SingleUsage
@@ -11,8 +12,8 @@ class Line:
     Has methods to get a list of Tokens in the line, and to record a usage of the whole line.
     """
 
-    WHITESPACE_DELIM = "\\S+"
-    CSV_DELIM = r'(?:,"|^")(""|[\w\W]*?)(?=",|"$)|(?:,(?!")|^(?!"))([^,]*?)(?=$|,)|(\r\n|\n)'
+    WHITESPACE_DELIM = re.compile("\\S+")
+    CSV_DELIM = re.compile(r'(?:,"|^")(""|[\w\W]*?)(?=",|"$)|(?:,(?!")|^(?!"))([^,]*?)(?=$|,)|(\r\n|\n)')
 
     __slots__ = ("children", "highlighted_file")
 
@@ -44,6 +45,7 @@ class Line:
             res += child.text
         return res
 
+    @profile
     def tokens(self, reg_exp=WHITESPACE_DELIM, strip_char=""):
         """Generates a list of Token objects for each token in the line.
         

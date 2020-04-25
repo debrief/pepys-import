@@ -31,6 +31,7 @@ class ReplayImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
+    @profile
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
         if line.text.startswith(";"):
             return
