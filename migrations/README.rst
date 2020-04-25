@@ -104,14 +104,55 @@ For doing that the following command might be used:
 
 :code:`alembic upgrade XXXXX --sql > new_migration.sql`. (Please change *XXXX* with the revision ID of the migration script.)
 
-| This command will create a new file named **new_migration.sql**, so that you can play with it or run it in your DB's bash.
+| This command will create a new file named **new_migration.sql** which has SQL Scripts for all migrations, so that you can play with it or run it in your DB's console.
 |
-| **Note:** Please keep in mind that you should consider *possible* failures before applying the migration.
+| You can also give a start point if you would like to: :code:`alembic upgrade FROM:TO --sql > new_migration.sql`
+| For example, there are 2 base migrations for SQLite. If you would like to see the SQL script for the second migration, you can run this command: :code:`alembic upgrade bcf:7df --sql`
+| It has to print this script:
+
+.. code-block:: sql
+
+    (pepys-import) baris@bariss-MacBook-Pro pepys-import % alembic upgrade bcf:7df --sql
+    INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+    INFO  [alembic.runtime.migration] Generating static SQL
+    INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+    INFO  [alembic.runtime.migration] Running upgrade bcff0ccb4fbd -> 7df9dcbd47e7, base2
+    -- Running upgrade bcff0ccb4fbd -> 7df9dcbd47e7
+
+    CREATE TABLE "_alembic_tmp_Geometries" (
+        geometry_id INTEGER NOT NULL,
+        geometry NUMERIC NOT NULL,
+        name VARCHAR(150) NOT NULL,
+        geo_type_id INTEGER NOT NULL,
+        geo_sub_type_id INTEGER NOT NULL,
+        start TIMESTAMP,
+        "end" TIMESTAMP,
+        task_id INTEGER,
+        subject_platform_id INTEGER,
+        sensor_platform_id INTEGER,
+        source_id INTEGER NOT NULL,
+        privacy_id INTEGER,
+        created_date DATETIME,
+        PRIMARY KEY (geometry_id)
+    );
+
+    INSERT INTO "_alembic_tmp_Geometries" (geometry_id, geometry, name, geo_type_id, geo_sub_type_id, start, "end", task_id, subject_platform_id, sensor_platform_id, source_id, privacy_id, created_date) SELECT "Geometries".geometry_id, "Geometries".geometry, "Geometries".name, "Geometries".geo_type_id, "Geometries".geo_sub_type_id, "Geometries".start, "Geometries"."end", "Geometries".task_id, "Geometries".subject_platform_id, "Geometries".sensor_platform_id, "Geometries".source_id, "Geometries".privacy_id, "Geometries".created_date
+    FROM "Geometries";
+
+    DROP TABLE "Geometries";
+
+    ALTER TABLE "_alembic_tmp_Geometries" RENAME TO "Geometries";
+
+    UPDATE alembic_version SET version_num='7df9dcbd47e7' WHERE alembic_version.version_num = 'bcff0ccb4fbd';
+
+| **Note:** Alembic calls :code:`--sql` flag option as the **offline mode**.
 |
-| **Note-1:** SQLite doesn't support ALTER TABLE syntax. Therefore, :code:`render_as_batch=True` is passed to the Alembic's context and :code:`batch_alter_table` is used in migration scripts. For further information: `Running Batch Migrations <https://alembic.sqlalchemy.org/en/latest/batch.html>`_
+| **Note-1:** Please keep in mind that you should consider *possible* failures before applying the migration.
+|
+| **Note-2:** SQLite doesn't support ALTER TABLE syntax. Therefore, :code:`render_as_batch=True` is passed to the Alembic's context and :code:`batch_alter_table` is used in migration scripts. For further information: `Running Batch Migrations <https://alembic.sqlalchemy.org/en/latest/batch.html>`_
 | This batch operation successfully drops a table, creates a new one with an arbitrary name, adds the copied values from the dropped table, and finally renames the new table.
 |
-| **Note-2:** If you would like to write your own migration script, you don't need to pass :code:`--autogenerate` flag. For example:
+| **Note-3:** If you would like to write your own migration script, you don't need to pass :code:`--autogenerate` flag. For example:
 
 .. code-block:: bash
 
