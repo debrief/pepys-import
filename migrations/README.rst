@@ -49,6 +49,14 @@ Postgres
 
 | If it doesn't throw any error, it is okay to go!
 
+| **Note:** It should print the revision ID of the head with the context information:
+
+.. code-block:: bash
+
+    INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+    INFO  [alembic.runtime.migration] Will assume transactional DDL.
+    5154f7db278d (head)
+
 SQLite
 """""""
 
@@ -60,19 +68,25 @@ SQLite
         CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
     );
     INSERT INTO alembic_version (version_num)
-    VALUES ('7df9dcbd47e7');
+    VALUES ('bcff0ccb4fbd');
 
-| Please try the same command as above and check if there is any error or not.
-|
-| **Note:** It should print the revision ID of the head with the context information:
+The last line will stamp your database with the first migration. However, SQLite has two base migrations.
+Even though :code:`geometry` field of Geometries Table has :code:`nullable=False` parameter, SQLite creates it nullable.
+Therefore you should run the following command to apply the second migration:
+
+.. code-block:: bash
+
+    alembic upgrade head
+
+| **Note:** It should apply the **base2** migration and print it with the context information:
 
 .. code-block:: bash
 
     INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
     INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
-    7df9dcbd47e7 (head)
+    INFO  [alembic.runtime.migration] Running upgrade bcff0ccb4fbd -> 7df9dcbd47e7, base2
 
-| If it is working without any problem, you can use Alembic according to your needs.
+| If get this output, it means that it worked correctly. You can use Alembic according to your needs.
 
 How to use it? (For Developers)
 --------------------------------
@@ -115,7 +129,7 @@ For doing that the following command might be used:
 
 | It is also possible to downgrade migration scripts. You can give a revision ID to do that:
 
-.. code-block::
+.. code-block:: bash
 
     alembic downgrade head REVISION_ID
 
