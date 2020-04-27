@@ -53,7 +53,7 @@ class SensorMixin:
     @classmethod
     def add_to_sensors(cls, data_store, name, sensor_type, host, privacy_id, change_id):
         session = data_store.session
-        sensor_type = data_store.db_classes.SensorType().search_sensor_type(data_store, sensor_type)
+        sensor_type = data_store.search_sensor_type(sensor_type)
         host = data_store.db_classes.Platform().search_platform(data_store, host)
 
         sensor_obj = data_store.db_classes.Sensor(
@@ -315,17 +315,6 @@ class DatafileMixin:
 
             extraction_log.append(f"{total_objects} measurements extracted by {parser}.")
         return extraction_log
-
-
-class SensorTypeMixin:
-    @classmethod
-    def search_sensor_type(cls, data_store, name):
-        # search for any sensor type featuring this name
-        return (
-            data_store.session.query(data_store.db_classes.SensorType)
-            .filter(data_store.db_classes.SensorType.name == name)
-            .first()
-        )
 
 
 class StateMixin:
