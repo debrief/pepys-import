@@ -106,6 +106,12 @@ class DataStore:
         # dictionary to cache platform object based on name
         self._platform_cache = dict()
 
+        # dictionary to cache sensor based on sensor_name and platform_id
+        self._sensor_cache = dict()
+
+        # dictionary to cache datafile based on datafile_name
+        self._datafile_cache = dict()
+
         # dictionaries, to cache sensor name
         self._sensor_dict_on_sensor_id = dict()
 
@@ -624,12 +630,17 @@ class DataStore:
         :type datafile_name: String
         :return:
         """
+        cached_result = self._datafile_cache.get(datafile_name)
+        if cached_result:
+            return cached_result
+
         datafile = (
             self.session.query(self.db_classes.Datafile)
             .filter(self.db_classes.Datafile.reference == datafile_name)
             .first()
         )
         if datafile:
+            self._datafile_cache[datafile_name] = datafile
             return datafile
 
         # Datafile is not found, try to find a synonym
