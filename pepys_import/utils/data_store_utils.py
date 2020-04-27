@@ -24,16 +24,16 @@ def cache_results_if_not_none(cache_attribute):
     def real_decorator(f):
         def helper(self, name):
             cache = eval("self." + cache_attribute)
-            print(f"Looking in cache for {name}")
+            # print(f"Looking in cache for {name}")
             if name not in cache:
-                print("Not found in cache")
+                # print("Not found in cache")
                 result = f(self, name)
                 if result:
                     self.session.expunge(result)
                     cache[name] = result
                 return result
             else:
-                print(f"Found in cache, returning {cache[name]}")
+                # print(f"Found in cache, returning {cache[name]}")
                 return cache[name]
 
         return helper
