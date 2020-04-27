@@ -18,3 +18,18 @@ def import_from_csv(data_store, path, files, change_id):
                     method_to_call(**keyword_arguments, change_id=change_id)
         else:
             print(f"Method({possible_method}) not found!")
+
+
+def cache_results_if_not_none(f):
+    cache = {}
+
+    def helper(self, name):
+        if name not in cache:
+            result = f(self, name)
+            if result:
+                cache[name] = result
+            return result
+        else:
+            return cache[name]
+
+    return helper

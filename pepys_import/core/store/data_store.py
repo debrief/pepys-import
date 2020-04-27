@@ -18,7 +18,7 @@ from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
-from pepys_import.utils.data_store_utils import import_from_csv
+from pepys_import.utils.data_store_utils import cache_results_if_not_none, import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
 from pepys_import.utils.value_transforming_utils import format_datetime
 
@@ -504,6 +504,7 @@ class DataStore:
     #############################################################
     # Search/lookup functions
 
+    @cache_results_if_not_none
     def search_datafile_type(self, name):
         """Search for any datafile type with this name"""
         return (
@@ -512,6 +513,7 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none
     def search_datafile(self, name):
         """Search for any datafile with this name"""
         return (
@@ -520,6 +522,7 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none
     def search_platform(self, name):
         """Search for any platform with this name"""
         return (
@@ -528,6 +531,7 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none
     def search_platform_type(self, name):
         """Search for any platform type with this name"""
         return (
@@ -536,6 +540,7 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none
     def search_nationality(self, name):
         """Search for any nationality with this name"""
         return (
@@ -544,6 +549,7 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none
     def search_sensor(self, name):
         """Search for any sensor type featuring this name"""
         return (
@@ -552,6 +558,7 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none
     def search_sensor_type(self, name):
         """Search for any sensor type featuring this name"""
         return (
@@ -560,6 +567,7 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none
     def search_privacy(self, name):
         """Search for any privacy with this name"""
         return (
@@ -568,6 +576,7 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none
     def get_datafile_from_id(self, datafile_id):
         """Search for datafile with this id"""
         return (
