@@ -1,5 +1,4 @@
 import os
-import platform
 import sys
 from contextlib import contextmanager
 from datetime import datetime
@@ -103,6 +102,9 @@ class DataStore:
         # dictionaries, to cache platform name
         self._platform_dict_on_sensor_id = dict()
         self._platform_dict_on_platform_id = dict()
+
+        # dictionary to cache platform object based on name
+        self._platform_cache = dict()
 
         # dictionaries, to cache sensor name
         self._sensor_dict_on_sensor_id = dict()
@@ -697,10 +699,17 @@ class DataStore:
         This method tries to find a Platform entity with the given platform_name. If it
         finds, it returns the entity. If it is not found, it searches synonyms.
 
+        It uses the cache in self._platform_cache first, and if it can't find it in there
+        then it looks it up in the database.
+
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
         :return:
         """
+        cached_result = self._platform_cache.get(platform_name)
+        if cached_result:
+            return cached_result
+
         platform = (
             self.session.query(self.db_classes.Platform)
             .filter(
@@ -713,6 +722,7 @@ class DataStore:
             .first()
         )
         if platform:
+            self._platform_cache[platform_name] = platform
             return platform
 
         # Platform is not found, try to find a synonym
