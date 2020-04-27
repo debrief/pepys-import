@@ -121,15 +121,15 @@ class DataStore:
             print("-" * 61)
 
     def initialise(self):
-        """Create schemas for the database
-        """
+        """Create schemas for the database"""
         config = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
         script_location = os.path.join(ROOT_DIRECTORY, "migrations")
         config.set_main_option("script_location", script_location)
-        config.attributes["connection"] = self.engine
         config.attributes["db_type"] = self.db_type
         try:
-            command.upgrade(config, "head")
+            with self.engine.begin() as connection:
+                config.attributes["connection"] = connection
+                command.upgrade(config, "head")
         except OperationalError as e:
             print(
                 f"SQL Exception details: {e}\n\n"

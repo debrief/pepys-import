@@ -44,19 +44,17 @@ def is_schema_created(engine, db_type):
             return False
 
 
-def create_spatial_tables_for_sqlite(engine):
+def create_spatial_tables_for_sqlite(engine, connection):
     """Create geometry_columns and spatial_ref_sys metadata table"""
     if not engine.dialect.has_table(engine, "spatial_ref_sys"):
-        with engine.connect() as conn:
-            conn.execute(select([func.InitSpatialMetaData(1)]))
+        connection.execute(select([func.InitSpatialMetaData(1)]))
 
 
-def create_spatial_tables_for_postgres(engine):
+def create_spatial_tables_for_postgres(connection):
     """Create schema pepys and extension for PostGIS"""
     query = """
         CREATE SCHEMA IF NOT EXISTS pepys;
         CREATE EXTENSION IF NOT EXISTS postgis;
         SET search_path = pepys,public;
     """
-    with engine.connect() as conn:
-        conn.execute(query)
+    connection.execute(query)

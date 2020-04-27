@@ -138,23 +138,21 @@ def run_migrations_online():
             if script.upgrade_ops.is_empty():
                 directives[:] = []
 
-    engine = config.attributes.get("connection", None)
-    if engine is None:
+    connectable = config.attributes.get("connection", None)
+    if connectable is None:
         # only create Engine if we don't have a Connection
         # from the outside
-        engine = engine_from_config(
+        connectable = engine_from_config(
             config.get_section(config.config_ini_section), prefix="sqlalchemy.",
         )
-
-    if db_type == "sqlite":
-        listen(engine, "connect", load_spatialite)
-    with engine.connect() as connection:
-        if not is_schema_created(engine, db_type):
+        if db_type == "sqlite":
+            load_spatialite(connectable, None)
+    with connectable.connect() as connection:
+        if not is_schema_created(connectable, db_type):
             if db_type == "sqlite":
-                create_spatial_tables_for_sqlite(engine)
+                create_spatial_tables_for_sqlite(connectable, connection)
             elif db_type == "postgres":
-                create_spatial_tables_for_postgres(engine)
-
+                create_spatial_tables_for_postgres(connection)
         if db_type == "postgres":
             context.configure(
                 connection=connection,
