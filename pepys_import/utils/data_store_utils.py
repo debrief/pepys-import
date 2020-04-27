@@ -27,6 +27,7 @@ def cache_results_if_not_none(f):
         if name not in cache:
             result = f(self, name)
             if result:
+                self.session.expunge(result)
                 cache[name] = result
             return result
         else:
