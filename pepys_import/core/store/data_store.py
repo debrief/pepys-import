@@ -118,6 +118,9 @@ class DataStore:
         # dictionary, to cache comment type name
         self._comment_type_name_dict_on_comment_type_id = dict()
 
+        self._search_privacy_cache = dict()
+        self._search_platform_type_cache = dict()
+
         # Branding Text
         if self.welcome_text:
             show_welcome_banner(welcome_text)
@@ -510,7 +513,7 @@ class DataStore:
     #############################################################
     # Search/lookup functions
 
-    @cache_results_if_not_none
+    # @cache_results_if_not_none
     def search_datafile_type(self, name):
         """Search for any datafile type with this name"""
         return (
@@ -519,7 +522,7 @@ class DataStore:
             .first()
         )
 
-    @cache_results_if_not_none
+    # @cache_results_if_not_none
     def search_datafile(self, name):
         """Search for any datafile with this name"""
         return (
@@ -528,7 +531,7 @@ class DataStore:
             .first()
         )
 
-    @cache_results_if_not_none
+    # @cache_results_if_not_none
     def search_platform(self, name):
         """Search for any platform with this name"""
         return (
@@ -537,16 +540,17 @@ class DataStore:
             .first()
         )
 
-    @cache_results_if_not_none
+    # @cache_results_if_not_none("search_platform_type_cache")
     def search_platform_type(self, name):
         """Search for any platform type with this name"""
+        print(f"Searching platform type with name = {name}")
         return (
             self.session.query(self.db_classes.PlatformType)
             .filter(self.db_classes.PlatformType.name == name)
             .first()
         )
 
-    @cache_results_if_not_none
+    # @cache_results_if_not_none
     def search_nationality(self, name):
         """Search for any nationality with this name"""
         return (
@@ -555,7 +559,7 @@ class DataStore:
             .first()
         )
 
-    @cache_results_if_not_none
+    # @cache_results_if_not_none
     def search_sensor(self, name):
         """Search for any sensor type featuring this name"""
         return (
@@ -564,7 +568,7 @@ class DataStore:
             .first()
         )
 
-    @cache_results_if_not_none
+    # @cache_results_if_not_none
     def search_sensor_type(self, name):
         """Search for any sensor type featuring this name"""
         return (
@@ -573,16 +577,27 @@ class DataStore:
             .first()
         )
 
-    @cache_results_if_not_none
+    # @cache_results_if_not_none("_search_privacy_cache")
     def search_privacy(self, name):
         """Search for any privacy with this name"""
-        return (
+        print(f"Searching privacy with name = {name}")
+        cached_result = self._search_privacy_cache.get(name)
+        if cached_result:
+            return cached_result
+
+        result = (
             self.session.query(self.db_classes.Privacy)
             .filter(self.db_classes.Privacy.name == name)
             .first()
         )
 
-    @cache_results_if_not_none
+        if result:
+            self.session.expunge(result)
+            self._search_privacy_cache[name] = result
+
+        return result
+
+    # @cache_results_if_not_none
     def get_datafile_from_id(self, datafile_id):
         """Search for datafile with this id"""
         return (
