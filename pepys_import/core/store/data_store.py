@@ -588,22 +588,11 @@ class DataStore:
     @cache_results_if_not_none("_search_privacy_cache")
     def search_privacy(self, name):
         """Search for any privacy with this name"""
-        # print(f"Searching privacy with name = {name}")
-        # cached_result = self._search_privacy_cache.get(name)
-        # if cached_result:
-        #     return cached_result
-
-        result = (
+        return (
             self.session.query(self.db_classes.Privacy)
             .filter(self.db_classes.Privacy.name == name)
             .first()
         )
-
-        # if result:
-        #     self.session.expunge(result)
-        #     self._search_privacy_cache[name] = result
-
-        return result
 
     @cache_results_if_not_none("_search_datafile_from_id_cache")
     def get_datafile_from_id(self, datafile_id):
