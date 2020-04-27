@@ -5,22 +5,24 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from alembic import command
-from alembic.config import Config
 from sqlalchemy import create_engine, or_
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func
 
-from paths import PEPYS_IMPORT_DIRECTORY, ROOT_DIRECTORY
+from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import import __version__
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
-from pepys_import.utils.data_store_utils import import_from_csv
+from pepys_import.utils.data_store_utils import (
+    create_spatial_tables_for_postgres,
+    create_spatial_tables_for_sqlite,
+    import_from_csv,
+)
 from pepys_import.utils.geoalchemy_utils import load_spatialite
 from pepys_import.utils.value_transforming_utils import format_datetime
 
@@ -122,22 +124,34 @@ class DataStore:
 
     def initialise(self):
         """Create schemas for the database"""
-        config = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
-        script_location = os.path.join(ROOT_DIRECTORY, "migrations")
-        config.set_main_option("script_location", script_location)
-        config.attributes["db_type"] = self.db_type
-        try:
-            with self.engine.begin() as connection:
-                config.attributes["connection"] = connection
-                command.upgrade(config, "head")
-        except OperationalError as e:
-            print(
-                f"SQL Exception details: {e}\n\n"
-                "ERROR: Database Connection Error! The schema couldn't be created.\n"
-                "Please check your config file. There might be missing/wrong values!\n"
-                "See above for the full error from SQLAlchemy."
-            )
-            sys.exit(1)
+        if self.db_type == "sqlite":
+            try:
+                with self.engine.connect() as connection:
+                    create_spatial_tables_for_sqlite(self.engine, connection)
+                # Attempt to create schema if not present, to cope with fresh DB file
+                BaseSpatiaLite.metadata.create_all(self.engine)
+            except OperationalError as e:
+                print(
+                    f"SQL Exception details: {e}\n\n"
+                    "ERROR: Database Connection Error! The schema couldn't be created.\n"
+                    "Please check your config file. There might be missing/wrong values!\n"
+                    "See above for the full error from SQLAlchemy."
+                )
+                sys.exit(1)
+        elif self.db_type == "postgres":
+            try:
+                # Create schema pepys and extension for PostGIS first
+                with self.engine.connect() as connection:
+                    create_spatial_tables_for_postgres(connection)
+                BasePostGIS.metadata.create_all(self.engine)
+            except OperationalError as e:
+                print(
+                    f"SQL Exception details: {e}\n\n"
+                    "ERROR: Database Connection Error! The schema couldn't be created.\n"
+                    "Please check your config file. There might be missing/wrong values!\n"
+                    "See above for the full error from SQLAlchemy."
+                )
+                sys.exit(1)
 
     @contextmanager
     def session_scope(self):
