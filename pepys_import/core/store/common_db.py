@@ -40,6 +40,7 @@ class SensorMixin:
             .first()
         )
         if sensor:
+            data_store.session.expunge(sensor)
             data_store._sensor_cache[(sensor_name, platform_id)] = sensor
             return sensor
 

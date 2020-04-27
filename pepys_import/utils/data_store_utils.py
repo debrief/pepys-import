@@ -20,19 +20,22 @@ def import_from_csv(data_store, path, files, change_id):
             print(f"Method({possible_method}) not found!")
 
 
-def cache_results_if_not_none(f, cache_attribute):
-    def helper(self, name):
-        cache = eval("self." + cache_attribute)
-        print(f"Looking in cache for {name}")
-        if name not in cache:
-            print("Not found in cache")
-            result = f(self, name)
-            if result:
-                self.session.expunge(result)
-                cache[name] = result
-            return result
-        else:
-            print(f"Found in cache, returning {cache[name]}")
-            return cache[name]
+def cache_results_if_not_none(cache_attribute):
+    def real_decorator(f):
+        def helper(self, name):
+            cache = eval("self." + cache_attribute)
+            print(f"Looking in cache for {name}")
+            if name not in cache:
+                print("Not found in cache")
+                result = f(self, name)
+                if result:
+                    self.session.expunge(result)
+                    cache[name] = result
+                return result
+            else:
+                print(f"Found in cache, returning {cache[name]}")
+                return cache[name]
 
-    return helper
+        return helper
+
+    return real_decorator
