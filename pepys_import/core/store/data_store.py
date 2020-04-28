@@ -19,6 +19,7 @@ from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
 from pepys_import.utils.data_store_utils import (
+    create_alembic_version_table,
     create_spatial_tables_for_postgres,
     create_spatial_tables_for_sqlite,
     import_from_csv,
@@ -126,8 +127,7 @@ class DataStore:
         """Create schemas for the database"""
         if self.db_type == "sqlite":
             try:
-                with self.engine.connect() as connection:
-                    create_spatial_tables_for_sqlite(self.engine, connection)
+                create_spatial_tables_for_sqlite(self.engine)
                 # Attempt to create schema if not present, to cope with fresh DB file
                 BaseSpatiaLite.metadata.create_all(self.engine)
             except OperationalError as e:
@@ -140,9 +140,7 @@ class DataStore:
                 sys.exit(1)
         elif self.db_type == "postgres":
             try:
-                # Create schema pepys and extension for PostGIS first
-                with self.engine.connect() as connection:
-                    create_spatial_tables_for_postgres(connection)
+                create_spatial_tables_for_postgres(self.engine)
                 BasePostGIS.metadata.create_all(self.engine)
             except OperationalError as e:
                 print(
@@ -152,6 +150,7 @@ class DataStore:
                     "See above for the full error from SQLAlchemy."
                 )
                 sys.exit(1)
+        create_alembic_version_table(self.engine, self.db_type)
 
     @contextmanager
     def session_scope(self):

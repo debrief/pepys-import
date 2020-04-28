@@ -44,17 +44,48 @@ def is_schema_created(engine, db_type):
             return False
 
 
-def create_spatial_tables_for_sqlite(engine, connection):
+def create_spatial_tables_for_sqlite(engine):
     """Create geometry_columns and spatial_ref_sys metadata table"""
     if not engine.dialect.has_table(engine, "spatial_ref_sys"):
-        connection.execute(select([func.InitSpatialMetaData(1)]))
+        with engine.connect() as connection:
+            connection.execute(select([func.InitSpatialMetaData(1)]))
 
 
-def create_spatial_tables_for_postgres(connection):
+def create_spatial_tables_for_postgres(engine):
     """Create schema pepys and extension for PostGIS"""
     query = """
         CREATE SCHEMA IF NOT EXISTS pepys;
         CREATE EXTENSION IF NOT EXISTS postgis;
         SET search_path = pepys,public;
     """
-    connection.execute(query)
+    with engine.connect() as connection:
+        connection.execute(query)
+
+
+def create_alembic_version_table(engine, db_type):
+    if db_type == "sqlite":
+        create_table = """
+            CREATE TABLE alembic_version
+            (
+                version_num VARCHAR(32) NOT NULL,
+                CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+            );
+        """
+        insert_value = """
+            INSERT INTO alembic_version (version_num)
+            VALUES ('bcff0ccb4fbd');
+        """
+    else:
+        create_table = """
+            CREATE TABLE pepys.alembic_version
+            (
+                version_num VARCHAR(32) NOT NULL,
+                CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+            );
+        """
+        insert_value = """
+            INSERT INTO pepys.alembic_version VALUES ('5154f7db278d');
+        """
+    with engine.connect() as connection:
+        connection.execute(create_table)
+        connection.execute(insert_value)
