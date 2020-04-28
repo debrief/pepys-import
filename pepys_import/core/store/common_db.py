@@ -250,7 +250,7 @@ class DatafileMixin:
         elif validation_level == validation_constants.BASIC_LEVEL:
             # Create validator objects here so we're only creating them once
             bv = BasicValidator(parser)
-            local_bv_objects = [bv() for bv in LOCAL_BASIC_VALIDATORS]
+            local_bv_objects = [bv(parser) for bv in LOCAL_BASIC_VALIDATORS]
             print(f"Running basic validation for {parser}")
             for measurement in tqdm(self.measurements[parser]):
                 # Run the standard Basic Validator
@@ -267,7 +267,7 @@ class DatafileMixin:
             # Create validator objects here, so we're only creating them once
             bv = BasicValidator(parser)
             ev = EnhancedValidator()
-            local_bv_objects = [bv() for bv in LOCAL_BASIC_VALIDATORS]
+            local_bv_objects = [bv(parser) for bv in LOCAL_BASIC_VALIDATORS]
             local_ev_objects = [ev() for ev in LOCAL_ENHANCED_VALIDATORS]
             print(f"Running enhanced validation for {parser}")
             for objects in self.measurements[parser].values():
