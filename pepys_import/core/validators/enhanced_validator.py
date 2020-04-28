@@ -20,15 +20,41 @@ class EnhancedValidator:
             f"{str(current_object.time)}, Sensor:"
             f"{current_object.sensor_name}, Platform:{current_object.platform_name}"
         )
-        heading = current_object.heading if hasattr(current_object, "heading") else None
-        course = current_object.course if hasattr(current_object, "course") else None
-        speed = current_object.speed if hasattr(current_object, "speed") else None
-        location = current_object.location if hasattr(current_object, "location") else None
-        time = current_object.time if hasattr(current_object, "time") else None
+        try:
+            heading = current_object.heading
+        except AttributeError:
+            heading = None
+
+        try:
+            course = current_object.course
+        except AttributeError:
+            course = None
+
+        try:
+            speed = current_object.speed
+        except AttributeError:
+            speed = None
+
+        try:
+            location = current_object.location
+        except AttributeError:
+            location = None
+
+        try:
+            time = current_object.time
+        except AttributeError:
+            time = None
 
         if prev_object:
-            prev_location = prev_object.location if hasattr(prev_object, "location") else None
-            prev_time = prev_object.time if hasattr(prev_object, "time") else None
+            try:
+                prev_location = prev_object.location
+            except AttributeError:
+                prev_location = None
+
+            try:
+                prev_time = prev_object.time
+            except AttributeError:
+                prev_time = None
 
             if location and prev_location:
                 self.course_heading_loose_match_with_location(
