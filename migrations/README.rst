@@ -3,7 +3,8 @@ Database Migration
 ==================
 
 Pepys-import repository uses `Alembic <https://github.com/alembic/alembic>`_ for data migration. Alembic is a database migration tool which is maintained by SQLAlchemy.
-:class:`.DataStore`'s initialisation method applies the existing migrations to the users' database. Don't forget to check your configuration file before running :code:`pepys_import` or :code:`pepys_admin`.
+It is possible to apply the existing migrations to the users' database via :code:`pepys_admin`.
+Don't forget to check your configuration file before running :code:`pepys_import` or :code:`pepys_admin`.
 
 Installation
 ------------
@@ -178,7 +179,7 @@ For doing that the following command might be used:
 
 How to use it? (For Users)
 ---------------------------
-Migrations are applied when :code:`DataStore.initialise()` is called. So, the users might use :code:`pepys_import` and :code:`pepys_admin` without migrating manually.
+Migrations might be applied in :code:`pepys_admin`. Its migration option migrates the DB to the latest version.
 However, if they would like to check it, after ensuring their **config file** points to the correct database, they might run this command to upgrade their DB if there are any migrations:
 
 .. code-block:: bash
