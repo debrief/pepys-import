@@ -65,7 +65,7 @@ def create_spatial_tables_for_postgres(engine):
 def create_alembic_version_table(engine, db_type):
     if db_type == "sqlite":
         create_table = """
-            CREATE TABLE alembic_version
+            CREATE TABLE IF NOT EXISTS alembic_version
             (
                 version_num VARCHAR(32) NOT NULL,
                 CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
@@ -73,18 +73,23 @@ def create_alembic_version_table(engine, db_type):
         """
         insert_value = """
             INSERT INTO alembic_version (version_num)
-            VALUES ('bcff0ccb4fbd');
+            SELECT 'bcff0ccb4fbd'
+            WHERE NOT EXISTS(SELECT 1 FROM alembic_version WHERE version_num = 'bcff0ccb4fbd');
         """
     else:
         create_table = """
-            CREATE TABLE pepys.alembic_version
+            CREATE TABLE IF NOT EXISTS pepys.alembic_version
             (
                 version_num VARCHAR(32) NOT NULL,
                 CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
             );
         """
         insert_value = """
-            INSERT INTO pepys.alembic_version VALUES ('5154f7db278d');
+            INSERT INTO pepys.alembic_version (version_num) 
+            SELECT '5154f7db278d'
+            WHERE NOT EXISTS(
+                SELECT '5154f7db278d' FROM pepys.alembic_version WHERE version_num = '5154f7db278d'
+            );
         """
     with engine.connect() as connection:
         connection.execute(create_table)
