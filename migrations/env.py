@@ -146,13 +146,14 @@ def run_migrations_online():
             config.get_section(config.config_ini_section), prefix="sqlalchemy.",
         )
         if db_type == "sqlite":
-            load_spatialite(connectable, None)
+            listen(connectable, "connect", load_spatialite)
+
+    if not is_schema_created(connectable, db_type):
+        if db_type == "sqlite":
+            create_spatial_tables_for_sqlite(connectable)
+        elif db_type == "postgres":
+            create_spatial_tables_for_postgres(connectable)
     with connectable.connect() as connection:
-        if not is_schema_created(connectable, db_type):
-            if db_type == "sqlite":
-                create_spatial_tables_for_sqlite(connectable, connection)
-            elif db_type == "postgres":
-                create_spatial_tables_for_postgres(connection)
         if db_type == "postgres":
             context.configure(
                 connection=connection,
