@@ -186,11 +186,11 @@ class AdminShell(cmd.Cmd):
             print(f"## Reference\n{report}\n")
 
     def do_migrate(self):
-        config = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
+        cfg = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
         script_location = os.path.join(ROOT_DIRECTORY, "migrations")
-        config.set_main_option("script_location", script_location)
-        config.attributes["db_type"] = DB_TYPE
-        command.upgrade(config, "head")
+        cfg.set_main_option("script_location", script_location)
+        cfg.attributes["db_type"] = DB_TYPE
+        command.upgrade(cfg, "head")
 
     @staticmethod
     def do_exit():

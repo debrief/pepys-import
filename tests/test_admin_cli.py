@@ -3,6 +3,7 @@ import shutil
 import sqlite3
 import unittest
 from contextlib import redirect_stdout
+from importlib import reload
 from io import StringIO
 from sqlite3 import OperationalError
 from unittest.mock import patch
@@ -11,6 +12,7 @@ import pg8000
 import pytest
 from testing.postgresql import Postgresql
 
+import config
 from pepys_admin.admin_cli import AdminShell
 from pepys_admin.cli import run_admin_shell
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
@@ -25,6 +27,9 @@ CURRENT_DIR = os.getcwd()
 SAMPLE_DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 CSV_PATH = os.path.join(SAMPLE_DATA_PATH, "csv_files")
 DATA_PATH = os.path.join(SAMPLE_DATA_PATH, "track_files/rep_data")
+CONFIG_FILE_PATH = os.path.join(
+    FILE_PATH, "config_file_tests", "example_config", "config_for_do_migrate.ini"
+)
 
 
 class AdminCLITestCase(unittest.TestCase):
@@ -650,6 +655,21 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
         output = temp_output.getvalue()
 
         assert "ERROR: SQL error when communicating with database" in output
+
+
+@patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH})
+def test_do_migrate():
+    reload(config)
+    temp_output = StringIO()
+    new_datastore = DataStore("", "", "", 0, "new_db.db", "sqlite")
+    new_admin_shell = AdminShell(new_datastore)
+
+    assert is_schema_created(new_datastore.engine, new_datastore.db_type) is False
+    # Migrate
+    new_admin_shell.do_migrate()
+    assert is_schema_created(new_datastore.engine, new_datastore.db_type) is True
+
+    os.remove(os.path.join(CURRENT_DIR, "new_db.db"))
 
 
 if __name__ == "__main__":
