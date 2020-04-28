@@ -40,10 +40,9 @@ class EnhancedValidator:
         except AttributeError:
             location = None
 
-        try:
-            time = current_object.time
-        except AttributeError:
-            time = None
+        # Doesn't need a try-catch as time is a compulsory field, created
+        # when a state is initialised
+        time = current_object.time
 
         if prev_object:
             try:
@@ -51,10 +50,9 @@ class EnhancedValidator:
             except AttributeError:
                 prev_location = None
 
-            try:
-                prev_time = prev_object.time
-            except AttributeError:
-                prev_time = None
+            # Doesn't need a try-catch as time is a compulsory field, created
+            # when a state is initialised
+            prev_time = prev_object.time
 
             if location and prev_location:
                 self.course_heading_loose_match_with_location(
