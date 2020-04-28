@@ -3,10 +3,14 @@ import os
 import sys
 from datetime import datetime
 
+from alembic import command
+from alembic.config import Config
 from iterfzf import iterfzf
 from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion.filesystem import PathCompleter
 
+from config import DB_TYPE
+from paths import ROOT_DIRECTORY
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.utils import get_default_export_folder
@@ -21,6 +25,7 @@ class AdminShell(cmd.Cmd):
 (2) Status
 (3) Export
 (4) Export by Platform and sensor
+(5) Migrate
 (0) Exit
 """
     prompt = "(pepys-admin) "
@@ -35,6 +40,7 @@ class AdminShell(cmd.Cmd):
             "2": self.do_status,
             "3": self.do_export,
             "4": self.do_export_by_platform_name,
+            "5": self.do_migrate,
             "9": self.do_export_all,
         }
 
@@ -178,6 +184,13 @@ class AdminShell(cmd.Cmd):
             reference_summary = self.data_store.get_status(report_reference=True)
             report = reference_summary.report()
             print(f"## Reference\n{report}\n")
+
+    def do_migrate(self):
+        config = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
+        script_location = os.path.join(ROOT_DIRECTORY, "migrations")
+        config.set_main_option("script_location", script_location)
+        config.attributes["db_type"] = DB_TYPE
+        command.upgrade(config, "head")
 
     @staticmethod
     def do_exit():
