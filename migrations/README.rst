@@ -232,3 +232,21 @@ If you face this error, it means that the :code:`pepys-import` repository should
 
     PYTHONPATH=. alembic current
 
+------------
+
+.. code-block:: bash
+
+    (pepys-import) baris@bariss-MacBook-Pro pepys-import % alembic revision -m "message" --autogenerate
+    Database tables are not found! (Hint: Did you initialise the DataStore?)
+    INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+    INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+    ERROR [alembic.util.messaging] Target database is not up to date.
+      FAILED: Target database is not up to date.
+
+If you make some changes and try to create a new migration script without having the latest version of the database, you will face this issue.
+You should upgrade your DB and then run the revision command:
+
+.. code-block:: bash
+
+    alembic upgrade head
+    alembic revision -m "your message" --autogenerate
