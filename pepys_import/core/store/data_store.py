@@ -151,6 +151,7 @@ class DataStore:
                 )
                 sys.exit(1)
         create_alembic_version_table(self.engine, self.db_type)
+        print("Database tables were created by DataStore's initialisation.")
 
     @contextmanager
     def session_scope(self):

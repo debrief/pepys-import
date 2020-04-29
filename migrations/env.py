@@ -149,6 +149,7 @@ def run_migrations_online():
             listen(connectable, "connect", load_spatialite)
 
     if not is_schema_created(connectable, db_type):
+        print("Database tables are going to be created by Alembic.")
         if db_type == "sqlite":
             create_spatial_tables_for_sqlite(connectable)
         elif db_type == "postgres":
