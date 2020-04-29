@@ -6,16 +6,6 @@ Pepys-import repository uses `Alembic <https://github.com/alembic/alembic>`_ for
 It is possible to apply the existing migrations to the users' database via :code:`pepys_admin`.
 Don't forget to check your configuration file before running :code:`pepys_import` or :code:`pepys_admin`.
 
-Installation
-------------
-Alembic is in the requirements of the project. However, there is one post-installation step to run it without any problem. You should install the pepys-import project in an editable mode. The commands must be run are as follows:
-
-.. code-block:: bash
-
-    source PATH/TO/YOUR/ENV/bin/activate
-    pip install -r requirements.txt
-    pip install -e .
-
 Instructions
 ------------
 | If this is your first time using Alembic, please do the followings:
