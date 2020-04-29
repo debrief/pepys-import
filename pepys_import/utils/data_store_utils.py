@@ -94,3 +94,21 @@ def create_alembic_version_table(engine, db_type):
     with engine.connect() as connection:
         connection.execute(create_table)
         connection.execute(insert_value)
+
+
+def cache_results_if_not_none(cache_attribute):
+    def real_decorator(f):
+        def helper(self, name):
+            cache = eval("self." + cache_attribute)
+            if name not in cache:
+                result = f(self, name)
+                if result:
+                    self.session.expunge(result)
+                    cache[name] = result
+                return result
+            else:
+                return cache[name]
+
+        return helper
+
+    return real_decorator
