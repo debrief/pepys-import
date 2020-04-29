@@ -1,5 +1,4 @@
 import os
-import platform
 import sys
 from contextlib import contextmanager
 from datetime import datetime
@@ -19,7 +18,7 @@ from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
-from pepys_import.utils.data_store_utils import import_from_csv
+from pepys_import.utils.data_store_utils import cache_results_if_not_none, import_from_csv
 from pepys_import.utils.geoalchemy_utils import load_spatialite
 from pepys_import.utils.value_transforming_utils import format_datetime
 
@@ -104,11 +103,30 @@ class DataStore:
         self._platform_dict_on_sensor_id = dict()
         self._platform_dict_on_platform_id = dict()
 
+        # dictionary to cache platform object based on name
+        self._platform_cache = dict()
+
+        # dictionary to cache sensor based on sensor_name and platform_id
+        self._sensor_cache = dict()
+
+        # dictionary to cache datafile based on datafile_name
+        self._datafile_cache = dict()
+
         # dictionaries, to cache sensor name
         self._sensor_dict_on_sensor_id = dict()
 
         # dictionary, to cache comment type name
         self._comment_type_name_dict_on_comment_type_id = dict()
+
+        self._search_privacy_cache = dict()
+        self._search_platform_type_cache = dict()
+        self._search_sensor_type_cache = dict()
+        self._search_sensor_cache = dict()
+        self._search_nationality_cache = dict()
+        self._search_datafile_from_id_cache = dict()
+        self._search_platform_cache = dict()
+        self._search_datafile_cache = dict()
+        self._search_datafile_type_cache = dict()
 
         # Branding Text
         if self.welcome_text:
@@ -502,6 +520,7 @@ class DataStore:
     #############################################################
     # Search/lookup functions
 
+    @cache_results_if_not_none("_search_datafile_type_cache")
     def search_datafile_type(self, name):
         """Search for any datafile type with this name"""
         return (
@@ -510,6 +529,7 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none("_search_datafile_cache")
     def search_datafile(self, name):
         """Search for any datafile with this name"""
         return (
@@ -518,6 +538,7 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none("_search_platform_cache")
     def search_platform(self, name):
         """Search for any platform with this name"""
         return (
@@ -526,14 +547,17 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none("_search_platform_type_cache")
     def search_platform_type(self, name):
         """Search for any platform type with this name"""
+        # print(f"Searching platform type with name = {name}")
         return (
             self.session.query(self.db_classes.PlatformType)
             .filter(self.db_classes.PlatformType.name == name)
             .first()
         )
 
+    @cache_results_if_not_none("_search_nationality_cache")
     def search_nationality(self, name):
         """Search for any nationality with this name"""
         return (
@@ -542,6 +566,7 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none("_search_sensor_cache")
     def search_sensor(self, name):
         """Search for any sensor type featuring this name"""
         return (
@@ -550,6 +575,8 @@ class DataStore:
             .first()
         )
 
+    # @cache_results_if_not_none
+    @cache_results_if_not_none("_search_sensor_type_cache")
     def search_sensor_type(self, name):
         """Search for any sensor type featuring this name"""
         return (
@@ -558,6 +585,7 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none("_search_privacy_cache")
     def search_privacy(self, name):
         """Search for any privacy with this name"""
         return (
@@ -566,6 +594,7 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none("_search_datafile_from_id_cache")
     def get_datafile_from_id(self, datafile_id):
         """Search for datafile with this id"""
         return (
@@ -613,12 +642,17 @@ class DataStore:
         :type datafile_name: String
         :return:
         """
+        cached_result = self._datafile_cache.get(datafile_name)
+        if cached_result:
+            return cached_result
+
         datafile = (
             self.session.query(self.db_classes.Datafile)
             .filter(self.db_classes.Datafile.reference == datafile_name)
             .first()
         )
         if datafile:
+            self._datafile_cache[datafile_name] = datafile
             return datafile
 
         # Datafile is not found, try to find a synonym
@@ -697,10 +731,17 @@ class DataStore:
         This method tries to find a Platform entity with the given platform_name. If it
         finds, it returns the entity. If it is not found, it searches synonyms.
 
+        It uses the cache in self._platform_cache first, and if it can't find it in there
+        then it looks it up in the database.
+
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
         :return:
         """
+        cached_result = self._platform_cache.get(platform_name)
+        if cached_result:
+            return cached_result
+
         platform = (
             self.session.query(self.db_classes.Platform)
             .filter(
@@ -713,6 +754,8 @@ class DataStore:
             .first()
         )
         if platform:
+            self.session.expunge(platform)
+            self._platform_cache[platform_name] = platform
             return platform
 
         # Platform is not found, try to find a synonym

@@ -132,7 +132,7 @@ def test_highlighter_on_whole_file_benchmark(benchmark):
     benchmark(run_highlighter_on_whole_file)
 
     if running_on_travis():
-        if benchmark.stats.stats.mean > 5:
+        if benchmark.stats.stats.mean > 6:
             pytest.fail(
                 f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of 5s"
             )
