@@ -29,6 +29,10 @@ class SensorMixin:
         :type platform_id: int
         :return:
         """
+        cached_result = data_store._sensor_cache.get((sensor_name, platform_id))
+        if cached_result:
+            return cached_result
+
         sensor = (
             data_store.session.query(data_store.db_classes.Sensor)
             .filter(data_store.db_classes.Sensor.name == sensor_name)
@@ -36,6 +40,8 @@ class SensorMixin:
             .first()
         )
         if sensor:
+            data_store.session.expunge(sensor)
+            data_store._sensor_cache[(sensor_name, platform_id)] = sensor
             return sensor
 
         # Sensor is not found, try to find a synonym
@@ -48,7 +54,7 @@ class SensorMixin:
     @classmethod
     def add_to_sensors(cls, data_store, name, sensor_type, host, privacy_id, change_id):
         session = data_store.session
-        sensor_type = data_store.db_classes.SensorType().search_sensor_type(data_store, sensor_type)
+        sensor_type = data_store.search_sensor_type(sensor_type)
         host = data_store.db_classes.Platform().search_platform(data_store, host)
 
         sensor_obj = data_store.db_classes.Sensor(
@@ -310,17 +316,6 @@ class DatafileMixin:
 
             extraction_log.append(f"{total_objects} measurements extracted by {parser}.")
         return extraction_log
-
-
-class SensorTypeMixin:
-    @classmethod
-    def search_sensor_type(cls, data_store, name):
-        # search for any sensor type featuring this name
-        return (
-            data_store.session.query(data_store.db_classes.SensorType)
-            .filter(data_store.db_classes.SensorType.name == name)
-            .first()
-        )
 
 
 class StateMixin:
