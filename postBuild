@@ -2,3 +2,4 @@
 # for Pepys
 conda install -y -c conda-forge libspatialite
 pip install git+git://github.com/robintw/notebook_xterm.git#egg=notebook_xterm
+echo PS1="$ " >> ~/.bashrc
