@@ -44,6 +44,11 @@ class AdminShell(cmd.Cmd):
             "9": self.do_export_all,
         }
 
+        self.cfg = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
+        script_location = os.path.join(ROOT_DIRECTORY, "migrations")
+        self.cfg.set_main_option("script_location", script_location)
+        self.cfg.attributes["db_type"] = DB_TYPE
+
     def do_export(self):
         """Start the export process"""
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
@@ -172,6 +177,9 @@ class AdminShell(cmd.Cmd):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
+        print(f"Current State of the Database")
+        command.current(self.cfg, verbose=True)
+        print("-" * 61)
         with self.data_store.session_scope():
             measurement_summary = self.data_store.get_status(report_measurement=True)
             report = measurement_summary.report()
@@ -186,11 +194,8 @@ class AdminShell(cmd.Cmd):
             print(f"## Reference\n{report}\n")
 
     def do_migrate(self):
-        cfg = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
-        script_location = os.path.join(ROOT_DIRECTORY, "migrations")
-        cfg.set_main_option("script_location", script_location)
-        cfg.attributes["db_type"] = DB_TYPE
-        command.upgrade(cfg, "head")
+        print("Alembic migration command running, see output below.")
+        command.upgrade(self.cfg, "head")
 
     @staticmethod
     def do_exit():
@@ -199,9 +204,9 @@ class AdminShell(cmd.Cmd):
         sys.exit()
 
     def default(self, line):
-        command, arg, line = self.parseline(line)
-        if command in self.aliases:
-            self.aliases[command]()
+        command_, arg, line = self.parseline(line)
+        if command_ in self.aliases:
+            self.aliases[command_]()
         else:
             print(f"*** Unknown syntax: {line}")
 
