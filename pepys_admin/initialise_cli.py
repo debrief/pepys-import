@@ -1,6 +1,8 @@
 import cmd
 import os
 
+from pepys_import.utils.data_store_utils import is_schema_created
+
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -34,14 +36,14 @@ class InitialiseShell(cmd.Cmd):
             self.prompt = parent_shell.prompt.strip() + "/" + self.prompt
 
     def do_clear_db_contents(self):
-        if self.data_store.is_schema_created() is False:
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
         self.data_store.clear_db_contents()
         print("Cleared database contents")
 
     def do_clear_db_schema(self):
-        if self.data_store.is_schema_created() is False:
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
         self.data_store.clear_db_schema()
@@ -52,7 +54,7 @@ class InitialiseShell(cmd.Cmd):
         print("Initialised database")
 
     def do_import_reference_data(self):
-        if self.data_store.is_schema_created() is False:
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
         with self.data_store.session_scope():
@@ -60,7 +62,7 @@ class InitialiseShell(cmd.Cmd):
         print("Reference data imported")
 
     def do_import_metadata(self):
-        if self.data_store.is_schema_created() is False:
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
         with self.data_store.session_scope():
@@ -68,7 +70,7 @@ class InitialiseShell(cmd.Cmd):
         print("Metadata imported")
 
     def do_import_sample_measurements(self):
-        if self.data_store.is_schema_created() is False:
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
         with self.data_store.session_scope():
