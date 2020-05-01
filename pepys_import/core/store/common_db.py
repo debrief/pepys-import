@@ -1,5 +1,6 @@
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.inspection import inspect
+from tqdm import tqdm
 
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
 from pepys_import.core.formats import unit_registry
@@ -253,38 +254,46 @@ class DatafileMixin:
         if validation_level == validation_constants.NONE_LEVEL:
             return (True, failed_validators)
         elif validation_level == validation_constants.BASIC_LEVEL:
-            for measurement in self.measurements[parser]:
-                bv = BasicValidator(parser)
+            # Create validator objects here so we're only creating them once
+            bv = BasicValidator(parser)
+            local_bv_objects = [bv(parser) for bv in LOCAL_BASIC_VALIDATORS]
+            print(f"Running basic validation for {parser}")
+            for measurement in tqdm(self.measurements[parser]):
+                # Run the standard Basic Validator
                 if not bv.validate(measurement, errors):
                     failed_validators.append(bv.name)
-                for basic_validator in LOCAL_BASIC_VALIDATORS:
-                    bv = basic_validator(parser)
-                    if not bv.validate(measurement, errors):
+                # Run all the basic validators in the folder configured in the config file
+                for local_bv in local_bv_objects:
+                    if not local_bv.validate(measurement, errors):
                         failed_validators.append(bv.name)
             if not errors:
                 return (True, failed_validators)
             return (False, failed_validators)
         elif validation_level == validation_constants.ENHANCED_LEVEL:
+            # Create validator objects here, so we're only creating them once
+            bv = BasicValidator(parser)
+            ev = EnhancedValidator()
+            local_bv_objects = [bv(parser) for bv in LOCAL_BASIC_VALIDATORS]
+            local_ev_objects = [ev() for ev in LOCAL_ENHANCED_VALIDATORS]
+            print(f"Running enhanced validation for {parser}")
             for objects in self.measurements[parser].values():
+                # Run the basic validators (standard one, plus configured local ones)
                 prev_object_dict = dict()
-                for curr_object in objects:
-                    bv = BasicValidator(parser)
+                for curr_object in tqdm(objects):
                     if not bv.validate(curr_object, errors):
                         failed_validators.append(bv.name)
-                    for basic_validator in LOCAL_BASIC_VALIDATORS:
-                        bv = basic_validator(parser)
-                        if not bv.validate(curr_object, errors):
+                    for local_bv in local_bv_objects:
+                        if not local_bv.validate(curr_object, errors):
                             failed_validators.append(bv.name)
-
                     prev_object = None
                     if curr_object.platform_name in prev_object_dict:
                         prev_object = prev_object_dict[curr_object.platform_name]
-                    ev = EnhancedValidator()
+
+                    # Run the enhanced validators (standard one, plus configured local ones)
                     if not ev.validate(curr_object, errors, parser, prev_object):
                         failed_validators.append(ev.name)
-                    for enhanced_validator in LOCAL_ENHANCED_VALIDATORS:
-                        ev = enhanced_validator()
-                        if not ev.validate(curr_object, errors, parser, prev_object):
+                    for local_ev in local_ev_objects:
+                        if not local_ev.validate(curr_object, errors, parser, prev_object):
                             failed_validators.append(ev.name)
                     prev_object_dict[curr_object.platform_name] = curr_object
 
