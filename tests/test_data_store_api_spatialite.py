@@ -464,8 +464,8 @@ class PlatformAndDatafileTestCase(TestCase):
 class DataStoreStatusTestCase(TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
         with self.store.session_scope():
-            self.store.initialise()
             self.store.populate_reference(TEST_DATA_PATH)
             self.store.populate_metadata(TEST_DATA_PATH)
             self.store.populate_measurement(TEST_DATA_PATH)
