@@ -183,7 +183,7 @@ class REPLine:
         speed_token.record(self.importer_name, "speed", self.speed)
 
         try:
-            self.depth = float(depth_token.text)
+            self.depth = float(depth_token.text) * unit_registry.metre
             if isnan(self.depth):
                 self.depth = None
         except ValueError:
