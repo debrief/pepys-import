@@ -184,7 +184,7 @@ class REPLine:
 
         try:
             self.depth = float(depth_token.text) * unit_registry.metre
-            if isnan(self.depth):
+            if isnan(self.depth.magnitude):
                 self.depth = None
         except ValueError:
             errors.append(
