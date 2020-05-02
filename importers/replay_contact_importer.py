@@ -216,27 +216,27 @@ class ReplayContactImporter(Importer):
             if bearing_token.text.upper() == "NULL":
                 bearing = None
             else:
-                bearing = convert_absolute_angle(
+                bearing_valid, bearing = convert_absolute_angle(
                     bearing_token.text, line, self.errors, self.error_type
                 )
-                if bearing:
+                if bearing_valid:
                     bearing_token.record(self.name, "bearing", bearing, "degs")
                     contact.bearing = bearing
 
             if range_token.text.upper() != "NULL":
-                range_val = convert_distance(
+                range_valid, range_val = convert_distance(
                     range_token.text, unit_registry.yard, line, self.errors, self.error_type,
                 )
-                if range_val:
+                if range_valid:
                     range_token.record(self.name, "range", range_val)
                     contact.range = range_val
 
             if freq_token is not None:
                 if freq_token.text.upper() != "NULL":
-                    freq_val = convert_frequency(
+                    freq_valid, freq_val = convert_frequency(
                         freq_token.text, unit_registry.hertz, line, self.errors, self.error_type,
                     )
-                    if freq_val:
+                    if freq_valid:
                         freq_token.record(self.name, "frequency", freq_val)
                         contact.freq = freq_val
 
@@ -244,9 +244,9 @@ class ReplayContactImporter(Importer):
                 if ambig_bearing_token.text.upper() == "NULL":
                     ambig_bearing = 0
                 else:
-                    ambig_bearing = convert_absolute_angle(
+                    ambig_bearing_valid, ambig_bearing = convert_absolute_angle(
                         ambig_bearing_token.text, line, self.errors, self.error_type
                     )
-                    if ambig_bearing:
+                    if ambig_bearing_valid:
                         ambig_bearing_token.record(self.name, "ambig bearing", ambig_bearing)
                         contact.ambig_bearing = ambig_bearing
