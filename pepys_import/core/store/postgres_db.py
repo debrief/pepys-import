@@ -15,7 +15,6 @@ from pepys_import.core.store.common_db import (
     MediaMixin,
     PlatformMixin,
     SensorMixin,
-    SensorTypeMixin,
     StateMixin,
 )
 from pepys_import.core.store.db_base import BasePostGIS
@@ -317,7 +316,7 @@ class ContactType(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class SensorType(BasePostGIS, SensorTypeMixin):
+class SensorType(BasePostGIS):
     __tablename__ = constants.SENSOR_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 21

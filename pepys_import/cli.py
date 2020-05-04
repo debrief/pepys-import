@@ -8,6 +8,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 from pepys_import.resolvers.default_resolver import DefaultResolver
+from pepys_import.utils.data_store_utils import is_schema_created
 
 FILE_PATH = os.path.abspath(__file__)
 DIRECTORY_PATH = os.path.dirname(FILE_PATH)
@@ -77,8 +78,8 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
             db_type="sqlite",
             missing_data_resolver=resolver_obj,
         )
-
-    data_store.initialise()
+    if not is_schema_created(data_store.engine, data_store.db_type):
+        data_store.initialise()
     with data_store.session_scope():
         if data_store.is_empty():
             data_store.populate_reference()
