@@ -32,7 +32,18 @@ shortcuts - it won't create duplicates.
 example configuration file is provided as :code:`default_config.ini` in the Pepys installation
 folder. Full details on the configuration file syntax are available in the :doc:`configuration`
 documentation. The default configuration file specifies a connection to a SQLite database: for
-deployment you will probably want to change this to connect to a Postgres server. 
+deployment you will probably want to change this to connect to a Postgres server. If desired, you
+can create multiple configuration files for different classes of user, and set users
+:code:`PEPYS_CONFIG_FILE` environment variable to point to the relevant configuration file for their
+user.
 
-6. Open *Pepys Admin* from the Start Menu, and choose option :code:`5` for the _Migrate_ option. This will
-update or create the Pepys database schema.
+6. Open *Pepys Admin* from the Start Menu, and choose option :code:`5` for the *Migrate* option.
+This will update the Pepys database schema to the version required by the newly-installed Pepys
+version. If your database was created before Pepys v0.0.11, then you may receive an error saying
+:code:`ERROR: SQL error when communicating with database` with an error above that saying :code:`SQL
+Exception details: table <X> already exists`. You can resolve this error
+by deleting the database schema and allowing the Migrate command to re-create it from scratch.
+**WARNING: This will delete all of the data in the database - do not do this unless you are absolutely sure you will not lose anything important.** To delete the database schema, run Pepys Admin
+and choose option :code:`1` *Initialise/Clear* and then option :code:`2` *Clear database schema*.
+Then go back to the main menu (option :code:`0`) and choose option :code:`5` *Migrate* again.
+
