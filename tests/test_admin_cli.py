@@ -3,6 +3,7 @@ import shutil
 import sqlite3
 import unittest
 from contextlib import redirect_stdout
+from importlib import reload
 from io import StringIO
 from sqlite3 import OperationalError
 from unittest.mock import patch
@@ -11,12 +12,14 @@ import pg8000
 import pytest
 from testing.postgresql import Postgresql
 
+import config
 from pepys_admin.admin_cli import AdminShell
 from pepys_admin.cli import run_admin_shell
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.geoalchemy_utils import load_spatialite
 
 FILE_PATH = os.path.dirname(__file__)
@@ -24,6 +27,9 @@ CURRENT_DIR = os.getcwd()
 SAMPLE_DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 CSV_PATH = os.path.join(SAMPLE_DATA_PATH, "csv_files")
 DATA_PATH = os.path.join(SAMPLE_DATA_PATH, "track_files/rep_data")
+CONFIG_FILE_PATH = os.path.join(
+    FILE_PATH, "config_file_tests", "example_config", "config_for_do_migrate.ini"
+)
 
 
 class AdminCLITestCase(unittest.TestCase):
@@ -299,18 +305,18 @@ class InitialiseShellTestCase(unittest.TestCase):
         assert "Cleared database contents" in output
 
     def test_do_clear_db_schema(self):
-        assert self.store.is_schema_created() is True
+        assert is_schema_created(self.store.engine, self.store.db_type) is True
 
         self.initialise_shell.do_clear_db_schema()
-        assert self.store.is_schema_created() is False
+        assert is_schema_created(self.store.engine, self.store.db_type) is False
 
     def test_do_create_pepys_schema(self):
         new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
-        assert new_data_store.is_schema_created() is False
+        assert is_schema_created(new_data_store.engine, new_data_store.db_type) is False
 
         new_shell = InitialiseShell(new_data_store, None, None)
         new_shell.do_create_pepys_schema()
-        assert new_data_store.is_schema_created() is True
+        assert is_schema_created(new_data_store.engine, new_data_store.db_type) is True
 
     def test_do_import_reference_data(self):
         temp_output = StringIO()
@@ -649,6 +655,21 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
         output = temp_output.getvalue()
 
         assert "ERROR: SQL error when communicating with database" in output
+
+
+@patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH})
+def test_do_migrate():
+    reload(config)
+    temp_output = StringIO()
+    new_datastore = DataStore("", "", "", 0, "new_db.db", "sqlite")
+    new_admin_shell = AdminShell(new_datastore)
+
+    assert is_schema_created(new_datastore.engine, new_datastore.db_type) is False
+    # Migrate
+    new_admin_shell.do_migrate()
+    assert is_schema_created(new_datastore.engine, new_datastore.db_type) is True
+
+    os.remove(os.path.join(CURRENT_DIR, "new_db.db"))
 
 
 if __name__ == "__main__":

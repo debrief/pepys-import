@@ -17,8 +17,8 @@ TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 class SpatialDataSpatialiteTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
         with self.store.session_scope():
-            self.store.initialise()
             self.store.populate_reference(TEST_DATA_PATH)
             self.store.populate_metadata(TEST_DATA_PATH)
             self.store.populate_measurement(TEST_DATA_PATH)
@@ -86,8 +86,8 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
                 db_port=55527,
                 db_type="postgres",
             )
+            self.store.initialise()
             with self.store.session_scope():
-                self.store.initialise()
                 self.store.populate_reference(TEST_DATA_PATH)
                 self.store.populate_metadata(TEST_DATA_PATH)
                 self.store.populate_measurement(TEST_DATA_PATH)

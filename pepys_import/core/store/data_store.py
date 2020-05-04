@@ -5,11 +5,11 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from sqlalchemy import create_engine, inspect, or_
+from sqlalchemy import create_engine, or_
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import func, select
+from sqlalchemy.sql import func
 
 from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import import __version__
@@ -18,7 +18,13 @@ from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
-from pepys_import.utils.data_store_utils import cache_results_if_not_none, import_from_csv
+from pepys_import.utils.data_store_utils import (
+    cache_results_if_not_none,
+    create_alembic_version_table,
+    create_spatial_tables_for_postgres,
+    create_spatial_tables_for_sqlite,
+    import_from_csv,
+)
 from pepys_import.utils.geoalchemy_utils import load_spatialite
 from pepys_import.utils.value_transforming_utils import format_datetime
 
@@ -138,15 +144,10 @@ class DataStore:
             print("-" * 61)
 
     def initialise(self):
-        """Create schemas for the database
-        """
-
+        """Create schemas for the database"""
         if self.db_type == "sqlite":
             try:
-                # Create geometry_columns and spatial_ref_sys metadata table
-                if not self.engine.dialect.has_table(self.engine, "spatial_ref_sys"):
-                    with self.engine.connect() as conn:
-                        conn.execute(select([func.InitSpatialMetaData(1)]))
+                create_spatial_tables_for_sqlite(self.engine)
                 # Attempt to create schema if not present, to cope with fresh DB file
                 BaseSpatiaLite.metadata.create_all(self.engine)
             except OperationalError as e:
@@ -159,14 +160,7 @@ class DataStore:
                 sys.exit(1)
         elif self.db_type == "postgres":
             try:
-                # Create schema pepys and extension for PostGIS first
-                query = """
-                    CREATE SCHEMA IF NOT EXISTS pepys;
-                    CREATE EXTENSION IF NOT EXISTS postgis;
-                    SET search_path = pepys,public;
-                """
-                with self.engine.connect() as conn:
-                    conn.execute(query)
+                create_spatial_tables_for_postgres(self.engine)
                 BasePostGIS.metadata.create_all(self.engine)
             except OperationalError as e:
                 print(
@@ -176,6 +170,8 @@ class DataStore:
                     "See above for the full error from SQLAlchemy."
                 )
                 sys.exit(1)
+        create_alembic_version_table(self.engine, self.db_type)
+        print("Database tables were created by DataStore's initialisation.")
 
     @contextmanager
     def session_scope(self):
@@ -1128,6 +1124,11 @@ class DataStore:
 
         with self.session_scope():
             meta.drop_all()
+        with self.engine.connect() as connection:
+            if self.db_type == "sqlite":
+                connection.execute("DROP TABLE alembic_version;")
+            else:
+                connection.execute('DROP TABLE pepys."alembic_version";')
 
     def get_all_datafiles(self):
         """Returns all datafiles.
@@ -1485,27 +1486,6 @@ class DataStore:
             )
             return True
         return False
-
-    def is_schema_created(self):
-        """Returns True if Pepys Tables are created, False otherwise."""
-        inspector = inspect(self.engine)
-        if self.db_type == "sqlite":
-            table_names = inspector.get_table_names()
-            # SQLite can have either 72 tables (if on Windows, with the new version of mod_spatialite)
-            # or 70 if on another platform (with the stable release of mod_spatialite)
-            if len(table_names) == 72 or len(table_names) == 70:
-                return True
-            else:
-                print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
-                return False
-        else:
-            table_names = inspector.get_table_names(schema="pepys")
-            # We expect 34 tables on Postgres
-            if len(table_names) == 34:
-                return True
-            else:
-                print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
-                return False
 
     def is_empty(self):
         """ Returns True if sample table (Privacy) is empty, False otherwise"""
