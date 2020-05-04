@@ -15,6 +15,7 @@ in two ways:
  - **Manually:** Run :code:`pepys_import <options>` on the command-line (this will call a batch file
  which sets the relevant paths, and then calls the pepys_import CLI using Python)
 
+
 Command-line options
 ^^^^^^^^^^^^^^^^^^^^
 
