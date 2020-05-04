@@ -46,4 +46,3 @@ by deleting the database schema and allowing the Migrate command to re-create it
 **WARNING: This will delete all of the data in the database - do not do this unless you are absolutely sure you will not lose anything important.** To delete the database schema, run Pepys Admin
 and choose option :code:`1` *Initialise/Clear* and then option :code:`2` *Clear database schema*.
 Then go back to the main menu (option :code:`0`) and choose option :code:`5` *Migrate* again.
-
