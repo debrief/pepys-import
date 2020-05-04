@@ -19,6 +19,7 @@ Welcome to pepys-import
    deployment
    Source documentation <modules>
    importer_dev_guide
+   database_migration
    contributing
    documentation
    history

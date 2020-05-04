@@ -151,6 +151,13 @@ and install the Python dependencies::
     $ pip install -r requirements.txt
     $ pip install -r requirements_dev.txt
 
+Alembic, which is used for Database migration, is in the requirements of the project. However, there is one post-installation step to run it without any problem.
+You should install the pepys-import project in an editable mode. Please run the following command in the root of the cloned repository:
+
+.. code-block:: bash
+
+    $ pip install -e .
+
 Run the unit tests
 ------------------
 
