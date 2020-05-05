@@ -63,7 +63,7 @@ class ReplayImporter(Importer):
         )
 
         if rep_line.depth is not None:
-            state.elevation = (-1 * rep_line.depth) * unit_registry.metre
+            state.elevation = -1 * rep_line.depth
 
         state.heading = rep_line.heading
         state.speed = rep_line.speed
