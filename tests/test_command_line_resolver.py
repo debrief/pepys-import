@@ -1081,8 +1081,8 @@ class GetMethodsTestCase(unittest.TestCase):
             db_type="sqlite",
             missing_data_resolver=CommandLineResolver(),
         )
+        self.store.initialise()
         with self.store.session_scope():
-            self.store.initialise()
             self.store.populate_reference()
             self.store.populate_metadata()
             self.store.populate_measurement()

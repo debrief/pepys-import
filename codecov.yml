@@ -1,2 +1,3 @@
 ignore:
   - "tests"  # ignore all tests
+  - "migrations"  # ignore migration folders

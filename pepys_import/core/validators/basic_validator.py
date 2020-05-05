@@ -9,12 +9,22 @@ class BasicValidator:
         longitude = None
         latitude = None
 
-        heading = object_.heading if hasattr(object_, "heading") else None
-        course = object_.course if hasattr(object_, "course") else None
-        if hasattr(object_, "location"):
+        try:
+            heading = object_.heading
+        except AttributeError:
+            heading = None
+
+        try:
+            course = object_.course
+        except AttributeError:
+            course = None
+
+        try:
             if object_.location is not None:
                 longitude = object_.location.longitude
                 latitude = object_.location.latitude
+        except AttributeError:
+            pass
 
         self.validate_longitude(longitude, errors, self.error_type)
         self.validate_latitude(latitude, errors, self.error_type)
