@@ -15,7 +15,7 @@ def convert_absolute_angle(angle, line_number, errors, error_type):
     :type errors: List
     :param error_type: Type of error
     :type error_type: String
-    :return: returns the converted angle value
+    :return: Returns a tuple of a boolean is_valid flag and the converted angle value
     """
     try:
         valid_angle = float(angle)
@@ -26,12 +26,14 @@ def convert_absolute_angle(angle, line_number, errors, error_type):
                 f"Couldn't convert to a number"
             }
         )
-        return False
+        return False, None
     if valid_angle < 0:
         valid_angle += 360
     if valid_angle > 360:
         valid_angle -= 360
-    return valid_angle * unit_registry.degree
+
+    valid_angle = valid_angle * unit_registry.degree
+    return True, valid_angle
 
 
 def convert_speed(speed, units, line_number, errors, error_type):
@@ -48,7 +50,7 @@ def convert_speed(speed, units, line_number, errors, error_type):
     :type errors: List
     :param error_type: Type of error
     :type error_type: String
-    :return: return the converted speed value
+    :return: Returns a tuple of a boolean is_valid flag, and the converted speed value
     """
     try:
         valid_speed = float(speed)
@@ -59,9 +61,71 @@ def convert_speed(speed, units, line_number, errors, error_type):
                 f"Couldn't convert to a number"
             }
         )
-        return False
+        return False, None
     speed = valid_speed * units
-    return speed
+    return True, speed
+
+
+def convert_frequency(frequency, units, line_number, errors, error_type):
+    """
+    Converts the given frequency string to a Quantity containing a float
+    value and the given units
+
+    :param frequency: frequency value in string format
+    :type frequency: String
+    :param units: units of frequency for supplied measurement
+    :type units: String
+    :param line_number: Line number
+    :type line_number: String
+    :param errors: Error List to save value error if it raises
+    :type errors: List
+    :param error_type: Type of error
+    :type error_type: String
+    :return: Returns a tuple of a boolean is_valid flag, and the converted frequency value
+    """
+    try:
+        valid_frequency = float(frequency)
+    except ValueError:
+        errors.append(
+            {
+                error_type: f"Line {line_number}. Error in frequency value {frequency}. "
+                f"Couldn't convert to a number"
+            }
+        )
+        return False, None
+    frequency = valid_frequency * units
+    return True, frequency
+
+
+def convert_distance(distance, units, line_number, errors, error_type):
+    """
+    Converts the given distance string to a Quantity consisting of a
+    float value and the given units.
+
+    :param distance: distance value in string format
+    :type distance: String
+    :param units: units of distance for supplied measurement
+    :type units: String
+    :param line_number: Line number
+    :type line_number: String
+    :param errors: Error List to save value error if it raises
+    :type errors: List
+    :param error_type: Type of error
+    :type error_type: String
+    :return: Returns a tuple of a boolean is_valid flag, and the converted distance value
+    """
+    try:
+        valid_distance = float(distance)
+    except ValueError:
+        errors.append(
+            {
+                error_type: f"Line {line_number}. Error in distance value {distance}. "
+                f"Couldn't convert to a number"
+            }
+        )
+        return False, None
+    distance = valid_distance * units
+    return True, distance
 
 
 def extract_points(location):
@@ -115,68 +179,6 @@ def distance_between_two_points_haversine(first_location, second_location):
     radius = 6371  # Radius of earth in kilometers. Use 3956 for miles
     distance = c * radius
     return (distance * unit_registry.kilometer).to(unit_registry.meter)
-
-
-def convert_frequency(frequency, units, line_number, errors, error_type):
-    """
-    Converts the given frequency string to a Quantity containing a float
-    value and the given units
-
-    :param frequency: frequency value in string format
-    :type frequency: String
-    :param units: units of frequency for supplied measurement
-    :type units: String
-    :param line_number: Line number
-    :type line_number: String
-    :param errors: Error List to save value error if it raises
-    :type errors: List
-    :param error_type: Type of error
-    :type error_type: String
-    :return: return the converted speed value
-    """
-    try:
-        valid_frequency = float(frequency)
-    except ValueError:
-        errors.append(
-            {
-                error_type: f"Line {line_number}. Error in frequency value {frequency}. "
-                f"Couldn't convert to a number"
-            }
-        )
-        return False
-    frequency = valid_frequency * units
-    return frequency
-
-
-def convert_distance(distance, units, line_number, errors, error_type):
-    """
-    Converts the given distance string to a Quantity consisting of a
-    float value and the given units.
-
-    :param distance: distance value in string format
-    :type distance: String
-    :param units: units of distance for supplied measurement
-    :type units: String
-    :param line_number: Line number
-    :type line_number: String
-    :param errors: Error List to save value error if it raises
-    :type errors: List
-    :param error_type: Type of error
-    :type error_type: String
-    :return: return the converted speed value
-    """
-    try:
-        valid_distance = float(distance)
-    except ValueError:
-        errors.append(
-            {
-                error_type: f"Line {line_number}. Error in distance value {distance}. "
-                f"Couldn't convert to a number"
-            }
-        )
-        return False
-    distance = valid_distance * units
-    return distance
 
 
 def acceptable_bearing_error(bearing1, bearing2, delta):

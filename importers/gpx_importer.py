@@ -106,29 +106,29 @@ class GPXImporter(Importer):
 
                 # Add course
                 if course_str is not None:
-                    course = convert_absolute_angle(
+                    course_valid, course = convert_absolute_angle(
                         course_str, tpt.sourceline, self.errors, self.error_type
                     )
-                    if course:
+                    if course_valid:
                         state.course = course
 
                 # Add speed (specified in metres per second in the file)
                 if speed_str is not None:
-                    speed = convert_speed(
+                    speed_valid, speed = convert_speed(
                         speed_str,
                         (unit_registry.metre / unit_registry.second),
                         None,
                         self.errors,
                         self.error_type,
                     )
-                    if speed:
+                    if speed_valid:
                         state.speed = speed
 
                 if elevation_str is not None:
-                    elevation = convert_distance(
+                    elevation_valid, elevation = convert_distance(
                         elevation_str, unit_registry.metre, None, self.errors, self.error_type
                     )
-                    if elevation:
+                    if elevation_valid:
                         state.elevation = elevation
 
     def get_child_text_if_exists(self, element, search_string):
