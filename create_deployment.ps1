@@ -50,16 +50,19 @@ python37.zip
 .
 Lib\site-packages
 ..
+import site
 "@
 
-Write-Output "INFO: Set Python pth file"
+Set-Content -Encoding ascii .\python\Lib\site-packages\extra_paths.pth @"
+import sys; sys.path.insert(0, "")
+pip\_vendor\pep517
+"@
 
-# Install distlib manually from a wheel file, as creation of the wheel through a standard pip install
-# fails on embedded python
-.\python\python.exe -m pip install .\bin\distlib-0.3.0-py2.py3-none-any.whl
+
+Write-Output "INFO: Set Python pth files"
 
 # Do a standard pip install of the requirements and dev requirements, not warning us that scripts will be unavailable
-.\python\python.exe -m pip install -r requirements.txt -r requirements_dev.txt --no-warn-script-location
+.\python\python.exe -m pip install -r requirements.txt -r requirements_dev.txt --no-warn-script-location --no-cache-dir
 
 Write-Output "INFO: Installed Python dependencies"
 

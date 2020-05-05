@@ -75,6 +75,16 @@ class GPXTests(unittest.TestCase):
             )
             assert len(elev_states) == 1
 
+            # there should be a 20 points with an elevation of 0m
+            # (this proves that zero values are imported properly and not
+            # treated as errors)
+            elev_zero_states = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(self.store.db_classes.State.elevation == 0)
+                .all()
+            )
+            assert len(elev_zero_states) == 20
+
 
 if __name__ == "__main__":
     unittest.main()
