@@ -155,8 +155,7 @@ def test_dist_between_two_points():
 
     result = unit_utils.distance_between_two_points_haversine(loc1, loc2)
 
-    # TODO Fix distance_between_two_points_haversine and update this
-    # test
+    assert result == 9231590.351134228 * unit_registry.metre
 
 
 def test_bearing_between_two_points():
