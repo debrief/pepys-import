@@ -151,7 +151,7 @@ class BasicTests(unittest.TestCase):
             ),
             " ",
         )
-        self.assertFalse(rep_line.parse(self.error, self.message))
+        assert rep_line.parse(self.error, self.message)
 
     def test_line_ok(self):
         rep_line = REPLine(
@@ -168,19 +168,33 @@ class BasicTests(unittest.TestCase):
             rep_line.print()
         rep_line.print()
         output = temp_output.getvalue()
-        self.assertIn("REP Line 1 - Timestamp: 2010-01-12 12:08:00", output)
-        self.assertEqual(1, rep_line.line_num)
-        self.assertEqual(datetime.datetime(2010, 1, 12, 12, 8), rep_line.timestamp)
-        self.assertEqual("SUBJECT", rep_line.get_platform())
-        self.assertEqual("VC", rep_line.symbology)
+        assert "REP Line 1 - Timestamp: 2010-01-12 12:08:00" in output
+        assert rep_line.line_num == 1
+        assert rep_line.timestamp == datetime.datetime(2010, 1, 12, 12, 8)
+        assert rep_line.get_platform() == "SUBJECT"
+        assert rep_line.symbology == "VC"
         correct_loc = Location()
         correct_loc.set_latitude_dms(60.0, 23.0, 40.25, "S")
         correct_loc.set_longitude_dms(0.0, 1.0, 25.86, "E")
-        self.assertEqual(correct_loc, rep_line.location)
-        self.assertAlmostEqual(1.9038051480754146, rep_line.heading)
-        self.assertAlmostEqual(6 * unit_registry.knot, rep_line.speed)
-        self.assertEqual(0.0, rep_line.depth)
-        self.assertEqual("Label", rep_line.text_label)
+        assert rep_line.location == correct_loc
+        assert rep_line.heading == 109.08 * unit_registry.degree
+        assert rep_line.speed == 6 * unit_registry.knot
+        assert rep_line.depth == 0.0 * unit_registry.metre
+        assert rep_line.text_label == "Label"
+
+    def test_line_units(self):
+        rep_line = REPLine(
+            line_number=1,
+            line=create_test_line_object(
+                "100112\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel"
+            ),
+            separator="\t",
+        )
+        assert rep_line.parse(self.error, self.message)
+
+        assert rep_line.heading.units == unit_registry.degree
+        assert rep_line.speed.units == unit_registry.knot
+        assert rep_line.depth.units == unit_registry.metre
 
     def test_zero_mins_secs(self):
         rep_line = REPLine(
