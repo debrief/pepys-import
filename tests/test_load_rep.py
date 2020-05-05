@@ -62,6 +62,16 @@ class TestLoadREP(unittest.TestCase):
 
             assert len(states_with_no_elevation) == 1
 
+            # there should be 581 points with an elevation of 0m
+            # (this proves that zero values are imported properly and not
+            # treated as errors)
+            elev_zero_states = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(self.store.db_classes.State.elevation == 0)
+                .all()
+            )
+            assert len(elev_zero_states) == 581
+
 
 if __name__ == "__main__":
     unittest.main()

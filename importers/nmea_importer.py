@@ -150,25 +150,25 @@ class NMEAImporter(Importer):
                     self.name, "location", state.location, "DMS"
                 )
 
-                heading = convert_absolute_angle(
+                heading_valid, heading = convert_absolute_angle(
                     self.heading, line_number, self.errors, self.error_type
                 )
-                if heading:
+                if heading_valid:
                     state.heading = heading
                     self.heading_token.record(self.name, "heading", heading)
 
-                speed = convert_speed(
+                speed_valid, speed = convert_speed(
                     self.speed, unit_registry.knots, line_number, self.errors, self.error_type,
                 )
-                if speed:
+                if speed_valid:
                     state.speed = speed
                     self.speed_token.record(self.name, "speed", speed)
 
                 if self.depth is not None:
-                    depth = convert_distance(
+                    depth_valid, depth = convert_distance(
                         self.depth, unit_registry.metre, line_number, self.errors, self.error_type
                     )
-                    if depth:
+                    if depth_valid:
                         state.elevation = -1 * depth
                         self.depth_token.record(self.name, "depth", depth)
 

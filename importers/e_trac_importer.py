@@ -115,24 +115,24 @@ class ETracImporter(Importer):
                 self.name, "location", state.location, "decimal degrees"
             )
 
-        elevation = convert_distance(
+        elevation_valid, elevation = convert_distance(
             altitude_token.text, unit_registry.metre, line_number, self.errors, self.error_type
         )
-        if elevation:
+        if elevation_valid:
             state.elevation = elevation
             altitude_token.record(self.name, "altitude", state.elevation)
 
-        heading = convert_absolute_angle(
+        heading_valid, heading = convert_absolute_angle(
             heading_token.text, line_number, self.errors, self.error_type
         )
-        if heading:
+        if heading_valid:
             state.heading = heading
             heading_token.record(self.name, "heading", heading)
 
-        speed = convert_speed(
+        speed_valid, speed = convert_speed(
             speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type,
         )
-        if speed:
+        if speed_valid:
             state.speed = speed
             speed_token.record(self.name, "speed", speed)
 
