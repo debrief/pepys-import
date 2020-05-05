@@ -151,7 +151,7 @@ class BasicTests(unittest.TestCase):
             ),
             " ",
         )
-        assert rep_line.parse(self.error, self.message)
+        self.assertFalse(rep_line.parse(self.error, self.message))
 
     def test_line_ok(self):
         rep_line = REPLine(
