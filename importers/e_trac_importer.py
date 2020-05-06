@@ -89,19 +89,12 @@ class ETracImporter(Importer):
             return
 
         # and finally store it
-        platform = data_store.get_platform(
-            platform_name=vessel_name,
-            nationality="UK",
-            platform_type="Fisher",
-            privacy="Public",
-            change_id=change_id,
-        )
+        platform = data_store.get_platform(platform_name=vessel_name, change_id=change_id,)
         sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
         sensor = platform.get_sensor(
             data_store=data_store,
             sensor_name="E-Trac",
             sensor_type=sensor_type,
-            privacy=None,
             change_id=change_id,
         )
         state = datafile.create_state(data_store, platform, sensor, timestamp, self.short_name)

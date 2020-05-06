@@ -93,11 +93,7 @@ class NMEAImporter(Importer):
 
                 # and finally store it
                 platform = data_store.get_platform(
-                    platform_name=self.platform_name,
-                    platform_type="Ferry",
-                    nationality="FR",
-                    privacy="Public",
-                    change_id=change_id,
+                    platform_name=self.platform_name, change_id=change_id,
                 )
                 # capture the name
                 self.platform_name = platform.name

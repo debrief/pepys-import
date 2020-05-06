@@ -72,11 +72,7 @@ class ReplayCommentImporter(Importer):
                 return
 
             platform = data_store.get_platform(
-                platform_name=vessel_name_token.text,
-                nationality="UK",
-                platform_type="Fisher",
-                privacy="Public",
-                change_id=change_id,
+                platform_name=vessel_name_token.text, change_id=change_id,
             )
             vessel_name_token.record(self.name, "vessel name", vessel_name_token.text)
             sensor_type = data_store.add_to_sensor_types("Human", change_id=change_id).name
@@ -84,7 +80,6 @@ class ReplayCommentImporter(Importer):
                 data_store=data_store,
                 sensor_name=platform.name,
                 sensor_type=sensor_type,
-                privacy=None,
                 change_id=change_id,
             )
             comment_type = data_store.add_to_comment_types(comment_type, change_id)
