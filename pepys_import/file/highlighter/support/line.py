@@ -35,7 +35,7 @@ class Line:
     @property
     def text(self):
         """Returns the entire text of the Line
-        
+
         :return: Entire text content of the Line
         :rtype: String
         """
@@ -46,7 +46,7 @@ class Line:
 
     def tokens(self, reg_exp=WHITESPACE_DELIM, strip_char=""):
         """Generates a list of Token objects for each token in the line.
-        
+
         :param reg_exp: Regular expression used to split the line into tokens. Useful
                         constants are defined in this class, including `CSV_DELIM`, defaults
                         to `WHITESPACE_DELIM`
