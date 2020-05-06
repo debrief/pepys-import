@@ -74,7 +74,7 @@ class CommandLineResolver(DataResolver):
     ):
         options = [f"Search for existing platform", f"Add a new platform"]
         if platform_name:
-            options[1] += f", titled '{platform_name}'"
+            options[1] += f", default name '{platform_name}'"
         choice = create_menu(
             f"Platform '{platform_name}' not found. Do you wish to: ",
             options,
@@ -96,12 +96,11 @@ class CommandLineResolver(DataResolver):
     def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy, change_id):
         options = [f"Search for existing sensor", f"Add a new sensor"]
         if sensor_name:
-            options[1] += f", titled '{sensor_name}'"
-        choice = create_menu(
-            f"Sensor '{sensor_name}' not found. Do you wish to: ",
-            options,
-            validate_method=is_valid,
-        )
+            options[1] += f", default name '{sensor_name}'"
+            prompt = f"Sensor '{sensor_name}' not found. Do you wish to: "
+        else:
+            prompt = "Sensor not found. Do you wish to: "
+        choice = create_menu(prompt, options, validate_method=is_valid,)
 
         if choice == str(1):
             return self.fuzzy_search_sensor(
@@ -285,6 +284,12 @@ class CommandLineResolver(DataResolver):
         elif choice not in completer:
             print(f"'{choice}' could not found! Redirecting to adding a new sensor..")
             return self.add_to_sensors(data_store, sensor_name, sensor_type, privacy, change_id)
+        else:
+            return (
+                data_store.session.query(data_store.db_classes.Sensor)
+                .filter(data_store.db_classes.Sensor.name == choice)
+                .first()
+            )
 
     def fuzzy_search_privacy(self, data_store, change_id, data_type):
         """
@@ -736,6 +741,10 @@ class CommandLineResolver(DataResolver):
         """
         # Choose Sensor Type
         print("Ok, adding new sensor.")
+
+        # Can't pass None to prompt function below, so pass empty string instead
+        if sensor_name is None:
+            sensor_name = ""
 
         sensor_name = prompt("Please enter a name: ", default=sensor_name)
         if sensor_type:
