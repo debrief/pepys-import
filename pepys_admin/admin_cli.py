@@ -16,6 +16,7 @@ from paths import ROOT_DIRECTORY
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.utils import get_default_export_folder
+from pepys_admin.view_data_cli import ViewDataShell
 from pepys_import.utils.data_store_utils import is_schema_created
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -204,45 +205,9 @@ class AdminShell(cmd.Cmd):
     def do_view_data(self):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
-        # Inspect the database and extract the table names
-        inspector = inspect(self.data_store.engine)
-        if self.data_store.db_type == "postgres":
-            table_names = inspector.get_table_names(schema="pepys")
-        else:
-            table_names = inspector.get_table_names()
-            # Exclude spatial tables
-            table_names = [
-                name
-                for name in table_names
-                if not name.startswith("idx")
-                and not name.startswith("virts")
-                and not name.startswith("geometry")
-                and not name.startswith("views")
-                and not name.startswith("sql")
-                and not name.lower().startswith("spatial")
-            ]
-        selected_table = iterfzf(table_names)
-        # Table names are plural in the database, therefore make it singular
-        if selected_table.endswith("ies"):
-            table = selected_table[:-3] + "y"
-        else:
-            table = selected_table[:-1]
-        # Find the class
-        table_obj = getattr(self.data_store.db_classes, table)
-        assert table_obj.__tablename__ == selected_table, "Table couldn't find!"
-
-        headers = [m.key for m in table_obj.__table__.columns]
-        # Fetch first 10 rows, create a table from these rows
-        with self.data_store.session_scope():
-            values = self.data_store.session.query(table_obj).limit(10).all()
-            res = f"{selected_table}\n"
-            res += tabulate(
-                [(str(getattr(row, column)) for column in headers) for row in values],
-                headers=headers,
-                tablefmt="github",
-            )
-            res += "\n"
-        print(res)
+        print("-" * 61)
+        shell = ViewDataShell(self.data_store)
+        shell.cmdloop()
 
     @staticmethod
     def do_exit():
