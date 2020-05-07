@@ -8,6 +8,8 @@ from alembic.config import Config
 from iterfzf import iterfzf
 from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion.filesystem import PathCompleter
+from sqlalchemy import inspect
+from tabulate import tabulate
 
 from config import DB_TYPE
 from paths import ROOT_DIRECTORY
@@ -26,6 +28,7 @@ class AdminShell(cmd.Cmd):
 (3) Export
 (4) Export by Platform and sensor
 (5) Migrate
+(6) View Data
 (0) Exit
 """
     prompt = "(pepys-admin) "
@@ -41,6 +44,7 @@ class AdminShell(cmd.Cmd):
             "3": self.do_export,
             "4": self.do_export_by_platform_name,
             "5": self.do_migrate,
+            "6": self.do_view_data,
             "9": self.do_export_all,
         }
 
@@ -196,6 +200,49 @@ class AdminShell(cmd.Cmd):
     def do_migrate(self):
         print("Alembic migration command running, see output below.")
         command.upgrade(self.cfg, "head")
+
+    def do_view_data(self):
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
+            return
+        # Inspect the database and extract the table names
+        inspector = inspect(self.data_store.engine)
+        if self.data_store.db_type == "postgres":
+            table_names = inspector.get_table_names(schema="pepys")
+        else:
+            table_names = inspector.get_table_names()
+            # Exclude spatial tables
+            table_names = [
+                name
+                for name in table_names
+                if not name.startswith("idx")
+                and not name.startswith("virts")
+                and not name.startswith("geometry")
+                and not name.startswith("views")
+                and not name.startswith("sql")
+                and not name.lower().startswith("spatial")
+            ]
+        selected_table = iterfzf(table_names)
+        # Table names are plural in the database, therefore make it singular
+        if selected_table.endswith("ies"):
+            table = selected_table[:-3] + "y"
+        else:
+            table = selected_table[:-1]
+        # Find the class
+        table_obj = getattr(self.data_store.db_classes, table)
+        assert table_obj.__tablename__ == selected_table, "Table couldn't find!"
+
+        headers = [m.key for m in table_obj.__table__.columns]
+        # Fetch first 10 rows, create a table from these rows
+        with self.data_store.session_scope():
+            values = self.data_store.session.query(table_obj).limit(10).all()
+            res = f"{selected_table}\n"
+            res += tabulate(
+                [(str(getattr(row, column)) for column in headers) for row in values],
+                headers=headers,
+                tablefmt="github",
+            )
+            res += "\n"
+        print(res)
 
     @staticmethod
     def do_exit():
