@@ -99,7 +99,7 @@ class AdminCLITestCase(unittest.TestCase):
 
     @patch("pepys_admin.admin_cli.iterfzf", return_value="SEARCH_PLATFORM")
     @patch("pepys_admin.export_by_platform_cli.input", return_value="")
-    @patch("cmd.input", return_value="1")
+    @patch("cmd.input", return_value="2")
     @patch("pepys_admin.export_by_platform_cli.ptk_prompt", return_value=".")
     def test_do_export_by_platform_name(
         self, cmd_input, shell_input, patched_iterfzf, patched_ptk_prompt
@@ -116,7 +116,8 @@ class AdminCLITestCase(unittest.TestCase):
 
         with open(file_path, "r") as file:
             data = file.read().splitlines()
-        assert len(data) == 6  # 4 State, 2 Contact objects
+        print(data)
+        assert len(data) == 4  # 4 State objects
 
         os.remove(file_path)
 
@@ -499,9 +500,10 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
     @patch("pepys_admin.export_by_platform_cli.input", return_value="export_test")
     @patch("pepys_admin.export_by_platform_cli.ptk_prompt", return_value=".")
     def test_do_export(self, patched_input, patched_ptk_prompt):
+        print(self.objects)
         temp_output = StringIO()
         with redirect_stdout(temp_output):
-            self.shell.do_export(self.objects[0])
+            self.shell.do_export(self.objects[1])
         output = temp_output.getvalue()
         assert "Objects are going to be exported to './export_test.rep'." in output
         assert "Objects successfully exported to ./export_test.rep." in output
@@ -511,7 +513,7 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
 
         with open(file_path, "r") as file:
             data = file.read().splitlines()
-        assert len(data) == 6  # 4 State, 2 Contact objects
+        assert len(data) == 4  # 4 State objects
         assert (
             "100112 115800.000\tSEARCH_PLATFORM\tAA\t60 28 56.02 N\t000 35 59.68 E\t179.84\t8.00\t"
             "0.0" in data
@@ -519,14 +521,6 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
         assert (
             "100112 121400.000\tSEARCH_PLATFORM\tAA\t60 28 8.02 N\t000 35 59.95 E\t179.84\t8.00\t"
             "0.0" in data
-        )
-        assert (
-            ";SENSOR2:\t100112 121000.000\tSEARCH_PLATFORM\t@@\tNULL\t253.29\t106.38\tNULL\tNULL\tSEARCH_PLATFORM\tN/A"
-            in data
-        )
-        assert (
-            ";SENSOR2:\t100112 121200.000\tSEARCH_PLATFORM\t@@\tNULL\t253.75\t105.92\tNULL\tNULL\tSEARCH_PLATFORM\tN/A"
-            in data
         )
 
         os.remove(file_path)
