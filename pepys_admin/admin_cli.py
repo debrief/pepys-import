@@ -8,8 +8,6 @@ from alembic.config import Config
 from iterfzf import iterfzf
 from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion.filesystem import PathCompleter
-from sqlalchemy import inspect
-from tabulate import tabulate
 
 from config import DB_TYPE
 from paths import ROOT_DIRECTORY
