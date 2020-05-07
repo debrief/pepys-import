@@ -111,7 +111,7 @@ class PlatformMixin:
         privacy_obj = data_store.search_privacy(privacy)
         if sensor_type_obj is None or privacy_obj is None:
             resolved_data = data_store.missing_data_resolver.resolve_sensor(
-                data_store, sensor_name, sensor_type, privacy, change_id
+                data_store, sensor_name, sensor_type, self.platform_id, privacy, change_id
             )
             # It means that new sensor added as a synonym and existing sensor returned
             if isinstance(resolved_data, Sensor):

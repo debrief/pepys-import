@@ -93,18 +93,26 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
-    def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy, change_id):
-        options = [f"Search for existing sensor", f"Add a new sensor"]
+    def resolve_sensor(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
+        Platform = data_store.db_classes.Platform
+        host_platform = (
+            data_store.session.query(Platform).filter(Platform.platform_id == host_id).first()
+        )
+
+        options = [
+            f"Search for existing sensor on platform '{host_platform.name}'",
+            f"Add a new sensor",
+        ]
         if sensor_name:
             options[1] += f", default name '{sensor_name}'"
-            prompt = f"Sensor '{sensor_name}' not found. Do you wish to: "
+            prompt = f"Sensor '{sensor_name}' on platform '{host_platform.name}' not found. Do you wish to: "
         else:
-            prompt = "Sensor not found. Do you wish to: "
+            prompt = f"Sensor on platform '{host_platform.name}' not found. Do you wish to: "
         choice = create_menu(prompt, options, validate_method=is_valid,)
 
         if choice == str(1):
             return self.fuzzy_search_sensor(
-                data_store, sensor_name, sensor_type, privacy, change_id
+                data_store, sensor_name, sensor_type, host_platform.platform_id, privacy, change_id
             )
         elif choice == str(2):
             return self.add_to_sensors(data_store, sensor_name, sensor_type, privacy, change_id)
@@ -226,7 +234,9 @@ class CommandLineResolver(DataResolver):
                 data_store, choice, platform_type, nationality, privacy, change_id
             )
 
-    def fuzzy_search_sensor(self, data_store, sensor_name, sensor_type, privacy, change_id):
+    def fuzzy_search_sensor(
+        self, data_store, sensor_name, sensor_type, host_id, privacy, change_id
+    ):
         """
         This method parses all sensors in the DB, and uses fuzzy search when
         user is typing. If user enters a new value, it adds to Sensor table or searches
@@ -245,8 +255,13 @@ class CommandLineResolver(DataResolver):
         :type change_id: Integer or UUID
         :return:
         """
-        sensors = data_store.session.query(data_store.db_classes.Sensor).all()
+        sensors = (
+            data_store.session.query(data_store.db_classes.Sensor)
+            .filter(data_store.db_classes.Sensor.host == host_id)
+            .all()
+        )
         completer = [sensor.name for sensor in sensors]
+
         choice = create_menu(
             "Please start typing to show suggested values",
             cancel="sensor search",
@@ -280,7 +295,9 @@ class CommandLineResolver(DataResolver):
                 )
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
-            return self.resolve_sensor(data_store, sensor_name, sensor_type, privacy, change_id)
+            return self.resolve_sensor(
+                data_store, sensor_name, sensor_type, host_id, privacy, change_id
+            )
         elif choice not in completer:
             print(f"'{choice}' could not found! Redirecting to adding a new sensor..")
             return self.add_to_sensors(data_store, sensor_name, sensor_type, privacy, change_id)
