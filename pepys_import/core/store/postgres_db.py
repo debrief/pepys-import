@@ -4,7 +4,8 @@ from uuid import uuid4
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
-from sqlalchemy.orm import deferred
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.orm import deferred, relationship
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
@@ -144,6 +145,14 @@ class Datafile(BasePostGIS, DatafileMixin):
     size = Column(Integer, nullable=False)
     hash = Column(String(32), nullable=False)
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
+
+    datafile_type = relationship(
+        "DatafileType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+    )
+    datafile_type_name = association_proxy("datafile_type", "name")
 
 
 class Synonym(BasePostGIS):
