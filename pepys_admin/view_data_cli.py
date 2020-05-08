@@ -5,6 +5,7 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.sql import SqlLexer
 from sqlalchemy import inspect
+from sqlalchemy.orm import class_mapper, load_only
 from tabulate import tabulate
 
 
@@ -54,13 +55,19 @@ class ViewDataShell(cmd.Cmd):
         else:
             table = selected_table[:-1]
         # Find the class
-        table_obj = getattr(self.data_store.db_classes, table)
-        assert table_obj.__tablename__ == selected_table, "Table couldn't find!"
+        table_cls = getattr(self.data_store.db_classes, table)
+        assert table_cls.__tablename__ == selected_table, "Table couldn't find!"
 
-        headers = [m.key for m in table_obj.__table__.columns]
+        # Take only not deferred columns
+        headers = [m.key for m in class_mapper(table_cls).iterate_properties if m.deferred is False]
         # Fetch first 10 rows, create a table from these rows
         with self.data_store.session_scope():
-            values = self.data_store.session.query(table_obj).limit(10).all()
+            values = (
+                self.data_store.session.query(table_cls)
+                .options(load_only(*headers))
+                .limit(10)
+                .all()
+            )
             res = f"{selected_table}\n"
             res += tabulate(
                 [[str(getattr(row, column)) for column in headers] for row in values],
