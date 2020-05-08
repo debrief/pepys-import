@@ -5,7 +5,8 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.sql import SqlLexer
 from sqlalchemy import inspect
-from sqlalchemy.orm import class_mapper, load_only
+from sqlalchemy.ext.associationproxy import AssociationProxy
+from sqlalchemy.orm import RelationshipProperty, class_mapper, load_only
 from tabulate import tabulate
 
 
@@ -31,6 +32,9 @@ class ViewDataShell(cmd.Cmd):
         print("Returning to the previous menu...")
 
     def do_view_table(self):
+        primary_key_field = None
+        headers = list()
+        associated_attributes = list()
         # Inspect the database and extract the table names
         inspector = inspect(self.data_store.engine)
         if self.data_store.db_type == "postgres":
@@ -59,7 +63,18 @@ class ViewDataShell(cmd.Cmd):
         assert table_cls.__tablename__ == selected_table, "Table couldn't find!"
 
         # Take only not deferred columns
-        headers = [m.key for m in class_mapper(table_cls).iterate_properties if m.deferred is False]
+        mapper = class_mapper(table_cls)
+        for column, column_property in zip(mapper.columns, mapper.column_attrs):
+            if column.primary_key is True:
+                primary_key_field = column.key
+            if isinstance(column_property, RelationshipProperty):
+                continue
+            if column_property.deferred is False and not column.foreign_keys:
+                headers.append(column.key)
+        for descriptor in mapper.all_orm_descriptors:
+            if isinstance(descriptor, AssociationProxy):
+                name = f"{descriptor.target_collection}_{descriptor.value_attr}"
+                associated_attributes.append(name)
         # Fetch first 10 rows, create a table from these rows
         with self.data_store.session_scope():
             values = (
@@ -68,9 +83,18 @@ class ViewDataShell(cmd.Cmd):
                 .limit(10)
                 .all()
             )
+            headers.extend(associated_attributes)
             res = f"{selected_table}\n"
             res += tabulate(
-                [[str(getattr(row, column)) for column in headers] for row in values],
+                [
+                    [
+                        str(getattr(row, column))[-10:]
+                        if column == primary_key_field
+                        else str(getattr(row, column))
+                        for column in headers
+                    ]
+                    for row in values
+                ],
                 headers=headers,
                 tablefmt="github",
             )
