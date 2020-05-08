@@ -3,6 +3,7 @@ from datetime import datetime
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, Integer, String
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
+from sqlalchemy.orm import deferred
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
@@ -112,7 +113,7 @@ class Datafile(BaseSpatiaLite, DatafileMixin):
     url = Column(String(150))
     size = Column(Integer, nullable=False)
     hash = Column(String(32), nullable=False)
-    created_date = Column(DateTime, default=datetime.utcnow)
+    created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
 
 class Synonym(BaseSpatiaLite):
