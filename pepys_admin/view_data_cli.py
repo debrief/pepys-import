@@ -62,15 +62,18 @@ class ViewDataShell(cmd.Cmd):
         table_cls = getattr(self.data_store.db_classes, table)
         assert table_cls.__tablename__ == selected_table, "Table couldn't find!"
 
-        # Take only not deferred columns
+        # Inspect the class using mapper
         mapper = class_mapper(table_cls)
         for column, column_property in zip(mapper.columns, mapper.column_attrs):
             if column.primary_key is True:
                 primary_key_field = column.key
+            # Skip RelationshipProperty instances, because their associated attributes are going to be printed
             if isinstance(column_property, RelationshipProperty):
                 continue
+            # Take only if column is not a foreign key and it is not deferred
             if column_property.deferred is False and not column.foreign_keys:
                 headers.append(column.key)
+        # In order to find and extract association_proxy attributes, iterate over all_orm_descriptors
         for descriptor in mapper.all_orm_descriptors:
             if isinstance(descriptor, AssociationProxy):
                 name = f"{descriptor.target_collection}_{descriptor.value_attr}"
