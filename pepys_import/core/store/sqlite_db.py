@@ -54,8 +54,8 @@ class Sensor(BaseSpatiaLite, SensorMixin):
     )
     sensor_type_name = association_proxy("sensor_type", "name")
 
-    platform = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    platform_name = association_proxy("platform", "name")
+    host_ = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    host__name = association_proxy("host_", "name")
 
     privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
     privacy_name = association_proxy("privacy", "name")
@@ -404,8 +404,8 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     sensor = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
     sensor_name = association_proxy("sensor", "name")
 
-    datafile = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
-    datafile_reference = association_proxy("datafile", "reference")
+    source = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+    source_reference = association_proxy("source", "reference")
 
     privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
     privacy_name = association_proxy("privacy", "name")
@@ -445,8 +445,8 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    platform = relationship("Platform", lazy="joined", join_depth=1, uselist=False)
-    platform_name = association_proxy("platform", "name")
+    subject = relationship("Platform", lazy="joined", join_depth=1, uselist=False)
+    subject_name = association_proxy("subject", "name")
 
     datafile = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
     datafile_reference = association_proxy("datafile", "reference")
@@ -518,8 +518,8 @@ class Comment(BaseSpatiaLite):
     )
     comment_type_name = association_proxy("comment_type", "name")
 
-    datafile = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
-    datafile_reference = association_proxy("datafile", "reference")
+    source = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+    source_reference = association_proxy("source", "reference")
 
     privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
     privacy_name = association_proxy("privacy", "name")
