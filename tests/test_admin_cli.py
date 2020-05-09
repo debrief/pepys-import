@@ -99,7 +99,7 @@ class AdminCLITestCase(unittest.TestCase):
 
     @patch("pepys_admin.admin_cli.iterfzf", return_value="SEARCH_PLATFORM")
     @patch("pepys_admin.export_by_platform_cli.input", return_value="")
-    @patch("cmd.input", return_value="2")
+    @patch("cmd.input", return_value="1")
     @patch("pepys_admin.export_by_platform_cli.ptk_prompt", return_value=".")
     def test_do_export_by_platform_name(
         self, cmd_input, shell_input, patched_iterfzf, patched_ptk_prompt
