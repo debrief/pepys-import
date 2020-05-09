@@ -115,6 +115,55 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "PRIVACY-1")
 
+    def test_resolve_platform_gives_platform_object_when_called_twice(self):
+        Platform = self.store.db_classes.Platform
+
+        with self.store.session_scope():
+            # Call it first time
+            result = self.resolver.resolve_platform(
+                data_store=self.store,
+                platform_name=None,
+                platform_type="Fisher",
+                nationality="UK",
+                privacy="Private",
+                change_id=self.change_id,
+            )
+
+            (
+                platform_name,
+                trigraph,
+                quadgraph,
+                pennant_number,
+                platform_type,
+                nationality,
+                privacy,
+            ) = result
+
+            # Add to database (like in get_sensor() in common_db.py)
+            new_platform_obj = self.store.add_to_platforms(
+                name=platform_name,
+                trigraph=trigraph,
+                quadgraph=quadgraph,
+                pennant_number=pennant_number,
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+                change_id=self.change_id,
+            )
+
+            # Now when we call resolve_sensor again, it should give us back the
+            # same sensor object as above
+            result = self.resolver.resolve_platform(
+                data_store=self.store,
+                platform_name=None,
+                platform_type="Fisher",
+                nationality="UK",
+                privacy="Private",
+                change_id=self.change_id,
+            )
+
+            assert result == new_platform_obj
+
     def test_resolver_datafile(self):
         with self.store.session_scope():
             datafile_name, datafile_type, privacy = self.resolver.resolve_datafile(
