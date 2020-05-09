@@ -47,8 +47,7 @@ class DefaultResolver(DataResolver):
         )
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
-
-        # needs to establish defaults for sensor name, sensor type, and privacy
+        # If we aren't given a sensor name, then use a default sensor name
         if not sensor_name:
             sensor_name = self.default_sensor_name
 
@@ -62,7 +61,26 @@ class DefaultResolver(DataResolver):
         else:
             privacy = data_store.add_to_privacies(self.default_privacy, change_id)
 
-        return sensor_name, sensor_type, privacy
+        # Look to see if we already have a sensor created for this platform, with this sensor type etc
+
+        results_from_db = (
+            data_store.session.query(data_store.db_classes.Sensor)
+            .filter(data_store.db_classes.Sensor.host == host_id)
+            .filter(data_store.db_classes.Sensor.name == sensor_name)
+            .filter(data_store.db_classes.Sensor.sensor_type_id == sensor_type.sensor_type_id)
+            .all()
+        )
+
+        if len(results_from_db) == 0:
+            # Nothing in DB already, so return details to create new entry
+            return sensor_name, sensor_type, privacy
+        elif len(results_from_db) == 1:
+            # One sensor matching these criteria, so return it
+            return results_from_db[0]
+        else:
+            # Should never reach here - there should only be one sensor object with a specific name for a
+            # specific platform
+            assert False
 
     def resolve_privacy(self, data_store, change_id, data_type=None):
         # needs to establish defaults for privacy

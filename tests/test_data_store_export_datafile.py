@@ -241,15 +241,21 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
     def test_find_related_datafile_objects_of_states_and_contacts(self):
         with self.store.session_scope():
             sensors_dict = {
-                "SEARCH_PLATFORM": self.store.search_sensor("SEARCH_PLATFORM").sensor_id,
+                "SENSOR-1": self.store.search_sensor("SENSOR-1").sensor_id,
                 "TA": self.store.search_sensor("TA").sensor_id,
             }
             objects = self.store.find_related_datafile_objects(123456789, sensors_dict=sensors_dict)
-            assert len(objects) == 1
-            assert objects[0]["name"] == "SEARCH_PLATFORM"
+            print(objects)
+            assert len(objects) == 2
+            assert objects[0]["name"] == "SENSOR-1"
             assert objects[0]["filename"] == "rep_test1.rep"
             assert str(objects[0]["min"]) == "2010-01-12 11:58:00"
             assert str(objects[0]["max"]) == "2010-01-12 12:14:00"
+
+            assert objects[1]["name"] == "TA"
+            assert objects[1]["filename"] == "rep_test1.rep"
+            assert str(objects[1]["min"]) == "2010-01-12 11:58:00"
+            assert str(objects[1]["max"]) == "2010-01-12 12:06:00"
 
 
 if __name__ == "__main__":

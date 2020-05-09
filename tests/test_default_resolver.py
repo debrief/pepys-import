@@ -13,6 +13,7 @@ class DefaultResolverTestCase(unittest.TestCase):
         )
         self.store.initialise()
         with self.store.session_scope():
+            self.store.populate_reference()
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
     def test_resolver_privacy(self):
@@ -27,12 +28,66 @@ class DefaultResolverTestCase(unittest.TestCase):
                 sensor_name=None,
                 sensor_type=None,
                 privacy=None,
-                host_id=None,
+                host_id=1,
                 change_id=self.change_id,
             )
             self.assertEqual(sensor_name, "SENSOR-1")
             self.assertEqual(sensor_type.name, "Position")
             self.assertEqual(privacy.name, "PRIVACY-1")
+
+    def test_resolve_sensor_gives_sensor_object_when_called_twice(self):
+        Sensor = self.store.db_classes.Sensor
+
+        with self.store.session_scope():
+            # Create a platform for it to belong to
+            platform_obj = self.store.add_to_platforms(
+                "TestPlatform",
+                "UK",
+                "Fisher",
+                "Private",
+                trigraph="PLT",
+                quadgraph="PLTT",
+                pennant_number=1234,
+                change_id=self.change_id,
+            )
+
+            # Call it first time
+            result = self.resolver.resolve_sensor(
+                data_store=self.store,
+                sensor_name=None,
+                sensor_type=None,
+                privacy=None,
+                host_id=platform_obj.platform_id,
+                change_id=self.change_id,
+            )
+
+            sensor_name, sensor_type, privacy = result
+            self.assertEqual(sensor_name, "SENSOR-1")
+            self.assertEqual(sensor_type.name, "Position")
+            self.assertEqual(privacy.name, "PRIVACY-1")
+
+            # Add to database (like in get_sensor() in common_db.py)
+            new_sensor_obj = Sensor().add_to_sensors(
+                data_store=self.store,
+                name=sensor_name,
+                sensor_type=sensor_type.name,
+                host=platform_obj.name,
+                privacy_id=privacy.privacy_id,
+                change_id=self.change_id,
+            )
+
+            # Now when we call resolve_sensor again, it should give us back the
+            # same sensor object as above
+            result = self.resolver.resolve_sensor(
+                data_store=self.store,
+                sensor_name=None,
+                sensor_type=None,
+                privacy=None,
+                host_id=platform_obj.platform_id,
+                change_id=self.change_id,
+            )
+
+            assert result == new_sensor_obj
 
     def test_resolver_platform(self):
         with self.store.session_scope():
