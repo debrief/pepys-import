@@ -202,7 +202,7 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
         Comment = self.store.db_classes.Comment
 
         with self.store.session_scope():
-            sensor_id = self.store.search_sensor("SEARCH_PLATFORM").sensor_id
+            sensor_id = self.store.search_sensor("SENSOR-1").sensor_id
 
             state_values = self.store.find_min_and_max_date(State, State.sensor_id, sensor_id)
             assert len(state_values) == 3
@@ -241,7 +241,8 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
     def test_find_related_datafile_objects_of_states_and_contacts(self):
         with self.store.session_scope():
             sensors_dict = {
-                "SEARCH_PLATFORM": self.store.search_sensor("SEARCH_PLATFORM").sensor_id
+                "SEARCH_PLATFORM": self.store.search_sensor("SEARCH_PLATFORM").sensor_id,
+                "TA": self.store.search_sensor("TA").sensor_id,
             }
             objects = self.store.find_related_datafile_objects(123456789, sensors_dict=sensors_dict)
             assert len(objects) == 1
