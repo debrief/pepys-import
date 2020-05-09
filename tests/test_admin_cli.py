@@ -109,7 +109,6 @@ class AdminCLITestCase(unittest.TestCase):
             self.admin_shell.do_export_by_platform_name()
         output = temp_output.getvalue()
 
-        print(output)
         assert "Objects are going to be exported to './exported_SEARCH_PLATFORM.rep'." in output
         assert "Objects successfully exported to ./exported_SEARCH_PLATFORM.rep." in output
 
@@ -118,7 +117,6 @@ class AdminCLITestCase(unittest.TestCase):
 
         with open(file_path, "r") as file:
             data = file.read().splitlines()
-        print(data)
         assert len(data) == 4  # 4 State objects
 
         os.remove(file_path)
