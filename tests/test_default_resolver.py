@@ -27,6 +27,7 @@ class DefaultResolverTestCase(unittest.TestCase):
                 sensor_name=None,
                 sensor_type=None,
                 privacy=None,
+                host_id=None,
                 change_id=self.change_id,
             )
             self.assertEqual(sensor_name, "SENSOR-1")
