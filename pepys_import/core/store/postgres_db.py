@@ -60,6 +60,17 @@ class Sensor(BasePostGIS, SensorMixin):
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    sensor_type = relationship(
+        "SensorType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+    )
+    sensor_type_name = association_proxy("sensor_type", "name")
+
+    host_ = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    host__name = association_proxy("host_", "name")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
+
 
 class Platform(BasePostGIS, PlatformMixin):
     __tablename__ = constants.PLATFORM
@@ -82,6 +93,19 @@ class Platform(BasePostGIS, PlatformMixin):
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"), nullable=False
     )
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    platform_type = relationship(
+        "PlatformType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+    )
+    platform_type_name = association_proxy("platform_type", "name")
+
+    nationality = relationship(
+        "Nationality", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+    )
+    nationality_name = association_proxy("nationality", "name")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
 
 
 class Task(BasePostGIS):
@@ -194,6 +218,9 @@ class Log(BasePostGIS):
     new_value = Column(String(150))
     change_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Changes.change_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    change = relationship("Change", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    change_reason = association_proxy("change", "reason")
 
 
 class Extraction(BasePostGIS):
@@ -429,6 +456,15 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    sensor = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+    sensor_name = association_proxy("sensor", "name")
+
+    source = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+    source_reference = association_proxy("source", "reference")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
+
 
 class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
     def __init__(self, *args, **kwargs):
@@ -466,6 +502,15 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    subject = relationship("Platform", lazy="joined", join_depth=1, uselist=False)
+    subject_name = association_proxy("subject", "name")
+
+    datafile = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+    datafile_reference = association_proxy("datafile", "reference")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
 
 
 class Activation(BasePostGIS, ActivationMixin):
@@ -536,6 +581,20 @@ class Comment(BasePostGIS):
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    platform = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    platform_name = association_proxy("platform", "name")
+
+    comment_type = relationship(
+        "CommentType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+    )
+    comment_type_name = association_proxy("comment_type", "name")
+
+    source = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+    source_reference = association_proxy("source", "reference")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
 
 
 class Geometry1(BasePostGIS):
