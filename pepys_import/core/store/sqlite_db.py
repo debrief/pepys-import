@@ -49,6 +49,17 @@ class Sensor(BaseSpatiaLite, SensorMixin):
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    sensor_type = relationship(
+        "SensorType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+    )
+    sensor_type_name = association_proxy("sensor_type", "name")
+
+    platform = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    platform_name = association_proxy("platform", "name")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
+
 
 class Platform(BaseSpatiaLite, PlatformMixin):
     __tablename__ = constants.PLATFORM
@@ -64,6 +75,19 @@ class Platform(BaseSpatiaLite, PlatformMixin):
     platform_type_id = Column(Integer, ForeignKey("PlatformTypes.platform_type_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    platform_type = relationship(
+        "PlatformType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+    )
+    platform_type_name = association_proxy("platform_type", "name")
+
+    nationality = relationship(
+        "Nationality", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+    )
+    nationality_name = association_proxy("nationality", "name")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
 
 
 class Task(BaseSpatiaLite):
@@ -161,6 +185,9 @@ class Log(BaseSpatiaLite):
     new_value = Column(String(150))
     change_id = Column(Integer, ForeignKey("Changes.change_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    change = relationship("Change", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    change_reason = association_proxy("change", "reason")
 
 
 class Extraction(BaseSpatiaLite):
@@ -374,6 +401,15 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    sensor = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+    sensor_name = association_proxy("sensor", "name")
+
+    datafile = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+    datafile_reference = association_proxy("datafile", "reference")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
+
 
 class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
     def __init__(self, *args, **kwargs):
@@ -408,6 +444,15 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    platform = relationship("Platform", lazy="joined", join_depth=1, uselist=False)
+    platform_name = association_proxy("platform", "name")
+
+    datafile = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+    datafile_reference = association_proxy("datafile", "reference")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
 
 
 class Activation(BaseSpatiaLite, ActivationMixin):
@@ -464,6 +509,20 @@ class Comment(BaseSpatiaLite):
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    platform = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    platform_name = association_proxy("platform", "name")
+
+    comment_type = relationship(
+        "CommentType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+    )
+    comment_type_name = association_proxy("comment_type", "name")
+
+    datafile = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+    datafile_reference = association_proxy("datafile", "reference")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
 
 
 class Geometry1(BaseSpatiaLite):
