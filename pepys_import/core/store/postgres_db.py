@@ -525,11 +525,11 @@ class Comment(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     comment_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False
-    )
+    platform_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     time = Column(TIMESTAMP, nullable=False)
-    comment_type_id = Column(UUID(as_uuid=True), nullable=False)
+    comment_type_id = Column(
+        UUID(as_uuid=True), ForeignKey("pepys.CommentTypes.comment_type_id"), nullable=False
+    )
     content = Column(String(150), nullable=False)
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
