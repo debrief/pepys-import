@@ -253,7 +253,7 @@ class AdminCLITestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.admin_shell.do_view_data()
         output = temp_output.getvalue()
-        # Assert that Admin Shell redirects to the initialise menu
+        # Assert that Admin Shell redirects to the view data menu
         assert view_data_shell.intro in output
 
     def test_do_exit(self):
