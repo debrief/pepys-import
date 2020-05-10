@@ -1,13 +1,17 @@
 import cmd
 
 from iterfzf import iterfzf
-from prompt_toolkit import PromptSession
+from prompt_toolkit import HTML, PromptSession
 from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.sql import SqlLexer
 from sqlalchemy import inspect
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import RelationshipProperty, class_mapper, load_only
 from tabulate import tabulate
+
+
+def bottom_toolbar():
+    return HTML('Press <b><style bg="ansired">ESC+Enter</style></b> to exit!')
 
 
 class ViewDataShell(cmd.Cmd):
@@ -100,17 +104,21 @@ class ViewDataShell(cmd.Cmd):
                 ],
                 headers=headers,
                 tablefmt="github",
+                floatfmt=".3f",
             )
             res += "\n"
         print(res)
 
     def do_run_sql(self):
         session = PromptSession(lexer=PygmentsLexer(SqlLexer))
-        query = session.prompt("Press ESC+Enter to exit> ", multiline=True)
-        with self.data_store.engine.connect() as connection:
-            result = connection.execute(query)
-            result = result.fetchall()
-        print(result)
+        query = session.prompt("> ", multiline=True, bottom_toolbar=bottom_toolbar)
+        if query:
+            with self.data_store.engine.connect() as connection:
+                result = connection.execute(query)
+                result = result.fetchall()
+            print(result)
+        else:
+            print("Returning to the menu!")
 
     def default(self, line):
         cmd_, arg, line = self.parseline(line)
