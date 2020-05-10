@@ -1,7 +1,7 @@
 import cmd
 
 from iterfzf import iterfzf
-from prompt_toolkit import HTML, PromptSession
+from prompt_toolkit import HTML, prompt
 from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.sql import SqlLexer
 from sqlalchemy import inspect
@@ -58,7 +58,9 @@ class ViewDataShell(cmd.Cmd):
             ]
         selected_table = iterfzf(table_names)
         # Table names are plural in the database, therefore make it singular
-        if selected_table.endswith("ies"):
+        if selected_table == "alembic_version":
+            table = "alembic_version"
+        elif selected_table.endswith("ies"):
             table = selected_table[:-3] + "y"
         else:
             table = selected_table[:-1]
@@ -110,15 +112,21 @@ class ViewDataShell(cmd.Cmd):
         print(res)
 
     def do_run_sql(self):
-        session = PromptSession(lexer=PygmentsLexer(SqlLexer))
-        query = session.prompt("> ", multiline=True, bottom_toolbar=bottom_toolbar)
+        query = prompt(
+            "> ", multiline=True, bottom_toolbar=bottom_toolbar, lexer=PygmentsLexer(SqlLexer)
+        )
         if query:
             with self.data_store.engine.connect() as connection:
                 result = connection.execute(query)
                 result = result.fetchall()
-            print(result)
-        else:
-            print("Returning to the menu!")
+            res = f"QUERY\n{'-' * 20}\n{query}\n{'-' * 20}\nRESULT\n"
+            res += tabulate(
+                [[str(column) for column in row] for row in result],
+                tablefmt="github",
+                floatfmt=".3f",
+            )
+            res += "\n"
+            print(res)
 
     def default(self, line):
         cmd_, arg, line = self.parseline(line)
