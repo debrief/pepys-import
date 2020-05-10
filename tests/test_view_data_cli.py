@@ -66,6 +66,32 @@ class ViewDataCLITestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Returning to the previous menu..." in output
 
+    def test_default(self):
+        # Only cancel command (0) returns True, others return None
+        result = self.shell.default("0")
+        assert result is True
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.default("123456789")
+        output = temp_output.getvalue()
+        assert "*** Unknown syntax: 123456789" in output
+
+    def test_postcmd(self):
+        # postcmd method should print the menu again if the user didn't select cancel ("0")
+        # Select view table
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.postcmd(stop=False, line="1")
+        output = temp_output.getvalue()
+        assert self.shell.intro in output
+        # Select run sql
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.postcmd(stop=False, line="2")
+        output = temp_output.getvalue()
+        assert self.shell.intro in output
+
 
 if __name__ == "__main__":
     unittest.main()
