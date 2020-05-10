@@ -36,16 +36,15 @@ class ViewDataCLITestCase(unittest.TestCase):
             in output
         )
         assert (
-            "|             1 | e_trac_bad.txt | None  |   5261 | PRIVACY-1      | .txt                 |\n"
+            "| e_trac_bad.txt | None  |   5261 | PRIVACY-1      | .txt                 |\n"
             in output
         )
         assert (
-            "|             2 | e_trac.txt     | None  |   5315 | PRIVACY-1      | .txt                 |\n"
+            "| e_trac.txt     | None  |   5315 | PRIVACY-1      | .txt                 |\n"
             in output
         )
         assert (
-            "|             3 | NMEA_bad.log   | None  |    243 | Private        | .log                 |"
-            in output
+            "| NMEA_bad.log   | None  |    243 | Private        | .log                 |" in output
         )
 
     @patch("pepys_admin.view_data_cli.prompt", return_value="SELECT * FROM Datafiles;")
@@ -55,18 +54,9 @@ class ViewDataCLITestCase(unittest.TestCase):
             self.shell.do_run_sql()
         output = temp_output.getvalue()
         assert "SELECT * FROM Datafiles;" in output
-        assert (
-            "| 1 | 0 | 1 | 1 | e_trac_bad.txt | None | 5261 | 47e7c07157672a353a112ffbc033571d"
-            in output
-        )
-        assert (
-            "| 2 | 0 | 1 | 1 | e_trac.txt     | None | 5315 | 577fad568cda2eb0b24178f5554f2b46"
-            in output
-        )
-        assert (
-            "| 3 | 0 | 3 | 2 | NMEA_bad.log   | None |  243 | 8ddb840fee218872d2bb394cc654bdae"
-            in output
-        )
+        assert "| e_trac_bad.txt | None | 5261 | 47e7c07157672a353a112ffbc033571d" in output
+        assert "| e_trac.txt     | None | 5315 | 577fad568cda2eb0b24178f5554f2b46" in output
+        assert "| NMEA_bad.log   | None |  243 | 8ddb840fee218872d2bb394cc654bdae" in output
 
     def test_do_cancel(self):
         temp_output = StringIO()
@@ -74,3 +64,7 @@ class ViewDataCLITestCase(unittest.TestCase):
             self.shell.do_cancel()
         output = temp_output.getvalue()
         assert "Returning to the previous menu..." in output
+
+
+if __name__ == "__main__":
+    unittest.main()
