@@ -401,8 +401,8 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
-    sensor = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
-    sensor_name = association_proxy("sensor", "name")
+    sensor_ = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+    sensor__name = association_proxy("sensor_", "name")
 
     source = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
     source_reference = association_proxy("source", "reference")
@@ -510,8 +510,8 @@ class Comment(BaseSpatiaLite):
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
-    platform = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    platform_name = association_proxy("platform", "name")
+    platform_ = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    platform__name = association_proxy("platform_", "name")
 
     comment_type = relationship(
         "CommentType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
