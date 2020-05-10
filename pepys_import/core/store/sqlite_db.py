@@ -47,7 +47,7 @@ class Sensor(BaseSpatiaLite, SensorMixin):
     sensor_type_id = Column(Integer, ForeignKey("SensorTypes.sensor_type_id"), nullable=False)
     host = Column(Integer, ForeignKey("Platforms.platform_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
-    created_date = Column(DateTime, default=datetime.utcnow)
+    created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     sensor_type = relationship(
         "SensorType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
@@ -68,13 +68,13 @@ class Platform(BaseSpatiaLite, PlatformMixin):
 
     platform_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
-    pennant = Column(String(10))
-    trigraph = Column(String(3))
-    quadgraph = Column(String(4))
+    pennant = deferred(Column(String(10)))
+    trigraph = deferred(Column(String(3)))
+    quadgraph = deferred(Column(String(4)))
     nationality_id = Column(Integer, ForeignKey("Nationalities.nationality_id"), nullable=False)
     platform_type_id = Column(Integer, ForeignKey("PlatformTypes.platform_type_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
-    created_date = Column(DateTime, default=datetime.utcnow)
+    created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     platform_type = relationship(
         "PlatformType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
@@ -131,13 +131,13 @@ class Datafile(BaseSpatiaLite, DatafileMixin):
     table_type_id = 6
 
     datafile_id = Column(Integer, primary_key=True)
-    simulated = Column(Boolean, nullable=False)
+    simulated = deferred(Column(Boolean, nullable=False))
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     datafile_type_id = Column(Integer, ForeignKey("DatafileTypes.datafile_type_id"), nullable=False)
     reference = Column(String(150))
     url = Column(String(150))
     size = Column(Integer, nullable=False)
-    hash = Column(String(32), nullable=False)
+    hash = deferred(Column(String(32), nullable=False))
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
@@ -399,7 +399,7 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     _speed = Column("speed", REAL)
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
-    created_date = Column(DateTime, default=datetime.utcnow)
+    created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     sensor = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
     sensor_name = association_proxy("sensor", "name")
@@ -443,7 +443,7 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     subject_id = Column(Integer, ForeignKey("Platforms.platform_id"))
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
-    created_date = Column(DateTime, default=datetime.utcnow)
+    created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     subject = relationship("Platform", lazy="joined", join_depth=1, uselist=False)
     subject_name = association_proxy("subject", "name")
@@ -508,7 +508,7 @@ class Comment(BaseSpatiaLite):
     content = Column(String(150), nullable=False)
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
-    created_date = Column(DateTime, default=datetime.utcnow)
+    created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     platform = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
     platform_name = association_proxy("platform", "name")

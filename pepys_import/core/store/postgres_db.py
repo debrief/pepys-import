@@ -58,7 +58,7 @@ class Sensor(BasePostGIS, SensorMixin):
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"), nullable=False
     )
-    created_date = Column(DateTime, default=datetime.utcnow)
+    created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     sensor_type = relationship(
         "SensorType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
@@ -80,9 +80,9 @@ class Platform(BasePostGIS, PlatformMixin):
 
     platform_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
-    pennant = Column(String(10))
-    trigraph = Column(String(3))
-    quadgraph = Column(String(4))
+    pennant = deferred(Column(String(10)))
+    trigraph = deferred(Column(String(3)))
+    quadgraph = deferred(Column(String(4)))
     nationality_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Nationalities.nationality_id"), nullable=False,
     )
@@ -92,7 +92,7 @@ class Platform(BasePostGIS, PlatformMixin):
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"), nullable=False
     )
-    created_date = Column(DateTime, default=datetime.utcnow)
+    created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     platform_type = relationship(
         "PlatformType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
@@ -157,7 +157,7 @@ class Datafile(BasePostGIS, DatafileMixin):
     __table_args__ = {"schema": "pepys"}
 
     datafile_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    simulated = Column(Boolean)
+    simulated = deferred(Column(Boolean, nullable=False))
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"), nullable=False
     )
@@ -167,7 +167,7 @@ class Datafile(BasePostGIS, DatafileMixin):
     reference = Column(String(150))
     url = Column(String(150))
     size = Column(Integer, nullable=False)
-    hash = Column(String(32), nullable=False)
+    hash = deferred(Column(String(32), nullable=False))
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
@@ -454,7 +454,7 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
-    created_date = Column(DateTime, default=datetime.utcnow)
+    created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     sensor = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
     sensor_name = association_proxy("sensor", "name")
@@ -501,7 +501,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
-    created_date = Column(DateTime, default=datetime.utcnow)
+    created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     subject = relationship("Platform", lazy="joined", join_depth=1, uselist=False)
     subject_name = association_proxy("subject", "name")
@@ -580,7 +580,7 @@ class Comment(BasePostGIS):
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
-    created_date = Column(DateTime, default=datetime.utcnow)
+    created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     platform = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
     platform_name = association_proxy("platform", "name")
