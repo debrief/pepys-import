@@ -30,21 +30,22 @@ class ViewDataCLITestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.shell.do_view_table()
         output = temp_output.getvalue()
+        print(output)
         assert "Datafiles\n" in output
         assert (
-            "|   datafile_id | reference      | url   |   size | privacy_name   | datafile_type_name   |\n"
+            "|   datafile_id | datafile_type_name   | privacy_name   | reference      |   size | url   |\n"
             in output
         )
         assert (
-            "| e_trac_bad.txt | None  |   5261 | PRIVACY-1      | .txt                 |\n"
+            "| .txt                 | PRIVACY-1      | e_trac_bad.txt |   5261 | None  |\n"
             in output
         )
         assert (
-            "| e_trac.txt     | None  |   5315 | PRIVACY-1      | .txt                 |\n"
+            "| .txt                 | PRIVACY-1      | e_trac.txt     |   5315 | None  |\n"
             in output
         )
         assert (
-            "| NMEA_bad.log   | None  |    243 | Private        | .log                 |" in output
+            "| .log                 | Private        | NMEA_bad.log   |    243 | None  |" in output
         )
 
     @patch("pepys_admin.view_data_cli.prompt", return_value="SELECT * FROM Datafiles;")
