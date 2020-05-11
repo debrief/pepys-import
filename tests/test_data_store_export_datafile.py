@@ -81,17 +81,15 @@ class DataStoreExportPostGISDBTestCase(unittest.TestCase):
                 in data
             )
             assert (
-                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\t106.83\t123.40\t432.10\tSENSOR\tN/A"
+                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\t106.83\t123.40\t432.10\tTA\tN/A"
                 in data
             )
             assert (
-                ";SENSOR2:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\t108.42\tNULL\tNULL\tSENSOR\tN/A"
+                ";SENSOR2:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\t108.42\tNULL\tNULL\tTA\tN/A"
                 in data
             )
 
-            assert (
-                ";SENSOR:\t100112 120400.000\tSENSOR\t@@\tNULL\t251.99\t107.69\tSENSOR\tN/A" in data
-            )
+            assert ";SENSOR:\t100112 120400.000\tSENSOR\t@@\tNULL\t251.99\t107.69\tTA\tN/A" in data
 
 
 class DataStoreExportSpatiaLiteTestCase(unittest.TestCase):
@@ -134,16 +132,14 @@ class DataStoreExportSpatiaLiteTestCase(unittest.TestCase):
                 in data
             )
             assert (
-                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\t106.83\t123.40\t432.10\tSENSOR\tN/A"
+                ";SENSOR2:\t100112 115800.000\tSENSOR\t@@\tNULL\t252.85\t106.83\t123.40\t432.10\tTA\tN/A"
                 in data
             )
             assert (
-                ";SENSOR2:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\t108.42\tNULL\tNULL\tSENSOR\tN/A"
+                ";SENSOR2:\t100112 120200.000\tSENSOR\t@@\tNULL\t251.58\t108.42\tNULL\tNULL\tTA\tN/A"
                 in data
             )
-            assert (
-                ";SENSOR:\t100112 120400.000\tSENSOR\t@@\tNULL\t251.99\t107.69\tSENSOR\tN/A" in data
-            )
+            assert ";SENSOR:\t100112 120400.000\tSENSOR\t@@\tNULL\t251.99\t107.69\tTA\tN/A" in data
 
 
 class CachePlatformAndSensorNamesTestCase(unittest.TestCase):
@@ -213,10 +209,13 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
             assert str(state_values[0]) == "2010-01-12 11:58:00"
             assert str(state_values[1]) == "2010-01-12 12:14:00"
 
+            sensor_id = self.store.search_sensor("TA").sensor_id
+
             contact_values = self.store.find_min_and_max_date(Contact, Contact.sensor_id, sensor_id)
+            print(contact_values)
             assert len(contact_values) == 3
-            assert str(contact_values[0]) == "2010-01-12 12:10:00"
-            assert str(contact_values[1]) == "2010-01-12 12:12:00"
+            assert str(contact_values[0]) == "2010-01-12 11:58:00"
+            assert str(contact_values[1]) == "2010-01-12 12:06:00"
 
             platform_id = self.store.search_platform("SEARCH_PLATFORM").platform_id
             comment_values = self.store.find_min_and_max_date(
