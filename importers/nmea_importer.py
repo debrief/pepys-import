@@ -49,9 +49,10 @@ class NMEAImporter(Importer):
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
         if line_number == 1:
-            # Make an empty variable to store the platform name so we can keep track of it
+            # We don't know the platform name when we start reading the file, so
+            # set it to None. Later we will set it to the returned value from the get_platform call
+            # so that we don't have to ask about the platform again for each line in the file
             self.platform_name = None
-
         tokens = line.tokens(line.CSV_DELIM, ",")
 
         if len(tokens) > 1:
@@ -95,16 +96,17 @@ class NMEAImporter(Importer):
                 platform = data_store.get_platform(
                     platform_name=self.platform_name, change_id=change_id,
                 )
-                # capture the name
+                # Keep track of the platform name, so we don't have to ask for each line
                 self.platform_name = platform.name
-                sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
+
                 sensor = platform.get_sensor(
                     data_store=data_store,
-                    sensor_name=platform.name,
-                    sensor_type=sensor_type,
+                    sensor_name=None,
+                    sensor_type=None,
                     privacy=None,
                     change_id=change_id,
                 )
+
                 timestamp = self.parse_timestamp(self.date, self.time)
                 if timestamp:
                     combine_tokens(self.date_token, self.time_token).record(
