@@ -172,7 +172,7 @@ class Importer(ABC):
             )
 
             # And store it in the cache for next time
-            self.platform_sensor_mapping[platform_id] = resolved_sensor
+            self.platform_sensor_mapping[platform_id] = data_store.session.expunge(resolved_sensor)
         else:
             # sensor_name or sensor_type aren't None, so just resolve it and don't store in cache
             platform_obj = (
