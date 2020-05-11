@@ -99,11 +99,11 @@ class NMEAImporter(Importer):
                 # Keep track of the platform name, so we don't have to ask for each line
                 self.platform_name = platform.name
 
-                sensor = platform.get_sensor(
+                sensor = self.get_cached_sensor(
                     data_store=data_store,
                     sensor_name=None,
                     sensor_type=None,
-                    privacy=None,
+                    platform_id=platform.platform_id,
                     change_id=change_id,
                 )
 
