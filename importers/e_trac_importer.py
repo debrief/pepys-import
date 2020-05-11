@@ -14,6 +14,7 @@ class ETracImporter(Importer):
             name="E-Trac Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name="E-Trac Importer",
+            default_privacy="Public",
         )
         self.separator = separator
 
@@ -95,6 +96,7 @@ class ETracImporter(Importer):
             data_store=data_store,
             sensor_name="E-Trac",
             sensor_type=sensor_type,
+            privacy="Public",
             change_id=change_id,
         )
         state = datafile.create_state(data_store, platform, sensor, timestamp, self.short_name)
