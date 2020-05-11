@@ -113,7 +113,7 @@ class AdminShell(cmd.Cmd):
         # Find related sensors to the selected platform
         platform_id = platforms_dict[selected_platform]
         sensors = self.data_store.session.query(Sensor).filter(Sensor.host == platform_id).all()
-        sensors_dict = {s.name: s.sensor_id for s in sensors}
+        sensors_dict = {s.name: s.sensor_id for s in sorted(sensors, key=lambda x: x.name)}
         with self.data_store.session_scope():
             objects = self.data_store.find_related_datafile_objects(platform_id, sensors_dict)
         # Create a dynamic menu for the found datafile objects
