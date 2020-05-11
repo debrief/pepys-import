@@ -181,7 +181,7 @@ class DataStore:
         try:
             yield self
             self.session.commit()
-        except:
+        except Exception:
             self.session.rollback()
             raise
         finally:

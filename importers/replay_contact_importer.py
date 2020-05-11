@@ -192,11 +192,9 @@ class ReplayContactImporter(Importer):
                 change_id=change_id,
             )
             vessel_name_token.record(self.name, "vessel name", vessel_name_token.text)
-            sensor_type = data_store.add_to_sensor_types(sensor_name.text, change_id).name
             sensor = platform.get_sensor(
                 data_store=data_store,
-                sensor_name=platform.name,
-                sensor_type=sensor_type,
+                sensor_name=sensor_name.text,
                 privacy=None,
                 change_id=change_id,
             )

@@ -140,7 +140,7 @@ class DatafileMixin:
     def create_state(self, data_store, platform, sensor, timestamp, parser_name):
         """Creates a new State object to record information on the state of a particular
         platform at a specific time.
-        
+
         :param data_store: DataStore connected to the database that the State object should be
         created in
         :type data_store: DataStore
@@ -170,7 +170,7 @@ class DatafileMixin:
     def create_contact(self, data_store, platform, sensor, timestamp, parser_name):
         """Creates a new Contact object to record information on a Contact observed by a particular
         platform at a specific time.
-        
+
         :param data_store: DataStore connected to the database that the Contact object should be
         created in
         :type data_store: DataStore
@@ -202,7 +202,7 @@ class DatafileMixin:
     ):
         """Creates a new Comment object to record textual information logged by a particular
         platform at a specific time.
-        
+
         :param data_store: DataStore connected to the database that the Comment object should be
         created in
         :type data_store: DataStore
@@ -557,9 +557,9 @@ class ContactMixin:
         # Set the actual bearing attribute to the given value converted to radians
         self._ambig_bearing = ambig_bearing.to(unit_registry.radian).magnitude
 
-    @rel_bearing.expression
-    def rel_bearing(self):
-        return self._rel_bearing
+    @ambig_bearing.expression
+    def ambig_bearing(self):
+        return self._ambig_bearing
 
     #
     # MLA properties
