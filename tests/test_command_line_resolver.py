@@ -778,9 +778,26 @@ class SensorTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["TEST", "SENSOR-TYPE-1", "PRIVACY-1"]
         with self.store.session_scope():
             self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
-            self.store.add_to_privacies("PRIVACY-1", self.change_id)
+
+            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+
             sensor_name, sensor_type, privacy = self.resolver.resolve_sensor(
-                self.store, "TEST", sensor_type=None, privacy=None, change_id=self.change_id,
+                self.store,
+                "TEST",
+                sensor_type=None,
+                host_id=platform.platform_id,
+                privacy=None,
+                change_id=self.change_id,
             )
 
             self.assertEqual(sensor_name, "TEST")
@@ -811,7 +828,12 @@ class SensorTestCase(unittest.TestCase):
             )
 
             synonym_sensor = self.resolver.resolve_sensor(
-                self.store, "SENSOR-TEST", sensor_type, privacy, change_id=self.change_id,
+                self.store,
+                "SENSOR-TEST",
+                sensor_type,
+                platform.platform_id,
+                privacy,
+                change_id=self.change_id,
             )
             self.assertEqual(synonym_sensor.sensor_id, sensor.sensor_id)
 
@@ -838,8 +860,24 @@ class SensorTestCase(unittest.TestCase):
             sensor_type_2 = self.store.add_to_sensor_types("SENSOR-TYPE-2", self.change_id)
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id)
             privacy_2 = self.store.add_to_privacies("PRIVACY-2", self.change_id)
+            nationality = self.store.add_to_nationalities("UK", self.change_id)
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id)
+
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+                change_id=self.change_id,
+            )
+
             (resolved_name, resolved_type, resolved_privacy,) = self.resolver.resolve_sensor(
-                self.store, "TEST", sensor_type.name, privacy.name, self.change_id
+                self.store,
+                "TEST",
+                sensor_type.name,
+                platform.platform_id,
+                privacy.name,
+                self.change_id,
             )
             self.assertEqual(resolved_name, "TEST")
             self.assertEqual(resolved_type.sensor_type_id, sensor_type_2.sensor_type_id)
@@ -882,7 +920,12 @@ class SensorTestCase(unittest.TestCase):
             platform.get_sensor(self.store, "SENSOR-2", sensor_type, privacy, self.change_id)
 
             sensor_name, sensor_type, privacy = self.resolver.resolve_sensor(
-                self.store, "SENSOR-TEST", sensor_type=None, privacy=None, change_id=self.change_id,
+                self.store,
+                "SENSOR-TEST",
+                host_id=platform.platform_id,
+                sensor_type=None,
+                privacy=None,
+                change_id=self.change_id,
             )
 
             self.assertEqual(sensor_name, "SENSOR-TEST")
@@ -904,11 +947,22 @@ class SensorTestCase(unittest.TestCase):
         with self.store.session_scope():
             sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
 
             sensor_name, sensor_type, privacy = self.resolver.resolve_sensor(
                 self.store,
                 "SENSOR-TEST",
                 sensor_type=sensor_type.name,
+                host_id=platform.platform_id,
                 privacy=privacy,
                 change_id=self.change_id,
             )
@@ -931,10 +985,22 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         """Test whether "." quits from the resolve platform/sensor"""
         menu_prompt.side_effect = [".", ".", "."]
         with self.store.session_scope():
+            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_platform(self.store, "", "", "", "", self.change_id)
             with self.assertRaises(SystemExit):
-                self.resolver.resolve_sensor(self.store, "", "", "", self.change_id)
+                self.resolver.resolve_sensor(
+                    self.store, "", "", platform.platform_id, "", self.change_id
+                )
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_cancelling_fuzzy_search_platform(self, menu_prompt):
@@ -977,7 +1043,9 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy, self.change_id)
 
             with self.assertRaises(SystemExit):
-                self.resolver.fuzzy_search_sensor(self.store, "TEST", "", "", self.change_id)
+                self.resolver.fuzzy_search_sensor(
+                    self.store, "TEST", "", platform.platform_id, "", self.change_id
+                )
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
@@ -1055,18 +1123,34 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             "PRIVACY-1",
         ]
         with self.store.session_scope():
+            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
             # Type "TEST"->Select "Cancel sensor type search"->Select "Cancel import"
             with self.assertRaises(SystemExit):
-                self.resolver.add_to_sensors(self.store, "SENSOR-1", "", "", self.change_id)
+                self.resolver.add_to_sensors(
+                    self.store, "SENSOR-1", "", platform.platform_id, "", self.change_id
+                )
             # Type "TEST"->Select "Add a new sensor type"->Type "SENSOR-TYPE-1->
             # Select "Cancel classification search" ->Select "Cancel import"
             with self.assertRaises(SystemExit):
-                self.resolver.add_to_sensors(self.store, "SENSOR-1", "", "", self.change_id)
+                self.resolver.add_to_sensors(
+                    self.store, "SENSOR-1", "", platform.platform_id, "", self.change_id
+                )
             # Type "TEST"->Select "Add a new sensor type"->Type "SENSOR-TYPE-1->
             # Select "Add a new classification"->Type "PRIVACY-1"->Select "Cancel import"->
             # Select "Cancel import"
             with self.assertRaises(SystemExit):
-                self.resolver.add_to_sensors(self.store, "SENSOR-1", "", "", self.change_id)
+                self.resolver.add_to_sensors(
+                    self.store, "SENSOR-1", "", platform.platform_id, "", self.change_id
+                )
 
 
 class GetMethodsTestCase(unittest.TestCase):
