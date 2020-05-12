@@ -557,9 +557,9 @@ class ContactMixin:
         # Set the actual bearing attribute to the given value converted to radians
         self._ambig_bearing = ambig_bearing.to(unit_registry.radian).magnitude
 
-    @rel_bearing.expression
-    def rel_bearing(self):
-        return self._rel_bearing
+    @ambig_bearing.expression
+    def ambig_bearing(self):
+        return self._ambig_bearing
 
     #
     # MLA properties
