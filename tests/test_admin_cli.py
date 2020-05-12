@@ -109,10 +109,10 @@ class AdminCLITestCase(unittest.TestCase):
             self.admin_shell.do_export_by_platform_name()
         output = temp_output.getvalue()
 
-        assert "Objects are going to be exported to './exported_SEARCH_PLATFORM.rep'." in output
-        assert "Objects successfully exported to ./exported_SEARCH_PLATFORM.rep." in output
+        assert "Objects are going to be exported to './exported_SENSOR-1.rep'." in output
+        assert "Objects successfully exported to ./exported_SENSOR-1.rep." in output
 
-        file_path = os.path.join(CURRENT_DIR, "exported_SEARCH_PLATFORM.rep")
+        file_path = os.path.join(CURRENT_DIR, "exported_SENSOR-1.rep")
         assert os.path.exists(file_path) is True
 
         with open(file_path, "r") as file:
@@ -500,9 +500,8 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
     @patch("pepys_admin.export_by_platform_cli.input", return_value="export_test")
     @patch("pepys_admin.export_by_platform_cli.ptk_prompt", return_value=".")
     def test_do_export(self, patched_input, patched_ptk_prompt):
-        search_platform_obj = [item for item in self.objects if item["name"] == "SEARCH_PLATFORM"][
-            0
-        ]
+        print(self.objects)
+        search_platform_obj = [item for item in self.objects if item["name"] == "SENSOR-1"][0]
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export(search_platform_obj)
