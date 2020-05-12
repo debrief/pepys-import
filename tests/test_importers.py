@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 from importers.nmea_importer import NMEAImporter
 from importers.replay_importer import ReplayImporter
+from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.file.importer import Importer
@@ -484,6 +485,68 @@ class ImporterDisableRecordingTest(unittest.TestCase):
 
         processor.register_importer(TestImporter())
         processor.process(DATA_PATH, None, False)
+
+
+class ImporterGetCachedSensorTest(unittest.TestCase):
+    def test_platform_sensor_mapping_has_sensible_values(self):
+        processor = FileProcessor(":memory:", archive=False)
+
+        processor.register_importer(ReplayImporter())
+
+        processor.process(REP_DATA_PATH, None, False)
+
+        cache = processor.importers[0].platform_sensor_mapping
+
+        # There must be at least one entry in the cache
+        assert len(cache) > 0
+
+        # All the values must not be None
+        assert all([value is not None for value in cache.values()])
+
+    def test_get_cached_sensor(self):
+        data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        data_store.initialise()
+
+        with data_store.session_scope():
+            replay_importer = ReplayImporter()
+            replay_importer.platform_sensor_mapping = {}
+
+            change_id = data_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+
+            platform = data_store.get_platform(
+                platform_name="TestPlatformName", change_id=change_id
+            )
+
+            # Should be nothing in the mapping to start with
+            assert len(replay_importer.platform_sensor_mapping) == 0
+
+            # Call first time - should create sensor and store in cache
+            sensor = replay_importer.get_cached_sensor(
+                data_store=data_store,
+                sensor_name=None,
+                sensor_type=None,
+                platform_id=platform.platform_id,
+                change_id=change_id,
+            )
+
+            assert sensor is not None
+
+            # Check stored in cache
+            assert len(replay_importer.platform_sensor_mapping) == 1
+            assert sensor in replay_importer.platform_sensor_mapping.values()
+
+            # Call a second time
+            sensor = replay_importer.get_cached_sensor(
+                data_store=data_store,
+                sensor_name=None,
+                sensor_type=None,
+                platform_id=platform.platform_id,
+                change_id=change_id,
+            )
+
+            # Check cache still only has one sensor in it
+            assert len(replay_importer.platform_sensor_mapping) == 1
+            assert sensor in replay_importer.platform_sensor_mapping.values()
 
 
 class ReplayImporterTestCase(unittest.TestCase):
