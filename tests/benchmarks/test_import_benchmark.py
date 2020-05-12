@@ -27,10 +27,12 @@ def test_single_rep_file_import_short(benchmark):
         file_path=os.path.join(FILE_DIR, "benchmark_data/rep_test1.rep"),
     )
 
+    TIME_THRESHOLD = 0.3
+
     if running_on_travis():
-        if benchmark.stats.stats.mean > 0.3:
+        if benchmark.stats.stats.mean > TIME_THRESHOLD:
             pytest.fail(
-                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of 0.3s"
+                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of {TIME_THRESHOLD}s"
             )
 
 
@@ -46,8 +48,10 @@ def test_single_rep_file_import_long(benchmark):
         rounds=1,
     )
 
+    TIME_THRESHOLD = 40
+
     if running_on_travis():
-        if benchmark.stats.stats.mean > 105:
+        if benchmark.stats.stats.mean > TIME_THRESHOLD:
             pytest.fail(
-                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of 105s"
+                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of {TIME_TRESHOLD}s"
             )
