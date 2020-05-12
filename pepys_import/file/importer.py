@@ -14,8 +14,6 @@ class Importer(ABC):
         self.errors = None
         self.error_type = None
 
-        self.platform_sensor_mapping = {}
-
         self.do_recording = True
 
     def __str__(self):
@@ -90,6 +88,10 @@ class Importer(ABC):
         self.errors = list()
         self.error_type = f"{self.short_name} - Parsing error on {basename}"
         datafile.measurements[self.short_name] = dict()
+
+        # Initialise the platform->sensor mapping here
+        # so that we get a separate mapping for each file that we process
+        self.platform_sensor_mapping = {}
 
         # If we've turned off recording of extractions for this importer
         # then add this to the list of ignored importers for this HighlightedFile
