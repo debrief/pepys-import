@@ -30,6 +30,10 @@ class SensorMixin:
         :type platform_id: int
         :return:
         """
+        # If we don't have a sensor name then we can't search by name!
+        if sensor_name is None:
+            return None
+
         cached_result = data_store._sensor_cache.get((sensor_name, platform_id))
         if cached_result:
             return cached_result
@@ -46,11 +50,19 @@ class SensorMixin:
             return sensor
 
         # Sensor is not found, try to find a synonym
-        return data_store.synonym_search(
+        synonym_result = data_store.synonym_search(
             name=sensor_name,
             table=data_store.db_classes.Sensor,
             pk_field=data_store.db_classes.Sensor.sensor_id,
         )
+
+        # If we found a synonym then cache that too
+        if synonym_result is not None:
+            data_store.session.expunge(synonym_result)
+            data_store._sensor_cache[(sensor_name, platform_id)] = synonym_result
+            return synonym_result
+
+        return synonym_result
 
     @classmethod
     def add_to_sensors(cls, data_store, name, sensor_type, host, privacy_id, change_id):
@@ -111,7 +123,7 @@ class PlatformMixin:
         privacy_obj = data_store.search_privacy(privacy)
         if sensor_type_obj is None or privacy_obj is None:
             resolved_data = data_store.missing_data_resolver.resolve_sensor(
-                data_store, sensor_name, sensor_type, privacy, change_id
+                data_store, sensor_name, sensor_type, self.platform_id, privacy, change_id
             )
             # It means that new sensor added as a synonym and existing sensor returned
             if isinstance(resolved_data, Sensor):

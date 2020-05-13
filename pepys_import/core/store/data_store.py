@@ -734,6 +734,10 @@ class DataStore:
         :type platform_name: String
         :return:
         """
+        # Can't search for a platform if we haven't got a name to search for
+        if platform_name is None:
+            return None
+
         cached_result = self._platform_cache.get(platform_name)
         if cached_result:
             return cached_result
@@ -755,11 +759,18 @@ class DataStore:
             return platform
 
         # Platform is not found, try to find a synonym
-        return self.synonym_search(
+        synonym_result = self.synonym_search(
             name=platform_name,
             table=self.db_classes.Platform,
             pk_field=self.db_classes.Platform.platform_id,
         )
+
+        if synonym_result is not None:
+            self.session.expunge(synonym_result)
+            self._platform_cache[platform_name] = synonym_result
+            return synonym_result
+
+        return synonym_result
 
     def get_platform(
         self,
