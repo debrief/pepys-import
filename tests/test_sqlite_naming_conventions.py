@@ -14,6 +14,7 @@ class NamingConventionsTestCase(unittest.TestCase):
         sql_script = str(CreateTable(Datafile.__table__).compile(self.store.engine))
         assert "pk_Datafiles" in sql_script
         assert "ck_Datafiles_simulated" in sql_script
+        # TODO: extend the test when uniqueness and foreign key constraints are added to SQLite
 
 
 if __name__ == "__main__":
