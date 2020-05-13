@@ -37,11 +37,11 @@ class ViewDataCLITestCase(unittest.TestCase):
             in output
         )
         assert (
-            "| .txt                 | PRIVACY-1      | e_trac_bad.txt |   5261 | None  |\n"
+            "| .txt                 | Public         | e_trac_bad.txt |   5261 | None  |\n"
             in output
         )
         assert (
-            "| .txt                 | PRIVACY-1      | e_trac.txt     |   5315 | None  |\n"
+            "| .txt                 | Public         | e_trac.txt     |   5315 | None  |\n"
             in output
         )
         assert (
