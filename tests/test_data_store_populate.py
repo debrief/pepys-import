@@ -83,7 +83,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
             platform_object = self.store.search_platform("PLATFORM-1")
             datafile_object = self.store.search_datafile("DATAFILE-1")
-            sensor_object = self.store.search_sensor("SENSOR-1")
+            sensor_object = self.store.search_sensor("SENSOR-1", platform_object.platform_id)
 
             # Check whether they are not empty anymore and filled with correct data
             self.assertNotEqual(len(platforms), 0)
@@ -225,7 +225,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
             platform_object = self.store.search_platform("PLATFORM-1")
             datafile_object = self.store.search_datafile("DATAFILE-1")
-            sensor_object = self.store.search_sensor("SENSOR-1")
+            sensor_object = self.store.search_sensor("SENSOR-1", platform_object.platform_id)
 
             # Check whether they are not empty anymore and filled with correct data
             self.assertNotEqual(len(platforms), 0)
