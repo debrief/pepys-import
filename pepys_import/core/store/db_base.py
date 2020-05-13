@@ -14,7 +14,15 @@ meta = MetaData(
         "pk": "pk_%(table_name)s",
     }
 )
-
+meta_postgres = MetaData(
+    naming_convention={
+        "ix": "ix_%(column_0_N_label)s",
+        "uq": "uq_%(table_name)s_%(column_0_N_name)s",
+        "ck": "ck_%(table_name)s_%(constraint_name)s",
+        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+        "pk": "pk_%(table_name)s",
+    }
+)
 # define this as the base for all the DB tables here in a common module
-BasePostGIS = declarative_base()
+BasePostGIS = declarative_base(metadata=meta_postgres)
 BaseSpatiaLite = declarative_base(metadata=meta)
