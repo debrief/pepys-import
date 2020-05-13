@@ -299,7 +299,6 @@ class InitialiseShellTestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.initialise_shell.do_import_reference_data()
             self.initialise_shell.do_import_metadata()
-            self.initialise_shell.do_import_sample_measurements()
             # Clear imported default entities
             self.initialise_shell.do_clear_db_contents()
         output = temp_output.getvalue()
@@ -334,17 +333,6 @@ class InitialiseShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Reference data imported" in output
         assert "Metadata imported" in output
-
-    def test_do_import_sample_measurements(self):
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.initialise_shell.do_import_reference_data()
-            self.initialise_shell.do_import_metadata()
-            self.initialise_shell.do_import_sample_measurements()
-        output = temp_output.getvalue()
-        assert "Reference data imported" in output
-        assert "Metadata imported" in output
-        assert "Sample measurements imported" in output
 
     def test_do_cancel(self):
         temp_output = StringIO()
@@ -452,12 +440,6 @@ class NotInitialisedDBTestCase(unittest.TestCase):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.initialise_shell.do_import_metadata()
-        output = temp_output.getvalue()
-        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
-
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.initialise_shell.do_import_sample_measurements()
         output = temp_output.getvalue()
         assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
 

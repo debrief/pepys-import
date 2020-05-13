@@ -1169,7 +1169,6 @@ class GetMethodsTestCase(unittest.TestCase):
         with self.store.session_scope():
             self.store.populate_reference()
             self.store.populate_metadata()
-            self.store.populate_measurement()
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
     def tearDown(self) -> None:

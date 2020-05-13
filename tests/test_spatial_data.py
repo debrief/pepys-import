@@ -21,7 +21,6 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
         with self.store.session_scope():
             self.store.populate_reference(TEST_DATA_PATH)
             self.store.populate_metadata(TEST_DATA_PATH)
-            self.store.populate_measurement(TEST_DATA_PATH)
 
     def tearDown(self) -> None:
         pass
@@ -90,7 +89,6 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
             with self.store.session_scope():
                 self.store.populate_reference(TEST_DATA_PATH)
                 self.store.populate_metadata(TEST_DATA_PATH)
-                self.store.populate_measurement(TEST_DATA_PATH)
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 
