@@ -10,53 +10,56 @@ importing some files, to checking the contents of the database and exporting som
 
 Follow the instructions at :doc:`installation` to install Pepys.
 
-2. Copy configuration file
---------------------------
-
-Copy the :code:`default_config.ini` file from the root of the Pepys installation, and place it in a
-location of your choice, and rename it to :code:`pepys_config.ini`. Open the file in a text editor
-and observe the configuration under the :code:`[database]` section: this configures which database
-to use. Edit the :code:`db_name` section to include a full path to a database file to create - you
-should ensure that this file does not already exist.
-
-3. Set environment variable
----------------------------
-
-Create a new environment variable called :code:`PEPYS_CONFIG_FILE`, set to the full path to the
-:code:`pepys_config.ini` file that you copied in the previous step. Follow these `instructions
-<https://www.computerhope.com/issues/ch000549.htm>`_ to do this, but rather than editing the
-:code:`PATH` variable, choose to create a *New* variable, and configure the name and value
-appropriately.
-
-4. Run an import using Pepys Import
+2. Run an import using Pepys Import
 -----------------------------------
 
-Navigate to the :code:`tests/sample_data/track_files/gpx` folder inside the Pepys install
-folder. Right click on :code:`gpx_1_0.gpx` and in the *Send To* menu choose :code:`Pepys Import
+Navigate to the :code:`tests/sample_data/track_files/gpx` folder inside the Pepys install folder.
+We're going to be working with a file called :code:`gpx_1_0.gpx`. Right-click thie file and choose
+:code:`Open with` and select to open the file with Notepad. You'll see that this is a text file in a
+XML format called GPX - a format that is commonly used by the handheld GPS trackers popularised by
+cyclists & walkers. The file contains some introductory metadata, followed by 5 position records.
+Pepys contains a series of importer modules, one of which can recognise and load :code:`*.gpx` files.
+
+To run the import, right-click on :code:`gpx_1_0.gpx` and in the *Send To* menu choose :code:`Pepys Import
 (no archive)`. This will tell Pepys to import this GPX file into the database. (If you don't have
-that item in your *Send To* menu, then make sure you ran Step 2 of the :doc:`Installation` instructions.
+that item in your *Send To* menu, then make sure you ran Step 4 of the :doc:`Installation` instructions.)
 
-A command-line window will open, showing the Pepys welcome banner, and then the 'resolver' will
-start asking you questions about bits of the data that it doesn't recognise. For example, it will
-ask you to create a new datafile, and then to create a new platform - as the platform in the GPX
-file wasn't in the database already. Use the number keys to choose an option each time you're asked
-a question, and type in relevant responses where necessary. There is no need to give real answers at
-the moment, this is just a first example.
+A command-line window will open, showing the Pepys welcome banner, followed by a table showing the
+status of the Pepys database before the import was run. As this is your first import, the number of
+rows in each table will be zero.
 
-At the end of the import, a status table will be shown. It should look like this:
+You will then get an interactive interface allowing you to define the metadata for the various
+'objects' that are being imported. In Pepys, these represent real-world objects such as Platforms (a
+vessel such as a ship or submarine), Sensors (some sort of measurement/sensing device on a Platform)
+and Datafiles (a file that is being imported into Pepys). All these objects have metadata associated
+with them. For example, a Platform has a Nationality and a Platform Type, and all objects have a
+Classification for security purposes.
 
-.. code-block:: none
+The first question asks you to provide a classification for the datafile. Choose to :code:`Search an
+existing classification`, and start typing :code:`Private` and you'll see that an autocompletion
+menu pops up. Press Tab to complete what you've typed, and Enter to continue. This will set the
+classification of the datafile to `Private`. You will then be given all the information about the
+datafile, to allow you to confirm everything is set correctly - just choose option `1` to confirm
+and continue.
 
-    | Table name   |   Number of rows | Last item added            |
-    |--------------|------------------|----------------------------|
-    | States       |                5 | 2020-04-02 14:10:59.119746 |
-    | Contacts     |                0 | -                          |
-    | Comments     |                0 | -                          |
-    | Platforms    |                1 | 2020-04-02 14:10:54.507565 |
+The next set of questions are about the Platform. You should choose to add a new platform (option
+:code:`2`), and then you'll be asked for details. It doesn't matter what name or details you give
+it, as this is just an example - but note that some fields are optional. Next is the search for a
+nationality (the nationality :code:`UK` is already defined for you), and you can add a new Platform
+Type of :code:`Frigate`. Finally, you'll be asked for a classification for the platform - again, you
+can just select the existing classification :code:`Private`.
 
-*Note:* The dates will be different in your example, but the number of rows should be the same.
+The next stage is entering data about the sensor used to collect the data that we're importing. In
+this case, we're importing a GPX file, which is a file format used by GPS systems - so the sensor
+name is pre-filled as :code:`GPS`. So, choose to add a new sensor (option :code:`2`), add a
+classification and confirm the details are correct.
 
-5. Check the database status using Pepys Admin
+You've now finished adding metadata, and the import itself will take place and a progress bar will
+(very quickly) move up to 100% completed. You will then see a summary of the database status after
+the import - it should show 5 States, and 1 Platform are now in the database. This matches our
+expectations from the datafile - it had 5 position reports, and they were all about one platform.
+
+3. Check the database status using Pepys Admin
 ----------------------------------------------
 
 Run *Pepys Admin* from the Start Menu (you can either navigate to the *Pepys* folder and choose
@@ -69,7 +72,17 @@ configuration file). Choose option :code:`(2) Status`. Summary tables will be di
 number of rows of different types in the database: it should show that there are 5 States, plus a
 single Sensor, Platform, Datafile and Change, and 15 Changes.
 
-6. Export a data file using Pepys Admin
+4. Try to import the same file again
+------------------------------------
+
+Pepys keeps track of which files have been imported already, so that we don't accidentally import
+them multiple times. In this case, there is already an entry in the Datafiles table for the
+`gpx_1_0.gpx` file that we just imported, so if we try and import it again we'll just get a message
+telling us it has already been imported (note: the date and time given in the message is in UTC, so
+may be different to your local time). Try this by doing exactly what you did before: right-click on
+:code:`gpx_1_0.gpx` and in the *Send To* menu choose :code:`Pepys Import (no archive)`.
+
+5. Export a data file using Pepys Admin
 ---------------------------------------
 
 Now choose option :code:`(4) Export by Platform and sensor`. You will need to select a platform -
@@ -79,7 +92,7 @@ the default value for the output filename. You should then see a message saying 
 successfully exported to exported_GPX.rep.`. Exit Pepys Admin by choosing option :code:`(0) Exit`.
 
 If you open the file :code:`exported_GPX.rep` in a text editor, you should see contents like the
-following:
+following (here we chose :code:`NELSON` as the name of the platform):
 
 .. code-block:: none
 
@@ -89,7 +102,7 @@ following:
     120427 163238.000	NELSON	AA	22 11 10.63 N	021 35 52.3702 W	0	18.47	0.0
     120427 163338.000	NELSON	AA	22 23 10.63 N	021 11 52.3702 W	0	6.80	0.0
 
-7. Import a file with errors
+6. Import a file with errors
 ----------------------------
 
 First, copy the entire :code:`track_files` folder from :code:`tests\sample_data` in the Pepys
@@ -137,7 +150,7 @@ you open this file in a text editor, you will see contents like:
 The two errors are saying that specific lines of the input file don't have enough tokens for
 processing to succeed.
 
-8. Fix the errors and re-import
+7. Fix the errors and re-import
 -------------------------------
 
 To fix the errors in the file, open :code:`track_files_test\rep_data\rep_test1_bad.rep`
@@ -167,7 +180,7 @@ This shows that three different importers have operated on this file, importing 
 the file. To see exactly which bits of the file were imported by which importer, open the HTML file
 and hover over the highlighted parts.
 
-9. Check the SQLite database itself
+8. Check the SQLite database itself
 -----------------------------------
 
 To examine the contents of the SQLite database directly, download and install `DB Browser for SQLite
@@ -180,7 +193,7 @@ and then look through the tables. An example of the States table is shown below:
 *Note:* Some of the values may look strange, but that is because the database stores values in SI units
 - so speeds are stored in metres per second, and angles in radians.
 
-10. Clean up
+9. Clean up
 ------------
 
 Delete the :code:`track_files_test` and :code:`archive` folders in the root of the Pepys install folder.
