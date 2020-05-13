@@ -44,9 +44,12 @@ class GPXTests(unittest.TestCase):
             states = self.store.session.query(self.store.db_classes.State).all()
             assert len(states) == 27
 
-            # there must be platforms after the import
+            # there must be a platform after import
+            # (Note: as the platform name is no longer imported from the track name,
+            # all files will have the same platform name - the default one generated
+            # by the default resolver)
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 3
+            assert len(platforms) == 1
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()

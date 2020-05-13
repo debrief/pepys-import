@@ -185,18 +185,11 @@ class ReplayContactImporter(Importer):
                 location = loc
 
             platform = data_store.get_platform(
-                platform_name=vessel_name_token.text,
-                nationality="UK",
-                platform_type="Fisher",
-                privacy="Public",
-                change_id=change_id,
+                platform_name=vessel_name_token.text, change_id=change_id,
             )
             vessel_name_token.record(self.name, "vessel name", vessel_name_token.text)
             sensor = platform.get_sensor(
-                data_store=data_store,
-                sensor_name=sensor_name.text,
-                privacy=None,
-                change_id=change_id,
+                data_store=data_store, sensor_name=sensor_name.text, change_id=change_id,
             )
 
             timestamp = parse_timestamp(date_token.text, time_token.text)
