@@ -445,6 +445,9 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
+    sensor_ = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+    sensor__name = association_proxy("sensor_", "name")
+
     subject = relationship("Platform", lazy="joined", join_depth=1, uselist=False)
     subject_name = association_proxy("subject", "name")
 
