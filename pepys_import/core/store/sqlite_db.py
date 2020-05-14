@@ -36,6 +36,19 @@ class HostedBy(BaseSpatiaLite):
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    subject = relationship(
+        "Platform", lazy="joined", join_depth=1, uselist=False, foreign_keys=[subject_id]
+    )
+    subject_name = association_proxy("subject", "name")
+
+    host = relationship(
+        "Platform", lazy="joined", join_depth=1, uselist=False, foreign_keys=[host_id]
+    )
+    host_name = association_proxy("host", "name")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
+
 
 class Sensor(BaseSpatiaLite, SensorMixin):
     __tablename__ = constants.SENSOR
@@ -47,7 +60,7 @@ class Sensor(BaseSpatiaLite, SensorMixin):
     sensor_type_id = Column(Integer, ForeignKey("SensorTypes.sensor_type_id"), nullable=False)
     host = Column(Integer, ForeignKey("Platforms.platform_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
-    created_date = deferred(Column(DateTime, default=datetime.utcnow))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
     sensor_type = relationship(
         "SensorType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
@@ -74,7 +87,7 @@ class Platform(BaseSpatiaLite, PlatformMixin):
     nationality_id = Column(Integer, ForeignKey("Nationalities.nationality_id"), nullable=False)
     platform_type_id = Column(Integer, ForeignKey("PlatformTypes.platform_type_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
-    created_date = deferred(Column(DateTime, default=datetime.utcnow))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
     platform_type = relationship(
         "PlatformType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
@@ -100,10 +113,16 @@ class Task(BaseSpatiaLite):
     parent_id = Column(Integer, ForeignKey("Tasks.task_id"), nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
-    environment = Column(String(150))
-    location = Column(String(150))
+    environment = deferred(Column(String(150)))
+    location = deferred(Column(String(150)))
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    parent = relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    parent_name = association_proxy("parent", "name")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
 
 
 class Participant(BaseSpatiaLite):
@@ -119,6 +138,12 @@ class Participant(BaseSpatiaLite):
     force = Column(String(150))
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    task = relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    task_name = association_proxy("task", "name")
+
+    platform = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    platform_name = association_proxy("platform", "name")
 
 
 class Datafile(BaseSpatiaLite, DatafileMixin):
@@ -136,7 +161,7 @@ class Datafile(BaseSpatiaLite, DatafileMixin):
     datafile_type_id = Column(Integer, ForeignKey("DatafileTypes.datafile_type_id"), nullable=False)
     reference = Column(String(150))
     url = Column(String(150))
-    size = Column(Integer, nullable=False)
+    size = deferred(Column(Integer, nullable=False))
     hash = deferred(Column(String(32), nullable=False))
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
@@ -392,11 +417,13 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     state_id = Column(Integer, primary_key=True)
     time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(Integer, ForeignKey("Sensors.sensor_id"), nullable=False)
-    _location = Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
-    _elevation = Column("elevation", REAL)
-    _heading = Column("heading", REAL)
-    _course = Column("course", REAL)
-    _speed = Column("speed", REAL)
+    _location = deferred(
+        Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+    )
+    _elevation = deferred(Column("elevation", REAL))
+    _heading = deferred(Column("heading", REAL))
+    _course = deferred(Column("course", REAL))
+    _speed = deferred(Column("speed", REAL))
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
@@ -425,21 +452,23 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     name = Column(String(150))
     sensor_id = Column(Integer, ForeignKey("Sensors.sensor_id"), nullable=False)
     time = Column(TIMESTAMP, nullable=False)
-    _bearing = Column("bearing", REAL)
-    _rel_bearing = Column("rel_bearing", REAL)
-    _ambig_bearing = Column("ambig_bearing", REAL)
-    _freq = Column("freq", REAL)
-    _range = Column("range", REAL)
-    _location = Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
-    _elevation = Column("elevation", REAL)
-    _major = Column("major", REAL)
-    _minor = Column("minor", REAL)
-    _orientation = Column("orientation", REAL)
-    classification = Column(String(150))
-    confidence = Column(String(150))
-    contact_type = Column(String(150))
-    _mla = Column("mla", REAL)
-    _soa = Column("soa", REAL)
+    _bearing = deferred(Column("bearing", REAL))
+    _rel_bearing = deferred(Column("rel_bearing", REAL))
+    _ambig_bearing = deferred(Column("ambig_bearing", REAL))
+    _freq = deferred(Column("freq", REAL))
+    _range = deferred(Column("range", REAL))
+    _location = deferred(
+        Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+    )
+    _elevation = deferred(Column("elevation", REAL))
+    _major = deferred(Column("major", REAL))
+    _minor = deferred(Column("minor", REAL))
+    _orientation = deferred(Column("orientation", REAL))
+    classification = deferred(Column(String(150)))
+    confidence = deferred(Column(String(150)))
+    contact_type = deferred(Column(String(150)))
+    _mla = deferred(Column("mla", REAL))
+    _soa = deferred(Column("soa", REAL))
     subject_id = Column(Integer, ForeignKey("Platforms.platform_id"))
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
@@ -466,15 +495,21 @@ class Activation(BaseSpatiaLite, ActivationMixin):
     activation_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
     sensor_id = Column(Integer, ForeignKey("Sensors.sensor_id"), nullable=False)
-    start = Column(TIMESTAMP, nullable=False)
-    end = Column(TIMESTAMP, nullable=False)
-    _min_range = Column("min_range", REAL)
-    _max_range = Column("max_range", REAL)
-    _left_arc = Column("left_arc", REAL)
-    _right_arc = Column("right_arc", REAL)
+    start = deferred(Column(TIMESTAMP, nullable=False))
+    end = deferred(Column(TIMESTAMP, nullable=False))
+    _min_range = deferred(Column("min_range", REAL))
+    _max_range = deferred(Column("max_range", REAL))
+    _left_arc = deferred(Column("left_arc", REAL))
+    _right_arc = deferred(Column("right_arc", REAL))
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    sensor = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+    sensor_name = association_proxy("sensor", "name")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
 
 
 class LogsHolding(BaseSpatiaLite):
@@ -484,7 +519,7 @@ class LogsHolding(BaseSpatiaLite):
 
     logs_holding_id = Column(Integer, primary_key=True)
     time = Column(TIMESTAMP, nullable=False)
-    commodity_id = Column(Integer, nullable=False)
+    commodity_id = Column(Integer, ForeignKey("CommodityTypes.commodity_type_id"), nullable=False)
     quantity = Column(REAL, nullable=False)
     unit_type_id = Column(Integer, ForeignKey("UnitTypes.unit_type_id"), nullable=False)
     platform_id = Column(Integer, ForeignKey("Platforms.platform_id"), nullable=False)
@@ -492,6 +527,23 @@ class LogsHolding(BaseSpatiaLite):
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    source = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+    source_reference = association_proxy("source", "reference")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
+
+    platform = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    platform_name = association_proxy("platform", "name")
+
+    unit_type = relationship("UnitType", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    unit_type_name = association_proxy("unit_type", "name")
+
+    commodity_type = relationship(
+        "CommodityType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+    )
+    commodity_type_name = association_proxy("commodity_type", "name")
 
 
 class Comment(BaseSpatiaLite):
@@ -534,7 +586,7 @@ class Geometry1(BaseSpatiaLite):
     table_type_id = 33
 
     geometry_id = Column(Integer, primary_key=True)
-    geometry = Column(Geometry(geometry_type="GEOMETRY", management=True), nullable=False)
+    geometry = deferred(Column(Geometry(geometry_type="GEOMETRY", management=True), nullable=False))
     name = Column(String(150), nullable=False)
     geo_type_id = Column(Integer, ForeignKey("GeometryTypes.geo_type_id"), nullable=False)
     geo_sub_type_id = Column(
@@ -549,6 +601,42 @@ class Geometry1(BaseSpatiaLite):
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    subject_platform = relationship(
+        "Platform",
+        lazy="joined",
+        join_depth=1,
+        innerjoin=True,
+        uselist=False,
+        foreign_keys=[subject_platform_id],
+    )
+    subject_platform_name = association_proxy("subject_platform", "name")
+
+    sensor_platform = relationship(
+        "Platform",
+        lazy="joined",
+        join_depth=1,
+        innerjoin=True,
+        uselist=False,
+        foreign_keys=[sensor_platform_id],
+    )
+    sensor_platform_name = association_proxy("sensor_platform", "name")
+
+    geometry_type = relationship(
+        "GeometryType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+    )
+    geometry_type_name = association_proxy("geometry_type", "name")
+
+    geometry_sub_type = relationship(
+        "GeometrySubType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+    )
+    geometry_sub_type_name = association_proxy("geometry_sub_type", "name")
+
+    source = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+    source_reference = association_proxy("source", "reference")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
+
 
 class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationPropertyMixin):
     __tablename__ = constants.MEDIA
@@ -559,11 +647,47 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
     platform_id = Column(Integer, ForeignKey("Platforms.platform_id"))
     subject_id = Column(Integer, ForeignKey("Platforms.platform_id"))
     sensor_id = Column(Integer, ForeignKey("Sensors.sensor_id"))
-    _location = Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
-    _elevation = Column("elevation", REAL)
+    _location = deferred(
+        Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+    )
+    _elevation = deferred(Column("elevation", REAL))
     time = Column(TIMESTAMP)
-    media_type_id = Column(Integer, nullable=False)
-    url = Column(String(150), nullable=False)
+    media_type_id = Column(Integer, ForeignKey("MediaTypes.media_type_id"), nullable=False)
+    url = deferred(Column(String(150), nullable=False))
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    media_type = relationship(
+        "MediaType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+    )
+    media_type_name = association_proxy("media_type", "name")
+
+    sensor = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+    sensor_name = association_proxy("sensor", "name")
+
+    platform = relationship(
+        "Platform",
+        lazy="joined",
+        join_depth=1,
+        innerjoin=True,
+        uselist=False,
+        foreign_keys=[platform_id],
+    )
+    platform_name = association_proxy("platform", "name")
+
+    subject = relationship(
+        "Platform",
+        lazy="joined",
+        join_depth=1,
+        innerjoin=True,
+        uselist=False,
+        foreign_keys=[subject_id],
+    )
+    subject_name = association_proxy("subject", "name")
+
+    source = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+    source_reference = association_proxy("source", "reference")
+
+    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+    privacy_name = association_proxy("privacy", "name")
