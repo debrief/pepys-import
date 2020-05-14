@@ -58,8 +58,14 @@ class ViewDataShell(cmd.Cmd):
             ]
         selected_table = iterfzf(table_names)
         # Table names are plural in the database, therefore make it singular
-        if selected_table == "alembic_version":
-            table = "alembic_version"
+        if (
+            selected_table == "alembic_version"
+            or selected_table == "HostedBy"
+            or selected_table == "Media"
+        ):
+            table = selected_table
+        elif selected_table == "Geometries":
+            table = "Geometry1"
         elif selected_table.endswith("ies"):
             table = selected_table[:-3] + "y"
         else:
@@ -71,10 +77,8 @@ class ViewDataShell(cmd.Cmd):
         # Inspect the class using mapper
         mapper = class_mapper(table_cls)
         for column, column_property in zip(mapper.columns, mapper.column_attrs):
-            if column.primary_key is True:
-                primary_key_field = column.key
             # Skip RelationshipProperty instances, because their associated attributes are going to be printed
-            if isinstance(column_property, RelationshipProperty):
+            if column.primary_key is True or isinstance(column_property, RelationshipProperty):
                 continue
             # Take only if column is not a foreign key and it is not deferred
             if column_property.deferred is False and not column.foreign_keys:
@@ -83,7 +87,8 @@ class ViewDataShell(cmd.Cmd):
         for descriptor in mapper.all_orm_descriptors:
             if isinstance(descriptor, AssociationProxy):
                 name = f"{descriptor.target_collection}_{descriptor.value_attr}"
-                associated_attributes.append(name)
+                if name != "privacy_name":
+                    associated_attributes.append(name)
         # Fetch first 10 rows, create a table from these rows
         with self.data_store.session_scope():
             values = (
@@ -94,20 +99,10 @@ class ViewDataShell(cmd.Cmd):
             )
             headers.extend(associated_attributes)
             # Sort headers, put primary key to the first column
-            headers.remove(primary_key_field)
             headers.sort()
-            headers.insert(0, primary_key_field)
             res = f"{selected_table}\n"
             res += tabulate(
-                [
-                    [
-                        str(getattr(row, column))[-10:]
-                        if column == primary_key_field
-                        else str(getattr(row, column))
-                        for column in headers
-                    ]
-                    for row in values
-                ],
+                [[str(getattr(row, column)) for column in headers] for row in values],
                 headers=headers,
                 tablefmt="github",
                 floatfmt=".3f",
