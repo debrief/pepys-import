@@ -25,7 +25,9 @@ class TableSummary:
         number_of_rows = self.session.query(self.table).count()
         last_row = (
             self.session.query(self.table)
-            .options(undefer("*"))
+            .options(
+                undefer("*")
+            )  # Fetch all attributes to enforce to failing if there is any mismatch
             .order_by(self.table.created_date.desc())
             .first()
         )

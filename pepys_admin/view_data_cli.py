@@ -101,7 +101,7 @@ class ViewDataShell(cmd.Cmd):
                 .all()
             )
             headers.extend(associated_attributes)
-            # Sort headers, put primary key to the first column
+            # Sort headers
             headers.sort()
             res = f"{selected_table}\n"
             res += tabulate(

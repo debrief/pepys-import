@@ -3,8 +3,9 @@ from datetime import datetime
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
-from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import deferred, relationship
+from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
+    deferred,
+)
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
