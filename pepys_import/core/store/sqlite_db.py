@@ -374,7 +374,7 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     _speed = deferred(Column("speed", REAL))
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
-    created_date = deferred(Column(DateTime, default=datetime.utcnow))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
