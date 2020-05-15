@@ -32,21 +32,10 @@ class ViewDataCLITestCase(unittest.TestCase):
         output = temp_output.getvalue()
         print(output)
         assert "Datafiles\n" in output
-        assert (
-            "|   datafile_id | datafile_type_name   | privacy_name   | reference      |   size | url   |\n"
-            in output
-        )
-        assert (
-            "| .txt                 | Public         | e_trac_bad.txt |   5261 | None  |\n"
-            in output
-        )
-        assert (
-            "| .txt                 | Public         | e_trac.txt     |   5315 | None  |\n"
-            in output
-        )
-        assert (
-            "| .log                 | Private        | NMEA_bad.log   |    243 | None  |" in output
-        )
+        assert "| datafile_type_name   | reference      | url   |\n" in output
+        assert "| .txt                 | e_trac_bad.txt | None  |\n" in output
+        assert "| .txt                 | e_trac.txt     | None  |\n" in output
+        assert "| .log                 | NMEA_bad.log   | None  |" in output
 
     @patch("pepys_admin.view_data_cli.prompt", return_value="SELECT * FROM Datafiles;")
     def test_do_run_sql(self, patched_prompt):
