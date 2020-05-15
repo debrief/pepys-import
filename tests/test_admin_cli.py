@@ -17,6 +17,7 @@ from pepys_admin.admin_cli import AdminShell
 from pepys_admin.cli import run_admin_shell
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
+from pepys_admin.view_data_cli import ViewDataShell
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.utils.data_store_utils import is_schema_created
@@ -245,6 +246,17 @@ class AdminCLITestCase(unittest.TestCase):
         assert comments_text in output
         assert datafiles_text in output
 
+    @patch("cmd.input", return_value="0")
+    def test_do_view_data(self, patched_input):
+        view_data_shell = ViewDataShell(self.store)
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_view_data()
+        output = temp_output.getvalue()
+        # Assert that Admin Shell redirects to the view data menu
+        assert view_data_shell.intro in output
+
     def test_do_exit(self):
         temp_output = StringIO()
         with pytest.raises(SystemExit), redirect_stdout(temp_output):
@@ -446,6 +458,12 @@ class NotInitialisedDBTestCase(unittest.TestCase):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.admin_shell.do_export_by_platform_name()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_view_data()
         output = temp_output.getvalue()
         assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
 
