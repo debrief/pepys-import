@@ -9,21 +9,29 @@ from sqlalchemy.orm import deferred, relationship
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
     ActivationMixin,
+    CommentMixin,
     ContactMixin,
     DatafileMixin,
     ElevationPropertyMixin,
+    GeometryMixin,
+    HostedByMixin,
     LocationPropertyMixin,
+    LogMixin,
+    LogsHoldingMixin,
     MediaMixin,
+    ParticipantMixin,
     PlatformMixin,
     SensorMixin,
     StateMixin,
+    TaggedItemMixin,
+    TaskMixin,
 )
 from pepys_import.core.store.db_base import BaseSpatiaLite
 from pepys_import.core.store.db_status import TableTypes
 
 
 # Metadata Tables
-class HostedBy(BaseSpatiaLite):
+class HostedBy(BaseSpatiaLite, HostedByMixin):
     __tablename__ = constants.HOSTED_BY
     table_type = TableTypes.METADATA
     table_type_id = 1
@@ -35,19 +43,6 @@ class HostedBy(BaseSpatiaLite):
     host_to = Column(DATE, nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    subject = relationship(
-        "Platform", lazy="joined", join_depth=1, uselist=False, foreign_keys=[subject_id]
-    )
-    subject_name = association_proxy("subject", "name")
-
-    host = relationship(
-        "Platform", lazy="joined", join_depth=1, uselist=False, foreign_keys=[host_id]
-    )
-    host_name = association_proxy("host", "name")
-
-    privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    privacy_name = association_proxy("privacy", "name")
 
 
 class Sensor(BaseSpatiaLite, SensorMixin):
@@ -61,17 +56,6 @@ class Sensor(BaseSpatiaLite, SensorMixin):
     host = Column(Integer, ForeignKey("Platforms.platform_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    sensor_type = relationship(
-        "SensorType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-    )
-    sensor_type_name = association_proxy("sensor_type", "name")
-
-    host_ = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    host__name = association_proxy("host_", "name")
-
-    privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    privacy_name = association_proxy("privacy", "name")
 
 
 class Platform(BaseSpatiaLite, PlatformMixin):
@@ -89,21 +73,8 @@ class Platform(BaseSpatiaLite, PlatformMixin):
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    platform_type = relationship(
-        "PlatformType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-    )
-    platform_type_name = association_proxy("platform_type", "name")
 
-    nationality = relationship(
-        "Nationality", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-    )
-    nationality_name = association_proxy("nationality", "name")
-
-    privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    privacy_name = association_proxy("privacy", "name")
-
-
-class Task(BaseSpatiaLite):
+class Task(BaseSpatiaLite, TaskMixin):
     __tablename__ = constants.TASK
     table_type = TableTypes.METADATA
     table_type_id = 4
@@ -118,14 +89,8 @@ class Task(BaseSpatiaLite):
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    parent = relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    parent_name = association_proxy("parent", "name")
 
-    privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    privacy_name = association_proxy("privacy", "name")
-
-
-class Participant(BaseSpatiaLite):
+class Participant(BaseSpatiaLite, ParticipantMixin):
     __tablename__ = constants.PARTICIPANT
     table_type = TableTypes.METADATA
     table_type_id = 5
@@ -138,12 +103,6 @@ class Participant(BaseSpatiaLite):
     force = Column(String(150))
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    task = relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    task_name = association_proxy("task", "name")
-
-    platform = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    platform_name = association_proxy("platform", "name")
 
 
 class Datafile(BaseSpatiaLite, DatafileMixin):
@@ -163,15 +122,7 @@ class Datafile(BaseSpatiaLite, DatafileMixin):
     url = Column(String(150))
     size = deferred(Column(Integer, nullable=False))
     hash = deferred(Column(String(32), nullable=False))
-    created_date = deferred(Column(DateTime, default=datetime.utcnow))
-
-    privacy = relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    privacy_name = association_proxy("privacy", "name")
-
-    datafile_type = relationship(
-        "DatafileType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-    )
-    datafile_type_name = association_proxy("datafile_type", "name")
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Synonym(BaseSpatiaLite):
@@ -198,7 +149,7 @@ class Change(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Log(BaseSpatiaLite):
+class Log(BaseSpatiaLite, LogMixin):
     __tablename__ = constants.LOG
     table_type = TableTypes.METADATA
     table_type_id = 9
@@ -210,9 +161,6 @@ class Log(BaseSpatiaLite):
     new_value = Column(String(150))
     change_id = Column(Integer, ForeignKey("Changes.change_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    change = relationship("Change", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    change_reason = association_proxy("change", "reason")
 
 
 class Extraction(BaseSpatiaLite):
@@ -237,7 +185,7 @@ class Tag(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class TaggedItem(BaseSpatiaLite):
+class TaggedItem(BaseSpatiaLite, TaggedItemMixin):
     __tablename__ = constants.TAGGED_ITEM
     table_type = TableTypes.METADATA
     table_type_id = 12
@@ -428,15 +376,6 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
-    sensor_ = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
-    sensor__name = association_proxy("sensor_", "name")
-
-    source = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
-    source_reference = association_proxy("source", "reference")
-
-    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
-    privacy_name = association_proxy("privacy", "name")
-
 
 class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
     def __init__(self, *args, **kwargs):
@@ -474,18 +413,6 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
-    sensor_ = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
-    sensor__name = association_proxy("sensor_", "name")
-
-    subject = relationship("Platform", lazy="joined", join_depth=1, uselist=False)
-    subject_name = association_proxy("subject", "name")
-
-    datafile = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
-    datafile_reference = association_proxy("datafile", "reference")
-
-    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
-    privacy_name = association_proxy("privacy", "name")
-
 
 class Activation(BaseSpatiaLite, ActivationMixin):
     __tablename__ = constants.ACTIVATION
@@ -505,14 +432,8 @@ class Activation(BaseSpatiaLite, ActivationMixin):
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    sensor = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
-    sensor_name = association_proxy("sensor", "name")
 
-    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
-    privacy_name = association_proxy("privacy", "name")
-
-
-class LogsHolding(BaseSpatiaLite):
+class LogsHolding(BaseSpatiaLite, LogsHoldingMixin):
     __tablename__ = constants.LOGS_HOLDING
     table_type = TableTypes.MEASUREMENT
     table_type_id = 31
@@ -528,25 +449,8 @@ class LogsHolding(BaseSpatiaLite):
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    source = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
-    source_reference = association_proxy("source", "reference")
 
-    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
-    privacy_name = association_proxy("privacy", "name")
-
-    platform = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    platform_name = association_proxy("platform", "name")
-
-    unit_type = relationship("UnitType", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    unit_type_name = association_proxy("unit_type", "name")
-
-    commodity_type = relationship(
-        "CommodityType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-    )
-    commodity_type_name = association_proxy("commodity_type", "name")
-
-
-class Comment(BaseSpatiaLite):
+class Comment(BaseSpatiaLite, CommentMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sensor_name = None
@@ -563,24 +467,10 @@ class Comment(BaseSpatiaLite):
     content = Column(String(150), nullable=False)
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
-    created_date = deferred(Column(DateTime, default=datetime.utcnow))
-
-    platform_ = relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
-    platform__name = association_proxy("platform_", "name")
-
-    comment_type = relationship(
-        "CommentType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-    )
-    comment_type_name = association_proxy("comment_type", "name")
-
-    source = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
-    source_reference = association_proxy("source", "reference")
-
-    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
-    privacy_name = association_proxy("privacy", "name")
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Geometry1(BaseSpatiaLite):
+class Geometry1(BaseSpatiaLite, GeometryMixin):
     __tablename__ = constants.GEOMETRY
     table_type = TableTypes.MEASUREMENT
     table_type_id = 33
@@ -594,48 +484,12 @@ class Geometry1(BaseSpatiaLite):
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    task_id = Column(Integer)
+    task_id = Column(Integer, ForeignKey("Tasks.task_id"))
     subject_platform_id = Column(Integer, ForeignKey("Platforms.platform_id"))
     sensor_platform_id = Column(Integer, ForeignKey("Platforms.platform_id"))
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    subject_platform = relationship(
-        "Platform",
-        lazy="joined",
-        join_depth=1,
-        innerjoin=True,
-        uselist=False,
-        foreign_keys=[subject_platform_id],
-    )
-    subject_platform_name = association_proxy("subject_platform", "name")
-
-    sensor_platform = relationship(
-        "Platform",
-        lazy="joined",
-        join_depth=1,
-        innerjoin=True,
-        uselist=False,
-        foreign_keys=[sensor_platform_id],
-    )
-    sensor_platform_name = association_proxy("sensor_platform", "name")
-
-    geometry_type = relationship(
-        "GeometryType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-    )
-    geometry_type_name = association_proxy("geometry_type", "name")
-
-    geometry_sub_type = relationship(
-        "GeometrySubType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-    )
-    geometry_sub_type_name = association_proxy("geometry_sub_type", "name")
-
-    source = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
-    source_reference = association_proxy("source", "reference")
-
-    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
-    privacy_name = association_proxy("privacy", "name")
 
 
 class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationPropertyMixin):
@@ -657,37 +511,3 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
     source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
-
-    media_type = relationship(
-        "MediaType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-    )
-    media_type_name = association_proxy("media_type", "name")
-
-    sensor = relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
-    sensor_name = association_proxy("sensor", "name")
-
-    platform = relationship(
-        "Platform",
-        lazy="joined",
-        join_depth=1,
-        innerjoin=True,
-        uselist=False,
-        foreign_keys=[platform_id],
-    )
-    platform_name = association_proxy("platform", "name")
-
-    subject = relationship(
-        "Platform",
-        lazy="joined",
-        join_depth=1,
-        innerjoin=True,
-        uselist=False,
-        foreign_keys=[subject_id],
-    )
-    subject_name = association_proxy("subject", "name")
-
-    source = relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
-    source_reference = association_proxy("source", "reference")
-
-    privacy = relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
-    privacy_name = association_proxy("privacy", "name")
