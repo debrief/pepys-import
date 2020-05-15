@@ -244,7 +244,7 @@ class PlatformType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     platform_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -255,7 +255,7 @@ class Nationality(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     nationality_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -266,7 +266,7 @@ class GeometryType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     geo_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -277,7 +277,7 @@ class GeometrySubType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     geo_sub_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     # parent = Column(UUID(as_uuid=True), ForeignKey("pepys.GeometryTypes.geometry_type_id"))
     parent = Column(UUID, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -290,7 +290,7 @@ class User(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -301,7 +301,7 @@ class UnitType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     unit_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    units = Column(String(150), nullable=False)
+    units = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -312,7 +312,7 @@ class ClassificationType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     class_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    class_type = Column(String(150), nullable=False)
+    class_type = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -323,7 +323,7 @@ class ContactType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     contact_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    contact_type = Column(String(150), nullable=False)
+    contact_type = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -334,7 +334,7 @@ class SensorType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     sensor_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -345,7 +345,7 @@ class Privacy(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     privacy_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -356,7 +356,7 @@ class DatafileType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     datafile_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -367,7 +367,7 @@ class MediaType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     media_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -378,7 +378,7 @@ class CommentType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     comment_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -389,7 +389,7 @@ class CommodityType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     commodity_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -400,7 +400,7 @@ class ConfidenceLevel(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     confidence_level_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    level = Column(String(150), nullable=False)
+    level = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
