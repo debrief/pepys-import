@@ -5,6 +5,7 @@ from prompt_toolkit import HTML, prompt
 from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.sql import SqlLexer
 from sqlalchemy import inspect
+from sqlalchemy.exc import InvalidRequestError, OperationalError, ProgrammingError
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import RelationshipProperty, class_mapper, load_only
 from tabulate import tabulate
@@ -118,8 +119,17 @@ class ViewDataShell(cmd.Cmd):
         )
         if query:
             with self.data_store.engine.connect() as connection:
-                result = connection.execute(query)
-                result = result.fetchall()
+                try:
+                    result = connection.execute(query)
+                    result = result.fetchall()
+                except (ProgrammingError, OperationalError, InvalidRequestError,) as e:
+                    print(
+                        f"SQL Exception details: {e}\n\n"
+                        "ERROR: Query couldn't be executed successfully.\n"
+                        "See above for the full error from SQLAlchemy."
+                    )
+                    return
+
             res = f"QUERY\n{'-' * 20}\n{query}\n{'-' * 20}\nRESULT\n"
             res += tabulate(
                 [[str(column) for column in row] for row in result],
