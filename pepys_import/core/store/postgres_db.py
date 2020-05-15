@@ -539,7 +539,7 @@ class Comment(BasePostGIS, CommentMixin):
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
-    created_date = deferred(Column(DateTime, default=datetime.utcnow))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Geometry1(BasePostGIS, GeometryMixin):
