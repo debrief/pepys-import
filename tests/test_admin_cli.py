@@ -479,6 +479,12 @@ class NotInitialisedDBTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
 
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_view_data()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
 
 class ExportByPlatformNameShellTestCase(unittest.TestCase):
     def setUp(self) -> None:
