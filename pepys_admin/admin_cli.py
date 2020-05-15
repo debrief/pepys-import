@@ -9,7 +9,6 @@ from iterfzf import iterfzf
 from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion.filesystem import PathCompleter
 
-from config import DB_TYPE
 from paths import ROOT_DIRECTORY
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
@@ -50,7 +49,8 @@ class AdminShell(cmd.Cmd):
         self.cfg = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
         script_location = os.path.join(ROOT_DIRECTORY, "migrations")
         self.cfg.set_main_option("script_location", script_location)
-        self.cfg.attributes["db_type"] = DB_TYPE
+        self.cfg.attributes["db_type"] = data_store.db_type
+        self.cfg.attributes["connection"] = data_store.engine
 
     def do_export(self):
         """Start the export process"""
