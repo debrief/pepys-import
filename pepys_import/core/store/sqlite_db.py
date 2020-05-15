@@ -196,7 +196,7 @@ class PlatformType(BaseSpatiaLite):
     table_type_id = 13
 
     platform_type_id = Column(Integer, primary_key=True)
-    name = Column(String(150))
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -206,7 +206,7 @@ class Nationality(BaseSpatiaLite):
     table_type_id = 14
 
     nationality_id = Column(Integer, primary_key=True)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -216,7 +216,7 @@ class GeometryType(BaseSpatiaLite):
     table_type_id = 15
 
     geo_type_id = Column(Integer, primary_key=True)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -226,7 +226,7 @@ class GeometrySubType(BaseSpatiaLite):
     table_type_id = 16
 
     geo_sub_type_id = Column(Integer, primary_key=True)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     parent = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -237,7 +237,7 @@ class User(BaseSpatiaLite):
     table_type_id = 17
 
     user_id = Column(Integer, primary_key=True)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -247,7 +247,7 @@ class UnitType(BaseSpatiaLite):
     table_type_id = 18
 
     unit_type_id = Column(Integer, primary_key=True)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -257,7 +257,7 @@ class ClassificationType(BaseSpatiaLite):
     table_type_id = 19
 
     class_type_id = Column(Integer, primary_key=True)
-    class_type = Column(String(150), nullable=False)
+    class_type = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -267,7 +267,7 @@ class ContactType(BaseSpatiaLite):
     table_type_id = 20
 
     contact_type_id = Column(Integer, primary_key=True)
-    contact_type = Column(String(150), nullable=False)
+    contact_type = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -277,7 +277,7 @@ class SensorType(BaseSpatiaLite):
     table_type_id = 21
 
     sensor_type_id = Column(Integer, primary_key=True)
-    name = Column(String(150))
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -287,7 +287,7 @@ class Privacy(BaseSpatiaLite):
     table_type_id = 22
 
     privacy_id = Column(Integer, primary_key=True)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -297,7 +297,7 @@ class DatafileType(BaseSpatiaLite):
     table_type_id = 23
 
     datafile_type_id = Column(Integer, primary_key=True)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -307,7 +307,7 @@ class MediaType(BaseSpatiaLite):
     table_type_id = 24
 
     media_type_id = Column(Integer, primary_key=True)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -317,7 +317,7 @@ class CommentType(BaseSpatiaLite):
     table_type_id = 25
 
     comment_type_id = Column(Integer, primary_key=True)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -327,7 +327,7 @@ class CommodityType(BaseSpatiaLite):
     table_type_id = 26
 
     commodity_type_id = Column(Integer, primary_key=True)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -337,7 +337,7 @@ class ConfidenceLevel(BaseSpatiaLite):
     table_type_id = 27
 
     confidence_level_id = Column(Integer, primary_key=True)
-    level = Column(String(150), nullable=False)
+    level = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
