@@ -97,7 +97,7 @@ class ViewDataShell(cmd.Cmd):
             values = (
                 self.data_store.session.query(table_cls)
                 .options(load_only(*headers))
-                .limit(10)
+                .limit(50)
                 .all()
             )
             headers.extend(associated_attributes)
