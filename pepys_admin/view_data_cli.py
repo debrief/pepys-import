@@ -12,7 +12,7 @@ from tabulate import tabulate
 
 
 def bottom_toolbar():
-    return HTML('Press <b><style bg="ansired">ESC+Enter</style></b> to exit!')
+    return HTML("Press <b>ESC+Enter</b> to exit!")
 
 
 class ViewDataShell(cmd.Cmd):
