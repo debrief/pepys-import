@@ -8,7 +8,7 @@ from importlib import import_module
 from sqlalchemy import create_engine, or_
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, undefer
 from sqlalchemy.sql import func
 
 from paths import PEPYS_IMPORT_DIRECTORY
@@ -530,6 +530,7 @@ class DataStore:
         """Search for any datafile with this name"""
         return (
             self.session.query(self.db_classes.Datafile)
+            .options(undefer("simulated"))
             .filter(self.db_classes.Datafile.reference == name)
             .first()
         )

@@ -1,37 +1,48 @@
 from datetime import datetime
 
 from geoalchemy2 import Geometry
-from sqlalchemy import DATE, Boolean, Column, DateTime, Integer, String
+from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
+from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
+    deferred,
+)
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
     ActivationMixin,
+    CommentMixin,
     ContactMixin,
     DatafileMixin,
     ElevationPropertyMixin,
+    GeometryMixin,
+    HostedByMixin,
     LocationPropertyMixin,
+    LogMixin,
+    LogsHoldingMixin,
     MediaMixin,
+    ParticipantMixin,
     PlatformMixin,
     SensorMixin,
     StateMixin,
+    TaggedItemMixin,
+    TaskMixin,
 )
 from pepys_import.core.store.db_base import BaseSpatiaLite
 from pepys_import.core.store.db_status import TableTypes
 
 
 # Metadata Tables
-class HostedBy(BaseSpatiaLite):
+class HostedBy(BaseSpatiaLite, HostedByMixin):
     __tablename__ = constants.HOSTED_BY
     table_type = TableTypes.METADATA
     table_type_id = 1
 
     hosted_by_id = Column(Integer, primary_key=True)
-    subject_id = Column(Integer, nullable=False)
-    host_id = Column(Integer, nullable=False)
+    subject_id = Column(Integer, ForeignKey("Platforms.platform_id"), nullable=False)
+    host_id = Column(Integer, ForeignKey("Platforms.platform_id"), nullable=False)
     hosted_from = Column(DATE, nullable=False)
     host_to = Column(DATE, nullable=False)
-    privacy_id = Column(Integer, nullable=False)
+    privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -42,9 +53,9 @@ class Sensor(BaseSpatiaLite, SensorMixin):
 
     sensor_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
-    sensor_type_id = Column(Integer, nullable=False)
-    host = Column(Integer, nullable=False)
-    privacy_id = Column(Integer, nullable=False)
+    sensor_type_id = Column(Integer, ForeignKey("SensorTypes.sensor_type_id"), nullable=False)
+    host = Column(Integer, ForeignKey("Platforms.platform_id"), nullable=False)
+    privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -55,43 +66,43 @@ class Platform(BaseSpatiaLite, PlatformMixin):
 
     platform_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
-    pennant = Column(String(10))
-    trigraph = Column(String(3))
-    quadgraph = Column(String(4))
-    nationality_id = Column(Integer, nullable=False)
-    platform_type_id = Column(Integer, nullable=False)
-    privacy_id = Column(Integer, nullable=False)
+    pennant = deferred(Column(String(10)))
+    trigraph = deferred(Column(String(3)))
+    quadgraph = deferred(Column(String(4)))
+    nationality_id = Column(Integer, ForeignKey("Nationalities.nationality_id"), nullable=False)
+    platform_type_id = Column(Integer, ForeignKey("PlatformTypes.platform_type_id"), nullable=False)
+    privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Task(BaseSpatiaLite):
+class Task(BaseSpatiaLite, TaskMixin):
     __tablename__ = constants.TASK
     table_type = TableTypes.METADATA
     table_type_id = 4
 
     task_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
-    parent_id = Column(Integer, nullable=False)
+    parent_id = Column(Integer, ForeignKey("Tasks.task_id"), nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
-    environment = Column(String(150))
-    location = Column(String(150))
-    privacy_id = Column(Integer, nullable=False)
+    environment = deferred(Column(String(150)))
+    location = deferred(Column(String(150)))
+    privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Participant(BaseSpatiaLite):
+class Participant(BaseSpatiaLite, ParticipantMixin):
     __tablename__ = constants.PARTICIPANT
     table_type = TableTypes.METADATA
     table_type_id = 5
 
     participant_id = Column(Integer, primary_key=True)
-    platform_id = Column(Integer, nullable=False)
-    task_id = Column(Integer, nullable=False)
+    platform_id = Column(Integer, ForeignKey("Platforms.platform_id"), nullable=False)
+    task_id = Column(Integer, ForeignKey("Tasks.task_id"), nullable=False)
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     force = Column(String(150))
-    privacy_id = Column(Integer, nullable=False)
+    privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -105,13 +116,13 @@ class Datafile(BaseSpatiaLite, DatafileMixin):
     table_type_id = 6
 
     datafile_id = Column(Integer, primary_key=True)
-    simulated = Column(Boolean, nullable=False)
-    privacy_id = Column(Integer, nullable=False)
-    datafile_type_id = Column(Integer, nullable=False)
+    simulated = deferred(Column(Boolean, nullable=False))
+    privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
+    datafile_type_id = Column(Integer, ForeignKey("DatafileTypes.datafile_type_id"), nullable=False)
     reference = Column(String(150))
     url = Column(String(150))
-    size = Column(Integer, nullable=False)
-    hash = Column(String(32), nullable=False)
+    size = deferred(Column(Integer, nullable=False))
+    hash = deferred(Column(String(32), nullable=False))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -139,7 +150,7 @@ class Change(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Log(BaseSpatiaLite):
+class Log(BaseSpatiaLite, LogMixin):
     __tablename__ = constants.LOG
     table_type = TableTypes.METADATA
     table_type_id = 9
@@ -149,7 +160,7 @@ class Log(BaseSpatiaLite):
     id = Column(Integer, nullable=False)
     field = Column(String(150))
     new_value = Column(String(150))
-    change_id = Column(Integer, nullable=False)
+    change_id = Column(Integer, ForeignKey("Changes.change_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -175,15 +186,15 @@ class Tag(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class TaggedItem(BaseSpatiaLite):
+class TaggedItem(BaseSpatiaLite, TaggedItemMixin):
     __tablename__ = constants.TAGGED_ITEM
     table_type = TableTypes.METADATA
     table_type_id = 12
 
     tagged_item_id = Column(Integer, primary_key=True)
-    tag_id = Column(Integer, nullable=False)
+    tag_id = Column(Integer, ForeignKey("Tags.tag_id"), nullable=False)
     item_id = Column(Integer, nullable=False)
-    tagged_by_id = Column(Integer, nullable=False)
+    tagged_by_id = Column(Integer, ForeignKey("Users.user_id"), nullable=False)
     private = Column(Boolean, nullable=False)
     tagged_on = Column(DATE, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -354,14 +365,16 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
 
     state_id = Column(Integer, primary_key=True)
     time = Column(TIMESTAMP, nullable=False)
-    sensor_id = Column(Integer, nullable=False)
-    _location = Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
-    _elevation = Column("elevation", REAL)
-    _heading = Column("heading", REAL)
-    _course = Column("course", REAL)
-    _speed = Column("speed", REAL)
-    source_id = Column(Integer, nullable=False)
-    privacy_id = Column(Integer)
+    sensor_id = Column(Integer, ForeignKey("Sensors.sensor_id"), nullable=False)
+    _location = deferred(
+        Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+    )
+    _elevation = deferred(Column("elevation", REAL))
+    _heading = deferred(Column("heading", REAL))
+    _course = deferred(Column("course", REAL))
+    _speed = deferred(Column("speed", REAL))
+    source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
+    privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -377,27 +390,29 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
 
     contact_id = Column(Integer, primary_key=True)
     name = Column(String(150))
-    sensor_id = Column(Integer, nullable=False)
+    sensor_id = Column(Integer, ForeignKey("Sensors.sensor_id"), nullable=False)
     time = Column(TIMESTAMP, nullable=False)
-    _bearing = Column("bearing", REAL)
-    _rel_bearing = Column("rel_bearing", REAL)
-    _ambig_bearing = Column("ambig_bearing", REAL)
-    _freq = Column("freq", REAL)
-    _range = Column("range", REAL)
-    _location = Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
-    _elevation = Column("elevation", REAL)
-    _major = Column("major", REAL)
-    _minor = Column("minor", REAL)
-    _orientation = Column("orientation", REAL)
-    classification = Column(String(150))
-    confidence = Column(String(150))
-    contact_type = Column(String(150))
-    _mla = Column("mla", REAL)
-    _soa = Column("soa", REAL)
-    subject_id = Column(Integer)
-    source_id = Column(Integer, nullable=False)
-    privacy_id = Column(Integer)
-    created_date = Column(DateTime, default=datetime.utcnow)
+    _bearing = deferred(Column("bearing", REAL))
+    _rel_bearing = deferred(Column("rel_bearing", REAL))
+    _ambig_bearing = deferred(Column("ambig_bearing", REAL))
+    _freq = deferred(Column("freq", REAL))
+    _range = deferred(Column("range", REAL))
+    _location = deferred(
+        Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+    )
+    _elevation = deferred(Column("elevation", REAL))
+    _major = deferred(Column("major", REAL))
+    _minor = deferred(Column("minor", REAL))
+    _orientation = deferred(Column("orientation", REAL))
+    classification = deferred(Column(String(150)))
+    confidence = deferred(Column(String(150)))
+    contact_type = deferred(Column(String(150)))
+    _mla = deferred(Column("mla", REAL))
+    _soa = deferred(Column("soa", REAL))
+    subject_id = Column(Integer, ForeignKey("Platforms.platform_id"))
+    source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
+    privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
+    created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
 
 class Activation(BaseSpatiaLite, ActivationMixin):
@@ -407,36 +422,36 @@ class Activation(BaseSpatiaLite, ActivationMixin):
 
     activation_id = Column(Integer, primary_key=True)
     name = Column(String(150), nullable=False)
-    sensor_id = Column(Integer, nullable=False)
-    start = Column(TIMESTAMP, nullable=False)
-    end = Column(TIMESTAMP, nullable=False)
-    _min_range = Column("min_range", REAL)
-    _max_range = Column("max_range", REAL)
-    _left_arc = Column("left_arc", REAL)
-    _right_arc = Column("right_arc", REAL)
-    source_id = Column(Integer, nullable=False)
-    privacy_id = Column(Integer)
+    sensor_id = Column(Integer, ForeignKey("Sensors.sensor_id"), nullable=False)
+    start = deferred(Column(TIMESTAMP, nullable=False))
+    end = deferred(Column(TIMESTAMP, nullable=False))
+    _min_range = deferred(Column("min_range", REAL))
+    _max_range = deferred(Column("max_range", REAL))
+    _left_arc = deferred(Column("left_arc", REAL))
+    _right_arc = deferred(Column("right_arc", REAL))
+    source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
+    privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class LogsHolding(BaseSpatiaLite):
+class LogsHolding(BaseSpatiaLite, LogsHoldingMixin):
     __tablename__ = constants.LOGS_HOLDING
     table_type = TableTypes.MEASUREMENT
     table_type_id = 31
 
     logs_holding_id = Column(Integer, primary_key=True)
     time = Column(TIMESTAMP, nullable=False)
-    commodity_id = Column(Integer, nullable=False)
+    commodity_id = Column(Integer, ForeignKey("CommodityTypes.commodity_type_id"), nullable=False)
     quantity = Column(REAL, nullable=False)
-    unit_type_id = Column(Integer, nullable=False)
-    platform_id = Column(Integer, nullable=False)
+    unit_type_id = Column(Integer, ForeignKey("UnitTypes.unit_type_id"), nullable=False)
+    platform_id = Column(Integer, ForeignKey("Platforms.platform_id"), nullable=False)
     comment = Column(String(150), nullable=False)
-    source_id = Column(Integer, nullable=False)
-    privacy_id = Column(Integer)
+    source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
+    privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Comment(BaseSpatiaLite):
+class Comment(BaseSpatiaLite, CommentMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sensor_name = None
@@ -447,32 +462,34 @@ class Comment(BaseSpatiaLite):
     table_type_id = 32
 
     comment_id = Column(Integer, primary_key=True)
-    platform_id = Column(Integer)
+    platform_id = Column(Integer, ForeignKey("Platforms.platform_id"))
     time = Column(TIMESTAMP, nullable=False)
-    comment_type_id = Column(Integer, nullable=False)
+    comment_type_id = Column(Integer, ForeignKey("CommentTypes.comment_type_id"), nullable=False)
     content = Column(String(150), nullable=False)
-    source_id = Column(Integer, nullable=False)
-    privacy_id = Column(Integer)
+    source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
+    privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Geometry1(BaseSpatiaLite):
+class Geometry1(BaseSpatiaLite, GeometryMixin):
     __tablename__ = constants.GEOMETRY
     table_type = TableTypes.MEASUREMENT
     table_type_id = 33
 
     geometry_id = Column(Integer, primary_key=True)
-    geometry = Column(Geometry(geometry_type="GEOMETRY", management=True), nullable=False)
+    geometry = deferred(Column(Geometry(geometry_type="GEOMETRY", management=True), nullable=False))
     name = Column(String(150), nullable=False)
-    geo_type_id = Column(Integer, nullable=False)
-    geo_sub_type_id = Column(Integer, nullable=False)
+    geo_type_id = Column(Integer, ForeignKey("GeometryTypes.geo_type_id"), nullable=False)
+    geo_sub_type_id = Column(
+        Integer, ForeignKey("GeometrySubTypes.geo_sub_type_id"), nullable=False
+    )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    task_id = Column(Integer)
-    subject_platform_id = Column(Integer)
-    sensor_platform_id = Column(Integer)
-    source_id = Column(Integer, nullable=False)
-    privacy_id = Column(Integer)
+    task_id = Column(Integer, ForeignKey("Tasks.task_id"))
+    subject_platform_id = Column(Integer, ForeignKey("Platforms.platform_id"))
+    sensor_platform_id = Column(Integer, ForeignKey("Platforms.platform_id"))
+    source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
+    privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -482,14 +499,16 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
     table_type_id = 34
 
     media_id = Column(Integer, primary_key=True)
-    platform_id = Column(Integer)
-    subject_id = Column(Integer)
-    sensor_id = Column(Integer)
-    _location = Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
-    _elevation = Column("elevation", REAL)
+    platform_id = Column(Integer, ForeignKey("Platforms.platform_id"))
+    subject_id = Column(Integer, ForeignKey("Platforms.platform_id"))
+    sensor_id = Column(Integer, ForeignKey("Sensors.sensor_id"))
+    _location = deferred(
+        Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+    )
+    _elevation = deferred(Column("elevation", REAL))
     time = Column(TIMESTAMP)
-    media_type_id = Column(Integer, nullable=False)
-    url = Column(String(150), nullable=False)
-    source_id = Column(Integer, nullable=False)
-    privacy_id = Column(Integer)
+    media_type_id = Column(Integer, ForeignKey("MediaTypes.media_type_id"), nullable=False)
+    url = deferred(Column(String(150), nullable=False))
+    source_id = Column(Integer, ForeignKey("Datafiles.datafile_id"), nullable=False)
+    privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
