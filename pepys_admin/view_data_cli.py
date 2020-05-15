@@ -57,6 +57,8 @@ class ViewDataShell(cmd.Cmd):
                 and not name.lower().startswith("spatial")
             ]
         selected_table = iterfzf(table_names)
+        if selected_table is None:
+            return
         # Table names are plural in the database, therefore make it singular
         if (
             selected_table == "alembic_version"
