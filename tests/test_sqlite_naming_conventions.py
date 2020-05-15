@@ -6,8 +6,8 @@ from sqlalchemy.sql.ddl import CreateTable
 from testing.postgresql import Postgresql
 
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.core.store.postgres_db import Datafile as pg_datafile
-from pepys_import.core.store.postgres_db import DatafileType as pg_datafile_type
+from pepys_import.core.store.postgres_db import Datafile as Datafile_pg
+from pepys_import.core.store.postgres_db import DatafileType as Datafile_type_pg
 from pepys_import.core.store.sqlite_db import Datafile, DatafileType
 
 
@@ -43,11 +43,11 @@ class NamingConventionsTestCase(unittest.TestCase):
             )
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
-        sql_script = str(CreateTable(pg_datafile.__table__).compile(self.store.engine))
+        sql_script = str(CreateTable(Datafile_pg.__table__).compile(self.store.engine))
         assert "pk_Datafiles" in sql_script
         assert "fk_Datafiles_privacy_id_Privacies" in sql_script
 
-        sql_script = str(CreateTable(pg_datafile_type.__table__).compile(self.store.engine))
+        sql_script = str(CreateTable(Datafile_type_pg.__table__).compile(self.store.engine))
         assert "uq_DatafileTypes_name" in sql_script
 
 
