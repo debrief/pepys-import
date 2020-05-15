@@ -73,8 +73,8 @@ def create_alembic_version_table(engine, db_type):
         """
         insert_value = """
             INSERT INTO alembic_version (version_num)
-            SELECT 'bcff0ccb4fbd'
-            WHERE NOT EXISTS(SELECT 1 FROM alembic_version WHERE version_num = 'bcff0ccb4fbd');
+            SELECT 'ccc37f794db6'
+            WHERE NOT EXISTS(SELECT 1 FROM alembic_version WHERE version_num = 'ccc37f794db6');
         """
     else:
         create_table = """
