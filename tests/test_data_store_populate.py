@@ -83,7 +83,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
             platform_object = self.store.search_platform("PLATFORM-1")
             datafile_object = self.store.search_datafile("DATAFILE-1")
-            sensor_object = self.store.search_sensor("SENSOR-1")
+            sensor_object = self.store.search_sensor("SENSOR-1", platform_object.platform_id)
 
             # Check whether they are not empty anymore and filled with correct data
             self.assertNotEqual(len(platforms), 0)
@@ -135,59 +135,6 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
                 .first()
             )
             self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
-
-    def test_populate_measurement(self):
-        # reference and metadata tables must be filled first
-        with self.store.session_scope():
-            self.store.populate_reference()
-            self.store.populate_metadata()
-
-        # get all table values
-        with self.store.session_scope():
-            states = self.store.session.query(self.store.db_classes.State).all()
-
-        # There must be no entities at the beginning
-        self.assertEqual(len(states), 0)
-
-        # Import CSVs to the related tables
-        with self.store.session_scope():
-            self.store.populate_measurement()
-
-        # Check tables filled with correct data
-        with self.store.session_scope():
-            states = self.store.session.query(self.store.db_classes.State).all()
-            first_state = self.store.session.query(self.store.db_classes.State).first()
-
-            # Check whether they are not empty anymore and filled with correct data
-            self.assertNotEqual(len(states), 0)
-
-            # The following assertions filter objects by foreign key ids and
-            # compares values with the data from CSV
-
-            # first_state = 2019-01-12 12:10:00, SENSOR-1, DATAFILE-1,46.000 32.000,,,,
-            # PRIVACY-1
-            self.assertEqual(
-                first_state.time, datetime.strptime("2019-01-12 12:10:00", "%Y-%m-%d %H:%M:%S"),
-            )
-
-            privacy = (
-                self.store.session.query(self.store.db_classes.Privacy)
-                .filter_by(privacy_id=first_state.privacy_id)
-                .first()
-            )
-            self.assertEqual(privacy.name, "PRIVACY-1")
-            datafile = (
-                self.store.session.query(self.store.db_classes.Datafile)
-                .filter_by(datafile_id=first_state.source_id)
-                .first()
-            )
-            self.assertEqual(datafile.reference, "DATAFILE-1")
-            sensor = (
-                self.store.session.query(self.store.db_classes.Sensor)
-                .filter_by(sensor_id=first_state.sensor_id)
-                .first()
-            )
-            self.assertEqual(sensor.name, "SENSOR-1")
 
 
 @pytest.mark.postgres
@@ -278,7 +225,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
             platform_object = self.store.search_platform("PLATFORM-1")
             datafile_object = self.store.search_datafile("DATAFILE-1")
-            sensor_object = self.store.search_sensor("SENSOR-1")
+            sensor_object = self.store.search_sensor("SENSOR-1", platform_object.platform_id)
 
             # Check whether they are not empty anymore and filled with correct data
             self.assertNotEqual(len(platforms), 0)
@@ -331,59 +278,6 @@ class DataStorePopulatePostGISTestCase(TestCase):
             )
             self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
 
-    def test_populate_measurement(self):
-        # reference and metadata tables must be filled first
-        with self.store.session_scope():
-            self.store.populate_reference()
-            self.store.populate_metadata()
-
-        # get all table values
-        with self.store.session_scope():
-            states = self.store.session.query(self.store.db_classes.State).all()
-
-        # There must be no entities at the beginning
-        self.assertEqual(len(states), 0)
-
-        # Import CSVs to the related tables
-        with self.store.session_scope():
-            self.store.populate_measurement()
-
-        # Check tables filled with correct data
-        with self.store.session_scope():
-            states = self.store.session.query(self.store.db_classes.State).all()
-            first_state = self.store.session.query(self.store.db_classes.State).first()
-
-            # Check whether they are not empty anymore and filled with correct data
-            self.assertNotEqual(len(states), 0)
-
-            # The following assertions filter objects by foreign key ids and
-            # compares values with the data from CSV
-
-            # first_state = 2019-01-12 12:10:00, SENSOR-1, DATAFILE-1,46.000 32.000,,,,
-            # PRIVACY-1
-            self.assertEqual(
-                first_state.time, datetime.strptime("2019-01-12 12:10:00", "%Y-%m-%d %H:%M:%S"),
-            )
-
-            privacy = (
-                self.store.session.query(self.store.db_classes.Privacy)
-                .filter_by(privacy_id=first_state.privacy_id)
-                .first()
-            )
-            self.assertEqual(privacy.name, "PRIVACY-1")
-            datafile = (
-                self.store.session.query(self.store.db_classes.Datafile)
-                .filter_by(datafile_id=first_state.source_id)
-                .first()
-            )
-            self.assertEqual(datafile.reference, "DATAFILE-1")
-            sensor = (
-                self.store.session.query(self.store.db_classes.Sensor)
-                .filter_by(sensor_id=first_state.sensor_id)
-                .first()
-            )
-            self.assertEqual(sensor.name, "SENSOR-1")
-
 
 # TODO: This test case should fail when all add_to_XXX methods are implemented.
 #  Remove it when there are add methods for each DB table.
@@ -415,18 +309,6 @@ class DataStorePopulateNotImplementedMethodTestCase(TestCase):
             output = temp_output.getvalue()
             self.assertIn("Method(add_to_confidence_levels) not found!", output)
             self.assertIn("Method(add_to_tags) not found!", output)
-
-    def test_populate_measurement(self):
-        with self.store.session_scope():
-            temp_output = StringIO()
-            with redirect_stdout(temp_output):
-                self.store.populate_reference(NOT_IMPLEMENTED_PATH)
-                self.store.populate_metadata(NOT_IMPLEMENTED_PATH)
-                self.store.populate_measurement(NOT_IMPLEMENTED_PATH)
-            output = temp_output.getvalue()
-            self.assertIn("Method(add_to_confidence_levels) not found!", output)
-            self.assertIn("Method(add_to_tags) not found!", output)
-            self.assertIn("Method(add_to_media) not found!", output)
 
 
 if __name__ == "__main__":

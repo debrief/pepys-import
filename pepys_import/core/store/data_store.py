@@ -249,113 +249,8 @@ class DataStore:
         metadata_files = [file for file in files if os.path.splitext(file)[0] in metadata_tables]
         import_from_csv(self, sample_data_folder, metadata_files, change.change_id)
 
-    def populate_measurement(self, sample_data_folder=None):
-        """Import CSV files from the given folder to the related Measurement Tables"""
-        change = self.add_to_changes(
-            user=USER, modified=datetime.utcnow(), reason="Importing measurement data"
-        )
-        if sample_data_folder is None:
-            sample_data_folder = DEFAULT_DATA_PATH
-
-        files = os.listdir(sample_data_folder)
-
-        measurement_tables = []
-        # Create measurement table list
-        measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
-        for table_object in list(measurement_table_objects):
-            measurement_tables.append(table_object.__tablename__)
-
-        measurement_files = [
-            file for file in files if os.path.splitext(file)[0] in measurement_tables
-        ]
-        import_from_csv(self, sample_data_folder, measurement_files, change.change_id)
-
     # End of Data Store methods
     #############################################################
-
-    def add_to_states(
-        self,
-        time,
-        sensor,
-        datafile,
-        location=None,
-        elevation=None,
-        heading=None,
-        course=None,
-        speed=None,
-        privacy=None,
-        change_id=None,
-    ):
-        """
-        Adds the specified state to the :class:`State` table if not already present.
-
-        :param time: Timestamp of :class:`State`
-        :type time: datetime
-        :param sensor: Sensor of :class:`State`
-        :type sensor: Sensor
-        :param datafile: Datafile of :class:`State`
-        :type datafile: Datafile
-        :param location: Location of :class:`State`
-        :type location: Point
-        :param elevation: Elevation of :class:`State` in metres (use negative for depth)
-        :type elevation: String
-        :param heading: Heading of :class:`State` (Which converted to radians)
-        :type heading: String
-        :param course: Course of :class:`State`
-        :type course:
-        :param speed: Speed of :class:`State` (Which converted to m/sec)
-        :type speed: String
-        :param privacy: :class:`Privacy` of :class:`State`
-        :type privacy: Privacy
-        :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
-        :return: Created :class:`State` entity
-        :rtype: State
-        """
-        if isinstance(time, str):
-            # TODO we can't assume the time is in this format. We should throw
-            # exception if time isn't of type datetime
-            time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
-
-        sensor = self.search_sensor(sensor)
-        datafile = self.search_datafile(datafile)
-        privacy = self.search_privacy(privacy)
-
-        if sensor is None or datafile is None:
-            raise Exception(f"There is missing value(s) in '{sensor}, {datafile}'!")
-
-        if elevation == "":
-            elevation = None
-        if heading == "":
-            heading = None
-        if course == "":
-            course = None
-        if speed == "":
-            speed = None
-
-        elevation = elevation * unit_registry.metre
-
-        loc = Location()
-        loc.set_from_wkt_string(location)
-        location = loc
-
-        state_obj = self.db_classes.State(
-            time=time,
-            sensor_id=sensor.sensor_id,
-            location=location,
-            elevation=elevation,
-            heading=heading,
-            course=course,
-            speed=speed,
-            source_id=datafile.datafile_id,
-            privacy_id=privacy.privacy_id,
-        )
-        self.session.add(state_obj)
-        self.session.flush()
-        self.session.expire(state_obj, ["_location"])
-
-        self.add_to_logs(table=constants.STATE, row_id=state_obj.state_id, change_id=change_id)
-        return state_obj
 
     def add_to_sensors(self, name, sensor_type, host, privacy, change_id):
         """
@@ -514,14 +409,14 @@ class DataStore:
         return synonym
 
     #############################################################
-    # Search/lookup functions
-
-    @cache_results_if_not_none("_search_datafile_type_cache")
-    def search_datafile_type(self, name):
-        """Search for any datafile type with this name"""
+    # Search/lookup functions for metadata
+    #############################################################
+    def search_sensor(self, name, platform_id):
+        """Search for any sensor type featuring this name"""
         return (
-            self.session.query(self.db_classes.DatafileType)
-            .filter(self.db_classes.DatafileType.name == name)
+            self.session.query(self.db_classes.Sensor)
+            .filter(self.db_classes.Sensor.name == name)
+            .filter(self.db_classes.Sensor.host == platform_id)
             .first()
         )
 
@@ -544,6 +439,28 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none("_search_datafile_from_id_cache")
+    def get_datafile_from_id(self, datafile_id):
+        """Search for datafile with this id"""
+        return (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.datafile_id == datafile_id)
+            .first()
+        )
+
+    #############################################################
+    # Search/lookup functions for reference data
+    #############################################################
+
+    @cache_results_if_not_none("_search_datafile_type_cache")
+    def search_datafile_type(self, name):
+        """Search for any datafile type with this name"""
+        return (
+            self.session.query(self.db_classes.DatafileType)
+            .filter(self.db_classes.DatafileType.name == name)
+            .first()
+        )
+
     @cache_results_if_not_none("_search_platform_type_cache")
     def search_platform_type(self, name):
         """Search for any platform type with this name"""
@@ -563,16 +480,6 @@ class DataStore:
             .first()
         )
 
-    @cache_results_if_not_none("_search_sensor_cache")
-    def search_sensor(self, name):
-        """Search for any sensor type featuring this name"""
-        return (
-            self.session.query(self.db_classes.Sensor)
-            .filter(self.db_classes.Sensor.name == name)
-            .first()
-        )
-
-    # @cache_results_if_not_none
     @cache_results_if_not_none("_search_sensor_type_cache")
     def search_sensor_type(self, name):
         """Search for any sensor type featuring this name"""
@@ -591,17 +498,6 @@ class DataStore:
             .first()
         )
 
-    @cache_results_if_not_none("_search_datafile_from_id_cache")
-    def get_datafile_from_id(self, datafile_id):
-        """Search for datafile with this id"""
-        return (
-            self.session.query(self.db_classes.Datafile)
-            .filter(self.db_classes.Datafile.datafile_id == datafile_id)
-            .first()
-        )
-
-    #############################################################
-    # New methods
     def synonym_search(self, name, table, pk_field):
         """
         This method looks up the Synonyms Table and returns if there is any matched entity.
