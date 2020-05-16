@@ -1,5 +1,6 @@
 import os
 import unittest
+from datetime import datetime
 
 import pytest
 from geoalchemy2 import WKTElement
@@ -21,7 +22,24 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
         with self.store.session_scope():
             self.store.populate_reference(TEST_DATA_PATH)
             self.store.populate_metadata(TEST_DATA_PATH)
-            self.store.populate_measurement(TEST_DATA_PATH)
+
+            platform = self.store.search_platform("PLATFORM-1")
+            sensor = self.store.search_sensor("SENSOR-1", platform.platform_id)
+            datafile = self.store.search_datafile("DATAFILE-1")
+
+            # Add an example State object
+            State = self.store.db_classes.State
+            timestamp = datetime(2020, 1, 1, 1, 2, 3)
+            state = State(
+                sensor_id=sensor.sensor_id, time=timestamp, source_id=datafile.datafile_id
+            )
+
+            loc = Location()
+            loc.set_latitude_decimal_degrees(32)
+            loc.set_longitude_decimal_degrees(46)
+
+            state.location = loc
+            self.store.session.add(state)
 
     def tearDown(self) -> None:
         pass
@@ -90,7 +108,24 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
             with self.store.session_scope():
                 self.store.populate_reference(TEST_DATA_PATH)
                 self.store.populate_metadata(TEST_DATA_PATH)
-                self.store.populate_measurement(TEST_DATA_PATH)
+
+                platform = self.store.search_platform("PLATFORM-1")
+                sensor = self.store.search_sensor("SENSOR-1", platform.platform_id)
+                datafile = self.store.search_datafile("DATAFILE-1")
+
+                # Add an example State object
+                State = self.store.db_classes.State
+                timestamp = datetime(2020, 1, 1, 1, 2, 3)
+                state = State(
+                    sensor_id=sensor.sensor_id, time=timestamp, source_id=datafile.datafile_id
+                )
+
+                loc = Location()
+                loc.set_latitude_decimal_degrees(32)
+                loc.set_longitude_decimal_degrees(46)
+
+                state.location = loc
+                self.store.session.add(state)
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 
