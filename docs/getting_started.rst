@@ -180,18 +180,33 @@ This shows that three different importers have operated on this file, importing 
 the file. To see exactly which bits of the file were imported by which importer, open the HTML file
 and hover over the highlighted parts.
 
-8. Check the SQLite database itself
------------------------------------
+8. Check the database contents
+------------------------------
 
-To examine the contents of the SQLite database directly, download and install `DB Browser for SQLite
-<https://sqlitebrowser.org/>`_ and load the SQLite file you configured in step 2. Choose to *Browse Data*
-and then look through the tables. An example of the States table is shown below:
+The Pepys Admin application has the ability to view the raw database tables themselves. To do this,
+run Pepys Admin from the Start Menu, and then choose option `6` (View Data), and then option `1`
+(View Table). This will give you a list of database tables - start typing `Platform` and then select
+it from the list using the arrow keys.
 
-.. image:: SQLiteBrowserScreenshot.png
-  :width: 600
+You'll see the contents of the Platforms table displayed: this should include the platform that you
+created manually the first time you ran Pepys Import, plus various other platforms added
+automatically by the default resolver including `SPLENDID` and `SEARCH_PLATFORM`. You'll see each
+platform has a nationality and platform type. In fact, the database stores more information about
+platforms (including pennant numbers, trigraphs and more) but for ease of visualisation these are
+left out of the database display here.
 
-*Note:* Some of the values may look strange, but that is because the database stores values in SI units
-- so speeds are stored in metres per second, and angles in radians.
+Now look at some other tables: choose option `1` again and look at the `States` table, in which
+you'll see entries for the individual measurements that have been imported. Here we're only showing
+a few columns, so you can't see the actual location, speed, bearing and so on, but you can see what
+sensor was used and the time of the measurement. Don't worry that this list seems short - it is only
+showing a limited number of rows: you can see from the database status output that was displayed
+earlier that there are actually many hundreds of rows in the States table.
+
+Similarly, look at the `Changes` table. This shows the reason for various changes to the database -
+here you can see various reasons including `Importing reference data` and importing various
+filenames. This allows all data in the database to be traced back to the files it came from.
+
+Feel free to investigate the other tables in the database.
 
 9. Clean up
 ------------
