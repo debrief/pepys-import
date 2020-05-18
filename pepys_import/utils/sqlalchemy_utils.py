@@ -12,6 +12,10 @@ class UUIDType(types.TypeDecorator):
     Stores a UUID in the database natively when it can and falls back to
     a BINARY(16) or a CHAR(32) when it can't.
 
+    Note: In a difference to the original implementation, this uses
+    a CHAR field as the default fallback to make it easier to view in SQLite
+    database viewers.
+
     ::
 
         from sqlalchemy_utils import UUIDType
@@ -20,7 +24,7 @@ class UUIDType(types.TypeDecorator):
         class User(Base):
             __tablename__ = 'user'
 
-            # Pass `binary=False` to fallback to CHAR instead of BINARY
+            # Pass `binary=True` to fallback to BINARY instead of CHAR
             id = sa.Column(UUIDType(binary=False), primary_key=True)
     """
 
@@ -28,7 +32,7 @@ class UUIDType(types.TypeDecorator):
 
     python_type = uuid.UUID
 
-    def __init__(self, binary=True, native=True):
+    def __init__(self, binary=False, native=True):
         """
         :param binary: Whether to use a BINARY(16) or CHAR(32) fallback.
         """
