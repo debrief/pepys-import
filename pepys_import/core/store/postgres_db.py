@@ -313,7 +313,7 @@ class ClassificationType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     class_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    class_type = Column(String(150), nullable=False, unique=True)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -324,7 +324,7 @@ class ContactType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     contact_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    contact_type = Column(String(150), nullable=False, unique=True)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -401,7 +401,7 @@ class ConfidenceLevel(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     confidence_level_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    level = Column(String(150), nullable=False, unique=True)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
