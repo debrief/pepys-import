@@ -4,6 +4,9 @@ from sqlalchemy import types
 from sqlalchemy.dialects import mssql, postgresql
 
 
+#
+# From https://sqlalchemy-utils.readthedocs.io/en/latest/_modules/sqlalchemy_utils/types/uuid.html#UUIDType
+#
 class UUIDType(types.TypeDecorator):
     """
     Stores a UUID in the database natively when it can and falls back to
