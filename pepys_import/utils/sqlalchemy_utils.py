@@ -32,9 +32,11 @@ class UUIDType(types.TypeDecorator):
 
     python_type = uuid.UUID
 
-    def __init__(self, binary=False, native=True):
+    def __init__(self, binary=False, native=True, length=None):
         """
         :param binary: Whether to use a BINARY(16) or CHAR(32) fallback.
+
+        We ignore the length parameter, but it is needed for Alembic to work properly
         """
         self.binary = binary
         self.native = native
