@@ -17,7 +17,7 @@ from pepys_import.utils.data_store_utils import (
     create_spatial_tables_for_sqlite,
     is_schema_created,
 )
-from pepys_import.utils.geoalchemy_utils import load_spatialite
+from pepys_import.utils.sqlite_utils import load_spatialite
 
 DIR_PATH = os.path.dirname(__file__)
 

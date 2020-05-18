@@ -21,7 +21,7 @@ from pepys_admin.view_data_cli import ViewDataShell
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.utils.data_store_utils import is_schema_created
-from pepys_import.utils.geoalchemy_utils import load_spatialite
+from pepys_import.utils.sqlite_utils import load_spatialite
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
