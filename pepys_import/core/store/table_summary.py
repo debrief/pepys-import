@@ -1,3 +1,4 @@
+from sqlalchemy.orm import undefer
 from tabulate import tabulate
 
 
@@ -22,7 +23,14 @@ class TableSummary:
 
     def table_summary(self):
         number_of_rows = self.session.query(self.table).count()
-        last_row = self.session.query(self.table).order_by(self.table.created_date.desc()).first()
+        last_row = (
+            self.session.query(self.table)
+            .options(
+                undefer("*")
+            )  # Fetch all attributes to enforce to failing if there is any mismatch
+            .order_by(self.table.created_date.desc())
+            .first()
+        )
         created_date = "-"
         if last_row:
             created_date = str(last_row.created_date)

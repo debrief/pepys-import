@@ -202,14 +202,16 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
         Comment = self.store.db_classes.Comment
 
         with self.store.session_scope():
-            sensor_id = self.store.search_sensor("SENSOR-1").sensor_id
+            platform = self.store.search_platform("SUBJECT")
+            sensor_id = self.store.search_sensor("SENSOR-1", platform.platform_id).sensor_id
 
             state_values = self.store.find_min_and_max_date(State, State.sensor_id, sensor_id)
             assert len(state_values) == 3
             assert str(state_values[0]) == "2010-01-12 11:58:00"
             assert str(state_values[1]) == "2010-01-12 12:14:00"
 
-            sensor_id = self.store.search_sensor("TA").sensor_id
+            platform = self.store.search_platform("SENSOR")
+            sensor_id = self.store.search_sensor("TA", platform.platform_id).sensor_id
 
             contact_values = self.store.find_min_and_max_date(Contact, Contact.sensor_id, sensor_id)
             print(contact_values)
@@ -240,9 +242,12 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
 
     def test_find_related_datafile_objects_of_states_and_contacts(self):
         with self.store.session_scope():
+            platform1 = self.store.search_platform("SUBJECT")
+            platform2 = self.store.search_platform("SENSOR")
+
             sensors_dict = {
-                "SENSOR-1": self.store.search_sensor("SENSOR-1").sensor_id,
-                "TA": self.store.search_sensor("TA").sensor_id,
+                "SENSOR-1": self.store.search_sensor("SENSOR-1", platform1.platform_id).sensor_id,
+                "TA": self.store.search_sensor("TA", platform2.platform_id).sensor_id,
             }
             objects = self.store.find_related_datafile_objects(123456789, sensors_dict=sensors_dict)
             print(objects)
