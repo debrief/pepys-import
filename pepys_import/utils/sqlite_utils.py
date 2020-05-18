@@ -25,3 +25,9 @@ def load_spatialite(connection, connection_record):
         connection.load_extension(environment_path)
     else:
         connection.load_extension(PLATFORM_EXTENSION_PATH)
+
+
+def set_sqlite_foreign_keys_on(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
