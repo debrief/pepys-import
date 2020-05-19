@@ -457,9 +457,15 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     _major = deferred(Column("major", DOUBLE_PRECISION))
     _minor = deferred(Column("minor", DOUBLE_PRECISION))
     _orientation = deferred(Column("orientation", DOUBLE_PRECISION))
-    classification = deferred(Column(String(150)))
-    confidence = deferred(Column(String(150)))
-    contact_type = deferred(Column(String(150)))
+    classification = deferred(
+        Column(UUID(as_uuid=True), ForeignKey("pepys.ClassificationTypes.class_type_id"))
+    )
+    confidence = deferred(
+        Column(UUID(as_uuid=True), ForeignKey("pepys.ConfidenceLevels.confidence_level_id"))
+    )
+    contact_type = deferred(
+        Column(UUID(as_uuid=True), ForeignKey("pepys.ContactTypes.contact_type_id"))
+    )
     _mla = deferred(Column("mla", DOUBLE_PRECISION))
     _soa = deferred(Column("soa", DOUBLE_PRECISION))
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
