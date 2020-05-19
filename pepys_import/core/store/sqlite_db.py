@@ -274,7 +274,7 @@ class ClassificationType(BaseSpatiaLite):
     table_type_id = 19
 
     class_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    class_type = Column(String(150), nullable=False, unique=True)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -284,7 +284,7 @@ class ContactType(BaseSpatiaLite):
     table_type_id = 20
 
     contact_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    contact_type = Column(String(150), nullable=False, unique=True)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -354,7 +354,7 @@ class ConfidenceLevel(BaseSpatiaLite):
     table_type_id = 27
 
     confidence_level_id = Column(UUIDType, primary_key=True, default=uuid4)
-    level = Column(String(150), nullable=False, unique=True)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
