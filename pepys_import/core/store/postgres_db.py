@@ -4,25 +4,36 @@ from uuid import uuid4
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
+from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
+    deferred,
+)
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
     ActivationMixin,
+    CommentMixin,
     ContactMixin,
     DatafileMixin,
     ElevationPropertyMixin,
+    GeometryMixin,
+    HostedByMixin,
     LocationPropertyMixin,
+    LogMixin,
+    LogsHoldingMixin,
     MediaMixin,
+    ParticipantMixin,
     PlatformMixin,
     SensorMixin,
     StateMixin,
+    TaggedItemMixin,
+    TaskMixin,
 )
 from pepys_import.core.store.db_base import BasePostGIS
 from pepys_import.core.store.db_status import TableTypes
 
 
 # Metadata Tables
-class HostedBy(BasePostGIS):
+class HostedBy(BasePostGIS, HostedByMixin):
     __tablename__ = constants.HOSTED_BY
     table_type = TableTypes.METADATA
     table_type_id = 1
@@ -67,9 +78,9 @@ class Platform(BasePostGIS, PlatformMixin):
 
     platform_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
-    pennant = Column(String(10))
-    trigraph = Column(String(3))
-    quadgraph = Column(String(4))
+    pennant = deferred(Column(String(10)))
+    trigraph = deferred(Column(String(3)))
+    quadgraph = deferred(Column(String(4)))
     nationality_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Nationalities.nationality_id"), nullable=False,
     )
@@ -82,25 +93,26 @@ class Platform(BasePostGIS, PlatformMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Task(BasePostGIS):
+class Task(BasePostGIS, TaskMixin):
     __tablename__ = constants.TASK
     table_type = TableTypes.METADATA
     table_type_id = 4
     __table_args__ = {"schema": "pepys"}
 
     task_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(String(150), nullable=False)
     parent_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Tasks.task_id"), nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
-    environment = Column(String(150))
-    location = Column(String(150))
+    environment = deferred(Column(String(150)))
+    location = deferred(Column(String(150)))
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"), nullable=False
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Participant(BasePostGIS):
+class Participant(BasePostGIS, ParticipantMixin):
     __tablename__ = constants.PARTICIPANT
     table_type = TableTypes.METADATA
     table_type_id = 5
@@ -131,7 +143,7 @@ class Datafile(BasePostGIS, DatafileMixin):
     __table_args__ = {"schema": "pepys"}
 
     datafile_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    simulated = Column(Boolean)
+    simulated = deferred(Column(Boolean, nullable=False))
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"), nullable=False
     )
@@ -141,8 +153,8 @@ class Datafile(BasePostGIS, DatafileMixin):
     reference = Column(String(150))
     url = Column(String(150))
     size = Column(Integer, nullable=False)
-    hash = Column(String(32), nullable=False)
-    created_date = Column(DateTime, default=datetime.utcnow)
+    hash = deferred(Column(String(32), nullable=False))
+    created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
 
 class Synonym(BasePostGIS):
@@ -171,7 +183,7 @@ class Change(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Log(BasePostGIS):
+class Log(BasePostGIS, LogMixin):
     __tablename__ = constants.LOG
     table_type = TableTypes.METADATA
     table_type_id = 9
@@ -210,7 +222,7 @@ class Tag(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class TaggedItem(BasePostGIS):
+class TaggedItem(BasePostGIS, TaggedItemMixin):
     __tablename__ = constants.TAGGED_ITEM
     table_type = TableTypes.METADATA
     table_type_id = 12
@@ -301,7 +313,7 @@ class ClassificationType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     class_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    class_type = Column(String(150), nullable=False, unique=True)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -312,7 +324,7 @@ class ContactType(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     contact_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    contact_type = Column(String(150), nullable=False, unique=True)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -389,7 +401,7 @@ class ConfidenceLevel(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     confidence_level_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    level = Column(String(150), nullable=False, unique=True)
+    name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -408,11 +420,11 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     state_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False)
-    _location = Column("location", Geometry(geometry_type="POINT", srid=4326))
-    _elevation = Column("elevation", DOUBLE_PRECISION)
-    _heading = Column("heading", DOUBLE_PRECISION)
-    _course = Column("course", DOUBLE_PRECISION)
-    _speed = Column("speed", DOUBLE_PRECISION)
+    _location = deferred(Column("location", Geometry(geometry_type="POINT", srid=4326)))
+    _elevation = deferred(Column("elevation", DOUBLE_PRECISION))
+    _heading = deferred(Column("heading", DOUBLE_PRECISION))
+    _course = deferred(Column("course", DOUBLE_PRECISION))
+    _speed = deferred(Column("speed", DOUBLE_PRECISION))
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )
@@ -435,21 +447,21 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     name = Column(String(150))
     sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False)
     time = Column(TIMESTAMP, nullable=False)
-    _bearing = Column("bearing", DOUBLE_PRECISION)
-    _rel_bearing = Column("rel_bearing", DOUBLE_PRECISION)
-    _ambig_bearing = Column("ambig_bearing", DOUBLE_PRECISION)
-    _freq = Column("freq", DOUBLE_PRECISION)
-    _range = Column("range", DOUBLE_PRECISION)
-    _location = Column("location", Geometry(geometry_type="POINT", srid=4326))
-    _elevation = Column("elevation", DOUBLE_PRECISION)
-    _major = Column("major", DOUBLE_PRECISION)
-    _minor = Column("minor", DOUBLE_PRECISION)
-    _orientation = Column("orientation", DOUBLE_PRECISION)
-    classification = Column(String(150))
-    confidence = Column(String(150))
-    contact_type = Column(String(150))
-    _mla = Column("mla", DOUBLE_PRECISION)
-    _soa = Column("soa", DOUBLE_PRECISION)
+    _bearing = deferred(Column("bearing", DOUBLE_PRECISION))
+    _rel_bearing = deferred(Column("rel_bearing", DOUBLE_PRECISION))
+    _ambig_bearing = deferred(Column("ambig_bearing", DOUBLE_PRECISION))
+    _freq = deferred(Column("freq", DOUBLE_PRECISION))
+    _range = deferred(Column("range", DOUBLE_PRECISION))
+    _location = deferred(Column("location", Geometry(geometry_type="POINT", srid=4326)))
+    _elevation = deferred(Column("elevation", DOUBLE_PRECISION))
+    _major = deferred(Column("major", DOUBLE_PRECISION))
+    _minor = deferred(Column("minor", DOUBLE_PRECISION))
+    _orientation = deferred(Column("orientation", DOUBLE_PRECISION))
+    classification = deferred(Column(String(150)))
+    confidence = deferred(Column(String(150)))
+    contact_type = deferred(Column(String(150)))
+    _mla = deferred(Column("mla", DOUBLE_PRECISION))
+    _soa = deferred(Column("soa", DOUBLE_PRECISION))
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
@@ -467,12 +479,12 @@ class Activation(BasePostGIS, ActivationMixin):
     activation_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
     sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"), nullable=False)
-    start = Column(TIMESTAMP, nullable=False)
-    end = Column(TIMESTAMP, nullable=False)
-    _min_range = Column("min_range", DOUBLE_PRECISION)
-    _max_range = Column("max_range", DOUBLE_PRECISION)
-    _left_arc = Column("left_arc", DOUBLE_PRECISION)
-    _right_arc = Column("right_arc", DOUBLE_PRECISION)
+    start = deferred(Column(TIMESTAMP, nullable=False))
+    end = deferred(Column(TIMESTAMP, nullable=False))
+    _min_range = deferred(Column("min_range", DOUBLE_PRECISION))
+    _max_range = deferred(Column("max_range", DOUBLE_PRECISION))
+    _left_arc = deferred(Column("left_arc", DOUBLE_PRECISION))
+    _right_arc = deferred(Column("right_arc", DOUBLE_PRECISION))
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )
@@ -480,7 +492,7 @@ class Activation(BasePostGIS, ActivationMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class LogsHolding(BasePostGIS):
+class LogsHolding(BasePostGIS, LogsHoldingMixin):
     __tablename__ = constants.LOGS_HOLDING
     table_type = TableTypes.MEASUREMENT
     table_type_id = 31
@@ -488,6 +500,9 @@ class LogsHolding(BasePostGIS):
 
     logs_holding_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     time = Column(TIMESTAMP, nullable=False)
+    commodity_id = Column(
+        UUID(as_uuid=True), ForeignKey("pepys.CommodityTypes.commodity_type_id"), nullable=False
+    )
     quantity = Column(DOUBLE_PRECISION, nullable=False)
     unit_type_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.UnitTypes.unit_type_id"), nullable=False
@@ -503,7 +518,7 @@ class LogsHolding(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Comment(BasePostGIS):
+class Comment(BasePostGIS, CommentMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.sensor_name = None
@@ -515,11 +530,11 @@ class Comment(BasePostGIS):
     __table_args__ = {"schema": "pepys"}
 
     comment_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"), nullable=False
-    )
+    platform_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     time = Column(TIMESTAMP, nullable=False)
-    comment_type_id = Column(UUID(as_uuid=True), nullable=False)
+    comment_type_id = Column(
+        UUID(as_uuid=True), ForeignKey("pepys.CommentTypes.comment_type_id"), nullable=False
+    )
     content = Column(String(150), nullable=False)
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
@@ -528,7 +543,7 @@ class Comment(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Geometry1(BasePostGIS):
+class Geometry1(BasePostGIS, GeometryMixin):
     __tablename__ = constants.GEOMETRY
     table_type = TableTypes.MEASUREMENT
     table_type_id = 33
@@ -545,7 +560,7 @@ class Geometry1(BasePostGIS):
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    task_id = Column(UUID(as_uuid=True))
+    task_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Tasks.task_id"))
     subject_platform_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     sensor_platform_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     source_id = Column(
@@ -565,11 +580,13 @@ class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin, LocationPropertyMix
     platform_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     subject_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id"))
     sensor_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id"))
-    _location = Column("location", Geometry(geometry_type="POINT", srid=4326))
-    _elevation = Column("elevation", DOUBLE_PRECISION)
+    _location = deferred(Column("location", Geometry(geometry_type="POINT", srid=4326)))
+    _elevation = deferred(Column("elevation", DOUBLE_PRECISION))
     time = Column(TIMESTAMP)
-    media_type_id = Column(UUID(as_uuid=True), nullable=False)
-    url = Column(String(150), nullable=False)
+    media_type_id = Column(
+        UUID(as_uuid=True), ForeignKey("pepys.MediaTypes.media_type_id"), nullable=False
+    )
+    url = deferred(Column(String(150), nullable=False))
     source_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Datafiles.datafile_id"), nullable=False
     )

@@ -9,11 +9,11 @@ from iterfzf import iterfzf
 from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion.filesystem import PathCompleter
 
-from config import DB_TYPE
 from paths import ROOT_DIRECTORY
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.utils import get_default_export_folder
+from pepys_admin.view_data_cli import ViewDataShell
 from pepys_import.utils.data_store_utils import is_schema_created
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -26,6 +26,7 @@ class AdminShell(cmd.Cmd):
 (3) Export
 (4) Export by Platform and sensor
 (5) Migrate
+(6) View Data
 (0) Exit
 """
     prompt = "(pepys-admin) "
@@ -41,13 +42,15 @@ class AdminShell(cmd.Cmd):
             "3": self.do_export,
             "4": self.do_export_by_platform_name,
             "5": self.do_migrate,
+            "6": self.do_view_data,
             "9": self.do_export_all,
         }
 
         self.cfg = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
         script_location = os.path.join(ROOT_DIRECTORY, "migrations")
         self.cfg.set_main_option("script_location", script_location)
-        self.cfg.attributes["db_type"] = DB_TYPE
+        self.cfg.attributes["db_type"] = data_store.db_type
+        self.cfg.attributes["connection"] = data_store.engine
 
     def do_export(self):
         """Start the export process"""
@@ -196,6 +199,13 @@ class AdminShell(cmd.Cmd):
     def do_migrate(self):
         print("Alembic migration command running, see output below.")
         command.upgrade(self.cfg, "head")
+
+    def do_view_data(self):
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
+            return
+        print("-" * 61)
+        shell = ViewDataShell(self.data_store)
+        shell.cmdloop()
 
     @staticmethod
     def do_exit():
