@@ -19,6 +19,9 @@ REFERENCE_TABLES = [
     "CommentType",
     "CommodityType",
     "ConfidenceLevel",
+    "ClassificationType",
+    "ContactType",
+    "ConfidenceLevel",
 ]
 
 
