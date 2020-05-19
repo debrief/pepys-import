@@ -14,6 +14,8 @@ from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.utils import get_default_export_folder
 from pepys_admin.view_data_cli import ViewDataShell
+from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import is_schema_created
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -27,6 +29,8 @@ class AdminShell(cmd.Cmd):
 (4) Export by Platform and sensor
 (5) Migrate
 (6) View Data
+(7) Export Reference Data
+(8) Export Reference and Metadata Data
 (0) Exit
 """
     prompt = "(pepys-admin) "
@@ -43,6 +47,8 @@ class AdminShell(cmd.Cmd):
             "4": self.do_export_by_platform_name,
             "5": self.do_migrate,
             "6": self.do_view_data,
+            "7": self.do_export_reference_data,
+            "8": self.do_export_reference_and_metadata_data,
             "9": self.do_export_all,
         }
 
@@ -206,6 +212,26 @@ class AdminShell(cmd.Cmd):
         print("-" * 61)
         shell = ViewDataShell(self.data_store)
         shell.cmdloop()
+
+    def do_export_reference_data(self):
+        destination_store = DataStore("", "", "", 0, "test.db", db_type="sqlite")
+        # destination_store.initialise()
+        reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
+        for table_object in list(reference_table_objects):
+            with self.data_store.session_scope():
+                values = self.data_store.session.query(table_object).all()
+                dict_values = list()
+                for row in values:
+                    d = dict()
+                    for column in row.__table__.columns:
+                        d[column.name] = getattr(row, column.name)
+                    dict_values.append(d)
+            table_object.__table__.create(bind=destination_store.engine)
+            with destination_store.session_scope():
+                destination_store.session.bulk_insert_mappings(table_object, dict_values)
+
+    def do_export_reference_and_metadata_data(self):
+        pass
 
     @staticmethod
     def do_exit():
