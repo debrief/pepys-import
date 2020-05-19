@@ -21,6 +21,16 @@ from pepys_import.utils.data_store_utils import is_schema_created
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
+def row_to_dict(table_object, data_store):
+    with data_store.session_scope():
+        values = data_store.session.query(table_object).all()
+        objects = list()
+        for row in values:
+            d = {column.name: getattr(row, column.name) for column in row.__table__.columns}
+            objects.append(d)
+    return objects
+
+
 class AdminShell(cmd.Cmd):
     intro = """--- Menu ---
 (1) Initialise/Clear
@@ -217,21 +227,29 @@ class AdminShell(cmd.Cmd):
         destination_store = DataStore("", "", "", 0, "test.db", db_type="sqlite")
         # destination_store.initialise()
         reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
-        for table_object in list(reference_table_objects):
-            with self.data_store.session_scope():
-                values = self.data_store.session.query(table_object).all()
-                dict_values = list()
-                for row in values:
-                    d = dict()
-                    for column in row.__table__.columns:
-                        d[column.name] = getattr(row, column.name)
-                    dict_values.append(d)
+        for table_object in reference_table_objects:
+            dict_values = row_to_dict(table_object, self.data_store)
             table_object.__table__.create(bind=destination_store.engine)
             with destination_store.session_scope():
                 destination_store.session.bulk_insert_mappings(table_object, dict_values)
 
     def do_export_reference_and_metadata_data(self):
-        pass
+        destination_store = DataStore("", "", "", 0, "test.db", db_type="sqlite")
+        # destination_store.initialise()
+        reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
+        for table_object in reference_table_objects:
+            table_object.__table__.create(bind=destination_store.engine)
+            dict_values = row_to_dict(table_object, self.data_store)
+            with destination_store.session_scope():
+                destination_store.session.bulk_insert_mappings(table_object, dict_values)
+
+        measurement_table_objects = self.data_store.meta_classes[TableTypes.METADATA]
+        for table_object in measurement_table_objects:
+            table_object.__table__.create(bind=destination_store.engine)
+            dict_values = row_to_dict(table_object, self.data_store)
+            with destination_store.session_scope():
+                destination_store.session.execute("PRAGMA foreign_keys=OFF;")
+                destination_store.session.bulk_insert_mappings(table_object, dict_values)
 
     @staticmethod
     def do_exit():
