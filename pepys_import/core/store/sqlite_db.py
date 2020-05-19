@@ -59,7 +59,7 @@ class Sensor(BaseSpatiaLite, SensorMixin):
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    __table_args__ = UniqueConstraint("name", "host", name="uq_sensors_name_host")
+    __table_args__ = (UniqueConstraint("name", "host", name="uq_sensors_name_host"),)
 
 
 class Platform(BaseSpatiaLite, PlatformMixin):
@@ -128,7 +128,7 @@ class Datafile(BaseSpatiaLite, DatafileMixin):
     hash = deferred(Column(String(32), nullable=False))
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    __table_args__ = UniqueConstraint("size", "hash", name="uq_Datafile_size_hash")
+    __table_args__ = (UniqueConstraint("size", "hash", name="uq_Datafile_size_hash"),)
 
 
 class Synonym(BaseSpatiaLite):
@@ -246,7 +246,7 @@ class GeometrySubType(BaseSpatiaLite):
     parent = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    __table_args__ = UniqueConstraint("name", "parent", name="uq_GeometrySubType_name_parent")
+    __table_args__ = (UniqueConstraint("name", "parent", name="uq_GeometrySubType_name_parent"),)
 
 
 class User(BaseSpatiaLite):
