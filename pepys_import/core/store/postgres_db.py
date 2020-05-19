@@ -7,6 +7,7 @@ from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
 from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
     deferred,
 )
+from sqlalchemy.sql.schema import UniqueConstraint
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
@@ -56,7 +57,10 @@ class Sensor(BasePostGIS, SensorMixin):
     __tablename__ = constants.SENSOR
     table_type = TableTypes.METADATA
     table_type_id = 2
-    __table_args__ = {"schema": "pepys"}
+    __table_args__ = (
+        UniqueConstraint("name", "host", name="uq_sensors_name_host"),
+        {"schema": "pepys"},
+    )
 
     sensor_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
@@ -140,7 +144,10 @@ class Datafile(BasePostGIS, DatafileMixin):
     __tablename__ = constants.DATAFILE
     table_type = TableTypes.METADATA
     table_type_id = 6  # Only needed for tables referenced by Entry table
-    __table_args__ = {"schema": "pepys"}
+    __table_args__ = (
+        UniqueConstraint("size", "hash", name="uq_Datafile_size_hash"),
+        {"schema": "pepys"},
+    )
 
     datafile_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     simulated = deferred(Column(Boolean, nullable=False))
@@ -275,7 +282,10 @@ class GeometrySubType(BasePostGIS):
     __tablename__ = constants.GEOMETRY_SUBTYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 16
-    __table_args__ = {"schema": "pepys"}
+    __table_args__ = (
+        UniqueConstraint("name", "parent", name="uq_GeometrySubType_name_parent"),
+        {"schema": "pepys"},
+    )
 
     geo_sub_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False, unique=True)

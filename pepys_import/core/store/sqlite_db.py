@@ -6,6 +6,7 @@ from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
 from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
     deferred,
 )
+from sqlalchemy.sql.schema import UniqueConstraint
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
@@ -57,6 +58,8 @@ class Sensor(BaseSpatiaLite, SensorMixin):
     host = Column(Integer, ForeignKey("Platforms.platform_id"), nullable=False)
     privacy_id = Column(Integer, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = UniqueConstraint("name", "host", name="uq_sensors_name_host")
 
 
 class Platform(BaseSpatiaLite, PlatformMixin):
@@ -124,6 +127,8 @@ class Datafile(BaseSpatiaLite, DatafileMixin):
     size = deferred(Column(Integer, nullable=False))
     hash = deferred(Column(String(32), nullable=False))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = UniqueConstraint("size", "hash", name="uq_Datafile_size_hash")
 
 
 class Synonym(BaseSpatiaLite):
@@ -237,9 +242,11 @@ class GeometrySubType(BaseSpatiaLite):
     table_type_id = 16
 
     geo_sub_type_id = Column(Integer, primary_key=True)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(String(150), nullable=False)
     parent = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = UniqueConstraint("name", "parent", name="uq_GeometrySubType_name_parent")
 
 
 class User(BaseSpatiaLite):
