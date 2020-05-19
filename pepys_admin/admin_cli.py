@@ -224,8 +224,8 @@ class AdminShell(cmd.Cmd):
         shell.cmdloop()
 
     def do_export_reference_data(self):
-        destination_store = DataStore("", "", "", 0, "test.db", db_type="sqlite")
-        # destination_store.initialise()
+        destination_db_name = input("SQLite database file to use: ")
+        destination_store = DataStore("", "", "", 0, db_name=destination_db_name, db_type="sqlite")
         reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
         for table_object in reference_table_objects:
             dict_values = row_to_dict(table_object, self.data_store)
@@ -234,8 +234,8 @@ class AdminShell(cmd.Cmd):
                 destination_store.session.bulk_insert_mappings(table_object, dict_values)
 
     def do_export_reference_and_metadata_data(self):
-        destination_store = DataStore("", "", "", 0, "test.db", db_type="sqlite")
-        # destination_store.initialise()
+        destination_db_name = input("SQLite database file to use: ")
+        destination_store = DataStore("", "", "", 0, db_name=destination_db_name, db_type="sqlite")
         reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
         for table_object in reference_table_objects:
             table_object.__table__.create(bind=destination_store.engine)
