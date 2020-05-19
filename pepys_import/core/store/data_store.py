@@ -25,7 +25,7 @@ from pepys_import.utils.data_store_utils import (
     create_spatial_tables_for_sqlite,
     import_from_csv,
 )
-from pepys_import.utils.geoalchemy_utils import load_spatialite
+from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_keys_on
 from pepys_import.utils.value_transforming_utils import format_datetime
 
 from .db_base import BasePostGIS, BaseSpatiaLite
@@ -81,6 +81,7 @@ class DataStore:
             elif db_type == "sqlite":
                 self.engine = create_engine(connection_string, echo=False)
                 listen(self.engine, "connect", load_spatialite)
+                listen(self.engine, "connect", set_sqlite_foreign_keys_on)
                 BaseSpatiaLite.metadata.bind = self.engine
         except ArgumentError as e:
             print(
