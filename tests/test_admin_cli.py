@@ -257,6 +257,50 @@ class AdminCLITestCase(unittest.TestCase):
         # Assert that Admin Shell redirects to the view data menu
         assert view_data_shell.intro in output
 
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    def test_do_export_reference_data(self, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_data()
+        output = temp_output.getvalue()
+        assert "Reference tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM DatafileTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert ".dsf" in names
+            assert ".rep" in names
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    def test_do_export_reference_and_metadata_data(self, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_and_metadata_data()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM DatafileTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert ".dsf" in names
+            assert ".rep" in names
+
+            results = connection.execute("SELECT reference FROM Datafiles;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "rep_test1.rep" in names
+            assert "sen_frig_sensor.dsf" in names
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
     def test_do_exit(self):
         temp_output = StringIO()
         with pytest.raises(SystemExit), redirect_stdout(temp_output):
