@@ -13,6 +13,7 @@ from pepys_import.core.validators import constants as validation_constants
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 from pepys_import.utils.import_utils import import_validators
+from pepys_import.utils.data_store_utils import shorten_uuid
 
 LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
 LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
@@ -78,6 +79,14 @@ class SensorMixin:
     @declared_attr
     def privacy_name(self):
         return association_proxy("privacy", "name")
+
+    def __repr__(self):
+        return (
+            f"Sensor(id={shorten_uuid(self.sensor_id)}, name={self.name}, "
+            "host={shorten_uuid(self.host)}, host__name={self.host__name}, "
+            "sensor_type={shorten_uuid(self.sensor_type_id)}, "
+            "sensor_type__name={self.sensor_type_name})"
+        )
 
     @classmethod
     def find_sensor(cls, data_store, sensor_name, platform_id):
