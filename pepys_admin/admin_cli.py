@@ -235,6 +235,20 @@ class AdminShell(cmd.Cmd):
         shell = ViewDataShell(self.data_store)
         shell.cmdloop()
 
+    @staticmethod
+    def _ask_for_db_name():
+        while True:
+            destination_db_name = input("SQLite database file to use: ")
+            path = os.path.join(os.getcwd(), destination_db_name)
+            if not os.path.exists(path):
+                break
+            else:
+                print(
+                    f"There is already a file named '{destination_db_name}' in '{os.getcwd()}'."
+                    f"\nPlease enter another name."
+                )
+        return destination_db_name, path
+
     def _export_tables(self, table_objects, destination_store):
         for table_object in table_objects:
             dict_values = row_to_dict(table_object, self.data_store)
@@ -245,7 +259,7 @@ class AdminShell(cmd.Cmd):
                 destination_store.session.bulk_insert_mappings(object_, dict_values)
 
     def do_export_reference_data(self):
-        destination_db_name = input("SQLite database file to use: ")
+        destination_db_name, path = self._ask_for_db_name()
         destination_store = DataStore(
             "",
             "",
@@ -262,7 +276,7 @@ class AdminShell(cmd.Cmd):
         print(f"Reference tables are successfully exported!\nYou can find it here: '{path}'.")
 
     def do_export_reference_and_metadata_data(self):
-        destination_db_name = input("SQLite database file to use: ")
+        destination_db_name, path = self._ask_for_db_name()
         destination_store = DataStore(
             "",
             "",
@@ -278,7 +292,6 @@ class AdminShell(cmd.Cmd):
             + self.data_store.meta_classes[TableTypes.METADATA]
         )
         self._export_tables(table_objects, destination_store)
-        path = os.path.join(os.getcwd(), destination_db_name)
         print(
             f"Reference and metadata tables are successfully exported!\nYou can find it here: '{path}'."
         )
