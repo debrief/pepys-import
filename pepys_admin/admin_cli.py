@@ -33,16 +33,14 @@ def row_to_dict(table_object, data_store):
     return objects
 
 
-def find_table_object(table_object, data_store):
+def find_sqlite_table_object(table_object, data_store):
     """Finds and returns a SQLite Base class which will be used to create and insert values"""
-    object_ = None
     if data_store.db_type == "postgres":
         for name, obj in inspect.getmembers(sqlite_db):
             if inspect.isclass(obj) and name == table_object.__name__:
-                object_ = obj
+                return obj
     else:
-        object_ = table_object
-    return object_
+        return table_object
 
 
 class AdminShell(cmd.Cmd):
@@ -237,34 +235,29 @@ class AdminShell(cmd.Cmd):
         shell = ViewDataShell(self.data_store)
         shell.cmdloop()
 
-    def do_export_reference_data(self, destination_store=None):
-        if destination_store is None:
-            destination_db_name = input("SQLite database file to use: ")
-            destination_store = DataStore(
-                "", "", "", 0, db_name=destination_db_name, db_type="sqlite"
-            )
-
-        reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
-        for table_object in reference_table_objects:
+    def _export_tables(self, table_objects, destination_store):
+        for table_object in table_objects:
             dict_values = row_to_dict(table_object, self.data_store)
-            object_ = find_table_object(table_object, self.data_store)
-            object_.__table__.create(bind=destination_store.engine)
-            with destination_store.session_scope():
-                destination_store.session.bulk_insert_mappings(object_, dict_values)
-
-    def do_export_reference_and_metadata_data(self):
-        destination_db_name = input("SQLite database file to use: ")
-        destination_store = DataStore("", "", "", 0, db_name=destination_db_name, db_type="sqlite")
-        self.do_export_reference_data(destination_store=destination_store)
-
-        measurement_table_objects = self.data_store.meta_classes[TableTypes.METADATA]
-        for table_object in measurement_table_objects:
-            dict_values = row_to_dict(table_object, self.data_store)
-            object_ = find_table_object(table_object, self.data_store)
+            object_ = find_sqlite_table_object(table_object, self.data_store)
             object_.__table__.create(bind=destination_store.engine)
             with destination_store.session_scope():
                 destination_store.session.execute("PRAGMA foreign_keys=OFF;")
                 destination_store.session.bulk_insert_mappings(object_, dict_values)
+
+    def do_export_reference_data(self):
+        destination_db_name = input("SQLite database file to use: ")
+        destination_store = DataStore("", "", "", 0, db_name=destination_db_name, db_type="sqlite")
+        reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
+        self._export_tables(reference_table_objects, destination_store)
+
+    def do_export_reference_and_metadata_data(self):
+        destination_db_name = input("SQLite database file to use: ")
+        destination_store = DataStore("", "", "", 0, db_name=destination_db_name, db_type="sqlite")
+        table_objects = (
+            self.data_store.meta_classes[TableTypes.REFERENCE]
+            + self.data_store.meta_classes[TableTypes.METADATA]
+        )
+        self._export_tables(table_objects, destination_store)
 
     @staticmethod
     def do_exit():
