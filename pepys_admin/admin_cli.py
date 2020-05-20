@@ -246,18 +246,42 @@ class AdminShell(cmd.Cmd):
 
     def do_export_reference_data(self):
         destination_db_name = input("SQLite database file to use: ")
-        destination_store = DataStore("", "", "", 0, db_name=destination_db_name, db_type="sqlite")
+        destination_store = DataStore(
+            "",
+            "",
+            "",
+            0,
+            db_name=destination_db_name,
+            db_type="sqlite",
+            show_status=False,
+            welcome_text=None,
+        )
         reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
         self._export_tables(reference_table_objects, destination_store)
+        path = os.path.join(os.getcwd(), destination_db_name)
+        print(f"Reference tables are successfully exported!\nYou can find it here: '{path}'.")
 
     def do_export_reference_and_metadata_data(self):
         destination_db_name = input("SQLite database file to use: ")
-        destination_store = DataStore("", "", "", 0, db_name=destination_db_name, db_type="sqlite")
+        destination_store = DataStore(
+            "",
+            "",
+            "",
+            0,
+            db_name=destination_db_name,
+            db_type="sqlite",
+            show_status=False,
+            welcome_text=None,
+        )
         table_objects = (
             self.data_store.meta_classes[TableTypes.REFERENCE]
             + self.data_store.meta_classes[TableTypes.METADATA]
         )
         self._export_tables(table_objects, destination_store)
+        path = os.path.join(os.getcwd(), destination_db_name)
+        print(
+            f"Reference and metadata tables are successfully exported!\nYou can find it here: '{path}'."
+        )
 
     @staticmethod
     def do_exit():
