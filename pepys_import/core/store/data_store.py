@@ -1033,9 +1033,9 @@ class DataStore:
             with self.engine.connect() as connection:
                 if self.db_type == "sqlite":
                     connection.execute("DROP TABLE alembic_version;")
-
-        with self.engine.connect() as connection:
-            connection.execute('DROP SCHEMA IF EXISTS "pepys" CASCADE;')
+        else:
+            with self.engine.connect() as connection:
+                connection.execute('DROP SCHEMA IF EXISTS "pepys" CASCADE;')
 
     def get_all_datafiles(self):
         """Returns all datafiles.
