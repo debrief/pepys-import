@@ -1028,16 +1028,12 @@ class DataStore:
         """Delete the database schema (ie all of the tables)"""
         if self.db_type == "sqlite":
             meta = BaseSpatiaLite.metadata
+            with self.session_scope():
+                meta.drop_all()
+                self.session.execute("DROP TABLE alembic_version;")
         else:
-            meta = BasePostGIS.metadata
-
-        with self.session_scope():
-            meta.drop_all()
-        with self.engine.connect() as connection:
-            if self.db_type == "sqlite":
-                connection.execute("DROP TABLE alembic_version;")
-            else:
-                connection.execute('DROP TABLE pepys."alembic_version";')
+            with self.engine.connect() as connection:
+                connection.execute('DROP SCHEMA IF EXISTS "pepys" CASCADE;')
 
     def get_all_datafiles(self):
         """Returns all datafiles.
