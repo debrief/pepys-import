@@ -362,7 +362,6 @@ class ConfidenceLevel(BaseSpatiaLite):
 class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.sensor_name = None
         self.platform_name = None
 
     __tablename__ = constants.STATE
@@ -387,7 +386,6 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
 class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.sensor_name = None
         self.platform_name = None
 
     __tablename__ = constants.CONTACT
@@ -460,8 +458,7 @@ class LogsHolding(BaseSpatiaLite, LogsHoldingMixin):
 class Comment(BaseSpatiaLite, CommentMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.sensor_name = None
-        self.platform_name = None
+        self.sensor_name = "N/A"
 
     __tablename__ = constants.COMMENT
     table_type = TableTypes.MEASUREMENT

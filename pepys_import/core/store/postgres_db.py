@@ -409,7 +409,6 @@ class ConfidenceLevel(BasePostGIS):
 class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.sensor_name = None
         self.platform_name = None
 
     __tablename__ = constants.STATE
@@ -435,7 +434,6 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
 class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.sensor_name = None
         self.platform_name = None
 
     __tablename__ = constants.CONTACT
@@ -521,8 +519,7 @@ class LogsHolding(BasePostGIS, LogsHoldingMixin):
 class Comment(BasePostGIS, CommentMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.sensor_name = None
-        self.platform_name = None
+        self.sensor_name = "N/A"
 
     __tablename__ = constants.COMMENT
     table_type = TableTypes.MEASUREMENT
