@@ -33,6 +33,18 @@ def row_to_dict(table_object, data_store):
     return objects
 
 
+def find_table_object(table_object, data_store):
+    """Finds and returns a SQLite Base class which will be used to create and insert values"""
+    object_ = None
+    if data_store.db_type == "postgres":
+        for name, obj in inspect.getmembers(sqlite_db):
+            if inspect.isclass(obj) and name == table_object.__name__:
+                object_ = obj
+    else:
+        object_ = table_object
+    return object_
+
+
 class AdminShell(cmd.Cmd):
     intro = """--- Menu ---
 (1) Initialise/Clear
@@ -235,32 +247,20 @@ class AdminShell(cmd.Cmd):
         reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
         for table_object in reference_table_objects:
             dict_values = row_to_dict(table_object, self.data_store)
-            object_ = None
-            if self.data_store.db_type == "postgres":
-                for name, obj in inspect.getmembers(sqlite_db):
-                    if inspect.isclass(obj) and name == table_object.__name__:
-                        object_ = obj
-            else:
-                object_ = table_object
+            object_ = find_table_object(table_object, self.data_store)
             object_.__table__.create(bind=destination_store.engine)
             with destination_store.session_scope():
                 destination_store.session.bulk_insert_mappings(object_, dict_values)
 
     def do_export_reference_and_metadata_data(self):
-        destination_db_name = "test.db"
+        destination_db_name = input("SQLite database file to use: ")
         destination_store = DataStore("", "", "", 0, db_name=destination_db_name, db_type="sqlite")
         self.do_export_reference_data(destination_store=destination_store)
 
         measurement_table_objects = self.data_store.meta_classes[TableTypes.METADATA]
         for table_object in measurement_table_objects:
             dict_values = row_to_dict(table_object, self.data_store)
-            object_ = None
-            if self.data_store.db_type == "postgres":
-                for name, obj in inspect.getmembers(sqlite_db):
-                    if inspect.isclass(obj) and name == table_object.__name__:
-                        object_ = obj
-            else:
-                object_ = table_object
+            object_ = find_table_object(table_object, self.data_store)
             object_.__table__.create(bind=destination_store.engine)
             with destination_store.session_scope():
                 destination_store.session.execute("PRAGMA foreign_keys=OFF;")
