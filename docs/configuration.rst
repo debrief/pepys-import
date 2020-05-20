@@ -41,7 +41,9 @@ These settings control how pepys-import archives files after importing them.
 The specific variables are:
 
  - :code:`user`: Username used to connect to the archiving location (default: none)
- - :code:`password`: Password used to connect to the archiving location (default: none)
+ - :code:`password`: Password used to connect to the archiving location (default: none). This field can
+   be included in an encrypted form. To do this, encrypt the password and add a :code:`_` to the beginning
+   and end of the encrypted string. For example, :code:`_aghiejf_`.
  - :code:`path`: Full path to folder used to archive input files and store output logs (default: none)
 
 :code:`[local]` section
