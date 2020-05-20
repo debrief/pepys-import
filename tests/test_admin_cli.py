@@ -705,5 +705,71 @@ def test_do_migrate():
     os.remove(os.path.join(CURRENT_DIR, "new_db.db"))
 
 
+class ExportSnapshotPostgresTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.postgres = Postgresql(
+            database="test", host="localhost", user="postgres", password="postgres", port=55527,
+        )
+        self.store = DataStore(
+            db_name="test",
+            db_host="localhost",
+            db_username="postgres",
+            db_password="postgres",
+            db_port=55527,
+            db_type="postgres",
+        )
+        self.store.initialise()
+        # Parse the REP files
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(DATA_PATH, self.store, False)
+
+        self.admin_shell = AdminShell(self.store)
+
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    def test_do_export_reference_data_postgres(self, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_data()
+        output = temp_output.getvalue()
+        assert "Reference tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM DatafileTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert ".dsf" in names
+            assert ".rep" in names
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    def test_do_export_reference_and_metadata_data_postgres(self, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_and_metadata_data()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM DatafileTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert ".dsf" in names
+            assert ".rep" in names
+
+            results = connection.execute("SELECT reference FROM Datafiles;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "rep_test1.rep" in names
+            assert "sen_frig_sensor.dsf" in names
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+
 if __name__ == "__main__":
     unittest.main()
