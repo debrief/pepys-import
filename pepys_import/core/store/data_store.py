@@ -1030,7 +1030,7 @@ class DataStore:
             meta = BaseSpatiaLite.metadata
             with self.session_scope():
                 meta.drop_all()
-                self.session.execute("DROP TABLE alembic_version;")
+                self.session.execute("DROP TABLE IF EXISTS alembic_version;")
         else:
             with self.engine.connect() as connection:
                 connection.execute('DROP SCHEMA IF EXISTS "pepys" CASCADE;')
