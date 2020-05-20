@@ -1,4 +1,5 @@
 import cmd
+import inspect
 import os
 import sys
 from datetime import datetime
@@ -14,6 +15,7 @@ from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.utils import get_default_export_folder
 from pepys_admin.view_data_cli import ViewDataShell
+from pepys_import.core.store import sqlite_db
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import is_schema_created
@@ -223,33 +225,46 @@ class AdminShell(cmd.Cmd):
         shell = ViewDataShell(self.data_store)
         shell.cmdloop()
 
-    def do_export_reference_data(self):
-        destination_db_name = input("SQLite database file to use: ")
-        destination_store = DataStore("", "", "", 0, db_name=destination_db_name, db_type="sqlite")
+    def do_export_reference_data(self, destination_store=None):
+        if destination_store is None:
+            destination_db_name = input("SQLite database file to use: ")
+            destination_store = DataStore(
+                "", "", "", 0, db_name=destination_db_name, db_type="sqlite"
+            )
+
         reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
         for table_object in reference_table_objects:
             dict_values = row_to_dict(table_object, self.data_store)
-            table_object.__table__.create(bind=destination_store.engine)
+            object_ = None
+            if self.data_store.db_type == "postgres":
+                for name, obj in inspect.getmembers(sqlite_db):
+                    if inspect.isclass(obj) and name == table_object.__name__:
+                        object_ = obj
+            else:
+                object_ = table_object
+            object_.__table__.create(bind=destination_store.engine)
             with destination_store.session_scope():
-                destination_store.session.bulk_insert_mappings(table_object, dict_values)
+                destination_store.session.bulk_insert_mappings(object_, dict_values)
 
     def do_export_reference_and_metadata_data(self):
-        destination_db_name = input("SQLite database file to use: ")
+        destination_db_name = "test.db"
         destination_store = DataStore("", "", "", 0, db_name=destination_db_name, db_type="sqlite")
-        reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
-        for table_object in reference_table_objects:
-            table_object.__table__.create(bind=destination_store.engine)
-            dict_values = row_to_dict(table_object, self.data_store)
-            with destination_store.session_scope():
-                destination_store.session.bulk_insert_mappings(table_object, dict_values)
+        self.do_export_reference_data(destination_store=destination_store)
 
         measurement_table_objects = self.data_store.meta_classes[TableTypes.METADATA]
         for table_object in measurement_table_objects:
-            table_object.__table__.create(bind=destination_store.engine)
             dict_values = row_to_dict(table_object, self.data_store)
+            object_ = None
+            if self.data_store.db_type == "postgres":
+                for name, obj in inspect.getmembers(sqlite_db):
+                    if inspect.isclass(obj) and name == table_object.__name__:
+                        object_ = obj
+            else:
+                object_ = table_object
+            object_.__table__.create(bind=destination_store.engine)
             with destination_store.session_scope():
                 destination_store.session.execute("PRAGMA foreign_keys=OFF;")
-                destination_store.session.bulk_insert_mappings(table_object, dict_values)
+                destination_store.session.bulk_insert_mappings(object_, dict_values)
 
     @staticmethod
     def do_exit():
