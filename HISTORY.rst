@@ -2,6 +2,13 @@
 History
 =======
 
+0.0.11 (2020-05-20)
+------------------
+
+* Use caching to improve import performance
+* Use database migration to allow updates to "live" databases
+* Add ability to view database contents from Admin interface
+
 0.0.9 (2020-04-04)
 ------------------
 

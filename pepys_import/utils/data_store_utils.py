@@ -73,8 +73,8 @@ def create_alembic_version_table(engine, db_type):
         """
         insert_value = """
             INSERT INTO alembic_version (version_num)
-            SELECT 'ccc37f794db6'
-            WHERE NOT EXISTS(SELECT 1 FROM alembic_version WHERE version_num = 'ccc37f794db6');
+            SELECT '07e4b725c547'
+            WHERE NOT EXISTS(SELECT 1 FROM alembic_version WHERE version_num = '07e4b725c547');
         """
     else:
         create_table = """
@@ -86,9 +86,9 @@ def create_alembic_version_table(engine, db_type):
         """
         insert_value = """
             INSERT INTO pepys.alembic_version (version_num) 
-            SELECT 'e2f70908043d'
+            SELECT '6f625922f61c'
             WHERE NOT EXISTS(
-                SELECT 'e2f70908043d' FROM pepys.alembic_version WHERE version_num = 'e2f70908043d'
+                SELECT '6f625922f61c' FROM pepys.alembic_version WHERE version_num = '6f625922f61c'
             );
         """
     with engine.connect() as connection:
