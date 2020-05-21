@@ -83,9 +83,9 @@ class SensorMixin:
     def __repr__(self):
         return (
             f"Sensor(id={shorten_uuid(self.sensor_id)}, name={self.name}, "
-            "host={shorten_uuid(self.host)}, host__name={self.host__name}, "
-            "sensor_type={shorten_uuid(self.sensor_type_id)}, "
-            "sensor_type__name={self.sensor_type_name})"
+            f"host={shorten_uuid(self.host)}, host__name={self.host__name}, "
+            f"sensor_type={shorten_uuid(self.sensor_type_id)}, "
+            f"sensor_type__name={self.sensor_type_name})"
         )
 
     @classmethod
@@ -137,16 +137,23 @@ class SensorMixin:
         return synonym_result
 
     @classmethod
-    def add_to_sensors(cls, data_store, name, sensor_type, host, privacy_id, change_id):
+    def add_to_sensors(cls, data_store, name, sensor_type, host, privacy_id, change_id, host_id=None):
         session = data_store.session
         sensor_type = data_store.search_sensor_type(sensor_type)
-        host = data_store.db_classes.Platform().search_platform(data_store, host)
+        # Temporary fix for #399, until #362 is fixed
+        # This allows us to pass a host_id to this function. If it's passed, then
+        # we use this ID for the platform that hosts this sensor. If it isn't
+        # passed, then we look up the host_id from the name given in the `host` argument
+        # (If you pass `host_id` then just set `host` to None)
+        if host_id is None:
+            host = data_store.db_classes.Platform().search_platform(data_store, host)
+            host_id = host.platform_id
 
         sensor_obj = data_store.db_classes.Sensor(
             name=name,
             sensor_type_id=sensor_type.sensor_type_id,
             privacy_id=privacy_id,
-            host=host.platform_id,
+            host=host_id,
         )
         session.add(sensor_obj)
         session.flush()
@@ -242,7 +249,8 @@ class PlatformMixin:
             data_store=data_store,
             name=sensor_name,
             sensor_type=sensor_type_obj.name,
-            host=self.name,
+            host=None,
+            host_id=self.platform_id,
             privacy_id=privacy_obj.privacy_id,
             change_id=change_id,
         )
