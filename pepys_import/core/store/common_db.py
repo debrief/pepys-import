@@ -12,8 +12,8 @@ from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
-from pepys_import.utils.import_utils import import_validators
 from pepys_import.utils.data_store_utils import shorten_uuid
+from pepys_import.utils.import_utils import import_validators
 
 LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
 LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
@@ -137,7 +137,9 @@ class SensorMixin:
         return synonym_result
 
     @classmethod
-    def add_to_sensors(cls, data_store, name, sensor_type, host, privacy_id, change_id, host_id=None):
+    def add_to_sensors(
+        cls, data_store, name, sensor_type, host, privacy_id, change_id, host_id=None
+    ):
         session = data_store.session
         sensor_type = data_store.search_sensor_type(sensor_type)
         # Temporary fix for #399, until #362 is fixed
