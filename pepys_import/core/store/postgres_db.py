@@ -27,6 +27,7 @@ from pepys_import.core.store.common_db import (
     StateMixin,
     TaggedItemMixin,
     TaskMixin,
+    ReferenceRepr
 )
 from pepys_import.core.store.db_base import BasePostGIS
 from pepys_import.core.store.db_status import TableTypes
@@ -238,7 +239,7 @@ class TaggedItem(BasePostGIS, TaggedItemMixin):
 
 
 # Reference Tables
-class PlatformType(BasePostGIS):
+class PlatformType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.PLATFORM_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 13
@@ -249,7 +250,7 @@ class PlatformType(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Nationality(BasePostGIS):
+class Nationality(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.NATIONALITY
     table_type = TableTypes.REFERENCE
     table_type_id = 14
@@ -260,7 +261,7 @@ class Nationality(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class GeometryType(BasePostGIS):
+class GeometryType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.GEOMETRY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 15
@@ -284,7 +285,7 @@ class GeometrySubType(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class User(BasePostGIS):
+class User(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.USER
     table_type = TableTypes.REFERENCE
     table_type_id = 17
@@ -295,7 +296,7 @@ class User(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class UnitType(BasePostGIS):
+class UnitType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.UNIT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 18
@@ -306,7 +307,7 @@ class UnitType(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ClassificationType(BasePostGIS):
+class ClassificationType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.CLASSIFICATION_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 19
@@ -317,7 +318,7 @@ class ClassificationType(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ContactType(BasePostGIS):
+class ContactType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.CONTACT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 20
@@ -328,7 +329,7 @@ class ContactType(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class SensorType(BasePostGIS):
+class SensorType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.SENSOR_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 21
@@ -339,7 +340,7 @@ class SensorType(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Privacy(BasePostGIS):
+class Privacy(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.PRIVACY
     table_type = TableTypes.REFERENCE
     table_type_id = 22
@@ -350,7 +351,7 @@ class Privacy(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class DatafileType(BasePostGIS):
+class DatafileType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.DATAFILE_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 23
@@ -361,7 +362,7 @@ class DatafileType(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class MediaType(BasePostGIS):
+class MediaType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.MEDIA_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 24
@@ -372,7 +373,7 @@ class MediaType(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class CommentType(BasePostGIS):
+class CommentType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.COMMENT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 25
@@ -383,7 +384,7 @@ class CommentType(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class CommodityType(BasePostGIS):
+class CommodityType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.COMMODITY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 26
@@ -394,7 +395,7 @@ class CommodityType(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ConfidenceLevel(BasePostGIS):
+class ConfidenceLevel(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.CONFIDENCE_LEVEL
     table_type = TableTypes.REFERENCE
     table_type_id = 27  # Only needed for tables referenced by Entry table

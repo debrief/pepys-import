@@ -27,6 +27,7 @@ from pepys_import.core.store.common_db import (
     StateMixin,
     TaggedItemMixin,
     TaskMixin,
+    ReferenceRepr
 )
 from pepys_import.core.store.db_base import BaseSpatiaLite
 from pepys_import.core.store.db_status import TableTypes
@@ -207,7 +208,7 @@ class TaggedItem(BaseSpatiaLite, TaggedItemMixin):
 
 
 # Reference Tables
-class PlatformType(BaseSpatiaLite):
+class PlatformType(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.PLATFORM_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 13
@@ -217,7 +218,7 @@ class PlatformType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Nationality(BaseSpatiaLite):
+class Nationality(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.NATIONALITY
     table_type = TableTypes.REFERENCE
     table_type_id = 14
@@ -227,7 +228,7 @@ class Nationality(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class GeometryType(BaseSpatiaLite):
+class GeometryType(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.GEOMETRY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 15
@@ -248,7 +249,7 @@ class GeometrySubType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class User(BaseSpatiaLite):
+class User(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.USER
     table_type = TableTypes.REFERENCE
     table_type_id = 17
@@ -258,7 +259,7 @@ class User(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class UnitType(BaseSpatiaLite):
+class UnitType(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.UNIT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 18
@@ -268,7 +269,7 @@ class UnitType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ClassificationType(BaseSpatiaLite):
+class ClassificationType(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.CLASSIFICATION_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 19
@@ -278,7 +279,7 @@ class ClassificationType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ContactType(BaseSpatiaLite):
+class ContactType(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.CONTACT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 20
@@ -288,7 +289,7 @@ class ContactType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class SensorType(BaseSpatiaLite):
+class SensorType(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.SENSOR_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 21
@@ -298,7 +299,7 @@ class SensorType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Privacy(BaseSpatiaLite):
+class Privacy(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.PRIVACY
     table_type = TableTypes.REFERENCE
     table_type_id = 22
@@ -308,7 +309,7 @@ class Privacy(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class DatafileType(BaseSpatiaLite):
+class DatafileType(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.DATAFILE_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 23
@@ -318,7 +319,7 @@ class DatafileType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class MediaType(BaseSpatiaLite):
+class MediaType(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.MEDIA_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 24
@@ -328,7 +329,7 @@ class MediaType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class CommentType(BaseSpatiaLite):
+class CommentType(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.COMMENT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 25
@@ -338,7 +339,7 @@ class CommentType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class CommodityType(BaseSpatiaLite):
+class CommodityType(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.COMMODITY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 26
@@ -348,7 +349,7 @@ class CommodityType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ConfidenceLevel(BaseSpatiaLite):
+class ConfidenceLevel(BaseSpatiaLite, ReferenceRepr):
     __tablename__ = constants.CONFIDENCE_LEVEL
     table_type = TableTypes.REFERENCE
     table_type_id = 27

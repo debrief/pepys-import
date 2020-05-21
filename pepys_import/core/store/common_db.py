@@ -83,9 +83,9 @@ class SensorMixin:
     def __repr__(self):
         return (
             f"Sensor(id={shorten_uuid(self.sensor_id)}, name={self.name}, "
-            "host={shorten_uuid(self.host)}, host__name={self.host__name}, "
-            "sensor_type={shorten_uuid(self.sensor_type_id)}, "
-            "sensor_type__name={self.sensor_type_name})"
+            f"host={shorten_uuid(self.host)}, host__name={self.host__name}, "
+            f"sensor_type={shorten_uuid(self.sensor_type_id)}, "
+            f"sensor_type__name={self.sensor_type_name})"
         )
 
     @classmethod
@@ -1500,3 +1500,10 @@ class ActivationMixin:
     @right_arc.expression
     def right_arc(self):
         return self._right_arc
+
+
+class ReferenceRepr:
+    def __repr__(self):
+        primary_key_col_name = self.__table__.primary_key.columns.values()[0].name
+        return (f"{self.__class__.__name__}(id={shorten_uuid(getattr(self, primary_key_col_name))} "
+                f"name={self.name})")
