@@ -249,6 +249,20 @@ class AdminShell(cmd.Cmd):
                 )
         return destination_db_name, path
 
+    def _create_destination_store(self):
+        destination_db_name, path = self._ask_for_db_name()
+        destination_store = DataStore(
+            "",
+            "",
+            "",
+            0,
+            db_name=destination_db_name,
+            db_type="sqlite",
+            show_status=False,
+            welcome_text=None,
+        )
+        return destination_store, path
+
     def _export_reference_tables(self, table_objects, destination_store):
         for table_object in table_objects:
             dict_values = row_to_dict(table_object, self.data_store)
@@ -303,37 +317,16 @@ class AdminShell(cmd.Cmd):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
-        destination_db_name, path = self._ask_for_db_name()
-        destination_store = DataStore(
-            "",
-            "",
-            "",
-            0,
-            db_name=destination_db_name,
-            db_type="sqlite",
-            show_status=False,
-            welcome_text=None,
-        )
+        destination_store, path = self._create_destination_store()
         reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
         self._export_reference_tables(reference_table_objects, destination_store)
-        path = os.path.join(os.getcwd(), destination_db_name)
         print(f"Reference tables are successfully exported!\nYou can find it here: '{path}'.")
 
     def do_export_reference_and_metadata_data(self):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
-        destination_db_name, path = self._ask_for_db_name()
-        destination_store = DataStore(
-            "",
-            "",
-            "",
-            0,
-            db_name=destination_db_name,
-            db_type="sqlite",
-            show_status=False,
-            welcome_text=None,
-        )
+        destination_store, path = self._create_destination_store()
         reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
         self._export_reference_tables(reference_table_objects, destination_store)
 
