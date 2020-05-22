@@ -240,6 +240,7 @@ class AdminShell(cmd.Cmd):
             show_status=False,
             welcome_text=None,
         )
+        destination_store.initialise()
         return destination_store, path
 
     def do_export_reference_data(self):

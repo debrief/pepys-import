@@ -27,7 +27,6 @@ def export_reference_tables(source_store, destination_store, table_objects):
     for table_object in table_objects:
         dict_values = row_to_dict(table_object, source_store)
         object_ = find_sqlite_table_object(table_object, source_store)
-        object_.__table__.create(bind=destination_store.engine)
         with destination_store.session_scope():
             destination_store.session.bulk_insert_mappings(object_, dict_values)
 
@@ -69,6 +68,5 @@ def export_metadata_tables(source_store, destination_store, privacy_ids):
                 dict_values.append(d)
 
             object_ = find_sqlite_table_object(table_object, source_store)
-            object_.__table__.create(bind=destination_store.engine)
             with destination_store.session_scope():
                 destination_store.session.bulk_insert_mappings(object_, dict_values)
