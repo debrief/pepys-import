@@ -262,6 +262,7 @@ class AdminShell(cmd.Cmd):
         for table_object in [
             self.data_store.db_classes.Platform,
             self.data_store.db_classes.Sensor,
+            self.data_store.db_classes.Synonym,
         ]:
             with self.data_store.session_scope():
                 dict_values = list()
@@ -272,11 +273,21 @@ class AdminShell(cmd.Cmd):
                         .all()
                     )
                     platform_ids = [row.platform_id for row in values]
-                else:
+                elif table_object.__name__ == "Sensor":
                     values = (
                         self.data_store.session.query(table_object)
                         .filter(table_object.host.in_(platform_ids))
                         .filter(table_object.privacy_id.in_(privacy_ids))
+                        .all()
+                    )
+                    sensor_ids = [row.sensor_id for row in values]
+                else:
+                    all_ids = list()
+                    all_ids.extend(platform_ids)
+                    all_ids.extend(sensor_ids)
+                    values = (
+                        self.data_store.session.query(self.data_store.db_classes.Synonym)
+                        .filter(self.data_store.db_classes.Synonym.entity.in_(all_ids))
                         .all()
                     )
                 for row in values:
