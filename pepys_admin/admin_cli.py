@@ -1,5 +1,4 @@
 import cmd
-import inspect
 import os
 import sys
 from datetime import datetime
@@ -12,35 +11,15 @@ from prompt_toolkit.completion.filesystem import PathCompleter
 
 from paths import ROOT_DIRECTORY
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
+from pepys_admin.export_snapshot import export_metadata_tables, export_reference_tables
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.utils import get_default_export_folder
 from pepys_admin.view_data_cli import ViewDataShell
-from pepys_import.core.store import sqlite_db
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import is_schema_created
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
-
-
-def row_to_dict(table_object, data_store):
-    with data_store.session_scope():
-        values = data_store.session.query(table_object).all()
-        objects = list()
-        for row in values:
-            d = {column.name: getattr(row, column.name) for column in row.__table__.columns}
-            objects.append(d)
-    return objects
-
-
-def find_sqlite_table_object(table_object, data_store):
-    """Finds and returns a SQLite Base class which will be used to create and insert values"""
-    if data_store.db_type == "postgres":
-        for name, obj in inspect.getmembers(sqlite_db):
-            if inspect.isclass(obj) and name == table_object.__name__:
-                return obj
-    else:
-        return table_object
 
 
 class AdminShell(cmd.Cmd):
@@ -263,63 +242,13 @@ class AdminShell(cmd.Cmd):
         )
         return destination_store, path
 
-    def _export_reference_tables(self, table_objects, destination_store):
-        for table_object in table_objects:
-            dict_values = row_to_dict(table_object, self.data_store)
-            object_ = find_sqlite_table_object(table_object, self.data_store)
-            object_.__table__.create(bind=destination_store.engine)
-            with destination_store.session_scope():
-                destination_store.session.execute("PRAGMA foreign_keys=OFF;")
-                destination_store.session.bulk_insert_mappings(object_, dict_values)
-
-    def _export_metadata_tables(self, destination_store, privacy_ids):
-        for table_object in [
-            self.data_store.db_classes.Platform,
-            self.data_store.db_classes.Sensor,
-            self.data_store.db_classes.Synonym,
-        ]:
-            with self.data_store.session_scope():
-                dict_values = list()
-                if table_object.__name__ == "Platform":
-                    values = (
-                        self.data_store.session.query(table_object)
-                        .filter(table_object.privacy_id.in_(privacy_ids))
-                        .all()
-                    )
-                    platform_ids = [row.platform_id for row in values]
-                elif table_object.__name__ == "Sensor":
-                    values = (
-                        self.data_store.session.query(table_object)
-                        .filter(table_object.host.in_(platform_ids))
-                        .filter(table_object.privacy_id.in_(privacy_ids))
-                        .all()
-                    )
-                    sensor_ids = [row.sensor_id for row in values]
-                else:
-                    all_ids = list()
-                    all_ids.extend(platform_ids)
-                    all_ids.extend(sensor_ids)
-                    values = (
-                        self.data_store.session.query(self.data_store.db_classes.Synonym)
-                        .filter(self.data_store.db_classes.Synonym.entity.in_(all_ids))
-                        .all()
-                    )
-                for row in values:
-                    d = {column.name: getattr(row, column.name) for column in row.__table__.columns}
-                    dict_values.append(d)
-
-                object_ = find_sqlite_table_object(table_object, self.data_store)
-                object_.__table__.create(bind=destination_store.engine)
-                with destination_store.session_scope():
-                    destination_store.session.bulk_insert_mappings(object_, dict_values)
-
     def do_export_reference_data(self):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
         destination_store, path = self._create_destination_store()
         reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
-        self._export_reference_tables(reference_table_objects, destination_store)
+        export_reference_tables(self.data_store, destination_store, reference_table_objects)
         print(f"Reference tables are successfully exported!\nYou can find it here: '{path}'.")
 
     def do_export_reference_and_metadata_data(self):
@@ -328,7 +257,7 @@ class AdminShell(cmd.Cmd):
 
         destination_store, path = self._create_destination_store()
         reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
-        self._export_reference_tables(reference_table_objects, destination_store)
+        export_reference_tables(self.data_store, destination_store, reference_table_objects)
 
         with self.data_store.session_scope():
             privacies = self.data_store.session.query(
@@ -338,7 +267,7 @@ class AdminShell(cmd.Cmd):
             privacy_dict = {name: privacy_id for privacy_id, name in privacies}
         selected_privacies = iterfzf(privacy_dict.keys(), multi=True)
         privacy_ids = [privacy_dict[name] for name in selected_privacies]
-        self._export_metadata_tables(destination_store, privacy_ids)
+        export_metadata_tables(self.data_store, destination_store, privacy_ids)
         print(
             f"Reference and metadata tables are successfully exported!\nYou can find it here: '{path}'."
         )
