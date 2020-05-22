@@ -249,7 +249,7 @@ class AdminShell(cmd.Cmd):
                 )
         return destination_db_name, path
 
-    def _export_tables(self, table_objects, destination_store):
+    def _export_reference_tables(self, table_objects, destination_store):
         for table_object in table_objects:
             dict_values = row_to_dict(table_object, self.data_store)
             object_ = find_sqlite_table_object(table_object, self.data_store)
@@ -257,6 +257,28 @@ class AdminShell(cmd.Cmd):
             with destination_store.session_scope():
                 destination_store.session.execute("PRAGMA foreign_keys=OFF;")
                 destination_store.session.bulk_insert_mappings(object_, dict_values)
+
+    def _export_metadata_tables(self, destination_store, privacy_ids):
+        for table_object in [
+            self.data_store.db_classes.Platform,
+            self.data_store.db_classes.Sensor,
+        ]:
+            with self.data_store.session_scope():
+                dict_values = list()
+                values = (
+                    self.data_store.session.query(table_object)
+                    .filter(table_object.privacy_id.in_(privacy_ids))
+                    .all()
+                )
+                for row in values:
+                    d = {column.name: getattr(row, column.name) for column in row.__table__.columns}
+                    dict_values.append(d)
+
+                object_ = find_sqlite_table_object(table_object, self.data_store)
+                object_.__table__.create(bind=destination_store.engine)
+                with destination_store.session_scope():
+                    # destination_store.session.execute("PRAGMA foreign_keys=OFF;")
+                    destination_store.session.bulk_insert_mappings(object_, dict_values)
 
     def do_export_reference_data(self):
         destination_db_name, path = self._ask_for_db_name()
@@ -271,7 +293,7 @@ class AdminShell(cmd.Cmd):
             welcome_text=None,
         )
         reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
-        self._export_tables(reference_table_objects, destination_store)
+        self._export_reference_tables(reference_table_objects, destination_store)
         path = os.path.join(os.getcwd(), destination_db_name)
         print(f"Reference tables are successfully exported!\nYou can find it here: '{path}'.")
 
@@ -287,11 +309,18 @@ class AdminShell(cmd.Cmd):
             show_status=False,
             welcome_text=None,
         )
-        table_objects = (
-            self.data_store.meta_classes[TableTypes.REFERENCE]
-            + self.data_store.meta_classes[TableTypes.METADATA]
-        )
-        self._export_tables(table_objects, destination_store)
+        reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
+        self._export_reference_tables(reference_table_objects, destination_store)
+
+        with self.data_store.session_scope():
+            privacies = self.data_store.session.query(
+                self.data_store.db_classes.Privacy.privacy_id,
+                self.data_store.db_classes.Privacy.name,
+            ).all()
+            privacy_dict = {name: privacy_id for privacy_id, name in privacies}
+        selected_privacies = iterfzf(privacy_dict.keys(), multi=True)
+        privacy_ids = [privacy_dict[name] for name in selected_privacies]
+        self._export_metadata_tables(destination_store, privacy_ids)
         print(
             f"Reference and metadata tables are successfully exported!\nYou can find it here: '{path}'."
         )
