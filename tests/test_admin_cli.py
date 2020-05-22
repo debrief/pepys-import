@@ -3,6 +3,7 @@ import shutil
 import sqlite3
 import unittest
 from contextlib import redirect_stdout
+from datetime import datetime
 from importlib import reload
 from io import StringIO
 from sqlite3 import OperationalError
@@ -702,6 +703,35 @@ class ExportSnapshotPostgresTestCase(unittest.TestCase):
         )
         processor.process(os.path.join(DATA_PATH), self.store, False)
 
+        with self.store.session_scope():
+            privacy_id = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "PRIVACY-1")
+                .first()
+                .privacy_id
+            )
+            platform_id = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.privacy_id == privacy_id)
+                .first()
+                .platform_id
+            )
+            privacy_id_2 = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "Public")
+                .first()
+                .privacy_id
+            )
+            sensor_id = (
+                self.store.session.query(self.store.db_classes.Sensor)
+                .filter(self.store.db_classes.Sensor.privacy_id == privacy_id_2)
+                .first()
+                .sensor_id
+            )
+            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "test").change_id
+            self.store.add_to_synonyms("Platforms", "test", entity=platform_id, change_id=change_id)
+            self.store.add_to_synonyms("Sensors", "test-2", entity=sensor_id, change_id=change_id)
+
         self.admin_shell = AdminShell(self.store)
 
     @patch("pepys_admin.admin_cli.input", return_value="test.db")
@@ -745,6 +775,49 @@ class ExportSnapshotPostgresTestCase(unittest.TestCase):
             assert "SENSOR-1" in names
             assert "New_SSK_FREQ" in names
             assert "E-Trac" in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "Sensors" in table_dict.keys()
+            assert "test" in table_dict.values()
+            assert "test-2" in table_dict.values()
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    @patch("pepys_admin.admin_cli.iterfzf", return_value=["PRIVACY-1"])
+    def test_do_export_reference_and_metadata_data_privacy_1(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_and_metadata_data()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "SENSOR-1" in names
+            assert "New_SSK_FREQ" in names
+            assert "E-Trac" not in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "test" in table_dict.values()
+            assert "Sensors" not in table_dict.keys()
+            assert "test-2" not in table_dict.values()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
@@ -790,6 +863,35 @@ class ExportMetadataTestCase(unittest.TestCase):
         )
         processor.process(os.path.join(DATA_PATH), self.store, False)
 
+        with self.store.session_scope():
+            privacy_id = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "PRIVACY-1")
+                .first()
+                .privacy_id
+            )
+            platform_id = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.privacy_id == privacy_id)
+                .first()
+                .platform_id
+            )
+            privacy_id_2 = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "Public")
+                .first()
+                .privacy_id
+            )
+            sensor_id = (
+                self.store.session.query(self.store.db_classes.Sensor)
+                .filter(self.store.db_classes.Sensor.privacy_id == privacy_id_2)
+                .first()
+                .sensor_id
+            )
+            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "test").change_id
+            self.store.add_to_synonyms("Platforms", "test", entity=platform_id, change_id=change_id)
+            self.store.add_to_synonyms("Sensors", "test-2", entity=sensor_id, change_id=change_id)
+
         self.admin_shell = AdminShell(self.store)
 
     @patch("pepys_admin.admin_cli.input", return_value="test.db")
@@ -814,6 +916,49 @@ class ExportMetadataTestCase(unittest.TestCase):
             assert "SENSOR-1" in names
             assert "New_SSK_FREQ" in names
             assert "E-Trac" in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "Sensors" in table_dict.keys()
+            assert "test" in table_dict.values()
+            assert "test-2" in table_dict.values()
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    @patch("pepys_admin.admin_cli.iterfzf", return_value=["PRIVACY-1"])
+    def test_do_export_reference_and_metadata_data_privacy_1(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_and_metadata_data()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "SENSOR-1" in names
+            assert "New_SSK_FREQ" in names
+            assert "E-Trac" not in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "test" in table_dict.values()
+            assert "Sensors" not in table_dict.keys()
+            assert "test-2" not in table_dict.values()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
