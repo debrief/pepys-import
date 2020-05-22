@@ -265,11 +265,20 @@ class AdminShell(cmd.Cmd):
         ]:
             with self.data_store.session_scope():
                 dict_values = list()
-                values = (
-                    self.data_store.session.query(table_object)
-                    .filter(table_object.privacy_id.in_(privacy_ids))
-                    .all()
-                )
+                if table_object.__name__ == "Platform":
+                    values = (
+                        self.data_store.session.query(table_object)
+                        .filter(table_object.privacy_id.in_(privacy_ids))
+                        .all()
+                    )
+                    platform_ids = [row.platform_id for row in values]
+                else:
+                    values = (
+                        self.data_store.session.query(table_object)
+                        .filter(table_object.host.in_(platform_ids))
+                        .filter(table_object.privacy_id.in_(privacy_ids))
+                        .all()
+                    )
                 for row in values:
                     d = {column.name: getattr(row, column.name) for column in row.__table__.columns}
                     dict_values.append(d)
@@ -277,7 +286,6 @@ class AdminShell(cmd.Cmd):
                 object_ = find_sqlite_table_object(table_object, self.data_store)
                 object_.__table__.create(bind=destination_store.engine)
                 with destination_store.session_scope():
-                    # destination_store.session.execute("PRAGMA foreign_keys=OFF;")
                     destination_store.session.bulk_insert_mappings(object_, dict_values)
 
     def do_export_reference_data(self):
