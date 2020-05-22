@@ -300,6 +300,9 @@ class AdminShell(cmd.Cmd):
                     destination_store.session.bulk_insert_mappings(object_, dict_values)
 
     def do_export_reference_data(self):
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
+            return
+
         destination_db_name, path = self._ask_for_db_name()
         destination_store = DataStore(
             "",
@@ -317,6 +320,9 @@ class AdminShell(cmd.Cmd):
         print(f"Reference tables are successfully exported!\nYou can find it here: '{path}'.")
 
     def do_export_reference_and_metadata_data(self):
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
+            return
+
         destination_db_name, path = self._ask_for_db_name()
         destination_store = DataStore(
             "",
