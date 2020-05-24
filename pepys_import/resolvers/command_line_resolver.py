@@ -142,16 +142,7 @@ class CommandLineResolver(DataResolver):
             sys.exit(1)
 
     def resolve_reference(
-        self,
-        data_store,
-        change_id,
-        data_type,
-        text_name,
-        db_class,
-        field_name,
-        platform_name=None,
-        sensor_name=None,
-        datafile_name=None,
+        self, data_store, change_id, data_type, text_name, db_class, field_name,
     ):
         options = [f"Search an existing {text_name}", f"Add a new {text_name}"]
         objects = data_store.session.query(db_class).all()
@@ -171,8 +162,9 @@ class CommandLineResolver(DataResolver):
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
         elif choice == str(1):
-            search_method = getattr(self, f"fuzzy_search_{field_name}")
-            result = search_method(data_store, change_id=change_id, data_type=data_type)
+            result = self.fuzzy_search_reference(
+                data_store, change_id, data_type, text_name, db_class, field_name
+            )
             if result is None:
                 return self.resolve_reference(
                     data_store, change_id, data_type, text_name, db_class, field_name
@@ -197,6 +189,41 @@ class CommandLineResolver(DataResolver):
             selected_object = objects_dict[options[int(choice) - 1]]
             if selected_object:
                 return selected_object
+
+    def fuzzy_search_reference(
+        self, data_store, change_id, data_type, text_name, db_class, field_name
+    ):
+
+        objects = data_store.session.query(db_class).all()
+        completer = [p.name for p in objects]
+        choice = create_menu(
+            "Please start typing to show suggested values",
+            cancel=f"{text_name} search",
+            choices=[],
+            completer=FuzzyWordCompleter(completer),
+        )
+        if choice == ".":
+            print("-" * 61, "\nReturning to the previous menu\n")
+            return None
+        elif choice not in completer:
+            new_choice = create_menu(
+                f"You didn't select an existing {text_name}. " f"Do you want to add '{choice}' ?",
+                choices=["Yes", f"No, I'd like to select an existing {text_name}"],
+                validate_method=is_valid,
+            )
+            if new_choice == str(1):
+                return data_store.add_to_privacies(choice, change_id)
+            elif new_choice == str(2):
+                return self.fuzzy_search_reference(
+                    data_store, change_id, data_type, text_name, db_class, field_name
+                )
+            elif new_choice == ".":
+                print("-" * 61, "\nReturning to the previous menu\n")
+                return self.resolve_reference(
+                    data_store, change_id, data_type, text_name, db_class, field_name,
+                )
+        else:
+            return data_store.session.query(db_class).filter(db_class.name == choice).first()
 
     # Helper methods
     def fuzzy_search_platform(
@@ -355,264 +382,6 @@ class CommandLineResolver(DataResolver):
             return (
                 data_store.session.query(data_store.db_classes.Sensor)
                 .filter(data_store.db_classes.Sensor.name == choice)
-                .first()
-            )
-
-    def fuzzy_search_privacy(self, data_store, change_id, data_type):
-        """
-        This method parses all privacies in the DB, and uses fuzzy search when
-        user is typing. If user enters a new value, it adds to Privacy table or searches
-        for an existing privacy again. If user selects an existing value, it returns the
-        selected Privacy entity.
-
-        :param data_store: A :class:`DataStore` object
-        :type data_store: DataStore
-        :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
-        :param data_type: Type of the data: datafile, platform or sensor
-        :type data_type: String
-        :return:
-        """
-
-        privacies = data_store.session.query(data_store.db_classes.Privacy).all()
-        completer = [p.name for p in privacies]
-        choice = create_menu(
-            "Please start typing to show suggested values",
-            cancel="classification search",
-            choices=[],
-            completer=FuzzyWordCompleter(completer),
-        )
-        if choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
-            return None
-        elif choice not in completer:
-            new_choice = create_menu(
-                f"You didn't select an existing classification. "
-                f"Do you want to add '{choice}' ?",
-                choices=["Yes", "No, I'd like to select an existing classification"],
-                validate_method=is_valid,
-            )
-            if new_choice == str(1):
-                return data_store.add_to_privacies(choice, change_id)
-            elif new_choice == str(2):
-                return self.fuzzy_search_privacy(data_store, change_id, data_type)
-            elif new_choice == ".":
-                print("-" * 61, "\nReturning to the previous menu\n")
-                return self.resolve_reference(
-                    data_store,
-                    change_id,
-                    data_type=data_type,
-                    text_name="classification",
-                    db_class=data_store.db_classes.Privacy,
-                    field_name="privacy",
-                )
-        else:
-            return (
-                data_store.session.query(data_store.db_classes.Privacy)
-                .filter(data_store.db_classes.Privacy.name == choice)
-                .first()
-            )
-
-    def fuzzy_search_datafile_type(self, data_store, datafile_name, change_id):
-        """
-        This method parses all datafile types in the DB, and uses fuzzy search when
-        user is typing. If user enters a new value, it adds to DatafileType table or
-        searches for an existing privacy again. If user selects an existing value,
-        it returns the selected DatafileType entity.
-
-        :param data_store: A :class:`DataStore` object
-        :type data_store: DataStore
-        :param datafile_name: Name of the Datafile
-        :type datafile_name: String
-        :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
-        :return:
-        """
-
-        datafile_types = data_store.session.query(data_store.db_classes.DatafileType).all()
-        completer = [p.name for p in datafile_types]
-        choice = create_menu(
-            "Please start typing to show suggested values",
-            cancel="datafile type search",
-            choices=[],
-            completer=FuzzyWordCompleter(completer),
-        )
-        if choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
-            self.resolve_reference(
-                data_store,
-                change_id,
-                data_type="Datafile",
-                text_name="datafile-type",
-                db_class=data_store.db_classes.DatafileType,
-                field_name="datafile_type",
-            )
-        elif choice not in completer:
-            new_choice = create_menu(
-                f"You didn't select an existing datafile type. " f"Do you want to add '{choice}' ?",
-                choices=["Yes", "No, I'd like to select an existing datafile type"],
-                validate_method=is_valid,
-            )
-            if new_choice == str(1):
-                return data_store.add_to_datafile_types(choice, change_id)
-            elif new_choice == str(2):
-                return self.fuzzy_search_datafile_type(data_store, datafile_name, change_id)
-            elif new_choice == ".":
-                print("-" * 61, "\nReturning to the previous menu\n")
-                return self.resolve_reference(
-                    data_store,
-                    change_id,
-                    data_type="Datafile",
-                    text_name="datafile-type",
-                    db_class=data_store.db_classes.DatafileType,
-                    field_name="datafile_type",
-                )
-        else:
-            return (
-                data_store.session.query(data_store.db_classes.DatafileType)
-                .filter(data_store.db_classes.DatafileType.name == choice)
-                .first()
-            )
-
-    def fuzzy_search_nationality(self, data_store, platform_name, change_id):
-        """
-        This method parses all Nationalities in the DB, and uses fuzzy search when
-        user is typing. If user enters a new value, it adds to Nationality table or
-        searches for an existing nationality again. If user selects an existing value,
-        it returns the selected Nationality entity.
-
-        :param platform_name:
-        :param data_store: A :class:`DataStore` object
-        :type data_store: DataStore
-        :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
-        :return:
-        """
-        nationalities = data_store.session.query(data_store.db_classes.Nationality).all()
-        completer = [n.name for n in nationalities]
-        choice = create_menu(
-            "Please start typing to show suggested values",
-            cancel="nationality search",
-            choices=[],
-            completer=FuzzyWordCompleter(completer),
-        )
-        if choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
-            return self.resolve_reference(
-                data_store,
-                change_id,
-                data_type="Platform",
-                text_name="nationality",
-                db_class=data_store.db_classes.Nationality,
-                field_name="nationality",
-            )
-        elif choice not in completer:
-            new_choice = create_menu(
-                f"You didn't select an existing nationality. " f"Do you want to add '{choice}' ?",
-                choices=["Yes", "No, I'd like to select an existing nationality"],
-                validate_method=is_valid,
-            )
-            if new_choice == str(1):
-                return data_store.add_to_nationalities(choice, change_id)
-            elif new_choice == str(2):
-                return self.fuzzy_search_nationality(data_store, platform_name, change_id)
-            elif new_choice == ".":
-                print("-" * 61, "\nReturning to the previous menu\n")
-                return self.resolve_nationality(data_store, platform_name, change_id)
-        else:
-            return (
-                data_store.session.query(data_store.db_classes.Nationality)
-                .filter(data_store.db_classes.Nationality.name == choice)
-                .first()
-            )
-
-    def fuzzy_search_platform_type(self, data_store, platform_name, change_id):
-        """
-        This method parses all platform types in the DB, and uses fuzzy search when
-        user is typing. If user enters a new value, it adds to PlatformType table or
-        searches for an existing privacy again. If user selects an existing value,
-        it returns the selected PlatformType entity.
-
-        :param platform_name:
-        :param data_store: A :class:`DataStore` object
-        :type data_store: DataStore
-        :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
-        :return:
-        """
-        platform_types = data_store.session.query(data_store.db_classes.PlatformType).all()
-        completer = [p.name for p in platform_types]
-        choice = create_menu(
-            "Please start typing to show suggested values",
-            cancel="platform type search",
-            choices=[],
-            completer=FuzzyWordCompleter(completer),
-        )
-        if choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
-            self.resolve_platform_type(data_store, platform_name, change_id)
-        elif choice not in completer:
-            new_choice = create_menu(
-                f"You didn't select an existing platform type. " f"Do you want to add '{choice}' ?",
-                choices=["Yes", "No, I'd like to select an existing platform type"],
-                validate_method=is_valid,
-            )
-            if new_choice == str(1):
-                return data_store.add_to_platform_types(choice, change_id)
-            elif new_choice == str(2):
-                return self.fuzzy_search_platform_type(data_store, platform_name, change_id)
-            elif new_choice == ".":
-                print("-" * 61, "\nReturning to the previous menu\n")
-                return self.resolve_platform_type(data_store, platform_name, change_id)
-        else:
-            return (
-                data_store.session.query(data_store.db_classes.PlatformType)
-                .filter(data_store.db_classes.PlatformType.name == choice)
-                .first()
-            )
-
-    def fuzzy_search_sensor_type(self, data_store, sensor_name, change_id):
-        """
-        This method parses all sensor types in the DB, and uses fuzzy search when
-        user is typing. If user enters a new value, it adds to SensorType table or
-        searches for an existing privacy again. If user selects an existing value,
-        it returns the selected SensorType entity.
-
-        :param sensor_name:
-        :param data_store: A :class:`DataStore` object
-        :type data_store: DataStore
-        :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
-        :return:
-        """
-        sensor_types = data_store.session.query(data_store.db_classes.SensorType).all()
-        completer = [sensor_type.name for sensor_type in sensor_types]
-        choice = create_menu(
-            "Please start typing to show suggested values",
-            cancel="sensor type search",
-            choices=[],
-            completer=FuzzyWordCompleter(completer),
-        )
-        if choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
-            self.resolve_nationality(data_store, sensor_name, change_id)
-        elif choice not in completer:
-            new_choice = create_menu(
-                f"You didn't select an existing sensor type. " f"Do you want to add '{choice}' ?",
-                choices=["Yes", "No, I'd like to select a sensor type"],
-                validate_method=is_valid,
-            )
-            if new_choice == str(1):
-                return data_store.add_to_sensor_types(choice, change_id)
-            elif new_choice == str(2):
-                return self.fuzzy_search_sensor_type(data_store, sensor_name, change_id)
-            elif new_choice == ".":
-                print("-" * 61, "\nReturning to the previous menu\n")
-                return self.resolve_sensor_type(data_store, sensor_name, change_id)
-        else:
-            return (
-                data_store.session.query(data_store.db_classes.SensorType)
-                .filter(data_store.db_classes.SensorType.name == choice)
                 .first()
             )
 
