@@ -101,6 +101,25 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "PRIVACY-1")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_select_privacy_directly(self, menu_prompt):
+        """Test whether recursive call works for privacy"""
+
+        # Select "3-PRIVACY-1"
+        menu_prompt.side_effect = ["3"]
+        with self.store.session_scope():
+            self.store.add_to_privacies("PRIVACY-1", self.change_id)
+            self.store.add_to_privacies("PRIVACY-2", self.change_id)
+            privacy = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                "classification",
+                self.store.db_classes.Privacy,
+                "privacy",
+            )
+            self.assertEqual(privacy.name, "PRIVACY-1")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_cancelling_fuzzy_search_privacy(self, menu_prompt):
         """Test whether "." returns to the resolver privacy"""
 
