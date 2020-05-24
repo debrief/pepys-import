@@ -132,10 +132,18 @@ class CommandLineResolver(DataResolver):
             "Search an existing classification",
             "Add a new classification",
         ]
+        with data_store.session_scope():
+            privacies = data_store.session.query(
+                data_store.db_classes.Privacy.privacy_id, data_store.db_classes.Privacy.name,
+            ).all()
+            privacy_dict = {name: privacy_id for privacy_id, name in privacies}
+            num_of_privacies = len(privacy_dict)
+        if num_of_privacies <= 7:
+            privacy_names.extend(privacy_dict.keys())
         choice = create_menu(
             f"Ok, please provide classification for new {data_type}: ",
             privacy_names,
-            validate_method=is_valid,
+            # validate_method=is_valid,
         )
 
         if choice == str(1):
@@ -154,6 +162,8 @@ class CommandLineResolver(DataResolver):
             else:
                 print("You haven't entered an input!")
                 return self.resolve_privacy(data_store, change_id, data_type)
+        elif 3 <= int(choice) <= len(privacy_names):
+            selected_privacy_id = privacy_dict[privacy_names[int(choice) - 1]]
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
