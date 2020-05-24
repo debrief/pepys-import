@@ -579,6 +579,3 @@ class CommandLineResolver(DataResolver):
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
-
-    def resolve_privacy(self, data_store, change_id, data_type):
-        pass
