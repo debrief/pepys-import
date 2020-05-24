@@ -133,13 +133,11 @@ class CommandLineResolver(DataResolver):
             "Add a new classification",
         ]
         with data_store.session_scope():
-            privacies = data_store.session.query(
-                data_store.db_classes.Privacy.privacy_id, data_store.db_classes.Privacy.name,
-            ).all()
-            privacy_dict = {name: privacy_id for privacy_id, name in privacies}
-            num_of_privacies = len(privacy_dict)
-        if num_of_privacies <= 7:
-            privacy_names.extend(privacy_dict.keys())
+            privacies = data_store.session.query(data_store.db_classes.Privacy).all()
+            privacies_from_db = {privacy.name: privacy for privacy in privacies}
+            data_store.session.expunge_all()
+        if len(privacies_from_db) <= 7:
+            privacy_names.extend(privacies_from_db)
         choice = create_menu(
             f"Ok, please provide classification for new {data_type}: ",
             privacy_names,
@@ -163,7 +161,10 @@ class CommandLineResolver(DataResolver):
                 print("You haven't entered an input!")
                 return self.resolve_privacy(data_store, change_id, data_type)
         elif 3 <= int(choice) <= len(privacy_names):
-            selected_privacy_id = privacy_dict[privacy_names[int(choice) - 1]]
+            selected_privacy = privacies_from_db[privacy_names[int(choice) - 1]]
+            print(selected_privacy.name, selected_privacy.privacy_id)
+            if selected_privacy:
+                return selected_privacy
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
