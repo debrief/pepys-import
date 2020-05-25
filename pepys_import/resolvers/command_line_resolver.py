@@ -26,7 +26,7 @@ class CommandLineResolver(DataResolver):
         :param privacy: Name of :class:`Privacy`
         :type privacy: String
         :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
+        :type change_id: UUID
         :return:
         """
         print("Ok, adding new datafile.")
@@ -258,7 +258,7 @@ class CommandLineResolver(DataResolver):
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
         :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
+        :type change_id: UUID
         :return:
         """
         completer = list()
@@ -337,7 +337,7 @@ class CommandLineResolver(DataResolver):
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
         :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
+        :type change_id: UUID
         :return:
         """
         sensors = (
@@ -417,7 +417,7 @@ class CommandLineResolver(DataResolver):
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
         :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
+        :type change_id: UUID
         :return:
         """
         print("Ok, adding new platform.")
@@ -531,7 +531,7 @@ class CommandLineResolver(DataResolver):
         :param privacy: Name of :class:`Privacy`
         :type privacy: Privacy
         :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
+        :type change_id: UUID
         :return:
         """
         # Choose Sensor Type

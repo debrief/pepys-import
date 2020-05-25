@@ -111,7 +111,7 @@ class DefaultResolver(DataResolver):
         :param data_store: A :class:`DataStore` object
         :type data_store: DataStore
         :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
+        :type change_id: UUID
         :param data_type: Type of the data: datafile, platform or sensor
         :type data_type: String
         :return:
