@@ -122,7 +122,11 @@ class CommandLineResolver(DataResolver):
             f"Search for existing sensor on platform '{host_platform.name}'",
             f"Add a new sensor",
         ]
-        objects = data_store.session.query(data_store.db_classes.Sensor).all()
+        objects = (
+            data_store.session.query(data_store.db_classes.Sensor)
+            .filter(data_store.db_classes.Sensor.host == host_id)
+            .all()
+        )
         objects_dict = {obj.name: obj for obj in objects}
         if len(objects_dict) <= 7:
             options.extend(objects_dict)
@@ -131,7 +135,7 @@ class CommandLineResolver(DataResolver):
             prompt = f"Sensor '{sensor_name}' on platform '{host_platform.name}' not found. Do you wish to: "
         else:
             prompt = f"Sensor on platform '{host_platform.name}' not found. Do you wish to: "
-        choice = create_menu(prompt, options, validate_method=is_valid,)
+        choice = create_menu(prompt, options)
 
         if choice == ".":
             print("Quitting")
