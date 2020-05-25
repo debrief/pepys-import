@@ -120,7 +120,105 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "PRIVACY-1")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_cancelling_fuzzy_search_privacy(self, menu_prompt):
+    def test_fuzzy_search_add_new_platform_type(self, menu_prompt):
+        """Test whether a new PlatformType entity created or not
+        after searched and not founded in the Privacy Table."""
+
+        # Select "Search an existing platform-type"->Search "TYPE-TEST"->
+        # Select "Yes"
+        menu_prompt.side_effect = ["1", "TYPE-TEST", "1"]
+        with self.store.session_scope():
+            platform_type = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                "platform-type",
+                self.store.db_classes.PlatformType,
+                "platform_type",
+            )
+            self.assertEqual(platform_type.name, "TYPE-TEST")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_select_existing_platform_type(self, menu_prompt):
+        """Test whether an existing PlatformType entity searched and returned or not"""
+
+        # Select "Search an existing platform-type"->Search "TYPE-TEST"
+        menu_prompt.side_effect = ["1", "TYPE-TEST"]
+        with self.store.session_scope():
+            self.store.add_to_platform_types("TYPE-TEST", self.change_id)
+            platform_type = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                "platform-type",
+                self.store.db_classes.PlatformType,
+                "platform_type",
+            )
+            self.assertEqual(platform_type.name, "TYPE-TEST")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_fuzzy_search_select_existing_platform_type_without_search(
+        self, resolver_prompt, menu_prompt
+    ):
+        """Test whether a new PlatformType entity created or not"""
+
+        # Select "Add a new platform-type"->Type "TYPE-TEST"
+        menu_prompt.side_effect = ["2"]
+        resolver_prompt.side_effect = ["TYPE-TEST"]
+        with self.store.session_scope():
+            self.store.add_to_privacies("TYPE-TEST", self.change_id)
+            platform_type = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                "platform-type",
+                self.store.db_classes.PlatformType,
+                "platform_type",
+            )
+            self.assertEqual(platform_type.name, "TYPE-TEST")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_recursive_platform_type(self, menu_prompt):
+        """Test whether recursive call works for platform_type"""
+
+        # Select "Search an existing platform-type"->Search "TYPE-TEST"->Select "No"
+        # ->Search "TYPE-1"
+        menu_prompt.side_effect = ["1", "TYPE-TEST", "2", "TYPE-1"]
+        with self.store.session_scope():
+            self.store.add_to_platform_types("TYPE-1", self.change_id)
+            self.store.add_to_platform_types("TYPE-2", self.change_id)
+            platform_type = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                "platform-type",
+                self.store.db_classes.PlatformType,
+                "platform_type",
+            )
+            self.assertEqual(platform_type.name, "TYPE-1")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_select_platform_type_directly(self, menu_prompt):
+        """Test whether recursive call works for platform_type"""
+
+        # Select "3-TYPE-1"
+        menu_prompt.side_effect = ["3"]
+        with self.store.session_scope():
+            self.store.add_to_platform_types("TYPE-1", self.change_id)
+            self.store.add_to_platform_types("TYPE-2", self.change_id)
+            platform_type = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                "platform-type",
+                self.store.db_classes.PlatformType,
+                "platform_type",
+            )
+            self.assertEqual(platform_type.name, "TYPE-1")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_cancelling_fuzzy_search_reference(self, menu_prompt):
         """Test whether "." returns to the resolver privacy"""
 
         # Search "TEST"->Select "."->Select "."
@@ -137,7 +235,7 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.assertIsNone(privacy)
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_cancelling_resolver_privacy(self, menu_prompt):
+    def test_cancelling_resolver_reference(self, menu_prompt):
         """Test whether "." cancels the resolve privacy and returns None"""
         menu_prompt.side_effect = [".", "1", ".", "."]
         temp_output = StringIO()
@@ -168,7 +266,7 @@ class ReferenceDataTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_resolve_privacy_empty_input(self, resolver_prompt, menu_prompt):
+    def test_resolve_reference_empty_input(self, resolver_prompt, menu_prompt):
         resolver_prompt.side_effect = [""]
         menu_prompt.side_effect = ["2", "."]
         temp_output = StringIO()
