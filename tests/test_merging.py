@@ -348,3 +348,66 @@ class TestMergeAllReferenceTables(unittest.TestCase):
 
     def test_merge_all_reference_tables(self):
         merge_all_reference_tables(self.master_store, self.slave_store)
+
+        # Check there are the right number of rows for each table
+
+        results = self.master_store.session.query(self.master_store.db_classes.Nationality).all()
+        assert len(results) == 6
+
+        results = self.master_store.session.query(self.master_store.db_classes.CommentType).all()
+        assert len(results) == 6
+
+        results = self.master_store.session.query(self.master_store.db_classes.GeometryType).all()
+        assert len(results) == 5
+
+        results = self.master_store.session.query(
+            self.master_store.db_classes.GeometrySubType
+        ).all()
+        assert len(results) == 2
+
+        # Check a few selected objects to make sure they're correct
+
+        # Is there a GeometrySubType in master called GST_Slave_1, and does
+        # it point to the GeomType_Shared_1 type as its parent
+        gst_result = (
+            self.master_store.session.query(self.master_store.db_classes.GeometrySubType)
+            .filter(self.master_store.db_classes.GeometrySubType.name == "GST_Slave_1")
+            .all()
+        )
+
+        gt_result = (
+            self.master_store.session.query(self.master_store.db_classes.GeometryType)
+            .filter(self.master_store.db_classes.GeometryType.name == "GeomType_Shared_1")
+            .all()
+        )
+
+        assert len(gst_result) == 1
+        assert len(gt_result) == 1
+
+        assert gst_result[0].parent == gt_result[0].geo_type_id
+
+        # Is there a Platform called Platform1 which refers to Nat_Shared_1 as its nationality, in
+        # the slave db and is this referring to the same GUID as Nat_Shared_1 in the master db
+
+        # Get platform obj
+        results = (
+            self.slave_store.session.query(self.slave_store.db_classes.Platform)
+            .filter(self.slave_store.db_classes.Platform.name == "Platform1")
+            .all()
+        )
+
+        # Check it has the right nationality name in the slave db
+        assert results[0].nationality_name == "Nat_Shared_1"
+
+        # Get the nationality GUID
+        nat_guid = results[0].nationality.nationality_id
+
+        # Search for that in the master db and check we get one result with correct name
+        results = (
+            self.slave_store.session.query(self.slave_store.db_classes.Nationality)
+            .filter(self.slave_store.db_classes.Nationality.nationality_id == nat_guid)
+            .all()
+        )
+
+        assert len(results) == 1
+        assert results[0].name == "Nat_Shared_1"
