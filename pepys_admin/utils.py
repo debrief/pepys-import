@@ -28,6 +28,11 @@ def check_sqlalchemy_results_are_equal(results1, results2):
 
 
 def make_query_for_all_data_columns(table_object, comparison_object, session):
+    """Makes a query to search for an object where all data columns match.
+
+    In this case, the data columns are all columns excluding the primary key and the
+    created_date column.
+    """
     primary_key = table_object.__table__.primary_key.columns.values()[0].name
 
     column_names = [col.name for col in table_object.__table__.columns.values()]

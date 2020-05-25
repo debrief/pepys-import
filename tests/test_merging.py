@@ -412,13 +412,6 @@ class TestMergeAllReferenceTables(unittest.TestCase):
 
 class TestSensorPlatformMerge(unittest.TestCase):
     def setUp(self):
-        """Creates the master and slave databases and contents required for the test.
-
-        At the end of this set up we will have We have two unique PlatformTypes on master, two unique
-        on slave, one shared with same name and different GUID, and one shared with same name and
-        same GUID.
-
-        """
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
 

@@ -6,6 +6,11 @@ from pepys_import.core.store.db_status import TableTypes
 
 
 def merge_all_reference_tables(master_store, slave_store):
+    """Merges all reference tables from the slave_store into the master_store.
+
+    Deals with all possible differences between slave and master, for example, data that is in both already
+    data only in slave, data added to both separately (so fields match but primary keys don't) etc.
+    """
     master_store.setup_table_type_mapping()
     reference_table_objects = master_store.meta_classes[TableTypes.REFERENCE]
 
