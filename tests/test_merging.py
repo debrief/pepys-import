@@ -325,21 +325,21 @@ class TestMergeAllReferenceTables(unittest.TestCase):
 
             # Object that refers to nationality object
             self.slave_store.add_to_privacies("Private", change_id)
-            self.slave_store.add_to_platform_types("PlatformType1")
+            self.slave_store.add_to_platform_types("PlatformType1", change_id)
             self.slave_store.add_to_platforms(
                 "Platform1", "Nat_Shared_1", "PlatformType1", "Private", change_id=change_id
             )
 
-            gt1 = self.master_store.db_classes.GeometryType(name="GeomType_Slave_1")
-            gt2 = self.master_store.db_classes.GeometryType(name="GeomType_Slave_2")
-            gt3 = self.master_store.db_classes.GeometryType(name="GeomType_Shared_1")
-            self.master_store.session.add_all([gt1, gt2, gt3])
-            self.master_store.session.commit()
-            gst1 = self.master_store.db_classes.GeometrySubType(
+            gt1 = self.slave_store.db_classes.GeometryType(name="GeomType_Slave_1")
+            gt2 = self.slave_store.db_classes.GeometryType(name="GeomType_Slave_2")
+            gt3 = self.slave_store.db_classes.GeometryType(name="GeomType_Shared_1")
+            self.slave_store.session.add_all([gt1, gt2, gt3])
+            self.slave_store.session.commit()
+            gst1 = self.slave_store.db_classes.GeometrySubType(
                 name="GST_Slave_1", parent=gt3.geo_type_id
             )
-            self.master_store.session.add(gst1)
-            self.master_store.session.commit()
+            self.slave_store.session.add(gst1)
+            self.slave_store.session.commit()
 
     def tearDown(self):
         # os.remove("master.db")
