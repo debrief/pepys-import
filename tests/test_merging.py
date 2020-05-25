@@ -2,7 +2,11 @@ import os
 import unittest
 from datetime import datetime
 
-from pepys_admin.merge import merge_all_reference_tables, merge_reference_table
+from pepys_admin.merge import (
+    merge_all_metadata_tables,
+    merge_all_reference_tables,
+    merge_reference_table,
+)
 from pepys_admin.utils import check_sqlalchemy_results_are_equal
 from pepys_import.core.store.data_store import DataStore
 
@@ -257,13 +261,6 @@ class TestPlatformTypeMerge(unittest.TestCase):
 
 class TestMergeAllReferenceTables(unittest.TestCase):
     def setUp(self):
-        """Creates the master and slave databases and contents required for the test.
-
-        At the end of this set up we will have We have two unique PlatformTypes on master, two unique
-        on slave, one shared with same name and different GUID, and one shared with same name and
-        same GUID.
-
-        """
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
 
@@ -411,3 +408,235 @@ class TestMergeAllReferenceTables(unittest.TestCase):
 
         assert len(results) == 1
         assert results[0].name == "Nat_Shared_1"
+
+
+class TestSensorMerge(unittest.TestCase):
+    def setUp(self):
+        """Creates the master and slave databases and contents required for the test.
+
+        At the end of this set up we will have We have two unique PlatformTypes on master, two unique
+        on slave, one shared with same name and different GUID, and one shared with same name and
+        same GUID.
+
+        """
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
+
+        self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
+        self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
+
+        self.master_store.initialise()
+        self.slave_store.initialise()
+
+        with self.master_store.session_scope():
+            change_id = self.master_store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
+
+            self.master_store.add_to_sensor_types("SensorType_Master_1", change_id)
+            self.master_store.add_to_sensor_types("SensorType_Master_2", change_id)
+            self.master_store.add_to_sensor_types("SensorType_Shared_1", change_id)
+            st_shared = self.master_store.add_to_sensor_types(
+                "SensorType_Shared_2_GUIDSame", change_id
+            )
+            st_shared_guid = st_shared.sensor_type_id
+
+            self.master_store.add_to_platform_types("PlatformType_Master_1", change_id)
+            self.master_store.add_to_platform_types("PlatformType_Shared_1", change_id)
+            pt_shared = self.master_store.add_to_platform_types(
+                "PlatformType_Shared_2_GUIDSame", change_id
+            )
+            pt_shared_guid = pt_shared.platform_type_id
+
+            nat_shared = self.master_store.add_to_nationalities("UK", change_id)
+            nat_shared_guid = nat_shared.nationality_id
+
+            priv_shared = self.master_store.add_to_privacies("Private", change_id)
+            priv_shared_guid = priv_shared.privacy_id
+
+            self.master_store.session.add_all([st_shared, pt_shared, nat_shared, priv_shared])
+            self.master_store.session.commit()
+
+            self.master_store.add_to_platforms(
+                "Platform_Master_1", "UK", "PlatformType_Master_1", "Private", change_id=change_id
+            )
+            self.master_store.add_to_platforms(
+                "Platform_Shared_1", "UK", "PlatformType_Shared_1", "Private", change_id=change_id
+            )
+
+            self.master_store.add_to_sensors(
+                "Sensor_Master_1", "SensorType_Master_1", "Platform_Master_1", "Private", change_id
+            )
+            self.master_store.add_to_sensors(
+                "Sensor_Master_2", "SensorType_Shared_1", "Platform_Master_1", "Private", change_id
+            )
+            self.master_store.add_to_sensors(
+                "Sensor_Master_3", "SensorType_Master_2", "Platform_Shared_1", "Private", change_id
+            )
+            self.master_store.add_to_sensors(
+                "Sensor_Shared_1", "SensorType_Shared_1", "Platform_Shared_1", "Private", change_id
+            )
+            sensor_shared = self.master_store.add_to_sensors(
+                "Sensor_Shared_2_GUIDSame",
+                "SensorType_Shared_1",
+                "Platform_Shared_1",
+                "Private",
+                change_id,
+            )
+            sensor_shared_guid = sensor_shared.sensor_id
+
+        with self.slave_store.session_scope():
+            change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+
+            self.slave_store.add_to_sensor_types("SensorType_Slave_1", change_id)
+            self.slave_store.add_to_sensor_types("SensorType_Slave_2", change_id)
+            self.slave_store.add_to_sensor_types("SensorType_Shared_1", change_id)
+            st_shared = self.slave_store.add_to_sensor_types(
+                "SensorType_Shared_2_GUIDSame", change_id
+            )
+            st_shared.sensor_type_id = st_shared_guid
+
+            self.slave_store.add_to_platform_types("PlatformType_Slave_1", change_id)
+            self.slave_store.add_to_platform_types("PlatformType_Shared_1", change_id)
+            pt_shared = self.slave_store.add_to_platform_types(
+                "PlatformType_Shared_2_GUIDSame", change_id
+            )
+            pt_shared.platform_type_id = pt_shared_guid
+
+            nat_shared = self.slave_store.add_to_nationalities("UK", change_id)
+            nat_shared.nationality_id = nat_shared_guid
+
+            priv_shared = self.slave_store.add_to_privacies("Private", change_id)
+            priv_shared.privacy_id = priv_shared_guid
+
+            self.slave_store.session.add_all([st_shared, pt_shared, nat_shared, priv_shared])
+            self.slave_store.session.commit()
+
+            self.slave_store.add_to_platforms(
+                "Platform_Slave_1", "UK", "PlatformType_Slave_1", "Private", change_id=change_id
+            )
+            self.slave_store.add_to_platforms(
+                "Platform_Shared_1", "UK", "PlatformType_Shared_1", "Private", change_id=change_id
+            )
+
+            self.slave_store.add_to_sensors(
+                "Sensor_Slave_1", "SensorType_Slave_1", "Platform_Slave_1", "Private", change_id
+            )
+            self.slave_store.add_to_sensors(
+                "Sensor_Slave_2", "SensorType_Shared_1", "Platform_Slave_1", "Private", change_id
+            )
+            self.slave_store.add_to_sensors(
+                "Sensor_Slave_3", "SensorType_Slave_2", "Platform_Shared_1", "Private", change_id
+            )
+            self.slave_store.add_to_sensors(
+                "Sensor_Shared_1", "SensorType_Shared_1", "Platform_Shared_1", "Private", change_id
+            )
+            sensor_shared = self.slave_store.add_to_sensors(
+                "Sensor_Shared_2_GUIDSame",
+                "SensorType_Shared_1",
+                "Platform_Shared_1",
+                "Private",
+                change_id,
+            )
+            sensor_shared.sensor_id = sensor_shared_guid
+
+            self.slave_store.session.add(sensor_shared)
+            self.slave_store.session.commit()
+
+    def tearDown(self):
+        # os.remove("master.db")
+        # os.remove("slave.db")
+        pass
+
+    def test_sensor_merge(self):
+        # Must merge reference tables first, so we can ensure foreign key integrity
+        merge_all_reference_tables(self.master_store, self.slave_store)
+
+        # Do the actual merge of the metadata tables
+        merge_all_metadata_tables(self.master_store, self.slave_store)
+
+        # Check there are the right number of entries in each table
+        results = self.master_store.session.query(self.master_store.db_classes.SensorType).all()
+        assert len(results) == 6
+
+        results = self.master_store.session.query(self.master_store.db_classes.PlatformType).all()
+        assert len(results) == 4
+
+        results = self.master_store.session.query(self.master_store.db_classes.Nationality).all()
+        assert len(results) == 1
+
+        results = self.master_store.session.query(self.master_store.db_classes.Privacy).all()
+        assert len(results) == 1
+
+        results = self.master_store.session.query(self.master_store.db_classes.Platform).all()
+        assert len(results) == 3
+
+        results = self.master_store.session.query(self.master_store.db_classes.Sensor).all()
+        assert len(results) == 8
+
+        # Check values of metadata tables
+
+        # Check we have a Platform called Platform_Slave_1 that references a Platform Type of PlatformType_Slave_1
+        master_platform_results = (
+            self.master_store.session.query(self.master_store.db_classes.Platform)
+            .filter(self.master_store.db_classes.Platform.name == "Platform_Slave_1")
+            .all()
+        )
+
+        slave_pt_results = (
+            self.slave_store.session.query(self.slave_store.db_classes.PlatformType)
+            .filter(self.slave_store.db_classes.PlatformType.name == "PlatformType_Slave_1")
+            .all()
+        )
+
+        assert len(master_platform_results) == 1
+        assert len(slave_pt_results) == 1
+
+        assert master_platform_results[0].platform_type_name == "PlatformType_Slave_1"
+        assert (
+            master_platform_results[0].platform_type.platform_type_id
+            == slave_pt_results[0].platform_type_id
+        )
+
+        # Check we have a Sensor called Sensor_Slave_1 in the master db now, with the right details
+        master_sensor_results = (
+            self.master_store.session.query(self.master_store.db_classes.Sensor)
+            .filter(self.master_store.db_classes.Sensor.name == "Sensor_Slave_1")
+            .all()
+        )
+
+        master_st_results = (
+            self.master_store.session.query(self.master_store.db_classes.SensorType)
+            .filter(self.master_store.db_classes.SensorType.name == "SensorType_Slave_1")
+            .all()
+        )
+
+        slave_st_results = (
+            self.slave_store.session.query(self.slave_store.db_classes.SensorType)
+            .filter(self.slave_store.db_classes.SensorType.name == "SensorType_Slave_1")
+            .all()
+        )
+
+        assert len(master_sensor_results) == 1
+
+        assert master_sensor_results[0].host == master_platform_results[0].platform_id
+        assert master_sensor_results[0].sensor_type_id == master_st_results[0].sensor_type_id
+        assert master_sensor_results[0].sensor_type_id == slave_st_results[0].sensor_type_id
+
+        # Check we have a Sensor called Sensor_Shared_1 in both dbs, and all fields match
+        master_results = (
+            self.master_store.session.query(self.master_store.db_classes.Sensor)
+            .filter(self.master_store.db_classes.Sensor.name == "Sensor_Shared_1")
+            .all()
+        )
+
+        slave_results = (
+            self.slave_store.session.query(self.slave_store.db_classes.Sensor)
+            .filter(self.slave_store.db_classes.Sensor.name == "Sensor_Shared_1")
+            .all()
+        )
+
+        assert check_sqlalchemy_results_are_equal(master_results, slave_results)

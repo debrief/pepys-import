@@ -25,3 +25,23 @@ def check_sqlalchemy_results_are_equal(results1, results2):
     list2 = [sqlalchemy_obj_to_dict(item) for item in results2]
 
     return list1 == list2
+
+
+def make_query_for_all_data_columns(table_object, comparison_object, session):
+    primary_key = table_object.__table__.primary_key.columns.values()[0].name
+
+    column_names = [col.name for col in table_object.__table__.columns.values()]
+
+    # Get rid of the primary key column from the list
+    column_names.remove(primary_key)
+    # And get rid of the created_date column
+    column_names.remove("created_date")
+
+    query = session.query(table_object)
+
+    for col_name in column_names:
+        query = query.filter(
+            getattr(table_object, col_name) == getattr(comparison_object, col_name)
+        )
+
+    return query
