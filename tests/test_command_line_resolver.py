@@ -869,6 +869,20 @@ class SensorTestCase(unittest.TestCase):
                 privacy=privacy,
                 change_id=self.change_id,
             )
+            platform_2 = self.store.get_platform(
+                platform_name="Test Platform 2",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            platform_2.get_sensor(
+                self.store,
+                sensor_name="TEST-SENSOR",
+                sensor_type=sensor_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
 
             sensor = self.resolver.resolve_sensor(
                 self.store,
@@ -880,21 +894,6 @@ class SensorTestCase(unittest.TestCase):
             )
 
             self.assertEqual(sensor.name, "TEST")
-
-        # Select "3-PRIVACY-1"
-        menu_prompt.side_effect = ["3"]
-        with self.store.session_scope():
-            self.store.add_to_privacies("PRIVACY-1", self.change_id)
-            self.store.add_to_privacies("PRIVACY-2", self.change_id)
-            privacy = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                "classification",
-                self.store.db_classes.Privacy,
-                "privacy",
-            )
-            self.assertEqual(privacy.name, "PRIVACY-1")
 
 
 class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
