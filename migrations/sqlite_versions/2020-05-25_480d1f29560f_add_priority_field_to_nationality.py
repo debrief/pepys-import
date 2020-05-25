@@ -13,7 +13,7 @@ import pepys_import
 
 # revision identifiers, used by Alembic.
 revision = "480d1f29560f"
-down_revision = "07e4b725c547"
+down_revision = "cd4a4f059f9e"
 branch_labels = None
 depends_on = None
 
