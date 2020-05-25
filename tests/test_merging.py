@@ -2,7 +2,7 @@ import os
 import unittest
 from datetime import datetime
 
-from pepys_admin.merge import merge_reference_table
+from pepys_admin.merge import merge_all_reference_tables, merge_reference_table
 from pepys_admin.utils import check_sqlalchemy_results_are_equal
 from pepys_import.core.store.data_store import DataStore
 
@@ -59,9 +59,11 @@ class TestSensorTypeMerge(unittest.TestCase):
             )
 
     def tearDown(self):
-        # os.remove("master.db")
-        # os.remove("slave.db")
-        pass
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
 
     def test_sensor_type_merge(self):
         # Do the merge
@@ -179,9 +181,11 @@ class TestPlatformTypeMerge(unittest.TestCase):
             )
 
     def tearDown(self):
-        # os.remove("master.db")
-        # os.remove("slave.db")
-        pass
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
 
     def test_platform_type_merge(self):
         # Do the merge
@@ -249,3 +253,98 @@ class TestPlatformTypeMerge(unittest.TestCase):
         )
 
         assert len(results) == 1
+
+
+class TestMergeAllReferenceTables(unittest.TestCase):
+    def setUp(self):
+        """Creates the master and slave databases and contents required for the test.
+
+        At the end of this set up we will have We have two unique PlatformTypes on master, two unique
+        on slave, one shared with same name and different GUID, and one shared with same name and
+        same GUID.
+
+        """
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
+
+        self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
+        self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
+
+        self.master_store.initialise()
+        self.slave_store.initialise()
+
+        with self.master_store.session_scope():
+            change_id = self.master_store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
+            self.master_store.add_to_nationalities("Nat_Master_1", change_id)
+            self.master_store.add_to_nationalities("Nat_Master_2", change_id)
+            self.master_store.add_to_nationalities("Nat_Shared_1", change_id)
+            shared_obj = self.master_store.add_to_nationalities("Nat_Shared_2_SameGUID", change_id)
+            shared_nat_guid = shared_obj.nationality_id
+
+            self.master_store.add_to_comment_types("CT_Master_1", change_id)
+            self.master_store.add_to_comment_types("CT_Master_2", change_id)
+            self.master_store.add_to_comment_types("CT_Shared_1", change_id)
+            shared_obj = self.master_store.add_to_comment_types("CT_Shared_2_SameGUID", change_id)
+            shared_ct_guid = shared_obj.comment_type_id
+
+            gt1 = self.master_store.db_classes.GeometryType(name="GeomType_Master_1")
+            gt2 = self.master_store.db_classes.GeometryType(name="GeomType_Master_2")
+            gt3 = self.master_store.db_classes.GeometryType(name="GeomType_Shared_1")
+            self.master_store.session.add_all([gt1, gt2, gt3])
+            self.master_store.session.commit()
+            gst1 = self.master_store.db_classes.GeometrySubType(
+                name="GST_Master_1", parent=gt1.geo_type_id
+            )
+            self.master_store.session.add(gst1)
+            self.master_store.session.commit()
+
+        with self.slave_store.session_scope():
+            change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+            self.slave_store.add_to_nationalities("Nat_Slave_1", change_id)
+            self.slave_store.add_to_nationalities("Nat_Slave_2", change_id)
+            self.slave_store.add_to_nationalities("Nat_Shared_1", change_id)
+            shared_nat_obj = self.slave_store.add_to_nationalities(
+                "Nat_Shared_2_SameGUID", change_id
+            )
+            shared_nat_obj.nationality_id = shared_nat_guid
+            self.slave_store.session.add(shared_nat_obj)
+            self.slave_store.session.commit()
+
+            self.slave_store.add_to_comment_types("CT_Slave_1", change_id)
+            self.slave_store.add_to_comment_types("CT_Slave_2", change_id)
+            self.slave_store.add_to_comment_types("CT_Shared_1", change_id)
+            shared_ct_obj = self.slave_store.add_to_comment_types("CT_Shared_2_SameGUID", change_id)
+            shared_ct_obj.comment_type_id = shared_ct_guid
+            self.slave_store.session.add(shared_ct_obj)
+            self.slave_store.session.commit()
+
+            # Object that refers to nationality object
+            self.slave_store.add_to_privacies("Private", change_id)
+            self.slave_store.add_to_platform_types("PlatformType1")
+            self.slave_store.add_to_platforms(
+                "Platform1", "Nat_Shared_1", "PlatformType1", "Private", change_id=change_id
+            )
+
+            gt1 = self.master_store.db_classes.GeometryType(name="GeomType_Slave_1")
+            gt2 = self.master_store.db_classes.GeometryType(name="GeomType_Slave_2")
+            gt3 = self.master_store.db_classes.GeometryType(name="GeomType_Shared_1")
+            self.master_store.session.add_all([gt1, gt2, gt3])
+            self.master_store.session.commit()
+            gst1 = self.master_store.db_classes.GeometrySubType(
+                name="GST_Slave_1", parent=gt3.geo_type_id
+            )
+            self.master_store.session.add(gst1)
+            self.master_store.session.commit()
+
+    def tearDown(self):
+        # os.remove("master.db")
+        # os.remove("slave.db")
+        pass
+
+    def test_merge_all_reference_tables(self):
+        merge_all_reference_tables(self.master_store, self.slave_store)

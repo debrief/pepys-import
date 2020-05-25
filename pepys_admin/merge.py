@@ -1,6 +1,23 @@
 from sqlalchemy.orm import undefer
 from sqlalchemy.orm.session import make_transient
 
+from pepys_import.core.store.db_status import TableTypes
+
+
+def merge_all_reference_tables(master_store, slave_store):
+    master_store.setup_table_type_mapping()
+    reference_table_objects = master_store.meta_classes[TableTypes.REFERENCE]
+
+    reference_table_names = [obj.__name__ for obj in reference_table_objects]
+
+    # Put the GeometryType table at the front of the list, so that it gets
+    # done first - as GeometrySubType depends on it
+    reference_table_names.remove("GeometryType")
+    reference_table_names.insert(0, "GeometryType")
+
+    for ref_table in reference_table_names:
+        merge_reference_table(ref_table, master_store, slave_store)
+
 
 def merge_reference_table(table_object_name, master_store, slave_store):
     # Get references to the table from the master and slave DataStores
