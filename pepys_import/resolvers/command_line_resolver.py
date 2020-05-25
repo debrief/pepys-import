@@ -157,7 +157,15 @@ class CommandLineResolver(DataResolver):
         self, data_store, change_id, data_type, text_name, db_class, field_name,
     ):
         options = [f"Search an existing {text_name}", f"Add a new {text_name}"]
-        objects = data_store.session.query(db_class).all()
+        if db_class.__tablename__ == "Nationalities":
+            objects = (
+                data_store.session.query(db_class)
+                .filter(db_class.priority.in_([1, 2]))
+                .order_by(db_class.priority)
+                .all()
+            )
+        else:
+            objects = data_store.session.query(db_class).all()
         objects_dict = {obj.name: obj for obj in objects}
         data_store.session.expunge_all()
         plural_field = (

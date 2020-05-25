@@ -221,6 +221,55 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.assertEqual(platform_type.name, "TYPE-1")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_resolver_reference_select_nationality_directly(self, menu_prompt):
+        # Select "3-UK"
+        menu_prompt.side_effect = ["3", "4", "5", "6"]
+        with self.store.session_scope():
+            self.store.add_to_nationalities("UK", self.change_id, priority=1)
+            self.store.add_to_nationalities("FR", self.change_id, priority=2)
+            self.store.add_to_nationalities("TR", self.change_id, priority=2)
+            self.store.add_to_nationalities("AAA", self.change_id, priority=3)
+            nationality = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                "nationality",
+                self.store.db_classes.Nationality,
+                "nationality",
+            )
+            assert nationality.name == "UK"
+
+            nationality = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                "nationality",
+                self.store.db_classes.Nationality,
+                "nationality",
+            )
+            assert nationality.name == "FR"
+
+            nationality = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                "nationality",
+                self.store.db_classes.Nationality,
+                "nationality",
+            )
+            assert nationality.name == "TR"
+
+            nationality = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                "nationality",
+                self.store.db_classes.Nationality,
+                "nationality",
+            )
+            assert nationality is None
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_cancelling_fuzzy_search_reference(self, menu_prompt):
         """Test whether "." returns to the resolver privacy"""
 
