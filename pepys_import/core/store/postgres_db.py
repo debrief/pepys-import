@@ -279,8 +279,9 @@ class GeometrySubType(BasePostGIS):
 
     geo_sub_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False, unique=True)
-    # parent = Column(UUID(as_uuid=True), ForeignKey("pepys.GeometryTypes.geometry_type_id"))
-    parent = Column(UUID, nullable=False)
+    parent = Column(
+        UUID(as_uuid=True), ForeignKey("pepys.GeometryTypes.geo_type_id"), nullable=False
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
