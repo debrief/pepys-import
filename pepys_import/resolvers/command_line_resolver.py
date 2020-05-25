@@ -122,6 +122,10 @@ class CommandLineResolver(DataResolver):
             f"Search for existing sensor on platform '{host_platform.name}'",
             f"Add a new sensor",
         ]
+        objects = data_store.session.query(data_store.db_classes.Sensor).all()
+        objects_dict = {obj.name: obj for obj in objects}
+        if len(objects_dict) <= 7:
+            options.extend(objects_dict)
         if sensor_name:
             options[1] += f", default name '{sensor_name}'"
             prompt = f"Sensor '{sensor_name}' on platform '{host_platform.name}' not found. Do you wish to: "
@@ -129,7 +133,10 @@ class CommandLineResolver(DataResolver):
             prompt = f"Sensor on platform '{host_platform.name}' not found. Do you wish to: "
         choice = create_menu(prompt, options, validate_method=is_valid,)
 
-        if choice == str(1):
+        if choice == ".":
+            print("Quitting")
+            sys.exit(1)
+        elif choice == str(1):
             return self.fuzzy_search_sensor(
                 data_store, sensor_name, sensor_type, host_platform.platform_id, privacy, change_id
             )
@@ -137,9 +144,10 @@ class CommandLineResolver(DataResolver):
             return self.add_to_sensors(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
-        elif choice == ".":
-            print("Quitting")
-            sys.exit(1)
+        elif 3 <= int(choice) <= len(options):
+            selected_object = objects_dict[options[int(choice) - 1]]
+            if selected_object:
+                return selected_object
 
     def resolve_reference(
         self, data_store, change_id, data_type, text_name, db_class, field_name,

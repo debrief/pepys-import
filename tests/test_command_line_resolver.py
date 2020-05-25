@@ -843,6 +843,59 @@ class SensorTestCase(unittest.TestCase):
 
             self.assertEqual(sensor_name, "SENSOR-TEST")
 
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_resolve_sensor_select_sensor_directly(self, menu_prompt):
+        """Test whether correct sensor is selected directly or not"""
+
+        # Select "3-SENSOR-1"
+        menu_prompt.side_effect = ["3"]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            platform.get_sensor(
+                self.store,
+                sensor_name="TEST",
+                sensor_type=sensor_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+
+            sensor = self.resolver.resolve_sensor(
+                self.store,
+                "TEST-2",
+                sensor_type=None,
+                host_id=platform.platform_id,
+                privacy=None,
+                change_id=self.change_id,
+            )
+
+            self.assertEqual(sensor.name, "TEST")
+
+        # Select "3-PRIVACY-1"
+        menu_prompt.side_effect = ["3"]
+        with self.store.session_scope():
+            self.store.add_to_privacies("PRIVACY-1", self.change_id)
+            self.store.add_to_privacies("PRIVACY-2", self.change_id)
+            privacy = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                "classification",
+                self.store.db_classes.Privacy,
+                "privacy",
+            )
+            self.assertEqual(privacy.name, "PRIVACY-1")
+
 
 class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
     def setUp(self) -> None:
