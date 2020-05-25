@@ -4,6 +4,9 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
 from unittest.mock import patch
+from uuid import uuid4
+
+import pytest
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
@@ -505,7 +508,7 @@ class PlatformTestCase(unittest.TestCase):
                 privacy,
             ) = self.resolver.resolve_platform(
                 data_store=self.store,
-                platform_name="TEST",
+                platform_name=None,
                 platform_type=platform_type,
                 nationality=nationality,
                 privacy=privacy,
@@ -894,6 +897,50 @@ class SensorTestCase(unittest.TestCase):
             )
 
             self.assertEqual(sensor.name, "TEST")
+
+    def test_resolve_sensor_wrong_platform(self):
+        with pytest.raises(SystemExit):
+            uuid = uuid4()
+            self.resolver.resolve_sensor(
+                self.store,
+                "TEST",
+                sensor_type=None,
+                host_id=uuid,
+                privacy=None,
+                change_id=self.change_id,
+            )
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_sensor_empty_name_and_choice_in_sensor(self, menu_prompt):
+        menu_prompt.side_effect = [
+            "SENSOR-1",
+        ]
+        with self.store.session_scope():
+            # Create platform first, then create a Sensor object
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy, self.change_id)
+            platform.get_sensor(self.store, "SENSOR-2", sensor_type, privacy, self.change_id)
+
+            sensor = self.resolver.fuzzy_search_sensor(
+                self.store,
+                sensor_name=None,
+                host_id=platform.platform_id,
+                sensor_type=None,
+                privacy=None,
+                change_id=self.change_id,
+            )
+
+            self.assertEqual(sensor.name, "SENSOR-1")
 
 
 class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
