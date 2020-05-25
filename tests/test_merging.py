@@ -410,7 +410,7 @@ class TestMergeAllReferenceTables(unittest.TestCase):
         assert results[0].name == "Nat_Shared_1"
 
 
-class TestSensorMerge(unittest.TestCase):
+class TestSensorPlatformMerge(unittest.TestCase):
     def setUp(self):
         """Creates the master and slave databases and contents required for the test.
 
@@ -551,7 +551,7 @@ class TestSensorMerge(unittest.TestCase):
         # os.remove("slave.db")
         pass
 
-    def test_sensor_merge(self):
+    def test_sensor_platform_merge(self):
         # Must merge reference tables first, so we can ensure foreign key integrity
         merge_all_reference_tables(self.master_store, self.slave_store)
 
