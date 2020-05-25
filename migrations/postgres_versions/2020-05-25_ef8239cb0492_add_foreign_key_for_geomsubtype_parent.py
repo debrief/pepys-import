@@ -27,6 +27,7 @@ def upgrade():
             ["parent"],
             ["geo_type_id"],
             referent_schema="pepys",
+            onupdate="cascade",
         )
 
     # ### end Alembic commands ###

@@ -32,6 +32,7 @@ def upgrade():
             "GeometryTypes",
             ["parent"],
             ["geo_type_id"],
+            onupdate="cascade",
         )
 
     # ### end Alembic commands ###
