@@ -134,8 +134,11 @@ class CommandLineResolver(DataResolver):
             prompt = f"Sensor '{sensor_name}' on platform '{host_platform.name}' not found. Do you wish to: "
         else:
             prompt = f"Sensor on platform '{host_platform.name}' not found. Do you wish to: "
-        choice = create_menu(prompt, options)
 
+        def is_valid_dynamic(option):
+            return option in [str(i) for i in range(1, len(options) + 1)] or option == "."
+
+        choice = create_menu(prompt, options, validate_method=is_valid_dynamic)
         if choice == ".":
             print("Quitting")
             sys.exit(1)
@@ -176,8 +179,15 @@ class CommandLineResolver(DataResolver):
         )
         if len(objects_dict) <= 7:
             options.extend(objects_dict)
-        choice = create_menu(f"Ok, please provide {text_name} for new {data_type}: ", options,)
 
+        def is_valid_dynamic(option):
+            return option in [str(i) for i in range(1, len(options) + 1)] or option == "."
+
+        choice = create_menu(
+            f"Ok, please provide {text_name} for new {data_type}: ",
+            options,
+            validate_method=is_valid_dynamic,
+        )
         if choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
