@@ -40,7 +40,6 @@ class CommandLineResolver(DataResolver):
                 data_store,
                 change_id,
                 data_type="Datafile",
-                text_name="datafile-type",
                 db_class=data_store.db_classes.DatafileType,
                 field_name="datafile_type",
             )
@@ -57,9 +56,9 @@ class CommandLineResolver(DataResolver):
                 data_store,
                 change_id,
                 data_type="Datafile",
-                text_name="classification",
                 db_class=data_store.db_classes.Privacy,
                 field_name="privacy",
+                text_name="classification",
             )
 
         if chosen_privacy is None:
@@ -154,8 +153,10 @@ class CommandLineResolver(DataResolver):
                 return selected_object
 
     def resolve_reference(
-        self, data_store, change_id, data_type, text_name, db_class, field_name,
+        self, data_store, change_id, data_type, db_class, field_name, text_name=None
     ):
+        if text_name is None:
+            text_name = field_name.replace("_", "-")
         options = [f"Search an existing {text_name}", f"Add a new {text_name}"]
         if db_class.__tablename__ == "Nationalities":
             objects = (
@@ -167,7 +168,6 @@ class CommandLineResolver(DataResolver):
         else:
             objects = data_store.session.query(db_class).all()
         objects_dict = {obj.name: obj for obj in objects}
-        data_store.session.expunge_all()
         plural_field = (
             re.sub("([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r"\1", db_class.__tablename__))
             .strip()
@@ -183,11 +183,11 @@ class CommandLineResolver(DataResolver):
             return None
         elif choice == str(1):
             result = self.fuzzy_search_reference(
-                data_store, change_id, data_type, text_name, db_class, field_name
+                data_store, change_id, data_type, db_class, field_name, text_name
             )
             if result is None:
                 return self.resolve_reference(
-                    data_store, change_id, data_type, text_name, db_class, field_name
+                    data_store, change_id, data_type, db_class, field_name, text_name
                 )
             else:
                 return result
@@ -203,7 +203,7 @@ class CommandLineResolver(DataResolver):
             else:
                 print("You haven't entered an input!")
                 return self.resolve_reference(
-                    data_store, change_id, data_type, text_name, db_class, field_name
+                    data_store, change_id, data_type, db_class, field_name, text_name
                 )
         elif 3 <= int(choice) <= len(options):
             selected_object = objects_dict[options[int(choice) - 1]]
@@ -211,7 +211,7 @@ class CommandLineResolver(DataResolver):
                 return selected_object
 
     def fuzzy_search_reference(
-        self, data_store, change_id, data_type, text_name, db_class, field_name
+        self, data_store, change_id, data_type, db_class, field_name, text_name=None
     ):
 
         objects = data_store.session.query(db_class).all()
@@ -235,12 +235,12 @@ class CommandLineResolver(DataResolver):
                 return data_store.add_to_privacies(choice, change_id)
             elif new_choice == str(2):
                 return self.fuzzy_search_reference(
-                    data_store, change_id, data_type, text_name, db_class, field_name
+                    data_store, change_id, data_type, db_class, field_name, text_name
                 )
             elif new_choice == ".":
                 print("-" * 61, "\nReturning to the previous menu\n")
                 return self.resolve_reference(
-                    data_store, change_id, data_type, text_name, db_class, field_name,
+                    data_store, change_id, data_type, db_class, field_name, text_name
                 )
         else:
             return data_store.session.query(db_class).filter(db_class.name == choice).first()
@@ -448,12 +448,7 @@ class CommandLineResolver(DataResolver):
             chosen_nationality = data_store.add_to_nationalities(nationality, change_id)
         else:
             chosen_nationality = self.resolve_reference(
-                data_store,
-                change_id,
-                data_type="Platform",
-                text_name="nationality",
-                db_class=data_store.db_classes.Nationality,
-                field_name="nationality",
+                data_store, change_id, "Platform", data_store.db_classes.Nationality, "nationality",
             )
         if chosen_nationality is None:
             print("Nationality couldn't resolved. Returning to the previous menu!")
@@ -467,7 +462,6 @@ class CommandLineResolver(DataResolver):
                 data_store,
                 change_id,
                 data_type="Platform",
-                text_name="platform-type",
                 db_class=data_store.db_classes.PlatformType,
                 field_name="platform_type",
             )
@@ -557,7 +551,6 @@ class CommandLineResolver(DataResolver):
                 data_store,
                 change_id,
                 data_type="Sensor",
-                text_name="sensor-type",
                 db_class=data_store.db_classes.SensorType,
                 field_name="sensor_type",
             )
