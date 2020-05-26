@@ -107,7 +107,8 @@ def merge_all_metadata_tables(master_store, slave_store):
     metadata_table_names.insert(0, "Sensor")
     metadata_table_names.insert(0, "Platform")
 
-    # Remove Log and Change entries for now - deal with those separately later
+    # Remove Datafile, Log and Change entries for now - deal with those separately later
+    metadata_table_names.remove("Datafile")
     metadata_table_names.remove("Log")
     metadata_table_names.remove("Change")
 
@@ -227,3 +228,14 @@ def merge_measurement_table(table_object_name, master_store, slave_store):
     # Then we just do multiple selects with an IN clause, and add them with bulk add - like Baris
     # does in his export PR
     pass
+
+
+def merge_all_tables(master_store, slave_store):
+    # Merge the reference tables first
+    merge_all_reference_tables(master_store, slave_store)
+
+    # Merge all the metadata tables, excluding the complicated ones
+    merge_all_metadata_tables(master_store, slave_store)
+
+    # Merge the Datafiles table, keeping track of the IDs that changed
+    datafile_ids = merge_metadata_table("Datafile", master_store, slave_store)

@@ -5,6 +5,7 @@ from datetime import datetime
 from pepys_admin.merge import (
     merge_all_metadata_tables,
     merge_all_reference_tables,
+    merge_metadata_table,
     merge_reference_table,
 )
 from pepys_admin.utils import check_sqlalchemy_results_are_equal
@@ -647,3 +648,159 @@ class TestSensorPlatformMerge(unittest.TestCase):
         )
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+
+
+class TestMergeDatafiles(unittest.TestCase):
+    def setUp(self):
+        self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
+        self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
+
+        self.master_store.initialise()
+        self.slave_store.initialise()
+
+        with self.master_store.session_scope():
+            change_id = self.master_store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
+
+            self.master_store.add_to_privacies("Private", change_id)
+            self.master_store.add_to_datafile_types("DFT1", change_id)
+
+            self.master_store.add_to_datafiles(
+                "Private",
+                "DFT1",
+                reference="Master_DF_1",
+                file_hash="TESTHASH",
+                file_size=1,
+                change_id=change_id,
+            )
+            self.master_store.add_to_datafiles(
+                "Private",
+                "DFT1",
+                reference="Master_DF_2",
+                file_hash="TESTHASH",
+                file_size=1,
+                change_id=change_id,
+            )
+            self.master_store.add_to_datafiles(
+                "Private",
+                "DFT1",
+                reference="Shared_DF_1",
+                file_hash="TESTHASH",
+                file_size=1,
+                change_id=change_id,
+            )
+            df_obj = self.master_store.add_to_datafiles(
+                "Private",
+                "DFT1",
+                reference="Shared_DF_2_GUIDSame",
+                file_hash="TESTHASH",
+                file_size=1,
+                change_id=change_id,
+            )
+            shared_guid = df_obj.datafile_id
+
+        with self.slave_store.session_scope():
+            change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+
+            self.slave_store.add_to_privacies("Private", change_id)
+            self.slave_store.add_to_datafile_types("DFT1", change_id)
+
+            self.slave_store.add_to_datafiles(
+                "Private",
+                "DFT1",
+                reference="Slave_DF_1",
+                file_hash="TESTHASH",
+                file_size=1,
+                change_id=change_id,
+            )
+            self.slave_store.add_to_datafiles(
+                "Private",
+                "DFT1",
+                reference="Slave_DF_2",
+                file_hash="TESTHASH",
+                file_size=1,
+                change_id=change_id,
+            )
+            shared_df = self.slave_store.add_to_datafiles(
+                "Private",
+                "DFT1",
+                reference="Shared_DF_1",
+                file_hash="TESTHASH",
+                file_size=1,
+                change_id=change_id,
+            )
+            self.shared_guid = shared_df.datafile_id
+            df_obj = self.slave_store.add_to_datafiles(
+                "Private",
+                "DFT1",
+                reference="Shared_DF_2_GUIDSame",
+                file_hash="TESTHASH",
+                file_size=1,
+                change_id=change_id,
+            )
+            df_obj.datafile_id = shared_guid
+            self.slave_store.session.add(df_obj)
+            self.slave_store.session.commit()
+
+    def tearDown(self):
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
+
+    def test_merge_data_files(self):
+        merge_all_reference_tables(self.master_store, self.slave_store)
+
+        id_results = merge_metadata_table("Datafile", self.master_store, self.slave_store)
+
+        # Check there are the right number of entries in the master database
+        results = self.master_store.session.query(self.master_store.db_classes.Datafile).all()
+        assert len(results) == 6
+
+        # Check there are the right number of IDs in each section of the ID results
+        assert len(id_results["already_there"]) == 1
+        assert len(id_results["added"]) == 2
+        assert len(id_results["modified"]["from"]) == 1
+
+        # Check we have an entry called Slave_DF_1 in master now
+        results = (
+            self.master_store.session.query(self.master_store.db_classes.Datafile)
+            .filter(self.master_store.db_classes.Datafile.reference == "Slave_DF_1")
+            .all()
+        )
+
+        assert len(results) == 1
+        assert results[0].datafile_id in id_results["added"]
+
+        # Check that we mark the Shared_DF_2_GUIDSame entry as already there
+        results = (
+            self.master_store.session.query(self.master_store.db_classes.Datafile)
+            .filter(self.master_store.db_classes.Datafile.reference == "Shared_DF_2_GUIDSame")
+            .all()
+        )
+
+        assert len(results) == 1
+        assert results[0].datafile_id in id_results["already_there"]
+
+        # Check that the GUID for Shared_DF_1 matches in both databases, and is correctly in the
+        # from and to sections of the list of modified IDs
+        master_results = (
+            self.master_store.session.query(self.master_store.db_classes.Datafile)
+            .filter(self.master_store.db_classes.Datafile.reference == "Shared_DF_1")
+            .all()
+        )
+        slave_results = (
+            self.slave_store.session.query(self.slave_store.db_classes.Datafile)
+            .filter(self.slave_store.db_classes.Datafile.reference == "Shared_DF_1")
+            .all()
+        )
+
+        assert len(master_results) == 1
+        assert len(slave_results) == 1
+
+        assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+
+        assert self.shared_guid in id_results["modified"]["from"]
+        assert master_results[0].datafile_id in id_results["modified"]["to"]
