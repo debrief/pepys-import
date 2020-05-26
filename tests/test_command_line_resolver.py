@@ -37,9 +37,9 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store,
                 self.change_id,
                 "",
-                "classification",
                 self.store.db_classes.Privacy,
                 "privacy",
+                "classification",
             )
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
@@ -55,9 +55,9 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store,
                 self.change_id,
                 "",
-                "classification",
                 self.store.db_classes.Privacy,
                 "privacy",
+                "classification",
             )
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
@@ -77,9 +77,9 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store,
                 self.change_id,
                 "",
-                "classification",
                 self.store.db_classes.Privacy,
                 "privacy",
+                "classification",
             )
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
@@ -97,9 +97,9 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store,
                 self.change_id,
                 "",
-                "classification",
                 self.store.db_classes.Privacy,
                 "privacy",
+                "classification",
             )
             self.assertEqual(privacy.name, "PRIVACY-1")
 
@@ -116,9 +116,9 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store,
                 self.change_id,
                 "",
-                "classification",
                 self.store.db_classes.Privacy,
                 "privacy",
+                "classification",
             )
             self.assertEqual(privacy.name, "PRIVACY-1")
 
@@ -132,12 +132,7 @@ class ReferenceDataTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["1", "TYPE-TEST", "1"]
         with self.store.session_scope():
             platform_type = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                "platform-type",
-                self.store.db_classes.PlatformType,
-                "platform_type",
+                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
             )
             self.assertEqual(platform_type.name, "TYPE-TEST")
 
@@ -150,12 +145,7 @@ class ReferenceDataTestCase(unittest.TestCase):
         with self.store.session_scope():
             self.store.add_to_platform_types("TYPE-TEST", self.change_id)
             platform_type = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                "platform-type",
-                self.store.db_classes.PlatformType,
-                "platform_type",
+                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
             )
             self.assertEqual(platform_type.name, "TYPE-TEST")
 
@@ -172,12 +162,7 @@ class ReferenceDataTestCase(unittest.TestCase):
         with self.store.session_scope():
             self.store.add_to_privacies("TYPE-TEST", self.change_id)
             platform_type = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                "platform-type",
-                self.store.db_classes.PlatformType,
-                "platform_type",
+                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
             )
             self.assertEqual(platform_type.name, "TYPE-TEST")
 
@@ -192,12 +177,7 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.store.add_to_platform_types("TYPE-1", self.change_id)
             self.store.add_to_platform_types("TYPE-2", self.change_id)
             platform_type = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                "platform-type",
-                self.store.db_classes.PlatformType,
-                "platform_type",
+                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
             )
             self.assertEqual(platform_type.name, "TYPE-1")
 
@@ -211,12 +191,7 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.store.add_to_platform_types("TYPE-1", self.change_id)
             self.store.add_to_platform_types("TYPE-2", self.change_id)
             platform_type = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                "platform-type",
-                self.store.db_classes.PlatformType,
-                "platform_type",
+                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
             )
             self.assertEqual(platform_type.name, "TYPE-1")
 
@@ -230,42 +205,22 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.store.add_to_nationalities("TR", self.change_id, priority=2)
             self.store.add_to_nationalities("AAA", self.change_id, priority=3)
             nationality = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                "nationality",
-                self.store.db_classes.Nationality,
-                "nationality",
+                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
             )
             assert nationality.name == "UK"
 
             nationality = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                "nationality",
-                self.store.db_classes.Nationality,
-                "nationality",
+                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
             )
             assert nationality.name == "FR"
 
             nationality = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                "nationality",
-                self.store.db_classes.Nationality,
-                "nationality",
+                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
             )
             assert nationality.name == "TR"
 
             nationality = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                "nationality",
-                self.store.db_classes.Nationality,
-                "nationality",
+                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
             )
             assert nationality is None
 
@@ -280,9 +235,9 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store,
                 self.change_id,
                 "",
-                "classification",
                 self.store.db_classes.Privacy,
                 "privacy",
+                "classification",
             )
             self.assertIsNone(privacy)
 
@@ -297,9 +252,9 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store,
                 self.change_id,
                 "",
-                "classification",
                 self.store.db_classes.Privacy,
                 "privacy",
+                "classification",
             )
             self.assertIsNone(privacy)
 
@@ -308,9 +263,9 @@ class ReferenceDataTestCase(unittest.TestCase):
                     self.store,
                     self.change_id,
                     "",
-                    "classification",
                     self.store.db_classes.Privacy,
                     "privacy",
+                    "classification",
                 )
             assert privacy is None
         output = temp_output.getvalue()
@@ -327,9 +282,9 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store,
                 self.change_id,
                 "",
-                "classification",
                 self.store.db_classes.Privacy,
                 "privacy",
+                "classification",
             )
         output = temp_output.getvalue()
         assert "You haven't entered an input!" in output
