@@ -32,6 +32,12 @@ def merge_reference_table(table_object_name, master_store, slave_store):
 
     primary_key = master_table.__table__.primary_key.columns.values()[0].name
 
+    # Keep track of each ID and what its status is
+    ids_already_there = []
+    ids_added = []
+    ids_modified_from = []
+    ids_modified_to = []
+
     with slave_store.session_scope():
         with master_store.session_scope():
             slave_entries = slave_store.session.query(slave_table).options(undefer("*")).all()
@@ -59,10 +65,13 @@ def merge_reference_table(table_object_name, master_store, slave_store):
 
                     if n_name_results == 0:
                         print("  - Not in master db, copying over")
+                        ids_added.append(guid)
                         make_transient(slave_entry)
                         master_store.session.add(slave_entry)
                     elif n_name_results == 1:
                         print("  - In master db, making GUIDs match and cascading")
+                        ids_modified_from.append(guid)
+                        ids_modified_to.append(getattr(search_by_name_results[0], primary_key))
                         setattr(
                             slave_entry,
                             primary_key,
@@ -74,8 +83,15 @@ def merge_reference_table(table_object_name, master_store, slave_store):
                         assert False
                 elif n_results == 1:
                     print(" - Already in master DB with same GUID, don't need to copy")
+                    ids_already_there.append(guid)
                 else:
                     assert False
+
+    return {
+        "already_there": ids_already_there,
+        "added": ids_added,
+        "modified": {"from": ids_modified_from, "to": ids_modified_to},
+    }
 
 
 def merge_all_metadata_tables(master_store, slave_store):
@@ -105,6 +121,12 @@ def merge_metadata_table(table_object_name, master_store, slave_store):
     slave_table = getattr(slave_store.db_classes, table_object_name)
 
     primary_key = master_table.__table__.primary_key.columns.values()[0].name
+
+    # Keep track of each ID and what its status is
+    ids_already_there = []
+    ids_added = []
+    ids_modified_from = []
+    ids_modified_to = []
 
     with slave_store.session_scope():
         with master_store.session_scope():
@@ -141,6 +163,7 @@ def merge_metadata_table(table_object_name, master_store, slave_store):
                         # We can't find an entry which matches in the master db,
                         # so this is a new entry from the slave which needs copying over
                         print("  - Not in master db, copying over")
+                        ids_added.append(guid)
                         slave_store.session.expunge(slave_entry)
                         make_transient(slave_entry)
                         master_store.session.merge(slave_entry)
@@ -149,6 +172,10 @@ def merge_metadata_table(table_object_name, master_store, slave_store):
                         # GUID - so update the GUID in the slave database and let it propagate
                         # so we can copy over other tables later and all the foreign key integrity will work
                         print("  - In master db, making GUIDs match and cascading")
+                        ids_modified_from.append(guid)
+                        ids_modified_to.append(
+                            getattr(search_by_all_fields_results[0], primary_key)
+                        )
                         setattr(
                             slave_entry,
                             primary_key,
@@ -161,7 +188,42 @@ def merge_metadata_table(table_object_name, master_store, slave_store):
                 elif n_results == 1:
                     # The GUID is in the master db - so the record must also be there (as GUIDs are unique)
                     print(" - Already in master DB with same GUID, don't need to copy")
+                    ids_already_there.append(guid)
                 else:
                     # We should never get here: the GUID should always appear in the master database either zero or one times,
                     # never more
                     assert False
+
+    return {
+        "already_there": ids_already_there,
+        "added": ids_added,
+        "modified": {"from": ids_modified_from, "to": ids_modified_to},
+    }
+
+
+def merge_measurement_table(table_object_name, master_store, slave_store):
+    # For each row in table
+    #   Check if datafile_id has already been imported into master
+    #   If it has, then ignore that row
+    #   If it hasn't, then copy the row in
+
+    # BUT, if we've already merged the Datafiles (one of the metadata tables)
+    # then we can't tell which ones have already been imported in master
+    # So maybe extract the list of datafiles in master before we do the merge of metadata?
+    # But we can't do a join to extract this, because we're looking in two different databases
+    # Basically we want to do something like:
+    # SELECT * FROM States WHERE States.source_id NOT IN [ID1, ID2, ID3 etc]
+    # where the IDs are the ids that were already imported in master
+    # But doing that would make an incredibly long SQL statement, and we can't do it in two pieces
+    # because it's a NOT IN statement as opposed to an IN statement
+    #
+    # Ah, can we extract the datafile IDs from the datafiles table, and do some set operations on them
+    # to find the ones that are needed and then do an IN statement (or multiple sequences of IN statements)
+    #
+    # Ah, actually, can we return some data from the metadata merging function? If we return a list of
+    # IDs that were added (maybe even a list of IDs added, list of IDs altered, list of IDs already there)
+    # then we can extract that separately for the Datafiles table (ie. don't do it in the main
+    # merge_all_metadata) function and get a list of Datafiles that have been added to the master db
+    # Then we just do multiple selects with an IN clause, and add them with bulk add - like Baris
+    # does in his export PR
+    pass

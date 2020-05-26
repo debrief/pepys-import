@@ -46,7 +46,8 @@ class TestSensorTypeMerge(unittest.TestCase):
             change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
             self.slave_store.add_to_sensor_types("ST_Slave_1", change_id)
             self.slave_store.add_to_sensor_types("ST_Slave_2", change_id)
-            self.slave_store.add_to_sensor_types("ST_Shared_1", change_id)
+            slave_shared_obj = self.slave_store.add_to_sensor_types("ST_Shared_1", change_id)
+            self.slave_shared_id = slave_shared_obj.sensor_type_id
             st_obj_slave = self.slave_store.add_to_sensor_types("ST_Shared_2GUIDMatch", change_id)
             st_obj_slave.sensor_type_id = st_obj_guid
             self.slave_store.session.add(st_obj_slave)
@@ -71,7 +72,7 @@ class TestSensorTypeMerge(unittest.TestCase):
 
     def test_sensor_type_merge(self):
         # Do the merge
-        merge_reference_table("SensorType", self.master_store, self.slave_store)
+        id_results = merge_reference_table("SensorType", self.master_store, self.slave_store)
 
         master_table = self.master_store.db_classes.SensorType
         slave_table = self.slave_store.db_classes.SensorType
@@ -95,6 +96,9 @@ class TestSensorTypeMerge(unittest.TestCase):
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
+        assert slave_results[0].sensor_type_id in id_results["added"]
+        assert slave_results[1].sensor_type_id in id_results["added"]
+
         # Check that the row that had the same name and same GUID in each db is still in both
         # databases
         master_results = (
@@ -109,6 +113,8 @@ class TestSensorTypeMerge(unittest.TestCase):
         )
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+
+        assert id_results["already_there"] == [slave_results[0].sensor_type_id]
 
         # Check that the row that had the same name but different GUID in each db now
         # matches in both databases
@@ -125,6 +131,9 @@ class TestSensorTypeMerge(unittest.TestCase):
         new_guid = slave_results[0].sensor_type_id
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+
+        assert id_results["modified"]["from"] == [self.slave_shared_id]
+        assert id_results["modified"]["to"] == [new_guid]
 
         # Check that the new GUID for this row has propagated to the Sensors table in the slave database
         # (so we can copy this table later with no problems)
@@ -172,7 +181,8 @@ class TestPlatformTypeMerge(unittest.TestCase):
             change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
             self.slave_store.add_to_platform_types("PT_Slave_1", change_id)
             self.slave_store.add_to_platform_types("PT_Slave_2", change_id)
-            self.slave_store.add_to_platform_types("PT_Shared_1", change_id)
+            slave_shared_obj = self.slave_store.add_to_platform_types("PT_Shared_1", change_id)
+            self.slave_shared_id = slave_shared_obj.platform_type_id
             st_obj_slave = self.slave_store.add_to_platform_types("PT_Shared_2GUIDMatch", change_id)
             st_obj_slave.platform_type_id = st_obj_guid
             self.slave_store.session.add(st_obj_slave)
@@ -193,7 +203,7 @@ class TestPlatformTypeMerge(unittest.TestCase):
 
     def test_platform_type_merge(self):
         # Do the merge
-        merge_reference_table("PlatformType", self.master_store, self.slave_store)
+        id_results = merge_reference_table("PlatformType", self.master_store, self.slave_store)
 
         master_table = self.master_store.db_classes.PlatformType
         slave_table = self.slave_store.db_classes.PlatformType
@@ -217,6 +227,9 @@ class TestPlatformTypeMerge(unittest.TestCase):
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
+        assert slave_results[0].platform_type_id in id_results["added"]
+        assert slave_results[1].platform_type_id in id_results["added"]
+
         # Check that the row that had the same name and same GUID in each db is still in both
         # databases
         master_results = (
@@ -231,6 +244,8 @@ class TestPlatformTypeMerge(unittest.TestCase):
         )
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+
+        assert id_results["already_there"] == [slave_results[0].platform_type_id]
 
         # Check that the row that had the same name but different GUID in each db now
         # matches in both databases
@@ -247,6 +262,9 @@ class TestPlatformTypeMerge(unittest.TestCase):
         new_guid = slave_results[0].platform_type_id
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+
+        assert id_results["modified"]["from"] == [self.slave_shared_id]
+        assert id_results["modified"]["to"] == [new_guid]
 
         # Check that the new GUID for this row has propagated to the Platforms table in the slave database
         # (so we can copy this table later with no problems)
@@ -412,12 +430,6 @@ class TestMergeAllReferenceTables(unittest.TestCase):
 
 class TestSensorPlatformMerge(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("master.sqlite"):
-            os.remove("master.sqlite")
-
-        if os.path.exists("slave.sqlite"):
-            os.remove("slave.sqlite")
-
         self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
         self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
 
@@ -540,9 +552,11 @@ class TestSensorPlatformMerge(unittest.TestCase):
             self.slave_store.session.commit()
 
     def tearDown(self):
-        # os.remove("master.db")
-        # os.remove("slave.db")
-        pass
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
 
     def test_sensor_platform_merge(self):
         # Must merge reference tables first, so we can ensure foreign key integrity
