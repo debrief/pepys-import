@@ -134,7 +134,8 @@ class ReferenceDataTestCase(unittest.TestCase):
             platform_type = self.resolver.resolve_reference(
                 self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
             )
-            self.assertEqual(platform_type.name, "TYPE-TEST")
+            assert platform_type.__tablename__ == "PlatformTypes"
+            assert platform_type.name == "TYPE-TEST"
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_select_existing_platform_type(self, menu_prompt):
@@ -147,7 +148,8 @@ class ReferenceDataTestCase(unittest.TestCase):
             platform_type = self.resolver.resolve_reference(
                 self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
             )
-            self.assertEqual(platform_type.name, "TYPE-TEST")
+            assert platform_type.__tablename__ == "PlatformTypes"
+            assert platform_type.name == "TYPE-TEST"
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
