@@ -239,3 +239,6 @@ def merge_all_tables(master_store, slave_store):
 
     # Merge the Datafiles table, keeping track of the IDs that changed
     datafile_ids = merge_metadata_table("Datafile", master_store, slave_store)
+
+    # Merge the measurement tables, only merging measurements that come from one of the datafiles that has been added
+    merge_all_measurement_tables(master_store, slave_store, datafile_ids["added"])
