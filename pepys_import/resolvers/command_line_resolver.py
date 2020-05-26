@@ -161,7 +161,7 @@ class CommandLineResolver(DataResolver):
             objects = (
                 data_store.session.query(db_class)
                 .filter(db_class.priority.in_([1, 2]))
-                .order_by(db_class.priority)
+                .order_by(db_class.priority, db_class.name)
                 .all()
             )
         else:
