@@ -11,9 +11,12 @@ from prompt_toolkit.completion.filesystem import PathCompleter
 
 from paths import ROOT_DIRECTORY
 from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
+from pepys_admin.export_snapshot import export_metadata_tables, export_reference_tables
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.utils import get_default_export_folder
 from pepys_admin.view_data_cli import ViewDataShell
+from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import is_schema_created
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -27,6 +30,8 @@ class AdminShell(cmd.Cmd):
 (4) Export by Platform and sensor
 (5) Migrate
 (6) View Data
+(7) Export Reference Data
+(8) Export Reference and Metadata Data
 (0) Exit
 """
     prompt = "(pepys-admin) "
@@ -43,6 +48,8 @@ class AdminShell(cmd.Cmd):
             "4": self.do_export_by_platform_name,
             "5": self.do_migrate,
             "6": self.do_view_data,
+            "7": self.do_export_reference_data,
+            "8": self.do_export_reference_and_metadata_data,
             "9": self.do_export_all,
         }
 
@@ -206,6 +213,65 @@ class AdminShell(cmd.Cmd):
         print("-" * 61)
         shell = ViewDataShell(self.data_store)
         shell.cmdloop()
+
+    @staticmethod
+    def _ask_for_db_name():
+        while True:
+            destination_db_name = input("SQLite database file to use: ")
+            path = os.path.join(os.getcwd(), destination_db_name)
+            if not os.path.exists(path):
+                break
+            else:
+                print(
+                    f"There is already a file named '{destination_db_name}' in '{os.getcwd()}'."
+                    f"\nPlease enter another name."
+                )
+        return destination_db_name, path
+
+    def _create_destination_store(self):
+        destination_db_name, path = self._ask_for_db_name()
+        destination_store = DataStore(
+            "",
+            "",
+            "",
+            0,
+            db_name=destination_db_name,
+            db_type="sqlite",
+            show_status=False,
+            welcome_text=None,
+        )
+        destination_store.initialise()
+        return destination_store, path
+
+    def do_export_reference_data(self):
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
+            return
+
+        destination_store, path = self._create_destination_store()
+        reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
+        export_reference_tables(self.data_store, destination_store, reference_table_objects)
+        print(f"Reference tables are successfully exported!\nYou can find it here: '{path}'.")
+
+    def do_export_reference_and_metadata_data(self):
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
+            return
+
+        destination_store, path = self._create_destination_store()
+        reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
+        export_reference_tables(self.data_store, destination_store, reference_table_objects)
+
+        with self.data_store.session_scope():
+            privacies = self.data_store.session.query(
+                self.data_store.db_classes.Privacy.privacy_id,
+                self.data_store.db_classes.Privacy.name,
+            ).all()
+            privacy_dict = {name: privacy_id for privacy_id, name in privacies}
+        selected_privacies = iterfzf(privacy_dict.keys(), multi=True)
+        privacy_ids = [privacy_dict[name] for name in selected_privacies]
+        export_metadata_tables(self.data_store, destination_store, privacy_ids)
+        print(
+            f"Reference and metadata tables are successfully exported!\nYou can find it here: '{path}'."
+        )
 
     @staticmethod
     def do_exit():
