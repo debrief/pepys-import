@@ -242,7 +242,16 @@ class CommandLineResolver(DataResolver):
                 validate_method=is_valid,
             )
             if new_choice == str(1):
-                return data_store.add_to_privacies(choice, change_id)
+                plural_field = (
+                    re.sub(
+                        "([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r"\1", db_class.__tablename__)
+                    )
+                    .strip()
+                    .lower()
+                    .replace(" ", "_")
+                )
+                add_method = getattr(data_store, f"add_to_{plural_field}")
+                return add_method(choice, change_id)
             elif new_choice == str(2):
                 return self.fuzzy_search_reference(
                     data_store, change_id, data_type, db_class, field_name, text_name
