@@ -1,3 +1,5 @@
+import pint
+from shapely import wkb
 from sqlalchemy.orm import undefer
 from sqlalchemy.orm.session import make_transient
 
@@ -202,32 +204,97 @@ def merge_metadata_table(table_object_name, master_store, slave_store):
     }
 
 
-def merge_measurement_table(table_object_name, master_store, slave_store):
-    # For each row in table
-    #   Check if datafile_id has already been imported into master
-    #   If it has, then ignore that row
-    #   If it hasn't, then copy the row in
+def split_list(lst, n=100):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]
 
-    # BUT, if we've already merged the Datafiles (one of the metadata tables)
-    # then we can't tell which ones have already been imported in master
-    # So maybe extract the list of datafiles in master before we do the merge of metadata?
-    # But we can't do a join to extract this, because we're looking in two different databases
-    # Basically we want to do something like:
-    # SELECT * FROM States WHERE States.source_id NOT IN [ID1, ID2, ID3 etc]
-    # where the IDs are the ids that were already imported in master
-    # But doing that would make an incredibly long SQL statement, and we can't do it in two pieces
-    # because it's a NOT IN statement as opposed to an IN statement
-    #
-    # Ah, can we extract the datafile IDs from the datafiles table, and do some set operations on them
-    # to find the ones that are needed and then do an IN statement (or multiple sequences of IN statements)
-    #
-    # Ah, actually, can we return some data from the metadata merging function? If we return a list of
-    # IDs that were added (maybe even a list of IDs added, list of IDs altered, list of IDs already there)
-    # then we can extract that separately for the Datafiles table (ie. don't do it in the main
-    # merge_all_metadata) function and get a list of Datafiles that have been added to the master db
-    # Then we just do multiple selects with an IN clause, and add them with bulk add - like Baris
-    # does in his export PR
-    pass
+
+def rows_to_list_of_dicts(results):
+    """Converts a list of rows returned from a SQLAlchemy query into a list of dicts.
+
+    The obvious way to do this would be to look in the __table__ attribute of the row
+    and get the column names, and then extract those values from the row. However, this
+    will not work for the Measurement tables, as the attributes of the class have different
+    names to the column names. For example, the column name is "speed" but the attribute
+    name is "_speed" and a property (with getter and setter methods) is used to convert
+    between the two. The bulk_insert_mappings method doesn't use the Table object,
+    so doesn't use the properties to do the conversion.
+
+    Therefore, we need to have *all* of the attributes of this class, including the attributes
+    starting with _. However, we don't want the SQLAlchemy internal attributes, or the 'dunder'
+    methods that start with a __. Therefore, this function excludes those, but keeps all others.
+
+    We also need to process the location field to make sure it is in WKT format so the database
+    can understand it.
+
+    """
+    dict_results = []
+    attributes_to_use = None
+    for row in results:
+        if attributes_to_use is None:
+            attributes_to_use = [attrib for attrib in dir(row) if not attrib.startswith("__")]
+            attributes_to_use.remove("_decl_class_registry")
+            attributes_to_use.remove("_sa_class_manager")
+            attributes_to_use.remove("_sa_instance_state")
+
+        d = {key: getattr(row, key) for key in attributes_to_use}
+
+        # Deal with the location field, making sure it gets converted to WKT so it can be inserted
+        # into the db
+        if "location" in d:
+            d["_location"] = d["location"].to_wkt()
+
+        # TODO: This function will fail for Geometry1 objects at the moment, as the geometry field is
+        # not processed properly. This table isn't used at the moment, but this should be fixed
+        # before the table is used
+
+        dict_results.append(d)
+
+    return dict_results
+
+
+def merge_measurement_table(table_object_name, master_store, slave_store, added_datafile_ids):
+    # We don't need to do a 'merge' as such for the measurement tables. Instead we just need to add
+    # the measurement entries for datafiles which hadn't already been imported into the master
+    # database.
+    # These come from the 'added' list of IDs from the datafile merging function and are
+    # passed to this function
+
+    master_table = getattr(master_store.db_classes, table_object_name)
+    slave_table = getattr(slave_store.db_classes, table_object_name)
+
+    with slave_store.session_scope():
+        with master_store.session_scope():
+            # Split the IDs list up into 100 at a time, as otherwise the SQL query could get longer
+            # than SQLite or Postgres allows - as it'll have a full UUID string in it for each
+            # datafile ID
+            for datafile_ids_chunk in split_list(added_datafile_ids):
+                # Search for all slave measurement table entries with IDs in this list
+                results = (
+                    slave_store.session.query(slave_table)
+                    .filter(slave_table.source_id.in_(datafile_ids_chunk))
+                    .options(undefer("*"))
+                    .all()
+                )
+
+                # Convert the rows to a list of dicts, taking into account
+                # the location field, and the properties used in the table classes
+                dict_results = rows_to_list_of_dicts(results)
+
+                master_store.session.bulk_insert_mappings(master_table, dict_results)
+
+
+def merge_all_measurement_tables(master_store, slave_store, added_datafile_ids):
+    master_store.setup_table_type_mapping()
+    measurement_table_objects = master_store.meta_classes[TableTypes.MEASUREMENT]
+
+    measurement_table_names = [obj.__name__ for obj in measurement_table_objects]
+
+    for measurement_table_name in measurement_table_names:
+        merge_measurement_table(
+            measurement_table_name, master_store, slave_store, added_datafile_ids
+        )
 
 
 def merge_all_tables(master_store, slave_store):
@@ -239,6 +306,8 @@ def merge_all_tables(master_store, slave_store):
 
     # Merge the Datafiles table, keeping track of the IDs that changed
     datafile_ids = merge_metadata_table("Datafile", master_store, slave_store)
+
+    print(datafile_ids)
 
     # Merge the measurement tables, only merging measurements that come from one of the datafiles that has been added
     merge_all_measurement_tables(master_store, slave_store, datafile_ids["added"])

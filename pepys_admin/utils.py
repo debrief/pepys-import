@@ -9,13 +9,17 @@ def get_default_export_folder():
         return os.getcwd()
 
 
-def sqlalchemy_obj_to_dict(obj):
+def sqlalchemy_obj_to_dict(obj, remove_id=False):
     """Converts a SQLAlchemy result from a query into a dict of {column_name: value}s,
     excluding the 'created_date' column
     """
     d = {column.name: getattr(obj, column.name) for column in obj.__table__.columns}
 
     del d["created_date"]
+
+    if remove_id:
+        pri_key_col_name = obj.__table__.primary_key.columns.values()[0].name
+        del d[pri_key_col_name]
 
     return d
 
