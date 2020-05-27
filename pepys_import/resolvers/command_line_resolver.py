@@ -158,6 +158,23 @@ class CommandLineResolver(DataResolver):
     def resolve_reference(
         self, data_store, change_id, data_type, db_class, field_name, text_name=None
     ):
+        """
+        This method resolves any reference data according to the given parameters.
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: DataStore
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: UUID
+        :param data_type: For which data type the reference is resolved(Platform, Sensor or Datafile)
+        :type data_type: String
+        :param db_class: Class of a Reference Table
+        :type db_class: SQLAlchemy Declarative Base Class
+        :param field_name: Name of the resolved data
+        :type field_name: String
+        :param text_name: Printed name of the resolved data
+        :type text_name: String
+        :return:
+        """
         if text_name is None:
             text_name = field_name.replace("_", "-")
         options = [f"Search an existing {text_name}", f"Add a new {text_name}"]
@@ -171,6 +188,8 @@ class CommandLineResolver(DataResolver):
         else:
             objects = data_store.session.query(db_class).all()
         objects_dict = {obj.name: obj for obj in objects}
+        # CamelCase table names should be split into words, separated by "-" and converted to
+        # lowercase for matching with DataStore add methods (i.e. PlatformTypes -> platform_types)
         plural_field = (
             re.sub("([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r"\1", db_class.__tablename__))
             .strip()
@@ -223,7 +242,26 @@ class CommandLineResolver(DataResolver):
     def fuzzy_search_reference(
         self, data_store, change_id, data_type, db_class, field_name, text_name=None
     ):
+        """
+        This method parses any reference data according to the given parameters, and uses fuzzy
+        search when user is typing. If user enters a new value, it adds to the related reference
+        table or searches for an existing entity again. If user selects an existing value,
+        it returns the selected entity.
 
+        :param data_store: A :class:`DataStore` object
+        :type data_store: DataStore
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: UUID
+        :param data_type: For which data type the reference is resolved(Platform, Sensor or Datafile)
+        :type data_type: String
+        :param db_class: Class of a Reference Table
+        :type db_class: SQLAlchemy Declarative Base Class
+        :param field_name: Name of the resolved data
+        :type field_name: String
+        :param text_name: Printed name of the resolved data
+        :type text_name: String
+        :return:
+        """
         objects = data_store.session.query(db_class).all()
         completer = [p.name for p in objects]
         choice = create_menu(
