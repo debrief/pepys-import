@@ -13,7 +13,6 @@ class InitialiseShell(cmd.Cmd):
 (3) Create Pepys schema
 (4) Import Reference data
 (5) Import Metadata
-(6) Import Sample Measurements
 (0) Exit
 """
     prompt = "(initialise) "
@@ -29,7 +28,6 @@ class InitialiseShell(cmd.Cmd):
             "3": self.do_create_pepys_schema,
             "4": self.do_import_reference_data,
             "5": self.do_import_metadata,
-            "6": self.do_import_sample_measurements,
         }
 
         if parent_shell:
@@ -43,9 +41,6 @@ class InitialiseShell(cmd.Cmd):
         print("Cleared database contents")
 
     def do_clear_db_schema(self):
-        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
-            return
-
         self.data_store.clear_db_schema()
         print("Cleared database schema")
 
@@ -68,14 +63,6 @@ class InitialiseShell(cmd.Cmd):
         with self.data_store.session_scope():
             self.data_store.populate_metadata(self.csv_path)
         print("Metadata imported")
-
-    def do_import_sample_measurements(self):
-        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
-            return
-
-        with self.data_store.session_scope():
-            self.data_store.populate_measurement(self.csv_path)
-        print("Sample measurements imported")
 
     @staticmethod
     def do_cancel():

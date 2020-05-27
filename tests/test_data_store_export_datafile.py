@@ -1,5 +1,6 @@
 import os
 import unittest
+from uuid import uuid4
 
 import pytest
 from testing.postgresql import Postgresql
@@ -156,14 +157,16 @@ class CachePlatformAndSensorNamesTestCase(unittest.TestCase):
     def test_cached_comment_type_exception(self):
         with self.store.session_scope():
             with pytest.raises(Exception) as exception:
-                self.store.get_cached_comment_type_name(comment_type_id=123456789)
-            assert f"No Comment Type found with Comment type id: 123456789" in str(exception.value)
+                uuid = uuid4()
+                self.store.get_cached_comment_type_name(comment_type_id=uuid)
+            assert f"No Comment Type found with Comment type id: {uuid}" in str(exception.value)
 
     def test_cached_sensor_name_exception(self):
         with self.store.session_scope():
             with pytest.raises(Exception) as exception:
-                self.store.get_cached_sensor_name(sensor_id=123456789)
-            assert f"No Sensor found with sensor id: 123456789" in str(exception.value)
+                uuid = uuid4()
+                self.store.get_cached_sensor_name(sensor_id=uuid)
+            assert f"No Sensor found with sensor id: {uuid}" in str(exception.value)
 
     def test_cached_platform_name_exceptions(self):
         with self.store.session_scope():
@@ -174,11 +177,13 @@ class CachePlatformAndSensorNamesTestCase(unittest.TestCase):
                 in str(exception.value)
             )
             with pytest.raises(Exception) as exception:
-                self.store.get_cached_platform_name(sensor_id=123456789)
-            assert f"No Sensor found with sensor id: 123456789" in str(exception.value)
+                uuid = uuid4()
+                self.store.get_cached_platform_name(sensor_id=uuid)
+            assert f"No Sensor found with sensor id: {uuid}" in str(exception.value)
             with pytest.raises(Exception) as exception:
-                self.store.get_cached_platform_name(platform_id=123456789)
-            assert f"No Platform found with platform id: 123456789" in str(exception.value)
+                uuid = uuid4()
+                self.store.get_cached_platform_name(platform_id=uuid)
+            assert f"No Platform found with platform id: {uuid}" in str(exception.value)
 
 
 class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
@@ -202,14 +207,16 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
         Comment = self.store.db_classes.Comment
 
         with self.store.session_scope():
-            sensor_id = self.store.search_sensor("SENSOR-1").sensor_id
+            platform = self.store.search_platform("SUBJECT")
+            sensor_id = self.store.search_sensor("SENSOR-1", platform.platform_id).sensor_id
 
             state_values = self.store.find_min_and_max_date(State, State.sensor_id, sensor_id)
             assert len(state_values) == 3
             assert str(state_values[0]) == "2010-01-12 11:58:00"
             assert str(state_values[1]) == "2010-01-12 12:14:00"
 
-            sensor_id = self.store.search_sensor("TA").sensor_id
+            platform = self.store.search_platform("SENSOR")
+            sensor_id = self.store.search_sensor("TA", platform.platform_id).sensor_id
 
             contact_values = self.store.find_min_and_max_date(Contact, Contact.sensor_id, sensor_id)
             print(contact_values)
@@ -240,11 +247,14 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
 
     def test_find_related_datafile_objects_of_states_and_contacts(self):
         with self.store.session_scope():
+            platform1 = self.store.search_platform("SUBJECT")
+            platform2 = self.store.search_platform("SENSOR")
+
             sensors_dict = {
-                "SENSOR-1": self.store.search_sensor("SENSOR-1").sensor_id,
-                "TA": self.store.search_sensor("TA").sensor_id,
+                "SENSOR-1": self.store.search_sensor("SENSOR-1", platform1.platform_id).sensor_id,
+                "TA": self.store.search_sensor("TA", platform2.platform_id).sensor_id,
             }
-            objects = self.store.find_related_datafile_objects(123456789, sensors_dict=sensors_dict)
+            objects = self.store.find_related_datafile_objects(uuid4(), sensors_dict=sensors_dict)
             print(objects)
             assert len(objects) == 2
             assert objects[0]["name"] == "SENSOR-1"

@@ -73,8 +73,8 @@ def create_alembic_version_table(engine, db_type):
         """
         insert_value = """
             INSERT INTO alembic_version (version_num)
-            SELECT 'bcff0ccb4fbd'
-            WHERE NOT EXISTS(SELECT 1 FROM alembic_version WHERE version_num = 'bcff0ccb4fbd');
+            SELECT '07e4b725c547'
+            WHERE NOT EXISTS(SELECT 1 FROM alembic_version WHERE version_num = '07e4b725c547');
         """
     else:
         create_table = """
@@ -86,9 +86,9 @@ def create_alembic_version_table(engine, db_type):
         """
         insert_value = """
             INSERT INTO pepys.alembic_version (version_num) 
-            SELECT '5154f7db278d'
+            SELECT '6f625922f61c'
             WHERE NOT EXISTS(
-                SELECT '5154f7db278d' FROM pepys.alembic_version WHERE version_num = '5154f7db278d'
+                SELECT '6f625922f61c' FROM pepys.alembic_version WHERE version_num = '6f625922f61c'
             );
         """
     with engine.connect() as connection:
@@ -112,3 +112,7 @@ def cache_results_if_not_none(cache_attribute):
         return helper
 
     return real_decorator
+
+
+def shorten_uuid(id):
+    return str(id)[-6:]
