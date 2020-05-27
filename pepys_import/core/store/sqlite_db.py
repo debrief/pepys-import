@@ -244,7 +244,9 @@ class GeometrySubType(BaseSpatiaLite):
 
     geo_sub_type_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False, unique=True)
-    parent = Column(Integer, nullable=False)
+    parent = Column(
+        UUIDType, ForeignKey("GeometryTypes.geo_type_id", onupdate="cascade"), nullable=False
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -408,9 +410,9 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     _major = deferred(Column("major", REAL))
     _minor = deferred(Column("minor", REAL))
     _orientation = deferred(Column("orientation", REAL))
-    classification = deferred(Column(String(150)))
-    confidence = deferred(Column(String(150)))
-    contact_type = deferred(Column(String(150)))
+    classification = deferred(Column(UUIDType, ForeignKey("ClassificationTypes.class_type_id")))
+    confidence = deferred(Column(UUIDType, ForeignKey("ConfidenceLevels.confidence_level_id")))
+    contact_type = deferred(Column(UUIDType, ForeignKey("ContactTypes.contact_type_id")))
     _mla = deferred(Column("mla", REAL))
     _soa = deferred(Column("soa", REAL))
     subject_id = Column(UUIDType, ForeignKey("Platforms.platform_id"))
