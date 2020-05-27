@@ -486,18 +486,11 @@ class CommandLineResolver(DataResolver):
         :return:
         """
         print("Ok, adding new platform.")
-        if platform_name:
-            platform_name = prompt("Please enter a name: ", default=platform_name)
-            trigraph = None
-            if len(platform_name) >= 3:
-                trigraph = prompt("Please enter trigraph (optional): ", default=platform_name[:3])
-            quadgraph = None
-            if len(platform_name) >= 4:
-                quadgraph = prompt("Please enter quadgraph (optional): ", default=platform_name[:4])
-        else:
-            platform_name = prompt("Please enter a name: ")
-            trigraph = prompt("Please enter trigraph (optional): ")
-            quadgraph = prompt("Please enter quadgraph (optional): ")
+        if platform_name is None:
+            platform_name = ""
+        platform_name = prompt("Please enter a name: ", default=platform_name)
+        trigraph = prompt("Please enter trigraph (optional): ", default=platform_name[:3])
+        quadgraph = prompt("Please enter quadgraph (optional): ", default=platform_name[:4])
         pennant_number = prompt("Please enter pennant number (optional): ")
 
         # Choose Nationality
@@ -547,10 +540,8 @@ class CommandLineResolver(DataResolver):
         print("-" * 61)
         print("Input complete. About to create this platform:")
         print(f"Name: {platform_name}")
-        if trigraph:
-            print(f"Trigraph: {trigraph}")
-        if quadgraph:
-            print(f"Quadgraph: {quadgraph}")
+        print(f"Trigraph: {trigraph}")
+        print(f"Quadgraph: {quadgraph}")
         print(f"Pennant Number: {pennant_number}")
         print(f"Nationality: {chosen_nationality.name}")
         print(f"Class: {chosen_platform_type.name}")
