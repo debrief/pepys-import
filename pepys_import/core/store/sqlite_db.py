@@ -26,6 +26,7 @@ from pepys_import.core.store.common_db import (
     ReferenceRepr,
     SensorMixin,
     StateMixin,
+    SynonymMixin,
     TaggedItemMixin,
     TaskMixin,
 )
@@ -155,7 +156,7 @@ class Datafile(BaseSpatiaLite, DatafileMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Synonym(BaseSpatiaLite):
+class Synonym(BaseSpatiaLite, SynonymMixin):
     __tablename__ = constants.SYNONYM
     table_type = TableTypes.METADATA
     table_type_id = 7

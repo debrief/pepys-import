@@ -1519,3 +1519,8 @@ class ReferenceRepr:
             f"{self.__class__.__name__}(id={shorten_uuid(getattr(self, primary_key_col_name))} "
             f"name={self.name})"
         )
+
+
+class SynonymMixin:
+    def __repr__(self):
+        return f"Synonym(id={shorten_uuid(self.synonym_id)}, table={self.table}, entity={shorten_uuid(self.entity)}, synonym={self.synonym})"

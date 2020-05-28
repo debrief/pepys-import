@@ -26,6 +26,7 @@ from pepys_import.core.store.common_db import (
     ReferenceRepr,
     SensorMixin,
     StateMixin,
+    SynonymMixin,
     TaggedItemMixin,
     TaskMixin,
 )
@@ -194,7 +195,7 @@ class Datafile(BasePostGIS, DatafileMixin):
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
 
-class Synonym(BasePostGIS):
+class Synonym(BasePostGIS, SynonymMixin):
     __tablename__ = constants.SYNONYM
     table_type = TableTypes.METADATA
     table_type_id = 7
