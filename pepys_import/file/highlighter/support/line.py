@@ -13,6 +13,7 @@ class Line:
 
     WHITESPACE_DELIM = "\\S+"
     CSV_DELIM = r'(?:,"|^")(""|[\w\W]*?)(?=",|"$)|(?:,(?!")|^(?!"))([^,]*?)(?=$|,)|(\r\n|\n)'
+    QUOTED_NAME = r"([\"'])(?:(?=(\\?))\2.)*?\1"
 
     __slots__ = ("children", "highlighted_file")
 
@@ -44,7 +45,7 @@ class Line:
             res += child.text
         return res
 
-    def tokens(self, reg_exp=WHITESPACE_DELIM, strip_char=""):
+    def tokens(self, reg_exp=WHITESPACE_DELIM, strip_char="", quoted_name=QUOTED_NAME):
         """Generates a list of Token objects for each token in the line.
 
         :param reg_exp: Regular expression used to split the line into tokens. Useful
@@ -66,16 +67,32 @@ class Line:
                     char_index = token_str.find(strip_char)
                     if char_index == 0:
                         token_str = token_str[1:]
-                        # and ditch any new whitespace
+                    # and ditch any new whitespace
                     token_str = token_str.strip()
 
                 subtoken = SubToken(match.span(), token_str, int(child.line_start), child.chars)
-
-                # the token object expects an array of SubTokens, as it could be
-                # a composite object
+                # the token object expects an array of SubTokens, as it could be a composite object
                 list_of_subtokens = [subtoken]
-
                 tokens_array.append(Token(list_of_subtokens, self.highlighted_file))
+
+            for match in finditer(quoted_name, child.text):
+                original_name = match.group()
+                quoted_sensor_name = original_name[1:-1].strip()
+                subtoken_sensor_name = SubToken(
+                    match.span(), quoted_sensor_name, int(child.line_start), child.chars
+                )
+                subtokens_sensor_name = [subtoken_sensor_name]
+
+                del_indexes = list()
+                for i, token in enumerate(tokens_array):
+                    if token.text in original_name and tokens_array[i + 1].text in original_name:
+                        del_indexes.append(i)
+                if del_indexes:
+                    del_indexes.append(del_indexes[-1] + 1)
+                    tokens_array = [e for i, e in enumerate(tokens_array) if i not in del_indexes]
+                    tokens_array.insert(
+                        del_indexes[0], Token(subtokens_sensor_name, self.highlighted_file)
+                    )
 
         return tokens_array
 
