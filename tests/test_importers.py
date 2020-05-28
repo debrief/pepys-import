@@ -562,7 +562,7 @@ class ReplayImporterTestCase(unittest.TestCase):
 
 class NMEAImporterTestCase(unittest.TestCase):
     def setUp(self) -> None:
-        self.nmea_importer = NMEAImporter(separator=" ")
+        self.nmea_importer = NMEAImporter()
 
     def test_parse_timestamp(self):
         """Test whether the method correctly converts the given string date and time"""
