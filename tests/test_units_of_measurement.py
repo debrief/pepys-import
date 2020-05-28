@@ -60,7 +60,6 @@ class UnitsTests(unittest.TestCase):
             create_test_line_object(
                 "100112 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
             ),
-            " ",
         )
         self.assertTrue(state.parse(list(), "test"))
 
