@@ -34,7 +34,7 @@ class ReplayContactImporter(Importer):
         return True
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
-        if line.text == "":
+        if line.text.strip() == "":
             return
         if line.text.startswith(";"):
             # we'll be using this value to determine if we have location
