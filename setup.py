@@ -43,6 +43,6 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/debrief/pepys-import",
-    version="0.0.11",
+    version="version='0.0.12'",
     zip_safe=False,
 )
