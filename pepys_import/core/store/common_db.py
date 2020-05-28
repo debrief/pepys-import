@@ -512,6 +512,9 @@ class LogMixin:
     def change_reason(self):
         return association_proxy("change", "reason")
 
+    def __repr__(self):
+        return f"Log(log_id={shorten_uuid(self.log_id)}, table={self.table}, id={shorten_uuid(self.id)}, change_id={shorten_uuid(self.change_id)})"
+
 
 class TaggedItemMixin:
     @declared_attr
