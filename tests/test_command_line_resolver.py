@@ -4,6 +4,9 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
 from unittest.mock import patch
+from uuid import uuid4
+
+import pytest
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
@@ -11,7 +14,7 @@ from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 DIR_PATH = os.path.dirname(__file__)
 
 
-class PrivacyTestCase(unittest.TestCase):
+class ReferenceDataTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = CommandLineResolver()
         self.store = DataStore(
@@ -30,7 +33,14 @@ class PrivacyTestCase(unittest.TestCase):
         # Select "Yes"
         menu_prompt.side_effect = ["1", "PRIVACY-TEST", "1"]
         with self.store.session_scope():
-            privacy = self.resolver.resolve_privacy(self.store, self.change_id, "")
+            privacy = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Privacy,
+                "privacy",
+                "classification",
+            )
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -41,7 +51,14 @@ class PrivacyTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["1", "PRIVACY-TEST"]
         with self.store.session_scope():
             self.store.add_to_privacies("PRIVACY-TEST", self.change_id)
-            privacy = self.resolver.resolve_privacy(self.store, self.change_id, "")
+            privacy = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Privacy,
+                "privacy",
+                "classification",
+            )
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -56,7 +73,14 @@ class PrivacyTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["PRIVACY-TEST"]
         with self.store.session_scope():
             self.store.add_to_privacies("PRIVACY-TEST", self.change_id)
-            privacy = self.resolver.resolve_privacy(self.store, self.change_id, "")
+            privacy = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Privacy,
+                "privacy",
+                "classification",
+            )
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -69,344 +93,203 @@ class PrivacyTestCase(unittest.TestCase):
         with self.store.session_scope():
             self.store.add_to_privacies("PRIVACY-1", self.change_id)
             self.store.add_to_privacies("PRIVACY-2", self.change_id)
-            privacy = self.resolver.resolve_privacy(self.store, self.change_id, "")
+            privacy = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Privacy,
+                "privacy",
+                "classification",
+            )
             self.assertEqual(privacy.name, "PRIVACY-1")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_cancelling_fuzzy_search_privacy(self, menu_prompt):
+    def test_fuzzy_search_select_privacy_directly(self, menu_prompt):
+        """Test whether recursive call works for privacy"""
+
+        # Select "3-PRIVACY-1"
+        menu_prompt.side_effect = ["3"]
+        with self.store.session_scope():
+            self.store.add_to_privacies("PRIVACY-1", self.change_id)
+            self.store.add_to_privacies("PRIVACY-2", self.change_id)
+            privacy = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Privacy,
+                "privacy",
+                "classification",
+            )
+            self.assertEqual(privacy.name, "PRIVACY-1")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_add_new_platform_type(self, menu_prompt):
+        """Test whether a new PlatformType entity created or not
+        after searched and not founded in the Privacy Table."""
+
+        # Select "Search an existing platform-type"->Search "TYPE-TEST"->
+        # Select "Yes"
+        menu_prompt.side_effect = ["1", "TYPE-TEST", "1"]
+        with self.store.session_scope():
+            platform_type = self.resolver.resolve_reference(
+                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+            )
+            assert platform_type.__tablename__ == "PlatformTypes"
+            assert platform_type.name == "TYPE-TEST"
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_select_existing_platform_type(self, menu_prompt):
+        """Test whether an existing PlatformType entity searched and returned or not"""
+
+        # Select "Search an existing platform-type"->Search "TYPE-TEST"
+        menu_prompt.side_effect = ["1", "TYPE-TEST"]
+        with self.store.session_scope():
+            self.store.add_to_platform_types("TYPE-TEST", self.change_id)
+            platform_type = self.resolver.resolve_reference(
+                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+            )
+            assert platform_type.__tablename__ == "PlatformTypes"
+            assert platform_type.name == "TYPE-TEST"
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_fuzzy_search_select_existing_platform_type_without_search(
+        self, resolver_prompt, menu_prompt
+    ):
+        """Test whether a new PlatformType entity created or not"""
+
+        # Select "Add a new platform-type"->Type "TYPE-TEST"
+        menu_prompt.side_effect = ["2"]
+        resolver_prompt.side_effect = ["TYPE-TEST"]
+        with self.store.session_scope():
+            self.store.add_to_privacies("TYPE-TEST", self.change_id)
+            platform_type = self.resolver.resolve_reference(
+                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+            )
+            self.assertEqual(platform_type.name, "TYPE-TEST")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_recursive_platform_type(self, menu_prompt):
+        """Test whether recursive call works for platform_type"""
+
+        # Select "Search an existing platform-type"->Search "TYPE-TEST"->Select "No"
+        # ->Search "TYPE-1"
+        menu_prompt.side_effect = ["1", "TYPE-TEST", "2", "TYPE-1"]
+        with self.store.session_scope():
+            self.store.add_to_platform_types("TYPE-1", self.change_id)
+            self.store.add_to_platform_types("TYPE-2", self.change_id)
+            platform_type = self.resolver.resolve_reference(
+                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+            )
+            self.assertEqual(platform_type.name, "TYPE-1")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_select_platform_type_directly(self, menu_prompt):
+        """Test whether recursive call works for platform_type"""
+
+        # Select "3-TYPE-1"
+        menu_prompt.side_effect = ["3"]
+        with self.store.session_scope():
+            self.store.add_to_platform_types("TYPE-1", self.change_id)
+            self.store.add_to_platform_types("TYPE-2", self.change_id)
+            platform_type = self.resolver.resolve_reference(
+                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+            )
+            self.assertEqual(platform_type.name, "TYPE-1")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_resolver_reference_select_nationality_directly(self, menu_prompt):
+        # Select "3-UK"
+        menu_prompt.side_effect = ["3", "4", "5", "6"]
+        with self.store.session_scope():
+            self.store.add_to_nationalities("UK", self.change_id, priority=1)
+            self.store.add_to_nationalities("FR", self.change_id, priority=2)
+            self.store.add_to_nationalities("TR", self.change_id, priority=2)
+            self.store.add_to_nationalities("AAA", self.change_id, priority=3)
+            nationality = self.resolver.resolve_reference(
+                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
+            )
+            assert nationality.name == "UK"
+
+            nationality = self.resolver.resolve_reference(
+                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
+            )
+            assert nationality.name == "FR"
+
+            nationality = self.resolver.resolve_reference(
+                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
+            )
+            assert nationality.name == "TR"
+
+            nationality = self.resolver.resolve_reference(
+                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
+            )
+            assert nationality is None
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_cancelling_fuzzy_search_reference(self, menu_prompt):
         """Test whether "." returns to the resolver privacy"""
 
         # Search "TEST"->Select "."->Select "."
         menu_prompt.side_effect = ["TEST", ".", "."]
         with self.store.session_scope():
-            privacy = self.resolver.fuzzy_search_privacy(self.store, self.change_id, "")
+            privacy = self.resolver.fuzzy_search_reference(
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Privacy,
+                "privacy",
+                "classification",
+            )
             self.assertIsNone(privacy)
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_cancelling_resolver_privacy(self, menu_prompt):
+    def test_cancelling_resolver_reference(self, menu_prompt):
         """Test whether "." cancels the resolve privacy and returns None"""
         menu_prompt.side_effect = [".", "1", ".", "."]
         temp_output = StringIO()
         with self.store.session_scope():
             # Select "."
-            privacy = self.resolver.resolve_privacy(self.store, self.change_id, "")
+            privacy = self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Privacy,
+                "privacy",
+                "classification",
+            )
             self.assertIsNone(privacy)
 
             with redirect_stdout(temp_output):
-                privacy = self.resolver.resolve_privacy(self.store, self.change_id, "")
+                privacy = self.resolver.resolve_reference(
+                    self.store,
+                    self.change_id,
+                    "",
+                    self.store.db_classes.Privacy,
+                    "privacy",
+                    "classification",
+                )
             assert privacy is None
         output = temp_output.getvalue()
         assert "Returning to the previous menu" in output
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_resolve_privacy_empty_input(self, resolver_prompt, menu_prompt):
+    def test_resolve_reference_empty_input(self, resolver_prompt, menu_prompt):
         resolver_prompt.side_effect = [""]
         menu_prompt.side_effect = ["2", "."]
         temp_output = StringIO()
         with self.store.session_scope(), redirect_stdout(temp_output):
-            self.resolver.resolve_privacy(self.store, self.change_id, "")
+            self.resolver.resolve_reference(
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Privacy,
+                "privacy",
+                "classification",
+            )
         output = temp_output.getvalue()
         assert "You haven't entered an input!" in output
-
-
-class NationalityTestCase(unittest.TestCase):
-    def setUp(self) -> None:
-        self.resolver = CommandLineResolver()
-        self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
-        )
-        self.store.initialise()
-        with self.store.session_scope():
-            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_add_new_nationality(self, menu_prompt):
-        """Test whether a new nationality is added or not"""
-
-        # Type "TEST"->Select "Yes"
-        menu_prompt.side_effect = ["TEST", "1"]
-        with self.store.session_scope():
-            nationality = self.resolver.fuzzy_search_nationality(
-                self.store, "PLATFORM-1", self.change_id
-            )
-            self.assertEqual(nationality.name, "TEST")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_nationality_recursive(self, menu_prompt):
-        """Test whether recursive call works for Nationality"""
-
-        # Type "TEST"->Select "No, I'd like to select a nationality"->Type "UK"
-        menu_prompt.side_effect = ["TEST", "2", "UK"]
-        with self.store.session_scope():
-            self.store.add_to_nationalities("UK", self.change_id)
-            self.store.add_to_nationalities("USA", self.change_id)
-            nationality = self.resolver.fuzzy_search_nationality(
-                self.store, "PLATFORM-1", self.change_id
-            )
-            self.assertEqual(nationality.name, "UK")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_cancelling_fuzzy_search_nationality(self, menu_prompt):
-        """Test whether "." returns to the resolve nationality """
-        menu_prompt.side_effect = [".", ".", "TEST", ".", "."]
-        with self.store.session_scope():
-            temp_output = StringIO()
-            # Select "."->Select "."
-            with redirect_stdout(temp_output):
-                nationality = self.resolver.fuzzy_search_nationality(
-                    self.store, "PLATFORM-1", self.change_id
-                )
-            output = temp_output.getvalue()
-            self.assertIn("Returning to the previous menu", output)
-            self.assertIsNone(nationality)
-
-            # Search "TEST"->Select "."->Select "."
-            with redirect_stdout(temp_output):
-                nationality = self.resolver.fuzzy_search_nationality(
-                    self.store, "PLATFORM-1", self.change_id
-                )
-            output = temp_output.getvalue()
-            self.assertIn("Returning to the previous menu", output)
-            self.assertIsNone(nationality)
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_cancelling_resolve_nationality(self, menu_prompt):
-        """Test whether "." cancels the resolve nationality and returns None"""
-        menu_prompt.side_effect = ["."]
-        with self.store.session_scope():
-            # Select "."
-            nationality = self.resolver.resolve_nationality(self.store, "", self.change_id)
-            self.assertIsNone(nationality)
-
-
-class PlatformTypeTestCase(unittest.TestCase):
-    def setUp(self) -> None:
-        self.resolver = CommandLineResolver()
-        self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
-        )
-        self.store.initialise()
-        with self.store.session_scope():
-            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_add_new_platform_type(self, menu_prompt):
-        """Test whether a new Platform Type is added or not"""
-
-        # Type "TEST"->Select "Yes"
-        menu_prompt.side_effect = ["TEST", "1"]
-        with self.store.session_scope():
-            platform_type = self.resolver.fuzzy_search_platform_type(
-                self.store, "PLATFORM-1", self.change_id
-            )
-            self.assertEqual(platform_type.name, "TEST")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_platform_type_recursive(self, menu_prompt):
-        """Test whether recursive call works for Platform Type"""
-
-        # Type "TEST"->Select "No, I'd like to select a platform type"->Type "PLATFORM-TYPE-1"
-        menu_prompt.side_effect = ["TEST", "2", "PLATFORM-TYPE-1"]
-        with self.store.session_scope():
-            self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id)
-            self.store.add_to_platform_types("PLATFORM-TYPE-2", self.change_id)
-            platform_type = self.resolver.fuzzy_search_platform_type(
-                self.store, "PLATFORM-1", self.change_id
-            )
-            self.assertEqual(platform_type.name, "PLATFORM-TYPE-1")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_cancelling_fuzzy_search_platform_type(self, menu_prompt):
-        """Test whether "." returns to the resolve platform type"""
-        menu_prompt.side_effect = [".", ".", "TEST", ".", "."]
-
-        with self.store.session_scope():
-            temp_output = StringIO()
-            # Select "."->Select "."
-            with redirect_stdout(temp_output):
-                platform_type = self.resolver.fuzzy_search_platform_type(
-                    self.store, "PLATFORM-1", self.change_id
-                )
-            output = temp_output.getvalue()
-            self.assertIn("Returning to the previous menu", output)
-            self.assertIsNone(platform_type)
-
-            # Search "TEST"->Select "."->Select "."
-            with redirect_stdout(temp_output):
-                platform_type = self.resolver.fuzzy_search_platform_type(
-                    self.store, "PLATFORM-1", self.change_id
-                )
-            output = temp_output.getvalue()
-            self.assertIn("Returning to the previous menu", output)
-            self.assertIsNone(platform_type)
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_cancelling_resolve_platform_type(self, menu_prompt):
-        """Test whether "." cancels the resolve platform type and returns None"""
-        menu_prompt.side_effect = ["."]
-        with self.store.session_scope():
-            platform_type = self.resolver.resolve_platform_type(
-                self.store, "PLATFORM-1", self.change_id
-            )
-        self.assertIsNone(platform_type)
-
-
-class DatafileTypeTestCase(unittest.TestCase):
-    def setUp(self) -> None:
-        self.resolver = CommandLineResolver()
-        self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
-        )
-        self.store.initialise()
-        with self.store.session_scope():
-            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_add_new_datafile_type(self, menu_prompt):
-        """Test whether a new Datafile Type is added or not"""
-
-        # Type "TEST"->Select "Yes"
-        menu_prompt.side_effect = ["TEST", "1"]
-        with self.store.session_scope():
-            datafile_type = self.resolver.fuzzy_search_datafile_type(
-                self.store, "DATAFILE-1", self.change_id
-            )
-            self.assertEqual(datafile_type.name, "TEST")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_datafile_type_recursive(self, menu_prompt):
-        """Test whether recursive call works for Datafile Type"""
-
-        # Type "TEST"->Select "No, I'd like to select a datafile type"->Type "DATAFILE-TYPE-1"
-        menu_prompt.side_effect = ["TEST", "2", "DATAFILE-TYPE-1"]
-        with self.store.session_scope():
-            self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id)
-            self.store.add_to_datafile_types("DATAFILE-TYPE-2", self.change_id)
-            datafile_type = self.resolver.fuzzy_search_datafile_type(
-                self.store, "DATAFILE-1", self.change_id
-            )
-            self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_cancelling_fuzzy_search_datafile_type(self, menu_prompt):
-        """Test whether "." returns to the resolve datafile type"""
-
-        menu_prompt.side_effect = [".", ".", "TEST", ".", "."]
-
-        temp_output = StringIO()
-        with self.store.session_scope():
-            # Select "."->Select "."
-            with redirect_stdout(temp_output):
-                datafile_type = self.resolver.fuzzy_search_datafile_type(
-                    self.store, "DATAFILE-1", self.change_id
-                )
-            output = temp_output.getvalue()
-            self.assertIn("Returning to the previous menu", output)
-            self.assertIsNone(datafile_type)
-
-            # Type "TEST"->Select "."->Select "."
-            with redirect_stdout(temp_output):
-                datafile_type = self.resolver.fuzzy_search_datafile_type(
-                    self.store, "DATAFILE-1", self.change_id
-                )
-            output = temp_output.getvalue()
-            self.assertIn("Returning to the previous menu", output)
-            self.assertIsNone(datafile_type)
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_resolve_datafile_type_add_new_datafile_type(self, resolver_prompt, menu_prompt):
-        """Test whether a new Datafile Type is added or not"""
-
-        # Select "Add a new datafile type" -> Type "TEST"
-        menu_prompt.side_effect = ["2"]
-        resolver_prompt.side_effect = ["TEST"]
-        with self.store.session_scope():
-            datafile_type = self.resolver.resolve_datafile_type(
-                self.store, "DATAFILE-1", self.change_id
-            )
-            self.assertEqual(datafile_type.name, "TEST")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_cancelling_resolve_datafile_type(self, menu_prompt):
-        """Test whether "." cancels the resolve datafile type and returns None"""
-        menu_prompt.side_effect = ["."]
-        with self.store.session_scope():
-            datafile_type = self.resolver.resolve_datafile_type(
-                self.store, "DATAFILE-1", self.change_id
-            )
-        self.assertIsNone(datafile_type)
-
-
-class SensorTypeTestCase(unittest.TestCase):
-    def setUp(self) -> None:
-        self.resolver = CommandLineResolver()
-        self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
-        )
-        self.store.initialise()
-        with self.store.session_scope():
-            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_add_new_sensor_type(self, menu_prompt):
-        """Test whether a new Sensor Type is added or not"""
-
-        # Type "TEST"->Select "Yes"
-        menu_prompt.side_effect = ["TEST", "1"]
-        with self.store.session_scope():
-            sensor_type = self.resolver.fuzzy_search_sensor_type(
-                self.store, "SENSOR-1", self.change_id
-            )
-            self.assertEqual(sensor_type.name, "TEST")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_sensor_type_recursive(self, menu_prompt):
-        """Test whether recursive call works for Sensor Type"""
-
-        # Type "TEST"->Select "No, I'd like to select a sensor type"->Type "SENSOR-TYPE-1"
-        menu_prompt.side_effect = ["TEST", "2", "SENSOR-TYPE-1"]
-        with self.store.session_scope():
-            self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
-            self.store.add_to_sensor_types("SENSOR-TYPE-2", self.change_id)
-            sensor_type = self.resolver.fuzzy_search_sensor_type(
-                self.store, "SENSOR-1", self.change_id
-            )
-            self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_cancelling_fuzzy_search_sensor_type(self, menu_prompt):
-        """Test whether "." returns to the resolver sensor type"""
-        menu_prompt.side_effect = [".", ".", "TEST", ".", "."]
-
-        with self.store.session_scope():
-            temp_output = StringIO()
-            # Select "."->Select "."
-            with redirect_stdout(temp_output):
-                sensor_type = self.resolver.fuzzy_search_sensor_type(
-                    self.store, "SENSOR-1", self.change_id
-                )
-            output = temp_output.getvalue()
-            self.assertIn("Returning to the previous menu", output)
-            self.assertIsNone(sensor_type)
-
-            # Type "TEST"->Select "."->Select "."
-            with redirect_stdout(temp_output):
-                sensor_type = self.resolver.fuzzy_search_sensor_type(
-                    self.store, "SENSOR-1", self.change_id
-                )
-            output = temp_output.getvalue()
-            self.assertIn("Returning to the previous menu", output)
-            self.assertIsNone(sensor_type)
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_cancelling_resolve_sensor_type(self, menu_prompt):
-        """Test whether "." cancels the resolve sensor type and returns None"""
-        menu_prompt.side_effect = ["."]
-        with self.store.session_scope():
-            sensor_type = self.resolver.resolve_sensor_type(self.store, "SENSOR-1", self.change_id)
-        self.assertIsNone(sensor_type)
 
 
 class PlatformTestCase(unittest.TestCase):
@@ -631,7 +514,7 @@ class PlatformTestCase(unittest.TestCase):
                 privacy,
             ) = self.resolver.resolve_platform(
                 data_store=self.store,
-                platform_name="TEST",
+                platform_name=None,
                 platform_type=platform_type,
                 nationality=nationality,
                 privacy=privacy,
@@ -969,6 +852,102 @@ class SensorTestCase(unittest.TestCase):
 
             self.assertEqual(sensor_name, "SENSOR-TEST")
 
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_resolve_sensor_select_sensor_directly(self, menu_prompt):
+        """Test whether correct sensor is selected directly or not"""
+
+        # Select "3-SENSOR-1"
+        menu_prompt.side_effect = ["3"]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            platform.get_sensor(
+                self.store,
+                sensor_name="TEST",
+                sensor_type=sensor_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            platform_2 = self.store.get_platform(
+                platform_name="Test Platform 2",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            platform_2.get_sensor(
+                self.store,
+                sensor_name="TEST-SENSOR",
+                sensor_type=sensor_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+
+            sensor = self.resolver.resolve_sensor(
+                self.store,
+                "TEST-2",
+                sensor_type=None,
+                host_id=platform.platform_id,
+                privacy=None,
+                change_id=self.change_id,
+            )
+
+            self.assertEqual(sensor.name, "TEST")
+
+    def test_resolve_sensor_wrong_platform(self):
+        with pytest.raises(SystemExit):
+            uuid = uuid4()
+            self.resolver.resolve_sensor(
+                self.store,
+                "TEST",
+                sensor_type=None,
+                host_id=uuid,
+                privacy=None,
+                change_id=self.change_id,
+            )
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_sensor_empty_name_and_choice_in_sensor(self, menu_prompt):
+        menu_prompt.side_effect = [
+            "SENSOR-1",
+        ]
+        with self.store.session_scope():
+            # Create platform first, then create a Sensor object
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy, self.change_id)
+            platform.get_sensor(self.store, "SENSOR-2", sensor_type, privacy, self.change_id)
+
+            sensor = self.resolver.fuzzy_search_sensor(
+                self.store,
+                sensor_name=None,
+                host_id=platform.platform_id,
+                sensor_type=None,
+                privacy=None,
+                change_id=self.change_id,
+            )
+
+            self.assertEqual(sensor.name, "SENSOR-1")
+
 
 class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
     def setUp(self) -> None:
@@ -1181,7 +1160,7 @@ class GetMethodsTestCase(unittest.TestCase):
         menu_prompt.side_effect = [
             "2",
             "1",
-            "UK",
+            "United Kingdom",
             "1",
             "Fisher",
             "1",

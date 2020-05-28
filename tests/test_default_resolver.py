@@ -43,7 +43,7 @@ class DefaultResolverTestCase(unittest.TestCase):
             # Create a platform for it to belong to
             platform_obj = self.store.add_to_platforms(
                 "TestPlatform",
-                "UK",
+                "United Kingdom",
                 "Fisher",
                 "Private",
                 trigraph="PLT",

@@ -3,6 +3,7 @@ import shutil
 import sqlite3
 import unittest
 from contextlib import redirect_stdout
+from datetime import datetime
 from importlib import reload
 from io import StringIO
 from sqlite3 import OperationalError
@@ -257,6 +258,25 @@ class AdminCLITestCase(unittest.TestCase):
         # Assert that Admin Shell redirects to the view data menu
         assert view_data_shell.intro in output
 
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    def test_do_export_reference_data(self, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_data()
+        output = temp_output.getvalue()
+        assert "Reference tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM DatafileTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert ".dsf" in names
+            assert ".rep" in names
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
     def test_do_exit(self):
         temp_output = StringIO()
         with pytest.raises(SystemExit), redirect_stdout(temp_output):
@@ -461,6 +481,18 @@ class NotInitialisedDBTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
 
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_data()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_and_metadata_data()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
 
 class ExportByPlatformNameShellTestCase(unittest.TestCase):
     def setUp(self) -> None:
@@ -659,6 +691,316 @@ def test_do_migrate():
     assert is_schema_created(new_datastore.engine, new_datastore.db_type) is True
 
     os.remove(os.path.join(CURRENT_DIR, "new_db.db"))
+
+
+class ExportSnapshotPostgresTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.postgres = Postgresql(
+            database="test", host="localhost", user="postgres", password="postgres", port=55527,
+        )
+        self.store = DataStore(
+            db_name="test",
+            db_host="localhost",
+            db_username="postgres",
+            db_password="postgres",
+            db_port=55527,
+            db_type="postgres",
+        )
+        self.store.initialise()
+        # Parse the REP files
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files/other_data"), self.store, False
+        )
+        processor.process(os.path.join(DATA_PATH), self.store, False)
+
+        with self.store.session_scope():
+            privacy_id = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "PRIVACY-1")
+                .first()
+                .privacy_id
+            )
+            platform_id = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.privacy_id == privacy_id)
+                .first()
+                .platform_id
+            )
+            privacy_id_2 = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "Public")
+                .first()
+                .privacy_id
+            )
+            sensor_id = (
+                self.store.session.query(self.store.db_classes.Sensor)
+                .filter(self.store.db_classes.Sensor.privacy_id == privacy_id_2)
+                .first()
+                .sensor_id
+            )
+            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "test").change_id
+            self.store.add_to_synonyms("Platforms", "test", entity=platform_id, change_id=change_id)
+            self.store.add_to_synonyms("Sensors", "test-2", entity=sensor_id, change_id=change_id)
+
+        self.admin_shell = AdminShell(self.store)
+
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    def test_do_export_reference_data_postgres(self, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_data()
+        output = temp_output.getvalue()
+        assert "Reference tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM DatafileTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert ".dsf" in names
+            assert ".rep" in names
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    @patch("pepys_admin.admin_cli.iterfzf", return_value=["PRIVACY-1", "Public"])
+    def test_do_export_reference_and_metadata_data_postgres(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_and_metadata_data()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "SENSOR-1" in names
+            assert "New_SSK_FREQ" in names
+            assert "E-Trac" in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "Sensors" in table_dict.keys()
+            assert "test" in table_dict.values()
+            assert "test-2" in table_dict.values()
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    @patch("pepys_admin.admin_cli.iterfzf", return_value=["PRIVACY-1"])
+    def test_do_export_reference_and_metadata_data_privacy_1(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_and_metadata_data()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "SENSOR-1" in names
+            assert "New_SSK_FREQ" in names
+            assert "E-Trac" not in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "test" in table_dict.values()
+            assert "Sensors" not in table_dict.keys()
+            assert "test-2" not in table_dict.values()
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    @patch("pepys_admin.admin_cli.iterfzf", return_value=["Public"])
+    def test_do_export_reference_and_metadata_data_public(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_and_metadata_data()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            # Even though there are Sensor objects with Public privacy level, their Platform objects
+            # have different privacy values. Therefore, none of platforms and sensors are exported.
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            assert len(results) == 0
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+
+class ExportMetadataTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+        # Parse the REP files
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files/other_data"), self.store, False
+        )
+        processor.process(os.path.join(DATA_PATH), self.store, False)
+
+        with self.store.session_scope():
+            privacy_id = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "PRIVACY-1")
+                .first()
+                .privacy_id
+            )
+            platform_id = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.privacy_id == privacy_id)
+                .first()
+                .platform_id
+            )
+            privacy_id_2 = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "Public")
+                .first()
+                .privacy_id
+            )
+            sensor_id = (
+                self.store.session.query(self.store.db_classes.Sensor)
+                .filter(self.store.db_classes.Sensor.privacy_id == privacy_id_2)
+                .first()
+                .sensor_id
+            )
+            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "test").change_id
+            self.store.add_to_synonyms("Platforms", "test", entity=platform_id, change_id=change_id)
+            self.store.add_to_synonyms("Sensors", "test-2", entity=sensor_id, change_id=change_id)
+
+        self.admin_shell = AdminShell(self.store)
+
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    @patch("pepys_admin.admin_cli.iterfzf", return_value=["PRIVACY-1", "Public"])
+    def test_do_export_reference_and_metadata_data(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_and_metadata_data()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "SENSOR-1" in names
+            assert "New_SSK_FREQ" in names
+            assert "E-Trac" in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "Sensors" in table_dict.keys()
+            assert "test" in table_dict.values()
+            assert "test-2" in table_dict.values()
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    @patch("pepys_admin.admin_cli.iterfzf", return_value=["PRIVACY-1"])
+    def test_do_export_reference_and_metadata_data_privacy_1(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_and_metadata_data()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "SENSOR-1" in names
+            assert "New_SSK_FREQ" in names
+            assert "E-Trac" not in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "test" in table_dict.values()
+            assert "Sensors" not in table_dict.keys()
+            assert "test-2" not in table_dict.values()
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.admin_cli.input", return_value="test.db")
+    @patch("pepys_admin.admin_cli.iterfzf", return_value=["Public"])
+    def test_do_export_reference_and_metadata_data_public(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export_reference_and_metadata_data()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            # Even though there are Sensor objects with Public privacy level, their Platform objects
+            # have different privacy values. Therefore, none of platforms and sensors are exported.
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            assert len(results) == 0
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
 
 
 if __name__ == "__main__":
