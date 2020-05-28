@@ -31,7 +31,7 @@ class ReplayImporter(Importer):
         return True
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
-        if line.text.startswith(";"):
+        if line.text.startswith(";") or line.text == "":
             return
 
         # create state, to store the data
