@@ -24,7 +24,8 @@ def merge_all_reference_tables(master_store, slave_store):
     reference_table_names.insert(0, "GeometryType")
 
     for ref_table in reference_table_names:
-        merge_reference_table(ref_table, master_store, slave_store)
+        id_results = merge_reference_table(ref_table, master_store, slave_store)
+        update_synonyms_table(master_store, slave_store, id_results["modified"])
 
 
 def merge_reference_table(table_object_name, master_store, slave_store):
@@ -109,13 +110,15 @@ def merge_all_metadata_tables(master_store, slave_store):
     metadata_table_names.insert(0, "Sensor")
     metadata_table_names.insert(0, "Platform")
 
-    # Remove Datafile, Log and Change entries for now - deal with those separately later
+    # Remove various entries for now - deal with those separately later
     metadata_table_names.remove("Datafile")
     metadata_table_names.remove("Log")
     metadata_table_names.remove("Change")
+    metadata_table_names.remove("Synonym")
 
     for ref_table in metadata_table_names:
-        merge_metadata_table(ref_table, master_store, slave_store)
+        id_results = merge_metadata_table(ref_table, master_store, slave_store)
+        update_synonyms_table(master_store, slave_store, id_results["modified"])
 
 
 def merge_metadata_table(table_object_name, master_store, slave_store):
@@ -159,7 +162,6 @@ def merge_metadata_table(table_object_name, master_store, slave_store):
                     search_by_all_fields_results = make_query_for_all_data_columns(
                         master_table, slave_entry, master_store.session
                     ).all()
-                    # breakpoint()
                     n_all_field_results = len(search_by_all_fields_results)
 
                     if n_all_field_results == 0:
@@ -202,6 +204,29 @@ def merge_metadata_table(table_object_name, master_store, slave_store):
         "added": ids_added,
         "modified": {"from": ids_modified_from, "to": ids_modified_to},
     }
+
+
+def update_synonyms_table(master_store, slave_store, modified_ids):
+    with slave_store.session_scope():
+        # For each modified ID
+        for from_id, to_id in zip(modified_ids["from"], modified_ids["to"]):
+            # Search for it in the Synonyms table
+            results = (
+                slave_store.session.query(slave_store.db_classes.Synonym)
+                .filter(slave_store.db_classes.Synonym.entity == from_id)
+                .all()
+            )
+
+            if len(results) > 0:
+                print(f"Found {len(results)} results")
+                # If it exists, then modify the old ID to the new ID
+                for result in results:
+                    print(f"Changing synonym for {result.synonym} with id {result.entity}")
+                    result.entity = to_id
+
+            # Commit changes
+            slave_store.session.add_all(results)
+            slave_store.session.commit()
 
 
 def split_list(lst, n=100):
@@ -304,10 +329,11 @@ def merge_all_tables(master_store, slave_store):
     # Merge all the metadata tables, excluding the complicated ones
     merge_all_metadata_tables(master_store, slave_store)
 
+    # Merge the synonyms table now we've merged all the reference and metadata tables
+    merge_metadata_table("Synonym", master_store, slave_store)
+
     # Merge the Datafiles table, keeping track of the IDs that changed
     datafile_ids = merge_metadata_table("Datafile", master_store, slave_store)
-
-    print(datafile_ids)
 
     # Merge the measurement tables, only merging measurements that come from one of the datafiles that has been added
     merge_all_measurement_tables(master_store, slave_store, datafile_ids["added"])

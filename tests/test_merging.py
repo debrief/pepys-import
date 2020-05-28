@@ -1192,3 +1192,89 @@ class TestMergeStateFromImport_Indempotent_DifferentFile(unittest.TestCase):
         merge_all_tables(self.master_store, new_slave_store)
 
         self.do_checks()
+
+
+class TestSynonymMergeWithRefTable(unittest.TestCase):
+    def setUp(self):
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
+
+        self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
+        self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
+
+        self.master_store.initialise()
+        self.slave_store.initialise()
+
+        with self.master_store.session_scope():
+            change_id = self.master_store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
+            self.master_store.add_to_sensor_types("ST_Master_1", change_id)
+            self.master_store.add_to_sensor_types("ST_Master_2", change_id)
+            self.master_store.add_to_sensor_types("ST_Shared_1", change_id)
+            st_obj = self.master_store.add_to_sensor_types("ST_Shared_2GUIDMatch", change_id)
+            st_obj_guid = st_obj.sensor_type_id
+
+        with self.slave_store.session_scope():
+            change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+            self.slave_store.add_to_sensor_types("ST_Slave_1", change_id)
+            self.slave_store.add_to_sensor_types("ST_Slave_2", change_id)
+            slave_shared_obj = self.slave_store.add_to_sensor_types("ST_Shared_1", change_id)
+            self.slave_shared_id = slave_shared_obj.sensor_type_id
+            st_obj_slave = self.slave_store.add_to_sensor_types("ST_Shared_2GUIDMatch", change_id)
+            st_obj_slave.sensor_type_id = st_obj_guid
+            self.slave_store.session.add(st_obj_slave)
+            self.slave_store.session.commit()
+
+            self.slave_store.add_to_platform_types("PlatformType1", change_id)
+            self.slave_store.add_to_nationalities("UK", change_id)
+            self.slave_store.add_to_privacies("Private", change_id)
+            self.slave_store.add_to_platforms(
+                "Platform1", "UK", "PlatformType1", "Private", change_id=change_id
+            )
+            self.slave_store.add_to_sensors(
+                "Sensor1", "ST_Shared_1", "Platform1", "Private", change_id
+            )
+
+            self.slave_store.add_to_synonyms(
+                "SensorTypes", "ST_Shared_1_Synonym", slave_shared_obj.sensor_type_id, change_id
+            )
+
+    def tearDown(self):
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
+
+    def test_synonym_merge_reference_table(self):
+        # Do the merge
+        merge_all_reference_tables(self.master_store, self.slave_store)
+        merge_metadata_table("Synonym", self.master_store, self.slave_store)
+
+        with self.master_store.session_scope():
+            # Check the synonym entry from the slave is now in master
+            slave_results = self.slave_store.session.query(
+                self.slave_store.db_classes.Synonym
+            ).all()
+            master_results = self.master_store.session.query(
+                self.master_store.db_classes.Synonym
+            ).all()
+
+            assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+
+            # Check the synonym entry in master points to a SensorType in master
+            results = self.master_store.session.query(self.master_store.db_classes.Synonym).all()
+
+            assert len(results) > 0
+
+            results = (
+                self.master_store.session.query(self.master_store.db_classes.SensorType)
+                .filter(self.master_store.db_classes.SensorType.sensor_type_id == results[0].entity)
+                .all()
+            )
+
+            assert len(results) > 0
