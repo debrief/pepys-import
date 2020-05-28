@@ -1,5 +1,3 @@
-import pint
-from shapely import wkb
 from sqlalchemy.orm import undefer
 from sqlalchemy.orm.session import make_transient
 
@@ -27,6 +25,7 @@ def merge_all_reference_tables(master_store, slave_store):
     for ref_table in reference_table_names:
         id_results = merge_reference_table(ref_table, master_store, slave_store)
         update_synonyms_table(master_store, slave_store, id_results["modified"])
+        # update_logs_table(master_store, slave_store, id_results["modified"])
 
 
 def merge_reference_table(table_object_name, master_store, slave_store):
@@ -120,6 +119,7 @@ def merge_all_metadata_tables(master_store, slave_store):
     for ref_table in metadata_table_names:
         id_results = merge_metadata_table(ref_table, master_store, slave_store)
         update_synonyms_table(master_store, slave_store, id_results["modified"])
+        # update_logs_table(master_store, slave_store, id_results["modified"])
 
 
 def merge_metadata_table(table_object_name, master_store, slave_store):
@@ -232,6 +232,31 @@ def update_synonyms_table(master_store, slave_store, modified_ids):
             slave_store.session.commit()
 
 
+def update_logs_table(master_store, slave_store, modified_ids):
+    with slave_store.session_scope():
+        # For each modified ID
+        for from_id, to_id in zip(modified_ids["from"], modified_ids["to"]):
+            # Search for it in the Logs table
+            results = (
+                slave_store.session.query(slave_store.db_classes.Log)
+                .filter(slave_store.db_classes.Log.id == from_id)
+                .all()
+            )
+
+            if len(results) > 0:
+                print(f"Found {len(results)} results")
+                # If it exists, then modify the old ID to the new ID
+                for result in results:
+                    print(
+                        f"Changing log id with id {shorten_uuid(result.id)} to {shorten_uuid(to_id)}"
+                    )
+                    result.id = to_id
+
+            # Commit changes
+            slave_store.session.add_all(results)
+            slave_store.session.commit()
+
+
 def split_list(lst, n=100):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(lst), n):
@@ -292,6 +317,8 @@ def merge_measurement_table(table_object_name, master_store, slave_store, added_
     master_table = getattr(master_store.db_classes, table_object_name)
     slave_table = getattr(slave_store.db_classes, table_object_name)
 
+    to_add = []
+
     with slave_store.session_scope():
         with master_store.session_scope():
             # Split the IDs list up into 100 at a time, as otherwise the SQL query could get longer
@@ -310,7 +337,9 @@ def merge_measurement_table(table_object_name, master_store, slave_store, added_
                 # the location field, and the properties used in the table classes
                 dict_results = rows_to_list_of_dicts(results)
 
-                master_store.session.bulk_insert_mappings(master_table, dict_results)
+                to_add.extend(dict_results)
+
+            master_store.session.bulk_insert_mappings(master_table, to_add)
 
 
 def merge_all_measurement_tables(master_store, slave_store, added_datafile_ids):
@@ -323,6 +352,146 @@ def merge_all_measurement_tables(master_store, slave_store, added_datafile_ids):
         merge_measurement_table(
             measurement_table_name, master_store, slave_store, added_datafile_ids
         )
+
+
+def table_name_to_class_name(table_name):
+    if table_name.endswith("ies"):
+        return table_name[:-3] + "y"
+    elif table_name.endswith("s"):
+        return table_name[:-1]
+
+
+def prepare_merge_logs(master_store, slave_store):
+    # Get references to the table from the master and slave DataStores
+    master_table = master_store.db_classes.Log
+    slave_table = slave_store.db_classes.Log
+
+    # Keep track of logs that need to be added to master
+    logs_to_add = []
+    # Keep track of unique change IDs that need to be copied across
+    changes_to_add = set()
+
+    with slave_store.session_scope():
+        with master_store.session_scope():
+            # Get all entries in this table in the slave database
+            slave_entries = slave_store.session.query(slave_table).options(undefer("*")).all()
+
+            for slave_entry in slave_entries:
+                print(f"Slave entry: {slave_entry}")
+                guid = slave_entry.log_id
+
+                # Find all entries with this GUID in the same table in the master database
+                results = (
+                    master_store.session.query(master_table)
+                    .filter(master_table.log_id == guid)
+                    .all()
+                )
+
+                n_results = len(results)
+
+                if n_results == 0:
+                    # The GUID isn't present in the master database
+                    # We now need to check whether the Log entry refers to an entry that actually exists in the master
+                    # database (as we've done all other copying by now)
+                    print(" - Log GUID not present in master db")
+
+                    class_name = table_name_to_class_name(slave_entry.table)
+
+                    referenced_table = getattr(master_store.db_classes, class_name)
+                    pri_key_field = referenced_table.__table__.primary_key.columns.values()[0].name
+                    referenced_table_pri_key = getattr(referenced_table, pri_key_field)
+                    id_to_match = slave_entry.id
+                    query = master_store.session.query(referenced_table).filter(
+                        referenced_table_pri_key == id_to_match
+                    )
+                    # breakpoint()
+                    id_results = query.all()
+
+                    print(id_results)
+                    if len(id_results) == 1:
+                        # The Log's id entry DOES refer to something that exists in master
+                        # Therefore put it in a list to be copied over
+                        print(" - Log ID matches in referred table, adding to list to copy")
+                        logs_to_add.append(slave_entry.log_id)
+
+                        changes_to_add.add(slave_entry.change_id)
+                elif n_results == 1:
+                    # The GUID is in the master db - so the record must also be there (as GUIDs are unique)
+                    print(" - Already in master DB with same GUID, don't need to copy")
+                else:
+                    # We should never get here: the GUID should always appear in the master database either zero or one times,
+                    # never more
+                    assert False
+
+    return logs_to_add, changes_to_add
+
+
+def add_changes(master_store, slave_store, changes_to_add):
+    to_add = []
+
+    with slave_store.session_scope():
+        with master_store.session_scope():
+            # Split the IDs list up into 100 at a time, as otherwise the SQL query could get longer
+            # than SQLite or Postgres allows - as it'll have a full UUID string in it for each
+            # change ID
+            for change_ids_chunk in split_list(list(changes_to_add)):
+                # Search for all slave Change entries with IDs in this list
+                results = (
+                    slave_store.session.query(slave_store.db_classes.Change)
+                    .filter(slave_store.db_classes.Change.change_id.in_(change_ids_chunk))
+                    .options(undefer("*"))
+                    .all()
+                )
+
+                # Convert the rows to a list of dicts
+                dict_results = rows_to_list_of_dicts(results)
+
+                to_add.extend(dict_results)
+
+            master_store.session.bulk_insert_mappings(master_store.db_classes.Change, to_add)
+
+
+def add_logs(master_store, slave_store, logs_to_add):
+    to_add = []
+
+    with slave_store.session_scope():
+        with master_store.session_scope():
+            # Split the IDs list up into 100 at a time, as otherwise the SQL query could get longer
+            # than SQLite or Postgres allows - as it'll have a full UUID string in it for each
+            # change ID
+            for log_ids_chunk in split_list(logs_to_add):
+                # Search for all slave Change entries with IDs in this list
+                results = (
+                    slave_store.session.query(slave_store.db_classes.Log)
+                    .filter(slave_store.db_classes.Log.log_id.in_(log_ids_chunk))
+                    .options(undefer("*"))
+                    .all()
+                )
+
+                # Convert the rows to a list of dicts
+                dict_results = rows_to_list_of_dicts(results)
+
+                to_add.extend(dict_results)
+
+            master_store.session.bulk_insert_mappings(master_store.db_classes.Log, to_add)
+
+
+def merge_logs_and_changes(master_store, slave_store):
+    # Prepare to merge the logs by working out which ones need
+    # adding, and which changes need adding
+    logs_to_add, changes_to_add = prepare_merge_logs(master_store, slave_store)
+
+    print("Logs to add:")
+    print(logs_to_add)
+
+    print("Changes to add")
+    print(changes_to_add)
+
+    # Add the change entries
+    add_changes(master_store, slave_store, changes_to_add)
+
+    # Add the log entries
+    add_logs(master_store, slave_store, logs_to_add)
 
 
 def merge_all_tables(master_store, slave_store):
@@ -340,3 +509,6 @@ def merge_all_tables(master_store, slave_store):
 
     # Merge the measurement tables, only merging measurements that come from one of the datafiles that has been added
     merge_all_measurement_tables(master_store, slave_store, datafile_ids["added"])
+
+    # Merge the Logs and Changes table, only merging ones which still match something in the new db
+    merge_logs_and_changes(master_store, slave_store)

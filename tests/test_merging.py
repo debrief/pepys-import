@@ -1452,3 +1452,57 @@ class TestSynonymMergeWithMetadataTable(unittest.TestCase):
                     .all()
                 )
                 assert len(sensor_results) > 0
+
+
+class TestMergeLogsAndChanges(unittest.TestCase):
+    def setUp(self):
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
+
+        self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
+        self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
+
+        self.master_store.initialise()
+        self.slave_store.initialise()
+
+        # Import two files into master
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "gpx", "gpx_1_0.gpx"),
+            self.master_store,
+            False,
+        )
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "rep_data", "rep_test1.rep"),
+            self.master_store,
+            False,
+        )
+
+        # Import two files into slave
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "gpx", "gpx_1_0.gpx"),
+            self.slave_store,
+            False,
+        )
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "rep_data", "uk_track.rep"),
+            self.slave_store,
+            False,
+        )
+
+    def tearDown(self):
+        # if os.path.exists("master.sqlite"):
+        #     os.remove("master.sqlite")
+
+        # if os.path.exists("slave.sqlite"):
+        #     os.remove("slave.sqlite")
+        pass
+
+    def test_merge_logs_and_changes(self):
+        merge_all_tables(self.master_store, self.slave_store)
