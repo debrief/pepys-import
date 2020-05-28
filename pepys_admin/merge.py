@@ -5,6 +5,7 @@ from sqlalchemy.orm.session import make_transient
 
 from pepys_admin.utils import make_query_for_all_data_columns
 from pepys_import.core.store.db_status import TableTypes
+from pepys_import.utils.data_store_utils import shorten_uuid
 
 
 def merge_all_reference_tables(master_store, slave_store):
@@ -221,7 +222,9 @@ def update_synonyms_table(master_store, slave_store, modified_ids):
                 print(f"Found {len(results)} results")
                 # If it exists, then modify the old ID to the new ID
                 for result in results:
-                    print(f"Changing synonym for {result.synonym} with id {result.entity}")
+                    print(
+                        f"Changing synonym for {result.synonym} with id {shorten_uuid(result.entity)} to {shorten_uuid(to_id)}"
+                    )
                     result.entity = to_id
 
             # Commit changes
