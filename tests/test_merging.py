@@ -1526,3 +1526,131 @@ class TestMergeLogsAndChanges(unittest.TestCase):
                     )
 
                     assert len(ref_table_results) == 1
+
+
+class TestMergeUpdatePlatform(unittest.TestCase):
+    def setUp(self):
+        self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
+        self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
+
+        self.master_store.initialise()
+        self.slave_store.initialise()
+
+        with self.master_store.session_scope():
+            change_id = self.master_store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
+
+            self.master_store.add_to_platform_types("PlatformType_Master_1", change_id)
+            self.master_store.add_to_platform_types("PlatformType_Shared_1", change_id)
+            pt_shared = self.master_store.add_to_platform_types(
+                "PlatformType_Shared_2_GUIDSame", change_id
+            )
+            pt_shared_guid = pt_shared.platform_type_id
+
+            nat_shared = self.master_store.add_to_nationalities("UK", change_id)
+            nat_shared_guid = nat_shared.nationality_id
+
+            priv_shared = self.master_store.add_to_privacies("Private", change_id)
+            priv_shared_guid = priv_shared.privacy_id
+
+            self.master_store.session.add_all([pt_shared, nat_shared, priv_shared])
+            self.master_store.session.commit()
+
+            self.master_store.add_to_platforms(
+                "Platform_Master_1", "UK", "PlatformType_Master_1", "Private", change_id=change_id
+            )
+            self.master_store.add_to_platforms(
+                "Platform_Shared_1", "UK", "PlatformType_Shared_1", "Private", change_id=change_id
+            )
+            self.master_store.add_to_platforms(
+                "Platform_Shared_2",
+                "UK",
+                "PlatformType_Shared_1",
+                "Private",
+                trigraph="PL1",
+                change_id=change_id,
+            )
+
+        with self.slave_store.session_scope():
+            change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+
+            self.slave_store.add_to_platform_types("PlatformType_Slave_1", change_id)
+            self.slave_store.add_to_platform_types("PlatformType_Shared_1", change_id)
+            pt_shared = self.slave_store.add_to_platform_types(
+                "PlatformType_Shared_2_GUIDSame", change_id
+            )
+            pt_shared.platform_type_id = pt_shared_guid
+
+            nat_shared = self.slave_store.add_to_nationalities("UK", change_id)
+            nat_shared.nationality_id = nat_shared_guid
+
+            priv_shared = self.slave_store.add_to_privacies("Private", change_id)
+            priv_shared.privacy_id = priv_shared_guid
+
+            self.slave_store.session.add_all([pt_shared, nat_shared, priv_shared])
+            self.slave_store.session.commit()
+
+            self.slave_store.add_to_platforms(
+                "Platform_Slave_1", "UK", "PlatformType_Slave_1", "Private", change_id=change_id
+            )
+            self.slave_store.add_to_platforms(
+                "Platform_Shared_1",
+                "UK",
+                "PlatformType_Shared_1",
+                "Private",
+                trigraph="PLT",
+                change_id=change_id,
+            )
+            # This has the same details as the one in master, except a different trigraph. Should still match,
+            # but the trigraph in master shouldn't be updated
+            self.slave_store.add_to_platforms(
+                "Platform_Shared_2",
+                "UK",
+                "PlatformType_Shared_1",
+                "Private",
+                trigraph="PL2",
+                change_id=change_id,
+            )
+
+    def tearDown(self):
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
+
+    def test_sensor_platform_merge(self):
+        merge_all_tables(self.master_store, self.slave_store)
+
+        # Check that the trigraph that was additional data for Platform_Shared_1 has copied across
+        results = (
+            self.master_store.session.query(self.master_store.db_classes.Platform)
+            .filter(self.master_store.db_classes.Platform.name == "Platform_Shared_1")
+            .all()
+        )
+
+        assert len(results) == 1
+        assert results[0].trigraph == "PLT"
+
+        # Check that only one platform called Platform_Shared_2 exists, and that the trigraph is still
+        # what it was originally set to in master
+        results = (
+            self.master_store.session.query(self.master_store.db_classes.Platform)
+            .filter(self.master_store.db_classes.Platform.name == "Platform_Shared_2")
+            .all()
+        )
+
+        assert len(results) == 1
+
+        assert results[0].trigraph == "PL1"
+        master_guid = results[0].platform_id
+
+        # Check that the GUIDs match between Platform_Shared_2 in slave and master
+        results = (
+            self.slave_store.session.query(self.slave_store.db_classes.Platform)
+            .filter(self.slave_store.db_classes.Platform.name == "Platform_Shared_2")
+            .all()
+        )
+
+        assert master_guid == results[0].platform_id

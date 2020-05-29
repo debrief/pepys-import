@@ -122,6 +122,26 @@ def merge_all_metadata_tables(master_store, slave_store):
         # update_logs_table(master_store, slave_store, id_results["modified"])
 
 
+def update_master_from_slave_entry(master_store, slave_store, master_entry, slave_entry):
+    column_names = [col.name for col in master_entry.__table__.columns.values()]
+
+    modified = False
+
+    # Loop through all fields on master entry
+    for col_name in column_names:
+        # If field is missing on master entry
+        if getattr(master_entry, col_name) is None:
+            # Look to see if it has a value in the slave entry
+            if getattr(slave_entry, col_name) is not None:
+                # Set it on the master entry, and note that we've modified the entry
+                setattr(master_entry, col_name, getattr(slave_entry, col_name))
+                modified = True
+
+    if modified:
+        master_store.session.add(master_entry)
+        master_store.session.commit()
+
+
 def merge_metadata_table(table_object_name, master_store, slave_store):
     # Get references to the table from the master and slave DataStores
     master_table = getattr(master_store.db_classes, table_object_name)
@@ -189,6 +209,12 @@ def merge_metadata_table(table_object_name, master_store, slave_store):
                         )
                         slave_store.session.add(slave_entry)
                         slave_store.session.commit()
+
+                        # We also need to compare the fields of the slave entry and the master entry
+                        # and update any master fields that are currently None with values from the slave entry
+                        update_master_from_slave_entry(
+                            master_store, slave_store, search_by_all_fields_results[0], slave_entry
+                        )
                     else:
                         assert False
                 elif n_results == 1:

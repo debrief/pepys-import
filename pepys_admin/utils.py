@@ -67,7 +67,6 @@ def make_query_for_unique_cols_or_all(table_object, comparison_object, session):
         return make_query_for_all_data_columns(table_object, comparison_object, session)
     elif len(unique_constraints) == 1:
         unique_col_names = [c.name for c in unique_constraints[0].columns]
-        print(unique_col_names)
         return make_query_for_cols(table_object, comparison_object, unique_col_names, session)
 
 
@@ -77,8 +76,6 @@ def make_query_for_all_data_columns(table_object, comparison_object, session):
     In this case, the data columns are all columns excluding the primary key and the
     created_date column.
     """
-    if table_object.__table__.name == "Sensors":
-        breakpoint()
     primary_key = table_object.__table__.primary_key.columns.values()[0].name
 
     column_names = [col.name for col in table_object.__table__.columns.values()]
@@ -87,10 +84,16 @@ def make_query_for_all_data_columns(table_object, comparison_object, session):
     column_names.remove(primary_key)
     # And get rid of the created_date column
     column_names.remove("created_date")
+    # And get rid of the privacy column, if it exists
+    if "privacy_id" in column_names:
+        column_names.remove("privacy_id")
 
     query = session.query(table_object)
 
     for col_name in column_names:
+        # Don't add a filter to match any columns which have missing values in the comparison object
+        if getattr(comparison_object, col_name) is None:
+            continue
         query = query.filter(
             getattr(table_object, col_name) == getattr(comparison_object, col_name)
         )
