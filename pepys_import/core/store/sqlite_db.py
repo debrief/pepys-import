@@ -97,6 +97,10 @@ class Platform(BaseSpatiaLite, PlatformMixin):
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    __table_args__ = (
+        UniqueConstraint("name", "nationality_id", "pennant", name="uq_Platform_name_nat_pennant"),
+    )
+
 
 class Task(BaseSpatiaLite, TaskMixin):
     __tablename__ = constants.TASK
