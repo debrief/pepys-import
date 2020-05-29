@@ -868,7 +868,7 @@ class DataStore:
 
         return platform_type
 
-    def add_to_nationalities(self, name, change_id):
+    def add_to_nationalities(self, name, change_id, priority=None):
         """
         Adds the specified nationality to the nationalities table if not already present
 
@@ -876,6 +876,8 @@ class DataStore:
         :type name: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
+        :param priority: Priority to print in defaults of CLI
+        :type priority: Integer
         :return: Created :class:`Nationality` entity
         :rtype: Nationality
         """
@@ -885,6 +887,8 @@ class DataStore:
 
         # enough info to proceed and create entry
         nationality = self.db_classes.Nationality(name=name)
+        if priority:
+            nationality.priority = priority
         self.session.add(nationality)
         self.session.flush()
 

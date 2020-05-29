@@ -13,7 +13,7 @@ class InitialiseShell(cmd.Cmd):
 (3) Create Pepys schema
 (4) Import Reference data
 (5) Import Metadata
-(0) Exit
+(0) Back
 """
     prompt = "(initialise) "
 
