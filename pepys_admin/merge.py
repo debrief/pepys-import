@@ -407,7 +407,6 @@ def prepare_merge_logs(master_store, slave_store):
                     # breakpoint()
                     id_results = query.all()
 
-                    print(id_results)
                     if len(id_results) == 1:
                         # The Log's id entry DOES refer to something that exists in master
                         # Therefore put it in a list to be copied over
@@ -480,12 +479,6 @@ def merge_logs_and_changes(master_store, slave_store):
     # Prepare to merge the logs by working out which ones need
     # adding, and which changes need adding
     logs_to_add, changes_to_add = prepare_merge_logs(master_store, slave_store)
-
-    print("Logs to add:")
-    print(logs_to_add)
-
-    print("Changes to add")
-    print(changes_to_add)
 
     # Add the change entries
     add_changes(master_store, slave_store, changes_to_add)

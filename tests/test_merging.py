@@ -9,6 +9,7 @@ from pepys_admin.merge import (
     merge_all_tables,
     merge_metadata_table,
     merge_reference_table,
+    table_name_to_class_name,
 )
 from pepys_admin.utils import check_sqlalchemy_results_are_equal, sqlalchemy_obj_to_dict
 from pepys_import.core.store.data_store import DataStore
@@ -1456,12 +1457,6 @@ class TestSynonymMergeWithMetadataTable(unittest.TestCase):
 
 class TestMergeLogsAndChanges(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("master.sqlite"):
-            os.remove("master.sqlite")
-
-        if os.path.exists("slave.sqlite"):
-            os.remove("slave.sqlite")
-
         self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
         self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
 
@@ -1497,12 +1492,37 @@ class TestMergeLogsAndChanges(unittest.TestCase):
         )
 
     def tearDown(self):
-        # if os.path.exists("master.sqlite"):
-        #     os.remove("master.sqlite")
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
 
-        # if os.path.exists("slave.sqlite"):
-        #     os.remove("slave.sqlite")
-        pass
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
 
     def test_merge_logs_and_changes(self):
         merge_all_tables(self.master_store, self.slave_store)
+
+        with self.master_store.session_scope():
+            with self.slave_store.session_scope():
+                # Check there are only three entries in the Changes table
+                results = self.master_store.session.query(self.master_store.db_classes.Change).all()
+
+                assert len(results) == 3
+
+                # Check that all entries in the master Log table match up with an entry in the table
+                # referenced in the 'table' attribute of the Log entry
+                results = self.master_store.session.query(self.master_store.db_classes.Log).all()
+
+                for result in results:
+                    class_name = table_name_to_class_name(result.table)
+
+                    referenced_table = getattr(self.master_store.db_classes, class_name)
+                    pri_key_field = referenced_table.__table__.primary_key.columns.values()[0].name
+                    referenced_table_pri_key = getattr(referenced_table, pri_key_field)
+                    id_to_match = result.id
+                    ref_table_results = (
+                        self.master_store.session.query(referenced_table)
+                        .filter(referenced_table_pri_key == id_to_match)
+                        .all()
+                    )
+
+                    assert len(ref_table_results) == 1
