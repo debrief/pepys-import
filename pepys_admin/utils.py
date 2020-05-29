@@ -34,6 +34,16 @@ def check_sqlalchemy_results_are_equal(results1, results2):
 
 
 def make_query_for_cols(table_object, comparison_object, columns, session):
+    """Create a SQLAlchemy query for the given table_object, with a filter comparing the given
+    columns with the given comparison_object.
+
+    For example, if the comparison object contains values
+    {'name': GPS, 'host': 42, 'type':12, 'blah': 'hello},
+    and the columns are ['name', 'host']
+    then this will return a query like this:
+
+    session.query(table_object).filter(table_object.name == "GPS").filter(table_object.host == 42)
+    """
     query = session.query(table_object)
 
     for col_name in columns:
@@ -45,6 +55,10 @@ def make_query_for_cols(table_object, comparison_object, columns, session):
 
 
 def make_query_for_unique_cols_or_all(table_object, comparison_object, session):
+    """Create a SQLAlchemy query object for the given table_object, with a filter comparing it
+    to the comparison object. The filter will use just the columns defined in the unique constraint
+    for the table if a unique constraint is defined, otherwise it will compare all columns.
+    """
     unique_constraints = [
         c for c in table_object.__table__.constraints if isinstance(c, UniqueConstraint)
     ]
@@ -58,7 +72,7 @@ def make_query_for_unique_cols_or_all(table_object, comparison_object, session):
 
 
 def make_query_for_all_data_columns(table_object, comparison_object, session):
-    """Makes a query to search for an object where all data columns match.
+    """Makes a query to search for an object where all data columns match the comparison object
 
     In this case, the data columns are all columns excluding the primary key and the
     created_date column.
