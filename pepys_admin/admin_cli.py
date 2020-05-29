@@ -270,7 +270,7 @@ class AdminShell(cmd.Cmd):
             ).all()
             privacy_dict = {name: privacy_id for privacy_id, name in privacies}
         message = (
-            "Export all data with the selected classification(s). " "(Press TAB) for multi-select >"
+            "Export all data with the selected classification(s). (Press TAB) for multi-select >"
         )
         selected_privacies = iterfzf(privacy_dict.keys(), multi=True, prompt=message)
         if selected_privacies is None:
