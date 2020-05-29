@@ -131,7 +131,7 @@ class AdminShell(cmd.Cmd):
         for index, obj in enumerate(objects, 1):
             text += f"({index}) {obj['name']} {obj['filename']} {obj['min']}-{obj['max']}\n"
             options.append(str(index))
-        text += "(0) Cancel\n"
+        text += "(0) Back\n"
         # Initialise a new menu
         export_platform = ExportByPlatformNameShell(self.data_store, options, objects)
         export_platform.cmdloop(intro=text)
