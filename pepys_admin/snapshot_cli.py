@@ -3,7 +3,7 @@ import os
 
 from iterfzf import iterfzf
 
-from pepys_admin.export_snapshot import export_metadata_tables, export_reference_tables
+from pepys_admin.snapshot_helpers import export_metadata_tables, export_reference_tables
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import is_schema_created
