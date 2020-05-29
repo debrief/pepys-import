@@ -58,6 +58,28 @@ class AdminCLITestCase(unittest.TestCase):
         # Assert that Admin Shell redirects to the initialise menu
         assert initialise_shell.intro in output
 
+    @patch("cmd.input", return_value="0")
+    def test_do_export(self, patched_input):
+        shell = ExportShell(self.store)
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export()
+        output = temp_output.getvalue()
+        # Assert that Admin Shell redirects to the initialise menu
+        assert shell.intro in output
+
+    @patch("cmd.input", return_value="0")
+    def test_do_snapshot(self, patched_input):
+        shell = SnapshotShell(self.store)
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_snapshot()
+        output = temp_output.getvalue()
+        # Assert that Admin Shell redirects to the initialise menu
+        assert shell.intro in output
+
     def test_do_status(self):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -490,6 +512,39 @@ class ExportShellTestCase(unittest.TestCase):
         output_path = os.path.join(CURRENT_DIR, "export_test")
         shutil.rmtree(output_path)
 
+    def test_do_cancel(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.do_cancel()
+        output = temp_output.getvalue()
+        assert "Returning to the previous menu..." in output
+
+    def test_default(self):
+        # Only cancel command (0) returns True, others return None
+        result = self.export_shell.default("0")
+        assert result is True
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.default("123456789")
+        output = temp_output.getvalue()
+        assert "*** Unknown syntax: 123456789" in output
+
+    def test_postcmd(self):
+        # postcmd method should print the menu again if the user didn't select cancel ("0")
+        # Select Export by name
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.postcmd(stop=None, line="1")
+        output = temp_output.getvalue()
+        assert self.export_shell.intro in output
+        # Select Export by platform and sensor
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.postcmd(stop=None, line="2")
+        output = temp_output.getvalue()
+        assert self.export_shell.intro in output
+
 
 class ExportByPlatformNameShellTestCase(unittest.TestCase):
     def setUp(self) -> None:
@@ -859,7 +914,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
             os.remove(path)
 
 
-class SnapshotTestCase(unittest.TestCase):
+class SnapshotShellTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -1017,6 +1072,39 @@ class SnapshotTestCase(unittest.TestCase):
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
             os.remove(path)
+
+    def test_do_cancel(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_cancel()
+        output = temp_output.getvalue()
+        assert "Returning to the previous menu..." in output
+
+    def test_default(self):
+        # Only cancel command (0) returns True, others return None
+        result = self.shell.default("0")
+        assert result is True
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.default("123456789")
+        output = temp_output.getvalue()
+        assert "*** Unknown syntax: 123456789" in output
+
+    def test_postcmd(self):
+        # postcmd method should print the menu again if the user didn't select cancel ("0")
+        # Select Create snapshot with Reference data
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.postcmd(stop=None, line="1")
+        output = temp_output.getvalue()
+        assert self.shell.intro in output
+        # Select Create snapshot with Reference data & Metadata
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.postcmd(stop=None, line="2")
+        output = temp_output.getvalue()
+        assert self.shell.intro in output
 
 
 if __name__ == "__main__":
