@@ -1620,7 +1620,7 @@ class TestMergeUpdatePlatform(unittest.TestCase):
         if os.path.exists("slave.sqlite"):
             os.remove("slave.sqlite")
 
-    def test_sensor_platform_merge(self):
+    def test_merge_update_platform(self):
         merge_all_tables(self.master_store, self.slave_store)
 
         # Check that the trigraph that was additional data for Platform_Shared_1 has copied across
@@ -1654,3 +1654,23 @@ class TestMergeUpdatePlatform(unittest.TestCase):
         )
 
         assert master_guid == results[0].platform_id
+
+        # Check a new change was added
+        results = (
+            self.master_store.session.query(self.master_store.db_classes.Change)
+            .filter(
+                self.master_store.db_classes.Change.reason == "Merging from database slave.sqlite"
+            )
+            .all()
+        )
+
+        assert len(results) == 1
+
+        # Check a log entry was added for updating the trigraph field
+        results = (
+            self.master_store.session.query(self.master_store.db_classes.Log)
+            .filter(self.master_store.db_classes.Log.new_value == "PLT")
+            .all()
+        )
+
+        assert len(results) == 1

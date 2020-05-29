@@ -1,3 +1,6 @@
+from datetime import datetime
+from getpass import getuser
+
 from sqlalchemy.orm import undefer
 from sqlalchemy.orm.session import make_transient
 
@@ -97,7 +100,7 @@ def merge_reference_table(table_object_name, master_store, slave_store):
     }
 
 
-def merge_all_metadata_tables(master_store, slave_store):
+def merge_all_metadata_tables(master_store, slave_store, merge_change_id):
     master_store.setup_table_type_mapping()
     metadata_table_objects = master_store.meta_classes[TableTypes.METADATA]
 
@@ -117,13 +120,16 @@ def merge_all_metadata_tables(master_store, slave_store):
     metadata_table_names.remove("Synonym")
 
     for ref_table in metadata_table_names:
-        id_results = merge_metadata_table(ref_table, master_store, slave_store)
+        id_results = merge_metadata_table(ref_table, master_store, slave_store, merge_change_id)
         update_synonyms_table(master_store, slave_store, id_results["modified"])
         # update_logs_table(master_store, slave_store, id_results["modified"])
 
 
-def update_master_from_slave_entry(master_store, slave_store, master_entry, slave_entry):
+def update_master_from_slave_entry(
+    master_store, slave_store, master_entry, slave_entry, merge_change_id
+):
     column_names = [col.name for col in master_entry.__table__.columns.values()]
+    primary_key = master_entry.__table__.primary_key.columns.values()[0].name
 
     modified = False
 
@@ -135,6 +141,15 @@ def update_master_from_slave_entry(master_store, slave_store, master_entry, slav
             if getattr(slave_entry, col_name) is not None:
                 # Set it on the master entry, and note that we've modified the entry
                 setattr(master_entry, col_name, getattr(slave_entry, col_name))
+                # Create a Log entry to say that we changed this attribute
+                master_store.add_to_logs(
+                    table=master_entry.__table__.name,
+                    row_id=getattr(master_entry, primary_key),
+                    field=col_name,
+                    new_value=getattr(slave_entry, col_name),
+                    change_id=merge_change_id,
+                )
+                # Note that we modified it, so we can update in DB if necessary
                 modified = True
 
     if modified:
@@ -142,7 +157,7 @@ def update_master_from_slave_entry(master_store, slave_store, master_entry, slav
         master_store.session.commit()
 
 
-def merge_metadata_table(table_object_name, master_store, slave_store):
+def merge_metadata_table(table_object_name, master_store, slave_store, merge_change_id):
     # Get references to the table from the master and slave DataStores
     master_table = getattr(master_store.db_classes, table_object_name)
     slave_table = getattr(slave_store.db_classes, table_object_name)
@@ -213,7 +228,11 @@ def merge_metadata_table(table_object_name, master_store, slave_store):
                         # We also need to compare the fields of the slave entry and the master entry
                         # and update any master fields that are currently None with values from the slave entry
                         update_master_from_slave_entry(
-                            master_store, slave_store, search_by_all_fields_results[0], slave_entry
+                            master_store,
+                            slave_store,
+                            search_by_all_fields_results[0],
+                            slave_entry,
+                            merge_change_id,
                         )
                     else:
                         assert False
@@ -514,17 +533,25 @@ def merge_logs_and_changes(master_store, slave_store):
 
 
 def merge_all_tables(master_store, slave_store):
+    # TODO: Add database name to this change ID
+    with master_store.session_scope():
+        merge_change_id = master_store.add_to_changes(
+            user=getuser(),
+            modified=datetime.utcnow(),
+            reason=f"Merging from database {slave_store.db_name}",
+        ).change_id
+
     # Merge the reference tables first
     merge_all_reference_tables(master_store, slave_store)
 
     # Merge all the metadata tables, excluding the complicated ones
-    merge_all_metadata_tables(master_store, slave_store)
+    merge_all_metadata_tables(master_store, slave_store, merge_change_id)
 
     # Merge the synonyms table now we've merged all the reference and metadata tables
-    merge_metadata_table("Synonym", master_store, slave_store)
+    merge_metadata_table("Synonym", master_store, slave_store, merge_change_id)
 
     # Merge the Datafiles table, keeping track of the IDs that changed
-    datafile_ids = merge_metadata_table("Datafile", master_store, slave_store)
+    datafile_ids = merge_metadata_table("Datafile", master_store, slave_store, merge_change_id)
 
     # Merge the measurement tables, only merging measurements that come from one of the datafiles that has been added
     merge_all_measurement_tables(master_store, slave_store, datafile_ids["added"])
