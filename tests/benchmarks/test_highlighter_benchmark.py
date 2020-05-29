@@ -151,7 +151,7 @@ def test_highlighter_fill_char_array_benchmark(benchmark):
     benchmark(run_fill_char_array)
 
     if running_on_travis():
-        if benchmark.stats.stats.mean > 3:
+        if benchmark.stats.stats.mean > 3.5:
             pytest.fail(
-                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of 3s"
+                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of 3.5s"
             )
