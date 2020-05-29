@@ -78,7 +78,10 @@ class Platform(BasePostGIS, PlatformMixin):
     __tablename__ = constants.PLATFORM
     table_type = TableTypes.METADATA
     table_type_id = 3
-    __table_args__ = {"schema": "pepys"}
+    __table_args__ = (
+        UniqueConstraint("name", "nationality_id", "pennant", name="uq_Platform_name_nat_pennant"),
+        {"schema": "pepys"},
+    )
 
     platform_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
