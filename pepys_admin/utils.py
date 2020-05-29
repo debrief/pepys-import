@@ -1,5 +1,7 @@
 import os
 
+from sqlalchemy.sql.schema import UniqueConstraint
+
 
 def get_default_export_folder():
     current_folder_name = os.path.basename(os.path.normpath(os.getcwd()))
@@ -31,12 +33,38 @@ def check_sqlalchemy_results_are_equal(results1, results2):
     return list1 == list2
 
 
+def make_query_for_cols(table_object, comparison_object, columns, session):
+    query = session.query(table_object)
+
+    for col_name in columns:
+        query = query.filter(
+            getattr(table_object, col_name) == getattr(comparison_object, col_name)
+        )
+
+    return query
+
+
+def make_query_for_unique_cols_or_all(table_object, comparison_object, session):
+    unique_constraints = [
+        c for c in table_object.__table__.constraints if isinstance(c, UniqueConstraint)
+    ]
+
+    if len(unique_constraints) == 0:
+        return make_query_for_all_data_columns(table_object, comparison_object, session)
+    elif len(unique_constraints) == 1:
+        unique_col_names = [c.name for c in unique_constraints[0].columns]
+        print(unique_col_names)
+        return make_query_for_cols(table_object, comparison_object, unique_col_names, session)
+
+
 def make_query_for_all_data_columns(table_object, comparison_object, session):
     """Makes a query to search for an object where all data columns match.
 
     In this case, the data columns are all columns excluding the primary key and the
     created_date column.
     """
+    if table_object.__table__.name == "Sensors":
+        breakpoint()
     primary_key = table_object.__table__.primary_key.columns.values()[0].name
 
     column_names = [col.name for col in table_object.__table__.columns.values()]

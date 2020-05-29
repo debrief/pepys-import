@@ -667,7 +667,7 @@ class TestMergeDatafiles(unittest.TestCase):
                 "Private",
                 "DFT1",
                 reference="Master_DF_1",
-                file_hash="TESTHASH",
+                file_hash="Master_DF_1_Hash",
                 file_size=1,
                 change_id=change_id,
             )
@@ -675,7 +675,7 @@ class TestMergeDatafiles(unittest.TestCase):
                 "Private",
                 "DFT1",
                 reference="Master_DF_2",
-                file_hash="TESTHASH",
+                file_hash="Master_DF_2_Hash",
                 file_size=1,
                 change_id=change_id,
             )
@@ -683,7 +683,7 @@ class TestMergeDatafiles(unittest.TestCase):
                 "Private",
                 "DFT1",
                 reference="Shared_DF_1",
-                file_hash="TESTHASH",
+                file_hash="Shared_DF_1_Hash",
                 file_size=1,
                 change_id=change_id,
             )
@@ -691,7 +691,7 @@ class TestMergeDatafiles(unittest.TestCase):
                 "Private",
                 "DFT1",
                 reference="Shared_DF_2_GUIDSame",
-                file_hash="TESTHASH",
+                file_hash="Shared_DF_2_GUIDSame_Hash",
                 file_size=1,
                 change_id=change_id,
             )
@@ -707,7 +707,7 @@ class TestMergeDatafiles(unittest.TestCase):
                 "Private",
                 "DFT1",
                 reference="Slave_DF_1",
-                file_hash="TESTHASH",
+                file_hash="Slave_DF_1_Hash",
                 file_size=1,
                 change_id=change_id,
             )
@@ -715,7 +715,7 @@ class TestMergeDatafiles(unittest.TestCase):
                 "Private",
                 "DFT1",
                 reference="Slave_DF_2",
-                file_hash="TESTHASH",
+                file_hash="Slave_DF_2_Hash",
                 file_size=1,
                 change_id=change_id,
             )
@@ -723,7 +723,7 @@ class TestMergeDatafiles(unittest.TestCase):
                 "Private",
                 "DFT1",
                 reference="Shared_DF_1",
-                file_hash="TESTHASH",
+                file_hash="Shared_DF_1_Hash",
                 file_size=1,
                 change_id=change_id,
             )
@@ -732,7 +732,7 @@ class TestMergeDatafiles(unittest.TestCase):
                 "Private",
                 "DFT1",
                 reference="Shared_DF_2_GUIDSame",
-                file_hash="TESTHASH",
+                file_hash="Shared_DF_2_GUIDSame_Hash",
                 file_size=1,
                 change_id=change_id,
             )

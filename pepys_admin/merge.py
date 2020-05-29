@@ -1,7 +1,7 @@
 from sqlalchemy.orm import undefer
 from sqlalchemy.orm.session import make_transient
 
-from pepys_admin.utils import make_query_for_all_data_columns
+from pepys_admin.utils import make_query_for_unique_cols_or_all
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import shorten_uuid
 
@@ -160,7 +160,7 @@ def merge_metadata_table(table_object_name, master_store, slave_store):
                     # with the same details - so we need to check whether there is an entry
                     # with the same values
                     print(" - No results, searching by all fields")
-                    search_by_all_fields_results = make_query_for_all_data_columns(
+                    search_by_all_fields_results = make_query_for_unique_cols_or_all(
                         master_table, slave_entry, master_store.session
                     ).all()
                     n_all_field_results = len(search_by_all_fields_results)
