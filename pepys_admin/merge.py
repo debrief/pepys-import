@@ -49,7 +49,6 @@ def merge_reference_table(table_object_name, master_store, slave_store):
             slave_entries = slave_store.session.query(slave_table).options(undefer("*")).all()
 
             for slave_entry in slave_entries:
-                print(f"Slave entry: {slave_entry}")
                 guid = getattr(slave_entry, primary_key)
 
                 results = (
@@ -61,7 +60,6 @@ def merge_reference_table(table_object_name, master_store, slave_store):
                 n_results = len(results)
 
                 if n_results == 0:
-                    print(" - No results, searching by name")
                     search_by_name_results = (
                         master_store.session.query(master_table)
                         .filter(master_table.name == slave_entry.name)
@@ -70,12 +68,10 @@ def merge_reference_table(table_object_name, master_store, slave_store):
                     n_name_results = len(search_by_name_results)
 
                     if n_name_results == 0:
-                        print("  - Not in master db, copying over")
                         ids_added.append(guid)
                         make_transient(slave_entry)
                         master_store.session.add(slave_entry)
                     elif n_name_results == 1:
-                        print("  - In master db, making GUIDs match and cascading")
                         ids_modified_from.append(guid)
                         ids_modified_to.append(getattr(search_by_name_results[0], primary_key))
                         setattr(
@@ -90,7 +86,6 @@ def merge_reference_table(table_object_name, master_store, slave_store):
                             False
                         ), "Fatal assertion error: multiple entries in master reference table with same name"
                 elif n_results == 1:
-                    print(" - Already in master DB with same GUID, don't need to copy")
                     ids_already_there.append(guid)
                 else:
                     assert (
@@ -180,7 +175,6 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
             slave_entries = slave_store.session.query(slave_table).options(undefer("*")).all()
 
             for slave_entry in slave_entries:
-                print(f"Slave entry: {slave_entry}")
                 guid = getattr(slave_entry, primary_key)
 
                 # Find all entries with this GUID in the same table in the master database
@@ -198,7 +192,6 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
                     # but both the master and slave dbs may have had the same entry added
                     # with the same details - so we need to check whether there is an entry
                     # with the same values
-                    print(" - No results, searching by all fields")
                     search_by_all_fields_results = make_query_for_unique_cols_or_all(
                         master_table, slave_entry, master_store.session
                     ).all()
@@ -207,7 +200,6 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
                     if n_all_field_results == 0:
                         # We can't find an entry which matches in the master db,
                         # so this is a new entry from the slave which needs copying over
-                        print("  - Not in master db, copying over")
                         ids_added.append(guid)
                         slave_store.session.expunge(slave_entry)
                         make_transient(slave_entry)
@@ -216,7 +208,6 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
                         # We found an entry that matches in the master db, but it'll have a different
                         # GUID - so update the GUID in the slave database and let it propagate
                         # so we can copy over other tables later and all the foreign key integrity will work
-                        print("  - In master db, making GUIDs match and cascading")
                         ids_modified_from.append(guid)
                         ids_modified_to.append(
                             getattr(search_by_all_fields_results[0], primary_key)
@@ -244,7 +235,6 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
                         ), "Fatal assertion error: multiple entries in master metadata table with same name"
                 elif n_results == 1:
                     # The GUID is in the master db - so the record must also be there (as GUIDs are unique)
-                    print(" - Already in master DB with same GUID, don't need to copy")
                     ids_already_there.append(guid)
                 else:
                     # We should never get here: the GUID should always appear in the master database either zero or one times,
@@ -272,12 +262,8 @@ def update_synonyms_table(master_store, slave_store, modified_ids):
             )
 
             if len(results) > 0:
-                print(f"Found {len(results)} results")
                 # If it exists, then modify the old ID to the new ID
                 for result in results:
-                    print(
-                        f"Changing synonym for {result.synonym} with id {shorten_uuid(result.entity)} to {shorten_uuid(to_id)}"
-                    )
                     result.entity = to_id
 
             # Commit changes
@@ -297,12 +283,8 @@ def update_logs_table(master_store, slave_store, modified_ids):
             )
 
             if len(results) > 0:
-                print(f"Found {len(results)} results")
                 # If it exists, then modify the old ID to the new ID
                 for result in results:
-                    print(
-                        f"Changing log id with id {shorten_uuid(result.id)} to {shorten_uuid(to_id)}"
-                    )
                     result.id = to_id
 
             # Commit changes
@@ -423,7 +405,6 @@ def prepare_merge_logs(master_store, slave_store):
             slave_entries = slave_store.session.query(slave_table).options(undefer("*")).all()
 
             for slave_entry in slave_entries:
-                print(f"Slave entry: {slave_entry}")
                 guid = slave_entry.log_id
 
                 # Find all entries with this GUID in the same table in the master database
@@ -439,7 +420,6 @@ def prepare_merge_logs(master_store, slave_store):
                     # The GUID isn't present in the master database
                     # We now need to check whether the Log entry refers to an entry that actually exists in the master
                     # database (as we've done all other copying by now)
-                    print(" - Log GUID not present in master db")
 
                     class_name = table_name_to_class_name(slave_entry.table)
 
@@ -456,13 +436,12 @@ def prepare_merge_logs(master_store, slave_store):
                     if len(id_results) == 1:
                         # The Log's id entry DOES refer to something that exists in master
                         # Therefore put it in a list to be copied over
-                        print(" - Log ID matches in referred table, adding to list to copy")
                         logs_to_add.append(slave_entry.log_id)
 
                         changes_to_add.add(slave_entry.change_id)
                 elif n_results == 1:
                     # The GUID is in the master db - so the record must also be there (as GUIDs are unique)
-                    print(" - Already in master DB with same GUID, don't need to copy")
+                    pass
                 else:
                     # We should never get here: the GUID should always appear in the master database either zero or one times,
                     # never more
