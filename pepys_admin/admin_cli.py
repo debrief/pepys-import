@@ -201,7 +201,7 @@ class AdminShell(cmd.Cmd):
             print(f"## Reference\n{report}\n")
 
         print(f"## Database Version")
-        command.current(self.cfg, verbose=True)
+        command.current(self.cfg)
 
     def do_migrate(self):
         print("Alembic migration command running, see output below.")
