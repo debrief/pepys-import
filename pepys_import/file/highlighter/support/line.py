@@ -1,4 +1,4 @@
-from re import finditer
+from re import finditer, search
 
 from .token import SubToken, Token
 from .usages import SingleUsage
@@ -60,8 +60,32 @@ class Line:
         tokens_array = []
 
         for child in self.children:
+            # Search and match values between quotation marks if there is any
+            quoted_text_match = search(quoted_name, child.text)
+            start, end = None, None
+            if quoted_text_match:
+                original_name = quoted_text_match.group()
+                start, end = quoted_text_match.span()
+                # Remove quotation marks and then strip the text
+                quoted_sensor_name = original_name[1:-1].strip()
+                subtoken_sensor_name = SubToken(
+                    (start, end), quoted_sensor_name, int(child.line_start), child.chars
+                )
+                subtokens_sensor_name = [subtoken_sensor_name]
+
             for match in finditer(reg_exp, child.text):
                 token_str = match.group()
+                token_start, token_end = match.span()
+                # If quoted text exists and it contains the split token, continue or
+                # add the quoted text's Token object
+                if start and end and token_start >= start and token_end <= end:
+                    # Since quoted text might contain a few tokens and it should be added to the
+                    # token arrays in the correct position, the following if clause used. It adds
+                    # the quoted text if token's end is equal to the quoted text's end.
+                    if token_end == end:
+                        tokens_array.append(Token(subtokens_sensor_name, self.highlighted_file))
+                    continue
+
                 # special handling, we may need to strip a leading delimiter
                 if strip_char != "":
                     char_index = token_str.find(strip_char)
@@ -70,29 +94,12 @@ class Line:
                     # and ditch any new whitespace
                     token_str = token_str.strip()
 
-                subtoken = SubToken(match.span(), token_str, int(child.line_start), child.chars)
+                subtoken = SubToken(
+                    (token_start, token_end), token_str, int(child.line_start), child.chars
+                )
                 # the token object expects an array of SubTokens, as it could be a composite object
                 list_of_subtokens = [subtoken]
                 tokens_array.append(Token(list_of_subtokens, self.highlighted_file))
-
-            for match in finditer(quoted_name, child.text):
-                original_name = match.group()
-                quoted_sensor_name = original_name[1:-1].strip()
-                subtoken_sensor_name = SubToken(
-                    match.span(), quoted_sensor_name, int(child.line_start), child.chars
-                )
-                subtokens_sensor_name = [subtoken_sensor_name]
-
-                del_indexes = list()
-                for i, token in enumerate(tokens_array):
-                    if token.text in original_name and tokens_array[i + 1].text in original_name:
-                        del_indexes.append(i)
-                if del_indexes:
-                    del_indexes.append(del_indexes[-1] + 1)
-                    tokens_array = [e for i, e in enumerate(tokens_array) if i not in del_indexes]
-                    tokens_array.insert(
-                        del_indexes[0], Token(subtokens_sensor_name, self.highlighted_file)
-                    )
 
         return tokens_array
 
