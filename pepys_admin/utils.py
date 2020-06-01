@@ -15,6 +15,8 @@ def get_default_export_folder():
 def round_object_if_necessary(obj):
     if isinstance(obj, pint.quantity._Quantity) or isinstance(obj, float):
         return round(obj, 3)
+    else:
+        return obj
 
 
 def sqlalchemy_obj_to_dict(obj, remove_id=False):
