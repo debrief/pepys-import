@@ -83,7 +83,7 @@ def test_make_query_for_all_data_columns():
         query_str = str(query.statement.compile(compile_kwargs={"literal_binds": True}))
 
         assert "\"Platforms\".name = 'Platform1'" in query_str
-        assert '"Platforms".pennant IS NULL' in query_str
+        assert '"Platforms".pennant IS NULL' not in query_str
         assert (
             f"\"Platforms\".nationality_id = '{remove_dashes(platform_obj.nationality_id)}'"
             in query_str
