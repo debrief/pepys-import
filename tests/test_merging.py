@@ -4,6 +4,9 @@ import unittest
 from datetime import datetime
 from getpass import getuser
 
+import pytest
+from testing.postgresql import Postgresql
+
 from pepys_admin.merge import (
     merge_all_metadata_tables,
     merge_all_reference_tables,
@@ -872,6 +875,149 @@ class TestMergeStateFromImport(unittest.TestCase):
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
+
+    def test_merge_state_from_import(self):
+        merge_all_tables(self.master_store, self.slave_store)
+
+        with self.master_store.session_scope():
+            with self.slave_store.session_scope():
+                # Check the datafiles table in master has the right number of rows
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.Datafile
+                ).all()
+                assert len(results) == 3
+
+                # Check the datafiles table in master has uk_track.rep in it
+                results = (
+                    self.master_store.session.query(self.master_store.db_classes.Datafile)
+                    .filter(self.master_store.db_classes.Datafile.reference == "uk_track.rep")
+                    .all()
+                )
+                assert len(results) == 1
+
+                # Check all of the state entries from slave uk_track.rep are in master - with all of their columns having the same value
+                master_results = (
+                    self.master_store.session.query(self.master_store.db_classes.State)
+                    .filter(self.master_store.db_classes.State.source_reference == "uk_track.rep")
+                    .all()
+                )
+                slave_results = (
+                    self.slave_store.session.query(self.slave_store.db_classes.State)
+                    .filter(self.slave_store.db_classes.State.source_reference == "uk_track.rep")
+                    .all()
+                )
+
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+
+                # Check that the gpx_1_0.gpx entries haven't been duplicated
+
+                # Specifically, check the original in master hasn't been touched
+                results = (
+                    self.master_store.session.query(self.master_store.db_classes.State)
+                    .filter(self.master_store.db_classes.State.source_reference == "gpx_1_0.gpx")
+                    .all()
+                )
+                new_master_gpx_states = [
+                    sqlalchemy_obj_to_dict(item, remove_id=True) for item in results
+                ]
+
+                assert self.master_gpx_states == new_master_gpx_states
+
+                # Check the slave and master copies match - except for their IDs which will be different
+                slave_gpx_results = (
+                    self.slave_store.session.query(self.slave_store.db_classes.State)
+                    .filter(self.slave_store.db_classes.State.source_reference == "gpx_1_0.gpx")
+                    .all()
+                )
+                slave_gpx_results = [
+                    sqlalchemy_obj_to_dict(item, remove_id=True) for item in slave_gpx_results
+                ]
+
+                assert self.master_gpx_states == slave_gpx_results
+
+                # Check there aren't extra copies by counting the number of entries associated with the reference gpx_1_0.gpx
+                results = (
+                    self.master_store.session.query(self.master_store.db_classes.State)
+                    .filter(self.master_store.db_classes.State.source_reference == "gpx_1_0.gpx")
+                    .all()
+                )
+                assert len(results) == len(self.master_gpx_states)
+
+
+@pytest.mark.postgres
+class TestMergeStateFromImport_Postgres(unittest.TestCase):
+    def setUp(self):
+        """This gets us to the situation where the master db has an import of gpx_1_0.gpx
+        and rep_test1.rep, and the slave db has an import of gpx_1_0.gpx and uk_track.rep."""
+        self.postgres = None
+
+        try:
+            self.postgres = Postgresql(
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+            )
+        except RuntimeError:
+            print("PostgreSQL database couldn't be created! Test is skipping.")
+            return
+
+        self.master_store = DataStore(
+            db_name="test",
+            db_host="localhost",
+            db_username="postgres",
+            db_password="postgres",
+            db_port=55527,
+            db_type="postgres",
+        )
+        self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
+
+        self.master_store.initialise()
+        self.slave_store.initialise()
+
+        # Import two files into master
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "gpx", "gpx_1_0.gpx"),
+            self.master_store,
+            False,
+        )
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "rep_data", "rep_test1.rep"),
+            self.master_store,
+            False,
+        )
+
+        with self.master_store.session_scope():
+            results = (
+                self.master_store.session.query(self.master_store.db_classes.State)
+                .filter(self.master_store.db_classes.State.source_reference == "gpx_1_0.gpx")
+                .all()
+            )
+            self.master_gpx_states = [
+                sqlalchemy_obj_to_dict(item, remove_id=True) for item in results
+            ]
+
+        # Import two files into slave
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "gpx", "gpx_1_0.gpx"),
+            self.slave_store,
+            False,
+        )
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "rep_data", "uk_track.rep"),
+            self.slave_store,
+            False,
+        )
+
+    def tearDown(self):
+        try:
+            self.postgres.stop()
+        except AttributeError:
+            return
 
         if os.path.exists("slave.sqlite"):
             os.remove("slave.sqlite")
