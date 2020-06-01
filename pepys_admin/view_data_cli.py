@@ -57,7 +57,8 @@ class ViewDataShell(cmd.Cmd):
                 and not name.startswith("sql")
                 and not name.lower().startswith("spatial")
             ]
-        selected_table = iterfzf(table_names)
+        message = "Select a table >"
+        selected_table = iterfzf(table_names, prompt=message)
         if selected_table is None:
             return
         # Table names are plural in the database, therefore make it singular
