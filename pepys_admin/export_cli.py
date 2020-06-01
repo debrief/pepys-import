@@ -44,7 +44,8 @@ class ExportShell(cmd.Cmd):
                 print("There is no datafile found in the database!")
                 return
             datafiles_dict = {d.reference: d.datafile_id for d in datafiles}
-        selected_datafile = iterfzf(datafiles_dict.keys())
+        message = "Select a datafile to export > "
+        selected_datafile = iterfzf(datafiles_dict.keys(), prompt=message)
 
         if selected_datafile is None or selected_datafile not in datafiles_dict.keys():
             print(f"You haven't selected a valid option!")
@@ -85,7 +86,8 @@ class ExportShell(cmd.Cmd):
                 print("There is no platform found in the database!")
                 return
             platforms_dict = {p.name: p.platform_id for p in platforms}
-        selected_platform = iterfzf(platforms_dict.keys())
+        message = "Select a platform name to export datafiles that include it > "
+        selected_platform = iterfzf(platforms_dict.keys(), prompt=message)
 
         if selected_platform is None or selected_platform not in platforms_dict.keys():
             print(f"You haven't selected a valid option!")
@@ -98,7 +100,8 @@ class ExportShell(cmd.Cmd):
         with self.data_store.session_scope():
             objects = self.data_store.find_related_datafile_objects(platform_id, sensors_dict)
         # Create a dynamic menu for the found datafile objects
-        text = "--- Menu ---\n"
+        text = "Select from the found datafile objects.\n"
+        text += "--- Menu ---\n"
         options = [
             "0",
         ]

@@ -78,7 +78,13 @@ class SnapshotShell(cmd.Cmd):
                 self.data_store.db_classes.Privacy.name,
             ).all()
             privacy_dict = {name: privacy_id for privacy_id, name in privacies}
-        selected_privacies = iterfzf(privacy_dict.keys(), multi=True)
+        message = (
+            "Export all data with the selected classification(s). (Press TAB for multi-select) >"
+        )
+        selected_privacies = iterfzf(privacy_dict.keys(), multi=True, prompt=message)
+        if selected_privacies is None:
+            print("Returning to the previous menu")
+            return
         privacy_ids = [privacy_dict[name] for name in selected_privacies]
         export_metadata_tables(self.data_store, destination_store, privacy_ids)
         print(

@@ -1106,6 +1106,19 @@ class SnapshotShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert self.shell.intro in output
 
+    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=None)
+    def test_do_export_reference_and_metadata_cancelling(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data_and_metadata()
+        output = temp_output.getvalue()
+        assert "Returning to the previous menu" in output
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
 
 if __name__ == "__main__":
     unittest.main()
