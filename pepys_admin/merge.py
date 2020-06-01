@@ -86,12 +86,16 @@ def merge_reference_table(table_object_name, master_store, slave_store):
                         slave_store.session.add(slave_entry)
                         slave_store.session.commit()
                     else:
-                        assert False
+                        assert (
+                            False
+                        ), "Fatal assertion error: multiple entries in master reference table with same name"
                 elif n_results == 1:
                     print(" - Already in master DB with same GUID, don't need to copy")
                     ids_already_there.append(guid)
                 else:
-                    assert False
+                    assert (
+                        False
+                    ), "Fatal assertion error: multiple entries in master reference table with same GUID"
 
     return {
         "already_there": ids_already_there,
@@ -235,7 +239,9 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
                             merge_change_id,
                         )
                     else:
-                        assert False
+                        assert (
+                            False
+                        ), "Fatal assertion error: multiple entries in master metadata table with same name"
                 elif n_results == 1:
                     # The GUID is in the master db - so the record must also be there (as GUIDs are unique)
                     print(" - Already in master DB with same GUID, don't need to copy")
@@ -243,7 +249,9 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
                 else:
                     # We should never get here: the GUID should always appear in the master database either zero or one times,
                     # never more
-                    assert False
+                    assert (
+                        False
+                    ), "Fatal assertion error: multiple entries in master metadata table with same GUID"
 
     return {
         "already_there": ids_already_there,
@@ -458,7 +466,9 @@ def prepare_merge_logs(master_store, slave_store):
                 else:
                     # We should never get here: the GUID should always appear in the master database either zero or one times,
                     # never more
-                    assert False
+                    assert (
+                        False
+                    ), "Fatal assertion error: multiple entries in master Logs table with same GUID"
 
     return logs_to_add, changes_to_add
 
