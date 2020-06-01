@@ -2,6 +2,7 @@ import os
 import shutil
 import unittest
 from datetime import datetime
+from getpass import getuser
 
 from pepys_admin.merge import (
     merge_all_metadata_tables,
@@ -557,11 +558,18 @@ class TestSensorPlatformMerge(unittest.TestCase):
             os.remove("slave.sqlite")
 
     def test_sensor_platform_merge(self):
+        with self.master_store.session_scope():
+            merge_change_id = self.master_store.add_to_changes(
+                user=getuser(),
+                modified=datetime.utcnow(),
+                reason=f"Merging from database {self.slave_store.db_name}",
+            ).change_id
+
         # Must merge reference tables first, so we can ensure foreign key integrity
         merge_all_reference_tables(self.master_store, self.slave_store)
 
         # Do the actual merge of the metadata tables
-        merge_all_metadata_tables(self.master_store, self.slave_store)
+        merge_all_metadata_tables(self.master_store, self.slave_store, merge_change_id)
 
         # Check there are the right number of entries in each table
         results = self.master_store.session.query(self.master_store.db_classes.SensorType).all()
@@ -748,9 +756,18 @@ class TestMergeDatafiles(unittest.TestCase):
             os.remove("slave.sqlite")
 
     def test_merge_data_files(self):
+        with self.master_store.session_scope():
+            merge_change_id = self.master_store.add_to_changes(
+                user=getuser(),
+                modified=datetime.utcnow(),
+                reason=f"Merging from database {self.slave_store.db_name}",
+            ).change_id
+
         merge_all_reference_tables(self.master_store, self.slave_store)
 
-        id_results = merge_metadata_table("Datafile", self.master_store, self.slave_store)
+        id_results = merge_metadata_table(
+            "Datafile", self.master_store, self.slave_store, merge_change_id
+        )
 
         # Check there are the right number of entries in the master database
         results = self.master_store.session.query(self.master_store.db_classes.Datafile).all()
@@ -1252,9 +1269,16 @@ class TestSynonymMergeWithRefTable(unittest.TestCase):
             os.remove("slave.sqlite")
 
     def test_synonym_merge_reference_table(self):
+        with self.master_store.session_scope():
+            merge_change_id = self.master_store.add_to_changes(
+                user=getuser(),
+                modified=datetime.utcnow(),
+                reason=f"Merging from database {self.slave_store.db_name}",
+            ).change_id
+
         # Do the merge
         merge_all_reference_tables(self.master_store, self.slave_store)
-        merge_metadata_table("Synonym", self.master_store, self.slave_store)
+        merge_metadata_table("Synonym", self.master_store, self.slave_store, merge_change_id)
 
         with self.master_store.session_scope():
             # Check the synonym entry from the slave is now in master
@@ -1503,10 +1527,11 @@ class TestMergeLogsAndChanges(unittest.TestCase):
 
         with self.master_store.session_scope():
             with self.slave_store.session_scope():
-                # Check there are only three entries in the Changes table
+                # Check there are only four entries in the Changes table (three from the merge, one extra for the
+                # change created for the merging)
                 results = self.master_store.session.query(self.master_store.db_classes.Change).all()
 
-                assert len(results) == 3
+                assert len(results) == 4
 
                 # Check that all entries in the master Log table match up with an entry in the table
                 # referenced in the 'table' attribute of the Log entry
