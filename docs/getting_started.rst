@@ -86,7 +86,7 @@ may be different to your local time). Try this by doing exactly what you did bef
 5. Export a data file using Pepys Admin
 ---------------------------------------
 
-Now choose option :code:`(4) Export by Platform and sensor`. You will need to select a platform -
+Now choose option :code:`(3) Export` and then option :code:`(2) Export by Platform and sensor`. You will need to select a platform -
 there is only one, so just press Enter. It will then give you a list of sensors and the periods they
 were active. Again there is only one, so just enter :code:`1` and press Enter. Press Enter to accept
 the default value for the output filename. You should then see a message saying :code:`Objects
