@@ -19,7 +19,7 @@ class ViewDataShell(cmd.Cmd):
     intro = """--- Menu ---
     (1) View Table
     (2) Run SQL
-    (0) Exit
+    (0) Back
     """
     prompt = "(pepys-admin) (view) "
 
