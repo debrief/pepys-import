@@ -1,5 +1,6 @@
 import os
 
+import pint
 from sqlalchemy.sql.schema import UniqueConstraint
 
 
@@ -11,11 +12,24 @@ def get_default_export_folder():
         return os.getcwd()
 
 
+def round_object_if_necessary(obj):
+    if isinstance(obj, pint.quantity._Quantity) or isinstance(obj, float):
+        return round(obj, 3)
+
+
 def sqlalchemy_obj_to_dict(obj, remove_id=False):
     """Converts a SQLAlchemy result from a query into a dict of {column_name: value}s,
-    excluding the 'created_date' column
+    excluding the 'created_date' column.
+
+    This is used for tests. To make the tests work on machines that round floats differently,
+    we round the objects if necessary before putting them in the dict. This deals with
+    issues we have if we have a Quantity with a value of 5.0000000024 from Postgres
+    and a value of 5.0000 on SQLite.
     """
-    d = {column.name: getattr(obj, column.name) for column in obj.__table__.columns}
+    d = {
+        column.name: round_object_if_necessary(getattr(obj, column.name))
+        for column in obj.__table__.columns
+    }
 
     del d["created_date"]
 
