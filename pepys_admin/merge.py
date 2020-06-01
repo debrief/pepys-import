@@ -4,7 +4,7 @@ from getpass import getuser
 from sqlalchemy.orm import undefer
 from sqlalchemy.orm.session import make_transient
 
-from pepys_admin.utils import make_query_for_unique_cols_or_all
+from pepys_admin.utils import make_query_for_unique_cols_or_all, table_name_to_class_name
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import shorten_uuid
 
@@ -397,13 +397,6 @@ def merge_all_measurement_tables(master_store, slave_store, added_datafile_ids):
         merge_measurement_table(
             measurement_table_name, master_store, slave_store, added_datafile_ids
         )
-
-
-def table_name_to_class_name(table_name):
-    if table_name.endswith("ies"):
-        return table_name[:-3] + "y"
-    elif table_name.endswith("s"):
-        return table_name[:-1]
 
 
 def prepare_merge_logs(master_store, slave_store):

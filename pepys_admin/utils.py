@@ -99,3 +99,10 @@ def make_query_for_all_data_columns(table_object, comparison_object, session):
         )
 
     return query
+
+
+def table_name_to_class_name(table_name):
+    if table_name.endswith("ies"):
+        return table_name[:-3] + "y"
+    elif table_name.endswith("s"):
+        return table_name[:-1]
