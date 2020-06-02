@@ -198,7 +198,7 @@ def add_copy_from(filename, options):
         lines = file_.readlines()
 
     data = "\n".join(lines)
-    if 'schema="pepys"' in data:
+    if "schema='pepys'" in data:
         lines.insert(10, "from pepys_import.core.store.postgres_db import *\n")
     else:
         lines.insert(10, "from pepys_import.core.store.sqlite_db import *\n")
