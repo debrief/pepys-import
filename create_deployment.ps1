@@ -73,7 +73,8 @@ Remove-Item get-pip.py
 Write-Output "INFO: Cleaned up all except 7zip"
 
 Write-Output "INFO: Building documentation"
-.\python\Scripts\sphinx-build.exe docs docs\html
+# Write to the same folder that 'make html' does, so it works for devs who've done that on other platforms
+.\python\Scripts\sphinx-build.exe docs docs\_build\html
 
 write-Output "INFO: Finished building documentation"
 
