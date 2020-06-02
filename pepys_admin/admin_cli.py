@@ -68,9 +68,6 @@ class AdminShell(cmd.Cmd):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
-        print(f"Current State of the Database")
-        command.current(self.cfg, verbose=True)
-        print("-" * 61)
         with self.data_store.session_scope():
             measurement_summary = self.data_store.get_status(report_measurement=True)
             report = measurement_summary.report()
@@ -83,6 +80,9 @@ class AdminShell(cmd.Cmd):
             reference_summary = self.data_store.get_status(report_reference=True)
             report = reference_summary.report()
             print(f"## Reference\n{report}\n")
+
+        print(f"## Database Version")
+        command.current(self.cfg, verbose=True)
 
     def do_migrate(self):
         print("Alembic migration command running, see output below.")
