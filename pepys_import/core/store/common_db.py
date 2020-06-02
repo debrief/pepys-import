@@ -537,6 +537,14 @@ class StateMixin:
     def sensor_name(self):
         return association_proxy("sensor", "name")
 
+    @hybrid_property
+    def platform_name(self):
+        return self._platform_name
+
+    @platform_name.setter
+    def platform_name(self, platform_name):
+        self._platform_name = platform_name
+
     @declared_attr
     def source(self):
         return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
@@ -672,6 +680,14 @@ class ContactMixin:
     @declared_attr
     def sensor_name(self):
         return association_proxy("sensor", "name")
+
+    @hybrid_property
+    def platform_name(self):
+        return self._platform_name
+
+    @platform_name.setter
+    def platform_name(self, platform_name):
+        self._platform_name = platform_name
 
     @declared_attr
     def subject(self):

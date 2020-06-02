@@ -411,10 +411,6 @@ class ConfidenceLevel(BasePostGIS):
 
 # Measurements Tables
 class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMixin):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.platform_name = None
-
     __tablename__ = constants.STATE
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
@@ -436,10 +432,6 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
 
 
 class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.platform_name = None
-
     __tablename__ = constants.CONTACT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
