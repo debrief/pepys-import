@@ -1,6 +1,7 @@
 import cmd
 import os
 import sys
+import webbrowser
 
 from alembic import command
 from alembic.config import Config
@@ -23,6 +24,7 @@ class AdminShell(cmd.Cmd):
 (4) Snapshot
 (5) Migrate
 (6) View Data
+(7) View Docs
 (0) Exit
 """
     prompt = "(pepys-admin) "
@@ -39,6 +41,7 @@ class AdminShell(cmd.Cmd):
             "4": self.do_snapshot,
             "5": self.do_migrate,
             "6": self.do_view_data,
+            "7": self.do_view_docs,
         }
 
         self.cfg = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
@@ -51,6 +54,11 @@ class AdminShell(cmd.Cmd):
         print("-" * 61)
         export_shell = ExportShell(self.data_store)
         export_shell.cmdloop()
+
+    def do_view_docs(self):
+        print("Loading docs in default web browser")
+        path = os.path.abspath(os.path.join(ROOT_DIRECTORY, "docs", "_build", "html", "index.html"))
+        webbrowser.open("file://" + path)
 
     def do_snapshot(self):
         print("-" * 61)
