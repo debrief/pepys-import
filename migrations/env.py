@@ -1,5 +1,6 @@
 import os
 from logging.config import fileConfig
+from re import search
 
 from alembic import context
 from alembic.script import write_hooks
@@ -190,11 +191,34 @@ else:
     run_migrations_online()
 
 
-@write_hooks.register("include_geoalchemy2")
-def include_geoalchemy2(filename, options):
+@write_hooks.register("add_copy_from")
+def add_copy_from(filename, options):
+    qouted_name_regex = r"op\.batch_alter_table\(([\"'])((?:(?=(\\?)).)*?)\1"
     with open(filename) as file_:
         lines = file_.readlines()
-    # insert geoalchemy clause to the imports, it will be reformatted with black and isort later on
-    lines.insert(10, "import geoalchemy2\n")
+
+    data = "\n".join(lines)
+    if 'schema="pepys"' in data:
+        lines.insert(10, "from pepys_import.core.store.postgres_db import *\n")
+    else:
+        lines.insert(10, "from pepys_import.core.store.sqlite_db import *\n")
+
+    for index, line in enumerate(lines):
+        match = search(qouted_name_regex, line)
+        if match:
+            table_name = match.group(2)
+            # Table names are plural in the database, therefore make it singular
+            if table_name in ["alembic_version", "HostedBy", "Media"]:
+                table = table_name
+            elif table_name == "Geometries":
+                table = "Geometry1"
+            elif table_name.endswith("ies"):
+                table = table_name[:-3] + "y"
+            else:
+                table = table_name[:-1]
+            argument = f", copy_from={table}.__table__"
+            idx = line.index(") as batch_op:")
+            lines[index] = line[:idx] + argument + line[idx:]
+
     with open(filename, "w") as to_write:
         to_write.writelines(lines)
