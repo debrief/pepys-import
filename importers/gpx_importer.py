@@ -1,4 +1,5 @@
 from dateutil.parser import parse
+from dateutil.tz import tzoffset
 from lxml import etree
 from tqdm import tqdm
 
@@ -83,7 +84,7 @@ class GPXImporter(Importer):
                 elevation_str = self.get_child_text_if_exists(tpt, "{*}ele")
 
                 # Parse timestamp and create state
-                timestamp = parse(timestamp_str)
+                timestamp = self.parse_timestamp(timestamp_str)
                 state = datafile.create_state(
                     data_store, platform, sensor, timestamp, self.short_name
                 )
@@ -127,3 +128,17 @@ class GPXImporter(Importer):
         if child is not None:
             return child.text
         return None
+
+    def parse_timestamp(self, s):
+        dt = parse(s)
+
+        # Create a UTC time zone object
+        utc = tzoffset("UTC", 0)
+
+        # Convert to UTC
+        dt_in_utc = dt.astimezone(utc)
+
+        # Convert to a 'naive' datetime - ie. without a timezone
+        dt_naive = dt_in_utc.replace(tzinfo=None)
+
+        return dt_naive

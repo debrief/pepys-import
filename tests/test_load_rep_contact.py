@@ -1,3 +1,4 @@
+import datetime
 import os
 import unittest
 
@@ -50,6 +51,9 @@ class RepContactTests(unittest.TestCase):
 
             # check the data contents
             self.assertEqual(contacts[0].bearing, 252.85 * unit_registry.degree)
+
+            # Check the timestamp
+            assert contacts[0].time == datetime.datetime(2010, 1, 12, 11, 58, 0)
 
             # Has to be almost equal as we get a number very slightly different to 251.33
             # due to floating point precision issues
