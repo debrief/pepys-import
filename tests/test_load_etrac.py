@@ -1,3 +1,4 @@
+import datetime
 import os
 import unittest
 
@@ -60,6 +61,7 @@ class TestLoadEtrac(unittest.TestCase):
                 .all()
             )
             assert len(results) == 1
+            assert results[0].time == datetime.datetime(2019, 8, 6, 4, 40, 0)
 
 
 if __name__ == "__main__":

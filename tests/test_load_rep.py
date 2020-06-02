@@ -1,3 +1,4 @@
+import datetime
 import os
 import unittest
 
@@ -61,6 +62,9 @@ class TestLoadREP(unittest.TestCase):
             )
 
             assert len(states_with_no_elevation) == 1
+
+            # This state should have a time of
+            assert states_with_no_elevation[0].time == datetime.datetime(2018, 5, 7, 5, 0, 0)
 
             # there should be 581 points with an elevation of 0m
             # (this proves that zero values are imported properly and not
