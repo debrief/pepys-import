@@ -197,12 +197,21 @@ def add_copy_from(filename, options):
     with open(filename) as file_:
         lines = file_.readlines()
 
-    data = "\n".join(lines)
-    if "schema='pepys'" in data:
+    # All tables are in the 'pepys' schema for Postgres. In order to import correct table classes,
+    # use this distinction.
+    postgres_file = False
+    for line in lines:
+        if "schema='pepys'" in line:
+            postgres_file = True
+            break
+    if postgres_file:
         lines.insert(10, "from pepys_import.core.store.postgres_db import *\n")
     else:
         lines.insert(10, "from pepys_import.core.store.sqlite_db import *\n")
 
+    # For each line, search for 'op.batch_alter_table("XXXXX")' kind of text. If it exists, extract
+    # the table name, which is the text inside of the quote marks. Make the name singular, add the
+    # argument (copy_from=TABLE.__table__) to the correct position
     for index, line in enumerate(lines):
         match = search(qouted_name_regex, line)
         if match:
