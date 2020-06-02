@@ -57,8 +57,8 @@ class AdminShell(cmd.Cmd):
 
     def do_view_docs(self):
         print("Loading docs in default web browser")
-        path = os.path.join("..", "docs\html\index.html")
-        webbrowser.open(path)
+        path = os.path.abspath(os.path.join("..", "docs\_build\html\index.html"))
+        webbrowser.open("file://" + path)
 
     def do_snapshot(self):
         print("-" * 61)
