@@ -194,11 +194,13 @@ If you have changed schema and want to create a migration script: :code:`alembic
 If you would like to see SQL script of migration scripts (Don't forget to change *START* and *END* values with the migration revision IDs):
 :code:`alembic upgrade START:END --sql`
 
-If you would like to get information about the head of Alembic: :code:`alembic -c alembic_sqlite.ini show head` or :code:`alembic -c alembic_postgres.ini show head`
-
+| If you would like to get information about a migration script of Alembic:
+| :code:`alembic -c alembic_sqlite.ini show XXXX` or :code:`alembic -c alembic_postgres.ini show XXXX`
+| Please change *XXXX* with a migration script's revision ID or *head* or *current*.
+|
 | If you would like to edit a migration script:
 | :code:`alembic -c alembic_sqlite.ini edit XXXX` or :code:`alembic -c alembic_postgres.ini edit XXXX`
-| Please change XXXX with the migration script's revision ID.
+| Please change *XXXX* with a migration script's revision ID or *head* or *current*.
 
 **Note:** Show and Edit commands don't run :code:`env.py` file and it checks the migration scripts in the :code:`version_locations` which is not specified in the main config file.
 Therefore, one of the extra config files should be passed to show/edit scripts in :code:`migrations/postgres_versions` and :code:`migrations/sqlite_versions`.
