@@ -57,7 +57,7 @@ class AdminShell(cmd.Cmd):
 
     def do_view_docs(self):
         print("Loading docs in default web browser")
-        path = os.path.abspath(os.path.join("..", "docs\_build\html\index.html"))
+        path = os.path.abspath(os.path.join(ROOT_DIRECTORY, "docs", "_build", "html", "index.html"))
         webbrowser.open("file://" + path)
 
     def do_snapshot(self):
