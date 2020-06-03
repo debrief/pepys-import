@@ -21,7 +21,6 @@ class BasicTests(unittest.TestCase):
             create_test_line_object(
                 "19951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  NaN"
             ),
-            " ",
         )
         self.assertTrue(rep_line.parse(self.error, self.message))
         self.assertEqual(str(rep_line.timestamp.date()), "1995-12-12")
@@ -32,7 +31,6 @@ class BasicTests(unittest.TestCase):
             create_test_line_object(
                 "951212 120800.555 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
             ),
-            " ",
         )
         self.assertTrue(rep_line.parse(self.error, self.message))
         self.assertEqual(str(rep_line.timestamp.time()), "12:08:00.555000")
@@ -40,7 +38,7 @@ class BasicTests(unittest.TestCase):
     def test_error_reports(self):
         # too few fields
         rep_line = REPLine(
-            1, create_test_line_object(" 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "), " ",
+            1, create_test_line_object(" 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "),
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
@@ -50,7 +48,6 @@ class BasicTests(unittest.TestCase):
             create_test_line_object(
                 "12 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
             ),
-            " ",
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
@@ -60,7 +57,6 @@ class BasicTests(unittest.TestCase):
             create_test_line_object(
                 "951212 12 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
             ),
-            " ",
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
@@ -70,7 +66,6 @@ class BasicTests(unittest.TestCase):
             create_test_line_object(
                 "100143\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel"
             ),
-            " ",
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
@@ -80,7 +75,6 @@ class BasicTests(unittest.TestCase):
             create_test_line_object(
                 "100112\t129800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel"
             ),
-            " ",
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
@@ -90,7 +84,6 @@ class BasicTests(unittest.TestCase):
             create_test_line_object(
                 "951212 120800 SUBJECT VCC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
             ),
-            " ",
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
@@ -100,7 +93,6 @@ class BasicTests(unittest.TestCase):
             create_test_line_object(
                 "951212 120800 SUBJECT VC[VC[VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
             ),
-            " ",
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
         # bad latitude
@@ -109,7 +101,6 @@ class BasicTests(unittest.TestCase):
             create_test_line_object(
                 "951212 120800 SUBJECT VC 6A 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
             ),
-            " ",
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
@@ -119,7 +110,6 @@ class BasicTests(unittest.TestCase):
             create_test_line_object(
                 "951212 120800 SUBJECT VC 60 23 40.25 N 00A 01 2B.86 E 109.08  6.00  0.00 "
             ),
-            " ",
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
@@ -129,7 +119,6 @@ class BasicTests(unittest.TestCase):
             create_test_line_object(
                 "951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 10b.08  6.00  0.00 "
             ),
-            " ",
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
@@ -139,7 +128,6 @@ class BasicTests(unittest.TestCase):
             create_test_line_object(
                 "951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.b0  0.00 "
             ),
-            " ",
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
@@ -149,7 +137,6 @@ class BasicTests(unittest.TestCase):
             create_test_line_object(
                 "951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.c0 "
             ),
-            " ",
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
@@ -159,7 +146,6 @@ class BasicTests(unittest.TestCase):
             line=create_test_line_object(
                 "100112\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel"
             ),
-            separator="\t",
         )
         self.assertTrue(rep_line.parse(self.error, self.message))
 
@@ -188,7 +174,6 @@ class BasicTests(unittest.TestCase):
             line=create_test_line_object(
                 "100112\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel"
             ),
-            separator="\t",
         )
         assert rep_line.parse(self.error, self.message)
 
@@ -202,7 +187,6 @@ class BasicTests(unittest.TestCase):
             line=create_test_line_object(
                 "100112\t120800\tSUBJECT\tVC\t53.243\t0\t0\tS\t23.495\t00\t0\tE\t109.08\t6.00\t0.00\tLabel"
             ),
-            separator="\t",
         )
         assert rep_line.parse(self.error, self.message)
 
@@ -217,7 +201,6 @@ class BasicTests(unittest.TestCase):
             line=create_test_line_object(
                 "100112\t120800\tSUBJECT\tVC\t53\t45.32\t0\tS\t23\t56.23\t0\tE\t109.08\t6.00\t0.00\tLabel"
             ),
-            separator="\t",
         )
         assert rep_line.parse(self.error, self.message)
 
@@ -232,7 +215,6 @@ class BasicTests(unittest.TestCase):
             line=create_test_line_object(
                 "100112\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\tNaN\tLabel"
             ),
-            separator="\t",
         )
         assert rep_line.parse(self.error, self.message)
 
@@ -244,7 +226,6 @@ class BasicTests(unittest.TestCase):
             line=create_test_line_object(
                 "100112\t120800\tSUBJECT\t@C[SYMBOL=torpedo,LAYER=Support]\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.0\tLabel"
             ),
-            separator="\t",
         )
         assert rep_line.parse(self.error, self.message)
 

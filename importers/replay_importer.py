@@ -5,13 +5,12 @@ from pepys_import.file.importer import Importer
 
 
 class ReplayImporter(Importer):
-    def __init__(self, separator=" "):
+    def __init__(self):
         super().__init__(
             name="Replay File Format Importer",
             validation_level=constants.ENHANCED_LEVEL,
             short_name="REP Importer",
         )
-        self.separator = separator
         self.text_label = None
         self.depth = 0.0
 
@@ -32,11 +31,11 @@ class ReplayImporter(Importer):
         return True
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
-        if line.text.startswith(";"):
+        if line.text.startswith(";") or line.text.strip() == "":
             return
 
         # create state, to store the data
-        rep_line = REPLine(line_number, line, self.separator)
+        rep_line = REPLine(line_number, line)
         # Store parsing errors in self.errors list
         if not rep_line.parse(self.errors, self.error_type):
             return
