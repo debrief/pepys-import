@@ -47,6 +47,9 @@ class AdminCLITestCase(unittest.TestCase):
 
         self.admin_shell = AdminShell(self.store)
 
+    def tearDown(self) -> None:
+        self.store.engine.dispose()
+
     @patch("cmd.input", return_value="0")
     def test_do_initialise(self, patched_input):
         initialise_shell = InitialiseShell(self.store, None, None)
@@ -154,6 +157,9 @@ class InitialiseShellTestCase(unittest.TestCase):
         self.store.initialise()
         self.admin_shell = AdminShell(self.store, csv_path=CSV_PATH)
         self.initialise_shell = InitialiseShell(self.store, self.admin_shell, CSV_PATH)
+
+    def tearDown(self) -> None:
+        self.store.engine.dispose()
 
     def test_do_clear_db_contents(self):
         temp_output = StringIO()
@@ -336,6 +342,9 @@ class ExportShellTestCase(unittest.TestCase):
         processor.process(DATA_PATH, self.store, False)
 
         self.export_shell = ExportShell(self.store)
+
+    def tearDown(self) -> None:
+        self.store.engine.dispose()
 
     @patch("pepys_admin.export_cli.iterfzf", return_value="rep_test1.rep")
     @patch("pepys_admin.export_cli.input", return_value="Y")
@@ -575,6 +584,9 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
         self.shell = ExportByPlatformNameShell(self.store, self.options, self.objects)
         self.shell.intro = self.text
 
+    def tearDown(self) -> None:
+        self.store.engine.dispose()
+
     @patch("pepys_admin.export_cli.input", return_value="export_test")
     @patch("pepys_admin.export_cli.ptk_prompt", return_value=".")
     def test_do_export(self, patched_input, patched_ptk_prompt):
@@ -703,6 +715,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
             self.postgres.stop()
         except AttributeError:
             return
+        self.store.engine.dispose()
 
     @patch("cmd.input", return_value="2\n")
     def test_missing_db_column_postgres(self, patched_input):
@@ -797,6 +810,9 @@ class SnapshotPostgresTestCase(unittest.TestCase):
             self.store.add_to_synonyms("Sensors", "test-2", entity=sensor_id, change_id=change_id)
 
         self.shell = SnapshotShell(self.store)
+
+    def tearDown(self) -> None:
+        self.store.engine.dispose()
 
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     def test_do_export_reference_data_postgres(self, patched_input):
@@ -957,6 +973,9 @@ class SnapshotShellTestCase(unittest.TestCase):
             self.store.add_to_synonyms("Sensors", "test-2", entity=sensor_id, change_id=change_id)
 
         self.shell = SnapshotShell(self.store)
+
+    def tearDown(self) -> None:
+        self.store.engine.dispose()
 
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     def test_do_export_reference_data(self, patched_input):
