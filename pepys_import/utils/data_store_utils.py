@@ -116,3 +116,7 @@ def cache_results_if_not_none(cache_attribute):
 
 def shorten_uuid(id):
     return str(id)[-6:]
+
+
+class MissingDataException(Exception):
+    pass

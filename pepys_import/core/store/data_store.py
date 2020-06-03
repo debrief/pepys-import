@@ -19,6 +19,7 @@ from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
 from pepys_import.utils.data_store_utils import (
+    MissingDataException,
     cache_results_if_not_none,
     create_alembic_version_table,
     create_spatial_tables_for_postgres,
@@ -326,6 +327,11 @@ class DataStore:
         """
         datafile_type = self.search_datafile_type(file_type)
         privacy = self.search_privacy(privacy)
+
+        if datafile_type is None:
+            raise MissingDataException("Datafile Type is invalid/missing")
+        elif privacy is None:
+            raise MissingDataException("Privacy is invalid/missing")
 
         datafile_obj = self.db_classes.Datafile(
             simulated=bool(simulated),
