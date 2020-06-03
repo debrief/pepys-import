@@ -1,3 +1,4 @@
+import datetime
 import os
 import unittest
 
@@ -55,6 +56,9 @@ class RepCommentTests(unittest.TestCase):
             assert comments[0].platform_id == comments[1].platform_id
             # and the last row is different
             assert comments[6].platform_id != comments[0].platform_id
+
+            # Check the timestamp for the first entry
+            assert comments[0].time == datetime.datetime(2010, 1, 12, 11, 58, 0)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
