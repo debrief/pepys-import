@@ -274,11 +274,12 @@ class DataStore:
         host = self.search_platform(host)
         privacy = self.search_privacy(privacy)
 
-        if sensor_type is None or host is None or privacy is None:
-            raise Exception(
-                f"There are missing value(s) in 'Sensor:{sensor_type},"
-                f" Host:{host}, Privacy:{privacy}'!"
-            )
+        if sensor_type is None:
+            raise MissingDataException("Sensor Type is missing/invalid")
+        elif host is None:
+            raise MissingDataException("Host is missing/invalid")
+        elif privacy is None:
+            raise MissingDataException("Privacy is missing/invalid")
 
         sensor_obj = self.db_classes.Sensor(
             name=name,
@@ -387,6 +388,13 @@ class DataStore:
         nationality = self.search_nationality(nationality)
         platform_type = self.search_platform_type(platform_type)
         privacy = self.search_privacy(privacy)
+
+        if nationality is None:
+            raise MissingDataException("Nationality is invalid/missing")
+        elif platform_type is None:
+            raise MissingDataException("Platform Type is invalid/missing")
+        elif privacy is None:
+            raise MissingDataException("Privacy is invalid/missing")
 
         platform_obj = self.db_classes.Platform(
             name=name,

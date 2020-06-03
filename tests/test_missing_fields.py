@@ -21,15 +21,104 @@ class MissingFieldsTestCase(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @unittest.expectedFailure
-    def test_missing_fields_for_add_to_states(self):
+    def test_missing_fields_for_add_to_platforms(self):
         with self.store.session_scope():
-            self.store.add_to_states(time=datetime.utcnow(), sensor=None, datafile=None)
+            with pytest.raises(MissingDataException):
+                self.store.add_to_platforms(
+                    name="TestPlatform",
+                    nationality="MissingNationality",
+                    platform_type="PLATFORM-TYPE-1",
+                    privacy="PRIVACY-1",
+                    trigraph="TPL",
+                    quadgraph="TPLT",
+                    pennant_number="123",
+                    change_id=self.change_id,
+                )
 
-    @unittest.expectedFailure
+            with pytest.raises(MissingDataException):
+                self.store.add_to_platforms(
+                    name="TestPlatform",
+                    nationality="United Kingdom",
+                    platform_type="MissingPlatformType",
+                    privacy="PRIVACY-1",
+                    trigraph="TPL",
+                    quadgraph="TPLT",
+                    pennant_number="123",
+                    change_id=self.change_id,
+                )
+
+            with pytest.raises(MissingDataException):
+                self.store.add_to_platforms(
+                    name="TestPlatform",
+                    nationality="United Kingdom",
+                    platform_type="PLATFORM-TYPE-1",
+                    privacy="MissingPrivacy",
+                    trigraph="TPL",
+                    quadgraph="TPLT",
+                    pennant_number="123",
+                    change_id=self.change_id,
+                )
+
+            # Shouldn't raise an exception, as all valid
+            self.store.add_to_platforms(
+                name="TestPlatform",
+                nationality="United Kingdom",
+                platform_type="PLATFORM-TYPE-1",
+                privacy="PRIVACY-1",
+                trigraph="TPL",
+                quadgraph="TPLT",
+                pennant_number="123",
+                change_id=self.change_id,
+            )
+
     def test_missing_fields_for_add_to_sensors(self):
+        self.store.add_to_platforms(
+            name="TestPlatform",
+            nationality="United Kingdom",
+            platform_type="PLATFORM-TYPE-1",
+            privacy="PRIVACY-1",
+            trigraph="TPL",
+            quadgraph="TPLT",
+            pennant_number="123",
+            change_id=self.change_id,
+        )
+
         with self.store.session_scope():
-            self.store.add_to_sensors(name="Sensor-1", sensor_type=None, host=None)
+            with pytest.raises(MissingDataException):
+                self.store.add_to_sensors(
+                    name="TestSensor",
+                    sensor_type="MissingSensorType",
+                    host="TestPlatform",
+                    privacy="PRIVACY-1",
+                    change_id=self.change_id,
+                )
+
+            with pytest.raises(MissingDataException):
+                self.store.add_to_sensors(
+                    name="TestSensor",
+                    sensor_type="GPS",
+                    host="MissingPlatform",
+                    privacy="PRIVACY-1",
+                    change_id=self.change_id,
+                )
+
+            with pytest.raises(MissingDataException):
+                self.store.add_to_sensors(
+                    name="TestSensor",
+                    sensor_type="GPS",
+                    host="TestPlatform",
+                    privacy="MissingPrivacy",
+                    change_id=self.change_id,
+                )
+
+            # Shouldn't raise an exception, as all valid
+            self.store.add_to_sensors(
+                name="TestSensor",
+                sensor_type="GPS",
+                host="TestPlatform",
+                privacy="PRIVACY-1",
+                change_id=self.change_id,
+            )
 
     def test_missing_fields_for_add_to_datafiles(self):
         with self.store.session_scope():
