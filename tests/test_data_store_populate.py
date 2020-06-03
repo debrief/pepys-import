@@ -320,6 +320,9 @@ class DataStorePopulateMissingData(TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
+        with self.store.session_scope():
+            self.store.populate_reference()
+
     def tearDown(self):
         pass
 
@@ -329,7 +332,24 @@ class DataStorePopulateMissingData(TestCase):
             with redirect_stdout(temp_output):
                 self.store.populate_metadata(MISSING_DATA_PATH)
             output = temp_output.getvalue()
-            print(output)
+
+            assert (
+                "Error importing row ['PRIVACY-Blah', 'DATAFILE-TYPE-1', 'DATAFILE-1', 'True', '0', 'HASHED-1', ''] from Datafiles.csv"
+                in output
+            )
+            assert "  Error was 'Privacy is invalid/missing'" in output
+
+            assert (
+                "Error importing row ['PLATFORM-2', 'MissingNationality', 'PLATFORM-TYPE-2', 'PRIVACY-2'] from Platforms.csv"
+                in output
+            )
+            assert "  Error was 'Nationality is invalid/missing'" in output
+
+            assert (
+                "Error importing row ['SENSOR-2', 'SENSOR-TYPE-2', 'MissingPlatform', 'PRIVACY-2'] from Sensors.csv"
+                in output
+            )
+            assert "  Error was 'Host is missing/invalid'" in output
 
 
 if __name__ == "__main__":
