@@ -1,7 +1,10 @@
 import csv
+import json
 import os
 
 from sqlalchemy import func, inspect, select
+
+from paths import MIGRATIONS_DIRECTORY
 
 
 def import_from_csv(data_store, path, files, change_id):
@@ -60,6 +63,50 @@ def create_spatial_tables_for_postgres(engine):
     """
     with engine.connect() as connection:
         connection.execute(query)
+
+
+def create_alembic_version_table(engine, db_type):
+    with open(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"), "r") as file:
+        versions = json.load(file)
+    if "LATEST_POSTGRES_VERSION" not in versions or "LATEST_SQLITE_VERSION" not in versions:
+        print("Latest revision IDs couldn't found!")
+        return
+
+    if db_type == "sqlite":
+        create_table = """
+            CREATE TABLE IF NOT EXISTS alembic_version
+            (
+                version_num VARCHAR(32) NOT NULL,
+                CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+            );
+        """
+        insert_value = """
+            INSERT INTO alembic_version (version_num)
+            SELECT '{id}'
+            WHERE NOT EXISTS(SELECT 1 FROM alembic_version WHERE version_num = '{id}');
+        """.format(
+            id=versions["LATEST_SQLITE_VERSION"]
+        )
+    else:
+        create_table = """
+            CREATE TABLE IF NOT EXISTS pepys.alembic_version
+            (
+                version_num VARCHAR(32) NOT NULL,
+                CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+            );
+        """
+        insert_value = """
+            INSERT INTO pepys.alembic_version (version_num) 
+            SELECT '{id}'
+            WHERE NOT EXISTS(
+                SELECT '{id}' FROM pepys.alembic_version WHERE version_num = '{id}'
+            );
+        """.format(
+            id=versions["LATEST_POSTGRES_VERSION"]
+        )
+    with engine.connect() as connection:
+        connection.execute(create_table)
+        connection.execute(insert_value)
 
 
 def cache_results_if_not_none(cache_attribute):
