@@ -9,14 +9,13 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distan
 
 
 class NMEAImporter(Importer):
-    def __init__(self, separator=","):
+    def __init__(self):
         super().__init__(
             name="NMEA File Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name="NMEA Importer",
             default_privacy="Private",
         )
-        self.separator = separator
 
         self.latitude = None
         self.latitude_hem = None

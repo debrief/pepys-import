@@ -9,15 +9,13 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distan
 
 
 class ETracImporter(Importer):
-    def __init__(self, separator=" "):
+    def __init__(self):
         super().__init__(
             name="E-Trac Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name="E-Trac Importer",
             default_privacy="Public",
         )
-        self.separator = separator
-
         self.text_label = None
 
     def can_load_this_type(self, suffix):
