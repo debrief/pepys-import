@@ -5,15 +5,13 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from alembic import command
-from alembic.config import Config
 from sqlalchemy import create_engine, or_
 from sqlalchemy.event import listen
-from sqlalchemy.exc import ArgumentError
+from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker, undefer
 from sqlalchemy.sql import func
 
-from paths import PEPYS_IMPORT_DIRECTORY, ROOT_DIRECTORY
+from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import import __version__
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.store import constants
@@ -21,8 +19,10 @@ from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
 from pepys_import.utils.data_store_utils import (
     cache_results_if_not_none,
+    create_alembic_version_table,
+    create_spatial_tables_for_postgres,
+    create_spatial_tables_for_sqlite,
     import_from_csv,
-    is_schema_created,
 )
 from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_keys_on
 from pepys_import.utils.value_transforming_utils import format_datetime
@@ -145,13 +145,33 @@ class DataStore:
 
     def initialise(self):
         """Create schemas for the database"""
-        if is_schema_created(self.engine, self.db_type) is False:
-            config = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
-            script_location = os.path.join(ROOT_DIRECTORY, "migrations")
-            config.set_main_option("script_location", script_location)
-            config.attributes["db_type"] = self.db_type
-            config.attributes["connection"] = self.engine
-            command.upgrade(config, "head")
+        if self.db_type == "sqlite":
+            try:
+                create_spatial_tables_for_sqlite(self.engine)
+                # Attempt to create schema if not present, to cope with fresh DB file
+                BaseSpatiaLite.metadata.create_all(self.engine)
+            except OperationalError as e:
+                print(
+                    f"SQL Exception details: {e}\n\n"
+                    "ERROR: Database Connection Error! The schema couldn't be created.\n"
+                    "Please check your config file. There might be missing/wrong values!\n"
+                    "See above for the full error from SQLAlchemy."
+                )
+                sys.exit(1)
+        elif self.db_type == "postgres":
+            try:
+                create_spatial_tables_for_postgres(self.engine)
+                BasePostGIS.metadata.create_all(self.engine)
+            except OperationalError as e:
+                print(
+                    f"SQL Exception details: {e}\n\n"
+                    "ERROR: Database Connection Error! The schema couldn't be created.\n"
+                    "Please check your config file. There might be missing/wrong values!\n"
+                    "See above for the full error from SQLAlchemy."
+                )
+                sys.exit(1)
+        create_alembic_version_table(self.engine, self.db_type)
+        print("Database tables were created by DataStore's initialisation.")
 
     @contextmanager
     def session_scope(self):

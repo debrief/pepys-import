@@ -15,8 +15,8 @@ class TestStateSpeedProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_state_speed_none(self):
         state = self.store.db_classes.State()
@@ -69,8 +69,8 @@ class TestStateHeadingProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_state_heading_none(self):
         state = self.store.db_classes.State()
@@ -121,8 +121,8 @@ class TestStateCourseProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_state_course_none(self):
         state = self.store.db_classes.State()
@@ -173,8 +173,8 @@ class TestContactBearingProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_contact_bearing_none(self):
         contact = self.store.db_classes.Contact()
@@ -225,8 +225,8 @@ class TestContactRelBearingProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_contact_rel_bearing_none(self):
         contact = self.store.db_classes.Contact()
@@ -279,8 +279,8 @@ class TestContactAmbigBearingProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_contact_ambig_bearing_none(self):
         contact = self.store.db_classes.Contact()
@@ -333,8 +333,8 @@ class TestContactMLAProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_contact_mla_none(self):
         contact = self.store.db_classes.Contact()
@@ -385,8 +385,8 @@ class TestContactSLAProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_contact_soa_none(self):
         contact = self.store.db_classes.Contact()
@@ -439,8 +439,8 @@ class TestContactOrientationProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_contact_orientation_none(self):
         contact = self.store.db_classes.Contact()
@@ -491,8 +491,8 @@ class TestContactMajorProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_contact_major_none(self):
         contact = self.store.db_classes.Contact()
@@ -543,8 +543,8 @@ class TestContactMinorProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_contact_minor_none(self):
         contact = self.store.db_classes.Contact()
@@ -595,8 +595,8 @@ class TestContactRangeProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_contact_range_none(self):
         contact = self.store.db_classes.Contact()
@@ -647,8 +647,8 @@ class TestContactFreqProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_contact_freq_none(self):
         contact = self.store.db_classes.Contact()
@@ -703,8 +703,8 @@ class TestElevationProperty:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     @pytest.mark.parametrize(
         "class_name", CLASSES_WITH_ELEVATION,
@@ -779,8 +779,8 @@ class TestLocationProperty:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     @pytest.mark.parametrize(
         "class_name", CLASSES_WITH_LOCATION,
@@ -852,8 +852,8 @@ class TestActivationMinRangeProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_activation_min_range_none(self):
         activation = self.store.db_classes.Activation()
@@ -906,8 +906,8 @@ class TestActivationMaxRangeProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_activation_max_range_none(self):
         activation = self.store.db_classes.Activation()
@@ -960,8 +960,8 @@ class TestActivationLeftArcProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_activation_left_arc_none(self):
         activation = self.store.db_classes.Activation()
@@ -1012,8 +1012,8 @@ class TestActivationRightArcProperty(unittest.TestCase):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_activation_right_arc_none(self):
         activation = self.store.db_classes.Activation()
@@ -1127,8 +1127,8 @@ class TestLocationRoundtripToDB(unittest.TestCase):
         self.parser = TestParser()
         self.file.measurements[self.parser.short_name] = dict()
 
-    def tearDown(self) -> None:
-        self.store.engine.dispose()
+    def tearDown(self):
+        pass
 
     def test_location_roundtrip_to_db(self):
         with self.store.session_scope():
