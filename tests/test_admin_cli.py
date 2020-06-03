@@ -90,7 +90,7 @@ class AdminCLITestCase(unittest.TestCase):
         output = temp_output.getvalue()
 
         states_text = "| States       |              738 |"
-        contacts_text = "| Contacts     |               15 |"
+        contacts_text = "| Contacts     |              110 |"
         comments_text = "| Comments     |                7 |"
         datafiles_text = "| Datafiles    |                8 |"
         assert states_text in output
