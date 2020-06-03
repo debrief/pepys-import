@@ -474,6 +474,8 @@ class CommandLineResolver(DataResolver):
 
         :param data_store: A :class:`DataStore` object
         :type data_store: DataStore
+        :param identifier: Identifier string
+        :type identifier: String
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
         :param nationality: Name of :class:`Nationality`

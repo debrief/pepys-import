@@ -313,7 +313,8 @@ class PlatformTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             platform = self.store.get_platform(
-                "PLATFORM-1",
+                platform_name="PLATFORM-1",
+                identifier="123",
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
@@ -338,7 +339,7 @@ class PlatformTestCase(unittest.TestCase):
 
         # Search "PLATFORM-1"->Select "No"->Type name/trigraph/quadgraph/idedntification->Select "Yes"
         menu_prompt.side_effect = ["PLATFORM-1", "2", "1"]
-        resolver_prompt.side_effect = ["TEST", "TST", "TEST", "123"]
+        resolver_prompt.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id)
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
@@ -397,7 +398,7 @@ class PlatformTestCase(unittest.TestCase):
             "PRIVACY-1",
             "1",
         ]
-        resolver_platform.side_effect = ["TEST", "TST", "TEST", "123"]
+        resolver_platform.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
             self.store.add_to_privacies("PRIVACY-1", self.change_id)
             self.store.add_to_platform_types("Warship", self.change_id)
@@ -438,9 +439,9 @@ class PlatformTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["2", "2", "2", "2", "1"]
         resolver_prompt.side_effect = [
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
             "UK",
             "Warship",
             "PRIVACY-1",
@@ -492,13 +493,13 @@ class PlatformTestCase(unittest.TestCase):
         ]
         resolver_prompt.side_effect = [
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
         ]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
@@ -668,6 +669,7 @@ class SensorTestCase(unittest.TestCase):
 
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -701,6 +703,7 @@ class SensorTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -748,6 +751,7 @@ class SensorTestCase(unittest.TestCase):
 
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
@@ -794,6 +798,7 @@ class SensorTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -835,6 +840,7 @@ class SensorTestCase(unittest.TestCase):
 
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -866,6 +872,7 @@ class SensorTestCase(unittest.TestCase):
 
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -880,6 +887,7 @@ class SensorTestCase(unittest.TestCase):
             )
             platform_2 = self.store.get_platform(
                 platform_name="Test Platform 2",
+                identifier="234",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -929,6 +937,7 @@ class SensorTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -969,6 +978,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -992,7 +1002,8 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             self.store.get_platform(
-                "PLATFORM-1",
+                platform_name="PLATFORM-1",
+                identifier="123",
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
@@ -1014,6 +1025,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -1070,15 +1082,15 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             "PRIVACY-1",
         ]
         with self.store.session_scope():
-            # Type name/trigraph/quadgraph/identification->Select "Cancel nationality search"->
+            # Type name/trigraph/quadgraph/identifier->Select "Cancel nationality search"->
             # Select "Cancel import"
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
-            # Type name/trigraph/quadgraph/identification->Select "Add new nationality"->Type "UK"->
+            # Type name/trigraph/quadgraph/identifier->Select "Add new nationality"->Type "UK"->
             # Select "Cancel platform type search"->Select "Cancel import"
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
-            # Type name/trigraph/quadgraph/identification->Select "Add new nationality"->Type "UK"->
+            # Type name/trigraph/quadgraph/identifier->Select "Add new nationality"->Type "UK"->
             # Select "Add a new platform type"->Type "TYPE-1"->Select "Cancel classification search"->
             # Select "Cancel import"
             with self.assertRaises(SystemExit):
@@ -1107,6 +1119,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,

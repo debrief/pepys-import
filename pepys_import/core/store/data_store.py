@@ -348,12 +348,12 @@ class DataStore:
     def add_to_platforms(
         self,
         name,
+        identifier,
         nationality,
         platform_type,
         privacy,
         trigraph=None,
         quadgraph=None,
-        identifier=None,
         change_id=None,
     ):
         """
@@ -673,12 +673,12 @@ class DataStore:
     def get_platform(
         self,
         platform_name=None,
+        identifier=None,
         nationality=None,
         platform_type=None,
         privacy=None,
         trigraph=None,
         quadgraph=None,
-        identifier=None,
         change_id=None,
     ):
         """
@@ -716,6 +716,7 @@ class DataStore:
 
         if (
             platform_name is None
+            or identifier is None
             or nationality_obj is None
             or platform_type_obj is None
             or privacy_obj is None
