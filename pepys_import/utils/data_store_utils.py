@@ -62,40 +62,6 @@ def create_spatial_tables_for_postgres(engine):
         connection.execute(query)
 
 
-def create_alembic_version_table(engine, db_type):
-    if db_type == "sqlite":
-        create_table = """
-            CREATE TABLE IF NOT EXISTS alembic_version
-            (
-                version_num VARCHAR(32) NOT NULL,
-                CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
-            );
-        """
-        insert_value = """
-            INSERT INTO alembic_version (version_num)
-            SELECT '07e4b725c547'
-            WHERE NOT EXISTS(SELECT 1 FROM alembic_version WHERE version_num = '07e4b725c547');
-        """
-    else:
-        create_table = """
-            CREATE TABLE IF NOT EXISTS pepys.alembic_version
-            (
-                version_num VARCHAR(32) NOT NULL,
-                CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
-            );
-        """
-        insert_value = """
-            INSERT INTO pepys.alembic_version (version_num) 
-            SELECT '6f625922f61c'
-            WHERE NOT EXISTS(
-                SELECT '6f625922f61c' FROM pepys.alembic_version WHERE version_num = '6f625922f61c'
-            );
-        """
-    with engine.connect() as connection:
-        connection.execute(create_table)
-        connection.execute(insert_value)
-
-
 def cache_results_if_not_none(cache_attribute):
     def real_decorator(f):
         def helper(self, name):
