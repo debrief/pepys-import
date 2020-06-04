@@ -340,7 +340,7 @@ class DataStorePopulateMissingData(TestCase):
             assert "  Error was 'Privacy is invalid/missing'" in output
 
             assert (
-                "Error importing row ['PLATFORM-2', 'MissingNationality', 'PLATFORM-TYPE-2', 'PRIVACY-2'] from Platforms.csv"
+                "Error importing row ['PLATFORM-2', '234', 'MissingNationality', 'PLATFORM-TYPE-2', 'PRIVACY-2'] from Platforms.csv"
                 in output
             )
             assert "  Error was 'Nationality is invalid/missing'" in output

@@ -31,7 +31,7 @@ class MissingFieldsTestCase(unittest.TestCase):
                     privacy="PRIVACY-1",
                     trigraph="TPL",
                     quadgraph="TPLT",
-                    pennant_number="123",
+                    identifier="123",
                     change_id=self.change_id,
                 )
 
@@ -43,7 +43,7 @@ class MissingFieldsTestCase(unittest.TestCase):
                     privacy="PRIVACY-1",
                     trigraph="TPL",
                     quadgraph="TPLT",
-                    pennant_number="123",
+                    identifier="123",
                     change_id=self.change_id,
                 )
 
@@ -55,7 +55,7 @@ class MissingFieldsTestCase(unittest.TestCase):
                     privacy="MissingPrivacy",
                     trigraph="TPL",
                     quadgraph="TPLT",
-                    pennant_number="123",
+                    identifier="123",
                     change_id=self.change_id,
                 )
 
@@ -67,7 +67,7 @@ class MissingFieldsTestCase(unittest.TestCase):
                 privacy="PRIVACY-1",
                 trigraph="TPL",
                 quadgraph="TPLT",
-                pennant_number="123",
+                identifier="123",
                 change_id=self.change_id,
             )
 
@@ -79,7 +79,7 @@ class MissingFieldsTestCase(unittest.TestCase):
             privacy="PRIVACY-1",
             trigraph="TPL",
             quadgraph="TPLT",
-            pennant_number="123",
+            identifier="123",
             change_id=self.change_id,
         )
 
