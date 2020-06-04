@@ -81,7 +81,7 @@ class Platform(BasePostGIS, PlatformMixin):
 
     platform_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
-    pennant = deferred(Column(String(10)))
+    identifier = deferred(Column(String(10), nullable=False))
     trigraph = deferred(Column(String(3)))
     quadgraph = deferred(Column(String(4)))
     nationality_id = Column(
