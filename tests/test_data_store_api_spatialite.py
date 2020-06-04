@@ -3,6 +3,8 @@ import unittest
 from datetime import datetime
 from unittest import TestCase
 
+import pytest
+
 from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
@@ -743,6 +745,19 @@ class MeasurementsTestCase(TestCase):
                 self.file.commit(self.store, self.change_id)
                 comments = self.store.session.query(self.store.db_classes.Comment).all()
                 self.assertEqual(len(comments), 1)
+
+
+class SynonymsTestCase(TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def test_create_invalid_synonym(self):
+        with pytest.raises(Exception):
+            self.store.add_to_synonyms("Sensors", "TestName", "TestEntity", "TestChangeID")
+
+        with pytest.raises(Exception):
+            self.store.add_to_synonyms("GeometrySubTypes", "TestName", "TestEntity", "TestChangeID")
 
 
 if __name__ == "__main__":
