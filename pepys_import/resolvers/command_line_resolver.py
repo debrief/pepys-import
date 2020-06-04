@@ -425,6 +425,7 @@ class CommandLineResolver(DataResolver):
                 validate_method=is_valid,
             )
             if new_choice == str(1):
+                # TODO: FIX THIS - should search by host_id here too!
                 sensor = (
                     data_store.session.query(data_store.db_classes.Sensor)
                     .filter(data_store.db_classes.Sensor.name == choice)
@@ -473,6 +474,8 @@ class CommandLineResolver(DataResolver):
 
         :param data_store: A :class:`DataStore` object
         :type data_store: DataStore
+        :param identifier: Identifier string
+        :type identifier: String
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
         :param nationality: Name of :class:`Nationality`
@@ -489,9 +492,9 @@ class CommandLineResolver(DataResolver):
         if platform_name is None:
             platform_name = ""
         platform_name = prompt("Please enter a name: ", default=platform_name)
+        identifier = prompt("Please enter identifier (pennant or tail number): ")
         trigraph = prompt("Please enter trigraph (optional): ", default=platform_name[:3])
         quadgraph = prompt("Please enter quadgraph (optional): ", default=platform_name[:4])
-        pennant_number = prompt("Please enter pennant number (optional): ")
 
         # Choose Nationality
         if nationality:
@@ -542,7 +545,7 @@ class CommandLineResolver(DataResolver):
         print(f"Name: {platform_name}")
         print(f"Trigraph: {trigraph}")
         print(f"Quadgraph: {quadgraph}")
-        print(f"Pennant Number: {pennant_number}")
+        print(f"Identifier: {identifier}")
         print(f"Nationality: {chosen_nationality.name}")
         print(f"Class: {chosen_platform_type.name}")
         print(f"Classification: {chosen_privacy.name}")
@@ -556,7 +559,7 @@ class CommandLineResolver(DataResolver):
                 platform_name,
                 trigraph,
                 quadgraph,
-                pennant_number,
+                identifier,
                 chosen_platform_type,
                 chosen_nationality,
                 chosen_privacy,

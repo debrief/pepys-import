@@ -313,7 +313,8 @@ class PlatformTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             platform = self.store.get_platform(
-                "PLATFORM-1",
+                platform_name="PLATFORM-1",
+                identifier="123",
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
@@ -336,9 +337,9 @@ class PlatformTestCase(unittest.TestCase):
     def test_fuzzy_search_add_new_platform(self, resolver_prompt, menu_prompt):
         """Test whether a new platform entity is created or not"""
 
-        # Search "PLATFORM-1"->Select "No"->Type name/trigraph/quadgraph/pennant number->Select "Yes"
+        # Search "PLATFORM-1"->Select "No"->Type name/trigraph/quadgraph/idedntification->Select "Yes"
         menu_prompt.side_effect = ["PLATFORM-1", "2", "1"]
-        resolver_prompt.side_effect = ["TEST", "TST", "TEST", "123"]
+        resolver_prompt.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id)
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
@@ -347,7 +348,7 @@ class PlatformTestCase(unittest.TestCase):
                 "PLATFORM-1",
                 trigraph="PL1",
                 quadgraph="PLT1",
-                pennant_number="123",
+                identifier="123",
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
@@ -358,7 +359,7 @@ class PlatformTestCase(unittest.TestCase):
                 platform_name,
                 trigraph,
                 quadgraph,
-                pennant_number,
+                identifier,
                 platform_type,
                 nationality,
                 privacy,
@@ -374,7 +375,7 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(platform_name, "TEST")
             self.assertEqual(trigraph, "TST")
             self.assertEqual(quadgraph, "TEST")
-            self.assertEqual(pennant_number, "123")
+            self.assertEqual(identifier, "123")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
@@ -382,7 +383,7 @@ class PlatformTestCase(unittest.TestCase):
         """Test whether correct entities return when fuzzy search for platform type, nationality
         and privacy are called"""
 
-        # Select "Search for existing platform"->Type "TEST"->Type name/trigraph/quadgraph/pennant number
+        # Select "Search for existing platform"->Type "TEST"->Type name/trigraph/quadgraph/identifier
         # ->Select "Search for an existing nationality"->Select "UK"->Select "Search for an existing
         # platform type"->Select "Warship"->Select "Search for an existing classification"->Select
         # "PRIVACY-1"->Select "Yes"
@@ -397,7 +398,7 @@ class PlatformTestCase(unittest.TestCase):
             "PRIVACY-1",
             "1",
         ]
-        resolver_platform.side_effect = ["TEST", "TST", "TEST", "123"]
+        resolver_platform.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
             self.store.add_to_privacies("PRIVACY-1", self.change_id)
             self.store.add_to_platform_types("Warship", self.change_id)
@@ -406,7 +407,7 @@ class PlatformTestCase(unittest.TestCase):
                 platform_name,
                 trigraph,
                 quadgraph,
-                pennant_number,
+                identifier,
                 platform_type,
                 nationality,
                 privacy,
@@ -421,7 +422,7 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(platform_name, "TEST")
             self.assertEqual(trigraph, "TST")
             self.assertEqual(quadgraph, "TEST")
-            self.assertEqual(pennant_number, "123")
+            self.assertEqual(identifier, "123")
             self.assertEqual(platform_type.name, "Warship")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "PRIVACY-1")
@@ -432,15 +433,15 @@ class PlatformTestCase(unittest.TestCase):
         """Test whether new platform type, nationality and privacy entities are created for Platform
          or not"""
 
-        # Select "Add a new platform"->Type name/trigraph/quadgraph/pennant number->Select
+        # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select
         # "Add a new nationality"->Select "UK"->Select "Add a new platform type"->Select "Warship
         # ->Select "Add a new classification"->Select "PRIVACY-1"->Select "Yes"
         menu_prompt.side_effect = ["2", "2", "2", "2", "1"]
         resolver_prompt.side_effect = [
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
             "UK",
             "Warship",
             "PRIVACY-1",
@@ -450,7 +451,7 @@ class PlatformTestCase(unittest.TestCase):
                 platform_name,
                 trigraph,
                 quadgraph,
-                pennant_number,
+                identifier,
                 platform_type,
                 nationality,
                 privacy,
@@ -465,7 +466,7 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(platform_name, "TEST")
             self.assertEqual(trigraph, "TST")
             self.assertEqual(quadgraph, "TEST")
-            self.assertEqual(pennant_number, "123")
+            self.assertEqual(identifier, "123")
             self.assertEqual(platform_type.name, "Warship")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "PRIVACY-1")
@@ -475,8 +476,8 @@ class PlatformTestCase(unittest.TestCase):
     def test_resolver_platform_edit_given_values(self, resolver_prompt, menu_prompt):
         """Test a new platform is created after make further edits option is selected"""
 
-        # Select "Add a new platform"->Type name/trigraph/quadgraph/pennant number->Select "No"->
-        # Type name/trigraph/quadgraph/pennant number->Select "Search for an existing nationality"
+        # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select "No"->
+        # Type name/trigraph/quadgraph/identifier->Select "Search for an existing nationality"
         # ->Select "UK"->Select "Search for an existing platform type"->Select "Warship"->Select
         # "Search for an existing classification"->Select "PRIVACY-1"->Select "Yes"
         menu_prompt.side_effect = [
@@ -492,13 +493,13 @@ class PlatformTestCase(unittest.TestCase):
         ]
         resolver_prompt.side_effect = [
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
         ]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
@@ -508,7 +509,7 @@ class PlatformTestCase(unittest.TestCase):
                 platform_name,
                 trigraph,
                 quadgraph,
-                pennant_number,
+                identifier,
                 platform_type,
                 nationality,
                 privacy,
@@ -523,7 +524,7 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(platform_name, "TEST")
             self.assertEqual(trigraph, "TST")
             self.assertEqual(quadgraph, "TEST")
-            self.assertEqual(pennant_number, "123")
+            self.assertEqual(identifier, "123")
             self.assertEqual(platform_type.name, "Warship")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "PRIVACY-1")
@@ -668,6 +669,7 @@ class SensorTestCase(unittest.TestCase):
 
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -701,6 +703,7 @@ class SensorTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -748,6 +751,7 @@ class SensorTestCase(unittest.TestCase):
 
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
@@ -794,6 +798,7 @@ class SensorTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -835,6 +840,7 @@ class SensorTestCase(unittest.TestCase):
 
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -866,6 +872,7 @@ class SensorTestCase(unittest.TestCase):
 
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -880,6 +887,7 @@ class SensorTestCase(unittest.TestCase):
             )
             platform_2 = self.store.get_platform(
                 platform_name="Test Platform 2",
+                identifier="234",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -929,6 +937,7 @@ class SensorTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -969,6 +978,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -992,7 +1002,8 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             self.store.get_platform(
-                "PLATFORM-1",
+                platform_name="PLATFORM-1",
+                identifier="123",
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
@@ -1014,6 +1025,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
@@ -1070,20 +1082,20 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             "PRIVACY-1",
         ]
         with self.store.session_scope():
-            # Type name/trigraph/quadgraph/pennant number->Select "Cancel nationality search"->
+            # Type name/trigraph/quadgraph/identifier->Select "Cancel nationality search"->
             # Select "Cancel import"
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
-            # Type name/trigraph/quadgraph/pennant number->Select "Add new nationality"->Type "UK"->
+            # Type name/trigraph/quadgraph/identifier->Select "Add new nationality"->Type "UK"->
             # Select "Cancel platform type search"->Select "Cancel import"
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
-            # Type name/trigraph/quadgraph/pennant number->Select "Add new nationality"->Type "UK"->
+            # Type name/trigraph/quadgraph/identifier->Select "Add new nationality"->Type "UK"->
             # Select "Add a new platform type"->Type "TYPE-1"->Select "Cancel classification search"->
             # Select "Cancel import"
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
-            # Type name/trigraph/quadgraph/pennant number->Select "Add new nationality"->Type "UK"->
+            # Type name/trigraph/quadgraph/identification->Select "Add new nationality"->Type "UK"->
             # Select "Add a new platform type"->Select "Add new classification"->Type "PRIVACY-1"->Type
             # "TYPE-1"->Select "Cancel import"->Select "Cancel import"
             with self.assertRaises(SystemExit):
@@ -1107,6 +1119,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
+                identifier="123",
                 nationality=nationality,
                 platform_type=platform_type,
                 privacy=privacy,
