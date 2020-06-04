@@ -794,7 +794,6 @@ class SnapshotPostgresTestCase(unittest.TestCase):
             )
             change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "test").change_id
             self.store.add_to_synonyms("Platforms", "test", entity=platform_id, change_id=change_id)
-            self.store.add_to_synonyms("Sensors", "test-2", entity=sensor_id, change_id=change_id)
 
         self.shell = SnapshotShell(self.store)
 
@@ -844,9 +843,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
             results = results.fetchall()
             table_dict = {row[1]: row[3] for row in results}
             assert "Platforms" in table_dict.keys()
-            assert "Sensors" in table_dict.keys()
             assert "test" in table_dict.values()
-            assert "test-2" in table_dict.values()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
@@ -954,7 +951,6 @@ class SnapshotShellTestCase(unittest.TestCase):
             )
             change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "test").change_id
             self.store.add_to_synonyms("Platforms", "test", entity=platform_id, change_id=change_id)
-            self.store.add_to_synonyms("Sensors", "test-2", entity=sensor_id, change_id=change_id)
 
         self.shell = SnapshotShell(self.store)
 
@@ -1004,9 +1000,7 @@ class SnapshotShellTestCase(unittest.TestCase):
             results = results.fetchall()
             table_dict = {row[1]: row[3] for row in results}
             assert "Platforms" in table_dict.keys()
-            assert "Sensors" in table_dict.keys()
             assert "test" in table_dict.values()
-            assert "test-2" in table_dict.values()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
