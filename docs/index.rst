@@ -36,6 +36,7 @@ full Pepys documentation.
    getting_started
    usage
    configuration
+   csv_import
    developer_guide
    deployment
    Source documentation <modules>
