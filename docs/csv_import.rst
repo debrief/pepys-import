@@ -15,8 +15,9 @@ make sure you know the full path to the folder of CSV files to be imported - it 
 
 3. Press :code:`1` followed by *Enter* to select the :code:`Initialise/Clear` option.
 
-4. **WARNING: This step will delete all data in the Pepys database.** Please check this is what you
-   want before doing this! Press :code:`2` followed by *Enter* to select the :code:`Clear database schema`
+4. **WARNING: Only perform this step if you intend to delete all data in the Pepys database.** 
+   This step is not necessary if new reference/metadata entries are being added to an existing database.
+   Press :code:`2` followed by *Enter* to select the :code:`Clear database schema`
    option.
 
 5. Press :code:`0` followed by *Enter*, and then :code:`0` followed by *Enter* again to exit Pepys Admin.
