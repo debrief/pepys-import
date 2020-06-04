@@ -4,8 +4,11 @@ from uuid import uuid4
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
     deferred,
+    relationship,
 )
 
 from pepys_import.core.store import constants
@@ -430,6 +433,23 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    @declared_attr
+    def platform(self):
+        return relationship(
+            "Platform",
+            secondary="pepys.Sensors",
+            primaryjoin="State.sensor_id == Sensor.sensor_id",
+            secondaryjoin="Platform.platform_id == Sensor.host",
+            lazy="joined",
+            join_depth=1,
+            uselist=False,
+            viewonly=True,
+        )
+
+    @declared_attr
+    def platform_name(self):
+        return association_proxy("platform", "name")
+
 
 class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
     __tablename__ = constants.CONTACT
@@ -468,6 +488,23 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    @declared_attr
+    def platform(self):
+        return relationship(
+            "Platform",
+            secondary="pepys.Sensors",
+            primaryjoin="Contact.sensor_id == Sensor.sensor_id",
+            secondaryjoin="Platform.platform_id == Sensor.host",
+            lazy="joined",
+            join_depth=1,
+            uselist=False,
+            viewonly=True,
+        )
+
+    @declared_attr
+    def platform_name(self):
+        return association_proxy("platform", "name")
 
 
 class Activation(BasePostGIS, ActivationMixin):

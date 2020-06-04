@@ -336,9 +336,12 @@ class DatafileMixin:
         later, if the full import succeeds.
         """
         state = data_store.db_classes.State(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id, sensor=sensor
+            sensor_id=sensor.sensor_id,
+            time=timestamp,
+            source_id=self.datafile_id,
+            sensor=sensor,
+            platform=platform,
         )
-        state.platform_name = platform.name
         self.add_measurement_to_dict(state, parser_name)
         return state
 
@@ -365,9 +368,12 @@ class DatafileMixin:
         later, if the full import succeeds.
         """
         contact = data_store.db_classes.Contact(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id, sensor=sensor
+            sensor_id=sensor.sensor_id,
+            time=timestamp,
+            source_id=self.datafile_id,
+            sensor=sensor,
+            platform=platform,
         )
-        contact.platform_name = platform.name
         self.add_measurement_to_dict(contact, parser_name)
         return contact
 
@@ -537,14 +543,6 @@ class StateMixin:
     def sensor_name(self):
         return association_proxy("sensor", "name")
 
-    @hybrid_property
-    def platform_name(self):
-        return self._platform_name
-
-    @platform_name.setter
-    def platform_name(self, platform_name):
-        self._platform_name = platform_name
-
     @declared_attr
     def source(self):
         return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
@@ -680,14 +678,6 @@ class ContactMixin:
     @declared_attr
     def sensor_name(self):
         return association_proxy("sensor", "name")
-
-    @hybrid_property
-    def platform_name(self):
-        return self._platform_name
-
-    @platform_name.setter
-    def platform_name(self, platform_name):
-        self._platform_name = platform_name
 
     @declared_attr
     def subject(self):
