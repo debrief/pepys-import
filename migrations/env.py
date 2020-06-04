@@ -202,15 +202,20 @@ def include_geoalchemy2(filename, options):
         to_write.writelines(lines)
 
 
-@write_hooks.register("stamp_revision")
-def stamp_revision(filename, options):
+@write_hooks.register("update_latest_revision")
+def update_latest_revision(filename, options):
     with open(filename) as file_:
         lines = file_.readlines()
 
-    with open(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"), "r") as json_file:
+    # Load json file
+    json_file_path = os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json")
+    with open(json_file_path, "r") as json_file:
         data = json.load(json_file)
 
     for line in lines:
+        # If line has revision variable, i.e. revision = "bcff0ccb4fbd", remove new line
+        # character and quote marks, split line into two parts: ('', 'bcff0ccb4fbd'), obtain the
+        # second element
         if line.startswith("revision = "):
             split_tokens = line.replace("\n", "").replace('"', "").split("revision = ")
             revision_id = split_tokens[1]
@@ -220,8 +225,6 @@ def stamp_revision(filename, options):
     else:
         data["LATEST_SQLITE_VERSION"] = revision_id
 
-    with open(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"), "w") as json_file:
+    # Dump updated json
+    with open(json_file_path, "w") as json_file:
         json.dump(data, json_file, indent=4)
-
-    with open(filename, "w") as to_write:
-        to_write.writelines(lines)
