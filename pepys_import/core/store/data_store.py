@@ -400,6 +400,10 @@ class DataStore:
         return platform_obj
 
     def add_to_synonyms(self, table, name, entity, change_id):
+        # Blacklist certain tables, and don't Synonyms for them be created
+        if table in ["Sensors", "GeometrySubTypes"]:
+            raise Exception(f"Synonyms are not allowed for table {table}")
+
         # enough info to proceed and create entry
         synonym = self.db_classes.Synonym(table=table, synonym=name, entity=entity)
         self.session.add(synonym)
