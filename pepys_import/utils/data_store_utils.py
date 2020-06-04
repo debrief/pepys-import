@@ -11,6 +11,8 @@ def import_from_csv(data_store, path, files, change_id):
     for file in sorted(files):
         # split file into filename and extension
         table_name, _ = os.path.splitext(file)
+        if table_name.lower() == "synonyms":
+            import_synonyms(data_store, os.path.join(path, file), change_id)
         possible_method = "add_to_" + table_name.lower().replace(" ", "_")
         method_to_call = getattr(data_store, possible_method, None)
         if method_to_call:
@@ -23,6 +25,59 @@ def import_from_csv(data_store, path, files, change_id):
                     method_to_call(**keyword_arguments, change_id=change_id)
         else:
             print(f"Method({possible_method}) not found!")
+
+
+def import_synonyms(data_store, filepath, change_id):
+    with open(filepath, "r") as file_object:
+        reader = csv.reader(file_object)
+        # extract header
+        header = next(reader)
+        # For every row in the CSV
+        for row in reader:
+            values = dict(zip(header, row))
+
+            # Search in the given table for the name
+            class_name = table_name_to_class_name(values["table"])
+
+            try:
+                db_class = getattr(data_store.db_classes, class_name)
+            except AttributeError:
+                print(f"Error on row {row}")
+                print(f"  Invalid table name {values['table']}")
+                continue
+
+            try:
+                name_col = db_class.name
+            except AttributeError:
+                print(f"Error on row {row}")
+                print(f"  Cannot find name column for table {values['table']}")
+                continue
+
+            results = data_store.session.query(db_class).filter(name_col == values["name"]).all()
+
+            if len(results) == 0:
+                # Nothing to link synonym to so give error
+                print(f"Error on row {row}")
+                print(f"  Name '{values['name']}' is not found in table {values['table']}")
+                continue
+            elif len(results) == 1:
+                pri_key_column_name = db_class.__table__.primary_key.columns.values()[0].name
+                guid = getattr(results[0], pri_key_column_name)
+                # Found one entry, so can create synonym
+                data_store.add_to_synonyms(values["table"], values["synonym"], guid, change_id)
+            elif len(results) > 1:
+                # Found more than one entry, so can't automatically link, so give error
+                # TODO: Extend this to ask the user which one to link to
+                print(f"Error on row {row}")
+                print(f"  Name '{values['name']}' occurs multiple times in table {values['table']}")
+                continue
+
+
+def table_name_to_class_name(table_name):
+    if table_name.endswith("ies"):
+        return table_name[:-3] + "y"
+    elif table_name.endswith("s"):
+        return table_name[:-1]
 
 
 def is_schema_created(engine, db_type):
