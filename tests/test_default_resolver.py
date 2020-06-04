@@ -43,12 +43,12 @@ class DefaultResolverTestCase(unittest.TestCase):
             # Create a platform for it to belong to
             platform_obj = self.store.add_to_platforms(
                 "TestPlatform",
+                "1234",
                 "United Kingdom",
                 "Fisher",
                 "Private",
                 trigraph="PLT",
                 quadgraph="PLTT",
-                pennant_number=1234,
                 change_id=self.change_id,
             )
 
@@ -96,7 +96,7 @@ class DefaultResolverTestCase(unittest.TestCase):
                 platform_name,
                 trigraph,
                 quadgraph,
-                pennant_number,
+                identifier,
                 platform_type,
                 nationality,
                 privacy,
@@ -111,14 +111,12 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(platform_name, "PLATFORM-1")
             self.assertEqual(trigraph, "PL1")
             self.assertEqual(quadgraph, "PLT1")
-            self.assertEqual(pennant_number, "123")
+            self.assertEqual(identifier, "123")
             self.assertEqual(platform_type.name, "Warship")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "PRIVACY-1")
 
     def test_resolve_platform_gives_platform_object_when_called_twice(self):
-        Platform = self.store.db_classes.Platform
-
         with self.store.session_scope():
             # Call it first time
             result = self.resolver.resolve_platform(
@@ -134,7 +132,7 @@ class DefaultResolverTestCase(unittest.TestCase):
                 platform_name,
                 trigraph,
                 quadgraph,
-                pennant_number,
+                identifier,
                 platform_type,
                 nationality,
                 privacy,
@@ -145,7 +143,7 @@ class DefaultResolverTestCase(unittest.TestCase):
                 name=platform_name,
                 trigraph=trigraph,
                 quadgraph=quadgraph,
-                pennant_number=pennant_number,
+                identifier=identifier,
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
