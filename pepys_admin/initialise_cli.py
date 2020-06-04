@@ -13,7 +13,7 @@ class InitialiseShell(cmd.Cmd):
 (3) Create Pepys schema
 (4) Import Reference data
 (5) Import Metadata
-(0) Exit
+(0) Back
 """
     prompt = "(initialise) "
 
@@ -41,9 +41,6 @@ class InitialiseShell(cmd.Cmd):
         print("Cleared database contents")
 
     def do_clear_db_schema(self):
-        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
-            return
-
         self.data_store.clear_db_schema()
         print("Cleared database schema")
 

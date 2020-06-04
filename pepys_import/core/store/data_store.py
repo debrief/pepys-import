@@ -25,7 +25,7 @@ from pepys_import.utils.data_store_utils import (
     create_spatial_tables_for_sqlite,
     import_from_csv,
 )
-from pepys_import.utils.geoalchemy_utils import load_spatialite
+from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_keys_on
 from pepys_import.utils.value_transforming_utils import format_datetime
 
 from .db_base import BasePostGIS, BaseSpatiaLite
@@ -81,6 +81,7 @@ class DataStore:
             elif db_type == "sqlite":
                 self.engine = create_engine(connection_string, echo=False)
                 listen(self.engine, "connect", load_spatialite)
+                listen(self.engine, "connect", set_sqlite_foreign_keys_on)
                 BaseSpatiaLite.metadata.bind = self.engine
         except ArgumentError as e:
             print(
@@ -867,7 +868,7 @@ class DataStore:
 
         return platform_type
 
-    def add_to_nationalities(self, name, change_id):
+    def add_to_nationalities(self, name, change_id, priority=None):
         """
         Adds the specified nationality to the nationalities table if not already present
 
@@ -875,6 +876,8 @@ class DataStore:
         :type name: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
+        :param priority: Priority to print in defaults of CLI
+        :type priority: Integer
         :return: Created :class:`Nationality` entity
         :rtype: Nationality
         """
@@ -884,6 +887,8 @@ class DataStore:
 
         # enough info to proceed and create entry
         nationality = self.db_classes.Nationality(name=name)
+        if priority:
+            nationality.priority = priority
         self.session.add(nationality)
         self.session.flush()
 
@@ -1027,16 +1032,12 @@ class DataStore:
         """Delete the database schema (ie all of the tables)"""
         if self.db_type == "sqlite":
             meta = BaseSpatiaLite.metadata
+            with self.session_scope():
+                meta.drop_all()
+                self.session.execute("DROP TABLE IF EXISTS alembic_version;")
         else:
-            meta = BasePostGIS.metadata
-
-        with self.session_scope():
-            meta.drop_all()
-        with self.engine.connect() as connection:
-            if self.db_type == "sqlite":
-                connection.execute("DROP TABLE alembic_version;")
-            else:
-                connection.execute('DROP TABLE pepys."alembic_version";')
+            with self.engine.connect() as connection:
+                connection.execute('DROP SCHEMA IF EXISTS "pepys" CASCADE;')
 
     def get_all_datafiles(self):
         """Returns all datafiles.

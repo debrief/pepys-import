@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime
+from uuid import uuid4
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.resolvers.default_resolver import DefaultResolver
@@ -28,7 +29,7 @@ class DefaultResolverTestCase(unittest.TestCase):
                 sensor_name=None,
                 sensor_type=None,
                 privacy=None,
-                host_id=1,
+                host_id=uuid4(),
                 change_id=self.change_id,
             )
             self.assertEqual(sensor_name, "SENSOR-1")
@@ -42,7 +43,7 @@ class DefaultResolverTestCase(unittest.TestCase):
             # Create a platform for it to belong to
             platform_obj = self.store.add_to_platforms(
                 "TestPlatform",
-                "UK",
+                "United Kingdom",
                 "Fisher",
                 "Private",
                 trigraph="PLT",

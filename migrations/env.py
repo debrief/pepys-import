@@ -17,7 +17,7 @@ from pepys_import.utils.data_store_utils import (
     create_spatial_tables_for_sqlite,
     is_schema_created,
 )
-from pepys_import.utils.geoalchemy_utils import load_spatialite
+from pepys_import.utils.sqlite_utils import load_spatialite
 
 DIR_PATH = os.path.dirname(__file__)
 
@@ -107,6 +107,7 @@ def run_migrations_offline():
             dialect_opts={"paramstyle": "named"},
             include_object=include_object_sqlite,
             render_as_batch=True,
+            compare_type=True,
         )
     else:
         context.configure(
@@ -118,6 +119,7 @@ def run_migrations_offline():
             include_schemas=True,
             include_object=include_object_postgres,
             render_as_batch=True,
+            compare_type=True,
         )
     with context.begin_transaction():
         context.run_migrations()
@@ -164,6 +166,7 @@ def run_migrations_online():
                 include_object=include_object_postgres,
                 render_as_batch=True,
                 process_revision_directives=process_revision_directives,
+                compare_type=True,
             )
             with context.begin_transaction():
                 context.execute("SET search_path TO pepys,public")
@@ -175,6 +178,7 @@ def run_migrations_online():
                 include_object=include_object_sqlite,
                 render_as_batch=True,
                 process_revision_directives=process_revision_directives,
+                compare_type=True,
             )
             with context.begin_transaction():
                 context.run_migrations()
