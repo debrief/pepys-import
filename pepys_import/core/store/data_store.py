@@ -348,12 +348,12 @@ class DataStore:
     def add_to_platforms(
         self,
         name,
+        identifier,
         nationality,
         platform_type,
         privacy,
         trigraph=None,
         quadgraph=None,
-        pennant_number=None,
         change_id=None,
     ):
         """
@@ -371,8 +371,8 @@ class DataStore:
         :type trigraph: String
         :param quadgraph: Quadgraph of :class:`Platform`
         :type quadgraph: String
-        :param pennant_number: Pennant number of :class:`Platform`
-        :type pennant_number: String
+        :param identifier: Identifier string of :class:`Platform`
+        :type identifier: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created Platform entity
@@ -386,7 +386,7 @@ class DataStore:
             name=name,
             trigraph=trigraph,
             quadgraph=quadgraph,
-            pennant=pennant_number,
+            identifier=identifier,
             nationality_id=nationality.nationality_id,
             platform_type_id=platform_type.platform_type_id,
             privacy_id=privacy.privacy_id,
@@ -673,12 +673,12 @@ class DataStore:
     def get_platform(
         self,
         platform_name=None,
+        identifier=None,
         nationality=None,
         platform_type=None,
         privacy=None,
         trigraph=None,
         quadgraph=None,
-        pennant_number=None,
         change_id=None,
     ):
         """
@@ -697,8 +697,8 @@ class DataStore:
         :type trigraph: String
         :param quadgraph: Quadgraph of :class:`Platform`
         :type quadgraph: String
-        :param pennant_number: Pennant number of :class:`Platform`
-        :type pennant_number: String
+        :param identifier: Identifier string of :class:`Platform`
+        :type identifier: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created Platform entity
@@ -716,6 +716,7 @@ class DataStore:
 
         if (
             platform_name is None
+            or identifier is None
             or nationality_obj is None
             or platform_type_obj is None
             or privacy_obj is None
@@ -731,7 +732,7 @@ class DataStore:
                     platform_name,
                     trigraph,
                     quadgraph,
-                    pennant_number,
+                    identifier,
                     platform_type_obj,
                     nationality_obj,
                     privacy_obj,
@@ -749,7 +750,7 @@ class DataStore:
             name=platform_name,
             trigraph=trigraph,
             quadgraph=quadgraph,
-            pennant_number=pennant_number,
+            identifier=identifier,
             nationality=nationality_obj.name,
             platform_type=platform_type_obj.name,
             privacy=privacy_obj.name,

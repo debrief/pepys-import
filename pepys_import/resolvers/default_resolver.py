@@ -6,7 +6,7 @@ class DefaultResolver(DataResolver):
     default_platform_name = "PLATFORM-1"
     default_trigraph = "PL1"
     default_quadgraph = "PLT1"
-    default_pennant_number = "123"
+    default_identifier = "123"
     default_platform_type = "Warship"
     default_nationality = "UK"
     default_sensor_name = "SENSOR-1"
@@ -54,7 +54,7 @@ class DefaultResolver(DataResolver):
                 platform_name,
                 self.default_trigraph,
                 self.default_quadgraph,
-                self.default_pennant_number,
+                self.default_identifier,
                 platform_type,
                 nationality,
                 privacy,
