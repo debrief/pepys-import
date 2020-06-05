@@ -50,7 +50,10 @@ class CommandLineResolver(DataResolver):
 
         # Choose Privacy
         if privacy:
-            chosen_privacy = data_store.add_to_privacies(privacy, 0, change_id)
+            chosen_privacy = data_store.search_privacy(privacy)
+            if chosen_privacy is None:
+                level = prompt(f"Please type level of new classification ({privacy}): ")
+                chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
         else:
             chosen_privacy = self.resolve_reference(
                 data_store,
@@ -537,7 +540,10 @@ class CommandLineResolver(DataResolver):
 
         # Choose Privacy
         if privacy:
-            chosen_privacy = data_store.add_to_privacies(privacy, 0, change_id)
+            chosen_privacy = data_store.search_privacy(privacy)
+            if chosen_privacy is None:
+                level = prompt(f"Please type level of new classification ({privacy}): ")
+                chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
         else:
             chosen_privacy = self.resolve_reference(
                 data_store,
@@ -623,7 +629,10 @@ class CommandLineResolver(DataResolver):
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
 
         if privacy:
-            privacy = data_store.add_to_privacies(privacy, 0, change_id)
+            privacy = data_store.search_privacy(privacy)
+            if privacy is None:
+                level = prompt(f"Please type level of new classification ({privacy}): ")
+                privacy = data_store.add_to_privacies(privacy, level, change_id)
         else:
             privacy = self.resolve_reference(
                 data_store,
