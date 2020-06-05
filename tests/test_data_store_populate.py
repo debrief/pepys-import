@@ -17,6 +17,8 @@ NOT_IMPLEMENTED_PATH = os.path.join(
     FILE_PATH, "sample_data", "csv_files", "for_not_implemented_methods"
 )
 MISSING_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files", "missing_data")
+SYNONYM_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files", "for_synonym_tests")
+SYNONYM_DATA_PATH_BAD = os.path.join(FILE_PATH, "sample_data", "csv_files", "for_synonym_tests_bad")
 
 
 class DataStorePopulateSpatiaLiteTestCase(TestCase):
@@ -313,9 +315,6 @@ class DataStorePopulateNotImplementedMethodTestCase(TestCase):
 
 
 class DataStorePopulateMissingData(TestCase):
-    """Test whether populate methods print correct table name and message
-    when the corresponding add method is not found"""
-
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -350,6 +349,67 @@ class DataStorePopulateMissingData(TestCase):
                 in output
             )
             assert "  Error was 'Host is missing/invalid'" in output
+
+
+class DataStorePopulateSynonyms(TestCase):
+    def setUp(self):
+        if os.path.exists("synonyms.sqlite"):
+            os.remove("synonyms.sqlite")
+
+        self.store = DataStore("", "", "", 0, "synonyms.sqlite", db_type="sqlite")
+        self.store.initialise()
+
+        with self.store.session_scope():
+            self.store.populate_reference()
+
+    def tearDown(self):
+        pass
+
+    def test_populate_synonyms_valid(self):
+        with self.store.session_scope():
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.store.populate_reference(SYNONYM_DATA_PATH)
+                self.store.populate_metadata(SYNONYM_DATA_PATH)
+            output = temp_output.getvalue()
+
+        # Check for error messages about duplicated platform name
+        assert (
+            "Error on row ['PLATFORM-Duplicated-Synonym', 'Platforms', 'PLATFORM-DuplicatedName']"
+            in output
+        )
+        assert "Name 'PLATFORM-DuplicatedName' occurs multiple times in table Platforms" in output
+
+        with self.store.session_scope():
+            synonyms = self.store.session.query(self.store.db_classes.Synonym).all()
+
+            # We tried to import four, but one was rejected, so just three should exist
+            assert len(synonyms) == 3
+
+            # Check all synonym entity IDs exist in the Platforms table
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            platform_ids = [platform.platform_id for platform in platforms]
+
+            for synonym in synonyms:
+                assert synonym.entity in platform_ids
+
+    def test_populate_synonyms_invalid(self):
+        with self.store.session_scope():
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.store.populate_reference(SYNONYM_DATA_PATH_BAD)
+                self.store.populate_metadata(SYNONYM_DATA_PATH_BAD)
+            output = temp_output.getvalue()
+
+        # Check for error messages about duplicated platform name
+        assert "Error on row ['Blah', 'InvalidTables', 'BlahName']" in output
+        assert "  Invalid table name InvalidTables" in output
+
+        assert "Error on row ['Blah', 'Participants', 'BlahName']" in output
+        assert "  Cannot find name column for table Participants" in output
+
+        assert "Error on row ['PLATFORM-1-Synonym2', 'Platforms', 'NonExistentPlatform']" in output
+        assert "  Name 'NonExistentPlatform' is not found in table Platforms" in output
 
 
 if __name__ == "__main__":
