@@ -178,14 +178,14 @@ class CommandLineResolver(DataResolver):
         if text_name is None:
             text_name = field_name.replace("_", "-")
         options = [f"Search an existing {text_name}", f"Add a new {text_name}"]
-        if db_class.__tablename__ == "Nationalities":
+        if db_class.__tablename__ == constants.NATIONALITY:
             objects = (
                 data_store.session.query(db_class)
                 .filter(db_class.priority.in_([1, 2]))
                 .order_by(db_class.priority, db_class.name)
                 .all()
             )
-        elif db_class.__tablename__ == "Privacies":
+        elif db_class.__tablename__ == constants.PRIVACY:
             objects = data_store.session.query(db_class).order_by(desc(db_class.level)).all()
         else:
             objects = data_store.session.query(db_class).all()
