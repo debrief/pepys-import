@@ -3,7 +3,7 @@ import sys
 
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyWordCompleter
-from sqlalchemy import or_
+from sqlalchemy import desc, or_
 
 from pepys_import.core.store import constants
 from pepys_import.resolvers.command_line_input import create_menu, is_valid
@@ -185,6 +185,8 @@ class CommandLineResolver(DataResolver):
                 .order_by(db_class.priority, db_class.name)
                 .all()
             )
+        elif db_class.__tablename__ == "Privacies":
+            objects = data_store.session.query(db_class).order_by(desc(db_class.level)).all()
         else:
             objects = data_store.session.query(db_class).all()
         objects_dict = {obj.name: obj for obj in objects}
