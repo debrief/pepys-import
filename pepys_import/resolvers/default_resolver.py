@@ -33,9 +33,9 @@ class DefaultResolver(DataResolver):
             nationality = data_store.add_to_nationalities(self.default_nationality, change_id)
 
         if privacy:
-            privacy = data_store.add_to_privacies(privacy, change_id)
+            privacy = data_store.add_to_privacies(privacy, 0, change_id)
         else:
-            privacy = data_store.add_to_privacies(self.default_privacy, change_id)
+            privacy = data_store.add_to_privacies(self.default_privacy, 0, change_id)
 
         # Look to see if we already have a platform created with these details, and if so, return it
         results_from_db = (
@@ -78,9 +78,9 @@ class DefaultResolver(DataResolver):
             sensor_type = data_store.add_to_sensor_types(self.default_sensor_type, change_id)
 
         if privacy:
-            privacy = data_store.add_to_privacies(privacy, change_id)
+            privacy = data_store.add_to_privacies(privacy, 0, change_id)
         else:
-            privacy = data_store.add_to_privacies(self.default_privacy, change_id)
+            privacy = data_store.add_to_privacies(self.default_privacy, 0, change_id)
 
         # Look to see if we already have a sensor created for this platform, with this sensor type etc
 
@@ -120,7 +120,7 @@ class DefaultResolver(DataResolver):
         # needs to establish defaults for privacy
         privacy = data_store.search_privacy(self.default_privacy)
         if not privacy:
-            privacy = data_store.add_to_privacies(self.default_privacy, change_id)
+            privacy = data_store.add_to_privacies(self.default_privacy, 0, change_id)
 
         return privacy
 
@@ -135,8 +135,8 @@ class DefaultResolver(DataResolver):
             datafile_type = data_store.add_to_datafile_types(self.default_datafile_type, change_id)
 
         if privacy:
-            privacy = data_store.add_to_privacies(privacy, change_id)
+            privacy = data_store.add_to_privacies(privacy, 0, change_id)
         else:
-            privacy = data_store.add_to_privacies(self.default_privacy, change_id)
+            privacy = data_store.add_to_privacies(self.default_privacy, 0, change_id)
 
         return datafile_name, datafile_type, privacy
