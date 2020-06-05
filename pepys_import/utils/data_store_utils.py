@@ -18,9 +18,13 @@ def import_from_csv(data_store, path, files, change_id):
                 reader = csv.reader(file_object)
                 # extract header
                 header = next(reader)
-                for row in reader:
+                for row_number, row in enumerate(reader):
                     keyword_arguments = dict(zip(header, row))
-                    method_to_call(**keyword_arguments, change_id=change_id)
+                    try:
+                        method_to_call(**keyword_arguments, change_id=change_id)
+                    except MissingDataException as e:
+                        print(f"Error importing row {row} from {file}")
+                        print(f"  Error was '{str(e)}'")
         else:
             print(f"Method({possible_method}) not found!")
 
@@ -129,3 +133,7 @@ def cache_results_if_not_none(cache_attribute):
 
 def shorten_uuid(id):
     return str(id)[-6:]
+
+
+class MissingDataException(Exception):
+    pass
