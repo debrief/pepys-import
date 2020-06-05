@@ -13,6 +13,7 @@ def import_from_csv(data_store, path, files, change_id):
         table_name, _ = os.path.splitext(file)
         if table_name.lower() == "synonyms":
             import_synonyms(data_store, os.path.join(path, file), change_id)
+            continue
         possible_method = "add_to_" + table_name.lower().replace(" ", "_")
         method_to_call = getattr(data_store, possible_method, None)
         if method_to_call:
