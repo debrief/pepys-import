@@ -50,7 +50,7 @@ class CommandLineResolver(DataResolver):
 
         # Choose Privacy
         if privacy:
-            chosen_privacy = data_store.add_to_privacies(privacy, change_id)
+            chosen_privacy = data_store.add_to_privacies(privacy, 0, change_id)
         else:
             chosen_privacy = self.resolve_reference(
                 data_store,
@@ -228,6 +228,9 @@ class CommandLineResolver(DataResolver):
                 return obj
             elif new_object:
                 add_method = getattr(data_store, f"add_to_{plural_field}")
+                if plural_field == "privacies":
+                    level = prompt(f"Please type level of new {text_name}: ")
+                    return add_method(new_object, level, change_id)
                 return add_method(new_object, change_id)
             else:
                 print("You haven't entered an input!")
@@ -289,6 +292,9 @@ class CommandLineResolver(DataResolver):
                     .replace(" ", "_")
                 )
                 add_method = getattr(data_store, f"add_to_{plural_field}")
+                if plural_field == "privacies":
+                    level = prompt(f"Please type level of new {text_name}: ")
+                    return add_method(choice, level, change_id)
                 return add_method(choice, change_id)
             elif new_choice == str(2):
                 return self.fuzzy_search_reference(
@@ -529,7 +535,7 @@ class CommandLineResolver(DataResolver):
 
         # Choose Privacy
         if privacy:
-            chosen_privacy = data_store.add_to_privacies(privacy, change_id)
+            chosen_privacy = data_store.add_to_privacies(privacy, 0, change_id)
         else:
             chosen_privacy = self.resolve_reference(
                 data_store,
@@ -615,7 +621,7 @@ class CommandLineResolver(DataResolver):
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
 
         if privacy:
-            privacy = data_store.add_to_privacies(privacy, change_id)
+            privacy = data_store.add_to_privacies(privacy, 0, change_id)
         else:
             privacy = self.resolve_reference(
                 data_store,

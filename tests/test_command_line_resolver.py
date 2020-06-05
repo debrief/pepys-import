@@ -25,13 +25,15 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_add_new_privacy(self, menu_prompt):
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_fuzzy_search_add_new_privacy(self, resolver_prompt, menu_prompt):
         """Test whether a new Privacy entity created or not
         after searched and not founded in the Privacy Table."""
 
-        # Select "Search an existing classification"->Search "PRIVACY-TEST"->
+        # Select "Search an existing classification"->Search "PRIVACY-TEST"->Type "0"->
         # Select "Yes"
         menu_prompt.side_effect = ["1", "PRIVACY-TEST", "1"]
+        resolver_prompt.side_effect = ["0"]
         with self.store.session_scope():
             privacy = self.resolver.resolve_reference(
                 self.store,
@@ -50,7 +52,7 @@ class ReferenceDataTestCase(unittest.TestCase):
         # Select "Search an existing classification"->Search "PRIVACY-TEST"
         menu_prompt.side_effect = ["1", "PRIVACY-TEST"]
         with self.store.session_scope():
-            self.store.add_to_privacies("PRIVACY-TEST", self.change_id)
+            self.store.add_to_privacies("PRIVACY-TEST", 0, self.change_id)
             privacy = self.resolver.resolve_reference(
                 self.store,
                 self.change_id,
@@ -72,7 +74,7 @@ class ReferenceDataTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["2"]
         resolver_prompt.side_effect = ["PRIVACY-TEST"]
         with self.store.session_scope():
-            self.store.add_to_privacies("PRIVACY-TEST", self.change_id)
+            self.store.add_to_privacies("PRIVACY-TEST", 0, self.change_id)
             privacy = self.resolver.resolve_reference(
                 self.store,
                 self.change_id,
@@ -91,8 +93,8 @@ class ReferenceDataTestCase(unittest.TestCase):
         # ->Search "PRIVACY-1"
         menu_prompt.side_effect = ["1", "PRIVACY-TEST", "2", "PRIVACY-1"]
         with self.store.session_scope():
-            self.store.add_to_privacies("PRIVACY-1", self.change_id)
-            self.store.add_to_privacies("PRIVACY-2", self.change_id)
+            self.store.add_to_privacies("PRIVACY-1", 0, self.change_id)
+            self.store.add_to_privacies("PRIVACY-2", 0, self.change_id)
             privacy = self.resolver.resolve_reference(
                 self.store,
                 self.change_id,
@@ -110,8 +112,8 @@ class ReferenceDataTestCase(unittest.TestCase):
         # Select "3-PRIVACY-1"
         menu_prompt.side_effect = ["3"]
         with self.store.session_scope():
-            self.store.add_to_privacies("PRIVACY-1", self.change_id)
-            self.store.add_to_privacies("PRIVACY-2", self.change_id)
+            self.store.add_to_privacies("PRIVACY-1", 0, self.change_id)
+            self.store.add_to_privacies("PRIVACY-2", 0, self.change_id)
             privacy = self.resolver.resolve_reference(
                 self.store,
                 self.change_id,
@@ -162,7 +164,7 @@ class ReferenceDataTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["2"]
         resolver_prompt.side_effect = ["TYPE-TEST"]
         with self.store.session_scope():
-            self.store.add_to_privacies("TYPE-TEST", self.change_id)
+            self.store.add_to_privacies("TYPE-TEST", 0, self.change_id)
             platform_type = self.resolver.resolve_reference(
                 self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
             )
@@ -309,7 +311,7 @@ class PlatformTestCase(unittest.TestCase):
         # Search "PLATFORM-1"->Select "Yes"
         menu_prompt.side_effect = ["PLATFORM-1", "1"]
         with self.store.session_scope():
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id)
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id)
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             platform = self.store.get_platform(
@@ -341,7 +343,7 @@ class PlatformTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["PLATFORM-1", "2", "1"]
         resolver_prompt.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id)
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id)
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             self.store.get_platform(
@@ -400,7 +402,7 @@ class PlatformTestCase(unittest.TestCase):
         ]
         resolver_platform.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
-            self.store.add_to_privacies("PRIVACY-1", self.change_id)
+            self.store.add_to_privacies("PRIVACY-1", 0, self.change_id)
             self.store.add_to_platform_types("Warship", self.change_id)
             self.store.add_to_nationalities("UK", self.change_id)
             (
@@ -435,7 +437,7 @@ class PlatformTestCase(unittest.TestCase):
 
         # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select
         # "Add a new nationality"->Select "UK"->Select "Add a new platform type"->Select "Warship
-        # ->Select "Add a new classification"->Select "PRIVACY-1"->Select "Yes"
+        # ->Select "Add a new classification"->Select "PRIVACY-1"->Select "0"->Select "Yes"
         menu_prompt.side_effect = ["2", "2", "2", "2", "1"]
         resolver_prompt.side_effect = [
             "TEST",
@@ -445,6 +447,7 @@ class PlatformTestCase(unittest.TestCase):
             "UK",
             "Warship",
             "PRIVACY-1",
+            "0",
         ]
         with self.store.session_scope():
             (
@@ -502,7 +505,7 @@ class PlatformTestCase(unittest.TestCase):
             "TEST",
         ]
         with self.store.session_scope():
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id).name
             platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             (
@@ -558,8 +561,8 @@ class DatafileTestCase(unittest.TestCase):
         ]
         resolver_prompt.side_effect = ["TEST", "TEST"]
         with self.store.session_scope():
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
-            self.store.add_to_privacies("PRIVACY-2", self.change_id)
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id).name
+            self.store.add_to_privacies("PRIVACY-2", 0, self.change_id)
             datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id).name
             self.store.add_to_datafile_types("DATAFILE-TYPE-2", self.change_id)
             (datafile_name, datafile_type, privacy,) = self.resolver.resolve_datafile(
@@ -590,7 +593,7 @@ class DatafileTestCase(unittest.TestCase):
         ]
         resolver_prompt.side_effect = ["TEST"]
         with self.store.session_scope():
-            self.store.add_to_privacies("PRIVACY-1", self.change_id)
+            self.store.add_to_privacies("PRIVACY-1", 0, self.change_id)
             self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id)
             datafile_name, datafile_type, privacy = self.resolver.resolve_datafile(
                 data_store=self.store,
@@ -613,7 +616,7 @@ class DatafileTestCase(unittest.TestCase):
         ]
         resolver_prompt.side_effect = ["TEST", "TEST", "TEST"]
         with self.store.session_scope():
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id).name
             datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id).name
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_datafile(
@@ -663,7 +666,7 @@ class SensorTestCase(unittest.TestCase):
         with self.store.session_scope():
             self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
 
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
 
@@ -698,7 +701,7 @@ class SensorTestCase(unittest.TestCase):
         with self.store.session_scope():
             # Create platform first, then create a Sensor object
             sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
@@ -744,8 +747,8 @@ class SensorTestCase(unittest.TestCase):
         with self.store.session_scope():
             sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
             sensor_type_2 = self.store.add_to_sensor_types("SENSOR-TYPE-2", self.change_id)
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id)
-            privacy_2 = self.store.add_to_privacies("PRIVACY-2", self.change_id)
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id)
+            privacy_2 = self.store.add_to_privacies("PRIVACY-2", 0, self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id)
 
@@ -793,7 +796,7 @@ class SensorTestCase(unittest.TestCase):
         with self.store.session_scope():
             # Create platform first, then create a Sensor object
             sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
@@ -834,7 +837,7 @@ class SensorTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["SENSOR-TEST"]
         with self.store.session_scope():
             sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
 
@@ -866,7 +869,7 @@ class SensorTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["3"]
         with self.store.session_scope():
             sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
 
@@ -932,7 +935,7 @@ class SensorTestCase(unittest.TestCase):
         with self.store.session_scope():
             # Create platform first, then create a Sensor object
             sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
@@ -973,7 +976,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         """Test whether "." quits from the resolve platform/sensor"""
         menu_prompt.side_effect = [".", ".", "."]
         with self.store.session_scope():
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
@@ -998,7 +1001,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         # Search "PLATFORM-1"->Select "."->Select "."->Select "."
         menu_prompt.side_effect = ["PLATFORM-1", ".", ".", "."]
         with self.store.session_scope():
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id)
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id)
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             self.store.get_platform(
@@ -1020,7 +1023,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["SENSOR-1", ".", ".", "."]
         with self.store.session_scope():
             sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
@@ -1080,6 +1083,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             "UK",
             "TYPE-1",
             "PRIVACY-1",
+            "0",
         ]
         with self.store.session_scope():
             # Type name/trigraph/quadgraph/identifier->Select "Cancel nationality search"->
@@ -1097,7 +1101,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
                 self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
             # Type name/trigraph/quadgraph/identification->Select "Add new nationality"->Type "UK"->
             # Select "Add a new platform type"->Select "Add new classification"->Type "PRIVACY-1"->Type
-            # "TYPE-1"->Select "Cancel import"->Select "Cancel import"
+            # "0"->Select "Cancel import"->Select "Cancel import"
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
 
@@ -1114,7 +1118,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             "PRIVACY-1",
         ]
         with self.store.session_scope():
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
