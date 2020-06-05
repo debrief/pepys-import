@@ -23,7 +23,7 @@ Online documentation
 Full documentation for Pepys is available here: |docs|
 
 .. |docs| image:: https://readthedocs.org/projects/pepys-import/badge/?version=latest
-  :target:  modules.html
+  :target:  https://pepys-import.readthedocs.io/
 
 Development documentation
 -------------------------

@@ -468,6 +468,10 @@ class CommandLineResolver(DataResolver):
         trigraph = prompt("Please enter trigraph (optional): ", default=platform_name[:3])
         quadgraph = prompt("Please enter quadgraph (optional): ", default=platform_name[:4])
 
+        if platform_name == "" or identifier == "":
+            print("You must provide a platform name and identifier! Restarting plaform data entry.")
+            return self.add_to_platforms(data_store, platform_name, None, None, None, change_id)
+
         # Choose Nationality
         if nationality:
             chosen_nationality = data_store.add_to_nationalities(nationality, change_id)
