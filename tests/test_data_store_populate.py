@@ -16,6 +16,7 @@ TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
 NOT_IMPLEMENTED_PATH = os.path.join(
     FILE_PATH, "sample_data", "csv_files", "for_not_implemented_methods"
 )
+MISSING_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files", "missing_data")
 
 
 class DataStorePopulateSpatiaLiteTestCase(TestCase):
@@ -309,6 +310,46 @@ class DataStorePopulateNotImplementedMethodTestCase(TestCase):
             output = temp_output.getvalue()
             self.assertIn("Method(add_to_confidence_levels) not found!", output)
             self.assertIn("Method(add_to_tags) not found!", output)
+
+
+class DataStorePopulateMissingData(TestCase):
+    """Test whether populate methods print correct table name and message
+    when the corresponding add method is not found"""
+
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+        with self.store.session_scope():
+            self.store.populate_reference()
+
+    def tearDown(self):
+        pass
+
+    def test_populate_missing_data(self):
+        with self.store.session_scope():
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.store.populate_metadata(MISSING_DATA_PATH)
+            output = temp_output.getvalue()
+
+            assert (
+                "Error importing row ['PRIVACY-Blah', 'DATAFILE-TYPE-1', 'DATAFILE-1', 'True', '0', 'HASHED-1', ''] from Datafiles.csv"
+                in output
+            )
+            assert "  Error was 'Privacy is invalid/missing'" in output
+
+            assert (
+                "Error importing row ['PLATFORM-2', '234', 'MissingNationality', 'PLATFORM-TYPE-2', 'PRIVACY-2'] from Platforms.csv"
+                in output
+            )
+            assert "  Error was 'Nationality is invalid/missing'" in output
+
+            assert (
+                "Error importing row ['SENSOR-2', 'SENSOR-TYPE-2', 'MissingPlatform', 'PRIVACY-2'] from Sensors.csv"
+                in output
+            )
+            assert "  Error was 'Host is missing/invalid'" in output
 
 
 if __name__ == "__main__":

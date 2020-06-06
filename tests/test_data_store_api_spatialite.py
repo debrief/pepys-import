@@ -653,10 +653,8 @@ class MeasurementsTestCase(TestCase):
                 name="Test Importer",
                 validation_level=validation_constants.NONE_LEVEL,
                 short_name="Test Importer",
-                separator=" ",
             ):
                 super().__init__(name, validation_level, short_name)
-                self.separator = separator
                 self.text_label = None
                 self.depth = 0.0
                 self.errors = list()

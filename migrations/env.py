@@ -1,3 +1,4 @@
+import json
 import os
 from logging.config import fileConfig
 from re import search
@@ -8,6 +9,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy.event import listen
 
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
+from paths import MIGRATIONS_DIRECTORY
 from pepys_import.core.store import (  # Don't remove, they are necessary for the discovery of changes!
     postgres_db,
     sqlite_db,
@@ -231,3 +233,31 @@ def add_copy_from(filename, options):
 
     with open(filename, "w") as to_write:
         to_write.writelines(lines)
+
+
+@write_hooks.register("update_latest_revision")
+def update_latest_revision(filename, options):
+    with open(filename) as file_:
+        lines = file_.readlines()
+
+    # Load json file
+    json_file_path = os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json")
+    with open(json_file_path, "r") as json_file:
+        data = json.load(json_file)
+
+    for line in lines:
+        # If line has revision variable, i.e. revision = "bcff0ccb4fbd", remove new line
+        # character and quote marks, split line into two parts: ('', 'bcff0ccb4fbd'), obtain the
+        # second element
+        if line.startswith("revision = "):
+            split_tokens = line.replace("\n", "").replace('"', "").split("revision = ")
+            revision_id = split_tokens[1]
+
+    if "postgres_versions" in filename:
+        data["LATEST_POSTGRES_VERSION"] = revision_id
+    else:
+        data["LATEST_SQLITE_VERSION"] = revision_id
+
+    # Dump updated json
+    with open(json_file_path, "w") as json_file:
+        json.dump(data, json_file, indent=4)

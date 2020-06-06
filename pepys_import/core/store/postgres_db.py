@@ -4,8 +4,11 @@ from uuid import uuid4
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
     deferred,
+    relationship,
 )
 
 from pepys_import.core.store import constants
@@ -78,7 +81,7 @@ class Platform(BasePostGIS, PlatformMixin):
 
     platform_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
-    pennant = deferred(Column(String(10)))
+    identifier = deferred(Column(String(10), nullable=False))
     trigraph = deferred(Column(String(3)))
     quadgraph = deferred(Column(String(4)))
     nationality_id = Column(
@@ -411,11 +414,6 @@ class ConfidenceLevel(BasePostGIS):
 
 # Measurements Tables
 class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMixin):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.sensor_name = None
-        self.platform_name = None
-
     __tablename__ = constants.STATE
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
@@ -435,13 +433,25 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    @declared_attr
+    def platform(self):
+        return relationship(
+            "Platform",
+            secondary="pepys.Sensors",
+            primaryjoin="State.sensor_id == Sensor.sensor_id",
+            secondaryjoin="Platform.platform_id == Sensor.host",
+            lazy="joined",
+            join_depth=1,
+            uselist=False,
+            viewonly=True,
+        )
+
+    @declared_attr
+    def platform_name(self):
+        return association_proxy("platform", "name")
+
 
 class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.sensor_name = None
-        self.platform_name = None
-
     __tablename__ = constants.CONTACT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
@@ -478,6 +488,23 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     )
     privacy_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id"))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    @declared_attr
+    def platform(self):
+        return relationship(
+            "Platform",
+            secondary="pepys.Sensors",
+            primaryjoin="Contact.sensor_id == Sensor.sensor_id",
+            secondaryjoin="Platform.platform_id == Sensor.host",
+            lazy="joined",
+            join_depth=1,
+            uselist=False,
+            viewonly=True,
+        )
+
+    @declared_attr
+    def platform_name(self):
+        return association_proxy("platform", "name")
 
 
 class Activation(BasePostGIS, ActivationMixin):
@@ -531,8 +558,7 @@ class LogsHolding(BasePostGIS, LogsHoldingMixin):
 class Comment(BasePostGIS, CommentMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.sensor_name = None
-        self.platform_name = None
+        self.sensor_name = "N/A"
 
     __tablename__ = constants.COMMENT
     table_type = TableTypes.MEASUREMENT
