@@ -532,6 +532,39 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "PRIVACY-1")
 
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_platform_new_privacy_given(self, resolver_prompt, menu_prompt):
+        menu_prompt.side_effect = ["2", "1"]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "123",
+            "TST",
+            "TEST",
+            "10",
+        ]
+        with self.store.session_scope():
+            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            (
+                platform_name,
+                trigraph,
+                quadgraph,
+                identifier,
+                platform_type,
+                nationality,
+                privacy,
+            ) = self.resolver.resolve_platform(
+                data_store=self.store,
+                platform_name="TEST",
+                platform_type=platform_type,
+                nationality=nationality,
+                privacy="PRIVACY-TEST",
+                change_id=self.change_id,
+            )
+            self.assertEqual(platform_name, "TEST")
+            self.assertEqual(privacy.name, "PRIVACY-TEST")
+
 
 class DatafileTestCase(unittest.TestCase):
     def setUp(self) -> None:
@@ -642,6 +675,26 @@ class DatafileTestCase(unittest.TestCase):
                     privacy=None,
                     change_id=self.change_id,
                 )
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_datafile_new_privacy_given(self, resolver_prompt, menu_prompt):
+        menu_prompt.side_effect = ["1"]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "10",
+        ]
+        with self.store.session_scope():
+            datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id).name
+            (datafile_name, datafile_type, privacy,) = self.resolver.resolve_datafile(
+                data_store=self.store,
+                datafile_name="TEST",
+                datafile_type=datafile_type,
+                privacy="PRIVACY-TEST",
+                change_id=self.change_id,
+            )
+            self.assertEqual(datafile_name, "TEST")
+            self.assertEqual(privacy.name, "PRIVACY-TEST")
 
 
 class SensorTestCase(unittest.TestCase):
@@ -959,6 +1012,40 @@ class SensorTestCase(unittest.TestCase):
             )
 
             self.assertEqual(sensor.name, "SENSOR-1")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_sensor_new_privacy_given(self, resolver_prompt, menu_prompt):
+        menu_prompt.side_effect = [
+            "2",
+            "1",
+        ]
+        resolver_prompt.side_effect = ["TEST", "10"]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
+            privacy = self.store.add_to_privacies("PRIVACY-1", 0, self.change_id)
+            nationality = self.store.add_to_nationalities("UK", self.change_id)
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id)
+
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+                change_id=self.change_id,
+            )
+
+            (resolved_name, resolved_type, resolved_privacy,) = self.resolver.resolve_sensor(
+                self.store,
+                "TEST",
+                sensor_type.name,
+                platform.platform_id,
+                "PRIVACY-TEST",
+                self.change_id,
+            )
+            self.assertEqual(resolved_name, "TEST")
+            self.assertEqual(resolved_privacy.name, "PRIVACY-TEST")
 
 
 class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
