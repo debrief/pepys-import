@@ -4,6 +4,7 @@ import sys
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyWordCompleter
 from sqlalchemy import desc, or_
+from tabulate import tabulate
 
 from pepys_import.core.store import constants
 from pepys_import.resolvers.command_line_input import create_menu, is_valid
@@ -181,6 +182,7 @@ class CommandLineResolver(DataResolver):
         if text_name is None:
             text_name = field_name.replace("_", "-")
         options = [f"Search an existing {text_name}", f"Add a new {text_name}"]
+        title = f"Ok, please provide {text_name} for new {data_type}: "
         if db_class.__tablename__ == constants.NATIONALITY:
             objects = (
                 data_store.session.query(db_class)
@@ -190,6 +192,16 @@ class CommandLineResolver(DataResolver):
             )
         elif db_class.__tablename__ == constants.PRIVACY:
             objects = data_store.session.query(db_class).order_by(desc(db_class.level)).all()
+            current_values = f"Current Privacies in the Database\n"
+            headers = ["name", "level"]
+            current_values += tabulate(
+                [[str(getattr(row, column)) for column in headers] for row in objects],
+                headers=headers,
+                tablefmt="github",
+                floatfmt=".3f",
+            )
+            current_values += "\n"
+            title += f"\n{current_values}\n"
         else:
             objects = data_store.session.query(db_class).all()
         objects_dict = {obj.name: obj for obj in objects}
@@ -207,11 +219,7 @@ class CommandLineResolver(DataResolver):
         def is_valid_dynamic(option):
             return option in [str(i) for i in range(1, len(options) + 1)] or option == "."
 
-        choice = create_menu(
-            f"Ok, please provide {text_name} for new {data_type}: ",
-            options,
-            validate_method=is_valid_dynamic,
-        )
+        choice = create_menu(title, options, validate_method=is_valid_dynamic,)
         if choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
