@@ -10,6 +10,8 @@ from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import RelationshipProperty, class_mapper, load_only
 from tabulate import tabulate
 
+from pepys_import.utils.table_name_utils import make_table_name_singular
+
 
 def bottom_toolbar():
     return HTML("Press <b>ESC then Enter</b> to exit!")
@@ -62,18 +64,7 @@ class ViewDataShell(cmd.Cmd):
         if selected_table is None:
             return
         # Table names are plural in the database, therefore make it singular
-        if (
-            selected_table == "alembic_version"
-            or selected_table == "HostedBy"
-            or selected_table == "Media"
-        ):
-            table = selected_table
-        elif selected_table == "Geometries":
-            table = "Geometry1"
-        elif selected_table.endswith("ies"):
-            table = selected_table[:-3] + "y"
-        else:
-            table = selected_table[:-1]
+        table = make_table_name_singular(selected_table)
         # Find the class
         table_cls = getattr(self.data_store.db_classes, table)
         assert table_cls.__tablename__ == selected_table, "Table couldn't find!"

@@ -21,6 +21,7 @@ from pepys_import.utils.data_store_utils import (
     is_schema_created,
 )
 from pepys_import.utils.sqlite_utils import load_spatialite
+from pepys_import.utils.table_name_utils import make_table_name_singular
 
 DIR_PATH = os.path.dirname(__file__)
 
@@ -219,14 +220,7 @@ def add_copy_from(filename, options):
         if match:
             table_name = match.group(2)
             # Table names are plural in the database, therefore make it singular
-            if table_name in ["alembic_version", "HostedBy", "Media"]:
-                table = table_name
-            elif table_name == "Geometries":
-                table = "Geometry1"
-            elif table_name.endswith("ies"):
-                table = table_name[:-3] + "y"
-            else:
-                table = table_name[:-1]
+            table = make_table_name_singular(table_name)
             argument = f", copy_from={table}.__table__"
             idx = line.index(") as batch_op:")
             lines[index] = line[:idx] + argument + line[idx:]
