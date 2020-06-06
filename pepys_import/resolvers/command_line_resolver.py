@@ -629,12 +629,12 @@ class CommandLineResolver(DataResolver):
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
 
         if privacy:
-            privacy = data_store.search_privacy(privacy)
-            if privacy is None:
+            chosen_privacy = data_store.search_privacy(privacy)
+            if chosen_privacy is None:
                 level = prompt(f"Please type level of new classification ({privacy}): ")
-                privacy = data_store.add_to_privacies(privacy, level, change_id)
+                chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
         else:
-            privacy = self.resolve_reference(
+            chosen_privacy = self.resolve_reference(
                 data_store,
                 change_id,
                 data_type="Sensor",
@@ -643,7 +643,7 @@ class CommandLineResolver(DataResolver):
                 field_name="privacy",
             )
 
-        if privacy is None:
+        if chosen_privacy is None:
             print("Classification couldn't resolved. Returning to the previous menu!")
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
 
@@ -651,14 +651,14 @@ class CommandLineResolver(DataResolver):
         print("Input complete. About to create this sensor:")
         print(f"Name: {sensor_name}")
         print(f"Type: {sensor_type.name}")
-        print(f"Classification: {privacy.name}")
+        print(f"Classification: {chosen_privacy.name}")
 
         choice = create_menu(
             "Create this sensor?: ", ["Yes", "No, make further edits"], validate_method=is_valid,
         )
 
         if choice == str(1):
-            return sensor_name, sensor_type, privacy
+            return sensor_name, sensor_type, chosen_privacy
         elif choice == str(2):
             return self.add_to_sensors(data_store, sensor_name, None, host_id, None, change_id)
         elif choice == ".":
