@@ -741,12 +741,14 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
         except AttributeError:
             return
 
-    @patch("cmd.input", return_value="2\n")
-    def test_missing_db_column_postgres(self, patched_input):
+    @patch("pepys_admin.view_data_cli.iterfzf", return_value="States")
+    @patch("cmd.input")
+    def test_missing_db_column_postgres(self, patched_input, patched_iterfzf):
+        patched_input.side_effect = ["6", "1"]
         conn = pg8000.connect(user="postgres", password="postgres", database="test", port=55527)
         cursor = conn.cursor()
         # Alter table to drop heading column
-        cursor.execute('ALTER TABLE pepys."States" DROP COLUMN heading CASCADE;')
+        cursor.execute('ALTER TABLE pepys."States" DROP COLUMN time CASCADE;')
 
         conn.commit()
         conn.close()
@@ -765,6 +767,32 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
         output = temp_output.getvalue()
 
         assert "ERROR: SQL error when communicating with database" in output
+
+    @patch("cmd.input")
+    def test_missing_db_column_postgres_2(self, patched_input):
+        patched_input.side_effect = ["2", "0"]
+        conn = pg8000.connect(user="postgres", password="postgres", database="test", port=55527)
+        cursor = conn.cursor()
+        # Alter table to drop heading column
+        cursor.execute('ALTER TABLE pepys."States" DROP COLUMN time CASCADE;')
+
+        conn.commit()
+        conn.close()
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output), pytest.raises(SystemExit):
+            data_store = DataStore(
+                db_name="test",
+                db_host="localhost",
+                db_username="postgres",
+                db_password="postgres",
+                db_port=55527,
+                db_type="postgres",
+            )
+            run_admin_shell(data_store, ".")
+        output = temp_output.getvalue()
+
+        assert "ERROR: Table summaries couldn't be printed." in output
 
 
 @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH})
