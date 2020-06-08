@@ -980,12 +980,14 @@ class DataStore:
         )
         return nationality
 
-    def add_to_privacies(self, name, change_id):
+    def add_to_privacies(self, name, level, change_id):
         """
         Adds the specified privacy entry to the :class:`Privacy` table if not already present.
 
         :param name: Name of :class:`Privacy`
         :type name: String
+        :param level: Level of :class:`Privacy`
+        :type level: Integer
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created :class:`Privacy` entity
@@ -996,7 +998,7 @@ class DataStore:
             return privacies
 
         # enough info to proceed and create entry
-        privacy = self.db_classes.Privacy(name=name)
+        privacy = self.db_classes.Privacy(name=name, level=level)
         self.session.add(privacy)
         self.session.flush()
 

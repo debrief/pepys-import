@@ -21,7 +21,7 @@ class BasicValidatorTestCase(unittest.TestCase):
             nationality = self.store.add_to_nationalities("test_nationality", change_id).name
             platform_type = self.store.add_to_platform_types("test_platform_type", change_id).name
             sensor_type = self.store.add_to_sensor_types("test_sensor_type", change_id).name
-            privacy = self.store.add_to_privacies("test_privacy", change_id).name
+            privacy = self.store.add_to_privacies("test_privacy", 0, change_id).name
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",

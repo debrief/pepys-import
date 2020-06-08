@@ -97,7 +97,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
             # The following assertions filter objects by foreign key ids and
             # compares values with the data from CSV
 
-            # Platform Object: PLATFORM-1, UNITED KINGDOM, TYPE-1, PRIVACY-1
+            # Platform Object: PLATFORM-1, UNITED KINGDOM, TYPE-1, Public
             nationality = (
                 self.store.session.query(self.store.db_classes.Nationality)
                 .filter_by(nationality_id=platform_object.nationality_id)
@@ -115,16 +115,16 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
                 .filter_by(privacy_id=platform_object.privacy_id)
                 .first()
             )
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
 
-            # Datafile Object: DATAFILE-1, True, PRIVACY-1, DATAFILE-TYPE-1
+            # Datafile Object: DATAFILE-1, True, Public, DATAFILE-TYPE-1
             self.assertEqual(datafile_object.simulated, True)
             privacy = (
                 self.store.session.query(self.store.db_classes.Privacy)
                 .filter_by(privacy_id=datafile_object.privacy_id)
                 .first()
             )
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
             datafile_type = (
                 self.store.session.query(self.store.db_classes.DatafileType)
                 .filter_by(datafile_type_id=datafile_object.datafile_type_id)
@@ -239,7 +239,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
             # The following assertions filter objects by foreign key ids and
             # compares values with the data from CSV
 
-            # Platform Object: PLATFORM-1, UNITED KINGDOM, TYPE-1, PRIVACY-1
+            # Platform Object: PLATFORM-1, UNITED KINGDOM, TYPE-1, Public
             nationality = (
                 self.store.session.query(self.store.db_classes.Nationality)
                 .filter_by(nationality_id=platform_object.nationality_id)
@@ -257,16 +257,16 @@ class DataStorePopulatePostGISTestCase(TestCase):
                 .filter_by(privacy_id=platform_object.privacy_id)
                 .first()
             )
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
 
-            # Datafile Object: DATAFILE-1, True, PRIVACY-1, DATAFILE-TYPE-1
+            # Datafile Object: DATAFILE-1, True, Public, DATAFILE-TYPE-1
             self.assertEqual(datafile_object.simulated, True)
             privacy = (
                 self.store.session.query(self.store.db_classes.Privacy)
                 .filter_by(privacy_id=datafile_object.privacy_id)
                 .first()
             )
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
             datafile_type = (
                 self.store.session.query(self.store.db_classes.DatafileType)
                 .filter_by(datafile_type_id=datafile_object.datafile_type_id)
@@ -340,13 +340,13 @@ class DataStorePopulateMissingData(TestCase):
             assert "  Error was 'Privacy is invalid/missing'" in output
 
             assert (
-                "Error importing row ['PLATFORM-2', '234', 'MissingNationality', 'PLATFORM-TYPE-2', 'PRIVACY-2'] from Platforms.csv"
+                "Error importing row ['PLATFORM-2', '234', 'MissingNationality', 'PLATFORM-TYPE-2', 'Public Sensitive'] from Platforms.csv"
                 in output
             )
             assert "  Error was 'Nationality is invalid/missing'" in output
 
             assert (
-                "Error importing row ['SENSOR-2', 'SENSOR-TYPE-2', 'MissingPlatform', 'PRIVACY-2'] from Sensors.csv"
+                "Error importing row ['SENSOR-2', 'SENSOR-TYPE-2', 'MissingPlatform', 'Public Sensitive'] from Sensors.csv"
                 in output
             )
             assert "  Error was 'Host is missing/invalid'" in output
