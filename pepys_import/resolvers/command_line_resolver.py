@@ -192,11 +192,12 @@ class CommandLineResolver(DataResolver):
                 .all()
             )
         elif db_class.__tablename__ == constants.PRIVACY:
-            objects = data_store.session.query(db_class).order_by(desc(db_class.level)).all()
+            all_values = data_store.session.query(db_class).order_by(db_class.level).all()
+            objects = all_values[:7]
             current_values = f"\nCurrent Privacies in the Database\n"
             headers = ["name", "level"]
             current_values += tabulate(
-                [[str(getattr(row, column)) for column in headers] for row in objects],
+                [[str(getattr(row, column)) for column in headers] for row in all_values],
                 headers=headers,
                 tablefmt="github",
                 floatfmt=".3f",
