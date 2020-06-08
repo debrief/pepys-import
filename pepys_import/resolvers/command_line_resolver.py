@@ -183,6 +183,7 @@ class CommandLineResolver(DataResolver):
             text_name = field_name.replace("_", "-")
         options = [f"Search an existing {text_name}", f"Add a new {text_name}"]
         title = f"Ok, please provide {text_name} for new {data_type}: "
+        current_values = ""
         if db_class.__tablename__ == constants.NATIONALITY:
             objects = (
                 data_store.session.query(db_class)
@@ -192,7 +193,7 @@ class CommandLineResolver(DataResolver):
             )
         elif db_class.__tablename__ == constants.PRIVACY:
             objects = data_store.session.query(db_class).order_by(desc(db_class.level)).all()
-            current_values = f"Current Privacies in the Database\n"
+            current_values = f"\nCurrent Privacies in the Database\n"
             headers = ["name", "level"]
             current_values += tabulate(
                 [[str(getattr(row, column)) for column in headers] for row in objects],
@@ -201,7 +202,6 @@ class CommandLineResolver(DataResolver):
                 floatfmt=".3f",
             )
             current_values += "\n"
-            title += f"\n{current_values}\n"
         else:
             objects = data_store.session.query(db_class).all()
         objects_dict = {obj.name: obj for obj in objects}
@@ -234,6 +234,7 @@ class CommandLineResolver(DataResolver):
             else:
                 return result
         elif choice == str(2):
+            print(current_values)
             new_object = prompt(f"Please type name of new {text_name}: ")
             search_method = getattr(data_store, f"search_{field_name}")
             obj = search_method(new_object)
