@@ -3,6 +3,7 @@ import shutil
 import unittest
 from datetime import datetime
 from getpass import getuser
+from unittest.mock import patch
 
 import pytest
 from testing.postgresql import Postgresql
@@ -15,9 +16,11 @@ from pepys_admin.merge import (
     merge_reference_table,
     table_name_to_class_name,
 )
+from pepys_admin.snapshot_cli import SnapshotShell
 from pepys_admin.utils import check_sqlalchemy_results_are_equal, sqlalchemy_obj_to_dict
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
 SAMPLE_DATA_PATH = os.path.join(os.path.dirname(__file__), "sample_data")
@@ -1846,3 +1849,114 @@ class TestMergeUpdatePlatform(unittest.TestCase):
         )
 
         assert len(results) == 1
+
+
+class TestExportAlterAndMerge(unittest.TestCase):
+    @patch("pepys_admin.snapshot_cli.input", return_value="slave_exported.sqlite")
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["PRIVACY-1"])
+    def setUp(self, patched_input, patched_iterfzf):
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave_exported.sqlite"):
+            os.remove("slave_exported.sqlite")
+
+        # Create a master database
+        self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
+        self.master_store.initialise()
+
+        # Do some imports into master
+        # We import these files: gpx_1_0.gpx, rep_test1.rep
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "gpx", "gpx_1_0.gpx"),
+            self.master_store,
+            False,
+        )
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "rep_data", "rep_test1.rep"),
+            self.master_store,
+            False,
+        )
+
+        # Export master to slave_exported.sqlite
+        self.shell = SnapshotShell(self.master_store)
+        self.shell.do_export_reference_data_and_metadata()
+
+        # Create a data_store pointing to the new slave database
+        self.slave_store = DataStore(
+            "", "", "", 0, db_name="slave_exported.sqlite", db_type="sqlite"
+        )
+
+        # Do some more imports into master
+        # We import these files: gpx_1_0_MultipleTracks.gpx
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "gpx", "gpx_1_0_MultipleTracks.gpx"),
+            self.master_store,
+            False,
+        )
+
+        # Do some imports into slave
+        # We import these files: rep_test1.rep
+        # (rep_test1.rep file is the same as was imported into master earlier - this won't be in this db already
+        # as measurements are not exported)
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "rep_data", "rep_test1.rep"),
+            self.slave_store,
+            False,
+        )
+
+        # Do some more imports into slave - now with a new default resolver, so we get different default values
+        # We import these files:  uk_track.rep
+        new_default_resolver = DefaultResolver()
+        new_default_resolver.default_platform_name = "PLATFORM-1-SLAVE"
+        new_default_resolver.default_trigraph = "PL1-SLAVE"
+        new_default_resolver.default_quadgraph = "PLT1-SLAVE"
+        new_default_resolver.default_identifier = "123-SLAVE"
+        new_default_resolver.default_platform_type = "Warship-SLAVE"
+        new_default_resolver.default_nationality = "UK-SLAVE"
+        new_default_resolver.default_sensor_name = "SENSOR-1-SLAVE"
+        new_default_resolver.default_sensor_type = "Position-SLAVE"
+        new_default_resolver.default_privacy = "PRIVACY-1-SLAVE"
+        new_default_resolver.default_datafile_name = "DATAFILE-1-SLAVE"
+        new_default_resolver.default_datafile_type = "DATAFILE-TYPE-1-SLAVE"
+
+        self.slave_store = DataStore(
+            "",
+            "",
+            "",
+            0,
+            db_name="slave_exported.sqlite",
+            db_type="sqlite",
+            missing_data_resolver=new_default_resolver,
+        )
+
+        # processor.process(
+        #     os.path.join(SAMPLE_DATA_PATH, "track_files", "rep_data", "uk_track.rep"),
+        #     self.slave_store,
+        #     False,
+        # )
+
+        # Do some manual creation of objects in master
+        # Specifically:
+        #  - a master-specific PlatformType, and a shared-by-name PlatformType
+        #  - a master-specific Platform and a shared-by-name Platform
+        #  - a master-specific Synonym and a shared-by-name Synonym
+
+        # Do some manual creation of objects in slave
+        # Specifically
+        #  - a slave-specific PlatformType, and a shared-by-name PlatformType (from above)
+        #  - a slave-specific Platform and a shared-by-name Platform (from above)
+        #  - a slave-specific Synonym and a shared-by-name Synonym (from above)
+
+    def tearDown(self):
+        # if os.path.exists("master.sqlite"):
+        #     os.remove("master.sqlite")
+
+        # if os.path.exists("slave.sqlite"):
+        #     os.remove("slave.sqlite")
+        pass
+
+    def test_export_alter_merge(self):
+        pass
