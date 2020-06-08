@@ -28,7 +28,7 @@ class MissingFieldsTestCase(unittest.TestCase):
                     name="TestPlatform",
                     nationality="MissingNationality",
                     platform_type="PLATFORM-TYPE-1",
-                    privacy="PRIVACY-1",
+                    privacy="Public",
                     trigraph="TPL",
                     quadgraph="TPLT",
                     identifier="123",
@@ -40,7 +40,7 @@ class MissingFieldsTestCase(unittest.TestCase):
                     name="TestPlatform",
                     nationality="United Kingdom",
                     platform_type="MissingPlatformType",
-                    privacy="PRIVACY-1",
+                    privacy="Public",
                     trigraph="TPL",
                     quadgraph="TPLT",
                     identifier="123",
@@ -64,7 +64,7 @@ class MissingFieldsTestCase(unittest.TestCase):
                 name="TestPlatform",
                 nationality="United Kingdom",
                 platform_type="PLATFORM-TYPE-1",
-                privacy="PRIVACY-1",
+                privacy="Public",
                 trigraph="TPL",
                 quadgraph="TPLT",
                 identifier="123",
@@ -76,7 +76,7 @@ class MissingFieldsTestCase(unittest.TestCase):
             name="TestPlatform",
             nationality="United Kingdom",
             platform_type="PLATFORM-TYPE-1",
-            privacy="PRIVACY-1",
+            privacy="Public",
             trigraph="TPL",
             quadgraph="TPLT",
             identifier="123",
@@ -89,7 +89,7 @@ class MissingFieldsTestCase(unittest.TestCase):
                     name="TestSensor",
                     sensor_type="MissingSensorType",
                     host="TestPlatform",
-                    privacy="PRIVACY-1",
+                    privacy="Public",
                     change_id=self.change_id,
                 )
 
@@ -98,7 +98,7 @@ class MissingFieldsTestCase(unittest.TestCase):
                     name="TestSensor",
                     sensor_type="GPS",
                     host="MissingPlatform",
-                    privacy="PRIVACY-1",
+                    privacy="Public",
                     change_id=self.change_id,
                 )
 
@@ -116,7 +116,7 @@ class MissingFieldsTestCase(unittest.TestCase):
                 name="TestSensor",
                 sensor_type="GPS",
                 host="TestPlatform",
-                privacy="PRIVACY-1",
+                privacy="Public",
                 change_id=self.change_id,
             )
 
@@ -135,7 +135,7 @@ class MissingFieldsTestCase(unittest.TestCase):
 
             with pytest.raises(MissingDataException):
                 self.store.add_to_datafiles(
-                    "PRIVACY-1",
+                    "Public",
                     "DATAFILE-TYPE-1-DoesNotExist",
                     "DATAFILE-1",
                     True,
@@ -146,7 +146,7 @@ class MissingFieldsTestCase(unittest.TestCase):
 
             # Shouldn't raise an exception, as all valid
             self.store.add_to_datafiles(
-                "PRIVACY-1",
+                "Public",
                 "DATAFILE-TYPE-1",
                 "DATAFILE-1",
                 True,
