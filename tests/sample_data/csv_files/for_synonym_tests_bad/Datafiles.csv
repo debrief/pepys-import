@@ -1,3 +1,5 @@
 privacy,file_type,reference,simulated,file_size,file_hash,url
 PRIVACY-1,DATAFILE-TYPE-1,DATAFILE-1,True,0,HASHED-1,
 PRIVACY-2,DATAFILE-TYPE-2,DATAFILE-2,False,0,HASHED-2,
+PRIVACY-2,DATAFILE-TYPE-2,Datafile-Duplicated,False,0,DuplicatedHash1,
+PRIVACY-2,DATAFILE-TYPE-2,Datafile-Duplicated,False,0,DuplicatedHash2,

@@ -452,6 +452,9 @@ class DataStorePopulateSynonyms(TestCase):
         assert "Error on row ['PLATFORM-1-Synonym2', 'Platforms', 'NonExistentPlatform']" in output
         assert "  Name 'NonExistentPlatform' is not found in table Platforms" in output
 
+        assert "Error on row ['Datafile1-Synonym', 'Datafiles', 'Datafile-Duplicated']" in output
+        assert "Name 'Datafile-Duplicated' occurs multiple times in table Datafiles. Asking user to resolve is only supported for Platforms table."
+
 
 if __name__ == "__main__":
     unittest.main()

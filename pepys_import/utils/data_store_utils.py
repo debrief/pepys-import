@@ -54,9 +54,17 @@ def import_synonyms(data_store, filepath, change_id):
                 print(f"  Invalid table name {values['table']}")
                 continue
 
-            try:
-                name_col = db_class.name
-            except AttributeError:
+            # Try and find a name column to use
+            possibilities = ["name", "reference"]
+
+            name_col = None
+            for poss in possibilities:
+                try:
+                    name_col = getattr(db_class, poss)
+                except AttributeError:
+                    continue
+
+            if name_col is None:
                 print(f"Error on row {row}")
                 print(f"  Cannot find name column for table {values['table']}")
                 continue
@@ -75,12 +83,11 @@ def import_synonyms(data_store, filepath, change_id):
                 # Found one entry, so can create synonym
                 data_store.add_to_synonyms(values["table"], values["synonym"], guid, change_id)
             elif len(results) > 1:
-                # Found more than one entry, so can't automatically link, so give error
                 if values["table"] != "Platforms":
                     print(f"Error on row {row}")
                     print(
                         f"  Name '{values['target_name']}' occurs multiple times in table {values['table']}."
-                        f"Asking user to resolve is only supported for Platforms table."
+                        f" Asking user to resolve is only supported for Platforms table."
                     )
                     continue
 
