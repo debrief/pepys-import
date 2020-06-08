@@ -456,5 +456,44 @@ class DataStorePopulateSynonyms(TestCase):
         assert "Name 'Datafile-Duplicated' occurs multiple times in table Datafiles. Asking user to resolve is only supported for Platforms table."
 
 
+class DataStorePopulateTwice(TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_populate_twice(self):
+        with self.store.session_scope():
+            self.store.populate_reference(TEST_DATA_PATH)
+            self.store.populate_metadata(TEST_DATA_PATH)
+
+        with self.store.session_scope():
+            # Check number of entries in a couple of tables
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+
+            assert len(platforms) == 2
+
+            sensor_types = self.store.session.query(self.store.db_classes.SensorType).all()
+
+            assert len(sensor_types) == 3
+
+        # Load again
+        with self.store.session_scope():
+            self.store.populate_reference(TEST_DATA_PATH)
+            self.store.populate_metadata(TEST_DATA_PATH)
+
+        # Check number of entries is the same
+        with self.store.session_scope():
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+
+            assert len(platforms) == 2
+
+            sensor_types = self.store.session.query(self.store.db_classes.SensorType).all()
+
+            assert len(sensor_types) == 3
+
+
 if __name__ == "__main__":
     unittest.main()
