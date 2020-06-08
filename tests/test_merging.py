@@ -18,6 +18,7 @@ from pepys_admin.merge import (
 from pepys_admin.utils import check_sqlalchemy_results_are_equal, sqlalchemy_obj_to_dict
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
 SAMPLE_DATA_PATH = os.path.join(os.path.dirname(__file__), "sample_data")
 
@@ -1687,7 +1688,7 @@ class TestMergeLogsAndChanges(unittest.TestCase):
                     class_name = table_name_to_class_name(result.table)
 
                     referenced_table = getattr(self.master_store.db_classes, class_name)
-                    pri_key_field = referenced_table.__table__.primary_key.columns.values()[0].name
+                    pri_key_field = get_primary_key_for_table(referenced_table)
                     referenced_table_pri_key = getattr(referenced_table, pri_key_field)
                     id_to_match = result.id
                     ref_table_results = (

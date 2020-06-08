@@ -3,6 +3,8 @@ import os
 import pint
 from sqlalchemy.sql.schema import UniqueConstraint
 
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
+
 
 def get_default_export_folder():
     current_folder_name = os.path.basename(os.path.normpath(os.getcwd()))
@@ -36,7 +38,7 @@ def sqlalchemy_obj_to_dict(obj, remove_id=False):
     del d["created_date"]
 
     if remove_id:
-        pri_key_col_name = obj.__table__.primary_key.columns.values()[0].name
+        pri_key_col_name = get_primary_key_for_table(obj)
         del d[pri_key_col_name]
 
     return d
@@ -98,7 +100,7 @@ def make_query_for_all_data_columns(table_object, comparison_object, session):
     In this case, the data columns are all columns excluding the primary key and the
     created_date column.
     """
-    primary_key = table_object.__table__.primary_key.columns.values()[0].name
+    primary_key = get_primary_key_for_table(table_object)
 
     column_names = [col.name for col in table_object.__table__.columns.values()]
 

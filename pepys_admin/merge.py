@@ -7,6 +7,7 @@ from sqlalchemy.orm.session import make_transient
 from pepys_admin.utils import make_query_for_unique_cols_or_all, table_name_to_class_name
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import shorten_uuid
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
 
 def merge_all_reference_tables(master_store, slave_store):
@@ -36,7 +37,7 @@ def merge_reference_table(table_object_name, master_store, slave_store):
     master_table = getattr(master_store.db_classes, table_object_name)
     slave_table = getattr(slave_store.db_classes, table_object_name)
 
-    primary_key = master_table.__table__.primary_key.columns.values()[0].name
+    primary_key = get_primary_key_for_table(master_table)
 
     # Keep track of each ID and what its status is
     ids_already_there = []
@@ -128,7 +129,7 @@ def update_master_from_slave_entry(
     master_store, slave_store, master_entry, slave_entry, merge_change_id
 ):
     column_names = [col.name for col in master_entry.__table__.columns.values()]
-    primary_key = master_entry.__table__.primary_key.columns.values()[0].name
+    primary_key = get_primary_key_for_table(master_entry)
 
     modified = False
 
@@ -161,7 +162,7 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
     master_table = getattr(master_store.db_classes, table_object_name)
     slave_table = getattr(slave_store.db_classes, table_object_name)
 
-    primary_key = master_table.__table__.primary_key.columns.values()[0].name
+    primary_key = get_primary_key_for_table(master_table)
 
     # Keep track of each ID and what its status is
     ids_already_there = []
@@ -424,7 +425,7 @@ def prepare_merge_logs(master_store, slave_store):
                     class_name = table_name_to_class_name(slave_entry.table)
 
                     referenced_table = getattr(master_store.db_classes, class_name)
-                    pri_key_field = referenced_table.__table__.primary_key.columns.values()[0].name
+                    pri_key_field = get_primary_key_for_table(referenced_table)
                     referenced_table_pri_key = getattr(referenced_table, pri_key_field)
                     id_to_match = slave_entry.id
                     query = master_store.session.query(referenced_table).filter(

@@ -14,6 +14,7 @@ from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 from pepys_import.utils.data_store_utils import shorten_uuid
 from pepys_import.utils.import_utils import import_validators
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
 LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
 LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
@@ -1507,7 +1508,7 @@ class ActivationMixin:
 
 class ReferenceRepr:
     def __repr__(self):
-        primary_key_col_name = self.__table__.primary_key.columns.values()[0].name
+        primary_key_col_name = get_primary_key_for_table(self)
         return (
             f"{self.__class__.__name__}(id={shorten_uuid(getattr(self, primary_key_col_name))} "
             f"name={self.name})"
