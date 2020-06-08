@@ -1,10 +1,12 @@
 import csv
 import json
 import os
+import sys
 
 from sqlalchemy import func, inspect, select
 
 from paths import MIGRATIONS_DIRECTORY
+from pepys_import.resolvers.command_line_input import create_menu
 
 
 def import_from_csv(data_store, path, files, change_id):
@@ -46,6 +48,7 @@ def import_synonyms(data_store, filepath, change_id):
 
             try:
                 db_class = getattr(data_store.db_classes, class_name)
+                pri_key_column_name = db_class.__table__.primary_key.columns.values()[0].name
             except AttributeError:
                 print(f"Error on row {row}")
                 print(f"  Invalid table name {values['table']}")
@@ -66,16 +69,53 @@ def import_synonyms(data_store, filepath, change_id):
                 print(f"  Name '{values['name']}' is not found in table {values['table']}")
                 continue
             elif len(results) == 1:
-                pri_key_column_name = db_class.__table__.primary_key.columns.values()[0].name
                 guid = getattr(results[0], pri_key_column_name)
                 # Found one entry, so can create synonym
                 data_store.add_to_synonyms(values["table"], values["synonym"], guid, change_id)
             elif len(results) > 1:
                 # Found more than one entry, so can't automatically link, so give error
-                # TODO: Extend this to ask the user which one to link to
-                print(f"Error on row {row}")
-                print(f"  Name '{values['name']}' occurs multiple times in table {values['table']}")
-                continue
+                if values["table"] != "Platforms":
+                    print(f"Error on row {row}")
+                    print(
+                        f"  Name '{values['name']}' occurs multiple times in table {values['table']}."
+                        f"Asking user to resolve is only supported for Platforms table."
+                    )
+                    continue
+
+                chosen_item = ask_user_for_synonym_link(data_store, results, values)
+
+                if chosen_item is None:
+                    print("Skipping row")
+                    continue
+                else:
+                    guid = getattr(chosen_item, pri_key_column_name)
+                    data_store.add_to_synonyms(values["table"], values["synonym"], guid, change_id)
+
+
+def ask_user_for_synonym_link(data_store, results, values):
+    options = [
+        f"{result.name}: Nationality = {result.nationality_name}, Identifier = {result.identifier}"
+        for result in results
+    ]
+
+    options += ["Skip this row"]
+
+    def is_valid(option):
+        return option.lower() in [str(i) for i in range(1, len(options) + 1)] or option == "."
+
+    choice = create_menu(
+        f"Choose which Platform to link synonym '{values['name']}'' to:",
+        options,
+        validate_method=is_valid,
+    )
+
+    if choice == ".":
+        print("Quitting")
+        sys.exit(1)
+    elif choice == str(len(options)):
+        return None
+    elif choice in [str(i) for i in range(1, len(options) + 1)]:
+        return results[int(choice) - 1]
 
 
 def table_name_to_class_name(table_name):

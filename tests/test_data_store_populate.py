@@ -4,6 +4,7 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
 from unittest import TestCase
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy.exc import OperationalError
@@ -365,26 +366,17 @@ class DataStorePopulateSynonyms(TestCase):
     def tearDown(self):
         pass
 
-    def test_populate_synonyms_valid(self):
+    @patch("pepys_import.resolvers.command_line_input.prompt", return_value="1")
+    def test_populate_synonyms_valid(self, ptk_prompt):
         with self.store.session_scope():
-            temp_output = StringIO()
-            with redirect_stdout(temp_output):
-                self.store.populate_reference(SYNONYM_DATA_PATH)
-                self.store.populate_metadata(SYNONYM_DATA_PATH)
-            output = temp_output.getvalue()
-
-        # Check for error messages about duplicated platform name
-        assert (
-            "Error on row ['PLATFORM-Duplicated-Synonym', 'Platforms', 'PLATFORM-DuplicatedName']"
-            in output
-        )
-        assert "Name 'PLATFORM-DuplicatedName' occurs multiple times in table Platforms" in output
+            self.store.populate_reference(SYNONYM_DATA_PATH)
+            self.store.populate_metadata(SYNONYM_DATA_PATH)
 
         with self.store.session_scope():
             synonyms = self.store.session.query(self.store.db_classes.Synonym).all()
 
-            # We tried to import four, but one was rejected, so just three should exist
-            assert len(synonyms) == 3
+            # We imported 4 synonyms
+            assert len(synonyms) == 4
 
             # Check all synonym entity IDs exist in the Platforms table
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -392,6 +384,55 @@ class DataStorePopulateSynonyms(TestCase):
 
             for synonym in synonyms:
                 assert synonym.entity in platform_ids
+
+            # Check the ID for the Synonym PLATFORM-Duplicated-Synonym is the ID for
+            # the Platform with name Platform-DuplicatedName and identifier F239
+            platforms = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.name == "PLATFORM-DuplicatedName")
+                .filter(self.store.db_classes.Platform.identifier == "F239")
+                .all()
+            )
+
+            platform_guid = platforms[0].platform_id
+
+            synonyms = (
+                self.store.session.query(self.store.db_classes.Synonym)
+                .filter(self.store.db_classes.Synonym.synonym == "PLATFORM-Duplicated-Synonym")
+                .all()
+            )
+
+            assert synonyms[0].entity == platform_guid
+
+    @patch("pepys_import.resolvers.command_line_input.prompt", return_value=".")
+    def test_populate_synonyms_valid_exit(self, ptk_prompt):
+        with self.store.session_scope():
+            self.store.populate_reference(SYNONYM_DATA_PATH)
+            with pytest.raises(SystemExit):
+                self.store.populate_metadata(SYNONYM_DATA_PATH)
+
+        with self.store.session_scope():
+            synonyms = self.store.session.query(self.store.db_classes.Synonym).all()
+
+            # We imported 3 synonyms because it was cancelled on the 4th one
+            assert len(synonyms) == 3
+
+    @patch("pepys_import.resolvers.command_line_input.prompt", return_value="3")
+    def test_populate_synonyms_valid_skip(self, ptk_prompt):
+        with self.store.session_scope():
+            self.store.populate_reference(SYNONYM_DATA_PATH)
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.store.populate_metadata(SYNONYM_DATA_PATH)
+            output = temp_output.getvalue()
+
+        assert "Skipping row" in output
+
+        with self.store.session_scope():
+            synonyms = self.store.session.query(self.store.db_classes.Synonym).all()
+
+            # We imported 3 synonyms because we skipped the 4th one
+            assert len(synonyms) == 3
 
     def test_populate_synonyms_invalid(self):
         with self.store.session_scope():
