@@ -1,5 +1,5 @@
-name,
-Public
-Private
-PRIVACY-1
-PRIVACY-2
+name,level
+Public,0
+Private,10
+PRIVACY-1,20
+PRIVACY-2,30
