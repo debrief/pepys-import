@@ -638,8 +638,45 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
     def tearDown(self):
         os.remove("cli_import_test.db")
 
-    @patch("cmd.input", return_value="2\n")
-    def test_missing_db_column_sqlite(self, patched_input):
+    @patch("pepys_admin.view_data_cli.iterfzf", return_value="States")
+    @patch("cmd.input")
+    def test_missing_db_column_sqlite(self, patched_input, patched_iterfzf):
+        patched_input.side_effect = ["6", "1"]
+        conn = sqlite3.connect("cli_import_test.db")
+        load_spatialite(conn, None)
+
+        # We want to DROP a column from the States table, but SQLite doesn't support this
+        # so we drop the table and create a new table instead
+        conn.execute("DROP TABLE States")
+
+        # SQL to create a States table without a time column
+        create_sql = """CREATE TABLE States (
+        state_id INTEGER NOT NULL,
+        sensor_id INTEGER NOT NULL,
+        elevation REAL,
+        heading REAL,
+        course REAL,
+        speed REAL,
+        source_id INTEGER NOT NULL,
+        privacy_id INTEGER,
+        created_date DATETIME, "location" POINT,
+        PRIMARY KEY (state_id)
+        )"""
+
+        conn.execute(create_sql)
+        conn.close()
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            data_store = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
+            run_admin_shell(data_store, ".")
+        output = temp_output.getvalue()
+
+        assert "ERROR: SQL error when communicating with database" in output
+
+    @patch("cmd.input")
+    def test_missing_db_column_sqlite_2(self, patched_input):
+        patched_input.side_effect = ["2", "0"]
         conn = sqlite3.connect("cli_import_test.db")
         load_spatialite(conn, None)
 
@@ -665,12 +702,12 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
         conn.close()
 
         temp_output = StringIO()
-        with redirect_stdout(temp_output):
+        with redirect_stdout(temp_output), pytest.raises(SystemExit):
             data_store = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
             run_admin_shell(data_store, ".")
         output = temp_output.getvalue()
 
-        assert "ERROR: SQL error when communicating with database" in output
+        assert "ERROR: Table summaries couldn't be printed." in output
 
 
 @pytest.mark.postgres
