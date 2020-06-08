@@ -719,33 +719,6 @@ class SensorTestCase(TestCase):
             self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
             self.assertEqual(found_sensor.name, "gps")
 
-    def test_find_sensor_synonym(self):
-        """Test whether find_sensor method finds the correct Sensor entity from Synonyms table"""
-        with self.store.session_scope():
-            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-
-            # there must be no entry at the beginning
-            self.assertEqual(len(sensors), 0)
-
-            sensor = self.platform.get_sensor(
-                self.store, "gps", self.sensor_type, change_id=self.change_id
-            )
-            self.platform.get_sensor(
-                self.store, "gps_2", self.sensor_type, change_id=self.change_id
-            )
-            self.store.add_to_synonyms(
-                table=constants.SENSOR,
-                name="TEST",
-                entity=sensor.sensor_id,
-                change_id=self.change_id,
-            )
-
-            found_sensor = self.store.db_classes.Sensor().find_sensor(
-                self.store, "TEST", self.platform.platform_id
-            )
-            self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
-            self.assertEqual(found_sensor.name, "gps")
-
 
 @pytest.mark.postgres
 class MeasurementsTestCase(TestCase):
@@ -813,10 +786,8 @@ class MeasurementsTestCase(TestCase):
                 name="Test Importer",
                 validation_level=validation_constants.NONE_LEVEL,
                 short_name="Test Importer",
-                separator=" ",
             ):
                 super().__init__(name, validation_level, short_name)
-                self.separator = separator
                 self.text_label = None
                 self.depth = 0.0
                 self.errors = list()

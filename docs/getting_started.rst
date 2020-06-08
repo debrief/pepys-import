@@ -193,7 +193,7 @@ You'll see the contents of the Platforms table displayed: this should include th
 created manually the first time you ran Pepys Import, plus various other platforms added
 automatically by the default resolver including `SPLENDID` and `SEARCH_PLATFORM`. You'll see each
 platform has a nationality and platform type. In fact, the database stores more information about
-platforms (including pennant numbers, trigraphs and more) but for ease of visualisation these are
+platforms (including identifier such as pennant or tail numbers, trigraphs and more) but for ease of visualisation these are
 left out of the database display here.
 
 Now look at some other tables: choose option `1` again and look at the `States` table, in which

@@ -3,6 +3,8 @@ import unittest
 from datetime import datetime
 from unittest import TestCase
 
+import pytest
+
 from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
@@ -589,27 +591,6 @@ class SensorTestCase(TestCase):
             self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
             self.assertEqual(found_sensor.name, "gps")
 
-    def test_find_sensor_synonym(self):
-        """Test whether find_sensor method finds the correct Sensor entity from Synonyms table"""
-        sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-
-        # there must be no entry at the beginning
-        self.assertEqual(len(sensors), 0)
-
-        sensor = self.platform.get_sensor(
-            self.store, "gps", self.sensor_type, change_id=self.change_id
-        )
-        self.platform.get_sensor(self.store, "gps_2", self.sensor_type, change_id=self.change_id)
-        self.store.add_to_synonyms(
-            table=constants.SENSOR, name="TEST", entity=sensor.sensor_id, change_id=self.change_id,
-        )
-
-        found_sensor = self.store.db_classes.Sensor().find_sensor(
-            self.store, "TEST", self.platform.platform_id
-        )
-        self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
-        self.assertEqual(found_sensor.name, "gps")
-
 
 class MeasurementsTestCase(TestCase):
     def setUp(self):
@@ -653,10 +634,8 @@ class MeasurementsTestCase(TestCase):
                 name="Test Importer",
                 validation_level=validation_constants.NONE_LEVEL,
                 short_name="Test Importer",
-                separator=" ",
             ):
                 super().__init__(name, validation_level, short_name)
-                self.separator = separator
                 self.text_label = None
                 self.depth = 0.0
                 self.errors = list()
@@ -766,6 +745,19 @@ class MeasurementsTestCase(TestCase):
                 self.file.commit(self.store, self.change_id)
                 comments = self.store.session.query(self.store.db_classes.Comment).all()
                 self.assertEqual(len(comments), 1)
+
+
+class SynonymsTestCase(TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def test_create_invalid_synonym(self):
+        with pytest.raises(Exception):
+            self.store.add_to_synonyms("Sensors", "TestName", "TestEntity", "TestChangeID")
+
+        with pytest.raises(Exception):
+            self.store.add_to_synonyms("GeometrySubTypes", "TestName", "TestEntity", "TestChangeID")
 
 
 if __name__ == "__main__":

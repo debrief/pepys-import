@@ -14,11 +14,11 @@ from sqlalchemy.sql import func
 from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import import __version__
 from pepys_import.core.formats import unit_registry
-from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
 from pepys_import.utils.data_store_utils import (
+    MissingDataException,
     cache_results_if_not_none,
     create_alembic_version_table,
     create_spatial_tables_for_postgres,
@@ -273,11 +273,12 @@ class DataStore:
         host = self.search_platform(host)
         privacy = self.search_privacy(privacy)
 
-        if sensor_type is None or host is None or privacy is None:
-            raise Exception(
-                f"There are missing value(s) in 'Sensor:{sensor_type},"
-                f" Host:{host}, Privacy:{privacy}'!"
-            )
+        if sensor_type is None:
+            raise MissingDataException("Sensor Type is missing/invalid")
+        elif host is None:
+            raise MissingDataException("Host is missing/invalid")
+        elif privacy is None:
+            raise MissingDataException("Privacy is missing/invalid")
 
         sensor_obj = self.db_classes.Sensor(
             name=name,
@@ -327,6 +328,11 @@ class DataStore:
         datafile_type = self.search_datafile_type(file_type)
         privacy = self.search_privacy(privacy)
 
+        if datafile_type is None:
+            raise MissingDataException("Datafile Type is invalid/missing")
+        elif privacy is None:
+            raise MissingDataException("Privacy is invalid/missing")
+
         datafile_obj = self.db_classes.Datafile(
             simulated=bool(simulated),
             privacy_id=privacy.privacy_id,
@@ -348,12 +354,12 @@ class DataStore:
     def add_to_platforms(
         self,
         name,
+        identifier,
         nationality,
         platform_type,
         privacy,
         trigraph=None,
         quadgraph=None,
-        pennant_number=None,
         change_id=None,
     ):
         """
@@ -371,8 +377,8 @@ class DataStore:
         :type trigraph: String
         :param quadgraph: Quadgraph of :class:`Platform`
         :type quadgraph: String
-        :param pennant_number: Pennant number of :class:`Platform`
-        :type pennant_number: String
+        :param identifier: Identifier string of :class:`Platform`
+        :type identifier: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created Platform entity
@@ -382,11 +388,18 @@ class DataStore:
         platform_type = self.search_platform_type(platform_type)
         privacy = self.search_privacy(privacy)
 
+        if nationality is None:
+            raise MissingDataException("Nationality is invalid/missing")
+        elif platform_type is None:
+            raise MissingDataException("Platform Type is invalid/missing")
+        elif privacy is None:
+            raise MissingDataException("Privacy is invalid/missing")
+
         platform_obj = self.db_classes.Platform(
             name=name,
             trigraph=trigraph,
             quadgraph=quadgraph,
-            pennant=pennant_number,
+            identifier=identifier,
             nationality_id=nationality.nationality_id,
             platform_type_id=platform_type.platform_type_id,
             privacy_id=privacy.privacy_id,
@@ -401,6 +414,10 @@ class DataStore:
         return platform_obj
 
     def add_to_synonyms(self, table, name, entity, change_id):
+        # Blacklist certain tables, and don't Synonyms for them be created
+        if table in [constants.SENSOR, constants.GEOMETRY_SUBTYPE]:
+            raise Exception(f"Synonyms are not allowed for table {table}")
+
         # enough info to proceed and create entry
         synonym = self.db_classes.Synonym(table=table, synonym=name, entity=entity)
         self.session.add(synonym)
@@ -673,12 +690,12 @@ class DataStore:
     def get_platform(
         self,
         platform_name=None,
+        identifier=None,
         nationality=None,
         platform_type=None,
         privacy=None,
         trigraph=None,
         quadgraph=None,
-        pennant_number=None,
         change_id=None,
     ):
         """
@@ -697,8 +714,8 @@ class DataStore:
         :type trigraph: String
         :param quadgraph: Quadgraph of :class:`Platform`
         :type quadgraph: String
-        :param pennant_number: Pennant number of :class:`Platform`
-        :type pennant_number: String
+        :param identifier: Identifier string of :class:`Platform`
+        :type identifier: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created Platform entity
@@ -716,6 +733,7 @@ class DataStore:
 
         if (
             platform_name is None
+            or identifier is None
             or nationality_obj is None
             or platform_type_obj is None
             or privacy_obj is None
@@ -731,7 +749,7 @@ class DataStore:
                     platform_name,
                     trigraph,
                     quadgraph,
-                    pennant_number,
+                    identifier,
                     platform_type_obj,
                     nationality_obj,
                     privacy_obj,
@@ -749,7 +767,7 @@ class DataStore:
             name=platform_name,
             trigraph=trigraph,
             quadgraph=quadgraph,
-            pennant_number=pennant_number,
+            identifier=identifier,
             nationality=nationality_obj.name,
             platform_type=platform_type_obj.name,
             privacy=privacy_obj.name,

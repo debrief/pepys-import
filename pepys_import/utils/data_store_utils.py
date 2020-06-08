@@ -1,7 +1,10 @@
 import csv
+import json
 import os
 
 from sqlalchemy import func, inspect, select
+
+from paths import MIGRATIONS_DIRECTORY
 
 
 def import_from_csv(data_store, path, files, change_id):
@@ -15,9 +18,13 @@ def import_from_csv(data_store, path, files, change_id):
                 reader = csv.reader(file_object)
                 # extract header
                 header = next(reader)
-                for row in reader:
+                for row_number, row in enumerate(reader):
                     keyword_arguments = dict(zip(header, row))
-                    method_to_call(**keyword_arguments, change_id=change_id)
+                    try:
+                        method_to_call(**keyword_arguments, change_id=change_id)
+                    except MissingDataException as e:
+                        print(f"Error importing row {row} from {file}")
+                        print(f"  Error was '{str(e)}'")
         else:
             print(f"Method({possible_method}) not found!")
 
@@ -63,6 +70,12 @@ def create_spatial_tables_for_postgres(engine):
 
 
 def create_alembic_version_table(engine, db_type):
+    with open(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"), "r") as file:
+        versions = json.load(file)
+    if "LATEST_POSTGRES_VERSION" not in versions or "LATEST_SQLITE_VERSION" not in versions:
+        print("Latest revision IDs couldn't found!")
+        return
+
     if db_type == "sqlite":
         create_table = """
             CREATE TABLE IF NOT EXISTS alembic_version
@@ -73,9 +86,11 @@ def create_alembic_version_table(engine, db_type):
         """
         insert_value = """
             INSERT INTO alembic_version (version_num)
-            SELECT '07e4b725c547'
-            WHERE NOT EXISTS(SELECT 1 FROM alembic_version WHERE version_num = '07e4b725c547');
-        """
+            SELECT '{id}'
+            WHERE NOT EXISTS(SELECT 1 FROM alembic_version WHERE version_num = '{id}');
+        """.format(
+            id=versions["LATEST_SQLITE_VERSION"]
+        )
     else:
         create_table = """
             CREATE TABLE IF NOT EXISTS pepys.alembic_version
@@ -86,11 +101,13 @@ def create_alembic_version_table(engine, db_type):
         """
         insert_value = """
             INSERT INTO pepys.alembic_version (version_num) 
-            SELECT '6f625922f61c'
+            SELECT '{id}'
             WHERE NOT EXISTS(
-                SELECT '6f625922f61c' FROM pepys.alembic_version WHERE version_num = '6f625922f61c'
+                SELECT '{id}' FROM pepys.alembic_version WHERE version_num = '{id}'
             );
-        """
+        """.format(
+            id=versions["LATEST_POSTGRES_VERSION"]
+        )
     with engine.connect() as connection:
         connection.execute(create_table)
         connection.execute(insert_value)
@@ -116,3 +133,7 @@ def cache_results_if_not_none(cache_attribute):
 
 def shorten_uuid(id):
     return str(id)[-6:]
+
+
+class MissingDataException(Exception):
+    pass
