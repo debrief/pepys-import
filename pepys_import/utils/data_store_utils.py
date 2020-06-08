@@ -61,12 +61,14 @@ def import_synonyms(data_store, filepath, change_id):
                 print(f"  Cannot find name column for table {values['table']}")
                 continue
 
-            results = data_store.session.query(db_class).filter(name_col == values["name"]).all()
+            results = (
+                data_store.session.query(db_class).filter(name_col == values["target_name"]).all()
+            )
 
             if len(results) == 0:
                 # Nothing to link synonym to so give error
                 print(f"Error on row {row}")
-                print(f"  Name '{values['name']}' is not found in table {values['table']}")
+                print(f"  Name '{values['target_name']}' is not found in table {values['table']}")
                 continue
             elif len(results) == 1:
                 guid = getattr(results[0], pri_key_column_name)
@@ -77,7 +79,7 @@ def import_synonyms(data_store, filepath, change_id):
                 if values["table"] != "Platforms":
                     print(f"Error on row {row}")
                     print(
-                        f"  Name '{values['name']}' occurs multiple times in table {values['table']}."
+                        f"  Name '{values['target_name']}' occurs multiple times in table {values['table']}."
                         f"Asking user to resolve is only supported for Platforms table."
                     )
                     continue
@@ -104,7 +106,7 @@ def ask_user_for_synonym_link(data_store, results, values):
         return option.lower() in [str(i) for i in range(1, len(options) + 1)] or option == "."
 
     choice = create_menu(
-        f"Choose which Platform to link synonym '{values['name']}'' to:",
+        f"Choose which Platform to link synonym '{values['target_name']}'' to:",
         options,
         validate_method=is_valid,
     )

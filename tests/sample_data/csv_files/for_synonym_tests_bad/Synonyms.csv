@@ -1,4 +1,4 @@
-synonym,table,name
+synonym,table,target_name
 PLATFORM-1-Synonym,Platforms,PLATFORM-1
 Blah,InvalidTables,BlahName
 PLATFORM-1-Synonym2,Platforms,PLATFORM-1
