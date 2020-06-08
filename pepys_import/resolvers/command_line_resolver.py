@@ -437,35 +437,7 @@ class CommandLineResolver(DataResolver):
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
-        if sensor_name and choice in completer:
-            new_choice = create_menu(
-                f"Do you wish to keep {sensor_name} as synonym for {choice}?",
-                ["Yes", "No"],
-                validate_method=is_valid,
-            )
-            if new_choice == str(1):
-                # TODO: FIX THIS - should search by host_id here too!
-                sensor = (
-                    data_store.session.query(data_store.db_classes.Sensor)
-                    .filter(data_store.db_classes.Sensor.name == choice)
-                    .first()
-                )
-                # Add it to synonyms and return existing sensor
-                data_store.add_to_synonyms(
-                    constants.SENSOR, sensor_name, sensor.sensor_id, change_id
-                )
-                print(f"'{sensor_name}' added to Synonyms!")
-                return sensor
-            elif new_choice == str(2):
-                return self.add_to_sensors(
-                    data_store, sensor_name, sensor_type, host_id, privacy, change_id
-                )
-            elif new_choice == ".":
-                print("-" * 61, "\nReturning to the previous menu\n")
-                return self.fuzzy_search_sensor(
-                    data_store, sensor_name, sensor_type, host_id, privacy, change_id
-                )
-        elif choice == ".":
+        if choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_sensor(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
