@@ -11,7 +11,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "8b8b16e167cf"
-down_revision = "91d0713df209"
+down_revision = "30194fdfc033"
 branch_labels = None
 depends_on = None
 
@@ -26,7 +26,7 @@ def upgrade():
 
     with op.batch_alter_table("Platforms", schema="pepys") as batch_op:
         batch_op.create_unique_constraint(
-            "uq_Platform_name_nat_pennant", ["name", "nationality_id", "pennant"]
+            "uq_Platform_name_nat_identifier", ["name", "nationality_id", "identifier"]
         )
 
     with op.batch_alter_table("Sensors", schema="pepys") as batch_op:
@@ -41,7 +41,7 @@ def downgrade():
         batch_op.drop_constraint("uq_sensors_name_host", type_="unique")
 
     with op.batch_alter_table("Platforms", schema="pepys") as batch_op:
-        batch_op.drop_constraint("uq_Platform_name_nat_pennant", type_="unique")
+        batch_op.drop_constraint("uq_Platform_name_nat_identifier", type_="unique")
 
     with op.batch_alter_table("GeometrySubTypes", schema="pepys") as batch_op:
         batch_op.drop_constraint("uq_GeometrySubType_name_parent", type_="unique")

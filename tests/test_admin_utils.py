@@ -86,9 +86,9 @@ def test_make_query_for_unique_cols_or_all_platform():
 
         query_str = str(query.statement.compile(compile_kwargs={"literal_binds": True}))
 
-        # Name, nationality_id and pennant are the unique fields that should be searched for Platform
+        # Name, nationality_id and identifier are the unique fields that should be searched for Platform
         assert "\"Platforms\".name = 'Platform1'" in query_str
-        assert '"Platforms".pennant IS NULL' in query_str
+        assert '"Platforms".identifier IS NULL' in query_str
         assert (
             f"\"Platforms\".nationality_id = '{remove_dashes(platform_obj.nationality_id)}'"
             in query_str
@@ -156,7 +156,7 @@ def test_make_query_for_cols():
         )
 
         query = make_query_for_cols(
-            store.db_classes.Platform, platform_obj, ["pennant", "name"], store.session
+            store.db_classes.Platform, platform_obj, ["identifier", "name"], store.session
         )
 
         query_str = str(query.statement.compile(compile_kwargs={"literal_binds": True}))
@@ -164,8 +164,8 @@ def test_make_query_for_cols():
         # Name field was specified, so should be in a WHERE clause
         assert "\"Platforms\".name = 'Platform1'" in query_str
 
-        # Even though the pennant value is NULL it should still be included as it was listed
-        assert '"Platforms".pennant IS NULL' in query_str
+        # Even though the identifier value is NULL it should still be included as it was listed
+        assert '"Platforms".identifier IS NULL' in query_str
 
         # Shouldn't be searching for nationality as it's not in the list
         assert (
@@ -210,7 +210,7 @@ def test_make_query_for_all_data_columns():
         )
 
         # Check NULL fields are ignored
-        assert '"Platforms".pennant IS NULL' not in query_str
+        assert '"Platforms".identifier IS NULL' not in query_str
 
         # Check created_date isn't present in a WHERE clause
         assert "created_date =" not in query_str
