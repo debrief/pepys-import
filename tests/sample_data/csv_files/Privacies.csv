@@ -1,5 +1,9 @@
 name,level
-Public,30
-Private,40
-PRIVACY-1,10
-PRIVACY-2,20
+Public,10
+Public Sensitive,20
+Private,30
+Private UK/IE,40
+Private UK/IE/FR,45
+Very Private,50
+Very Private UK/IE,40
+Very Private UK/IE/FR,45
