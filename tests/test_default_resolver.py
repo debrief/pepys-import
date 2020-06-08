@@ -20,7 +20,7 @@ class DefaultResolverTestCase(unittest.TestCase):
     def test_resolver_privacy(self):
         with self.store.session_scope():
             privacy = self.resolver.resolve_privacy(self.store, self.change_id)
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
 
     def test_resolve_sensor(self):
         with self.store.session_scope():
@@ -34,7 +34,7 @@ class DefaultResolverTestCase(unittest.TestCase):
             )
             self.assertEqual(sensor_name, "SENSOR-1")
             self.assertEqual(sensor_type.name, "Position")
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
 
     def test_resolve_sensor_gives_sensor_object_when_called_twice(self):
         Sensor = self.store.db_classes.Sensor
@@ -65,7 +65,7 @@ class DefaultResolverTestCase(unittest.TestCase):
             sensor_name, sensor_type, privacy = result
             self.assertEqual(sensor_name, "SENSOR-1")
             self.assertEqual(sensor_type.name, "Position")
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
 
             # Add to database (like in get_sensor() in common_db.py)
             new_sensor_obj = Sensor().add_to_sensors(
@@ -114,7 +114,7 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(identifier, "123")
             self.assertEqual(platform_type.name, "Warship")
             self.assertEqual(nationality.name, "UK")
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
 
     def test_resolve_platform_gives_platform_object_when_called_twice(self):
         with self.store.session_scope():
@@ -174,7 +174,7 @@ class DefaultResolverTestCase(unittest.TestCase):
             )
             self.assertEqual(datafile_name, "DATAFILE-1")
             self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
 
 
 if __name__ == "__main__":
