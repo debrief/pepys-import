@@ -12,6 +12,7 @@ from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.snapshot_cli import SnapshotShell
 from pepys_admin.view_data_cli import ViewDataShell
 from pepys_import.utils.data_store_utils import is_schema_created
+from pepys_import.utils.error_handling import handle_status_errors
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -76,7 +77,7 @@ class AdminShell(cmd.Cmd):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
-        with self.data_store.session_scope():
+        with self.data_store.session_scope(), handle_status_errors():
             measurement_summary = self.data_store.get_status(report_measurement=True)
             report = measurement_summary.report()
             print(f"## Measurements\n{report}\n")
