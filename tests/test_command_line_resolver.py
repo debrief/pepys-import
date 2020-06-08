@@ -690,40 +690,6 @@ class SensorTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "PRIVACY-1")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_resolve_sensor_add_to_synonyms(self, menu_prompt):
-        """Test whether the given sensor name is correctly added to Synonyms table or not"""
-
-        # Select "Search an existing sensor"->Search "SENSOR-1"->Select "Yes"
-        menu_prompt.side_effect = ["1", "SENSOR-1", "1"]
-        with self.store.session_scope():
-            # Create platform first, then create a Sensor object
-            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
-            privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
-            nationality = self.store.add_to_nationalities("UK", self.change_id).name
-            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
-            platform = self.store.get_platform(
-                platform_name="Test Platform",
-                identifier="123",
-                nationality=nationality,
-                platform_type=platform_type,
-                privacy=privacy,
-                change_id=self.change_id,
-            )
-            sensor = platform.get_sensor(
-                self.store, "SENSOR-1", sensor_type, privacy, change_id=self.change_id
-            )
-
-            synonym_sensor = self.resolver.resolve_sensor(
-                self.store,
-                "SENSOR-TEST",
-                sensor_type,
-                platform.platform_id,
-                privacy,
-                change_id=self.change_id,
-            )
-            self.assertEqual(synonym_sensor.sensor_id, sensor.sensor_id)
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_sensor_make_further_edit(self, resolver_prompt, menu_prompt):
         """Test whether correct sensor type and privacy returns after resolver is further edited"""
@@ -776,13 +742,12 @@ class SensorTestCase(unittest.TestCase):
         """Test whether a new Sensor entity created or not after searched
         and not founded in the Sensor Table."""
 
-        # Select "Search an existing sensor"->Search "SENSOR-1"->Select "No"->Type "SENSOR-TEST"->
+        # Select "Search an existing sensor"->Search "Blah"->Type "SENSOR-TEST"->
         # Select "Search for an existing sensor-type"->Search "SENSOR-TYPE-1"->
         # Select "Search an existing classification"->Search "PRIVACY-1"->Select "Yes"
         menu_prompt.side_effect = [
             "1",
-            "SENSOR-1",
-            "2",
+            "Blah",
             "1",
             "SENSOR-TYPE-1",
             "1",
@@ -1016,8 +981,8 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
     def test_cancelling_fuzzy_search_sensor(self, menu_prompt):
         """Test whether "." returns to resolve sensor"""
 
-        # Type "SENSOR-1"->Select "."->Select "."->Select "."
-        menu_prompt.side_effect = ["SENSOR-1", ".", ".", "."]
+        # Type Select "."->Select "."->Select "."->Select "."
+        menu_prompt.side_effect = [".", ".", ".", "."]
         with self.store.session_scope():
             sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
             privacy = self.store.add_to_privacies("PRIVACY-1", self.change_id).name
