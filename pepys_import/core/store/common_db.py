@@ -336,10 +336,12 @@ class DatafileMixin:
         later, if the full import succeeds.
         """
         state = data_store.db_classes.State(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
+            sensor_id=sensor.sensor_id,
+            time=timestamp,
+            source_id=self.datafile_id,
+            sensor=sensor,
+            platform=platform,
         )
-        state.platform_name = platform.name
-        state.sensor_name = sensor.name
         self.add_measurement_to_dict(state, parser_name)
         return state
 
@@ -366,10 +368,12 @@ class DatafileMixin:
         later, if the full import succeeds.
         """
         contact = data_store.db_classes.Contact(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
+            sensor_id=sensor.sensor_id,
+            time=timestamp,
+            source_id=self.datafile_id,
+            sensor=sensor,
+            platform=platform,
         )
-        contact.platform_name = platform.name
-        contact.sensor_name = sensor.name
         self.add_measurement_to_dict(contact, parser_name)
         return contact
 
@@ -403,9 +407,8 @@ class DatafileMixin:
             content=comment,
             comment_type_id=comment_type.comment_type_id,
             source_id=self.datafile_id,
+            platform=platform,
         )
-        comment.platform_name = platform.name
-        comment.sensor_name = "N/A"
         self.add_measurement_to_dict(comment, parser_name)
         return comment
 
@@ -533,12 +536,12 @@ class TaggedItemMixin:
 
 class StateMixin:
     @declared_attr
-    def sensor_(self):
+    def sensor(self):
         return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
 
     @declared_attr
-    def sensor__name(self):
-        return association_proxy("sensor_", "name")
+    def sensor_name(self):
+        return association_proxy("sensor", "name")
 
     @declared_attr
     def source(self):
@@ -669,12 +672,12 @@ class StateMixin:
 
 class ContactMixin:
     @declared_attr
-    def sensor_(self):
+    def sensor(self):
         return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
 
     @declared_attr
-    def sensor__name(self):
-        return association_proxy("sensor_", "name")
+    def sensor_name(self):
+        return association_proxy("sensor", "name")
 
     @declared_attr
     def subject(self):
@@ -1105,12 +1108,12 @@ class LogsHoldingMixin:
 
 class CommentMixin:
     @declared_attr
-    def platform_(self):
+    def platform(self):
         return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
 
     @declared_attr
-    def platform__name(self):
-        return association_proxy("platform_", "name")
+    def platform_name(self):
+        return association_proxy("platform", "name")
 
     @declared_attr
     def comment_type(self):
