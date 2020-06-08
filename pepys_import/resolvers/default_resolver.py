@@ -11,7 +11,7 @@ class DefaultResolver(DataResolver):
     default_nationality = "UK"
     default_sensor_name = "SENSOR-1"
     default_sensor_type = "Position"
-    default_privacy = "PRIVACY-1"
+    default_privacy = "Public"
     default_privacy_level = 10
     default_datafile_name = "DATAFILE-1"
     default_datafile_type = "DATAFILE-TYPE-1"
