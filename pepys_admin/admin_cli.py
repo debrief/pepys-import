@@ -94,7 +94,10 @@ class AdminShell(cmd.Cmd):
 
     def do_migrate(self):
         print("Alembic migration command running, see output below.")
-        command.upgrade(self.cfg, "head")
+        try:
+            command.upgrade(self.cfg, "head")
+        except Exception as e:
+            print(f"Exception details: {e}\n\nERROR: Alembic error when migrating the database!")
 
     def do_view_data(self):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
