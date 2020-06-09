@@ -4,6 +4,7 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
 from unittest import TestCase
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy.exc import OperationalError
@@ -17,6 +18,8 @@ NOT_IMPLEMENTED_PATH = os.path.join(
     FILE_PATH, "sample_data", "csv_files", "for_not_implemented_methods"
 )
 MISSING_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files", "missing_data")
+SYNONYM_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files", "for_synonym_tests")
+SYNONYM_DATA_PATH_BAD = os.path.join(FILE_PATH, "sample_data", "csv_files", "for_synonym_tests_bad")
 
 
 class DataStorePopulateSpatiaLiteTestCase(TestCase):
@@ -313,9 +316,6 @@ class DataStorePopulateNotImplementedMethodTestCase(TestCase):
 
 
 class DataStorePopulateMissingData(TestCase):
-    """Test whether populate methods print correct table name and message
-    when the corresponding add method is not found"""
-
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -350,6 +350,110 @@ class DataStorePopulateMissingData(TestCase):
                 in output
             )
             assert "  Error was 'Host is missing/invalid'" in output
+
+
+class DataStorePopulateSynonyms(TestCase):
+    def setUp(self):
+        if os.path.exists("synonyms.sqlite"):
+            os.remove("synonyms.sqlite")
+
+        self.store = DataStore("", "", "", 0, "synonyms.sqlite", db_type="sqlite")
+        self.store.initialise()
+
+        with self.store.session_scope():
+            self.store.populate_reference()
+
+    def tearDown(self):
+        pass
+
+    @patch("pepys_import.resolvers.command_line_input.prompt", return_value="1")
+    def test_populate_synonyms_valid(self, ptk_prompt):
+        with self.store.session_scope():
+            self.store.populate_reference(SYNONYM_DATA_PATH)
+            self.store.populate_metadata(SYNONYM_DATA_PATH)
+
+        with self.store.session_scope():
+            synonyms = self.store.session.query(self.store.db_classes.Synonym).all()
+
+            # We imported 4 synonyms
+            assert len(synonyms) == 4
+
+            # Check all synonym entity IDs exist in the Platforms table
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            platform_ids = [platform.platform_id for platform in platforms]
+
+            for synonym in synonyms:
+                assert synonym.entity in platform_ids
+
+            # Check the ID for the Synonym PLATFORM-Duplicated-Synonym is the ID for
+            # the Platform with name Platform-DuplicatedName and identifier F239
+            platforms = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.name == "PLATFORM-DuplicatedName")
+                .filter(self.store.db_classes.Platform.identifier == "F239")
+                .all()
+            )
+
+            platform_guid = platforms[0].platform_id
+
+            synonyms = (
+                self.store.session.query(self.store.db_classes.Synonym)
+                .filter(self.store.db_classes.Synonym.synonym == "PLATFORM-Duplicated-Synonym")
+                .all()
+            )
+
+            assert synonyms[0].entity == platform_guid
+
+    @patch("pepys_import.resolvers.command_line_input.prompt", return_value=".")
+    def test_populate_synonyms_valid_exit(self, ptk_prompt):
+        with self.store.session_scope():
+            self.store.populate_reference(SYNONYM_DATA_PATH)
+            with pytest.raises(SystemExit):
+                self.store.populate_metadata(SYNONYM_DATA_PATH)
+
+        with self.store.session_scope():
+            synonyms = self.store.session.query(self.store.db_classes.Synonym).all()
+
+            # We imported 3 synonyms because it was cancelled on the 4th one
+            assert len(synonyms) == 3
+
+    @patch("pepys_import.resolvers.command_line_input.prompt", return_value="3")
+    def test_populate_synonyms_valid_skip(self, ptk_prompt):
+        with self.store.session_scope():
+            self.store.populate_reference(SYNONYM_DATA_PATH)
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.store.populate_metadata(SYNONYM_DATA_PATH)
+            output = temp_output.getvalue()
+
+        assert "Skipping row" in output
+
+        with self.store.session_scope():
+            synonyms = self.store.session.query(self.store.db_classes.Synonym).all()
+
+            # We imported 3 synonyms because we skipped the 4th one
+            assert len(synonyms) == 3
+
+    def test_populate_synonyms_invalid(self):
+        with self.store.session_scope():
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.store.populate_reference(SYNONYM_DATA_PATH_BAD)
+                self.store.populate_metadata(SYNONYM_DATA_PATH_BAD)
+            output = temp_output.getvalue()
+
+        # Check for error messages about duplicated platform name
+        assert "Error on row ['Blah', 'InvalidTables', 'BlahName']" in output
+        assert "  Invalid table name InvalidTables" in output
+
+        assert "Error on row ['Blah', 'Participants', 'BlahName']" in output
+        assert "  Cannot find name column for table Participants" in output
+
+        assert "Error on row ['PLATFORM-1-Synonym2', 'Platforms', 'NonExistentPlatform']" in output
+        assert "  Name 'NonExistentPlatform' is not found in table Platforms" in output
+
+        assert "Error on row ['Datafile1-Synonym', 'Datafiles', 'Datafile-Duplicated']" in output
+        assert "Name 'Datafile-Duplicated' occurs multiple times in table Datafiles. Asking user to resolve is only supported for Platforms table."
 
 
 class DataStorePopulateTwice(TestCase):
