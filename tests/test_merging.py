@@ -70,9 +70,9 @@ class TestSensorTypeMerge(unittest.TestCase):
 
             self.slave_store.add_to_platform_types("PlatformType1", change_id)
             self.slave_store.add_to_nationalities("UK", change_id)
-            self.slave_store.add_to_privacies("Private", change_id)
+            self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
             self.slave_store.add_to_platforms(
-                "Platform1", "UK", "PlatformType1", "Private", change_id=change_id
+                "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
             )
             self.slave_store.add_to_sensors(
                 "Sensor1", "ST_Shared_1", "Platform1", "Private", change_id
@@ -199,9 +199,9 @@ class TestPlatformTypeMerge(unittest.TestCase):
             self.slave_store.session.commit()
 
             self.slave_store.add_to_nationalities("UK", change_id)
-            self.slave_store.add_to_privacies("Private", change_id)
+            self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
             self.slave_store.add_to_platforms(
-                "Platform1", "UK", "PT_Shared_1", "Private", change_id=change_id
+                "Platform1", "123", "UK", "PT_Shared_1", "Private", change_id=change_id
             )
 
     def tearDown(self):
@@ -343,10 +343,10 @@ class TestMergeAllReferenceTables(unittest.TestCase):
             self.slave_store.session.commit()
 
             # Object that refers to nationality object
-            self.slave_store.add_to_privacies("Private", change_id)
+            self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
             self.slave_store.add_to_platform_types("PlatformType1", change_id)
             self.slave_store.add_to_platforms(
-                "Platform1", "Nat_Shared_1", "PlatformType1", "Private", change_id=change_id
+                "Platform1", "123", "Nat_Shared_1", "PlatformType1", "Private", change_id=change_id
             )
 
             gt1 = self.slave_store.db_classes.GeometryType(name="GeomType_Slave_1")
@@ -465,17 +465,29 @@ class TestSensorPlatformMerge(unittest.TestCase):
             nat_shared = self.master_store.add_to_nationalities("UK", change_id)
             nat_shared_guid = nat_shared.nationality_id
 
-            priv_shared = self.master_store.add_to_privacies("Private", change_id)
+            priv_shared = self.master_store.add_to_privacies(
+                "Private", level=0, change_id=change_id
+            )
             priv_shared_guid = priv_shared.privacy_id
 
             self.master_store.session.add_all([st_shared, pt_shared, nat_shared, priv_shared])
             self.master_store.session.commit()
 
             self.master_store.add_to_platforms(
-                "Platform_Master_1", "UK", "PlatformType_Master_1", "Private", change_id=change_id
+                "Platform_Master_1",
+                "123",
+                "UK",
+                "PlatformType_Master_1",
+                "Private",
+                change_id=change_id,
             )
             self.master_store.add_to_platforms(
-                "Platform_Shared_1", "UK", "PlatformType_Shared_1", "Private", change_id=change_id
+                "Platform_Shared_1",
+                "234",
+                "UK",
+                "PlatformType_Shared_1",
+                "Private",
+                change_id=change_id,
             )
 
             self.master_store.add_to_sensors(
@@ -520,17 +532,27 @@ class TestSensorPlatformMerge(unittest.TestCase):
             nat_shared = self.slave_store.add_to_nationalities("UK", change_id)
             nat_shared.nationality_id = nat_shared_guid
 
-            priv_shared = self.slave_store.add_to_privacies("Private", change_id)
+            priv_shared = self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
             priv_shared.privacy_id = priv_shared_guid
 
             self.slave_store.session.add_all([st_shared, pt_shared, nat_shared, priv_shared])
             self.slave_store.session.commit()
 
             self.slave_store.add_to_platforms(
-                "Platform_Slave_1", "UK", "PlatformType_Slave_1", "Private", change_id=change_id
+                "Platform_Slave_1",
+                "123",
+                "UK",
+                "PlatformType_Slave_1",
+                "Private",
+                change_id=change_id,
             )
             self.slave_store.add_to_platforms(
-                "Platform_Shared_1", "UK", "PlatformType_Shared_1", "Private", change_id=change_id
+                "Platform_Shared_1",
+                "234",
+                "UK",
+                "PlatformType_Shared_1",
+                "Private",
+                change_id=change_id,
             )
 
             self.slave_store.add_to_sensors(
@@ -675,7 +697,7 @@ class TestMergeDatafiles(unittest.TestCase):
                 "TEST", datetime.utcnow(), "TEST"
             ).change_id
 
-            self.master_store.add_to_privacies("Private", change_id)
+            self.master_store.add_to_privacies("Private", level=0, change_id=change_id)
             self.master_store.add_to_datafile_types("DFT1", change_id)
 
             self.master_store.add_to_datafiles(
@@ -715,7 +737,7 @@ class TestMergeDatafiles(unittest.TestCase):
         with self.slave_store.session_scope():
             change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
-            self.slave_store.add_to_privacies("Private", change_id)
+            self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
             self.slave_store.add_to_datafile_types("DFT1", change_id)
 
             self.slave_store.add_to_datafiles(
@@ -1399,9 +1421,9 @@ class TestSynonymMergeWithRefTable(unittest.TestCase):
 
             self.slave_store.add_to_platform_types("PlatformType1", change_id)
             self.slave_store.add_to_nationalities("UK", change_id)
-            self.slave_store.add_to_privacies("Private", change_id)
+            self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
             self.slave_store.add_to_platforms(
-                "Platform1", "UK", "PlatformType1", "Private", change_id=change_id
+                "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
             )
             self.slave_store.add_to_sensors(
                 "Sensor1", "ST_Shared_1", "Platform1", "Private", change_id
@@ -1468,14 +1490,6 @@ class TestSynonymMergeWithMetadataTable(unittest.TestCase):
                 "TEST", datetime.utcnow(), "TEST"
             ).change_id
 
-            self.master_store.add_to_sensor_types("SensorType_Master_1", change_id)
-            self.master_store.add_to_sensor_types("SensorType_Master_2", change_id)
-            self.master_store.add_to_sensor_types("SensorType_Shared_1", change_id)
-            st_shared = self.master_store.add_to_sensor_types(
-                "SensorType_Shared_2_GUIDSame", change_id
-            )
-            st_shared_guid = st_shared.sensor_type_id
-
             self.master_store.add_to_platform_types("PlatformType_Master_1", change_id)
             self.master_store.add_to_platform_types("PlatformType_Shared_1", change_id)
             pt_shared = self.master_store.add_to_platform_types(
@@ -1486,55 +1500,66 @@ class TestSynonymMergeWithMetadataTable(unittest.TestCase):
             nat_shared = self.master_store.add_to_nationalities("UK", change_id)
             nat_shared_guid = nat_shared.nationality_id
 
-            priv_shared = self.master_store.add_to_privacies("Private", change_id)
+            priv_shared = self.master_store.add_to_privacies(
+                "Private", level=0, change_id=change_id
+            )
             priv_shared_guid = priv_shared.privacy_id
 
-            self.master_store.session.add_all([st_shared, pt_shared, nat_shared, priv_shared])
+            self.master_store.session.add_all([pt_shared, nat_shared, priv_shared])
             self.master_store.session.commit()
 
-            self.master_store.add_to_platforms(
-                "Platform_Master_1", "UK", "PlatformType_Master_1", "Private", change_id=change_id
+            plat_master_1 = self.master_store.add_to_platforms(
+                "Platform_Master_1",
+                "123",
+                "UK",
+                "PlatformType_Master_1",
+                "Private",
+                change_id=change_id,
             )
             self.master_store.add_to_platforms(
-                "Platform_Shared_1", "UK", "PlatformType_Shared_1", "Private", change_id=change_id
+                "Platform_Master_2",
+                "234",
+                "UK",
+                "PlatformType_Master_1",
+                "Private",
+                change_id=change_id,
+            )
+            self.master_store.add_to_platforms(
+                "Platform_Master_3",
+                "345",
+                "UK",
+                "PlatformType_Master_1",
+                "Private",
+                change_id=change_id,
+            )
+            self.master_store.add_to_platforms(
+                "Platform_Shared_1",
+                "456",
+                "UK",
+                "PlatformType_Shared_1",
+                "Private",
+                change_id=change_id,
             )
 
-            sensor_master_1 = self.master_store.add_to_sensors(
-                "Sensor_Master_1", "SensorType_Master_1", "Platform_Master_1", "Private", change_id
-            )
-            self.master_store.add_to_sensors(
-                "Sensor_Master_2", "SensorType_Shared_1", "Platform_Master_1", "Private", change_id
-            )
-            self.master_store.add_to_sensors(
-                "Sensor_Master_3", "SensorType_Master_2", "Platform_Shared_1", "Private", change_id
-            )
-            self.master_store.add_to_sensors(
-                "Sensor_Shared_1", "SensorType_Shared_1", "Platform_Shared_1", "Private", change_id
-            )
-            sensor_shared = self.master_store.add_to_sensors(
-                "Sensor_Shared_2_GUIDSame",
-                "SensorType_Shared_1",
-                "Platform_Shared_1",
+            platform_shared = self.master_store.add_to_platforms(
+                "Platform_Shared_2_GUIDSame",
+                "567",
+                "UK",
+                "PlatformType_Shared_1",
                 "Private",
-                change_id,
+                change_id=change_id,
             )
-            sensor_shared_guid = sensor_shared.sensor_id
+            platform_shared_guid = platform_shared.platform_id
+            self.master_store.session.add(platform_shared)
+            self.master_store.session.flush()
 
             # Create synonym on master for Sensor_Master_1
             self.master_store.add_to_synonyms(
-                "Sensors", "Sensor_Master_1_Synonym", sensor_master_1.sensor_id, change_id
+                "Platforms", "Platform_Master_1_Synonym", plat_master_1.platform_id, change_id
             )
 
         with self.slave_store.session_scope():
             change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
-
-            self.slave_store.add_to_sensor_types("SensorType_Slave_1", change_id)
-            self.slave_store.add_to_sensor_types("SensorType_Slave_2", change_id)
-            self.slave_store.add_to_sensor_types("SensorType_Shared_1", change_id)
-            st_shared = self.slave_store.add_to_sensor_types(
-                "SensorType_Shared_2_GUIDSame", change_id
-            )
-            st_shared.sensor_type_id = st_shared_guid
 
             self.slave_store.add_to_platform_types("PlatformType_Slave_1", change_id)
             self.slave_store.add_to_platform_types("PlatformType_Shared_1", change_id)
@@ -1546,45 +1571,60 @@ class TestSynonymMergeWithMetadataTable(unittest.TestCase):
             nat_shared = self.slave_store.add_to_nationalities("UK", change_id)
             nat_shared.nationality_id = nat_shared_guid
 
-            priv_shared = self.slave_store.add_to_privacies("Private", change_id)
+            priv_shared = self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
             priv_shared.privacy_id = priv_shared_guid
 
-            self.slave_store.session.add_all([st_shared, pt_shared, nat_shared, priv_shared])
+            self.slave_store.session.add_all([pt_shared, nat_shared, priv_shared])
             self.slave_store.session.commit()
 
             self.slave_store.add_to_platforms(
-                "Platform_Slave_1", "UK", "PlatformType_Slave_1", "Private", change_id=change_id
+                "Platform_Slave_1",
+                "123",
+                "UK",
+                "PlatformType_Slave_1",
+                "Private",
+                change_id=change_id,
             )
             self.slave_store.add_to_platforms(
-                "Platform_Shared_1", "UK", "PlatformType_Shared_1", "Private", change_id=change_id
-            )
-
-            self.slave_store.add_to_sensors(
-                "Sensor_Slave_1", "SensorType_Slave_1", "Platform_Slave_1", "Private", change_id
-            )
-            self.slave_store.add_to_sensors(
-                "Sensor_Slave_2", "SensorType_Shared_1", "Platform_Slave_1", "Private", change_id
-            )
-            self.slave_store.add_to_sensors(
-                "Sensor_Slave_3", "SensorType_Slave_2", "Platform_Shared_1", "Private", change_id
-            )
-            sensor_shared_1 = self.slave_store.add_to_sensors(
-                "Sensor_Shared_1", "SensorType_Shared_1", "Platform_Shared_1", "Private", change_id
-            )
-            sensor_shared = self.slave_store.add_to_sensors(
-                "Sensor_Shared_2_GUIDSame",
-                "SensorType_Shared_1",
-                "Platform_Shared_1",
+                "Platform_Slave_2",
+                "234",
+                "UK",
+                "PlatformType_Slave_1",
                 "Private",
-                change_id,
+                change_id=change_id,
             )
-            sensor_shared.sensor_id = sensor_shared_guid
+            self.slave_store.add_to_platforms(
+                "Platform_Slave_3",
+                "345",
+                "UK",
+                "PlatformType_Slave_1",
+                "Private",
+                change_id=change_id,
+            )
+            platform_shared_1 = self.slave_store.add_to_platforms(
+                "Platform_Shared_1",
+                "456",
+                "UK",
+                "PlatformType_Shared_1",
+                "Private",
+                change_id=change_id,
+            )
 
-            self.slave_store.session.add(sensor_shared)
+            platform_shared_slave = self.slave_store.add_to_platforms(
+                "Platform_Shared_2_GUIDSame",
+                "567",
+                "UK",
+                "PlatformType_Shared_1",
+                "Private",
+                change_id=change_id,
+            )
+            platform_shared_slave.platform_id = platform_shared_guid
+
+            self.slave_store.session.add(platform_shared_slave)
             self.slave_store.session.commit()
 
             self.slave_store.add_to_synonyms(
-                "Sensors", "Sensor_Shared_1_Synonym", sensor_shared_1.sensor_id, change_id
+                "Platforms", "Platform_Shared1_Synonym", platform_shared_1.platform_id, change_id
             )
 
     def tearDown(self):
@@ -1613,7 +1653,7 @@ class TestSynonymMergeWithMetadataTable(unittest.TestCase):
 
             assert len(master_results) > 0
 
-            # Check the synonym entry in master points to a SensorType in master
+            # Check the synonym entry in master points to a Platform in master
             synonym_results = self.master_store.session.query(
                 self.master_store.db_classes.Synonym
             ).all()
@@ -1622,8 +1662,8 @@ class TestSynonymMergeWithMetadataTable(unittest.TestCase):
 
             for entity in entities:
                 sensor_results = (
-                    self.master_store.session.query(self.master_store.db_classes.Sensor)
-                    .filter(self.master_store.db_classes.Sensor.sensor_id == entity)
+                    self.master_store.session.query(self.master_store.db_classes.Platform)
+                    .filter(self.master_store.db_classes.Platform.platform_id == entity)
                     .all()
                 )
                 assert len(sensor_results) > 0
@@ -1726,20 +1766,33 @@ class TestMergeUpdatePlatform(unittest.TestCase):
             nat_shared = self.master_store.add_to_nationalities("UK", change_id)
             nat_shared_guid = nat_shared.nationality_id
 
-            priv_shared = self.master_store.add_to_privacies("Private", change_id)
+            priv_shared = self.master_store.add_to_privacies(
+                "Private", level=0, change_id=change_id
+            )
             priv_shared_guid = priv_shared.privacy_id
 
             self.master_store.session.add_all([pt_shared, nat_shared, priv_shared])
             self.master_store.session.commit()
 
             self.master_store.add_to_platforms(
-                "Platform_Master_1", "UK", "PlatformType_Master_1", "Private", change_id=change_id
+                "Platform_Master_1",
+                "123",
+                "UK",
+                "PlatformType_Master_1",
+                "Private",
+                change_id=change_id,
             )
             self.master_store.add_to_platforms(
-                "Platform_Shared_1", "UK", "PlatformType_Shared_1", "Private", change_id=change_id
+                "Platform_Shared_1",
+                "234",
+                "UK",
+                "PlatformType_Shared_1",
+                "Private",
+                change_id=change_id,
             )
             self.master_store.add_to_platforms(
                 "Platform_Shared_2",
+                "345",
                 "UK",
                 "PlatformType_Shared_1",
                 "Private",
@@ -1760,17 +1813,23 @@ class TestMergeUpdatePlatform(unittest.TestCase):
             nat_shared = self.slave_store.add_to_nationalities("UK", change_id)
             nat_shared.nationality_id = nat_shared_guid
 
-            priv_shared = self.slave_store.add_to_privacies("Private", change_id)
+            priv_shared = self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
             priv_shared.privacy_id = priv_shared_guid
 
             self.slave_store.session.add_all([pt_shared, nat_shared, priv_shared])
             self.slave_store.session.commit()
 
             self.slave_store.add_to_platforms(
-                "Platform_Slave_1", "UK", "PlatformType_Slave_1", "Private", change_id=change_id
+                "Platform_Slave_1",
+                "123",
+                "UK",
+                "PlatformType_Slave_1",
+                "Private",
+                change_id=change_id,
             )
             self.slave_store.add_to_platforms(
                 "Platform_Shared_1",
+                "234",
                 "UK",
                 "PlatformType_Shared_1",
                 "Private",
@@ -1781,6 +1840,7 @@ class TestMergeUpdatePlatform(unittest.TestCase):
             # but the trigraph in master shouldn't be updated
             self.slave_store.add_to_platforms(
                 "Platform_Shared_2",
+                "345",
                 "UK",
                 "PlatformType_Shared_1",
                 "Private",

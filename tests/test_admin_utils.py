@@ -38,8 +38,12 @@ def test_check_sqlalchemy_results_are_equal():
         store.add_to_platform_types("PlatformType1", change_id)
         store.add_to_nationalities("UK", change_id)
         store.add_to_privacies("Private", change_id)
-        store.add_to_platforms("Platform1", "UK", "PlatformType1", "Private", change_id=change_id)
-        store.add_to_platforms("Platform2", "UK", "PlatformType1", "Private", change_id=change_id)
+        store.add_to_platforms(
+            "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
+        )
+        store.add_to_platforms(
+            "Platform2", "234", "UK", "PlatformType1", "Private", change_id=change_id
+        )
 
         # Same query, same results
         result1 = store.session.query(store.db_classes.Platform).all()
@@ -71,8 +75,12 @@ def test_make_query_for_unique_cols_or_all_platform():
         store.add_to_platform_types("PlatformType1", change_id)
         store.add_to_nationalities("UK", change_id)
         store.add_to_privacies("Private", change_id)
-        store.add_to_platforms("Platform1", "UK", "PlatformType1", "Private", change_id=change_id)
-        store.add_to_platforms("Platform2", "UK", "PlatformType1", "Private", change_id=change_id)
+        store.add_to_platforms(
+            "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
+        )
+        store.add_to_platforms(
+            "Platform2", "123", "UK", "PlatformType1", "Private", change_id=change_id
+        )
 
         platform_obj = (
             store.session.query(store.db_classes.Platform)
@@ -88,7 +96,7 @@ def test_make_query_for_unique_cols_or_all_platform():
 
         # Name, nationality_id and identifier are the unique fields that should be searched for Platform
         assert "\"Platforms\".name = 'Platform1'" in query_str
-        assert '"Platforms".identifier IS NULL' in query_str
+        assert "\"Platforms\".identifier = '123'" in query_str
         assert (
             f"\"Platforms\".nationality_id = '{remove_dashes(platform_obj.nationality_id)}'"
             in query_str
@@ -146,8 +154,12 @@ def test_make_query_for_cols():
         store.add_to_platform_types("PlatformType1", change_id)
         store.add_to_nationalities("UK", change_id)
         store.add_to_privacies("Private", change_id)
-        store.add_to_platforms("Platform1", "UK", "PlatformType1", "Private", change_id=change_id)
-        store.add_to_platforms("Platform2", "UK", "PlatformType1", "Private", change_id=change_id)
+        store.add_to_platforms(
+            "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
+        )
+        store.add_to_platforms(
+            "Platform2", "123", "UK", "PlatformType1", "Private", change_id=change_id
+        )
 
         platform_obj = (
             store.session.query(store.db_classes.Platform)
@@ -164,8 +176,8 @@ def test_make_query_for_cols():
         # Name field was specified, so should be in a WHERE clause
         assert "\"Platforms\".name = 'Platform1'" in query_str
 
-        # Even though the identifier value is NULL it should still be included as it was listed
-        assert '"Platforms".identifier IS NULL' in query_str
+        # Identifier field was specified, so should be there too
+        assert "\"Platforms\".identifier = '123'" in query_str
 
         # Shouldn't be searching for nationality as it's not in the list
         assert (
@@ -183,8 +195,12 @@ def test_make_query_for_all_data_columns():
         store.add_to_platform_types("PlatformType1", change_id)
         store.add_to_nationalities("UK", change_id)
         store.add_to_privacies("Private", change_id)
-        store.add_to_platforms("Platform1", "UK", "PlatformType1", "Private", change_id=change_id)
-        store.add_to_platforms("Platform2", "UK", "PlatformType1", "Private", change_id=change_id)
+        store.add_to_platforms(
+            "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
+        )
+        store.add_to_platforms(
+            "Platform2", "123", "UK", "PlatformType1", "Private", change_id=change_id
+        )
 
         platform_obj = (
             store.session.query(store.db_classes.Platform)
