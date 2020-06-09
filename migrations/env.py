@@ -1,3 +1,4 @@
+import inspect
 import json
 import os
 from logging.config import fileConfig
@@ -195,38 +196,81 @@ else:
 
 
 @write_hooks.register("add_copy_from")
-def add_copy_from(filename, options):
+def add_copy_from(filename):
     qouted_name_regex = r"op\.batch_alter_table\(([\"'])((?:(?=(\\?)).)*?)\1"
     with open(filename) as file_:
         lines = file_.readlines()
 
     # All tables are in the 'pepys' schema for Postgres. In order to import correct table classes,
     # use this distinction.
-    postgres_file = False
-    for line in lines:
-        if "schema='pepys'" in line:
-            postgres_file = True
-            break
-    if postgres_file:
-        lines.insert(10, "from pepys_import.core.store.postgres_db import *\n")
+    if "postgres_versions" in filename:
+        return
     else:
-        lines.insert(10, "from pepys_import.core.store.sqlite_db import *\n")
+        text = """
+from datetime import datetime
+from uuid import uuid4
+from geoalchemy2 import Geometry
 
-    # For each line, search for 'op.batch_alter_table("XXXXX")' kind of text. If it exists, extract
-    # the table name, which is the text inside of the quote marks. Make the name singular, add the
-    # argument (copy_from=TABLE.__table__) to the correct position
-    for index, line in enumerate(lines):
-        match = search(qouted_name_regex, line)
-        if match:
-            table_name = match.group(2)
-            # Table names are plural in the database, therefore make it singular
-            table = make_table_name_singular(table_name)
-            argument = f", copy_from={table}.__table__"
-            idx = line.index(") as batch_op:")
-            lines[index] = line[:idx] + argument + line[idx:]
+from sqlalchemy import MetaData
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
+    deferred,
+    relationship,
+)
 
-    with open(filename, "w") as to_write:
-        to_write.writelines(lines)
+from pepys_import.core.store import constants
+from pepys_import.core.store.common_db import (
+    ActivationMixin,
+    CommentMixin,
+    ContactMixin,
+    DatafileMixin,
+    ElevationPropertyMixin,
+    GeometryMixin,
+    HostedByMixin,
+    LocationPropertyMixin,
+    LogMixin,
+    LogsHoldingMixin,
+    MediaMixin,
+    ParticipantMixin,
+    PlatformMixin,
+    SensorMixin,
+    StateMixin,
+    TaggedItemMixin,
+    TaskMixin,
+)
+from pepys_import.core.store.db_status import TableTypes
+from pepys_import.core.store.db_base import sqlite_naming_convention
+from pepys_import.utils.sqlalchemy_utils import UUIDType
+
+Metadata = MetaData(naming_convention=sqlite_naming_convention)
+BaseSpatiaLite = declarative_base(metadata=Metadata)
+"""
+
+        # For each line, search for 'op.batch_alter_table("XXXXX")' kind of text. If it exists, extract
+        # the table name, which is the text inside of the quote marks. Make the name singular, add the
+        # argument (copy_from=TABLE.__table__) to the correct position
+        class_to_include = set()
+        for index, line in enumerate(lines):
+            match = search(qouted_name_regex, line)
+            if match:
+                table_name = match.group(2)
+                # Table names are plural in the database, therefore make it singular
+                table = make_table_name_singular(table_name)
+                table_obj = getattr(sqlite_db, table)
+                class_to_include.add(inspect.getsource(table_obj))
+                argument = f", copy_from={table}.__table__"
+                idx = line.index(") as batch_op:")
+                lines[index] = line[:idx] + argument + line[idx:]
+
+        class_to_include = "\n\n".join(class_to_include)
+        text += f"\n\n{class_to_include}"
+        lines.insert(10, text)
+        with open(filename, "w") as to_write:
+            to_write.writelines(lines)
 
 
 @write_hooks.register("update_latest_revision")
