@@ -3,9 +3,16 @@ from getpass import getuser
 
 from sqlalchemy.orm import undefer
 from sqlalchemy.orm.session import make_transient
+from tabulate import tabulate
 from tqdm import tqdm
 
-from pepys_admin.utils import make_query_for_unique_cols_or_all, table_name_to_class_name
+from pepys_admin.utils import (
+    get_name_for_obj,
+    make_query_for_unique_cols_or_all,
+    print_names_added,
+    statistics_to_table_data,
+    table_name_to_class_name,
+)
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import shorten_uuid
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
@@ -27,10 +34,22 @@ def merge_all_reference_tables(master_store, slave_store):
     reference_table_names.remove("GeometryType")
     reference_table_names.insert(0, "GeometryType")
 
+    added_names = {}
+    statistics = {}
+
     for ref_table in tqdm(reference_table_names):
         id_results = merge_reference_table(ref_table, master_store, slave_store)
         update_synonyms_table(master_store, slave_store, id_results["modified"])
-        # update_logs_table(master_store, slave_store, id_results["modified"])
+
+        statistics[ref_table] = {
+            "added": len(id_results["added"]),
+            "modified": len(id_results["modified"]),
+            "already_there": len(id_results["already_there"]),
+        }
+        if len(id_results["added"]) > 0:
+            added_names[ref_table] = [d["name"] for d in id_results["added"]]
+
+    return added_names, statistics
 
 
 def merge_reference_table(table_object_name, master_store, slave_store):
@@ -43,8 +62,7 @@ def merge_reference_table(table_object_name, master_store, slave_store):
     # Keep track of each ID and what its status is
     ids_already_there = []
     ids_added = []
-    ids_modified_from = []
-    ids_modified_to = []
+    ids_modified = []
 
     with slave_store.session_scope():
         with master_store.session_scope():
@@ -70,12 +88,17 @@ def merge_reference_table(table_object_name, master_store, slave_store):
                     n_name_results = len(search_by_name_results)
 
                     if n_name_results == 0:
-                        ids_added.append(guid)
+                        ids_added.append({"id": guid, "name": slave_entry.name})
                         make_transient(slave_entry)
                         master_store.session.add(slave_entry)
                     elif n_name_results == 1:
-                        ids_modified_from.append(guid)
-                        ids_modified_to.append(getattr(search_by_name_results[0], primary_key))
+                        ids_modified.append(
+                            {
+                                "from": guid,
+                                "to": getattr(search_by_name_results[0], primary_key),
+                                "name": slave_entry.name,
+                            }
+                        )
                         setattr(
                             slave_entry,
                             primary_key,
@@ -88,7 +111,7 @@ def merge_reference_table(table_object_name, master_store, slave_store):
                             False
                         ), "Fatal assertion error: multiple entries in master reference table with same name"
                 elif n_results == 1:
-                    ids_already_there.append(guid)
+                    ids_already_there.append({"id": guid, "name": slave_entry.name})
                 else:
                     assert (
                         False
@@ -97,7 +120,7 @@ def merge_reference_table(table_object_name, master_store, slave_store):
     return {
         "already_there": ids_already_there,
         "added": ids_added,
-        "modified": {"from": ids_modified_from, "to": ids_modified_to},
+        "modified": ids_modified,
     }
 
 
@@ -120,10 +143,23 @@ def merge_all_metadata_tables(master_store, slave_store, merge_change_id):
     metadata_table_names.remove("Change")
     metadata_table_names.remove("Synonym")
 
-    for ref_table in tqdm(metadata_table_names):
-        id_results = merge_metadata_table(ref_table, master_store, slave_store, merge_change_id)
+    added_names = {}
+    statistics = {}
+
+    for met_table in tqdm(metadata_table_names):
+        id_results = merge_metadata_table(met_table, master_store, slave_store, merge_change_id)
         update_synonyms_table(master_store, slave_store, id_results["modified"])
-        # update_logs_table(master_store, slave_store, id_results["modified"])
+        update_logs_table(master_store, slave_store, id_results["modified"])
+
+        statistics[met_table] = {
+            "added": len(id_results["added"]),
+            "modified": len(id_results["modified"]),
+            "already_there": len(id_results["already_there"]),
+        }
+        if len(id_results["added"]) > 0:
+            added_names[met_table] = [d["name"] for d in id_results["added"]]
+
+    return added_names, statistics
 
 
 def update_master_from_slave_entry(
@@ -154,13 +190,14 @@ def update_master_from_slave_entry(
                 # Note that we modified it, so we can update in DB if necessary
                 modified = True
 
-    master_privacy = master_entry.privacy.level
-    slave_privacy = slave_entry.privacy.level
+    if hasattr(master_entry, "privacy"):
+        master_privacy = master_entry.privacy.level
+        slave_privacy = slave_entry.privacy.level
 
-    # If master privacy has a level less than the slave privacy, then update with the slave privacy
-    if master_privacy < slave_privacy:
-        master_entry.privacy_id = slave_entry.privacy_id
-        modified = True
+        # If master privacy has a level less than the slave privacy, then update with the slave privacy
+        if master_privacy < slave_privacy:
+            master_entry.privacy_id = slave_entry.privacy_id
+            modified = True
 
     if modified:
         master_store.session.add(master_entry)
@@ -177,8 +214,7 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
     # Keep track of each ID and what its status is
     ids_already_there = []
     ids_added = []
-    ids_modified_from = []
-    ids_modified_to = []
+    ids_modified = []
 
     with slave_store.session_scope():
         with master_store.session_scope():
@@ -211,7 +247,7 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
                     if n_all_field_results == 0:
                         # We can't find an entry which matches in the master db,
                         # so this is a new entry from the slave which needs copying over
-                        ids_added.append(guid)
+                        ids_added.append({"id": guid, "name": get_name_for_obj(slave_entry)})
                         slave_store.session.expunge(slave_entry)
                         make_transient(slave_entry)
                         master_store.session.merge(slave_entry)
@@ -219,9 +255,12 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
                         # We found an entry that matches in the master db, but it'll have a different
                         # GUID - so update the GUID in the slave database and let it propagate
                         # so we can copy over other tables later and all the foreign key integrity will work
-                        ids_modified_from.append(guid)
-                        ids_modified_to.append(
-                            getattr(search_by_all_fields_results[0], primary_key)
+                        ids_modified.append(
+                            {
+                                "from": guid,
+                                "to": getattr(search_by_all_fields_results[0], primary_key),
+                                "name": get_name_for_obj(slave_entry),
+                            }
                         )
                         setattr(
                             slave_entry,
@@ -246,7 +285,7 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
                         ), "Fatal assertion error: multiple entries in master metadata table with same name"
                 elif n_results == 1:
                     # The GUID is in the master db - so the record must also be there (as GUIDs are unique)
-                    ids_already_there.append(guid)
+                    ids_already_there.append({"id": guid, "name": get_name_for_obj(slave_entry)})
                 else:
                     # We should never get here: the GUID should always appear in the master database either zero or one times,
                     # never more
@@ -257,14 +296,16 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
     return {
         "already_there": ids_already_there,
         "added": ids_added,
-        "modified": {"from": ids_modified_from, "to": ids_modified_to},
+        "modified": ids_modified,
     }
 
 
 def update_synonyms_table(master_store, slave_store, modified_ids):
     with slave_store.session_scope():
         # For each modified ID
-        for from_id, to_id in zip(modified_ids["from"], modified_ids["to"]):
+        for details in modified_ids:
+            from_id = details["from"]
+            to_id = details["to"]
             # Search for it in the Synonyms table
             results = (
                 slave_store.session.query(slave_store.db_classes.Synonym)
@@ -285,7 +326,10 @@ def update_synonyms_table(master_store, slave_store, modified_ids):
 def update_logs_table(master_store, slave_store, modified_ids):
     with slave_store.session_scope():
         # For each modified ID
-        for from_id, to_id in zip(modified_ids["from"], modified_ids["to"]):
+        for details in modified_ids:
+            from_id = details["from"]
+            to_id = details["to"]
+
             # Search for it in the Logs table
             results = (
                 slave_store.session.query(slave_store.db_classes.Log)
@@ -535,19 +579,55 @@ def merge_all_tables(master_store, slave_store):
         ).change_id
 
     # Merge the reference tables first
-    merge_all_reference_tables(master_store, slave_store)
+    ref_added_names, ref_statistics = merge_all_reference_tables(master_store, slave_store)
 
     # Merge all the metadata tables, excluding the complicated ones
-    merge_all_metadata_tables(master_store, slave_store, merge_change_id)
+    meta_added_names, meta_statistics = merge_all_metadata_tables(
+        master_store, slave_store, merge_change_id
+    )
 
     # Merge the synonyms table now we've merged all the reference and metadata tables
-    merge_metadata_table("Synonym", master_store, slave_store, merge_change_id)
+    syn_ids = merge_metadata_table("Synonym", master_store, slave_store, merge_change_id)
+    syn_added_names = [d["name"] for d in syn_ids["added"]]
 
     # Merge the Datafiles table, keeping track of the IDs that changed
-    datafile_ids = merge_metadata_table("Datafile", master_store, slave_store, merge_change_id)
+    df_ids = datafile_ids = merge_metadata_table(
+        "Datafile", master_store, slave_store, merge_change_id
+    )
+    df_added_names = [d["name"] for d in df_ids["added"]]
 
     # Merge the measurement tables, only merging measurements that come from one of the datafiles that has been added
-    merge_all_measurement_tables(master_store, slave_store, datafile_ids["added"])
+    merge_all_measurement_tables(
+        master_store, slave_store, [d["id"] for d in datafile_ids["added"]]
+    )
 
     # Merge the Logs and Changes table, only merging ones which still match something in the new db
     merge_logs_and_changes(master_store, slave_store)
+
+    print("Statistics:\n")
+    print("Reference tables:")
+    print(
+        tabulate(
+            statistics_to_table_data(ref_statistics),
+            headers=["Table", "Already present", "Added", "Modified"],
+            tablefmt="github",
+        )
+    )
+
+    print("\nMetadata tables:")
+    print(
+        tabulate(
+            statistics_to_table_data(meta_statistics),
+            headers=["Table", "Already present", "Added", "Modified"],
+            tablefmt="github",
+        )
+    )
+
+    print("\nEntries added:")
+    all_added_names = {**ref_added_names, **meta_added_names}
+    if len(syn_added_names) > 0:
+        all_added_names["Synonyms"] = syn_added_names
+    if len(df_added_names) > 0:
+        all_added_names["Datafiles"] = df_added_names
+
+    print_names_added(all_added_names)

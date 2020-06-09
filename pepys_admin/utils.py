@@ -130,3 +130,27 @@ def table_name_to_class_name(table_name):
         return table_name[:-3] + "y"
     elif table_name.endswith("s"):
         return table_name[:-1]
+
+
+def get_name_for_obj(obj):
+    if "name" in obj.__dict__:
+        return obj.name
+    elif "reference" in obj.__dict__:
+        return obj.reference
+    elif "synonym" in obj.__dict__:
+        return obj.synonym
+    else:
+        return "-"
+
+
+def statistics_to_table_data(statistics):
+    return [
+        (k, v["already_there"], v["added"], v["modified"]) for k, v in sorted(statistics.items())
+    ]
+
+
+def print_names_added(names):
+    for table_name, names in sorted(names.items()):
+        print(f"- {table_name}")
+        for name in names:
+            print(f" - {name}")
