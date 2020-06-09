@@ -130,6 +130,7 @@ def update_master_from_slave_entry(
     master_store, slave_store, master_entry, slave_entry, merge_change_id
 ):
     column_names = [col.name for col in master_entry.__table__.columns.values()]
+
     primary_key = get_primary_key_for_table(master_entry)
 
     modified = False
@@ -152,6 +153,14 @@ def update_master_from_slave_entry(
                 )
                 # Note that we modified it, so we can update in DB if necessary
                 modified = True
+
+    master_privacy = master_entry.privacy.level
+    slave_privacy = slave_entry.privacy.level
+
+    # If master privacy has a level less than the slave privacy, then update with the slave privacy
+    if master_privacy < slave_privacy:
+        master_entry.privacy_id = slave_entry.privacy_id
+        modified = True
 
     if modified:
         master_store.session.add(master_entry)

@@ -1743,7 +1743,7 @@ class TestMergeLogsAndChanges(unittest.TestCase):
                     assert len(ref_table_results) == 1
 
 
-class TestMergeUpdatePlatform(unittest.TestCase):
+class TestMergeUpdatePlatformPrivacy(unittest.TestCase):
     def setUp(self):
         self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
         self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
@@ -1788,6 +1788,7 @@ class TestMergeUpdatePlatform(unittest.TestCase):
                 "UK",
                 "PlatformType_Shared_1",
                 "Private",
+                trigraph=None,
                 change_id=change_id,
             )
             self.master_store.add_to_platforms(
@@ -1815,6 +1816,7 @@ class TestMergeUpdatePlatform(unittest.TestCase):
 
             priv_shared = self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
             priv_shared.privacy_id = priv_shared_guid
+            self.slave_store.add_to_privacies("Very Private", level=20, change_id=change_id)
 
             self.slave_store.session.add_all([pt_shared, nat_shared, priv_shared])
             self.slave_store.session.commit()
@@ -1832,7 +1834,7 @@ class TestMergeUpdatePlatform(unittest.TestCase):
                 "234",
                 "UK",
                 "PlatformType_Shared_1",
-                "Private",
+                "Very Private",
                 trigraph="PLT",
                 change_id=change_id,
             )
@@ -1867,6 +1869,10 @@ class TestMergeUpdatePlatform(unittest.TestCase):
 
         assert len(results) == 1
         assert results[0].trigraph == "PLT"
+
+        # Check that the Privacy for Platform_Shared_1 is now Very Private with level=20
+        assert results[0].privacy.name == "Very Private"
+        assert results[0].privacy.level == 20
 
         # Check that only one platform called Platform_Shared_2 exists, and that the trigraph is still
         # what it was originally set to in master
