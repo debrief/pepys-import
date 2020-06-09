@@ -3,7 +3,8 @@ import sys
 
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyWordCompleter
-from sqlalchemy import or_
+from sqlalchemy import desc, or_
+from tabulate import tabulate
 
 from pepys_import.core.store import constants
 from pepys_import.resolvers.command_line_input import create_menu, is_valid
@@ -50,7 +51,10 @@ class CommandLineResolver(DataResolver):
 
         # Choose Privacy
         if privacy:
-            chosen_privacy = data_store.add_to_privacies(privacy, change_id)
+            chosen_privacy = data_store.search_privacy(privacy)
+            if chosen_privacy is None:
+                level = prompt(f"Please type level of new classification ({privacy}): ")
+                chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
         else:
             chosen_privacy = self.resolve_reference(
                 data_store,
@@ -178,13 +182,27 @@ class CommandLineResolver(DataResolver):
         if text_name is None:
             text_name = field_name.replace("_", "-")
         options = [f"Search an existing {text_name}", f"Add a new {text_name}"]
-        if db_class.__tablename__ == "Nationalities":
+        title = f"Ok, please provide {text_name} for new {data_type}: "
+        current_values = ""
+        if db_class.__tablename__ == constants.NATIONALITY:
             objects = (
                 data_store.session.query(db_class)
                 .filter(db_class.priority.in_([1, 2]))
                 .order_by(db_class.priority, db_class.name)
                 .all()
             )
+        elif db_class.__tablename__ == constants.PRIVACY:
+            all_values = data_store.session.query(db_class).order_by(db_class.level).all()
+            objects = all_values[:7]
+            current_values = f"\nCurrent Privacies in the Database\n"
+            headers = ["name", "level"]
+            current_values += tabulate(
+                [[str(getattr(row, column)) for column in headers] for row in all_values],
+                headers=headers,
+                tablefmt="github",
+                floatfmt=".3f",
+            )
+            current_values += "\n"
         else:
             objects = data_store.session.query(db_class).all()
         objects_dict = {obj.name: obj for obj in objects}
@@ -202,11 +220,7 @@ class CommandLineResolver(DataResolver):
         def is_valid_dynamic(option):
             return option in [str(i) for i in range(1, len(options) + 1)] or option == "."
 
-        choice = create_menu(
-            f"Ok, please provide {text_name} for new {data_type}: ",
-            options,
-            validate_method=is_valid_dynamic,
-        )
+        choice = create_menu(title, options, validate_method=is_valid_dynamic,)
         if choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
@@ -221,6 +235,7 @@ class CommandLineResolver(DataResolver):
             else:
                 return result
         elif choice == str(2):
+            print(current_values)
             new_object = prompt(f"Please type name of new {text_name}: ")
             search_method = getattr(data_store, f"search_{field_name}")
             obj = search_method(new_object)
@@ -228,6 +243,9 @@ class CommandLineResolver(DataResolver):
                 return obj
             elif new_object:
                 add_method = getattr(data_store, f"add_to_{plural_field}")
+                if plural_field == "privacies":
+                    level = prompt(f"Please type level of new {text_name}: ")
+                    return add_method(new_object, level, change_id)
                 return add_method(new_object, change_id)
             else:
                 print("You haven't entered an input!")
@@ -289,6 +307,9 @@ class CommandLineResolver(DataResolver):
                     .replace(" ", "_")
                 )
                 add_method = getattr(data_store, f"add_to_{plural_field}")
+                if plural_field == "privacies":
+                    level = prompt(f"Please type level of new {text_name}: ")
+                    return add_method(choice, level, change_id)
                 return add_method(choice, change_id)
             elif new_choice == str(2):
                 return self.fuzzy_search_reference(
@@ -418,35 +439,7 @@ class CommandLineResolver(DataResolver):
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
-        if sensor_name and choice in completer:
-            new_choice = create_menu(
-                f"Do you wish to keep {sensor_name} as synonym for {choice}?",
-                ["Yes", "No"],
-                validate_method=is_valid,
-            )
-            if new_choice == str(1):
-                # TODO: FIX THIS - should search by host_id here too!
-                sensor = (
-                    data_store.session.query(data_store.db_classes.Sensor)
-                    .filter(data_store.db_classes.Sensor.name == choice)
-                    .first()
-                )
-                # Add it to synonyms and return existing sensor
-                data_store.add_to_synonyms(
-                    constants.SENSOR, sensor_name, sensor.sensor_id, change_id
-                )
-                print(f"'{sensor_name}' added to Synonyms!")
-                return sensor
-            elif new_choice == str(2):
-                return self.add_to_sensors(
-                    data_store, sensor_name, sensor_type, host_id, privacy, change_id
-                )
-            elif new_choice == ".":
-                print("-" * 61, "\nReturning to the previous menu\n")
-                return self.fuzzy_search_sensor(
-                    data_store, sensor_name, sensor_type, host_id, privacy, change_id
-                )
-        elif choice == ".":
+        if choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_sensor(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
@@ -529,7 +522,10 @@ class CommandLineResolver(DataResolver):
 
         # Choose Privacy
         if privacy:
-            chosen_privacy = data_store.add_to_privacies(privacy, change_id)
+            chosen_privacy = data_store.search_privacy(privacy)
+            if chosen_privacy is None:
+                level = prompt(f"Please type level of new classification ({privacy}): ")
+                chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
         else:
             chosen_privacy = self.resolve_reference(
                 data_store,
@@ -615,9 +611,12 @@ class CommandLineResolver(DataResolver):
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
 
         if privacy:
-            privacy = data_store.add_to_privacies(privacy, change_id)
+            chosen_privacy = data_store.search_privacy(privacy)
+            if chosen_privacy is None:
+                level = prompt(f"Please type level of new classification ({privacy}): ")
+                chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
         else:
-            privacy = self.resolve_reference(
+            chosen_privacy = self.resolve_reference(
                 data_store,
                 change_id,
                 data_type="Sensor",
@@ -626,7 +625,7 @@ class CommandLineResolver(DataResolver):
                 field_name="privacy",
             )
 
-        if privacy is None:
+        if chosen_privacy is None:
             print("Classification couldn't resolved. Returning to the previous menu!")
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
 
@@ -634,14 +633,14 @@ class CommandLineResolver(DataResolver):
         print("Input complete. About to create this sensor:")
         print(f"Name: {sensor_name}")
         print(f"Type: {sensor_type.name}")
-        print(f"Classification: {privacy.name}")
+        print(f"Classification: {chosen_privacy.name}")
 
         choice = create_menu(
             "Create this sensor?: ", ["Yes", "No, make further edits"], validate_method=is_valid,
         )
 
         if choice == str(1):
-            return sensor_name, sensor_type, privacy
+            return sensor_name, sensor_type, chosen_privacy
         elif choice == str(2):
             return self.add_to_sensors(data_store, sensor_name, None, host_id, None, change_id)
         elif choice == ".":
