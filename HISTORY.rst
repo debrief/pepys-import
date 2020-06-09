@@ -3,6 +3,11 @@ History
 =======
 
 
+0.0.16 (2020-06-09)
+-------------------
+
+* Improve database migration error handling (hotfix) 
+
 0.0.15 (2020-06-09)
 -------------------
 
