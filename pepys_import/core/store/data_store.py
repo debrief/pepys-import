@@ -14,18 +14,18 @@ from sqlalchemy.sql import func
 from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import import __version__
 from pepys_import.core.formats import unit_registry
-from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
 from pepys_import.utils.data_store_utils import (
+    MissingDataException,
     cache_results_if_not_none,
     create_alembic_version_table,
     create_spatial_tables_for_postgres,
     create_spatial_tables_for_sqlite,
     import_from_csv,
 )
-from pepys_import.utils.geoalchemy_utils import load_spatialite
+from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_keys_on
 from pepys_import.utils.value_transforming_utils import format_datetime
 
 from .db_base import BasePostGIS, BaseSpatiaLite
@@ -81,6 +81,7 @@ class DataStore:
             elif db_type == "sqlite":
                 self.engine = create_engine(connection_string, echo=False)
                 listen(self.engine, "connect", load_spatialite)
+                listen(self.engine, "connect", set_sqlite_foreign_keys_on)
                 BaseSpatiaLite.metadata.bind = self.engine
         except ArgumentError as e:
             print(
@@ -272,11 +273,28 @@ class DataStore:
         host = self.search_platform(host)
         privacy = self.search_privacy(privacy)
 
-        if sensor_type is None or host is None or privacy is None:
-            raise Exception(
-                f"There are missing value(s) in 'Sensor:{sensor_type},"
-                f" Host:{host}, Privacy:{privacy}'!"
-            )
+        if sensor_type is None:
+            raise MissingDataException("Sensor Type is missing/invalid")
+        elif host is None:
+            raise MissingDataException("Host is missing/invalid")
+        elif privacy is None:
+            raise MissingDataException("Privacy is missing/invalid")
+
+        # Check if entry already exists with these details, and if so, just return it
+        # Just check the unique fields - in this case: name and host
+        # TODO: Possibly update when we get final uniqueness info from client
+        results = (
+            self.session.query(self.db_classes.Sensor)
+            .filter(self.db_classes.Sensor.name == name)
+            .filter(self.db_classes.Sensor.host == host.platform_id)
+            .all()
+        )
+
+        if len(results) == 1:
+            # Don't add it, as it already exists - just return it
+            return results[0]
+        elif len(results) > 1:
+            assert False, "Fatal error: Duplicate entries found in Sensors table"
 
         sensor_obj = self.db_classes.Sensor(
             name=name,
@@ -326,6 +344,27 @@ class DataStore:
         datafile_type = self.search_datafile_type(file_type)
         privacy = self.search_privacy(privacy)
 
+        if datafile_type is None:
+            raise MissingDataException("Datafile Type is invalid/missing")
+        elif privacy is None:
+            raise MissingDataException("Privacy is invalid/missing")
+
+        # Check if entry already exists with these details, and if so, just return it
+        # Just check the unique fields - in this case: size and hash
+        # TODO: Possibly update when we get final uniqueness info from client
+        results = (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.size == file_size)
+            .filter(self.db_classes.Datafile.hash == file_hash)
+            .all()
+        )
+
+        if len(results) == 1:
+            # Don't add it, as it already exists - just return it
+            return results[0]
+        elif len(results) > 1:
+            assert False, "Fatal error: Duplicate entries found in Datafiles table"
+
         datafile_obj = self.db_classes.Datafile(
             simulated=bool(simulated),
             privacy_id=privacy.privacy_id,
@@ -347,12 +386,12 @@ class DataStore:
     def add_to_platforms(
         self,
         name,
+        identifier,
         nationality,
         platform_type,
         privacy,
         trigraph=None,
         quadgraph=None,
-        pennant_number=None,
         change_id=None,
     ):
         """
@@ -370,8 +409,8 @@ class DataStore:
         :type trigraph: String
         :param quadgraph: Quadgraph of :class:`Platform`
         :type quadgraph: String
-        :param pennant_number: Pennant number of :class:`Platform`
-        :type pennant_number: String
+        :param identifier: Identifier string of :class:`Platform`
+        :type identifier: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created Platform entity
@@ -381,11 +420,35 @@ class DataStore:
         platform_type = self.search_platform_type(platform_type)
         privacy = self.search_privacy(privacy)
 
+        if nationality is None:
+            raise MissingDataException("Nationality is invalid/missing")
+        elif platform_type is None:
+            raise MissingDataException("Platform Type is invalid/missing")
+        elif privacy is None:
+            raise MissingDataException("Privacy is invalid/missing")
+
+        # Check if entry already exists with these details, and if so, just return it
+        # Just check the unique fields - in this case: name, nationality_id and identifier
+        # TODO: Possibly update when we get final uniqueness info from client
+        results = (
+            self.session.query(self.db_classes.Platform)
+            .filter(self.db_classes.Platform.name == name)
+            .filter(self.db_classes.Platform.nationality_id == nationality.nationality_id)
+            .filter(self.db_classes.Platform.identifier == identifier)
+            .all()
+        )
+
+        if len(results) == 1:
+            # Don't add it, as it already exists - just return it
+            return results[0]
+        elif len(results) > 1:
+            assert False, "Fatal error: Duplicate entries found in Platforms table"
+
         platform_obj = self.db_classes.Platform(
             name=name,
             trigraph=trigraph,
             quadgraph=quadgraph,
-            pennant=pennant_number,
+            identifier=identifier,
             nationality_id=nationality.nationality_id,
             platform_type_id=platform_type.platform_type_id,
             privacy_id=privacy.privacy_id,
@@ -400,6 +463,26 @@ class DataStore:
         return platform_obj
 
     def add_to_synonyms(self, table, name, entity, change_id):
+        # Blacklist certain tables, and don't Synonyms for them be created
+        if table in [constants.SENSOR, constants.GEOMETRY_SUBTYPE]:
+            raise Exception(f"Synonyms are not allowed for table {table}")
+
+        # Check if entry already exists with these details, and if so, just return it
+        # Just check the unique fields - in this case: name and table
+        # TODO: Possibly update when we get final uniqueness info from client
+        results = (
+            self.session.query(self.db_classes.Synonym)
+            .filter(self.db_classes.Synonym.synonym == name)
+            .filter(self.db_classes.Synonym.table == table)
+            .all()
+        )
+
+        if len(results) == 1:
+            # Don't add it, as it already exists - just return it
+            return results[0]
+        elif len(results) > 1:
+            assert False, "Fatal error: Duplicate entries found in Synonyms table"
+
         # enough info to proceed and create entry
         synonym = self.db_classes.Synonym(table=table, synonym=name, entity=entity)
         self.session.add(synonym)
@@ -672,12 +755,12 @@ class DataStore:
     def get_platform(
         self,
         platform_name=None,
+        identifier=None,
         nationality=None,
         platform_type=None,
         privacy=None,
         trigraph=None,
         quadgraph=None,
-        pennant_number=None,
         change_id=None,
     ):
         """
@@ -696,8 +779,8 @@ class DataStore:
         :type trigraph: String
         :param quadgraph: Quadgraph of :class:`Platform`
         :type quadgraph: String
-        :param pennant_number: Pennant number of :class:`Platform`
-        :type pennant_number: String
+        :param identifier: Identifier string of :class:`Platform`
+        :type identifier: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created Platform entity
@@ -715,6 +798,7 @@ class DataStore:
 
         if (
             platform_name is None
+            or identifier is None
             or nationality_obj is None
             or platform_type_obj is None
             or privacy_obj is None
@@ -730,7 +814,7 @@ class DataStore:
                     platform_name,
                     trigraph,
                     quadgraph,
-                    pennant_number,
+                    identifier,
                     platform_type_obj,
                     nationality_obj,
                     privacy_obj,
@@ -748,7 +832,7 @@ class DataStore:
             name=platform_name,
             trigraph=trigraph,
             quadgraph=quadgraph,
-            pennant_number=pennant_number,
+            identifier=identifier,
             nationality=nationality_obj.name,
             platform_type=platform_type_obj.name,
             privacy=privacy_obj.name,
@@ -867,7 +951,7 @@ class DataStore:
 
         return platform_type
 
-    def add_to_nationalities(self, name, change_id):
+    def add_to_nationalities(self, name, change_id, priority=None):
         """
         Adds the specified nationality to the nationalities table if not already present
 
@@ -875,6 +959,8 @@ class DataStore:
         :type name: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
+        :param priority: Priority to print in defaults of CLI
+        :type priority: Integer
         :return: Created :class:`Nationality` entity
         :rtype: Nationality
         """
@@ -884,6 +970,8 @@ class DataStore:
 
         # enough info to proceed and create entry
         nationality = self.db_classes.Nationality(name=name)
+        if priority:
+            nationality.priority = priority
         self.session.add(nationality)
         self.session.flush()
 
@@ -892,12 +980,14 @@ class DataStore:
         )
         return nationality
 
-    def add_to_privacies(self, name, change_id):
+    def add_to_privacies(self, name, level, change_id):
         """
         Adds the specified privacy entry to the :class:`Privacy` table if not already present.
 
         :param name: Name of :class:`Privacy`
         :type name: String
+        :param level: Level of :class:`Privacy`
+        :type level: Integer
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created :class:`Privacy` entity
@@ -908,7 +998,7 @@ class DataStore:
             return privacies
 
         # enough info to proceed and create entry
-        privacy = self.db_classes.Privacy(name=name)
+        privacy = self.db_classes.Privacy(name=name, level=level)
         self.session.add(privacy)
         self.session.flush()
 
@@ -1027,16 +1117,12 @@ class DataStore:
         """Delete the database schema (ie all of the tables)"""
         if self.db_type == "sqlite":
             meta = BaseSpatiaLite.metadata
+            with self.session_scope():
+                meta.drop_all()
+                self.session.execute("DROP TABLE IF EXISTS alembic_version;")
         else:
-            meta = BasePostGIS.metadata
-
-        with self.session_scope():
-            meta.drop_all()
-        with self.engine.connect() as connection:
-            if self.db_type == "sqlite":
-                connection.execute("DROP TABLE alembic_version;")
-            else:
-                connection.execute('DROP TABLE pepys."alembic_version";')
+            with self.engine.connect() as connection:
+                connection.execute('DROP SCHEMA IF EXISTS "pepys" CASCADE;')
 
     def get_all_datafiles(self):
         """Returns all datafiles.

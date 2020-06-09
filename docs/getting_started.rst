@@ -35,19 +35,20 @@ and Datafiles (a file that is being imported into Pepys). All these objects have
 with them. For example, a Platform has a Nationality and a Platform Type, and all objects have a
 Classification for security purposes.
 
-The first question asks you to provide a classification for the datafile. Choose to :code:`Search an
-existing classification`, and start typing :code:`Private` and you'll see that an autocompletion
-menu pops up. Press Tab to complete what you've typed, and Enter to continue. This will set the
-classification of the datafile to `Private`. You will then be given all the information about the
-datafile, to allow you to confirm everything is set correctly - just choose option `1` to confirm
-and continue.
+The first question asks you to accept the default name for the datafile - just press Enter for this.
+You'll then be asked to select a classification for the datafile. Various pre-configured
+classifications will be listed (these are just examples used during testing). Choose option :code:`4` to
+set the classification to :code:`Private`. You will then be given all the information about the datafile,
+to allow you to confirm everything is set correctly - just choose option :code:`1` to confirm and
+continue.
 
 The next set of questions are about the Platform. You should choose to add a new platform (option
-:code:`2`), and then you'll be asked for details. It doesn't matter what name or details you give
-it, as this is just an example - but note that some fields are optional. Next is the search for a
-nationality (the nationality :code:`UK` is already defined for you), and you can add a new Platform
-Type of :code:`Frigate`. Finally, you'll be asked for a classification for the platform - again, you
-can just select the existing classification :code:`Private`.
+:code:`2`), and then you'll be asked for details. It doesn't matter what name or details you give it, as
+this is just an example - but note that some fields are optional. Next is the search for a
+nationality - again, you'll get a list of the most common nationalities, but can search for others
+if you want to. For now, just choose :code:`3` for :code:`United Kingdom`. When you're given the list of
+pre-defined platform types to choose from, choose :code:`2` to add a new platform type and enter
+:code:`Frigate`, before selecting a classification of :code:`Private` and confirming the addition.
 
 The next stage is entering data about the sensor used to collect the data that we're importing. In
 this case, we're importing a GPX file, which is a file format used by GPS systems - so the sensor
@@ -85,7 +86,7 @@ may be different to your local time). Try this by doing exactly what you did bef
 5. Export a data file using Pepys Admin
 ---------------------------------------
 
-Now choose option :code:`(4) Export by Platform and sensor`. You will need to select a platform -
+Now choose option :code:`(3) Export` and then option :code:`(2) Export by Platform and sensor`. You will need to select a platform -
 there is only one, so just press Enter. It will then give you a list of sensors and the periods they
 were active. Again there is only one, so just enter :code:`1` and press Enter. Press Enter to accept
 the default value for the output filename. You should then see a message saying :code:`Objects
@@ -192,7 +193,7 @@ You'll see the contents of the Platforms table displayed: this should include th
 created manually the first time you ran Pepys Import, plus various other platforms added
 automatically by the default resolver including `SPLENDID` and `SEARCH_PLATFORM`. You'll see each
 platform has a nationality and platform type. In fact, the database stores more information about
-platforms (including pennant numbers, trigraphs and more) but for ease of visualisation these are
+platforms (including identifier such as pennant or tail numbers, trigraphs and more) but for ease of visualisation these are
 left out of the database display here.
 
 Now look at some other tables: choose option `1` again and look at the `States` table, in which

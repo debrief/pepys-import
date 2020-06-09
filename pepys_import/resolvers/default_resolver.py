@@ -6,12 +6,13 @@ class DefaultResolver(DataResolver):
     default_platform_name = "PLATFORM-1"
     default_trigraph = "PL1"
     default_quadgraph = "PLT1"
-    default_pennant_number = "123"
+    default_identifier = "123"
     default_platform_type = "Warship"
     default_nationality = "UK"
     default_sensor_name = "SENSOR-1"
     default_sensor_type = "Position"
-    default_privacy = "PRIVACY-1"
+    default_privacy = "Public"
+    default_privacy_level = 10
     default_datafile_name = "DATAFILE-1"
     default_datafile_type = "DATAFILE-TYPE-1"
 
@@ -33,9 +34,11 @@ class DefaultResolver(DataResolver):
             nationality = data_store.add_to_nationalities(self.default_nationality, change_id)
 
         if privacy:
-            privacy = data_store.add_to_privacies(privacy, change_id)
+            privacy = data_store.add_to_privacies(privacy, self.default_privacy_level, change_id)
         else:
-            privacy = data_store.add_to_privacies(self.default_privacy, change_id)
+            privacy = data_store.add_to_privacies(
+                self.default_privacy, self.default_privacy_level, change_id
+            )
 
         # Look to see if we already have a platform created with these details, and if so, return it
         results_from_db = (
@@ -54,7 +57,7 @@ class DefaultResolver(DataResolver):
                 platform_name,
                 self.default_trigraph,
                 self.default_quadgraph,
-                self.default_pennant_number,
+                self.default_identifier,
                 platform_type,
                 nationality,
                 privacy,
@@ -78,9 +81,11 @@ class DefaultResolver(DataResolver):
             sensor_type = data_store.add_to_sensor_types(self.default_sensor_type, change_id)
 
         if privacy:
-            privacy = data_store.add_to_privacies(privacy, change_id)
+            privacy = data_store.add_to_privacies(privacy, self.default_privacy_level, change_id)
         else:
-            privacy = data_store.add_to_privacies(self.default_privacy, change_id)
+            privacy = data_store.add_to_privacies(
+                self.default_privacy, self.default_privacy_level, change_id
+            )
 
         # Look to see if we already have a sensor created for this platform, with this sensor type etc
 
@@ -104,10 +109,25 @@ class DefaultResolver(DataResolver):
             assert False
 
     def resolve_privacy(self, data_store, change_id, data_type=None):
+        """
+        Implementation method should return any data necessary to create a privacy.
+        Currently: name
+
+        :param data_store: A :class:`DataStore` object
+        :type data_store: DataStore
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: UUID
+        :param data_type: Type of the data: datafile, platform or sensor
+        :type data_type: String
+        :return:
+        """
+
         # needs to establish defaults for privacy
         privacy = data_store.search_privacy(self.default_privacy)
         if not privacy:
-            privacy = data_store.add_to_privacies(self.default_privacy, change_id)
+            privacy = data_store.add_to_privacies(
+                self.default_privacy, self.default_privacy_level, change_id
+            )
 
         return privacy
 
@@ -122,8 +142,10 @@ class DefaultResolver(DataResolver):
             datafile_type = data_store.add_to_datafile_types(self.default_datafile_type, change_id)
 
         if privacy:
-            privacy = data_store.add_to_privacies(privacy, change_id)
+            privacy = data_store.add_to_privacies(privacy, self.default_privacy_level, change_id)
         else:
-            privacy = data_store.add_to_privacies(self.default_privacy, change_id)
+            privacy = data_store.add_to_privacies(
+                self.default_privacy, self.default_privacy_level, change_id
+            )
 
         return datafile_name, datafile_type, privacy

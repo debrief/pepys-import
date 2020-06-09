@@ -189,7 +189,13 @@ class ImporterSummaryTest(unittest.TestCase):
         lines = output.split("\n")
 
         # List of files which should be listed in the 'Import succeeded for' section
-        succeeded_files = ["sen_tracks.rep", "sen_ssk_freq.dsf", "rep_test1.rep", "uk_track.rep"]
+        succeeded_files = [
+            "sen_tracks.rep",
+            "sen_ssk_freq.dsf",
+            "sen_frig_sensor.dsf",
+            "rep_test1.rep",
+            "uk_track.rep",
+        ]
 
         succeeded_index = lines.index("Import succeeded for:")
         index = succeeded_index + 1
@@ -212,7 +218,6 @@ class ImporterSummaryTest(unittest.TestCase):
         # List of details for files that should be in the 'import failed for' section
         failed_files = {
             "rep_test1_bad.rep": "REP Comment Importer",
-            "sen_frig_sensor.dsf": "REP Importer",
             "rep_test2.rep": "REP Importer",
             "uk_track_failing_enh_validation.rep": "Enhanced Validator",
         }
@@ -256,7 +261,13 @@ class ImporterSummaryTest(unittest.TestCase):
         lines = output.split("\n")
 
         # List of files which should be listed in the 'Import succeeded for' section
-        succeeded_files = ["sen_tracks.rep", "sen_ssk_freq.dsf", "rep_test1.rep", "uk_track.rep"]
+        succeeded_files = [
+            "sen_tracks.rep",
+            "sen_ssk_freq.dsf",
+            "sen_frig_sensor.dsf",
+            "rep_test1.rep",
+            "uk_track.rep",
+        ]
 
         succeeded_index = lines.index("Import succeeded for:")
         index = succeeded_index + 1
@@ -281,7 +292,6 @@ class ImporterSummaryTest(unittest.TestCase):
         # List of details for files that should be in the 'import failed for' section
         failed_files = {
             "rep_test1_bad.rep": "REP Comment Importer",
-            "sen_frig_sensor.dsf": "REP Importer",
             "rep_test2.rep": "REP Importer",
             "uk_track_failing_enh_validation.rep": "Enhanced Validator",
         }
@@ -562,7 +572,7 @@ class ReplayImporterTestCase(unittest.TestCase):
 
 class NMEAImporterTestCase(unittest.TestCase):
     def setUp(self) -> None:
-        self.nmea_importer = NMEAImporter(separator=" ")
+        self.nmea_importer = NMEAImporter()
 
     def test_parse_timestamp(self):
         """Test whether the method correctly converts the given string date and time"""

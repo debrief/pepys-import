@@ -72,6 +72,12 @@ Remove-Item get-pip.py
 
 Write-Output "INFO: Cleaned up all except 7zip"
 
+Write-Output "INFO: Building documentation"
+# Write to the same folder that 'make html' does, so it works for devs who've done that on other platforms
+.\python\Scripts\sphinx-build.exe docs docs\_build\html
+
+write-Output "INFO: Finished building documentation"
+
 # Zip up whole folder into a zip-file with the current date in the filename
 # excluding the 7zip folder
 $date_str = Get-Date -Format "yyyyMMdd"

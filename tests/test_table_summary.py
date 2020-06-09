@@ -12,8 +12,8 @@ class TableSummarySetTestCase(TestCase):
         self.store.initialise()
         with self.store.session_scope():
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
-            self.store.add_to_privacies("TEST-1", self.change_id)
-            self.store.add_to_privacies("TEST-2", self.change_id)
+            self.store.add_to_privacies("TEST-1", 0, self.change_id)
+            self.store.add_to_privacies("TEST-2", 0, self.change_id)
 
     def tearDown(self):
         pass
@@ -40,7 +40,7 @@ class TableSummaryTestCase(TestCase):
         self.store.initialise()
         with self.store.session_scope():
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
-            self.store.add_to_privacies("TEST-1", self.change_id)
+            self.store.add_to_privacies("TEST-1", 0, self.change_id)
             self.store.add_to_nationalities("NAT-1", self.change_id)
             self.store.add_to_nationalities("NAT-2", self.change_id)
             privacy_sum = TableSummary(self.store.session, self.store.db_classes.Privacy)
@@ -64,8 +64,8 @@ class TableSummaryTestCase(TestCase):
         first_table_summary_set = TableSummarySet(self.summaries)
 
         with self.store.session_scope():
-            self.store.add_to_privacies("TEST-2", self.change_id)
-            self.store.add_to_privacies("TEST-3", self.change_id)
+            self.store.add_to_privacies("TEST-2", 0, self.change_id)
+            self.store.add_to_privacies("TEST-3", 0, self.change_id)
             privacy_sum = TableSummary(self.store.session, self.store.db_classes.Privacy)
             nationality_sum = TableSummary(self.store.session, self.store.db_classes.Nationality)
         second_summary = [privacy_sum, nationality_sum]

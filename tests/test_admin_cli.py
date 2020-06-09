@@ -3,6 +3,7 @@ import shutil
 import sqlite3
 import unittest
 from contextlib import redirect_stdout
+from datetime import datetime
 from importlib import reload
 from io import StringIO
 from sqlite3 import OperationalError
@@ -15,13 +16,14 @@ from testing.postgresql import Postgresql
 import config
 from pepys_admin.admin_cli import AdminShell
 from pepys_admin.cli import run_admin_shell
-from pepys_admin.export_by_platform_cli import ExportByPlatformNameShell
+from pepys_admin.export_cli import ExportByPlatformNameShell, ExportShell
 from pepys_admin.initialise_cli import InitialiseShell
+from pepys_admin.snapshot_cli import SnapshotShell
 from pepys_admin.view_data_cli import ViewDataShell
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.utils.data_store_utils import is_schema_created
-from pepys_import.utils.geoalchemy_utils import load_spatialite
+from pepys_import.utils.sqlite_utils import load_spatialite
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
@@ -45,181 +47,6 @@ class AdminCLITestCase(unittest.TestCase):
 
         self.admin_shell = AdminShell(self.store)
 
-    @patch("pepys_admin.admin_cli.iterfzf", return_value="rep_test1.rep")
-    @patch("pepys_admin.admin_cli.input", return_value="Y")
-    @patch("pepys_admin.admin_cli.ptk_prompt", return_value=".")
-    def test_do_export(self, patched_iterfzf, patched_input, patched_ptk_prompt):
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.admin_shell.do_export()
-        output = temp_output.getvalue()
-        assert "'rep_test1.rep' is going to be exported." in output
-        assert "Datafile successfully exported to ./exported_rep_test1_rep.rep." in output
-
-        file_path = os.path.join(CURRENT_DIR, "exported_rep_test1_rep.rep")
-        assert os.path.exists(file_path) is True
-        with open(file_path, "r") as file:
-            data = file.read().splitlines()
-        assert len(data) == 22  # 8 States, 7 Contacts, 7 Comments
-
-    @patch("pepys_admin.admin_cli.iterfzf", return_value="NOT_EXISTING_FILE.rep")
-    def test_do_export_invalid_datafile_name(self, patched_iterfzf):
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.admin_shell.do_export()
-        output = temp_output.getvalue()
-        assert "You haven't selected a valid option!" in output
-
-    @patch("pepys_admin.admin_cli.iterfzf")
-    @patch("pepys_admin.admin_cli.input")
-    def test_do_export_other_options(self, patched_input, patched_iterfzf):
-        patched_iterfzf.side_effect = ["rep_test1.rep", "rep_test1.rep"]
-        patched_input.side_effect = ["n", "RANDOM-INPUT"]
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.admin_shell.do_export()
-        output = temp_output.getvalue()
-        assert "You selected not to export!" in output
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.admin_shell.do_export()
-        output = temp_output.getvalue()
-        assert "Please enter a valid input." in output
-
-    def test_do_export_empty_database(self):
-        # Create an empty database
-        new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
-        new_data_store.initialise()
-        new_shell = AdminShell(new_data_store)
-
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            new_shell.do_export()
-        output = temp_output.getvalue()
-        assert "There is no datafile found in the database!" in output
-
-    @patch("pepys_admin.admin_cli.iterfzf", return_value="SEARCH_PLATFORM")
-    @patch("pepys_admin.export_by_platform_cli.input", return_value="")
-    @patch("cmd.input", return_value="1")
-    @patch("pepys_admin.export_by_platform_cli.ptk_prompt", return_value=".")
-    def test_do_export_by_platform_name(
-        self, cmd_input, shell_input, patched_iterfzf, patched_ptk_prompt
-    ):
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.admin_shell.do_export_by_platform_name()
-        output = temp_output.getvalue()
-
-        assert "Objects are going to be exported to './exported_SENSOR-1.rep'." in output
-        assert "Objects successfully exported to ./exported_SENSOR-1.rep." in output
-
-        file_path = os.path.join(CURRENT_DIR, "exported_SENSOR-1.rep")
-        assert os.path.exists(file_path) is True
-
-        with open(file_path, "r") as file:
-            data = file.read().splitlines()
-        assert len(data) == 4  # 4 State objects
-
-        os.remove(file_path)
-
-    @patch("pepys_admin.admin_cli.iterfzf", return_value="NOT_EXISTING_PLATFORM")
-    def test_do_export_by_platform_name_invalid_platform_name(self, patched_input):
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.admin_shell.do_export_by_platform_name()
-        output = temp_output.getvalue()
-        assert "You haven't selected a valid option!" in output
-
-    def test_do_export_by_platform_name_empty_database(self):
-        # Create an empty database
-        new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
-        new_data_store.initialise()
-        new_shell = AdminShell(new_data_store)
-
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            new_shell.do_export_by_platform_name()
-        output = temp_output.getvalue()
-        assert "There is no platform found in the database!" in output
-
-    @patch("pepys_admin.admin_cli.input")
-    def test_do_export_all(self, patched_input):
-        patched_input.side_effect = ["Y", "export_test"]
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.admin_shell.do_export_all()
-        output = temp_output.getvalue()
-        assert "Datafiles are going to be exported to 'export_test' folder" in output
-        assert "All datafiles are successfully exported!" in output
-
-        folder_path = os.path.join(CURRENT_DIR, "export_test")
-        assert os.path.exists(folder_path) is True
-
-        shutil.rmtree(folder_path)
-
-    @patch("pepys_admin.admin_cli.input")
-    def test_do_export_all_to_existing_folder(self, patched_input):
-        patched_input.side_effect = ["Y", SAMPLE_DATA_PATH, "export_test"]
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.admin_shell.do_export_all()
-        output = temp_output.getvalue()
-        assert f"{SAMPLE_DATA_PATH} already exists." in output
-        assert "Datafiles are going to be exported to 'export_test' folder" in output
-        assert "All datafiles are successfully exported!" in output
-
-        folder_path = os.path.join(CURRENT_DIR, "export_test")
-        assert os.path.exists(folder_path) is True
-
-        shutil.rmtree(folder_path)
-
-    @patch("pepys_admin.admin_cli.input")
-    def test_do_export_all_to_default_folder(self, patched_input):
-        patched_input.side_effect = ["Y", None]
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.admin_shell.do_export_all()
-        output = temp_output.getvalue()
-        assert "Datafiles are going to be exported to 'exported_datafiles_" in output
-        assert "All datafiles are successfully exported!" in output
-
-        folders = [
-            folder for folder in os.listdir(CURRENT_DIR) if folder.startswith("exported_datafiles")
-        ]
-        for folder in folders:
-            shutil.rmtree(folder)
-
-    @patch("pepys_admin.admin_cli.input")
-    def test_do_export_all_other_options(self, patched_input):
-        patched_input.side_effect = ["n", "RANDOM-INPUT"]
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.admin_shell.do_export_all()
-        output = temp_output.getvalue()
-        assert "You selected not to export!" in output
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.admin_shell.do_export_all()
-        output = temp_output.getvalue()
-        assert "Please enter a valid input." in output
-
-    @patch("pepys_admin.admin_cli.input")
-    def test_do_export_all_empty_database(self, patched_input):
-        patched_input.side_effect = ["Y", "export_test"]
-        # Create an empty database
-        new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
-        new_data_store.initialise()
-        new_shell = AdminShell(new_data_store)
-
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            new_shell.do_export_all()
-        output = temp_output.getvalue()
-        assert "There is no datafile found in the database!" in output
-
-        output_path = os.path.join(CURRENT_DIR, "export_test")
-        shutil.rmtree(output_path)
-
     @patch("cmd.input", return_value="0")
     def test_do_initialise(self, patched_input):
         initialise_shell = InitialiseShell(self.store, None, None)
@@ -231,6 +58,28 @@ class AdminCLITestCase(unittest.TestCase):
         # Assert that Admin Shell redirects to the initialise menu
         assert initialise_shell.intro in output
 
+    @patch("cmd.input", return_value="0")
+    def test_do_export(self, patched_input):
+        shell = ExportShell(self.store)
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_export()
+        output = temp_output.getvalue()
+        # Assert that Admin Shell redirects to the initialise menu
+        assert shell.intro in output
+
+    @patch("cmd.input", return_value="0")
+    def test_do_snapshot(self, patched_input):
+        shell = SnapshotShell(self.store)
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.admin_shell.do_snapshot()
+        output = temp_output.getvalue()
+        # Assert that Admin Shell redirects to the initialise menu
+        assert shell.intro in output
+
     def test_do_status(self):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -238,7 +87,7 @@ class AdminCLITestCase(unittest.TestCase):
         output = temp_output.getvalue()
 
         states_text = "| States       |              738 |"
-        contacts_text = "| Contacts     |               15 |"
+        contacts_text = "| Contacts     |              110 |"
         comments_text = "| Comments     |                7 |"
         datafiles_text = "| Datafiles    |                8 |"
         assert states_text in output
@@ -408,6 +257,8 @@ class NotInitialisedDBTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.admin_shell = AdminShell(self.store)
+        self.export_shell = ExportShell(self.store)
+        self.snapshot_shell = SnapshotShell(self.store)
         self.initialise_shell = InitialiseShell(
             self.store, self.admin_shell, self.admin_shell.csv_path
         )
@@ -415,13 +266,13 @@ class NotInitialisedDBTestCase(unittest.TestCase):
     def test_not_initialised_db(self):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
-            self.admin_shell.do_export()
+            self.export_shell.do_export()
         output = temp_output.getvalue()
         assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
-            self.admin_shell.do_export_all()
+            self.export_shell.do_export_all()
         output = temp_output.getvalue()
         assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
 
@@ -439,12 +290,6 @@ class NotInitialisedDBTestCase(unittest.TestCase):
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
-            self.initialise_shell.do_clear_db_schema()
-        output = temp_output.getvalue()
-        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
-
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
             self.initialise_shell.do_import_reference_data()
         output = temp_output.getvalue()
         assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
@@ -457,7 +302,7 @@ class NotInitialisedDBTestCase(unittest.TestCase):
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
-            self.admin_shell.do_export_by_platform_name()
+            self.export_shell.do_export_by_platform_name()
         output = temp_output.getvalue()
         assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
 
@@ -466,6 +311,239 @@ class NotInitialisedDBTestCase(unittest.TestCase):
             self.admin_shell.do_view_data()
         output = temp_output.getvalue()
         assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.snapshot_shell.do_export_reference_data()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.snapshot_shell.do_export_reference_data_and_metadata()
+        output = temp_output.getvalue()
+        assert "Database tables are not found! (Hint: Did you initialise the DataStore?)" in output
+
+
+class ExportShellTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+        # Parse the REP files
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(DATA_PATH, self.store, False)
+
+        self.export_shell = ExportShell(self.store)
+
+    @patch("pepys_admin.export_cli.iterfzf", return_value="rep_test1.rep")
+    @patch("pepys_admin.export_cli.input", return_value="Y")
+    @patch("pepys_admin.export_cli.ptk_prompt", return_value=".")
+    def test_do_export(self, patched_iterfzf, patched_input, patched_ptk_prompt):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.do_export()
+        output = temp_output.getvalue()
+        assert "'rep_test1.rep' is going to be exported." in output
+        assert "Datafile successfully exported to ./exported_rep_test1_rep.rep." in output
+
+        file_path = os.path.join(CURRENT_DIR, "exported_rep_test1_rep.rep")
+        assert os.path.exists(file_path) is True
+        with open(file_path, "r") as file:
+            data = file.read().splitlines()
+        assert len(data) == 22  # 8 States, 7 Contacts, 7 Comments
+
+    @patch("pepys_admin.export_cli.iterfzf", return_value="NOT_EXISTING_FILE.rep")
+    def test_do_export_invalid_datafile_name(self, patched_iterfzf):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.do_export()
+        output = temp_output.getvalue()
+        assert "You haven't selected a valid option!" in output
+
+    @patch("pepys_admin.export_cli.iterfzf")
+    @patch("pepys_admin.export_cli.input")
+    def test_do_export_other_options(self, patched_input, patched_iterfzf):
+        patched_iterfzf.side_effect = ["rep_test1.rep", "rep_test1.rep"]
+        patched_input.side_effect = ["n", "RANDOM-INPUT"]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.do_export()
+        output = temp_output.getvalue()
+        assert "You selected not to export!" in output
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.do_export()
+        output = temp_output.getvalue()
+        assert "Please enter a valid input." in output
+
+    def test_do_export_empty_database(self):
+        # Create an empty database
+        new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        new_data_store.initialise()
+        new_shell = ExportShell(new_data_store)
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            new_shell.do_export()
+        output = temp_output.getvalue()
+        assert "There is no datafile found in the database!" in output
+
+    @patch("pepys_admin.export_cli.iterfzf", return_value="SEARCH_PLATFORM")
+    @patch("pepys_admin.export_cli.input", return_value="")
+    @patch("cmd.input", return_value="1")
+    @patch("pepys_admin.export_cli.ptk_prompt", return_value=".")
+    def test_do_export_by_platform_name(
+        self, cmd_input, shell_input, patched_iterfzf, patched_ptk_prompt
+    ):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.do_export_by_platform_name()
+        output = temp_output.getvalue()
+
+        assert "Objects are going to be exported to './exported_SENSOR-1.rep'." in output
+        assert "Objects successfully exported to ./exported_SENSOR-1.rep." in output
+
+        file_path = os.path.join(CURRENT_DIR, "exported_SENSOR-1.rep")
+        assert os.path.exists(file_path) is True
+
+        with open(file_path, "r") as file:
+            data = file.read().splitlines()
+        assert len(data) == 4  # 4 State objects
+
+        os.remove(file_path)
+
+    @patch("pepys_admin.export_cli.iterfzf", return_value="NOT_EXISTING_PLATFORM")
+    def test_do_export_by_platform_name_invalid_platform_name(self, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.do_export_by_platform_name()
+        output = temp_output.getvalue()
+        assert "You haven't selected a valid option!" in output
+
+    def test_do_export_by_platform_name_empty_database(self):
+        # Create an empty database
+        new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        new_data_store.initialise()
+        new_shell = ExportShell(new_data_store)
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            new_shell.do_export_by_platform_name()
+        output = temp_output.getvalue()
+        assert "There is no platform found in the database!" in output
+
+    @patch("pepys_admin.export_cli.input")
+    def test_do_export_all(self, patched_input):
+        patched_input.side_effect = ["Y", "export_test"]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.do_export_all()
+        output = temp_output.getvalue()
+        assert "Datafiles are going to be exported to 'export_test' folder" in output
+        assert "All datafiles are successfully exported!" in output
+
+        folder_path = os.path.join(CURRENT_DIR, "export_test")
+        assert os.path.exists(folder_path) is True
+
+        shutil.rmtree(folder_path)
+
+    @patch("pepys_admin.export_cli.input")
+    def test_do_export_all_to_existing_folder(self, patched_input):
+        patched_input.side_effect = ["Y", SAMPLE_DATA_PATH, "export_test"]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.do_export_all()
+        output = temp_output.getvalue()
+        assert f"{SAMPLE_DATA_PATH} already exists." in output
+        assert "Datafiles are going to be exported to 'export_test' folder" in output
+        assert "All datafiles are successfully exported!" in output
+
+        folder_path = os.path.join(CURRENT_DIR, "export_test")
+        assert os.path.exists(folder_path) is True
+
+        shutil.rmtree(folder_path)
+
+    @patch("pepys_admin.export_cli.input")
+    def test_do_export_all_to_default_folder(self, patched_input):
+        patched_input.side_effect = ["Y", None]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.do_export_all()
+        output = temp_output.getvalue()
+        assert "Datafiles are going to be exported to 'exported_datafiles_" in output
+        assert "All datafiles are successfully exported!" in output
+
+        folders = [
+            folder for folder in os.listdir(CURRENT_DIR) if folder.startswith("exported_datafiles")
+        ]
+        for folder in folders:
+            shutil.rmtree(folder)
+
+    @patch("pepys_admin.export_cli.input")
+    def test_do_export_all_other_options(self, patched_input):
+        patched_input.side_effect = ["n", "RANDOM-INPUT"]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.do_export_all()
+        output = temp_output.getvalue()
+        assert "You selected not to export!" in output
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.do_export_all()
+        output = temp_output.getvalue()
+        assert "Please enter a valid input." in output
+
+    @patch("pepys_admin.export_cli.input")
+    def test_do_export_all_empty_database(self, patched_input):
+        patched_input.side_effect = ["Y", "export_test"]
+        # Create an empty database
+        new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        new_data_store.initialise()
+        new_shell = ExportShell(new_data_store)
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            new_shell.do_export_all()
+        output = temp_output.getvalue()
+        assert "There is no datafile found in the database!" in output
+
+        output_path = os.path.join(CURRENT_DIR, "export_test")
+        shutil.rmtree(output_path)
+
+    def test_do_cancel(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.do_cancel()
+        output = temp_output.getvalue()
+        assert "Returning to the previous menu..." in output
+
+    def test_default(self):
+        # Only cancel command (0) returns True, others return None
+        result = self.export_shell.default("0")
+        assert result is True
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.default("123456789")
+        output = temp_output.getvalue()
+        assert "*** Unknown syntax: 123456789" in output
+
+    def test_postcmd(self):
+        # postcmd method should print the menu again if the user didn't select cancel ("0")
+        # Select Export by name
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.postcmd(stop=None, line="1")
+        output = temp_output.getvalue()
+        assert self.export_shell.intro in output
+        # Select Export by platform and sensor
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.export_shell.postcmd(stop=None, line="2")
+        output = temp_output.getvalue()
+        assert self.export_shell.intro in output
 
 
 class ExportByPlatformNameShellTestCase(unittest.TestCase):
@@ -497,8 +575,8 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
         self.shell = ExportByPlatformNameShell(self.store, self.options, self.objects)
         self.shell.intro = self.text
 
-    @patch("pepys_admin.export_by_platform_cli.input", return_value="export_test")
-    @patch("pepys_admin.export_by_platform_cli.ptk_prompt", return_value=".")
+    @patch("pepys_admin.export_cli.input", return_value="export_test")
+    @patch("pepys_admin.export_cli.ptk_prompt", return_value=".")
     def test_do_export(self, patched_input, patched_ptk_prompt):
         print(self.objects)
         search_platform_obj = [item for item in self.objects if item["name"] == "SENSOR-1"][0]
@@ -665,6 +743,409 @@ def test_do_migrate():
     assert is_schema_created(new_datastore.engine, new_datastore.db_type) is True
 
     os.remove(os.path.join(CURRENT_DIR, "new_db.db"))
+
+
+class SnapshotPostgresTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.postgres = Postgresql(
+            database="test", host="localhost", user="postgres", password="postgres", port=55527,
+        )
+        self.store = DataStore(
+            db_name="test",
+            db_host="localhost",
+            db_username="postgres",
+            db_password="postgres",
+            db_port=55527,
+            db_type="postgres",
+        )
+        self.store.initialise()
+        # Parse the REP files
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files/other_data"), self.store, False
+        )
+        processor.process(os.path.join(DATA_PATH), self.store, False)
+
+        with self.store.session_scope():
+            self.store.populate_reference()
+            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "test").change_id
+            privacy = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "Public")
+                .first()
+            )
+            platform_id = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.privacy_id == privacy.privacy_id)
+                .first()
+                .platform_id
+            )
+            privacy_2 = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "Public Sensitive")
+                .first()
+            )
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-TEST", change_id)
+            nationality = self.store.add_to_nationalities("UK", change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", change_id).name
+
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy.name,
+                change_id=change_id,
+            )
+            sensor = platform.get_sensor(
+                self.store,
+                "SENSOR-TEST",
+                sensor_type=sensor_type.name,
+                privacy=privacy_2.name,
+                change_id=change_id,
+            )
+            sensor_id = sensor.sensor_id
+            self.store.add_to_synonyms("Platforms", "test", entity=platform_id, change_id=change_id)
+
+        self.shell = SnapshotShell(self.store)
+
+    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
+    def test_do_export_reference_data_postgres(self, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data()
+        output = temp_output.getvalue()
+        assert "Reference tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM DatafileTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert ".dsf" in names
+            assert ".rep" in names
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public", "Public Sensitive"])
+    def test_do_export_reference_data_and_metadata_postgres(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data_and_metadata()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "SENSOR-1" in names
+            assert "New_SSK_FREQ" in names
+            assert "E-Trac" in names
+            assert "SENSOR-TEST" in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "test" in table_dict.values()
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
+    def test_do_export_reference_data_and_metadata_public(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data_and_metadata()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "SENSOR-1" in names
+            assert "New_SSK_FREQ" in names
+            assert "E-Trac" in names
+            assert "SENSOR-TEST" not in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "test" in table_dict.values()
+            assert "Sensors" not in table_dict.keys()
+            assert "test-2" not in table_dict.values()
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public Sensitive"])
+    def test_do_export_reference_data_and_metadata_public_sensitive(
+        self, patched_iterfzf, patched_input
+    ):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data_and_metadata()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            # Even though there are Sensor objects with Public Sensitive level, their Platform objects
+            # have different privacy values. Therefore, none of platforms and sensors are exported.
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            assert len(results) == 0
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+
+class SnapshotShellTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+        # Parse the REP files
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files/other_data"), self.store, False
+        )
+        processor.process(os.path.join(DATA_PATH), self.store, False)
+
+        with self.store.session_scope():
+            self.store.populate_reference()
+            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "test").change_id
+            privacy = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "Public")
+                .first()
+            )
+            platform_id = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.privacy_id == privacy.privacy_id)
+                .first()
+                .platform_id
+            )
+            privacy_2 = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "Public Sensitive")
+                .first()
+            )
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-TEST", change_id)
+            nationality = self.store.add_to_nationalities("UK", change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", change_id).name
+
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy.name,
+                change_id=change_id,
+            )
+            sensor = platform.get_sensor(
+                self.store,
+                "SENSOR-TEST",
+                sensor_type=sensor_type.name,
+                privacy=privacy_2.name,
+                change_id=change_id,
+            )
+            sensor_id = sensor.sensor_id
+            self.store.add_to_synonyms("Platforms", "test", entity=platform_id, change_id=change_id)
+
+        self.shell = SnapshotShell(self.store)
+
+    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
+    def test_do_export_reference_data(self, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data()
+        output = temp_output.getvalue()
+        assert "Reference tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM DatafileTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert ".dsf" in names
+            assert ".rep" in names
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public", "Public Sensitive"])
+    def test_do_export_reference_data_and_metadata(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data_and_metadata()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "SENSOR-1" in names
+            assert "New_SSK_FREQ" in names
+            assert "E-Trac" in names
+            assert "SENSOR-TEST" in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "test" in table_dict.values()
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
+    def test_do_export_reference_data_and_metadata_public(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data_and_metadata()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "SENSOR-1" in names
+            assert "New_SSK_FREQ" in names
+            assert "E-Trac" in names
+            assert "SENSOR-TEST" not in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "test" in table_dict.values()
+            assert "Sensors" not in table_dict.keys()
+            assert "test-2" not in table_dict.values()
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public Sensitive"])
+    def test_do_export_reference_data_and_metadata_public_sensitive(
+        self, patched_iterfzf, patched_input
+    ):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data_and_metadata()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            # Even though there are Sensor objects with Public Sensitive level, their Platform objects
+            # have different privacy values. Therefore, none of platforms and sensors are exported.
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            assert len(results) == 0
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    def test_do_cancel(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_cancel()
+        output = temp_output.getvalue()
+        assert "Returning to the previous menu..." in output
+
+    def test_default(self):
+        # Only cancel command (0) returns True, others return None
+        result = self.shell.default("0")
+        assert result is True
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.default("123456789")
+        output = temp_output.getvalue()
+        assert "*** Unknown syntax: 123456789" in output
+
+    def test_postcmd(self):
+        # postcmd method should print the menu again if the user didn't select cancel ("0")
+        # Select Create snapshot with Reference data
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.postcmd(stop=None, line="1")
+        output = temp_output.getvalue()
+        assert self.shell.intro in output
+        # Select Create snapshot with Reference data & Metadata
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.postcmd(stop=None, line="2")
+        output = temp_output.getvalue()
+        assert self.shell.intro in output
+
+    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=None)
+    def test_do_export_reference_and_metadata_cancelling(self, patched_iterfzf, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data_and_metadata()
+        output = temp_output.getvalue()
+        assert "Returning to the previous menu" in output
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
 
 
 if __name__ == "__main__":

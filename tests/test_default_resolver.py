@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime
+from uuid import uuid4
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.resolvers.default_resolver import DefaultResolver
@@ -19,7 +20,7 @@ class DefaultResolverTestCase(unittest.TestCase):
     def test_resolver_privacy(self):
         with self.store.session_scope():
             privacy = self.resolver.resolve_privacy(self.store, self.change_id)
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
 
     def test_resolve_sensor(self):
         with self.store.session_scope():
@@ -28,12 +29,12 @@ class DefaultResolverTestCase(unittest.TestCase):
                 sensor_name=None,
                 sensor_type=None,
                 privacy=None,
-                host_id=1,
+                host_id=uuid4(),
                 change_id=self.change_id,
             )
             self.assertEqual(sensor_name, "SENSOR-1")
             self.assertEqual(sensor_type.name, "Position")
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
 
     def test_resolve_sensor_gives_sensor_object_when_called_twice(self):
         Sensor = self.store.db_classes.Sensor
@@ -42,12 +43,12 @@ class DefaultResolverTestCase(unittest.TestCase):
             # Create a platform for it to belong to
             platform_obj = self.store.add_to_platforms(
                 "TestPlatform",
-                "UK",
+                "1234",
+                "United Kingdom",
                 "Fisher",
                 "Private",
                 trigraph="PLT",
                 quadgraph="PLTT",
-                pennant_number=1234,
                 change_id=self.change_id,
             )
 
@@ -64,7 +65,7 @@ class DefaultResolverTestCase(unittest.TestCase):
             sensor_name, sensor_type, privacy = result
             self.assertEqual(sensor_name, "SENSOR-1")
             self.assertEqual(sensor_type.name, "Position")
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
 
             # Add to database (like in get_sensor() in common_db.py)
             new_sensor_obj = Sensor().add_to_sensors(
@@ -95,7 +96,7 @@ class DefaultResolverTestCase(unittest.TestCase):
                 platform_name,
                 trigraph,
                 quadgraph,
-                pennant_number,
+                identifier,
                 platform_type,
                 nationality,
                 privacy,
@@ -110,14 +111,12 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(platform_name, "PLATFORM-1")
             self.assertEqual(trigraph, "PL1")
             self.assertEqual(quadgraph, "PLT1")
-            self.assertEqual(pennant_number, "123")
+            self.assertEqual(identifier, "123")
             self.assertEqual(platform_type.name, "Warship")
             self.assertEqual(nationality.name, "UK")
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
 
     def test_resolve_platform_gives_platform_object_when_called_twice(self):
-        Platform = self.store.db_classes.Platform
-
         with self.store.session_scope():
             # Call it first time
             result = self.resolver.resolve_platform(
@@ -133,7 +132,7 @@ class DefaultResolverTestCase(unittest.TestCase):
                 platform_name,
                 trigraph,
                 quadgraph,
-                pennant_number,
+                identifier,
                 platform_type,
                 nationality,
                 privacy,
@@ -144,7 +143,7 @@ class DefaultResolverTestCase(unittest.TestCase):
                 name=platform_name,
                 trigraph=trigraph,
                 quadgraph=quadgraph,
-                pennant_number=pennant_number,
+                identifier=identifier,
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
@@ -175,7 +174,7 @@ class DefaultResolverTestCase(unittest.TestCase):
             )
             self.assertEqual(datafile_name, "DATAFILE-1")
             self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
-            self.assertEqual(privacy.name, "PRIVACY-1")
+            self.assertEqual(privacy.name, "Public")
 
 
 if __name__ == "__main__":

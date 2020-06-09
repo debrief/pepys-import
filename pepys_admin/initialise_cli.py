@@ -13,7 +13,7 @@ class InitialiseShell(cmd.Cmd):
 (3) Create Pepys schema
 (4) Import Reference data
 (5) Import Metadata
-(0) Exit
+(0) Back
 """
     prompt = "(initialise) "
 
@@ -41,9 +41,6 @@ class InitialiseShell(cmd.Cmd):
         print("Cleared database contents")
 
     def do_clear_db_schema(self):
-        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
-            return
-
         self.data_store.clear_db_schema()
         print("Cleared database schema")
 
@@ -57,7 +54,10 @@ class InitialiseShell(cmd.Cmd):
 
         with self.data_store.session_scope():
             self.data_store.populate_reference(self.csv_path)
-        print("Reference data imported")
+        if self.csv_path is not None:
+            print(f"Reference data imported from {self.csv_path}")
+        else:
+            print("Reference data imported from default location")
 
     def do_import_metadata(self):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
@@ -65,7 +65,10 @@ class InitialiseShell(cmd.Cmd):
 
         with self.data_store.session_scope():
             self.data_store.populate_metadata(self.csv_path)
-        print("Metadata imported")
+        if self.csv_path is not None:
+            print(f"Metadata imported from {self.csv_path}")
+        else:
+            print("Metadata imported from default location")
 
     @staticmethod
     def do_cancel():

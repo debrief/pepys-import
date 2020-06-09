@@ -28,12 +28,11 @@ def parse_timestamp(date, time):
 
 
 class REPLine:
-    def __init__(self, line_number, line, separator):
+    def __init__(self, line_number, line):
         self.importer_name = "Replay File Format Importer"
 
         self.line_num = line_number
         self.line = line
-        self.separator = separator
 
         self.timestamp = None
         self.vessel = None
