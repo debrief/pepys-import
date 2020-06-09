@@ -40,10 +40,11 @@ def merge_all_reference_tables(master_store, slave_store):
     for ref_table in tqdm(reference_table_names):
         id_results = merge_reference_table(ref_table, master_store, slave_store)
         update_synonyms_table(master_store, slave_store, id_results["modified"])
+        update_logs_table(master_store, slave_store, id_results["modified"])
 
         statistics[ref_table] = {
             "added": len(id_results["added"]),
-            "modified": len(id_results["modified"]),
+            "modified": len([item for item in id_results["modified"] if item["data_changed"]]),
             "already_there": len(id_results["already_there"]),
         }
         if len(id_results["added"]) > 0:
@@ -97,6 +98,8 @@ def merge_reference_table(table_object_name, master_store, slave_store):
                                 "from": guid,
                                 "to": getattr(search_by_name_results[0], primary_key),
                                 "name": slave_entry.name,
+                                # Data can never be changed here, because there's only one field (name) and that's what we search by
+                                "data_changed": False,
                             }
                         )
                         setattr(
@@ -153,7 +156,7 @@ def merge_all_metadata_tables(master_store, slave_store, merge_change_id):
 
         statistics[met_table] = {
             "added": len(id_results["added"]),
-            "modified": len(id_results["modified"]),
+            "modified": len([item for item in id_results["modified"] if item["data_changed"]]),
             "already_there": len(id_results["already_there"]),
         }
         if len(id_results["added"]) > 0:
@@ -202,6 +205,8 @@ def update_master_from_slave_entry(
     if modified:
         master_store.session.add(master_entry)
         master_store.session.commit()
+
+    return modified
 
 
 def merge_metadata_table(table_object_name, master_store, slave_store, merge_change_id):
@@ -255,13 +260,6 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
                         # We found an entry that matches in the master db, but it'll have a different
                         # GUID - so update the GUID in the slave database and let it propagate
                         # so we can copy over other tables later and all the foreign key integrity will work
-                        ids_modified.append(
-                            {
-                                "from": guid,
-                                "to": getattr(search_by_all_fields_results[0], primary_key),
-                                "name": get_name_for_obj(slave_entry),
-                            }
-                        )
                         setattr(
                             slave_entry,
                             primary_key,
@@ -272,12 +270,21 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
 
                         # We also need to compare the fields of the slave entry and the master entry
                         # and update any master fields that are currently None with values from the slave entry
-                        update_master_from_slave_entry(
+                        was_modified = update_master_from_slave_entry(
                             master_store,
                             slave_store,
                             search_by_all_fields_results[0],
                             slave_entry,
                             merge_change_id,
+                        )
+
+                        ids_modified.append(
+                            {
+                                "from": guid,
+                                "to": getattr(search_by_all_fields_results[0], primary_key),
+                                "name": get_name_for_obj(slave_entry),
+                                "data_changed": was_modified,
+                            }
                         )
                     else:
                         assert (
@@ -485,7 +492,6 @@ def prepare_merge_logs(master_store, slave_store):
                     query = master_store.session.query(referenced_table).filter(
                         referenced_table_pri_key == id_to_match
                     )
-                    # breakpoint()
                     id_results = query.all()
 
                     if len(id_results) == 1:
@@ -562,6 +568,9 @@ def merge_logs_and_changes(master_store, slave_store):
     # adding, and which changes need adding
     logs_to_add, changes_to_add = prepare_merge_logs(master_store, slave_store)
 
+    print(logs_to_add)
+    print(changes_to_add)
+
     # Add the change entries
     add_changes(master_store, slave_store, changes_to_add)
 
@@ -591,15 +600,11 @@ def merge_all_tables(master_store, slave_store):
     syn_added_names = [d["name"] for d in syn_ids["added"]]
 
     # Merge the Datafiles table, keeping track of the IDs that changed
-    df_ids = datafile_ids = merge_metadata_table(
-        "Datafile", master_store, slave_store, merge_change_id
-    )
+    df_ids = merge_metadata_table("Datafile", master_store, slave_store, merge_change_id)
     df_added_names = [d["name"] for d in df_ids["added"]]
 
     # Merge the measurement tables, only merging measurements that come from one of the datafiles that has been added
-    merge_all_measurement_tables(
-        master_store, slave_store, [d["id"] for d in datafile_ids["added"]]
-    )
+    merge_all_measurement_tables(master_store, slave_store, [d["id"] for d in df_ids["added"]])
 
     # Merge the Logs and Changes table, only merging ones which still match something in the new db
     merge_logs_and_changes(master_store, slave_store)

@@ -111,8 +111,10 @@ class TestSensorTypeMerge(unittest.TestCase):
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert slave_results[0].sensor_type_id in id_results["added"]
-        assert slave_results[1].sensor_type_id in id_results["added"]
+        added_ids = [d["id"] for d in id_results["added"]]
+
+        assert slave_results[0].sensor_type_id in added_ids
+        assert slave_results[1].sensor_type_id in added_ids
 
         # Check that the row that had the same name and same GUID in each db is still in both
         # databases
@@ -129,7 +131,7 @@ class TestSensorTypeMerge(unittest.TestCase):
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert id_results["already_there"] == [slave_results[0].sensor_type_id]
+        assert id_results["already_there"][0]["id"] == slave_results[0].sensor_type_id
 
         # Check that the row that had the same name but different GUID in each db now
         # matches in both databases
@@ -147,8 +149,8 @@ class TestSensorTypeMerge(unittest.TestCase):
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert id_results["modified"]["from"] == [self.slave_shared_id]
-        assert id_results["modified"]["to"] == [new_guid]
+        assert id_results["modified"][0]["from"] == self.slave_shared_id
+        assert id_results["modified"][0]["to"] == new_guid
 
         # Check that the new GUID for this row has propagated to the Sensors table in the slave database
         # (so we can copy this table later with no problems)
@@ -237,8 +239,9 @@ class TestPlatformTypeMerge(unittest.TestCase):
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert slave_results[0].platform_type_id in id_results["added"]
-        assert slave_results[1].platform_type_id in id_results["added"]
+        added_ids = [d["id"] for d in id_results["added"]]
+        assert slave_results[0].platform_type_id in added_ids
+        assert slave_results[1].platform_type_id in added_ids
 
         # Check that the row that had the same name and same GUID in each db is still in both
         # databases
@@ -255,7 +258,7 @@ class TestPlatformTypeMerge(unittest.TestCase):
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert id_results["already_there"] == [slave_results[0].platform_type_id]
+        assert id_results["already_there"][0]["id"] == slave_results[0].platform_type_id
 
         # Check that the row that had the same name but different GUID in each db now
         # matches in both databases
@@ -273,8 +276,8 @@ class TestPlatformTypeMerge(unittest.TestCase):
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert id_results["modified"]["from"] == [self.slave_shared_id]
-        assert id_results["modified"]["to"] == [new_guid]
+        assert id_results["modified"][0]["from"] == self.slave_shared_id
+        assert id_results["modified"][0]["to"] == new_guid
 
         # Check that the new GUID for this row has propagated to the Platforms table in the slave database
         # (so we can copy this table later with no problems)
@@ -805,7 +808,7 @@ class TestMergeDatafiles(unittest.TestCase):
         # Check there are the right number of IDs in each section of the ID results
         assert len(id_results["already_there"]) == 1
         assert len(id_results["added"]) == 2
-        assert len(id_results["modified"]["from"]) == 1
+        assert len(id_results["modified"]) == 1
 
         # Check we have an entry called Slave_DF_1 in master now
         results = (
@@ -815,7 +818,8 @@ class TestMergeDatafiles(unittest.TestCase):
         )
 
         assert len(results) == 1
-        assert results[0].datafile_id in id_results["added"]
+        ids_added = [d["id"] for d in id_results["added"]]
+        assert results[0].datafile_id in ids_added
 
         # Check that we mark the Shared_DF_2_GUIDSame entry as already there
         results = (
@@ -825,7 +829,8 @@ class TestMergeDatafiles(unittest.TestCase):
         )
 
         assert len(results) == 1
-        assert results[0].datafile_id in id_results["already_there"]
+        ids_already_there = [d["id"] for d in id_results["already_there"]]
+        assert results[0].datafile_id in ids_already_there
 
         # Check that the GUID for Shared_DF_1 matches in both databases, and is correctly in the
         # from and to sections of the list of modified IDs
@@ -845,8 +850,8 @@ class TestMergeDatafiles(unittest.TestCase):
 
         assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert self.shared_guid in id_results["modified"]["from"]
-        assert master_results[0].datafile_id in id_results["modified"]["to"]
+        assert id_results["modified"][0]["from"] == self.shared_guid
+        assert id_results["modified"][0]["to"] == master_results[0].datafile_id
 
 
 class TestMergeStateFromImport(unittest.TestCase):
@@ -1671,6 +1676,12 @@ class TestSynonymMergeWithMetadataTable(unittest.TestCase):
 
 class TestMergeLogsAndChanges(unittest.TestCase):
     def setUp(self):
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
+
         self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
         self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
 
@@ -1717,11 +1728,12 @@ class TestMergeLogsAndChanges(unittest.TestCase):
 
         with self.master_store.session_scope():
             with self.slave_store.session_scope():
-                # Check there are only four entries in the Changes table (three from the merge, one extra for the
-                # change created for the merging)
+                # Check there are five entries in the Changes table.
+                # This is one from each of the imports (including the slave import - as objects from that import were merged,
+                # so it's import to know where they came from for auditing), plus one for the merge itself
                 results = self.master_store.session.query(self.master_store.db_classes.Change).all()
 
-                assert len(results) == 4
+                assert len(results) == 5
 
                 # Check that all entries in the master Log table match up with an entry in the table
                 # referenced in the 'table' attribute of the Log entry
@@ -1921,12 +1933,6 @@ class TestExportAlterAndMerge(unittest.TestCase):
     @patch("pepys_admin.snapshot_cli.input", return_value="slave_exported.sqlite")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
     def setUp(self, patched_input, patched_iterfzf):
-        if os.path.exists("master.sqlite"):
-            os.remove("master.sqlite")
-
-        if os.path.exists("slave_exported.sqlite"):
-            os.remove("slave_exported.sqlite")
-
         # Create a master database
         self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
         self.master_store.initialise()
@@ -2066,12 +2072,11 @@ class TestExportAlterAndMerge(unittest.TestCase):
             )
 
     def tearDown(self):
-        # if os.path.exists("master.sqlite"):
-        #     os.remove("master.sqlite")
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
 
-        # if os.path.exists("slave.sqlite"):
-        #     os.remove("slave.sqlite")
-        pass
+        if os.path.exists("slave_exported.sqlite"):
+            os.remove("slave_exported.sqlite")
 
     def test_export_alter_merge(self):
         # Do the merge
@@ -2170,9 +2175,6 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
     @patch("pepys_admin.snapshot_cli.input", return_value="slave_exported.sqlite")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
     def setUp(self, patched_input, patched_iterfzf):
-        if os.path.exists("slave_exported.sqlite"):
-            os.remove("slave_exported.sqlite")
-
         self.postgres = None
 
         try:
@@ -2330,12 +2332,11 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
             )
 
     def tearDown(self):
-        # if os.path.exists("master.sqlite"):
-        #     os.remove("master.sqlite")
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
 
-        # if os.path.exists("slave.sqlite"):
-        #     os.remove("slave.sqlite")
-        pass
+        if os.path.exists("slave_exported.sqlite"):
+            os.remove("slave_exported.sqlite")
 
     def test_export_alter_merge(self):
         # Do the merge

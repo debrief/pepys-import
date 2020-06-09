@@ -48,12 +48,6 @@ def check_sqlalchemy_results_are_equal(results1, results2):
     list1 = [sqlalchemy_obj_to_dict(item) for item in results1]
     list2 = [sqlalchemy_obj_to_dict(item) for item in results2]
 
-    print("List 1:")
-    print(list1)
-
-    print("List 2:")
-    print(list2)
-
     return list1 == list2
 
 
