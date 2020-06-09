@@ -1913,7 +1913,7 @@ class TestMergeUpdatePlatform(unittest.TestCase):
 
 class TestExportAlterAndMerge(unittest.TestCase):
     @patch("pepys_admin.snapshot_cli.input", return_value="slave_exported.sqlite")
-    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["PRIVACY-1"])
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
     def setUp(self, patched_input, patched_iterfzf):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -1992,23 +1992,72 @@ class TestExportAlterAndMerge(unittest.TestCase):
             missing_data_resolver=new_default_resolver,
         )
 
-        # processor.process(
-        #     os.path.join(SAMPLE_DATA_PATH, "track_files", "rep_data", "uk_track.rep"),
-        #     self.slave_store,
-        #     False,
-        # )
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "rep_data", "uk_track.rep"),
+            self.slave_store,
+            False,
+        )
 
         # Do some manual creation of objects in master
         # Specifically:
         #  - a master-specific PlatformType, and a shared-by-name PlatformType
         #  - a master-specific Platform and a shared-by-name Platform
-        #  - a master-specific Synonym and a shared-by-name Synonym
+        #  - a master-specific and shared-by-name Synonym
+
+        # Create a change ID first
+        with self.master_store.session_scope():
+            change_id = self.master_store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
+            self.master_store.add_to_platform_types("Master_PT_1", change_id=change_id)
+            self.master_store.add_to_platform_types("Shared_PT_1", change_id=change_id)
+
+            m_plat_1 = self.master_store.add_to_platforms(
+                "Master_Platform_1", "123", "UK", "Warship", "Public", change_id=change_id
+            )
+            shared_plat_1 = self.master_store.add_to_platforms(
+                "Shared_Platform_1", "234", "UK", "Warship", "Public", change_id=change_id
+            )
+
+            self.master_store.add_to_synonyms(
+                "Platforms", "Master_Platform_1_Synonym", m_plat_1.platform_id, change_id=change_id
+            )
+            self.master_store.add_to_synonyms(
+                "Platforms",
+                "Shared_Platform_1_Synonym",
+                shared_plat_1.platform_id,
+                change_id=change_id,
+            )
 
         # Do some manual creation of objects in slave
         # Specifically
         #  - a slave-specific PlatformType, and a shared-by-name PlatformType (from above)
         #  - a slave-specific Platform and a shared-by-name Platform (from above)
         #  - a slave-specific Synonym and a shared-by-name Synonym (from above)
+
+        # Create a change ID first
+        with self.slave_store.session_scope():
+            change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+
+            self.slave_store.add_to_platform_types("Slave_PT_1", change_id=change_id)
+            self.slave_store.add_to_platform_types("Shared_PT_1", change_id=change_id)
+
+            s_plat_1 = self.slave_store.add_to_platforms(
+                "Slave_Platform_1", "123", "UK", "Warship", "Public", change_id=change_id
+            )
+            shared_plat_1 = self.slave_store.add_to_platforms(
+                "Shared_Platform_1", "234", "UK", "Warship", "Public", change_id=change_id
+            )
+
+            self.slave_store.add_to_synonyms(
+                "Platforms", "Slave_Platform_1_Synonym", s_plat_1.platform_id, change_id=change_id
+            )
+            self.slave_store.add_to_synonyms(
+                "Platforms",
+                "Shared_Platform_1_Synonym",
+                shared_plat_1.platform_id,
+                change_id=change_id,
+            )
 
     def tearDown(self):
         # if os.path.exists("master.sqlite"):
@@ -2019,4 +2068,92 @@ class TestExportAlterAndMerge(unittest.TestCase):
         pass
 
     def test_export_alter_merge(self):
-        pass
+        # Do the merge
+        merge_all_tables(self.master_store, self.slave_store)
+
+        with self.master_store.session_scope():
+            with self.slave_store.session_scope():
+                # Check we have four datafiles in master
+                datafiles = self.master_store.session.query(
+                    self.master_store.db_classes.Datafile
+                ).all()
+
+                assert len(datafiles) == 4
+
+                # Check one of these datafiles is called uk_track.rep
+                references = [d.reference for d in datafiles]
+
+                assert "uk_track.rep" in references
+
+                # Check we have 425 rows in States
+                states_count = self.master_store.session.query(
+                    self.master_store.db_classes.State
+                ).count()
+
+                assert states_count == 425
+
+                # Check we have objects with the slave's new default resolver values
+
+                # Platform
+                platform_results = (
+                    self.master_store.session.query(self.master_store.db_classes.Platform)
+                    .filter(self.master_store.db_classes.Platform.identifier == "123-SLAVE")
+                    .all()
+                )
+
+                assert len(platform_results) == 1
+
+                # Privacy
+                privacy_results = (
+                    self.master_store.session.query(self.master_store.db_classes.Privacy)
+                    .filter(self.master_store.db_classes.Privacy.name == "PRIVACY-1-SLAVE")
+                    .all()
+                )
+
+                assert len(privacy_results) == 1
+
+                # Check we have merged PlatformTypes correctly
+                pt_results = self.master_store.session.query(
+                    self.master_store.db_classes.PlatformType
+                ).all()
+
+                pt_names = [pt.name for pt in pt_results]
+
+                assert len(pt_names) == 5
+
+                assert "Master_PT_1" in pt_names
+                assert "Shared_PT_1" in pt_names
+                assert "Slave_PT_1" in pt_names
+
+                # Check we have merged Platforms correctly
+                platform_results = self.master_store.session.query(
+                    self.master_store.db_classes.Platform
+                ).all()
+
+                platform_names = [p.name for p in platform_results]
+
+                assert len(platform_names) == 8
+
+                assert "Master_Platform_1" in platform_names
+                assert "Slave_Platform_1" in platform_names
+                assert "Shared_Platform_1" in platform_names
+
+                # Check we have merged Synonyms properly
+                synonym_results = self.master_store.session.query(
+                    self.master_store.db_classes.Synonym
+                ).all()
+
+                assert len(synonym_results) == 3
+
+                # All Synonyms should link to an entry in the Platforms table
+                for synonym_result in synonym_results:
+                    platforms = (
+                        self.master_store.session.query(self.master_store.db_classes.Platform)
+                        .filter(
+                            self.master_store.db_classes.Platform.platform_id
+                            == synonym_result.entity
+                        )
+                        .all()
+                    )
+
+                    assert len(platforms) == 1
