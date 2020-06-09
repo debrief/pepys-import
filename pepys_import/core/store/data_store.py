@@ -280,6 +280,22 @@ class DataStore:
         elif privacy is None:
             raise MissingDataException("Privacy is missing/invalid")
 
+        # Check if entry already exists with these details, and if so, just return it
+        # Just check the unique fields - in this case: name and host
+        # TODO: Possibly update when we get final uniqueness info from client
+        results = (
+            self.session.query(self.db_classes.Sensor)
+            .filter(self.db_classes.Sensor.name == name)
+            .filter(self.db_classes.Sensor.host == host.platform_id)
+            .all()
+        )
+
+        if len(results) == 1:
+            # Don't add it, as it already exists - just return it
+            return results[0]
+        elif len(results) > 1:
+            assert False, "Fatal error: Duplicate entries found in Sensors table"
+
         sensor_obj = self.db_classes.Sensor(
             name=name,
             sensor_type_id=sensor_type.sensor_type_id,
@@ -332,6 +348,22 @@ class DataStore:
             raise MissingDataException("Datafile Type is invalid/missing")
         elif privacy is None:
             raise MissingDataException("Privacy is invalid/missing")
+
+        # Check if entry already exists with these details, and if so, just return it
+        # Just check the unique fields - in this case: size and hash
+        # TODO: Possibly update when we get final uniqueness info from client
+        results = (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.size == file_size)
+            .filter(self.db_classes.Datafile.hash == file_hash)
+            .all()
+        )
+
+        if len(results) == 1:
+            # Don't add it, as it already exists - just return it
+            return results[0]
+        elif len(results) > 1:
+            assert False, "Fatal error: Duplicate entries found in Datafiles table"
 
         datafile_obj = self.db_classes.Datafile(
             simulated=bool(simulated),
@@ -395,6 +427,23 @@ class DataStore:
         elif privacy is None:
             raise MissingDataException("Privacy is invalid/missing")
 
+        # Check if entry already exists with these details, and if so, just return it
+        # Just check the unique fields - in this case: name, nationality_id and identifier
+        # TODO: Possibly update when we get final uniqueness info from client
+        results = (
+            self.session.query(self.db_classes.Platform)
+            .filter(self.db_classes.Platform.name == name)
+            .filter(self.db_classes.Platform.nationality_id == nationality.nationality_id)
+            .filter(self.db_classes.Platform.identifier == identifier)
+            .all()
+        )
+
+        if len(results) == 1:
+            # Don't add it, as it already exists - just return it
+            return results[0]
+        elif len(results) > 1:
+            assert False, "Fatal error: Duplicate entries found in Platforms table"
+
         platform_obj = self.db_classes.Platform(
             name=name,
             trigraph=trigraph,
@@ -417,6 +466,22 @@ class DataStore:
         # Blacklist certain tables, and don't Synonyms for them be created
         if table in [constants.SENSOR, constants.GEOMETRY_SUBTYPE]:
             raise Exception(f"Synonyms are not allowed for table {table}")
+
+        # Check if entry already exists with these details, and if so, just return it
+        # Just check the unique fields - in this case: name and table
+        # TODO: Possibly update when we get final uniqueness info from client
+        results = (
+            self.session.query(self.db_classes.Synonym)
+            .filter(self.db_classes.Synonym.synonym == name)
+            .filter(self.db_classes.Synonym.table == table)
+            .all()
+        )
+
+        if len(results) == 1:
+            # Don't add it, as it already exists - just return it
+            return results[0]
+        elif len(results) > 1:
+            assert False, "Fatal error: Duplicate entries found in Synonyms table"
 
         # enough info to proceed and create entry
         synonym = self.db_classes.Synonym(table=table, synonym=name, entity=entity)
@@ -915,12 +980,14 @@ class DataStore:
         )
         return nationality
 
-    def add_to_privacies(self, name, change_id):
+    def add_to_privacies(self, name, level, change_id):
         """
         Adds the specified privacy entry to the :class:`Privacy` table if not already present.
 
         :param name: Name of :class:`Privacy`
         :type name: String
+        :param level: Level of :class:`Privacy`
+        :type level: Integer
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created :class:`Privacy` entity
@@ -931,7 +998,7 @@ class DataStore:
             return privacies
 
         # enough info to proceed and create entry
-        privacy = self.db_classes.Privacy(name=name)
+        privacy = self.db_classes.Privacy(name=name, level=level)
         self.session.add(privacy)
         self.session.flush()
 

@@ -1,16 +1,21 @@
 import csv
 import json
 import os
+import sys
 
 from sqlalchemy import func, inspect, select
 
 from paths import MIGRATIONS_DIRECTORY
+from pepys_import.resolvers.command_line_input import create_menu
 
 
 def import_from_csv(data_store, path, files, change_id):
     for file in sorted(files):
         # split file into filename and extension
         table_name, _ = os.path.splitext(file)
+        if table_name.lower() == "synonyms":
+            import_synonyms(data_store, os.path.join(path, file), change_id)
+            continue
         possible_method = "add_to_" + table_name.lower().replace(" ", "_")
         method_to_call = getattr(data_store, possible_method, None)
         if method_to_call:
@@ -27,6 +32,106 @@ def import_from_csv(data_store, path, files, change_id):
                         print(f"  Error was '{str(e)}'")
         else:
             print(f"Method({possible_method}) not found!")
+
+
+def import_synonyms(data_store, filepath, change_id):
+    with open(filepath, "r") as file_object:
+        reader = csv.reader(file_object)
+        # extract header
+        header = next(reader)
+        # For every row in the CSV
+        for row in reader:
+            values = dict(zip(header, row))
+
+            # Search in the given table for the name
+            class_name = table_name_to_class_name(values["table"])
+
+            try:
+                db_class = getattr(data_store.db_classes, class_name)
+                pri_key_column_name = db_class.__table__.primary_key.columns.values()[0].name
+            except AttributeError:
+                print(f"Error on row {row}")
+                print(f"  Invalid table name {values['table']}")
+                continue
+
+            # Try and find a name column to use
+            possibilities = ["name", "reference"]
+
+            name_col = None
+            for poss in possibilities:
+                try:
+                    name_col = getattr(db_class, poss)
+                except AttributeError:
+                    continue
+
+            if name_col is None:
+                print(f"Error on row {row}")
+                print(f"  Cannot find name column for table {values['table']}")
+                continue
+
+            results = (
+                data_store.session.query(db_class).filter(name_col == values["target_name"]).all()
+            )
+
+            if len(results) == 0:
+                # Nothing to link synonym to so give error
+                print(f"Error on row {row}")
+                print(f"  Name '{values['target_name']}' is not found in table {values['table']}")
+                continue
+            elif len(results) == 1:
+                guid = getattr(results[0], pri_key_column_name)
+                # Found one entry, so can create synonym
+                data_store.add_to_synonyms(values["table"], values["synonym"], guid, change_id)
+            elif len(results) > 1:
+                if values["table"] != "Platforms":
+                    print(f"Error on row {row}")
+                    print(
+                        f"  Name '{values['target_name']}' occurs multiple times in table {values['table']}."
+                        f" Asking user to resolve is only supported for Platforms table."
+                    )
+                    continue
+
+                chosen_item = ask_user_for_synonym_link(data_store, results, values)
+
+                if chosen_item is None:
+                    print("Skipping row")
+                    continue
+                else:
+                    guid = getattr(chosen_item, pri_key_column_name)
+                    data_store.add_to_synonyms(values["table"], values["synonym"], guid, change_id)
+
+
+def ask_user_for_synonym_link(data_store, results, values):
+    options = [
+        f"{result.name}: Nationality = {result.nationality_name}, Identifier = {result.identifier}"
+        for result in results
+    ]
+
+    options += ["Skip this row"]
+
+    def is_valid(option):
+        return option.lower() in [str(i) for i in range(1, len(options) + 1)] or option == "."
+
+    choice = create_menu(
+        f"Choose which Platform to link synonym '{values['target_name']}'' to:",
+        options,
+        validate_method=is_valid,
+    )
+
+    if choice == ".":
+        print("Quitting")
+        sys.exit(1)
+    elif choice == str(len(options)):
+        return None
+    elif choice in [str(i) for i in range(1, len(options) + 1)]:
+        return results[int(choice) - 1]
+
+
+def table_name_to_class_name(table_name):
+    if table_name.endswith("ies"):
+        return table_name[:-3] + "y"
+    elif table_name.endswith("s"):
+        return table_name[:-1]
 
 
 def is_schema_created(engine, db_type):

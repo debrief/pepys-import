@@ -1,3 +1,3 @@
 name,identifier,nationality,platform_type,privacy
-PLATFORM-1,123,United Kingdom,PLATFORM-TYPE-1,PRIVACY-1
-PLATFORM-2,234,MissingNationality,PLATFORM-TYPE-2,PRIVACY-2
+PLATFORM-1,123,United Kingdom,PLATFORM-TYPE-1,Public
+PLATFORM-2,234,MissingNationality,PLATFORM-TYPE-2,Public Sensitive

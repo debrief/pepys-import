@@ -768,31 +768,44 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         processor.process(os.path.join(DATA_PATH), self.store, False)
 
         with self.store.session_scope():
-            privacy_id = (
-                self.store.session.query(self.store.db_classes.Privacy)
-                .filter(self.store.db_classes.Privacy.name == "PRIVACY-1")
-                .first()
-                .privacy_id
-            )
-            platform_id = (
-                self.store.session.query(self.store.db_classes.Platform)
-                .filter(self.store.db_classes.Platform.privacy_id == privacy_id)
-                .first()
-                .platform_id
-            )
-            privacy_id_2 = (
+            self.store.populate_reference()
+            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "test").change_id
+            privacy = (
                 self.store.session.query(self.store.db_classes.Privacy)
                 .filter(self.store.db_classes.Privacy.name == "Public")
                 .first()
-                .privacy_id
             )
-            sensor_id = (
-                self.store.session.query(self.store.db_classes.Sensor)
-                .filter(self.store.db_classes.Sensor.privacy_id == privacy_id_2)
+            platform_id = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.privacy_id == privacy.privacy_id)
                 .first()
-                .sensor_id
+                .platform_id
             )
-            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "test").change_id
+            privacy_2 = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "Public Sensitive")
+                .first()
+            )
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-TEST", change_id)
+            nationality = self.store.add_to_nationalities("UK", change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", change_id).name
+
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy.name,
+                change_id=change_id,
+            )
+            sensor = platform.get_sensor(
+                self.store,
+                "SENSOR-TEST",
+                sensor_type=sensor_type.name,
+                privacy=privacy_2.name,
+                change_id=change_id,
+            )
+            sensor_id = sensor.sensor_id
             self.store.add_to_synonyms("Platforms", "test", entity=platform_id, change_id=change_id)
 
         self.shell = SnapshotShell(self.store)
@@ -817,7 +830,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
             os.remove(path)
 
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
-    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["PRIVACY-1", "Public"])
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public", "Public Sensitive"])
     def test_do_export_reference_data_and_metadata_postgres(self, patched_iterfzf, patched_input):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -838,47 +851,13 @@ class SnapshotPostgresTestCase(unittest.TestCase):
             assert "SENSOR-1" in names
             assert "New_SSK_FREQ" in names
             assert "E-Trac" in names
+            assert "SENSOR-TEST" in names
 
             results = connection.execute("SELECT * FROM Synonyms;")
             results = results.fetchall()
             table_dict = {row[1]: row[3] for row in results}
             assert "Platforms" in table_dict.keys()
             assert "test" in table_dict.values()
-
-        path = os.path.join(os.getcwd(), "test.db")
-        if os.path.exists(path):
-            os.remove(path)
-
-    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
-    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["PRIVACY-1"])
-    def test_do_export_reference_data_and_metadata_privacy_1(self, patched_iterfzf, patched_input):
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.shell.do_export_reference_data_and_metadata()
-        output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
-
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
-
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "SENSOR-1" in names
-            assert "New_SSK_FREQ" in names
-            assert "E-Trac" not in names
-
-            results = connection.execute("SELECT * FROM Synonyms;")
-            results = results.fetchall()
-            table_dict = {row[1]: row[3] for row in results}
-            assert "Platforms" in table_dict.keys()
-            assert "test" in table_dict.values()
-            assert "Sensors" not in table_dict.keys()
-            assert "test-2" not in table_dict.values()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
@@ -900,7 +879,45 @@ class SnapshotPostgresTestCase(unittest.TestCase):
             assert "GPS" in names
             assert "Position" in names
 
-            # Even though there are Sensor objects with Public privacy level, their Platform objects
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "SENSOR-1" in names
+            assert "New_SSK_FREQ" in names
+            assert "E-Trac" in names
+            assert "SENSOR-TEST" not in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "test" in table_dict.values()
+            assert "Sensors" not in table_dict.keys()
+            assert "test-2" not in table_dict.values()
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public Sensitive"])
+    def test_do_export_reference_data_and_metadata_public_sensitive(
+        self, patched_iterfzf, patched_input
+    ):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data_and_metadata()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            # Even though there are Sensor objects with Public Sensitive level, their Platform objects
             # have different privacy values. Therefore, none of platforms and sensors are exported.
             results = connection.execute("SELECT name FROM Sensors;")
             results = results.fetchall()
@@ -925,31 +942,44 @@ class SnapshotShellTestCase(unittest.TestCase):
         processor.process(os.path.join(DATA_PATH), self.store, False)
 
         with self.store.session_scope():
-            privacy_id = (
-                self.store.session.query(self.store.db_classes.Privacy)
-                .filter(self.store.db_classes.Privacy.name == "PRIVACY-1")
-                .first()
-                .privacy_id
-            )
-            platform_id = (
-                self.store.session.query(self.store.db_classes.Platform)
-                .filter(self.store.db_classes.Platform.privacy_id == privacy_id)
-                .first()
-                .platform_id
-            )
-            privacy_id_2 = (
+            self.store.populate_reference()
+            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "test").change_id
+            privacy = (
                 self.store.session.query(self.store.db_classes.Privacy)
                 .filter(self.store.db_classes.Privacy.name == "Public")
                 .first()
-                .privacy_id
             )
-            sensor_id = (
-                self.store.session.query(self.store.db_classes.Sensor)
-                .filter(self.store.db_classes.Sensor.privacy_id == privacy_id_2)
+            platform_id = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.privacy_id == privacy.privacy_id)
                 .first()
-                .sensor_id
+                .platform_id
             )
-            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "test").change_id
+            privacy_2 = (
+                self.store.session.query(self.store.db_classes.Privacy)
+                .filter(self.store.db_classes.Privacy.name == "Public Sensitive")
+                .first()
+            )
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-TEST", change_id)
+            nationality = self.store.add_to_nationalities("UK", change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", change_id).name
+
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy.name,
+                change_id=change_id,
+            )
+            sensor = platform.get_sensor(
+                self.store,
+                "SENSOR-TEST",
+                sensor_type=sensor_type.name,
+                privacy=privacy_2.name,
+                change_id=change_id,
+            )
+            sensor_id = sensor.sensor_id
             self.store.add_to_synonyms("Platforms", "test", entity=platform_id, change_id=change_id)
 
         self.shell = SnapshotShell(self.store)
@@ -974,7 +1004,7 @@ class SnapshotShellTestCase(unittest.TestCase):
             os.remove(path)
 
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
-    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["PRIVACY-1", "Public"])
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public", "Public Sensitive"])
     def test_do_export_reference_data_and_metadata(self, patched_iterfzf, patched_input):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -995,47 +1025,13 @@ class SnapshotShellTestCase(unittest.TestCase):
             assert "SENSOR-1" in names
             assert "New_SSK_FREQ" in names
             assert "E-Trac" in names
+            assert "SENSOR-TEST" in names
 
             results = connection.execute("SELECT * FROM Synonyms;")
             results = results.fetchall()
             table_dict = {row[1]: row[3] for row in results}
             assert "Platforms" in table_dict.keys()
             assert "test" in table_dict.values()
-
-        path = os.path.join(os.getcwd(), "test.db")
-        if os.path.exists(path):
-            os.remove(path)
-
-    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
-    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["PRIVACY-1"])
-    def test_do_export_reference_data_and_metadata_privacy_1(self, patched_iterfzf, patched_input):
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            self.shell.do_export_reference_data_and_metadata()
-        output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
-
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
-
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "SENSOR-1" in names
-            assert "New_SSK_FREQ" in names
-            assert "E-Trac" not in names
-
-            results = connection.execute("SELECT * FROM Synonyms;")
-            results = results.fetchall()
-            table_dict = {row[1]: row[3] for row in results}
-            assert "Platforms" in table_dict.keys()
-            assert "test" in table_dict.values()
-            assert "Sensors" not in table_dict.keys()
-            assert "test-2" not in table_dict.values()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
@@ -1057,7 +1053,45 @@ class SnapshotShellTestCase(unittest.TestCase):
             assert "GPS" in names
             assert "Position" in names
 
-            # Even though there are Sensor objects with Public privacy level, their Platform objects
+            results = connection.execute("SELECT name FROM Sensors;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "SENSOR-1" in names
+            assert "New_SSK_FREQ" in names
+            assert "E-Trac" in names
+            assert "SENSOR-TEST" not in names
+
+            results = connection.execute("SELECT * FROM Synonyms;")
+            results = results.fetchall()
+            table_dict = {row[1]: row[3] for row in results}
+            assert "Platforms" in table_dict.keys()
+            assert "test" in table_dict.values()
+            assert "Sensors" not in table_dict.keys()
+            assert "test-2" not in table_dict.values()
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+    @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public Sensitive"])
+    def test_do_export_reference_data_and_metadata_public_sensitive(
+        self, patched_iterfzf, patched_input
+    ):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data_and_metadata()
+        output = temp_output.getvalue()
+        assert "Reference and metadata tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM SensorTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "GPS" in names
+            assert "Position" in names
+
+            # Even though there are Sensor objects with Public Sensitive level, their Platform objects
             # have different privacy values. Therefore, none of platforms and sensors are exported.
             results = connection.execute("SELECT name FROM Sensors;")
             results = results.fetchall()

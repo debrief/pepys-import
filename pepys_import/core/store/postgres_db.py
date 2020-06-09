@@ -414,6 +414,7 @@ class Privacy(BasePostGIS, ReferenceRepr):
     __table_args__ = {"schema": "pepys"}
 
     privacy_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    level = Column(Integer, nullable=False)
     name = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
