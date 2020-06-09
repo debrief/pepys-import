@@ -3,6 +3,7 @@ from getpass import getuser
 
 from sqlalchemy.orm import undefer
 from sqlalchemy.orm.session import make_transient
+from tqdm import tqdm
 
 from pepys_admin.utils import make_query_for_unique_cols_or_all, table_name_to_class_name
 from pepys_import.core.store.db_status import TableTypes
@@ -26,7 +27,7 @@ def merge_all_reference_tables(master_store, slave_store):
     reference_table_names.remove("GeometryType")
     reference_table_names.insert(0, "GeometryType")
 
-    for ref_table in reference_table_names:
+    for ref_table in tqdm(reference_table_names):
         id_results = merge_reference_table(ref_table, master_store, slave_store)
         update_synonyms_table(master_store, slave_store, id_results["modified"])
         # update_logs_table(master_store, slave_store, id_results["modified"])
@@ -119,7 +120,7 @@ def merge_all_metadata_tables(master_store, slave_store, merge_change_id):
     metadata_table_names.remove("Change")
     metadata_table_names.remove("Synonym")
 
-    for ref_table in metadata_table_names:
+    for ref_table in tqdm(metadata_table_names):
         id_results = merge_metadata_table(ref_table, master_store, slave_store, merge_change_id)
         update_synonyms_table(master_store, slave_store, id_results["modified"])
         # update_logs_table(master_store, slave_store, id_results["modified"])
@@ -360,7 +361,7 @@ def merge_measurement_table(table_object_name, master_store, slave_store, added_
             # Split the IDs list up into 100 at a time, as otherwise the SQL query could get longer
             # than SQLite or Postgres allows - as it'll have a full UUID string in it for each
             # datafile ID
-            for datafile_ids_chunk in split_list(added_datafile_ids):
+            for datafile_ids_chunk in tqdm(split_list(added_datafile_ids)):
                 # Search for all slave measurement table entries with IDs in this list
                 results = (
                     slave_store.session.query(slave_table)
@@ -384,7 +385,7 @@ def merge_all_measurement_tables(master_store, slave_store, added_datafile_ids):
 
     measurement_table_names = [obj.__name__ for obj in measurement_table_objects]
 
-    for measurement_table_name in measurement_table_names:
+    for measurement_table_name in tqdm(measurement_table_names):
         merge_measurement_table(
             measurement_table_name, master_store, slave_store, added_datafile_ids
         )
