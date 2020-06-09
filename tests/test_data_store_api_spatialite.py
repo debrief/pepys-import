@@ -3,6 +3,8 @@ import unittest
 from datetime import datetime
 from unittest import TestCase
 
+import pytest
+
 from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
@@ -92,9 +94,9 @@ class DataStoreCacheTestCase(TestCase):
             # there must be no entity at the beginning
             self.assertEqual(len(privacies), 0)
 
-            privacy_1 = self.store.add_to_privacies(name="test", change_id=self.change_id)
+            privacy_1 = self.store.add_to_privacies(name="test", level=0, change_id=self.change_id)
             # This one shouldn't duplicate, it should return existing entity
-            privacy_2 = self.store.add_to_privacies(name="test", change_id=self.change_id)
+            privacy_2 = self.store.add_to_privacies(name="test", level=0, change_id=self.change_id)
 
             # objects must be the same
             self.assertEqual(privacy_1, privacy_2)
@@ -215,7 +217,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
 
     def test_privacies(self):
         with self.store.session_scope():
-            privacy = self.store.db_classes.Privacy(name="test")
+            privacy = self.store.db_classes.Privacy(name="test", level=0)
             self.store.session.add(privacy)
             self.store.session.flush()
 
@@ -224,7 +226,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             # there must be one entity at the beginning
             self.assertEqual(len(privacies), 1)
 
-            self.store.add_to_privacies("test", self.change_id)
+            self.store.add_to_privacies("test", 0, self.change_id)
 
             privacies = self.store.session.query(self.store.db_classes.Privacy).all()
 
@@ -280,7 +282,7 @@ class PlatformAndDatafileTestCase(TestCase):
             self.platform_type = self.store.add_to_platform_types(
                 "test_platform_type", self.change_id
             ).name
-            self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
+            self.privacy = self.store.add_to_privacies("test_privacy", 0, self.change_id).name
 
     def tearDown(self):
         pass
@@ -521,7 +523,7 @@ class SensorTestCase(TestCase):
             self.sensor_type = self.store.add_to_sensor_types(
                 "test_sensor_type", self.change_id
             ).name
-            self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
+            self.privacy = self.store.add_to_privacies("test_privacy", 0, self.change_id).name
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -589,27 +591,6 @@ class SensorTestCase(TestCase):
             self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
             self.assertEqual(found_sensor.name, "gps")
 
-    def test_find_sensor_synonym(self):
-        """Test whether find_sensor method finds the correct Sensor entity from Synonyms table"""
-        sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-
-        # there must be no entry at the beginning
-        self.assertEqual(len(sensors), 0)
-
-        sensor = self.platform.get_sensor(
-            self.store, "gps", self.sensor_type, change_id=self.change_id
-        )
-        self.platform.get_sensor(self.store, "gps_2", self.sensor_type, change_id=self.change_id)
-        self.store.add_to_synonyms(
-            table=constants.SENSOR, name="TEST", entity=sensor.sensor_id, change_id=self.change_id,
-        )
-
-        found_sensor = self.store.db_classes.Sensor().find_sensor(
-            self.store, "TEST", self.platform.platform_id
-        )
-        self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
-        self.assertEqual(found_sensor.name, "gps")
-
 
 class MeasurementsTestCase(TestCase):
     def setUp(self):
@@ -627,7 +608,7 @@ class MeasurementsTestCase(TestCase):
             self.sensor_type = self.store.add_to_sensor_types(
                 "test_sensor_type", self.change_id
             ).name
-            self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
+            self.privacy = self.store.add_to_privacies("test_privacy", 0, self.change_id).name
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -764,6 +745,19 @@ class MeasurementsTestCase(TestCase):
                 self.file.commit(self.store, self.change_id)
                 comments = self.store.session.query(self.store.db_classes.Comment).all()
                 self.assertEqual(len(comments), 1)
+
+
+class SynonymsTestCase(TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def test_create_invalid_synonym(self):
+        with pytest.raises(Exception):
+            self.store.add_to_synonyms("Sensors", "TestName", "TestEntity", "TestChangeID")
+
+        with pytest.raises(Exception):
+            self.store.add_to_synonyms("GeometrySubTypes", "TestName", "TestEntity", "TestChangeID")
 
 
 if __name__ == "__main__":
