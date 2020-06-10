@@ -111,7 +111,10 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     _freq = deferred(Column("freq", REAL))
     _range = deferred(Column("range", REAL))
     _location = deferred(
-        Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+        Column(
+            "location",
+            Geometry(geometry_type="POINT", srid=4326, management=True, spatial_index=False),
+        )
     )
     _elevation = deferred(Column("elevation", REAL))
     _major = deferred(Column("major", REAL))

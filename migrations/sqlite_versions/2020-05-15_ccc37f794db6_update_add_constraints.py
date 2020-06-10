@@ -133,7 +133,10 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(UUIDType, ForeignKey("Sensors.sensor_id"), nullable=False)
     _location = deferred(
-        Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+        Column(
+            "location",
+            Geometry(geometry_type="POINT", srid=4326, management=True, spatial_index=False),
+        )
     )
     _elevation = deferred(Column("elevation", REAL))
     _heading = deferred(Column("heading", REAL))
@@ -248,7 +251,11 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
     table_type_id = 33
 
     geometry_id = Column(UUIDType, primary_key=True, default=uuid4)
-    geometry = deferred(Column(Geometry(geometry_type="GEOMETRY", management=True), nullable=False))
+    geometry = deferred(
+        Column(
+            Geometry(geometry_type="GEOMETRY", management=True, spatial_index=False), nullable=False
+        )
+    )
     name = Column(String(150), nullable=False)
     geo_type_id = Column(UUIDType, ForeignKey("GeometryTypes.geo_type_id"), nullable=False)
     geo_sub_type_id = Column(
@@ -396,7 +403,10 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     _freq = deferred(Column("freq", REAL))
     _range = deferred(Column("range", REAL))
     _location = deferred(
-        Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+        Column(
+            "location",
+            Geometry(geometry_type="POINT", srid=4326, management=True, spatial_index=False),
+        )
     )
     _elevation = deferred(Column("elevation", REAL))
     _major = deferred(Column("major", REAL))
@@ -495,7 +505,10 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
     subject_id = Column(UUIDType, ForeignKey("Platforms.platform_id"))
     sensor_id = Column(UUIDType, ForeignKey("Sensors.sensor_id"))
     _location = deferred(
-        Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+        Column(
+            "location",
+            Geometry(geometry_type="POINT", srid=4326, management=True, spatial_index=False),
+        )
     )
     _elevation = deferred(Column("elevation", REAL))
     time = Column(TIMESTAMP)
