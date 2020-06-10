@@ -1,8 +1,10 @@
 import os
 import shutil
 import unittest
+from contextlib import redirect_stdout
 from datetime import datetime
 from getpass import getuser
+from io import StringIO
 from unittest.mock import patch
 
 import pytest
@@ -2058,7 +2060,13 @@ class TestExportAlterAndMerge(unittest.TestCase):
                 "Slave_Platform_1", "123", "UK", "Warship", "Public", change_id=change_id
             )
             shared_plat_1 = self.slave_store.add_to_platforms(
-                "Shared_Platform_1", "234", "UK", "Warship", "Public", change_id=change_id
+                "Shared_Platform_1",
+                "234",
+                "UK",
+                "Warship",
+                "Public",
+                trigraph="P12",
+                change_id=change_id,
             )
 
             self.slave_store.add_to_synonyms(
@@ -2079,8 +2087,30 @@ class TestExportAlterAndMerge(unittest.TestCase):
             os.remove("slave_exported.sqlite")
 
     def test_export_alter_merge(self):
-        # Do the merge
-        merge_all_tables(self.master_store, self.slave_store)
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            # Do the merge
+            merge_all_tables(self.master_store, self.slave_store)
+        output = temp_output.getvalue()
+
+        print(output)
+
+        # Check statistics
+        assert "| Nationality        |                 1 |       1 |          0 |" in output
+        assert "| PlatformType       |                 1 |       2 |          0 |" in output
+        assert "| Datafiles   |                 0 |       1 |          0 |" in output
+        assert "| Platform    |                 4 |       2 |          1 |" in output
+        assert "| Sensor      |                 5 |       1 |          0 |" in output
+        assert "| State       |     402 |" in output
+        assert "| Contact     |       0 |" in output
+
+        # Check entries added list
+        assert "  - uk_track.rep" in output
+        assert "  - UK-SLAVE" in output
+        assert "  - SPLENDID" in output
+        assert "  - Warship-SLAVE" in output
+        assert "  - PRIVACY-1-SLAVE" in output
+        assert "  - Slave_Platform_1_Synonym" in output
 
         with self.master_store.session_scope():
             with self.slave_store.session_scope():
