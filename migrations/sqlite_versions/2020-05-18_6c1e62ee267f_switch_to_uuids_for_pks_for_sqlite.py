@@ -8,7 +8,6 @@ Create Date: 2020-05-18 16:54:47.274410
 from datetime import datetime
 from uuid import uuid4
 
-import geoalchemy2
 import sqlalchemy as sa
 from alembic import op
 from geoalchemy2 import Geometry
@@ -232,7 +231,7 @@ class ClassificationType(BaseSpatiaLite):
     table_type_id = 19
 
     class_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    class_type = Column(String(150), nullable=False, unique=True)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -352,7 +351,7 @@ class Platform(BaseSpatiaLite, PlatformMixin):
 
     platform_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
-
+    pennant = deferred(Column(String(10), nullable=False))
     trigraph = deferred(Column(String(3)))
     quadgraph = deferred(Column(String(4)))
     nationality_id = Column(UUIDType, ForeignKey("Nationalities.nationality_id"), nullable=False)

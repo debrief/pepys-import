@@ -8,8 +8,6 @@ Create Date: 2020-05-15 14:02:21.163220
 from datetime import datetime
 from uuid import uuid4
 
-import geoalchemy2
-import sqlalchemy as sa
 from alembic import op
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, MetaData, String
@@ -56,7 +54,7 @@ class Platform(BaseSpatiaLite, PlatformMixin):
 
     platform_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
-
+    pennant = deferred(Column(String(10), nullable=False))
     trigraph = deferred(Column(String(3)))
     quadgraph = deferred(Column(String(4)))
     nationality_id = Column(UUIDType, ForeignKey("Nationalities.nationality_id"), nullable=False)
