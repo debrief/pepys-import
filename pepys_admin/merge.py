@@ -7,6 +7,7 @@ from tabulate import tabulate
 from tqdm import tqdm
 
 from pepys_admin.utils import (
+    create_statistics_from_ids,
     get_name_for_obj,
     make_query_for_unique_cols_or_all,
     print_names_added,
@@ -42,11 +43,7 @@ def merge_all_reference_tables(master_store, slave_store):
         update_synonyms_table(master_store, slave_store, id_results["modified"])
         update_logs_table(master_store, slave_store, id_results["modified"])
 
-        statistics[ref_table] = {
-            "added": len(id_results["added"]),
-            "modified": len([item for item in id_results["modified"] if item["data_changed"]]),
-            "already_there": len(id_results["already_there"]),
-        }
+        statistics[ref_table] = create_statistics_from_ids(id_results)
         if len(id_results["added"]) > 0:
             added_names[ref_table] = [d["name"] for d in id_results["added"]]
 
@@ -154,11 +151,7 @@ def merge_all_metadata_tables(master_store, slave_store, merge_change_id):
         update_synonyms_table(master_store, slave_store, id_results["modified"])
         update_logs_table(master_store, slave_store, id_results["modified"])
 
-        statistics[met_table] = {
-            "added": len(id_results["added"]),
-            "modified": len([item for item in id_results["modified"] if item["data_changed"]]),
-            "already_there": len(id_results["already_there"]),
-        }
+        statistics[met_table] = create_statistics_from_ids(id_results)
         if len(id_results["added"]) > 0:
             added_names[met_table] = [d["name"] for d in id_results["added"]]
 
@@ -438,6 +431,8 @@ def merge_measurement_table(table_object_name, master_store, slave_store, added_
 
             master_store.session.bulk_insert_mappings(master_table, to_add)
 
+    return len(to_add)
+
 
 def merge_all_measurement_tables(master_store, slave_store, added_datafile_ids):
     master_store.setup_table_type_mapping()
@@ -445,10 +440,14 @@ def merge_all_measurement_tables(master_store, slave_store, added_datafile_ids):
 
     measurement_table_names = [obj.__name__ for obj in measurement_table_objects]
 
+    n_added = {}
+
     for measurement_table_name in tqdm(measurement_table_names):
-        merge_measurement_table(
+        n_added[measurement_table_name] = merge_measurement_table(
             measurement_table_name, master_store, slave_store, added_datafile_ids
         )
+
+    return n_added
 
 
 def prepare_merge_logs(master_store, slave_store):
@@ -466,7 +465,7 @@ def prepare_merge_logs(master_store, slave_store):
             # Get all entries in this table in the slave database
             slave_entries = slave_store.session.query(slave_table).options(undefer("*")).all()
 
-            for slave_entry in slave_entries:
+            for slave_entry in tqdm(slave_entries):
                 guid = slave_entry.log_id
 
                 # Find all entries with this GUID in the same table in the master database
@@ -521,7 +520,7 @@ def add_changes(master_store, slave_store, changes_to_add):
             # Split the IDs list up into 100 at a time, as otherwise the SQL query could get longer
             # than SQLite or Postgres allows - as it'll have a full UUID string in it for each
             # change ID
-            for change_ids_chunk in split_list(list(changes_to_add)):
+            for change_ids_chunk in tqdm(split_list(list(changes_to_add))):
                 # Search for all slave Change entries with IDs in this list
                 results = (
                     slave_store.session.query(slave_store.db_classes.Change)
@@ -546,7 +545,7 @@ def add_logs(master_store, slave_store, logs_to_add):
             # Split the IDs list up into 100 at a time, as otherwise the SQL query could get longer
             # than SQLite or Postgres allows - as it'll have a full UUID string in it for each
             # change ID
-            for log_ids_chunk in split_list(logs_to_add):
+            for log_ids_chunk in tqdm(split_list(logs_to_add)):
                 # Search for all slave Change entries with IDs in this list
                 results = (
                     slave_store.session.query(slave_store.db_classes.Log)
@@ -568,9 +567,6 @@ def merge_logs_and_changes(master_store, slave_store):
     # adding, and which changes need adding
     logs_to_add, changes_to_add = prepare_merge_logs(master_store, slave_store)
 
-    print(logs_to_add)
-    print(changes_to_add)
-
     # Add the change entries
     add_changes(master_store, slave_store, changes_to_add)
 
@@ -579,7 +575,7 @@ def merge_logs_and_changes(master_store, slave_store):
 
 
 def merge_all_tables(master_store, slave_store):
-    # TODO: Add database name to this change ID
+    # Create a Change for this merge
     with master_store.session_scope():
         merge_change_id = master_store.add_to_changes(
             user=getuser(),
@@ -597,14 +593,19 @@ def merge_all_tables(master_store, slave_store):
 
     # Merge the synonyms table now we've merged all the reference and metadata tables
     syn_ids = merge_metadata_table("Synonym", master_store, slave_store, merge_change_id)
+    # Get the list of added names, and add the statistics to the meta_statistics list
     syn_added_names = [d["name"] for d in syn_ids["added"]]
+    meta_statistics["Synonyms"] = create_statistics_from_ids(syn_ids)
 
     # Merge the Datafiles table, keeping track of the IDs that changed
     df_ids = merge_metadata_table("Datafile", master_store, slave_store, merge_change_id)
     df_added_names = [d["name"] for d in df_ids["added"]]
+    meta_statistics["Datafiles"] = create_statistics_from_ids(df_ids)
 
     # Merge the measurement tables, only merging measurements that come from one of the datafiles that has been added
-    merge_all_measurement_tables(master_store, slave_store, [d["id"] for d in df_ids["added"]])
+    measurement_statistics = merge_all_measurement_tables(
+        master_store, slave_store, [d["id"] for d in df_ids["added"]]
+    )
 
     # Merge the Logs and Changes table, only merging ones which still match something in the new db
     merge_logs_and_changes(master_store, slave_store)
@@ -625,6 +626,13 @@ def merge_all_tables(master_store, slave_store):
             statistics_to_table_data(meta_statistics),
             headers=["Table", "Already present", "Added", "Modified"],
             tablefmt="github",
+        )
+    )
+
+    print("\nMeasurement tables:")
+    print(
+        tabulate(
+            list(measurement_statistics.items()), headers=["Table", "Added"], tablefmt="github",
         )
     )
 

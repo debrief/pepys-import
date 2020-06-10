@@ -147,4 +147,12 @@ def print_names_added(names):
     for table_name, names in sorted(names.items()):
         print(f"- {table_name}")
         for name in names:
-            print(f" - {name}")
+            print(f"  - {name}")
+
+
+def create_statistics_from_ids(ids):
+    return {
+        "added": len(ids["added"]),
+        "modified": len([item for item in ids["modified"] if item["data_changed"]]),
+        "already_there": len(ids["already_there"]),
+    }
