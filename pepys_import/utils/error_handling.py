@@ -30,3 +30,19 @@ def handle_database_errors():
         else:
             # Re-raises the ValueError if it wasn't a UUID error
             raise
+
+
+@contextmanager
+def handle_status_errors():
+    try:
+        yield
+    except (
+        sqlalchemy.exc.ProgrammingError,
+        sqlalchemy.exc.OperationalError,
+        sqlalchemy.exc.InvalidRequestError,
+    ) as e:
+        print(
+            "ERROR: Table summaries couldn't be printed.\n"
+            "Please check your database structure is up-to-date with that expected "
+            "by the version of Pepys you have installed.\n"
+        )
