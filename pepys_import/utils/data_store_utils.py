@@ -91,6 +91,7 @@ def import_synonyms(data_store, filepath, change_id):
                     )
                     continue
 
+                results = sorted(results, key=lambda x: x.identifier)
                 chosen_item = ask_user_for_synonym_link(data_store, results, values)
 
                 if chosen_item is None:
