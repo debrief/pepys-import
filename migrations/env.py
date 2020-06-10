@@ -261,6 +261,11 @@ BaseSpatiaLite = declarative_base(metadata=Metadata)
                 # Table names are plural in the database, therefore make it singular
                 table = make_table_name_singular(table_name)
                 table_obj = getattr(sqlite_db, table)
+                foreign_key_tables = list()
+                find_foreign_key_table_names_recursively(table_obj, foreign_key_tables)
+                for foreign_key_table in foreign_key_tables:
+                    foreign_key_table_obj = getattr(sqlite_db, foreign_key_table)
+                    class_to_include.add(inspect.getsource(foreign_key_table_obj))
                 class_to_include.add(inspect.getsource(table_obj))
                 argument = f", copy_from={table}.__table__"
                 idx = line.index(") as batch_op:")
@@ -271,6 +276,20 @@ BaseSpatiaLite = declarative_base(metadata=Metadata)
         lines.insert(10, text)
         with open(filename, "w") as to_write:
             to_write.writelines(lines)
+
+
+def find_foreign_key_table_names_recursively(table_obj, table_names):
+    foreign_keys = list(table_obj.__table__.foreign_keys)
+    if not foreign_keys:
+        return table_names
+    else:
+        for foreign_key in foreign_keys:
+            foreign_key_table = foreign_key.target_fullname.split(".")[0]
+            foreign_key_table = make_table_name_singular(foreign_key_table)
+            if foreign_key_table not in table_names:
+                table_names.append(foreign_key_table)
+                foreign_key_table_obj = getattr(sqlite_db, foreign_key_table)
+                find_foreign_key_table_names_recursively(foreign_key_table_obj, table_names)
 
 
 @write_hooks.register("update_latest_revision")
