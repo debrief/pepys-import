@@ -21,9 +21,6 @@ from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
 def merge_all_reference_tables(master_store, slave_store):
     """Merges all reference tables from the slave_store into the master_store.
-
-    Deals with all possible differences between slave and master, for example, data that is in both already
-    data only in slave, data added to both separately (so fields match but primary keys don't) etc.
     """
     master_store.setup_table_type_mapping()
     reference_table_objects = master_store.meta_classes[TableTypes.REFERENCE]
@@ -51,6 +48,9 @@ def merge_all_reference_tables(master_store, slave_store):
 
 
 def merge_reference_table(table_object_name, master_store, slave_store):
+    """Merges a reference table (table_object_name should be the singular name of the table object, such as
+    PlatformType) from the slave_store into the master_store.
+    """
     # Get references to the table from the master and slave DataStores
     master_table = getattr(master_store.db_classes, table_object_name)
     slave_table = getattr(slave_store.db_classes, table_object_name)
@@ -125,6 +125,11 @@ def merge_reference_table(table_object_name, master_store, slave_store):
 
 
 def merge_all_metadata_tables(master_store, slave_store, merge_change_id):
+    """Merge *most* metadata tables from the slave_store into the master_store, using the merge_change_id
+    as the change_id for any modifications occuring as part of the merge.
+
+    Note: this does not merge the Datafile, Synonym, Log or Change tables - these are handled separately.
+    """
     master_store.setup_table_type_mapping()
     metadata_table_objects = master_store.meta_classes[TableTypes.METADATA]
 
@@ -161,6 +166,12 @@ def merge_all_metadata_tables(master_store, slave_store, merge_change_id):
 def update_master_from_slave_entry(
     master_store, slave_store, master_entry, slave_entry, merge_change_id
 ):
+    """Updates the entry in master with any fields that are set on slave but not on master
+    (ie. optional fields like trigraph that may be left blank), or if the slave privacy
+    is higher (ie. more secure) than in the entry on master.
+
+    Returns True if the entry has been modified.
+    """
     column_names = [col.name for col in master_entry.__table__.columns.values()]
 
     primary_key = get_primary_key_for_table(master_entry)
@@ -203,6 +214,11 @@ def update_master_from_slave_entry(
 
 
 def merge_metadata_table(table_object_name, master_store, slave_store, merge_change_id):
+    """Merge the specified metadata table (table_object_name should be the singular name for the table,
+    such as "Platform") from the slave_store into the master_store. Use the given change_id for any
+    modifications that occur because of the merge (these modifications would happen if an optional value
+    is set on the slave but not on the master, and it is therefore copied across).
+    """
     # Get references to the table from the master and slave DataStores
     master_table = getattr(master_store.db_classes, table_object_name)
     slave_table = getattr(slave_store.db_classes, table_object_name)
@@ -301,6 +317,14 @@ def merge_metadata_table(table_object_name, master_store, slave_store, merge_cha
 
 
 def update_synonyms_table(master_store, slave_store, modified_ids):
+    """Updates the Synonyms table in the slave_store for entries which have had their GUID modified
+    when they were merged with the master_store.
+
+    This occurs in the situation where there are entries in both master_store and slave_store with
+    the same details, and therefore the slave GUID for that entry is updated to match the master GUID.
+    A list of information about those entries is passed to this function, and their original IDs ('from_id')
+    are searched in the Synonyms table and updated (to 'to_id') if found.
+    """
     with slave_store.session_scope():
         # For each modified ID
         for details in modified_ids:
@@ -324,6 +348,14 @@ def update_synonyms_table(master_store, slave_store, modified_ids):
 
 
 def update_logs_table(master_store, slave_store, modified_ids):
+    """Updates the Logs table in the slave_store for entries which have had their GUID modified
+    when they were merged with the master_store.
+
+    This occurs in the situation where there are entries in both master_store and slave_store with
+    the same details, and therefore the slave GUID for that entry is updated to match the master GUID.
+    A list of information about those entries is passed to this function, and their original IDs ('from_id')
+    are searched in the Logs table and updated (to 'to_id') if found.
+    """
     with slave_store.session_scope():
         # For each modified ID
         for details in modified_ids:
@@ -398,6 +430,9 @@ def rows_to_list_of_dicts(results):
 
 
 def merge_measurement_table(table_object_name, master_store, slave_store, added_datafile_ids):
+    """Merge the specified metadata table (specified as the object name, so singular) from the slave_store
+    into the master_store, copying across entries which have a source_id in added_datafile_ids.
+    """
     # We don't need to do a 'merge' as such for the measurement tables. Instead we just need to add
     # the measurement entries for datafiles which hadn't already been imported into the master
     # database.
@@ -435,6 +470,11 @@ def merge_measurement_table(table_object_name, master_store, slave_store, added_
 
 
 def merge_all_measurement_tables(master_store, slave_store, added_datafile_ids):
+    """Copies across all entries in all measurement tables that have a source_id in the list of
+    added_datafile_ids.
+
+    Must be run *after* reference and metadata tables have been merged.
+    """
     master_store.setup_table_type_mapping()
     measurement_table_objects = master_store.meta_classes[TableTypes.MEASUREMENT]
 
@@ -451,6 +491,11 @@ def merge_all_measurement_tables(master_store, slave_store, added_datafile_ids):
 
 
 def prepare_merge_logs(master_store, slave_store):
+    """Works out which Log and Change entries need copying from the slave_store to the master_store,
+    by checking which entries refer to something that is actually in the master database.
+
+    Must be run *after* all other merging is complete.
+    """
     # Get references to the table from the master and slave DataStores
     master_table = master_store.db_classes.Log
     slave_table = slave_store.db_classes.Log
@@ -513,6 +558,7 @@ def prepare_merge_logs(master_store, slave_store):
 
 
 def add_changes(master_store, slave_store, changes_to_add):
+    """Copies the Change entries with the specified ids in changes_to_add from the slave_store to the master_store."""
     to_add = []
 
     with slave_store.session_scope():
@@ -538,6 +584,7 @@ def add_changes(master_store, slave_store, changes_to_add):
 
 
 def add_logs(master_store, slave_store, logs_to_add):
+    """Copies the Log entries with the specified ids in logs_to_add from the slave_store to the master_store."""
     to_add = []
 
     with slave_store.session_scope():
@@ -563,6 +610,10 @@ def add_logs(master_store, slave_store, logs_to_add):
 
 
 def merge_logs_and_changes(master_store, slave_store):
+    """Merges the Logs and Changes tables from the slave_store into the master_store.
+
+    Must be run *after* all other merging is complete.
+    """
     # Prepare to merge the logs by working out which ones need
     # adding, and which changes need adding
     logs_to_add, changes_to_add = prepare_merge_logs(master_store, slave_store)
@@ -575,6 +626,50 @@ def merge_logs_and_changes(master_store, slave_store):
 
 
 def merge_all_tables(master_store, slave_store):
+    """Does a full merge, taking all data from the slave_store database and merging it into the master_store database.
+    At the end of merging, print some summary tables with merge statistics and lists of new objects added.
+
+    Both master_store and data_store can be connected to either Postgres or SQLite databases.
+
+    The overall outline of the merge is that we first merge the reference tables and most of the metadata tables,
+    then merge the Synonyms and Datafiles tables, then copy across the relevant entries from the measurement tables,
+    before finally filtering and copying the Logs and Changes tables.
+
+    In general, "merging" here means comparing the two databases and dealing with these specific situations:
+      a) The exact same entry exists in both databases, with the same GUID.
+      This will occur when this entry was exported from the master database to the slave database.
+      This is counted as 'already present', and nothing is done to change it.
+
+      b) An entry exists in the slave database which isn't present in the master database
+      This will occur when the entry is added to the slave database after the two databases have been separated
+      This entry will be added to the master database, and counted as an item 'added'.
+
+      c) An entry exists in the slave database with the same details as in the master database, but with
+      a different GUID. The details that are compared to see if the entry is the same are the name field for a 
+      reference table, the fields defined in a unique constraint for any other table (eg. `name` and `host` for Sensors) or
+      all fields if a unique constraint isn't defined. If optional fields are present in the slave database that are not
+      present in the entry in the master database, then these are copied across. If the privacy value in the slave database
+      is higher (ie. more secure) than the entry in the master database, then the privacy is updated to match the slave value.
+      This entry counts as a 'modified' entry, as the GUID in the slave database is modified to match the GUID in the master,
+      so that other objects can be copied without failing foreign key integrity checks. This does NOT mean that the data
+      for the entry has been modified - this is only the case if the `data_changed` field is set to True in the resulting
+      list of ids.
+
+    The measurement tables (States, Contacts etc) aren't merged as such: new entries are just copied across. This is done based
+    on the entries in the Datafiles table: we keep track of the IDs of all datafile entries that are added to the master from the
+    slave, and then just copy the measurement data that has come from those datafiles.
+
+    Logs and Changes are merged at the end, so that we can check each Log entry to see if it refers to something that actually exists
+    in the master database, and only copy it if it does.
+
+    The results from the merge_all_* functions consist of:
+
+     - A list of 'added names': a dictionary with keys for each table merged, and values of a list of all the new 'names' that have been
+       added (the 'name' is either the name field, if it exists, or the 'reference' or 'synonym' field if it doesn't.)
+     - A list of statistics: a dictionary with keys for each table merged, and values of a dictionary with counts of items 'already there',
+       'modified' and 'added'.
+
+    """
     # Create a Change for this merge
     with master_store.session_scope():
         merge_change_id = master_store.add_to_changes(
@@ -599,6 +694,7 @@ def merge_all_tables(master_store, slave_store):
 
     # Merge the Datafiles table, keeping track of the IDs that changed
     df_ids = merge_metadata_table("Datafile", master_store, slave_store, merge_change_id)
+    # Get the list of added names, and add the statistics to the meta_statistics list
     df_added_names = [d["name"] for d in df_ids["added"]]
     meta_statistics["Datafiles"] = create_statistics_from_ids(df_ids)
 

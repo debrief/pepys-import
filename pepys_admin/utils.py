@@ -45,6 +45,7 @@ def sqlalchemy_obj_to_dict(obj, remove_id=False):
 
 
 def check_sqlalchemy_results_are_equal(results1, results2):
+    """Compare two lists of SQLAlchemy results to see if they are equal"""
     list1 = [sqlalchemy_obj_to_dict(item) for item in results1]
     list2 = [sqlalchemy_obj_to_dict(item) for item in results2]
 
@@ -120,6 +121,7 @@ def make_query_for_all_data_columns(table_object, comparison_object, session):
 
 
 def table_name_to_class_name(table_name):
+    """Converts a table name which is plural (eg. PlatformTypes) into a class name which is singular (eg. PlatformType)."""
     if table_name.endswith("ies"):
         return table_name[:-3] + "y"
     elif table_name.endswith("s"):
@@ -127,6 +129,10 @@ def table_name_to_class_name(table_name):
 
 
 def get_name_for_obj(obj):
+    """Return a 'name' field for an object. Most objects have a field called `name`, so we try this first.
+    If this fails, we try `reference` (for Datafiles) and `synonym` (for Synonyms), otherwise we just return
+    'Unknown'.
+    """
     if "name" in obj.__dict__:
         return obj.name
     elif "reference" in obj.__dict__:
@@ -134,16 +140,18 @@ def get_name_for_obj(obj):
     elif "synonym" in obj.__dict__:
         return obj.synonym
     else:
-        return "-"
+        return "Unknown"
 
 
 def statistics_to_table_data(statistics):
+    """Convert a dictionary of statistics data into tuples ready for displaying as a table with the tabulate function."""
     return [
         (k, v["already_there"], v["added"], v["modified"]) for k, v in sorted(statistics.items())
     ]
 
 
 def print_names_added(names):
+    """Print the list of names of items added in a sensible format"""
     for table_name, names in sorted(names.items()):
         print(f"- {table_name}")
         for name in names:
@@ -151,6 +159,7 @@ def print_names_added(names):
 
 
 def create_statistics_from_ids(ids):
+    """Create a statistics dictionary from a dict of ids/details for items added, modified and already_there"""
     return {
         "added": len(ids["added"]),
         "modified": len([item for item in ids["modified"] if item["data_changed"]]),
