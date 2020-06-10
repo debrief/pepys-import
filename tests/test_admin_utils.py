@@ -37,7 +37,7 @@ def test_check_sqlalchemy_results_are_equal():
         change_id = store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
         store.add_to_platform_types("PlatformType1", change_id)
         store.add_to_nationalities("UK", change_id)
-        store.add_to_privacies("Private", change_id)
+        store.add_to_privacies("Private", 0, change_id)
         store.add_to_platforms(
             "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
         )
@@ -74,7 +74,7 @@ def test_make_query_for_unique_cols_or_all_platform():
         change_id = store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
         store.add_to_platform_types("PlatformType1", change_id)
         store.add_to_nationalities("UK", change_id)
-        store.add_to_privacies("Private", change_id)
+        store.add_to_privacies("Private", 0, change_id)
         store.add_to_platforms(
             "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
         )
@@ -153,7 +153,7 @@ def test_make_query_for_cols():
         change_id = store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
         store.add_to_platform_types("PlatformType1", change_id)
         store.add_to_nationalities("UK", change_id)
-        store.add_to_privacies("Private", change_id)
+        store.add_to_privacies("Private", 0, change_id)
         store.add_to_platforms(
             "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
         )
@@ -194,7 +194,7 @@ def test_make_query_for_all_data_columns():
         change_id = store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
         store.add_to_platform_types("PlatformType1", change_id)
         store.add_to_nationalities("UK", change_id)
-        store.add_to_privacies("Private", change_id)
+        store.add_to_privacies("Private", 0, change_id)
         store.add_to_platforms(
             "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
         )
