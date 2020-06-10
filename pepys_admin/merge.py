@@ -403,6 +403,8 @@ def rows_to_list_of_dicts(results):
     We also need to process the location field to make sure it is in WKT format so the database
     can understand it.
 
+    Note: This will currently fail for any table with a generic geometry field in it (ie. the geometry1 table),
+    but this is not used currently.
     """
     dict_results = []
     attributes_to_use = None
