@@ -8,11 +8,10 @@ Create Date: 2020-05-19 11:34:17.060199
 from datetime import datetime
 from uuid import uuid4
 
-import geoalchemy2
 import sqlalchemy as sa
 from alembic import op
 from geoalchemy2 import Geometry
-from sqlalchemy import Column, DateTime, ForeignKey, MetaData, String
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, MetaData, String
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
@@ -25,8 +24,11 @@ import pepys_import
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
     ContactMixin,
+    DatafileMixin,
     ElevationPropertyMixin,
     LocationPropertyMixin,
+    PlatformMixin,
+    SensorMixin,
 )
 from pepys_import.core.store.db_base import sqlite_naming_convention
 from pepys_import.core.store.db_status import TableTypes
@@ -34,6 +36,36 @@ from pepys_import.utils.sqlalchemy_utils import UUIDType
 
 Metadata = MetaData(naming_convention=sqlite_naming_convention)
 BaseSpatiaLite = declarative_base(metadata=Metadata)
+
+
+class Privacy(BaseSpatiaLite):
+    __tablename__ = constants.PRIVACY
+    table_type = TableTypes.REFERENCE
+    table_type_id = 22
+
+    privacy_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(String(150), nullable=False, unique=True)
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class ConfidenceLevel(BaseSpatiaLite):
+    __tablename__ = constants.CONFIDENCE_LEVEL
+    table_type = TableTypes.REFERENCE
+    table_type_id = 27
+
+    confidence_level_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(String(150), nullable=False, unique=True)
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class SensorType(BaseSpatiaLite):
+    __tablename__ = constants.SENSOR_TYPE
+    table_type = TableTypes.REFERENCE
+    table_type_id = 21
+
+    sensor_type_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(String(150), nullable=False, unique=True)
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class ClassificationType(BaseSpatiaLite):
@@ -46,13 +78,21 @@ class ClassificationType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ContactType(BaseSpatiaLite):
-    __tablename__ = constants.CONTACT_TYPE
-    table_type = TableTypes.REFERENCE
-    table_type_id = 20
+class Platform(BaseSpatiaLite, PlatformMixin):
+    __tablename__ = constants.PLATFORM
+    table_type = TableTypes.METADATA
+    table_type_id = 3
 
-    contact_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    platform_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(String(150), nullable=False)
+    pennant = deferred(Column(String(10), nullable=False))
+    trigraph = deferred(Column(String(3)))
+    quadgraph = deferred(Column(String(4)))
+    nationality_id = Column(UUIDType, ForeignKey("Nationalities.nationality_id"), nullable=False)
+    platform_type_id = Column(
+        UUIDType, ForeignKey("PlatformTypes.platform_type_id"), nullable=False
+    )
+    privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id"), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -105,13 +145,78 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
         return association_proxy("platform", "name")
 
 
-class ConfidenceLevel(BaseSpatiaLite):
-    __tablename__ = constants.CONFIDENCE_LEVEL
+class ContactType(BaseSpatiaLite):
+    __tablename__ = constants.CONTACT_TYPE
     table_type = TableTypes.REFERENCE
-    table_type_id = 27
+    table_type_id = 20
 
-    confidence_level_id = Column(UUIDType, primary_key=True, default=uuid4)
+    contact_type_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False, unique=True)
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class PlatformType(BaseSpatiaLite):
+    __tablename__ = constants.PLATFORM_TYPE
+    table_type = TableTypes.REFERENCE
+    table_type_id = 13
+
+    platform_type_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(String(150), nullable=False, unique=True)
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class Nationality(BaseSpatiaLite):
+    __tablename__ = constants.NATIONALITY
+    table_type = TableTypes.REFERENCE
+    table_type_id = 14
+
+    nationality_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(String(150), nullable=False, unique=True)
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class Sensor(BaseSpatiaLite, SensorMixin):
+    __tablename__ = constants.SENSOR
+    table_type = TableTypes.METADATA
+    table_type_id = 2
+
+    sensor_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(String(150), nullable=False)
+    sensor_type_id = Column(UUIDType, ForeignKey("SensorTypes.sensor_type_id"), nullable=False)
+    host = Column(UUIDType, ForeignKey("Platforms.platform_id"), nullable=False)
+    privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id"), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class DatafileType(BaseSpatiaLite):
+    __tablename__ = constants.DATAFILE_TYPE
+    table_type = TableTypes.REFERENCE
+    table_type_id = 23
+
+    datafile_type_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(String(150), nullable=False, unique=True)
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class Datafile(BaseSpatiaLite, DatafileMixin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.measurements = dict()
+
+    __tablename__ = constants.DATAFILE
+    table_type = TableTypes.METADATA
+    table_type_id = 6
+
+    datafile_id = Column(UUIDType, primary_key=True, default=uuid4)
+    simulated = deferred(Column(Boolean, nullable=False))
+    privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id"), nullable=False)
+    datafile_type_id = Column(
+        UUIDType, ForeignKey("DatafileTypes.datafile_type_id"), nullable=False
+    )
+    reference = Column(String(150))
+    url = Column(String(150))
+    size = deferred(Column(Integer, nullable=False))
+    hash = deferred(Column(String(32), nullable=False))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 

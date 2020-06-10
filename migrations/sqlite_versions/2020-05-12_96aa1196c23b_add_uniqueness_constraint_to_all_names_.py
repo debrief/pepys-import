@@ -100,7 +100,6 @@ class Nationality(BaseSpatiaLite):
 
     nationality_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False, unique=True)
-
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
