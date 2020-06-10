@@ -196,16 +196,17 @@ else:
 
 
 @write_hooks.register("add_copy_from")
-def add_copy_from(filename):
+def add_copy_from(filename, options):
     qouted_name_regex = r"op\.batch_alter_table\(([\"'])((?:(?=(\\?)).)*?)\1"
     with open(filename) as file_:
         lines = file_.readlines()
 
-    # All tables are in the 'pepys' schema for Postgres. In order to import correct table classes,
-    # use this distinction.
+    # If filename is in the postgres_versions folder, do nothing and return because it doesn't need
+    # copy_from field.
     if "postgres_versions" in filename:
         return
     else:
+        # Necessary imports for Base class definitions
         text = """
 from datetime import datetime
 from uuid import uuid4
@@ -250,35 +251,51 @@ Metadata = MetaData(naming_convention=sqlite_naming_convention)
 BaseSpatiaLite = declarative_base(metadata=Metadata)
 """
 
-        # For each line, search for 'op.batch_alter_table("XXXXX")' kind of text. If it exists, extract
-        # the table name, which is the text inside of the quote marks. Make the name singular, add the
-        # argument (copy_from=TABLE.__table__) to the correct position
         class_to_include = set()
         for index, line in enumerate(lines):
+            # For each line, search for 'op.batch_alter_table("XXXXX")' kind of text. If it exists,
+            # extract the table name, which is the text inside of the quote marks.
             match = search(qouted_name_regex, line)
+            # Continue if there is a match
             if match:
                 table_name = match.group(2)
                 # Table names are plural in the database, therefore make it singular
                 table = make_table_name_singular(table_name)
+                # Get class from pepys_import.core.store.sqlite_db
                 table_obj = getattr(sqlite_db, table)
+                # Add the class definition's string to the set
+                class_to_include.add(inspect.getsource(table_obj))
                 foreign_key_tables = list()
+                # Find all necessary foreign keyed table definitions
                 find_foreign_key_table_names_recursively(table_obj, foreign_key_tables)
+                # For each foreign key table names, find the class and include it's string to the set
                 for foreign_key_table in foreign_key_tables:
                     foreign_key_table_obj = getattr(sqlite_db, foreign_key_table)
                     class_to_include.add(inspect.getsource(foreign_key_table_obj))
-                class_to_include.add(inspect.getsource(table_obj))
+                # Add argument to the batch_alter_table method
                 argument = f", copy_from={table}.__table__"
                 idx = line.index(") as batch_op:")
                 lines[index] = line[:idx] + argument + line[idx:]
 
+        # Merge all import text and the string of the classes in the set
         class_to_include = "\n\n".join(class_to_include)
         text += f"\n\n{class_to_include}"
+        # Insert the merged text and overwrite the file
         lines.insert(10, text)
         with open(filename, "w") as to_write:
             to_write.writelines(lines)
 
 
 def find_foreign_key_table_names_recursively(table_obj, table_names):
+    """
+        This function finds all necessary classes by running recursively on foreign keys of table_obj.
+
+    :param table_obj: A table object from the sqlite_db
+    :param table_obj: Base class
+    :param table_names: A list that contains the name of the necessary tables
+    :param table_names: List
+    :return:
+    """
     foreign_keys = list(table_obj.__table__.foreign_keys)
     if not foreign_keys:
         return table_names
