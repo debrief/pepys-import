@@ -993,6 +993,76 @@ class SnapshotPostgresTestCase(unittest.TestCase):
             os.remove(path)
 
 
+class SnapshotShellMergingTestCase(unittest.TestCase):
+    def setUp(self):
+        if os.path.exists("slave.db"):
+            os.remove("slave.db")
+
+        self.master_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.master_store.initialise()
+
+        self.slave_store = DataStore("", "", "", 0, "slave.db", db_type="sqlite")
+        self.slave_store.initialise()
+
+        # Import two files into master
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "gpx", "gpx_1_0.gpx"),
+            self.master_store,
+            False,
+        )
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "rep_data", "rep_test1.rep"),
+            self.master_store,
+            False,
+        )
+
+        # Import two files into slave
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "gpx", "gpx_1_0.gpx"),
+            self.slave_store,
+            False,
+        )
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "rep_data", "uk_track.rep"),
+            self.slave_store,
+            False,
+        )
+
+        self.shell = SnapshotShell(self.master_store)
+
+    @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="./slave.db")
+    @patch("pepys_admin.snapshot_cli.input", return_value="y")
+    def test_merge_valid(self, patched_ptk_prompt, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            # Do the merge
+            self.shell.do_merge_databases()
+        output = temp_output.getvalue()
+
+        assert "| Platform    |                 0 |       1 |          0 |" in output
+        assert "| State       |     402 |" in output
+
+        # Check entries added
+        assert "  - uk_track.rep" in output
+        assert "  - SPLENDID" in output
+        assert "  - SENSOR-1" in output
+
+    @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="./slave.db")
+    @patch("pepys_admin.snapshot_cli.input", return_value="n")
+    def test_merge_confirm_no(self, patched_ptk_prompt, patched_input):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            # Do the merge
+            self.shell.do_merge_databases()
+        output = temp_output.getvalue()
+
+        assert "Ok, returning to previous menu" in output
+
+
 class SnapshotShellTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
