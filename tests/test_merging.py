@@ -1123,7 +1123,7 @@ class TestMergeStateFromImport_Postgres(unittest.TestCase):
                 assert len(results) == len(self.master_gpx_states)
 
 
-class TestMergeStateFromImport_Indempotent_SameFile(unittest.TestCase):
+class TestMergeStateFromImport_Idempotent_SameFile(unittest.TestCase):
     def setUp(self):
         """This gets us to the situation where the master db has an import of gpx_1_0.gpx
         and rep_test1.rep, and the slave db has an import of gpx_1_0.gpx and uk_track.rep."""
@@ -1255,7 +1255,7 @@ class TestMergeStateFromImport_Indempotent_SameFile(unittest.TestCase):
         self.do_checks()
 
 
-class TestMergeStateFromImport_Indempotent_DifferentFile(unittest.TestCase):
+class TestMergeStateFromImport_Idempotent_DifferentFile(unittest.TestCase):
     def setUp(self):
         """This gets us to the situation where the master db has an import of gpx_1_0.gpx
         and rep_test1.rep, and the slave db has an import of gpx_1_0.gpx and uk_track.rep."""
@@ -2200,72 +2200,6 @@ class TestExportAlterAndMerge(unittest.TestCase):
                     assert len(platforms) == 1
 
 
-class TestExportDoNothingAndMerge(unittest.TestCase):
-    @patch("pepys_admin.snapshot_cli.input", return_value="slave_exported.sqlite")
-    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
-    def setUp(self, patched_input, patched_iterfzf):
-        # Create a master database
-        self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
-        self.master_store.initialise()
-
-        # Do some imports into master
-        # We import these files: gpx_1_0.gpx, rep_test1.rep
-        processor = FileProcessor(archive=False)
-        processor.load_importers_dynamically()
-        processor.process(
-            os.path.join(SAMPLE_DATA_PATH, "track_files", "gpx", "gpx_1_0.gpx"),
-            self.master_store,
-            False,
-        )
-        processor.process(
-            os.path.join(SAMPLE_DATA_PATH, "track_files", "rep_data", "rep_test1.rep"),
-            self.master_store,
-            False,
-        )
-
-        # Export master to slave_exported.sqlite
-        self.shell = SnapshotShell(self.master_store)
-        self.shell.do_export_reference_data_and_metadata()
-
-        # Create a data_store pointing to the new slave database
-        self.slave_store = DataStore(
-            "", "", "", 0, db_name="slave_exported.sqlite", db_type="sqlite"
-        )
-
-    def tearDown(self):
-        if os.path.exists("master.sqlite"):
-            os.remove("master.sqlite")
-
-        if os.path.exists("slave_exported.sqlite"):
-            os.remove("slave_exported.sqlite")
-
-    def test_export_do_nothing_and_merge(self):
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            # Do the merge
-            merge_all_tables(self.master_store, self.slave_store)
-        output = temp_output.getvalue()
-
-        print(output)
-
-        # As we didn't do anything to the exported snapshot before merging it, there should be no new things to copy
-        # so everything will be found as 'already there', and nothing will be in the 'added' or 'modified' columns
-
-        # Check statistics
-        assert "| CommentType        |                 2 |       0 |          0 |" in output
-        assert "| DatafileType       |                 2 |       0 |          0 |" in output
-        assert "| Nationality        |                 1 |       0 |          0 |" in output
-        assert "| PlatformType       |                 1 |       0 |          0 |" in output
-        assert "| Privacy            |                 1 |       0 |          0 |" in output
-        assert "| SensorType         |                 2 |       0 |          0 |" in output
-        assert "| Platform    |                 4 |       0 |          0 |" in output
-        assert "| Sensor      |                 5 |       0 |          0 |" in output
-        assert "| State       |       0 |" in output
-
-        # Check entries added list
-        assert "No entries added" in output
-
-
 @pytest.mark.postgres
 class TestExportAlterAndMerge_Postgres(unittest.TestCase):
     @patch("pepys_admin.snapshot_cli.input", return_value="slave_exported.sqlite")
@@ -2524,3 +2458,69 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
                     )
 
                     assert len(platforms) == 1
+
+
+class TestExportDoNothingAndMerge(unittest.TestCase):
+    @patch("pepys_admin.snapshot_cli.input", return_value="slave_exported.sqlite")
+    @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
+    def setUp(self, patched_input, patched_iterfzf):
+        # Create a master database
+        self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
+        self.master_store.initialise()
+
+        # Do some imports into master
+        # We import these files: gpx_1_0.gpx, rep_test1.rep
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "gpx", "gpx_1_0.gpx"),
+            self.master_store,
+            False,
+        )
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files", "rep_data", "rep_test1.rep"),
+            self.master_store,
+            False,
+        )
+
+        # Export master to slave_exported.sqlite
+        self.shell = SnapshotShell(self.master_store)
+        self.shell.do_export_reference_data_and_metadata()
+
+        # Create a data_store pointing to the new slave database
+        self.slave_store = DataStore(
+            "", "", "", 0, db_name="slave_exported.sqlite", db_type="sqlite"
+        )
+
+    def tearDown(self):
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave_exported.sqlite"):
+            os.remove("slave_exported.sqlite")
+
+    def test_export_do_nothing_and_merge(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            # Do the merge
+            merge_all_tables(self.master_store, self.slave_store)
+        output = temp_output.getvalue()
+
+        print(output)
+
+        # As we didn't do anything to the exported snapshot before merging it, there should be no new things to copy
+        # so everything will be found as 'already there', and nothing will be in the 'added' or 'modified' columns
+
+        # Check statistics
+        assert "| CommentType        |                 2 |       0 |          0 |" in output
+        assert "| DatafileType       |                 2 |       0 |          0 |" in output
+        assert "| Nationality        |                 1 |       0 |          0 |" in output
+        assert "| PlatformType       |                 1 |       0 |          0 |" in output
+        assert "| Privacy            |                 1 |       0 |          0 |" in output
+        assert "| SensorType         |                 2 |       0 |          0 |" in output
+        assert "| Platform    |                 4 |       0 |          0 |" in output
+        assert "| Sensor      |                 5 |       0 |          0 |" in output
+        assert "| State       |       0 |" in output
+
+        # Check entries added list
+        assert "No entries added" in output
