@@ -170,7 +170,7 @@ For doing that the following command might be used:
 
 | If you would like to use relative identifiers, such as :code:`alembic downgrade -1`, you might check it out: `Relative Identifiers <https://alembic.sqlalchemy.org/en/latest/tutorial.html#relative-migration-identifiers>`_
 |
-| **Note-4:**: During the migration of SQLite Database, it's possible to see this error:
+| **Note-4:** During the migration of SQLite Database, it's possible to see this error:
 
 .. code-block:: bash
 
@@ -178,6 +178,14 @@ For doing that the following command might be used:
 
 You can ignore this error because it says that there is already a geometry column entity for your table that has a Geometry column (i.e. States, Geometries, Contact). This error happens because SQLite doesn't support *ALTER TABLE* statement.
 Instead, it creates a new one, copies values from the previous table, and drops the existing table. However, during the creation of a new table, it tries to push the Geometry column to the :code:`geometry_columns` table again.
+
+| **Note-5:** If you change a column's name, you should implement different classes for :code:`upgrade()` and :code:`downgrade()` methods. Otherwise, this class breaks your upgrade because it doesn't have that column to rename.
+|
+| An example can be found in :code:`migrations/sqlite_versions/2020-06-03_f103f27c4575_change_pennant_to_identifier_and_make_.py`. What you should do is as follows:
+
+- :code:`copy_from` post-hook will create all necessary tables. Copy the table that has a column change to :code:`upgrade()` and :code:`downgrade()` methods.
+- Remove the global class.
+- Change the changed column name with the first argument in :code:`alter_column`.
 
 How to use it? (For Users)
 ---------------------------
