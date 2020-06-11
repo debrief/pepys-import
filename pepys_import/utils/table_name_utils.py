@@ -1,4 +1,4 @@
-from pepys_import.core.store import sqlite_db
+from pepys_import.core.store import constants, sqlite_db
 
 
 def make_table_name_singular(table_name):
@@ -10,9 +10,9 @@ def make_table_name_singular(table_name):
     :return: Returns the singular class name
     :rtype: String
     """
-    if table_name in ["alembic_version", "HostedBy", "Media"]:
+    if table_name in [constants.ALEMBIC_VERSION, constants.HOSTED_BY, constants.MEDIA]:
         table = table_name
-    elif table_name == "Geometries":
+    elif table_name == constants.GEOMETRY:
         table = "Geometry1"
     elif table_name.endswith("ies"):
         table = table_name[:-3] + "y"
