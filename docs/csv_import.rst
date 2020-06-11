@@ -19,13 +19,15 @@ make sure you know the full path to the folder of CSV files to be imported - it 
 
 3. Press :code:`1` followed by *Enter* to select the :code:`Initialise/Clear` option.
 
-4. **WARNING: Only perform this step if you intend to delete all data in the Pepys database.** 
-   This step is not necessary if new reference/metadata entries are being added to an existing database,
-   it is only required if reference/metadata entries have been *modified* from previous versions imported.
-   Press :code:`2` followed by *Enter* to select the :code:`Clear database schema`
-   option.
+4. **WARNING: Only perform steps 4a & 4b if you intend to delete all data in the Pepys database.** 
+   It is most likely that you don't wish to clear the database schema.  Please read
+   the conditions described below in the section stitled `Clearing the database schema`.
 
-5. You will be back a list of options. Choose option :code:`4`. This will import the
+4a. Press :code:`2` followed by *Enter* to select the :code:`Clear database schema` option
+
+4b. Press :code:`3` followed by *Enter* to select the :code:`Create Pepys schema` option
+
+5. You will be back at list of options. Choose option :code:`4`. This will import the
    reference data from the CSV files, and a message will appear saying this has completed and which file
    was used, followed by the menu appearing again.
 
@@ -37,3 +39,10 @@ make sure you know the full path to the folder of CSV files to be imported - it 
 7. Choose option :code:`0` and then option :code:`0` again to exit Pepys Admin.
 
 8. Close the Command Prompt
+
+Clearing the database schema
+----------------------------
+
+Under a few circumstances it is necessary to clear/wipe the database.  This should be performed if 
+an organisation is performing initial experiments with strategies for Reference Tables, or 
+performing Pepys trials, and wishes to wipe everything and start again.
