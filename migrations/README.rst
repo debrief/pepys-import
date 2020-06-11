@@ -168,7 +168,16 @@ For doing that the following command might be used:
 
     alembic downgrade head REVISION_ID
 
-| If you would like to use relative identifiers, such as :code:`alembic downgrade head -1`, you might check it out: `Relative Identifiers <https://alembic.sqlalchemy.org/en/latest/tutorial.html#relative-migration-identifiers>`_
+| If you would like to use relative identifiers, such as :code:`alembic downgrade -1`, you might check it out: `Relative Identifiers <https://alembic.sqlalchemy.org/en/latest/tutorial.html#relative-migration-identifiers>`_
+|
+| **Note-4:**: During the migration of SQLite Database, it's possible to see this error:
+
+.. code-block:: bash
+
+    AddGeometryColumn() error: "UNIQUE constraint failed: geometry_columns.f_table_name, geometry_columns.f_geometry_column"
+
+You can ignore this error because it says that there is already geometry column(s) in your tables (States, Geometries, Contact, etc.). This error happens because SQLite doesn't support *ALTER TABLE* statement.
+Instead, it creates a new one, copies values from the previous table, and drops the existing table. However, during the creation of a new table, it tries to push the Geometry column to the :code:`geometry_columns` table again.
 
 How to use it? (For Users)
 ---------------------------
@@ -235,6 +244,27 @@ If you face this error, it means that the :code:`pepys-import` repository should
 .. code-block:: bash
 
     PYTHONPATH=. alembic current
+
+------------
+
+.. code-block:: bash
+
+    Database tables are not found! (Hint: Did you initialise the DataStore?)
+
+If you migrated your **SQLite** database and started to see this message, it would have been because of the extra tables created by Alembic. When a table with Geometry column is included in migration,
+please check the SQLite database if there are any temporary tables (with *tmp* keyword) such as :code:`idx_Geometries_tmp_geometry_node` etc. If there is any, please drop these tables. After that,
+please open your migration script and add :code:`spatial_index=False` argument to the Geometry column. An example is as follows:
+
+.. code-block:: python
+
+    # Change this column
+    geometry = deferred(Column(Geometry(geometry_type="GEOMETRY", management=True), nullable=False))
+    # Add spatial_index
+    geometry = deferred(
+        Column(
+            Geometry(geometry_type="GEOMETRY", management=True, spatial_index=False), nullable=False
+        )
+    )
 
 ------------
 
