@@ -2,6 +2,14 @@ from pepys_import.core.store import sqlite_db
 
 
 def make_table_name_singular(table_name):
+    """
+        Converts a table name which is plural to a singular class name.
+
+    :param table_name: Name of a table
+    :type table_name: String
+    :return: Returns the singular class name
+    :rtype: String
+    """
     if table_name in ["alembic_version", "HostedBy", "Media"]:
         table = table_name
     elif table_name == "Geometries":
@@ -15,7 +23,7 @@ def make_table_name_singular(table_name):
 
 def find_foreign_key_table_names_recursively(table_obj, table_names):
     """
-        This function finds all necessary classes by running recursively on foreign keys of table_obj.
+        Finds all necessary classes by running recursively on foreign keys of table_obj.
 
     :param table_obj: A table object from the sqlite_db
     :param table_obj: Base class
