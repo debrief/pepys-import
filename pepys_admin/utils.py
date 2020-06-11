@@ -152,6 +152,11 @@ def statistics_to_table_data(statistics):
 
 def print_names_added(names):
     """Print the list of names of items added in a sensible format"""
+    if len(names) == 0:
+        print("No entries added")
+    else:
+        print("\nEntries added:")
+
     for table_name, names in sorted(names.items()):
         print(f"- {table_name}")
         for name in names:

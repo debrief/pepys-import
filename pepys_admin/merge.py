@@ -734,7 +734,6 @@ def merge_all_tables(master_store, slave_store):
         )
     )
 
-    print("\nEntries added:")
     all_added_names = {**ref_added_names, **meta_added_names}
     if len(syn_added_names) > 0:
         all_added_names["Synonyms"] = syn_added_names
