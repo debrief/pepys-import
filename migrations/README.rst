@@ -176,7 +176,7 @@ For doing that the following command might be used:
 
     AddGeometryColumn() error: "UNIQUE constraint failed: geometry_columns.f_table_name, geometry_columns.f_geometry_column"
 
-You can ignore this error because it says that there is already geometry column(s) in your tables (States, Geometries, Contact, etc.). This error happens because SQLite doesn't support *ALTER TABLE* statement.
+You can ignore this error because it says that there is already a geometry column entity for your table that has a Geometry column (i.e. States, Geometries, Contact). This error happens because SQLite doesn't support *ALTER TABLE* statement.
 Instead, it creates a new one, copies values from the previous table, and drops the existing table. However, during the creation of a new table, it tries to push the Geometry column to the :code:`geometry_columns` table again.
 
 How to use it? (For Users)
