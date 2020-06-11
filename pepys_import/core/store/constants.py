@@ -1,5 +1,3 @@
-ENTRY = "Entry"
-TABLE_TYPE = "TableTypes"
 HOSTED_BY = "HostedBy"
 SENSOR = "Sensors"
 PLATFORM = "Platforms"
