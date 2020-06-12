@@ -23,6 +23,7 @@ class ExportShell(cmd.Cmd):
 
     @staticmethod
     def do_cancel():
+        """Returns to the previous menu"""
         print("Returning to the previous menu...")
 
     def __init__(self, data_store):
@@ -177,6 +178,8 @@ class ExportShell(cmd.Cmd):
 
 
 class ExportByPlatformNameShell(cmd.Cmd):
+    """Offers to export datafiles by platform and sensor"""
+
     prompt = "(pepys-admin) (export by platform) "
 
     def __init__(self, data_store, options, objects):
@@ -187,6 +190,7 @@ class ExportByPlatformNameShell(cmd.Cmd):
 
     @staticmethod
     def do_cancel():
+        """Returns to the previous menu"""
         print("Returning to the previous menu...")
 
     def do_export(self, option):

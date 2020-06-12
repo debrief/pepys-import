@@ -38,6 +38,7 @@ class ViewDataShell(cmd.Cmd):
 
     @staticmethod
     def do_cancel():
+        """Returns to the previous menu"""
         print("Returning to the previous menu...")
 
     def do_view_table(self):

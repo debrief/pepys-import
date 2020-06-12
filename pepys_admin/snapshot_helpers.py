@@ -59,8 +59,8 @@ def export_reference_tables(source_store, destination_store, table_objects):
 
 
 def export_metadata_tables(source_store, destination_store, privacy_ids):
-    """Copies Platform, Sensor and Synonym objects from :code:`source_store` to
-    :code:`destination_store`.
+    """Copies :code:`Platform`, :code:`Sensor` and :code:`Synonym` objects from
+    :code:`source_store` to :code:`destination_store`.
 
     :param source_store: A :class:`DataStore` object to fetch objects
     :type source_store: DataStore

@@ -79,6 +79,7 @@ class InitialiseShell(cmd.Cmd):
 
     @staticmethod
     def do_cancel():
+        """Returns to the previous menu"""
         print("Returning to the previous menu...")
 
     def default(self, line):
