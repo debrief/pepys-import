@@ -1,3 +1,4 @@
+import math
 import os
 from datetime import datetime
 
@@ -8,7 +9,7 @@ from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
+from pepys_import.utils.unit_utils import convert_absolute_angle
 
 
 class EAGImporter(Importer):
@@ -34,6 +35,7 @@ class EAGImporter(Importer):
     def load_this_file(self, data_store, path, file_object, datafile, change_id):
         filename, ext = os.path.splitext(os.path.basename(path))
 
+        # Extract date of recording and callsign from filename
         try:
             date_of_recording_str, callsign = filename.split("_")
         except ValueError:
@@ -42,7 +44,7 @@ class EAGImporter(Importer):
             )
             return
 
-        # Get date of last Sunday
+        # Get date of last Sunday, ready for timestamp calculation later
         try:
             last_sun_date = self.get_last_sunday(date_of_recording_str)
         except Exception:
@@ -77,25 +79,23 @@ class EAGImporter(Importer):
                 )
                 continue
 
+            # Calculate the timestamp, using the time since last Sunday and the calculated last Sunday date
             timestamp = self.calculate_timestamp(time_since_sun_ms, last_sun_date)
             time_since_sun_ms_token.record(self.name, "timestamp", timestamp)
 
-            # and finally store it
+            # Platform is based on the callsign - the user will link this as a synonym to a defined Platform
             platform = data_store.get_platform(platform_name=callsign, change_id=change_id,)
 
-            # TODO: Do we have a fixed sensor type for these files?
+            # Sensor Type is always fixed to GPS
             sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
-            # TODO: Or a fixed sensor name?
             sensor = platform.get_sensor(
-                data_store=data_store,
-                sensor_name="E-Trac",
-                sensor_type=sensor_type,
-                privacy="Public",
-                change_id=change_id,
+                data_store=data_store, sensor_type=sensor_type, change_id=change_id,
             )
             state = datafile.create_state(data_store, platform, sensor, timestamp, self.short_name)
 
-            location, success = self.convert_ecef_to_location(
+            # Location and height info are provided as Earth-Centred, Earth-Fixed co-ordinates
+            # We convert them to lat/lon and height
+            location, height, success = self.convert_ecef_to_location_and_height(
                 ecef_x_token, ecef_y_token, ecef_z_token
             )
 
@@ -105,12 +105,17 @@ class EAGImporter(Importer):
                     self.name, "location", state.location, "ECEF X, Y and Z"
                 )
 
-            elevation_valid, elevation = convert_distance(
-                altitude_token.text, unit_registry.metre, line_number, self.errors, self.error_type
-            )
-            if elevation_valid:
-                state.elevation = elevation
-                altitude_token.record(self.name, "altitude", state.elevation)
+                state.elevation = height * unit_registry.metre
+                combine_tokens(ecef_x_token, ecef_y_token, ecef_z_token).record(
+                    self.name, "altitude", state.elevation, "ECEF X, Y and Z"
+                )
+            else:
+                self.errors.append(
+                    {
+                        self.error_type: f"Error on line {line_number}. Cannot parse ECEF X, Y and Z to latitude, longitude and height: {line}"
+                    }
+                )
+                continue
 
             heading_valid, heading = convert_absolute_angle(
                 heading_token.text, line_number, self.errors, self.error_type
@@ -118,13 +123,6 @@ class EAGImporter(Importer):
             if heading_valid:
                 state.heading = heading
                 heading_token.record(self.name, "heading", heading)
-
-            speed_valid, speed = convert_speed(
-                speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type,
-            )
-            if speed_valid:
-                state.speed = speed
-                speed_token.record(self.name, "speed", speed)
 
     def get_last_sunday(self, date_of_recording_str):
         format_str = "%Y%m%d"
@@ -139,8 +137,44 @@ class EAGImporter(Importer):
     def calculate_timestamp(self, time_since_sun_ms, last_sun_date):
         timestamp = last_sun_date + datetime.timedelta(milliseconds=time_since_sun_ms)
 
-    def convert_ecef_to_location(self, ecef_x_token, ecef_y_token):
+        return timestamp
+
+    def convert_ecef_to_location_and_height(self, ecef_x_token, ecef_y_token, ecef_z_token):
+        """Converts Earth-Centred, Earth-Fixed X, Y and Z co-ordinates into a Location object containing
+        latitude and longitude, plus a height value in metres
+        
+        All formulae taken from https://microem.ru/files/2012/08/GPS.G1-X-00006.pdf
+        """
+        ecef_x = float(ecef_x_token.text)
+        ecef_y = float(ecef_y_token.text)
+        ecef_z = float(ecef_z_token.text)
+
+        # Parameters for WGS-84 ellipsoid
+        a = 6378137
+        b = 6356752.31424518
+        e = math.sqrt((a ** 2 - b ** 2) / (a ** 2))
+        e_dash = math.sqrt((a ** 2 - b ** 2) / (b ** 2))
+
+        # Auxilliary values
+        p = math.sqrt(ecef_x ** 2 + ecef_y ** 2)
+        theta = math.atan((ecef_z * a) / (p * b))
+
+        # Calculate longitude from ECEF X and Y as:
+        # longitude = arctan(Y / X)
+        longitude = math.degrees(math.atan((ecef_y / ecef_x)))
+
+        top_lat_frac = ecef_z + (e_dash ** 2) * b * (math.sin(theta) ** 3)
+        bottom_lat_frac = p - (e ** 2) * a * (math.cos(theta) ** 3)
+
+        latitude = math.degrees(math.atan(top_lat_frac / bottom_lat_frac))
+
+        N = a / (math.sqrt(1 - (e ** 2) * (math.sin(latitude) ** 2)))
+
+        height = (p / math.cos(math.radians(latitude))) - N
 
         location = Location(errors=self.errors, error_type=self.error_type)
-        lat_success = location.set_latitude_decimal_degrees(lat_degrees_token.text)
-        lon_success = location.set_longitude_decimal_degrees(long_degrees_token.text)
+        lat_success = location.set_latitude_decimal_degrees(latitude)
+        lon_success = location.set_longitude_decimal_degrees(longitude)
+
+        success = lat_success and lon_success
+        return location, height, success
