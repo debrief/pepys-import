@@ -11,7 +11,7 @@ from pepys_import.utils.data_store_utils import is_schema_created
 
 
 class ExportShell(cmd.Cmd):
-    """ExportShell which offers to export datafiles by name, by platform and sensor"""
+    """Offers to export datafiles by name, by platform and sensor"""
 
     intro = """--- Menu ---
     (1) Export by name
@@ -190,7 +190,7 @@ class ExportByPlatformNameShell(cmd.Cmd):
         print("Returning to the previous menu...")
 
     def do_export(self, option):
-        """Asks user for a file name, then uses :code:`DataStore.export_datafile` to export Datafiles."""
+        """Asks user for a file name, then calls :code:`DataStore.export_datafile` to export Datafiles."""
         datafile_id = option["datafile_id"]
         sensor_id = option.get("sensor_id")  # May be missing if it's a Comment object
         platform_id = option.get("platform_id")  # May be missing if it's a State or Contact object

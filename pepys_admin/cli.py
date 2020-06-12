@@ -48,9 +48,9 @@ def run_admin_shell(data_store, path):
     """Runs the :code:`AdminShell`.
 
     :param data_store: A :class:`DataStore` object
-    :param data_store: DataStore
+    :type data_store: DataStore
     :param path: CSV files path which will be used by import reference & metadata options
-    :param path: String
+    :type path: String
     :return:
     """
     with handle_database_errors():
