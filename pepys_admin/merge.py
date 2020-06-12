@@ -631,7 +631,7 @@ def merge_all_tables(master_store, slave_store):
     """Does a full merge, taking all data from the slave_store database and merging it into the master_store database.
     At the end of merging, print some summary tables with merge statistics and lists of new objects added.
 
-    Both master_store and data_store can be connected to either Postgres or SQLite databases.
+    Both master_store and slave_store can be connected to either Postgres or SQLite databases.
 
     The overall outline of the merge is that we first merge the reference tables and most of the metadata tables,
     then merge the Synonyms and Datafiles tables, then copy across the relevant entries from the measurement tables,
