@@ -7,6 +7,10 @@ from pepys_import.utils.error_handling import handle_database_errors
 
 
 def main():
+    """
+    Main function which parses the command line arguments, creates a DataStore object and
+    calls :code:`run_admin_shell` to open a shell.
+    """
     db_help = (
         "SQLite database file to use (overrides config file database settings). "
         "Use `:memory:` for temporary in-memory instance"
@@ -41,6 +45,14 @@ def main():
 
 
 def run_admin_shell(data_store, path):
+    """Runs the :code:`AdminShell`.
+
+    :param data_store: A :class:`DataStore` object
+    :param data_store: DataStore
+    :param path: CSV files path which will be used by import reference & metadata options
+    :param path: String
+    :return:
+    """
     with handle_database_errors():
         AdminShell(data_store, path).cmdloop()
 

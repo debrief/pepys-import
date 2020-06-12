@@ -18,6 +18,8 @@ DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class AdminShell(cmd.Cmd):
+    """Main Shell of Pepys Admin."""
+
     intro = """--- Menu ---
 (1) Initialise/Clear
 (2) Status
@@ -52,6 +54,7 @@ class AdminShell(cmd.Cmd):
         self.cfg.attributes["connection"] = data_store.engine
 
     def do_export(self):
+        """Runs the :code:`ExportShell` to export datafiles."""
         print("-" * 61)
         export_shell = ExportShell(self.data_store)
         export_shell.cmdloop()
@@ -62,18 +65,20 @@ class AdminShell(cmd.Cmd):
         webbrowser.open("file://" + path)
 
     def do_snapshot(self):
+        """Runs the :code:`SnapshotShell` to take a snapshot of reference or/and metadata tables."""
         print("-" * 61)
         snapshot_shell = SnapshotShell(self.data_store)
         snapshot_shell.cmdloop()
 
     def do_initialise(self):
-        """Allow the currently connected database to be configured"""
+        """Runs the :code:`InitialiseShell` which offers to clear contents, import sample data,
+         create/delete schema."""
         print("-" * 61)
         initialise = InitialiseShell(self.data_store, self, self.csv_path)
         initialise.cmdloop()
 
     def do_status(self):
-        """Report on the database contents"""
+        """Prints table summaries and database version."""
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
@@ -94,6 +99,7 @@ class AdminShell(cmd.Cmd):
         command.current(self.cfg, verbose=True)
 
     def do_migrate(self):
+        """Runs Alembic's upgrade command to migrate the database to the latest version."""
         print("Alembic migration command running, see output below.")
         try:
             command.upgrade(self.cfg, "head")
@@ -101,6 +107,7 @@ class AdminShell(cmd.Cmd):
             print(f"Exception details: {e}\n\nERROR: Alembic error when migrating the database!")
 
     def do_view_data(self):
+        """Runs the :code:`ViewDataShell` which offers to view a table and run SQL."""
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
         print("-" * 61)
