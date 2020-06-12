@@ -1,6 +1,6 @@
+import datetime
 import math
 import os
-from datetime import datetime
 
 from tqdm import tqdm
 
@@ -20,11 +20,17 @@ class EAGImporter(Importer):
             short_name="EAG Importer",
         )
 
+    # EAG files end with .eag.txt
+    # BUT, can_load_this_type only provides the file extension
+    # which the Python splitext function thinks is .TXT - as it just
+    # looks for the last .
+    # Therefore, we check for a file extension of .TXT AND
+    # a filename ending with .EAG (in the next function)
     def can_load_this_type(self, suffix):
-        return suffix.upper() == ".EAG.TXT"
+        return suffix.upper() == ".TXT"
 
     def can_load_this_filename(self, filename):
-        return True
+        return filename.upper().endswith(".EAG")
 
     def can_load_this_header(self, header):
         return True
@@ -32,7 +38,7 @@ class EAGImporter(Importer):
     def can_load_this_file(self, file_contents):
         return True
 
-    def load_this_file(self, data_store, path, file_object, datafile, change_id):
+    def _load_this_file(self, data_store, path, file_object, datafile, change_id):
         filename, ext = os.path.splitext(os.path.basename(path))
 
         # Extract date of recording and callsign from filename
@@ -48,7 +54,9 @@ class EAGImporter(Importer):
         try:
             last_sun_date = self.get_last_sunday(date_of_recording_str)
         except Exception:
-            self.errors.append({self.error_type: f"Error in filename - cannot parse date"})
+            self.errors.append(
+                {self.error_type: f"Error in filename - cannot parse date {date_of_recording_str}"}
+            )
             return
 
         for line_number, line in enumerate(tqdm(file_object.lines()), 1):
@@ -70,7 +78,7 @@ class EAGImporter(Importer):
             heading_token = tokens[9]
 
             try:
-                time_since_sun_ms = float(time_since_sun_ms_token.text())
+                time_since_sun_ms = float(time_since_sun_ms_token.text)
             except ValueError:
                 self.errors.append(
                     {
