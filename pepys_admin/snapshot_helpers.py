@@ -7,11 +7,11 @@ def row_to_dict(table_object, data_store):
     """Converts all entities of a table into a dict of {column_name: value}s.
 
     :param table_object: A table object
-    :type table_object: DeclarativeMeta
+    :type table_object: sqlalchemy.ext.declarative.DeclarativeMeta
     :param data_store: A :class:`DataStore` object
     :type data_store: DataStore
     :return: Returns a dictionary with values
-    :rtype: dict
+    :rtype: Dict
     """
     with data_store.session_scope():
         values = data_store.session.query(table_object).all()
@@ -26,11 +26,11 @@ def find_sqlite_table_object(table_object, data_store):
     """Finds and returns a SQLite Base class which will be used to create and insert values.
 
     :param table_object: A table object
-    :type table_object: DeclarativeMeta
+    :type table_object: sqlalchemy.ext.declarative.DeclarativeMeta
     :param data_store: A :class:`DataStore` object
     :type data_store: DataStore
     :return: Returns a table object
-    :rtype: DeclarativeMeta
+    :rtype: sqlalchemy.ext.declarative.DeclarativeMeta
     """
     if data_store.db_type == "postgres":
         for name, obj in inspect.getmembers(sqlite_db):
@@ -48,7 +48,7 @@ def export_reference_tables(source_store, destination_store, table_objects):
     :param destination_store: A :class:`DataStore` object to copy the objects from source_store
     :type destination_store: DataStore
     :param table_objects: A list of table objects
-    :type table_objects: list
+    :type table_objects: List
     :return:
     """
     for table_object in table_objects:
@@ -67,7 +67,7 @@ def export_metadata_tables(source_store, destination_store, privacy_ids):
     :param destination_store: A :class:`DataStore` object to copy the objects from source_store
     :type destination_store: DataStore
     :param privacy_ids: A list of Privacy ID's which is used to filter Platform and Sensor objects
-    :type privacy_ids: list
+    :type privacy_ids: List
     :return:
     """
     for table_object in [

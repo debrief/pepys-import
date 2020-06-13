@@ -80,8 +80,8 @@ class ExportShell(cmd.Cmd):
 
     def do_export_by_platform_name(self):
         """Exports datafiles by platform and sensor names. It asks user to select an existing
-        Platform first. Then, it finds all datafile objects which include the selected Platform.
-        Creates a dynamic intro from the found datafile objects, runs
+        :code:`Platform` first. Then, it finds all datafile objects which include the selected
+        :code:`Platform`. Creates a dynamic intro (menu) from the found datafile objects, runs
         :code:`ExportByPlatformNameShell`
         """
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:

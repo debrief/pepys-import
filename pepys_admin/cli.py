@@ -8,7 +8,7 @@ from pepys_import.utils.error_handling import handle_database_errors
 
 def main():
     """
-    Main function which parses the command line arguments, creates a DataStore object and
+    Main function which parses the command line arguments, creates a :code:`DataStore` object and
     calls :code:`run_admin_shell` to open a shell.
     """
     db_help = (

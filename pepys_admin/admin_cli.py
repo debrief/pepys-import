@@ -54,7 +54,7 @@ class AdminShell(cmd.Cmd):
         self.cfg.attributes["connection"] = data_store.engine
 
     def do_export(self):
-        """Runs the :code:`ExportShell` to export datafiles."""
+        """Runs the :code:`ExportShell` which offers to export datafiles."""
         print("-" * 61)
         export_shell = ExportShell(self.data_store)
         export_shell.cmdloop()
@@ -99,7 +99,7 @@ class AdminShell(cmd.Cmd):
         command.current(self.cfg, verbose=True)
 
     def do_migrate(self):
-        """Runs Alembic's upgrade command to migrate the database to the latest version."""
+        """Runs Alembic's :code:`upgrade` command to migrate the database to the latest version."""
         print("Alembic migration command running, see output below.")
         try:
             command.upgrade(self.cfg, "head")
