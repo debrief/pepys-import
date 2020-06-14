@@ -267,7 +267,7 @@ please open your migration script and add :code:`spatial_index=False` argument t
 
     # Change this column
     geometry = deferred(Column(Geometry(geometry_type="GEOMETRY", management=True), nullable=False))
-    # Add spatial_index
+    # Add spatial_index=False parameter
     geometry = deferred(
         Column(
             Geometry(geometry_type="GEOMETRY", management=True, spatial_index=False), nullable=False
