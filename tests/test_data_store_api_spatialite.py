@@ -779,6 +779,7 @@ class FirstConnectionTestCase(TestCase):
         assert "ERROR: SQL error when communicating with database" in output
         assert "Please check your database file and the config file's database section." in output
         assert "Current database URL: 'sqlite+pysqlite://:@:0/" in output
+        assert "__init__.py" in output
 
 
 if __name__ == "__main__":
