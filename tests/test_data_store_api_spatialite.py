@@ -1,6 +1,8 @@
 import os
 import unittest
+from contextlib import redirect_stdout
 from datetime import datetime
+from io import StringIO
 from unittest import TestCase
 
 import pytest
@@ -758,6 +760,27 @@ class SynonymsTestCase(TestCase):
 
         with pytest.raises(Exception):
             self.store.add_to_synonyms("GeometrySubTypes", "TestName", "TestEntity", "TestChangeID")
+
+
+class FirstConnectionTestCase(TestCase):
+    def test_data_store_fails_at_the_beginning(self):
+        temp_output = StringIO()
+        with pytest.raises(SystemExit), redirect_stdout(temp_output):
+            DataStore(
+                db_host="",
+                db_username="",
+                db_password="",
+                db_port=0,
+                db_name="test_data_store_api_spatialite.py",  # Give a file that is not a database
+                db_type="sqlite",
+            )
+        output = temp_output.getvalue()
+        assert "ERROR: SQL error when communicating with database" in output
+        assert "Please check your database file and the config file's database section." in output
+        assert (
+            "Current database URL: 'sqlite+pysqlite://:@:0/test_data_store_api_spatialite.py'"
+            in output
+        )
 
 
 if __name__ == "__main__":
