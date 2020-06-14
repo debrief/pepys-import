@@ -7,7 +7,7 @@ from iterfzf import iterfzf
 from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion import PathCompleter
 
-from pepys_admin.merge import merge_all_tables
+from pepys_admin.merge import MergeDatabases
 from pepys_admin.snapshot_helpers import export_metadata_tables, export_reference_tables
 from pepys_admin.utils import get_default_export_folder
 from pepys_import.core.store.data_store import DataStore
@@ -130,8 +130,8 @@ class SnapshotShell(cmd.Cmd):
             slave_store = DataStore(
                 "", "", "", 0, db_name=temp_slave_db_path, db_type="sqlite", show_status=False
             )
-
-            merge_all_tables(self.data_store, slave_store)
+            merge_class = MergeDatabases(self.data_store, slave_store)
+            merge_class.merge_all_tables()
 
             # Delete the temporary DB
             os.remove(temp_slave_db_path)
