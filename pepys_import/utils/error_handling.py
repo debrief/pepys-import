@@ -57,6 +57,7 @@ def handle_first_connection_error(connection_string):
         sqlalchemy.exc.ProgrammingError,
         sqlalchemy.exc.OperationalError,
         sqlalchemy.exc.InvalidRequestError,
+        sqlalchemy.exc.DatabaseError,
     ) as e:
         print(
             f"SQL Exception details: {e}\n\n"
