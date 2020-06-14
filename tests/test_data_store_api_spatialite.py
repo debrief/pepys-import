@@ -765,22 +765,20 @@ class SynonymsTestCase(TestCase):
 class FirstConnectionTestCase(TestCase):
     def test_data_store_fails_at_the_beginning(self):
         temp_output = StringIO()
+        db_name = os.path.join(FILE_PATH, "__init__.py")
         with pytest.raises(SystemExit), redirect_stdout(temp_output):
             DataStore(
                 db_host="",
                 db_username="",
                 db_password="",
                 db_port=0,
-                db_name="test_data_store_api_spatialite.py",  # Give a file that is not a database
+                db_name=db_name,  # Give a file that is not a database
                 db_type="sqlite",
             )
         output = temp_output.getvalue()
         assert "ERROR: SQL error when communicating with database" in output
         assert "Please check your database file and the config file's database section." in output
-        assert (
-            "Current database URL: 'sqlite+pysqlite://:@:0/test_data_store_api_spatialite.py'"
-            in output
-        )
+        assert "Current database URL: 'sqlite+pysqlite://:@:0/" in output
 
 
 if __name__ == "__main__":
