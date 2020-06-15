@@ -105,10 +105,12 @@ class EAGImporter(Importer):
             # Platform is based on the callsign - the user will link this as a synonym to a defined Platform
             platform = data_store.get_platform(platform_name=callsign, change_id=change_id,)
 
-            # Sensor Type is always fixed to GPS
-            sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
-            sensor = platform.get_sensor(
-                data_store=data_store, sensor_type=sensor_type, change_id=change_id,
+            sensor = self.get_cached_sensor(
+                data_store=data_store,
+                sensor_name=None,
+                sensor_type=None,
+                platform_id=platform.platform_id,
+                change_id=change_id,
             )
             state = datafile.create_state(data_store, platform, sensor, timestamp, self.short_name)
 
