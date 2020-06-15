@@ -101,7 +101,7 @@ class AdminShell(cmd.Cmd):
     def do_migrate(self):
         """Runs Alembic's :code:`upgrade` command to migrate the database to the latest version."""
         confirmation = input(
-            "Your database's schema is going to be changed. Are you sure to continue? (Y/n) "
+            "Your database schema is going to be updated. Are you sure to continue? (Y/n) "
         )
         if confirmation.lower() == "y":
             print("Alembic migration command running, see output below.")
