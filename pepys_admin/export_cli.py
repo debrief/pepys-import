@@ -11,6 +11,8 @@ from pepys_import.utils.data_store_utils import is_schema_created
 
 
 class ExportShell(cmd.Cmd):
+    """Offers to export datafiles by name, by platform and sensor"""
+
     intro = """--- Menu ---
     (1) Export by name
     (2) Export by Platform and sensor
@@ -21,6 +23,7 @@ class ExportShell(cmd.Cmd):
 
     @staticmethod
     def do_cancel():
+        """Returns to the previous menu"""
         print("Returning to the previous menu...")
 
     def __init__(self, data_store):
@@ -34,7 +37,7 @@ class ExportShell(cmd.Cmd):
         }
 
     def do_export(self):
-        """Start the export process"""
+        """Exports datafiles by name."""
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
@@ -76,6 +79,11 @@ class ExportShell(cmd.Cmd):
             print(f"Please enter a valid input.")
 
     def do_export_by_platform_name(self):
+        """Exports datafiles by platform and sensor names. It asks user to select an existing
+        :code:`Platform` first. Then, it finds all datafile objects which include the selected
+        :code:`Platform`. Creates a dynamic intro (menu) from the found datafile objects, runs
+        :code:`ExportByPlatformNameShell`
+        """
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
@@ -114,7 +122,7 @@ class ExportShell(cmd.Cmd):
         export_platform.cmdloop(intro=text)
 
     def do_export_all(self):
-        """Start the export all datafiles process"""
+        """Exports all datafiles."""
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
         export_flag = input("Do you want to export all Datafiles. (Y/n)\n")
@@ -170,6 +178,8 @@ class ExportShell(cmd.Cmd):
 
 
 class ExportByPlatformNameShell(cmd.Cmd):
+    """Offers to export datafiles by platform and sensor"""
+
     prompt = "(pepys-admin) (export by platform) "
 
     def __init__(self, data_store, options, objects):
@@ -180,9 +190,11 @@ class ExportByPlatformNameShell(cmd.Cmd):
 
     @staticmethod
     def do_cancel():
+        """Returns to the previous menu"""
         print("Returning to the previous menu...")
 
     def do_export(self, option):
+        """Asks user for a file name, then calls :code:`DataStore.export_datafile` to export Datafiles."""
         datafile_id = option["datafile_id"]
         sensor_id = option.get("sensor_id")  # May be missing if it's a Comment object
         platform_id = option.get("platform_id")  # May be missing if it's a State or Contact object

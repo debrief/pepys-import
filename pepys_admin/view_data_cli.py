@@ -18,6 +18,8 @@ def bottom_toolbar():
 
 
 class ViewDataShell(cmd.Cmd):
+    """Offers to view table and run SQL."""
+
     intro = """--- Menu ---
     (1) View Table
     (2) Run SQL
@@ -36,9 +38,13 @@ class ViewDataShell(cmd.Cmd):
 
     @staticmethod
     def do_cancel():
+        """Returns to the previous menu"""
         print("Returning to the previous menu...")
 
     def do_view_table(self):
+        """Asks user to select a table name. Converts table name to class name,
+        fetches the first 50 objects, and prints them in table format.
+        """
         primary_key_field = None
         headers = list()
         associated_attributes = list()
@@ -135,6 +141,7 @@ class ViewDataShell(cmd.Cmd):
         print(res)
 
     def do_run_sql(self):
+        """Executes the input. Prints the results of the query in table format."""
         query = prompt(
             "> ", multiline=True, bottom_toolbar=bottom_toolbar, lexer=PygmentsLexer(SqlLexer)
         )
