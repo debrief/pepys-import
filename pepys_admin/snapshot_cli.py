@@ -16,6 +16,8 @@ from pepys_import.utils.data_store_utils import is_schema_created
 
 
 class SnapshotShell(cmd.Cmd):
+    """Offers to create snapshot with Reference data and create snapshot with reference data & metadata."""
+
     intro = """--- Menu ---
     (1) Create snapshot with Reference data
     (2) Create snapshot with Reference data & Metadata
@@ -64,6 +66,7 @@ class SnapshotShell(cmd.Cmd):
         return destination_store, path
 
     def do_export_reference_data(self):
+        """Exports reference data."""
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
@@ -73,6 +76,7 @@ class SnapshotShell(cmd.Cmd):
         print(f"Reference tables are successfully exported!\nYou can find it here: '{path}'.")
 
     def do_export_reference_data_and_metadata(self):
+        """Exports reference data and metadata."""
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
@@ -143,6 +147,7 @@ class SnapshotShell(cmd.Cmd):
 
     @staticmethod
     def do_cancel():
+        """Returns to the previous menu"""
         print("Returning to the previous menu...")
 
     def default(self, line):
