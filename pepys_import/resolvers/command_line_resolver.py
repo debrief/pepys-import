@@ -204,7 +204,7 @@ class CommandLineResolver(DataResolver):
             )
             current_values += "\n"
         else:
-            objects = data_store.session.query(db_class).all()
+            objects = data_store.session.query(db_class).limit(7).all()
         objects_dict = {obj.name: obj for obj in objects}
         # CamelCase table names should be split into words, separated by "-" and converted to
         # lowercase for matching with DataStore add methods (i.e. PlatformTypes -> platform_types)
@@ -214,8 +214,7 @@ class CommandLineResolver(DataResolver):
             .lower()
             .replace(" ", "_")
         )
-        if len(objects_dict) <= 7:
-            options.extend(objects_dict)
+        options.extend(objects_dict)
 
         def is_valid_dynamic(option):
             return option in [str(i) for i in range(1, len(options) + 1)] or option == "."
