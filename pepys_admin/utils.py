@@ -120,14 +120,6 @@ def make_query_for_all_data_columns(table_object, comparison_object, session):
     return query
 
 
-def table_name_to_class_name(table_name):
-    """Converts a table name which is plural (eg. PlatformTypes) into a class name which is singular (eg. PlatformType)."""
-    if table_name.endswith("ies"):
-        return table_name[:-3] + "y"
-    elif table_name.endswith("s"):
-        return table_name[:-1]
-
-
 def get_name_for_obj(obj):
     """Return a 'name' field for an object. Most objects have a field called `name`, so we try this first.
     If this fails, we try `reference` (for Datafiles) and `synonym` (for Synonyms), otherwise we just return

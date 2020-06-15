@@ -12,10 +12,10 @@ from pepys_admin.utils import (
     make_query_for_unique_cols_or_all,
     print_names_added,
     statistics_to_table_data,
-    table_name_to_class_name,
 )
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 
 class MergeDatabases:
@@ -41,6 +41,7 @@ class MergeDatabases:
 
         added_names = {}
 
+        print("Merging reference tables")
         for ref_table in tqdm(reference_table_names):
             id_results = self.merge_reference_table(ref_table)
             self.update_synonyms_table(id_results["modified"])
@@ -156,6 +157,7 @@ class MergeDatabases:
 
         added_names = {}
 
+        print("Merging metadata tables")
         for met_table in tqdm(metadata_table_names):
             id_results = self.merge_metadata_table(met_table)
             self.update_synonyms_table(id_results["modified"])
@@ -450,6 +452,7 @@ class MergeDatabases:
                 # Split the IDs list up into 100 at a time, as otherwise the SQL query could get longer
                 # than SQLite or Postgres allows - as it'll have a full UUID string in it for each
                 # datafile ID
+                print(f"Merging measurement table {table_object_name}")
                 for datafile_ids_chunk in tqdm(self.split_list(added_datafile_ids)):
                     # Search for all slave measurement table entries with IDs in this list
                     results = (
@@ -482,6 +485,7 @@ class MergeDatabases:
 
         n_added = {}
 
+        print("Merging measurement tables")
         for measurement_table_name in tqdm(measurement_table_names):
             n_added[measurement_table_name] = self.merge_measurement_table(
                 measurement_table_name, added_datafile_ids
@@ -511,6 +515,7 @@ class MergeDatabases:
                     self.slave_store.session.query(slave_table).options(undefer("*")).all()
                 )
 
+                print("Preparing to merge Logs and Changes")
                 for slave_entry in tqdm(slave_entries):
                     guid = slave_entry.log_id
 
@@ -569,6 +574,7 @@ class MergeDatabases:
                 # Split the IDs list up into 100 at a time, as otherwise the SQL query could get longer
                 # than SQLite or Postgres allows - as it'll have a full UUID string in it for each
                 # change ID
+                print("Merging Changes")
                 for change_ids_chunk in tqdm(self.split_list(list(changes_to_add))):
                     # Search for all slave Change entries with IDs in this list
                     results = (
@@ -598,6 +604,7 @@ class MergeDatabases:
                 # Split the IDs list up into 100 at a time, as otherwise the SQL query could get longer
                 # than SQLite or Postgres allows - as it'll have a full UUID string in it for each
                 # change ID
+                print("Merging Logs")
                 for log_ids_chunk in tqdm(self.split_list(logs_to_add)):
                     # Search for all slave Change entries with IDs in this list
                     results = (

@@ -108,14 +108,13 @@ class SnapshotShell(cmd.Cmd):
                 completer=file_completer,
                 complete_while_typing=True,
             )
-            print(f"DB path = {slave_db_path}")
             if os.path.exists(slave_db_path):
                 break
             else:
                 print("Invalid path entered, please try again")
 
         confirmation = input(
-            f"Database to merge: {slave_db_path}"
+            f"Database to merge: {slave_db_path}\n"
             f"Merging will alter your main database, are you sure you want to merge? (y/n)"
         )
         if confirmation.lower() == "y":
