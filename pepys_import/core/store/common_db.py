@@ -14,6 +14,7 @@ from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 from pepys_import.utils.data_store_utils import shorten_uuid
 from pepys_import.utils.import_utils import import_validators
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
 LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
 LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
@@ -501,6 +502,9 @@ class LogMixin:
     @declared_attr
     def change_reason(self):
         return association_proxy("change", "reason")
+
+    def __repr__(self):
+        return f"Log(log_id={shorten_uuid(self.log_id)}, table={self.table}, id={shorten_uuid(self.id)}, change_id={shorten_uuid(self.change_id)})"
 
 
 class TaggedItemMixin:
@@ -1500,3 +1504,17 @@ class ActivationMixin:
     @right_arc.expression
     def right_arc(self):
         return self._right_arc
+
+
+class ReferenceRepr:
+    def __repr__(self):
+        primary_key_col_name = get_primary_key_for_table(self)
+        return (
+            f"{self.__class__.__name__}(id={shorten_uuid(getattr(self, primary_key_col_name))} "
+            f"name={self.name})"
+        )
+
+
+class SynonymMixin:
+    def __repr__(self):
+        return f"Synonym(id={shorten_uuid(self.synonym_id)}, table={self.table}, entity={shorten_uuid(self.entity)}, synonym={self.synonym})"

@@ -7,7 +7,7 @@ from pepys_import.core.store import sqlite_db
 from pepys_import.core.store.constants import *
 from pepys_import.utils.table_name_utils import (
     find_foreign_key_table_names_recursively,
-    make_table_name_singular,
+    table_name_to_class_name,
 )
 
 TABLE_NAMES = [
@@ -52,7 +52,7 @@ TABLE_NAMES = [
     "table_name", TABLE_NAMES,
 )
 def test_make_table_names_singular(table_name):
-    table = make_table_name_singular(table_name)
+    table = table_name_to_class_name(table_name)
     table_obj = getattr(sqlite_db, table)
     assert isinstance(table_obj, DeclarativeMeta) is True
 
@@ -61,7 +61,7 @@ def test_make_table_names_singular(table_name):
     "table_name", ["alembic_version"],
 )
 def test_make_table_names_singular_alembic_version(table_name):
-    table = make_table_name_singular(table_name)
+    table = table_name_to_class_name(table_name)
     assert table == "alembic_version"
 
 

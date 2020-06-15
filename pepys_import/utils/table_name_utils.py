@@ -1,10 +1,9 @@
-from pepys_import.core.store import constants, sqlite_db
+from pepys_import.core.store import constants
 
 
-def make_table_name_singular(table_name):
+def table_name_to_class_name(table_name):
     """
-        Converts a table name which is plural to a singular class name.
-
+    Converts a table name which is plural to a singular class name.
     :param table_name: Name of a table
     :type table_name: String
     :return: Returns the singular class name

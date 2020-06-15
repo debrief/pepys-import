@@ -1,3 +1,4 @@
+import sys
 from contextlib import contextmanager
 
 import sqlalchemy
@@ -46,3 +47,23 @@ def handle_status_errors():
             "Please check your database structure is up-to-date with that expected "
             "by the version of Pepys you have installed.\n"
         )
+
+
+@contextmanager
+def handle_first_connection_error(connection_string):
+    try:
+        yield
+    except (
+        sqlalchemy.exc.ProgrammingError,
+        sqlalchemy.exc.OperationalError,
+        sqlalchemy.exc.InvalidRequestError,
+        sqlalchemy.exc.DatabaseError,
+    ) as e:
+        print(
+            f"SQL Exception details: {e}\n\n"
+            "ERROR: SQL error when communicating with database\n"
+            f"Please check your database file and the config file's database section.\n"
+            f"Current database URL: '{connection_string}'\n"
+            "See above for the full error from SQLAlchemy."
+        )
+        sys.exit(1)

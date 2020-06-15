@@ -4,6 +4,15 @@ from pepys_import.core.store import sqlite_db
 
 
 def row_to_dict(table_object, data_store):
+    """Converts all entities of a table into a dict of {column_name: value}s.
+
+    :param table_object: A table object
+    :type table_object: sqlalchemy.ext.declarative.DeclarativeMeta
+    :param data_store: A :class:`DataStore` object
+    :type data_store: DataStore
+    :return: Returns a dictionary with values
+    :rtype: Dict
+    """
     with data_store.session_scope():
         values = data_store.session.query(table_object).all()
         objects = list()
@@ -14,7 +23,15 @@ def row_to_dict(table_object, data_store):
 
 
 def find_sqlite_table_object(table_object, data_store):
-    """Finds and returns a SQLite Base class which will be used to create and insert values"""
+    """Finds and returns a SQLite Base class which will be used to create and insert values.
+
+    :param table_object: A table object
+    :type table_object: sqlalchemy.ext.declarative.DeclarativeMeta
+    :param data_store: A :class:`DataStore` object
+    :type data_store: DataStore
+    :return: Returns a table object
+    :rtype: sqlalchemy.ext.declarative.DeclarativeMeta
+    """
     if data_store.db_type == "postgres":
         for name, obj in inspect.getmembers(sqlite_db):
             if inspect.isclass(obj) and name == table_object.__name__:
@@ -24,6 +41,16 @@ def find_sqlite_table_object(table_object, data_store):
 
 
 def export_reference_tables(source_store, destination_store, table_objects):
+    """Copies table objects from :code:`source_store` to :code:`destination_store`.
+
+    :param source_store: A :class:`DataStore` object to fetch objects
+    :type source_store: DataStore
+    :param destination_store: A :class:`DataStore` object to copy the objects from source_store
+    :type destination_store: DataStore
+    :param table_objects: A list of table objects
+    :type table_objects: List
+    :return:
+    """
     for table_object in table_objects:
         dict_values = row_to_dict(table_object, source_store)
         object_ = find_sqlite_table_object(table_object, source_store)
@@ -32,6 +59,17 @@ def export_reference_tables(source_store, destination_store, table_objects):
 
 
 def export_metadata_tables(source_store, destination_store, privacy_ids):
+    """Copies :code:`Platform`, :code:`Sensor` and :code:`Synonym` objects from
+    :code:`source_store` to :code:`destination_store`.
+
+    :param source_store: A :class:`DataStore` object to fetch objects
+    :type source_store: DataStore
+    :param destination_store: A :class:`DataStore` object to copy the objects from source_store
+    :type destination_store: DataStore
+    :param privacy_ids: A list of Privacy ID's which is used to filter Platform and Sensor objects
+    :type privacy_ids: List
+    :return:
+    """
     for table_object in [
         source_store.db_classes.Platform,
         source_store.db_classes.Sensor,

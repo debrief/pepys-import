@@ -1,6 +1,8 @@
 import os
 import unittest
+from contextlib import redirect_stdout
 from datetime import datetime
+from io import StringIO
 from sqlite3 import OperationalError
 from unittest import TestCase
 
@@ -900,6 +902,44 @@ class MeasurementsTestCase(TestCase):
                 self.file.commit(self.store, self.change_id)
                 comments = self.store.session.query(self.store.db_classes.Comment).all()
                 self.assertEqual(len(comments), 1)
+
+
+@pytest.mark.postgres
+class FirstConnectionTestCase(TestCase):
+    def setUp(self) -> None:
+        self.postgres = None
+        self.store = None
+        try:
+            self.postgres = Postgresql(
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+            )
+        except RuntimeError:
+            print("PostgreSQL database couldn't be created! Test is skipping.")
+            return
+
+    def tearDown(self) -> None:
+        try:
+            self.postgres.stop()
+        except AttributeError:
+            return
+
+    def test_data_store_fails_at_the_beginning(self):
+        temp_output = StringIO()
+        with pytest.raises(SystemExit), redirect_stdout(temp_output):
+            DataStore(
+                db_name="test",
+                db_host="localhost",
+                db_username="TEST",
+                db_password="TEST",
+                db_port=55527,
+                db_type="postgres",
+            )
+        output = temp_output.getvalue()
+        assert "ERROR: SQL error when communicating with database" in output
+        assert "Please check your database file and the config file's database section." in output
+        assert (
+            "Current database URL: 'postgresql+psycopg2://TEST:TEST@localhost:55527/test'" in output
+        )
 
 
 if __name__ == "__main__":

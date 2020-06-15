@@ -7,6 +7,8 @@ DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class InitialiseShell(cmd.Cmd):
+    """Offers users to clear contents, import sample reference data and metadata, create/clear schema."""
+
     intro = """--- Menu ---
 (1) Clear database contents
 (2) Clear database schema
@@ -34,6 +36,7 @@ class InitialiseShell(cmd.Cmd):
             self.prompt = parent_shell.prompt.strip() + "/" + self.prompt
 
     def do_clear_db_contents(self):
+        """Truncates all tables in the database."""
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
@@ -41,14 +44,17 @@ class InitialiseShell(cmd.Cmd):
         print("Cleared database contents")
 
     def do_clear_db_schema(self):
+        """Deletes the schema from the database, i.e. removes all created tables"""
         self.data_store.clear_db_schema()
         print("Cleared database schema")
 
     def do_create_pepys_schema(self):
+        """Creates the tables and the schema."""
         self.data_store.initialise()
         print("Initialised database")
 
     def do_import_reference_data(self):
+        """Imports reference data from the given CSV files path"""
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
@@ -60,6 +66,7 @@ class InitialiseShell(cmd.Cmd):
             print("Reference data imported from default location")
 
     def do_import_metadata(self):
+        """Imports metadata from the given CSV files path."""
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
@@ -72,6 +79,7 @@ class InitialiseShell(cmd.Cmd):
 
     @staticmethod
     def do_cancel():
+        """Returns to the previous menu"""
         print("Returning to the previous menu...")
 
     def default(self, line):

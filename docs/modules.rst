@@ -6,4 +6,5 @@ importers
 
    pepys_import
    importers
+   pepys_admin
    
