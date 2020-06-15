@@ -168,9 +168,17 @@ class EAGImporter(Importer):
         
         All formulae taken from https://microem.ru/files/2012/08/GPS.G1-X-00006.pdf
         """
-        ecef_x = float(ecef_x_token.text)
-        ecef_y = float(ecef_y_token.text)
-        ecef_z = float(ecef_z_token.text)
+        try:
+            ecef_x = float(ecef_x_token.text)
+            ecef_y = float(ecef_y_token.text)
+            ecef_z = float(ecef_z_token.text)
+        except ValueError:
+            self.errors.append(
+                {
+                    self.error_type: f"Error: cannot parse ECEF values to floats: X: {ecef_x}, Y: {ecef_y}, Z: {ecef_z}"
+                }
+            )
+            return None, None, False
 
         # Parameters for WGS-84 ellipsoid
         a = 6378137
