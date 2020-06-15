@@ -40,14 +40,14 @@ class InitialiseShell(cmd.Cmd):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
-        confirmation = input("Are you sure you wish to clear the contents of all tables? (Y/n) ")
+        confirmation = input("Are you sure you wish to clear the contents of all tables? (y/N) ")
         if confirmation.lower() == "y":
             self.data_store.clear_db_contents()
             print("Cleared database contents")
 
     def do_clear_db_schema(self):
         """Deletes the schema from the database, i.e. removes all created tables"""
-        confirmation = input("Are you sure you wish to completely wipe the database? (Y/n) ")
+        confirmation = input("Are you sure you wish to completely wipe the database? (y/N) ")
         if confirmation.lower() == "y":
             self.data_store.clear_db_schema()
             print("Cleared database schema")
