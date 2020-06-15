@@ -100,11 +100,17 @@ class AdminShell(cmd.Cmd):
 
     def do_migrate(self):
         """Runs Alembic's :code:`upgrade` command to migrate the database to the latest version."""
-        print("Alembic migration command running, see output below.")
-        try:
-            command.upgrade(self.cfg, "head")
-        except Exception as e:
-            print(f"Exception details: {e}\n\nERROR: Alembic error when migrating the database!")
+        confirmation = input(
+            "Your database's schema is going to be changed. Are you sure to continue? (Y/n) "
+        )
+        if confirmation.lower() == "y":
+            print("Alembic migration command running, see output below.")
+            try:
+                command.upgrade(self.cfg, "head")
+            except Exception as e:
+                print(
+                    f"Exception details: {e}\n\nERROR: Alembic error when migrating the database!"
+                )
 
     def do_view_data(self):
         """Runs the :code:`ViewDataShell` which offers to view a table and run SQL."""

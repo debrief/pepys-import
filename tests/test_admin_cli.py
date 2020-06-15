@@ -155,7 +155,8 @@ class InitialiseShellTestCase(unittest.TestCase):
         self.admin_shell = AdminShell(self.store, csv_path=CSV_PATH)
         self.initialise_shell = InitialiseShell(self.store, self.admin_shell, CSV_PATH)
 
-    def test_do_clear_db_contents(self):
+    @patch("pepys_admin.initialise_cli.input", return_value="Y")
+    def test_do_clear_db_contents(self, patched_input):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.initialise_shell.do_import_reference_data()
@@ -165,7 +166,8 @@ class InitialiseShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Cleared database contents" in output
 
-    def test_do_clear_db_schema(self):
+    @patch("pepys_admin.initialise_cli.input", return_value="Y")
+    def test_do_clear_db_schema(self, patched_input):
         assert is_schema_created(self.store.engine, self.store.db_type) is True
 
         self.initialise_shell.do_clear_db_schema()
@@ -796,7 +798,8 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
 
 
 @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH})
-def test_do_migrate():
+@patch("pepys_admin.admin_cli.input", return_value="Y")
+def test_do_migrate(patched_input):
     reload(config)
     temp_output = StringIO()
     new_datastore = DataStore("", "", "", 0, "new_db.db", "sqlite")
