@@ -12,10 +12,10 @@ from pepys_admin.utils import (
     make_query_for_unique_cols_or_all,
     print_names_added,
     statistics_to_table_data,
-    table_name_to_class_name,
 )
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 
 class MergeDatabases:
