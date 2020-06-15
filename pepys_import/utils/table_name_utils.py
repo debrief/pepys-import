@@ -30,13 +30,15 @@ def find_foreign_key_table_names_recursively(table_obj, table_names):
     :param table_names: List
     :return:
     """
+    from pepys_import.core.store import sqlite_db
+
     foreign_keys = list(table_obj.__table__.foreign_keys)
     if not foreign_keys:
         return table_names
     else:
         for foreign_key in foreign_keys:
             foreign_key_table = foreign_key.target_fullname.split(".")[0]
-            foreign_key_table = make_table_name_singular(foreign_key_table)
+            foreign_key_table = table_name_to_class_name(foreign_key_table)
             if foreign_key_table not in table_names:
                 table_names.append(foreign_key_table)
                 foreign_key_table_obj = getattr(sqlite_db, foreign_key_table)

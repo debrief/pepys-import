@@ -11,7 +11,7 @@ from sqlalchemy.orm import RelationshipProperty, class_mapper, load_only
 from tabulate import tabulate
 
 from pepys_import.core.store import constants
-from pepys_import.utils.table_name_utils import make_table_name_singular
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 
 def bottom_toolbar():
@@ -71,7 +71,7 @@ class ViewDataShell(cmd.Cmd):
         if selected_table is None:
             return
         # Table names are plural in the database, therefore make it singular
-        table = make_table_name_singular(selected_table)
+        table = table_name_to_class_name(selected_table)
         if table == constants.ALEMBIC_VERSION:
             with self.data_store.engine.connect() as connection:
                 if self.data_store.db_type == "postgres":

@@ -87,7 +87,7 @@ def test_make_table_names_singular_alembic_version(table_name):
 )
 def test_find_foreign_key_table_names(table_name, actual_result):
     tables = list()
-    table = make_table_name_singular(table_name)
+    table = table_name_to_class_name(table_name)
     table_obj = getattr(sqlite_db, table)
     find_foreign_key_table_names_recursively(table_obj, tables)
     # They should have the same values but they might not have the same order.

@@ -24,7 +24,7 @@ from pepys_import.utils.data_store_utils import (
 from pepys_import.utils.sqlite_utils import load_spatialite
 from pepys_import.utils.table_name_utils import (
     find_foreign_key_table_names_recursively,
-    make_table_name_singular,
+    table_name_to_class_name,
 )
 
 DIR_PATH = os.path.dirname(__file__)
@@ -263,7 +263,7 @@ BaseSpatiaLite = declarative_base(metadata=Metadata)
             if match:
                 table_name = match.group(2)
                 # Table names are plural in the database, therefore make it singular
-                table = make_table_name_singular(table_name)
+                table = table_name_to_class_name(table_name)
                 # Get class from pepys_import.core.store.sqlite_db
                 table_obj = getattr(sqlite_db, table)
                 # Add the class definition's string to the set
