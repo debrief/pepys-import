@@ -51,7 +51,7 @@ class EAGImporter(Importer):
 
         # Extract date of recording and callsign from filename
         try:
-            date_of_recording_str, callsign = filename.split("_")
+            date_of_recording_str, callsign = filename.replace(".eag", "").split("_")
         except ValueError:
             self.errors.append(
                 {self.error_type: f"Error in filename - cannot extract date and callsign"}
