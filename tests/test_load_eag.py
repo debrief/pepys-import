@@ -13,9 +13,7 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data/20200305
 
 class TestLoadEAG(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("eag.sqlite"):
-            os.remove("eag.sqlite")
-        self.store = DataStore("", "", "", 0, "eag.sqlite", db_type="sqlite")
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
     def tearDown(self):
