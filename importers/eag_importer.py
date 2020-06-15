@@ -14,6 +14,14 @@ from pepys_import.utils.unit_utils import convert_absolute_angle
 
 class EAGImporter(Importer):
     def __init__(self):
+        # The TIME_OFFSET is a value in seconds to be added to
+        # the timestamp value calculated from the 'milliseconds since Sunday'
+        # column (Column A). This defaults to zero, but can be altered
+        # to adjust the time value so it matches Column K
+        # For example, TIME_OFFSET of -16, will subtract 16 seconds from
+        # the calculated time, which would mean it would match the
+        # GPS time in Column K
+        self.TIME_OFFSET = 0
         super().__init__(
             name="EAG Format Importer",
             validation_level=constants.BASIC_LEVEL,
@@ -23,7 +31,7 @@ class EAGImporter(Importer):
     # EAG files end with .eag.txt
     # BUT, can_load_this_type only provides the file extension
     # which the Python splitext function thinks is .TXT - as it just
-    # looks for the last .
+    # looks for the last dot.
     # Therefore, we check for a file extension of .TXT AND
     # a filename ending with .EAG (in the next function)
     def can_load_this_type(self, suffix):
@@ -52,7 +60,7 @@ class EAGImporter(Importer):
 
         # Get date of last Sunday, ready for timestamp calculation later
         try:
-            last_sun_date = self.get_last_sunday(date_of_recording_str)
+            last_sun_date = self.get_previous_sunday(date_of_recording_str)
         except Exception:
             self.errors.append(
                 {self.error_type: f"Error in filename - cannot parse date {date_of_recording_str}"}
@@ -60,6 +68,9 @@ class EAGImporter(Importer):
             return
 
         for line_number, line in enumerate(tqdm(file_object.lines()), 1):
+            if line.text.strip().startswith("#VALUE"):
+                # Skip line
+                continue
             tokens = line.tokens(line.WHITESPACE_DELIM)
 
             if len(tokens) != 11:
@@ -132,7 +143,7 @@ class EAGImporter(Importer):
                 state.heading = heading
                 heading_token.record(self.name, "heading", heading)
 
-    def get_last_sunday(self, date_of_recording_str):
+    def get_previous_sunday(self, date_of_recording_str):
         format_str = "%Y%m%d"
         date_of_recording = datetime.datetime.strptime(date_of_recording_str, format_str)
 
@@ -145,11 +156,15 @@ class EAGImporter(Importer):
     def calculate_timestamp(self, time_since_sun_ms, last_sun_date):
         timestamp = last_sun_date + datetime.timedelta(milliseconds=time_since_sun_ms)
 
+        timestamp = timestamp + datetime.timedelta(seconds=self.TIME_OFFSET)
+
         return timestamp
 
     def convert_ecef_to_location_and_height(self, ecef_x_token, ecef_y_token, ecef_z_token):
         """Converts Earth-Centred, Earth-Fixed X, Y and Z co-ordinates into a Location object containing
-        latitude and longitude, plus a height value in metres
+        latitude and longitude, plus a height value in metres.
+
+        X, Y and Z should be provided in metres.
         
         All formulae taken from https://microem.ru/files/2012/08/GPS.G1-X-00006.pdf
         """
@@ -176,7 +191,9 @@ class EAGImporter(Importer):
 
         latitude = math.degrees(math.atan(top_lat_frac / bottom_lat_frac))
 
-        N = a / (math.sqrt(1 - (e ** 2) * (math.sin(latitude) ** 2)))
+        Ntemp = math.sqrt(1 - (e ** 2) * (math.sin(math.radians(latitude)) ** 2))
+
+        N = a / Ntemp
 
         height = (p / math.cos(math.radians(latitude))) - N
 
