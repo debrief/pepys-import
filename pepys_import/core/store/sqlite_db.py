@@ -284,7 +284,7 @@ class GeometrySubType(BaseSpatiaLite):
     table_type_id = 16
 
     geo_sub_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(String(150), nullable=False)
     parent = Column(
         UUIDType, ForeignKey("GeometryTypes.geo_type_id", onupdate="cascade"), nullable=False
     )
