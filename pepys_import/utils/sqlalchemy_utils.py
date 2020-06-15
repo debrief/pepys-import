@@ -90,3 +90,9 @@ class UUIDType(types.TypeDecorator):
             return uuid.UUID(value)
 
         return uuid.UUID(bytes=value) if self.binary else uuid.UUID(value)
+
+
+def get_primary_key_for_table(obj):
+    primary_key = obj.__table__.primary_key.columns.values()[0].name
+
+    return primary_key
