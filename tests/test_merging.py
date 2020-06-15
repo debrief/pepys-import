@@ -12,15 +12,12 @@ from testing.postgresql import Postgresql
 
 from pepys_admin.merge import MergeDatabases
 from pepys_admin.snapshot_cli import SnapshotShell
-from pepys_admin.utils import (
-    check_sqlalchemy_results_are_equal,
-    sqlalchemy_obj_to_dict,
-    table_name_to_class_name,
-)
+from pepys_admin.utils import check_sqlalchemy_results_are_equal, sqlalchemy_obj_to_dict
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 SAMPLE_DATA_PATH = os.path.join(os.path.dirname(__file__), "sample_data")
 
