@@ -33,6 +33,13 @@ class CommandLineResolver(DataResolver):
         print("Ok, adding new datafile.")
 
         datafile_name = prompt("Please enter a name: ", default=datafile_name)
+
+        if datafile_name == "":
+            print("You must provide a datafile name")
+            return self.resolve_datafile(
+                data_store, datafile_name, datafile_type, privacy, change_id
+            )
+
         # Choose Datafile Type
         if datafile_type:
             chosen_datafile_type = data_store.add_to_datafile_types(datafile_type, change_id)
@@ -594,6 +601,13 @@ class CommandLineResolver(DataResolver):
             sensor_name = ""
 
         sensor_name = prompt("Please enter a name: ", default=sensor_name)
+
+        if sensor_name == "":
+            print("You must provide a sensor name")
+            return self.add_to_sensors(
+                data_store, sensor_name, sensor_type, host_id, privacy, change_id
+            )
+
         if sensor_type:
             sensor_type = data_store.add_to_sensor_types(sensor_type, change_id)
         else:
