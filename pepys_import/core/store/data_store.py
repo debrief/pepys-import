@@ -5,7 +5,7 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from sqlalchemy import create_engine, or_
+from sqlalchemy import create_engine, inspect, or_
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker, undefer
@@ -28,6 +28,7 @@ from pepys_import.utils.data_store_utils import (
 from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_keys_on
 from pepys_import.utils.value_transforming_utils import format_datetime
 
+from ...utils.error_handling import handle_first_connection_error
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
 from .table_summary import TableSummary, TableSummarySet
@@ -91,6 +92,11 @@ class DataStore:
                 "See above for the full error from SQLAlchemy."
             )
             sys.exit(1)
+
+        # Try to connect to the engine to check if there is any problem
+        with handle_first_connection_error(connection_string):
+            inspector = inspect(self.engine)
+            _ = inspector.get_table_names()
 
         self.missing_data_resolver = missing_data_resolver
         self.welcome_text = welcome_text
