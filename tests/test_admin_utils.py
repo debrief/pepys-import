@@ -1,5 +1,4 @@
 from datetime import datetime
-from unittest.mock import patch
 
 from pepys_admin.utils import (
     check_sqlalchemy_results_are_equal,
@@ -7,7 +6,6 @@ from pepys_admin.utils import (
     make_query_for_cols,
     make_query_for_unique_cols_or_all,
     sqlalchemy_obj_to_dict,
-    table_name_to_class_name,
 )
 from pepys_import.core.store.data_store import DataStore
 
@@ -236,9 +234,3 @@ def test_make_query_for_all_data_columns():
             f"\"Platforms\".privacy_id = '{remove_dashes(platform_obj.privacy_id)}'"
             not in query_str
         )
-
-
-def test_table_name_to_class_name():
-    assert table_name_to_class_name("Synonyms") == "Synonym"
-    assert table_name_to_class_name("Platforms") == "Platform"
-    assert table_name_to_class_name("Nationalities") == "Nationality"
