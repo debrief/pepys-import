@@ -10,6 +10,8 @@ from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import RelationshipProperty, class_mapper, load_only
 from tabulate import tabulate
 
+from pepys_import.core.store import constants
+
 
 def bottom_toolbar():
     return HTML("Press <b>ESC then Enter</b> to exit!")
@@ -74,6 +76,24 @@ class ViewDataShell(cmd.Cmd):
             table = selected_table[:-3] + "y"
         else:
             table = selected_table[:-1]
+
+        if table == constants.ALEMBIC_VERSION:
+            with self.data_store.engine.connect() as connection:
+                if self.data_store.db_type == "postgres":
+                    result = connection.execute("SELECT * FROM pepys.alembic_version;")
+                else:
+                    result = connection.execute("SELECT * FROM alembic_version;")
+                    result = result.fetchall()
+                res = "Alembic Version\n"
+                res += tabulate(
+                    [[str(column) for column in row] for row in result],
+                    headers=["version_number"],
+                    tablefmt="github",
+                    floatfmt=".3f",
+                )
+                res += "\n"
+                print(res)
+            return
         # Find the class
         table_cls = getattr(self.data_store.db_classes, table)
         assert table_cls.__tablename__ == selected_table, "Table couldn't find!"

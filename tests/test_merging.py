@@ -10,16 +10,13 @@ from unittest.mock import patch
 import pytest
 from testing.postgresql import Postgresql
 
-from pepys_admin.merge import (
-    merge_all_metadata_tables,
-    merge_all_reference_tables,
-    merge_all_tables,
-    merge_metadata_table,
-    merge_reference_table,
+from pepys_admin.merge import MergeDatabases
+from pepys_admin.snapshot_cli import SnapshotShell
+from pepys_admin.utils import (
+    check_sqlalchemy_results_are_equal,
+    sqlalchemy_obj_to_dict,
     table_name_to_class_name,
 )
-from pepys_admin.snapshot_cli import SnapshotShell
-from pepys_admin.utils import check_sqlalchemy_results_are_equal, sqlalchemy_obj_to_dict
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.resolvers.default_resolver import DefaultResolver
@@ -80,6 +77,8 @@ class TestSensorTypeMerge(unittest.TestCase):
                 "Sensor1", "ST_Shared_1", "Platform1", "Private", change_id
             )
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -89,7 +88,7 @@ class TestSensorTypeMerge(unittest.TestCase):
 
     def test_sensor_type_merge(self):
         # Do the merge
-        id_results = merge_reference_table("SensorType", self.master_store, self.slave_store)
+        id_results = self.merge_class.merge_reference_table("SensorType",)
 
         master_table = self.master_store.db_classes.SensorType
         slave_table = self.slave_store.db_classes.SensorType
@@ -208,6 +207,8 @@ class TestPlatformTypeMerge(unittest.TestCase):
                 "Platform1", "123", "UK", "PT_Shared_1", "Private", change_id=change_id
             )
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -217,7 +218,7 @@ class TestPlatformTypeMerge(unittest.TestCase):
 
     def test_platform_type_merge(self):
         # Do the merge
-        id_results = merge_reference_table("PlatformType", self.master_store, self.slave_store)
+        id_results = self.merge_class.merge_reference_table("PlatformType",)
 
         master_table = self.master_store.db_classes.PlatformType
         slave_table = self.slave_store.db_classes.PlatformType
@@ -365,6 +366,8 @@ class TestMergeAllReferenceTables(unittest.TestCase):
             self.slave_store.session.add(gst1)
             self.slave_store.session.commit()
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -373,7 +376,7 @@ class TestMergeAllReferenceTables(unittest.TestCase):
             os.remove("slave.sqlite")
 
     def test_merge_all_reference_tables(self):
-        merge_all_reference_tables(self.master_store, self.slave_store)
+        self.merge_class.merge_all_reference_tables()
 
         # Check there are the right number of rows for each table
 
@@ -584,6 +587,8 @@ class TestSensorPlatformMerge(unittest.TestCase):
             self.slave_store.session.add(sensor_shared)
             self.slave_store.session.commit()
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -600,10 +605,10 @@ class TestSensorPlatformMerge(unittest.TestCase):
             ).change_id
 
         # Must merge reference tables first, so we can ensure foreign key integrity
-        merge_all_reference_tables(self.master_store, self.slave_store)
+        self.merge_class.merge_all_reference_tables()
 
         # Do the actual merge of the metadata tables
-        merge_all_metadata_tables(self.master_store, self.slave_store, merge_change_id)
+        self.merge_class.merge_all_metadata_tables()
 
         # Check there are the right number of entries in each table
         results = self.master_store.session.query(self.master_store.db_classes.SensorType).all()
@@ -782,6 +787,8 @@ class TestMergeDatafiles(unittest.TestCase):
             self.slave_store.session.add(df_obj)
             self.slave_store.session.commit()
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -797,11 +804,9 @@ class TestMergeDatafiles(unittest.TestCase):
                 reason=f"Merging from database {self.slave_store.db_name}",
             ).change_id
 
-        merge_all_reference_tables(self.master_store, self.slave_store)
+        self.merge_class.merge_all_reference_tables()
 
-        id_results = merge_metadata_table(
-            "Datafile", self.master_store, self.slave_store, merge_change_id
-        )
+        id_results = self.merge_class.merge_metadata_table("Datafile")
 
         # Check there are the right number of entries in the master database
         results = self.master_store.session.query(self.master_store.db_classes.Datafile).all()
@@ -905,6 +910,8 @@ class TestMergeStateFromImport(unittest.TestCase):
             False,
         )
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -913,7 +920,7 @@ class TestMergeStateFromImport(unittest.TestCase):
             os.remove("slave.sqlite")
 
     def test_merge_state_from_import(self):
-        merge_all_tables(self.master_store, self.slave_store)
+        self.merge_class.merge_all_tables()
 
         with self.master_store.session_scope():
             with self.slave_store.session_scope():
@@ -1046,6 +1053,8 @@ class TestMergeStateFromImport_Postgres(unittest.TestCase):
             False,
         )
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         try:
             self.postgres.stop()
@@ -1056,7 +1065,7 @@ class TestMergeStateFromImport_Postgres(unittest.TestCase):
             os.remove("slave.sqlite")
 
     def test_merge_state_from_import(self):
-        merge_all_tables(self.master_store, self.slave_store)
+        self.merge_class.merge_all_tables()
 
         with self.master_store.session_scope():
             with self.slave_store.session_scope():
@@ -1172,6 +1181,8 @@ class TestMergeStateFromImport_Idempotent_SameFile(unittest.TestCase):
             False,
         )
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -1245,12 +1256,12 @@ class TestMergeStateFromImport_Idempotent_SameFile(unittest.TestCase):
                 assert len(results) == len(self.master_gpx_states)
 
     def test_merge_state_from_import_indempotent_with_altering(self):
-        merge_all_tables(self.master_store, self.slave_store)
+        self.merge_class.merge_all_tables()
 
         self.do_checks()
 
         # Run again and check all the tests still pass
-        merge_all_tables(self.master_store, self.slave_store)
+        self.merge_class.merge_all_tables()
 
         self.do_checks()
 
@@ -1306,6 +1317,8 @@ class TestMergeStateFromImport_Idempotent_DifferentFile(unittest.TestCase):
 
         shutil.copyfile("slave.sqlite", "slave_orig.sqlite")
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -1379,14 +1392,14 @@ class TestMergeStateFromImport_Idempotent_DifferentFile(unittest.TestCase):
                 assert len(results) == len(self.master_gpx_states)
 
     def test_merge_state_from_import_indempotent_with_altering(self):
-        merge_all_tables(self.master_store, self.slave_store)
+        self.merge_class.merge_all_tables()
 
         self.do_checks()
 
         # Run again merging from the original sqlite file
         # that hasn't been altered by the merge process
         new_slave_store = DataStore("", "", "", 0, db_name="slave_orig.sqlite", db_type="sqlite")
-        merge_all_tables(self.master_store, new_slave_store)
+        self.merge_class.merge_all_tables()
 
         self.do_checks()
 
@@ -1440,6 +1453,8 @@ class TestSynonymMergeWithRefTable(unittest.TestCase):
                 "SensorTypes", "ST_Shared_1_Synonym", slave_shared_obj.sensor_type_id, change_id
             )
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -1456,8 +1471,8 @@ class TestSynonymMergeWithRefTable(unittest.TestCase):
             ).change_id
 
         # Do the merge
-        merge_all_reference_tables(self.master_store, self.slave_store)
-        merge_metadata_table("Synonym", self.master_store, self.slave_store, merge_change_id)
+        self.merge_class.merge_all_reference_tables()
+        self.merge_class.merge_metadata_table("Synonym")
 
         with self.master_store.session_scope():
             # Check the synonym entry from the slave is now in master
@@ -1634,6 +1649,8 @@ class TestSynonymMergeWithMetadataTable(unittest.TestCase):
                 "Platforms", "Platform_Shared1_Synonym", platform_shared_1.platform_id, change_id
             )
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -1642,7 +1659,7 @@ class TestSynonymMergeWithMetadataTable(unittest.TestCase):
             os.remove("slave.sqlite")
 
     def test_synonym_merge_metadata_table(self):
-        merge_all_tables(self.master_store, self.slave_store)
+        self.merge_class.merge_all_tables()
 
         with self.master_store.session_scope():
             # Check the synonym entry from the slave is now in master
@@ -1718,6 +1735,8 @@ class TestMergeLogsAndChanges(unittest.TestCase):
             False,
         )
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -1726,7 +1745,7 @@ class TestMergeLogsAndChanges(unittest.TestCase):
             os.remove("slave.sqlite")
 
     def test_merge_logs_and_changes(self):
-        merge_all_tables(self.master_store, self.slave_store)
+        self.merge_class.merge_all_tables()
 
         with self.master_store.session_scope():
             with self.slave_store.session_scope():
@@ -1864,6 +1883,8 @@ class TestMergeUpdatePlatformPrivacy(unittest.TestCase):
                 change_id=change_id,
             )
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -1872,7 +1893,7 @@ class TestMergeUpdatePlatformPrivacy(unittest.TestCase):
             os.remove("slave.sqlite")
 
     def test_merge_update_platform(self):
-        merge_all_tables(self.master_store, self.slave_store)
+        self.merge_class.merge_all_tables()
 
         # Check that the trigraph that was additional data for Platform_Shared_1 has copied across
         results = (
@@ -2079,6 +2100,8 @@ class TestExportAlterAndMerge(unittest.TestCase):
                 change_id=change_id,
             )
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -2090,7 +2113,7 @@ class TestExportAlterAndMerge(unittest.TestCase):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             # Do the merge
-            merge_all_tables(self.master_store, self.slave_store)
+            self.merge_class.merge_all_tables()
         output = temp_output.getvalue()
 
         print(output)
@@ -2361,6 +2384,8 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
                 change_id=change_id,
             )
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -2370,7 +2395,7 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
 
     def test_export_alter_merge(self):
         # Do the merge
-        merge_all_tables(self.master_store, self.slave_store)
+        self.merge_class.merge_all_tables()
 
         with self.master_store.session_scope():
             with self.slave_store.session_scope():
@@ -2492,6 +2517,8 @@ class TestExportDoNothingAndMerge(unittest.TestCase):
             "", "", "", 0, db_name="slave_exported.sqlite", db_type="sqlite"
         )
 
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -2503,7 +2530,7 @@ class TestExportDoNothingAndMerge(unittest.TestCase):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             # Do the merge
-            merge_all_tables(self.master_store, self.slave_store)
+            self.merge_class.merge_all_tables()
         output = temp_output.getvalue()
 
         print(output)
@@ -2524,3 +2551,7 @@ class TestExportDoNothingAndMerge(unittest.TestCase):
 
         # Check entries added list
         assert "No entries added" in output
+
+
+if __name__ == "__main__":
+    unittest.main()
