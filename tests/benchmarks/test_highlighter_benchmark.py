@@ -131,10 +131,12 @@ def run_highlighter_on_whole_file():
 def test_highlighter_on_whole_file_benchmark(benchmark):
     benchmark(run_highlighter_on_whole_file)
 
+    TIME_THRESHOLD = 6.5
+
     if running_on_travis():
-        if benchmark.stats.stats.mean > 6:
+        if benchmark.stats.stats.mean > TIME_THRESHOLD:
             pytest.fail(
-                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of 5s"
+                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of {TIME_THRESHOLD}s"
             )
 
     os.remove(os.path.join(DIR_PATH, "nmea_highlighted.html"))
@@ -150,8 +152,10 @@ def run_fill_char_array():
 def test_highlighter_fill_char_array_benchmark(benchmark):
     benchmark(run_fill_char_array)
 
+    TIME_THRESHOLD = 3.5
+
     if running_on_travis():
-        if benchmark.stats.stats.mean > 3.5:
+        if benchmark.stats.stats.mean > TIME_THRESHOLD:
             pytest.fail(
-                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of 3.5s"
+                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of {TIME_THRESHOLD}s"
             )

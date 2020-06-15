@@ -7,6 +7,7 @@ from sqlalchemy import func, inspect, select
 
 from paths import MIGRATIONS_DIRECTORY
 from pepys_import.resolvers.command_line_input import create_menu
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 
 def import_from_csv(data_store, path, files, change_id):
@@ -91,6 +92,7 @@ def import_synonyms(data_store, filepath, change_id):
                     )
                     continue
 
+                results = sorted(results, key=lambda x: x.identifier)
                 chosen_item = ask_user_for_synonym_link(data_store, results, values)
 
                 if chosen_item is None:
@@ -125,13 +127,6 @@ def ask_user_for_synonym_link(data_store, results, values):
         return None
     elif choice in [str(i) for i in range(1, len(options) + 1)]:
         return results[int(choice) - 1]
-
-
-def table_name_to_class_name(table_name):
-    if table_name.endswith("ies"):
-        return table_name[:-3] + "y"
-    elif table_name.endswith("s"):
-        return table_name[:-1]
 
 
 def is_schema_created(engine, db_type):

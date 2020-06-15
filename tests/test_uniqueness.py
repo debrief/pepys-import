@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 from sqlalchemy import exc
 from sqlalchemy.orm.session import sessionmaker
@@ -25,6 +27,12 @@ REFERENCE_TABLES = [
 
 
 class TestUniqueness:
+    """Test the uniqueness constraints by trying to force adding duplicate objects.
+
+    We can't do this with the normal self.store.add_to_x methods as they check
+    for existing entries first - so we have to do it with the raw classes and a raw session.
+    """
+
     def setup_class(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
@@ -59,5 +67,107 @@ class TestUniqueness:
         # Try adding with same name but different level - should still fail
         with pytest.raises(exc.IntegrityError):
             obj = self.store.db_classes.Privacy(name="Blah", level=20)
+            session.add(obj)
+            session.flush()
+
+    def test_platform_uniqueness(self):
+        with self.store.session_scope():
+            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+            pt_id = self.store.add_to_platform_types(
+                "PlatformType1", change_id=change_id
+            ).platform_type_id
+            nat_id = self.store.add_to_nationalities("UK", change_id=change_id).nationality_id
+            priv_id = self.store.add_to_privacies("Private", 0, change_id=change_id).privacy_id
+
+        db_session = sessionmaker(bind=self.store.engine)
+        session = db_session()
+
+        # Add privacy
+        obj = self.store.db_classes.Platform(
+            name="Platform1",
+            identifier="P123",
+            nationality_id=nat_id,
+            platform_type_id=pt_id,
+            privacy_id=priv_id,
+        )
+        session.add(obj)
+        session.flush()
+
+        # Try adding with same name but different level - should still fail
+        with pytest.raises(exc.IntegrityError):
+            obj = self.store.db_classes.Platform(
+                name="Platform1",
+                identifier="P123",
+                nationality_id=nat_id,
+                platform_type_id=pt_id,
+                privacy_id=priv_id,
+            )
+            session.add(obj)
+            session.flush()
+
+    def test_sensor_uniqueness(self):
+        with self.store.session_scope():
+            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+            self.store.add_to_platform_types("PlatformType1", change_id=change_id).platform_type_id
+            self.store.add_to_nationalities("UK", change_id=change_id).nationality_id
+            priv_id = self.store.add_to_privacies("Private", 0, change_id=change_id).privacy_id
+            st_id = self.store.add_to_sensor_types(
+                "SensorType1", change_id=change_id
+            ).sensor_type_id
+            plat_id = self.store.add_to_platforms(
+                "Platform1", "P123", "UK", "PlatformType1", "Private", change_id=change_id
+            ).platform_id
+        db_session = sessionmaker(bind=self.store.engine)
+        session = db_session()
+
+        # Add privacy
+        obj = self.store.db_classes.Sensor(
+            name="Sensor1", sensor_type_id=st_id, host=plat_id, privacy_id=priv_id
+        )
+        session.add(obj)
+        session.flush()
+
+        # Try adding with same name but different level - should still fail
+        with pytest.raises(exc.IntegrityError):
+            obj = self.store.db_classes.Sensor(
+                name="Sensor1", sensor_type_id=st_id, host=plat_id, privacy_id=priv_id
+            )
+            session.add(obj)
+            session.flush()
+
+    def test_datafile_uniqueness(self):
+        with self.store.session_scope():
+            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+            priv_id = self.store.add_to_privacies("Private", 0, change_id=change_id).privacy_id
+            dft_id = self.store.add_to_datafile_types(
+                "DatafileType1", change_id=change_id
+            ).datafile_type_id
+        db_session = sessionmaker(bind=self.store.engine)
+        session = db_session()
+
+        # Add privacy
+        obj = self.store.db_classes.Datafile(
+            simulated=True,
+            privacy_id=priv_id,
+            datafile_type_id=dft_id,
+            reference="Test",
+            size=1234,
+            hash="TestHash",
+            url="TestURL",
+        )
+        session.add(obj)
+        session.flush()
+
+        # Try adding with same name but different level - should still fail
+        with pytest.raises(exc.IntegrityError):
+            obj = self.store.db_classes.Datafile(
+                simulated=True,
+                privacy_id=priv_id,
+                datafile_type_id=dft_id,
+                reference="Test",
+                size=1234,
+                hash="TestHash",
+                url="TestURL",
+            )
             session.add(obj)
             session.flush()
