@@ -343,7 +343,7 @@ class GeometrySubType(BasePostGIS):
     )
 
     geo_sub_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(String(150), nullable=False)
     parent = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.GeometryTypes.geo_type_id", onupdate="cascade"),
