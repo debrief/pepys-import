@@ -2,5 +2,5 @@
 # for Pepys
 conda install -y -c conda-forge libspatialite
 pip install git+git://github.com/robintw/notebook_xterm.git#egg=notebook_xterm
-sudo apt-get install -y tree 
+apt-get install -y tree 
 echo "PS1='$ '" >>  ~/.bashrc
