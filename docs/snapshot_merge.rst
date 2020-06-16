@@ -40,20 +40,21 @@ are automatically managed. Full technical details of the merging process are ava
 Example workflow
 ----------------
 
-1. A Pepys installation is set up at the analysis headquarters, with a Postgres database containing
+1. A Pepys installation is use at an analysis facility, with a Master Postgres database containing
    significant volumes of data.
 
-2. An analyst is deployed on a ship, and needs to be able to perform analysis of data using Pepys
-   while on-board, without any connection to the analysis headquarters.
+2. An analyst is to be deployed offsite, and needs to be able to perform analysis of data using Pepys, 
+   but without any connection to the Master database.
 
-3. A snapshot is created before the analyst leaves, containing reference and metadata from the
-   analysis headquarters database.
+3. A snapshot is created before the analyst departs, containing reference and metadata from the
+   Master database.  Since this snapshot contains the reference & metadata, any new data added
+   will be consistent with that in the Master.
 
-4. This snapshot is copied to a laptop for the analyst to take on-board ship, and Pepys is set up
+4. This snapshot is copied to a laptop for the analyst to taken offsite, and Pepys is configured
    on that laptop to connect to this snapshot database.
 
-5. While on-board the ship, the analysis imports new datafiles to Pepys, and creates new metadata
+5. While offsite, the analysis imports new datafiles to Pepys, and creates new metadata
    and reference entries such as Platforms, Sensors and Platform Types.
 
-6. The analyst returns from the ship to the analysis headquarters, and uses the merge functionality
-   to bring all of the data from their database into the main headquarters database.
+6. The analyst returns from the offsite deployment, and uses the merge functionality
+   to bring all of the data from their database into the Master database.
