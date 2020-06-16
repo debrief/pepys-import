@@ -9,21 +9,50 @@ from pepys_import.utils.unit_utils import (
 class EnhancedValidator:
     """Enhanced validator serve to verify the lat/long, in addition to the course/speed/heading"""
 
-    def __init__(self, current_object, errors, parser_name, prev_object=None):
+    def __init__(self):
+        self.name = "Enhanced Validator"
+
+    def validate(self, current_object, errors, parser_name, prev_object=None):
+        orig_errors_length = len(errors)
+
         error_type = (
-            parser_name + f"-Enhanced Validation Error on Timestamp:"
+            f"{parser_name} - {self.name} Error on Timestamp:"
             f"{str(current_object.time)}, Sensor:"
             f"{current_object.sensor_name}, Platform:{current_object.platform_name}"
         )
-        heading = current_object.heading if hasattr(current_object, "heading") else None
-        course = current_object.course if hasattr(current_object, "course") else None
-        speed = current_object.speed if hasattr(current_object, "speed") else None
-        location = current_object.location if hasattr(current_object, "location") else None
-        time = current_object.time if hasattr(current_object, "time") else None
+        try:
+            heading = current_object.heading
+        except AttributeError:
+            heading = None
+
+        try:
+            course = current_object.course
+        except AttributeError:
+            course = None
+
+        try:
+            speed = current_object.speed
+        except AttributeError:
+            speed = None
+
+        try:
+            location = current_object.location
+        except AttributeError:
+            location = None
+
+        # Doesn't need a try-catch as time is a compulsory field, created
+        # when a state is initialised
+        time = current_object.time
 
         if prev_object:
-            prev_location = prev_object.location if hasattr(prev_object, "location") else None
-            prev_time = prev_object.time if hasattr(prev_object, "time") else None
+            try:
+                prev_location = prev_object.location
+            except AttributeError:
+                prev_location = None
+
+            # Doesn't need a try-catch as time is a compulsory field, created
+            # when a state is initialised
+            prev_time = prev_object.time
 
             if location and prev_location:
                 self.course_heading_loose_match_with_location(
@@ -34,6 +63,11 @@ class EnhancedValidator:
                     self.speed_loose_match_with_location(
                         location, prev_location, speed, calculated_time, errors, error_type,
                     )
+
+        if len(errors) > orig_errors_length:
+            return False
+        else:
+            return True
 
     @staticmethod
     def course_heading_loose_match_with_location(

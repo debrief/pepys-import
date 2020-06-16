@@ -18,8 +18,9 @@ def test_convert_abs_angle_valid(input_, actual_result):
     errors = []
     error_type = "test"
 
-    result = unit_utils.convert_absolute_angle(input_, 0, errors, error_type)
+    is_valid, result = unit_utils.convert_absolute_angle(input_, 0, errors, error_type)
 
+    assert is_valid
     assert result == actual_result * unit_registry.degree
 
 
@@ -27,9 +28,10 @@ def test_convert_abs_angle_invalid():
     errors = []
     error_type = "test"
 
-    result = unit_utils.convert_absolute_angle("blah", 0, errors, error_type)
+    is_valid, result = unit_utils.convert_absolute_angle("blah", 0, errors, error_type)
 
-    assert result is False
+    assert is_valid is False
+    assert result is None
     assert len(errors) == 1
     assert "Error in angle value" in errors[0]["test"]
 
@@ -51,8 +53,9 @@ def test_convert_speed_valid(input_, units, actual_result):
     errors = []
     error_type = "test"
 
-    result = unit_utils.convert_speed(input_, units, 0, errors, error_type)
+    is_valid, result = unit_utils.convert_speed(input_, units, 0, errors, error_type)
 
+    assert is_valid
     assert result == actual_result
 
 
@@ -60,9 +63,10 @@ def test_convert_speed_invalid():
     errors = []
     error_type = "test"
 
-    result = unit_utils.convert_speed("blah", unit_registry.knots, 0, errors, error_type)
+    is_valid, result = unit_utils.convert_speed("blah", unit_registry.knots, 0, errors, error_type)
 
-    assert result is False
+    assert is_valid is False
+    assert result is None
     assert len(errors) == 1
     assert "Error in speed value" in errors[0]["test"]
 
@@ -89,8 +93,9 @@ def test_convert_frequency_valid(input_, units, actual_result):
     errors = []
     error_type = "test"
 
-    result = unit_utils.convert_frequency(input_, units, 0, errors, error_type)
+    is_valid, result = unit_utils.convert_frequency(input_, units, 0, errors, error_type)
 
+    assert is_valid
     assert result == actual_result
 
 
@@ -98,9 +103,12 @@ def test_convert_frequency_invalid():
     errors = []
     error_type = "test"
 
-    result = unit_utils.convert_frequency("blah", unit_registry.hertz, 0, errors, error_type)
+    is_valid, result = unit_utils.convert_frequency(
+        "blah", unit_registry.hertz, 0, errors, error_type
+    )
 
-    assert result is False
+    assert is_valid is False
+    assert result is None
     assert len(errors) == 1
     assert "Error in frequency value" in errors[0]["test"]
 
@@ -116,8 +124,9 @@ def test_convert_distance_valid(input_, units, actual_result):
     errors = []
     error_type = "test"
 
-    result = unit_utils.convert_distance(input_, units, 0, errors, error_type)
+    is_valid, result = unit_utils.convert_distance(input_, units, 0, errors, error_type)
 
+    assert is_valid
     assert result == actual_result
 
 
@@ -125,9 +134,12 @@ def test_convert_distance_invalid():
     errors = []
     error_type = "test"
 
-    result = unit_utils.convert_distance("blah", unit_registry.metre, 0, errors, error_type)
+    is_valid, result = unit_utils.convert_distance(
+        "blah", unit_registry.metre, 0, errors, error_type
+    )
 
-    assert result is False
+    assert is_valid is False
+    assert result is None
     assert len(errors) == 1
     assert "Error in distance value" in errors[0]["test"]
 
@@ -143,8 +155,7 @@ def test_dist_between_two_points():
 
     result = unit_utils.distance_between_two_points_haversine(loc1, loc2)
 
-    # TODO Fix distance_between_two_points_haversine and update this
-    # test
+    assert result == 9231590.351134228 * unit_registry.metre
 
 
 def test_bearing_between_two_points():

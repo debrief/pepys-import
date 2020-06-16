@@ -63,7 +63,7 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         output = temp_output.getvalue()
 
         assert "Files got processed: 0 times" in output
-        assert "'rep_test1.rep' is already loaded! Skipping the file." in output
+        assert "'rep_test1.rep' was already loaded" in output
 
     def test_importing_the_same_file_with_different_name(self):
         """Test whether process method runs only once when the same datafile
@@ -82,7 +82,7 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         output = temp_output.getvalue()
 
         assert "Files got processed: 0 times" in output
-        assert "'rep_test1.rep' is already loaded! Skipping the file." in output
+        assert "'rep_test1.rep' was already loaded" in output
         # Delete the copy file
         os.remove(copied_file_path)
 

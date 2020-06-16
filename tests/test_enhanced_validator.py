@@ -22,7 +22,7 @@ class EnhancedValidatorTestCase(unittest.TestCase):
                 "test_platform_type", self.change_id
             ).name
             sensor_type = self.store.add_to_sensor_types("test_sensor_type", self.change_id).name
-            privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
+            privacy = self.store.add_to_privacies("test_privacy", 0, self.change_id).name
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -49,10 +49,8 @@ class EnhancedValidatorTestCase(unittest.TestCase):
                 name="Test Importer",
                 validation_level=constants.NONE_LEVEL,
                 short_name="Test Importer",
-                separator=" ",
             ):
                 super().__init__(name, validation_level, short_name)
-                self.separator = separator
                 self.text_label = None
                 self.depth = 0.0
                 self.errors = list()
@@ -115,7 +113,8 @@ class EnhancedValidatorTestCase(unittest.TestCase):
 
         current_state.heading = 5.0 * unit_registry.radian
         current_state.course = 5.0 * unit_registry.radian
-        EnhancedValidator(current_state, self.errors, "Test Parser", prev_state)
+        ev = EnhancedValidator()
+        ev.validate(current_state, self.errors, "Test Parser", prev_state)
         assert len(self.errors) == 2
         assert (
             "Difference between Bearing (40.444) and Heading (286.479 degree) is more than 90 degrees!"
@@ -152,7 +151,8 @@ class EnhancedValidatorTestCase(unittest.TestCase):
         current_state.location = loc
 
         current_state.speed = 10.0 * (unit_registry.metre / unit_registry.second)
-        EnhancedValidator(current_state, self.errors, "Test Parser", prev_state)
+        ev = EnhancedValidator()
+        ev.validate(current_state, self.errors, "Test Parser", prev_state)
         assert len(self.errors) == 1
         assert (
             "Calculated speed (12382.753 meter / second) is more than the measured speed * 10 "

@@ -274,6 +274,60 @@ class TestContactRelBearingProperty(unittest.TestCase):
         assert contact.rel_bearing.check("")
 
 
+class TestContactAmbigBearingProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_contact_ambig_bearing_none(self):
+        contact = self.store.db_classes.Contact()
+
+        contact.ambig_bearing = None
+
+        assert contact.ambig_bearing is None
+
+    def test_contact_ambig_bearing_scalar(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a scalar (float) gives error
+        with pytest.raises(TypeError) as exception:
+            contact.ambig_bearing = 5
+
+        assert "Ambig Bearing must be a Quantity" in str(exception.value)
+
+    def test_contact_ambig_bearing_wrong_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.ambig_bearing = 5 * unit_registry.second
+
+        assert "Ambig Bearing must be a Quantity with a dimensionality of ''" in str(
+            exception.value
+        )
+
+    def test_contact_ambig_bearing_right_units(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the right SI units succeeds
+        contact.ambig_bearing = 178 * unit_registry.degree
+
+        # Check setting with a Quantity of strange but valid units succeeds
+        contact.ambig_bearing = 0.324 * unit_registry.radian
+
+    def test_contact_ambig_bearing_roundtrip(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting and retrieving field works, and gives units as a result
+        contact.ambig_bearing = 234 * unit_registry.degree
+
+        assert contact.ambig_bearing == 234 * unit_registry.degree
+        assert contact.ambig_bearing.check("")
+
+
 class TestContactMLAProperty(unittest.TestCase):
     def setUp(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -1021,7 +1075,7 @@ class TestLocationRoundtripToDB(unittest.TestCase):
             self.sensor_type = self.store.add_to_sensor_types(
                 "test_sensor_type", self.change_id
             ).name
-            self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
+            self.privacy = self.store.add_to_privacies("test_privacy", 0, self.change_id).name
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -1049,10 +1103,8 @@ class TestLocationRoundtripToDB(unittest.TestCase):
                 name="Test Importer",
                 validation_level=validation_constants.NONE_LEVEL,
                 short_name="Test Importer",
-                separator=" ",
             ):
                 super().__init__(name, validation_level, short_name)
-                self.separator = separator
                 self.text_label = None
                 self.depth = 0.0
                 self.errors = list()

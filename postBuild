@@ -1,0 +1,5 @@
+# Post Build script file for Binder - this is nothing to do with building a standard deployment
+# for Pepys
+conda install -y -c conda-forge libspatialite
+pip install git+git://github.com/robintw/notebook_xterm.git#egg=notebook_xterm
+echo "PS1='$ '" >>  ~/.bashrc

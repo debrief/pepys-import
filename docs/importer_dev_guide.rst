@@ -86,6 +86,8 @@ and the :code:`super().__init__()` method must be called.
 +---------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | :code:`validation_level`  | Defines the level of validation required for this parser. Must be one of :code:`pepys_import.core.validators.constants.NONE_LEVEL`, :code:`pepys_import.core.validators.constants.BASIC_LEVEL`, or :code:`pepys_import.core.validators.constants.ENHANCED_LEVEL`        |
 +---------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| :code:`default_privacy`   | (Optional) Defines the hardcoded privacy level of all data coming from this importer. Defaults to None, which means the user is asked for the privacy.                                                                                                                  |
++---------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 A complete example is:
 

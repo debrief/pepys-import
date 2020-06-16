@@ -1,4 +1,4 @@
+@echo off
 CALL set_paths.bat
-python -m pepys_admin.cli
-REM we're pausing the end of the script so we learn more about what is being processed
+python -m pepys_admin.cli %1 %2 %3 %4 %5 %6 %7 %8 %9
 PAUSE

@@ -1,5 +1,5 @@
 import os
-import platform
+import sys
 from contextlib import contextmanager
 from datetime import datetime
 from getpass import getuser
@@ -7,21 +7,28 @@ from importlib import import_module
 
 from sqlalchemy import create_engine, inspect, or_
 from sqlalchemy.event import listen
-from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import func, select
+from sqlalchemy.exc import ArgumentError, OperationalError
+from sqlalchemy.orm import sessionmaker, undefer
+from sqlalchemy.sql import func
 
 from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import import __version__
 from pepys_import.core.formats import unit_registry
-from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
-from pepys_import.utils.data_store_utils import import_from_csv
-from pepys_import.utils.geoalchemy_utils import load_spatialite
+from pepys_import.utils.data_store_utils import (
+    MissingDataException,
+    cache_results_if_not_none,
+    create_alembic_version_table,
+    create_spatial_tables_for_postgres,
+    create_spatial_tables_for_sqlite,
+    import_from_csv,
+)
+from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_keys_on
 from pepys_import.utils.value_transforming_utils import format_datetime
 
+from ...utils.error_handling import handle_first_connection_error
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
 from .table_summary import TableSummary, TableSummarySet
@@ -68,13 +75,28 @@ class DataStore:
         connection_string = "{}://{}:{}@{}:{}/{}".format(
             driver, db_username, db_password, db_host, db_port, db_name
         )
-        self.engine = create_engine(connection_string, echo=False)
+        try:
+            if db_type == "postgres":
+                self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
+                BasePostGIS.metadata.bind = self.engine
+            elif db_type == "sqlite":
+                self.engine = create_engine(connection_string, echo=False)
+                listen(self.engine, "connect", load_spatialite)
+                listen(self.engine, "connect", set_sqlite_foreign_keys_on)
+                BaseSpatiaLite.metadata.bind = self.engine
+        except ArgumentError as e:
+            print(
+                f"SQL Exception details: {e}\n\n"
+                "ERROR: Invalid Connection URL Error!\n"
+                "Please check your config file. There might be missing/wrong values!\n"
+                "See above for the full error from SQLAlchemy."
+            )
+            sys.exit(1)
 
-        if db_type == "postgres":
-            BasePostGIS.metadata.bind = self.engine
-        elif db_type == "sqlite":
-            listen(self.engine, "connect", load_spatialite)
-            BaseSpatiaLite.metadata.bind = self.engine
+        # Try to connect to the engine to check if there is any problem
+        with handle_first_connection_error(connection_string):
+            inspector = inspect(self.engine)
+            _ = inspector.get_table_names()
 
         self.missing_data_resolver = missing_data_resolver
         self.welcome_text = welcome_text
@@ -94,11 +116,30 @@ class DataStore:
         self._platform_dict_on_sensor_id = dict()
         self._platform_dict_on_platform_id = dict()
 
+        # dictionary to cache platform object based on name
+        self._platform_cache = dict()
+
+        # dictionary to cache sensor based on sensor_name and platform_id
+        self._sensor_cache = dict()
+
+        # dictionary to cache datafile based on datafile_name
+        self._datafile_cache = dict()
+
         # dictionaries, to cache sensor name
         self._sensor_dict_on_sensor_id = dict()
 
         # dictionary, to cache comment type name
         self._comment_type_name_dict_on_comment_type_id = dict()
+
+        self._search_privacy_cache = dict()
+        self._search_platform_type_cache = dict()
+        self._search_sensor_type_cache = dict()
+        self._search_sensor_cache = dict()
+        self._search_nationality_cache = dict()
+        self._search_datafile_from_id_cache = dict()
+        self._search_platform_cache = dict()
+        self._search_datafile_cache = dict()
+        self._search_datafile_type_cache = dict()
 
         # Branding Text
         if self.welcome_text:
@@ -110,35 +151,34 @@ class DataStore:
             print("-" * 61)
 
     def initialise(self):
-        """Create schemas for the database
-        """
-
+        """Create schemas for the database"""
         if self.db_type == "sqlite":
             try:
-                # Create geometry_columns and spatial_ref_sys metadata table
-                if not self.engine.dialect.has_table(self.engine, "spatial_ref_sys"):
-                    with self.engine.connect() as conn:
-                        conn.execute(select([func.InitSpatialMetaData(1)]))
+                create_spatial_tables_for_sqlite(self.engine)
                 # Attempt to create schema if not present, to cope with fresh DB file
                 BaseSpatiaLite.metadata.create_all(self.engine)
-            except OperationalError:
-                raise Exception(
-                    "Error creating database schema, possible invalid path?"
-                    f" ('{self.db_name}'). Quitting"
+            except OperationalError as e:
+                print(
+                    f"SQL Exception details: {e}\n\n"
+                    "ERROR: Database Connection Error! The schema couldn't be created.\n"
+                    "Please check your config file. There might be missing/wrong values!\n"
+                    "See above for the full error from SQLAlchemy."
                 )
+                sys.exit(1)
         elif self.db_type == "postgres":
             try:
-                # Create schema pepys and extension for PostGIS first
-                query = """
-                    CREATE SCHEMA IF NOT EXISTS pepys;
-                    CREATE EXTENSION IF NOT EXISTS postgis;
-                    SET search_path = pepys,public;
-                """
-                with self.engine.connect() as conn:
-                    conn.execute(query)
+                create_spatial_tables_for_postgres(self.engine)
                 BasePostGIS.metadata.create_all(self.engine)
-            except OperationalError:
-                raise Exception(f"Error creating database({self.db_name})! Quitting")
+            except OperationalError as e:
+                print(
+                    f"SQL Exception details: {e}\n\n"
+                    "ERROR: Database Connection Error! The schema couldn't be created.\n"
+                    "Please check your config file. There might be missing/wrong values!\n"
+                    "See above for the full error from SQLAlchemy."
+                )
+                sys.exit(1)
+        create_alembic_version_table(self.engine, self.db_type)
+        print("Database tables were created by DataStore's initialisation.")
 
     @contextmanager
     def session_scope(self):
@@ -148,7 +188,7 @@ class DataStore:
         try:
             yield self
             self.session.commit()
-        except:
+        except Exception:
             self.session.rollback()
             raise
         finally:
@@ -216,115 +256,10 @@ class DataStore:
         metadata_files = [file for file in files if os.path.splitext(file)[0] in metadata_tables]
         import_from_csv(self, sample_data_folder, metadata_files, change.change_id)
 
-    def populate_measurement(self, sample_data_folder=None):
-        """Import CSV files from the given folder to the related Measurement Tables"""
-        change = self.add_to_changes(
-            user=USER, modified=datetime.utcnow(), reason="Importing measurement data"
-        )
-        if sample_data_folder is None:
-            sample_data_folder = DEFAULT_DATA_PATH
-
-        files = os.listdir(sample_data_folder)
-
-        measurement_tables = []
-        # Create measurement table list
-        measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
-        for table_object in list(measurement_table_objects):
-            measurement_tables.append(table_object.__tablename__)
-
-        measurement_files = [
-            file for file in files if os.path.splitext(file)[0] in measurement_tables
-        ]
-        import_from_csv(self, sample_data_folder, measurement_files, change.change_id)
-
     # End of Data Store methods
     #############################################################
 
-    def add_to_states(
-        self,
-        time,
-        sensor,
-        datafile,
-        location=None,
-        elevation=None,
-        heading=None,
-        course=None,
-        speed=None,
-        privacy=None,
-        change_id=None,
-    ):
-        """
-        Adds the specified state to the :class:`State` table if not already present.
-
-        :param time: Timestamp of :class:`State`
-        :type time: datetime
-        :param sensor: Sensor of :class:`State`
-        :type sensor: Sensor
-        :param datafile: Datafile of :class:`State`
-        :type datafile: Datafile
-        :param location: Location of :class:`State`
-        :type location: Point
-        :param elevation: Elevation of :class:`State` in metres (use negative for depth)
-        :type elevation: String
-        :param heading: Heading of :class:`State` (Which converted to radians)
-        :type heading: String
-        :param course: Course of :class:`State`
-        :type course:
-        :param speed: Speed of :class:`State` (Which converted to m/sec)
-        :type speed: String
-        :param privacy: :class:`Privacy` of :class:`State`
-        :type privacy: Privacy
-        :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
-        :return: Created :class:`State` entity
-        :rtype: State
-        """
-        if isinstance(time, str):
-            # TODO we can't assume the time is in this format. We should throw
-            # exception if time isn't of type datetime
-            time = datetime.strptime(time, "%Y-%m-%d %H:%M:%S")
-
-        sensor = self.search_sensor(sensor)
-        datafile = self.search_datafile(datafile)
-        privacy = self.search_privacy(privacy)
-
-        if sensor is None or datafile is None:
-            raise Exception(f"There is missing value(s) in '{sensor}, {datafile}'!")
-
-        if elevation == "":
-            elevation = None
-        if heading == "":
-            heading = None
-        if course == "":
-            course = None
-        if speed == "":
-            speed = None
-
-        elevation = elevation * unit_registry.metre
-
-        loc = Location()
-        loc.set_from_wkt_string(location)
-        location = loc
-
-        state_obj = self.db_classes.State(
-            time=time,
-            sensor_id=sensor.sensor_id,
-            location=location,
-            elevation=elevation,
-            heading=heading,
-            course=course,
-            speed=speed,
-            source_id=datafile.datafile_id,
-            privacy_id=privacy.privacy_id,
-        )
-        self.session.add(state_obj)
-        self.session.flush()
-        self.session.expire(state_obj, ["_location"])
-
-        self.add_to_logs(table=constants.STATE, row_id=state_obj.state_id, change_id=change_id)
-        return state_obj
-
-    def add_to_sensors(self, name, sensor_type, host, change_id):
+    def add_to_sensors(self, name, sensor_type, host, privacy, change_id):
         """
         Adds the specified sensor to the :class:`Sensor` table if not already present.
 
@@ -334,18 +269,44 @@ class DataStore:
         :type sensor_type: :class:`SensorType`
         :param host: Platform of sensor
         :type host: Platform
+        :param privacy: :class:`Privacy` of :class:`State`
+        :type privacy: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created Sensor entity
         """
         sensor_type = self.search_sensor_type(sensor_type)
         host = self.search_platform(host)
+        privacy = self.search_privacy(privacy)
 
-        if sensor_type is None or host is None:
-            raise Exception(f"There is missing value(s) in '{sensor_type}, {host}'!")
+        if sensor_type is None:
+            raise MissingDataException("Sensor Type is missing/invalid")
+        elif host is None:
+            raise MissingDataException("Host is missing/invalid")
+        elif privacy is None:
+            raise MissingDataException("Privacy is missing/invalid")
+
+        # Check if entry already exists with these details, and if so, just return it
+        # Just check the unique fields - in this case: name and host
+        # TODO: Possibly update when we get final uniqueness info from client
+        results = (
+            self.session.query(self.db_classes.Sensor)
+            .filter(self.db_classes.Sensor.name == name)
+            .filter(self.db_classes.Sensor.host == host.platform_id)
+            .all()
+        )
+
+        if len(results) == 1:
+            # Don't add it, as it already exists - just return it
+            return results[0]
+        elif len(results) > 1:
+            assert False, "Fatal error: Duplicate entries found in Sensors table"
 
         sensor_obj = self.db_classes.Sensor(
-            name=name, sensor_type_id=sensor_type.sensor_type_id, host=host.platform_id,
+            name=name,
+            sensor_type_id=sensor_type.sensor_type_id,
+            host=host.platform_id,
+            privacy_id=privacy.privacy_id,
         )
         self.session.add(sensor_obj)
         self.session.flush()
@@ -389,6 +350,27 @@ class DataStore:
         datafile_type = self.search_datafile_type(file_type)
         privacy = self.search_privacy(privacy)
 
+        if datafile_type is None:
+            raise MissingDataException("Datafile Type is invalid/missing")
+        elif privacy is None:
+            raise MissingDataException("Privacy is invalid/missing")
+
+        # Check if entry already exists with these details, and if so, just return it
+        # Just check the unique fields - in this case: size and hash
+        # TODO: Possibly update when we get final uniqueness info from client
+        results = (
+            self.session.query(self.db_classes.Datafile)
+            .filter(self.db_classes.Datafile.size == file_size)
+            .filter(self.db_classes.Datafile.hash == file_hash)
+            .all()
+        )
+
+        if len(results) == 1:
+            # Don't add it, as it already exists - just return it
+            return results[0]
+        elif len(results) > 1:
+            assert False, "Fatal error: Duplicate entries found in Datafiles table"
+
         datafile_obj = self.db_classes.Datafile(
             simulated=bool(simulated),
             privacy_id=privacy.privacy_id,
@@ -410,12 +392,12 @@ class DataStore:
     def add_to_platforms(
         self,
         name,
+        identifier,
         nationality,
         platform_type,
         privacy,
         trigraph=None,
         quadgraph=None,
-        pennant_number=None,
         change_id=None,
     ):
         """
@@ -433,8 +415,8 @@ class DataStore:
         :type trigraph: String
         :param quadgraph: Quadgraph of :class:`Platform`
         :type quadgraph: String
-        :param pennant_number: Pennant number of :class:`Platform`
-        :type pennant_number: String
+        :param identifier: Identifier string of :class:`Platform`
+        :type identifier: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created Platform entity
@@ -444,11 +426,35 @@ class DataStore:
         platform_type = self.search_platform_type(platform_type)
         privacy = self.search_privacy(privacy)
 
+        if nationality is None:
+            raise MissingDataException("Nationality is invalid/missing")
+        elif platform_type is None:
+            raise MissingDataException("Platform Type is invalid/missing")
+        elif privacy is None:
+            raise MissingDataException("Privacy is invalid/missing")
+
+        # Check if entry already exists with these details, and if so, just return it
+        # Just check the unique fields - in this case: name, nationality_id and identifier
+        # TODO: Possibly update when we get final uniqueness info from client
+        results = (
+            self.session.query(self.db_classes.Platform)
+            .filter(self.db_classes.Platform.name == name)
+            .filter(self.db_classes.Platform.nationality_id == nationality.nationality_id)
+            .filter(self.db_classes.Platform.identifier == identifier)
+            .all()
+        )
+
+        if len(results) == 1:
+            # Don't add it, as it already exists - just return it
+            return results[0]
+        elif len(results) > 1:
+            assert False, "Fatal error: Duplicate entries found in Platforms table"
+
         platform_obj = self.db_classes.Platform(
             name=name,
             trigraph=trigraph,
             quadgraph=quadgraph,
-            pennant=pennant_number,
+            identifier=identifier,
             nationality_id=nationality.nationality_id,
             platform_type_id=platform_type.platform_type_id,
             privacy_id=privacy.privacy_id,
@@ -463,6 +469,26 @@ class DataStore:
         return platform_obj
 
     def add_to_synonyms(self, table, name, entity, change_id):
+        # Blacklist certain tables, and don't Synonyms for them be created
+        if table in [constants.SENSOR, constants.GEOMETRY_SUBTYPE]:
+            raise Exception(f"Synonyms are not allowed for table {table}")
+
+        # Check if entry already exists with these details, and if so, just return it
+        # Just check the unique fields - in this case: name and table
+        # TODO: Possibly update when we get final uniqueness info from client
+        results = (
+            self.session.query(self.db_classes.Synonym)
+            .filter(self.db_classes.Synonym.synonym == name)
+            .filter(self.db_classes.Synonym.table == table)
+            .all()
+        )
+
+        if len(results) == 1:
+            # Don't add it, as it already exists - just return it
+            return results[0]
+        elif len(results) > 1:
+            assert False, "Fatal error: Duplicate entries found in Synonyms table"
+
         # enough info to proceed and create entry
         synonym = self.db_classes.Synonym(table=table, synonym=name, entity=entity)
         self.session.add(synonym)
@@ -472,24 +498,28 @@ class DataStore:
         return synonym
 
     #############################################################
-    # Search/lookup functions
-
-    def search_datafile_type(self, name):
-        """Search for any datafile type with this name"""
+    # Search/lookup functions for metadata
+    #############################################################
+    def search_sensor(self, name, platform_id):
+        """Search for any sensor type featuring this name"""
         return (
-            self.session.query(self.db_classes.DatafileType)
-            .filter(self.db_classes.DatafileType.name == name)
+            self.session.query(self.db_classes.Sensor)
+            .filter(self.db_classes.Sensor.name == name)
+            .filter(self.db_classes.Sensor.host == platform_id)
             .first()
         )
 
+    @cache_results_if_not_none("_search_datafile_cache")
     def search_datafile(self, name):
         """Search for any datafile with this name"""
         return (
             self.session.query(self.db_classes.Datafile)
+            .options(undefer("simulated"))
             .filter(self.db_classes.Datafile.reference == name)
             .first()
         )
 
+    @cache_results_if_not_none("_search_platform_cache")
     def search_platform(self, name):
         """Search for any platform with this name"""
         return (
@@ -498,46 +528,7 @@ class DataStore:
             .first()
         )
 
-    def search_platform_type(self, name):
-        """Search for any platform type with this name"""
-        return (
-            self.session.query(self.db_classes.PlatformType)
-            .filter(self.db_classes.PlatformType.name == name)
-            .first()
-        )
-
-    def search_nationality(self, name):
-        """Search for any nationality with this name"""
-        return (
-            self.session.query(self.db_classes.Nationality)
-            .filter(self.db_classes.Nationality.name == name)
-            .first()
-        )
-
-    def search_sensor(self, name):
-        """Search for any sensor type featuring this name"""
-        return (
-            self.session.query(self.db_classes.Sensor)
-            .filter(self.db_classes.Sensor.name == name)
-            .first()
-        )
-
-    def search_sensor_type(self, name):
-        """Search for any sensor type featuring this name"""
-        return (
-            self.session.query(self.db_classes.SensorType)
-            .filter(self.db_classes.SensorType.name == name)
-            .first()
-        )
-
-    def search_privacy(self, name):
-        """Search for any privacy with this name"""
-        return (
-            self.session.query(self.db_classes.Privacy)
-            .filter(self.db_classes.Privacy.name == name)
-            .first()
-        )
-
+    @cache_results_if_not_none("_search_datafile_from_id_cache")
     def get_datafile_from_id(self, datafile_id):
         """Search for datafile with this id"""
         return (
@@ -547,7 +538,55 @@ class DataStore:
         )
 
     #############################################################
-    # New methods
+    # Search/lookup functions for reference data
+    #############################################################
+
+    @cache_results_if_not_none("_search_datafile_type_cache")
+    def search_datafile_type(self, name):
+        """Search for any datafile type with this name"""
+        return (
+            self.session.query(self.db_classes.DatafileType)
+            .filter(self.db_classes.DatafileType.name == name)
+            .first()
+        )
+
+    @cache_results_if_not_none("_search_platform_type_cache")
+    def search_platform_type(self, name):
+        """Search for any platform type with this name"""
+        # print(f"Searching platform type with name = {name}")
+        return (
+            self.session.query(self.db_classes.PlatformType)
+            .filter(self.db_classes.PlatformType.name == name)
+            .first()
+        )
+
+    @cache_results_if_not_none("_search_nationality_cache")
+    def search_nationality(self, name):
+        """Search for any nationality with this name"""
+        return (
+            self.session.query(self.db_classes.Nationality)
+            .filter(self.db_classes.Nationality.name == name)
+            .first()
+        )
+
+    @cache_results_if_not_none("_search_sensor_type_cache")
+    def search_sensor_type(self, name):
+        """Search for any sensor type featuring this name"""
+        return (
+            self.session.query(self.db_classes.SensorType)
+            .filter(self.db_classes.SensorType.name == name)
+            .first()
+        )
+
+    @cache_results_if_not_none("_search_privacy_cache")
+    def search_privacy(self, name):
+        """Search for any privacy with this name"""
+        return (
+            self.session.query(self.db_classes.Privacy)
+            .filter(self.db_classes.Privacy.name == name)
+            .first()
+        )
+
     def synonym_search(self, name, table, pk_field):
         """
         This method looks up the Synonyms Table and returns if there is any matched entity.
@@ -585,12 +624,17 @@ class DataStore:
         :type datafile_name: String
         :return:
         """
+        cached_result = self._datafile_cache.get(datafile_name)
+        if cached_result:
+            return cached_result
+
         datafile = (
             self.session.query(self.db_classes.Datafile)
             .filter(self.db_classes.Datafile.reference == datafile_name)
             .first()
         )
         if datafile:
+            self._datafile_cache[datafile_name] = datafile
             return datafile
 
         # Datafile is not found, try to find a synonym
@@ -669,10 +713,21 @@ class DataStore:
         This method tries to find a Platform entity with the given platform_name. If it
         finds, it returns the entity. If it is not found, it searches synonyms.
 
+        It uses the cache in self._platform_cache first, and if it can't find it in there
+        then it looks it up in the database.
+
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
         :return:
         """
+        # Can't search for a platform if we haven't got a name to search for
+        if platform_name is None:
+            return None
+
+        cached_result = self._platform_cache.get(platform_name)
+        if cached_result:
+            return cached_result
+
         platform = (
             self.session.query(self.db_classes.Platform)
             .filter(
@@ -685,24 +740,33 @@ class DataStore:
             .first()
         )
         if platform:
+            self.session.expunge(platform)
+            self._platform_cache[platform_name] = platform
             return platform
 
         # Platform is not found, try to find a synonym
-        return self.synonym_search(
+        synonym_result = self.synonym_search(
             name=platform_name,
             table=self.db_classes.Platform,
             pk_field=self.db_classes.Platform.platform_id,
         )
 
+        if synonym_result is not None:
+            self.session.expunge(synonym_result)
+            self._platform_cache[platform_name] = synonym_result
+            return synonym_result
+
+        return synonym_result
+
     def get_platform(
         self,
         platform_name=None,
+        identifier=None,
         nationality=None,
         platform_type=None,
         privacy=None,
         trigraph=None,
         quadgraph=None,
-        pennant_number=None,
         change_id=None,
     ):
         """
@@ -721,8 +785,8 @@ class DataStore:
         :type trigraph: String
         :param quadgraph: Quadgraph of :class:`Platform`
         :type quadgraph: String
-        :param pennant_number: Pennant number of :class:`Platform`
-        :type pennant_number: String
+        :param identifier: Identifier string of :class:`Platform`
+        :type identifier: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created Platform entity
@@ -740,6 +804,7 @@ class DataStore:
 
         if (
             platform_name is None
+            or identifier is None
             or nationality_obj is None
             or platform_type_obj is None
             or privacy_obj is None
@@ -755,7 +820,7 @@ class DataStore:
                     platform_name,
                     trigraph,
                     quadgraph,
-                    pennant_number,
+                    identifier,
                     platform_type_obj,
                     nationality_obj,
                     privacy_obj,
@@ -773,7 +838,7 @@ class DataStore:
             name=platform_name,
             trigraph=trigraph,
             quadgraph=quadgraph,
-            pennant_number=pennant_number,
+            identifier=identifier,
             nationality=nationality_obj.name,
             platform_type=platform_type_obj.name,
             privacy=privacy_obj.name,
@@ -892,7 +957,7 @@ class DataStore:
 
         return platform_type
 
-    def add_to_nationalities(self, name, change_id):
+    def add_to_nationalities(self, name, change_id, priority=None):
         """
         Adds the specified nationality to the nationalities table if not already present
 
@@ -900,6 +965,8 @@ class DataStore:
         :type name: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
+        :param priority: Priority to print in defaults of CLI
+        :type priority: Integer
         :return: Created :class:`Nationality` entity
         :rtype: Nationality
         """
@@ -909,6 +976,8 @@ class DataStore:
 
         # enough info to proceed and create entry
         nationality = self.db_classes.Nationality(name=name)
+        if priority:
+            nationality.priority = priority
         self.session.add(nationality)
         self.session.flush()
 
@@ -917,12 +986,14 @@ class DataStore:
         )
         return nationality
 
-    def add_to_privacies(self, name, change_id):
+    def add_to_privacies(self, name, level, change_id):
         """
         Adds the specified privacy entry to the :class:`Privacy` table if not already present.
 
         :param name: Name of :class:`Privacy`
         :type name: String
+        :param level: Level of :class:`Privacy`
+        :type level: Integer
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created :class:`Privacy` entity
@@ -933,7 +1004,7 @@ class DataStore:
             return privacies
 
         # enough info to proceed and create entry
-        privacy = self.db_classes.Privacy(name=name)
+        privacy = self.db_classes.Privacy(name=name, level=level)
         self.session.add(privacy)
         self.session.flush()
 
@@ -1052,11 +1123,12 @@ class DataStore:
         """Delete the database schema (ie all of the tables)"""
         if self.db_type == "sqlite":
             meta = BaseSpatiaLite.metadata
+            with self.session_scope():
+                meta.drop_all()
+                self.session.execute("DROP TABLE IF EXISTS alembic_version;")
         else:
-            meta = BasePostGIS.metadata
-
-        with self.session_scope():
-            meta.drop_all()
+            with self.engine.connect() as connection:
+                connection.execute('DROP SCHEMA IF EXISTS "pepys" CASCADE;')
 
     def get_all_datafiles(self):
         """Returns all datafiles.
@@ -1069,7 +1141,7 @@ class DataStore:
 
     def get_cached_comment_type_name(self, comment_type_id):
         """
-        Get comment type name from cache on either "comment_type_id"
+        Get comment type name from cache on "comment_type_id"
         If name is not found in the cache, sytem will load from the data store,
         and add it into cache.
         """
@@ -1352,15 +1424,17 @@ class DataStore:
                     "N/A",
                 ]
 
-                ambiguous_bearing = None  # TODO: ambiguous_bearing.
-                if ambiguous_bearing or contact.freq:
+                if contact.ambig_bearing or contact.freq:
                     contact_rep_line.insert(0, ";SENSOR2:")
 
                     contact_rep_line.insert(
-                        6, str(ambiguous_bearing.magnitude) if ambiguous_bearing else "NULL",
+                        6,
+                        f"{contact.ambig_bearing.magnitude:.2f}"
+                        if contact.ambig_bearing
+                        else "NULL",
                     )
                     contact_rep_line.insert(
-                        7, str(contact.freq.magnitude) if contact.freq else "NULL",
+                        7, f"{contact.freq.magnitude:.2f}" if contact.freq else "NULL",
                     )
                 else:
                     contact_rep_line.insert(0, ";SENSOR:")
@@ -1407,24 +1481,11 @@ class DataStore:
             .first()
         )
         if is_loaded_before:
-            print(f"'{is_loaded_before.reference}' is already loaded! Skipping the file.")
+            print(
+                f"'{is_loaded_before.reference}' was already loaded at {is_loaded_before.created_date:%Y-%m-%d %H:%M}! Skipping the file."
+            )
             return True
         return False
-
-    def is_schema_created(self):
-        """Returns True if Pepys Tables are created, False otherwise."""
-        inspector = inspect(self.engine)
-        if self.db_type == "sqlite":
-            table_names = inspector.get_table_names()
-            number_of_tables = 72 if platform.system() == "Windows" else 70
-        else:
-            table_names = inspector.get_table_names(schema="pepys")
-            number_of_tables = 34
-
-        if len(table_names) != number_of_tables:
-            print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
-            return False
-        return True
 
     def is_empty(self):
         """ Returns True if sample table (Privacy) is empty, False otherwise"""

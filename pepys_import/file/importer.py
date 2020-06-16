@@ -81,13 +81,17 @@ class Importer(ABC):
         :param change_id: ID of the :class:`Change` object that represents the change
                           which will occur when importing this file
         :type change_id: Integer or UUID
-        
+
         """
         basename = os.path.basename(path)
         print(f"{self.short_name} working on {basename}")
         self.errors = list()
         self.error_type = f"{self.short_name} - Parsing error on {basename}"
         datafile.measurements[self.short_name] = dict()
+
+        # Initialise the platform->sensor mapping here
+        # so that we get a separate mapping for each file that we process
+        self.platform_sensor_mapping = {}
 
         # If we've turned off recording of extractions for this importer
         # then add this to the list of ignored importers for this HighlightedFile
@@ -135,3 +139,56 @@ class Importer(ABC):
         :type change_id: integer or UUID
         """
         raise NotImplementedError
+
+    def get_cached_sensor(self, data_store, sensor_name, sensor_type, platform_id, change_id):
+        """Gets the sensor object for the given platform - either from the cache if it exists there,
+        or resolving it.
+
+        If the sensor_name and sensor_type are both None, and this platform_id is present in the
+        self.platform_sensor_mapping dict, then get the Sensor object from there - otherwise use the
+        resolver to resolve it.
+
+        :param data_store: DataStore instance :type data_Store: DataStore :param platform_id: ID of
+        the platform for which you want to get the sensor :type platform_id: int
+        """
+        Platform = data_store.db_classes.Platform
+
+        if sensor_name is None and sensor_type is None:
+            # Only look in the cache if the user hasn't specified any names or types
+            sensor_from_cache = self.platform_sensor_mapping.get(platform_id)
+            if sensor_from_cache is not None:
+                return sensor_from_cache
+
+            # Otherwise, resolve it
+            platform_obj = (
+                data_store.session.query(Platform)
+                .filter(Platform.platform_id == platform_id)
+                .first()
+            )
+
+            resolved_sensor = platform_obj.get_sensor(
+                data_store=data_store,
+                sensor_name=sensor_name,
+                sensor_type=sensor_type,
+                change_id=change_id,
+            )
+
+            data_store.session.expunge(resolved_sensor)
+            # And store it in the cache for next time
+            self.platform_sensor_mapping[platform_id] = resolved_sensor
+        else:
+            # sensor_name or sensor_type aren't None, so just resolve it and don't store in cache
+            platform_obj = (
+                data_store.session.query(Platform)
+                .filter(Platform.platform_id == platform_id)
+                .first()
+            )
+
+            resolved_sensor = platform_obj.get_sensor(
+                data_store=data_store,
+                sensor_name=sensor_name,
+                sensor_type=sensor_type,
+                change_id=change_id,
+            )
+
+        return resolved_sensor

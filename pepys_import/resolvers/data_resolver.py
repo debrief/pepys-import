@@ -21,12 +21,12 @@ class DataResolver(ABC):
         :param privacy: Name of :class:`Privacy`
         :type privacy: String
         :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
+        :type change_id: UUID
         :return:
         """
 
     @abstractmethod
-    def resolve_sensor(self, data_store, sensor_name, sensor_type, privacy, change_id):
+    def resolve_sensor(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
         """
         Implementation method should return any data necessary to create a sensor.
         Currently: sensor_name, sensor_type.
@@ -37,23 +37,12 @@ class DataResolver(ABC):
         :type sensor_name: String
         :param sensor_type: Type of :class:`Sensor`
         :type sensor_type: String
+        :param host_id: Host Platform's UUID
+        :type host_id: UUID
         :param privacy: Name of :class:`Privacy`
         :type privacy: String
         :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
-        :return:
-        """
-
-    @abstractmethod
-    def resolve_privacy(self, data_store, change_id):
-        """
-        Implementation method should return any data necessary to create a privacy.
-        Currently: name
-
-        :param data_store: A :class:`DataStore` object
-        :type data_store: DataStore
-        :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
+        :type change_id: UUID
         :return:
         """
 
@@ -72,6 +61,6 @@ class DataResolver(ABC):
         :param privacy: Name of :class:`Privacy`
         :type privacy: String
         :param change_id: ID of the :class:`Change` object
-        :type change_id: Integer or UUID
+        :type change_id: UUID
         :return:
         """

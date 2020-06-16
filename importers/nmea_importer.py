@@ -9,14 +9,13 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distan
 
 
 class NMEAImporter(Importer):
-    def __init__(self, separator=","):
+    def __init__(self):
         super().__init__(
             name="NMEA File Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name="NMEA Importer",
             default_privacy="Private",
         )
-        self.separator = separator
 
         self.latitude = None
         self.latitude_hem = None
@@ -49,9 +48,10 @@ class NMEAImporter(Importer):
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
         if line_number == 1:
-            # Make an empty variable to store the platform name so we can keep track of it
+            # We don't know the platform name when we start reading the file, so
+            # set it to None. Later we will set it to the returned value from the get_platform call
+            # so that we don't have to ask about the platform again for each line in the file
             self.platform_name = None
-
         tokens = line.tokens(line.CSV_DELIM, ",")
 
         if len(tokens) > 1:
@@ -93,26 +93,31 @@ class NMEAImporter(Importer):
 
                 # and finally store it
                 platform = data_store.get_platform(
-                    platform_name=self.platform_name,
-                    platform_type="Ferry",
-                    nationality="FR",
-                    privacy="Public",
-                    change_id=change_id,
+                    platform_name=self.platform_name, change_id=change_id,
                 )
-                # capture the name
+                # Keep track of the platform name, so we don't have to ask for each line
                 self.platform_name = platform.name
-                sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
-                sensor = platform.get_sensor(
+
+                sensor = self.get_cached_sensor(
                     data_store=data_store,
-                    sensor_name=platform.name,
-                    sensor_type=sensor_type,
-                    privacy=None,
+                    sensor_name=None,
+                    sensor_type=None,
+                    platform_id=platform.platform_id,
                     change_id=change_id,
                 )
+
                 timestamp = self.parse_timestamp(self.date, self.time)
-                combine_tokens(self.date_token, self.time_token).record(
-                    self.name, "timestamp", timestamp
-                )
+                if timestamp:
+                    combine_tokens(self.date_token, self.time_token).record(
+                        self.name, "timestamp", timestamp
+                    )
+                else:
+                    self.errors.append(
+                        {
+                            self.error_type: f"Line {line_number}. Error in timestamp value {self.date} {self.time}. "
+                            f"Couldn't convert to a datetime"
+                        }
+                    )
 
                 state = datafile.create_state(
                     data_store, platform, sensor, timestamp, self.short_name
@@ -142,27 +147,27 @@ class NMEAImporter(Importer):
                     self.name, "location", state.location, "DMS"
                 )
 
-                heading = convert_absolute_angle(
+                heading_valid, heading = convert_absolute_angle(
                     self.heading, line_number, self.errors, self.error_type
                 )
-                if heading:
+                if heading_valid:
                     state.heading = heading
-                self.heading_token.record(self.name, "heading", heading)
+                    self.heading_token.record(self.name, "heading", heading)
 
-                speed = convert_speed(
+                speed_valid, speed = convert_speed(
                     self.speed, unit_registry.knots, line_number, self.errors, self.error_type,
                 )
-                if speed:
+                if speed_valid:
                     state.speed = speed
-                self.speed_token.record(self.name, "speed", speed)
+                    self.speed_token.record(self.name, "speed", speed)
 
                 if self.depth is not None:
-                    depth = convert_distance(
+                    depth_valid, depth = convert_distance(
                         self.depth, unit_registry.metre, line_number, self.errors, self.error_type
                     )
-                    if depth:
+                    if depth_valid:
                         state.elevation = -1 * depth
-                    self.depth_token.record(self.name, "depth", depth)
+                        self.depth_token.record(self.name, "depth", depth)
 
                 self.date = None
                 self.time = None
@@ -187,4 +192,9 @@ class NMEAImporter(Importer):
         else:
             format_str += "%H%M%S.%f"
 
-        return datetime.strptime(date + time, format_str)
+        try:
+            parsed_timestamp = datetime.strptime(date + time, format_str)
+        except ValueError:
+            return False
+
+        return parsed_timestamp

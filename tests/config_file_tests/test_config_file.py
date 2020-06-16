@@ -16,6 +16,7 @@ TEST_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "parsers")
 BAD_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "bad_path")
 OUTPUT_PATH = os.path.join(DIRECTORY_PATH, "output")
 CONFIG_FILE_PATH = os.path.join(DIRECTORY_PATH, "example_config", "config.ini")
+CONFIG_FILE_PATH_2 = os.path.join(DIRECTORY_PATH, "example_config", "config_without_database.ini")
 BASIC_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "basic_tests")
 ENHANCED_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "enhanced_tests")
 
@@ -39,15 +40,30 @@ class ConfigVariablesTestCase(unittest.TestCase):
 
     @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": BAD_IMPORTER_PATH})
     def test_wrong_file_path(self):
-        # No such file exception
-        with pytest.raises(Exception):
+        # File not found exception
+        temp_output = StringIO()
+        with redirect_stdout(temp_output), pytest.raises(SystemExit):
             reload(config)
+        output = temp_output.getvalue()
+        assert "Pepys config file not found at location: " in output
 
     @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": TEST_IMPORTER_PATH})
     def test_wrong_file_path_2(self):
         # Your environment variable doesn't point to a file exception
-        with pytest.raises(Exception):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output), pytest.raises(SystemExit):
             reload(config)
+        output = temp_output.getvalue()
+        assert "Your environment variable doesn't point to a file:" in output
+
+    @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH_2})
+    def test_without_database_section(self):
+        # Your environment variable doesn't point to a file exception
+        temp_output = StringIO()
+        with redirect_stdout(temp_output), pytest.raises(SystemExit):
+            reload(config)
+        output = temp_output.getvalue()
+        assert "'database' section couldn't find in" in output
 
 
 class FileProcessorVariablesTestCase(unittest.TestCase):

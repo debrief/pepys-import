@@ -1,3 +1,4 @@
+import datetime
 import os
 import unittest
 
@@ -50,7 +51,7 @@ class TestLoadREP(unittest.TestCase):
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 7)
+            self.assertEqual(len(datafiles), 8)
 
             # There should be one state with no elevation, which comes from the NaN
             # in the elevation field in the first line of uk_track.rep
@@ -61,6 +62,19 @@ class TestLoadREP(unittest.TestCase):
             )
 
             assert len(states_with_no_elevation) == 1
+
+            # This state should have a time of
+            assert states_with_no_elevation[0].time == datetime.datetime(2018, 5, 7, 5, 0, 0)
+
+            # there should be 581 points with an elevation of 0m
+            # (this proves that zero values are imported properly and not
+            # treated as errors)
+            elev_zero_states = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(self.store.db_classes.State.elevation == 0)
+                .all()
+            )
+            assert len(elev_zero_states) == 581
 
 
 if __name__ == "__main__":

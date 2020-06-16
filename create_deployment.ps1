@@ -5,7 +5,7 @@ $url = 'https://www.python.org/ftp/python/3.7.6/python-3.7.6-embed-amd64.zip'
 (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\python.zip")
 
 # Extract zip file
-Expand-Archive -Path python.zip -DestinationPath .\python
+Expand-Archive -Path python.zip -DestinationPath .\python -Force
 Write-Output "INFO: Downloaded and extracted embedded Python"
 
 # Download and run get-pip to install pip
@@ -34,10 +34,10 @@ $url = 'http://www.gaia-gis.it/gaia-sins/windows-bin-NEXTGEN-amd64/mod_spatialit
 $url = 'http://www.7-zip.org/a/7za920.zip'
 (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\7zip.zip")
 # Put the 7zip exe in the .\7zip folder - we will delete this later
-Expand-Archive -Path 7zip.zip -DestinationPath .\7zip
+Expand-Archive -Path 7zip.zip -DestinationPath .\7zip -Force
 
 # Extract the mod_spatialite 7zip file into the lib folder (it creates its own subfolder in there)
-.\7zip\7za.exe x .\mod_spatialite.7z -olib
+.\7zip\7za.exe x .\mod_spatialite.7z -olib -y
 
 Write-Output "INFO: Downloaded and extracted mod_spatialite"
 
@@ -50,31 +50,39 @@ python37.zip
 .
 Lib\site-packages
 ..
+import site
 "@
 
-Write-Output "INFO: Set Python pth file"
+Set-Content -Encoding ascii .\python\Lib\site-packages\extra_paths.pth @"
+import sys; sys.path.insert(0, "")
+pip\_vendor\pep517
+"@
 
-# Install distlib manually from a wheel file, as creation of the wheel through a standard pip install
-# fails on embedded python
-.\python\python.exe -m pip install .\bin\distlib-0.3.0-py2.py3-none-any.whl
+
+Write-Output "INFO: Set Python pth files"
 
 # Do a standard pip install of the requirements and dev requirements, not warning us that scripts will be unavailable
-.\python\python.exe -m pip install -r requirements.txt -r requirements_dev.txt --no-warn-script-location
+.\python\python.exe -m pip install -r requirements.txt -r requirements_dev.txt --no-warn-script-location --no-cache-dir
 
 Write-Output "INFO: Installed Python dependencies"
 
 Remove-Item *.zip
 Remove-Item *.7z
 Remove-Item get-pip.py
-Remove-Item .\bin\distlib-0.3.0-py2.py3-none-any.whl
 
 Write-Output "INFO: Cleaned up all except 7zip"
+
+Write-Output "INFO: Building documentation"
+# Write to the same folder that 'make html' does, so it works for devs who've done that on other platforms
+.\python\Scripts\sphinx-build.exe docs docs\_build\html
+
+write-Output "INFO: Finished building documentation"
 
 # Zip up whole folder into a zip-file with the current date in the filename
 # excluding the 7zip folder
 $date_str = Get-Date -Format "yyyyMMdd"
 $output_filename = $date_str + "_pepys-import.zip"
-.\7zip\7za.exe a .\$output_filename .\* -xr!7zip/
+.\7zip\7za.exe a .\$output_filename .\* -xr!7zip/ -xr!"bin\distlib-0.3.0-py2.py3-none-any.whl"
 
 Write-Output "INFO: Written zipped deployment file to $output_filename"
 

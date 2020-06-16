@@ -1,4 +1,5 @@
 from dateutil.parser import parse
+from dateutil.tz import tzoffset
 from lxml import etree
 from tqdm import tqdm
 
@@ -6,7 +7,7 @@ from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
 
 
 class GPXImporter(Importer):
@@ -48,23 +49,14 @@ class GPXImporter(Importer):
         # Iterate through <trk> elements - these should correspond to
         # a specific platform, with the platform name in the <name> element
         for track_element in tqdm(doc.findall("//{*}trk")):
-            track_name = track_element.find("{*}name").text
-
             # Get the platform and sensor details, as these will be the same for all
             # points in this track
-            platform = data_store.get_platform(
-                platform_name=track_name,
-                nationality="UK",
-                platform_type="Fisher",
-                privacy="Public",
-                change_id=change_id,
-            )
+            platform = data_store.get_platform(platform_name=None, change_id=change_id,)
             sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
             sensor = platform.get_sensor(
                 data_store=data_store,
                 sensor_name="GPS",
                 sensor_type=sensor_type,
-                privacy=None,
                 change_id=change_id,
             )
 
@@ -92,49 +84,61 @@ class GPXImporter(Importer):
                 elevation_str = self.get_child_text_if_exists(tpt, "{*}ele")
 
                 # Parse timestamp and create state
-                timestamp = parse(timestamp_str)
+                timestamp = self.parse_timestamp(timestamp_str)
                 state = datafile.create_state(
                     data_store, platform, sensor, timestamp, self.short_name
                 )
 
                 location = Location(errors=self.errors, error_type=self.error_type)
-                location.set_latitude_decimal_degrees(latitude_str)
-                location.set_longitude_decimal_degrees(longitude_str)
-                state.location = location
+                lat_valid = location.set_latitude_decimal_degrees(latitude_str)
+                lon_valid = location.set_longitude_decimal_degrees(longitude_str)
+
+                if lat_valid and lon_valid:
+                    state.location = location
 
                 # Add course
                 if course_str is not None:
-                    course = convert_absolute_angle(
+                    course_valid, course = convert_absolute_angle(
                         course_str, tpt.sourceline, self.errors, self.error_type
                     )
-                    state.course = course
+                    if course_valid:
+                        state.course = course
 
                 # Add speed (specified in metres per second in the file)
                 if speed_str is not None:
-                    speed = convert_speed(
+                    speed_valid, speed = convert_speed(
                         speed_str,
                         (unit_registry.metre / unit_registry.second),
                         None,
                         self.errors,
                         self.error_type,
                     )
-                    if speed:
+                    if speed_valid:
                         state.speed = speed
 
                 if elevation_str is not None:
-                    try:
-                        elevation = float(elevation_str)
-                    except ValueError:
-                        self.errors.append(
-                            {
-                                self.error_type: f"Line {tpt.sourceline}. Error in elevation value "
-                                f"{elevation_str}. Couldn't convert to number"
-                            }
-                        )
-                    state.elevation = elevation * unit_registry.metre
+                    elevation_valid, elevation = convert_distance(
+                        elevation_str, unit_registry.metre, None, self.errors, self.error_type
+                    )
+                    if elevation_valid:
+                        state.elevation = elevation
 
     def get_child_text_if_exists(self, element, search_string):
         child = element.find(search_string)
         if child is not None:
             return child.text
         return None
+
+    def parse_timestamp(self, s):
+        dt = parse(s)
+
+        # Create a UTC time zone object
+        utc = tzoffset("UTC", 0)
+
+        # Convert to UTC
+        dt_in_utc = dt.astimezone(utc)
+
+        # Convert to a 'naive' datetime - ie. without a timezone
+        dt_naive = dt_in_utc.replace(tzinfo=None)
+
+        return dt_naive
