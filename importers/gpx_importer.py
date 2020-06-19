@@ -49,9 +49,11 @@ class GPXImporter(Importer):
         # Iterate through <trk> elements - these should correspond to
         # a specific platform, with the platform name in the <name> element
         for track_element in tqdm(doc.findall("//{*}trk")):
+            track_name = track_element.find("{*}name").text
+
             # Get the platform and sensor details, as these will be the same for all
             # points in this track
-            platform = data_store.get_platform(platform_name=None, change_id=change_id,)
+            platform = data_store.get_platform(platform_name=track_name, change_id=change_id,)
             sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
             sensor = platform.get_sensor(
                 data_store=data_store,
