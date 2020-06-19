@@ -37,6 +37,7 @@ full Pepys documentation.
    usage
    configuration
    csv_import
+   snapshot_merge
    developer_guide
    deployment
    Source documentation <modules>
