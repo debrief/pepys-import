@@ -2193,7 +2193,7 @@ class TestExportAlterAndMerge(unittest.TestCase):
 
                 platform_names = [p.name for p in platform_results]
 
-                assert len(platform_names) == 8
+                assert len(platform_names) == 9
 
                 assert "Master_Platform_1" in platform_names
                 assert "Slave_Platform_1" in platform_names
@@ -2455,7 +2455,7 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
 
                 platform_names = [p.name for p in platform_results]
 
-                assert len(platform_names) == 8
+                assert len(platform_names) == 9
 
                 assert "Master_Platform_1" in platform_names
                 assert "Slave_Platform_1" in platform_names
