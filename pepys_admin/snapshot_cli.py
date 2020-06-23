@@ -119,7 +119,7 @@ class SnapshotShell(cmd.Cmd):
 
         confirmation = input(
             f"Database to merge: {slave_db_path}\n"
-            f"Merging will alter your main database, are you sure you want to merge? (y/n)"
+            f"Merging a snapshot can introduce significant volumes of new data, are you sure you want to perform merge? (y/N)"
         )
         if confirmation.lower() == "y":
             # Copy the SQLite db to a temporary location, as the merge function modifies the slave
