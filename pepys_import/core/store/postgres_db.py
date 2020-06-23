@@ -10,7 +10,7 @@ from sqlalchemy.orm import (  # used to defer fetching attributes unless it's sp
     deferred,
     relationship,
 )
-from sqlalchemy.sql.schema import UniqueConstraint
+from sqlalchemy.sql.schema import CheckConstraint, UniqueConstraint
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
@@ -76,7 +76,9 @@ class Sensor(BasePostGIS, SensorMixin):
     )
 
     sensor_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(
+        String(150), CheckConstraint("name <> ''", name="ck_Sensors_name"), nullable=False
+    )
     sensor_type_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.SensorTypes.sensor_type_id", onupdate="cascade"),
@@ -107,8 +109,16 @@ class Platform(BasePostGIS, PlatformMixin):
     )
 
     platform_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
-    identifier = deferred(Column(String(10), nullable=False))
+    name = Column(
+        String(150), CheckConstraint("name <> ''", name="ck_Platforms_name"), nullable=False
+    )
+    identifier = deferred(
+        Column(
+            String(10),
+            CheckConstraint("identifier <> ''", name="ck_Platforms_identifier"),
+            nullable=False,
+        )
+    )
     trigraph = deferred(Column(String(3)))
     quadgraph = deferred(Column(String(4)))
     nationality_id = Column(
@@ -206,7 +216,9 @@ class Datafile(BasePostGIS, DatafileMixin):
     reference = Column(String(150))
     url = Column(String(150))
     size = Column(Integer, nullable=False)
-    hash = deferred(Column(String(32), nullable=False))
+    hash = deferred(
+        Column(String(32), CheckConstraint("hash <> ''", name="ck_Datafiles_hash"), nullable=False)
+    )
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
 
