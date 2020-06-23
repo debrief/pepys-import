@@ -122,13 +122,10 @@ class EAGImporter(Importer):
 
             if success:
                 state.location = location
-                combine_tokens(ecef_x_token, ecef_y_token, ecef_z_token).record(
-                    self.name, "location", state.location, "ECEF X, Y and Z"
-                )
-
                 state.elevation = height * unit_registry.metre
+
                 combine_tokens(ecef_x_token, ecef_y_token, ecef_z_token).record(
-                    self.name, "altitude", state.elevation, "ECEF X, Y and Z"
+                    self.name, "location and elevation", state.location, "ECEF X, Y and Z"
                 )
             else:
                 self.errors.append(
