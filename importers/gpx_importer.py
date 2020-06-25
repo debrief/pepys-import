@@ -16,6 +16,7 @@ class GPXImporter(Importer):
             name="GPX Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name="GPX Importer",
+            datafile_type="GPX",
         )
 
     def can_load_this_type(self, suffix):
