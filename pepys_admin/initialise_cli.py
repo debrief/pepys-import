@@ -15,7 +15,7 @@ class InitialiseShell(cmd.Cmd):
 (3) Create Pepys schema
 (4) Import Reference data
 (5) Import Metadata
-(0) Back
+(.) Back
 """
     prompt = "(initialise) "
 
@@ -24,7 +24,7 @@ class InitialiseShell(cmd.Cmd):
         self.data_store = data_store
         self.csv_path = csv_path
         self.aliases = {
-            "0": self.do_cancel,
+            ".": self.do_cancel,
             "1": self.do_clear_db_contents,
             "2": self.do_clear_db_schema,
             "3": self.do_create_pepys_schema,
@@ -88,15 +88,15 @@ class InitialiseShell(cmd.Cmd):
 
     def default(self, line):
         cmd_, arg, line = self.parseline(line)
-        if cmd_ in self.aliases:
+        if arg == "." and line == ".":
+            return True
+        elif cmd_ in self.aliases:
             self.aliases[cmd_]()
-            if cmd_ == "0":
-                return True
         else:
             print(f"*** Unknown syntax: {line}")
 
     def postcmd(self, stop, line):
-        if line != "0":
+        if line != ".":
             print("-" * 61)
             print(self.intro)
         return cmd.Cmd.postcmd(self, stop, line)

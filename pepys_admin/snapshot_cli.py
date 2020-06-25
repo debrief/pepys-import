@@ -22,7 +22,7 @@ class SnapshotShell(cmd.Cmd):
     (1) Create snapshot with Reference data
     (2) Create snapshot with Reference data & Metadata
     (3) Merge databases
-    (0) Back
+    (.) Back
     """
     prompt = "(pepys-admin) (snapshot) "
 
@@ -30,7 +30,7 @@ class SnapshotShell(cmd.Cmd):
         super(SnapshotShell, self).__init__()
         self.data_store = data_store
         self.aliases = {
-            "0": self.do_cancel,
+            ".": self.do_cancel,
             "1": self.do_export_reference_data,
             "2": self.do_export_reference_data_and_metadata,
             "3": self.do_merge_databases,
@@ -152,15 +152,15 @@ class SnapshotShell(cmd.Cmd):
 
     def default(self, line):
         cmd_, arg, line = self.parseline(line)
-        if cmd_ in self.aliases:
+        if arg == "." and line == ".":
+            return True
+        elif cmd_ in self.aliases:
             self.aliases[cmd_]()
-            if cmd_ == "0":
-                return True
         else:
             print(f"*** Unknown syntax: {line}")
 
     def postcmd(self, stop, line):
-        if line != "0":
+        if line != ".":
             print("-" * 61)
             print(self.intro)
         return cmd.Cmd.postcmd(self, stop, line)

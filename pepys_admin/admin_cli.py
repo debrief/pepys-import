@@ -28,7 +28,7 @@ class AdminShell(cmd.Cmd):
 (5) Migrate
 (6) View Data
 (7) View Docs
-(0) Exit
+(.) Exit
 """
     prompt = "(pepys-admin) "
 
@@ -37,7 +37,7 @@ class AdminShell(cmd.Cmd):
         self.data_store = data_store
         self.csv_path = csv_path
         self.aliases = {
-            "0": self.do_exit,
+            ".": self.do_exit,
             "1": self.do_initialise,
             "2": self.do_status,
             "3": self.do_export,
@@ -128,13 +128,15 @@ class AdminShell(cmd.Cmd):
 
     def default(self, line):
         command_, arg, line = self.parseline(line)
-        if command_ in self.aliases:
+        if arg == "." and line == ".":
+            self.aliases["."]()
+        elif command_ in self.aliases:
             self.aliases[command_]()
         else:
             print(f"*** Unknown syntax: {line}")
 
     def postcmd(self, stop, line):
-        if line != "0":
+        if line != ".":
             print("-" * 61)
             print(self.intro)
         return cmd.Cmd.postcmd(self, stop, line)

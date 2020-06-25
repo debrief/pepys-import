@@ -16,7 +16,7 @@ class ExportShell(cmd.Cmd):
     intro = """--- Menu ---
     (1) Export by name
     (2) Export by Platform and sensor
-    (0) Back
+    (.) Back
     """
 
     prompt = "(pepys-admin) (export) "
@@ -30,7 +30,7 @@ class ExportShell(cmd.Cmd):
         super(ExportShell, self).__init__()
         self.data_store = data_store
         self.aliases = {
-            "0": self.do_cancel,
+            ".": self.do_cancel,
             "1": self.do_export,
             "2": self.do_export_by_platform_name,
             "9": self.do_export_all,
@@ -111,12 +111,12 @@ class ExportShell(cmd.Cmd):
         text = "Select from the found datafile objects.\n"
         text += "--- Menu ---\n"
         options = [
-            "0",
+            ".",
         ]
         for index, obj in enumerate(objects, 1):
             text += f"({index}) {obj['name']} {obj['filename']} {obj['min']}-{obj['max']}\n"
             options.append(str(index))
-        text += "(0) Cancel\n"
+        text += "(.) Cancel\n"
         # Initialise a new menu
         export_platform = ExportByPlatformNameShell(self.data_store, options, objects)
         export_platform.cmdloop(intro=text)
@@ -163,15 +163,15 @@ class ExportShell(cmd.Cmd):
 
     def default(self, line):
         cmd_, arg, line = self.parseline(line)
-        if cmd_ in self.aliases:
+        if arg == "." and line == ".":
+            return True
+        elif cmd_ in self.aliases:
             self.aliases[cmd_]()
-            if cmd_ == "0":
-                return True
         else:
             print(f"*** Unknown syntax: {line}")
 
     def postcmd(self, stop, line):
-        if line != "0":
+        if line != ".":
             print("-" * 61)
             print(self.intro)
         return cmd.Cmd.postcmd(self, stop, line)
@@ -227,9 +227,9 @@ class ExportByPlatformNameShell(cmd.Cmd):
 
     def default(self, line):
         cmd_, arg, line = self.parseline(line)
-        if cmd_ in self.options:
-            if cmd_ == "0":
-                return True
+        if arg == "." and line == ".":
+            return True
+        elif cmd_ in self.options:
             selected_option = self.objects[int(cmd_) - 1]
             return self.do_export(selected_option)
         else:
