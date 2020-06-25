@@ -152,6 +152,8 @@ class SnapshotShell(cmd.Cmd):
 
     def default(self, line):
         cmd_, arg, line = self.parseline(line)
+        # Python accepts letters, digits, and "_" character as a command.
+        # Therefore, "." is interpreted as an argument.
         if arg == "." and line == ".":
             return True
         elif cmd_ in self.aliases:

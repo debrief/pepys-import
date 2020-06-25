@@ -128,6 +128,8 @@ class AdminShell(cmd.Cmd):
 
     def default(self, line):
         command_, arg, line = self.parseline(line)
+        # Python accepts letters, digits, and "_" character as a command.
+        # Therefore, "." is interpreted as an argument.
         if arg == "." and line == ".":
             self.aliases["."]()
         elif command_ in self.aliases:
