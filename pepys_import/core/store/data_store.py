@@ -678,7 +678,8 @@ class DataStore:
             datafile = self.find_datafile(datafile_name=datafile_name)
             if datafile:
                 # found object should be initialised because of _measurement variable
-                datafile.__init__()
+                if not hasattr(datafile, "measurements"):
+                    datafile.__init__()
                 return datafile
 
         datafile_type_obj = self.search_datafile_type(datafile_type)
