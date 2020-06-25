@@ -249,13 +249,18 @@ class FileProcessor:
                 if importer.default_privacy:
                     privacy = importer.default_privacy
                     break
-            datafile = data_store.get_datafile(
-                basename, file_extension, file_size, file_hash, change.change_id, privacy=privacy,
-            )
 
             # Run all parsers
             for importer in good_importers:
                 processed_ctr += 1
+                datafile = data_store.get_datafile(
+                    basename,
+                    importer.datafile_type,
+                    file_size,
+                    file_hash,
+                    change.change_id,
+                    privacy=privacy,
+                )
                 importer.load_this_file(
                     data_store, full_path, highlighted_file, datafile, change.change_id
                 )
