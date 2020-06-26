@@ -163,23 +163,23 @@ class NisidaImporter(Importer):
 
         return datetime(year=self.year, month=self.month, day=day, hour=hour, minute=minute)
 
-    def parse_location(self, lat_token, lon_token):
+    def parse_location(self, lat_str, lon_str):
         # The latitude and longitude values are given in degrees and decimal minutes as follows:
         # (D)DDMM.MMH
         try:
-            lat_hemisphere = lat_token.text[-1]
-            lon_hemisphere = lon_token.text[-1]
+            lat_hemisphere = lat_str[-1]
+            lon_hemisphere = lon_str[-1]
 
-            lat_minutes = float(lat_token.text[-6:-1])
-            lon_minutes = float(lon_token.text[-6:-1])
+            lat_minutes = float(lat_str[-6:-1])
+            lon_minutes = float(lon_str[-6:-1])
 
-            lat_degrees = float(lat_token.text[:-6])
-            lon_degrees = float(lon_token.text[:-6])
-        except ValueError:
+            lat_degrees = float(lat_str[:-6])
+            lon_degrees = float(lon_str[:-6])
+        except (ValueError, IndexError):
             self.errors.append(
                 {
                     self.error_type: f"Error on line {self.current_line_no}. "
-                    f"Unable to parse latitude/longitude values: {lat_token.text}, {lon_token.text}"
+                    f"Unable to parse latitude/longitude values: {lat_str}, {lon_str}"
                 }
             )
             return False
@@ -245,7 +245,7 @@ class NisidaImporter(Importer):
         lat_token = self.tokens[1]
         lon_token = self.tokens[2]
 
-        loc = self.parse_location(lat_token, lon_token)
+        loc = self.parse_location(lat_token.text, lon_token.text)
 
         if loc:
             state.location = loc
