@@ -75,7 +75,6 @@ class Line:
 
             for match in finditer(reg_exp, child.text):
                 token_str = match.group()
-                token_str = token_str.rstrip("/")
                 token_start, token_end = match.span()
                 # If quoted text exists and it contains the split token, continue or
                 # add the quoted text's Token object

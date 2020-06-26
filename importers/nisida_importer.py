@@ -11,7 +11,15 @@ from pepys_import.file.importer import Importer
 from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
 
-SLASH_SPLIT_REGEX = r"(.*?)(?:/|$)"
+# This is a slightly 'hacky' regex, as it does what we want but gives an
+# empty match at the end of any lines that end in a slash. It has to do
+# this to match the final token in lines that don't end in a slash.
+# This is the best solution we've found that extracts just the relevant matches
+# plus an empty match if there is just // (ie. a missing entry), plus
+# deals with lines that end with a slash and lines that don't. See
+# https://stackoverflow.com/questions/62600563/regex-to-match-entries-between-slashes-but-not-slashes-including-empty-entrie#62600719
+# for some discussion
+SLASH_SPLIT_REGEX = r"(?:(?<=/)|(?<=^))[^/]*"
 
 SENSOR_CODE_TO_NAME = {
     "RDR": "Radar",
