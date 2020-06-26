@@ -440,11 +440,9 @@ class NisidaImporter(Importer):
         self.last_comment_entry = comment_with_remarks
 
         # Create a geometry entry for the position given by 'own position' plus the range and bearing
-        geom_type_id = data_store.add_to_geometry_types(
-            "Test Geom Type", change_id=change_id
-        ).geo_type_id
+        geom_type_id = data_store.add_to_geometry_types("Tactical", change_id=change_id).geo_type_id
         geom_sub_type_id = data_store.add_to_geometry_sub_types(
-            "Test Geom Sub Type", geom_type_id, change_id=change_id
+            "Detection", geom_type_id, change_id=change_id
         ).geo_sub_type_id
 
         geometry_location = self.location_plus_range_and_bearing(loc, bearing, range_value)
