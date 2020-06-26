@@ -185,6 +185,10 @@ class FileProcessor:
         # file may have full path, therefore extract basename and split it
         basename = os.path.basename(file_object)
         filename, file_extension = os.path.splitext(basename)
+
+        if basename == ".DS_Store":
+            return processed_ctr
+
         # make copy of list of importers
         good_importers = self.importers.copy()
 
@@ -221,7 +225,13 @@ class FileProcessor:
             highlighted_file = HighlightedFile(full_path)
 
             # Get the file contents, for the final check
-            file_contents = self.get_file_contents(full_path)
+            try:
+                file_contents = self.get_file_contents(full_path)
+            except Exception:
+                # Can't get the file contents - eg. because it's not a proper
+                # unicode text file (This can occur for binary files in the same folders)
+                # So skip the file
+                return processed_ctr
 
             # lastly the contents
             tmp_importers = good_importers.copy()
@@ -411,9 +421,6 @@ class FileProcessor:
 
     @staticmethod
     def get_file_contents(full_path: str):
-        try:
-            with open(full_path, "r", encoding="windows-1252") as file:
-                lines = file.read().split("\n")
-            return lines
-        except UnicodeDecodeError:
-            return None
+        with open(full_path, "r", encoding="windows-1252") as file:
+            lines = file.read().split("\n")
+        return lines
