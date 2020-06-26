@@ -1184,6 +1184,8 @@ class GeometryMixin:
                 loc.set_from_wkb(self._location.desc)
 
             return loc
+        else:
+            return None
 
     @declared_attr
     def task(self):

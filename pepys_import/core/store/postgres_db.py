@@ -704,7 +704,7 @@ class Geometry1(BasePostGIS, GeometryMixin):
     __table_args__ = {"schema": "pepys"}
 
     geometry_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    _geometry = Column("geometry", Geometry, nullable=False)
+    _geometry = Column("geometry", Geometry, srid=4326, nullable=False)
     name = Column(String(150), nullable=False)
     geo_type_id = Column(
         UUID(as_uuid=True),
