@@ -1,5 +1,8 @@
 from datetime import datetime
 
+import geopy
+import geopy.distance
+
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
@@ -49,10 +52,11 @@ class NisidaImporter(Importer):
         return True
 
     def can_load_this_file(self, file_contents):
-        for line in file_contents:
-            if line.startswith("UNIT/"):
-                return True
-        return False
+        return True
+        # for line in file_contents:
+        #     if line.startswith("UNIT/"):
+        #         return True
+        # return False
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
         self.current_line_no = line_number
@@ -204,6 +208,27 @@ class NisidaImporter(Importer):
             return loc
         else:
             return False
+
+    def location_plus_range_and_bearing(self, orig_loc, bearing, range_value):
+        # Get starting point from the orig_loc Location object
+        start = geopy.Point(orig_loc.latitude, orig_loc.longitude)
+        print(f"Starting point: {start}")
+
+        # Convert distance to kilometres and initialise object
+        range_in_km = range_value.to(unit_registry.kilometre)
+        d = geopy.distance.distance(kilometers=range_in_km.magnitude)
+
+        print(f"Distance: {range_in_km}, Bearing: {bearing}")
+
+        # Use the `destination` method with the bearing
+        result = d.destination(point=start, bearing=bearing.magnitude)
+        print(f"Result: {result}")
+
+        result_loc = Location()
+        result_loc.set_latitude_decimal_degrees(result.latitude)
+        result_loc.set_longitude_decimal_degrees(result.longitude)
+
+        return result_loc
 
     def process_narrative(self, data_store, datafile, change_id):
         comment_text = self.tokens[2].text
@@ -394,7 +419,7 @@ class NisidaImporter(Importer):
         )
 
         # Create a comment entry for the remarks
-        comment_type = data_store.add_to_comment_types("Remarks", change_id)
+        comment_type = data_store.add_to_comment_types("Detection Remarks", change_id)
 
         comment_with_remarks = datafile.create_comment(
             data_store=data_store,
@@ -406,3 +431,22 @@ class NisidaImporter(Importer):
         )
 
         self.last_comment_entry = comment_with_remarks
+
+        # Create a geometry entry for the position given by 'own position' plus the range and bearing
+        geom_type_id = data_store.add_to_geometry_types(
+            "Test Geom Type", change_id=change_id
+        ).geo_type_id
+        geom_sub_type_id = data_store.add_to_geometry_sub_types(
+            "Test Geom Sub Type", geom_type_id, change_id=change_id
+        ).geo_sub_type_id
+
+        geometry_location = self.location_plus_range_and_bearing(loc, bearing, range_value)
+
+        geometry = datafile.create_geometry(
+            data_store=data_store,
+            name="Test",
+            geom=geometry_location,
+            geom_type_id=geom_type_id,
+            geom_sub_type_id=geom_sub_type_id,
+            parser_name=self.short_name,
+        )

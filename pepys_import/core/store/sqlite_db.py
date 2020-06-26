@@ -588,7 +588,13 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
     table_type_id = 33
 
     geometry_id = Column(UUIDType, primary_key=True, default=uuid4)
-    geometry = deferred(Column(Geometry(geometry_type="GEOMETRY", management=True), nullable=False))
+    _geometry = deferred(
+        Column(
+            "geometry",
+            Geometry(geometry_type="GEOMETRY", srid=4326, management=True),
+            nullable=False,
+        )
+    )
     name = Column(String(150), nullable=False)
     geo_type_id = Column(
         UUIDType, ForeignKey("GeometryTypes.geo_type_id", onupdate="cascade"), nullable=False
