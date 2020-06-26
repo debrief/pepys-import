@@ -10,6 +10,21 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distan
 
 SLASH_SPLIT_REGEX = r"(.*?)(?:/|$)"
 
+SENSOR_CODE_TO_NAME = {
+    "RDR": "Radar",
+    "PSON": "Passive Sonar",
+    "ASON": "Active Sonar",
+    "VDS": "Variable Depth Sonar",
+    "HSON": "Helo Sonar",
+    "HRDR": "Helo Radar",
+    "TAS": "Array Sonar",
+    "VIS": "Visible",
+    "IR": "Infrared",
+    "OTHER": "Generic",
+}
+
+POS_SOURCE_TO_NAME = {"GPS": "GPS", "DR": "Dead Recknoning", "IN": "Inertial"}
+
 
 class NisidaImporter(Importer):
     def __init__(self):
@@ -99,7 +114,7 @@ class NisidaImporter(Importer):
             if self.tokens[1].text.upper() in ("NAR", "COC"):
                 self.process_narrative(data_store, datafile, change_id)
             elif self.tokens[1].text.upper() == "DET":
-                pass
+                self.process_detection(data_store, datafile, change_id)
             elif self.tokens[1].text.upper() == "ATT":
                 pass
             elif self.tokens[1].text.upper() == "DIP":
@@ -130,9 +145,6 @@ class NisidaImporter(Importer):
     def not_missing(self, text):
         empty = text == ""
         missing = text == "-"
-
-        if empty:
-            print("Found empty field")
 
         return not (empty or missing)
 
@@ -212,14 +224,8 @@ class NisidaImporter(Importer):
 
     def process_position(self, data_store, datafile, change_id):
         pos_source_token = self.tokens[3]
-
-        if pos_source_token.text == "GPS":
-            pos_source = "GPS"
-        elif pos_source_token.text == "DR":
-            pos_source = "Dead Reckoning"
-        elif pos_source_token.text == "IN":
-            pos_source = "Inertial"
-        else:
+        pos_source = POS_SOURCE_TO_NAME.get(pos_source_token.text)
+        if pos_source is None:
             self.errors.append(
                 {
                     self.error_type: f"Error on line {self.current_line_no}. "
@@ -250,7 +256,7 @@ class NisidaImporter(Importer):
         if loc:
             state.location = loc
             combine_tokens(lat_token, lon_token).record(
-                self.name, "location", loc, "decimal degrees"
+                self.name, "location", loc, "degrees and decimal minutes"
             )
 
         course_token = self.tokens[4]
@@ -288,3 +294,115 @@ class NisidaImporter(Importer):
             if elevation_valid:
                 state.elevation = elevation * -1
                 depth_token.record(self.name, "depth", state.elevation)
+
+    def process_detection(self, data_store, datafile, change_id):
+        # Get the sensor code, as we need it to create the sensor object
+        sensor_code_token = self.tokens[2]
+        sensor_name = SENSOR_CODE_TO_NAME.get(sensor_code_token.text)
+        if sensor_name is None:
+            self.errors.append(
+                {
+                    self.error_type: f"Error on line {self.current_line_no}. "
+                    f"Invalid sensor code: {sensor_code_token.text}"
+                }
+            )
+            return
+        sensor_code_token.record(self.name, "Sensor", sensor_name)
+
+        sensor = self.platform.get_sensor(
+            data_store=data_store, sensor_name=sensor_name, change_id=change_id,
+        )
+
+        # Create the contact object that we're going to add to the database
+        contact = datafile.create_contact(
+            data_store=data_store,
+            platform=self.platform,
+            sensor=sensor,
+            timestamp=self.timestamp,
+            parser_name=self.short_name,
+        )
+
+        # Parse the bearing field
+        bearing_token = self.tokens[3]
+        if self.not_missing(bearing_token.text):
+            bearing_valid, bearing = convert_absolute_angle(
+                bearing_token.text, self.current_line_no, self.errors, self.error_type
+            )
+            if bearing_valid:
+                contact.bearing = bearing
+                bearing_token.record(self.name, "bearing", bearing)
+
+        # Parse the range field
+        range_token = self.tokens[4]
+        if self.not_missing(range_token.text):
+            range_valid, range_value = convert_distance(
+                range_token.text,
+                unit_registry.nautical_mile,
+                self.current_line_no,
+                self.errors,
+                self.error_type,
+            )
+            if range_valid:
+                contact.range = range_value
+                range_token.record(self.name, "range", range_value)
+
+        # TODO: Extract self.tokens[5] which is labelled as TN in the docs...we don't know what it is yet
+
+        # Parse lat and lon for own location
+        lat_token = self.tokens[6]
+        lon_token = self.tokens[7]
+
+        if self.not_missing(lat_token) and self.not_missing(lon_token):
+            loc = self.parse_location(lat_token.text, lon_token.text)
+
+            if loc:
+                contact.location = loc
+                combine_tokens(lat_token, lon_token).record(
+                    self.name, "location", loc, "degrees and decimal minutes"
+                )
+
+        # Parse position source
+        pos_source_token = self.tokens[8]
+        if self.not_missing(pos_source_token):
+            pos_source = POS_SOURCE_TO_NAME.get(pos_source_token.text)
+            if pos_source is None:
+                self.errors.append(
+                    {
+                        self.error_type: f"Error on line {self.current_line_no}. "
+                        f"Invalid position source value: {pos_source_token.text}"
+                    }
+                )
+                return
+            pos_source_token.record(self.name, "position source", pos_source)
+
+        # Parse remarks
+        remarks_token = self.tokens[9]
+        if self.not_missing(remarks_token):
+            remarks = remarks_token.text
+            remarks_token.record(self.name, "remarks", remarks)
+
+        # Create a comment entry for the Position Source
+        comment_type = data_store.add_to_comment_types("Position Source", change_id)
+
+        comment_with_pos_source = datafile.create_comment(
+            data_store=data_store,
+            platform=self.platform,
+            timestamp=self.timestamp,
+            comment=pos_source,
+            comment_type=comment_type,
+            parser_name=self.short_name,
+        )
+
+        # Create a comment entry for the remarks
+        comment_type = data_store.add_to_comment_types("Remarks", change_id)
+
+        comment_with_remarks = datafile.create_comment(
+            data_store=data_store,
+            platform=self.platform,
+            timestamp=self.timestamp,
+            comment=remarks,
+            comment_type=comment_type,
+            parser_name=self.short_name,
+        )
+
+        self.last_comment_entry = comment_with_remarks
