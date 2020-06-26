@@ -52,11 +52,10 @@ class NisidaImporter(Importer):
         return True
 
     def can_load_this_file(self, file_contents):
-        return True
-        # for line in file_contents:
-        #     if line.startswith("UNIT/"):
-        #         return True
-        # return False
+        for line in file_contents:
+            if line.startswith("UNIT/"):
+                return True
+        return False
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
         self.current_line_no = line_number
