@@ -568,6 +568,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     )
     _mla = deferred(Column("mla", DOUBLE_PRECISION))
     _soa = deferred(Column("soa", DOUBLE_PRECISION))
+    track_number = Column(String(20))
     subject_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id", onupdate="cascade")
     )
