@@ -7,6 +7,7 @@ class BaseShell(cmd.Cmd):
         # Python accepts letters, digits, and "_" character as a command.
         # Therefore, "." is interpreted as an argument.
         if arg == "." and line == ".":
+            self.aliases["."]()
             return True
         elif cmd_ in self.aliases:
             self.aliases[cmd_]()
