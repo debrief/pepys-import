@@ -219,7 +219,7 @@ from datetime import datetime
 from uuid import uuid4
 from geoalchemy2 import Geometry
 
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, CheckConstraint, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
@@ -245,6 +245,7 @@ from pepys_import.core.store.common_db import (
     MediaMixin,
     ParticipantMixin,
     PlatformMixin,
+    ReferenceRepr,
     SensorMixin,
     StateMixin,
     TaggedItemMixin,
