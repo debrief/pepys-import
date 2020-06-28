@@ -401,15 +401,13 @@ class DatafileMixin:
         return comment
 
     def create_geometry(self, data_store, name, geom, geom_type_id, geom_sub_type_id, parser_name):
-        print(f"Passed geom: {geom}")
         geometry = data_store.db_classes.Geometry1(
             name=name,
+            geometry=geom,
             source_id=self.datafile_id,
             geo_type_id=geom_type_id,
             geo_sub_type_id=geom_sub_type_id,
         )
-        geometry.geometry = geom
-        print(f"Geometry: {geometry.geometry}")
         self.add_measurement_to_dict(geometry, parser_name)
         return geometry
 
