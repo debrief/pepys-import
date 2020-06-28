@@ -7,6 +7,7 @@ from iterfzf import iterfzf
 from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion import PathCompleter
 
+from pepys_admin.base_cli import BaseShell
 from pepys_admin.merge import MergeDatabases
 from pepys_admin.snapshot_helpers import export_metadata_tables, export_reference_tables
 from pepys_admin.utils import get_default_export_folder
@@ -15,7 +16,7 @@ from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import is_schema_created
 
 
-class SnapshotShell(cmd.Cmd):
+class SnapshotShell(BaseShell):
     """Offers to create snapshot with Reference data and create snapshot with reference data & metadata."""
 
     intro = """--- Menu ---
@@ -149,20 +150,3 @@ class SnapshotShell(cmd.Cmd):
     def do_cancel():
         """Returns to the previous menu"""
         print("Returning to the previous menu...")
-
-    def default(self, line):
-        cmd_, arg, line = self.parseline(line)
-        # Python accepts letters, digits, and "_" character as a command.
-        # Therefore, "." is interpreted as an argument.
-        if arg == "." and line == ".":
-            return True
-        elif cmd_ in self.aliases:
-            self.aliases[cmd_]()
-        else:
-            print(f"*** Unknown syntax: {line}")
-
-    def postcmd(self, stop, line):
-        if line != ".":
-            print("-" * 61)
-            print(self.intro)
-        return cmd.Cmd.postcmd(self, stop, line)

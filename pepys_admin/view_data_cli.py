@@ -10,6 +10,7 @@ from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import RelationshipProperty, class_mapper, load_only
 from tabulate import tabulate
 
+from pepys_admin.base_cli import BaseShell
 from pepys_import.core.store import constants
 
 
@@ -17,7 +18,7 @@ def bottom_toolbar():
     return HTML("Press <b>ESC then Enter</b> to exit!")
 
 
-class ViewDataShell(cmd.Cmd):
+class ViewDataShell(BaseShell):
     """Offers to view table and run SQL."""
 
     intro = """--- Menu ---
@@ -166,20 +167,3 @@ class ViewDataShell(cmd.Cmd):
             )
             res += "\n"
             print(res)
-
-    def default(self, line):
-        cmd_, arg, line = self.parseline(line)
-        # Python accepts letters, digits, and "_" character as a command.
-        # Therefore, "." is interpreted as an argument.
-        if arg == "." and line == ".":
-            return True
-        elif cmd_ in self.aliases:
-            self.aliases[cmd_]()
-        else:
-            print(f"*** Unknown syntax: {line}")
-
-    def postcmd(self, stop, line):
-        if line != ".":
-            print("-" * 61)
-            print(self.intro)
-        return cmd.Cmd.postcmd(self, stop, line)

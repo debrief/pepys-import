@@ -6,11 +6,12 @@ from iterfzf import iterfzf
 from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion import PathCompleter
 
+from pepys_admin.base_cli import BaseShell
 from pepys_admin.utils import get_default_export_folder
 from pepys_import.utils.data_store_utils import is_schema_created
 
 
-class ExportShell(cmd.Cmd):
+class ExportShell(BaseShell):
     """Offers to export datafiles by name, by platform and sensor"""
 
     intro = """--- Menu ---
@@ -161,25 +162,8 @@ class ExportShell(cmd.Cmd):
         else:
             print(f"Please enter a valid input.")
 
-    def default(self, line):
-        cmd_, arg, line = self.parseline(line)
-        # Python accepts letters, digits, and "_" character as a command.
-        # Therefore, "." is interpreted as an argument.
-        if arg == "." and line == ".":
-            return True
-        elif cmd_ in self.aliases:
-            self.aliases[cmd_]()
-        else:
-            print(f"*** Unknown syntax: {line}")
 
-    def postcmd(self, stop, line):
-        if line != ".":
-            print("-" * 61)
-            print(self.intro)
-        return cmd.Cmd.postcmd(self, stop, line)
-
-
-class ExportByPlatformNameShell(cmd.Cmd):
+class ExportByPlatformNameShell(BaseShell):
     """Offers to export datafiles by platform and sensor"""
 
     prompt = "(pepys-admin) (export by platform) "
@@ -238,9 +222,3 @@ class ExportByPlatformNameShell(cmd.Cmd):
             return self.do_export(selected_option)
         else:
             print(f"*** Unknown syntax: {line}")
-
-    def postcmd(self, stop, line):
-        if stop is False:
-            print("-" * 61)
-            print(self.intro)
-        return cmd.Cmd.postcmd(self, stop, line)

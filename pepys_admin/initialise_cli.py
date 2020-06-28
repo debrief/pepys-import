@@ -1,12 +1,13 @@
 import cmd
 import os
 
+from pepys_admin.base_cli import BaseShell
 from pepys_import.utils.data_store_utils import is_schema_created
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-class InitialiseShell(cmd.Cmd):
+class InitialiseShell(BaseShell):
     """Offers users to clear contents, import sample reference data and metadata, create/clear schema."""
 
     intro = """--- Menu ---
@@ -85,20 +86,3 @@ class InitialiseShell(cmd.Cmd):
     def do_cancel():
         """Returns to the previous menu"""
         print("Returning to the previous menu...")
-
-    def default(self, line):
-        cmd_, arg, line = self.parseline(line)
-        # Python accepts letters, digits, and "_" character as a command.
-        # Therefore, "." is interpreted as an argument.
-        if arg == "." and line == ".":
-            return True
-        elif cmd_ in self.aliases:
-            self.aliases[cmd_]()
-        else:
-            print(f"*** Unknown syntax: {line}")
-
-    def postcmd(self, stop, line):
-        if line != ".":
-            print("-" * 61)
-            print(self.intro)
-        return cmd.Cmd.postcmd(self, stop, line)
