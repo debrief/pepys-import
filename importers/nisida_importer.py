@@ -122,7 +122,7 @@ class NisidaImporter(Importer):
             elif self.tokens[1].text.upper() == "DET":
                 self.process_detection(data_store, datafile, change_id)
             elif self.tokens[1].text.upper() == "ATT":
-                pass
+                self.process_attack(data_store, datafile, change_id)
             elif self.tokens[1].text.upper() == "DIP":
                 pass
             elif self.tokens[1].text.upper() == "SSQ":
@@ -454,3 +454,88 @@ class NisidaImporter(Importer):
             geom_sub_type_id=geom_sub_type_id,
             parser_name=self.short_name,
         )
+
+    def process_attack(self, data_store, datafile, change_id):
+        # Parse the bearing field
+        bearing_token = self.tokens[3]
+        if self.not_missing(bearing_token.text):
+            bearing_valid, bearing = convert_absolute_angle(
+                bearing_token.text, self.current_line_no, self.errors, self.error_type
+            )
+            if bearing_valid:
+                bearing_token.record(self.name, "bearing", bearing)
+
+        # Parse the range field
+        range_token = self.tokens[4]
+        if self.not_missing(range_token.text):
+            range_valid, range_value = convert_distance(
+                range_token.text,
+                unit_registry.nautical_mile,
+                self.current_line_no,
+                self.errors,
+                self.error_type,
+            )
+            if range_valid:
+                range_token.record(self.name, "range", range_value)
+
+        # Parse lat and lon for own location
+        lat_token = self.tokens[6]
+        lon_token = self.tokens[7]
+
+        if self.not_missing(lat_token) and self.not_missing(lon_token):
+            loc = self.parse_location(lat_token.text, lon_token.text)
+
+            if not loc:
+                self.errors.append(
+                    {
+                        self.error_type: f"Error on line {self.current_line_no}. "
+                        f"Cannot parse latitude/longitude location: {lat_token.text} {lon_token.text}"
+                    }
+                )
+                return
+
+            combine_tokens(lat_token, lon_token).record(
+                self.name, "location", loc, "degrees and decimal minutes"
+            )
+
+        # Create a geometry entry for the position given by 'own position' plus the range and bearing
+        geom_type_id = data_store.add_to_geometry_types("Tactical", change_id=change_id).geo_type_id
+        geom_sub_type_id = data_store.add_to_geometry_sub_types(
+            "Attack", geom_type_id, change_id=change_id
+        ).geo_sub_type_id
+
+        if (not bearing_valid) or (not range_valid) or (not loc):
+            self.errors.append(
+                {
+                    self.error_type: f"Error on line {self.current_line_no}. "
+                    f"Not enough data to calculate attack position - bearing, range or own location missing"
+                }
+            )
+            return
+
+        geometry_location = self.location_plus_range_and_bearing(loc, bearing, range_value)
+
+        geometry = datafile.create_geometry(
+            data_store=data_store,
+            name="Test",
+            geom=geometry_location,
+            geom_type_id=geom_type_id,
+            geom_sub_type_id=geom_sub_type_id,
+            parser_name=self.short_name,
+        )
+
+        comment_type = data_store.add_to_comment_types("Attack", change_id)
+
+        comment_text = "/".join([t.text for t in self.tokens[1:]])
+        combine_tokens(*self.tokens[1:]).record(self.name, "comment text", comment_text)
+
+        comment = datafile.create_comment(
+            data_store=data_store,
+            platform=self.platform,
+            timestamp=self.timestamp,
+            comment=comment_text,
+            comment_type=comment_type,
+            parser_name=self.short_name,
+        )
+
+        self.last_comment_entry = comment
