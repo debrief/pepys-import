@@ -33,6 +33,13 @@ class CommandLineResolver(DataResolver):
         print("Ok, adding new datafile.")
 
         datafile_name = prompt("Please enter a name: ", default=datafile_name)
+
+        if datafile_name == "":
+            print("You must provide a datafile name")
+            return self.resolve_datafile(
+                data_store, datafile_name, datafile_type, privacy, change_id
+            )
+
         # Choose Datafile Type
         if datafile_type:
             chosen_datafile_type = data_store.add_to_datafile_types(datafile_type, change_id)
@@ -204,7 +211,7 @@ class CommandLineResolver(DataResolver):
             )
             current_values += "\n"
         else:
-            objects = data_store.session.query(db_class).all()
+            objects = data_store.session.query(db_class).limit(7).all()
         objects_dict = {obj.name: obj for obj in objects}
         # CamelCase table names should be split into words, separated by "-" and converted to
         # lowercase for matching with DataStore add methods (i.e. PlatformTypes -> platform_types)
@@ -214,8 +221,7 @@ class CommandLineResolver(DataResolver):
             .lower()
             .replace(" ", "_")
         )
-        if len(objects_dict) <= 7:
-            options.extend(objects_dict)
+        options.extend(objects_dict)
 
         def is_valid_dynamic(option):
             return option in [str(i) for i in range(1, len(options) + 1)] or option == "."
@@ -361,39 +367,44 @@ class CommandLineResolver(DataResolver):
             choices=[],
             completer=FuzzyWordCompleter(completer),
         )
-        if platform_name and choice in completer:
-            new_choice = create_menu(
-                f"Do you wish to keep {platform_name} as synonym for {choice}?",
-                ["Yes", "No"],
-                validate_method=is_valid,
-            )
-            if new_choice == str(1):
-                platform = (
-                    data_store.session.query(data_store.db_classes.Platform)
-                    .filter(
-                        or_(
-                            data_store.db_classes.Platform.name == choice,
-                            data_store.db_classes.Platform.trigraph == choice,
-                            data_store.db_classes.Platform.quadgraph == choice,
-                        )
+        if choice in completer:
+            # Get the platform from the database
+            platform = (
+                data_store.session.query(data_store.db_classes.Platform)
+                .filter(
+                    or_(
+                        data_store.db_classes.Platform.name == choice,
+                        data_store.db_classes.Platform.trigraph == choice,
+                        data_store.db_classes.Platform.quadgraph == choice,
                     )
-                    .first()
                 )
-                # Add it to synonyms and return existing platform
-                data_store.add_to_synonyms(
-                    constants.PLATFORM, platform_name, platform.platform_id, change_id
+                .first()
+            )
+            # If we've been given a platform name, then we might want to link
+            # that platform name to the one we've picked, as a synonym
+            if platform_name:
+                new_choice = create_menu(
+                    f"Do you wish to keep {platform_name} as synonym for {choice}?",
+                    ["Yes", "No"],
+                    validate_method=is_valid,
                 )
-                print(f"'{platform_name}' added to Synonyms!")
-                return platform
-            elif new_choice == str(2):
-                return self.add_to_platforms(
-                    data_store, platform_name, platform_type, nationality, privacy, change_id,
-                )
-            elif new_choice == ".":
-                print("-" * 61, "\nReturning to the previous menu\n")
-                return self.fuzzy_search_platform(
-                    data_store, platform_name, platform_type, nationality, privacy, change_id,
-                )
+                if new_choice == str(1):
+                    # Add it to synonyms and return existing platform
+                    data_store.add_to_synonyms(
+                        constants.PLATFORM, platform_name, platform.platform_id, change_id
+                    )
+                    print(f"'{platform_name}' added to Synonyms!")
+                    return platform
+                elif new_choice == str(2):
+                    return self.add_to_platforms(
+                        data_store, platform_name, platform_type, nationality, privacy, change_id,
+                    )
+                elif new_choice == ".":
+                    print("-" * 61, "\nReturning to the previous menu\n")
+                    return self.fuzzy_search_platform(
+                        data_store, platform_name, platform_type, nationality, privacy, change_id,
+                    )
+            return platform
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_platform(
@@ -595,6 +606,13 @@ class CommandLineResolver(DataResolver):
             sensor_name = ""
 
         sensor_name = prompt("Please enter a name: ", default=sensor_name)
+
+        if sensor_name == "":
+            print("You must provide a sensor name")
+            return self.add_to_sensors(
+                data_store, sensor_name, sensor_type, host_id, privacy, change_id
+            )
+
         if sensor_type:
             sensor_type = data_store.add_to_sensor_types(sensor_type, change_id)
         else:

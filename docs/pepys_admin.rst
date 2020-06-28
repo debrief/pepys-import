@@ -58,6 +58,8 @@ pepys\_admin.snapshot_helpers module
    :undoc-members:
    :show-inheritance:
 
+.. _merge_docs:
+
 pepys\_admin.merge module
 ------------------------------------------
 

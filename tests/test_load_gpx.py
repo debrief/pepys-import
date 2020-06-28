@@ -44,12 +44,9 @@ class GPXTests(unittest.TestCase):
             states = self.store.session.query(self.store.db_classes.State).all()
             assert len(states) == 27
 
-            # there must be a platform after import
-            # (Note: as the platform name is no longer imported from the track name,
-            # all files will have the same platform name - the default one generated
-            # by the default resolver)
+            # there must be 3 platforms after import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 1
+            assert len(platforms) == 3
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
@@ -58,6 +55,8 @@ class GPXTests(unittest.TestCase):
             #
             # Test the actual values that are imported
             #
+            platform_names = [platform.name for platform in platforms]
+            assert "NELSON" in platform_names
 
             # there should be 3 States with a speed of 4.5m/s
             # as the first <trkpt> element in gpx_1_0.gpx has been imported

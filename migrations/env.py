@@ -180,6 +180,8 @@ def run_migrations_online():
                 context.execute("SET search_path TO pepys,public")
                 context.run_migrations()
         else:
+            # Turn off the enforcement of foreign key constraints before running the migration
+            connection.execute("PRAGMA foreign_keys=OFF;")
             context.configure(
                 connection=connection,
                 target_metadata=target_metadata,
@@ -190,6 +192,8 @@ def run_migrations_online():
             )
             with context.begin_transaction():
                 context.run_migrations()
+            # Turn on the enforcement of foreign key constraints after the migration is done
+            connection.execute("PRAGMA foreign_keys=ON;")
 
 
 if context.is_offline_mode():
