@@ -373,7 +373,11 @@ class NisidaImporter(Importer):
                 contact.range = range_value
                 range_token.record(self.name, "range", range_value)
 
-        # TODO: Extract self.tokens[5] which is labelled as TN in the docs...we don't know what it is yet
+        # Parse the track number field
+        track_number_token = self.tokens[5]
+        if self.not_missing(track_number_token.text):
+            contact.track_number = track_number_token.text
+            track_number_token.record(self.name, "track number", contact.track_number)
 
         # Parse lat and lon for own location
         lat_token = self.tokens[6]
