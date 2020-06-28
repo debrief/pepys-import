@@ -115,18 +115,21 @@ class NisidaImporter(Importer):
             self.timestamp = self.parse_timestamp(self.tokens[0])
             self.tokens[0].record(self.name, "timestamp", self.timestamp)
 
+            self.tokens[1].record(self.name, "message type", self.tokens[1].text)
+
             print([t.text for t in self.tokens])
 
             if self.tokens[1].text.upper() in ("NAR", "COC"):
+                # The COC and NAR messages have the same format
+                # COC isn't actually described in the documentation for the format,
+                # but seems to be Commanding Officer Comments, and is present in the example
                 self.process_narrative(data_store, datafile, change_id)
             elif self.tokens[1].text.upper() == "DET":
                 self.process_detection(data_store, datafile, change_id)
             elif self.tokens[1].text.upper() == "ATT":
                 self.process_attack(data_store, datafile, change_id)
-            elif self.tokens[1].text.upper() == "DIP":
-                pass
-            elif self.tokens[1].text.upper() == "SSQ":
-                pass
+            elif self.tokens[1].text.upper() in ("DIP", "SSQ"):
+                self.process_dip_or_buoy(data_store, datafile, change_id)
             elif self.tokens[1].text.upper() == "EXP":
                 pass
             elif self.tokens[1].text.upper() == "SEN":
@@ -231,6 +234,14 @@ class NisidaImporter(Importer):
         result_loc.set_longitude_decimal_degrees(result.longitude)
 
         return result_loc
+
+    def comment_text_from_whole_line(self):
+        """Extracts the text of the whole line excluding the initial timestamp entry
+        and records it as comment text"""
+        comment_text = "/".join([t.text for t in self.tokens[1:]])
+        combine_tokens(*self.tokens[1:]).record(self.name, "comment text", comment_text)
+
+        return comment_text
 
     def process_narrative(self, data_store, datafile, change_id):
         comment_text = self.tokens[2].text
@@ -526,8 +537,65 @@ class NisidaImporter(Importer):
 
         comment_type = data_store.add_to_comment_types("Attack", change_id)
 
-        comment_text = "/".join([t.text for t in self.tokens[1:]])
-        combine_tokens(*self.tokens[1:]).record(self.name, "comment text", comment_text)
+        comment_text = self.comment_text_from_whole_line()
+
+        comment = datafile.create_comment(
+            data_store=data_store,
+            platform=self.platform,
+            timestamp=self.timestamp,
+            comment=comment_text,
+            comment_type=comment_type,
+            parser_name=self.short_name,
+        )
+
+        self.last_comment_entry = comment
+
+    def process_dip_or_buoy(self, data_store, datafile, change_id):
+        # Parse lat and lon for own location
+        lat_token = self.tokens[5]
+        lon_token = self.tokens[6]
+
+        if self.not_missing(lat_token) and self.not_missing(lon_token):
+            loc = self.parse_location(lat_token.text, lon_token.text)
+
+            if not loc:
+                self.errors.append(
+                    {
+                        self.error_type: f"Error on line {self.current_line_no}. "
+                        f"Cannot parse latitude/longitude location: {lat_token.text} {lon_token.text}"
+                    }
+                )
+                return
+
+            combine_tokens(lat_token, lon_token).record(
+                self.name, "location", loc, "degrees and decimal minutes"
+            )
+
+        # Get type of message - Dip (type DIP) or Buoy (type SSQ)
+        message_type = self.tokens[1].text
+
+        message_name_from_message_type_field = {"DIP": "Dip", "SSQ": "Buoy"}
+
+        # Create a geometry entry for the position given
+        geom_type_id = data_store.add_to_geometry_types("Tactical", change_id=change_id).geo_type_id
+        geom_sub_type_id = data_store.add_to_geometry_sub_types(
+            message_name_from_message_type_field[message_type], geom_type_id, change_id=change_id
+        ).geo_sub_type_id
+
+        geometry = datafile.create_geometry(
+            data_store=data_store,
+            name="Test",
+            geom=loc,
+            geom_type_id=geom_type_id,
+            geom_sub_type_id=geom_sub_type_id,
+            parser_name=self.short_name,
+        )
+
+        comment_type = data_store.add_to_comment_types(
+            message_name_from_message_type_field[message_type], change_id
+        )
+
+        comment_text = self.comment_text_from_whole_line()
 
         comment = datafile.create_comment(
             data_store=data_store,
