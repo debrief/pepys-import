@@ -131,7 +131,7 @@ class NisidaImporter(Importer):
             elif self.tokens[1].text.upper() in ("DIP", "SSQ"):
                 self.process_dip_or_buoy(data_store, datafile, change_id)
             elif self.tokens[1].text.upper() == "EXP":
-                pass
+                self.process_mastexposure(data_store, datafile, change_id)
             elif self.tokens[1].text.upper() == "SEN":
                 pass
             elif self.tokens[1].text.upper() == "ENV":
@@ -213,6 +213,26 @@ class NisidaImporter(Importer):
             return loc
         else:
             return False
+
+    def parse_time(self, text):
+        splitted = text.split(":")
+
+        try:
+            hour = int(splitted[0])
+            mins = int(splitted[1])
+        except (ValueError, AttributeError, IndexError):
+            self.errors.append(
+                {
+                    self.error_type: f"Error on line {self.current_line_no}. "
+                    f"Unable to parse time value: {text}"
+                }
+            )
+            return False
+
+        # Take current timestamp value, and replace the hours and mins, and zero the seconds
+        new_timestamp = self.timestamp.replace(hour=hour, minute=mins, second=0)
+
+        return new_timestamp
 
     def location_plus_range_and_bearing(self, orig_loc, bearing, range_value):
         # Get starting point from the orig_loc Location object
@@ -607,3 +627,58 @@ class NisidaImporter(Importer):
         )
 
         self.last_comment_entry = comment
+
+    def process_mastexposure(self, data_store, datafile, change_id):
+        print("Processing mast exposure")
+        comment_type = data_store.add_to_comment_types("Mast Exposure", change_id)
+
+        comment_text = self.comment_text_from_whole_line()
+
+        comment = datafile.create_comment(
+            data_store=data_store,
+            platform=self.platform,
+            timestamp=self.timestamp,
+            comment=comment_text,
+            comment_type=comment_type,
+            parser_name=self.short_name,
+        )
+
+        self.last_comment_entry = comment
+
+        mast_type_token = self.tokens[2]
+        mast_type = mast_type_token.text
+
+        sensor_type = data_store.add_to_sensor_types(mast_type, change_id=change_id).name
+        privacy = get_lowest_privacy(data_store)
+        sensor = self.platform.get_sensor(
+            data_store=data_store,
+            sensor_name=mast_type,
+            sensor_type=sensor_type,
+            privacy=privacy,
+            change_id=change_id,
+        )
+
+        time_up = self.parse_time(self.tokens[3].text)
+        if time_up:
+            self.tokens[3].record(self.name, "time up", time_up)
+        else:
+            # Parsing error already raised inside self.parse_time function
+            return
+
+        if self.not_missing(self.tokens[4].text):
+            time_down = self.parse_time(self.tokens[4].text)
+            if time_down:
+                self.tokens[4].record(self.name, "time down", time_down)
+            else:
+                return
+        else:
+            time_down = time_up
+
+        activation = datafile.create_activation(
+            data_store=data_store,
+            name="Test",
+            sensor=sensor,
+            start=time_up,
+            end=time_down,
+            parser_name=self.short_name,
+        )
