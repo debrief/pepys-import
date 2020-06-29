@@ -607,7 +607,7 @@ class Activation(BasePostGIS, ActivationMixin):
     __table_args__ = {"schema": "pepys"}
 
     activation_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150))
     sensor_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade"),
@@ -706,7 +706,7 @@ class Geometry1(BasePostGIS, GeometryMixin):
 
     geometry_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     _geometry = Column("geometry", Geometry(srid=4326), nullable=False)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150))
     geo_type_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.GeometryTypes.geo_type_id", onupdate="cascade"),

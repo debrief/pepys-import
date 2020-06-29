@@ -518,7 +518,7 @@ class Activation(BaseSpatiaLite, ActivationMixin):
     table_type_id = 30
 
     activation_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150))
     sensor_id = Column(
         UUIDType, ForeignKey("Sensors.sensor_id", onupdate="cascade"), nullable=False
     )
@@ -596,7 +596,7 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
             nullable=False,
         )
     )
-    name = Column(String(150), nullable=False)
+    name = Column(String(150))
     geo_type_id = Column(
         UUIDType, ForeignKey("GeometryTypes.geo_type_id", onupdate="cascade"), nullable=False
     )
