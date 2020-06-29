@@ -411,6 +411,13 @@ class DatafileMixin:
         self.add_measurement_to_dict(geometry, parser_name)
         return geometry
 
+    def create_activation(self, data_store, name, sensor, start, end, parser_name):
+        activation = data_store.db_classes.Activation(
+            name=name, sensor_id=sensor.sensor_id, start=start, end=end, source_id=self.datafile_id,
+        )
+        self.add_measurement_to_dict(activation, parser_name)
+        return activation
+
     def add_measurement_to_dict(self, measurement, parser_name):
         try:
             platform_name = measurement.platform_name
