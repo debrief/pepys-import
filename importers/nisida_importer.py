@@ -267,7 +267,10 @@ class NisidaImporter(Importer):
         comment_text = self.tokens[2].text
         self.tokens[2].record(self.name, "comment text", comment_text)
 
-        comment_type = data_store.add_to_comment_types("Narrative", change_id)
+        if self.tokens[1].text == "NAR":
+            comment_type = data_store.add_to_comment_types("Narrative", change_id)
+        elif self.tokens[1].text == "COC":
+            comment_type = data_store.add_to_comment_types("CO Comments", change_id)
 
         comment = datafile.create_comment(
             data_store=data_store,
@@ -547,7 +550,6 @@ class NisidaImporter(Importer):
 
         geometry = datafile.create_geometry(
             data_store=data_store,
-            name="Test",
             geom=geometry_location,
             geom_type_id=geom_type_id,
             geom_sub_type_id=geom_sub_type_id,
@@ -674,7 +676,6 @@ class NisidaImporter(Importer):
 
         activation = datafile.create_activation(
             data_store=data_store,
-            name="Test",
             sensor=sensor,
             start=time_up,
             end=time_down,
