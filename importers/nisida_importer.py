@@ -133,7 +133,7 @@ class NisidaImporter(Importer):
             elif self.tokens[1].text.upper() == "EXP":
                 self.process_mastexposure(data_store, datafile, change_id)
             elif self.tokens[1].text.upper() == "SEN":
-                pass
+                self.process_sensor(data_store, datafile, change_id)
             elif self.tokens[1].text.upper() == "ENV":
                 pass
             elif len(self.tokens) >= 3 and self.tokens[3].text in ("GPS", "DR", "IN"):
@@ -629,7 +629,6 @@ class NisidaImporter(Importer):
         self.last_comment_entry = comment
 
     def process_mastexposure(self, data_store, datafile, change_id):
-        print("Processing mast exposure")
         comment_type = data_store.add_to_comment_types("Mast Exposure", change_id)
 
         comment_text = self.comment_text_from_whole_line()
@@ -673,6 +672,83 @@ class NisidaImporter(Importer):
                 return
         else:
             time_down = time_up
+
+        activation = datafile.create_activation(
+            data_store=data_store,
+            sensor=sensor,
+            start=time_up,
+            end=time_down,
+            parser_name=self.short_name,
+        )
+
+    def process_sensor(self, data_store, datafile, change_id):
+        comment_type = data_store.add_to_comment_types("Sensor", change_id)
+
+        comment_text = self.comment_text_from_whole_line()
+
+        comment = datafile.create_comment(
+            data_store=data_store,
+            platform=self.platform,
+            timestamp=self.timestamp,
+            comment=comment_text,
+            comment_type=comment_type,
+            parser_name=self.short_name,
+        )
+
+        self.last_comment_entry = comment
+
+        sensor_code_token = self.tokens[2]
+        sensor_name = SENSOR_CODE_TO_NAME.get(sensor_code_token.text)
+        if sensor_name is None:
+            self.errors.append(
+                {
+                    self.error_type: f"Error on line {self.current_line_no}. "
+                    f"Invalid sensor code: {sensor_code_token.text}"
+                }
+            )
+            return
+        sensor_code_token.record(self.name, "Sensor", sensor_name)
+
+        sensor_type = data_store.add_to_sensor_types(sensor_name, change_id=change_id).name
+        privacy = get_lowest_privacy(data_store)
+        sensor = self.platform.get_sensor(
+            data_store=data_store,
+            sensor_name=sensor_name,
+            sensor_type=sensor_type,
+            privacy=privacy,
+            change_id=change_id,
+        )
+
+        time_up = None
+        time_down = None
+
+        if self.not_missing(self.tokens[3].text):
+            time_up = self.parse_time(self.tokens[3].text)
+            if time_up:
+                self.tokens[3].record(self.name, "time up", time_up)
+            else:
+                # Parsing error already raised inside self.parse_time function
+                return
+
+        if self.not_missing(self.tokens[4].text):
+            time_down = self.parse_time(self.tokens[4].text)
+            if time_down:
+                self.tokens[4].record(self.name, "time down", time_down)
+            else:
+                return
+
+        if time_up and not time_down:
+            time_down = time_up
+        if time_down and not time_up:
+            time_up = time_down
+        if (not time_down) and (not time_up):
+            self.errors.append(
+                {
+                    self.error_type: f"Error on line {self.current_line_no}. "
+                    f"You must provide at least one of time up or time down {self.tokens[3].text} {self.tokens[4].text}"
+                }
+            )
+            return
 
         activation = datafile.create_activation(
             data_store=data_store,
