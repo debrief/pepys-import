@@ -1193,7 +1193,7 @@ class GeometryMixin:
 
     @declared_attr
     def task(self):
-        return relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Task", lazy="joined", join_depth=1, uselist=False)
 
     # @declared_attr
     # def task_name(self):
@@ -1205,7 +1205,6 @@ class GeometryMixin:
             "Platform",
             lazy="joined",
             join_depth=1,
-            innerjoin=True,
             uselist=False,
             foreign_keys="Geometry1.subject_platform_id",
         )
@@ -1220,7 +1219,6 @@ class GeometryMixin:
             "Platform",
             lazy="joined",
             join_depth=1,
-            innerjoin=True,
             uselist=False,
             foreign_keys="Geometry1.sensor_platform_id",
         )
