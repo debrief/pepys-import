@@ -400,9 +400,8 @@ class DatafileMixin:
         self.add_measurement_to_dict(comment, parser_name)
         return comment
 
-    def create_geometry(self, data_store, name, geom, geom_type_id, geom_sub_type_id, parser_name):
+    def create_geometry(self, data_store, geom, geom_type_id, geom_sub_type_id, parser_name):
         geometry = data_store.db_classes.Geometry1(
-            name=name,
             geometry=geom,
             source_id=self.datafile_id,
             geo_type_id=geom_type_id,
@@ -411,9 +410,9 @@ class DatafileMixin:
         self.add_measurement_to_dict(geometry, parser_name)
         return geometry
 
-    def create_activation(self, data_store, name, sensor, start, end, parser_name):
+    def create_activation(self, data_store, sensor, start, end, parser_name):
         activation = data_store.db_classes.Activation(
-            name=name, sensor_id=sensor.sensor_id, start=start, end=end, source_id=self.datafile_id,
+            sensor_id=sensor.sensor_id, start=start, end=end, source_id=self.datafile_id,
         )
         self.add_measurement_to_dict(activation, parser_name)
         return activation
