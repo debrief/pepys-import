@@ -135,7 +135,7 @@ class NisidaImporter(Importer):
             elif self.tokens[1].text.upper() == "SEN":
                 self.process_sensor(data_store, datafile, change_id)
             elif self.tokens[1].text.upper() == "ENV":
-                pass
+                self.process_enviroment(data_store, datafile, change_id)
             elif len(self.tokens) >= 3 and self.tokens[3].text in ("GPS", "DR", "IN"):
                 print("Processing position")
                 self.process_position(data_store, datafile, change_id)
@@ -757,3 +757,19 @@ class NisidaImporter(Importer):
             end=time_down,
             parser_name=self.short_name,
         )
+
+    def process_enviroment(self, data_store, datafile, change_id):
+        comment_type = data_store.add_to_comment_types("Environment", change_id)
+
+        comment_text = self.comment_text_from_whole_line()
+
+        comment = datafile.create_comment(
+            data_store=data_store,
+            platform=self.platform,
+            timestamp=self.timestamp,
+            comment=comment_text,
+            comment_type=comment_type,
+            parser_name=self.short_name,
+        )
+
+        self.last_comment_entry = comment
