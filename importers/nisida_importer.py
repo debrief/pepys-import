@@ -479,7 +479,6 @@ class NisidaImporter(Importer):
 
         geometry = datafile.create_geometry(
             data_store=data_store,
-            name="Test",
             geom=geometry_location,
             geom_type_id=geom_type_id,
             geom_sub_type_id=geom_sub_type_id,
@@ -604,7 +603,6 @@ class NisidaImporter(Importer):
 
         geometry = datafile.create_geometry(
             data_store=data_store,
-            name="Test",
             geom=loc,
             geom_type_id=geom_type_id,
             geom_sub_type_id=geom_sub_type_id,
