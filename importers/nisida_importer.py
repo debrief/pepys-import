@@ -449,21 +449,23 @@ class NisidaImporter(Importer):
             contact.remarks = remarks_token.text
             remarks_token.record(self.name, "remarks", remarks_token.text)
 
-        # TODO: Change how Position Source is recorded
+        self.last_entry_with_text = contact
 
-        # Create a comment entry for the Position Source
-        comment_type = data_store.add_to_comment_types("Position Source", change_id)
-
-        comment_with_pos_source = datafile.create_comment(
+        # Create a State entry for the own position values, with a sensor of Position Source
+        sensor_type = data_store.add_to_sensor_types(pos_source, change_id=change_id).name
+        privacy = get_lowest_privacy(data_store)
+        sensor = self.platform.get_sensor(
             data_store=data_store,
-            platform=self.platform,
-            timestamp=self.timestamp,
-            comment=pos_source,
-            comment_type=comment_type,
-            parser_name=self.short_name,
+            sensor_name=pos_source,
+            sensor_type=sensor_type,
+            privacy=privacy,
+            change_id=change_id,
+        )
+        state = datafile.create_state(
+            data_store, self.platform, sensor, self.timestamp, self.short_name
         )
 
-        self.last_entry_with_text = contact
+        state.location = loc
 
         # Create a geometry entry for the position given by 'own position' plus the range and bearing
         geom_type_id = data_store.add_to_geometry_types("Tactical", change_id=change_id).geo_type_id
@@ -523,6 +525,36 @@ class NisidaImporter(Importer):
             combine_tokens(lat_token, lon_token).record(
                 self.name, "location", loc, "degrees and decimal minutes"
             )
+
+        # Parse position source
+        pos_source_token = self.tokens[8]
+        if self.not_missing(pos_source_token):
+            pos_source = POS_SOURCE_TO_NAME.get(pos_source_token.text)
+            if pos_source is None:
+                self.errors.append(
+                    {
+                        self.error_type: f"Error on line {self.current_line_no}. "
+                        f"Invalid position source value: {pos_source_token.text}"
+                    }
+                )
+                return
+            pos_source_token.record(self.name, "position source", pos_source)
+
+        # Create a State entry for the own position values, with a sensor of Position Source
+        sensor_type = data_store.add_to_sensor_types(pos_source, change_id=change_id).name
+        privacy = get_lowest_privacy(data_store)
+        sensor = self.platform.get_sensor(
+            data_store=data_store,
+            sensor_name=pos_source,
+            sensor_type=sensor_type,
+            privacy=privacy,
+            change_id=change_id,
+        )
+        state = datafile.create_state(
+            data_store, self.platform, sensor, self.timestamp, self.short_name
+        )
+
+        state.location = loc
 
         # Create a geometry entry for the position given by 'own position' plus the range and bearing
         geom_type_id = data_store.add_to_geometry_types("Tactical", change_id=change_id).geo_type_id
