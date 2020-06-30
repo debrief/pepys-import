@@ -615,8 +615,8 @@ class Activation(BasePostGIS, ActivationMixin):
         ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade"),
         nullable=False,
     )
-    start = deferred(Column(TIMESTAMP, nullable=False))
-    end = deferred(Column(TIMESTAMP, nullable=False))
+    start = deferred(Column(TIMESTAMP))
+    end = deferred(Column(TIMESTAMP))
     _min_range = deferred(Column("min_range", DOUBLE_PRECISION))
     _max_range = deferred(Column("max_range", DOUBLE_PRECISION))
     _left_arc = deferred(Column("left_arc", DOUBLE_PRECISION))

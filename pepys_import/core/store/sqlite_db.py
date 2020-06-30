@@ -524,8 +524,8 @@ class Activation(BaseSpatiaLite, ActivationMixin):
     sensor_id = Column(
         UUIDType, ForeignKey("Sensors.sensor_id", onupdate="cascade"), nullable=False
     )
-    start = deferred(Column(TIMESTAMP, nullable=False))
-    end = deferred(Column(TIMESTAMP, nullable=False))
+    start = deferred(Column(TIMESTAMP))
+    end = deferred(Column(TIMESTAMP))
     _min_range = deferred(Column("min_range", REAL))
     _max_range = deferred(Column("max_range", REAL))
     _left_arc = deferred(Column("left_arc", REAL))

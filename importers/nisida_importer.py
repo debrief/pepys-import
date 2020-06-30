@@ -146,11 +146,11 @@ class NisidaImporter(Importer):
                         }
                     )
                     return
-            except Exception:
+            except Exception as e:
                 self.errors.append(
                     {
                         self.error_type: f"Error on line {self.current_line_no}. "
-                        f"General error processing line - possibly incorrect number of tokens: {line}"
+                        f"General error processing line - {e}: {line.text}"
                     }
                 )
                 return
@@ -667,12 +667,15 @@ class NisidaImporter(Importer):
             change_id=change_id,
         )
 
-        time_up = self.parse_time(self.tokens[3].text)
-        if time_up:
-            self.tokens[3].record(self.name, "time up", time_up)
-        else:
-            # Parsing error already raised inside self.parse_time function
-            return
+        time_up = None
+        time_down = None
+        if self.not_missing(self.tokens[3].text):
+            time_up = self.parse_time(self.tokens[3].text)
+            if time_up:
+                self.tokens[3].record(self.name, "time up", time_up)
+            else:
+                # Parsing error already raised inside self.parse_time function
+                return
 
         if self.not_missing(self.tokens[4].text):
             time_down = self.parse_time(self.tokens[4].text)
@@ -680,8 +683,15 @@ class NisidaImporter(Importer):
                 self.tokens[4].record(self.name, "time down", time_down)
             else:
                 return
-        else:
-            time_down = time_up
+
+        if (not time_up) and (not time_down):
+            self.errors.append(
+                {
+                    self.error_type: f"Error on line {self.current_line_no}. "
+                    f"You must provide at least one of time up or time down {self.tokens[3].text} {self.tokens[4].text}"
+                }
+            )
+            return
 
         activation = datafile.create_activation(
             data_store=data_store,
@@ -737,10 +747,6 @@ class NisidaImporter(Importer):
             else:
                 return
 
-        if time_up and not time_down:
-            time_down = time_up
-        if time_down and not time_up:
-            time_up = time_down
         if (not time_down) and (not time_up):
             self.errors.append(
                 {
