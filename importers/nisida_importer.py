@@ -41,7 +41,7 @@ class NisidaImporter(Importer):
             short_name="Nisida Importer",
         )
         self.current_line_no = None
-        self.last_comment_entry = None
+        self.last_entry_with_text = None
         self.month = None
         self.year = None
         self.platform = None
@@ -83,9 +83,7 @@ class NisidaImporter(Importer):
         elif line.text.startswith("//"):
             # This is a continuation of the previous line, so add whatever else is in this line
             # to the content field of the previous entry
-            print(f"Processing continuation with text {line.text}")
-
-            if self.last_comment_entry is None:
+            if self.last_entry_with_text is None:
                 self.errors.append(
                     {
                         self.error_type: f"Error on line {self.current_line_no}. "
@@ -98,16 +96,19 @@ class NisidaImporter(Importer):
                 text_to_add = line.text[2:-1]
             else:
                 text_to_add = line.text[2:]
-            self.last_comment_entry.content = self.last_comment_entry.content + text_to_add
+            if isinstance(self.last_entry_with_text, data_store.db_classes.Comment):
+                self.last_entry_with_text.content = self.last_entry_with_text.content + text_to_add
+            else:
+                self.last_entry_with_text.remarks = self.last_entry_with_text.remarks + text_to_add
             line.record(self.name, "comment text", text_to_add)
         elif len(line.text) > 7 and line.text[7] == "/" and line.text[0:5].isdigit():
             # Check whether line starts with something like "311206Z/" (a timestamp and a slash)
             # Checking like this is faster than using regular expressions on each line
 
-            # Reset last_comment_entry, so that if continuation characters aren't directly
+            # Reset last_entry_with_text, so that if continuation characters aren't directly
             # after an entry we processed, then we will raise an error rather than
             # add to the incorrect entry
-            self.last_comment_entry = None
+            self.last_entry_with_text = None
 
             # Split line by slash
             self.tokens = line.tokens(SLASH_SPLIT_REGEX)
@@ -117,33 +118,39 @@ class NisidaImporter(Importer):
 
             self.tokens[1].record(self.name, "message type", self.tokens[1].text)
 
-            print([t.text for t in self.tokens])
-
-            if self.tokens[1].text.upper() in ("NAR", "COC"):
-                # The COC and NAR messages have the same format
-                # COC isn't actually described in the documentation for the format,
-                # but seems to be Commanding Officer Comments, and is present in the example
-                self.process_narrative(data_store, datafile, change_id)
-            elif self.tokens[1].text.upper() == "DET":
-                self.process_detection(data_store, datafile, change_id)
-            elif self.tokens[1].text.upper() == "ATT":
-                self.process_attack(data_store, datafile, change_id)
-            elif self.tokens[1].text.upper() in ("DIP", "SSQ"):
-                self.process_dip_or_buoy(data_store, datafile, change_id)
-            elif self.tokens[1].text.upper() == "EXP":
-                self.process_mastexposure(data_store, datafile, change_id)
-            elif self.tokens[1].text.upper() == "SEN":
-                self.process_sensor(data_store, datafile, change_id)
-            elif self.tokens[1].text.upper() == "ENV":
-                self.process_enviroment(data_store, datafile, change_id)
-            elif len(self.tokens) >= 3 and self.tokens[3].text in ("GPS", "DR", "IN"):
-                print("Processing position")
-                self.process_position(data_store, datafile, change_id)
-            else:
+            try:
+                if self.tokens[1].text.upper() in ("NAR", "COC"):
+                    # The COC and NAR messages have the same format
+                    # COC isn't actually described in the documentation for the format,
+                    # but seems to be Commanding Officer Comments, and is present in the example
+                    self.process_narrative(data_store, datafile, change_id)
+                elif self.tokens[1].text.upper() == "DET":
+                    self.process_detection(data_store, datafile, change_id)
+                elif self.tokens[1].text.upper() == "ATT":
+                    self.process_attack(data_store, datafile, change_id)
+                elif self.tokens[1].text.upper() in ("DIP", "SSQ"):
+                    self.process_dip_or_buoy(data_store, datafile, change_id)
+                elif self.tokens[1].text.upper() == "EXP":
+                    self.process_mastexposure(data_store, datafile, change_id)
+                elif self.tokens[1].text.upper() == "SEN":
+                    self.process_sensor(data_store, datafile, change_id)
+                elif self.tokens[1].text.upper() == "ENV":
+                    self.process_enviroment(data_store, datafile, change_id)
+                elif len(self.tokens) >= 3 and self.tokens[3].text in ("GPS", "DR", "IN"):
+                    self.process_position(data_store, datafile, change_id)
+                else:
+                    self.errors.append(
+                        {
+                            self.error_type: f"Error on line {self.current_line_no}. "
+                            f"Line does not match any known message format: {line.text}"
+                        }
+                    )
+                    return
+            except Exception:
                 self.errors.append(
                     {
                         self.error_type: f"Error on line {self.current_line_no}. "
-                        f"Line does not match any known message format: {line.text}"
+                        f"General error processing line - possibly incorrect number of tokens: {line}"
                     }
                 )
                 return
@@ -237,17 +244,13 @@ class NisidaImporter(Importer):
     def location_plus_range_and_bearing(self, orig_loc, bearing, range_value):
         # Get starting point from the orig_loc Location object
         start = geopy.Point(orig_loc.latitude, orig_loc.longitude)
-        print(f"Starting point: {start}")
 
         # Convert distance to kilometres and initialise object
         range_in_km = range_value.to(unit_registry.kilometre)
         d = geopy.distance.distance(kilometers=range_in_km.magnitude)
 
-        print(f"Distance: {range_in_km}, Bearing: {bearing}")
-
         # Use the `destination` method with the bearing
         result = d.destination(point=start, bearing=bearing.magnitude)
-        print(f"Result: {result}")
 
         result_loc = Location()
         result_loc.set_latitude_decimal_degrees(result.latitude)
@@ -281,7 +284,7 @@ class NisidaImporter(Importer):
             parser_name=self.short_name,
         )
 
-        self.last_comment_entry = comment
+        self.last_entry_with_text = comment
 
     def process_position(self, data_store, datafile, change_id):
         pos_source_token = self.tokens[3]
@@ -443,8 +446,10 @@ class NisidaImporter(Importer):
         # Parse remarks
         remarks_token = self.tokens[9]
         if self.not_missing(remarks_token):
-            remarks = remarks_token.text
-            remarks_token.record(self.name, "remarks", remarks)
+            contact.remarks = remarks_token.text
+            remarks_token.record(self.name, "remarks", remarks_token.text)
+
+        # TODO: Change how Position Source is recorded
 
         # Create a comment entry for the Position Source
         comment_type = data_store.add_to_comment_types("Position Source", change_id)
@@ -458,19 +463,7 @@ class NisidaImporter(Importer):
             parser_name=self.short_name,
         )
 
-        # Create a comment entry for the remarks
-        comment_type = data_store.add_to_comment_types("Detection Remarks", change_id)
-
-        comment_with_remarks = datafile.create_comment(
-            data_store=data_store,
-            platform=self.platform,
-            timestamp=self.timestamp,
-            comment=remarks,
-            comment_type=comment_type,
-            parser_name=self.short_name,
-        )
-
-        self.last_comment_entry = comment_with_remarks
+        self.last_entry_with_text = contact
 
         # Create a geometry entry for the position given by 'own position' plus the range and bearing
         geom_type_id = data_store.add_to_geometry_types("Tactical", change_id=change_id).geo_type_id
@@ -569,7 +562,7 @@ class NisidaImporter(Importer):
             parser_name=self.short_name,
         )
 
-        self.last_comment_entry = comment
+        self.last_entry_with_text = comment
 
     def process_dip_or_buoy(self, data_store, datafile, change_id):
         # Parse lat and lon for own location
@@ -626,24 +619,9 @@ class NisidaImporter(Importer):
             parser_name=self.short_name,
         )
 
-        self.last_comment_entry = comment
+        self.last_entry_with_text = comment
 
     def process_mastexposure(self, data_store, datafile, change_id):
-        comment_type = data_store.add_to_comment_types("Mast Exposure", change_id)
-
-        comment_text = self.comment_text_from_whole_line()
-
-        comment = datafile.create_comment(
-            data_store=data_store,
-            platform=self.platform,
-            timestamp=self.timestamp,
-            comment=comment_text,
-            comment_type=comment_type,
-            parser_name=self.short_name,
-        )
-
-        self.last_comment_entry = comment
-
         mast_type_token = self.tokens[2]
         mast_type = mast_type_token.text
 
@@ -681,22 +659,12 @@ class NisidaImporter(Importer):
             parser_name=self.short_name,
         )
 
+        activation.remarks = self.tokens[5].text
+        self.tokens[5].record(self.name, "remarks", self.tokens[5].text)
+
+        self.last_entry_with_text = activation
+
     def process_sensor(self, data_store, datafile, change_id):
-        comment_type = data_store.add_to_comment_types("Sensor", change_id)
-
-        comment_text = self.comment_text_from_whole_line()
-
-        comment = datafile.create_comment(
-            data_store=data_store,
-            platform=self.platform,
-            timestamp=self.timestamp,
-            comment=comment_text,
-            comment_type=comment_type,
-            parser_name=self.short_name,
-        )
-
-        self.last_comment_entry = comment
-
         sensor_code_token = self.tokens[2]
         sensor_name = SENSOR_CODE_TO_NAME.get(sensor_code_token.text)
         if sensor_name is None:
@@ -758,6 +726,11 @@ class NisidaImporter(Importer):
             parser_name=self.short_name,
         )
 
+        activation.remarks = self.tokens[5].text
+        self.tokens[5].record(self.name, "remarks", self.tokens[5].text)
+
+        self.last_entry_with_text = activation
+
     def process_enviroment(self, data_store, datafile, change_id):
         comment_type = data_store.add_to_comment_types("Environment", change_id)
 
@@ -772,4 +745,4 @@ class NisidaImporter(Importer):
             parser_name=self.short_name,
         )
 
-        self.last_comment_entry = comment
+        self.last_entry_with_text = comment

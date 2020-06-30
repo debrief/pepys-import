@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from geoalchemy2 import Geometry
-from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
@@ -438,6 +438,7 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
     @declared_attr
@@ -492,6 +493,7 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    remarks = Column(Text)
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     @declared_attr
@@ -532,6 +534,7 @@ class Activation(BaseSpatiaLite, ActivationMixin):
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -552,7 +555,7 @@ class LogsHolding(BaseSpatiaLite, LogsHoldingMixin):
     platform_id = Column(
         UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"), nullable=False
     )
-    comment = Column(String(150), nullable=False)
+    comment = Column(Text(), nullable=False)
     source_id = Column(
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
@@ -575,7 +578,7 @@ class Comment(BaseSpatiaLite, CommentMixin):
     comment_type_id = Column(
         UUIDType, ForeignKey("CommentTypes.comment_type_id", onupdate="cascade"), nullable=False
     )
-    content = Column(String(150), nullable=False)
+    content = Column(Text, nullable=False)
     source_id = Column(
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
@@ -589,12 +592,8 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
     table_type_id = 33
 
     geometry_id = Column(UUIDType, primary_key=True, default=uuid4)
-    _geometry = deferred(
-        Column(
-            "geometry",
-            Geometry(geometry_type="GEOMETRY", srid=4326, management=True),
-            nullable=False,
-        )
+    _geometry = Column(
+        "geometry", Geometry(geometry_type="GEOMETRY", srid=4326, management=True), nullable=False,
     )
     name = Column(String(150))
     geo_type_id = Column(
@@ -612,6 +611,7 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -637,4 +637,5 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
