@@ -16,9 +16,7 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/nisida/nisida_examp
 
 class TestLoadNisida(unittest.TestCase):
     def setUp(self):
-        if os.path.exists("nisida.sqlite"):
-            os.remove("nisida.sqlite")
-        self.store = DataStore("", "", "", 0, "nisida.sqlite", db_type="sqlite")
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
     def tearDown(self):
