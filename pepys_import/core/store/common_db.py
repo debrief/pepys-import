@@ -1179,18 +1179,6 @@ class GeometryMixin:
     def geometry(self):
         return self._geometry
 
-    def geometry_as_location(self):
-        if self._geometry is not None:
-            loc = Location()
-            if isinstance(self._location, str):
-                loc.set_from_wkt_string(self._location)
-            else:
-                loc.set_from_wkb(self._location.desc)
-
-            return loc
-        else:
-            return None
-
     @declared_attr
     def task(self):
         return relationship("Task", lazy="joined", join_depth=1, uselist=False)
