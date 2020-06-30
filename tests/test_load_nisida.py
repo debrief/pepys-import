@@ -165,10 +165,13 @@ class TestLoadNisida(unittest.TestCase):
             # Check the activation entries
             assert activations[0].sensor_name == "Array Sonar"
             assert activations[0].start == datetime.datetime(2003, 10, 31, 10, 2)
-            assert activations[0].end == datetime.datetime(2003, 10, 31, 10, 2)
+            assert activations[0].end is None
             assert activations[0].remarks == "TIME ON EXAMPLE"
 
-            assert activations[2].start == datetime.datetime(2003, 10, 31, 15, 0)
+            assert activations[1].start == datetime.datetime(2003, 10, 31, 13, 0)
+            assert activations[1].end == datetime.datetime(2003, 10, 31, 14, 50)
+
+            assert activations[2].start is None
             assert activations[2].end == datetime.datetime(2003, 10, 31, 15, 0)
 
             assert activations[3].sensor_name == "PER"
