@@ -191,7 +191,7 @@ class NisidaImporter(Importer):
 
         return datetime(year=self.year, month=self.month, day=day, hour=hour, minute=minute)
 
-    def parse_location(self, lat_str, lon_str):
+    def parse_lat_lon_strings(self, lat_str, lon_str):
         # The latitude and longitude values are given in degrees and decimal minutes as follows:
         # (D)DDMM.MMH
         try:
@@ -315,13 +315,10 @@ class NisidaImporter(Importer):
         lat_token = self.tokens[1]
         lon_token = self.tokens[2]
 
-        loc = self.parse_location(lat_token.text, lon_token.text)
+        loc = self.parse_location(lat_token, lon_token)
 
         if loc:
             state.location = loc
-            combine_tokens(lat_token, lon_token).record(
-                self.name, "location", loc, "degrees and decimal minutes"
-            )
 
         course_token = self.tokens[4]
         speed_token = self.tokens[5]
@@ -371,7 +368,7 @@ class NisidaImporter(Importer):
                 }
             )
             return
-        sensor_code_token.record(self.name, "Sensor", sensor_name)
+        sensor_code_token.record(self.name, "sensor", sensor_name)
 
         sensor = self.platform.get_sensor(
             data_store=data_store, sensor_name=sensor_name, change_id=change_id,
@@ -420,28 +417,15 @@ class NisidaImporter(Importer):
         lat_token = self.tokens[6]
         lon_token = self.tokens[7]
 
-        if self.not_missing(lat_token) and self.not_missing(lon_token):
-            loc = self.parse_location(lat_token.text, lon_token.text)
-
-            if loc:
-                contact.location = loc
-                combine_tokens(lat_token, lon_token).record(
-                    self.name, "location", loc, "degrees and decimal minutes"
-                )
+        loc = self.parse_location(lat_token, lon_token)
+        if loc is None:
+            return
 
         # Parse position source
         pos_source_token = self.tokens[8]
-        if self.not_missing(pos_source_token):
-            pos_source = POS_SOURCE_TO_NAME.get(pos_source_token.text)
-            if pos_source is None:
-                self.errors.append(
-                    {
-                        self.error_type: f"Error on line {self.current_line_no}. "
-                        f"Invalid position source value: {pos_source_token.text}"
-                    }
-                )
-                return
-            pos_source_token.record(self.name, "position source", pos_source)
+        pos_source = self.parse_pos_source(pos_source_token)
+        if pos_source is None:
+            return
 
         # Parse remarks
         remarks_token = self.tokens[9]
@@ -465,7 +449,8 @@ class NisidaImporter(Importer):
             data_store, self.platform, sensor, self.timestamp, self.short_name
         )
 
-        state.location = loc
+        if loc:
+            state.location = loc
 
         # Create a geometry entry for the position given by 'own position' plus the range and bearing
         geom_type_id = data_store.add_to_geometry_types("Tactical", change_id=change_id).geo_type_id
@@ -510,35 +495,15 @@ class NisidaImporter(Importer):
         lat_token = self.tokens[6]
         lon_token = self.tokens[7]
 
-        if self.not_missing(lat_token) and self.not_missing(lon_token):
-            loc = self.parse_location(lat_token.text, lon_token.text)
-
-            if not loc:
-                self.errors.append(
-                    {
-                        self.error_type: f"Error on line {self.current_line_no}. "
-                        f"Cannot parse latitude/longitude location: {lat_token.text} {lon_token.text}"
-                    }
-                )
-                return
-
-            combine_tokens(lat_token, lon_token).record(
-                self.name, "location", loc, "degrees and decimal minutes"
-            )
+        loc = self.parse_location(lat_token, lon_token)
+        if loc is None:
+            return
 
         # Parse position source
         pos_source_token = self.tokens[8]
-        if self.not_missing(pos_source_token):
-            pos_source = POS_SOURCE_TO_NAME.get(pos_source_token.text)
-            if pos_source is None:
-                self.errors.append(
-                    {
-                        self.error_type: f"Error on line {self.current_line_no}. "
-                        f"Invalid position source value: {pos_source_token.text}"
-                    }
-                )
-                return
-            pos_source_token.record(self.name, "position source", pos_source)
+        pos_source = self.parse_pos_source(pos_source_token)
+        if pos_source is None:
+            return
 
         # Create a State entry for the own position values, with a sensor of Position Source
         sensor_type = data_store.add_to_sensor_types(pos_source, change_id=change_id).name
@@ -601,21 +566,9 @@ class NisidaImporter(Importer):
         lat_token = self.tokens[5]
         lon_token = self.tokens[6]
 
-        if self.not_missing(lat_token) and self.not_missing(lon_token):
-            loc = self.parse_location(lat_token.text, lon_token.text)
-
-            if not loc:
-                self.errors.append(
-                    {
-                        self.error_type: f"Error on line {self.current_line_no}. "
-                        f"Cannot parse latitude/longitude location: {lat_token.text} {lon_token.text}"
-                    }
-                )
-                return
-
-            combine_tokens(lat_token, lon_token).record(
-                self.name, "location", loc, "degrees and decimal minutes"
-            )
+        loc = self.parse_location(lat_token, lon_token)
+        if loc is None:
+            return
 
         # Get type of message - Dip (type DIP) or Buoy (type SSQ)
         message_type = self.tokens[1].text
@@ -656,6 +609,7 @@ class NisidaImporter(Importer):
     def process_mastexposure(self, data_store, datafile, change_id):
         mast_type_token = self.tokens[2]
         mast_type = mast_type_token.text
+        mast_type_token.record(self.name, "mast type", mast_type)
 
         sensor_type = data_store.add_to_sensor_types(mast_type, change_id=change_id).name
         privacy = get_lowest_privacy(data_store)
@@ -729,25 +683,25 @@ class NisidaImporter(Importer):
             change_id=change_id,
         )
 
-        time_up = None
-        time_down = None
+        time_on = None
+        time_off = None
 
         if self.not_missing(self.tokens[3].text):
-            time_up = self.parse_time(self.tokens[3].text)
-            if time_up:
-                self.tokens[3].record(self.name, "time up", time_up)
+            time_on = self.parse_time(self.tokens[3].text)
+            if time_on:
+                self.tokens[3].record(self.name, "time on", time_on)
             else:
                 # Parsing error already raised inside self.parse_time function
                 return
 
         if self.not_missing(self.tokens[4].text):
-            time_down = self.parse_time(self.tokens[4].text)
-            if time_down:
-                self.tokens[4].record(self.name, "time down", time_down)
+            time_off = self.parse_time(self.tokens[4].text)
+            if time_off:
+                self.tokens[4].record(self.name, "time off", time_off)
             else:
                 return
 
-        if (not time_down) and (not time_up):
+        if (not time_off) and (not time_on):
             self.errors.append(
                 {
                     self.error_type: f"Error on line {self.current_line_no}. "
@@ -759,8 +713,8 @@ class NisidaImporter(Importer):
         activation = datafile.create_activation(
             data_store=data_store,
             sensor=sensor,
-            start=time_up,
-            end=time_down,
+            start=time_on,
+            end=time_off,
             parser_name=self.short_name,
         )
 
@@ -784,3 +738,37 @@ class NisidaImporter(Importer):
         )
 
         self.last_entry_with_text = comment
+
+    def parse_pos_source(self, pos_source_token):
+        if self.not_missing(pos_source_token):
+            pos_source = POS_SOURCE_TO_NAME.get(pos_source_token.text)
+            if pos_source is None:
+                self.errors.append(
+                    {
+                        self.error_type: f"Error on line {self.current_line_no}. "
+                        f"Invalid position source value: {pos_source_token.text}"
+                    }
+                )
+                return
+            pos_source_token.record(self.name, "position source", pos_source)
+
+        return pos_source
+
+    def parse_location(self, lat_token, lon_token):
+        if self.not_missing(lat_token) and self.not_missing(lon_token):
+            loc = self.parse_lat_lon_strings(lat_token.text, lon_token.text)
+
+            if not loc:
+                self.errors.append(
+                    {
+                        self.error_type: f"Error on line {self.current_line_no}. "
+                        f"Cannot parse latitude/longitude location: {lat_token.text} {lon_token.text}"
+                    }
+                )
+                return
+
+            combine_tokens(lat_token, lon_token).record(
+                self.name, "location", loc, "degrees and decimal minutes"
+            )
+
+        return loc
