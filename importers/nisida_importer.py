@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 
 import geopy
@@ -62,6 +63,7 @@ class NisidaImporter(Importer):
         return False
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
+        print(f"Line: {line.text}")
         self.current_line_no = line_number
 
         if line.text.startswith("UNIT/"):
@@ -70,16 +72,43 @@ class NisidaImporter(Importer):
             # UNIT/ADRI/OCT03/SRF/
             tokens = line.tokens(SLASH_SPLIT_REGEX)
 
-            platform_name = tokens[1].text
+            if len(tokens) != 4:
+                self.errors.append(
+                    {
+                        self.error_type: f"Error on line {self.current_line_no}. "
+                        f"Not enough tokens in UNIT/ line: {line.text}"
+                    }
+                )
+                return
+
+            if self.not_missing(tokens[1].text):
+                platform_name = tokens[1].text
+            else:
+                self.errors.append(
+                    {
+                        self.error_type: f"Error on line {self.current_line_no}. "
+                        f"Missing platform name in UNIT/ line: {line.text}"
+                    }
+                )
+                return
             tokens[1].record(self.name, "platform", platform_name)
             self.platform = data_store.get_platform(
                 platform_name=platform_name, change_id=change_id,
             )
 
-            month_and_year = datetime.strptime(tokens[2].text, "%b%y")
-            self.month = month_and_year.month
-            self.year = month_and_year.year
-            tokens[2].record(self.name, "month and year", month_and_year.strftime("%Y-%m"))
+            try:
+                month_and_year = datetime.strptime(tokens[2].text, "%b%y")
+                self.month = month_and_year.month
+                self.year = month_and_year.year
+                tokens[2].record(self.name, "month and year", month_and_year.strftime("%Y-%m"))
+            except (ValueError, AttributeError):
+                self.errors.append(
+                    {
+                        self.error_type: f"Error on line {self.current_line_no}. "
+                        f"Invalid month/year in UNIT/ line: {line.text}"
+                    }
+                )
+                return
         elif line.text.startswith("//"):
             # This is a continuation of the previous line, so add whatever else is in this line
             # to the content field of the previous entry
@@ -136,8 +165,9 @@ class NisidaImporter(Importer):
                     self.process_sensor(data_store, datafile, change_id)
                 elif self.tokens[1].text.upper() == "ENV":
                     self.process_enviroment(data_store, datafile, change_id)
-                elif len(self.tokens) >= 3 and self.tokens[3].text in ("GPS", "DR", "IN"):
-                    self.process_position(data_store, datafile, change_id)
+                elif len(self.tokens) >= 4:
+                    if self.tokens[3].text in POS_SOURCE_TO_NAME.keys():
+                        self.process_position(data_store, datafile, change_id)
                 else:
                     self.errors.append(
                         {
@@ -150,7 +180,7 @@ class NisidaImporter(Importer):
                 self.errors.append(
                     {
                         self.error_type: f"Error on line {self.current_line_no}. "
-                        f"General error processing line - {e}: {line.text}"
+                        f"General error processing line - exception was: '{e}' on code line {sys.exc_info()[-1].tb_lineno}: {line.text}"
                     }
                 )
                 return
@@ -189,7 +219,19 @@ class NisidaImporter(Importer):
             )
             return False
 
-        return datetime(year=self.year, month=self.month, day=day, hour=hour, minute=minute)
+        try:
+            timestamp = datetime(
+                year=self.year, month=self.month, day=day, hour=hour, minute=minute
+            )
+        except ValueError:
+            self.errors.append(
+                {
+                    self.error_type: f"Error on line {self.current_line_no}. "
+                    f"Invalid timestamp: {timestamp_text}"
+                }
+            )
+            return False
+        return timestamp
 
     def parse_lat_lon_strings(self, lat_str, lon_str):
         # The latitude and longitude values are given in degrees and decimal minutes as follows:
@@ -231,13 +273,22 @@ class NisidaImporter(Importer):
             self.errors.append(
                 {
                     self.error_type: f"Error on line {self.current_line_no}. "
-                    f"Unable to parse time value: {text}"
+                    f"Unable to parse time value to float: {text}"
                 }
             )
             return False
 
-        # Take current timestamp value, and replace the hours and mins, and zero the seconds
-        new_timestamp = self.timestamp.replace(hour=hour, minute=mins, second=0)
+        try:
+            # Take current timestamp value, and replace the hours and mins, and zero the seconds
+            new_timestamp = self.timestamp.replace(hour=hour, minute=mins, second=0)
+        except ValueError:
+            self.errors.append(
+                {
+                    self.error_type: f"Error on line {self.current_line_no}. "
+                    f"Invalid time value: {text}"
+                }
+            )
+            return False
 
         return new_timestamp
 
@@ -287,17 +338,11 @@ class NisidaImporter(Importer):
         self.last_entry_with_text = comment
 
     def process_position(self, data_store, datafile, change_id):
+        print(f"Processing position: {self.tokens}")
         pos_source_token = self.tokens[3]
-        pos_source = POS_SOURCE_TO_NAME.get(pos_source_token.text)
+        pos_source = self.parse_pos_source(pos_source_token)
         if pos_source is None:
-            self.errors.append(
-                {
-                    self.error_type: f"Error on line {self.current_line_no}. "
-                    f"Invalid position source value: {pos_source_token.text}"
-                }
-            )
             return
-        pos_source_token.record(self.name, "position source", pos_source)
 
         sensor_type = data_store.add_to_sensor_types(pos_source, change_id=change_id).name
         privacy = get_lowest_privacy(data_store)
@@ -385,6 +430,7 @@ class NisidaImporter(Importer):
 
         # Parse the bearing field
         bearing_token = self.tokens[3]
+        bearing_valid = False
         if self.not_missing(bearing_token.text):
             bearing_valid, bearing = convert_absolute_angle(
                 bearing_token.text, self.current_line_no, self.errors, self.error_type
@@ -395,6 +441,7 @@ class NisidaImporter(Importer):
 
         # Parse the range field
         range_token = self.tokens[4]
+        range_valid = False
         if self.not_missing(range_token.text):
             range_valid, range_value = convert_distance(
                 range_token.text,
@@ -458,6 +505,15 @@ class NisidaImporter(Importer):
             "Detection", geom_type_id, change_id=change_id
         ).geo_sub_type_id
 
+        if (not bearing_valid) or (not range_valid) or (not loc):
+            self.errors.append(
+                {
+                    self.error_type: f"Error on line {self.current_line_no}. "
+                    f"Not enough data to calculate attack position - bearing, range or own location missing"
+                }
+            )
+            return
+
         geometry_location = self.location_plus_range_and_bearing(loc, bearing, range_value)
 
         geometry = datafile.create_geometry(
@@ -471,6 +527,7 @@ class NisidaImporter(Importer):
     def process_attack(self, data_store, datafile, change_id):
         # Parse the bearing field
         bearing_token = self.tokens[3]
+        bearing_valid = False
         if self.not_missing(bearing_token.text):
             bearing_valid, bearing = convert_absolute_angle(
                 bearing_token.text, self.current_line_no, self.errors, self.error_type
@@ -480,6 +537,7 @@ class NisidaImporter(Importer):
 
         # Parse the range field
         range_token = self.tokens[4]
+        range_valid = False
         if self.not_missing(range_token.text):
             range_valid, range_value = convert_distance(
                 range_token.text,
@@ -705,7 +763,7 @@ class NisidaImporter(Importer):
             self.errors.append(
                 {
                     self.error_type: f"Error on line {self.current_line_no}. "
-                    f"You must provide at least one of time up or time down {self.tokens[3].text} {self.tokens[4].text}"
+                    f"You must provide at least one of time on or time off {self.tokens[3].text} {self.tokens[4].text}"
                 }
             )
             return
@@ -752,7 +810,7 @@ class NisidaImporter(Importer):
                 return
             pos_source_token.record(self.name, "position source", pos_source)
 
-        return pos_source
+            return pos_source
 
     def parse_location(self, lat_token, lon_token):
         if self.not_missing(lat_token) and self.not_missing(lon_token):

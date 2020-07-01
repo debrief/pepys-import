@@ -82,7 +82,7 @@ class Location:
             self.errors.append(
                 {
                     self.error_type: f"Error in {lat_or_lon} degrees value {degrees}. "
-                    f"Must be between 0 and 90"
+                    f"Must be between {min_value} and {max_value}"
                 }
             )
 
@@ -106,7 +106,7 @@ class Location:
             self.errors.append(
                 {
                     self.error_type: f"Error in {lat_or_lon} minutes value {minutes}. "
-                    f"Must be between 0 and 90"
+                    f"Must be between 0 and 60"
                 }
             )
             return None, False
@@ -131,7 +131,7 @@ class Location:
             self.errors.append(
                 {
                     self.error_type: f"Error in {lat_or_lon} seconds value {seconds}. "
-                    f"Must be between 0 and 90"
+                    f"Must be between 0 and 60"
                 }
             )
             return None, False
