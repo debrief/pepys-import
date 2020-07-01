@@ -11,6 +11,7 @@ from sqlalchemy.orm import RelationshipProperty, class_mapper, load_only
 from tabulate import tabulate
 
 from pepys_import.core.store import constants
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 
 def bottom_toolbar():
@@ -70,18 +71,7 @@ class ViewDataShell(cmd.Cmd):
         if selected_table is None:
             return
         # Table names are plural in the database, therefore make it singular
-        if (
-            selected_table == "alembic_version"
-            or selected_table == "HostedBy"
-            or selected_table == "Media"
-        ):
-            table = selected_table
-        elif selected_table == "Geometries":
-            table = "Geometry1"
-        elif selected_table.endswith("ies"):
-            table = selected_table[:-3] + "y"
-        else:
-            table = selected_table[:-1]
+        table = table_name_to_class_name(selected_table)
 
         if table == constants.ALEMBIC_VERSION:
             with self.data_store.engine.connect() as connection:
