@@ -7,6 +7,7 @@ from iterfzf import iterfzf
 from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion import PathCompleter
 
+from pepys_admin.base_cli import BaseShell
 from pepys_admin.merge import MergeDatabases
 from pepys_admin.snapshot_helpers import export_metadata_tables, export_reference_tables
 from pepys_admin.utils import get_default_export_folder
@@ -15,14 +16,14 @@ from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import is_schema_created
 
 
-class SnapshotShell(cmd.Cmd):
+class SnapshotShell(BaseShell):
     """Offers to create snapshot with Reference data and create snapshot with reference data & metadata."""
 
     intro = """--- Menu ---
     (1) Create snapshot with Reference data
     (2) Create snapshot with Reference data & Metadata
     (3) Merge databases
-    (0) Back
+    (.) Back
     """
     prompt = "(pepys-admin) (snapshot) "
 
@@ -30,7 +31,7 @@ class SnapshotShell(cmd.Cmd):
         super(SnapshotShell, self).__init__()
         self.data_store = data_store
         self.aliases = {
-            "0": self.do_cancel,
+            ".": self.do_cancel,
             "1": self.do_export_reference_data,
             "2": self.do_export_reference_data_and_metadata,
             "3": self.do_merge_databases,
@@ -149,18 +150,3 @@ class SnapshotShell(cmd.Cmd):
     def do_cancel():
         """Returns to the previous menu"""
         print("Returning to the previous menu...")
-
-    def default(self, line):
-        cmd_, arg, line = self.parseline(line)
-        if cmd_ in self.aliases:
-            self.aliases[cmd_]()
-            if cmd_ == "0":
-                return True
-        else:
-            print(f"*** Unknown syntax: {line}")
-
-    def postcmd(self, stop, line):
-        if line != "0":
-            print("-" * 61)
-            print(self.intro)
-        return cmd.Cmd.postcmd(self, stop, line)

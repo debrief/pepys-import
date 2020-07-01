@@ -47,7 +47,7 @@ class AdminCLITestCase(unittest.TestCase):
 
         self.admin_shell = AdminShell(self.store)
 
-    @patch("cmd.input", return_value="0")
+    @patch("cmd.input", return_value=".")
     def test_do_initialise(self, patched_input):
         initialise_shell = InitialiseShell(self.store, None, None)
 
@@ -58,7 +58,7 @@ class AdminCLITestCase(unittest.TestCase):
         # Assert that Admin Shell redirects to the initialise menu
         assert initialise_shell.intro in output
 
-    @patch("cmd.input", return_value="0")
+    @patch("cmd.input", return_value=".")
     def test_do_export(self, patched_input):
         shell = ExportShell(self.store)
 
@@ -69,7 +69,7 @@ class AdminCLITestCase(unittest.TestCase):
         # Assert that Admin Shell redirects to the initialise menu
         assert shell.intro in output
 
-    @patch("cmd.input", return_value="0")
+    @patch("cmd.input", return_value=".")
     def test_do_snapshot(self, patched_input):
         shell = SnapshotShell(self.store)
 
@@ -95,7 +95,7 @@ class AdminCLITestCase(unittest.TestCase):
         assert comments_text in output
         assert datafiles_text in output
 
-    @patch("cmd.input", return_value="0")
+    @patch("cmd.input", return_value=".")
     def test_do_view_data(self, patched_input):
         view_data_shell = ViewDataShell(self.store)
 
@@ -121,7 +121,7 @@ class AdminCLITestCase(unittest.TestCase):
         assert "*** Unknown syntax: 123456789" in output
 
     def test_postcmd(self):
-        # postcmd method should print the menu again if the user didn't select exit ("0")
+        # postcmd method should print the menu again if the user didn't select exit (".")
         # Select Export
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -206,7 +206,7 @@ class InitialiseShellTestCase(unittest.TestCase):
 
     def test_default(self):
         # Only cancel command (0) returns True, others return None
-        result = self.initialise_shell.default("0")
+        result = self.initialise_shell.default(".")
         assert result is True
 
         temp_output = StringIO()
@@ -216,7 +216,7 @@ class InitialiseShellTestCase(unittest.TestCase):
         assert "*** Unknown syntax: 123456789" in output
 
     def test_postcmd(self):
-        # postcmd method should print the menu again if the user didn't select cancel ("0")
+        # postcmd method should print the menu again if the user didn't select cancel (".")
         # Select Clear database contents
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -523,7 +523,7 @@ class ExportShellTestCase(unittest.TestCase):
 
     def test_default(self):
         # Only cancel command (0) returns True, others return None
-        result = self.export_shell.default("0")
+        result = self.export_shell.default(".")
         assert result is True
 
         temp_output = StringIO()
@@ -533,7 +533,7 @@ class ExportShellTestCase(unittest.TestCase):
         assert "*** Unknown syntax: 123456789" in output
 
     def test_postcmd(self):
-        # postcmd method should print the menu again if the user didn't select cancel ("0")
+        # postcmd method should print the menu again if the user didn't select cancel (".")
         # Select Export by name
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -567,12 +567,12 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
         # Create a dynamic menu for the found datafile objects
         self.text = "--- Menu ---\n"
         self.options = [
-            "0",
+            ".",
         ]
         for index, obj in enumerate(self.objects, 1):
             self.text += f"({index}) {obj['name']} {obj['filename']} {obj['min']}-{obj['max']}\n"
             self.options.append(str(index))
-        self.text += "(0) Cancel\n"
+        self.text += "(.) Cancel\n"
         # Initialise a new menu
         self.shell = ExportByPlatformNameShell(self.store, self.options, self.objects)
         self.shell.intro = self.text
@@ -614,7 +614,7 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
         assert "Returning to the previous menu..." in output
 
     def test_default(self):
-        result = self.shell.default("0")
+        result = self.shell.default(".")
         assert result is True
 
         temp_output = StringIO()
@@ -678,7 +678,7 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
 
     @patch("cmd.input")
     def test_missing_db_column_sqlite_2(self, patched_input):
-        patched_input.side_effect = ["2", "0"]
+        patched_input.side_effect = ["2", "."]
         conn = sqlite3.connect("cli_import_test.db")
         load_spatialite(conn, None)
 
@@ -772,7 +772,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
 
     @patch("cmd.input")
     def test_missing_db_column_postgres_2(self, patched_input):
-        patched_input.side_effect = ["2", "0"]
+        patched_input.side_effect = ["2", "."]
         conn = pg8000.connect(user="postgres", password="postgres", database="test", port=55527)
         cursor = conn.cursor()
         # Alter table to drop heading column
@@ -1248,7 +1248,7 @@ class SnapshotShellTestCase(unittest.TestCase):
 
     def test_default(self):
         # Only cancel command (0) returns True, others return None
-        result = self.shell.default("0")
+        result = self.shell.default(".")
         assert result is True
 
         temp_output = StringIO()
@@ -1258,7 +1258,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         assert "*** Unknown syntax: 123456789" in output
 
     def test_postcmd(self):
-        # postcmd method should print the menu again if the user didn't select cancel ("0")
+        # postcmd method should print the menu again if the user didn't select cancel (".")
         # Select Create snapshot with Reference data
         temp_output = StringIO()
         with redirect_stdout(temp_output):

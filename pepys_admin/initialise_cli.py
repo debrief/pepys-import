@@ -1,12 +1,13 @@
 import cmd
 import os
 
+from pepys_admin.base_cli import BaseShell
 from pepys_import.utils.data_store_utils import is_schema_created
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-class InitialiseShell(cmd.Cmd):
+class InitialiseShell(BaseShell):
     """Offers users to clear contents, import sample reference data and metadata, create/clear schema."""
 
     intro = """--- Menu ---
@@ -15,7 +16,7 @@ class InitialiseShell(cmd.Cmd):
 (3) Create Pepys schema
 (4) Import Reference data
 (5) Import Metadata
-(0) Back
+(.) Back
 """
     prompt = "(initialise) "
 
@@ -24,7 +25,7 @@ class InitialiseShell(cmd.Cmd):
         self.data_store = data_store
         self.csv_path = csv_path
         self.aliases = {
-            "0": self.do_cancel,
+            ".": self.do_cancel,
             "1": self.do_clear_db_contents,
             "2": self.do_clear_db_schema,
             "3": self.do_create_pepys_schema,
@@ -85,18 +86,3 @@ class InitialiseShell(cmd.Cmd):
     def do_cancel():
         """Returns to the previous menu"""
         print("Returning to the previous menu...")
-
-    def default(self, line):
-        cmd_, arg, line = self.parseline(line)
-        if cmd_ in self.aliases:
-            self.aliases[cmd_]()
-            if cmd_ == "0":
-                return True
-        else:
-            print(f"*** Unknown syntax: {line}")
-
-    def postcmd(self, stop, line):
-        if line != "0":
-            print("-" * 61)
-            print(self.intro)
-        return cmd.Cmd.postcmd(self, stop, line)
