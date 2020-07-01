@@ -67,7 +67,7 @@ class ViewDataCLITestCase(unittest.TestCase):
 
     def test_default(self):
         # Only cancel command (0) returns True, others return None
-        result = self.shell.default("0")
+        result = self.shell.default(".")
         assert result is True
 
         temp_output = StringIO()
@@ -77,7 +77,7 @@ class ViewDataCLITestCase(unittest.TestCase):
         assert "*** Unknown syntax: 123456789" in output
 
     def test_postcmd(self):
-        # postcmd method should print the menu again if the user didn't select cancel ("0")
+        # postcmd method should print the menu again if the user didn't select cancel (".")
         # Select view table
         temp_output = StringIO()
         with redirect_stdout(temp_output):
