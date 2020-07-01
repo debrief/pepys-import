@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import types
+from sqlalchemy import func, types
 from sqlalchemy.dialects import mssql, postgresql
 
 
@@ -96,3 +96,18 @@ def get_primary_key_for_table(obj):
     primary_key = obj.__table__.primary_key.columns.values()[0].name
 
     return primary_key
+
+
+def get_lowest_privacy(data_store):
+    min_privacy_query = data_store.session.query(func.min(data_store.db_classes.Privacy.level))
+
+    results = (
+        data_store.session.query(data_store.db_classes.Privacy)
+        .filter(data_store.db_classes.Privacy.level == min_privacy_query)
+        .all()
+    )
+
+    if len(results) > 0:
+        return results[0].name
+    else:
+        return None
