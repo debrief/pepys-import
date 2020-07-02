@@ -42,7 +42,7 @@ def import_from_csv(data_store, path, files, change_id):
                     keyword_arguments = dict(zip(header, row))
                     try:
                         method_to_call(**keyword_arguments, change_id=change_id)
-                    except MissingDataException as e:
+                    except Exception as e:
                         print(f"Error importing row {row} from {file}")
                         print(f"  Error was '{str(e)}'")
         else:
