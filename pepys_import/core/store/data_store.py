@@ -1125,7 +1125,7 @@ class DataStore:
         """
         geo_type_obj = self.search_geometry_type(parent_name)
         if geo_type_obj is None:
-            raise MissingDataException("Parent is missing/invalid!")
+            geo_type_obj = self.add_to_geometry_types(parent_name, change_id)
 
         geom_sub_type = self.search_geometry_sub_type(name, geo_type_obj.geo_type_id)
         if geom_sub_type:
