@@ -14,7 +14,7 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/nisida/nisida_examp
 
 
 class TestLoadNisida(unittest.TestCase):
-    def test_process_nisida_data_valid(self):
+    def test_process_nisida_data_full_check(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
@@ -212,11 +212,13 @@ class TestLoadNisida(unittest.TestCase):
 
         errors = processor.importers[0].errors
 
+        if expected_errors is None:
+            assert len(errors) == 0
+            return
+
         if len(errors) == 0:
             assert False, "No errors reported"
         errors = errors[0]
-
-        print(errors)
 
         joined_errors = "\n".join(errors.values())
 
@@ -236,6 +238,11 @@ class TestLoadNisida(unittest.TestCase):
         )
         self.check_errors_for_file_contents(
             "UNIT/PLAT/MARBB/SRF", "Invalid month/year in UNIT/ line"
+        )
+        # Invalid date in UNIT header, plus another line that would depend on that
+        self.check_errors_for_file_contents(
+            "UNIT/PLAT/MARBB/SRF\n311002Z/3623.00N/00412.02E/GPS/359/03/-/",
+            "Invalid month/year in UNIT/ line",
         )
 
         header = "UNIT/ADRI/OCT03/SRF/\n"
@@ -349,6 +356,15 @@ class TestLoadNisida(unittest.TestCase):
         self.check_errors_for_file_contents(
             header + "311200Z/DET/RDR/23/-/777/3602.02N/00412.12E/GPS/DETECTION RECORD",
             "Not enough data to calculate attack position - bearing, range or own location missing",
+        )
+
+    def test_process_nisida_data_valid(self):
+        # UNIT line with POS at the end
+        self.check_errors_for_file_contents("UNIT/PLAT/OCT03/SRF/POS", None)
+
+        # UNIT line with POS at the end and other lines after
+        self.check_errors_for_file_contents(
+            "UNIT/PLAT/OCT03/SRF/POS\n101000Z/COC/TEXT FOR CO COMMENTS/", None
         )
 
 

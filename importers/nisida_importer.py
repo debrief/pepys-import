@@ -8,7 +8,7 @@ from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
 from pepys_import.file.highlighter.support.combine import combine_tokens
-from pepys_import.file.importer import Importer
+from pepys_import.file.importer import CANCEL_IMPORT, Importer
 from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
 
@@ -63,7 +63,6 @@ class NisidaImporter(Importer):
         return False
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
-        print(f"Line: {line.text}")
         self.current_line_no = line_number
 
         if line.text.startswith("UNIT/"):
@@ -72,14 +71,14 @@ class NisidaImporter(Importer):
             # UNIT/ADRI/OCT03/SRF/
             tokens = line.tokens(SLASH_SPLIT_REGEX)
 
-            if len(tokens) != 4:
+            if len(tokens) < 4:
                 self.errors.append(
                     {
                         self.error_type: f"Error on line {self.current_line_no}. "
                         f"Not enough tokens in UNIT/ line: {line.text}"
                     }
                 )
-                return
+                return CANCEL_IMPORT
 
             if self.not_missing(tokens[1].text):
                 platform_name = tokens[1].text
@@ -90,7 +89,8 @@ class NisidaImporter(Importer):
                         f"Missing platform name in UNIT/ line: {line.text}"
                     }
                 )
-                return
+                return CANCEL_IMPORT
+
             tokens[1].record(self.name, "platform", platform_name)
             self.platform = data_store.get_platform(
                 platform_name=platform_name, change_id=change_id,
@@ -108,7 +108,8 @@ class NisidaImporter(Importer):
                         f"Invalid month/year in UNIT/ line: {line.text}"
                     }
                 )
-                return
+                return CANCEL_IMPORT
+
         elif line.text.startswith("//"):
             # This is a continuation of the previous line, so add whatever else is in this line
             # to the content field of the previous entry
@@ -325,6 +326,14 @@ class NisidaImporter(Importer):
             comment_type = data_store.add_to_comment_types("Narrative", change_id)
         elif self.tokens[1].text == "COC":
             comment_type = data_store.add_to_comment_types("CO Comments", change_id)
+        else:
+            self.errors.append(
+                {
+                    self.error_type: f"Error on line {self.current_line_no}. "
+                    f"Invalid comment type: {self.tokens[1].text}"
+                }
+            )
+            return
 
         comment = datafile.create_comment(
             data_store=data_store,
@@ -338,7 +347,6 @@ class NisidaImporter(Importer):
         self.last_entry_with_text = comment
 
     def process_position(self, data_store, datafile, change_id):
-        print(f"Processing position: {self.tokens}")
         pos_source_token = self.tokens[3]
         pos_source = self.parse_pos_source(pos_source_token)
         if pos_source is None:
