@@ -25,6 +25,9 @@ def import_from_csv(data_store, path, files, change_id):
                 # extract header
                 header = next(reader)
                 for row_number, row in enumerate(reader):
+                    row_as_string = "".join(row).strip()
+                    if row_as_string == "":
+                        continue
                     keyword_arguments = dict(zip(header, row))
                     try:
                         method_to_call(**keyword_arguments, change_id=change_id)
@@ -42,6 +45,10 @@ def import_synonyms(data_store, filepath, change_id):
         header = next(reader)
         # For every row in the CSV
         for row in reader:
+            row_as_string = "".join(row).strip()
+            if row_as_string == "":
+                continue
+
             values = dict(zip(header, row))
 
             # Search in the given table for the name
