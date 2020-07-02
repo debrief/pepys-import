@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 
 from tqdm import tqdm
 
+CANCEL_IMPORT = "CANCEL"
+
 
 class Importer(ABC):
     def __init__(self, name, validation_level, short_name, default_privacy=None):
@@ -120,7 +122,10 @@ class Importer(ABC):
         :type change_id: integer or UUID
         """
         for line_number, line in enumerate(tqdm(file_object.lines()), 1):
-            self._load_this_line(data_store, line_number, line, datafile, change_id)
+            result = self._load_this_line(data_store, line_number, line, datafile, change_id)
+            if result == CANCEL_IMPORT:
+                print(f"Error in file caused cancellation of import of {path}")
+                break
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
         """Process a line from this data-file
