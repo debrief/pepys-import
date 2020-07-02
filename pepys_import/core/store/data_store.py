@@ -1110,23 +1110,29 @@ class DataStore:
         )
         return geom_type
 
-    def add_to_geometry_sub_types(self, name, parent_id, change_id):
+    def add_to_geometry_sub_types(self, name, parent_name, change_id):
         """
         Adds the specified geometry sub type to the :class:`GeometrySubType` table if not already present.
 
         :param name: Name of :class:`GeometrySubType`
         :type name: String
+        :param parent_name: Name of parent :class:`GeometryType`
+        :type parent_name: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :return: Created :class:`GeometrySubType` entity
         :rtype: GeometrySubType
         """
-        geom_sub_type = self.search_geometry_sub_type(name, parent_id)
+        geo_type_obj = self.search_geometry_type(parent_name)
+        if geo_type_obj is None:
+            raise MissingDataException("Parent is missing/invalid!")
+
+        geom_sub_type = self.search_geometry_sub_type(name, geo_type_obj.geo_type_id)
         if geom_sub_type:
             return geom_sub_type
 
         # enough info to proceed and create entry
-        geom_sub_type = self.db_classes.GeometrySubType(name=name, parent=parent_id)
+        geom_sub_type = self.db_classes.GeometrySubType(name=name, parent=geo_type_obj.geo_type_id)
         self.session.add(geom_sub_type)
         self.session.flush()
 
