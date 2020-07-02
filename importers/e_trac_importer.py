@@ -35,7 +35,7 @@ class ETracImporter(Importer):
         if line_number == 1:
             return
 
-        tokens = line.tokens(line.CSV_DELIM, ",")
+        tokens = line.tokens(line.CSV_TOKENISER, ",")
         if len(tokens) <= 1:
             # the last line may be empty, don't worry
             return
