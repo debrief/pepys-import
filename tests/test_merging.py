@@ -2574,11 +2574,11 @@ class TestGeometryMerge(unittest.TestCase):
             change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
             self.slave_store.add_to_privacies("Public", level=0, change_id=change_id)
             self.slave_store.add_to_datafile_types("TestDFT", change_id=change_id)
-            geom_type_name = self.slave_store.add_to_geometry_types(
+            geom_type_obj = self.slave_store.add_to_geometry_types(
                 "TestGeomType", change_id=change_id
-            ).name
+            )
             geom_sub_type_id = self.slave_store.add_to_geometry_sub_types(
-                "TestGeomSubType", parent_name=geom_type_name, change_id=change_id
+                "TestGeomSubType", parent_name=geom_type_obj.name, change_id=change_id
             ).geo_sub_type_id
             datafile = self.slave_store.add_to_datafiles(
                 "Public",
@@ -2592,14 +2592,14 @@ class TestGeometryMerge(unittest.TestCase):
             datafile.create_geometry(
                 self.slave_store,
                 "SRID=4326;POINT (-1.5 50.5)",
-                geom_type_id,
+                geom_type_obj.geo_type_id,
                 geom_sub_type_id,
                 "TestParser",
             )
             datafile.create_geometry(
                 self.slave_store,
                 "SRID=4326;LINESTRING (-1 0, -2 0, -3 1)",
-                geom_type_id,
+                geom_type_obj.geo_type_id,
                 geom_sub_type_id,
                 "TestParser",
             )
