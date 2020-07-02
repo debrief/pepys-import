@@ -2574,11 +2574,11 @@ class TestGeometryMerge(unittest.TestCase):
             change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
             self.slave_store.add_to_privacies("Public", level=0, change_id=change_id)
             self.slave_store.add_to_datafile_types("TestDFT", change_id=change_id)
-            geom_type_id = self.slave_store.add_to_geometry_types(
+            geom_type_name = self.slave_store.add_to_geometry_types(
                 "TestGeomType", change_id=change_id
-            ).geo_type_id
+            ).name
             geom_sub_type_id = self.slave_store.add_to_geometry_sub_types(
-                "TestGeomSubType", parent_id=geom_type_id, change_id=change_id
+                "TestGeomSubType", parent_name=geom_type_name, change_id=change_id
             ).geo_sub_type_id
             datafile = self.slave_store.add_to_datafiles(
                 "Public",
