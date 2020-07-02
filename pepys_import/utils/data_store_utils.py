@@ -2,6 +2,7 @@ import csv
 import json
 import os
 import sys
+from inspect import getfullargspec
 
 from sqlalchemy import func, inspect, select
 
@@ -20,10 +21,20 @@ def import_from_csv(data_store, path, files, change_id):
         possible_method = "add_to_" + table_name.lower().replace(" ", "_")
         method_to_call = getattr(data_store, possible_method, None)
         if method_to_call:
+            # Get all arguments of the method, except the first argument which is 'self'
+            arguments = getfullargspec(method_to_call).args[1:]
+            possible_arguments = ",".join(arguments)
             with open(os.path.join(path, file), "r") as file_object:
                 reader = csv.reader(file_object)
                 # extract header
                 header = next(reader)
+                if not set(header).issubset(set(arguments)):
+                    print(
+                        f"Headers and the arguments of DataStore.{possible_method}() don't match!"
+                        f"\nPossible arguments: {possible_arguments}"
+                        f"\nPlease check your CSV file."
+                    )
+                    return
                 for row_number, row in enumerate(reader):
                     row_as_string = "".join(row).strip()
                     if row_as_string == "":

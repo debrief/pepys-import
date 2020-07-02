@@ -20,6 +20,9 @@ NOT_IMPLEMENTED_PATH = os.path.join(
 MISSING_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files", "missing_data")
 SYNONYM_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files", "for_synonym_tests")
 SYNONYM_DATA_PATH_BAD = os.path.join(FILE_PATH, "sample_data", "csv_files", "for_synonym_tests_bad")
+WRONG_HEADER_NAME_PATH = os.path.join(
+    FILE_PATH, "sample_data", "csv_files", "for_wrong_header_names"
+)
 
 
 class DataStorePopulateSpatiaLiteTestCase(TestCase):
@@ -493,6 +496,24 @@ class DataStorePopulateTwice(TestCase):
             sensor_types = self.store.session.query(self.store.db_classes.SensorType).all()
 
             assert len(sensor_types) == 3
+
+
+class CSVHeadersTestCase(TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_wrong_header_name(self):
+        temp_output = StringIO()
+        with self.store.session_scope(), redirect_stdout(temp_output):
+            self.store.populate_reference(WRONG_HEADER_NAME_PATH)
+        output = temp_output.getvalue()
+        assert "Headers and the arguments of DataStore.add_to_sensor_types() don't match!" in output
+        assert "Possible arguments: name,change_id" in output
+        assert "Please check your CSV file." in output
 
 
 if __name__ == "__main__":
