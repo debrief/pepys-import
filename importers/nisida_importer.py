@@ -72,7 +72,7 @@ class NisidaImporter(Importer):
             # UNIT/ADRI/OCT03/SRF/
             tokens = line.tokens(SLASH_SPLIT_REGEX)
 
-            if len(tokens) != 4:
+            if len(tokens) <= 4:
                 self.errors.append(
                     {
                         self.error_type: f"Error on line {self.current_line_no}. "
