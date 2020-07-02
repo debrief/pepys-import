@@ -60,6 +60,19 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
             self.assertIn(nationality_object.name, "United Kingdom")
             self.assertIn(platform_type_object.name, "PLATFORM-TYPE-1")
 
+            geo_types = self.store.session.query(self.store.db_classes.GeometryType).all()
+            geo_sub_types = self.store.session.query(self.store.db_classes.GeometrySubType).all()
+            geo_type_obj = self.store.search_geometry_type("GEOMETRY-1")
+            geo_sub_type_obj = self.store.search_geometry_sub_type(
+                "GEO-SUB-1", geo_type_obj.geo_type_id
+            )
+
+            self.assertNotEqual(len(geo_types), 0)
+            self.assertNotEqual(len(geo_sub_types), 0)
+
+            self.assertIn(geo_type_obj.name, "GEOMETRY-1")
+            self.assertIn(geo_sub_type_obj.name, "GEO-SUB-1")
+
     def test_populate_metadata(self):
         # reference tables must be filled first
         with self.store.session_scope():
@@ -201,6 +214,19 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
             self.assertIn(nationality_object.name, "United Kingdom")
             self.assertIn(platform_type_object.name, "PLATFORM-TYPE-1")
+
+            geo_types = self.store.session.query(self.store.db_classes.GeometryType).all()
+            geo_sub_types = self.store.session.query(self.store.db_classes.GeometrySubType).all()
+            geo_type_obj = self.store.search_geometry_type("GEOMETRY-1")
+            geo_sub_type_obj = self.store.search_geometry_sub_type(
+                "GEO-SUB-1", geo_type_obj.geo_type_id
+            )
+
+            self.assertNotEqual(len(geo_types), 0)
+            self.assertNotEqual(len(geo_sub_types), 0)
+
+            self.assertIn(geo_type_obj.name, "GEOMETRY-1")
+            self.assertIn(geo_sub_type_obj.name, "GEO-SUB-1")
 
     def test_populate_metadata(self):
         # reference tables must be filled first
