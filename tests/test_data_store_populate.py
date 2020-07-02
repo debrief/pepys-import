@@ -23,6 +23,9 @@ SYNONYM_DATA_PATH_BAD = os.path.join(FILE_PATH, "sample_data", "csv_files", "for
 WRONG_HEADER_NAME_PATH = os.path.join(
     FILE_PATH, "sample_data", "csv_files", "for_wrong_header_names"
 )
+WRONG_SYNONYM_HEADER_NAME_PATH = os.path.join(
+    FILE_PATH, "sample_data", "csv_files", "for_wrong_synonym_header"
+)
 
 
 class DataStorePopulateSpatiaLiteTestCase(TestCase):
@@ -513,6 +516,16 @@ class CSVHeadersTestCase(TestCase):
         output = temp_output.getvalue()
         assert "Headers and the arguments of DataStore.add_to_sensor_types() don't match!" in output
         assert "Possible arguments: name,change_id" in output
+        assert "Please check your CSV file." in output
+
+    def test_wrong_header_name_synonym(self):
+        temp_output = StringIO()
+        with self.store.session_scope(), redirect_stdout(temp_output):
+            self.store.populate_reference()
+            self.store.populate_metadata(WRONG_SYNONYM_HEADER_NAME_PATH)
+        output = temp_output.getvalue()
+        assert "Headers of the Synonyms.csv file are wrong or missing!" in output
+        assert "Necessary arguments: synonym,table,target_name" in output
         assert "Please check your CSV file." in output
 
 

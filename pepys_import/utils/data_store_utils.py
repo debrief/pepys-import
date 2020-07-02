@@ -54,6 +54,13 @@ def import_synonyms(data_store, filepath, change_id):
         reader = csv.reader(file_object)
         # extract header
         header = next(reader)
+        if not set(header).issubset({"synonym", "table", "target_name"}):
+            print(
+                f"Headers of the Synonyms.csv file are wrong or missing!"
+                f"\nNecessary arguments: synonym,table,target_name"
+                f"\nPlease check your CSV file."
+            )
+            return
         # For every row in the CSV
         for row in reader:
             row_as_string = "".join(row).strip()
