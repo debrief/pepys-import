@@ -2,6 +2,14 @@
 History
 =======
 
+0.0.19 (2020-07-03)
+-------------------
+
+* Hotfix for trailing field in Nisida file
+* Improve robustness of Import CSV
+* Support CSV load of GeometrySubTypes
+* Show path for archive folder location at end of import
+
 0.0.18 (2020-07-01)
 -------------------
 
