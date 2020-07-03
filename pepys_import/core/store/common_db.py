@@ -209,7 +209,9 @@ class PlatformMixin:
         return data_store.add_to_sensors(
             name=sensor_name,
             sensor_type=sensor_type_obj.name,
-            host=None,
+            host_name=None,
+            host_nationality=None,
+            host_identifier=None,
             host_id=self.platform_id,
             privacy=privacy_obj.name,
             change_id=change_id,

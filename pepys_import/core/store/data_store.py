@@ -261,7 +261,17 @@ class DataStore:
     # End of Data Store methods
     #############################################################
 
-    def add_to_sensors(self, name, sensor_type, host, privacy, change_id, host_id=None):
+    def add_to_sensors(
+        self,
+        name,
+        sensor_type,
+        host_name,
+        host_nationality,
+        host_identifier,
+        privacy,
+        change_id,
+        host_id=None,
+    ):
         """
         Adds the specified sensor to the :class:`Sensor` table if not already present.
 
@@ -277,8 +287,12 @@ class DataStore:
         :type change_id: Integer or UUID
         :return: Created Sensor entity
         """
+        if host_id is not None:
+            host = self.search_platform_by_id(host_id)
+        else:
+            host = self.search_platform(host_name, host_nationality, host_identifier)
+
         sensor_type = self.search_sensor_type(sensor_type)
-        host = self.search_platform(host)
         privacy = self.search_privacy(privacy)
 
         if sensor_type is None:
@@ -521,12 +535,29 @@ class DataStore:
             .first()
         )
 
-    @cache_results_if_not_none("_search_platform_cache")
-    def search_platform(self, name):
-        """Search for any platform with this name"""
-        return (
+    def search_platform(self, name, nationality, identifier):
+        """Search for any platform with this name, nationality and identifier"""
+        results = (
             self.session.query(self.db_classes.Platform)
             .filter(self.db_classes.Platform.name == name)
+            .filter(self.db_classes.Platform.identifier == identifier)
+            .filter(self.db_classes.Platform.nationality_name == nationality)
+            .all()
+        )
+
+        if len(results) == 1:
+            return results[0]
+        elif len(results) == 0:
+            return None
+        else:
+            raise Exception(
+                "Multiple platforms with the same name, nationality and identifier found"
+            )
+
+    def search_platform_by_id(self, platform_id):
+        return (
+            self.session.query(self.db_classes.Platform)
+            .filter(self.db_classes.Platform.platform_id == platform_id)
             .first()
         )
 
