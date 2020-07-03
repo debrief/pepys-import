@@ -137,7 +137,6 @@ class DataStore:
         self._search_sensor_cache = dict()
         self._search_nationality_cache = dict()
         self._search_datafile_from_id_cache = dict()
-        self._search_platform_cache = dict()
         self._search_datafile_cache = dict()
         self._search_datafile_type_cache = dict()
         self._search_geometry_type_cache = dict()
