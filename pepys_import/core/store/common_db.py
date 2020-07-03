@@ -154,12 +154,6 @@ class PlatformMixin:
     def privacy_name(self):
         return association_proxy("privacy", "name")
 
-    @classmethod
-    def search_platform(cls, data_store, name):
-        # search for any platform with this name
-        Platform = data_store.db_classes.Platform
-        return data_store.session.query(Platform).filter(Platform.name == name).first()
-
     def get_sensor(
         self, data_store, sensor_name=None, sensor_type=None, privacy=None, change_id=None,
     ):
