@@ -211,7 +211,7 @@ class PlatformMixin:
             sensor_type=sensor_type_obj.name,
             host=None,
             host_id=self.platform_id,
-            privacy_id=privacy_obj.name,
+            privacy=privacy_obj.name,
             change_id=change_id,
         )
 
