@@ -278,14 +278,25 @@ class DataStore:
         :param name: Name of sensor
         :type name: String
         :param sensor_type: Type of sensor
-        :type sensor_type: :class:`SensorType`
-        :param host: Platform of sensor
-        :type host: Platform
+        :type sensor_type: String
+        :param host_name: Name of Platform that sensor belongs to
+        :type host_name: String
+        :param host_nationality: Nationality of Platform that sensor belongs to
+        :type host_nationality: String
+        :param host_identifier: Identifier of Platform that sensor belongs to
+        :type host_identifier: String
         :param privacy: :class:`Privacy` of :class:`State`
         :type privacy: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
+        :param host_id: ID of Platform that sensor belongs to (optional, can be passed instead
+                        of host_name, host_nationality and host_identifier)
         :return: Created Sensor entity
+
+        Notes:
+        To specify the platform that the added sensor should belong to you can either:
+         - Specify the host_name, host_nationality and host_identifier parameters, to uniquely identify the Platform
+         - Specify the host_id parameter to give the ID of the Platform, and set host_name, host_nationality and host_identifier to None
         """
         if host_id is not None:
             host = self.search_platform_by_id(host_id)
