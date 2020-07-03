@@ -20,6 +20,12 @@ NOT_IMPLEMENTED_PATH = os.path.join(
 MISSING_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files", "missing_data")
 SYNONYM_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files", "for_synonym_tests")
 SYNONYM_DATA_PATH_BAD = os.path.join(FILE_PATH, "sample_data", "csv_files", "for_synonym_tests_bad")
+WRONG_HEADER_NAME_PATH = os.path.join(
+    FILE_PATH, "sample_data", "csv_files", "for_wrong_header_names"
+)
+WRONG_SYNONYM_HEADER_NAME_PATH = os.path.join(
+    FILE_PATH, "sample_data", "csv_files", "for_wrong_synonym_header"
+)
 
 
 class DataStorePopulateSpatiaLiteTestCase(TestCase):
@@ -59,6 +65,19 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
             self.assertIn(nationality_object.name, "United Kingdom")
             self.assertIn(platform_type_object.name, "PLATFORM-TYPE-1")
+
+            geo_types = self.store.session.query(self.store.db_classes.GeometryType).all()
+            geo_sub_types = self.store.session.query(self.store.db_classes.GeometrySubType).all()
+            geo_type_obj = self.store.search_geometry_type("GEOMETRY-1")
+            geo_sub_type_obj = self.store.search_geometry_sub_type(
+                "GEO-SUB-1", geo_type_obj.geo_type_id
+            )
+
+            self.assertNotEqual(len(geo_types), 0)
+            self.assertNotEqual(len(geo_sub_types), 0)
+
+            self.assertIn(geo_type_obj.name, "GEOMETRY-1")
+            self.assertIn(geo_sub_type_obj.name, "GEO-SUB-1")
 
     def test_populate_metadata(self):
         # reference tables must be filled first
@@ -201,6 +220,19 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
             self.assertIn(nationality_object.name, "United Kingdom")
             self.assertIn(platform_type_object.name, "PLATFORM-TYPE-1")
+
+            geo_types = self.store.session.query(self.store.db_classes.GeometryType).all()
+            geo_sub_types = self.store.session.query(self.store.db_classes.GeometrySubType).all()
+            geo_type_obj = self.store.search_geometry_type("GEOMETRY-1")
+            geo_sub_type_obj = self.store.search_geometry_sub_type(
+                "GEO-SUB-1", geo_type_obj.geo_type_id
+            )
+
+            self.assertNotEqual(len(geo_types), 0)
+            self.assertNotEqual(len(geo_sub_types), 0)
+
+            self.assertIn(geo_type_obj.name, "GEOMETRY-1")
+            self.assertIn(geo_sub_type_obj.name, "GEO-SUB-1")
 
     def test_populate_metadata(self):
         # reference tables must be filled first
@@ -493,6 +525,34 @@ class DataStorePopulateTwice(TestCase):
             sensor_types = self.store.session.query(self.store.db_classes.SensorType).all()
 
             assert len(sensor_types) == 3
+
+
+class CSVHeadersTestCase(TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_wrong_header_name(self):
+        temp_output = StringIO()
+        with self.store.session_scope(), redirect_stdout(temp_output):
+            self.store.populate_reference(WRONG_HEADER_NAME_PATH)
+        output = temp_output.getvalue()
+        assert "Headers and the arguments of DataStore.add_to_sensor_types() don't match!" in output
+        assert "Possible arguments: name,change_id" in output
+        assert "Please check your CSV file." in output
+
+    def test_wrong_header_name_synonym(self):
+        temp_output = StringIO()
+        with self.store.session_scope(), redirect_stdout(temp_output):
+            self.store.populate_reference()
+            self.store.populate_metadata(WRONG_SYNONYM_HEADER_NAME_PATH)
+        output = temp_output.getvalue()
+        assert "Headers of the Synonyms.csv file are wrong or missing!" in output
+        assert "Necessary arguments: synonym,table,target_name" in output
+        assert "Please check your CSV file." in output
 
 
 if __name__ == "__main__":

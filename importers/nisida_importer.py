@@ -508,9 +508,9 @@ class NisidaImporter(Importer):
             state.location = loc
 
         # Create a geometry entry for the position given by 'own position' plus the range and bearing
-        geom_type_id = data_store.add_to_geometry_types("Tactical", change_id=change_id).geo_type_id
+        geom_type_obj = data_store.add_to_geometry_types("Tactical", change_id=change_id)
         geom_sub_type_id = data_store.add_to_geometry_sub_types(
-            "Detection", geom_type_id, change_id=change_id
+            "Detection", geom_type_obj.name, change_id=change_id
         ).geo_sub_type_id
 
         if (not bearing_valid) or (not range_valid) or (not loc):
@@ -527,7 +527,7 @@ class NisidaImporter(Importer):
         geometry = datafile.create_geometry(
             data_store=data_store,
             geom=geometry_location,
-            geom_type_id=geom_type_id,
+            geom_type_id=geom_type_obj.geo_type_id,
             geom_sub_type_id=geom_sub_type_id,
             parser_name=self.short_name,
         )
@@ -588,9 +588,9 @@ class NisidaImporter(Importer):
         state.location = loc
 
         # Create a geometry entry for the position given by 'own position' plus the range and bearing
-        geom_type_id = data_store.add_to_geometry_types("Tactical", change_id=change_id).geo_type_id
+        geom_type_obj = data_store.add_to_geometry_types("Tactical", change_id=change_id)
         geom_sub_type_id = data_store.add_to_geometry_sub_types(
-            "Attack", geom_type_id, change_id=change_id
+            "Attack", geom_type_obj.name, change_id=change_id
         ).geo_sub_type_id
 
         if (not bearing_valid) or (not range_valid) or (not loc):
@@ -607,7 +607,7 @@ class NisidaImporter(Importer):
         geometry = datafile.create_geometry(
             data_store=data_store,
             geom=geometry_location,
-            geom_type_id=geom_type_id,
+            geom_type_id=geom_type_obj.geo_type_id,
             geom_sub_type_id=geom_sub_type_id,
             parser_name=self.short_name,
         )
@@ -642,15 +642,17 @@ class NisidaImporter(Importer):
         message_name_from_message_type_field = {"DIP": "Dip", "SSQ": "Buoy"}
 
         # Create a geometry entry for the position given
-        geom_type_id = data_store.add_to_geometry_types("Tactical", change_id=change_id).geo_type_id
+        geom_type_obj = data_store.add_to_geometry_types("Tactical", change_id=change_id)
         geom_sub_type_id = data_store.add_to_geometry_sub_types(
-            message_name_from_message_type_field[message_type], geom_type_id, change_id=change_id
+            message_name_from_message_type_field[message_type],
+            geom_type_obj.name,
+            change_id=change_id,
         ).geo_sub_type_id
 
         geometry = datafile.create_geometry(
             data_store=data_store,
             geom=loc,
-            geom_type_id=geom_type_id,
+            geom_type_id=geom_type_obj.geo_type_id,
             geom_sub_type_id=geom_sub_type_id,
             parser_name=self.short_name,
         )
