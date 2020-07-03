@@ -419,17 +419,17 @@ class DatafileMixin:
 
     def add_measurement_to_dict(self, measurement, parser_name):
         try:
-            platform_name = measurement.platform_name
+            platform_id = measurement.platform_id
         except AttributeError:
-            # Platform name doesn't exist for Geometry1 objects, so
+            # Platform ID doesn't exist for Geometry1 objects, so
             # use a platform of 'N/A'
-            platform_name = "N/A"
+            platform_id = "N/A"
 
         # Cache objects according to their platform
-        if platform_name not in self.measurements[parser_name]:
-            self.measurements[parser_name][platform_name] = list()
+        if platform_id not in self.measurements[parser_name]:
+            self.measurements[parser_name][platform_id] = list()
 
-        self.measurements[parser_name][platform_name].append(measurement)
+        self.measurements[parser_name][platform_id].append(measurement)
 
     def validate(
         self, validation_level=validation_constants.NONE_LEVEL, errors=None, parser="Default",
@@ -557,6 +557,10 @@ class StateMixin:
     @declared_attr
     def sensor_name(self):
         return association_proxy("sensor", "name")
+
+    @declared_attr
+    def platform_id(self):
+        return association_proxy("sensor", "host")
 
     @declared_attr
     def source(self):
@@ -693,6 +697,10 @@ class ContactMixin:
     @declared_attr
     def sensor_name(self):
         return association_proxy("sensor", "name")
+
+    @declared_attr
+    def platform_id(self):
+        return association_proxy("sensor", "host")
 
     @declared_attr
     def subject(self):
@@ -1131,6 +1139,10 @@ class CommentMixin:
         return association_proxy("platform", "name")
 
     @declared_attr
+    def platform_id(self):
+        return association_proxy("platform", "platform_id")
+
+    @declared_attr
     def comment_type(self):
         return relationship(
             "CommentType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
@@ -1283,6 +1295,10 @@ class MediaMixin:
     @declared_attr
     def platform_name(self):
         return association_proxy("platform", "name")
+
+    @declared_attr
+    def platform_id(self):
+        return association_proxy("platform", "platform_id")
 
     @declared_attr
     def subject(self):
