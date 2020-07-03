@@ -1,6 +1,7 @@
 from datetime import datetime
 from getpass import getuser
 
+from geoalchemy2.shape import to_shape
 from sqlalchemy.orm import undefer
 from sqlalchemy.orm.session import make_transient
 from tabulate import tabulate
@@ -13,6 +14,7 @@ from pepys_admin.utils import (
     print_names_added,
     statistics_to_table_data,
 )
+from pepys_import.core.formats.location import Location
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.table_name_utils import table_name_to_class_name
@@ -424,9 +426,15 @@ class MergeDatabases:
             if "location" in d:
                 d["_location"] = d["location"].to_wkt()
 
-            # TODO: This function will fail for Geometry1 objects at the moment, as the geometry field is
-            # not processed properly. This table isn't used at the moment, but this should be fixed
-            # before the table is used
+            # Deal with the geometry table where we have a generic geometry in the table
+            # If it is a Location object then convert to WKT. If not then, convert the
+            # WKB geometry field to a WKT field, going via Shapely
+            if "geometry" in d:
+                if isinstance(d["geometry"], Location):
+                    d["_geometry"] = d["geometry"].to_wkt()
+                else:
+                    shply_geom = to_shape(d["geometry"])
+                    d["_geometry"] = "SRID=4326;" + shply_geom.wkt
 
             dict_results.append(d)
 

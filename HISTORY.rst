@@ -2,6 +2,24 @@
 History
 =======
 
+0.0.18 (2020-07-01)
+-------------------
+
+* Add support for Nisida file format
+* Add guidance for exporting and merging snapshots
+* Add steps to verify installation
+* Consistent use of "." to exit Pepys-Admin
+
+0.0.17 (2020-06-16)
+-------------------
+
+* Improve display of database version (diagnostics)
+* Multi-column unique constraints
+* Pause when Pepys-Admin closes (diagnostics)
+* Connect to database immediately when Pepys-Admin opens (diagnostics)
+* Introduce ability to merge snapshots back in
+* Add importer for EAG data
+* Double-check with user before destructive admin changes
 
 0.0.16 (2020-06-09)
 -------------------
