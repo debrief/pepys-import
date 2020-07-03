@@ -769,55 +769,32 @@ class DataStore:
             change_id=change_id,
         )
 
-    def find_platform(self, platform_name):
+    def find_platform(self, name, nationality=None, identifier=None):
         """
-        This method tries to find a Platform entity with the given platform_name. If it
-        finds, it returns the entity. If it is not found, it searches synonyms.
+        This method tries to find a Platform entity with the given platform details.
+        
+        If only the platform_name is given, then it searches synonyms ONLY. If all details
+        are given then it searches for all the details in the database
 
-        It uses the cache in self._platform_cache first, and if it can't find it in there
-        then it looks it up in the database.
-
-        :param platform_name: Name of :class:`Platform`
-        :type platform_name: String
-        :return:
+        It does not currently use a cache.
         """
-        # Can't search for a platform if we haven't got a name to search for
-        if platform_name is None:
+        # TODO: Add caching here if things get slow
+
+        # Must have a name regardless what sort of search we're doing
+        if name is None:
             return None
 
-        cached_result = self._platform_cache.get(platform_name)
-        if cached_result:
-            return cached_result
-
-        platform = (
-            self.session.query(self.db_classes.Platform)
-            .filter(
-                or_(
-                    self.db_classes.Platform.name == platform_name,
-                    self.db_classes.Platform.trigraph == platform_name,
-                    self.db_classes.Platform.quadgraph == platform_name,
-                )
+        if (nationality is None) and (identifier is None):
+            # No nat or identifier, so just search synonyms
+            synonym_result = self.synonym_search(
+                name=name,
+                table=self.db_classes.Platform,
+                pk_field=self.db_classes.Platform.platform_id,
             )
-            .first()
-        )
-        if platform:
-            self.session.expunge(platform)
-            self._platform_cache[platform_name] = platform
-            return platform
-
-        # Platform is not found, try to find a synonym
-        synonym_result = self.synonym_search(
-            name=platform_name,
-            table=self.db_classes.Platform,
-            pk_field=self.db_classes.Platform.platform_id,
-        )
-
-        if synonym_result is not None:
-            self.session.expunge(synonym_result)
-            self._platform_cache[platform_name] = synonym_result
             return synonym_result
-
-        return synonym_result
+        else:
+            # Got all details, so search for all details and return results
+            return self.search_platform(name, nationality, identifier)
 
     def get_platform(
         self,
@@ -853,9 +830,13 @@ class DataStore:
         :return: Created Platform entity
         """
 
-        # Check for name match in Platform and Synonym Tables
+        # Check for name match in existing Platforms
+        # If identifier and nationality are None then this just searches synonyms
+        # otherwise, it searches the Platform table by all three fields
         if platform_name:
-            platform = self.find_platform(platform_name)
+            platform = self.find_platform(
+                name=platform_name, identifier=identifier, nationality=nationality
+            )
             if platform:
                 return platform
 
