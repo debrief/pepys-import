@@ -132,6 +132,7 @@ class FileProcessor:
                 print(second_table_summary_set.report("==After=="))
             self.display_import_summary(import_summary)
             print(f"Files got processed: {processed_ctr} times")
+            print(f"Archive/report folders can be found at {self.output_path}")
             return
 
         # If we've got to here then we're dealing with a folder

@@ -188,11 +188,11 @@ class DataStoreCacheTestCase(TestCase):
             )
 
             geometry_sub_type_1 = self.store.add_to_geometry_sub_types(
-                name="test", parent_id=geometry_type.geo_type_id, change_id=self.change_id
+                name="test", parent_name=geometry_type.name, change_id=self.change_id
             )
             # This one shouldn't duplicate, it should return existing entity
             geometry_sub_type_2 = self.store.add_to_geometry_sub_types(
-                name="test", parent_id=geometry_type.geo_type_id, change_id=self.change_id
+                name="test", parent_name=geometry_type.name, change_id=self.change_id
             )
 
             # objects must be the same
