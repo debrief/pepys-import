@@ -68,11 +68,18 @@ class TestSensorTypeMerge(unittest.TestCase):
             self.slave_store.add_to_platform_types("PlatformType1", change_id)
             self.slave_store.add_to_nationalities("UK", change_id)
             self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
-            self.slave_store.add_to_platforms(
+            platform = self.slave_store.add_to_platforms(
                 "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
             )
             self.slave_store.add_to_sensors(
-                "Sensor1", "ST_Shared_1", "Platform1", "Private", change_id
+                name="Sensor1",
+                sensor_type="ST_Shared_1",
+                host_id=platform.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
 
         self.merge_class = MergeDatabases(self.master_store, self.slave_store)
@@ -479,7 +486,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
             self.master_store.session.add_all([st_shared, pt_shared, nat_shared, priv_shared])
             self.master_store.session.commit()
 
-            self.master_store.add_to_platforms(
+            plat_master_1 = self.master_store.add_to_platforms(
                 "Platform_Master_1",
                 "123",
                 "UK",
@@ -487,7 +494,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
                 "Private",
                 change_id=change_id,
             )
-            self.master_store.add_to_platforms(
+            plat_shared_1 = self.master_store.add_to_platforms(
                 "Platform_Shared_1",
                 "234",
                 "UK",
@@ -497,23 +504,54 @@ class TestSensorPlatformMerge(unittest.TestCase):
             )
 
             self.master_store.add_to_sensors(
-                "Sensor_Master_1", "SensorType_Master_1", "Platform_Master_1", "Private", change_id
+                name="Sensor_Master_1",
+                sensor_type="SensorType_Master_1",
+                host_id=plat_master_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.master_store.add_to_sensors(
-                "Sensor_Master_2", "SensorType_Shared_1", "Platform_Master_1", "Private", change_id
+                name="Sensor_Master_2",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_master_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.master_store.add_to_sensors(
-                "Sensor_Master_3", "SensorType_Master_2", "Platform_Shared_1", "Private", change_id
+                name="Sensor_Master_3",
+                sensor_type="SensorType_Master_2",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.master_store.add_to_sensors(
-                "Sensor_Shared_1", "SensorType_Shared_1", "Platform_Shared_1", "Private", change_id
+                name="Sensor_Shared_1",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             sensor_shared = self.master_store.add_to_sensors(
-                "Sensor_Shared_2_GUIDSame",
-                "SensorType_Shared_1",
-                "Platform_Shared_1",
-                "Private",
-                change_id,
+                name="Sensor_Shared_2_GUIDSame",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             sensor_shared_guid = sensor_shared.sensor_id
 
@@ -544,7 +582,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
             self.slave_store.session.add_all([st_shared, pt_shared, nat_shared, priv_shared])
             self.slave_store.session.commit()
 
-            self.slave_store.add_to_platforms(
+            plat_slave_1 = self.slave_store.add_to_platforms(
                 "Platform_Slave_1",
                 "123",
                 "UK",
@@ -552,7 +590,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
                 "Private",
                 change_id=change_id,
             )
-            self.slave_store.add_to_platforms(
+            plat_shared_1 = self.slave_store.add_to_platforms(
                 "Platform_Shared_1",
                 "234",
                 "UK",
@@ -562,23 +600,54 @@ class TestSensorPlatformMerge(unittest.TestCase):
             )
 
             self.slave_store.add_to_sensors(
-                "Sensor_Slave_1", "SensorType_Slave_1", "Platform_Slave_1", "Private", change_id
+                name="Sensor_Slave_1",
+                sensor_type="SensorType_Slave_1",
+                host_id=plat_slave_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.slave_store.add_to_sensors(
-                "Sensor_Slave_2", "SensorType_Shared_1", "Platform_Slave_1", "Private", change_id
+                name="Sensor_Slave_2",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_slave_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.slave_store.add_to_sensors(
-                "Sensor_Slave_3", "SensorType_Slave_2", "Platform_Shared_1", "Private", change_id
+                name="Sensor_Slave_3",
+                sensor_type="SensorType_Slave_2",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.slave_store.add_to_sensors(
-                "Sensor_Shared_1", "SensorType_Shared_1", "Platform_Shared_1", "Private", change_id
+                name="Sensor_Shared_1",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             sensor_shared = self.slave_store.add_to_sensors(
-                "Sensor_Shared_2_GUIDSame",
-                "SensorType_Shared_1",
-                "Platform_Shared_1",
-                "Private",
-                change_id,
+                name="Sensor_Shared_2_GUIDSame",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             sensor_shared.sensor_id = sensor_shared_guid
 
@@ -1440,11 +1509,18 @@ class TestSynonymMergeWithRefTable(unittest.TestCase):
             self.slave_store.add_to_platform_types("PlatformType1", change_id)
             self.slave_store.add_to_nationalities("UK", change_id)
             self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
-            self.slave_store.add_to_platforms(
+            plat1 = self.slave_store.add_to_platforms(
                 "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
             )
             self.slave_store.add_to_sensors(
-                "Sensor1", "ST_Shared_1", "Platform1", "Private", change_id
+                name="Sensor1",
+                sensor_type="ST_Shared_1",
+                host_id=plat1.platform_id,
+                host_name=None,
+                host_nationality=None,
+                host_identifier=None,
+                privacy="Private",
+                change_id=change_id,
             )
 
             self.slave_store.add_to_synonyms(

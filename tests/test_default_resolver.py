@@ -71,7 +71,10 @@ class DefaultResolverTestCase(unittest.TestCase):
             new_sensor_obj = self.store.add_to_sensors(
                 name=sensor_name,
                 sensor_type=sensor_type.name,
-                host=platform_obj.name,
+                host_name=None,
+                host_nationality=None,
+                host_identifier=None,
+                host_id=platform_obj.platform_id,
                 privacy=privacy.name,
                 change_id=self.change_id,
             )

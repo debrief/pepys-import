@@ -51,16 +51,25 @@ def test_adding_duplicate_sensor():
         change_id = store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
         # Add Platform for this Sensor to belong to
-        store.add_to_platforms(
+        platform_id = store.add_to_platforms(
             "TestPlatform",
             "TestIdentifier",
             "United Kingdom",
             "PLATFORM-TYPE-1",
             "Public",
             change_id=change_id,
-        )
+        ).platform_id
 
-        store.add_to_sensors("TestSensor", "GPS", "TestPlatform", "Public", change_id=change_id)
+        store.add_to_sensors(
+            name="TestSensor",
+            sensor_type="GPS",
+            host_id=platform_id,
+            host_name=None,
+            host_nationality=None,
+            host_identifier=None,
+            privacy="Public",
+            change_id=change_id,
+        )
 
         results = store.session.query(store.db_classes.Sensor).all()
 
@@ -69,7 +78,16 @@ def test_adding_duplicate_sensor():
 
     with store.session_scope():
         # Add Sensor with same details again
-        store.add_to_sensors("TestSensor", "GPS", "TestPlatform", "Public", change_id=change_id)
+        store.add_to_sensors(
+            name="TestSensor",
+            sensor_type="GPS",
+            host_id=platform_id,
+            host_name=None,
+            host_nationality=None,
+            host_identifier=None,
+            privacy="Public",
+            change_id=change_id,
+        )
 
         results = store.session.query(store.db_classes.Sensor).all()
 
