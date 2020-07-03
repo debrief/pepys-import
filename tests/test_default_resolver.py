@@ -68,12 +68,11 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "Public")
 
             # Add to database (like in get_sensor() in common_db.py)
-            new_sensor_obj = Sensor().add_to_sensors(
-                data_store=self.store,
+            new_sensor_obj = self.store.add_to_sensors(
                 name=sensor_name,
                 sensor_type=sensor_type.name,
                 host=platform_obj.name,
-                privacy_id=privacy.privacy_id,
+                privacy=privacy.name,
                 change_id=self.change_id,
             )
 

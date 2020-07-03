@@ -261,7 +261,7 @@ class DataStore:
     # End of Data Store methods
     #############################################################
 
-    def add_to_sensors(self, name, sensor_type, host, privacy, change_id):
+    def add_to_sensors(self, name, sensor_type, host, privacy, change_id, host_id=None):
         """
         Adds the specified sensor to the :class:`Sensor` table if not already present.
 
