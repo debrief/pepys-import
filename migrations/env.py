@@ -221,7 +221,7 @@ from geoalchemy2 import Geometry
 
 from sqlalchemy import MetaData, CheckConstraint, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
@@ -287,7 +287,7 @@ BaseSpatiaLite = declarative_base(metadata=Metadata)
 
         # Merge all import text and the string of the classes in the set
         class_to_include = "\n\n".join(class_to_include)
-        text += f"\n\n{class_to_include}"
+        text += f"\n\n{class_to_include}\n\n"
         # Insert the merged text and overwrite the file
         lines.insert(10, text)
         with open(filename, "w") as to_write:
