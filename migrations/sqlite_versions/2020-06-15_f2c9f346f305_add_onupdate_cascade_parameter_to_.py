@@ -191,7 +191,6 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
-    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -322,7 +321,6 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
-    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
     @declared_attr
@@ -418,13 +416,11 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     contact_type = deferred(Column(UUIDType, ForeignKey("ContactTypes.contact_type_id")))
     _mla = deferred(Column("mla", REAL))
     _soa = deferred(Column("soa", REAL))
-    track_number = Column(String(20))
     subject_id = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"))
     source_id = Column(
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
-    remarks = Column(Text)
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     @declared_attr
@@ -475,7 +471,6 @@ class Activation(BaseSpatiaLite, ActivationMixin):
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
-    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -533,7 +528,6 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
-    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
