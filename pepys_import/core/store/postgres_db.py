@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from geoalchemy2 import Geometry
-from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
@@ -513,6 +513,7 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade")
     )
+    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
     @declared_attr
@@ -568,6 +569,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     )
     _mla = deferred(Column("mla", DOUBLE_PRECISION))
     _soa = deferred(Column("soa", DOUBLE_PRECISION))
+    track_number = Column(String(20))
     subject_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id", onupdate="cascade")
     )
@@ -579,6 +581,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade")
     )
+    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
     @declared_attr
@@ -606,14 +609,14 @@ class Activation(BasePostGIS, ActivationMixin):
     __table_args__ = {"schema": "pepys"}
 
     activation_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150))
     sensor_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade"),
         nullable=False,
     )
-    start = deferred(Column(TIMESTAMP, nullable=False))
-    end = deferred(Column(TIMESTAMP, nullable=False))
+    start = deferred(Column(TIMESTAMP))
+    end = deferred(Column(TIMESTAMP))
     _min_range = deferred(Column("min_range", DOUBLE_PRECISION))
     _max_range = deferred(Column("max_range", DOUBLE_PRECISION))
     _left_arc = deferred(Column("left_arc", DOUBLE_PRECISION))
@@ -626,6 +629,7 @@ class Activation(BasePostGIS, ActivationMixin):
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade")
     )
+    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -653,7 +657,7 @@ class LogsHolding(BasePostGIS, LogsHoldingMixin):
         ForeignKey("pepys.Platforms.platform_id", onupdate="cascade"),
         nullable=False,
     )
-    comment = Column(String(150), nullable=False)
+    comment = Column(Text, nullable=False)
     source_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade"),
@@ -685,7 +689,7 @@ class Comment(BasePostGIS, CommentMixin):
         ForeignKey("pepys.CommentTypes.comment_type_id", onupdate="cascade"),
         nullable=False,
     )
-    content = Column(String(150), nullable=False)
+    content = Column(Text, nullable=False)
     source_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade"),
@@ -704,8 +708,8 @@ class Geometry1(BasePostGIS, GeometryMixin):
     __table_args__ = {"schema": "pepys"}
 
     geometry_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    geometry = Column(Geometry, nullable=False)
-    name = Column(String(150), nullable=False)
+    _geometry = Column("geometry", Geometry(srid=4326), nullable=False)
+    name = Column(String(150))
     geo_type_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.GeometryTypes.geo_type_id", onupdate="cascade"),
@@ -733,6 +737,7 @@ class Geometry1(BasePostGIS, GeometryMixin):
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade")
     )
+    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -769,4 +774,5 @@ class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin, LocationPropertyMix
     privacy_id = Column(
         UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade")
     )
+    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)

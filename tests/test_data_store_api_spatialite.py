@@ -149,6 +149,61 @@ class DataStoreCacheTestCase(TestCase):
             # there must be only one entity at the beginning
             self.assertEqual(len(sensor_types), 1)
 
+    def test_cached_geometry_type(self):
+        """Test whether a new geometry type entity cached and returned"""
+        with self.store.session_scope():
+            geometry_types = self.store.session.query(self.store.db_classes.GeometryType).all()
+
+            # there must be no entity at the beginning
+            self.assertEqual(len(geometry_types), 0)
+
+            geometry_type_1 = self.store.add_to_geometry_types(
+                name="test", change_id=self.change_id
+            )
+            # This one shouldn't duplicate, it should return existing entity
+            geometry_type_2 = self.store.add_to_geometry_types(
+                name="test", change_id=self.change_id
+            )
+
+            # objects must be the same
+            self.assertEqual(geometry_type_1, geometry_type_2)
+            geometry_types = self.store.session.query(self.store.db_classes.GeometryType).all()
+
+            # there must be only one entity at the beginning
+            self.assertEqual(len(geometry_types), 1)
+
+    def test_cached_geometry_sub_type(self):
+        """Test whether a new geometry sub type entity cached and returned"""
+        with self.store.session_scope():
+            geometry_sub_types = self.store.session.query(
+                self.store.db_classes.GeometrySubType
+            ).all()
+
+            # there must be no entity at the beginning
+            self.assertEqual(len(geometry_sub_types), 0)
+
+            # Create Geometry Type as parent
+            geometry_type = self.store.add_to_geometry_types(
+                name="Test Parent", change_id=self.change_id
+            )
+
+            geometry_sub_type_1 = self.store.add_to_geometry_sub_types(
+                name="test", parent_name=geometry_type.name, change_id=self.change_id
+            )
+            # This one shouldn't duplicate, it should return existing entity
+            geometry_sub_type_2 = self.store.add_to_geometry_sub_types(
+                name="test", parent_name=geometry_type.name, change_id=self.change_id
+            )
+
+            # objects must be the same
+            self.assertEqual(geometry_sub_type_1, geometry_sub_type_2)
+            geometry_sub_types = self.store.session.query(
+                self.store.db_classes.GeometrySubType
+            ).all()
+
+            # there must be only one entity at the beginning
+            self.assertEqual(len(geometry_sub_types), 1)
+
 
 class LookUpDBAndAddToCacheTestCase(TestCase):
     """Test searching functionality and adding existing DB entities to the cache of

@@ -400,12 +400,36 @@ class DatafileMixin:
         self.add_measurement_to_dict(comment, parser_name)
         return comment
 
-    def add_measurement_to_dict(self, measurement, parser_name):
-        # Cache objects according to their platform
-        if measurement.platform_name not in self.measurements[parser_name]:
-            self.measurements[parser_name][measurement.platform_name] = list()
+    def create_geometry(self, data_store, geom, geom_type_id, geom_sub_type_id, parser_name):
+        geometry = data_store.db_classes.Geometry1(
+            geometry=geom,
+            source_id=self.datafile_id,
+            geo_type_id=geom_type_id,
+            geo_sub_type_id=geom_sub_type_id,
+        )
+        self.add_measurement_to_dict(geometry, parser_name)
+        return geometry
 
-        self.measurements[parser_name][measurement.platform_name].append(measurement)
+    def create_activation(self, data_store, sensor, start, end, parser_name):
+        activation = data_store.db_classes.Activation(
+            sensor_id=sensor.sensor_id, start=start, end=end, source_id=self.datafile_id,
+        )
+        self.add_measurement_to_dict(activation, parser_name)
+        return activation
+
+    def add_measurement_to_dict(self, measurement, parser_name):
+        try:
+            platform_name = measurement.platform_name
+        except AttributeError:
+            # Platform name doesn't exist for Geometry1 objects, so
+            # use a platform of 'N/A'
+            platform_name = "N/A"
+
+        # Cache objects according to their platform
+        if platform_name not in self.measurements[parser_name]:
+            self.measurements[parser_name][platform_name] = list()
+
+        self.measurements[parser_name][platform_name].append(measurement)
 
     def validate(
         self, validation_level=validation_constants.NONE_LEVEL, errors=None, parser="Default",
@@ -1134,9 +1158,30 @@ class CommentMixin:
 
 
 class GeometryMixin:
+    @hybrid_property
+    def geometry(self):
+        return self._geometry
+
+    @geometry.setter
+    def geometry(self, geom):
+        if geom is None:
+            self._geometry = None
+            return
+
+        # If we're given a Location object then convert it to WKT and set it
+        # otherwise just pass through whatever we've been given
+        if isinstance(geom, Location):
+            self._geometry = geom.to_wkt()
+        else:
+            self._geometry = geom
+
+    @geometry.expression
+    def geometry(self):
+        return self._geometry
+
     @declared_attr
     def task(self):
-        return relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Task", lazy="joined", join_depth=1, uselist=False)
 
     # @declared_attr
     # def task_name(self):
@@ -1148,7 +1193,6 @@ class GeometryMixin:
             "Platform",
             lazy="joined",
             join_depth=1,
-            innerjoin=True,
             uselist=False,
             foreign_keys="Geometry1.subject_platform_id",
         )
@@ -1163,7 +1207,6 @@ class GeometryMixin:
             "Platform",
             lazy="joined",
             join_depth=1,
-            innerjoin=True,
             uselist=False,
             foreign_keys="Geometry1.sensor_platform_id",
         )

@@ -10,6 +10,7 @@ from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import RelationshipProperty, class_mapper, load_only
 from tabulate import tabulate
 
+from pepys_admin.base_cli import BaseShell
 from pepys_import.core.store import constants
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
@@ -18,13 +19,13 @@ def bottom_toolbar():
     return HTML("Press <b>ESC then Enter</b> to exit!")
 
 
-class ViewDataShell(cmd.Cmd):
+class ViewDataShell(BaseShell):
     """Offers to view table and run SQL."""
 
     intro = """--- Menu ---
     (1) View Table
     (2) Run SQL
-    (0) Back
+    (.) Back
     """
     prompt = "(pepys-admin) (view) "
 
@@ -32,7 +33,7 @@ class ViewDataShell(cmd.Cmd):
         super(ViewDataShell, self).__init__()
         self.data_store = data_store
         self.aliases = {
-            "0": self.do_cancel,
+            ".": self.do_cancel,
             "1": self.do_view_table,
             "2": self.do_run_sql,
         }
@@ -72,6 +73,7 @@ class ViewDataShell(cmd.Cmd):
             return
         # Table names are plural in the database, therefore make it singular
         table = table_name_to_class_name(selected_table)
+
         if table == constants.ALEMBIC_VERSION:
             with self.data_store.engine.connect() as connection:
                 if self.data_store.db_type == "postgres":
@@ -155,18 +157,3 @@ class ViewDataShell(cmd.Cmd):
             )
             res += "\n"
             print(res)
-
-    def default(self, line):
-        cmd_, arg, line = self.parseline(line)
-        if cmd_ in self.aliases:
-            self.aliases[cmd_]()
-            if cmd_ == "0":
-                return True
-        else:
-            print(f"*** Unknown syntax: {line}")
-
-    def postcmd(self, stop, line):
-        if line != "0":
-            print("-" * 61)
-            print(self.intro)
-        return cmd.Cmd.postcmd(self, stop, line)

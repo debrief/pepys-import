@@ -140,6 +140,8 @@ class DataStore:
         self._search_platform_cache = dict()
         self._search_datafile_cache = dict()
         self._search_datafile_type_cache = dict()
+        self._search_geometry_type_cache = dict()
+        self._search_geometry_subtype_cache = dict()
 
         # Branding Text
         if self.welcome_text:
@@ -575,6 +577,24 @@ class DataStore:
         return (
             self.session.query(self.db_classes.SensorType)
             .filter(self.db_classes.SensorType.name == name)
+            .first()
+        )
+
+    @cache_results_if_not_none("_search_geometry_type_cache")
+    def search_geometry_type(self, name):
+        """Search for any Geometry Type featuring this name"""
+        return (
+            self.session.query(self.db_classes.GeometryType)
+            .filter(self.db_classes.GeometryType.name == name)
+            .first()
+        )
+
+    def search_geometry_sub_type(self, name, parent):
+        """Search for any Geometry Sub Type featuring this name and parent"""
+        return (
+            self.session.query(self.db_classes.GeometrySubType)
+            .filter(self.db_classes.GeometrySubType.name == name)
+            .filter(self.db_classes.GeometrySubType.parent == parent)
             .first()
         )
 
@@ -1064,6 +1084,64 @@ class DataStore:
             table=constants.SENSOR_TYPE, row_id=sensor_type.sensor_type_id, change_id=change_id,
         )
         return sensor_type
+
+    def add_to_geometry_types(self, name, change_id):
+        """
+        Adds the specified geometry type to the :class:`GeometryType` table if not already present.
+
+        :param name: Name of :class:`GeometryType`
+        :type name: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
+        :return: Created :class:`GeometryType` entity
+        :rtype: GeometryType
+        """
+        geom_type = self.search_geometry_type(name)
+        if geom_type:
+            return geom_type
+
+        # enough info to proceed and create entry
+        geom_type = self.db_classes.GeometryType(name=name)
+        self.session.add(geom_type)
+        self.session.flush()
+
+        self.add_to_logs(
+            table=constants.GEOMETRY_TYPE, row_id=geom_type.geo_type_id, change_id=change_id,
+        )
+        return geom_type
+
+    def add_to_geometry_sub_types(self, name, parent_name, change_id):
+        """
+        Adds the specified geometry sub type to the :class:`GeometrySubType` table if not already present.
+
+        :param name: Name of :class:`GeometrySubType`
+        :type name: String
+        :param parent_name: Name of parent :class:`GeometryType`
+        :type parent_name: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
+        :return: Created :class:`GeometrySubType` entity
+        :rtype: GeometrySubType
+        """
+        geo_type_obj = self.search_geometry_type(parent_name)
+        if geo_type_obj is None:
+            geo_type_obj = self.add_to_geometry_types(parent_name, change_id)
+
+        geom_sub_type = self.search_geometry_sub_type(name, geo_type_obj.geo_type_id)
+        if geom_sub_type:
+            return geom_sub_type
+
+        # enough info to proceed and create entry
+        geom_sub_type = self.db_classes.GeometrySubType(name=name, parent=geo_type_obj.geo_type_id)
+        self.session.add(geom_sub_type)
+        self.session.flush()
+
+        self.add_to_logs(
+            table=constants.GEOMETRY_SUBTYPE,
+            row_id=geom_sub_type.geo_sub_type_id,
+            change_id=change_id,
+        )
+        return geom_sub_type
 
     # End of References
     #############################################################
