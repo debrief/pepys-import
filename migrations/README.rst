@@ -256,6 +256,7 @@ If you face this error, it means that the :code:`pepys-import` repository should
 ------------
 
 **(FOR DEVELOPERS ONLY)**
+
 .. code-block:: bash
 
     Database tables are not found! (Hint: Did you initialise the DataStore?)
