@@ -173,7 +173,9 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
 
     geometry_id = Column(UUIDType, primary_key=True, default=uuid4)
     _geometry = Column(
-        "geometry", Geometry(geometry_type="GEOMETRY", srid=4326, management=True), nullable=False,
+        "geometry",
+        Geometry(geometry_type="GEOMETRY", srid=4326, management=True, spatial_index=False),
+        nullable=False,
     )
     name = Column(String(150))
     geo_type_id = Column(
@@ -311,7 +313,10 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
         UUIDType, ForeignKey("Sensors.sensor_id", onupdate="cascade"), nullable=False
     )
     _location = deferred(
-        Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+        Column(
+            "location",
+            Geometry(geometry_type="POINT", srid=4326, management=True, spatial_index=False),
+        )
     )
     _elevation = deferred(Column("elevation", REAL))
     _heading = deferred(Column("heading", REAL))
@@ -405,7 +410,10 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     _freq = deferred(Column("freq", REAL))
     _range = deferred(Column("range", REAL))
     _location = deferred(
-        Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+        Column(
+            "location",
+            Geometry(geometry_type="POINT", srid=4326, management=True, spatial_index=False),
+        )
     )
     _elevation = deferred(Column("elevation", REAL))
     _major = deferred(Column("major", REAL))
@@ -516,7 +524,10 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
     subject_id = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"))
     sensor_id = Column(UUIDType, ForeignKey("Sensors.sensor_id", onupdate="cascade"))
     _location = deferred(
-        Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+        Column(
+            "location",
+            Geometry(geometry_type="POINT", srid=4326, management=True, spatial_index=False),
+        )
     )
     _elevation = deferred(Column("elevation", REAL))
     time = Column(TIMESTAMP)
@@ -1167,7 +1178,7 @@ def downgrade():
         batch_op.alter_column(
             "location",
             existing_type=geoalchemy2.types.Geometry(
-                geometry_type="POINT", srid=4326, management=True
+                geometry_type="POINT", srid=4326, management=True, spatial_index=False
             ),
             type_=sa.INTEGER(),
             existing_nullable=True,
@@ -1240,7 +1251,7 @@ def downgrade():
         batch_op.alter_column(
             "location",
             existing_type=geoalchemy2.types.Geometry(
-                geometry_type="POINT", srid=4326, management=True
+                geometry_type="POINT", srid=4326, management=True, spatial_index=False
             ),
             type_=sa.INTEGER(),
             existing_nullable=True,
@@ -1325,7 +1336,7 @@ def downgrade():
         batch_op.create_foreign_key(None, "Tasks", ["task_id"], ["task_id"])
         batch_op.alter_column(
             "geometry",
-            existing_type=geoalchemy2.types.Geometry(management=True),
+            existing_type=geoalchemy2.types.Geometry(management=True, spatial_index=False),
             type_=sa.NUMERIC(),
             existing_nullable=False,
         )
@@ -1358,7 +1369,7 @@ def downgrade():
         batch_op.alter_column(
             "location",
             existing_type=geoalchemy2.types.Geometry(
-                geometry_type="POINT", srid=4326, management=True
+                geometry_type="POINT", srid=4326, management=True, spatial_index=False
             ),
             type_=sa.INTEGER(),
             existing_nullable=True,
