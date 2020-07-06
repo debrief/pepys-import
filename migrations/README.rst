@@ -184,8 +184,11 @@ Instead, it creates a new one, copies values from the previous table, and drops 
 | An example can be found in :code:`migrations/sqlite_versions/2020-06-03_f103f27c4575_change_pennant_to_identifier_and_make_.py`. What you should do is as follows:
 
 - :code:`copy_from` post-hook will create all necessary tables. Copy the table that has a column change to :code:`upgrade()` and :code:`downgrade()` methods.
-- Remove the global class.
+- Remove the global class in the migration script.
 - Change the changed column name with the first argument in :code:`alter_column`.
+
+| **Note-6:** :code:`copy_from` post-hook runs for each migration script and therefore, it import many classes, methods that are not necessary for your specific migration script.
+| You can detect these unused imports using :code:`flake8` command and remove them.
 
 How to use it? (For Users)
 ---------------------------
@@ -255,7 +258,26 @@ If you face this error, it means that the :code:`pepys-import` repository should
 
 ------------
 
-**(FOR DEVELOPERS ONLY)**
+.. code-block:: bash
+
+    (pepys-import) baris@bariss-MacBook-Pro pepys-import % alembic revision -m "message" --autogenerate
+    Database tables are not found! (Hint: Did you initialise the DataStore?)
+    INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+    INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+    ERROR [alembic.util.messaging] Target database is not up to date.
+      FAILED: Target database is not up to date.
+
+If you make some changes and try to create a new migration script without having the latest version of the database, you will face this issue.
+You should upgrade your DB and then run the revision command:
+
+.. code-block:: bash
+
+    alembic upgrade head
+    alembic revision -m "your message" --autogenerate
+
+------------
+
+**FOR DEVELOPERS ONLY**
 
 .. code-block:: bash
 
@@ -281,17 +303,27 @@ please open your migration script and add :code:`spatial_index=False` argument t
 
 .. code-block:: bash
 
-    (pepys-import) baris@bariss-MacBook-Pro pepys-import % alembic revision -m "message" --autogenerate
-    Database tables are not found! (Hint: Did you initialise the DataStore?)
-    INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
-    INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
-    ERROR [alembic.util.messaging] Target database is not up to date.
-      FAILED: Target database is not up to date.
+    ValueError: No such constraint: 'XXXX'
 
-If you make some changes and try to create a new migration script without having the latest version of the database, you will face this issue.
-You should upgrade your DB and then run the revision command:
+This error might happen in both **PostgreSQL** and **SQLite** databases. However, when it happens in **SQLite**,
+it might mean that your class that passed in :code:`copy_from` parameter to :code:`batch_alter_table` doesn't have the necessary constraint.
+You might compare the related class in :code:`pepys_import.core.store.sqlite_db` with the class in the migration script to find out the missing constraint.
+Then, you might add the constraint to the class using :code:`Table.append_constraint()` method:
 
-.. code-block:: bash
+.. code-block:: python
 
-    alembic upgrade head
-    alembic revision -m "your message" --autogenerate
+    ...
+    # Append constraint
+    Sensor.__table__.append_constraint(CheckConstraint("name <> ''", name="ck_Sensors_name"))
+    with op.batch_alter_table("Sensors", schema=None, copy_from=Sensor.__table__) as batch_op:
+        batch_op.drop_constraint("ck_Sensors_name", type_="check")
+    ...
+
+If you face this error during the upgrade, please add :code:`append_constraint()` line inside of the :code:`upgrade()` function.
+If you face it during the downgrade, add the line inside of the :code:`downgrade()` function. This error should be corrected now.
+
+------------
+
+Sometimes, it might be necessary to use a new field type of SQLAlchemy, or a new class from the project (i.e. :code:`ReferenceRepr`).
+If these new imports break the migration script for :code:`SQLite`, you can add them to the :code:`text` variable in :code:`migrations/env.py`'s :code:`copy_from()` function.
+They will be included next time when you generate a migration script for :code:`SQLite`.
