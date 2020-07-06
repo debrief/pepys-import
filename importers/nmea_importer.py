@@ -52,7 +52,7 @@ class NMEAImporter(Importer):
             # set it to None. Later we will set it to the returned value from the get_platform call
             # so that we don't have to ask about the platform again for each line in the file
             self.platform_name = None
-        tokens = line.tokens(line.CSV_DELIM, ",")
+        tokens = line.tokens(line.CSV_TOKENISER, ",")
 
         if len(tokens) > 1:
 
