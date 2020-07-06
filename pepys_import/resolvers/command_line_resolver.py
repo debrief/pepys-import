@@ -97,20 +97,36 @@ class CommandLineResolver(DataResolver):
     def resolve_platform(
         self, data_store, platform_name, platform_type, nationality, privacy, change_id
     ):
-        options = [f"Search for existing platform", f"Add a new platform"]
+        name_list = []
+        final_options = [f"Search for existing platform", f"Add a new platform"]
         if platform_name:
-            options[1] += f", default name '{platform_name}'"
+            # If we've got a platform_name, then we can search for all platforms
+            # with this name, and present a list to the user to choose from,
+            # alongside the options to search for an existing platform and add
+            # a new platform
+            platforms = (
+                data_store.session.query(data_store.db_classes.Platform)
+                .filter(data_store.db_classes.Platform.name == platform_name)
+                .all()
+            )
+            for platform in platforms:
+                name_list.append(
+                    f"{platform.name} / {platform.identifier} / {platform.nationality_name}"
+                )
+            final_options[1] += f", default name '{platform_name}'"
+        choices = name_list + final_options
         choice = create_menu(
-            f"Platform '{platform_name}' not found. Do you wish to: ",
-            options,
-            validate_method=is_valid,
+            f"Select a platform entry for {platform_name}:", choices, validate_method=is_valid,
         )
-
-        if choice == str(1):
+        if int(choice) <= len(platforms):
+            # One of the pre-existing platforms was chosen
+            platform_index = int(choice) - 1
+            return platforms[platform_index]
+        elif choice == str(len(choices) - 1):
             return self.fuzzy_search_platform(
                 data_store, platform_name, platform_type, nationality, privacy, change_id,
             )
-        elif choice == str(2):
+        elif choice == str(len(choices)):
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy, change_id,
             )
