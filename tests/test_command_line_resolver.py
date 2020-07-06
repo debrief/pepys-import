@@ -1288,7 +1288,7 @@ class GetMethodsTestCase(unittest.TestCase):
             self.assertEqual(len(sensors), 2)
 
             platform = self.store.get_platform(
-                name="PLATFORM-1",
+                platform_name="PLATFORM-1",
                 identifier="123",
                 nationality="United Kingdom",
                 change_id=self.change_id,

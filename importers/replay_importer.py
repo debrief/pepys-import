@@ -41,7 +41,7 @@ class ReplayImporter(Importer):
             return
         # and finally store it
         vessel_name = rep_line.get_platform()
-        platform = data_store.get_platform(platform_name=vessel_name, change_id=change_id,)
+        platform = self.get_cached_platform(data_store, vessel_name, change_id=change_id)
 
         sensor = self.get_cached_sensor(
             data_store=data_store,

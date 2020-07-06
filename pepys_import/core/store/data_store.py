@@ -798,7 +798,7 @@ class DataStore:
 
     def get_platform(
         self,
-        name=None,
+        platform_name=None,
         identifier=None,
         nationality=None,
         platform_type=None,
@@ -833,8 +833,10 @@ class DataStore:
         # Check for name match in existing Platforms
         # If identifier and nationality are None then this just searches synonyms
         # otherwise, it searches the Platform table by all three fields
-        if name:
-            platform = self.find_platform(name=name, identifier=identifier, nationality=nationality)
+        if platform_name:
+            platform = self.find_platform(
+                name=platform_name, identifier=identifier, nationality=nationality
+            )
             if platform:
                 return platform
 
@@ -843,21 +845,21 @@ class DataStore:
         privacy_obj = self.search_privacy(privacy)
 
         if (
-            name is None
+            platform_name is None
             or identifier is None
             or nationality_obj is None
             or platform_type_obj is None
             or privacy_obj is None
         ):
             resolved_data = self.missing_data_resolver.resolve_platform(
-                self, name, platform_type, nationality, privacy, change_id
+                self, platform_name, platform_type, nationality, privacy, change_id
             )
             # It means that new platform added as a synonym and existing platform returned
             if isinstance(resolved_data, self.db_classes.Platform):
                 return resolved_data
             elif len(resolved_data) == 7:
                 (
-                    name,
+                    platform_name,
                     trigraph,
                     quadgraph,
                     identifier,
@@ -875,7 +877,7 @@ class DataStore:
         assert isinstance(privacy_obj, self.db_classes.Privacy), "Type error for Privacy entity"
 
         return self.add_to_platforms(
-            name=name,
+            name=platform_name,
             trigraph=trigraph,
             quadgraph=quadgraph,
             identifier=identifier,
