@@ -356,11 +356,17 @@ class CommandLineResolver(DataResolver):
         completer = list()
         platforms = data_store.session.query(data_store.db_classes.Platform).all()
         for platform in platforms:
-            completer.append(platform.name)
+            completer.append(
+                f"{platform.name} / {platform.identifier} / {platform.nationality_name}"
+            )
             if platform.trigraph:
-                completer.append(platform.trigraph)
+                completer.append(
+                    f"{platform.trigraph} / {platform.identifier} / {platform.nationality_name}"
+                )
             if platform.quadgraph:
-                completer.append(platform.quadgraph)
+                completer.append(
+                    f"{platform.quadgraph} / {platform.identifier} / {platform.nationality_name}"
+                )
         choice = create_menu(
             "Please start typing to show suggested values",
             cancel="platform search",
@@ -368,23 +374,29 @@ class CommandLineResolver(DataResolver):
             completer=FuzzyWordCompleter(completer),
         )
         if choice in completer:
+            # Extract the platform details from the string
+            name_or_xgraph, identifier, nationality = choice.split(" / ")
             # Get the platform from the database
             platform = (
                 data_store.session.query(data_store.db_classes.Platform)
                 .filter(
                     or_(
-                        data_store.db_classes.Platform.name == choice,
-                        data_store.db_classes.Platform.trigraph == choice,
-                        data_store.db_classes.Platform.quadgraph == choice,
+                        data_store.db_classes.Platform.name == name_or_xgraph,
+                        data_store.db_classes.Platform.trigraph == name_or_xgraph,
+                        data_store.db_classes.Platform.quadgraph == name_or_xgraph,
                     )
                 )
+                .filter(data_store.db_classes.Platform.identifier == identifier)
+                .filter(data_store.db_classes.Platform.nationality_name == nationality)
                 .first()
             )
             # If we've been given a platform name, then we might want to link
             # that platform name to the one we've picked, as a synonym
             if platform_name:
                 new_choice = create_menu(
-                    f"Do you wish to keep {platform_name} as synonym for {choice}?",
+                    f"Do you wish to keep {platform_name} as synonym for {choice}?\n"
+                    f"Warning: this should only be done when {platform_name} is a completely unique identifier for this platform\n"
+                    f"not a name that could be shared across platforms of different nationalities",
                     ["Yes", "No"],
                     validate_method=is_valid,
                 )
@@ -396,9 +408,7 @@ class CommandLineResolver(DataResolver):
                     print(f"'{platform_name}' added to Synonyms!")
                     return platform
                 elif new_choice == str(2):
-                    return self.add_to_platforms(
-                        data_store, platform_name, platform_type, nationality, privacy, change_id,
-                    )
+                    return platform
                 elif new_choice == ".":
                     print("-" * 61, "\nReturning to the previous menu\n")
                     return self.fuzzy_search_platform(
