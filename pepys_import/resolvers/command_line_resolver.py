@@ -97,7 +97,7 @@ class CommandLineResolver(DataResolver):
     def resolve_platform(
         self, data_store, platform_name, platform_type, nationality, privacy, change_id
     ):
-        name_list = []
+        platform_details = []
         final_options = [f"Search for existing platform", f"Add a new platform"]
         if platform_name:
             # If we've got a platform_name, then we can search for all platforms
@@ -110,15 +110,18 @@ class CommandLineResolver(DataResolver):
                 .all()
             )
             for platform in platforms:
-                name_list.append(
+                platform_details.append(
                     f"{platform.name} / {platform.identifier} / {platform.nationality_name}"
                 )
             final_options[1] += f", default name '{platform_name}'"
-        choices = name_list + final_options
+        choices = platform_details + final_options
         choice = create_menu(
             f"Select a platform entry for {platform_name}:", choices, validate_method=is_valid,
         )
-        if int(choice) <= len(platforms):
+        if choice == ".":
+            print("Quitting")
+            sys.exit(1)
+        if int(choice) <= len(platform_details):
             # One of the pre-existing platforms was chosen
             platform_index = int(choice) - 1
             return platforms[platform_index]
@@ -130,9 +133,6 @@ class CommandLineResolver(DataResolver):
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy, change_id,
             )
-        elif choice == ".":
-            print("Quitting")
-            sys.exit(1)
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
         Platform = data_store.db_classes.Platform
@@ -437,7 +437,7 @@ class CommandLineResolver(DataResolver):
                 data_store, platform_name, nationality, platform_type, privacy, change_id,
             )
         elif choice not in completer:
-            print(f"'{choice}' could not found! Redirecting to adding a new platform..")
+            print(f"'{choice}' could not be found! Redirecting to adding a new platform..")
             return self.add_to_platforms(
                 data_store, choice, platform_type, nationality, privacy, change_id
             )
@@ -482,7 +482,7 @@ class CommandLineResolver(DataResolver):
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
         elif choice not in completer:
-            print(f"'{choice}' could not found! Redirecting to adding a new sensor..")
+            print(f"'{choice}' could not be found! Redirecting to adding a new sensor..")
             return self.add_to_sensors(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
