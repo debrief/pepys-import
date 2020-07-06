@@ -1287,7 +1287,12 @@ class GetMethodsTestCase(unittest.TestCase):
             # there must be 2 entities at the beginning
             self.assertEqual(len(sensors), 2)
 
-            platform = self.store.get_platform("PLATFORM-1", change_id=self.change_id)
+            platform = self.store.get_platform(
+                name="PLATFORM-1",
+                identifier="123",
+                nationality="United Kingdom",
+                change_id=self.change_id,
+            )
             platform.get_sensor(self.store, "SENSOR-TEST", change_id=self.change_id)
 
             # there must be 3 entities now
