@@ -43,15 +43,15 @@ class TestLoadREP(unittest.TestCase):
         with self.store.session_scope():
             # there must be states after the import
             states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 748)
+            self.assertEqual(len(states), 746)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 7)
+            self.assertEqual(len(platforms), 5)
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 9)
+            self.assertEqual(len(datafiles), 8)
 
             # There should be one state with no elevation, which comes from the NaN
             # in the elevation field in the first line of uk_track.rep
@@ -74,7 +74,7 @@ class TestLoadREP(unittest.TestCase):
                 .filter(self.store.db_classes.State.elevation == 0)
                 .all()
             )
-            assert len(elev_zero_states) == 583
+            assert len(elev_zero_states) == 581
 
 
 if __name__ == "__main__":
