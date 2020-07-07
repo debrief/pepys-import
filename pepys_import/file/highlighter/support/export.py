@@ -1,4 +1,4 @@
-import pepys_import.file.smb_and_local_file_operations as smblocal
+from pepys_import.file import smb_and_local_file_operations as smblocal
 
 from .color_picker import color_for, hex_color_for, mean_color_for
 

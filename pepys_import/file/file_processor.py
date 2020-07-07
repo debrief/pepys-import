@@ -4,11 +4,11 @@ import os
 from datetime import datetime
 from getpass import getuser
 
-import pepys_import.file.smb_and_local_file_operations as smblocal
 from config import ARCHIVE_PATH, LOCAL_PARSERS
 from paths import IMPORTERS_DIRECTORY
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
+from pepys_import.file import smb_and_local_file_operations as smblocal
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
 from pepys_import.utils.datafile_utils import hash_file
