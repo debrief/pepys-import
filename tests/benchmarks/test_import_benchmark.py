@@ -53,5 +53,5 @@ def test_single_rep_file_import_long(benchmark):
     if running_on_travis():
         if benchmark.stats.stats.mean > TIME_THRESHOLD:
             pytest.fail(
-                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of {TIME_TRESHOLD}s"
+                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of {TIME_THRESHOLD}s"
             )
