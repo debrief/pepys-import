@@ -104,9 +104,13 @@ class CommandLineResolver(DataResolver):
             # with this name, and present a list to the user to choose from,
             # alongside the options to search for an existing platform and add
             # a new platform
+
+            # The order-by clause is important, to get the same ordering of
+            # options on different platforms/db backends, so that our tests work
             platforms = (
                 data_store.session.query(data_store.db_classes.Platform)
                 .filter(data_store.db_classes.Platform.name == platform_name)
+                .order_by(data_store.db_classes.Platform.identifier.asc())
                 .all()
             )
             for platform in platforms:
