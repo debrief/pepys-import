@@ -15,3 +15,4 @@ pg8000>=1.14.1
 setuptools>=40.8.0
 Pygments>=2.6.1
 geopy>=1.22
+smbprotocol

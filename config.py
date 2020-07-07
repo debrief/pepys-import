@@ -42,6 +42,8 @@ if DB_PASSWORD.startswith("_") and DB_PASSWORD.startswith("_"):
 ARCHIVE_USER = config.get("archive", "user", fallback="")
 ARCHIVE_PASSWORD = config.get("archive", "password", fallback="")
 ARCHIVE_PATH = config.get("archive", "path", fallback=None)
+# Set useful extra config variable based on the archive path
+ARCHIVE_ON_SMB = True if ARCHIVE_PATH.startswith("\\\\") else False
 
 # Process user and password if necessary
 if ARCHIVE_USER.startswith("_") and ARCHIVE_USER.endswith("_"):

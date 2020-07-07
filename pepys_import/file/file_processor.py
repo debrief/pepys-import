@@ -1,15 +1,14 @@
 import inspect
 import json
 import os
-import shutil
 from datetime import datetime
 from getpass import getuser
-from stat import S_IREAD
 
 from config import ARCHIVE_PATH, LOCAL_PARSERS
 from paths import IMPORTERS_DIRECTORY
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
+from pepys_import.file import smb_and_local_file_operations as smblocal
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
 from pepys_import.utils.datafile_utils import hash_file
@@ -37,14 +36,15 @@ class FileProcessor:
             self.filename = filename
         self.output_path = None
         self.input_files_path = None
-        self.directory_path = None
+        self.output_files_path = None
+        self.archive = archive
+
         # Check if ARCHIVE_PATH is given in the config file
         if ARCHIVE_PATH:
             # Create the path if it doesn't exist
-            if not os.path.exists(ARCHIVE_PATH):
-                os.makedirs(ARCHIVE_PATH)
+            if not smblocal.exists(ARCHIVE_PATH):
+                smblocal.makedirs(ARCHIVE_PATH)
             self.output_path = ARCHIVE_PATH
-        self.archive = archive
 
     def process(self, path: str, data_store: DataStore = None, descend_tree: bool = True):
         """Process the data in the given path
@@ -58,6 +58,9 @@ class FileProcessor:
         """
         dir_path = os.path.dirname(path)
         # create output folder if not exists
+        # We will never get to this bit of code if the ARCHIVE_PATH is set
+        # (as self.output_path is already set), so we can just use standard
+        # Python os functions
         if not self.output_path:
             self.output_path = os.path.join(dir_path, "output")
             if not os.path.exists(self.output_path):
@@ -81,22 +84,22 @@ class FileProcessor:
             str(now.minute).zfill(2),
             str(now.second).zfill(2),
         )
-        if not os.path.isdir(self.output_path):
-            os.makedirs(self.output_path)
+        if not smblocal.isdir(self.output_path):
+            smblocal.makedirs(self.output_path)
         else:
             self.output_path = os.path.join(
                 self.output_path + "_" + str(now.microsecond).zfill(3)[:3]
             )
-            os.makedirs(self.output_path)
+            smblocal.makedirs(self.output_path)
 
         # create input_files folder if not exists
         self.input_files_path = os.path.join(self.output_path, "sources")
-        if not os.path.exists(self.input_files_path):
-            os.makedirs(self.input_files_path)
+        if not smblocal.exists(self.input_files_path):
+            smblocal.makedirs(self.input_files_path)
 
-        self.directory_path = os.path.join(self.output_path, "reports")
-        if not os.path.isdir(self.directory_path):
-            os.makedirs(self.directory_path)
+        self.output_files_path = os.path.join(self.output_path, "reports")
+        if not smblocal.isdir(self.output_files_path):
+            smblocal.makedirs(self.output_files_path)
 
         processed_ctr = 0
 
@@ -274,7 +277,7 @@ class FileProcessor:
 
             # Write highlighted output to file
             highlighted_output_path = os.path.join(
-                self.directory_path, f"{filename}_highlighted.html"
+                self.output_files_path, f"{filename}_highlighted.html"
             )
 
             highlighted_file.export(highlighted_output_path, include_key=True)
@@ -315,25 +318,25 @@ class FileProcessor:
                 summary_details["filename"] = basename
 
                 # write extraction log to output folder
-                with open(
-                    os.path.join(self.directory_path, f"{filename}_output.log"), "w",
+                with smblocal.open_file(
+                    os.path.join(self.output_files_path, f"{filename}_output.log"), "w",
                 ) as file:
                     file.write("\n".join(log))
                 if self.archive is True:
                     # move original file to output folder
                     new_path = os.path.join(self.input_files_path, basename)
-                    shutil.move(full_path, new_path)
+                    smblocal.move(full_path, new_path)
                     # make it read-only
-                    os.chmod(new_path, S_IREAD)
+                    smblocal.set_read_only(new_path)
                     summary_details["archived_location"] = new_path
                 import_summary["succeeded"].append(summary_details)
 
             else:
                 failure_report_filename = os.path.join(
-                    self.directory_path, f"{filename}_errors.log"
+                    self.output_files_path, f"{filename}_errors.log"
                 )
                 # write error log to the output folder
-                with open(failure_report_filename, "w") as file:
+                with smblocal.open_file(failure_report_filename, "w") as file:
                     json.dump(errors, file, ensure_ascii=False, indent=4)
                 import_summary["failed"].append(
                     {
