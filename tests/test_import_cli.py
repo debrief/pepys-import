@@ -11,7 +11,7 @@ from testing.postgresql import Postgresql
 
 from pepys_import.cli import process
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.utils.geoalchemy_utils import load_spatialite
+from pepys_import.utils.sqlite_utils import load_spatialite
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data")
@@ -35,15 +35,15 @@ class TestImportWithMissingDBFieldSQLite(unittest.TestCase):
 
         # SQL to create a States table without a heading column
         create_sql = """CREATE TABLE States (
-        state_id INTEGER NOT NULL, 
-        time TIMESTAMP NOT NULL, 
-        sensor_id INTEGER NOT NULL, 
-        elevation REAL, 
-        course REAL, 
-        speed REAL, 
-        source_id INTEGER NOT NULL, 
-        privacy_id INTEGER, 
-        created_date DATETIME, "location" POINT, 
+        state_id INTEGER NOT NULL,
+        time TIMESTAMP NOT NULL,
+        sensor_id INTEGER NOT NULL,
+        elevation REAL,
+        course REAL,
+        speed REAL,
+        source_id INTEGER NOT NULL,
+        privacy_id INTEGER,
+        created_date DATETIME, "location" POINT,
         PRIMARY KEY (state_id)
         )"""
 

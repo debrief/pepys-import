@@ -69,7 +69,7 @@ class Token:
     @property
     def text(self):
         """Returns the entire text of the Line
-        
+
         :return: Entire text content of the Line
         :rtype: String
         """

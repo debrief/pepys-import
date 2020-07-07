@@ -4,4 +4,4 @@
 
 __author__ = "Ian Mayo"
 __email__ = "ian@planetmayo.com"
-__version__ = "0.0.10"
+__version__ = "0.0.19"

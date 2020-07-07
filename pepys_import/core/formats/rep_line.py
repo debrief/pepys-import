@@ -28,12 +28,11 @@ def parse_timestamp(date, time):
 
 
 class REPLine:
-    def __init__(self, line_number, line, separator):
+    def __init__(self, line_number, line):
         self.importer_name = "Replay File Format Importer"
 
         self.line_num = line_number
         self.line = line
-        self.separator = separator
 
         self.timestamp = None
         self.vessel = None
@@ -167,24 +166,26 @@ class REPLine:
             long_degrees_token, long_mins_token, long_secs_token, long_hemi_token
         ).record(self.importer_name, "longitude", self.location, "DMS")
 
-        heading = convert_absolute_angle(heading_token.text, self.line_num, errors, error_type)
-        if not heading:
+        heading_valid, heading = convert_absolute_angle(
+            heading_token.text, self.line_num, errors, error_type
+        )
+        if not heading_valid:
             return False
 
         self.heading = heading
         heading_token.record(self.importer_name, "heading", self.heading)
 
-        speed = convert_speed(
+        speed_valid, speed = convert_speed(
             speed_token.text, unit_registry.knots, self.line_num, errors, error_type
         )
-        if not speed:
+        if not speed_valid:
             return False
         self.speed = speed
         speed_token.record(self.importer_name, "speed", self.speed)
 
         try:
-            self.depth = float(depth_token.text)
-            if isnan(self.depth):
+            self.depth = float(depth_token.text) * unit_registry.metre
+            if isnan(self.depth.magnitude):
                 self.depth = None
         except ValueError:
             errors.append(

@@ -34,6 +34,8 @@ class ReplayContactImporter(Importer):
         return True
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
+        if line.text.strip() == "":
+            return
         if line.text.startswith(";"):
             # we'll be using this value to determine if we have location
             lat_degrees_token = None
@@ -185,20 +187,11 @@ class ReplayContactImporter(Importer):
                 location = loc
 
             platform = data_store.get_platform(
-                platform_name=vessel_name_token.text,
-                nationality="UK",
-                platform_type="Fisher",
-                privacy="Public",
-                change_id=change_id,
+                platform_name=vessel_name_token.text, change_id=change_id,
             )
             vessel_name_token.record(self.name, "vessel name", vessel_name_token.text)
-            sensor_type = data_store.add_to_sensor_types(sensor_name.text, change_id).name
             sensor = platform.get_sensor(
-                data_store=data_store,
-                sensor_name=platform.name,
-                sensor_type=sensor_type,
-                privacy=None,
-                change_id=change_id,
+                data_store=data_store, sensor_name=sensor_name.text, change_id=change_id,
             )
 
             timestamp = parse_timestamp(date_token.text, time_token.text)
@@ -216,27 +209,27 @@ class ReplayContactImporter(Importer):
             if bearing_token.text.upper() == "NULL":
                 bearing = None
             else:
-                bearing = convert_absolute_angle(
+                bearing_valid, bearing = convert_absolute_angle(
                     bearing_token.text, line, self.errors, self.error_type
                 )
-                if bearing:
+                if bearing_valid:
                     bearing_token.record(self.name, "bearing", bearing, "degs")
                     contact.bearing = bearing
 
             if range_token.text.upper() != "NULL":
-                range_val = convert_distance(
+                range_valid, range_val = convert_distance(
                     range_token.text, unit_registry.yard, line, self.errors, self.error_type,
                 )
-                if range_val:
+                if range_valid:
                     range_token.record(self.name, "range", range_val)
                     contact.range = range_val
 
             if freq_token is not None:
                 if freq_token.text.upper() != "NULL":
-                    freq_val = convert_frequency(
+                    freq_valid, freq_val = convert_frequency(
                         freq_token.text, unit_registry.hertz, line, self.errors, self.error_type,
                     )
-                    if freq_val:
+                    if freq_valid:
                         freq_token.record(self.name, "frequency", freq_val)
                         contact.freq = freq_val
 
@@ -244,9 +237,9 @@ class ReplayContactImporter(Importer):
                 if ambig_bearing_token.text.upper() == "NULL":
                     ambig_bearing = 0
                 else:
-                    ambig_bearing = convert_absolute_angle(
+                    ambig_bearing_valid, ambig_bearing = convert_absolute_angle(
                         ambig_bearing_token.text, line, self.errors, self.error_type
                     )
-                    if ambig_bearing:
+                    if ambig_bearing_valid:
                         ambig_bearing_token.record(self.name, "ambig bearing", ambig_bearing)
                         contact.ambig_bearing = ambig_bearing

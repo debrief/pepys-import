@@ -1,3 +1,5 @@
+from tqdm import tqdm
+
 from pepys_import.file.highlighter.support.line import Line
 
 from .support.char import Char
@@ -112,7 +114,7 @@ class HighlightedFile:
         # We do this as a list comprehension as it's more efficient, but we have to
         # add it to list that already exists in self.chars, as references have already
         # been made to this list
-        self.chars += [Char(c) for c in file_contents]
+        self.chars += [Char(c) for c in tqdm(file_contents)]
 
     def create_lines(self, file_contents, lines_list):
         """

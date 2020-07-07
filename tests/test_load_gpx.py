@@ -44,7 +44,7 @@ class GPXTests(unittest.TestCase):
             states = self.store.session.query(self.store.db_classes.State).all()
             assert len(states) == 27
 
-            # there must be platforms after the import
+            # there must be 3 platforms after import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             assert len(platforms) == 3
 
@@ -55,6 +55,8 @@ class GPXTests(unittest.TestCase):
             #
             # Test the actual values that are imported
             #
+            platform_names = [platform.name for platform in platforms]
+            assert "NELSON" in platform_names
 
             # there should be 3 States with a speed of 4.5m/s
             # as the first <trkpt> element in gpx_1_0.gpx has been imported
@@ -74,6 +76,16 @@ class GPXTests(unittest.TestCase):
                 .all()
             )
             assert len(elev_states) == 1
+
+            # there should be a 20 points with an elevation of 0m
+            # (this proves that zero values are imported properly and not
+            # treated as errors)
+            elev_zero_states = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(self.store.db_classes.State.elevation == 0)
+                .all()
+            )
+            assert len(elev_zero_states) == 20
 
 
 if __name__ == "__main__":

@@ -11,18 +11,23 @@ PostgreSQL and SQLite databases are currently supported, with SQLite being
 the low-friction option favoured for getting started with Pepys-import, or
 for project maintainers.
 
-**Note:** This README file is aimed at *users* of pepys-import - please see the `Developer Guide
-<https://github.com/debrief/pepys-import/blob/develop/DeveloperGuide.rst>`_ for information on
-getting started as a developer.
+To try out Pepys without installing anything, click this button to run the *Getting Started*
+guide in an interactive notebook on the Binder platform: |binder|
+
+.. |binder| image:: https://mybinder.org/badge_logo.svg
+ :target: https://mybinder.org/v2/gh/debrief/pepys-import/develop?filepath=docs%2FPepys%20Getting%20Started%20-%20Binder.ipynb
 
 Online documentation
 --------------------
 
-Use the links on the left to learn about how to install and run Pepys-Import.
-
-More details on the structure and API of pepys-import is available in the full documentation: |docs|
+Full documentation for Pepys is available here: |docs|
 
 .. |docs| image:: https://readthedocs.org/projects/pepys-import/badge/?version=latest
-  :target:  modules.html
+  :target:  https://pepys-import.readthedocs.io/
 
+Development documentation
+-------------------------
 
+The developer setup guide is available `here
+<https://pepys-import.readthedocs.io/en/latest/developer_guide.html>`_, and the contributors guide
+is available `here <https://pepys-import.readthedocs.io/en/latest/contributing.html>`_.

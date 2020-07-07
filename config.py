@@ -1,4 +1,5 @@
 import os
+import sys
 from configparser import ConfigParser
 
 from pepys_import.utils.config_utils import process
@@ -8,14 +9,18 @@ DEFAULT_CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), "default_conf
 CONFIG_FILE_PATH = os.getenv("PEPYS_CONFIG_FILE", DEFAULT_CONFIG_FILE_PATH)
 
 if not os.path.exists(CONFIG_FILE_PATH):
-    raise Exception(f"No such file: '{CONFIG_FILE_PATH}'.")
+    print(f"Pepys config file not found at location: '{CONFIG_FILE_PATH}'.")
+    sys.exit(1)
 elif not os.path.isfile(CONFIG_FILE_PATH):
-    raise Exception(f"Your environment variable doesn't point to a file: '{CONFIG_FILE_PATH}'.")
+    print(f"Your environment variable doesn't point to a file: '{CONFIG_FILE_PATH}'.")
+    sys.exit(1)
 
 # Read the config file
 config.read(CONFIG_FILE_PATH)
 
-assert config.has_section("database"), f"'database' section couldn't find in '{CONFIG_FILE_PATH}'!"
+if not config.has_section("database"):
+    print(f"'database' section couldn't find in '{CONFIG_FILE_PATH}'!")
+    sys.exit(1)
 
 # Fetch database section
 DB_USERNAME = config.get("database", "db_username", fallback="")

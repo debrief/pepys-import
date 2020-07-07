@@ -22,7 +22,7 @@ class EnhancedValidatorTestCase(unittest.TestCase):
                 "test_platform_type", self.change_id
             ).name
             sensor_type = self.store.add_to_sensor_types("test_sensor_type", self.change_id).name
-            privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
+            privacy = self.store.add_to_privacies("test_privacy", 0, self.change_id).name
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -49,10 +49,8 @@ class EnhancedValidatorTestCase(unittest.TestCase):
                 name="Test Importer",
                 validation_level=constants.NONE_LEVEL,
                 short_name="Test Importer",
-                separator=" ",
             ):
                 super().__init__(name, validation_level, short_name)
-                self.separator = separator
                 self.text_label = None
                 self.depth = 0.0
                 self.errors = list()

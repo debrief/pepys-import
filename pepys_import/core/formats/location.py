@@ -30,7 +30,7 @@ class Location:
     @property
     def latitude(self):
         """Returns the latitude of the Location object, in decimal degrees
-        
+
         :return: Latitude
         :rtype: float
         """
@@ -47,7 +47,7 @@ class Location:
     @property
     def longitude(self):
         """Returns the longitude of the Location object, in decimal degrees
-        
+
         :return: Longitude
         :rtype: float
         """
@@ -82,7 +82,7 @@ class Location:
             self.errors.append(
                 {
                     self.error_type: f"Error in {lat_or_lon} degrees value {degrees}. "
-                    f"Must be between 0 and 90"
+                    f"Must be between {min_value} and {max_value}"
                 }
             )
 
@@ -106,7 +106,7 @@ class Location:
             self.errors.append(
                 {
                     self.error_type: f"Error in {lat_or_lon} minutes value {minutes}. "
-                    f"Must be between 0 and 90"
+                    f"Must be between 0 and 60"
                 }
             )
             return None, False
@@ -131,7 +131,7 @@ class Location:
             self.errors.append(
                 {
                     self.error_type: f"Error in {lat_or_lon} seconds value {seconds}. "
-                    f"Must be between 0 and 90"
+                    f"Must be between 0 and 60"
                 }
             )
             return None, False
@@ -159,7 +159,7 @@ class Location:
 
     def set_latitude_decimal_degrees(self, latitude):
         """Sets the latitude of the Location object to a latitude given in decimal degrees
-        
+
         :param latitude: Latitude to set to, in decimal degrees (use +/- values for North/South)
         :type latitude: float
         :return: Whether latitude was set successfully
@@ -175,7 +175,7 @@ class Location:
 
     def set_longitude_decimal_degrees(self, longitude):
         """Sets the longitude value of the Location object to a longitude given in decimal degrees
-        
+
         :param longitude: Longitude to set to, in decimal degrees (use +/- values for East/West)
         :type longitude: float
         :return: Whether longitude was set successfully
@@ -192,7 +192,7 @@ class Location:
     def set_latitude_dms(self, degrees, minutes, seconds, hemisphere):
         """Sets the latitude value of the Location object to a latitude given in degrees, minutes
         and seconds format.
-        
+
         :param degrees: Degrees of latitude (must be positive float)
         :type degrees: float
         :param minutes: Minutes of latitude (must be positive float)
@@ -231,7 +231,7 @@ class Location:
     def set_longitude_dms(self, degrees, minutes, seconds, hemisphere):
         """Sets the longitude value of the Location object to a longitude given in degrees, minutes
         and seconds format.
-        
+
         :param degrees: Degrees of longitude (must be positive float)
         :type degrees: float
         :param minutes: Minutes of longitude (must be positive float)
@@ -270,7 +270,7 @@ class Location:
     def to_wkt(self):
         """Returns the location stored in the Location object in Well-Known Text format,
         ready for assigning to the _location attribute of a SQLAlchemy/GeoAlchemy model
-        
+
         :return: Well-Known Text of location
         :rtype: String
         """
@@ -278,7 +278,7 @@ class Location:
 
     def set_from_wkb(self, wkb_string):
         """Sets the location from a Well-Known Binary blob
-        
+
         :param wkb_string: String containing Well-Known Binary blog in hex format
         :type wkb_string: String
         """
@@ -289,7 +289,7 @@ class Location:
 
     def set_from_wkt_string(self, wkt_string):
         """Sets the location from a Well-Known Text string
-        
+
         :param wkt_string: Well-Known Text
         :type wkt_string: String
         """
@@ -300,7 +300,7 @@ class Location:
 
     def check_valid(self):
         """Checks whether the location is valid (ie. has both a latitude and a longitude)
-        
+
         :return: Validity
         :rtype: Boolean
         """
@@ -337,3 +337,16 @@ class Location:
         longitude = f"{dms_values[3]:03g} {dms_values[4]:02g} {dms_values[5]:02g}"
         longitude_hemisphere = "E" if self.longitude >= 0 else "W"
         return f"{latitude} {latitude_hemisphere}\t{longitude} {longitude_hemisphere}"
+
+    @classmethod
+    def from_geometry(cls, geom):
+        if geom is not None:
+            loc = Location()
+            if isinstance(geom, str):
+                loc.set_from_wkt_string(geom)
+            else:
+                loc.set_from_wkb(geom.desc)
+
+            return loc
+        else:
+            return None

@@ -1,3 +1,4 @@
+import datetime
 import os
 import unittest
 
@@ -45,16 +46,19 @@ class RepCommentTests(unittest.TestCase):
             comments = self.store.session.query(self.store.db_classes.Comment).all()
             self.assertEqual(len(comments), 7)
             # check the first two rows have matching comment types (NULL)
-            self.assertEqual(comments[0].comment_type_id, 1)
-            self.assertEqual(comments[1].comment_type_id, 1)
+            assert comments[0].comment_type_id == comments[1].comment_type_id
             # and the last row has a different comment type
-            self.assertEqual(comments[6].comment_type_id, 2)
+            assert comments[6].comment_type_id != comments[0].comment_type_id
             # and the full comments on some other rows
             self.assertEqual(comments[0].content, "Contact detected on TA")
             self.assertEqual(comments[6].content, "SUBJECT lost on TA")
-            # check the source
-            self.assertEqual(comments[0].platform_id, 1)
-            self.assertEqual(comments[6].platform_id, 2)
+            # check the source is equal for the first two rows
+            assert comments[0].platform_id == comments[1].platform_id
+            # and the last row is different
+            assert comments[6].platform_id != comments[0].platform_id
+
+            # Check the timestamp for the first entry
+            assert comments[0].time == datetime.datetime(2010, 1, 12, 11, 58, 0)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()

@@ -1,4 +1,5 @@
 from dateutil.parser import parse
+from dateutil.tz import tzoffset
 from lxml import etree
 from tqdm import tqdm
 
@@ -52,19 +53,12 @@ class GPXImporter(Importer):
 
             # Get the platform and sensor details, as these will be the same for all
             # points in this track
-            platform = data_store.get_platform(
-                platform_name=track_name,
-                nationality="UK",
-                platform_type="Fisher",
-                privacy="Public",
-                change_id=change_id,
-            )
+            platform = data_store.get_platform(platform_name=track_name, change_id=change_id,)
             sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
             sensor = platform.get_sensor(
                 data_store=data_store,
                 sensor_name="GPS",
                 sensor_type=sensor_type,
-                privacy=None,
                 change_id=change_id,
             )
 
@@ -92,7 +86,7 @@ class GPXImporter(Importer):
                 elevation_str = self.get_child_text_if_exists(tpt, "{*}ele")
 
                 # Parse timestamp and create state
-                timestamp = parse(timestamp_str)
+                timestamp = self.parse_timestamp(timestamp_str)
                 state = datafile.create_state(
                     data_store, platform, sensor, timestamp, self.short_name
                 )
@@ -106,29 +100,29 @@ class GPXImporter(Importer):
 
                 # Add course
                 if course_str is not None:
-                    course = convert_absolute_angle(
+                    course_valid, course = convert_absolute_angle(
                         course_str, tpt.sourceline, self.errors, self.error_type
                     )
-                    if course:
+                    if course_valid:
                         state.course = course
 
                 # Add speed (specified in metres per second in the file)
                 if speed_str is not None:
-                    speed = convert_speed(
+                    speed_valid, speed = convert_speed(
                         speed_str,
                         (unit_registry.metre / unit_registry.second),
                         None,
                         self.errors,
                         self.error_type,
                     )
-                    if speed:
+                    if speed_valid:
                         state.speed = speed
 
                 if elevation_str is not None:
-                    elevation = convert_distance(
+                    elevation_valid, elevation = convert_distance(
                         elevation_str, unit_registry.metre, None, self.errors, self.error_type
                     )
-                    if elevation:
+                    if elevation_valid:
                         state.elevation = elevation
 
     def get_child_text_if_exists(self, element, search_string):
@@ -136,3 +130,17 @@ class GPXImporter(Importer):
         if child is not None:
             return child.text
         return None
+
+    def parse_timestamp(self, s):
+        dt = parse(s)
+
+        # Create a UTC time zone object
+        utc = tzoffset("UTC", 0)
+
+        # Convert to UTC
+        dt_in_utc = dt.astimezone(utc)
+
+        # Convert to a 'naive' datetime - ie. without a timezone
+        dt_naive = dt_in_utc.replace(tzinfo=None)
+
+        return dt_naive

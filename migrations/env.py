@@ -1,3 +1,4 @@
+import json
 import os
 from logging.config import fileConfig
 
@@ -7,6 +8,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy.event import listen
 
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
+from paths import MIGRATIONS_DIRECTORY
 from pepys_import.core.store import (  # Don't remove, they are necessary for the discovery of changes!
     postgres_db,
     sqlite_db,
@@ -17,7 +19,7 @@ from pepys_import.utils.data_store_utils import (
     create_spatial_tables_for_sqlite,
     is_schema_created,
 )
-from pepys_import.utils.geoalchemy_utils import load_spatialite
+from pepys_import.utils.sqlite_utils import load_spatialite
 
 DIR_PATH = os.path.dirname(__file__)
 
@@ -107,6 +109,7 @@ def run_migrations_offline():
             dialect_opts={"paramstyle": "named"},
             include_object=include_object_sqlite,
             render_as_batch=True,
+            compare_type=True,
         )
     else:
         context.configure(
@@ -118,6 +121,7 @@ def run_migrations_offline():
             include_schemas=True,
             include_object=include_object_postgres,
             render_as_batch=True,
+            compare_type=True,
         )
     with context.begin_transaction():
         context.run_migrations()
@@ -164,20 +168,26 @@ def run_migrations_online():
                 include_object=include_object_postgres,
                 render_as_batch=True,
                 process_revision_directives=process_revision_directives,
+                compare_type=True,
             )
             with context.begin_transaction():
                 context.execute("SET search_path TO pepys,public")
                 context.run_migrations()
         else:
+            # Turn off the enforcement of foreign key constraints before running the migration
+            connection.execute("PRAGMA foreign_keys=OFF;")
             context.configure(
                 connection=connection,
                 target_metadata=target_metadata,
                 include_object=include_object_sqlite,
                 render_as_batch=True,
                 process_revision_directives=process_revision_directives,
+                compare_type=True,
             )
             with context.begin_transaction():
                 context.run_migrations()
+            # Turn on the enforcement of foreign key constraints after the migration is done
+            connection.execute("PRAGMA foreign_keys=ON;")
 
 
 if context.is_offline_mode():
@@ -194,3 +204,31 @@ def include_geoalchemy2(filename, options):
     lines.insert(10, "import geoalchemy2\n")
     with open(filename, "w") as to_write:
         to_write.writelines(lines)
+
+
+@write_hooks.register("update_latest_revision")
+def update_latest_revision(filename, options):
+    with open(filename) as file_:
+        lines = file_.readlines()
+
+    # Load json file
+    json_file_path = os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json")
+    with open(json_file_path, "r") as json_file:
+        data = json.load(json_file)
+
+    for line in lines:
+        # If line has revision variable, i.e. revision = "bcff0ccb4fbd", remove new line
+        # character and quote marks, split line into two parts: ('', 'bcff0ccb4fbd'), obtain the
+        # second element
+        if line.startswith("revision = "):
+            split_tokens = line.replace("\n", "").replace('"', "").split("revision = ")
+            revision_id = split_tokens[1]
+
+    if "postgres_versions" in filename:
+        data["LATEST_POSTGRES_VERSION"] = revision_id
+    else:
+        data["LATEST_SQLITE_VERSION"] = revision_id
+
+    # Dump updated json
+    with open(json_file_path, "w") as json_file:
+        json.dump(data, json_file, indent=4)

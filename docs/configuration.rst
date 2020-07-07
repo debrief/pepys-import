@@ -28,8 +28,8 @@ Configuration file variables
 These settings control how pepys-import connects to the database. The specific
 variables are:
 
- - :code:`db_username`: Username used to connect to the database server (default: :code:`postgres`). Only used for PostgreSQL connections.
- - :code:`db_password`: Password used to connect to the database server (default: :code:`postgres`). Only used for PostgreSQL connections.
+ - :code:`db_username`: Username used to connect to the database server (default: :code:`postgres`). Only used for PostgreSQL connections. Can be encrypted.
+ - :code:`db_password`: Password used to connect to the database server (default: :code:`postgres`). Only used for PostgreSQL connections. Can be encrypted.
  - :code:`db_host`: Host (name or IP address) on which the database server is running (default: :code:`localhost`). Only used for PostgreSQL connections.
  - :code:`db_port`: Port on which the database server is accepting connections (default: :code:`5432`). Only used for PostgreSQL connections.
  - :code:`db_name`: Name of the database on the server (for PostgreSQL) or name of the database file to be used for SQLite (default: :code:`pepys`). Can be set to :code:`:memory:` for an in-memory SQLite database.
@@ -63,5 +63,9 @@ The specific variables are:
  - :code:`parsers`: Path to a folder containing custom parsers to be loaded by pepys-import (default: none)
  - :code:`basic_tests`: Path to a folder containing custom basic validation tests to be loaded by pepys-import (default: none)
  - :code:`enhanced_tests`: Path to a folder containing custom enhanced validation tests to be loaded by pepys-import (default: none)
- (default: none)
- 
+
+Encryption
+##########
+Various fields can be specified in an encrypted form (see notes above). To do this,
+encrypt the value and add a :code:`_` to the beginning and end of the encrypted string. For
+example, :code:`_aghiejf_`. Then use this as the value of the configuration option.

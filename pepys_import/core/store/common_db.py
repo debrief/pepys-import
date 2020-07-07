@@ -1,5 +1,8 @@
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.inspection import inspect
+from sqlalchemy.orm import relationship
 from tqdm import tqdm
 
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
@@ -9,13 +12,83 @@ from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
+from pepys_import.utils.data_store_utils import shorten_uuid
 from pepys_import.utils.import_utils import import_validators
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
 LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
 LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
 
 
+class HostedByMixin:
+    @declared_attr
+    def subject(self):
+        return relationship(
+            "Platform",
+            lazy="joined",
+            join_depth=1,
+            uselist=False,
+            foreign_keys="HostedBy.subject_id",
+        )
+
+    @declared_attr
+    def subject_name(self):
+        return association_proxy("subject", "name")
+
+    @declared_attr
+    def host(self):
+        return relationship(
+            "Platform", lazy="joined", join_depth=1, uselist=False, foreign_keys="HostedBy.host_id"
+        )
+
+    @declared_attr
+    def host_name(self):
+        return association_proxy("host", "name")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+
 class SensorMixin:
+    @declared_attr
+    def sensor_type(self):
+        return relationship(
+            "SensorType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+        )
+
+    @declared_attr
+    def sensor_type_name(self):
+        return association_proxy("sensor_type", "name")
+
+    @declared_attr
+    def host_(self):
+        return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def host__name(self):
+        return association_proxy("host_", "name")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+    def __repr__(self):
+        return (
+            f"Sensor(id={shorten_uuid(self.sensor_id)}, name={self.name}, "
+            f"host={shorten_uuid(self.host)}, host__name={self.host__name}, "
+            f"sensor_type={shorten_uuid(self.sensor_type_id)}, "
+            f"sensor_type__name={self.sensor_type_name})"
+        )
+
     @classmethod
     def find_sensor(cls, data_store, sensor_name, platform_id):
         """
@@ -30,6 +103,10 @@ class SensorMixin:
         :type platform_id: int
         :return:
         """
+        # If we don't have a sensor name then we can't search by name!
+        if sensor_name is None:
+            return None
+
         cached_result = data_store._sensor_cache.get((sensor_name, platform_id))
         if cached_result:
             return cached_result
@@ -45,24 +122,28 @@ class SensorMixin:
             data_store._sensor_cache[(sensor_name, platform_id)] = sensor
             return sensor
 
-        # Sensor is not found, try to find a synonym
-        return data_store.synonym_search(
-            name=sensor_name,
-            table=data_store.db_classes.Sensor,
-            pk_field=data_store.db_classes.Sensor.sensor_id,
-        )
+        return None
 
     @classmethod
-    def add_to_sensors(cls, data_store, name, sensor_type, host, privacy_id, change_id):
+    def add_to_sensors(
+        cls, data_store, name, sensor_type, host, privacy_id, change_id, host_id=None
+    ):
         session = data_store.session
         sensor_type = data_store.search_sensor_type(sensor_type)
-        host = data_store.db_classes.Platform().search_platform(data_store, host)
+        # Temporary fix for #399, until #362 is fixed
+        # This allows us to pass a host_id to this function. If it's passed, then
+        # we use this ID for the platform that hosts this sensor. If it isn't
+        # passed, then we look up the host_id from the name given in the `host` argument
+        # (If you pass `host_id` then just set `host` to None)
+        if host_id is None:
+            host = data_store.db_classes.Platform().search_platform(data_store, host)
+            host_id = host.platform_id
 
         sensor_obj = data_store.db_classes.Sensor(
             name=name,
             sensor_type_id=sensor_type.sensor_type_id,
             privacy_id=privacy_id,
-            host=host.platform_id,
+            host=host_id,
         )
         session.add(sensor_obj)
         session.flush()
@@ -74,6 +155,34 @@ class SensorMixin:
 
 
 class PlatformMixin:
+    @declared_attr
+    def platform_type(self):
+        return relationship(
+            "PlatformType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+        )
+
+    @declared_attr
+    def platform_type_name(self):
+        return association_proxy("platform_type", "name")
+
+    @declared_attr
+    def nationality(self):
+        return relationship(
+            "Nationality", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+        )
+
+    @declared_attr
+    def nationality_name(self):
+        return association_proxy("nationality", "name")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
     @classmethod
     def search_platform(cls, data_store, name):
         # search for any platform with this name
@@ -111,7 +220,7 @@ class PlatformMixin:
         privacy_obj = data_store.search_privacy(privacy)
         if sensor_type_obj is None or privacy_obj is None:
             resolved_data = data_store.missing_data_resolver.resolve_sensor(
-                data_store, sensor_name, sensor_type, privacy, change_id
+                data_store, sensor_name, sensor_type, self.platform_id, privacy, change_id
             )
             # It means that new sensor added as a synonym and existing sensor returned
             if isinstance(resolved_data, Sensor):
@@ -130,17 +239,72 @@ class PlatformMixin:
             data_store=data_store,
             name=sensor_name,
             sensor_type=sensor_type_obj.name,
-            host=self.name,
+            host=None,
+            host_id=self.platform_id,
             privacy_id=privacy_obj.privacy_id,
             change_id=change_id,
         )
 
 
+class TaskMixin:
+    @declared_attr
+    def parent(self):
+        return relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def parent_name(self):
+        return association_proxy("parent", "name")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+
+class ParticipantMixin:
+    @declared_attr
+    def task(self):
+        return relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    # @declared_attr
+    # def task_name(self):
+    #     return association_proxy("task", "name")
+
+    @declared_attr
+    def platform(self):
+        return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def platform_name(self):
+        return association_proxy("platform", "name")
+
+
 class DatafileMixin:
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+    @declared_attr
+    def datafile_type(self):
+        return relationship(
+            "DatafileType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+        )
+
+    @declared_attr
+    def datafile_type_name(self):
+        return association_proxy("datafile_type", "name")
+
     def create_state(self, data_store, platform, sensor, timestamp, parser_name):
         """Creates a new State object to record information on the state of a particular
         platform at a specific time.
-        
+
         :param data_store: DataStore connected to the database that the State object should be
         created in
         :type data_store: DataStore
@@ -160,17 +324,19 @@ class DatafileMixin:
         later, if the full import succeeds.
         """
         state = data_store.db_classes.State(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
+            sensor_id=sensor.sensor_id,
+            time=timestamp,
+            source_id=self.datafile_id,
+            sensor=sensor,
+            platform=platform,
         )
-        state.platform_name = platform.name
-        state.sensor_name = sensor.name
         self.add_measurement_to_dict(state, parser_name)
         return state
 
     def create_contact(self, data_store, platform, sensor, timestamp, parser_name):
         """Creates a new Contact object to record information on a Contact observed by a particular
         platform at a specific time.
-        
+
         :param data_store: DataStore connected to the database that the Contact object should be
         created in
         :type data_store: DataStore
@@ -190,10 +356,12 @@ class DatafileMixin:
         later, if the full import succeeds.
         """
         contact = data_store.db_classes.Contact(
-            sensor_id=sensor.sensor_id, time=timestamp, source_id=self.datafile_id
+            sensor_id=sensor.sensor_id,
+            time=timestamp,
+            source_id=self.datafile_id,
+            sensor=sensor,
+            platform=platform,
         )
-        contact.platform_name = platform.name
-        contact.sensor_name = sensor.name
         self.add_measurement_to_dict(contact, parser_name)
         return contact
 
@@ -202,7 +370,7 @@ class DatafileMixin:
     ):
         """Creates a new Comment object to record textual information logged by a particular
         platform at a specific time.
-        
+
         :param data_store: DataStore connected to the database that the Comment object should be
         created in
         :type data_store: DataStore
@@ -227,18 +395,41 @@ class DatafileMixin:
             content=comment,
             comment_type_id=comment_type.comment_type_id,
             source_id=self.datafile_id,
+            platform=platform,
         )
-        comment.platform_name = platform.name
-        comment.sensor_name = "N/A"
         self.add_measurement_to_dict(comment, parser_name)
         return comment
 
-    def add_measurement_to_dict(self, measurement, parser_name):
-        # Cache objects according to their platform
-        if measurement.platform_name not in self.measurements[parser_name]:
-            self.measurements[parser_name][measurement.platform_name] = list()
+    def create_geometry(self, data_store, geom, geom_type_id, geom_sub_type_id, parser_name):
+        geometry = data_store.db_classes.Geometry1(
+            geometry=geom,
+            source_id=self.datafile_id,
+            geo_type_id=geom_type_id,
+            geo_sub_type_id=geom_sub_type_id,
+        )
+        self.add_measurement_to_dict(geometry, parser_name)
+        return geometry
 
-        self.measurements[parser_name][measurement.platform_name].append(measurement)
+    def create_activation(self, data_store, sensor, start, end, parser_name):
+        activation = data_store.db_classes.Activation(
+            sensor_id=sensor.sensor_id, start=start, end=end, source_id=self.datafile_id,
+        )
+        self.add_measurement_to_dict(activation, parser_name)
+        return activation
+
+    def add_measurement_to_dict(self, measurement, parser_name):
+        try:
+            platform_name = measurement.platform_name
+        except AttributeError:
+            # Platform name doesn't exist for Geometry1 objects, so
+            # use a platform of 'N/A'
+            platform_name = "N/A"
+
+        # Cache objects according to their platform
+        if platform_name not in self.measurements[parser_name]:
+            self.measurements[parser_name][platform_name] = list()
+
+        self.measurements[parser_name][platform_name].append(measurement)
 
     def validate(
         self, validation_level=validation_constants.NONE_LEVEL, errors=None, parser="Default",
@@ -327,7 +518,62 @@ class DatafileMixin:
         return extraction_log
 
 
+class LogMixin:
+    @declared_attr
+    def change(self):
+        return relationship("Change", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def change_reason(self):
+        return association_proxy("change", "reason")
+
+    def __repr__(self):
+        return f"Log(log_id={shorten_uuid(self.log_id)}, table={self.table}, id={shorten_uuid(self.id)}, change_id={shorten_uuid(self.change_id)})"
+
+
+class TaggedItemMixin:
+    @declared_attr
+    def tag(self):
+        return relationship("Tag", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def tag_name(self):
+        return association_proxy("tag", "name")
+
+    @declared_attr
+    def tagged_by(self):
+        return relationship("User", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def tagged_by_name(self):
+        return association_proxy("tagged_by", "name")
+
+
 class StateMixin:
+    @declared_attr
+    def sensor(self):
+        return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def sensor_name(self):
+        return association_proxy("sensor", "name")
+
+    @declared_attr
+    def source(self):
+        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def source_reference(self):
+        return association_proxy("source", "reference")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
     #
     # Speed properties
     #
@@ -440,6 +686,38 @@ class StateMixin:
 
 
 class ContactMixin:
+    @declared_attr
+    def sensor(self):
+        return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def sensor_name(self):
+        return association_proxy("sensor", "name")
+
+    @declared_attr
+    def subject(self):
+        return relationship("Platform", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def subject_name(self):
+        return association_proxy("subject", "name")
+
+    @declared_attr
+    def source(self):
+        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def source_reference(self):
+        return association_proxy("source", "reference")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
     #
     # Bearing properties
     #
@@ -557,9 +835,9 @@ class ContactMixin:
         # Set the actual bearing attribute to the given value converted to radians
         self._ambig_bearing = ambig_bearing.to(unit_registry.radian).magnitude
 
-    @rel_bearing.expression
-    def rel_bearing(self):
-        return self._rel_bearing
+    @ambig_bearing.expression
+    def ambig_bearing(self):
+        return self._ambig_bearing
 
     #
     # MLA properties
@@ -799,8 +1077,243 @@ class ContactMixin:
         return self._freq
 
 
+class LogsHoldingMixin:
+    @declared_attr
+    def source(self):
+        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def source_reference(self):
+        return association_proxy("source", "reference")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+    @declared_attr
+    def platform(self):
+        return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def platform_name(self):
+        return association_proxy("platform", "name")
+
+    @declared_attr
+    def unit_type(self):
+        return relationship("UnitType", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def unit_type_name(self):
+        return association_proxy("unit_type", "name")
+
+    @declared_attr
+    def commodity_type(self):
+        return relationship(
+            "CommodityType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+        )
+
+    @declared_attr
+    def commodity_type_name(self):
+        return association_proxy("commodity_type", "name")
+
+
+class CommentMixin:
+    @declared_attr
+    def platform(self):
+        return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def platform_name(self):
+        return association_proxy("platform", "name")
+
+    @declared_attr
+    def comment_type(self):
+        return relationship(
+            "CommentType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+        )
+
+    @declared_attr
+    def comment_type_name(self):
+        return association_proxy("comment_type", "name")
+
+    @declared_attr
+    def source(self):
+        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def source_reference(self):
+        return association_proxy("source", "reference")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+
+class GeometryMixin:
+    @hybrid_property
+    def geometry(self):
+        return self._geometry
+
+    @geometry.setter
+    def geometry(self, geom):
+        if geom is None:
+            self._geometry = None
+            return
+
+        # If we're given a Location object then convert it to WKT and set it
+        # otherwise just pass through whatever we've been given
+        if isinstance(geom, Location):
+            self._geometry = geom.to_wkt()
+        else:
+            self._geometry = geom
+
+    @geometry.expression
+    def geometry(self):
+        return self._geometry
+
+    @declared_attr
+    def task(self):
+        return relationship("Task", lazy="joined", join_depth=1, uselist=False)
+
+    # @declared_attr
+    # def task_name(self):
+    #     return association_proxy("task", "name")
+
+    @declared_attr
+    def subject_platform(self):
+        return relationship(
+            "Platform",
+            lazy="joined",
+            join_depth=1,
+            uselist=False,
+            foreign_keys="Geometry1.subject_platform_id",
+        )
+
+    # @declared_attr
+    # def subject_platform_name(self):
+    #     return association_proxy("subject_platform", "name")
+
+    @declared_attr
+    def sensor_platform(self):
+        return relationship(
+            "Platform",
+            lazy="joined",
+            join_depth=1,
+            uselist=False,
+            foreign_keys="Geometry1.sensor_platform_id",
+        )
+
+    # @declared_attr
+    # def sensor_platform_name(self):
+    #     return association_proxy("sensor_platform", "name")
+
+    @declared_attr
+    def geo_type(self):
+        return relationship(
+            "GeometryType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+        )
+
+    @declared_attr
+    def geo_type_name(self):
+        return association_proxy("geo_type", "name")
+
+    @declared_attr
+    def geo_sub_type(self):
+        return relationship(
+            "GeometrySubType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+        )
+
+    @declared_attr
+    def geo_sub_type_name(self):
+        return association_proxy("geo_sub_type", "name")
+
+    @declared_attr
+    def source(self):
+        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+
+    # @declared_attr
+    # def source_reference(self):
+    #     return association_proxy("source", "reference")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+
 class MediaMixin:
-    pass
+    @declared_attr
+    def media_type(self):
+        return relationship("MediaType", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+
+    @declared_attr
+    def media_type_name(self):
+        return association_proxy("media_type", "name")
+
+    @declared_attr
+    def sensor(self):
+        return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def sensor_name(self):
+        return association_proxy("sensor", "name")
+
+    @declared_attr
+    def platform(self):
+        return relationship(
+            "Platform",
+            lazy="joined",
+            join_depth=1,
+            innerjoin=True,
+            uselist=False,
+            foreign_keys="Media.platform_id",
+        )
+
+    @declared_attr
+    def platform_name(self):
+        return association_proxy("platform", "name")
+
+    @declared_attr
+    def subject(self):
+        return relationship(
+            "Platform",
+            lazy="joined",
+            join_depth=1,
+            innerjoin=True,
+            uselist=False,
+            foreign_keys="Media.subject_id",
+        )
+
+    @declared_attr
+    def subject_name(self):
+        return association_proxy("subject", "name")
+
+    @declared_attr
+    def source(self):
+        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+
+    # @declared_attr
+    # def source_reference(self):
+    #     return association_proxy("source", "reference")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
 
 
 class ElevationPropertyMixin:
@@ -867,6 +1380,30 @@ class LocationPropertyMixin:
 
 
 class ActivationMixin:
+    @declared_attr
+    def sensor(self):
+        return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def sensor_name(self):
+        return association_proxy("sensor", "name")
+
+    @declared_attr
+    def source(self):
+        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+
+    # @declared_attr
+    # def source_reference(self):
+    #     return association_proxy("source", "reference")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
     #
     # min_range property
     #
@@ -1010,3 +1547,17 @@ class ActivationMixin:
     @right_arc.expression
     def right_arc(self):
         return self._right_arc
+
+
+class ReferenceRepr:
+    def __repr__(self):
+        primary_key_col_name = get_primary_key_for_table(self)
+        return (
+            f"{self.__class__.__name__}(id={shorten_uuid(getattr(self, primary_key_col_name))} "
+            f"name={self.name})"
+        )
+
+
+class SynonymMixin:
+    def __repr__(self):
+        return f"Synonym(id={shorten_uuid(self.synonym_id)}, table={self.table}, entity={shorten_uuid(self.entity)}, synonym={self.synonym})"

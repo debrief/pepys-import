@@ -5,13 +5,12 @@ from pepys_import.file.importer import Importer
 
 
 class ReplayImporter(Importer):
-    def __init__(self, separator=" "):
+    def __init__(self):
         super().__init__(
             name="Replay File Format Importer",
             validation_level=constants.ENHANCED_LEVEL,
             short_name="REP Importer",
         )
-        self.separator = separator
         self.text_label = None
         self.depth = 0.0
 
@@ -32,38 +31,32 @@ class ReplayImporter(Importer):
         return True
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
-        if line.text.startswith(";"):
+        if line.text.startswith(";") or line.text.strip() == "":
             return
 
         # create state, to store the data
-        rep_line = REPLine(line_number, line, self.separator)
+        rep_line = REPLine(line_number, line)
         # Store parsing errors in self.errors list
         if not rep_line.parse(self.errors, self.error_type):
             return
         # and finally store it
         vessel_name = rep_line.get_platform()
-        platform = data_store.get_platform(
-            platform_name=vessel_name,
-            nationality="UK",
-            platform_type="Fisher",
-            privacy="Public",
+        platform = data_store.get_platform(platform_name=vessel_name, change_id=change_id,)
+
+        sensor = self.get_cached_sensor(
+            data_store=data_store,
+            sensor_name=None,
+            sensor_type=None,
+            platform_id=platform.platform_id,
             change_id=change_id,
         )
 
-        sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
-        sensor = platform.get_sensor(
-            data_store=data_store,
-            sensor_name=platform.name,
-            sensor_type=sensor_type,
-            privacy=None,
-            change_id=change_id,
-        )
         state = datafile.create_state(
             data_store, platform, sensor, rep_line.timestamp, self.short_name,
         )
 
         if rep_line.depth is not None:
-            state.elevation = (-1 * rep_line.depth) * unit_registry.metre
+            state.elevation = -1 * rep_line.depth
 
         state.heading = rep_line.heading
         state.speed = rep_line.speed

@@ -1,6 +1,8 @@
 import os
 import unittest
+from contextlib import redirect_stdout
 from datetime import datetime
+from io import StringIO
 from sqlite3 import OperationalError
 from unittest import TestCase
 
@@ -121,9 +123,9 @@ class DataStoreCacheTestCase(TestCase):
             # there must be no entity at the beginning
             self.assertEqual(len(privacies), 0)
 
-            privacy_1 = self.store.add_to_privacies(name="test", change_id=self.change_id)
+            privacy_1 = self.store.add_to_privacies(name="test", level=0, change_id=self.change_id)
             # This one shouldn't duplicate, it should return existing entity
-            privacy_2 = self.store.add_to_privacies(name="test", change_id=self.change_id)
+            privacy_2 = self.store.add_to_privacies(name="test", level=0, change_id=self.change_id)
 
             # objects must be the same
             self.assertEqual(privacy_1, privacy_2)
@@ -173,6 +175,61 @@ class DataStoreCacheTestCase(TestCase):
 
             # there must be only one entity at the beginning
             self.assertEqual(len(sensor_types), 1)
+
+    def test_cached_geometry_type(self):
+        """Test whether a new geometry type entity cached and returned"""
+        with self.store.session_scope():
+            geometry_types = self.store.session.query(self.store.db_classes.GeometryType).all()
+
+            # there must be no entity at the beginning
+            self.assertEqual(len(geometry_types), 0)
+
+            geometry_type_1 = self.store.add_to_geometry_types(
+                name="test", change_id=self.change_id
+            )
+            # This one shouldn't duplicate, it should return existing entity
+            geometry_type_2 = self.store.add_to_geometry_types(
+                name="test", change_id=self.change_id
+            )
+
+            # objects must be the same
+            self.assertEqual(geometry_type_1, geometry_type_2)
+            geometry_types = self.store.session.query(self.store.db_classes.GeometryType).all()
+
+            # there must be only one entity at the beginning
+            self.assertEqual(len(geometry_types), 1)
+
+    def test_cached_geometry_sub_type(self):
+        """Test whether a new geometry sub type entity cached and returned"""
+        with self.store.session_scope():
+            geometry_sub_types = self.store.session.query(
+                self.store.db_classes.GeometrySubType
+            ).all()
+
+            # there must be no entity at the beginning
+            self.assertEqual(len(geometry_sub_types), 0)
+
+            # Create Geometry Type as parent
+            geometry_type = self.store.add_to_geometry_types(
+                name="Test Parent", change_id=self.change_id
+            )
+
+            geometry_sub_type_1 = self.store.add_to_geometry_sub_types(
+                name="test", parent_name=geometry_type.name, change_id=self.change_id
+            )
+            # This one shouldn't duplicate, it should return existing entity
+            geometry_sub_type_2 = self.store.add_to_geometry_sub_types(
+                name="test", parent_name=geometry_type.name, change_id=self.change_id
+            )
+
+            # objects must be the same
+            self.assertEqual(geometry_sub_type_1, geometry_sub_type_2)
+            geometry_sub_types = self.store.session.query(
+                self.store.db_classes.GeometrySubType
+            ).all()
+
+            # there must be only one entity at the beginning
+            self.assertEqual(len(geometry_sub_types), 1)
 
 
 @pytest.mark.postgres
@@ -269,7 +326,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
 
     def test_privacies(self):
         with self.store.session_scope():
-            privacy = self.store.db_classes.Privacy(name="test")
+            privacy = self.store.db_classes.Privacy(name="test", level=0)
             self.store.session.add(privacy)
             self.store.session.flush()
 
@@ -278,7 +335,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
             # there must be one entity at the beginning
             self.assertEqual(len(privacies), 1)
 
-            self.store.add_to_privacies("test", self.change_id)
+            self.store.add_to_privacies("test", 0, self.change_id)
 
             privacies = self.store.session.query(self.store.db_classes.Privacy).all()
 
@@ -354,7 +411,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 self.platform_type = self.store.add_to_platform_types(
                     "test_platform_type", self.change_id
                 ).name
-                self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
+                self.privacy = self.store.add_to_privacies("test_privacy", 0, self.change_id).name
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 
@@ -565,7 +622,6 @@ class DataStoreStatusTestCase(TestCase):
             with self.store.session_scope():
                 self.store.populate_reference(TEST_DATA_PATH)
                 self.store.populate_metadata(TEST_DATA_PATH)
-                self.store.populate_measurement(TEST_DATA_PATH)
         except OperationalError:
             print("Database schema and data population failed! Test is skipping.")
 
@@ -647,7 +703,7 @@ class SensorTestCase(TestCase):
                 self.sensor_type = self.store.add_to_sensor_types(
                     "test_sensor_type", self.change_id
                 ).name
-                self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
+                self.privacy = self.store.add_to_privacies("test_privacy", 0, self.change_id).name
 
                 self.platform = self.store.get_platform(
                     platform_name="Test Platform",
@@ -720,33 +776,6 @@ class SensorTestCase(TestCase):
             self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
             self.assertEqual(found_sensor.name, "gps")
 
-    def test_find_sensor_synonym(self):
-        """Test whether find_sensor method finds the correct Sensor entity from Synonyms table"""
-        with self.store.session_scope():
-            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-
-            # there must be no entry at the beginning
-            self.assertEqual(len(sensors), 0)
-
-            sensor = self.platform.get_sensor(
-                self.store, "gps", self.sensor_type, change_id=self.change_id
-            )
-            self.platform.get_sensor(
-                self.store, "gps_2", self.sensor_type, change_id=self.change_id
-            )
-            self.store.add_to_synonyms(
-                table=constants.SENSOR,
-                name="TEST",
-                entity=sensor.sensor_id,
-                change_id=self.change_id,
-            )
-
-            found_sensor = self.store.db_classes.Sensor().find_sensor(
-                self.store, "TEST", self.platform.platform_id
-            )
-            self.assertEqual(sensor.sensor_id, found_sensor.sensor_id)
-            self.assertEqual(found_sensor.name, "gps")
-
 
 @pytest.mark.postgres
 class MeasurementsTestCase(TestCase):
@@ -784,7 +813,7 @@ class MeasurementsTestCase(TestCase):
                 self.sensor_type = self.store.add_to_sensor_types(
                     "test_sensor_type", self.change_id
                 ).name
-                self.privacy = self.store.add_to_privacies("test_privacy", self.change_id).name
+                self.privacy = self.store.add_to_privacies("test_privacy", 0, self.change_id).name
 
                 self.platform = self.store.get_platform(
                     platform_name="Test Platform",
@@ -814,10 +843,8 @@ class MeasurementsTestCase(TestCase):
                 name="Test Importer",
                 validation_level=validation_constants.NONE_LEVEL,
                 short_name="Test Importer",
-                separator=" ",
             ):
                 super().__init__(name, validation_level, short_name)
-                self.separator = separator
                 self.text_label = None
                 self.depth = 0.0
                 self.errors = list()
@@ -930,6 +957,44 @@ class MeasurementsTestCase(TestCase):
                 self.file.commit(self.store, self.change_id)
                 comments = self.store.session.query(self.store.db_classes.Comment).all()
                 self.assertEqual(len(comments), 1)
+
+
+@pytest.mark.postgres
+class FirstConnectionTestCase(TestCase):
+    def setUp(self) -> None:
+        self.postgres = None
+        self.store = None
+        try:
+            self.postgres = Postgresql(
+                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+            )
+        except RuntimeError:
+            print("PostgreSQL database couldn't be created! Test is skipping.")
+            return
+
+    def tearDown(self) -> None:
+        try:
+            self.postgres.stop()
+        except AttributeError:
+            return
+
+    def test_data_store_fails_at_the_beginning(self):
+        temp_output = StringIO()
+        with pytest.raises(SystemExit), redirect_stdout(temp_output):
+            DataStore(
+                db_name="test",
+                db_host="localhost",
+                db_username="TEST",
+                db_password="TEST",
+                db_port=55527,
+                db_type="postgres",
+            )
+        output = temp_output.getvalue()
+        assert "ERROR: SQL error when communicating with database" in output
+        assert "Please check your database file and the config file's database section." in output
+        assert (
+            "Current database URL: 'postgresql+psycopg2://TEST:TEST@localhost:55527/test'" in output
+        )
 
 
 if __name__ == "__main__":
