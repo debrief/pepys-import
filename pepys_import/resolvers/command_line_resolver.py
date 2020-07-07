@@ -109,8 +109,12 @@ class CommandLineResolver(DataResolver):
             # options on different platforms/db backends, so that our tests work
             platforms = (
                 data_store.session.query(data_store.db_classes.Platform)
+                .join(data_store.db_classes.Nationality)
                 .filter(data_store.db_classes.Platform.name == platform_name)
-                .order_by(data_store.db_classes.Platform.identifier.asc())
+                .order_by(
+                    data_store.db_classes.Platform.identifier.asc(),
+                    data_store.db_classes.Nationality.name.asc(),
+                )
                 .all()
             )
             for platform in platforms:

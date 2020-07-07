@@ -385,8 +385,7 @@ class PlatformTestCase(unittest.TestCase):
     def test_resolve_platform_select_existing_platform(self, resolver_prompt, menu_prompt):
         """Test whether a new platform entity is created or not"""
 
-        # Choose the 2nd one of the
-        resolver_prompt.side_effect = ["2"]
+        menu_prompt.side_effect = ["2"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
