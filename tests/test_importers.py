@@ -654,7 +654,9 @@ class TestImportWithDuplicatePlatformNames(unittest.TestCase):
         processor.register_importer(ReplayImporter())
 
         processor.process(
-            os.path.join(REP_DATA_PATH, "rep_duplicate_name_test.rep"), self.store, False
+            os.path.join(DATA_PATH, "track_files", "other_data", "rep_duplicate_name_test.rep"),
+            self.store,
+            False,
         )
 
         with self.store.session_scope():
