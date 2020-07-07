@@ -104,7 +104,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
-            platform_object = self.store.search_platform("PLATFORM-1")
+            platform_object = self.store.search_platform("PLATFORM-1", "United Kingdom", "123")
             datafile_object = self.store.search_datafile("DATAFILE-1")
             sensor_object = self.store.search_sensor("SENSOR-1", platform_object.platform_id)
 
@@ -259,7 +259,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
-            platform_object = self.store.search_platform("PLATFORM-1")
+            platform_object = self.store.search_platform("PLATFORM-1", "United Kingdom", "123")
             datafile_object = self.store.search_datafile("DATAFILE-1")
             sensor_object = self.store.search_sensor("SENSOR-1", platform_object.platform_id)
 
@@ -378,7 +378,7 @@ class DataStorePopulateMissingData(TestCase):
             assert "  Error was 'Nationality is invalid/missing'" in output
 
             assert (
-                "Error importing row ['SENSOR-2', 'SENSOR-TYPE-2', 'MissingPlatform', 'Public Sensitive'] from Sensors.csv"
+                "Error importing row ['SENSOR-2', 'SENSOR-TYPE-2', 'MissingPlatform', 'France', '234', 'Public Sensitive'] from Sensors.csv"
                 in output
             )
             assert "  Error was 'Host is missing/invalid'" in output

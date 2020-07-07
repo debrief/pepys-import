@@ -207,7 +207,7 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
         Comment = self.store.db_classes.Comment
 
         with self.store.session_scope():
-            platform = self.store.search_platform("SUBJECT")
+            platform = self.store.search_platform("SUBJECT", "UK", "123")
             sensor_id = self.store.search_sensor("SENSOR-1", platform.platform_id).sensor_id
 
             state_values = self.store.find_min_and_max_date(State, State.sensor_id, sensor_id)
@@ -215,7 +215,7 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
             assert str(state_values[0]) == "2010-01-12 11:58:00"
             assert str(state_values[1]) == "2010-01-12 12:14:00"
 
-            platform = self.store.search_platform("SENSOR")
+            platform = self.store.search_platform("SENSOR", "UK", "123")
             sensor_id = self.store.search_sensor("TA", platform.platform_id).sensor_id
 
             contact_values = self.store.find_min_and_max_date(Contact, Contact.sensor_id, sensor_id)
@@ -224,7 +224,7 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
             assert str(contact_values[0]) == "2010-01-12 11:58:00"
             assert str(contact_values[1]) == "2010-01-12 12:06:00"
 
-            platform_id = self.store.search_platform("SEARCH_PLATFORM").platform_id
+            platform_id = self.store.search_platform("SEARCH_PLATFORM", "UK", "123").platform_id
             comment_values = self.store.find_min_and_max_date(
                 Comment, Comment.platform_id, platform_id
             )
@@ -237,7 +237,7 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
 
     def test_find_related_datafile_objects_of_comments(self):
         with self.store.session_scope():
-            platform_id = self.store.search_platform("SEARCH_PLATFORM").platform_id
+            platform_id = self.store.search_platform("SEARCH_PLATFORM", "UK", "123").platform_id
             objects = self.store.find_related_datafile_objects(platform_id, sensors_dict={})
             assert len(objects) == 1
             assert objects[0]["name"] == "Comment"
@@ -247,8 +247,8 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
 
     def test_find_related_datafile_objects_of_states_and_contacts(self):
         with self.store.session_scope():
-            platform1 = self.store.search_platform("SUBJECT")
-            platform2 = self.store.search_platform("SENSOR")
+            platform1 = self.store.search_platform("SUBJECT", "UK", "123")
+            platform2 = self.store.search_platform("SENSOR", "UK", "123")
 
             sensors_dict = {
                 "SENSOR-1": self.store.search_sensor("SENSOR-1", platform1.platform_id).sensor_id,

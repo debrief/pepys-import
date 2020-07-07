@@ -92,8 +92,8 @@ class NisidaImporter(Importer):
                 return CANCEL_IMPORT
 
             tokens[1].record(self.name, "platform", platform_name)
-            self.platform = data_store.get_platform(
-                platform_name=platform_name, change_id=change_id,
+            self.platform = self.get_cached_platform(
+                data_store, platform_name=platform_name, change_id=change_id
             )
 
             try:

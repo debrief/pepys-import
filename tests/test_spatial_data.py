@@ -23,7 +23,7 @@ class SpatialDataSpatialiteTestCase(unittest.TestCase):
             self.store.populate_reference(TEST_DATA_PATH)
             self.store.populate_metadata(TEST_DATA_PATH)
 
-            platform = self.store.search_platform("PLATFORM-1")
+            platform = self.store.search_platform("PLATFORM-1", "United Kingdom", "123")
             sensor = self.store.search_sensor("SENSOR-1", platform.platform_id)
             datafile = self.store.search_datafile("DATAFILE-1")
 
@@ -109,7 +109,7 @@ class SpatialDataPostGISTestCase(unittest.TestCase):
                 self.store.populate_reference(TEST_DATA_PATH)
                 self.store.populate_metadata(TEST_DATA_PATH)
 
-                platform = self.store.search_platform("PLATFORM-1")
+                platform = self.store.search_platform("PLATFORM-1", "United Kingdom", "123")
                 sensor = self.store.search_sensor("SENSOR-1", platform.platform_id)
                 datafile = self.store.search_datafile("DATAFILE-1")
 

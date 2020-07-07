@@ -137,7 +137,6 @@ class DataStore:
         self._search_sensor_cache = dict()
         self._search_nationality_cache = dict()
         self._search_datafile_from_id_cache = dict()
-        self._search_platform_cache = dict()
         self._search_datafile_cache = dict()
         self._search_datafile_type_cache = dict()
         self._search_geometry_type_cache = dict()
@@ -261,24 +260,49 @@ class DataStore:
     # End of Data Store methods
     #############################################################
 
-    def add_to_sensors(self, name, sensor_type, host, privacy, change_id):
+    def add_to_sensors(
+        self,
+        name,
+        sensor_type,
+        host_name,
+        host_nationality,
+        host_identifier,
+        privacy,
+        change_id,
+        host_id=None,
+    ):
         """
         Adds the specified sensor to the :class:`Sensor` table if not already present.
 
         :param name: Name of sensor
         :type name: String
         :param sensor_type: Type of sensor
-        :type sensor_type: :class:`SensorType`
-        :param host: Platform of sensor
-        :type host: Platform
+        :type sensor_type: String
+        :param host_name: Name of Platform that sensor belongs to
+        :type host_name: String
+        :param host_nationality: Nationality of Platform that sensor belongs to
+        :type host_nationality: String
+        :param host_identifier: Identifier of Platform that sensor belongs to
+        :type host_identifier: String
         :param privacy: :class:`Privacy` of :class:`State`
         :type privacy: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
+        :param host_id: ID of Platform that sensor belongs to (optional, can be passed instead
+                        of host_name, host_nationality and host_identifier)
         :return: Created Sensor entity
+
+        Notes:
+        To specify the platform that the added sensor should belong to you can either:
+         - Specify the host_name, host_nationality and host_identifier parameters, to uniquely identify the Platform
+         - Specify the host_id parameter to give the ID of the Platform, and set host_name, host_nationality and host_identifier to None
         """
+        if host_id is not None:
+            host = self.search_platform_by_id(host_id)
+        else:
+            host = self.search_platform(host_name, host_nationality, host_identifier)
+
         sensor_type = self.search_sensor_type(sensor_type)
-        host = self.search_platform(host)
         privacy = self.search_privacy(privacy)
 
         if sensor_type is None:
@@ -521,12 +545,29 @@ class DataStore:
             .first()
         )
 
-    @cache_results_if_not_none("_search_platform_cache")
-    def search_platform(self, name):
-        """Search for any platform with this name"""
-        return (
+    def search_platform(self, name, nationality, identifier):
+        """Search for any platform with this name, nationality and identifier"""
+        results = (
             self.session.query(self.db_classes.Platform)
             .filter(self.db_classes.Platform.name == name)
+            .filter(self.db_classes.Platform.identifier == identifier)
+            .filter(self.db_classes.Platform.nationality_name == nationality)
+            .all()
+        )
+
+        if len(results) == 1:
+            return results[0]
+        elif len(results) == 0:
+            return None
+        else:
+            raise Exception(
+                "Multiple platforms with the same name, nationality and identifier found"
+            )
+
+    def search_platform_by_id(self, platform_id):
+        return (
+            self.session.query(self.db_classes.Platform)
+            .filter(self.db_classes.Platform.platform_id == platform_id)
             .first()
         )
 
@@ -728,55 +769,32 @@ class DataStore:
             change_id=change_id,
         )
 
-    def find_platform(self, platform_name):
+    def find_platform(self, name, nationality=None, identifier=None):
         """
-        This method tries to find a Platform entity with the given platform_name. If it
-        finds, it returns the entity. If it is not found, it searches synonyms.
+        This method tries to find a Platform entity with the given platform details.
+        
+        If only the platform_name is given, then it searches synonyms ONLY. If all details
+        are given then it searches for all the details in the database
 
-        It uses the cache in self._platform_cache first, and if it can't find it in there
-        then it looks it up in the database.
-
-        :param platform_name: Name of :class:`Platform`
-        :type platform_name: String
-        :return:
+        It does not currently use a cache.
         """
-        # Can't search for a platform if we haven't got a name to search for
-        if platform_name is None:
+        # TODO: Add caching here if things get slow
+
+        # Must have a name regardless what sort of search we're doing
+        if name is None:
             return None
 
-        cached_result = self._platform_cache.get(platform_name)
-        if cached_result:
-            return cached_result
-
-        platform = (
-            self.session.query(self.db_classes.Platform)
-            .filter(
-                or_(
-                    self.db_classes.Platform.name == platform_name,
-                    self.db_classes.Platform.trigraph == platform_name,
-                    self.db_classes.Platform.quadgraph == platform_name,
-                )
+        if (nationality is None) and (identifier is None):
+            # No nat or identifier, so just search synonyms
+            synonym_result = self.synonym_search(
+                name=name,
+                table=self.db_classes.Platform,
+                pk_field=self.db_classes.Platform.platform_id,
             )
-            .first()
-        )
-        if platform:
-            self.session.expunge(platform)
-            self._platform_cache[platform_name] = platform
-            return platform
-
-        # Platform is not found, try to find a synonym
-        synonym_result = self.synonym_search(
-            name=platform_name,
-            table=self.db_classes.Platform,
-            pk_field=self.db_classes.Platform.platform_id,
-        )
-
-        if synonym_result is not None:
-            self.session.expunge(synonym_result)
-            self._platform_cache[platform_name] = synonym_result
             return synonym_result
-
-        return synonym_result
+        else:
+            # Got all details, so search for all details and return results
+            return self.search_platform(name, nationality, identifier)
 
     def get_platform(
         self,
@@ -812,9 +830,13 @@ class DataStore:
         :return: Created Platform entity
         """
 
-        # Check for name match in Platform and Synonym Tables
+        # Check for name match in existing Platforms
+        # If identifier and nationality are None then this just searches synonyms
+        # otherwise, it searches the Platform table by all three fields
         if platform_name:
-            platform = self.find_platform(platform_name)
+            platform = self.find_platform(
+                name=platform_name, identifier=identifier, nationality=nationality
+            )
             if platform:
                 return platform
 

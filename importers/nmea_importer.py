@@ -92,8 +92,8 @@ class NMEAImporter(Importer):
             ):
 
                 # and finally store it
-                platform = data_store.get_platform(
-                    platform_name=self.platform_name, change_id=change_id,
+                platform = self.get_cached_platform(
+                    data_store, self.platform_name, change_id=change_id
                 )
                 # Keep track of the platform name, so we don't have to ask for each line
                 self.platform_name = platform.name

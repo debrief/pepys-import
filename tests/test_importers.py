@@ -14,6 +14,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.file.importer import Importer
+from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
@@ -579,6 +580,113 @@ class NMEAImporterTestCase(unittest.TestCase):
         timestamp = self.nmea_importer.parse_timestamp("010101", "010101")
         self.assertEqual(type(timestamp), datetime)
         self.assertEqual(str(timestamp), "2001-01-01 01:01:01")
+
+
+class TestImportWithDuplicatePlatformNames(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore(
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=CommandLineResolver(),
+        )
+        self.store.initialise()
+        with self.store.session_scope():
+            self.store.populate_reference()
+            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+
+    @patch("pepys_import.resolvers.command_line_input.prompt")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_import_with_duplicate_platform_names(self, resolver_prompt, menu_prompt):
+        # Provide datafile name, and approve creation of datafile
+        # Add platform with name DOLPHIN, identifier 123, trigraph and quadgraph
+        # Select UK nationality, and select platform type, privacy etc
+        # Appove creation
+        # Add sensor called TestSensor, type GPS, Public
+        # Add platform with name DOLPHIN, identifier 123, trigraph and quadgraph
+        # Select France nationality, plus platform type, privacy etc
+        # Add sensor called TestSensor, type GPS, Public
+
+        # The upshot of all of this is that we have two rows imported from this datafile
+        # both with the same name platform, but referring to two separate platforms that belong
+        # to UK and France
+        resolver_prompt.side_effect = [
+            "rep_duplicate_name_test.rep",
+            "DOLPHIN",
+            "123",
+            "DLP",
+            "DLPH",
+            "TestSensor",
+            "DOLPHIN",
+            "123",
+            "DLP",
+            "DLPH",
+            "TestSensor",
+        ]
+
+        menu_prompt.side_effect = [
+            "3",
+            "1",
+            "2",
+            "3",
+            "3",
+            "3",
+            "1",
+            "2",
+            "3",
+            "3",
+            "1",
+            "2",
+            "5",
+            "3",
+            "3",
+            "1",
+            "2",
+            "3",
+            "3",
+            "1",
+        ]
+
+        processor = FileProcessor(archive=False)
+        processor.register_importer(ReplayImporter())
+
+        processor.process(
+            os.path.join(DATA_PATH, "track_files", "other_data", "rep_duplicate_name_test.rep"),
+            self.store,
+            False,
+        )
+
+        with self.store.session_scope():
+            # Check the State entries refer to two different platforms, one that is UK and one that is France
+            states = self.store.session.query(self.store.db_classes.State).all()
+
+            assert len(states) == 2
+
+            plat1_id = states[0].platform_id
+            plat2_id = states[1].platform_id
+
+            plat1 = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.platform_id == plat1_id)
+                .all()
+            )
+
+            assert len(plat1) == 1
+            assert plat1[0].name == "DOLPHIN"
+            assert plat1[0].nationality_name == "United Kingdom"
+
+            plat2 = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.platform_id == plat2_id)
+                .all()
+            )
+
+            assert len(plat2) == 1
+            assert plat2[0].name == "DOLPHIN"
+            assert plat2[0].nationality_name == "France"
 
 
 if __name__ == "__main__":
