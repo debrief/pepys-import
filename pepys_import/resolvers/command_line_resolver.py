@@ -113,7 +113,7 @@ class CommandLineResolver(DataResolver):
                 .filter(data_store.db_classes.Platform.name == platform_name)
                 .order_by(
                     data_store.db_classes.Platform.identifier.asc(),
-                    data_store.db_classes.Nationality.name.asc(),
+                    data_store.db_classes.Nationality.priority.asc(),
                 )
                 .all()
             )
