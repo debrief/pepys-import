@@ -71,7 +71,7 @@ class EAGImporter(Importer):
             if line.text.strip().startswith("#VALUE"):
                 # Skip line
                 continue
-            tokens = line.tokens(line.WHITESPACE_DELIM)
+            tokens = line.tokens(line.WHITESPACE_TOKENISER)
 
             if len(tokens) != 11:
                 self.errors.append(

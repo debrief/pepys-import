@@ -16,7 +16,7 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distan
 # See:
 # https://stackoverflow.com/questions/62600563/regex-to-match-entries-between-slashes-but-not-slashes-including-empty-entrie
 # for some discussion
-SLASH_SPLIT_REGEX = r"[^/]+|(?<=/)(?=/)"
+SLASH_TOKENISER = r"[^/]+|(?<=/)(?=/)"
 
 SENSOR_CODE_TO_NAME = {
     "RDR": "Radar",
@@ -69,7 +69,7 @@ class NisidaImporter(Importer):
             # Handle UNIT line giving month, year and platform
             # Format is:
             # UNIT/ADRI/OCT03/SRF/
-            tokens = line.tokens(SLASH_SPLIT_REGEX)
+            tokens = line.tokens(SLASH_TOKENISER)
 
             if len(tokens) < 4:
                 self.errors.append(
@@ -141,7 +141,7 @@ class NisidaImporter(Importer):
             self.last_entry_with_text = None
 
             # Split line by slash
-            self.tokens = line.tokens(SLASH_SPLIT_REGEX)
+            self.tokens = line.tokens(SLASH_TOKENISER)
 
             self.timestamp = self.parse_timestamp(self.tokens[0])
             self.tokens[0].record(self.name, "timestamp", self.timestamp)

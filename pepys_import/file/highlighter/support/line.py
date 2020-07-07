@@ -11,9 +11,9 @@ class Line:
     Has methods to get a list of Tokens in the line, and to record a usage of the whole line.
     """
 
-    WHITESPACE_DELIM = "\\S+"
-    CSV_DELIM = r'(?:,"|^")(""|[\w\W]*?)(?=",|"$)|(?:,(?!")|^(?!"))([^,]*?)(?=$|,)|(\r\n|\n)'
-    QUOTED_NAME = r"([\"'])(?:(?=(\\?))\2.)*?\1"
+    WHITESPACE_TOKENISER = "\\S+"
+    CSV_TOKENISER = r'(?:,"|^")(""|[\w\W]*?)(?=",|"$)|(?:,(?!")|^(?!"))([^,]*?)(?=$|,)|(\r\n|\n)'
+    QUOTED_NAME_REGEX = r"([\"'])(?:(?=(\\?))\2.)*?\1"
 
     __slots__ = ("children", "highlighted_file")
 
@@ -45,17 +45,27 @@ class Line:
             res += child.text
         return res
 
-    def tokens(self, reg_exp=WHITESPACE_DELIM, strip_char="", quoted_name=QUOTED_NAME):
+    def tokens(self, reg_exp=WHITESPACE_TOKENISER, strip_char="", quoted_name=QUOTED_NAME_REGEX):
         """Generates a list of Token objects for each token in the line.
 
         :param reg_exp: Regular expression used to split the line into tokens. Useful
-                        constants are defined in this class, including `CSV_DELIM`, defaults
-                        to `WHITESPACE_DELIM`
+                        constants are defined in this class, including `CSV_TOKENISER`, defaults
+                        to `WHITESPACE_TOKENISER`. See notes below.
         :type reg_exp: String, optional
         :param strip_char: Characters to strip after splitting, defaults to ""
         :type strip_char: String, optional
         :return: List of Token objects
         :rtype: List
+
+        Notes:
+        The reg_exp given to this function should be a regular expression that extracts the individual tokens from the line,
+        and *not* a regular expression that identifies the characters to split by. Thus, the WHITESPACE_TOKENISER regex is
+        simply \S+, which matches any amount of anything that isn't whitespace. The CSV_TOKENISER is more complex, as it deals
+        with quotes and other issues that cause problems in CSV files.
+        The regular expression can use groups, but the entire match of the regular expression should be the token - there is no
+        capacity (currently at least) for extracting particular groups of the regular expression. Use can be made of look-ahead
+        and look-behind expressions in the regex to constrain it so that the entire match covers just the token and nothing else.
+        (For a good example of this see the SLASH_TOKENISER in the Nisida importer)
         """
         tokens_array = []
 
