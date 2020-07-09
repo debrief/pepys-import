@@ -114,6 +114,7 @@ class CommandLineResolver(DataResolver):
                 .order_by(
                     data_store.db_classes.Platform.identifier.asc(),
                     data_store.db_classes.Nationality.priority.asc(),
+                    data_store.db_classes.Nationality.name.asc(),
                 )
                 .all()
             )
