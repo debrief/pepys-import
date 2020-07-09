@@ -103,7 +103,9 @@ class EAGImporter(Importer):
             time_since_sun_ms_token.record(self.name, "timestamp", timestamp)
 
             # Platform is based on the callsign - the user will link this as a synonym to a defined Platform
-            platform = data_store.get_platform(platform_name=callsign, change_id=change_id,)
+            platform = self.get_cached_platform(
+                data_store, platform_name=callsign, change_id=change_id
+            )
 
             sensor = self.get_cached_sensor(
                 data_store=data_store,

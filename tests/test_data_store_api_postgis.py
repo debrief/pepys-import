@@ -547,40 +547,49 @@ class PlatformAndDatafileTestCase(TestCase):
     def test_find_platform(self):
         """Test whether find_platform method returns the correct Platform entity"""
         with self.store.session_scope():
-            # Create two platforms
+            nat1 = self.store.add_to_nationalities("Nat1", self.change_id).name
+            nat2 = self.store.add_to_nationalities("Nat2", self.change_id).name
+            # Create two platforms with same name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
-                nationality=self.nationality,
+                nationality=nat1,
+                identifier="123",
                 platform_type=self.platform_type,
                 privacy=self.privacy,
                 change_id=self.change_id,
             )
             self.store.get_platform(
-                platform_name="Test Platform 2",
-                nationality=self.nationality,
+                platform_name="Test Platform",
+                nationality=nat2,
+                identifier="123",
                 platform_type=self.platform_type,
                 privacy=self.privacy,
                 change_id=self.change_id,
             )
 
-            found_platform = self.store.find_platform("Test Platform")
-            self.assertEqual(platform.platform_id, found_platform.platform_id)
-            self.assertEqual(found_platform.name, "Test Platform")
+            found_platform = self.store.find_platform("Test Platform", "Nat1", "123")
+            assert found_platform.platform_id == platform.platform_id
+            assert "Test Platform" == found_platform.name
 
     def test_find_platform_synonym(self):
         """Test whether find_platform method finds the correct Platform entity from Synonyms table"""
         with self.store.session_scope():
+            nat1 = self.store.add_to_nationalities("Nat1", self.change_id).name
+            nat2 = self.store.add_to_nationalities("Nat2", self.change_id).name
+
             # Create two platforms
             platform = self.store.get_platform(
                 platform_name="Test Platform",
-                nationality=self.nationality,
+                nationality=nat1,
+                identifier="123",
                 platform_type=self.platform_type,
                 privacy=self.privacy,
                 change_id=self.change_id,
             )
             self.store.get_platform(
-                platform_name="Test Platform 2",
-                nationality=self.nationality,
+                platform_name="Test Platform",
+                nationality=nat2,
+                identifier="123",
                 platform_type=self.platform_type,
                 privacy=self.privacy,
                 change_id=self.change_id,
@@ -592,7 +601,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 change_id=self.change_id,
             )
 
-            found_platform = self.store.find_platform("TEST")
+            found_platform = self.store.find_platform("TEST", identifier=None, nationality=None)
             self.assertEqual(platform.platform_id, found_platform.platform_id)
             self.assertEqual(found_platform.name, "Test Platform")
 

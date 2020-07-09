@@ -560,7 +560,7 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
 
         Sensor = self.store.db_classes.Sensor
         with self.store.session_scope():
-            platform_id = self.store.search_platform("SEARCH_PLATFORM").platform_id
+            platform_id = self.store.search_platform("SEARCH_PLATFORM", "UK", "123").platform_id
             sensors = self.store.session.query(Sensor).filter(Sensor.host == platform_id).all()
             sensors_dict = {s.name: s.sensor_id for s in sensors}
             self.objects = self.store.find_related_datafile_objects(platform_id, sensors_dict)
