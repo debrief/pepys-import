@@ -48,7 +48,7 @@ def test_single_rep_file_import_long(benchmark):
         rounds=1,
     )
 
-    TIME_THRESHOLD = 40
+    TIME_THRESHOLD = 44
 
     if running_on_travis():
         if benchmark.stats.stats.mean > TIME_THRESHOLD:
