@@ -7,7 +7,11 @@ A default configuration file is provided in the root of the repository
 with the name :code:`default_config.ini`. Rather than editing this directly,
 it should be copied to a new location, and the environment variable
 :code:`PEPYS_CONFIG_FILE` should be set to the full path to the new
-configuration file.
+configuration file. If the configuration file needs to be set differently
+on a specific computer, and network configuration (for example, a Group Policy)
+forces :code:`PEPYS_CONFIG_FILE` to a specific value, then the :code:`PEPYS_CONFIG_FILE_USER`
+variable can be set to the path to the configuration file instead, and this will override
+the :code:`PEPYS_CONFIG_FILE` variable.
 
 Configuration file format
 -------------------------
