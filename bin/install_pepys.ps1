@@ -83,4 +83,19 @@ if (!($env:Path -split ';' -contains $pepys_bin_path)) {
         [EnvironmentVariableTarget]::User)
 }
 
+# Create file associations for .sqlite and .db files to open in Pepys Admin
+$pepys_admin_run_command = [System.IO.Path]::GetFullPath(".\pepys_admin.bat") + " --db %1"
 
+# All of the assigning to $null below is just to stop the default output showing exactly
+# what registry keys have been created
+
+# Create the file extension entry for .sqlite and assign it to the filetype sqlitefile
+$null = New-Item -Path HKCU:\Software\Classes -Name .sqlite -Value sqlitefile -Force
+# Do the same for the .db extension
+$null = New-Item -Path HKCU:\Software\Classes -Name .db -Value sqlitefile -Force
+# Specify the 'shell open' command for the filetype sqlitefile (that both extensions reference)
+$null = New-Item -Path HKCU:\Software\Classes\sqlitefile\shell\open -Force -Name command -Value "$pepys_admin_run_command"
+# Set the default icon for the filetype to the Pepys icon
+$null = New-Item -Path HKCU:\Software\Classes\sqlitefile -Force -Name DefaultIcon -Value $icon_string
+# Refresh the Windows Explorer icon cache, so the icons show immediately
+ie4uinit.exe -show
