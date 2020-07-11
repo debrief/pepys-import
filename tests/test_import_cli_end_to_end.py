@@ -57,7 +57,9 @@ def clr_prompt_patch(*args, **kwargs):
     print(f"Prompt: {prompt}")
 
     if "Please type level of" in prompt:
-        return str(random.randint(0, 10000))
+        response = str(random.randint(0, 10000))
+        print(f"Response: {response}")
+        return response
     else:
         response = random.choice(FALLBACK_RESPONSES)
         print(f"Response: {response}")
@@ -107,7 +109,7 @@ class TestClass:
         print(f"Running with seed = {seed}")
 
         # Replace this line with the seed printed out by a previous run of the test to duplicate that test
-        random.seed(4014)
+        random.seed(seed)
 
         processor = FileProcessor(archive=False)
         processor.register_importer(ReplayImporter())
@@ -126,7 +128,7 @@ class TestClass:
         print(f"Running with seed = {seed}")
 
         # Replace this line with the seed printed out by a previous run of the test to duplicate that test
-        random.seed(4014)
+        random.seed(seed)
 
         processor = FileProcessor(archive=False)
         processor.register_importer(NisidaImporter())
