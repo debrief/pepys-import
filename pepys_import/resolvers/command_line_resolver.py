@@ -42,10 +42,17 @@ class CommandLineResolver(DataResolver):
         """
         print("Ok, adding new datafile.")
 
-        datafile_name = prompt("Please enter a name: ", default=datafile_name)
+        datafile_name = prompt("Please enter a name: ", default=datafile_name).strip()
 
         if datafile_name == "":
-            print("You must provide a datafile name")
+            print("You must provide a datafile name. Restarting data file entry.")
+            return self.resolve_datafile(
+                data_store, datafile_name, datafile_type, privacy, change_id
+            )
+        if len(datafile_name) > 150:
+            print(
+                "Datafile name too long, maximum length 150 characters. Restarting data file entry."
+            )
             return self.resolve_datafile(
                 data_store, datafile_name, datafile_type, privacy, change_id
             )
@@ -280,7 +287,13 @@ class CommandLineResolver(DataResolver):
                 return result
         elif choice == str(2):
             print(current_values)
-            new_object = prompt(f"Please type name of new {text_name}: ")
+            while True:
+                new_object = prompt(f"Please type name of new {text_name}: ").strip()
+                # If not too long for the field
+                if len(new_object) <= 150:
+                    break
+                else:
+                    print("Name too long, please enter a name less than 150 characters long")
             search_method = getattr(data_store, f"search_{field_name}")
             obj = search_method(new_object)
             if obj:
@@ -547,7 +560,8 @@ class CommandLineResolver(DataResolver):
         print("Ok, adding new platform.")
         if platform_name is None:
             platform_name = ""
-        platform_name = prompt("Please enter a name: ", default=platform_name)
+
+        platform_name = prompt("Please enter a name: ", default=platform_name).strip()
         if len(platform_name) > 150:
             print(
                 "Platform name too long, maximum length 150 characters. Restarting platform data entry."
@@ -556,7 +570,7 @@ class CommandLineResolver(DataResolver):
                 data_store, platform_name, platform_type, nationality, privacy, change_id
             )
 
-        identifier = prompt("Please enter identifier (pennant or tail number): ")
+        identifier = prompt("Please enter identifier (pennant or tail number): ").strip()
         if len(identifier) > 10:
             print(
                 "Identifier too long, maximum length 10 characters. Restarting platform data entry."
@@ -565,14 +579,14 @@ class CommandLineResolver(DataResolver):
                 data_store, platform_name, platform_type, nationality, privacy, change_id
             )
 
-        trigraph = prompt("Please enter trigraph (optional): ", default=platform_name[:3])
+        trigraph = prompt("Please enter trigraph (optional): ", default=platform_name[:3]).strip()
         if len(trigraph) > 3:
             print("Trigraph too long, maximum length 3 characters. Restarting platform data entry.")
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy, change_id
             )
 
-        quadgraph = prompt("Please enter quadgraph (optional): ", default=platform_name[:4])
+        quadgraph = prompt("Please enter quadgraph (optional): ", default=platform_name[:4]).strip()
         if len(quadgraph) > 4:
             print(
                 "Quadgraph too long, maximum length 4 characters. Restarting platform data entry."
@@ -691,10 +705,17 @@ class CommandLineResolver(DataResolver):
         if sensor_name is None:
             sensor_name = ""
 
-        sensor_name = prompt("Please enter a name: ", default=sensor_name)
+        sensor_name = prompt("Please enter a name: ", default=sensor_name).strip()
 
         if sensor_name == "":
-            print("You must provide a sensor name")
+            print("You must provide a sensor name. Restarting sensor data entry")
+            return self.add_to_sensors(
+                data_store, sensor_name, sensor_type, host_id, privacy, change_id
+            )
+        if len(sensor_name) > 150:
+            print(
+                "Sensor name too long, maximum length 150 characters. Restarting sensor data entry."
+            )
             return self.add_to_sensors(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
