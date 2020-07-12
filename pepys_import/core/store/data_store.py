@@ -24,6 +24,7 @@ from pepys_import.utils.data_store_utils import (
     create_spatial_tables_for_postgres,
     create_spatial_tables_for_sqlite,
     import_from_csv,
+    lowercase_or_none,
 )
 from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_keys_on
 from pepys_import.utils.value_transforming_utils import format_datetime
@@ -317,7 +318,7 @@ class DataStore:
         # TODO: Possibly update when we get final uniqueness info from client
         results = (
             self.session.query(self.db_classes.Sensor)
-            .filter(func.lower(self.db_classes.Sensor.name) == name.lower())
+            .filter(func.lower(self.db_classes.Sensor.name) == lowercase_or_none(name))
             .filter(self.db_classes.Sensor.host == host.platform_id)
             .all()
         )
@@ -464,9 +465,11 @@ class DataStore:
         # TODO: Possibly update when we get final uniqueness info from client
         results = (
             self.session.query(self.db_classes.Platform)
-            .filter(func.lower(self.db_classes.Platform.name) == name.lower())
+            .filter(func.lower(self.db_classes.Platform.name) == lowercase_or_none(name))
             .filter(self.db_classes.Platform.nationality_id == nationality.nationality_id)
-            .filter(func.lower(self.db_classes.Platform.identifier) == identifier.lower())
+            .filter(
+                func.lower(self.db_classes.Platform.identifier) == lowercase_or_none(identifier)
+            )
             .all()
         )
 
@@ -504,7 +507,7 @@ class DataStore:
         # TODO: Possibly update when we get final uniqueness info from client
         results = (
             self.session.query(self.db_classes.Synonym)
-            .filter(func.lower(self.db_classes.Synonym.synonym) == name.lower())
+            .filter(func.lower(self.db_classes.Synonym.synonym) == lowercase_or_none(name))
             .filter(self.db_classes.Synonym.table == table)
             .all()
         )
@@ -530,7 +533,7 @@ class DataStore:
         """Search for any sensor type featuring this name"""
         return (
             self.session.query(self.db_classes.Sensor)
-            .filter(func.lower(self.db_classes.Sensor.name) == name.lower())
+            .filter(func.lower(self.db_classes.Sensor.name) == lowercase_or_none(name))
             .filter(self.db_classes.Sensor.host == platform_id)
             .first()
         )
@@ -541,7 +544,7 @@ class DataStore:
         return (
             self.session.query(self.db_classes.Datafile)
             .options(undefer("simulated"))
-            .filter(func.lower(self.db_classes.Datafile.reference) == name.lower())
+            .filter(func.lower(self.db_classes.Datafile.reference) == lowercase_or_none(name))
             .first()
         )
 
@@ -549,9 +552,14 @@ class DataStore:
         """Search for any platform with this name, nationality and identifier"""
         results = (
             self.session.query(self.db_classes.Platform)
-            .filter(func.lower(self.db_classes.Platform.name) == name.lower())
-            .filter(func.lower(self.db_classes.Platform.identifier) == identifier.lower())
-            .filter(func.lower(self.db_classes.Platform.nationality_name) == nationality.lower())
+            .filter(func.lower(self.db_classes.Platform.name) == lowercase_or_none(name))
+            .filter(
+                func.lower(self.db_classes.Platform.identifier) == lowercase_or_none(identifier)
+            )
+            .filter(
+                func.lower(self.db_classes.Platform.nationality_name)
+                == lowercase_or_none(nationality)
+            )
             .all()
         )
 
@@ -589,7 +597,7 @@ class DataStore:
         """Search for any datafile type with this name"""
         return (
             self.session.query(self.db_classes.DatafileType)
-            .filter(func.lower(self.db_classes.DatafileType.name) == name.lower())
+            .filter(func.lower(self.db_classes.DatafileType.name) == lowercase_or_none(name))
             .first()
         )
 
@@ -599,7 +607,7 @@ class DataStore:
         # print(f"Searching platform type with name = {name}")
         return (
             self.session.query(self.db_classes.PlatformType)
-            .filter(func.lower(self.db_classes.PlatformType.name) == name.lower())
+            .filter(func.lower(self.db_classes.PlatformType.name) == lowercase_or_none(name))
             .first()
         )
 
@@ -608,7 +616,7 @@ class DataStore:
         """Search for any nationality with this name"""
         return (
             self.session.query(self.db_classes.Nationality)
-            .filter(func.lower(self.db_classes.Nationality.name) == name.lower())
+            .filter(func.lower(self.db_classes.Nationality.name) == lowercase_or_none(name))
             .first()
         )
 
@@ -617,7 +625,7 @@ class DataStore:
         """Search for any sensor type featuring this name"""
         return (
             self.session.query(self.db_classes.SensorType)
-            .filter(func.lower(self.db_classes.SensorType.name) == name.lower())
+            .filter(func.lower(self.db_classes.SensorType.name) == lowercase_or_none(name))
             .first()
         )
 
@@ -626,7 +634,7 @@ class DataStore:
         """Search for any Geometry Type featuring this name"""
         return (
             self.session.query(self.db_classes.GeometryType)
-            .filter(func.lower(self.db_classes.GeometryType.name) == name.lower())
+            .filter(func.lower(self.db_classes.GeometryType.name) == lowercase_or_none(name))
             .first()
         )
 
@@ -634,7 +642,7 @@ class DataStore:
         """Search for any Geometry Sub Type featuring this name and parent"""
         return (
             self.session.query(self.db_classes.GeometrySubType)
-            .filter(func.lower(self.db_classes.GeometrySubType.name) == name.lower())
+            .filter(func.lower(self.db_classes.GeometrySubType.name) == lowercase_or_none(name))
             .filter(self.db_classes.GeometrySubType.parent == parent)
             .first()
         )
@@ -644,7 +652,7 @@ class DataStore:
         """Search for any privacy with this name"""
         return (
             self.session.query(self.db_classes.Privacy)
-            .filter(func.lower(self.db_classes.Privacy.name) == name.lower())
+            .filter(func.lower(self.db_classes.Privacy.name) == lowercase_or_none(name))
             .first()
         )
 
@@ -664,7 +672,7 @@ class DataStore:
         synonym = (
             self.session.query(self.db_classes.Synonym)
             .filter(
-                func.lower(self.db_classes.Synonym.synonym) == name.lower(),
+                func.lower(self.db_classes.Synonym.synonym) == lowercase_or_none(name),
                 self.db_classes.Synonym.table == table.__tablename__,
             )
             .first()
@@ -691,7 +699,9 @@ class DataStore:
 
         datafile = (
             self.session.query(self.db_classes.Datafile)
-            .filter(func.lower(self.db_classes.Datafile.reference) == datafile_name.lower())
+            .filter(
+                func.lower(self.db_classes.Datafile.reference) == lowercase_or_none(datafile_name)
+            )
             .first()
         )
         if datafile:
@@ -936,7 +946,7 @@ class DataStore:
         """Search for any comment type featuring this name"""
         return (
             self.session.query(self.db_classes.CommentType)
-            .filter(func.lower(self.db_classes.CommentType.name) == name.lower())
+            .filter(func.lower(self.db_classes.CommentType.name) == lowercase_or_none(name))
             .first()
         )
 
