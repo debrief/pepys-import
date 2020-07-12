@@ -6,7 +6,12 @@ from pepys_import.utils.config_utils import process
 
 config = ConfigParser(allow_no_value=True)
 DEFAULT_CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), "default_config.ini")
-CONFIG_FILE_PATH = os.getenv("PEPYS_CONFIG_FILE", DEFAULT_CONFIG_FILE_PATH)
+
+# Try PEPYS_CONFIG_FILE_USER first, if it exists
+CONFIG_FILE_PATH = os.getenv("PEPYS_CONFIG_FILE_USER")
+if CONFIG_FILE_PATH is None:
+    # If not, fallback to PEPYS_CONFIG_FILE, and then to the default path
+    CONFIG_FILE_PATH = os.getenv("PEPYS_CONFIG_FILE", DEFAULT_CONFIG_FILE_PATH)
 
 if not os.path.exists(CONFIG_FILE_PATH):
     print(f"Pepys config file not found at location: '{CONFIG_FILE_PATH}'.")
@@ -19,7 +24,7 @@ elif not os.path.isfile(CONFIG_FILE_PATH):
 config.read(CONFIG_FILE_PATH)
 
 if not config.has_section("database"):
-    print(f"'database' section couldn't find in '{CONFIG_FILE_PATH}'!")
+    print(f"Couldn't find 'database' section in '{CONFIG_FILE_PATH}'!")
     sys.exit(1)
 
 # Fetch database section

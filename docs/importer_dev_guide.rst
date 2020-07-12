@@ -161,8 +161,10 @@ database to help understand data provenance.
 
 But this token highlighting does come with a performance cost. For high volume
 file types that are tightly structured, with little room for misinterpretation,
-the overhead may not be justified. In these circumstances an alternative core
-Python solution may be justified.
+the overhead may not be justified. In these circumstances, a call to
+:code:`self.disable_recording()` in the :code:`__init__` method will turn off
+the extraction highlighting for this importer, and significantly speed up the processing
+of large files.
 
 Similarly, it may be justified to capture extraction data in the early stages of
 developing/maintaining the parser for a new file format, with level of
@@ -171,7 +173,7 @@ extraction recording reduced as it matures.
 The line parameter passed to :meth:`._load_this_line`
 is actually a :class:`.Line` object,
 from which a list of tokens can be produced using the
-:meth:`~.Line.tokens` method.
+:meth:`~.Line.tokens` method. This takes a regular expression,
 
 The text of each Token/Line object can be accessed as :code:`Token.text`, so the
 following two code examples are equivalent:
@@ -179,12 +181,20 @@ following two code examples are equivalent:
 .. code-block:: python
 
     # Basic Python
-    tokens = line.split(" ")
+    # (default separator is any whitespace)
+    tokens = line.split()
     print(tokens[1])
 
     # Pepys-import methods
-    Tokens = line.tokens(" ")
+    Tokens = line.tokens(line.WHITESPACE_TOKENISER)
     print(tokens[1].text)
+
+The argument to :meth:`~.Line.tokens` is a regular expression giving the parts of the line
+to extract as tokens (*not* the parts of the line to use as a separator). Various useful
+regular expressions are defined in the line class including :code:`WHITESPACE_TOKENISER`
+and :code:`CSV_TOKENISER`. As an example, the :code:`WHITESPACE_TOKENISER` is :code:`\S+`,
+which matches one or more non-whitespace characters, which is what defines a token if the
+separator is whitespace.
 
 Tokens and Lines also have a
 :meth:`~.Line.record` method, which is
@@ -221,7 +231,9 @@ measurement objects using the :meth:`.create_state`, :meth:`.create_contact` or
 :meth:`.create_comment` methods. These methods require arguments for the
 :code:`data_store` (provided by the File Processor), :code:`platform`,
 :code:`sensor`, :code:`timestamp` and the :code:`parser_name` (always
-:code:`self.short_name`). The platform can be obtained from
+:code:`self.short_name`).
+
+The platform can be obtained from
 :code:`data_store.get_platform` and the sensor from :code:`platform.get_sensor`.
 The timestamp must be parsed from the file.
 
@@ -229,30 +241,43 @@ Where the value for a field is missing, Pepys will use command-line interaction
 to get this data from the current user. It will also ensure that supporting
 metadata is also determined (such as the nationality for a new platform).
 
+In most circumstances, a file will only contain information on the name of the
+platform (eg. :code:`DOLPHIN`) and not the nationality or identifier. As the
+combination of all three of these are required to uniquely identify a platform,
+we have to 'resolve' it via user interaction to establish which platform this
+name refers to. Doing this repeatedly for every line of a file would require
+a lot of user interaction, and a particular platform name in a file is likely
+to refer to the same platform throughout the file. Therefore, we can use the
+:code:`self.get_cached_platform` method instead of the :code:`data_store.get_platform`
+method. This tries to look in a cache which links platform names from the file
+to actual Platform entries, and if it can't find it in the cache then it resolves
+it as usual. The cache is reset every time a new file is processed - meaning
+the user should only have to interact to identify the platform once per platform, per file.
+
+Similarly, a :code:`self.get_cached_sensor` method exists, which can be used to cache
+the sensor associated with a platform, to reduce the need for user interaction to select
+the sensor for each row of the data. This should be used for files where there is only
+one sensor per platform in the file - for example, when the sensor is a location sensor
+used to produce the location data which are being imported into State objects, and
+is not listed in the file. However, this should not be used for files where the
+sensors are specifically listed in the file - for example, those that import Contact objects.
+
 For example:
 
 .. code-block:: python
 
     # Get the platform given the vessel_name (a variable parsed from the file earlier in the code)
-    platform = data_store.get_platform(
-        platform_name=vessel_name,
-        nationality="UK",
-        platform_type="Fisher",
-        privacy="Public",
-        change_id=change_id,
-    )
+    platform = self.get_cached_platform(
+            data_store, platform_name=vessel_name, change_id=change_id
+        )
 
-    # Get the sensor object for the GPS sensor on this particular platform
-    sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id)
-    privacy = data_store.missing_data_resolver.resolve_privacy(data_store, change_id)
-
-    sensor = platform.get_sensor(
-        data_store=data_store,
-        sensor_name="E-Trac",
-        sensor_type=sensor_type,
-        privacy=privacy.name,
-        change_id=change_id,
-    )
+    sensor = self.get_cached_sensor(
+                data_store=data_store,
+                sensor_name=None,
+                sensor_type=None,
+                platform_id=platform.platform_id,
+                change_id=change_id,
+            )
 
     # Create the actual state object
     state = datafile.create_state(data_store, platform, sensor, timestamp, self.short_name)

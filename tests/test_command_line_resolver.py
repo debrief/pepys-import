@@ -385,12 +385,12 @@ class PlatformTestCase(unittest.TestCase):
     def test_resolve_platform_select_existing_platform(self, resolver_prompt, menu_prompt):
         """Test whether a new platform entity is created or not"""
 
-        menu_prompt.side_effect = ["2"]
+        menu_prompt.side_effect = ["1"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
-            uk_nat = self.store.add_to_nationalities("UK", self.change_id)
-            fr_nat = self.store.add_to_nationalities("France", self.change_id)
+            uk_nat = self.store.add_to_nationalities("UK", priority=1, change_id=self.change_id)
+            fr_nat = self.store.add_to_nationalities("France", priority=2, change_id=self.change_id)
             self.store.add_to_platforms(
                 "PLATFORM-1",
                 trigraph="PL1",
