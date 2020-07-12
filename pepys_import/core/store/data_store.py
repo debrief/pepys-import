@@ -5,7 +5,7 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from sqlalchemy import create_engine, inspect, or_
+from sqlalchemy import create_engine, func, inspect, or_
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker, undefer
@@ -317,7 +317,7 @@ class DataStore:
         # TODO: Possibly update when we get final uniqueness info from client
         results = (
             self.session.query(self.db_classes.Sensor)
-            .filter(self.db_classes.Sensor.name == name)
+            .filter(func.lower(self.db_classes.Sensor.name) == name.lower())
             .filter(self.db_classes.Sensor.host == host.platform_id)
             .all()
         )
@@ -464,9 +464,9 @@ class DataStore:
         # TODO: Possibly update when we get final uniqueness info from client
         results = (
             self.session.query(self.db_classes.Platform)
-            .filter(self.db_classes.Platform.name == name)
+            .filter(func.lower(self.db_classes.Platform.name) == name.lower())
             .filter(self.db_classes.Platform.nationality_id == nationality.nationality_id)
-            .filter(self.db_classes.Platform.identifier == identifier)
+            .filter(func.lower(self.db_classes.Platform.identifier) == identifier.lower())
             .all()
         )
 
@@ -504,7 +504,7 @@ class DataStore:
         # TODO: Possibly update when we get final uniqueness info from client
         results = (
             self.session.query(self.db_classes.Synonym)
-            .filter(self.db_classes.Synonym.synonym == name)
+            .filter(func.lower(self.db_classes.Synonym.synonym) == name.lower())
             .filter(self.db_classes.Synonym.table == table)
             .all()
         )
@@ -530,7 +530,7 @@ class DataStore:
         """Search for any sensor type featuring this name"""
         return (
             self.session.query(self.db_classes.Sensor)
-            .filter(self.db_classes.Sensor.name == name)
+            .filter(func.lower(self.db_classes.Sensor.name) == name.lower())
             .filter(self.db_classes.Sensor.host == platform_id)
             .first()
         )
@@ -541,7 +541,7 @@ class DataStore:
         return (
             self.session.query(self.db_classes.Datafile)
             .options(undefer("simulated"))
-            .filter(self.db_classes.Datafile.reference == name)
+            .filter(func.lower(self.db_classes.Datafile.reference) == name.lower())
             .first()
         )
 
@@ -549,9 +549,9 @@ class DataStore:
         """Search for any platform with this name, nationality and identifier"""
         results = (
             self.session.query(self.db_classes.Platform)
-            .filter(self.db_classes.Platform.name == name)
-            .filter(self.db_classes.Platform.identifier == identifier)
-            .filter(self.db_classes.Platform.nationality_name == nationality)
+            .filter(func.lower(self.db_classes.Platform.name) == name.lower())
+            .filter(func.lower(self.db_classes.Platform.identifier) == identifier.lower())
+            .filter(func.lower(self.db_classes.Platform.nationality_name) == nationality.lower())
             .all()
         )
 
@@ -589,7 +589,7 @@ class DataStore:
         """Search for any datafile type with this name"""
         return (
             self.session.query(self.db_classes.DatafileType)
-            .filter(self.db_classes.DatafileType.name == name)
+            .filter(func.lower(self.db_classes.DatafileType.name) == name.lower())
             .first()
         )
 
@@ -599,7 +599,7 @@ class DataStore:
         # print(f"Searching platform type with name = {name}")
         return (
             self.session.query(self.db_classes.PlatformType)
-            .filter(self.db_classes.PlatformType.name == name)
+            .filter(func.lower(self.db_classes.PlatformType.name) == name.lower())
             .first()
         )
 
@@ -608,7 +608,7 @@ class DataStore:
         """Search for any nationality with this name"""
         return (
             self.session.query(self.db_classes.Nationality)
-            .filter(self.db_classes.Nationality.name == name)
+            .filter(func.lower(self.db_classes.Nationality.name) == name.lower())
             .first()
         )
 
@@ -617,7 +617,7 @@ class DataStore:
         """Search for any sensor type featuring this name"""
         return (
             self.session.query(self.db_classes.SensorType)
-            .filter(self.db_classes.SensorType.name == name)
+            .filter(func.lower(self.db_classes.SensorType.name) == name.lower())
             .first()
         )
 
@@ -626,7 +626,7 @@ class DataStore:
         """Search for any Geometry Type featuring this name"""
         return (
             self.session.query(self.db_classes.GeometryType)
-            .filter(self.db_classes.GeometryType.name == name)
+            .filter(func.lower(self.db_classes.GeometryType.name) == name.lower())
             .first()
         )
 
@@ -634,7 +634,7 @@ class DataStore:
         """Search for any Geometry Sub Type featuring this name and parent"""
         return (
             self.session.query(self.db_classes.GeometrySubType)
-            .filter(self.db_classes.GeometrySubType.name == name)
+            .filter(func.lower(self.db_classes.GeometrySubType.name) == name.lower())
             .filter(self.db_classes.GeometrySubType.parent == parent)
             .first()
         )
@@ -644,7 +644,7 @@ class DataStore:
         """Search for any privacy with this name"""
         return (
             self.session.query(self.db_classes.Privacy)
-            .filter(self.db_classes.Privacy.name == name)
+            .filter(func.lower(self.db_classes.Privacy.name) == name.lower())
             .first()
         )
 
@@ -664,7 +664,7 @@ class DataStore:
         synonym = (
             self.session.query(self.db_classes.Synonym)
             .filter(
-                self.db_classes.Synonym.synonym == name,
+                func.lower(self.db_classes.Synonym.synonym) == name.lower(),
                 self.db_classes.Synonym.table == table.__tablename__,
             )
             .first()
@@ -691,7 +691,7 @@ class DataStore:
 
         datafile = (
             self.session.query(self.db_classes.Datafile)
-            .filter(self.db_classes.Datafile.reference == datafile_name)
+            .filter(func.lower(self.db_classes.Datafile.reference) == datafile_name.lower())
             .first()
         )
         if datafile:
@@ -936,7 +936,7 @@ class DataStore:
         """Search for any comment type featuring this name"""
         return (
             self.session.query(self.db_classes.CommentType)
-            .filter(self.db_classes.CommentType.name == name)
+            .filter(func.lower(self.db_classes.CommentType.name) == name.lower())
             .first()
         )
 
