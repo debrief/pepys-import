@@ -1,6 +1,7 @@
 import unittest
 
 from pepys_import.file.highlighter.support.color_picker import (
+    DISTINCT_COLORS_30,
     color_for,
     html_color_for,
     mean_color_for,
@@ -28,6 +29,24 @@ class ColorTests(unittest.TestCase):
         color3 = color_for("aaa", color_dict)
         self.assertEqual(2, len(color_dict), "Should not have created new dict entry")
         self.assertEqual(color1, color3)
+
+    def test_lots_of_color_for_calls(self):
+        colors = []
+        color_dict = {}
+        for i in range(30):
+            colors.append(color_for(str(i), color_dict))
+
+        assert set(colors) == set(DISTINCT_COLORS_30)
+
+    def test_lots_of_color_for_calls_more_than_30(self):
+        colors = []
+        color_dict = {}
+        for i in range(40):
+            result = color_for(str(i), color_dict)
+            assert result
+            colors.append(result)
+
+        assert set(colors).issubset(set(DISTINCT_COLORS_30))
 
     def test_hex_conversion(self):
         red = (255, 0, 0)
