@@ -552,14 +552,12 @@ class DataStore:
         """Search for any platform with this name, nationality and identifier"""
         results = (
             self.session.query(self.db_classes.Platform)
+            .join(self.db_classes.Nationality)
             .filter(func.lower(self.db_classes.Platform.name) == lowercase_or_none(name))
             .filter(
                 func.lower(self.db_classes.Platform.identifier) == lowercase_or_none(identifier)
             )
-            .filter(
-                func.lower(self.db_classes.Platform.nationality_name)
-                == lowercase_or_none(nationality)
-            )
+            .filter(func.lower(self.db_classes.Nationality.name) == lowercase_or_none(nationality))
             .all()
         )
 
