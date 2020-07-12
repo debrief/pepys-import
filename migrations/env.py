@@ -6,7 +6,8 @@ from re import search
 
 from alembic import context
 from alembic.script import write_hooks
-from sqlalchemy import engine_from_config
+from geoalchemy2.types import Geometry
+from sqlalchemy import NUMERIC, Integer, engine_from_config
 from sqlalchemy.event import listen
 
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
@@ -92,6 +93,19 @@ def include_object_sqlite(object_, name, type_, reflected, compare_to):
         return False
     else:
         return True
+
+
+def special_compare_type(context, inspected_column, metadata_column, inspected_type, metadata_type):
+    # return False if the metadata_type is the same as the inspected_type
+    # or None to allow the default implementation to compare these
+    # types. a return value of True means the two types do not
+    # match and should result in a type change operation.
+    if (isinstance(inspected_type, NUMERIC) or isinstance(inspected_type, Integer)) and isinstance(
+        metadata_type, Geometry
+    ):
+        return False
+
+    return None
 
 
 def run_migrations_offline():
@@ -188,7 +202,7 @@ def run_migrations_online():
                 include_object=include_object_sqlite,
                 render_as_batch=True,
                 process_revision_directives=process_revision_directives,
-                compare_type=True,
+                compare_type=special_compare_type,
             )
             with context.begin_transaction():
                 context.run_migrations()
