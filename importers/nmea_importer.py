@@ -53,7 +53,7 @@ class NMEAImporter(Importer):
             # set it to None. Later we will set it to the returned value from the get_platform call
             # so that we don't have to ask about the platform again for each line in the file
             self.platform_name = None
-        tokens = line.tokens(line.CSV_DELIM, ",")
+        tokens = line.tokens(line.CSV_TOKENISER, ",")
 
         if len(tokens) > 1:
 
@@ -93,8 +93,8 @@ class NMEAImporter(Importer):
             ):
 
                 # and finally store it
-                platform = data_store.get_platform(
-                    platform_name=self.platform_name, change_id=change_id,
+                platform = self.get_cached_platform(
+                    data_store, self.platform_name, change_id=change_id
                 )
                 # Keep track of the platform name, so we don't have to ask for each line
                 self.platform_name = platform.name

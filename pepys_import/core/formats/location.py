@@ -82,7 +82,7 @@ class Location:
             self.errors.append(
                 {
                     self.error_type: f"Error in {lat_or_lon} degrees value {degrees}. "
-                    f"Must be between 0 and 90"
+                    f"Must be between {min_value} and {max_value}"
                 }
             )
 
@@ -106,7 +106,7 @@ class Location:
             self.errors.append(
                 {
                     self.error_type: f"Error in {lat_or_lon} minutes value {minutes}. "
-                    f"Must be between 0 and 90"
+                    f"Must be between 0 and 60"
                 }
             )
             return None, False
@@ -131,7 +131,7 @@ class Location:
             self.errors.append(
                 {
                     self.error_type: f"Error in {lat_or_lon} seconds value {seconds}. "
-                    f"Must be between 0 and 90"
+                    f"Must be between 0 and 60"
                 }
             )
             return None, False
@@ -337,3 +337,16 @@ class Location:
         longitude = f"{dms_values[3]:03g} {dms_values[4]:02g} {dms_values[5]:02g}"
         longitude_hemisphere = "E" if self.longitude >= 0 else "W"
         return f"{latitude} {latitude_hemisphere}\t{longitude} {longitude_hemisphere}"
+
+    @classmethod
+    def from_geometry(cls, geom):
+        if geom is not None:
+            loc = Location()
+            if isinstance(geom, str):
+                loc.set_from_wkt_string(geom)
+            else:
+                loc.set_from_wkb(geom.desc)
+
+            return loc
+        else:
+            return None

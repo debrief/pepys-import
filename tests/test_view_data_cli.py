@@ -54,9 +54,18 @@ class ViewDataCLITestCase(unittest.TestCase):
         output = temp_output.getvalue()
 
         assert "SELECT * FROM Datafiles;" in output
-        assert "| e_trac_bad.txt         | None | 5261 | 47e7c07157672a353a112ffbc033571d" in output
-        assert "| e_trac.txt             | None | 5315 | 577fad568cda2eb0b24178f5554f2b46" in output
-        assert "| NMEA_bad.log           | None |  243 | 8ddb840fee218872d2bb394cc654bdae" in output
+        assert (
+            "| e_trac_bad.txt              | None | 5261 | 47e7c07157672a353a112ffbc033571d"
+            in output
+        )
+        assert (
+            "| e_trac.txt                  | None | 5315 | 577fad568cda2eb0b24178f5554f2b46"
+            in output
+        )
+        assert (
+            "| NMEA_bad.log                | None |  243 | 8ddb840fee218872d2bb394cc654bdae"
+            in output
+        )
 
     def test_do_cancel(self):
         temp_output = StringIO()
@@ -67,7 +76,7 @@ class ViewDataCLITestCase(unittest.TestCase):
 
     def test_default(self):
         # Only cancel command (0) returns True, others return None
-        result = self.shell.default("0")
+        result = self.shell.default(".")
         assert result is True
 
         temp_output = StringIO()
@@ -77,7 +86,7 @@ class ViewDataCLITestCase(unittest.TestCase):
         assert "*** Unknown syntax: 123456789" in output
 
     def test_postcmd(self):
-        # postcmd method should print the menu again if the user didn't select cancel ("0")
+        # postcmd method should print the menu again if the user didn't select cancel (".")
         # Select view table
         temp_output = StringIO()
         with redirect_stdout(temp_output):

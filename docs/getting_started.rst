@@ -90,7 +90,7 @@ Now choose option :code:`(3) Export` and then option :code:`(2) Export by Platfo
 there is only one, so just press Enter. It will then give you a list of sensors and the periods they
 were active. Again there is only one, so just enter :code:`1` and press Enter. Press Enter to accept
 the default value for the output filename. You should then see a message saying :code:`Objects
-successfully exported to exported_GPX.rep.`. Exit Pepys Admin by choosing option :code:`(0) Exit`.
+successfully exported to exported_GPX.rep.`. Exit Pepys Admin by choosing option :code:`(.) Exit`.
 
 If you open the file :code:`exported_GPX.rep` in a text editor, you should see contents like the
 following (here we chose :code:`NELSON` as the name of the platform):

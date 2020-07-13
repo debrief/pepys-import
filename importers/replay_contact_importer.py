@@ -187,8 +187,8 @@ class ReplayContactImporter(Importer):
 
                 location = loc
 
-            platform = data_store.get_platform(
-                platform_name=vessel_name_token.text, change_id=change_id,
+            platform = self.get_cached_platform(
+                data_store, platform_name=vessel_name_token.text, change_id=change_id
             )
             vessel_name_token.record(self.name, "vessel name", vessel_name_token.text)
             sensor = platform.get_sensor(

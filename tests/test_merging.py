@@ -8,6 +8,7 @@ from io import StringIO
 from unittest.mock import patch
 
 import pytest
+from geoalchemy2.shape import to_shape
 from testing.postgresql import Postgresql
 
 from pepys_admin.merge import MergeDatabases
@@ -67,11 +68,18 @@ class TestSensorTypeMerge(unittest.TestCase):
             self.slave_store.add_to_platform_types("PlatformType1", change_id)
             self.slave_store.add_to_nationalities("UK", change_id)
             self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
-            self.slave_store.add_to_platforms(
+            platform = self.slave_store.add_to_platforms(
                 "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
             )
             self.slave_store.add_to_sensors(
-                "Sensor1", "ST_Shared_1", "Platform1", "Private", change_id
+                name="Sensor1",
+                sensor_type="ST_Shared_1",
+                host_id=platform.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
 
         self.merge_class = MergeDatabases(self.master_store, self.slave_store)
@@ -478,7 +486,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
             self.master_store.session.add_all([st_shared, pt_shared, nat_shared, priv_shared])
             self.master_store.session.commit()
 
-            self.master_store.add_to_platforms(
+            plat_master_1 = self.master_store.add_to_platforms(
                 "Platform_Master_1",
                 "123",
                 "UK",
@@ -486,7 +494,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
                 "Private",
                 change_id=change_id,
             )
-            self.master_store.add_to_platforms(
+            plat_shared_1 = self.master_store.add_to_platforms(
                 "Platform_Shared_1",
                 "234",
                 "UK",
@@ -496,23 +504,54 @@ class TestSensorPlatformMerge(unittest.TestCase):
             )
 
             self.master_store.add_to_sensors(
-                "Sensor_Master_1", "SensorType_Master_1", "Platform_Master_1", "Private", change_id
+                name="Sensor_Master_1",
+                sensor_type="SensorType_Master_1",
+                host_id=plat_master_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.master_store.add_to_sensors(
-                "Sensor_Master_2", "SensorType_Shared_1", "Platform_Master_1", "Private", change_id
+                name="Sensor_Master_2",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_master_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.master_store.add_to_sensors(
-                "Sensor_Master_3", "SensorType_Master_2", "Platform_Shared_1", "Private", change_id
+                name="Sensor_Master_3",
+                sensor_type="SensorType_Master_2",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.master_store.add_to_sensors(
-                "Sensor_Shared_1", "SensorType_Shared_1", "Platform_Shared_1", "Private", change_id
+                name="Sensor_Shared_1",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             sensor_shared = self.master_store.add_to_sensors(
-                "Sensor_Shared_2_GUIDSame",
-                "SensorType_Shared_1",
-                "Platform_Shared_1",
-                "Private",
-                change_id,
+                name="Sensor_Shared_2_GUIDSame",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             sensor_shared_guid = sensor_shared.sensor_id
 
@@ -543,7 +582,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
             self.slave_store.session.add_all([st_shared, pt_shared, nat_shared, priv_shared])
             self.slave_store.session.commit()
 
-            self.slave_store.add_to_platforms(
+            plat_slave_1 = self.slave_store.add_to_platforms(
                 "Platform_Slave_1",
                 "123",
                 "UK",
@@ -551,7 +590,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
                 "Private",
                 change_id=change_id,
             )
-            self.slave_store.add_to_platforms(
+            plat_shared_1 = self.slave_store.add_to_platforms(
                 "Platform_Shared_1",
                 "234",
                 "UK",
@@ -561,23 +600,54 @@ class TestSensorPlatformMerge(unittest.TestCase):
             )
 
             self.slave_store.add_to_sensors(
-                "Sensor_Slave_1", "SensorType_Slave_1", "Platform_Slave_1", "Private", change_id
+                name="Sensor_Slave_1",
+                sensor_type="SensorType_Slave_1",
+                host_id=plat_slave_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.slave_store.add_to_sensors(
-                "Sensor_Slave_2", "SensorType_Shared_1", "Platform_Slave_1", "Private", change_id
+                name="Sensor_Slave_2",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_slave_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.slave_store.add_to_sensors(
-                "Sensor_Slave_3", "SensorType_Slave_2", "Platform_Shared_1", "Private", change_id
+                name="Sensor_Slave_3",
+                sensor_type="SensorType_Slave_2",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.slave_store.add_to_sensors(
-                "Sensor_Shared_1", "SensorType_Shared_1", "Platform_Shared_1", "Private", change_id
+                name="Sensor_Shared_1",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             sensor_shared = self.slave_store.add_to_sensors(
-                "Sensor_Shared_2_GUIDSame",
-                "SensorType_Shared_1",
-                "Platform_Shared_1",
-                "Private",
-                change_id,
+                name="Sensor_Shared_2_GUIDSame",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             sensor_shared.sensor_id = sensor_shared_guid
 
@@ -1439,11 +1509,18 @@ class TestSynonymMergeWithRefTable(unittest.TestCase):
             self.slave_store.add_to_platform_types("PlatformType1", change_id)
             self.slave_store.add_to_nationalities("UK", change_id)
             self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
-            self.slave_store.add_to_platforms(
+            plat1 = self.slave_store.add_to_platforms(
                 "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
             )
             self.slave_store.add_to_sensors(
-                "Sensor1", "ST_Shared_1", "Platform1", "Private", change_id
+                name="Sensor1",
+                sensor_type="ST_Shared_1",
+                host_id=plat1.platform_id,
+                host_name=None,
+                host_nationality=None,
+                host_identifier=None,
+                privacy="Private",
+                change_id=change_id,
             )
 
             self.slave_store.add_to_synonyms(
@@ -2548,6 +2625,91 @@ class TestExportDoNothingAndMerge(unittest.TestCase):
 
         # Check entries added list
         assert "No entries added" in output
+
+
+class TestGeometryMerge(unittest.TestCase):
+    def setUp(self):
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
+
+        self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
+        self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
+
+        self.master_store.initialise()
+        self.slave_store.initialise()
+
+        with self.master_store.session_scope():
+            change_id = self.master_store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
+
+        with self.slave_store.session_scope():
+            change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+            self.slave_store.add_to_privacies("Public", level=0, change_id=change_id)
+            self.slave_store.add_to_datafile_types("TestDFT", change_id=change_id)
+            geom_type_obj = self.slave_store.add_to_geometry_types(
+                "TestGeomType", change_id=change_id
+            )
+            geom_sub_type_id = self.slave_store.add_to_geometry_sub_types(
+                "TestGeomSubType", parent_name=geom_type_obj.name, change_id=change_id
+            ).geo_sub_type_id
+            datafile = self.slave_store.add_to_datafiles(
+                "Public",
+                "TestDFT",
+                reference="TestDatafile",
+                file_hash="HASH",
+                file_size=100,
+                change_id=change_id,
+            )
+            datafile.measurements["TestParser"] = {}
+            datafile.create_geometry(
+                self.slave_store,
+                "SRID=4326;POINT (-1.5 50.5)",
+                geom_type_obj.geo_type_id,
+                geom_sub_type_id,
+                "TestParser",
+            )
+            datafile.create_geometry(
+                self.slave_store,
+                "SRID=4326;LINESTRING (-1 0, -2 0, -3 1)",
+                geom_type_obj.geo_type_id,
+                geom_sub_type_id,
+                "TestParser",
+            )
+            datafile.commit(self.slave_store, change_id=change_id)
+
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
+    def tearDown(self):
+        # if os.path.exists("master.sqlite"):
+        #     os.remove("master.sqlite")
+
+        # if os.path.exists("slave.sqlite"):
+        #     os.remove("slave.sqlite")
+        pass
+
+    def test_geometry_merge(self):
+        # Do the merge
+        self.merge_class.merge_all_tables()
+
+        with self.master_store.session_scope():
+            master_geoms = self.master_store.session.query(
+                self.master_store.db_classes.Geometry1
+            ).all()
+
+            assert len(master_geoms) == 2
+
+            assert master_geoms[0].geometry is not None
+            assert master_geoms[1].geometry is not None
+
+            shapely_geom = to_shape(master_geoms[0].geometry)
+            assert shapely_geom.wkt == "POINT (-1.5 50.5)"
+
+            shapely_geom = to_shape(master_geoms[1].geometry)
+            assert shapely_geom.wkt == "LINESTRING (-1 0, -2 0, -3 1)"
 
 
 if __name__ == "__main__":

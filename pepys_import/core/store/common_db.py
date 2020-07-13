@@ -124,35 +124,6 @@ class SensorMixin:
 
         return None
 
-    @classmethod
-    def add_to_sensors(
-        cls, data_store, name, sensor_type, host, privacy_id, change_id, host_id=None
-    ):
-        session = data_store.session
-        sensor_type = data_store.search_sensor_type(sensor_type)
-        # Temporary fix for #399, until #362 is fixed
-        # This allows us to pass a host_id to this function. If it's passed, then
-        # we use this ID for the platform that hosts this sensor. If it isn't
-        # passed, then we look up the host_id from the name given in the `host` argument
-        # (If you pass `host_id` then just set `host` to None)
-        if host_id is None:
-            host = data_store.db_classes.Platform().search_platform(data_store, host)
-            host_id = host.platform_id
-
-        sensor_obj = data_store.db_classes.Sensor(
-            name=name,
-            sensor_type_id=sensor_type.sensor_type_id,
-            privacy_id=privacy_id,
-            host=host_id,
-        )
-        session.add(sensor_obj)
-        session.flush()
-
-        data_store.add_to_logs(
-            table=constants.SENSOR, row_id=sensor_obj.sensor_id, change_id=change_id
-        )
-        return sensor_obj
-
 
 class PlatformMixin:
     @declared_attr
@@ -182,12 +153,6 @@ class PlatformMixin:
     @declared_attr
     def privacy_name(self):
         return association_proxy("privacy", "name")
-
-    @classmethod
-    def search_platform(cls, data_store, name):
-        # search for any platform with this name
-        Platform = data_store.db_classes.Platform
-        return data_store.session.query(Platform).filter(Platform.name == name).first()
 
     def get_sensor(
         self, data_store, sensor_name=None, sensor_type=None, privacy=None, change_id=None,
@@ -235,13 +200,14 @@ class PlatformMixin:
             privacy_obj, data_store.db_classes.Privacy
         ), "Type error for Privacy entity"
 
-        return Sensor().add_to_sensors(
-            data_store=data_store,
+        return data_store.add_to_sensors(
             name=sensor_name,
             sensor_type=sensor_type_obj.name,
-            host=None,
+            host_name=None,
+            host_nationality=None,
+            host_identifier=None,
             host_id=self.platform_id,
-            privacy_id=privacy_obj.privacy_id,
+            privacy=privacy_obj.name,
             change_id=change_id,
         )
 
@@ -400,12 +366,36 @@ class DatafileMixin:
         self.add_measurement_to_dict(comment, parser_name)
         return comment
 
-    def add_measurement_to_dict(self, measurement, parser_name):
-        # Cache objects according to their platform
-        if measurement.platform_name not in self.measurements[parser_name]:
-            self.measurements[parser_name][measurement.platform_name] = list()
+    def create_geometry(self, data_store, geom, geom_type_id, geom_sub_type_id, parser_name):
+        geometry = data_store.db_classes.Geometry1(
+            geometry=geom,
+            source_id=self.datafile_id,
+            geo_type_id=geom_type_id,
+            geo_sub_type_id=geom_sub_type_id,
+        )
+        self.add_measurement_to_dict(geometry, parser_name)
+        return geometry
 
-        self.measurements[parser_name][measurement.platform_name].append(measurement)
+    def create_activation(self, data_store, sensor, start, end, parser_name):
+        activation = data_store.db_classes.Activation(
+            sensor_id=sensor.sensor_id, start=start, end=end, source_id=self.datafile_id,
+        )
+        self.add_measurement_to_dict(activation, parser_name)
+        return activation
+
+    def add_measurement_to_dict(self, measurement, parser_name):
+        try:
+            platform_id = measurement.platform_id
+        except AttributeError:
+            # Platform ID doesn't exist for Geometry1 objects, so
+            # use a platform of 'N/A'
+            platform_id = "N/A"
+
+        # Cache objects according to their platform
+        if platform_id not in self.measurements[parser_name]:
+            self.measurements[parser_name][platform_id] = list()
+
+        self.measurements[parser_name][platform_id].append(measurement)
 
     def validate(
         self, validation_level=validation_constants.NONE_LEVEL, errors=None, parser="Default",
@@ -533,6 +523,10 @@ class StateMixin:
     @declared_attr
     def sensor_name(self):
         return association_proxy("sensor", "name")
+
+    @declared_attr
+    def platform_id(self):
+        return association_proxy("sensor", "host")
 
     @declared_attr
     def source(self):
@@ -669,6 +663,10 @@ class ContactMixin:
     @declared_attr
     def sensor_name(self):
         return association_proxy("sensor", "name")
+
+    @declared_attr
+    def platform_id(self):
+        return association_proxy("sensor", "host")
 
     @declared_attr
     def subject(self):
@@ -1107,6 +1105,10 @@ class CommentMixin:
         return association_proxy("platform", "name")
 
     @declared_attr
+    def platform_id(self):
+        return association_proxy("platform", "platform_id")
+
+    @declared_attr
     def comment_type(self):
         return relationship(
             "CommentType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
@@ -1134,9 +1136,30 @@ class CommentMixin:
 
 
 class GeometryMixin:
+    @hybrid_property
+    def geometry(self):
+        return self._geometry
+
+    @geometry.setter
+    def geometry(self, geom):
+        if geom is None:
+            self._geometry = None
+            return
+
+        # If we're given a Location object then convert it to WKT and set it
+        # otherwise just pass through whatever we've been given
+        if isinstance(geom, Location):
+            self._geometry = geom.to_wkt()
+        else:
+            self._geometry = geom
+
+    @geometry.expression
+    def geometry(self):
+        return self._geometry
+
     @declared_attr
     def task(self):
-        return relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Task", lazy="joined", join_depth=1, uselist=False)
 
     # @declared_attr
     # def task_name(self):
@@ -1148,7 +1171,6 @@ class GeometryMixin:
             "Platform",
             lazy="joined",
             join_depth=1,
-            innerjoin=True,
             uselist=False,
             foreign_keys="Geometry1.subject_platform_id",
         )
@@ -1163,7 +1185,6 @@ class GeometryMixin:
             "Platform",
             lazy="joined",
             join_depth=1,
-            innerjoin=True,
             uselist=False,
             foreign_keys="Geometry1.sensor_platform_id",
         )
@@ -1240,6 +1261,10 @@ class MediaMixin:
     @declared_attr
     def platform_name(self):
         return association_proxy("platform", "name")
+
+    @declared_attr
+    def platform_id(self):
+        return association_proxy("platform", "platform_id")
 
     @declared_attr
     def subject(self):

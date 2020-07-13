@@ -1,0 +1,7 @@
+synonym,WRONG_HEADER,target_name
+PLATFORM-1-Synonym,Platforms,PLATFORM-1
+PLATFORM-1-Synonym2,Platforms,PLATFORM-1
+PLATFORM-2-Synonym,Platforms,PLATFORM-2
+PLATFORM-Duplicated-Synonym,Platforms,PLATFORM-DuplicatedName
+
+

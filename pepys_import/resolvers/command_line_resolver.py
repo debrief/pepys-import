@@ -97,26 +97,51 @@ class CommandLineResolver(DataResolver):
     def resolve_platform(
         self, data_store, platform_name, platform_type, nationality, privacy, change_id
     ):
-        options = [f"Search for existing platform", f"Add a new platform"]
+        platform_details = []
+        final_options = [f"Search for existing platform", f"Add a new platform"]
         if platform_name:
-            options[1] += f", default name '{platform_name}'"
-        choice = create_menu(
-            f"Platform '{platform_name}' not found. Do you wish to: ",
-            options,
-            validate_method=is_valid,
-        )
+            # If we've got a platform_name, then we can search for all platforms
+            # with this name, and present a list to the user to choose from,
+            # alongside the options to search for an existing platform and add
+            # a new platform
 
-        if choice == str(1):
+            # The order-by clause is important, to get the same ordering of
+            # options on different platforms/db backends, so that our tests work
+            platforms = (
+                data_store.session.query(data_store.db_classes.Platform)
+                .join(data_store.db_classes.Nationality)
+                .filter(data_store.db_classes.Platform.name == platform_name)
+                .order_by(
+                    data_store.db_classes.Platform.identifier.asc(),
+                    data_store.db_classes.Nationality.priority.asc(),
+                    data_store.db_classes.Nationality.name.asc(),
+                )
+                .all()
+            )
+            for platform in platforms:
+                platform_details.append(
+                    f"{platform.name} / {platform.identifier} / {platform.nationality_name}"
+                )
+            final_options[1] += f", default name '{platform_name}'"
+        choices = platform_details + final_options
+        choice = create_menu(
+            f"Select a platform entry for {platform_name}:", choices, validate_method=is_valid,
+        )
+        if choice == ".":
+            print("Quitting")
+            sys.exit(1)
+        if int(choice) <= len(platform_details):
+            # One of the pre-existing platforms was chosen
+            platform_index = int(choice) - 1
+            return platforms[platform_index]
+        elif choice == str(len(choices) - 1):
             return self.fuzzy_search_platform(
                 data_store, platform_name, platform_type, nationality, privacy, change_id,
             )
-        elif choice == str(2):
+        elif choice == str(len(choices)):
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy, change_id,
             )
-        elif choice == ".":
-            print("Quitting")
-            sys.exit(1)
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
         Platform = data_store.db_classes.Platform
@@ -356,11 +381,17 @@ class CommandLineResolver(DataResolver):
         completer = list()
         platforms = data_store.session.query(data_store.db_classes.Platform).all()
         for platform in platforms:
-            completer.append(platform.name)
+            completer.append(
+                f"{platform.name} / {platform.identifier} / {platform.nationality_name}"
+            )
             if platform.trigraph:
-                completer.append(platform.trigraph)
+                completer.append(
+                    f"{platform.trigraph} / {platform.identifier} / {platform.nationality_name}"
+                )
             if platform.quadgraph:
-                completer.append(platform.quadgraph)
+                completer.append(
+                    f"{platform.quadgraph} / {platform.identifier} / {platform.nationality_name}"
+                )
         choice = create_menu(
             "Please start typing to show suggested values",
             cancel="platform search",
@@ -368,23 +399,29 @@ class CommandLineResolver(DataResolver):
             completer=FuzzyWordCompleter(completer),
         )
         if choice in completer:
+            # Extract the platform details from the string
+            name_or_xgraph, identifier, nationality = choice.split(" / ")
             # Get the platform from the database
             platform = (
                 data_store.session.query(data_store.db_classes.Platform)
                 .filter(
                     or_(
-                        data_store.db_classes.Platform.name == choice,
-                        data_store.db_classes.Platform.trigraph == choice,
-                        data_store.db_classes.Platform.quadgraph == choice,
+                        data_store.db_classes.Platform.name == name_or_xgraph,
+                        data_store.db_classes.Platform.trigraph == name_or_xgraph,
+                        data_store.db_classes.Platform.quadgraph == name_or_xgraph,
                     )
                 )
+                .filter(data_store.db_classes.Platform.identifier == identifier)
+                .filter(data_store.db_classes.Platform.nationality_name == nationality)
                 .first()
             )
             # If we've been given a platform name, then we might want to link
             # that platform name to the one we've picked, as a synonym
             if platform_name:
                 new_choice = create_menu(
-                    f"Do you wish to keep {platform_name} as synonym for {choice}?",
+                    f"Do you wish to keep {platform_name} as synonym for {choice}?\n"
+                    f"Warning: this should only be done when {platform_name} is a completely unique identifier for this platform\n"
+                    f"not a name that could be shared across platforms of different nationalities",
                     ["Yes", "No"],
                     validate_method=is_valid,
                 )
@@ -396,9 +433,7 @@ class CommandLineResolver(DataResolver):
                     print(f"'{platform_name}' added to Synonyms!")
                     return platform
                 elif new_choice == str(2):
-                    return self.add_to_platforms(
-                        data_store, platform_name, platform_type, nationality, privacy, change_id,
-                    )
+                    return platform
                 elif new_choice == ".":
                     print("-" * 61, "\nReturning to the previous menu\n")
                     return self.fuzzy_search_platform(
@@ -411,7 +446,7 @@ class CommandLineResolver(DataResolver):
                 data_store, platform_name, nationality, platform_type, privacy, change_id,
             )
         elif choice not in completer:
-            print(f"'{choice}' could not found! Redirecting to adding a new platform..")
+            print(f"'{choice}' could not be found! Redirecting to adding a new platform..")
             return self.add_to_platforms(
                 data_store, choice, platform_type, nationality, privacy, change_id
             )
@@ -456,7 +491,7 @@ class CommandLineResolver(DataResolver):
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
         elif choice not in completer:
-            print(f"'{choice}' could not found! Redirecting to adding a new sensor..")
+            print(f"'{choice}' could not be found! Redirecting to adding a new sensor..")
             return self.add_to_sensors(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )

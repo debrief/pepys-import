@@ -309,13 +309,14 @@ class PlatformTestCase(unittest.TestCase):
         """Test whether entered platform name is added as a synonym or not"""
 
         # Search "PLATFORM-1"->Select "Yes"
-        menu_prompt.side_effect = ["PLATFORM-1", "1"]
+        menu_prompt.side_effect = ["PLATFORM-1 / 123 / UK", "1"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
-            platform = self.store.get_platform(
-                platform_name="PLATFORM-1",
+
+            platform = self.store.add_to_platforms(
+                "PLATFORM-1",
                 identifier="123",
                 nationality=nationality.name,
                 platform_type=platform_type.name,
@@ -340,13 +341,13 @@ class PlatformTestCase(unittest.TestCase):
         """Test whether a new platform entity is created or not"""
 
         # Search "PLATFORM-1"->Select "No"->Type name/trigraph/quadgraph/idedntification->Select "Yes"
-        menu_prompt.side_effect = ["PLATFORM-1", "2", "1"]
+        menu_prompt.side_effect = ["TEST", "1"]
         resolver_prompt.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
-            self.store.get_platform(
+            self.store.add_to_platforms(
                 "PLATFORM-1",
                 trigraph="PL1",
                 quadgraph="PLT1",
@@ -378,6 +379,47 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(trigraph, "TST")
             self.assertEqual(quadgraph, "TEST")
             self.assertEqual(identifier, "123")
+
+    @patch("pepys_import.resolvers.command_line_input.prompt")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolve_platform_select_existing_platform(self, resolver_prompt, menu_prompt):
+        """Test whether a new platform entity is created or not"""
+
+        menu_prompt.side_effect = ["1"]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id)
+            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            uk_nat = self.store.add_to_nationalities("UK", priority=1, change_id=self.change_id)
+            fr_nat = self.store.add_to_nationalities("France", priority=2, change_id=self.change_id)
+            self.store.add_to_platforms(
+                "PLATFORM-1",
+                trigraph="PL1",
+                quadgraph="PLT1",
+                identifier="123",
+                nationality=uk_nat.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+                change_id=self.change_id,
+            )
+
+            self.store.add_to_platforms(
+                "PLATFORM-1",
+                trigraph="PL1",
+                quadgraph="PLT1",
+                identifier="123",
+                nationality=fr_nat.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+                change_id=self.change_id,
+            )
+
+            resolved_platform = self.resolver.resolve_platform(
+                self.store, "PLATFORM-1", "", "", "", change_id=self.change_id,
+            )
+
+            assert resolved_platform.name == "PLATFORM-1"
+            assert resolved_platform.nationality_name == "UK"
+            assert resolved_platform.identifier == "123"
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
@@ -1051,17 +1093,17 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         """Test whether "." returns to resolve platform"""
 
         # Search "PLATFORM-1"->Select "."->Select "."->Select "."
-        menu_prompt.side_effect = ["PLATFORM-1", ".", ".", "."]
+        menu_prompt.side_effect = [".", ".", "."]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
-            self.store.get_platform(
-                platform_name="PLATFORM-1",
-                identifier="123",
-                nationality=nationality.name,
-                platform_type=platform_type.name,
-                privacy=privacy.name,
+            self.store.add_to_platforms(
+                "PLATFORM-1",
+                "123",
+                nationality.name,
+                platform_type.name,
+                privacy.name,
                 change_id=self.change_id,
             )
             with self.assertRaises(SystemExit):
@@ -1287,7 +1329,12 @@ class GetMethodsTestCase(unittest.TestCase):
             # there must be 2 entities at the beginning
             self.assertEqual(len(sensors), 2)
 
-            platform = self.store.get_platform("PLATFORM-1", change_id=self.change_id)
+            platform = self.store.get_platform(
+                platform_name="PLATFORM-1",
+                identifier="123",
+                nationality="United Kingdom",
+                change_id=self.change_id,
+            )
             platform.get_sensor(self.store, "SENSOR-TEST", change_id=self.change_id)
 
             # there must be 3 entities now

@@ -72,7 +72,7 @@ class MissingFieldsTestCase(unittest.TestCase):
             )
 
     def test_missing_fields_for_add_to_sensors(self):
-        self.store.add_to_platforms(
+        plat_id = self.store.add_to_platforms(
             name="TestPlatform",
             nationality="United Kingdom",
             platform_type="PLATFORM-TYPE-1",
@@ -81,14 +81,17 @@ class MissingFieldsTestCase(unittest.TestCase):
             quadgraph="TPLT",
             identifier="123",
             change_id=self.change_id,
-        )
+        ).platform_id
 
         with self.store.session_scope():
             with pytest.raises(MissingDataException):
                 self.store.add_to_sensors(
                     name="TestSensor",
                     sensor_type="MissingSensorType",
-                    host="TestPlatform",
+                    host_name=None,
+                    host_identifier=None,
+                    host_nationality=None,
+                    host_id=plat_id,
                     privacy="Public",
                     change_id=self.change_id,
                 )
@@ -97,7 +100,9 @@ class MissingFieldsTestCase(unittest.TestCase):
                 self.store.add_to_sensors(
                     name="TestSensor",
                     sensor_type="GPS",
-                    host="MissingPlatform",
+                    host_name="MissingPlatform",
+                    host_identifier="123",
+                    host_nationality="UK",
                     privacy="Public",
                     change_id=self.change_id,
                 )
@@ -106,7 +111,10 @@ class MissingFieldsTestCase(unittest.TestCase):
                 self.store.add_to_sensors(
                     name="TestSensor",
                     sensor_type="GPS",
-                    host="TestPlatform",
+                    host_name=None,
+                    host_identifier=None,
+                    host_nationality=None,
+                    host_id=plat_id,
                     privacy="MissingPrivacy",
                     change_id=self.change_id,
                 )
@@ -115,7 +123,10 @@ class MissingFieldsTestCase(unittest.TestCase):
             self.store.add_to_sensors(
                 name="TestSensor",
                 sensor_type="GPS",
-                host="TestPlatform",
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                host_id=plat_id,
                 privacy="Public",
                 change_id=self.change_id,
             )
