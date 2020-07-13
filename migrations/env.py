@@ -245,26 +245,7 @@ from sqlalchemy.orm import (  # used to defer fetching attributes unless it's sp
 )
 
 from pepys_import.core.store import constants
-from pepys_import.core.store.common_db import (
-    ActivationMixin,
-    CommentMixin,
-    ContactMixin,
-    DatafileMixin,
-    ElevationPropertyMixin,
-    GeometryMixin,
-    HostedByMixin,
-    LocationPropertyMixin,
-    LogMixin,
-    LogsHoldingMixin,
-    MediaMixin,
-    ParticipantMixin,
-    PlatformMixin,
-    ReferenceRepr,
-    SensorMixin,
-    StateMixin,
-    TaggedItemMixin,
-    TaskMixin,
-)
+from pepys_import.core.store.common_db import *
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.store.db_base import sqlite_naming_convention
 from pepys_import.utils.sqlalchemy_utils import UUIDType
@@ -301,6 +282,10 @@ BaseSpatiaLite = declarative_base(metadata=Metadata)
 
         # Merge all import text and the string of the classes in the set
         class_to_include = "\n\n".join(class_to_include)
+        # Add spatial_index=False parameter to prevent redundant index tables
+        class_to_include = class_to_include.replace(
+            "management=True", "management=True, spatial_index=False"
+        )
         text += f"\n\n{class_to_include}\n\n"
         # Insert the merged text and overwrite the file
         lines.insert(10, text)
