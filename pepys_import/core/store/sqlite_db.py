@@ -661,7 +661,7 @@ class Comment(BaseSpatiaLite, CommentMixin):
         UUIDType, ForeignKey("CommentTypes.comment_type_id", onupdate="cascade"), nullable=False
     )
     content = Column(
-        Text, CheckConstraint("content <> ''", name="ck_Comment_content"), nullable=False
+        Text, CheckConstraint("content <> ''", name="ck_Comments_content"), nullable=False
     )
     source_id = Column(
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
