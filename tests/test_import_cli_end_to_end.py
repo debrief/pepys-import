@@ -151,8 +151,8 @@ def create_menu_patch(*args, **kwargs):
         response_explanation = choices[random_choice - 1]
         print(f"Response: {response} [{response_explanation}]")
     else:
-        if "completer" in kwargs and len(kwargs["completer"].words) > 0:
-            response = random.choice(kwargs["completer"].words)
+        if "completer" in kwargs and len(kwargs["completer"].completer.words) > 0:
+            response = random.choice(kwargs["completer"].completer.words)
         else:
             response = random.choice(FALLBACK_RESPONSES)
         print(f"Response: {response}")
