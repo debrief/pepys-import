@@ -36,18 +36,6 @@ DISTINCT_COLORS_30 = [
     (135, 206, 250),
 ]
 
-
-def random_color():
-    hue = random.random()
-    sat = 0.9 + random.random() * 0.1
-    rgb = colorsys.hsv_to_rgb(hue, sat, 0.9)
-    r = int(rgb[0] * 255)
-    g = int(rgb[1] * 255)
-    b = int(rgb[2] * 255)
-    new_col = (r, g, b)
-    return new_col
-
-
 # This creates an iterator which iterates over the list of distinct colours,
 # looping around as necessary
 COLORS = itertools.cycle(DISTINCT_COLORS_30)
