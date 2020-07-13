@@ -2,12 +2,11 @@ import re
 import sys
 
 from prompt_toolkit import prompt
-from prompt_toolkit.completion import FuzzyWordCompleter
 from sqlalchemy import desc, or_
 from tabulate import tabulate
 
 from pepys_import.core.store import constants
-from pepys_import.resolvers.command_line_input import create_menu, is_valid
+from pepys_import.resolvers.command_line_input import create_menu, get_fuzzy_completer, is_valid
 from pepys_import.resolvers.data_resolver import DataResolver
 
 
@@ -317,7 +316,7 @@ class CommandLineResolver(DataResolver):
             "Please start typing to show suggested values",
             cancel=f"{text_name} search",
             choices=[],
-            completer=FuzzyWordCompleter(completer),
+            completer=get_fuzzy_completer(completer),
         )
         if choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
@@ -396,7 +395,7 @@ class CommandLineResolver(DataResolver):
             "Please start typing to show suggested values",
             cancel="platform search",
             choices=[],
-            completer=FuzzyWordCompleter(completer),
+            completer=get_fuzzy_completer(completer),
         )
         if choice in completer:
             # Extract the platform details from the string
@@ -483,7 +482,7 @@ class CommandLineResolver(DataResolver):
             "Please start typing to show suggested values",
             cancel="sensor search",
             choices=[],
-            completer=FuzzyWordCompleter(completer),
+            completer=get_fuzzy_completer(completer),
         )
         if choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
