@@ -32,10 +32,11 @@ class ViewDataCLITestCase(unittest.TestCase):
         output = temp_output.getvalue()
         print(output)
         assert "Datafiles\n" in output
-        assert "| datafile_type_name   | reference              | url   |\n" in output
-        assert "| E-Trac               | e_trac_bad.txt         | None  |\n" in output
-        assert "| E-Trac               | e_trac.txt             | None  |\n" in output
-        assert "| NMEA                 | NMEA_bad.log           | None  |" in output
+        assert "| datafile_type_name   | reference                   | url   |\n" in output
+        assert "| E-Trac               | e_trac_bad.txt              | None  |\n" in output
+        assert "| E-Trac               | e_trac.txt                  | None  |\n" in output
+        assert "| EAG                  | 20200305_ROBIN.eag.txt      | None  |" in output
+        assert "| NMEA                 | NMEA_bad.log                | None  |" in output
 
     @patch("pepys_admin.view_data_cli.iterfzf", return_value="alembic_version")
     def test_do_view_table_alembic_version(self, patched_input):
