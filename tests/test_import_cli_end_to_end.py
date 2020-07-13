@@ -67,7 +67,35 @@ def clr_prompt_patch(*args, **kwargs):
         return response
 
 
-class TestClass:
+class EndToEndAutomatonTestClass:
+    """
+    These tests use an 'automaton' to do end-to-end testing of the import command-line interface.
+    This automaton gives reasonable answers to each question asked by the command-line resolver:
+    either choosing from the list, where a list or auto-completion list is given, or giving one of a
+    predefined set of answers.
+
+    This means, whenever the test is run, the interface is 'exercised' with a load of potential
+    interactions, which can flush out various bugs. The tests use randomness in choosing which
+    answers to give, so are run ten times each to get a reasonable coverage, and I have implemented
+    tests for importing a REP file and a Nisida file. If the test fails then the output that will be
+    shown includes the random seed used to run the test, so it can be recreated for testing
+    purposes. A lot of the interactions 'go round in circles' a bit, as it gives invalid input, so
+    the question is asked again, and again, until it randomly picks a valid input. Still, that is a
+    good test of our invalid input handling code! Basically, if the CLI can deal with this automaton
+    hammering it with crazy stuff, then it should be able to deal with a real human operating it
+    sensibly!
+
+    This is a relatively naive automaton at the moment, and doesn't do absolutely everything that is
+    possible in the GUI, but it has already brought a number of bugs to my attention. These bugs are
+    mostly around checking input from the user more carefully to deal with empty input, input that
+    is too long, input that isn't properly parsed etc. The actual results of the import are not
+    checked: if the CLI doesn't fail with an exception then the test passes.
+
+    **Note:** There is a possibility that these tests will randomly fail when *something else* in the
+    repo has been changed. This does not mean that your other change caused these tests to fail: it could
+    be just the randomness in the automaton finding a bug that hasn't been found before.
+    """
+
     def setup_method(self, test_method):
         self.postgres = None
         self.store = None
@@ -104,7 +132,7 @@ class TestClass:
     @patch("pepys_import.resolvers.command_line_resolver.create_menu", new=create_menu_patch)
     @patch("pepys_import.resolvers.command_line_resolver.prompt", new=clr_prompt_patch)
     @pytest.mark.parametrize("execution_number", range(10))  # Used to just repeat the test 5 times
-    def test_load_rep1(self, execution_number):
+    def test_automaton_load_rep1(self, execution_number):
         seed = random.randint(0, 10000)
         print("---- Starting end-to-end automaton test")
         print(f"Running with seed = {seed}")
@@ -124,7 +152,7 @@ class TestClass:
     @patch("pepys_import.resolvers.command_line_resolver.create_menu", new=create_menu_patch)
     @patch("pepys_import.resolvers.command_line_resolver.prompt", new=clr_prompt_patch)
     @pytest.mark.parametrize("execution_number", range(10))  # Used to just repeat the test 5 times
-    def test_load_nisida(self, execution_number):
+    def test_automaton_load_nisida(self, execution_number):
         seed = random.randint(0, 10000)
         print("---- Starting end-to-end automaton test")
         print(f"Running with seed = {seed}")
