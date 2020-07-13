@@ -100,9 +100,10 @@ class TestClass:
         except AttributeError:
             return
 
+    @pytest.mark.automaton
     @patch("pepys_import.resolvers.command_line_resolver.create_menu", new=create_menu_patch)
     @patch("pepys_import.resolvers.command_line_resolver.prompt", new=clr_prompt_patch)
-    @pytest.mark.parametrize("execution_number", range(5))  # Used to just repeat the test 5 times
+    @pytest.mark.parametrize("execution_number", range(10))  # Used to just repeat the test 5 times
     def test_load_rep1(self, execution_number):
         seed = random.randint(0, 10000)
         print("---- Starting end-to-end automaton test")
@@ -119,9 +120,10 @@ class TestClass:
         )
         print("---- End of end-to-end autmaton test")
 
+    @pytest.mark.automaton
     @patch("pepys_import.resolvers.command_line_resolver.create_menu", new=create_menu_patch)
     @patch("pepys_import.resolvers.command_line_resolver.prompt", new=clr_prompt_patch)
-    @pytest.mark.parametrize("execution_number", range(5))  # Used to just repeat the test 5 times
+    @pytest.mark.parametrize("execution_number", range(10))  # Used to just repeat the test 5 times
     def test_load_nisida(self, execution_number):
         seed = random.randint(0, 10000)
         print("---- Starting end-to-end automaton test")
