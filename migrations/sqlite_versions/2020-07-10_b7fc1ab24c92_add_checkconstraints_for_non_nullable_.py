@@ -8,37 +8,23 @@ Create Date: 2020-07-10 13:24:56.007611
 from datetime import datetime
 from uuid import uuid4
 
-import geoalchemy2
-import sqlalchemy as sa
 from alembic import op
 from geoalchemy2 import Geometry
-from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, MetaData, String, Text
+from sqlalchemy import DATE, Column, DateTime, ForeignKey, Integer, MetaData, String, Text
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import deferred
 from sqlalchemy.sql.schema import CheckConstraint, UniqueConstraint
 
-import pepys_import
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
-    ActivationMixin,
     CommentMixin,
-    ContactMixin,
-    DatafileMixin,
     ElevationPropertyMixin,
-    GeometryMixin,
-    HostedByMixin,
     LocationPropertyMixin,
     LogMixin,
-    LogsHoldingMixin,
     MediaMixin,
-    ParticipantMixin,
-    PlatformMixin,
     ReferenceRepr,
-    SensorMixin,
-    StateMixin,
     SynonymMixin,
-    TaggedItemMixin,
     TaskMixin,
 )
 from pepys_import.core.store.db_base import sqlite_naming_convention
