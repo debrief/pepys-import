@@ -262,17 +262,22 @@ class FileProcessor:
                     privacy = importer.default_privacy
                     break
 
+            # We assume that good importers will have the same datafile-type values at the moment.
+            # That's why we can create a datafile using the first importer's datafile_type.
+            # They don't have different datafile-type values, but if necessary, we might iterate over
+            # good importers and find a composite datafile-type.
+            datafile = data_store.get_datafile(
+                basename,
+                good_importers[0].datafile_type,
+                file_size,
+                file_hash,
+                change.change_id,
+                privacy=privacy,
+            )
+
             # Run all parsers
             for importer in good_importers:
                 processed_ctr += 1
-                datafile = data_store.get_datafile(
-                    basename,
-                    importer.datafile_type,
-                    file_size,
-                    file_hash,
-                    change.change_id,
-                    privacy=privacy,
-                )
                 importer.load_this_file(
                     data_store, full_path, highlighted_file, datafile, change.change_id
                 )
