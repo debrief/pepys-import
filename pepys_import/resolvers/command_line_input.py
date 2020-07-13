@@ -1,5 +1,10 @@
 from prompt_toolkit import prompt
+from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 from prompt_toolkit.validation import Validator
+
+
+def get_fuzzy_completer(completer_list):
+    return FuzzyCompleter(WordCompleter(completer_list), pattern="^[a-zA-Z0-9_ ]*")
 
 
 def is_valid(option):
