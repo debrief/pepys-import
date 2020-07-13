@@ -2,12 +2,22 @@ import re
 import sys
 
 from prompt_toolkit import prompt
-from sqlalchemy import desc, or_
+from prompt_toolkit.validation import Validator
+from sqlalchemy import or_
 from tabulate import tabulate
 
 from pepys_import.core.store import constants
 from pepys_import.resolvers.command_line_input import create_menu, get_fuzzy_completer, is_valid
 from pepys_import.resolvers.data_resolver import DataResolver
+
+
+def is_number(text):
+    return text.isdigit()
+
+
+numeric_validator = Validator.from_callable(
+    is_number, error_message="This input contains non-numeric characters", move_cursor_to_end=True
+)
 
 
 class CommandLineResolver(DataResolver):
@@ -31,10 +41,17 @@ class CommandLineResolver(DataResolver):
         """
         print("Ok, adding new datafile.")
 
-        datafile_name = prompt("Please enter a name: ", default=datafile_name)
+        datafile_name = prompt("Please enter a name: ", default=datafile_name).strip()
 
         if datafile_name == "":
-            print("You must provide a datafile name")
+            print("You must provide a datafile name. Restarting data file entry.")
+            return self.resolve_datafile(
+                data_store, datafile_name, datafile_type, privacy, change_id
+            )
+        if len(datafile_name) > 150:
+            print(
+                "Datafile name too long, maximum length 150 characters. Restarting data file entry."
+            )
             return self.resolve_datafile(
                 data_store, datafile_name, datafile_type, privacy, change_id
             )
@@ -59,7 +76,10 @@ class CommandLineResolver(DataResolver):
         if privacy:
             chosen_privacy = data_store.search_privacy(privacy)
             if chosen_privacy is None:
-                level = prompt(f"Please type level of new classification ({privacy}): ")
+                level = prompt(
+                    f"Please type level of new classification ({privacy}): ",
+                    validator=numeric_validator,
+                )
                 chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
         else:
             chosen_privacy = self.resolve_reference(
@@ -266,7 +286,13 @@ class CommandLineResolver(DataResolver):
                 return result
         elif choice == str(2):
             print(current_values)
-            new_object = prompt(f"Please type name of new {text_name}: ")
+            while True:
+                new_object = prompt(f"Please type name of new {text_name}: ").strip()
+                # If not too long for the field
+                if len(new_object) <= 150:
+                    break
+                else:
+                    print("Name too long, please enter a name less than 150 characters long")
             search_method = getattr(data_store, f"search_{field_name}")
             obj = search_method(new_object)
             if obj:
@@ -274,7 +300,9 @@ class CommandLineResolver(DataResolver):
             elif new_object:
                 add_method = getattr(data_store, f"add_to_{plural_field}")
                 if plural_field == "privacies":
-                    level = prompt(f"Please type level of new {text_name}: ")
+                    level = prompt(
+                        f"Please type level of new {text_name}: ", validator=numeric_validator
+                    )
                     return add_method(new_object, level, change_id)
                 return add_method(new_object, change_id)
             else:
@@ -338,7 +366,9 @@ class CommandLineResolver(DataResolver):
                 )
                 add_method = getattr(data_store, f"add_to_{plural_field}")
                 if plural_field == "privacies":
-                    level = prompt(f"Please type level of new {text_name}: ")
+                    level = prompt(
+                        f"Please type level of new {text_name}: ", validator=numeric_validator
+                    )
                     return add_method(choice, level, change_id)
                 return add_method(choice, change_id)
             elif new_choice == str(2):
@@ -529,14 +559,46 @@ class CommandLineResolver(DataResolver):
         print("Ok, adding new platform.")
         if platform_name is None:
             platform_name = ""
-        platform_name = prompt("Please enter a name: ", default=platform_name)
-        identifier = prompt("Please enter identifier (pennant or tail number): ")
-        trigraph = prompt("Please enter trigraph (optional): ", default=platform_name[:3])
-        quadgraph = prompt("Please enter quadgraph (optional): ", default=platform_name[:4])
+
+        platform_name = prompt("Please enter a name: ", default=platform_name).strip()
+        if len(platform_name) > 150:
+            print(
+                "Platform name too long, maximum length 150 characters. Restarting platform data entry."
+            )
+            return self.add_to_platforms(
+                data_store, platform_name, platform_type, nationality, privacy, change_id
+            )
+
+        identifier = prompt("Please enter identifier (pennant or tail number): ").strip()
+        if len(identifier) > 10:
+            print(
+                "Identifier too long, maximum length 10 characters. Restarting platform data entry."
+            )
+            return self.add_to_platforms(
+                data_store, platform_name, platform_type, nationality, privacy, change_id
+            )
+
+        trigraph = prompt("Please enter trigraph (optional): ", default=platform_name[:3]).strip()
+        if len(trigraph) > 3:
+            print("Trigraph too long, maximum length 3 characters. Restarting platform data entry.")
+            return self.add_to_platforms(
+                data_store, platform_name, platform_type, nationality, privacy, change_id
+            )
+
+        quadgraph = prompt("Please enter quadgraph (optional): ", default=platform_name[:4]).strip()
+        if len(quadgraph) > 4:
+            print(
+                "Quadgraph too long, maximum length 4 characters. Restarting platform data entry."
+            )
+            return self.add_to_platforms(
+                data_store, platform_name, platform_type, nationality, privacy, change_id
+            )
 
         if platform_name == "" or identifier == "":
             print("You must provide a platform name and identifier! Restarting plaform data entry.")
-            return self.add_to_platforms(data_store, platform_name, None, None, None, change_id)
+            return self.add_to_platforms(
+                data_store, platform_name, platform_type, nationality, privacy, change_id
+            )
 
         # Choose Nationality
         if nationality:
@@ -569,7 +631,10 @@ class CommandLineResolver(DataResolver):
         if privacy:
             chosen_privacy = data_store.search_privacy(privacy)
             if chosen_privacy is None:
-                level = prompt(f"Please type level of new classification ({privacy}): ")
+                level = prompt(
+                    f"Please type level of new classification ({privacy}): ",
+                    validator=numeric_validator,
+                )
                 chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
         else:
             chosen_privacy = self.resolve_reference(
@@ -639,10 +704,17 @@ class CommandLineResolver(DataResolver):
         if sensor_name is None:
             sensor_name = ""
 
-        sensor_name = prompt("Please enter a name: ", default=sensor_name)
+        sensor_name = prompt("Please enter a name: ", default=sensor_name).strip()
 
         if sensor_name == "":
-            print("You must provide a sensor name")
+            print("You must provide a sensor name. Restarting sensor data entry")
+            return self.add_to_sensors(
+                data_store, sensor_name, sensor_type, host_id, privacy, change_id
+            )
+        if len(sensor_name) > 150:
+            print(
+                "Sensor name too long, maximum length 150 characters. Restarting sensor data entry."
+            )
             return self.add_to_sensors(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
@@ -665,7 +737,10 @@ class CommandLineResolver(DataResolver):
         if privacy:
             chosen_privacy = data_store.search_privacy(privacy)
             if chosen_privacy is None:
-                level = prompt(f"Please type level of new classification ({privacy}): ")
+                level = prompt(
+                    f"Please type level of new classification ({privacy}): ",
+                    validator=numeric_validator,
+                )
                 chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
         else:
             chosen_privacy = self.resolve_reference(
