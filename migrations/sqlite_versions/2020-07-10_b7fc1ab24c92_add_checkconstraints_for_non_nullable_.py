@@ -10,7 +10,7 @@ from uuid import uuid4
 
 from alembic import op
 from geoalchemy2 import Geometry
-from sqlalchemy import DATE, Column, DateTime, ForeignKey, Integer, MetaData, String, Text
+from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, MetaData, String, Text
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import deferred
