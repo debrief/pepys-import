@@ -26,6 +26,7 @@ from pepys_import.core.store.common_db import (
     MediaMixin,
     PlatformMixin,
     ReferenceRepr,
+    SensorMixin,
     SynonymMixin,
     TaskMixin,
 )
@@ -357,6 +358,27 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
     created_date = Column(DateTime, default=datetime.utcnow)
 
     __table_args__ = (CheckConstraint("url <> ''", name="ck_Media_url"),)
+
+
+class Sensor(BaseSpatiaLite, SensorMixin):
+    __tablename__ = constants.SENSOR
+    table_type = TableTypes.METADATA
+    table_type_id = 2
+
+    sensor_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(
+        String(150), CheckConstraint("name <> ''", name="ck_Sensors_name"), nullable=False
+    )
+    sensor_type_id = Column(
+        UUIDType, ForeignKey("SensorTypes.sensor_type_id", onupdate="cascade"), nullable=False
+    )
+    host = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"), nullable=False)
+    privacy_id = Column(
+        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"), nullable=False
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (UniqueConstraint("name", "host", name="uq_sensors_name_host"),)
 
 
 class Platform(BaseSpatiaLite, PlatformMixin):
