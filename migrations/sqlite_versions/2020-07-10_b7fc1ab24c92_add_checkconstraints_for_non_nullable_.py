@@ -23,6 +23,7 @@ from pepys_import.core.store.common_db import (
     LocationPropertyMixin,
     LogMixin,
     MediaMixin,
+    PlatformMixin,
     ReferenceRepr,
     SynonymMixin,
     TaskMixin,
@@ -355,6 +356,42 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
     created_date = Column(DateTime, default=datetime.utcnow)
 
     __table_args__ = (CheckConstraint("url <> ''", name="ck_Media_url"),)
+
+
+class Platform(BaseSpatiaLite, PlatformMixin):
+    __tablename__ = constants.PLATFORM
+    table_type = TableTypes.METADATA
+    table_type_id = 3
+
+    platform_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(
+        String(150), CheckConstraint("name <> ''", name="ck_Platforms_name"), nullable=False
+    )
+    identifier = deferred(
+        Column(
+            String(10),
+            CheckConstraint("identifier <> ''", name="ck_Platforms_identifier"),
+            nullable=False,
+        )
+    )
+    trigraph = deferred(Column(String(3)))
+    quadgraph = deferred(Column(String(4)))
+    nationality_id = Column(
+        UUIDType, ForeignKey("Nationalities.nationality_id", onupdate="cascade"), nullable=False
+    )
+    platform_type_id = Column(
+        UUIDType, ForeignKey("PlatformTypes.platform_type_id", onupdate="cascade"), nullable=False
+    )
+    privacy_id = Column(
+        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"), nullable=False
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint(
+            "name", "nationality_id", "identifier", name="uq_Platform_name_nat_identifier"
+        ),
+    )
 
 
 def upgrade():
