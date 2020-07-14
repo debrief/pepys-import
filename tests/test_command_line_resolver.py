@@ -1156,24 +1156,24 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         ]
         resolver_prompt.side_effect = [
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
             "UK",
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
             "UK",
             "TYPE-1",
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
             "UK",
             "TYPE-1",
             "Public",
@@ -1278,7 +1278,7 @@ class GetMethodsTestCase(unittest.TestCase):
             "Public",
             "1",
         ]
-        resolver_prompt.side_effect = ["Test Platform", "Tst", "Test", "123"]
+        resolver_prompt.side_effect = ["Test Platform", "123", "Tst", "Test"]
         with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             # there must be 2 entities at the beginning

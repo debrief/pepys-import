@@ -262,3 +262,10 @@ def shorten_uuid(id):
 
 class MissingDataException(Exception):
     pass
+
+
+def lowercase_or_none(obj):
+    if obj is None:
+        return None
+    else:
+        return obj.lower()
