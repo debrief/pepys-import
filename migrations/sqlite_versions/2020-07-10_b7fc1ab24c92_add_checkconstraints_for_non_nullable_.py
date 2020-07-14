@@ -19,6 +19,7 @@ from sqlalchemy.sql.schema import CheckConstraint, UniqueConstraint
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
     CommentMixin,
+    DatafileMixin,
     ElevationPropertyMixin,
     LocationPropertyMixin,
     LogMixin,
@@ -392,6 +393,34 @@ class Platform(BaseSpatiaLite, PlatformMixin):
             "name", "nationality_id", "identifier", name="uq_Platform_name_nat_identifier"
         ),
     )
+
+
+class Datafile(BaseSpatiaLite, DatafileMixin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.measurements = dict()
+
+    __tablename__ = constants.DATAFILE
+    table_type = TableTypes.METADATA
+    table_type_id = 6
+
+    datafile_id = Column(UUIDType, primary_key=True, default=uuid4)
+    simulated = deferred(Column(Boolean, nullable=False))
+    privacy_id = Column(
+        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"), nullable=False
+    )
+    datafile_type_id = Column(
+        UUIDType, ForeignKey("DatafileTypes.datafile_type_id", onupdate="cascade"), nullable=False
+    )
+    reference = Column(String(150))
+    url = Column(String(150))
+    size = deferred(Column(Integer, nullable=False))
+    hash = deferred(
+        Column(String(32), CheckConstraint("hash <> ''", name="ck_Datafiles_hash"), nullable=False)
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (UniqueConstraint("size", "hash", name="uq_Datafile_size_hash"),)
 
 
 def upgrade():
