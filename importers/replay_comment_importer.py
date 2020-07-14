@@ -10,6 +10,7 @@ class ReplayCommentImporter(Importer):
             name="Replay Comment Importer",
             validation_level=constants.ENHANCED_LEVEL,
             short_name="REP Comment Importer",
+            datafile_type="Replay",
         )
         self.text_label = None
         self.depth = 0.0

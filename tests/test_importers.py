@@ -358,7 +358,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter("", "", ""))
+        processor.register_importer(TestImporter("", "", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -390,7 +390,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter("", "", ""))
+        processor.register_importer(TestImporter("", "", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -422,7 +422,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter("", "", ""))
+        processor.register_importer(TestImporter("", "", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -454,7 +454,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter("", "", ""))
+        processor.register_importer(TestImporter("", "", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -474,6 +474,7 @@ class ImporterDisableRecordingTest(unittest.TestCase):
                     name="Test Importer",
                     validation_level=validation_constants.BASIC_LEVEL,
                     short_name="Test Importer",
+                    datafile_type="Importer",
                 )
                 self.disable_recording()
 
