@@ -152,7 +152,7 @@ def run_fill_char_array():
 def test_highlighter_fill_char_array_benchmark(benchmark):
     benchmark(run_fill_char_array)
 
-    TIME_THRESHOLD = 3.5
+    TIME_THRESHOLD = 4
 
     if running_on_travis():
         if benchmark.stats.stats.mean > TIME_THRESHOLD:
