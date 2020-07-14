@@ -334,7 +334,7 @@ Please add the missing import(s) to the generated migration script manually. But
 **Why do we have many SQLite related problems ?**
 
 
-We’re using `render_as_batch=True` parameter to apply the move-and-copy approach for SQLite. Alembic calls it the **_Batch mode_** and I think many of our problems related to that.
+We’re using `render_as_batch=True` parameter to apply the move-and-copy approach for SQLite. Alembic calls it the **Batch mode** and I think many of our problems related to that.
 
 `Move-and-copy approach <https://alembic.sqlalchemy.org/en/latest/batch.html#running-batch-migrations-for-sqlite-and-other-databases>`_
 
@@ -344,7 +344,7 @@ We’re using `render_as_batch=True` parameter to apply the move-and-copy approa
     then drop the old table. For our purposes here we’ll call this “move and copy” workflow, and in order to accommodate it in a way that is reasonably predictable,
     while also remaining compatible with other databases, Alembic provides the batch operations context.
 
-For running `--sql` command (in the offline mode), batch-mode asks for `copy_from` parameter. It is explained in `here <https://alembic.sqlalchemy.org/en/latest/batch.html#working-in-offline-mode>`_
+For running :code:`--sql` command (in the offline mode), batch-mode asks for :code:`copy_from` parameter. It is explained in `here <https://alembic.sqlalchemy.org/en/latest/batch.html#working-in-offline-mode>`_
 
 ::
 
@@ -364,4 +364,4 @@ Alembic says that SQLAlchemy doesn’t reflect CHECK Constraints for now and the
 
 It is said that SQLAlchemy doesn’t reflect it **on any backend**. But it’s strange that it works for PostgreSQL and it works when we pass :code:`copy_from` argument with :code:`__table_args__`  tuple that includes the constraints.
 
-In general, SQLite’s unsupporting `ALTER TABLE`  statement pushes us to use the move-and-copy approach to not lose any data. But when we use it, all problems arise.
+In general, SQLite’s unsupporting *ALTER TABLE*  statement pushes us to use the move-and-copy approach to not lose any data. But when we use it, all problems arise.
