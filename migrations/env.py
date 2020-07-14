@@ -226,31 +226,16 @@ def add_copy_from(filename, options):
         return
     else:
         # Necessary imports for Base class definitions
-        text = """
-from datetime import datetime
-from uuid import uuid4
-from geoalchemy2 import Geometry
-
-from sqlalchemy import MetaData, CheckConstraint, UniqueConstraint
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
-from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
-    deferred,
-    relationship,
-)
-
-from pepys_import.core.store import constants
-from pepys_import.core.store.common_db import *
-from pepys_import.core.store.db_status import TableTypes
-from pepys_import.core.store.db_base import sqlite_naming_convention
-from pepys_import.utils.sqlalchemy_utils import UUIDType
-
-Metadata = MetaData(naming_convention=sqlite_naming_convention)
-BaseSpatiaLite = declarative_base(metadata=Metadata)
-"""
+        text = ""
+        module_lines = inspect.getsourcelines(sqlite_db)[0]
+        for line in module_lines:
+            # Include all lines until '# Metadata Tables' which is the start of class definitions
+            if "# Metadata Tables" in line:
+                break
+            else:
+                text += line
+        text += "Metadata = MetaData(naming_convention=sqlite_naming_convention)\n"
+        text += "BaseSpatiaLite = declarative_base(metadata=Metadata)"
 
         class_to_include = set()
         for index, line in enumerate(lines):
