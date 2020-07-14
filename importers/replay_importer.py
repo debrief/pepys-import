@@ -10,6 +10,7 @@ class ReplayImporter(Importer):
             name="Replay File Format Importer",
             validation_level=constants.ENHANCED_LEVEL,
             short_name="REP Importer",
+            datafile_type="Replay",
         )
         self.text_label = None
         self.depth = 0.0

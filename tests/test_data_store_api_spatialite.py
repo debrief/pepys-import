@@ -700,8 +700,9 @@ class MeasurementsTestCase(TestCase):
                 name="Test Importer",
                 validation_level=validation_constants.NONE_LEVEL,
                 short_name="Test Importer",
+                datafile_type="Test",
             ):
-                super().__init__(name, validation_level, short_name)
+                super().__init__(name, validation_level, short_name, datafile_type)
                 self.text_label = None
                 self.depth = 0.0
                 self.errors = list()

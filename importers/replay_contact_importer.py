@@ -17,6 +17,7 @@ class ReplayContactImporter(Importer):
             name="Replay Contact Importer",
             validation_level=constants.ENHANCED_LEVEL,
             short_name="REP Contact Importer",
+            datafile_type="Replay",
         )
         self.text_label = None
         self.depth = 0.0

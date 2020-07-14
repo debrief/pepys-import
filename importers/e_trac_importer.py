@@ -16,6 +16,7 @@ class ETracImporter(Importer):
             validation_level=constants.BASIC_LEVEL,
             short_name="E-Trac Importer",
             default_privacy="Public",
+            datafile_type="E-Trac",
         )
         self.text_label = None
 
