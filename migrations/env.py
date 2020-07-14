@@ -140,7 +140,6 @@ def run_migrations_offline():
             version_table_schema="pepys",
             include_schemas=True,
             include_object=include_object_postgres,
-            render_as_batch=True,
             compare_type=True,
         )
     with context.begin_transaction():
@@ -186,7 +185,6 @@ def run_migrations_online():
                 version_table_schema="pepys",
                 include_schemas=True,
                 include_object=include_object_postgres,
-                render_as_batch=True,
                 process_revision_directives=process_revision_directives,
                 compare_type=True,
             )
