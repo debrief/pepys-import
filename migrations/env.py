@@ -6,7 +6,8 @@ from re import search
 
 from alembic import context
 from alembic.script import write_hooks
-from sqlalchemy import engine_from_config
+from geoalchemy2.types import Geometry
+from sqlalchemy import NUMERIC, Integer, engine_from_config
 from sqlalchemy.event import listen
 
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
@@ -94,6 +95,19 @@ def include_object_sqlite(object_, name, type_, reflected, compare_to):
         return True
 
 
+def special_compare_type(context, inspected_column, metadata_column, inspected_type, metadata_type):
+    # return False if the metadata_type is the same as the inspected_type
+    # or None to allow the default implementation to compare these
+    # types. a return value of True means the two types do not
+    # match and should result in a type change operation.
+    if (isinstance(inspected_type, NUMERIC) or isinstance(inspected_type, Integer)) and isinstance(
+        metadata_type, Geometry
+    ):
+        return False
+
+    return None
+
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -126,7 +140,6 @@ def run_migrations_offline():
             version_table_schema="pepys",
             include_schemas=True,
             include_object=include_object_postgres,
-            render_as_batch=True,
             compare_type=True,
         )
     with context.begin_transaction():
@@ -172,7 +185,6 @@ def run_migrations_online():
                 version_table_schema="pepys",
                 include_schemas=True,
                 include_object=include_object_postgres,
-                render_as_batch=True,
                 process_revision_directives=process_revision_directives,
                 compare_type=True,
             )
@@ -188,7 +200,7 @@ def run_migrations_online():
                 include_object=include_object_sqlite,
                 render_as_batch=True,
                 process_revision_directives=process_revision_directives,
-                compare_type=True,
+                compare_type=special_compare_type,
             )
             with context.begin_transaction():
                 context.run_migrations()
@@ -214,50 +226,16 @@ def add_copy_from(filename, options):
         return
     else:
         # Necessary imports for Base class definitions
-        text = """
-from datetime import datetime
-from uuid import uuid4
-from geoalchemy2 import Geometry
-
-from sqlalchemy import MetaData, CheckConstraint, UniqueConstraint
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
-from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
-    deferred,
-    relationship,
-)
-
-from pepys_import.core.store import constants
-from pepys_import.core.store.common_db import (
-    ActivationMixin,
-    CommentMixin,
-    ContactMixin,
-    DatafileMixin,
-    ElevationPropertyMixin,
-    GeometryMixin,
-    HostedByMixin,
-    LocationPropertyMixin,
-    LogMixin,
-    LogsHoldingMixin,
-    MediaMixin,
-    ParticipantMixin,
-    PlatformMixin,
-    ReferenceRepr,
-    SensorMixin,
-    StateMixin,
-    TaggedItemMixin,
-    TaskMixin,
-)
-from pepys_import.core.store.db_status import TableTypes
-from pepys_import.core.store.db_base import sqlite_naming_convention
-from pepys_import.utils.sqlalchemy_utils import UUIDType
-
-Metadata = MetaData(naming_convention=sqlite_naming_convention)
-BaseSpatiaLite = declarative_base(metadata=Metadata)
-"""
+        text = ""
+        module_lines = inspect.getsourcelines(sqlite_db)[0]
+        for line in module_lines:
+            # Include all lines until '# Metadata Tables' which is the start of class definitions
+            if "# Metadata Tables" in line:
+                break
+            else:
+                text += line
+        text += "Metadata = MetaData(naming_convention=sqlite_naming_convention)\n"
+        text += "BaseSpatiaLite = declarative_base(metadata=Metadata)"
 
         class_to_include = set()
         for index, line in enumerate(lines):
@@ -287,6 +265,10 @@ BaseSpatiaLite = declarative_base(metadata=Metadata)
 
         # Merge all import text and the string of the classes in the set
         class_to_include = "\n\n".join(class_to_include)
+        # Add spatial_index=False parameter to prevent redundant index tables
+        class_to_include = class_to_include.replace(
+            "management=True", "management=True, spatial_index=False"
+        )
         text += f"\n\n{class_to_include}\n\n"
         # Insert the merged text and overwrite the file
         lines.insert(10, text)

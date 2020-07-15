@@ -26,6 +26,7 @@ class EAGImporter(Importer):
             name="EAG Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name="EAG Importer",
+            datafile_type="EAG",
         )
 
     # EAG files end with .eag.txt

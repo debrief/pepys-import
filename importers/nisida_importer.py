@@ -40,6 +40,7 @@ class NisidaImporter(Importer):
             name="Nisida Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name="Nisida Importer",
+            datafile_type="Nisida",
         )
         self.current_line_no = None
         self.last_entry_with_text = None

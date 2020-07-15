@@ -15,6 +15,7 @@ class NMEAImporter(Importer):
             validation_level=constants.BASIC_LEVEL,
             short_name="NMEA Importer",
             default_privacy="Private",
+            datafile_type="NMEA",
         )
 
         self.latitude = None

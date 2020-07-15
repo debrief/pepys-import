@@ -4,9 +4,13 @@ from pepys_import.file.importer import Importer
 
 class TestImporter(Importer):
     def __init__(
-        self, name="Test Importer", validation_level=constants.BASIC_LEVEL, short_name="Test",
+        self,
+        name="Test Importer",
+        validation_level=constants.BASIC_LEVEL,
+        short_name="Test",
+        datafile_type="",
     ):
-        super().__init__(name, validation_level, short_name)
+        super().__init__(name, validation_level, short_name, datafile_type=datafile_type)
         self.errors = list()
 
     def can_load_this_header(self, header) -> bool:

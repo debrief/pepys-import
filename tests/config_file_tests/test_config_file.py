@@ -63,7 +63,24 @@ class ConfigVariablesTestCase(unittest.TestCase):
         with redirect_stdout(temp_output), pytest.raises(SystemExit):
             reload(config)
         output = temp_output.getvalue()
-        assert "'database' section couldn't find in" in output
+        assert "Couldn't find 'database' section in" in output
+
+    @patch.dict(os.environ, {"PEPYS_CONFIG_FILE_USER": CONFIG_FILE_PATH})
+    def test_config_file_user_variable(self):
+        reload(config)
+        assert config.DB_USERNAME == "Grfg Hfre"
+        assert config.DB_PASSWORD == "123456"
+        assert config.DB_HOST == "localhost"
+
+    @patch.dict(
+        os.environ,
+        {"PEPYS_CONFIG_FILE_USER": CONFIG_FILE_PATH, "PEPYS_CONFIG_FILE": CONFIG_FILE_PATH_2},
+    )
+    def test_config_file_user_has_priority(self):
+        reload(config)
+        assert config.DB_USERNAME == "Grfg Hfre"
+        assert config.DB_PASSWORD == "123456"
+        assert config.DB_HOST == "localhost"
 
 
 class FileProcessorVariablesTestCase(unittest.TestCase):
