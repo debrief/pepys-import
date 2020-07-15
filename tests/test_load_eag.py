@@ -112,9 +112,9 @@ class TestLoadEAG(unittest.TestCase):
             states = self.store.session.query(self.store.db_classes.State).all()
             self.assertEqual(len(states), 4)
 
-            # there must be 3 platforms after the import
+            # there must be 2 platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 3
+            assert len(platforms) == 2
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
@@ -129,7 +129,6 @@ class TestLoadEAG(unittest.TestCase):
             # same as those checked in the previous test
             assert platforms[0].name == "CALLSIGN 1"
             assert platforms[1].name == "CALLSIGN 2"
-            assert platforms[2].name == "CALLSIGN 3"
 
             data = [(s.heading, s.platform_name) for s in states]
 

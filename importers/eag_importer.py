@@ -81,6 +81,9 @@ class EAGImporter(Importer):
 
             if tokens[0].text == "A":
                 # We're in a header line, so extract the callsign and the track ID number
+                if len(tokens) < 7:
+                    # Not enough tokens - so not a useable header line, so skip
+                    continue
                 track_id = tokens[1].text
                 tokens[1].record(self.name, "track id", tokens[1].text)
                 callsign = " ".join(t.text for t in tokens[6:])
