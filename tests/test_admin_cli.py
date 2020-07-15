@@ -797,20 +797,85 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
         assert "ERROR: Table summaries couldn't be printed." in output
 
 
-@patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH})
-@patch("pepys_admin.admin_cli.input", return_value="Y")
-def test_do_migrate(patched_input):
-    reload(config)
-    temp_output = StringIO()
-    new_datastore = DataStore("", "", "", 0, "new_db.db", "sqlite")
-    new_admin_shell = AdminShell(new_datastore)
+class MigrateSQLiteTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.store = DataStore("", "", "", 0, "new_db.db", "sqlite")
+        self.shell = AdminShell(self.store)
 
-    assert is_schema_created(new_datastore.engine, new_datastore.db_type) is False
-    # Migrate
-    new_admin_shell.do_migrate()
-    assert is_schema_created(new_datastore.engine, new_datastore.db_type) is True
+    def tearDown(self) -> None:
+        file_path = os.path.join(CURRENT_DIR, "new_db.db")
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
-    os.remove(os.path.join(CURRENT_DIR, "new_db.db"))
+    @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH})
+    @patch("pepys_admin.admin_cli.input", return_value="Y")
+    def test_do_migrate_empty_database(self, patched_input):
+        reload(config)
+        assert is_schema_created(self.store.engine, self.store.db_type) is False
+        # Migrate
+        self.shell.do_migrate()
+        assert is_schema_created(self.store.engine, self.store.db_type) is True
+
+    @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH})
+    @patch("pepys_admin.admin_cli.input", return_value="Y")
+    def test_do_migrate_not_empty_database(self, patched_input):
+        reload(config)
+        self.store.initialise()
+        # Parse the REP files
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(SAMPLE_DATA_PATH, self.store, True)
+
+        # Migrate
+        self.shell.do_migrate()
+        # Assert that it didn't break the schema
+        assert is_schema_created(self.store.engine, self.store.db_type) is True
+
+
+class MigratePostgresTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.postgres = Postgresql(
+            database="test", host="localhost", user="postgres", password="postgres", port=55527,
+        )
+        self.store = DataStore(
+            db_name="test",
+            db_host="localhost",
+            db_username="postgres",
+            db_password="postgres",
+            db_port=55527,
+            db_type="postgres",
+        )
+        self.shell = AdminShell(self.store)
+
+    def tearDown(self) -> None:
+        try:
+            self.postgres.stop()
+        except AttributeError:
+            return
+
+    @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH})
+    @patch("pepys_admin.admin_cli.input", return_value="Y")
+    def test_do_migrate_empty_database(self, patched_input):
+        reload(config)
+        assert is_schema_created(self.store.engine, self.store.db_type) is False
+        # Migrate
+        self.shell.do_migrate()
+        assert is_schema_created(self.store.engine, self.store.db_type) is True
+
+    @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH})
+    @patch("pepys_admin.admin_cli.input", return_value="Y")
+    def test_do_migrate_not_empty_database(self, patched_input):
+        reload(config)
+        self.store.initialise()
+        # Parse the REP files
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(SAMPLE_DATA_PATH, self.store, True)
+
+        # Migrate
+        self.shell.do_migrate()
+        # Assert that it didn't break the schema
+        assert is_schema_created(self.store.engine, self.store.db_type) is True
 
 
 class SnapshotPostgresTestCase(unittest.TestCase):
