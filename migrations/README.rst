@@ -263,7 +263,7 @@ You should upgrade your DB and then run the revision command:
 
     Database tables are not found! (Hint: Did you initialise the DataStore?)
 
-If you migrated your **SQLite** database and started to see this message, it might mean that your migration script it wrong.
+If you migrated your **SQLite** database and started to see this message, it might mean that your migration script is wrong.
 It would have been because of the extra tables created by Alembic. When a table with Geometry column is included in migration,
 please check the SQLite database if there are any temporary tables (with *tmp* keyword) such as :code:`idx_Geometries_tmp_geometry_node` etc. If there is any, please drop these tables. After that,
 please open your migration script and add :code:`spatial_index=False` argument to the Geometry column. An example is as follows:
