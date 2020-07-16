@@ -68,7 +68,7 @@ class DefaultResolver(DataResolver):
         else:
             # Should never reach here - there should only be one platform object with a specific name
             # for a specific nationality, platform type etc
-            assert False
+            assert False  # pragma: no cover
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
         # If we aren't given a sensor name, then use a default sensor name
@@ -106,7 +106,7 @@ class DefaultResolver(DataResolver):
         else:
             # Should never reach here - there should only be one sensor object with a specific name for a
             # specific platform
-            assert False
+            assert False  # pragma: no cover
 
     def resolve_privacy(self, data_store, change_id, data_type=None):
         """

@@ -119,13 +119,13 @@ class MergeDatabases:
                         else:
                             assert (
                                 False
-                            ), "Fatal assertion error: multiple entries in master reference table with same name"
+                            ), "Fatal assertion error: multiple entries in master reference table with same name"  # pragma: no cover
                     elif n_results == 1:
                         ids_already_there.append({"id": guid, "name": slave_entry.name})
                     else:
                         assert (
                             False
-                        ), "Fatal assertion error: multiple entries in master reference table with same GUID"
+                        ), "Fatal assertion error: multiple entries in master reference table with same GUID"  # pragma: no cover
 
         return {
             "already_there": ids_already_there,
@@ -302,7 +302,7 @@ class MergeDatabases:
                         else:
                             assert (
                                 False
-                            ), "Fatal assertion error: multiple entries in master metadata table with same name"
+                            ), "Fatal assertion error: multiple entries in master metadata table with same name"  # pragma: no cover
                     elif n_results == 1:
                         # The GUID is in the master db - so the record must also be there(as GUIDs are unique)
                         ids_already_there.append(
@@ -313,7 +313,7 @@ class MergeDatabases:
                         # either zero or one times, never more
                         assert (
                             False
-                        ), "Fatal assertion error: multiple entries in master metadata table with same GUID"
+                        ), "Fatal assertion error: multiple entries in master metadata table with same GUID"  # pragma: no cover
 
         return {
             "already_there": ids_already_there,
@@ -567,7 +567,7 @@ class MergeDatabases:
                         # either zero or one times, never more
                         assert (
                             False
-                        ), "Fatal assertion error: multiple entries in master Logs table with same GUID"
+                        ), "Fatal assertion error: multiple entries in master Logs table with same GUID"  # pragma: no cover
 
         return logs_to_add, changes_to_add
 

@@ -93,7 +93,7 @@ class ViewDataShell(BaseShell):
             return
         # Find the class
         table_cls = getattr(self.data_store.db_classes, table)
-        assert table_cls.__tablename__ == selected_table, "Table couldn't find!"
+        assert table_cls.__tablename__ == selected_table, "Couldn't find table!"
 
         # Inspect the class using mapper
         mapper = class_mapper(table_cls)
