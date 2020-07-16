@@ -68,6 +68,15 @@ class ViewDataCLITestCase(unittest.TestCase):
             in output
         )
 
+    @patch("pepys_admin.view_data_cli.prompt", return_value="SELECT Blah from NonExisting")
+    def test_do_run_sql_invalid(self, patched_prompt):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_run_sql()
+        output = temp_output.getvalue()
+        print(output)
+        assert "ERROR: Query couldn't be executed successfully" in output
+
     def test_do_cancel(self):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
