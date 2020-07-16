@@ -573,10 +573,10 @@ class DataStore:
             return results[0]
         elif len(results) == 0:
             return None
-        else:
+        else:  # pragma no cover
             raise Exception(
                 "Multiple platforms with the same name, nationality and identifier found"
-            )  # pragma no cover
+            )
 
     def search_platform_by_id(self, platform_id):
         return (

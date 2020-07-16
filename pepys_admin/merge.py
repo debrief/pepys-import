@@ -116,16 +116,16 @@ class MergeDatabases:
                             )
                             self.slave_store.session.add(slave_entry)
                             self.slave_store.session.commit()
-                        else:
+                        else:  # pragma: no cover
                             assert (
                                 False
-                            ), "Fatal assertion error: multiple entries in master reference table with same name"  # pragma: no cover
+                            ), "Fatal assertion error: multiple entries in master reference table with same name"
                     elif n_results == 1:
                         ids_already_there.append({"id": guid, "name": slave_entry.name})
-                    else:
+                    else:  # pragma: no cover
                         assert (
                             False
-                        ), "Fatal assertion error: multiple entries in master reference table with same GUID"  # pragma: no cover
+                        ), "Fatal assertion error: multiple entries in master reference table with same GUID"
 
         return {
             "already_there": ids_already_there,
@@ -299,21 +299,21 @@ class MergeDatabases:
                                     "data_changed": was_modified,
                                 }
                             )
-                        else:
+                        else:  # pragma: no cover
                             assert (
                                 False
-                            ), "Fatal assertion error: multiple entries in master metadata table with same name"  # pragma: no cover
+                            ), "Fatal assertion error: multiple entries in master metadata table with same name"
                     elif n_results == 1:
                         # The GUID is in the master db - so the record must also be there(as GUIDs are unique)
                         ids_already_there.append(
                             {"id": guid, "name": get_name_for_obj(slave_entry)}
                         )
-                    else:
+                    else:  # pragma: no cover
                         # We should never get here: the GUID should always appear in the master database
                         # either zero or one times, never more
                         assert (
                             False
-                        ), "Fatal assertion error: multiple entries in master metadata table with same GUID"  # pragma: no cover
+                        ), "Fatal assertion error: multiple entries in master metadata table with same GUID"
 
         return {
             "already_there": ids_already_there,
@@ -562,12 +562,12 @@ class MergeDatabases:
                         # The GUID is in the master db - so the record must also be there
                         # (as GUIDs are unique)
                         pass
-                    else:
+                    else:  # pragma: no cover
                         # We should never get here: the GUID should always appear in the master database
                         # either zero or one times, never more
                         assert (
                             False
-                        ), "Fatal assertion error: multiple entries in master Logs table with same GUID"  # pragma: no cover
+                        ), "Fatal assertion error: multiple entries in master Logs table with same GUID"
 
         return logs_to_add, changes_to_add
 
