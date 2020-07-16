@@ -42,7 +42,7 @@ def upgrade():
         batch_op.create_unique_constraint("uq_Datafile_size_hash", ["size", "hash"])
 
     with op.batch_alter_table("GeometrySubTypes", schema=None) as batch_op:
-        batch_op.create_unique_constraint("uq_GeometrySubType_name_parent", ["name", "parent"])
+        batch_op.create_unique_constraint("uq_GeometrySubTypes_name_parent", ["name", "parent"])
         batch_op.drop_constraint("uq_GeometrySubTypes_name", type_="unique")
 
     with op.batch_alter_table("Platforms", schema=None) as batch_op:
