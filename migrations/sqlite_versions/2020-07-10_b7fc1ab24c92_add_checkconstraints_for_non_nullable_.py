@@ -386,7 +386,10 @@ def downgrade():
         subject_id = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"))
         sensor_id = Column(UUIDType, ForeignKey("Sensors.sensor_id", onupdate="cascade"))
         _location = deferred(
-            Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
+            Column(
+                "location",
+                Geometry(geometry_type="POINT", srid=4326, management=True, spatial_index=False),
+            )
         )
         _elevation = deferred(Column("elevation", REAL))
         time = Column(TIMESTAMP)
