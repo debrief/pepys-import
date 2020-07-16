@@ -890,8 +890,8 @@ class SnapshotPostgresTestCase(unittest.TestCase):
             results = connection.execute("SELECT name FROM DatafileTypes;")
             results = results.fetchall()
             names = [name for r in results for name in r]
-            assert ".dsf" in names
-            assert ".rep" in names
+            assert "Replay" in names
+            assert "GPX" in names
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
@@ -1134,8 +1134,8 @@ class SnapshotShellTestCase(unittest.TestCase):
             results = connection.execute("SELECT name FROM DatafileTypes;")
             results = results.fetchall()
             names = [name for r in results for name in r]
-            assert ".dsf" in names
-            assert ".rep" in names
+            assert "Replay" in names
+            assert "GPX" in names
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
