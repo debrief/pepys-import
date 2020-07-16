@@ -22,6 +22,8 @@ class EAGImporter(Importer):
         # the calculated time, which would mean it would match the
         # GPS time in Column K
         self.TIME_OFFSET = 0
+
+        self.track_id_to_callsign = {}
         super().__init__(
             name="EAG Format Importer",
             validation_level=constants.BASIC_LEVEL,
@@ -29,17 +31,19 @@ class EAGImporter(Importer):
             datafile_type="EAG",
         )
 
-    # EAG files end with .eag.txt
-    # BUT, can_load_this_type only provides the file extension
-    # which the Python splitext function thinks is .TXT - as it just
-    # looks for the last dot.
-    # Therefore, we check for a file extension of .TXT AND
-    # a filename ending with .EAG (in the next function)
+    # Criteria for determining that a file is an EAG file:
+    #
+    # filename ends in ".txt"
+    # filename starts with 8-digit integer
+    # in filename, last the chars before ".txt" are "EAG"
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".TXT"
 
     def can_load_this_filename(self, filename):
-        return filename.upper().endswith(".EAG")
+        starts_with_8_digit_integer = filename[:8].isdigit()
+        ends_with_eag = filename.upper().endswith("EAG")
+
+        return starts_with_8_digit_integer and ends_with_eag
 
     def can_load_this_header(self, header):
         return True
@@ -52,7 +56,8 @@ class EAGImporter(Importer):
 
         # Extract date of recording and callsign from filename
         try:
-            date_of_recording_str, callsign = filename.replace(".eag", "").split("_")
+            date_of_recording_str = filename[:8]
+            callsign_from_filename = filename[9:-8]
         except ValueError:
             self.errors.append(
                 {self.error_type: f"Error in filename - cannot extract date and callsign"}
@@ -74,6 +79,19 @@ class EAGImporter(Importer):
                 continue
             tokens = line.tokens(line.WHITESPACE_TOKENISER)
 
+            if tokens[0].text == "A":
+                # We're in a header line, so extract the callsign and the track ID number
+                if len(tokens) < 7:
+                    # Not enough tokens - so not a useable header line, so skip
+                    continue
+                track_id = tokens[1].text
+                tokens[1].record(self.name, "track id", tokens[1].text)
+                callsign = " ".join(t.text for t in tokens[6:])
+                combine_tokens(*tokens[6:]).record(self.name, "callsign", tokens[6].text)
+
+                self.track_id_to_callsign[track_id] = callsign
+                continue
+
             if len(tokens) != 11:
                 self.errors.append(
                     {
@@ -84,6 +102,7 @@ class EAGImporter(Importer):
 
             # separate token strings
             time_since_sun_ms_token = tokens[0]
+            track_id_token = tokens[1]
             ecef_x_token = tokens[4]
             ecef_y_token = tokens[5]
             ecef_z_token = tokens[6]
@@ -102,6 +121,21 @@ class EAGImporter(Importer):
             # Calculate the timestamp, using the time since last Sunday and the calculated last Sunday date
             timestamp = self.calculate_timestamp(time_since_sun_ms, last_sun_date)
             time_since_sun_ms_token.record(self.name, "timestamp", timestamp)
+
+            if len(self.track_id_to_callsign) == 0:
+                # No header lines were provided, so there is only one platform in the file
+                # Take the callsign from the filename, and continue
+                callsign = callsign_from_filename
+            else:
+                callsign = self.track_id_to_callsign.get(track_id_token.text)
+                track_id_token.record(self.name, "track ID", track_id_token.text)
+                if callsign is None:
+                    self.errors.append(
+                        {
+                            self.error_type: f"Error on line {line_number}. Track ID {track_id_token.text} not found in header: {line}"
+                        }
+                    )
+                    continue
 
             # Platform is based on the callsign - the user will link this as a synonym to a defined Platform
             platform = self.get_cached_platform(
