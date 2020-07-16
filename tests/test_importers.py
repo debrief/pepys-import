@@ -8,6 +8,8 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from importers.nmea_importer import NMEAImporter
 from importers.replay_importer import ReplayImporter
 from pepys_import.core.store.data_store import DataStore
@@ -464,6 +466,39 @@ class ImporterRemoveTestCase(unittest.TestCase):
         output = temp_output.getvalue()
 
         self.assertIn("Files got processed: 0 times", output)
+
+
+class ImporterInvalidValidationLevelTest(unittest.TestCase):
+    def test_invalid_validation_level(self):
+        class TestImporter(Importer):
+            def __init__(self):
+                super().__init__(
+                    name="Test Importer",
+                    validation_level="invalid level",
+                    short_name="Test Importer",
+                    datafile_type="Importer",
+                )
+
+            def can_load_this_header(self, header) -> bool:
+                return True
+
+            def can_load_this_filename(self, filename):
+                return True
+
+            def can_load_this_type(self, suffix):
+                return True
+
+            def can_load_this_file(self, file_contents):
+                return True
+
+            def _load_this_file(self, data_store, path, file_object, datafile, change_id):
+                pass
+
+        with pytest.raises(ValueError, match="Invalid Validation Level"):
+            processor = FileProcessor()
+
+            processor.register_importer(TestImporter())
+            processor.process(DATA_PATH, None, False)
 
 
 class ImporterDisableRecordingTest(unittest.TestCase):
