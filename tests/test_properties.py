@@ -97,6 +97,17 @@ class TestStateHeadingProperty(unittest.TestCase):
 
         assert "Heading must be a Quantity with a dimensionality of ''" in str(exception.value)
 
+    def test_state_heading_wrong_units_dimensionless(self):
+        state = self.store.db_classes.State()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            state.heading = unit_registry.Quantity(5)
+
+        assert "Heading must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_state_heading_right_units(self):
         state = self.store.db_classes.State()
 
@@ -148,6 +159,17 @@ class TestStateCourseProperty(unittest.TestCase):
             state.course = 5 * unit_registry.second
 
         assert "Course must be a Quantity with a dimensionality of ''" in str(exception.value)
+
+    def test_state_course_wrong_units_dimensionless(self):
+        state = self.store.db_classes.State()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            state.course = unit_registry.Quantity(5)
+
+        assert "Course must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
 
     def test_state_course_right_units(self):
         state = self.store.db_classes.State()
@@ -201,6 +223,17 @@ class TestContactBearingProperty(unittest.TestCase):
 
         assert "Bearing must be a Quantity with a dimensionality of ''" in str(exception.value)
 
+    def test_contact_bearing_wrong_units_dimensionless(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.bearing = unit_registry.Quantity(5)
+
+        assert "Bearing must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_contact_bearing_right_units(self):
         contact = self.store.db_classes.Contact()
 
@@ -252,6 +285,17 @@ class TestContactRelBearingProperty(unittest.TestCase):
             contact.rel_bearing = 5 * unit_registry.second
 
         assert "Relative Bearing must be a Quantity with a dimensionality of ''" in str(
+            exception.value
+        )
+
+    def test_contact_bearing_wrong_units_dimensionless(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.rel_bearing = unit_registry.Quantity(5)
+
+        assert "Relative Bearing must be a Quantity with angular units (degree or radian)" in str(
             exception.value
         )
 
@@ -309,6 +353,17 @@ class TestContactAmbigBearingProperty(unittest.TestCase):
             exception.value
         )
 
+    def test_contact_ambig_bearing_wrong_units_dimensionless(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.ambig_bearing = unit_registry.Quantity(5)
+
+        assert "Ambig Bearing must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_contact_ambig_bearing_right_units(self):
         contact = self.store.db_classes.Contact()
 
@@ -360,6 +415,17 @@ class TestContactMLAProperty(unittest.TestCase):
             contact.mla = 5 * unit_registry.second
 
         assert "MLA must be a Quantity with a dimensionality of ''" in str(exception.value)
+
+    def test_contact_mla_wrong_units_dimensionless(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.mla = unit_registry.Quantity(5)
+
+        assert "MLA must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
 
     def test_contact_mla_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -466,6 +532,17 @@ class TestContactOrientationProperty(unittest.TestCase):
             contact.orientation = 5 * unit_registry.second
 
         assert "Orientation must be a Quantity with a dimensionality of ''" in str(exception.value)
+
+    def test_contact_orientation_wrong_units_dimensionless(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.orientation = unit_registry.Quantity(5)
+
+        assert "Orientation must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
 
     def test_contact_orientation_right_units(self):
         contact = self.store.db_classes.Contact()
@@ -988,6 +1065,17 @@ class TestActivationLeftArcProperty(unittest.TestCase):
 
         assert "left_arc must be a Quantity with a dimensionality of ''" in str(exception.value)
 
+    def test_contact_left_arc_wrong_units_dimensionless(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.left_arc = unit_registry.Quantity(5)
+
+        assert "left_arc must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_activation_left_arc_right_units(self):
         activation = self.store.db_classes.Activation()
 
@@ -1040,6 +1128,17 @@ class TestActivationRightArcProperty(unittest.TestCase):
 
         assert "right_arc must be a Quantity with a dimensionality of ''" in str(exception.value)
 
+    def test_contact_right_arc_wrong_units_dimensionless(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.right_arc = unit_registry.Quantity(5)
+
+        assert "right_arc must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_activation_right_arc_right_units(self):
         activation = self.store.db_classes.Activation()
 
@@ -1057,6 +1156,44 @@ class TestActivationRightArcProperty(unittest.TestCase):
 
         assert activation.right_arc == 121 * unit_registry.degree
         assert activation.right_arc.check("")
+
+
+class TestGeometryGeometryProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_geometry_geometry_none(self):
+        geometry = self.store.db_classes.Geometry1()
+
+        geometry.geometry = None
+
+        assert geometry.geometry is None
+
+    def test_geometry_geometry_loc(self):
+        geometry = self.store.db_classes.Geometry1()
+
+        loc = Location()
+        loc.set_latitude_decimal_degrees(50)
+        loc.set_longitude_decimal_degrees(-1)
+
+        geometry.geometry = loc
+
+        assert geometry.geometry == loc.to_wkt()
+
+    def test_geometry_geometry_other(self):
+        geometry = self.store.db_classes.Geometry1()
+
+        geometry.geometry = "Test String"
+
+        assert geometry.geometry == "Test String"
+
+    def test_geometry_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Geometry1.geometry, "expression")
 
 
 class TestLocationRoundtripToDB(unittest.TestCase):
