@@ -14,7 +14,7 @@ DIRECTORY_PATH = os.path.dirname(FILE_PATH)
 DEFAULT_DATABASE = ":memory:"
 
 
-def main():
+def main():  # pragma no cover
     # Parse arguments
     parser = argparse.ArgumentParser()
     path_help = "The path to import data from (The default value is the directory of the script)"

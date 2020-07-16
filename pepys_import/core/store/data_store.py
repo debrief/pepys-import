@@ -327,7 +327,9 @@ class DataStore:
             # Don't add it, as it already exists - just return it
             return results[0]
         elif len(results) > 1:
-            assert False, "Fatal error: Duplicate entries found in Sensors table"
+            assert (
+                False
+            ), "Fatal error: Duplicate entries found in Sensors table"  # pragma: no cover
 
         sensor_obj = self.db_classes.Sensor(
             name=name,
@@ -396,7 +398,9 @@ class DataStore:
             # Don't add it, as it already exists - just return it
             return results[0]
         elif len(results) > 1:
-            assert False, "Fatal error: Duplicate entries found in Datafiles table"
+            assert (
+                False
+            ), "Fatal error: Duplicate entries found in Datafiles table"  # pragma: no cover
 
         datafile_obj = self.db_classes.Datafile(
             simulated=bool(simulated),
@@ -477,7 +481,9 @@ class DataStore:
             # Don't add it, as it already exists - just return it
             return results[0]
         elif len(results) > 1:
-            assert False, "Fatal error: Duplicate entries found in Platforms table"
+            assert (
+                False
+            ), "Fatal error: Duplicate entries found in Platforms table"  # pragma: no cover
 
         platform_obj = self.db_classes.Platform(
             name=name,
@@ -516,7 +522,9 @@ class DataStore:
             # Don't add it, as it already exists - just return it
             return results[0]
         elif len(results) > 1:
-            assert False, "Fatal error: Duplicate entries found in Synonyms table"
+            assert (
+                False
+            ), "Fatal error: Duplicate entries found in Synonyms table"  # pragma: no cover
 
         # enough info to proceed and create entry
         synonym = self.db_classes.Synonym(table=table, synonym=name, entity=entity)
@@ -565,7 +573,7 @@ class DataStore:
             return results[0]
         elif len(results) == 0:
             return None
-        else:
+        else:  # pragma no cover
             raise Exception(
                 "Multiple platforms with the same name, nationality and identifier found"
             )
@@ -1385,9 +1393,9 @@ class DataStore:
             result = self.find_min_and_max_date(State, State.sensor_id, sensor_id)
             min_time, max_time = datetime.utcnow(), datetime(day=1, month=1, year=1700)
             if result:
-                assert len(result) == 3, (
-                    "It should return minimum date, maximum date and datafile" " id in a row!"
-                )
+                assert (
+                    len(result) == 3
+                ), "It should return minimum date, maximum date and datafile id in a row!"
                 min_time, max_time, datafile_id = result
                 # Extract datafile name from the given datafile id
                 datafile_name = self.get_datafile_from_id(datafile_id).reference
@@ -1396,9 +1404,9 @@ class DataStore:
             result = self.find_min_and_max_date(Contact, Contact.sensor_id, sensor_id)
             min_time_2, max_time_2 = datetime.utcnow(), datetime(day=1, month=1, year=1700)
             if result:
-                assert len(result) == 3, (
-                    "It should return minimum date, maximum date and datafile" " id in a row!"
-                )
+                assert (
+                    len(result) == 3
+                ), "It should return minimum date, maximum date and datafile id in a row!"
                 min_time_2, max_time_2, datafile_id_2 = result
                 if not datafile_name:
                     datafile_name = self.get_datafile_from_id(datafile_id_2).reference
