@@ -573,7 +573,7 @@ class DataStore:
             return results[0]
         elif len(results) == 0:
             return None
-        else:  # pragma no cover
+        else:  # pragma: no cover
             raise Exception(
                 "Multiple platforms with the same name, nationality and identifier found"
             )
