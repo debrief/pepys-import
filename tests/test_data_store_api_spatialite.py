@@ -4,6 +4,7 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
 from unittest import TestCase
+from unittest.mock import patch
 
 import pytest
 
@@ -828,7 +829,7 @@ class SynonymsTestCase(TestCase):
 
 
 class FirstConnectionTestCase(TestCase):
-    def test_data_store_fails_at_the_beginning(self):
+    def test_data_store_invalid_db_name(self):
         temp_output = StringIO()
         db_name = os.path.join(FILE_PATH, "__init__.py")
         with pytest.raises(SystemExit), redirect_stdout(temp_output):
@@ -845,6 +846,22 @@ class FirstConnectionTestCase(TestCase):
         assert "Please check your database file and the config file's database section." in output
         assert "Current database URL: 'sqlite+pysqlite://:@:0/" in output
         assert "__init__.py" in output
+
+    def test_data_store_invalid_conn_string(self):
+        temp_output = StringIO()
+        db_name = os.path.join(FILE_PATH, "__init__.py")
+        with pytest.raises(SystemExit), redirect_stdout(temp_output):
+            DataStore(
+                db_host="blah",
+                db_username="blah",
+                db_password="blah",
+                db_port=0,
+                db_name=db_name,  # Give a file that is not a database
+                db_type="sqlite",
+            )
+        output = temp_output.getvalue()
+
+        assert "ERROR: Invalid Connection URL Error!" in output
 
 
 if __name__ == "__main__":
