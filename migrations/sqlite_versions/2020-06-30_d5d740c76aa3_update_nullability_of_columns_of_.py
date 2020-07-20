@@ -5,11 +5,8 @@ Revises: 0f716b0487aa
 Create Date: 2020-06-30 14:29:07.829885
 
 """
-import geoalchemy2
 import sqlalchemy as sa
 from alembic import op
-
-import pepys_import
 
 # revision identifiers, used by Alembic.
 revision = "d5d740c76aa3"

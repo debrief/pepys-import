@@ -1,10 +1,13 @@
+import inspect
 import json
 import os
 from logging.config import fileConfig
+from re import search
 
 from alembic import context
 from alembic.script import write_hooks
-from sqlalchemy import engine_from_config
+from geoalchemy2.types import Geometry
+from sqlalchemy import NUMERIC, Integer, engine_from_config
 from sqlalchemy.event import listen
 
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
@@ -20,6 +23,10 @@ from pepys_import.utils.data_store_utils import (
     is_schema_created,
 )
 from pepys_import.utils.sqlite_utils import load_spatialite
+from pepys_import.utils.table_name_utils import (
+    find_foreign_key_table_names_recursively,
+    table_name_to_class_name,
+)
 
 DIR_PATH = os.path.dirname(__file__)
 
@@ -88,6 +95,19 @@ def include_object_sqlite(object_, name, type_, reflected, compare_to):
         return True
 
 
+def special_compare_type(context, inspected_column, metadata_column, inspected_type, metadata_type):
+    # return False if the metadata_type is the same as the inspected_type
+    # or None to allow the default implementation to compare these
+    # types. a return value of True means the two types do not
+    # match and should result in a type change operation.
+    if (isinstance(inspected_type, NUMERIC) or isinstance(inspected_type, Integer)) and isinstance(
+        metadata_type, Geometry
+    ):
+        return False
+
+    return None
+
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -120,7 +140,6 @@ def run_migrations_offline():
             version_table_schema="pepys",
             include_schemas=True,
             include_object=include_object_postgres,
-            render_as_batch=True,
             compare_type=True,
         )
     with context.begin_transaction():
@@ -166,7 +185,6 @@ def run_migrations_online():
                 version_table_schema="pepys",
                 include_schemas=True,
                 include_object=include_object_postgres,
-                render_as_batch=True,
                 process_revision_directives=process_revision_directives,
                 compare_type=True,
             )
@@ -182,7 +200,7 @@ def run_migrations_online():
                 include_object=include_object_sqlite,
                 render_as_batch=True,
                 process_revision_directives=process_revision_directives,
-                compare_type=True,
+                compare_type=special_compare_type,
             )
             with context.begin_transaction():
                 context.run_migrations()
@@ -194,16 +212,6 @@ if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
-
-@write_hooks.register("include_geoalchemy2")
-def include_geoalchemy2(filename, options):
-    with open(filename) as file_:
-        lines = file_.readlines()
-    # insert geoalchemy clause to the imports, it will be reformatted with black and isort later on
-    lines.insert(10, "import geoalchemy2\n")
-    with open(filename, "w") as to_write:
-        to_write.writelines(lines)
 
 
 @write_hooks.register("update_latest_revision")

@@ -6,7 +6,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.utils.error_handling import handle_database_errors
 
 
-def main():
+def main():  # pragma no cover
     """
     Main function which parses the command line arguments, creates a :code:`DataStore` object and
     calls :code:`run_admin_shell` to open a shell.
