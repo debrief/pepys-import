@@ -495,6 +495,11 @@ class PlatformAndDatafileTestCase(TestCase):
             assert found_platform.platform_id == platform.platform_id
             assert "Test Platform" == found_platform.name
 
+    def test_find_platform_none(self):
+        """Test whether find_platform method returns None if it's given a name of None"""
+        found_platform = self.store.find_platform(name=None)
+        assert found_platform is None
+
     def test_find_platform_synonym(self):
         """Test whether find_platform method finds the correct Platform entity from Synonyms table"""
         with self.store.session_scope():
