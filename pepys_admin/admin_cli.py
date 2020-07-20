@@ -60,7 +60,7 @@ class AdminShell(BaseShell):
         export_shell = ExportShell(self.data_store)
         export_shell.cmdloop()
 
-    def do_view_docs(self):
+    def do_view_docs(self):  # pragma no cover
         print("Loading docs in default web browser")
         path = os.path.abspath(os.path.join(ROOT_DIRECTORY, "docs", "_build", "html", "index.html"))
         webbrowser.open("file://" + path)
