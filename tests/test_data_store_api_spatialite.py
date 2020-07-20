@@ -394,6 +394,22 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
             self.assertEqual(found_datafile.reference, "test_file.csv")
 
+    def test_find_datafile_with_cache(self):
+        """Test whether find_datafile method returns the correct Datafile entity"""
+        with self.store.session_scope():
+            # Create a datafile
+            datafile = self.store.get_datafile(
+                "test_file.csv", "csv", 0, "HASHED-1", self.change_id
+            )
+            self.store.get_datafile("test_file_2.csv", "csv", 0, "HASHED-2", self.change_id)
+            found_datafile = self.store.find_datafile("test_file.csv")
+            found_datafile2 = self.store.find_datafile("test_file.csv")
+
+            self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
+            self.assertEqual(found_datafile.reference, "test_file.csv")
+
+            assert found_datafile == found_datafile2
+
     def test_find_datafile_synonym(self):
         """Test whether find_datafile method finds the correct Datafile entity from Synonyms table"""
         with self.store.session_scope():
