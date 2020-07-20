@@ -1054,6 +1054,27 @@ class SnapshotShellMergingTestCase(unittest.TestCase):
         assert "  - SPLENDID" in output
         assert "  - SENSOR-1" in output
 
+    @patch("pepys_admin.snapshot_cli.ptk_prompt")
+    @patch("pepys_admin.snapshot_cli.input", return_value="y")
+    def test_merge_invalid_filename(self, patched_input, patched_ptk_prompt):
+        # Try entering an invalid filename first, then it'll ask us again
+        # and so then enter a valid filename
+        patched_ptk_prompt.side_effect = ["./nonexisting_file.db", "./slave.db"]
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            # Do the merge
+            self.shell.do_merge_databases()
+        output = temp_output.getvalue()
+
+        assert "| Platform    |                 0 |       1 |          0 |" in output
+        assert "| State       |     402 |" in output
+
+        # Check entries added
+        assert "  - uk_track.rep" in output
+        assert "  - SPLENDID" in output
+        assert "  - SENSOR-1" in output
+
     @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="./slave.db")
     @patch("pepys_admin.snapshot_cli.input", return_value="n")
     def test_merge_confirm_no(self, patched_ptk_prompt, patched_input):
