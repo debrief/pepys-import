@@ -1162,6 +1162,32 @@ class SnapshotShellTestCase(unittest.TestCase):
         if os.path.exists(path):
             os.remove(path)
 
+    @patch("pepys_admin.snapshot_cli.input")
+    def test_do_export_reference_data_invalid_filename(self, patched_input):
+        with open("already_existing_file.db", "w") as f:
+            f.write("Hello, world")
+
+        patched_input.side_effect = ["already_existing_file.db", "test.db"]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data()
+        output = temp_output.getvalue()
+        assert "Reference tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM DatafileTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "Replay" in names
+            assert "GPX" in names
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+        if os.path.exists("already_existing_file.db"):
+            os.remove("already_existing_file.db")
+
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public", "Public Sensitive"])
     def test_do_export_reference_data_and_metadata(self, patched_iterfzf, patched_input):
