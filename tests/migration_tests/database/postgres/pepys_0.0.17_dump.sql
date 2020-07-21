@@ -41,8 +41,6 @@ COMMENT ON EXTENSION postgis IS 'PostGIS geometry, geography, and raster spatial
 
 SET default_tablespace = '';
 
-SET default_table_access_method = heap;
-
 --
 -- Name: Activations; Type: TABLE; Schema: pepys; Owner: postgres
 --
