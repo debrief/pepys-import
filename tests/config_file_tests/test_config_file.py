@@ -1,6 +1,7 @@
 import os
 import unittest
 from contextlib import redirect_stdout
+from datetime import datetime
 from importlib import reload
 from io import StringIO
 from unittest.mock import patch
@@ -8,7 +9,9 @@ from unittest.mock import patch
 import pytest
 
 import config
+from importers.replay_importer import ReplayImporter
 from pepys_import.core.store import common_db
+from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 
 DIRECTORY_PATH = os.path.dirname(__file__)
@@ -19,6 +22,7 @@ CONFIG_FILE_PATH = os.path.join(DIRECTORY_PATH, "example_config", "config.ini")
 CONFIG_FILE_PATH_2 = os.path.join(DIRECTORY_PATH, "example_config", "config_without_database.ini")
 BASIC_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "basic_tests")
 ENHANCED_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "enhanced_tests")
+DATA_PATH = os.path.join(DIRECTORY_PATH, "..", "sample_data")
 
 
 class ConfigVariablesTestCase(unittest.TestCase):
@@ -111,6 +115,26 @@ class FileProcessorVariablesTestCase(unittest.TestCase):
         assert file_processor.output_path == OUTPUT_PATH
         # Remove the test_output directory
         os.rmdir(OUTPUT_PATH)
+
+    @patch("pepys_import.file.file_processor.ARCHIVE_PATH", None)
+    def test_no_archive_path_given(self):
+        store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        store.initialise()
+        with store.session_scope():
+            store.populate_reference()
+
+        file_processor = FileProcessor()
+
+        file_processor.register_importer(ReplayImporter())
+        processing_path = os.path.join(DATA_PATH, "track_files", "rep_data", "rep_test1.rep")
+        file_processor.process(
+            processing_path, store, False,
+        )
+
+        assert os.path.exists(os.path.join(DATA_PATH, "track_files", "rep_data", "output"))
+
+        if os.path.exists(os.path.join(processing_path, "output")):
+            os.rmdir(os.path.join(processing_path, "output"))
 
 
 class CommonDBVariablesTestCase(unittest.TestCase):
