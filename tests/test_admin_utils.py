@@ -1,7 +1,10 @@
+import os
 from datetime import datetime
+from unittest.mock import patch
 
 from pepys_admin.utils import (
     check_sqlalchemy_results_are_equal,
+    get_default_export_folder,
     make_query_for_all_data_columns,
     make_query_for_cols,
     make_query_for_unique_cols_or_all,
@@ -234,3 +237,16 @@ def test_make_query_for_all_data_columns():
             f"\"Platforms\".privacy_id = '{remove_dashes(platform_obj.privacy_id)}'"
             not in query_str
         )
+
+
+@patch("pepys_admin.utils.os.getcwd")
+def test_get_default_export_folder(patched_getcwd):
+    patched_getcwd.return_value = "/path/to/folder/bin/"
+    path = get_default_export_folder()
+
+    assert path == os.path.expanduser("~")
+
+    patched_getcwd.return_value = "/test/path/here"
+    path = get_default_export_folder()
+
+    assert path == "/test/path/here"
