@@ -130,8 +130,7 @@ def import_synonyms(data_store, filepath, change_id):
 
 def ask_user_for_synonym_link(data_store, results, values):
     options = [
-        f"{result.name}: Nationality = {result.nationality_name}, Identifier = {result.identifier}"
-        for result in results
+        f"{result.name} / {result.identifier} / {result.nationality_name}" for result in results
     ]
 
     options += ["Skip this row"]
