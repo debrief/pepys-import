@@ -14,9 +14,9 @@ DATABASE_PATH = os.path.join(TESTS_DIRECTORY, "migration_tests", "database")
 CONFIG_FILE_PATH = os.path.join(
     TESTS_DIRECTORY, "config_file_tests", "example_config", "config_for_do_migrate.ini"
 )
-SQLITE_PATH = os.path.join(DATABASE_PATH, "pepys_0.0.17v_test.sqlite")
-COPY_FILE_PATH = os.path.join(DATABASE_PATH, "COPY_pepys_0.0.17v_test.sqlite")
-POSTGRES_SQL_PATH = os.path.join(DATABASE_PATH, "pepys_0.0.17_dump.sql")
+SQLITE_PATH = os.path.join(DATABASE_PATH, "sqlite", "pepys_0.0.17_test.sqlite")
+COPY_FILE_PATH = os.path.join(DATABASE_PATH, "sqlite", "COPY_pepys_0.0.17_test.sqlite")
+POSTGRES_SQL_PATH = os.path.join(DATABASE_PATH, "postgres", "pepys_0.0.17_dump.sql")
 
 
 @patch("pepys_admin.admin_cli.input", return_value="Y")
