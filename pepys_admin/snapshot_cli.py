@@ -1,19 +1,16 @@
 import cmd
-import json
 import os
 import shutil
-import sqlite3
 import tempfile
 
 from iterfzf import iterfzf
 from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion import PathCompleter
 
-from paths import MIGRATIONS_DIRECTORY
 from pepys_admin.base_cli import BaseShell
 from pepys_admin.merge import MergeDatabases
 from pepys_admin.snapshot_helpers import export_metadata_tables, export_reference_tables
-from pepys_admin.utils import get_default_export_folder
+from pepys_admin.utils import database_at_latest_revision, get_default_export_folder
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import is_schema_created
@@ -122,7 +119,7 @@ class SnapshotShell(BaseShell):
                 print("Invalid path entered, please try again")
 
         # Check whether slave database is at latest revision
-        if not self.database_at_latest_revision(slave_db_path):
+        if not database_at_latest_revision(slave_db_path):
             print(
                 "The schema of the selected slave database is not at the latest revision. Before merging can go ahead "
                 "you must connect to this database with Pepys Admin and run the 'Migrate' option."
@@ -156,30 +153,6 @@ class SnapshotShell(BaseShell):
             print("Ok, returning to previous menu")
             # Don't go ahead with merge unless we got "y"
             return
-
-    def database_at_latest_revision(self, db_path):
-        try:
-            conn = sqlite3.connect(db_path)
-            result = conn.execute("SELECT version_num from alembic_version;")
-            slave_version = next(result)[0]
-            conn.close()
-        except Exception:
-            print(
-                "Could not read schema revision from database - is this a valid Pepys database file?"
-            )
-            return False
-
-        with open(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"), "r") as file:
-            versions = json.load(file)
-
-        if "LATEST_SQLITE_VERSION" not in versions:
-            print("Latest revision IDs couldn't found from latest_revisions.json")
-            return
-
-        if slave_version == versions["LATEST_SQLITE_VERSION"]:
-            return True
-        else:
-            return False
 
     @staticmethod
     def do_cancel():
