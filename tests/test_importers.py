@@ -595,6 +595,53 @@ class ImporterGetCachedSensorTest(unittest.TestCase):
             assert len(replay_importer.platform_sensor_mapping) == 1
             assert sensor in replay_importer.platform_sensor_mapping.values()
 
+    def test_get_cached_sensor_specifying_sensor_name(self):
+        data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        data_store.initialise()
+
+        with data_store.session_scope():
+            replay_importer = ReplayImporter()
+            replay_importer.platform_sensor_mapping = {}
+
+            change_id = data_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+
+            platform = data_store.get_platform(
+                platform_name="TestPlatformName", change_id=change_id
+            )
+
+            # Should be nothing in the mapping to start with
+            assert len(replay_importer.platform_sensor_mapping) == 0
+
+            # Call first time - should create sensor and store in cache
+            sensor = replay_importer.get_cached_sensor(
+                data_store=data_store,
+                sensor_name=None,
+                sensor_type=None,
+                platform_id=platform.platform_id,
+                change_id=change_id,
+            )
+
+            assert sensor is not None
+
+            # Check stored in cache
+            assert len(replay_importer.platform_sensor_mapping) == 1
+            assert sensor in replay_importer.platform_sensor_mapping.values()
+
+            # Call a second time, but this time specify a name
+            sensor = replay_importer.get_cached_sensor(
+                data_store=data_store,
+                sensor_name="Test Sensor",
+                sensor_type=None,
+                platform_id=platform.platform_id,
+                change_id=change_id,
+            )
+
+            # Check name of returned sensor
+            assert sensor.name == "Test Sensor"
+
+            # Check cache still only has one sensor in it
+            assert len(replay_importer.platform_sensor_mapping) == 1
+
 
 class ReplayImporterTestCase(unittest.TestCase):
     def test_degrees_for(self):
