@@ -136,7 +136,7 @@ def ask_user_for_synonym_link(data_store, results, values):
 
     options += ["Skip this row"]
 
-    def is_valid(option):
+    def is_valid(option):  # pragma: no cover
         return option.lower() in [str(i) for i in range(1, len(options) + 1)] or option == "."
 
     choice = create_menu(
