@@ -4,7 +4,6 @@ import sqlite3
 import unittest
 from contextlib import redirect_stdout
 from datetime import datetime
-from importlib import reload
 from io import StringIO
 from sqlite3 import OperationalError
 from unittest.mock import patch
@@ -13,7 +12,6 @@ import pg8000
 import pytest
 from testing.postgresql import Postgresql
 
-import config
 from pepys_admin.admin_cli import AdminShell
 from pepys_admin.cli import run_admin_shell
 from pepys_admin.export_cli import ExportByPlatformNameShell, ExportShell

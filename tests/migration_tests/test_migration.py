@@ -14,9 +14,6 @@ from pepys_import.utils.data_store_utils import is_schema_created
 CURRENT_DIR = os.getcwd()
 SAMPLE_DATA_PATH = os.path.join(TESTS_DIRECTORY, "sample_data", "track_files", "rep_data")
 DATABASE_PATH = os.path.join(TESTS_DIRECTORY, "migration_tests", "database")
-CONFIG_FILE_PATH = os.path.join(
-    TESTS_DIRECTORY, "config_file_tests", "example_config", "config_for_do_migrate.ini"
-)
 SQLITE_PATH = os.path.join(DATABASE_PATH, "sqlite", "pepys_0.0.17_test.sqlite")
 COPY_FILE_PATH = os.path.join(DATABASE_PATH, "sqlite", "COPY_pepys_0.0.17_test.sqlite")
 POSTGRES_SQL_PATH = os.path.join(DATABASE_PATH, "postgres", "pepys_0.0.17_dump.sql")
