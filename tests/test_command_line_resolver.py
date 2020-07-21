@@ -9,7 +9,7 @@ from uuid import uuid4
 import pytest
 
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.resolvers.command_line_resolver import CommandLineResolver
+from pepys_import.resolvers.command_line_resolver import CommandLineResolver, is_number
 
 DIR_PATH = os.path.dirname(__file__)
 
@@ -1341,6 +1341,19 @@ class GetMethodsTestCase(unittest.TestCase):
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
             self.assertEqual(len(sensors), 3)
             self.assertEqual(sensors[2].name, "SENSOR-TEST")
+
+
+@pytest.mark.parametrize(
+    "number,expected_result",
+    [
+        pytest.param("123", True, id="valid number1"),
+        pytest.param("9", True, id="valid number2"),
+        pytest.param("ABC", False, id="invalid number1"),
+        pytest.param("12#", False, id="invalid number2"),
+    ],
+)
+def test_is_number(number, expected_result):
+    assert is_number(number) == expected_result
 
 
 if __name__ == "__main__":
