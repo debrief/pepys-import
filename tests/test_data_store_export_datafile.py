@@ -142,6 +142,34 @@ class DataStoreExportSpatiaLiteTestCase(unittest.TestCase):
             )
             assert ";SENSOR:\t100112 120400.000\tSENSOR\t@@\tNULL\t251.99\t107.69\tTA\tN/A" in data
 
+    def test_sqlite_export_datafile_just_comments(self):
+        with self.store.session_scope():
+            datafiles = self.store.get_all_datafiles()
+            selected_datafile_id = datafiles[0].datafile_id
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            selected_platform_id = platforms[0].platform_id
+            self.store.export_datafile(
+                selected_datafile_id, self.path, platform_id=selected_platform_id
+            )
+
+            # Fetch data from the exported file
+            with open(self.path, "r") as file:
+                data = file.read().split("\n")
+                print(data)
+
+            assert ";NARRATIVE:\t100112 115800.000\tSENSOR\tContact detected on TA" in data
+            assert (
+                ";NARRATIVE:\t100112 120000.000\tSENSOR\tContact identified as SUBJECT on TA"
+                in data
+            )
+            assert (
+                ";NARRATIVE:\t100112 120000.000\tSENSOR\tContact identified as SUBJECT on TA"
+                in data
+            )
+            assert ";NARRATIVE:\t100112 120200.000\tSENSOR\tSUBJECT weakening on TA" in data
+            assert ";NARRATIVE:\t100112 120400.000\tSENSOR\tSUBJECT lost on TA" in data
+            assert ";NARRATIVE:\t100112 120600.000\tSENSOR\tSUBJECT regained on TA" in data
+
 
 class CachePlatformAndSensorNamesTestCase(unittest.TestCase):
     def setUp(self) -> None:
