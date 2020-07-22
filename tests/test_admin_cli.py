@@ -4,7 +4,6 @@ import sqlite3
 import unittest
 from contextlib import redirect_stdout
 from datetime import datetime
-from importlib import reload
 from io import StringIO
 from sqlite3 import OperationalError
 from unittest.mock import patch
@@ -13,7 +12,6 @@ import pg8000
 import pytest
 from testing.postgresql import Postgresql
 
-import config
 from pepys_admin.admin_cli import AdminShell
 from pepys_admin.cli import run_admin_shell
 from pepys_admin.export_cli import ExportByPlatformNameShell, ExportShell
@@ -795,22 +793,6 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
         output = temp_output.getvalue()
 
         assert "ERROR: Table summaries couldn't be printed." in output
-
-
-@patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH})
-@patch("pepys_admin.admin_cli.input", return_value="Y")
-def test_do_migrate(patched_input):
-    reload(config)
-    temp_output = StringIO()
-    new_datastore = DataStore("", "", "", 0, "new_db.db", "sqlite")
-    new_admin_shell = AdminShell(new_datastore)
-
-    assert is_schema_created(new_datastore.engine, new_datastore.db_type) is False
-    # Migrate
-    new_admin_shell.do_migrate()
-    assert is_schema_created(new_datastore.engine, new_datastore.db_type) is True
-
-    os.remove(os.path.join(CURRENT_DIR, "new_db.db"))
 
 
 class SnapshotPostgresTestCase(unittest.TestCase):
