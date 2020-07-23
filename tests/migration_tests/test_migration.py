@@ -192,9 +192,9 @@ class StepByStepMigrationTestCase(unittest.TestCase):
                 )
                 break
 
+        connection.execute("DROP TABLE version_datafile;")
         connection.close()
 
         # Assert that it didn't break the schema
-        # assert is_schema_created(data_store.engine, data_store.db_type) is True
-        #
+        assert is_schema_created(data_store.engine, data_store.db_type) is True
         os.remove(COPY_FILE_2_PATH)
