@@ -1050,6 +1050,27 @@ class SnapshotShellMergingTestCase(unittest.TestCase):
 
         assert "Ok, returning to previous menu" in output
 
+    @patch("pepys_admin.snapshot_cli.ptk_prompt")
+    # @patch("pepys_admin.snapshot_cli.input", return_value="y")
+    def test_merge_db_not_up_to_date(self, patched_ptk_prompt):
+        patched_ptk_prompt.side_effect = [
+            os.path.join(
+                FILE_PATH, "migration_tests", "database", "sqlite", "pepys_0.0.17_test.sqlite"
+            )
+        ]
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            # Do the merge
+            self.shell.do_merge_databases()
+        output = temp_output.getvalue()
+
+        assert (
+            "The schema of the selected slave database is not at the latest revision. "
+            "Before merging can go ahead you must connect to this database with Pepys Admin and run the 'Migrate' option."
+            in output
+        )
+
 
 class TestDatabaseAtLatestRevision(unittest.TestCase):
     def test_db_at_latest_revision_just_alembic_version(self):
@@ -1135,6 +1156,12 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
 
         if os.path.exists("uptodate.sqlite"):
             os.remove("uptodate.sqlite")
+
+    def test_db_at_latest_version_old_db(self):
+        db_path = os.path.join(
+            FILE_PATH, "migration_tests", "database", "sqlite", "pepys_0.0.17_test.sqlite"
+        )
+        assert not database_at_latest_revision(db_path)
 
 
 class SnapshotShellTestCase(unittest.TestCase):
