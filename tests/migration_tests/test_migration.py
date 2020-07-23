@@ -131,13 +131,23 @@ def get_alembic_version(connection):
     return version
 
 
-def import_files(file_list, data_store, file_dict):
+def import_files(path_list, data_store):
     processor = FileProcessor(archive=False)
     processor.load_importers_dynamically()
-    for file in file_list:
-        full_path = file_dict.get(file)
-        if full_path:
-            processor.process(full_path, data_store, False)
+    for path in path_list:
+        processor.process(path, data_store, False)
+
+
+def get_full_path_of_sample_data(directory=SAMPLE_DATA_PATH):
+    """Fetches full path for each datafile in the directory.
+    By default, it fetches paths from *tests/sample_data* folder."""
+    full_paths = {}
+    for current_path, folders, files in os.walk(directory):
+        if "csv_files" in current_path:
+            continue
+        for file in files:
+            full_paths[file] = os.path.join(current_path, file)
+    return full_paths
 
 
 class StepByStepMigrationTestCase(unittest.TestCase):
@@ -147,51 +157,42 @@ class StepByStepMigrationTestCase(unittest.TestCase):
 
         data_store = DataStore("", "", "", 0, COPY_FILE_2_PATH, "sqlite")
         admin_shell = AdminShell(data_store)
+        config = admin_shell.cfg
+        full_paths = get_full_path_of_sample_data()
 
+        # Read SQL file for creating version/datafile table and inserting values
         with open(SQL_PATH, "r") as f:
             sql = f.read()
 
-        # Fetch all values from version/datafile table
+        # Run SQL script, then fetch all values from the version/datafile table
         connection = sqlite3.connect(COPY_FILE_2_PATH)
         connection.executescript(sql)
         result = connection.execute(
             f"SELECT version, datafile FROM version_datafile ORDER BY created_at;"
         )
         result = result.fetchall()
-
-        current_version = get_alembic_version(connection)
-        print(current_version)
         # Put them in a proper dictionary, where key is an alembic version,
         # and value is a list that contains datafile references
-        output = {}
+        version_datafile_dict = {}
         for version, datafile in result:
-            if version not in output:
-                output[version] = []
-            output[version].append(datafile)
-        print(output)
+            if version not in version_datafile_dict:
+                version_datafile_dict[version] = []
+            version_datafile_dict[version].append(full_paths.get(datafile))
 
-        file_dict = {}
-        for current_path, folders, files in os.walk(SAMPLE_DATA_PATH):
-            if "csv_files" in current_path:
-                continue
-            for file in files:
-                file_dict[file] = os.path.join(current_path, file)
-        print(file_dict)
-
-        config = admin_shell.cfg
+        # Migrate the database one by one, import datafiles if specified in version/datafile table
         while True:
             try:
                 command.upgrade(config, "+1")
                 new_version = get_alembic_version(connection)
-                if new_version in output:
-                    import_files(output[new_version], data_store, file_dict)
+                if new_version in version_datafile_dict:
+                    import_files(version_datafile_dict[new_version], data_store)
                 print(new_version)
             except Exception as e:
                 print(
                     f"Exception details: {e}\n\nERROR: Alembic error when migrating the database!"
                 )
                 break
-
+        # Drop the custom version/datafile table
         connection.execute("DROP TABLE version_datafile;")
         connection.close()
 
