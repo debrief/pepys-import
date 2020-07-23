@@ -1,8 +1,11 @@
+import json
 import os
+import sqlite3
 
 import pint
 from sqlalchemy.sql.schema import UniqueConstraint
 
+from paths import MIGRATIONS_DIRECTORY
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
 
@@ -162,3 +165,30 @@ def create_statistics_from_ids(ids):
         "modified": len([item for item in ids["modified"] if item["data_changed"]]),
         "already_there": len(ids["already_there"]),
     }
+
+
+def database_at_latest_revision(db_path):
+    try:
+        conn = sqlite3.connect(db_path)
+        result = conn.execute("SELECT version_num from alembic_version;")
+        slave_version = next(result)[0]
+        conn.close()
+    except Exception:
+        print("Could not read schema revision from database - is this a valid Pepys database file?")
+        return False
+
+    try:
+        with open(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"), "r") as file:
+            versions = json.load(file)
+    except Exception:
+        print("Could not find latest_revisions.json")
+        return
+
+    if "LATEST_SQLITE_VERSION" not in versions:
+        print("Latest revision IDs couldn't found from latest_revisions.json")
+        return
+
+    if slave_version == versions["LATEST_SQLITE_VERSION"]:
+        return True
+    else:
+        return False
