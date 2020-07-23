@@ -573,7 +573,7 @@ class DataStore:
             return results[0]
         elif len(results) == 0:
             return None
-        else:  # pragma no cover
+        else:  # pragma: no cover
             raise Exception(
                 "Multiple platforms with the same name, nationality and identifier found"
             )
@@ -765,9 +765,6 @@ class DataStore:
             resolved_data = self.missing_data_resolver.resolve_datafile(
                 self, datafile_name, datafile_type, privacy, change_id=change_id
             )
-            # It means that new datafile added as a synonym and existing datafile returned
-            if isinstance(resolved_data, self.db_classes.Datafile):
-                return resolved_data
 
             datafile_name, datafile_type_obj, privacy_obj = resolved_data
 

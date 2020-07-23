@@ -152,6 +152,17 @@ def test_set_from_wkb():
     assert loc.longitude == -1.35
 
 
+def test_set_from_geometry():
+    loc = Location().from_geometry(None)
+
+    assert loc is None
+
+    loc = Location.from_geometry("SRID=4326;POINT(-1.34 50.2)")
+
+    assert loc.latitude == 50.2
+    assert loc.longitude == -1.34
+
+
 def test_check_valid():
     loc = Location()
 
@@ -162,3 +173,21 @@ def test_check_valid():
 
     loc.set_longitude_decimal_degrees(-1.34)
     assert loc.check_valid()
+
+
+def test_equality():
+    loc1 = Location()
+    loc1.set_latitude_decimal_degrees(50)
+    loc1.set_longitude_decimal_degrees(-1)
+
+    loc2 = Location()
+    loc2.set_latitude_decimal_degrees(50)
+    loc2.set_longitude_decimal_degrees(-1)
+
+    loc3 = Location()
+    loc3.set_latitude_decimal_degrees(50)
+    loc3.set_longitude_decimal_degrees(-1.5)
+
+    assert loc1 == loc2
+
+    assert not loc1 == loc3

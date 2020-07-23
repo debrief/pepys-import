@@ -8,6 +8,8 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from importers.nmea_importer import NMEAImporter
 from importers.replay_importer import ReplayImporter
 from pepys_import.core.store.data_store import DataStore
@@ -466,6 +468,39 @@ class ImporterRemoveTestCase(unittest.TestCase):
         self.assertIn("Files got processed: 0 times", output)
 
 
+class ImporterInvalidValidationLevelTest(unittest.TestCase):
+    def test_invalid_validation_level(self):
+        class TestImporter(Importer):
+            def __init__(self):
+                super().__init__(
+                    name="Test Importer",
+                    validation_level="invalid level",
+                    short_name="Test Importer",
+                    datafile_type="Importer",
+                )
+
+            def can_load_this_header(self, header) -> bool:
+                return True
+
+            def can_load_this_filename(self, filename):
+                return True
+
+            def can_load_this_type(self, suffix):
+                return True
+
+            def can_load_this_file(self, file_contents):
+                return True
+
+            def _load_this_file(self, data_store, path, file_object, datafile, change_id):
+                pass
+
+        with pytest.raises(ValueError, match="Invalid Validation Level"):
+            processor = FileProcessor()
+
+            processor.register_importer(TestImporter())
+            processor.process(DATA_PATH, None, False)
+
+
 class ImporterDisableRecordingTest(unittest.TestCase):
     def test_turn_off_recording(self):
         class TestImporter(Importer):
@@ -559,6 +594,53 @@ class ImporterGetCachedSensorTest(unittest.TestCase):
             # Check cache still only has one sensor in it
             assert len(replay_importer.platform_sensor_mapping) == 1
             assert sensor in replay_importer.platform_sensor_mapping.values()
+
+    def test_get_cached_sensor_specifying_sensor_name(self):
+        data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        data_store.initialise()
+
+        with data_store.session_scope():
+            replay_importer = ReplayImporter()
+            replay_importer.platform_sensor_mapping = {}
+
+            change_id = data_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+
+            platform = data_store.get_platform(
+                platform_name="TestPlatformName", change_id=change_id
+            )
+
+            # Should be nothing in the mapping to start with
+            assert len(replay_importer.platform_sensor_mapping) == 0
+
+            # Call first time - should create sensor and store in cache
+            sensor = replay_importer.get_cached_sensor(
+                data_store=data_store,
+                sensor_name=None,
+                sensor_type=None,
+                platform_id=platform.platform_id,
+                change_id=change_id,
+            )
+
+            assert sensor is not None
+
+            # Check stored in cache
+            assert len(replay_importer.platform_sensor_mapping) == 1
+            assert sensor in replay_importer.platform_sensor_mapping.values()
+
+            # Call a second time, but this time specify a name
+            sensor = replay_importer.get_cached_sensor(
+                data_store=data_store,
+                sensor_name="Test Sensor",
+                sensor_type=None,
+                platform_id=platform.platform_id,
+                change_id=change_id,
+            )
+
+            # Check name of returned sensor
+            assert sensor.name == "Test Sensor"
+
+            # Check cache still only has one sensor in it
+            assert len(replay_importer.platform_sensor_mapping) == 1
 
 
 class ReplayImporterTestCase(unittest.TestCase):

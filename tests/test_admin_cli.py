@@ -1039,6 +1039,27 @@ class SnapshotShellMergingTestCase(unittest.TestCase):
         assert "  - SPLENDID" in output
         assert "  - SENSOR-1" in output
 
+    @patch("pepys_admin.snapshot_cli.ptk_prompt")
+    @patch("pepys_admin.snapshot_cli.input", return_value="y")
+    def test_merge_invalid_filename(self, patched_input, patched_ptk_prompt):
+        # Try entering an invalid filename first, then it'll ask us again
+        # and so then enter a valid filename
+        patched_ptk_prompt.side_effect = ["./nonexisting_file.db", "./slave.db"]
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            # Do the merge
+            self.shell.do_merge_databases()
+        output = temp_output.getvalue()
+
+        assert "| Platform    |                 0 |       1 |          0 |" in output
+        assert "| State       |     402 |" in output
+
+        # Check entries added
+        assert "  - uk_track.rep" in output
+        assert "  - SPLENDID" in output
+        assert "  - SENSOR-1" in output
+
     @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="./slave.db")
     @patch("pepys_admin.snapshot_cli.input", return_value="n")
     def test_merge_confirm_no(self, patched_ptk_prompt, patched_input):
@@ -1238,6 +1259,34 @@ class SnapshotShellTestCase(unittest.TestCase):
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
             os.remove(path)
+
+    @patch("pepys_admin.snapshot_cli.input")
+    def test_do_export_reference_data_invalid_filename(self, patched_input):
+        with open("already_existing_file.db", "w") as f:
+            f.write("Hello, world")
+
+        patched_input.side_effect = ["already_existing_file.db", "test.db"]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data()
+        output = temp_output.getvalue()
+
+        assert "There is already a file named 'already_existing_file.db'" in output
+        assert "Reference tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM DatafileTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "Replay" in names
+            assert "GPX" in names
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+        if os.path.exists("already_existing_file.db"):
+            os.remove("already_existing_file.db")
 
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public", "Public Sensitive"])

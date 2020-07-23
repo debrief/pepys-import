@@ -21,7 +21,7 @@ def handle_database_errors():
             "See above for the full error from SQLAlchemy."
         )
     except ValueError as e:
-        if "UUID" in str(e):  # pragma no cover
+        if "UUID" in str(e):  # pragma: no cover
             print(
                 f"Error converting UUIDs from database.\n"
                 "This probably means you're using an outdated SQLite database "
