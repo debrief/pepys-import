@@ -10,7 +10,7 @@ from prompt_toolkit.completion import PathCompleter
 from pepys_admin.base_cli import BaseShell
 from pepys_admin.merge import MergeDatabases
 from pepys_admin.snapshot_helpers import export_metadata_tables, export_reference_tables
-from pepys_admin.utils import get_default_export_folder
+from pepys_admin.utils import database_at_latest_revision, get_default_export_folder
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import is_schema_created
@@ -117,6 +117,14 @@ class SnapshotShell(BaseShell):
                 break
             else:
                 print("Invalid path entered, please try again")
+
+        # Check whether slave database is at latest revision
+        if not database_at_latest_revision(slave_db_path):
+            print(
+                "The schema of the selected slave database is not at the latest revision. Before merging can go ahead "
+                "you must connect to this database with Pepys Admin and run the 'Migrate' option."
+            )
+            return
 
         confirmation = input(
             f"Database to merge: {slave_db_path}\n"
