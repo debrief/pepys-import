@@ -1154,6 +1154,8 @@ class SnapshotShellTestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data()
         output = temp_output.getvalue()
+
+        assert "There is already a file named 'already_existing_file.db'" in output
         assert "Reference tables are successfully exported!" in output
 
         with sqlite3.connect("test.db") as connection:

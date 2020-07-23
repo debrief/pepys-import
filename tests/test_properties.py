@@ -304,7 +304,7 @@ class TestContactRelBearingProperty(unittest.TestCase):
             exception.value
         )
 
-    def test_contact_bearing_wrong_units_dimensionless(self):
+    def test_contact_rel_bearing_wrong_units_dimensionless(self):
         contact = self.store.db_classes.Contact()
 
         # Check setting with a Quantity of the wrong units gives error
