@@ -4,6 +4,7 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
 from unittest import TestCase
+from unittest.mock import patch
 
 import pytest
 
@@ -393,6 +394,22 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
             self.assertEqual(found_datafile.reference, "test_file.csv")
 
+    def test_find_datafile_with_cache(self):
+        """Test whether find_datafile method returns the correct Datafile entity"""
+        with self.store.session_scope():
+            # Create a datafile
+            datafile = self.store.get_datafile(
+                "test_file.csv", "csv", 0, "HASHED-1", self.change_id
+            )
+            self.store.get_datafile("test_file_2.csv", "csv", 0, "HASHED-2", self.change_id)
+            found_datafile = self.store.find_datafile("test_file.csv")
+            found_datafile2 = self.store.find_datafile("test_file.csv")
+
+            self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
+            self.assertEqual(found_datafile.reference, "test_file.csv")
+
+            assert found_datafile == found_datafile2
+
     def test_find_datafile_synonym(self):
         """Test whether find_datafile method finds the correct Datafile entity from Synonyms table"""
         with self.store.session_scope():
@@ -493,6 +510,11 @@ class PlatformAndDatafileTestCase(TestCase):
             found_platform = self.store.find_platform("Test Platform", "Nat1", "123")
             assert found_platform.platform_id == platform.platform_id
             assert "Test Platform" == found_platform.name
+
+    def test_find_platform_none(self):
+        """Test whether find_platform method returns None if it's given a name of None"""
+        found_platform = self.store.find_platform(name=None)
+        assert found_platform is None
 
     def test_find_platform_synonym(self):
         """Test whether find_platform method finds the correct Platform entity from Synonyms table"""
@@ -828,7 +850,7 @@ class SynonymsTestCase(TestCase):
 
 
 class FirstConnectionTestCase(TestCase):
-    def test_data_store_fails_at_the_beginning(self):
+    def test_data_store_invalid_db_name(self):
         temp_output = StringIO()
         db_name = os.path.join(FILE_PATH, "__init__.py")
         with pytest.raises(SystemExit), redirect_stdout(temp_output):
@@ -845,6 +867,22 @@ class FirstConnectionTestCase(TestCase):
         assert "Please check your database file and the config file's database section." in output
         assert "Current database URL: 'sqlite+pysqlite://:@:0/" in output
         assert "__init__.py" in output
+
+    def test_data_store_invalid_conn_string(self):
+        temp_output = StringIO()
+        db_name = os.path.join(FILE_PATH, "__init__.py")
+        with pytest.raises(SystemExit), redirect_stdout(temp_output):
+            DataStore(
+                db_host="blah",
+                db_username="blah",
+                db_password="blah",
+                db_port=0,
+                db_name=db_name,  # Give a file that is not a database
+                db_type="sqlite",
+            )
+        output = temp_output.getvalue()
+
+        assert "ERROR: Invalid Connection URL Error!" in output
 
 
 if __name__ == "__main__":

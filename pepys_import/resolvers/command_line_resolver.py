@@ -190,7 +190,7 @@ class CommandLineResolver(DataResolver):
         else:
             prompt = f"Sensor on platform '{host_platform.name}' not found. Do you wish to: "
 
-        def is_valid_dynamic(option):
+        def is_valid_dynamic(option):  # pragma: no cover
             return option in [str(i) for i in range(1, len(options) + 1)] or option == "."
 
         choice = create_menu(prompt, options, validate_method=is_valid_dynamic)
@@ -267,7 +267,7 @@ class CommandLineResolver(DataResolver):
         )
         options.extend(objects_dict)
 
-        def is_valid_dynamic(option):
+        def is_valid_dynamic(option):  # pragma: no cover
             return option in [str(i) for i in range(1, len(options) + 1)] or option == "."
 
         choice = create_menu(title, options, validate_method=is_valid_dynamic,)

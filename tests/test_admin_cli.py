@@ -12,11 +12,14 @@ import pg8000
 import pytest
 from testing.postgresql import Postgresql
 
+import config
+from paths import MIGRATIONS_DIRECTORY
 from pepys_admin.admin_cli import AdminShell
 from pepys_admin.cli import run_admin_shell
 from pepys_admin.export_cli import ExportByPlatformNameShell, ExportShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.snapshot_cli import SnapshotShell
+from pepys_admin.utils import database_at_latest_revision
 from pepys_admin.view_data_cli import ViewDataShell
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
@@ -1036,6 +1039,27 @@ class SnapshotShellMergingTestCase(unittest.TestCase):
         assert "  - SPLENDID" in output
         assert "  - SENSOR-1" in output
 
+    @patch("pepys_admin.snapshot_cli.ptk_prompt")
+    @patch("pepys_admin.snapshot_cli.input", return_value="y")
+    def test_merge_invalid_filename(self, patched_input, patched_ptk_prompt):
+        # Try entering an invalid filename first, then it'll ask us again
+        # and so then enter a valid filename
+        patched_ptk_prompt.side_effect = ["./nonexisting_file.db", "./slave.db"]
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            # Do the merge
+            self.shell.do_merge_databases()
+        output = temp_output.getvalue()
+
+        assert "| Platform    |                 0 |       1 |          0 |" in output
+        assert "| State       |     402 |" in output
+
+        # Check entries added
+        assert "  - uk_track.rep" in output
+        assert "  - SPLENDID" in output
+        assert "  - SENSOR-1" in output
+
     @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="./slave.db")
     @patch("pepys_admin.snapshot_cli.input", return_value="n")
     def test_merge_confirm_no(self, patched_ptk_prompt, patched_input):
@@ -1046,6 +1070,119 @@ class SnapshotShellMergingTestCase(unittest.TestCase):
         output = temp_output.getvalue()
 
         assert "Ok, returning to previous menu" in output
+
+    @patch("pepys_admin.snapshot_cli.ptk_prompt")
+    # @patch("pepys_admin.snapshot_cli.input", return_value="y")
+    def test_merge_db_not_up_to_date(self, patched_ptk_prompt):
+        patched_ptk_prompt.side_effect = [
+            os.path.join(
+                FILE_PATH, "migration_tests", "database", "sqlite", "pepys_0.0.17_test.sqlite"
+            )
+        ]
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            # Do the merge
+            self.shell.do_merge_databases()
+        output = temp_output.getvalue()
+
+        assert (
+            "The schema of the selected slave database is not at the latest revision. "
+            "Before merging can go ahead you must connect to this database with Pepys Admin and run the 'Migrate' option."
+            in output
+        )
+
+
+class TestDatabaseAtLatestRevision(unittest.TestCase):
+    def test_db_at_latest_revision_just_alembic_version(self):
+        conn = sqlite3.connect("old_alembic_version.sqlite")
+        conn.execute(
+            """CREATE TABLE alembic_version
+(
+    version_num VARCHAR(32) NOT NULL
+);"""
+        )
+        conn.execute("""INSERT INTO alembic_version VALUES ("aaaaaaa")""")
+
+        conn.close()
+
+        assert not database_at_latest_revision("old_alembic_version.sqlite")
+
+        if os.path.exists("old_alembic_version.sqlite"):
+            os.remove("old_alembic_version.sqlite")
+
+    def test_db_at_latest_revision_no_alembic_version(self):
+        conn = sqlite3.connect("no_alembic_version.sqlite")
+        conn.execute(
+            """CREATE TABLE Blah
+(
+    TestString VARCHAR(32) NOT NULL
+);"""
+        )
+
+        conn.close()
+
+        assert not database_at_latest_revision("no_alembic_version.sqlite")
+
+        if os.path.exists("no_alembic_version.sqlite"):
+            os.remove("no_alembic_version.sqlite")
+
+    def test_db_at_latest_revision_uptodate_file(self):
+        store = DataStore("", "", "", 0, "uptodate.sqlite", db_type="sqlite")
+        store.initialise()
+
+        # Parse the REP files
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files/rep_data/rep_test1.rep"), store, False
+        )
+        processor.process(os.path.join(DATA_PATH), store, False)
+
+        assert database_at_latest_revision("uptodate.sqlite")
+
+        if os.path.exists("uptodate.sqlite"):
+            os.remove("uptodate.sqlite")
+
+    def test_db_at_latest_revision_no_json(self):
+        store = DataStore("", "", "", 0, "uptodate.sqlite", db_type="sqlite")
+        store.initialise()
+
+        # Parse the REP files
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files/rep_data/rep_test1.rep"), store, False
+        )
+        processor.process(os.path.join(DATA_PATH), store, False)
+
+        # Rename the latest_revisions.json file as a backup
+        os.rename(
+            os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"),
+            os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json_backup"),
+        )
+
+        with open(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"), "w") as f:
+            f.write("Test")
+
+        assert not database_at_latest_revision("uptodate.sqlite")
+
+        os.remove(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"))
+
+        # Rename it back again for future use
+        os.rename(
+            os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json_backup"),
+            os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"),
+        )
+
+        if os.path.exists("uptodate.sqlite"):
+            os.remove("uptodate.sqlite")
+
+    def test_db_at_latest_version_old_db(self):
+        db_path = os.path.join(
+            FILE_PATH, "migration_tests", "database", "sqlite", "pepys_0.0.17_test.sqlite"
+        )
+        assert not database_at_latest_revision(db_path)
 
 
 class SnapshotShellTestCase(unittest.TestCase):
@@ -1122,6 +1259,34 @@ class SnapshotShellTestCase(unittest.TestCase):
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
             os.remove(path)
+
+    @patch("pepys_admin.snapshot_cli.input")
+    def test_do_export_reference_data_invalid_filename(self, patched_input):
+        with open("already_existing_file.db", "w") as f:
+            f.write("Hello, world")
+
+        patched_input.side_effect = ["already_existing_file.db", "test.db"]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_export_reference_data()
+        output = temp_output.getvalue()
+
+        assert "There is already a file named 'already_existing_file.db'" in output
+        assert "Reference tables are successfully exported!" in output
+
+        with sqlite3.connect("test.db") as connection:
+            results = connection.execute("SELECT name FROM DatafileTypes;")
+            results = results.fetchall()
+            names = [name for r in results for name in r]
+            assert "Replay" in names
+            assert "GPX" in names
+
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
+        if os.path.exists("already_existing_file.db"):
+            os.remove("already_existing_file.db")
 
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public", "Public Sensitive"])

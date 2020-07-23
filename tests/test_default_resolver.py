@@ -179,5 +179,26 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "Public")
 
 
+class DefaultResolverTestCaseWithNoRefLoaded(unittest.TestCase):
+    """
+    Does the same as the test above, but doesn't load reference data into data store first, so we can test that
+    the privacy is created properly even if it doesn't exist
+    """
+
+    def setUp(self) -> None:
+        self.resolver = DefaultResolver()
+        self.store = DataStore(
+            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+        )
+        self.store.initialise()
+        with self.store.session_scope():
+            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+
+    def test_resolver_privacy(self):
+        with self.store.session_scope():
+            privacy = self.resolver.resolve_privacy(self.store, self.change_id)
+            self.assertEqual(privacy.name, "Public")
+
+
 if __name__ == "__main__":
     unittest.main()
