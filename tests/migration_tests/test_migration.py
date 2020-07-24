@@ -196,9 +196,7 @@ class StepByStepMigrationTestCase(unittest.TestCase):
         # Run SQL script, then fetch all values from the version/datafile table
         connection = sqlite3.connect(COPY_DB_PATH)
         connection.executescript(sql)
-        result = connection.execute(
-            f"SELECT version, datafile FROM version_datafile ORDER BY created_at;"
-        )
+        result = connection.execute(f"SELECT version, datafile FROM version_datafile ORDER BY id;")
         result = result.fetchall()
         version_datafile_dict = convert_query_result_to_dictionary(result)
 
@@ -249,7 +247,7 @@ class StepByStepMigrationTestCase(unittest.TestCase):
             connection.execute(sql_code_2)
 
             result = connection.execute(
-                f'SELECT version, datafile FROM pepys."version_datafile" ORDER BY created_at;'
+                f'SELECT version, datafile FROM pepys."version_datafile" ORDER BY id;'
             )
             result = result.fetchall()
             version_datafile_dict = convert_query_result_to_dictionary(result)
