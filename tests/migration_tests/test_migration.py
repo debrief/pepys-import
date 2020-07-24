@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import sqlite3
@@ -7,7 +8,7 @@ from unittest.mock import patch
 from alembic import command
 from testing.postgresql import Postgresql
 
-from paths import TESTS_DIRECTORY
+from paths import MIGRATIONS_DIRECTORY, TESTS_DIRECTORY
 from pepys_admin.admin_cli import AdminShell
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
@@ -22,6 +23,7 @@ COPY_DB_PATH = os.path.join(DATABASE_PATH, "sqlite", "COPY_pepys_0.0.17_test.sql
 SQLITE_SQL_PATH = os.path.join(DATABASE_PATH, "sqlite", "version_datafile_table.sql")
 POSTGRES_SQL_PATH = os.path.join(DATABASE_PATH, "postgres", "pepys_0.0.17_dump.sql")
 POSTGRES_SQL_PATH_2 = os.path.join(DATABASE_PATH, "postgres", "version_datafile_table.sql")
+LATEST_VERSIONS_PATH = os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json")
 
 
 class MigrateSQLiteTestCase(unittest.TestCase):
@@ -137,6 +139,17 @@ def get_alembic_version_postgres(connection):
     return version
 
 
+def get_latest_alembic_version(db_type="sqlite"):
+    with open(LATEST_VERSIONS_PATH, "r") as f:
+        versions = json.load(f)
+    if db_type == "sqlite":
+        return versions.get("LATEST_SQLITE_VERSION")
+    elif db_type == "postgres":
+        return versions.get("LATEST_POSTGRES_VERSION")
+    else:
+        print("Given DB type is wrong!")
+
+
 def import_files(path_list, data_store):
     processor = FileProcessor(archive=False)
     processor.load_importers_dynamically()
@@ -188,7 +201,7 @@ class StepByStepMigrationTestCase(unittest.TestCase):
         data_store = DataStore("", "", "", 0, COPY_DB_PATH, "sqlite")
         admin_shell = AdminShell(data_store)
         config = admin_shell.cfg
-
+        latest_sqlite_version = get_latest_alembic_version()
         # Read SQL file for creating version/datafile table and inserting values
         with open(SQLITE_SQL_PATH, "r") as f:
             sql = f.read()
@@ -207,7 +220,9 @@ class StepByStepMigrationTestCase(unittest.TestCase):
                 new_version = get_alembic_version(connection)
                 if new_version in version_datafile_dict:
                     import_files(version_datafile_dict[new_version], data_store)
-                print(new_version)
+                if new_version == latest_sqlite_version:
+                    print("Upgrade to head is successful!")
+                    break
             except Exception as e:
                 print(
                     f"Exception details: {e}\n\nERROR: Alembic error when migrating the database!"
@@ -235,6 +250,7 @@ class StepByStepMigrationTestCase(unittest.TestCase):
         )
         admin_shell = AdminShell(data_store)
         config = admin_shell.cfg
+        latest_postgres_version = get_latest_alembic_version("postgres")
 
         with open(POSTGRES_SQL_PATH, "r") as f:
             sql_code = f.read()
@@ -259,6 +275,9 @@ class StepByStepMigrationTestCase(unittest.TestCase):
                     new_version = get_alembic_version_postgres(connection)
                     if new_version in version_datafile_dict:
                         import_files(version_datafile_dict[new_version], data_store)
+                    if new_version == latest_postgres_version:
+                        print("Upgrade to head is successful!")
+                        break
                 except Exception as e:
                     print(
                         f"Exception details: {e}\n\nERROR: Alembic error when migrating the database!"
