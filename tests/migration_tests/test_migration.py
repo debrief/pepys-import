@@ -215,18 +215,12 @@ class StepByStepMigrationTestCase(unittest.TestCase):
 
         # Migrate the database one by one, import datafiles if specified in version/datafile table
         while True:
-            try:
-                command.upgrade(config, "+1")
-                new_version = get_alembic_version(connection)
-                if new_version in version_datafile_dict:
-                    import_files(version_datafile_dict[new_version], data_store)
-                if new_version == latest_sqlite_version:
-                    print("Upgrade to head is successful!")
-                    break
-            except Exception as e:
-                print(
-                    f"Exception details: {e}\n\nERROR: Alembic error when migrating the database!"
-                )
+            command.upgrade(config, "+1")
+            new_version = get_alembic_version(connection)
+            if new_version in version_datafile_dict:
+                import_files(version_datafile_dict[new_version], data_store)
+            if new_version == latest_sqlite_version:
+                print("Upgrade to head is successful!")
                 break
         # Drop the custom version/datafile table
         connection.execute("DROP TABLE version_datafile;")
@@ -270,18 +264,12 @@ class StepByStepMigrationTestCase(unittest.TestCase):
 
             # Migrate the database one by one, import datafiles if specified in version/datafile table
             while True:
-                try:
-                    command.upgrade(config, "+1")
-                    new_version = get_alembic_version_postgres(connection)
-                    if new_version in version_datafile_dict:
-                        import_files(version_datafile_dict[new_version], data_store)
-                    if new_version == latest_postgres_version:
-                        print("Upgrade to head is successful!")
-                        break
-                except Exception as e:
-                    print(
-                        f"Exception details: {e}\n\nERROR: Alembic error when migrating the database!"
-                    )
+                command.upgrade(config, "+1")
+                new_version = get_alembic_version_postgres(connection)
+                if new_version in version_datafile_dict:
+                    import_files(version_datafile_dict[new_version], data_store)
+                if new_version == latest_postgres_version:
+                    print("Upgrade to head is successful!")
                     break
             # Drop the custom version/datafile table
             connection.execute('DROP TABLE pepys."version_datafile";')
