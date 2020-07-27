@@ -178,7 +178,7 @@ class NisidaImporter(Importer):
                         }
                     )
                     return
-            except Exception as e:
+            except Exception as e:  # pragma: no cover (catches any other error, but all errors we can test are already caught elsewhere)
                 self.errors.append(
                     {
                         self.error_type: f"Error on line {self.current_line_no}. "
@@ -208,18 +208,13 @@ class NisidaImporter(Importer):
             )
             return False
 
-        try:
-            day = int(timestamp_text[0:2])
-            hour = int(timestamp_text[2:4])
-            minute = int(timestamp_text[4:6])
-        except ValueError:
-            self.errors.append(
-                {
-                    self.error_type: f"Error on line {self.current_line_no}. "
-                    f"Invalid format for timestamp - day, hour or min could not be converted to float: {timestamp_text}"
-                }
-            )
-            return False
+        # Note: No need to wrap this in a try-catch to check for parsing errors
+        # as the timestamp_text is already guaranteed to consist of 6 digits
+        # as an if statement checks that around Line 135, before this function
+        # is called
+        day = int(timestamp_text[0:2])
+        hour = int(timestamp_text[2:4])
+        minute = int(timestamp_text[4:6])
 
         try:
             timestamp = datetime(
@@ -342,8 +337,9 @@ class NisidaImporter(Importer):
     def process_position(self, data_store, datafile, change_id):
         pos_source_token = self.tokens[3]
         pos_source = self.parse_pos_source(pos_source_token)
-        if pos_source is None:
-            return
+        # No need to check if pos_source returns none, as we only
+        # call this function if self.tokens[3] is in the POS_SOURCE_TO_NAME dict
+        # and therefore this function is guaranteed to succeed
 
         sensor_type = data_store.add_to_sensor_types(pos_source, change_id=change_id).name
         privacy = get_lowest_privacy(data_store)
