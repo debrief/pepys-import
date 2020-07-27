@@ -1,10 +1,10 @@
-from tempfile import NamedTemporaryFile
+import os
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 
 
-def check_errors_for_file_contents(file_contents, expected_errors, importer):
+def check_errors_for_file_contents(file_contents, expected_errors, importer, filename=None):
     data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
     data_store.initialise()
 
@@ -25,15 +25,17 @@ def check_errors_for_file_contents(file_contents, expected_errors, importer):
         datafiles = data_store.session.query(data_store.db_classes.Datafile).all()
         assert len(datafiles) == 0
 
-    tempfile = NamedTemporaryFile(mode="w")
-    tempfile.write(file_contents)
-    tempfile.seek(0)
+    if filename is None:
+        filename = "test_input"
+
+    with open(filename, "w") as f:
+        f.write(file_contents)
 
     # parse the file
-    processor.process(tempfile.name, data_store, False)
+    processor.process(filename, data_store, False)
 
-    # Automatically deletes the tempfile
-    tempfile.close()
+    # Delete the temporary file
+    os.remove(filename)
 
     # check data got created
     with data_store.session_scope():
