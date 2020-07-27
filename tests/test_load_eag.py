@@ -184,6 +184,14 @@ class TestLoadEAG(unittest.TestCase):
             filename="20200305_ROBIN.eag.txt",
         )
 
+        # Invalid heading
+        check_errors_for_file_contents(
+            "382512000	2	123	456	3978788.87  -93765.36    4969927.68	0	0	10A.2	10:15:12.00",
+            "Error in angle value",
+            eag_importer,
+            filename="20200305_ROBIN.eag.txt",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
