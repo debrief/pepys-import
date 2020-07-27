@@ -6,6 +6,7 @@ from importers.eag_importer import EAGImporter
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from tests.utils import check_errors_for_file_contents
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH_NO_HEADER = os.path.join(
@@ -135,6 +136,53 @@ class TestLoadEAG(unittest.TestCase):
             assert (98.2 * unit_registry.degree, "CALLSIGN 1") in data
             assert (104.2 * unit_registry.degree, "CALLSIGN 2") in data
             assert (156.8 * unit_registry.degree, "CALLSIGN 1") in data
+
+    def test_process_eag_data_invalid(self):
+        eag_importer = EAGImporter()
+
+        # Invalid filename
+        check_errors_for_file_contents(
+            "Blah",
+            "Error in filename - cannot parse date",
+            eag_importer,
+            filename="20200345_ROBIN.eag.txt",
+        )
+
+        # Too many tokens in line
+        check_errors_for_file_contents(
+            "382512000	2	123	456	3978788.87  -93765.36    ExtraToken   4969927.68	0	0	104.2	10:15:12.00",
+            "Incorrect number of tokens",
+            eag_importer,
+            filename="20200305_ROBIN.eag.txt",
+        )
+
+        # Invalid float for time since Sunday
+        check_errors_for_file_contents(
+            "382517A00	2	123	456	3957216.04  -91183.85       4987436.42	0	0	126.3	10:15:17.00",
+            "Cannot parse time since Sunday to float",
+            eag_importer,
+            filename="20200305_ROBIN.eag.txt",
+        )
+
+        # Track ID listed in row but not found in header
+        contents_with_header = """A   1   152 130 23  13  CALLSIGN 1
+        A   2   192 130 23  13  CALLSIGN 2
+        382507000	1	123	456	4021773.74  -98290.03       4934710.34	0	0	98.2	10:15:07.00
+        382512000	4	123	456	3978788.87  -93765.36       4969927.68	0	0	104.2	10:15:12.00"""
+        check_errors_for_file_contents(
+            contents_with_header,
+            "Track ID 4 not found in header",
+            eag_importer,
+            filename="20200305_ROBIN.eag.txt",
+        )
+
+        # Invalid float for ECEF values
+        check_errors_for_file_contents(
+            "382507000	2	123	456	3957A16.04  -91183.85       4987436.42	0	0	126.3	10:15:17.00",
+            "Error: cannot parse ECEF values to floats",
+            eag_importer,
+            filename="20200305_ROBIN.eag.txt",
+        )
 
 
 if __name__ == "__main__":
