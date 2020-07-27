@@ -327,14 +327,6 @@ class NisidaImporter(Importer):
             comment_type = data_store.add_to_comment_types("Narrative", change_id)
         elif self.tokens[1].text == "COC":
             comment_type = data_store.add_to_comment_types("CO Comments", change_id)
-        else:
-            self.errors.append(
-                {
-                    self.error_type: f"Error on line {self.current_line_no}. "
-                    f"Invalid comment type: {self.tokens[1].text}"
-                }
-            )
-            return
 
         comment = datafile.create_comment(
             data_store=data_store,

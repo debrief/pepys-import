@@ -248,7 +248,7 @@ class TestLoadNisida(unittest.TestCase):
             nisida_importer,
         )
 
-        # Invalid time
+        # Invalid time up
         check_errors_for_file_contents(
             header + "312130Z/EXP/PER/55:92/-/FULLY CHARGED AND READY",
             "Invalid time value",
@@ -266,6 +266,25 @@ class TestLoadNisida(unittest.TestCase):
         )
         check_errors_for_file_contents(
             header + "312130Z/EXP/PER/1015/-/FULLY CHARGED AND READY",
+            "Unable to parse time value to float",
+            nisida_importer,
+        )
+
+        # Invalid time down
+        check_errors_for_file_contents(
+            header + "312130Z/EXP/PER/-/10:BB/FULLY CHARGED AND READY",
+            "Unable to parse time value to float",
+            nisida_importer,
+        )
+
+        # Invalid time on/off for SENSOR
+        check_errors_for_file_contents(
+            header + "311300Z/SEN/TAS/13:00/CC:50/SENSOR ON AND OFF/",
+            "Unable to parse time value to float",
+            nisida_importer,
+        )
+        check_errors_for_file_contents(
+            header + "311300Z/SEN/TAS/13:CC/15:50/SENSOR ON AND OFF/",
             "Unable to parse time value to float",
             nisida_importer,
         )
@@ -293,6 +312,13 @@ class TestLoadNisida(unittest.TestCase):
         check_errors_for_file_contents(
             header + "311002Z/SEN/BLAH/10:02/-/TIME ON EXAMPLE/",
             "Invalid sensor code: BLAH",
+            nisida_importer,
+        )
+
+        # Invalid position source for DETECTION
+        check_errors_for_file_contents(
+            header + "311200Z/DET/RDR/23/20/777/3602.02N/00412.12E/BLA/DETECTION RECORD",
+            "Invalid position source value",
             nisida_importer,
         )
 
@@ -329,6 +355,21 @@ class TestLoadNisida(unittest.TestCase):
         check_errors_for_file_contents(
             header + "311200Z/DET/RDR/23/-/777/3602.02N/00412.12E/GPS/DETECTION RECORD",
             "Not enough data to calculate attack position - bearing, range or own location missing",
+            nisida_importer,
+        )
+
+        # Invalid position source for ATTACK
+        check_errors_for_file_contents(
+            header + "311206Z/ATT/OTHER/63/12/775/3623.23N/00500.25E/BLA/TEXT FOR ATTACK",
+            "Invalid position source value",
+            nisida_importer,
+        )
+
+        # Invalid location for DIP
+
+        check_errors_for_file_contents(
+            header + "311305Z/DIP/5/23/14:00/3502.02Q/00502.06E/ASW DIP EXAMPLE/",
+            "Error in latitude hemisphere value Q. Must be N or S",
             nisida_importer,
         )
 
