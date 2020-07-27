@@ -8,6 +8,7 @@ from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from tests.utils import check_errors_for_file_contents
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/nisida/nisida_example.txt")
@@ -173,198 +174,173 @@ class TestLoadNisida(unittest.TestCase):
             assert activations[3].sensor_name == "PER"
             assert activations[3].remarks == "FULLY CHARGED AND READY TO KILL"
 
-    def check_errors_for_file_contents(self, file_contents, expected_errors):
-        data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
-        data_store.initialise()
-
-        processor = FileProcessor(archive=False)
-        processor.register_importer(NisidaImporter())
-
-        # check states empty
-        with data_store.session_scope():
-            # there must be no states at the beginning
-            states = data_store.session.query(data_store.db_classes.State).all()
-            self.assertEqual(len(states), 0)
-
-            # there must be no platforms at the beginning
-            platforms = data_store.session.query(data_store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 0)
-
-            # there must be no datafiles at the beginning
-            datafiles = data_store.session.query(data_store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 0)
-
-        tempfile = NamedTemporaryFile(mode="w")
-        tempfile.write(file_contents)
-        tempfile.seek(0)
-
-        # parse the file
-        processor.process(tempfile.name, data_store, False)
-
-        # Automatically deletes the tempfile
-        tempfile.close()
-
-        # check data got created
-        with data_store.session_scope():
-            # there must be no states
-            states = data_store.session.query(data_store.db_classes.State).all()
-            self.assertEqual(len(states), 0)
-
-        errors = processor.importers[0].errors
-
-        if expected_errors is None:
-            assert len(errors) == 0
-            return
-
-        if len(errors) == 0:
-            assert False, "No errors reported"
-        errors = errors[0]
-
-        joined_errors = "\n".join(errors.values())
-
-        if isinstance(expected_errors, str):
-            assert expected_errors in joined_errors
-        else:
-            for expected_error in expected_errors:
-                assert expected_error in joined_errors
-
     def test_process_nisida_data_invalid(self):
-        self.check_errors_for_file_contents("UNIT/OCT03/SRF", "Not enough tokens in UNIT/ line")
-        self.check_errors_for_file_contents(
-            "UNIT//OCT03/SRF", "Missing platform name in UNIT/ line"
+        nisida_importer = NisidaImporter()
+
+        check_errors_for_file_contents(
+            "UNIT/OCT03/SRF", "Not enough tokens in UNIT/ line", nisida_importer
         )
-        self.check_errors_for_file_contents(
-            "UNIT/PLAT/BLH03/SRF", "Invalid month/year in UNIT/ line"
+        check_errors_for_file_contents(
+            "UNIT//OCT03/SRF", "Missing platform name in UNIT/ line", nisida_importer
         )
-        self.check_errors_for_file_contents(
-            "UNIT/PLAT/MARBB/SRF", "Invalid month/year in UNIT/ line"
+        check_errors_for_file_contents(
+            "UNIT/PLAT/BLH03/SRF", "Invalid month/year in UNIT/ line", nisida_importer
+        )
+        check_errors_for_file_contents(
+            "UNIT/PLAT/MARBB/SRF", "Invalid month/year in UNIT/ line", nisida_importer
         )
         # Invalid date in UNIT header, plus another line that would depend on that
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             "UNIT/PLAT/MARBB/SRF\n311002Z/3623.00N/00412.02E/GPS/359/03/-/",
             "Invalid month/year in UNIT/ line",
+            nisida_importer,
         )
 
         header = "UNIT/ADRI/OCT03/SRF/\n"
 
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "311056Z/BLA/TEXT FOR NARRATIVE PURPOSES",
             "Line does not match any known message format",
+            nisida_importer,
         )
 
         # Invalid lat/lon for Position message
-        self.check_errors_for_file_contents(
-            header + "311002Z/AB/CD/GPS/359/03/-/", "Unable to parse latitude/longitude values"
+        check_errors_for_file_contents(
+            header + "311002Z/AB/CD/GPS/359/03/-/",
+            "Unable to parse latitude/longitude values",
+            nisida_importer,
         )
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "311002Z/99999.99/99999.99/GPS/359/03/-/",
             "Error in latitude degrees value 99.0. Must be between -90 and 90",
+            nisida_importer,
         )
 
         # Invalid timestamps for day, hour and minute
-        self.check_errors_for_file_contents(
-            header + "451000Z/COC/TEXT FOR CO COMMENTS/", "Invalid timestamp"
+        check_errors_for_file_contents(
+            header + "451000Z/COC/TEXT FOR CO COMMENTS/", "Invalid timestamp", nisida_importer
         )
-        self.check_errors_for_file_contents(
-            header + "255500Z/COC/TEXT FOR CO COMMENTS/", "Invalid timestamp"
+        check_errors_for_file_contents(
+            header + "255500Z/COC/TEXT FOR CO COMMENTS/", "Invalid timestamp", nisida_importer
         )
-        self.check_errors_for_file_contents(
-            header + "251178Z/COC/TEXT FOR CO COMMENTS/", "Invalid timestamp"
+        check_errors_for_file_contents(
+            header + "251178Z/COC/TEXT FOR CO COMMENTS/", "Invalid timestamp", nisida_importer
         )
 
         # No Z at the end of timestamp
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "251125A/COC/TEXT FOR CO COMMENTS/",
             "Invalid format for timestamp - missing Z character",
+            nisida_importer,
         )
 
         # Both time up and time down missing
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "311002Z/SEN/TAS/-/-/TIME ON EXAMPLE/",
             "You must provide at least one of time on or time off",
+            nisida_importer,
         )
 
         # Both time up and time down missing
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "312130Z/EXP/PER//-/FULLY CHARGED AND READY",
             "You must provide at least one of time up or time down",
+            nisida_importer,
         )
 
         # Invalid time
-        self.check_errors_for_file_contents(
-            header + "312130Z/EXP/PER/55:92/-/FULLY CHARGED AND READY", "Invalid time value"
+        check_errors_for_file_contents(
+            header + "312130Z/EXP/PER/55:92/-/FULLY CHARGED AND READY",
+            "Invalid time value",
+            nisida_importer,
         )
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "312130Z/EXP/PER/AA:15/-/FULLY CHARGED AND READY",
             "Unable to parse time value to float",
+            nisida_importer,
         )
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "312130Z/EXP/PER/10:BB/-/FULLY CHARGED AND READY",
             "Unable to parse time value to float",
+            nisida_importer,
         )
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "312130Z/EXP/PER/1015/-/FULLY CHARGED AND READY",
             "Unable to parse time value to float",
+            nisida_importer,
         )
 
         # Invalid location for ATTACK message
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "311206Z/ATT/OTHER/63/12/775/99923.23N/00500.25E/GPS/TEXT FOR ATTAC",
             "Error in latitude degrees value 999.0. Must be between -90 and 90",
+            nisida_importer,
         )
 
         # Invalid line continuation
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "311002Z/3623.00N/00412.02E/GPS/359/03/-/\n//CONTINUATION",
             "Line continuation not immediately after valid line",
+            nisida_importer,
         )
 
         # Invalid Sensor Code
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "311200Z/DET/BLAH/23/20/777/3602.02N/00412.12E/GPS/DETECTION RECORD",
             "Invalid sensor code: BLAH",
+            nisida_importer,
         )
-        self.check_errors_for_file_contents(
-            header + "311002Z/SEN/BLAH/10:02/-/TIME ON EXAMPLE/", "Invalid sensor code: BLAH"
+        check_errors_for_file_contents(
+            header + "311002Z/SEN/BLAH/10:02/-/TIME ON EXAMPLE/",
+            "Invalid sensor code: BLAH",
+            nisida_importer,
         )
 
         # Invalid lat lon for Detection
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "311200Z/DET/RDR/23/20/777/3602.02Q/00412.12E/GPS/DETECTION RECORD",
             "Error in latitude hemisphere value Q. Must be N or S",
+            nisida_importer,
         )
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "311200Z/DET/RDR/23/20/777/9902.02N/00412.12E/GPS/DETECTION RECORD",
             "Error in latitude degrees value 99.0. Must be between -90 and 90",
+            nisida_importer,
         )
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "311200Z/DET/RDR/23/20/777/3502.02N/592412.12E/GPS/DETECTION RECORD",
             "Error in longitude degrees value 5924.0. Must be between -180 and 180",
+            nisida_importer,
         )
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "311200Z/DET/RDR/23/20/777/3502.02N/005412.12N/GPS/DETECTION RECORD",
             "Error in longitude hemisphere value N. Must be E or W",
+            nisida_importer,
         )
 
         # Not enough info for geometry calculation for ATTACK
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "311206Z/ATT/OTHER//12/775/3623.23N/00500.25E/GPS/TEXT",
             "Not enough data to calculate attack position - bearing, range or own location missing",
+            nisida_importer,
         )
 
         # Not enough info for geometry calculation for DETECTION
-        self.check_errors_for_file_contents(
+        check_errors_for_file_contents(
             header + "311200Z/DET/RDR/23/-/777/3602.02N/00412.12E/GPS/DETECTION RECORD",
             "Not enough data to calculate attack position - bearing, range or own location missing",
+            nisida_importer,
         )
 
     def test_process_nisida_data_valid(self):
+        nisida_importer = NisidaImporter()
+
         # UNIT line with POS at the end
-        self.check_errors_for_file_contents("UNIT/PLAT/OCT03/SRF/POS", None)
+        check_errors_for_file_contents("UNIT/PLAT/OCT03/SRF/POS", None, nisida_importer)
 
         # UNIT line with POS at the end and other lines after
-        self.check_errors_for_file_contents(
-            "UNIT/PLAT/OCT03/SRF/POS\n101000Z/COC/TEXT FOR CO COMMENTS/", None
+        check_errors_for_file_contents(
+            "UNIT/PLAT/OCT03/SRF/POS\n101000Z/COC/TEXT FOR CO COMMENTS/", None, nisida_importer
         )
 
 
