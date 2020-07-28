@@ -270,6 +270,15 @@ class InitialiseShellDefaultCSVLocTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Reference data imported" in output
 
+    def test_do_import_metadata(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.do_import_reference_data()
+            self.initialise_shell.do_import_metadata()
+        output = temp_output.getvalue()
+        assert "Reference data imported" in output
+        assert "Metadata imported" in output
+
 
 class NotInitialisedDBTestCase(unittest.TestCase):
     def setUp(self) -> None:
