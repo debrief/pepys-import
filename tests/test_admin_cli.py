@@ -256,6 +256,21 @@ class InitialiseShellTestCase(unittest.TestCase):
         assert self.initialise_shell.intro in output
 
 
+class InitialiseShellDefaultCSVLocTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+        self.admin_shell = AdminShell(self.store)
+        self.initialise_shell = InitialiseShell(self.store, self.admin_shell, None)
+
+    def test_do_import_reference_data(self):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.initialise_shell.do_import_reference_data()
+        output = temp_output.getvalue()
+        assert "Reference data imported" in output
+
+
 class NotInitialisedDBTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
