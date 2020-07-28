@@ -1178,6 +1178,40 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
         if os.path.exists("uptodate.sqlite"):
             os.remove("uptodate.sqlite")
 
+    def test_db_at_latest_revision_incorrect_json(self):
+        store = DataStore("", "", "", 0, "uptodate.sqlite", db_type="sqlite")
+        store.initialise()
+
+        # Parse the REP files
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(
+            os.path.join(SAMPLE_DATA_PATH, "track_files/rep_data/rep_test1.rep"), store, False
+        )
+        processor.process(os.path.join(DATA_PATH), store, False)
+
+        # Rename the latest_revisions.json file as a backup
+        os.rename(
+            os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"),
+            os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json_backup"),
+        )
+
+        with open(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"), "w") as f:
+            f.write('{"BLAH": "TestValue"}')
+
+        assert not database_at_latest_revision("uptodate.sqlite")
+
+        os.remove(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"))
+
+        # Rename it back again for future use
+        os.rename(
+            os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json_backup"),
+            os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"),
+        )
+
+        if os.path.exists("uptodate.sqlite"):
+            os.remove("uptodate.sqlite")
+
     def test_db_at_latest_version_old_db(self):
         db_path = os.path.join(
             FILE_PATH, "migration_tests", "database", "sqlite", "pepys_0.0.17_test.sqlite"
