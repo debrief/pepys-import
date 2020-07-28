@@ -215,7 +215,7 @@ class Datafile(BasePostGIS, DatafileMixin):
     )
     reference = Column(String(150))
     url = Column(String(150))
-    size = Column(Integer, nullable=False)
+    size = deferred(Column(Integer, nullable=False))
     hash = deferred(
         Column(String(32), CheckConstraint("hash <> ''", name="ck_Datafiles_hash"), nullable=False)
     )
