@@ -207,7 +207,7 @@ class DefaultResolverTestCaseWithNoRefLoaded(unittest.TestCase):
             platform = self.store.add_to_platforms(
                 "TestPlatform", "P123", "UK", "PlatType", "Priv1", change_id=self.change_id
             )
-            sensor = self.resolver.resolve_sensor(
+            self.resolver.resolve_sensor(
                 self.store,
                 "TestSensorName",
                 "TestSensorType",
@@ -216,7 +216,8 @@ class DefaultResolverTestCaseWithNoRefLoaded(unittest.TestCase):
                 self.change_id,
             )
 
-            assert sensor.privacy_name == "TestPrivacy"
+            result = self.store.search_privacy("TestPrivacy")
+            assert result is not None
 
 
 if __name__ == "__main__":
