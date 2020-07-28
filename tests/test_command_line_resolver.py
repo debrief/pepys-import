@@ -1111,6 +1111,28 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
                 self.resolver.fuzzy_search_platform(self.store, "TEST", "", "", "", self.change_id)
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_cancelling_fuzzy_search_platform_when_given_platform_name(self, menu_prompt):
+        """Test whether "." returns to resolve platform if we've given a platform name, and
+        therefore are asked whether we want to create a synonym"""
+
+        # Search "PLATFORM-1"->Select "."->Select "."->Select "."
+        menu_prompt.side_effect = ["PLATFORM-1 / 123 / UK", ".", ".", "."]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id)
+            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            nationality = self.store.add_to_nationalities("UK", self.change_id)
+            self.store.add_to_platforms(
+                "PLATFORM-1",
+                "123",
+                nationality.name,
+                platform_type.name,
+                privacy.name,
+                change_id=self.change_id,
+            )
+            with self.assertRaises(SystemExit):
+                self.resolver.fuzzy_search_platform(self.store, "TEST", "", "", "", self.change_id)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_cancelling_fuzzy_search_sensor(self, menu_prompt):
         """Test whether "." returns to resolve sensor"""
 
