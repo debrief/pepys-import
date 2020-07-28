@@ -58,7 +58,7 @@ class EAGImporter(Importer):
         try:
             date_of_recording_str = filename[:8]
             callsign_from_filename = filename[9:-8]
-        except ValueError:
+        except ValueError:  # pragma: no cover (can't test as filenames that don't match this pattern won't be processed)
             self.errors.append(
                 {self.error_type: f"Error in filename - cannot extract date and callsign"}
             )
@@ -211,7 +211,7 @@ class EAGImporter(Importer):
         except ValueError:
             self.errors.append(
                 {
-                    self.error_type: f"Error: cannot parse ECEF values to floats: X: {ecef_x}, Y: {ecef_y}, Z: {ecef_z}"
+                    self.error_type: f"Error: cannot parse ECEF values to floats: X: {ecef_x_token.text}, Y: {ecef_y_token.text}, Z: {ecef_z_token.text}"
                 }
             )
             return None, None, False

@@ -64,7 +64,7 @@ class ViewDataCLITestCase(unittest.TestCase):
             in output
         )
         assert (
-            "| NMEA_bad.log                     | None |  243 | 8ddb840fee218872d2bb394cc654bdae"
+            "| NMEA_bad.log                     | None |  243 | b201a229fb2c4a80bd657066e4bf9c8a"
             in output
         )
 
