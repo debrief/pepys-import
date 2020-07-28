@@ -2,6 +2,18 @@
 History
 =======
 
+0.0.20 (2020-07-28)
+-------------------
+
+* Allow local override of Pepys config file
+* Improve importer writing guide
+* Associate SQLite database files with Pepys Admin (right-click editing)
+* Make highlight colors more distinctive
+* Fix to allow prompts to better handle spaces
+* Fix issues with EAG importer
+* Check that deployed database is at same version as master when merging
+
+
 0.0.19 (2020-07-03)
 -------------------
 
