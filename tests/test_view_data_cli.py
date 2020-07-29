@@ -88,7 +88,7 @@ class ViewDataCLITestCase(unittest.TestCase):
         assert "Returning to the previous menu..." in output
 
     def test_default(self):
-        # Only cancel command (0) returns True, others return None
+        # Only cancel command (.) returns True, others return None
         result = self.shell.default(".")
         assert result is True
 
@@ -210,7 +210,7 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
         assert "Returning to the previous menu..." in output
 
     def test_default(self):
-        # Only cancel command (0) returns True, others return None
+        # Only cancel command (.) returns True, others return None
         result = self.shell.default(".")
         assert result is True
 
