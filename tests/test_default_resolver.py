@@ -199,6 +199,26 @@ class DefaultResolverTestCaseWithNoRefLoaded(unittest.TestCase):
             privacy = self.resolver.resolve_privacy(self.store, self.change_id)
             self.assertEqual(privacy.name, "Public")
 
+    def test_resolve_sensor_with_given_privacy(self):
+        with self.store.session_scope():
+            self.store.add_to_platform_types("PlatType", change_id=self.change_id)
+            self.store.add_to_nationalities("UK", change_id=self.change_id)
+            self.store.add_to_privacies("Priv1", 0, change_id=self.change_id)
+            platform = self.store.add_to_platforms(
+                "TestPlatform", "P123", "UK", "PlatType", "Priv1", change_id=self.change_id
+            )
+            self.resolver.resolve_sensor(
+                self.store,
+                "TestSensorName",
+                "TestSensorType",
+                platform.platform_id,
+                "TestPrivacy",
+                self.change_id,
+            )
+
+            result = self.store.search_privacy("TestPrivacy")
+            assert result is not None
+
 
 if __name__ == "__main__":
     unittest.main()

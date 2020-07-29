@@ -2,6 +2,8 @@ import os
 import unittest
 from datetime import datetime
 
+import pytest
+
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.highlighter.support.combine import combine_tokens
 
@@ -51,6 +53,12 @@ class UsageRecordingTests(unittest.TestCase):
         usages = chars[0].usages
         self.assertTrue(usages is not None, "usages should be declared")
         self.assertEqual(0, len(usages), "usages should start empty")
+
+    def test_create_with_negative_n_lines(self):
+        data_file = HighlightedFile(DATA_FILE, -10)
+
+        with pytest.raises(ValueError):
+            data_file.fill_char_array_if_needed()
 
     def test_record_tokens(self):
         data_file = HighlightedFile(DATA_FILE)
