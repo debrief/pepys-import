@@ -11,3 +11,7 @@
     rev: 4.3.21  # pick the isort version you'd like to use from https://github.com/timothycrosley/isort/releases
     hooks:
     -   id: isort
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.8.3
+    hooks:
+      - id: flake8
