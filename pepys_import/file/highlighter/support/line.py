@@ -60,7 +60,7 @@ class Line:
         Notes:
         The reg_exp given to this function should be a regular expression that extracts the individual tokens from the line,
         and *not* a regular expression that identifies the characters to split by. Thus, the WHITESPACE_TOKENISER regex is
-        simply \S+, which matches any amount of anything that isn't whitespace. The CSV_TOKENISER is more complex, as it deals
+        simply \\S+, which matches any amount of anything that isn't whitespace. The CSV_TOKENISER is more complex, as it deals
         with quotes and other issues that cause problems in CSV files.
         The regular expression can use groups, but the entire match of the regular expression should be the token - there is no
         capacity (currently at least) for extracting particular groups of the regular expression. Use can be made of look-ahead

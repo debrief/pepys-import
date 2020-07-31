@@ -1,4 +1,3 @@
-import cmd
 import os
 
 from pepys_admin.base_cli import BaseShell

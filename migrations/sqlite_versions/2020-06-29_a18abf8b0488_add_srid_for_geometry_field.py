@@ -26,7 +26,7 @@ def upgrade():
     query_1 = """
 UPDATE geometry_columns
 SET srid = 4326
-WHERE f_table_name = 'geometries';    
+WHERE f_table_name = 'geometries';
     """
     # Query for updating the SRID
     query_2 = """
@@ -46,7 +46,7 @@ def downgrade():
     query_1 = """
     UPDATE geometry_columns
     SET srid = -1
-    WHERE f_table_name = 'geometries';    
+    WHERE f_table_name = 'geometries';
     """
     # Query for updating the SRID
     query_2 = """

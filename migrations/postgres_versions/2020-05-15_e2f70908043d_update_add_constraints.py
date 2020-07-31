@@ -5,7 +5,6 @@ Revises: ce68ca5be4cd
 Create Date: 2020-05-15 13:56:52.009533
 
 """
-import geoalchemy2
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql

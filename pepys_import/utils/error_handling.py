@@ -41,7 +41,7 @@ def handle_status_errors():
         sqlalchemy.exc.ProgrammingError,
         sqlalchemy.exc.OperationalError,
         sqlalchemy.exc.InvalidRequestError,
-    ) as e:
+    ):
         print(
             "ERROR: Table summaries couldn't be printed.\n"
             "Please check your database structure is up-to-date with that expected "

@@ -6,7 +6,6 @@ from sqlalchemy import exc
 from sqlalchemy.orm.session import sessionmaker
 from testing.postgresql import Postgresql
 
-from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import DataStore
 
 # All reference tables excluding GeometrySubType and Privacy which can't be tested in this simple way

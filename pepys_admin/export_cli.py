@@ -1,4 +1,3 @@
-import cmd
 import os
 from datetime import datetime
 

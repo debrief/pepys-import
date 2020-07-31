@@ -37,8 +37,6 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "Public")
 
     def test_resolve_sensor_gives_sensor_object_when_called_twice(self):
-        Sensor = self.store.db_classes.Sensor
-
         with self.store.session_scope():
             # Create a platform for it to belong to
             platform_obj = self.store.add_to_platforms(

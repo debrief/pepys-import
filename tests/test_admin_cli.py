@@ -12,7 +12,6 @@ import pg8000
 import pytest
 from testing.postgresql import Postgresql
 
-import config
 from paths import MIGRATIONS_DIRECTORY
 from pepys_admin.admin_cli import AdminShell
 from pepys_admin.cli import run_admin_shell
@@ -875,14 +874,13 @@ class SnapshotPostgresTestCase(unittest.TestCase):
                 privacy=privacy.name,
                 change_id=change_id,
             )
-            sensor = platform.get_sensor(
+            platform.get_sensor(
                 self.store,
                 "SENSOR-TEST",
                 sensor_type=sensor_type.name,
                 privacy=privacy_2.name,
                 change_id=change_id,
             )
-            sensor_id = sensor.sensor_id
             self.store.add_to_synonyms("Platforms", "test", entity=platform_id, change_id=change_id)
 
         self.shell = SnapshotShell(self.store)
@@ -1287,14 +1285,13 @@ class SnapshotShellTestCase(unittest.TestCase):
                 privacy=privacy.name,
                 change_id=change_id,
             )
-            sensor = platform.get_sensor(
+            platform.get_sensor(
                 self.store,
                 "SENSOR-TEST",
                 sensor_type=sensor_type.name,
                 privacy=privacy_2.name,
                 change_id=change_id,
             )
-            sensor_id = sensor.sensor_id
             self.store.add_to_synonyms("Platforms", "test", entity=platform_id, change_id=change_id)
 
         self.shell = SnapshotShell(self.store)

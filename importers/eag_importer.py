@@ -201,7 +201,7 @@ class EAGImporter(Importer):
         latitude and longitude, plus a height value in metres.
 
         X, Y and Z should be provided in metres.
-        
+
         All formulae taken from https://microem.ru/files/2012/08/GPS.G1-X-00006.pdf
         """
         try:

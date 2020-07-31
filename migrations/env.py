@@ -1,8 +1,6 @@
-import inspect
 import json
 import os
 from logging.config import fileConfig
-from re import search
 
 from alembic import context
 from alembic.script import write_hooks
@@ -23,10 +21,6 @@ from pepys_import.utils.data_store_utils import (
     is_schema_created,
 )
 from pepys_import.utils.sqlite_utils import load_spatialite
-from pepys_import.utils.table_name_utils import (
-    find_foreign_key_table_names_recursively,
-    table_name_to_class_name,
-)
 
 DIR_PATH = os.path.dirname(__file__)
 

@@ -1,7 +1,6 @@
 import datetime
 import os
 import unittest
-from tempfile import NamedTemporaryFile
 
 from importers.nisida_importer import NisidaImporter
 from pepys_import.core.formats import unit_registry

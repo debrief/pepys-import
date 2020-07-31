@@ -1,7 +1,7 @@
 """base
 
 Revision ID: 5154f7db278d
-Revises: 
+Revises:
 Create Date: 2020-04-23 12:23:01.219218
 
 """

@@ -1,6 +1,4 @@
-import colorsys
 import itertools
-import random
 
 # Set of 30 distinct colours generated from https://mokole.com/palette.html
 DISTINCT_COLORS_30 = [

@@ -1,6 +1,5 @@
 import os
 import random
-import unittest
 from unittest.mock import patch
 
 import pytest
@@ -22,7 +21,7 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 @patch("pepys_import.resolvers.command_line_resolver.prompt")
 def test_rep_test_1_import(prompt, menu_prompt):
     """Tests a full run of an import of rep_test1.rep using the importer CLI
-    
+
     **Note:** This will fail if the CLI interface changes at all!"""
     menu_prompt.side_effect = [
         "3",  # Public
@@ -87,7 +86,7 @@ def test_rep_test_1_import(prompt, menu_prompt):
 @patch("pepys_import.resolvers.command_line_resolver.prompt")
 def test_gpx_1_0_import(prompt, menu_prompt):
     """Tests a full run of an import of gpx_1_0.gpx using the importer CLI.
-    
+
     **Note:** This will fail if the CLI interface changes at all!"""
     menu_prompt.side_effect = [
         "5",  # Private
