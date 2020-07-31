@@ -40,10 +40,7 @@ from pepys_import.core.store.constants import (
     UNIT_TYPE,
     USER,
 )
-from pepys_import.utils.table_name_utils import (
-    find_foreign_key_table_names_recursively,
-    table_name_to_class_name,
-)
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 TABLE_NAMES = [
     HOSTED_BY,
@@ -98,36 +95,6 @@ def test_make_table_names_singular(table_name):
 def test_make_table_names_singular_alembic_version(table_name):
     table = table_name_to_class_name(table_name)
     assert table == "alembic_version"
-
-
-@pytest.mark.parametrize(
-    "table_name,actual_result",
-    [
-        (NATIONALITY, []),
-        (PLATFORM, ["Privacy", "PlatformType", "Nationality"]),
-        (
-            STATE,
-            [
-                "Datafile",
-                "DatafileType",
-                "Privacy",
-                "Sensor",
-                "SensorType",
-                "Platform",
-                "PlatformType",
-                "Nationality",
-            ],
-        ),
-    ],
-)
-def test_find_foreign_key_table_names(table_name, actual_result):
-    tables = list()
-    table = table_name_to_class_name(table_name)
-    table_obj = getattr(sqlite_db, table)
-    find_foreign_key_table_names_recursively(table_obj, tables)
-    # They should have the same values but they might not have the same order.
-    # Convert them to set and compare
-    assert set(tables) == set(actual_result)
 
 
 if __name__ == "__main__":
