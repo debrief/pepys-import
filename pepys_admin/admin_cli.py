@@ -1,4 +1,3 @@
-import cmd
 import os
 import sys
 import webbrowser

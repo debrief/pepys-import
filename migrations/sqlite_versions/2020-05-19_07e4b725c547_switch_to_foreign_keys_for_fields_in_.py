@@ -11,7 +11,7 @@ from uuid import uuid4
 import sqlalchemy as sa
 from alembic import op
 from geoalchemy2 import Geometry
-from sqlalchemy import REAL, TIMESTAMP, Column, DateTime, ForeignKey, MetaData, String, Text
+from sqlalchemy import REAL, TIMESTAMP, Column, DateTime, ForeignKey, MetaData, String
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.declarative.base import declared_attr

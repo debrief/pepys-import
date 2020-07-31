@@ -8,9 +8,6 @@ Create Date: 2020-06-15 12:57:28.809322
 import geoalchemy2
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy import ForeignKeyConstraint
-
-import pepys_import
 
 # revision identifiers, used by Alembic.
 revision = "f2c9f346f305"
@@ -493,7 +490,7 @@ def upgrade():
             onupdate="cascade",
         )
 
-    ### end Alembic commands ###
+    # ### end Alembic commands ###
 
 
 def downgrade():

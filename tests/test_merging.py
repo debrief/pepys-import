@@ -665,7 +665,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
 
     def test_sensor_platform_merge(self):
         with self.master_store.session_scope():
-            merge_change_id = self.master_store.add_to_changes(
+            self.master_store.add_to_changes(
                 user=getuser(),
                 modified=datetime.utcnow(),
                 reason=f"Merging from database {self.slave_store.db_name}",
@@ -865,7 +865,7 @@ class TestMergeDatafiles(unittest.TestCase):
 
     def test_merge_data_files(self):
         with self.master_store.session_scope():
-            merge_change_id = self.master_store.add_to_changes(
+            self.master_store.add_to_changes(
                 user=getuser(),
                 modified=datetime.utcnow(),
                 reason=f"Merging from database {self.slave_store.db_name}",
@@ -1465,7 +1465,7 @@ class TestMergeStateFromImport_Idempotent_DifferentFile(unittest.TestCase):
 
         # Run again merging from the original sqlite file
         # that hasn't been altered by the merge process
-        new_slave_store = DataStore("", "", "", 0, db_name="slave_orig.sqlite", db_type="sqlite")
+        DataStore("", "", "", 0, db_name="slave_orig.sqlite", db_type="sqlite")
         self.merge_class.merge_all_tables()
 
         self.do_checks()
@@ -1538,7 +1538,7 @@ class TestSynonymMergeWithRefTable(unittest.TestCase):
 
     def test_synonym_merge_reference_table(self):
         with self.master_store.session_scope():
-            merge_change_id = self.master_store.add_to_changes(
+            self.master_store.add_to_changes(
                 user=getuser(),
                 modified=datetime.utcnow(),
                 reason=f"Merging from database {self.slave_store.db_name}",

@@ -513,7 +513,7 @@ class NisidaImporter(Importer):
 
         geometry_location = self.location_plus_range_and_bearing(loc, bearing, range_value)
 
-        geometry = datafile.create_geometry(
+        datafile.create_geometry(
             data_store=data_store,
             geom=geometry_location,
             geom_type_id=geom_type_obj.geo_type_id,
@@ -593,7 +593,7 @@ class NisidaImporter(Importer):
 
         geometry_location = self.location_plus_range_and_bearing(loc, bearing, range_value)
 
-        geometry = datafile.create_geometry(
+        datafile.create_geometry(
             data_store=data_store,
             geom=geometry_location,
             geom_type_id=geom_type_obj.geo_type_id,
@@ -638,7 +638,7 @@ class NisidaImporter(Importer):
             change_id=change_id,
         ).geo_sub_type_id
 
-        geometry = datafile.create_geometry(
+        datafile.create_geometry(
             data_store=data_store,
             geom=loc,
             geom_type_id=geom_type_obj.geo_type_id,

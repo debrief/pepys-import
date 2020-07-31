@@ -5,7 +5,7 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from sqlalchemy import create_engine, func, inspect, or_
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker, undefer
@@ -786,7 +786,7 @@ class DataStore:
     def find_platform(self, name, nationality=None, identifier=None):
         """
         This method tries to find a Platform entity with the given platform details.
-        
+
         If only the platform_name is given, then it searches synonyms ONLY. If all details
         are given then it searches for all the details in the database
 

@@ -1,7 +1,6 @@
 import os
 import unittest
 from contextlib import redirect_stdout
-from datetime import datetime
 from importlib import reload
 from io import StringIO
 from unittest.mock import patch

@@ -1,5 +1,3 @@
-import cmd
-
 from iterfzf import iterfzf
 from prompt_toolkit import HTML, prompt
 from prompt_toolkit.lexers import PygmentsLexer
@@ -47,7 +45,6 @@ class ViewDataShell(BaseShell):
         """Asks user to select a table name. Converts table name to class name,
         fetches the first 50 objects, and prints them in table format.
         """
-        primary_key_field = None
         headers = list()
         associated_attributes = list()
         # Inspect the database and extract the table names

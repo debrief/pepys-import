@@ -224,7 +224,7 @@ def create_alembic_version_table(engine, db_type):
             );
         """
         insert_value = """
-            INSERT INTO pepys.alembic_version (version_num) 
+            INSERT INTO pepys.alembic_version (version_num)
             SELECT '{id}'
             WHERE NOT EXISTS(
                 SELECT '{id}' FROM pepys.alembic_version WHERE version_num = '{id}'
