@@ -12,6 +12,7 @@ from sqlalchemy.orm import RelationshipProperty, class_mapper, load_only
 from tabulate import tabulate
 
 from pepys_admin.base_cli import BaseShell
+from pepys_admin.utils import get_default_export_folder
 from pepys_import.core.store import constants
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
@@ -147,14 +148,15 @@ class ViewDataShell(BaseShell):
         selected_table = iterfzf(table_names, prompt=message)
         if selected_table is None:
             return
+        path = os.path.join(get_default_export_folder(), f"Pepys_Output_{selected_table}.csv")
+        table = table_name_to_class_name(selected_table)
         with self.data_store.engine.connect() as connection:
             if self.data_store.db_type == "postgres":
                 results = connection.execute(f"SELECT * FROM pepys.{selected_table};")
             else:
                 results = connection.execute(f"SELECT * FROM {selected_table};")
             results = results.fetchall()
-            path = os.path.join(WORKING_DIR, f"Pepys_Output_{selected_table}.csv")
-            table = table_name_to_class_name(selected_table)
+
             if table != constants.ALEMBIC_VERSION:
                 table_cls = getattr(self.data_store.db_classes, table)
                 headers = list(table_cls.__table__.columns.keys())
