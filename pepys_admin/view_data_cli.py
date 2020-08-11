@@ -1,3 +1,6 @@
+import csv
+import os
+
 from iterfzf import iterfzf
 from prompt_toolkit import HTML, prompt
 from prompt_toolkit.lexers import PygmentsLexer
@@ -12,6 +15,8 @@ from pepys_admin.base_cli import BaseShell
 from pepys_import.core.store import constants
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
+WORKING_DIR = os.getcwd()
+
 
 def bottom_toolbar():
     return HTML("Press <b>ESC then Enter</b> to exit!")
@@ -22,7 +27,9 @@ class ViewDataShell(BaseShell):
 
     intro = """--- Menu ---
     (1) View Table
-    (2) Run SQL
+    (2) Output Table to CSV
+    (3) Run SQL
+    (4) Output SQL Results to CSV
     (.) Back
     """
     prompt = "(pepys-admin) (view) "
@@ -33,7 +40,9 @@ class ViewDataShell(BaseShell):
         self.aliases = {
             ".": self.do_cancel,
             "1": self.do_view_table,
-            "2": self.do_run_sql,
+            "2": self.do_output_table_to_csv,
+            "3": self.do_run_sql,
+            # "4": self.do_output_sql_to_csv,
         }
 
     @staticmethod
@@ -41,12 +50,7 @@ class ViewDataShell(BaseShell):
         """Returns to the previous menu"""
         print("Returning to the previous menu...")
 
-    def do_view_table(self):
-        """Asks user to select a table name. Converts table name to class name,
-        fetches the first 50 objects, and prints them in table format.
-        """
-        headers = list()
-        associated_attributes = list()
+    def _table_names(self):
         # Inspect the database and extract the table names
         inspector = inspect(self.data_store.engine)
         if self.data_store.db_type == "postgres":
@@ -64,6 +68,15 @@ class ViewDataShell(BaseShell):
                 and not name.startswith("sql")
                 and not name.lower().startswith("spatial")
             ]
+        return table_names
+
+    def do_view_table(self):
+        """Asks user to select a table name. Converts table name to class name,
+        fetches the first 50 objects, and prints them in table format.
+        """
+        headers = list()
+        associated_attributes = list()
+        table_names = self._table_names()
         message = "Select a table >"
         selected_table = iterfzf(table_names, prompt=message)
         if selected_table is None:
@@ -127,6 +140,33 @@ class ViewDataShell(BaseShell):
             )
             res += "\n"
         print(res)
+
+    def do_output_table_to_csv(self):
+        table_names = self._table_names()
+        message = "Select a table >"
+        selected_table = iterfzf(table_names, prompt=message)
+        if selected_table is None:
+            return
+        with self.data_store.engine.connect() as connection:
+            if self.data_store.db_type == "postgres":
+                results = connection.execute(f"SELECT * FROM pepys.{selected_table};")
+            else:
+                results = connection.execute(f"SELECT * FROM {selected_table};")
+            results = results.fetchall()
+            path = os.path.join(WORKING_DIR, f"Pepys_Output_{selected_table}.csv")
+            table = table_name_to_class_name(selected_table)
+            if table != constants.ALEMBIC_VERSION:
+                table_cls = getattr(self.data_store.db_classes, table)
+                headers = list(table_cls.__table__.columns.keys())
+            else:
+                headers = ["version_num"]
+            with open(path, "w") as f:
+                writer = csv.writer(f)
+                writer.writerow(headers)
+                writer.writerows(results)
+            print(
+                f"{selected_table} table is successfully exported!\nYou can find it here: '{path}'."
+            )
 
     def do_run_sql(self):
         """Executes the input. Prints the results of the query in table format."""
