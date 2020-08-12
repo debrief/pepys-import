@@ -16,8 +16,6 @@ from pepys_admin.utils import get_default_export_folder
 from pepys_import.core.store import constants
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
-WORKING_DIR = os.getcwd()
-
 
 def bottom_toolbar():
     return HTML("Press <b>ESC then Enter</b> to exit!")
@@ -43,7 +41,7 @@ class ViewDataShell(BaseShell):
             "1": self.do_view_table,
             "2": self.do_output_table_to_csv,
             "3": self.do_run_sql,
-            # "4": self.do_output_sql_to_csv,
+            "4": self.do_output_sql_to_csv,
         }
 
     @staticmethod
@@ -170,29 +168,43 @@ class ViewDataShell(BaseShell):
                 f"{selected_table} table is successfully exported!\nYou can find it here: '{path}'."
             )
 
-    def do_run_sql(self):
-        """Executes the input. Prints the results of the query in table format."""
+    def _sql_results(self):
         query = prompt(
             "> ", multiline=True, bottom_toolbar=bottom_toolbar, lexer=PygmentsLexer(SqlLexer)
         )
         if query:
             with self.data_store.engine.connect() as connection:
                 try:
-                    result = connection.execute(query)
-                    result = result.fetchall()
+                    results = connection.execute(query)
+                    results = results.fetchall()
+                    return query, results
                 except (ProgrammingError, OperationalError, InvalidRequestError,) as e:
                     print(
                         f"SQL Exception details: {e}\n\n"
                         "ERROR: Query couldn't be executed successfully.\n"
                         "See above for the full error from SQLAlchemy."
                     )
-                    return
+        return None, None
 
+    def do_run_sql(self):
+        """Executes the input. Prints the resultss of the query in table format."""
+        query, results = self._sql_results()
+        if query and results:
             res = f"QUERY\n{'-' * 20}\n{query}\n{'-' * 20}\nRESULT\n"
             res += tabulate(
-                [[str(column) for column in row] for row in result],
+                [[str(column) for column in row] for row in results],
                 tablefmt="github",
                 floatfmt=".3f",
             )
             res += "\n"
             print(res)
+
+    def do_output_sql_to_csv(self):
+        query, results, = self._sql_results()
+        if query and results:
+            path = os.path.join(get_default_export_folder(), "Pepys_Output_SQL_Query.csv")
+            with open(path, "w") as f:
+                writer = csv.writer(f)
+                writer.writerow([f"Executed Query: {query}"])
+                writer.writerows(results)
+            print(f"SQL results are successfully exported!\nYou can find it here: '{path}'.")
