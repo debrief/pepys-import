@@ -49,7 +49,7 @@ class ViewDataShell(BaseShell):
         """Returns to the previous menu"""
         print("Returning to the previous menu...")
 
-    def _table_names(self):
+    def _get_table_names(self):
         # Inspect the database and extract the table names
         inspector = inspect(self.data_store.engine)
         if self.data_store.db_type == "postgres":
@@ -75,7 +75,7 @@ class ViewDataShell(BaseShell):
         """
         headers = list()
         associated_attributes = list()
-        table_names = self._table_names()
+        table_names = self._get_table_names()
         message = "Select a table >"
         selected_table = iterfzf(table_names, prompt=message)
         if selected_table is None:
@@ -141,7 +141,7 @@ class ViewDataShell(BaseShell):
         print(res)
 
     def do_output_table_to_csv(self):
-        table_names = self._table_names()
+        table_names = self._get_table_names()
         message = "Select a table >"
         selected_table = iterfzf(table_names, prompt=message)
         if selected_table is None:
@@ -168,7 +168,7 @@ class ViewDataShell(BaseShell):
                 f"{selected_table} table is successfully exported!\nYou can find it here: '{path}'."
             )
 
-    def _sql_results(self):
+    def _get_sql_results(self):
         query = prompt(
             "> ", multiline=True, bottom_toolbar=bottom_toolbar, lexer=PygmentsLexer(SqlLexer)
         )
@@ -188,7 +188,7 @@ class ViewDataShell(BaseShell):
 
     def do_run_sql(self):
         """Executes the input. Prints the resultss of the query in table format."""
-        query, results = self._sql_results()
+        query, results = self._get_sql_results()
         if query and results:
             res = f"QUERY\n{'-' * 20}\n{query}\n{'-' * 20}\nRESULT\n"
             res += tabulate(
@@ -200,7 +200,7 @@ class ViewDataShell(BaseShell):
             print(res)
 
     def do_output_sql_to_csv(self):
-        query, results, = self._sql_results()
+        query, results, = self._get_sql_results()
         if query and results:
             path = os.path.join(get_default_export_folder(), "Pepys_Output_SQL_Query.csv")
             with open(path, "w") as f:
