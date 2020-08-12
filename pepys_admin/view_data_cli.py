@@ -200,7 +200,7 @@ class ViewDataShell(BaseShell):
             print(res)
 
     def do_output_sql_to_csv(self):
-        query, results, = self._get_sql_results()
+        query, results = self._get_sql_results()
         if query and results:
             path = os.path.join(get_default_export_folder(), "Pepys_Output_SQL_Query.csv")
             with open(path, "w") as f:
