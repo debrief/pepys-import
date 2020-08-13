@@ -524,6 +524,10 @@ class StateMixin:
         return association_proxy("sensor", "name")
 
     @declared_attr
+    def sensor_host(self):
+        return association_proxy("sensor", "host")
+
+    @declared_attr
     def platform_id(self):
         return association_proxy("sensor", "host")
 
@@ -662,6 +666,10 @@ class ContactMixin:
     @declared_attr
     def sensor_name(self):
         return association_proxy("sensor", "name")
+
+    @declared_attr
+    def sensor_host(self):
+        return association_proxy("sensor", "host")
 
     @declared_attr
     def platform_id(self):
