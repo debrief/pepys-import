@@ -13,6 +13,7 @@ from pepys_import.file.file_processor import FileProcessor
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data")
+CURRENT_DIR = os.getcwd()
 
 
 class ViewDataCLITestCase(unittest.TestCase):
@@ -50,6 +51,49 @@ class ViewDataCLITestCase(unittest.TestCase):
         assert "Alembic Version\n" in output
         assert "| version_number   |" in output
 
+    @patch("pepys_admin.view_data_cli.iterfzf", return_value="Datafiles")
+    def test_do_output_table_to_csv(self, patched_input):
+        path = os.path.join(CURRENT_DIR, "Pepys_Output_Datafiles.csv")
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_output_table_to_csv()
+        output = temp_output.getvalue()
+        assert "Datafiles table is successfully exported!" in output
+        assert f"You can find it here: '{path}'." in output
+
+        if os.path.exists(path):
+            with open(path, "r") as f:
+                data = f.read()
+                assert (
+                    "datafile_id,simulated,privacy_id,datafile_type_id,reference,url,size,hash,created_date\n"
+                    in data
+                )
+                assert "e_trac_bad.txt,,5261,7bbe513d9d253d2277435e0849ed8342" in data
+                assert "20200305_ROBIN.eag.txt,,386,f3d0a8a1760f312ea57912548b48b766" in data
+                assert (
+                    "20200305_ROBINWithHeader.eag.txt,,479,ec2694c2cfe2eaa26181999a55aee5b4" in data
+                )
+                assert "rep_duplicate_name_test.rep,,153,4e8067e51a8e39b2a8fd9f9802618247" in data
+
+            os.remove(path)
+
+    @patch("pepys_admin.view_data_cli.iterfzf", return_value="alembic_version")
+    def test_do_output_table_to_csv_alembic_version(self, patched_input):
+        path = os.path.join(CURRENT_DIR, "Pepys_Output_alembic_version.csv")
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_output_table_to_csv()
+        output = temp_output.getvalue()
+        assert "alembic_version table is successfully exported!" in output
+        assert f"You can find it here: '{path}'." in output
+
+        if os.path.exists(path):
+            with open(path, "r") as f:
+                data = f.read()
+                assert "version_num\n" in data
+
+            os.remove(path)
+
     @patch("pepys_admin.view_data_cli.prompt", return_value="SELECT * FROM Datafiles;")
     def test_do_run_sql(self, patched_prompt):
         temp_output = StringIO()
@@ -76,6 +120,37 @@ class ViewDataCLITestCase(unittest.TestCase):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_run_sql()
+        output = temp_output.getvalue()
+        print(output)
+        assert "ERROR: Query couldn't be executed successfully" in output
+
+    @patch("pepys_admin.view_data_cli.prompt", return_value="SELECT * FROM Datafiles;")
+    def test_do_output_sql_to_csv(self, patched_prompt):
+        path = os.path.join(CURRENT_DIR, "Pepys_Output_SQL_Query.csv")
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_output_sql_to_csv()
+        output = temp_output.getvalue()
+        assert f"SQL results are successfully exported!\nYou can find it here: '{path}'." in output
+
+        if os.path.exists(path):
+            with open(path, "r") as f:
+                data = f.read()
+                assert "Executed Query: SELECT * FROM Datafiles;" in data
+                assert "e_trac_bad.txt,,5261,7bbe513d9d253d2277435e0849ed8342" in data
+                assert "20200305_ROBIN.eag.txt,,386,f3d0a8a1760f312ea57912548b48b766" in data
+                assert (
+                    "20200305_ROBINWithHeader.eag.txt,,479,ec2694c2cfe2eaa26181999a55aee5b4" in data
+                )
+                assert "rep_duplicate_name_test.rep,,153,4e8067e51a8e39b2a8fd9f9802618247" in data
+
+            os.remove(path)
+
+    @patch("pepys_admin.view_data_cli.prompt", return_value="SELECT Blah from NonExisting")
+    def test_do_output_sql_to_csv_invalid(self, patched_prompt):
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.shell.do_output_sql_to_csv()
         output = temp_output.getvalue()
         print(output)
         assert "ERROR: Query couldn't be executed successfully" in output
