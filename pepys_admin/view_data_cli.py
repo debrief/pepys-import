@@ -50,6 +50,7 @@ class ViewDataShell(BaseShell):
         print("Returning to the previous menu...")
 
     def _get_table_names(self):
+        """Gets the table names using SQL Alchemy's inspect db functionality."""
         # Inspect the database and extract the table names
         inspector = inspect(self.data_store.engine)
         if self.data_store.db_type == "postgres":
@@ -141,6 +142,7 @@ class ViewDataShell(BaseShell):
         print(res)
 
     def do_output_table_to_csv(self):
+        """Asks user to select a table name. Fetches all objects, and exports them to a CSV file."""
         table_names = self._get_table_names()
         message = "Select a table >"
         selected_table = iterfzf(table_names, prompt=message)
@@ -169,6 +171,8 @@ class ViewDataShell(BaseShell):
             )
 
     def _get_sql_results(self):
+        """Asks user to enter a query, then runs it on the database.
+        If there isn't any error, returns query and the results."""
         query = prompt(
             "> ", multiline=True, bottom_toolbar=bottom_toolbar, lexer=PygmentsLexer(SqlLexer)
         )
@@ -187,7 +191,7 @@ class ViewDataShell(BaseShell):
         return None, None
 
     def do_run_sql(self):
-        """Executes the input. Prints the resultss of the query in table format."""
+        """Executes the input. Prints the results of the query in table format."""
         query, results = self._get_sql_results()
         if query and results:
             res = f"QUERY\n{'-' * 20}\n{query}\n{'-' * 20}\nRESULT\n"
@@ -200,6 +204,7 @@ class ViewDataShell(BaseShell):
             print(res)
 
     def do_output_sql_to_csv(self):
+        """Executes the input. Exports the results of the query to a CSV file."""
         query, results = self._get_sql_results()
         if query and results:
             path = os.path.join(get_default_export_folder(), "Pepys_Output_SQL_Query.csv")
