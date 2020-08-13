@@ -138,7 +138,7 @@ class ViewDataShell(BaseShell):
                 tablefmt="github",
                 floatfmt=".3f",
             )
-            res += "\n"
+        res += "\n"
         print(res)
 
     def do_output_table_to_csv(self):
