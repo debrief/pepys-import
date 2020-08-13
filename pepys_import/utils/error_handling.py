@@ -23,7 +23,7 @@ def handle_database_errors():
     except ValueError as e:
         if "UUID" in str(e):  # pragma: no cover
             print(
-                f"Error converting UUIDs from database.\n"
+                "Error converting UUIDs from database.\n"
                 "This probably means you're using an outdated SQLite database "
                 "which still uses integer primary keys.\nIf possible, delete your database "
                 "and start from scratch.\nIf that's not possible then contact support."
@@ -31,6 +31,8 @@ def handle_database_errors():
         else:
             # Re-raises the ValueError if it wasn't a UUID error
             raise
+    except AttributeError as e:
+        print(f"Attribute error! Please check the error message: {e}")
 
 
 @contextmanager

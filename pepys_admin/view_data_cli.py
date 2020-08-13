@@ -109,28 +109,24 @@ class ViewDataShell(BaseShell):
                     associated_attributes.append(name)
         # Fetch first 10 rows, create a table from these rows
         with self.data_store.session_scope():
-            try:
-                values = (
-                    self.data_store.session.query(table_cls)
-                    .options(load_only(*headers))
-                    .limit(50)
-                    .all()
-                )
-                headers.extend(associated_attributes)
-                # Sort headers
-                headers.sort()
-                res = f"{selected_table}\n"
-                res += tabulate(
-                    [[str(getattr(row, column)) for column in headers] for row in values],
-                    headers=headers,
-                    tablefmt="github",
-                    floatfmt=".3f",
-                )
-                res += "\n"
-                print(res)
-            except Exception as e:
-                print(f"Viewing table failed! Please check the error message: {e}")
-                return
+            values = (
+                self.data_store.session.query(table_cls)
+                .options(load_only(*headers))
+                .limit(50)
+                .all()
+            )
+            headers.extend(associated_attributes)
+            # Sort headers
+            headers.sort()
+            res = f"{selected_table}\n"
+            res += tabulate(
+                [[str(getattr(row, column)) for column in headers] for row in values],
+                headers=headers,
+                tablefmt="github",
+                floatfmt=".3f",
+            )
+        res += "\n"
+        print(res)
 
     def do_run_sql(self):
         """Executes the input. Prints the results of the query in table format."""
