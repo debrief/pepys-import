@@ -152,7 +152,7 @@ class ViewDataShell(BaseShell):
         table = table_name_to_class_name(selected_table)
         with self.data_store.engine.connect() as connection:
             if self.data_store.db_type == "postgres":
-                results = connection.execute(f"SELECT * FROM pepys.{selected_table};")
+                results = connection.execute(f'SELECT * FROM pepys."{selected_table}";')
             else:
                 results = connection.execute(f"SELECT * FROM {selected_table};")
             results = results.fetchall()
