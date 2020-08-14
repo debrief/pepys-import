@@ -40,6 +40,13 @@ class EnhancedValidator:
         except AttributeError:
             location = None
 
+        if (
+            speed == 0.0 * (unit_registry.metre / unit_registry.second)
+            and course == 0.0 * unit_registry.radian
+        ):
+            print("Both course and speed are exactly zero. Skipping the enhanced validator...")
+            return True
+
         # Doesn't need a try-catch as time is a compulsory field, created
         # when a state is initialised
         time = current_object.time
