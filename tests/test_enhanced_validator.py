@@ -191,35 +191,30 @@ class EnhancedValidatorTestCase(unittest.TestCase):
         )
 
     def test_measured_speed_is_zero(self):
-        prev_state = self.file.create_state(
-            self.store,
-            self.platform,
-            self.sensor,
-            self.current_time,
-            parser_name=self.parser.short_name,
-        )
+        # The difference between the following locations is ~3.574 km
         prev_loc = Location()
         prev_loc.set_latitude_decimal_degrees(50)
         prev_loc.set_longitude_decimal_degrees(75)
-        prev_state.location = prev_loc
-        prev_state.time = self.current_time - timedelta(seconds=3600)
 
-        current_state = self.file.create_state(
-            self.store,
-            self.platform,
-            self.sensor,
-            self.current_time + timedelta(minutes=1),
-            parser_name=self.parser.short_name,
-        )
-        loc = Location()
-        loc.set_latitude_decimal_degrees(50)
-        loc.set_longitude_decimal_degrees(75.05)
-        current_state.location = loc
-        current_state.speed = 0.0 * (unit_registry.metre / unit_registry.second)
-        current_state.time = self.current_time
+        current_loc = Location()
+        current_loc.set_latitude_decimal_degrees(50)
+        current_loc.set_longitude_decimal_degrees(75.05)
+
+        speed = 0.0 * (unit_registry.metre / unit_registry.second)
+        time = 3600 * unit_registry.seconds
 
         ev = EnhancedValidator()
-        assert ev.validate(current_state, self.errors, "Test Parser", prev_state) is True
+        assert (
+            ev.speed_loose_match_with_location(
+                prev_location=prev_loc,
+                curr_location=current_loc,
+                speed=speed,
+                time=time,
+                errors=self.errors,
+                error_type="Test Parser",
+            )
+            is True
+        )
 
 
 if __name__ == "__main__":
