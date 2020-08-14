@@ -190,6 +190,37 @@ class EnhancedValidatorTestCase(unittest.TestCase):
             "Both course and speed are exactly zero. Skipping the enhanced validator..." in output
         )
 
+    def test_measured_speed_is_zero(self):
+        prev_state = self.file.create_state(
+            self.store,
+            self.platform,
+            self.sensor,
+            self.current_time,
+            parser_name=self.parser.short_name,
+        )
+        prev_loc = Location()
+        prev_loc.set_latitude_decimal_degrees(50)
+        prev_loc.set_longitude_decimal_degrees(75)
+        prev_state.location = prev_loc
+        prev_state.time = self.current_time - timedelta(seconds=3600)
+
+        current_state = self.file.create_state(
+            self.store,
+            self.platform,
+            self.sensor,
+            self.current_time + timedelta(minutes=1),
+            parser_name=self.parser.short_name,
+        )
+        loc = Location()
+        loc.set_latitude_decimal_degrees(50)
+        loc.set_longitude_decimal_degrees(75.05)
+        current_state.location = loc
+        current_state.speed = 0.0 * (unit_registry.metre / unit_registry.second)
+        current_state.time = self.current_time
+
+        ev = EnhancedValidator()
+        assert ev.validate(current_state, self.errors, "Test Parser", prev_state) is True
+
 
 if __name__ == "__main__":
     unittest.main()

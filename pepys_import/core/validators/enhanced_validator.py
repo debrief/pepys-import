@@ -163,6 +163,11 @@ class EnhancedValidator:
         calculated_speed = distance / time
         if speed is None or calculated_speed <= speed * 10:
             return True
+        elif speed == 0.0 * (
+            unit_registry.metre / unit_registry.second
+        ) and calculated_speed <= 1.0 * (unit_registry.metre / unit_registry.second):
+            return True
+
         errors.append(
             {
                 error_type: f"Calculated speed ({calculated_speed:.3f}) is more than "
