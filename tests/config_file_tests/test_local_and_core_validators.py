@@ -168,7 +168,8 @@ class TestLocalTestsFails(unittest.TestCase):
 
     @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_FAILS_PATH)
     @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_FAILS_PATH)
-    def test_local_basic_and_enhanced_tests(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_local_basic_and_enhanced_tests(self, patched_prompt):
         reload(common_db)
 
         processor = FileProcessor(archive=False)

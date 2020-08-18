@@ -1,6 +1,7 @@
 import datetime
 import os
 import unittest
+from unittest.mock import patch
 
 from importers.replay_importer import ReplayImporter
 from pepys_import.core.store.data_store import DataStore
@@ -18,7 +19,8 @@ class TestLoadREP(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_load_rep_data(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_load_rep_data(self, patched_prompt):
         processor = FileProcessor(archive=False)
         processor.register_importer(ReplayImporter())
 

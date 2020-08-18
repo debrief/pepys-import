@@ -57,7 +57,8 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, False)
 
-    def test_process_folders_descending(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_process_folders_descending(self, patched_prompt):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("descending.db", archive=False)
 
@@ -74,7 +75,8 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, True)
 
-    def test_process_folders_descending_in_memory(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_process_folders_descending_in_memory(self, patched_prompt):
         """Test whether :memory: is used when no filename is given"""
         processor = FileProcessor(archive=False)
 
@@ -113,8 +115,9 @@ class SampleImporterTests(unittest.TestCase):
 
         self.assertIn("Files got processed: 0 times", output)
 
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
     @patch("pepys_import.file.file_processor.ARCHIVE_PATH", OUTPUT_PATH)
-    def test_archiving_files(self):
+    def test_archiving_files(self, patched_prompt):
         """Test whether archive flag correctly works for File Processor"""
         # Assert that REP files exist in the original location
         input_files = os.listdir(REP_DATA_PATH)
@@ -178,7 +181,8 @@ class ImporterSummaryTest(unittest.TestCase):
         if os.path.exists(descending_file):
             os.remove(descending_file)
 
-    def test_summary_no_archive(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_summary_no_archive(self, patched_prompt):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("import_status_test.db", archive=False)
 
@@ -249,8 +253,9 @@ class ImporterSummaryTest(unittest.TestCase):
         # Check there's nothing left in the dict
         assert len(failed_files) == 0
 
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
     @patch("pepys_import.file.file_processor.ARCHIVE_PATH", OUTPUT_PATH)
-    def test_summary_with_archive(self):
+    def test_summary_with_archive(self, patched_prompt):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("import_status_test2.db", archive=True)
 
@@ -535,7 +540,8 @@ class ImporterDisableRecordingTest(unittest.TestCase):
 
 
 class ImporterGetCachedSensorTest(unittest.TestCase):
-    def test_platform_sensor_mapping_has_sensible_values(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_platform_sensor_mapping_has_sensible_values(self, patched_prompt):
         processor = FileProcessor(":memory:", archive=False)
 
         processor.register_importer(ReplayImporter())
