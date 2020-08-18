@@ -417,13 +417,14 @@ class DatafileMixin:
         for index, choice in enumerate(choices, 1):
             input_text += f"   {str(index)}) {choice}\n"
         choice = prompt(input_text, validator=validator)
+        delete = False
         if choice == "1":
             ask_skipping_validator = False
             skip_validator = True
-            del error
+            delete = True
         elif choice == "2":
             ask_skipping_validator = False
-        return ask_skipping_validator, skip_validator
+        return ask_skipping_validator, skip_validator, delete
 
     def validate(
         self, validation_level=validation_constants.NONE_LEVEL, errors=None, parser="Default",
@@ -484,9 +485,12 @@ class DatafileMixin:
                                 (
                                     ask_skipping_validator,
                                     skip_validator,
+                                    delete,
                                 ) = self._ask_user_what_they_want(
                                     errors[-1], ask_skipping_validator, skip_validator
                                 )
+                                if delete:
+                                    del errors[-1]
                         for local_ev in local_ev_objects:
                             if not local_ev.validate(curr_object, errors, parser, prev_object):
                                 failed_validators.append(ev.name)
@@ -494,9 +498,12 @@ class DatafileMixin:
                                     (
                                         ask_skipping_validator,
                                         skip_validator,
+                                        delete,
                                     ) = self._ask_user_what_they_want(
                                         errors[-1], ask_skipping_validator, skip_validator,
                                     )
+                                    if delete:
+                                        del errors[-1]
 
                     prev_object_dict[curr_object.platform_name] = curr_object
 
