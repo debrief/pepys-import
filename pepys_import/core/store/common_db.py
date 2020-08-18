@@ -1,3 +1,5 @@
+from prompt_toolkit import prompt
+from prompt_toolkit.validation import Validator
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -396,6 +398,33 @@ class DatafileMixin:
 
         self.measurements[parser_name][platform_id].append(measurement)
 
+    def _input_validator(self):
+        def is_valid(option):
+            return option == str(1) or option == str(2)
+
+        validator = Validator.from_callable(
+            is_valid, error_message="You didn't select a valid option", move_cursor_to_end=True,
+        )
+        return validator
+
+    def _ask_user_what_they_want(self, error, ask_skipping_validator, skip_validator):
+        validator = self._input_validator()
+        input_text = f"\n\nError! Message: {error}\n.Would you like to\n"
+        choices = (
+            "Skip enhanced validator for this file",
+            "Carry on running the validator, logging errors",
+        )
+        for index, choice in enumerate(choices, 1):
+            input_text += f"   {str(index)}) {choice}\n"
+        choice = prompt(input_text, validator=validator)
+        if choice == "1":
+            ask_skipping_validator = False
+            skip_validator = True
+            del error
+        elif choice == "2":
+            ask_skipping_validator = False
+        return ask_skipping_validator, skip_validator
+
     def validate(
         self, validation_level=validation_constants.NONE_LEVEL, errors=None, parser="Default",
     ):
@@ -426,6 +455,8 @@ class DatafileMixin:
                 return (True, failed_validators)
             return (False, failed_validators)
         elif validation_level == validation_constants.ENHANCED_LEVEL:
+            ask_skipping_validator = True
+            skip_validator = False
             # Create validator objects here, so we're only creating them once
             bv = BasicValidator(parser)
             ev = EnhancedValidator()
@@ -446,11 +477,27 @@ class DatafileMixin:
                         prev_object = prev_object_dict[curr_object.platform_name]
 
                     # Run the enhanced validators (standard one, plus configured local ones)
-                    if not ev.validate(curr_object, errors, parser, prev_object):
-                        failed_validators.append(ev.name)
-                    for local_ev in local_ev_objects:
-                        if not local_ev.validate(curr_object, errors, parser, prev_object):
+                    if not skip_validator:
+                        if not ev.validate(curr_object, errors, parser, prev_object):
                             failed_validators.append(ev.name)
+                            if ask_skipping_validator:
+                                (
+                                    ask_skipping_validator,
+                                    skip_validator,
+                                ) = self._ask_user_what_they_want(
+                                    errors[-1], ask_skipping_validator, skip_validator
+                                )
+                        for local_ev in local_ev_objects:
+                            if not local_ev.validate(curr_object, errors, parser, prev_object):
+                                failed_validators.append(ev.name)
+                                if ask_skipping_validator:
+                                    (
+                                        ask_skipping_validator,
+                                        skip_validator,
+                                    ) = self._ask_user_what_they_want(
+                                        errors[-1], ask_skipping_validator, skip_validator,
+                                    )
+
                     prev_object_dict[curr_object.platform_name] = curr_object
 
             if not errors:
