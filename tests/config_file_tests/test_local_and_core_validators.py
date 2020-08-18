@@ -168,8 +168,7 @@ class TestLocalTestsFails(unittest.TestCase):
 
     @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_FAILS_PATH)
     @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_FAILS_PATH)
-    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
-    def test_local_basic_and_enhanced_tests(self, patched_prompt):
+    def test_local_basic_and_enhanced_tests(self):
         reload(common_db)
 
         processor = FileProcessor(archive=False)
@@ -190,7 +189,8 @@ class TestLocalTestsFails(unittest.TestCase):
             self.assertEqual(len(datafiles), 0)
 
         # parse the folder
-        processor.process(REP_DATA_PATH, self.store, False)
+        with patch("pepys_import.core.store.common_db.prompt", return_value="2"):
+            processor.process(REP_DATA_PATH, self.store, False)
 
         # check data got created
         with self.store.session_scope():
