@@ -189,7 +189,8 @@ class TestLocalTestsFails(unittest.TestCase):
             self.assertEqual(len(datafiles), 0)
 
         # parse the folder
-        processor.process(REP_DATA_PATH, self.store, False)
+        with patch("pepys_import.core.store.common_db.prompt", return_value="2"):
+            processor.process(REP_DATA_PATH, self.store, False)
 
         # check data got created
         with self.store.session_scope():

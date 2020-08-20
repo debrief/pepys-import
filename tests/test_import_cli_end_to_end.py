@@ -239,7 +239,8 @@ class TestEndToEndAutomaton:
     @patch("pepys_import.resolvers.command_line_resolver.create_menu", new=create_menu_patch)
     @patch("pepys_import.resolvers.command_line_resolver.prompt", new=clr_prompt_patch)
     @pytest.mark.parametrize("execution_number", range(10))  # Used to just repeat the test 5 times
-    def test_automaton_load_rep1(self, execution_number):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_automaton_load_rep1(self, patched_prompt, execution_number):
         seed = random.randint(0, 10000)
         print("---- Starting end-to-end automaton test")
         print(f"Running with seed = {seed}")
