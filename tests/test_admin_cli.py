@@ -36,7 +36,8 @@ CONFIG_FILE_PATH = os.path.join(
 
 
 class AdminCLITestCase(unittest.TestCase):
-    def setUp(self) -> None:
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def setUp(self, patched_prompt) -> None:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
@@ -352,7 +353,8 @@ class NotInitialisedDBTestCase(unittest.TestCase):
 
 
 class ExportShellTestCase(unittest.TestCase):
-    def setUp(self) -> None:
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def setUp(self, patched_prompt) -> None:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
@@ -573,7 +575,8 @@ class ExportShellTestCase(unittest.TestCase):
 
 
 class ExportByPlatformNameShellTestCase(unittest.TestCase):
-    def setUp(self) -> None:
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def setUp(self, patched_prompt) -> None:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 
@@ -822,7 +825,8 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
 
 
 class SnapshotPostgresTestCase(unittest.TestCase):
-    def setUp(self) -> None:
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def setUp(self, patched_prompt) -> None:
         self.postgres = Postgresql(
             database="test", host="localhost", user="postgres", password="postgres", port=55527,
         )
@@ -1149,7 +1153,8 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
         if os.path.exists("no_alembic_version.sqlite"):
             os.remove("no_alembic_version.sqlite")
 
-    def test_db_at_latest_revision_uptodate_file(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_db_at_latest_revision_uptodate_file(self, patched_prompt):
         store = DataStore("", "", "", 0, "uptodate.sqlite", db_type="sqlite")
         store.initialise()
 
@@ -1166,7 +1171,8 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
         if os.path.exists("uptodate.sqlite"):
             os.remove("uptodate.sqlite")
 
-    def test_db_at_latest_revision_no_json(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_db_at_latest_revision_no_json(self, patched_prompt):
         store = DataStore("", "", "", 0, "uptodate.sqlite", db_type="sqlite")
         store.initialise()
 
@@ -1200,7 +1206,8 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
         if os.path.exists("uptodate.sqlite"):
             os.remove("uptodate.sqlite")
 
-    def test_db_at_latest_revision_incorrect_json(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_db_at_latest_revision_incorrect_json(self, patched_prompt):
         store = DataStore("", "", "", 0, "uptodate.sqlite", db_type="sqlite")
         store.initialise()
 
@@ -1242,7 +1249,8 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
 
 
 class SnapshotShellTestCase(unittest.TestCase):
-    def setUp(self) -> None:
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def setUp(self, patched_prompt) -> None:
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         self.store.initialise()
 

@@ -1,5 +1,6 @@
 import os
 import unittest
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy.exc import OperationalError
@@ -63,7 +64,8 @@ class SampleImporterTestCase(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, self.store, False)
 
-    def test_process_folders_descending(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_process_folders_descending(self, patched_prompt):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("descending.db", archive=False)
 

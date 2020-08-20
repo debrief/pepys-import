@@ -44,7 +44,8 @@ class MigrateSQLiteTestCase(unittest.TestCase):
         assert is_schema_created(self.store.engine, self.store.db_type) is True
 
     @patch("pepys_admin.admin_cli.input", return_value="Y")
-    def test_do_migrate_not_empty_database(self, patched_input):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_do_migrate_not_empty_database(self, patched_prompt, patched_input):
         self.store.initialise()
         # Parse the REP files
         processor = FileProcessor(archive=False)
@@ -100,7 +101,8 @@ class MigratePostgresTestCase(unittest.TestCase):
         assert is_schema_created(self.store.engine, self.store.db_type) is True
 
     @patch("pepys_admin.admin_cli.input", return_value="Y")
-    def test_do_migrate_not_empty_database(self, patched_input):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_do_migrate_not_empty_database(self, patched_prompt, patched_input):
         self.store.initialise()
         # Parse the REP files
         processor = FileProcessor(archive=False)
@@ -129,9 +131,9 @@ class MigratePostgresTestCase(unittest.TestCase):
 
 def get_alembic_version(connection, db_type="sqlite"):
     if db_type == "sqlite":
-        version = connection.execute(f"SELECT version_num FROM alembic_version;")
+        version = connection.execute("SELECT version_num FROM alembic_version;")
     elif db_type == "postgres":
-        version = connection.execute(f'SELECT version_num FROM pepys."alembic_version";')
+        version = connection.execute('SELECT version_num FROM pepys."alembic_version";')
     else:
         print("Given DB type is wrong!")
         return
