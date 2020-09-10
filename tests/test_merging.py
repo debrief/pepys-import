@@ -93,7 +93,9 @@ class TestSensorTypeMerge(unittest.TestCase):
 
     def test_sensor_type_merge(self):
         # Do the merge
-        id_results = self.merge_class.merge_reference_table("SensorType",)
+        id_results = self.merge_class.merge_reference_table(
+            "SensorType",
+        )
 
         master_table = self.master_store.db_classes.SensorType
         slave_table = self.slave_store.db_classes.SensorType
@@ -223,7 +225,9 @@ class TestPlatformTypeMerge(unittest.TestCase):
 
     def test_platform_type_merge(self):
         # Do the merge
-        id_results = self.merge_class.merge_reference_table("PlatformType",)
+        id_results = self.merge_class.merge_reference_table(
+            "PlatformType",
+        )
 
         master_table = self.master_store.db_classes.PlatformType
         slave_table = self.slave_store.db_classes.PlatformType
@@ -1063,7 +1067,11 @@ class TestMergeStateFromImport_Postgres(unittest.TestCase):
 
         try:
             self.postgres = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -2306,7 +2314,11 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
 
         try:
             self.postgres = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")

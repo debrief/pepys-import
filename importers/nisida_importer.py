@@ -413,7 +413,9 @@ class NisidaImporter(Importer):
         sensor_code_token.record(self.name, "sensor", sensor_name)
 
         sensor = self.platform.get_sensor(
-            data_store=data_store, sensor_name=sensor_name, change_id=change_id,
+            data_store=data_store,
+            sensor_name=sensor_name,
+            change_id=change_id,
         )
 
         # Create the contact object that we're going to add to the database

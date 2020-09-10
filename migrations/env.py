@@ -160,7 +160,8 @@ def run_migrations_online():
         # only create Engine if we don't have a Connection
         # from the outside
         connectable = engine_from_config(
-            config.get_section(config.config_ini_section), prefix="sqlalchemy.",
+            config.get_section(config.config_ini_section),
+            prefix="sqlalchemy.",
         )
         if db_type == "sqlite":
             listen(connectable, "connect", load_spatialite)

@@ -677,7 +677,9 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
 
     geometry_id = Column(UUIDType, primary_key=True, default=uuid4)
     _geometry = Column(
-        "geometry", Geometry(geometry_type="GEOMETRY", srid=4326, management=True), nullable=False,
+        "geometry",
+        Geometry(geometry_type="GEOMETRY", srid=4326, management=True),
+        nullable=False,
     )
     name = Column(String(150))
     geo_type_id = Column(

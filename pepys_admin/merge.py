@@ -288,7 +288,8 @@ class MergeDatabases:
                             # We also need to compare the fields of the slave entry and the master entry
                             # and update any master fields that are currently None with values from the slave entry
                             was_modified = self.update_master_from_slave_entry(
-                                search_by_all_fields_results[0], slave_entry,
+                                search_by_all_fields_results[0],
+                                slave_entry,
                             )
 
                             ids_modified.append(

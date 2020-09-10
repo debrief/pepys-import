@@ -95,7 +95,10 @@ def run_highlighter_on_whole_file():
                 date_time = parse_timestamp(date_tok.text, time_tok.text)
 
                 loc = parse_location(
-                    lat_tok.text, lat_hem_tok.text, long_tok.text, long_hem_tok.text,
+                    lat_tok.text,
+                    lat_hem_tok.text,
+                    long_tok.text,
+                    long_hem_tok.text,
                 )
                 spd = float(spd_tok.text)
                 hdg = float(hdg_tok.text)
