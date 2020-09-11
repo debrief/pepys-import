@@ -208,7 +208,11 @@ class TestEndToEndAutomaton:
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -252,7 +256,9 @@ class TestEndToEndAutomaton:
         processor.register_importer(ReplayImporter())
 
         processor.process(
-            os.path.join(DATA_PATH, "track_files", "rep_data", "rep_test1.rep"), self.store, False,
+            os.path.join(DATA_PATH, "track_files", "rep_data", "rep_test1.rep"),
+            self.store,
+            False,
         )
         print("---- End of end-to-end autmaton test")
 

@@ -30,7 +30,11 @@ def main():  # pragma: no cover
     )
     parser.add_argument("--path", help=path_help, required=False, default=DIRECTORY_PATH)
     parser.add_argument(
-        "--archive", dest="archive", help=archive_help, action="store_true", default=False,
+        "--archive",
+        dest="archive",
+        help=archive_help,
+        action="store_true",
+        default=False,
     )
     parser.add_argument("--db", help=db_help, required=False, default=None)
     parser.add_argument("--resolver", help=resolver_help, required=False, default="command-line")

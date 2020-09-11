@@ -39,7 +39,8 @@ class TestUniqueness:
         self.store.initialise()
 
     @pytest.mark.parametrize(
-        "table_name", REFERENCE_TABLES,
+        "table_name",
+        REFERENCE_TABLES,
     )
     def test_reference_table_uniqueness(self, table_name):
         db_session = sessionmaker(bind=self.store.engine)
@@ -275,7 +276,11 @@ class TestNotEmptyStringPostgres(unittest.TestCase):
 
         try:
             self.postgres = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")

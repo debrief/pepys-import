@@ -127,7 +127,9 @@ class FileProcessorVariablesTestCase(unittest.TestCase):
         file_processor.register_importer(ReplayImporter())
         processing_path = os.path.join(DATA_PATH, "track_files", "rep_data", "rep_test1.rep")
         file_processor.process(
-            processing_path, store, False,
+            processing_path,
+            store,
+            False,
         )
 
         assert os.path.exists(os.path.join(DATA_PATH, "track_files", "rep_data", "output"))

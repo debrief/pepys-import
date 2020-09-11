@@ -39,7 +39,7 @@ USER = getuser()  # Login name of the current user
 
 
 class DataStore:
-    """ Representation of database
+    """Representation of database
 
     :returns: :class:`DataStore`
     """
@@ -416,7 +416,9 @@ class DataStore:
         self.session.flush()
 
         self.add_to_logs(
-            table=constants.DATAFILE, row_id=datafile_obj.datafile_id, change_id=change_id,
+            table=constants.DATAFILE,
+            row_id=datafile_obj.datafile_id,
+            change_id=change_id,
         )
         return datafile_obj
 
@@ -499,7 +501,9 @@ class DataStore:
         self.session.flush()
 
         self.add_to_logs(
-            table=constants.PLATFORM, row_id=platform_obj.platform_id, change_id=change_id,
+            table=constants.PLATFORM,
+            row_id=platform_obj.platform_id,
+            change_id=change_id,
         )
         return platform_obj
 
@@ -975,7 +979,9 @@ class DataStore:
         self.session.flush()
 
         self.add_to_logs(
-            table=constants.COMMENT_TYPE, row_id=comment_type.comment_type_id, change_id=change_id,
+            table=constants.COMMENT_TYPE,
+            row_id=comment_type.comment_type_id,
+            change_id=change_id,
         )
 
         return comment_type
@@ -1038,7 +1044,9 @@ class DataStore:
         self.session.flush()
 
         self.add_to_logs(
-            table=constants.NATIONALITY, row_id=nationality.nationality_id, change_id=change_id,
+            table=constants.NATIONALITY,
+            row_id=nationality.nationality_id,
+            change_id=change_id,
         )
         return nationality
 
@@ -1117,7 +1125,9 @@ class DataStore:
         self.session.flush()
 
         self.add_to_logs(
-            table=constants.SENSOR_TYPE, row_id=sensor_type.sensor_type_id, change_id=change_id,
+            table=constants.SENSOR_TYPE,
+            row_id=sensor_type.sensor_type_id,
+            change_id=change_id,
         )
         return sensor_type
 
@@ -1142,7 +1152,9 @@ class DataStore:
         self.session.flush()
 
         self.add_to_logs(
-            table=constants.GEOMETRY_TYPE, row_id=geom_type.geo_type_id, change_id=change_id,
+            table=constants.GEOMETRY_TYPE,
+            row_id=geom_type.geo_type_id,
+            change_id=change_id,
         )
         return geom_type
 
@@ -1197,7 +1209,11 @@ class DataStore:
         :return: Created :class:`Logs` entity
         """
         log = self.db_classes.Log(
-            table=table, id=row_id, field=field, new_value=new_value, change_id=change_id,
+            table=table,
+            id=row_id,
+            field=field,
+            new_value=new_value,
+            change_id=change_id,
         )
         self.session.add(log)
         self.session.flush()
@@ -1213,7 +1229,11 @@ class DataStore:
         :param reason:  Reason of the change
         :return: Created :class:`Change` entity
         """
-        change = self.db_classes.Change(user=user, modified=modified, reason=reason,)
+        change = self.db_classes.Change(
+            user=user,
+            modified=modified,
+            reason=reason,
+        )
         self.session.add(change)
         self.session.flush()
 
@@ -1548,7 +1568,8 @@ class DataStore:
                         else "NULL",
                     )
                     contact_rep_line.insert(
-                        7, f"{contact.freq.magnitude:.2f}" if contact.freq else "NULL",
+                        7,
+                        f"{contact.freq.magnitude:.2f}" if contact.freq else "NULL",
                     )
                 else:
                     contact_rep_line.insert(0, ";SENSOR:")

@@ -82,7 +82,12 @@ def downgrade():
 
         platform_id = Column(UUIDType, primary_key=True, default=uuid4)
         name = Column(String(150), nullable=False)
-        identifier = deferred(Column(String(10), nullable=False,))
+        identifier = deferred(
+            Column(
+                String(10),
+                nullable=False,
+            )
+        )
         trigraph = deferred(Column(String(3)))
         quadgraph = deferred(Column(String(4)))
         nationality_id = Column(
