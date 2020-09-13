@@ -81,7 +81,8 @@ TABLE_NAMES = [
 
 
 @pytest.mark.parametrize(
-    "table_name", TABLE_NAMES,
+    "table_name",
+    TABLE_NAMES,
 )
 def test_make_table_names_singular(table_name):
     table = table_name_to_class_name(table_name)
@@ -90,7 +91,8 @@ def test_make_table_names_singular(table_name):
 
 
 @pytest.mark.parametrize(
-    "table_name", ["alembic_version"],
+    "table_name",
+    ["alembic_version"],
 )
 def test_make_table_names_singular_alembic_version(table_name):
     table = table_name_to_class_name(table_name)

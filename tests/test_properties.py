@@ -828,7 +828,8 @@ CLASSES_WITH_ELEVATION = [
 
 
 @pytest.mark.parametrize(
-    "class_name", CLASSES_WITH_ELEVATION,
+    "class_name",
+    CLASSES_WITH_ELEVATION,
 )
 class TestElevationProperty:
     def setup_class(self):
@@ -897,7 +898,8 @@ CLASSES_WITH_LOCATION = [
 
 
 @pytest.mark.parametrize(
-    "class_name", CLASSES_WITH_LOCATION,
+    "class_name",
+    CLASSES_WITH_LOCATION,
 )
 class TestLocationProperty:
     def setup_class(self):

@@ -10,7 +10,7 @@ from sqlalchemy.event import listen
 
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from paths import MIGRATIONS_DIRECTORY
-from pepys_import.core.store import (  # Don't remove, they are necessary for the discovery of changes!
+from pepys_import.core.store import (  # noqa: F401,Don't remove,they're necessary for the discovery of changes!
     postgres_db,
     sqlite_db,
 )
@@ -160,7 +160,8 @@ def run_migrations_online():
         # only create Engine if we don't have a Connection
         # from the outside
         connectable = engine_from_config(
-            config.get_section(config.config_ini_section), prefix="sqlalchemy.",
+            config.get_section(config.config_ini_section),
+            prefix="sqlalchemy.",
         )
         if db_type == "sqlite":
             listen(connectable, "connect", load_spatialite)

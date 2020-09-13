@@ -124,7 +124,10 @@ class NMEAImporter(Importer):
                     data_store, platform, sensor, timestamp, self.short_name
                 )
 
-                self.location = Location(errors=self.errors, error_type=self.error_type,)
+                self.location = Location(
+                    errors=self.errors,
+                    error_type=self.error_type,
+                )
 
                 if not self.location.set_latitude_dms(
                     degrees=self.latitude[:2],
@@ -156,7 +159,11 @@ class NMEAImporter(Importer):
                     self.heading_token.record(self.name, "heading", heading)
 
                 speed_valid, speed = convert_speed(
-                    self.speed, unit_registry.knots, line_number, self.errors, self.error_type,
+                    self.speed,
+                    unit_registry.knots,
+                    line_number,
+                    self.errors,
+                    self.error_type,
                 )
                 if speed_valid:
                     state.speed = speed

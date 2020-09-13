@@ -128,7 +128,11 @@ class ETracImporter(Importer):
             heading_token.record(self.name, "heading", heading)
 
         speed_valid, speed = convert_speed(
-            speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type,
+            speed_token.text,
+            unit_registry.knots,
+            line_number,
+            self.errors,
+            self.error_type,
         )
         if speed_valid:
             state.speed = speed
