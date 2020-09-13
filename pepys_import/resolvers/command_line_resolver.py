@@ -102,7 +102,9 @@ class CommandLineResolver(DataResolver):
         print(f"Classification: {chosen_privacy.name}")
 
         choice = create_menu(
-            "Create this datafile?: ", ["Yes", "No, make further edits"], validate_method=is_valid,
+            "Create this datafile?: ",
+            ["Yes", "No, make further edits"],
+            validate_method=is_valid,
         )
 
         if choice == str(1):
@@ -117,7 +119,7 @@ class CommandLineResolver(DataResolver):
         self, data_store, platform_name, platform_type, nationality, privacy, change_id
     ):
         platform_details = []
-        final_options = [f"Search for existing platform", f"Add a new platform"]
+        final_options = ["Search for existing platform", "Add a new platform"]
         if platform_name:
             # If we've got a platform_name, then we can search for all platforms
             # with this name, and present a list to the user to choose from,
@@ -144,7 +146,9 @@ class CommandLineResolver(DataResolver):
             final_options[1] += f", default name '{platform_name}'"
         choices = platform_details + final_options
         choice = create_menu(
-            f"Select a platform entry for {platform_name}:", choices, validate_method=is_valid,
+            f"Select a platform entry for {platform_name}:",
+            choices,
+            validate_method=is_valid,
         )
         if choice == ".":
             print("Quitting")
@@ -155,11 +159,21 @@ class CommandLineResolver(DataResolver):
             return platforms[platform_index]
         elif choice == str(len(choices) - 1):
             return self.fuzzy_search_platform(
-                data_store, platform_name, platform_type, nationality, privacy, change_id,
+                data_store,
+                platform_name,
+                platform_type,
+                nationality,
+                privacy,
+                change_id,
             )
         elif choice == str(len(choices)):
             return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id,
+                data_store,
+                platform_name,
+                platform_type,
+                nationality,
+                privacy,
+                change_id,
             )
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
@@ -174,7 +188,7 @@ class CommandLineResolver(DataResolver):
 
         options = [
             f"Search for existing sensor on platform '{host_platform.name}'",
-            f"Add a new sensor",
+            "Add a new sensor",
         ]
         objects = (
             data_store.session.query(data_store.db_classes.Sensor)
@@ -245,7 +259,7 @@ class CommandLineResolver(DataResolver):
         elif db_class.__tablename__ == constants.PRIVACY:
             all_values = data_store.session.query(db_class).order_by(db_class.level).all()
             objects = all_values[:7]
-            current_values = f"\nCurrent Privacies in the Database\n"
+            current_values = "\nCurrent Privacies in the Database\n"
             headers = ["name", "level"]
             current_values += tabulate(
                 [[str(getattr(row, column)) for column in headers] for row in all_values],
@@ -270,7 +284,11 @@ class CommandLineResolver(DataResolver):
         def is_valid_dynamic(option):  # pragma: no cover
             return option in [str(i) for i in range(1, len(options) + 1)] or option == "."
 
-        choice = create_menu(title, options, validate_method=is_valid_dynamic,)
+        choice = create_menu(
+            title,
+            options,
+            validate_method=is_valid_dynamic,
+        )
         if choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
@@ -466,13 +484,23 @@ class CommandLineResolver(DataResolver):
                 elif new_choice == ".":
                     print("-" * 61, "\nReturning to the previous menu\n")
                     return self.fuzzy_search_platform(
-                        data_store, platform_name, platform_type, nationality, privacy, change_id,
+                        data_store,
+                        platform_name,
+                        platform_type,
+                        nationality,
+                        privacy,
+                        change_id,
                     )
             return platform
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_platform(
-                data_store, platform_name, nationality, platform_type, privacy, change_id,
+                data_store,
+                platform_name,
+                nationality,
+                platform_type,
+                privacy,
+                change_id,
             )
         elif choice not in completer:
             print(f"'{choice}' could not be found! Redirecting to adding a new platform..")
@@ -605,7 +633,11 @@ class CommandLineResolver(DataResolver):
             chosen_nationality = data_store.add_to_nationalities(nationality, change_id)
         else:
             chosen_nationality = self.resolve_reference(
-                data_store, change_id, "Platform", data_store.db_classes.Nationality, "nationality",
+                data_store,
+                change_id,
+                "Platform",
+                data_store.db_classes.Nationality,
+                "nationality",
             )
         if chosen_nationality is None:
             print("Nationality couldn't resolved. Returning to the previous menu!")
@@ -661,7 +693,9 @@ class CommandLineResolver(DataResolver):
         print(f"Classification: {chosen_privacy.name}")
 
         choice = create_menu(
-            "Create this platform?: ", ["Yes", "No, make further edits"], validate_method=is_valid,
+            "Create this platform?: ",
+            ["Yes", "No, make further edits"],
+            validate_method=is_valid,
         )
 
         if choice == str(1):
@@ -763,7 +797,9 @@ class CommandLineResolver(DataResolver):
         print(f"Classification: {chosen_privacy.name}")
 
         choice = create_menu(
-            "Create this sensor?: ", ["Yes", "No, make further edits"], validate_method=is_valid,
+            "Create this sensor?: ",
+            ["Yes", "No, make further edits"],
+            validate_method=is_valid,
         )
 
         if choice == str(1):

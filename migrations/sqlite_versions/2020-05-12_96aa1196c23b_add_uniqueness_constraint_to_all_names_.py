@@ -104,7 +104,11 @@ def downgrade():
         table_type_id = 20
 
         contact_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-        contact_type = Column(String(150), nullable=False, unique=True,)
+        contact_type = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         created_date = Column(DateTime, default=datetime.utcnow)
 
     class ConfidenceLevel(BaseSpatiaLite):

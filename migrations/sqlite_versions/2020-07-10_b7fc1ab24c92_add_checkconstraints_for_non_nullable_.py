@@ -185,7 +185,11 @@ def downgrade():
         table_type_id = 13
 
         platform_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         created_date = Column(DateTime, default=datetime.utcnow)
 
         __table_args__ = (CheckConstraint("name <> ''", name="ck_PlatformTypes_name"),)
@@ -196,7 +200,11 @@ def downgrade():
         table_type_id = 14
 
         nationality_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         priority = Column(Integer)
         created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -208,7 +216,11 @@ def downgrade():
         table_type_id = 15
 
         geo_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         created_date = Column(DateTime, default=datetime.utcnow)
 
         __table_args__ = (CheckConstraint("name <> ''", name="ck_GeometryTypes_name"),)
@@ -236,7 +248,11 @@ def downgrade():
         table_type_id = 17
 
         user_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         created_date = Column(DateTime, default=datetime.utcnow)
 
         __table_args__ = (CheckConstraint("name <> ''", name="ck_Users_name"),)
@@ -247,7 +263,11 @@ def downgrade():
         table_type_id = 18
 
         unit_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         created_date = Column(DateTime, default=datetime.utcnow)
 
         __table_args__ = (CheckConstraint("name <> ''", name="ck_UnitTypes_name"),)
@@ -258,7 +278,11 @@ def downgrade():
         table_type_id = 19
 
         class_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         created_date = Column(DateTime, default=datetime.utcnow)
 
         __table_args__ = (CheckConstraint("name <> ''", name="ck_ClassificationTypes_name"),)
@@ -269,7 +293,11 @@ def downgrade():
         table_type_id = 20
 
         contact_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         created_date = Column(DateTime, default=datetime.utcnow)
 
         __table_args__ = (CheckConstraint("name <> ''", name="ck_ContactTypes_name"),)
@@ -280,7 +308,11 @@ def downgrade():
         table_type_id = 21
 
         sensor_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         created_date = Column(DateTime, default=datetime.utcnow)
 
         __table_args__ = (CheckConstraint("name <> ''", name="ck_SensorTypes_name"),)
@@ -291,7 +323,11 @@ def downgrade():
         table_type_id = 22
 
         privacy_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         level = Column(Integer, nullable=False)
         created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -303,7 +339,11 @@ def downgrade():
         table_type_id = 23
 
         datafile_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         created_date = Column(DateTime, default=datetime.utcnow)
 
         __table_args__ = (CheckConstraint("name <> ''", name="ck_DatafileTypes_name"),)
@@ -314,7 +354,11 @@ def downgrade():
         table_type_id = 24
 
         media_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         created_date = Column(DateTime, default=datetime.utcnow)
 
         __table_args__ = (CheckConstraint("name <> ''", name="ck_MediaTypes_name"),)
@@ -325,7 +369,11 @@ def downgrade():
         table_type_id = 25
 
         comment_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         created_date = Column(DateTime, default=datetime.utcnow)
 
         __table_args__ = (CheckConstraint("name <> ''", name="ck_CommentTypes_name"),)
@@ -336,7 +384,11 @@ def downgrade():
         table_type_id = 26
 
         commodity_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         created_date = Column(DateTime, default=datetime.utcnow)
 
         __table_args__ = (CheckConstraint("name <> ''", name="ck_CommodityTypes_name"),)
@@ -347,7 +399,11 @@ def downgrade():
         table_type_id = 27
 
         confidence_level_id = Column(UUIDType, primary_key=True, default=uuid4)
-        name = Column(String(150), nullable=False, unique=True,)
+        name = Column(
+            String(150),
+            nullable=False,
+            unique=True,
+        )
         created_date = Column(DateTime, default=datetime.utcnow)
 
         __table_args__ = (CheckConstraint("name <> ''", name="ck_ConfidenceLevels_name"),)

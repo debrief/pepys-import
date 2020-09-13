@@ -746,7 +746,11 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -828,7 +832,11 @@ class SnapshotPostgresTestCase(unittest.TestCase):
     @patch("pepys_import.core.store.common_db.prompt", return_value="2")
     def setUp(self, patched_prompt) -> None:
         self.postgres = Postgresql(
-            database="test", host="localhost", user="postgres", password="postgres", port=55527,
+            database="test",
+            host="localhost",
+            user="postgres",
+            password="postgres",
+            port=55527,
         )
         self.store = DataStore(
             db_name="test",

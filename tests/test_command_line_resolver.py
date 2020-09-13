@@ -19,7 +19,13 @@ class ReferenceDataTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = CommandLineResolver()
         self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
@@ -135,7 +141,11 @@ class ReferenceDataTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["1", "TYPE-TEST", "1"]
         with self.store.session_scope():
             platform_type = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.PlatformType,
+                "platform_type",
             )
             assert platform_type.__tablename__ == "PlatformTypes"
             assert platform_type.name == "TYPE-TEST"
@@ -149,7 +159,11 @@ class ReferenceDataTestCase(unittest.TestCase):
         with self.store.session_scope():
             self.store.add_to_platform_types("TYPE-TEST", self.change_id)
             platform_type = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.PlatformType,
+                "platform_type",
             )
             assert platform_type.__tablename__ == "PlatformTypes"
             assert platform_type.name == "TYPE-TEST"
@@ -167,7 +181,11 @@ class ReferenceDataTestCase(unittest.TestCase):
         with self.store.session_scope():
             self.store.add_to_privacies("TYPE-TEST", 0, self.change_id)
             platform_type = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.PlatformType,
+                "platform_type",
             )
             self.assertEqual(platform_type.name, "TYPE-TEST")
 
@@ -182,7 +200,11 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.store.add_to_platform_types("TYPE-1", self.change_id)
             self.store.add_to_platform_types("TYPE-2", self.change_id)
             platform_type = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.PlatformType,
+                "platform_type",
             )
             self.assertEqual(platform_type.name, "TYPE-1")
 
@@ -196,7 +218,11 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.store.add_to_platform_types("TYPE-1", self.change_id)
             self.store.add_to_platform_types("TYPE-2", self.change_id)
             platform_type = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.PlatformType,
+                "platform_type",
             )
             self.assertEqual(platform_type.name, "TYPE-1")
 
@@ -210,22 +236,38 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.store.add_to_nationalities("TR", self.change_id, priority=2)
             self.store.add_to_nationalities("AAA", self.change_id, priority=3)
             nationality = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Nationality,
+                "nationality",
             )
             assert nationality.name == "UK"
 
             nationality = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Nationality,
+                "nationality",
             )
             assert nationality.name == "FR"
 
             nationality = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Nationality,
+                "nationality",
             )
             assert nationality.name == "TR"
 
             nationality = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Nationality,
+                "nationality",
             )
             assert nationality is None
 
@@ -299,7 +341,13 @@ class PlatformTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = CommandLineResolver()
         self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
@@ -415,7 +463,12 @@ class PlatformTestCase(unittest.TestCase):
             )
 
             resolved_platform = self.resolver.resolve_platform(
-                self.store, "PLATFORM-1", "", "", "", change_id=self.change_id,
+                self.store,
+                "PLATFORM-1",
+                "",
+                "",
+                "",
+                change_id=self.change_id,
             )
 
             assert resolved_platform.name == "PLATFORM-1"
@@ -476,7 +529,7 @@ class PlatformTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_platform_with_new_values(self, resolver_prompt, menu_prompt):
         """Test whether new platform type, nationality and privacy entities are created for Platform
-         or not"""
+        or not"""
 
         # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select
         # "Add a new nationality"->Select "UK"->Select "Add a new platform type"->Select "Warship
@@ -613,7 +666,13 @@ class DatafileTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = CommandLineResolver()
         self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
@@ -744,7 +803,13 @@ class SensorTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = CommandLineResolver()
         self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
@@ -1060,7 +1125,13 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = CommandLineResolver()
         self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
