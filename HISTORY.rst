@@ -2,6 +2,14 @@
 History
 =======
 
+0.0.21 (2020-09-14)
+-------------------
+
+* Sort tables in alpha order when selecting to view
+* Increase number of records shown in view table (500)
+* Add ability to export database table to CSV
+* Allow enhanced validator to be relaxed
+
 0.0.20 (2020-07-28)
 -------------------
 
@@ -12,7 +20,6 @@ History
 * Fix to allow prompts to better handle spaces
 * Fix issues with EAG importer
 * Check that deployed database is at same version as master when merging
-
 
 0.0.19 (2020-07-03)
 -------------------
