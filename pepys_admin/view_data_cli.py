@@ -16,6 +16,8 @@ from pepys_admin.utils import get_default_export_folder
 from pepys_import.core.store import constants
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
+MAX_ROWS_DISPLAYED = 500
+
 
 def bottom_toolbar():
     return HTML("Press <b>ESC then Enter</b> to exit!")
@@ -74,7 +76,7 @@ class ViewDataShell(BaseShell):
 
     def do_view_table(self):
         """Asks user to select a table name. Converts table name to class name,
-        fetches the first 50 objects, and prints them in table format.
+        fetches the objects up to the number of MAX_ROWS_DISPLAYED, and prints them in table format.
         """
         headers = list()
         associated_attributes = list()
@@ -122,12 +124,12 @@ class ViewDataShell(BaseShell):
                 name = f"{descriptor.target_collection}_{descriptor.value_attr}"
                 if name != "privacy_name":
                     associated_attributes.append(name)
-        # Fetch first 10 rows, create a table from these rows
+        # Fetch first rows up to MAX_ROWS_DISPLAYED, create a table from these rows
         with self.data_store.session_scope():
             values = (
                 self.data_store.session.query(table_cls)
                 .options(load_only(*headers))
-                .limit(50)
+                .limit(MAX_ROWS_DISPLAYED)
                 .all()
             )
             headers.extend(associated_attributes)
