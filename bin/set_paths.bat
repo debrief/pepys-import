@@ -13,7 +13,7 @@ set PEPYS_PATH_PYTHON_ABS=%CD%
 popd
 
 REM Get absolute path to folder with spatialite DLLs in it
-set PEPYS_PATH_SPATIALITE=..\lib\mod_spatialite-NG-win-amd64
+set PEPYS_PATH_SPATIALITE=..\lib\spatialite-loadable-modules-5.0.0-win-amd64
 pushd %PEPYS_PATH_SPATIALITE%
 set PEPYS_PATH_SPATIALITE_ABS=%CD%
 popd
