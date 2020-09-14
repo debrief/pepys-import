@@ -27,8 +27,8 @@ Expand-Archive -Path sqlite.zip -DestinationPath .\python -Force
 Write-Output "INFO: Downloaded and extracted SQLite"
 
 # Download mod_spatialite DLL files
-$url = 'http://www.gaia-gis.it/gaia-sins/windows-bin-NEXTGEN-amd64/mod_spatialite-NG-win-amd64.7z'
-(New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\mod_spatialite.7z")
+$url = 'http://www.gaia-gis.it/gaia-sins/windows-bin-amd64/spatialite-loadable-modules-5.0.0-win-amd64.7z'
+(New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\spatialite-loadable-modules-5.0.0-win-amd64.7z")
 
 # mod_spatialite comes in a 7zip archive, so we need to download 7zip to be able to extract it
 $url = 'http://www.7-zip.org/a/7za920.zip'
@@ -37,7 +37,13 @@ $url = 'http://www.7-zip.org/a/7za920.zip'
 Expand-Archive -Path 7zip.zip -DestinationPath .\7zip -Force
 
 # Extract the mod_spatialite 7zip file into the lib folder (it creates its own subfolder in there)
-.\7zip\7za.exe x .\mod_spatialite.7z -olib -y
+.\7zip\7za.exe x .\spatialite-loadable-modules-5.0.0-win-amd64.7z -olib -y
+
+if ($LastExitCode -ne 0)
+{
+    Write-Output "ERROR: Could not extract spatialite file - has the URL broken?"
+    exit
+}
 
 Write-Output "INFO: Downloaded and extracted mod_spatialite"
 
