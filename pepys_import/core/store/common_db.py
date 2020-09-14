@@ -156,7 +156,12 @@ class PlatformMixin:
         return association_proxy("privacy", "name")
 
     def get_sensor(
-        self, data_store, sensor_name=None, sensor_type=None, privacy=None, change_id=None,
+        self,
+        data_store,
+        sensor_name=None,
+        sensor_type=None,
+        privacy=None,
+        change_id=None,
     ):
         """
          Lookup or create a sensor of this name for this :class:`Platform`.
@@ -192,7 +197,11 @@ class PlatformMixin:
             if isinstance(resolved_data, Sensor):
                 return resolved_data
             elif len(resolved_data) == 3:
-                (sensor_name, sensor_type_obj, privacy_obj,) = resolved_data
+                (
+                    sensor_name,
+                    sensor_type_obj,
+                    privacy_obj,
+                ) = resolved_data
 
         assert isinstance(
             sensor_type_obj, data_store.db_classes.SensorType
@@ -333,7 +342,13 @@ class DatafileMixin:
         return contact
 
     def create_comment(
-        self, data_store, platform, timestamp, comment, comment_type, parser_name,
+        self,
+        data_store,
+        platform,
+        timestamp,
+        comment,
+        comment_type,
+        parser_name,
     ):
         """Creates a new Comment object to record textual information logged by a particular
         platform at a specific time.
@@ -379,7 +394,10 @@ class DatafileMixin:
 
     def create_activation(self, data_store, sensor, start, end, parser_name):
         activation = data_store.db_classes.Activation(
-            sensor_id=sensor.sensor_id, start=start, end=end, source_id=self.datafile_id,
+            sensor_id=sensor.sensor_id,
+            start=start,
+            end=end,
+            source_id=self.datafile_id,
         )
         self.add_measurement_to_dict(activation, parser_name)
         return activation
@@ -403,7 +421,9 @@ class DatafileMixin:
             return option == str(1) or option == str(2)
 
         validator = Validator.from_callable(
-            is_valid, error_message="You didn't select a valid option", move_cursor_to_end=True,
+            is_valid,
+            error_message="You didn't select a valid option",
+            move_cursor_to_end=True,
         )
         return validator
 
@@ -427,7 +447,10 @@ class DatafileMixin:
         return ask_skipping_validator, skip_validator, delete
 
     def validate(
-        self, validation_level=validation_constants.NONE_LEVEL, errors=None, parser="Default",
+        self,
+        validation_level=validation_constants.NONE_LEVEL,
+        errors=None,
+        parser="Default",
     ):
         # If there is no parsing error, it will return None. If that's the case,
         # create a new list for validation errors.
@@ -500,7 +523,9 @@ class DatafileMixin:
                                         skip_validator,
                                         delete,
                                     ) = self._ask_user_what_they_want(
-                                        errors[-1], ask_skipping_validator, skip_validator,
+                                        errors[-1],
+                                        ask_skipping_validator,
+                                        skip_validator,
                                     )
                                     if delete:
                                         del errors[-1]

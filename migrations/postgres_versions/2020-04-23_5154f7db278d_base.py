@@ -189,8 +189,14 @@ def upgrade():
         sa.Column("size", sa.Integer(), nullable=False),
         sa.Column("hash", sa.String(length=32), nullable=False),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["datafile_type_id"], ["pepys.DatafileTypes.datafile_type_id"],),
-        sa.ForeignKeyConstraint(["privacy_id"], ["pepys.Privacies.privacy_id"],),
+        sa.ForeignKeyConstraint(
+            ["datafile_type_id"],
+            ["pepys.DatafileTypes.datafile_type_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["privacy_id"],
+            ["pepys.Privacies.privacy_id"],
+        ),
         sa.PrimaryKeyConstraint("datafile_id"),
         schema="pepys",
     )
@@ -203,7 +209,10 @@ def upgrade():
         sa.Column("new_value", sa.String(length=150), nullable=True),
         sa.Column("change_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["change_id"], ["pepys.Changes.change_id"],),
+        sa.ForeignKeyConstraint(
+            ["change_id"],
+            ["pepys.Changes.change_id"],
+        ),
         sa.PrimaryKeyConstraint("log_id"),
         schema="pepys",
     )
@@ -218,9 +227,18 @@ def upgrade():
         sa.Column("platform_type_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("privacy_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["nationality_id"], ["pepys.Nationalities.nationality_id"],),
-        sa.ForeignKeyConstraint(["platform_type_id"], ["pepys.PlatformTypes.platform_type_id"],),
-        sa.ForeignKeyConstraint(["privacy_id"], ["pepys.Privacies.privacy_id"],),
+        sa.ForeignKeyConstraint(
+            ["nationality_id"],
+            ["pepys.Nationalities.nationality_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["platform_type_id"],
+            ["pepys.PlatformTypes.platform_type_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["privacy_id"],
+            ["pepys.Privacies.privacy_id"],
+        ),
         sa.PrimaryKeyConstraint("platform_id"),
         schema="pepys",
     )
@@ -233,8 +251,14 @@ def upgrade():
         sa.Column("private", sa.Boolean(), nullable=False),
         sa.Column("tagged_on", sa.DATE(), nullable=False),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["tag_id"], ["pepys.Tags.tag_id"],),
-        sa.ForeignKeyConstraint(["tagged_by_id"], ["pepys.Users.user_id"],),
+        sa.ForeignKeyConstraint(
+            ["tag_id"],
+            ["pepys.Tags.tag_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["tagged_by_id"],
+            ["pepys.Users.user_id"],
+        ),
         sa.PrimaryKeyConstraint("tagged_item_id"),
         schema="pepys",
     )
@@ -248,8 +272,14 @@ def upgrade():
         sa.Column("location", sa.String(length=150), nullable=True),
         sa.Column("privacy_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["parent_id"], ["pepys.Tasks.task_id"],),
-        sa.ForeignKeyConstraint(["privacy_id"], ["pepys.Privacies.privacy_id"],),
+        sa.ForeignKeyConstraint(
+            ["parent_id"],
+            ["pepys.Tasks.task_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["privacy_id"],
+            ["pepys.Privacies.privacy_id"],
+        ),
         sa.PrimaryKeyConstraint("task_id"),
         schema="pepys",
     )
@@ -263,9 +293,18 @@ def upgrade():
         sa.Column("source_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("privacy_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["platform_id"], ["pepys.Platforms.platform_id"],),
-        sa.ForeignKeyConstraint(["privacy_id"], ["pepys.Privacies.privacy_id"],),
-        sa.ForeignKeyConstraint(["source_id"], ["pepys.Datafiles.datafile_id"],),
+        sa.ForeignKeyConstraint(
+            ["platform_id"],
+            ["pepys.Platforms.platform_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["privacy_id"],
+            ["pepys.Privacies.privacy_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["source_id"],
+            ["pepys.Datafiles.datafile_id"],
+        ),
         sa.PrimaryKeyConstraint("comment_id"),
         schema="pepys",
     )
@@ -284,12 +323,30 @@ def upgrade():
         sa.Column("source_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("privacy_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["geo_sub_type_id"], ["pepys.GeometrySubTypes.geo_sub_type_id"],),
-        sa.ForeignKeyConstraint(["geo_type_id"], ["pepys.GeometryTypes.geo_type_id"],),
-        sa.ForeignKeyConstraint(["privacy_id"], ["pepys.Privacies.privacy_id"],),
-        sa.ForeignKeyConstraint(["sensor_platform_id"], ["pepys.Platforms.platform_id"],),
-        sa.ForeignKeyConstraint(["source_id"], ["pepys.Datafiles.datafile_id"],),
-        sa.ForeignKeyConstraint(["subject_platform_id"], ["pepys.Platforms.platform_id"],),
+        sa.ForeignKeyConstraint(
+            ["geo_sub_type_id"],
+            ["pepys.GeometrySubTypes.geo_sub_type_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["geo_type_id"],
+            ["pepys.GeometryTypes.geo_type_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["privacy_id"],
+            ["pepys.Privacies.privacy_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["sensor_platform_id"],
+            ["pepys.Platforms.platform_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["source_id"],
+            ["pepys.Datafiles.datafile_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["subject_platform_id"],
+            ["pepys.Platforms.platform_id"],
+        ),
         sa.PrimaryKeyConstraint("geometry_id"),
         schema="pepys",
     )
@@ -302,9 +359,18 @@ def upgrade():
         sa.Column("host_to", sa.DATE(), nullable=False),
         sa.Column("privacy_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["host_id"], ["pepys.Platforms.platform_id"],),
-        sa.ForeignKeyConstraint(["privacy_id"], ["pepys.Privacies.privacy_id"],),
-        sa.ForeignKeyConstraint(["subject_id"], ["pepys.Platforms.platform_id"],),
+        sa.ForeignKeyConstraint(
+            ["host_id"],
+            ["pepys.Platforms.platform_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["privacy_id"],
+            ["pepys.Privacies.privacy_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["subject_id"],
+            ["pepys.Platforms.platform_id"],
+        ),
         sa.PrimaryKeyConstraint("hosted_by_id"),
         schema="pepys",
     )
@@ -319,10 +385,22 @@ def upgrade():
         sa.Column("source_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("privacy_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["platform_id"], ["pepys.Platforms.platform_id"],),
-        sa.ForeignKeyConstraint(["privacy_id"], ["pepys.Privacies.privacy_id"],),
-        sa.ForeignKeyConstraint(["source_id"], ["pepys.Datafiles.datafile_id"],),
-        sa.ForeignKeyConstraint(["unit_type_id"], ["pepys.UnitTypes.unit_type_id"],),
+        sa.ForeignKeyConstraint(
+            ["platform_id"],
+            ["pepys.Platforms.platform_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["privacy_id"],
+            ["pepys.Privacies.privacy_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["source_id"],
+            ["pepys.Datafiles.datafile_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["unit_type_id"],
+            ["pepys.UnitTypes.unit_type_id"],
+        ),
         sa.PrimaryKeyConstraint("logs_holding_id"),
         schema="pepys",
     )
@@ -336,9 +414,18 @@ def upgrade():
         sa.Column("force", sa.String(length=150), nullable=True),
         sa.Column("privacy_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["platform_id"], ["pepys.Platforms.platform_id"],),
-        sa.ForeignKeyConstraint(["privacy_id"], ["pepys.Privacies.privacy_id"],),
-        sa.ForeignKeyConstraint(["task_id"], ["pepys.Tasks.task_id"],),
+        sa.ForeignKeyConstraint(
+            ["platform_id"],
+            ["pepys.Platforms.platform_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["privacy_id"],
+            ["pepys.Privacies.privacy_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["task_id"],
+            ["pepys.Tasks.task_id"],
+        ),
         sa.PrimaryKeyConstraint("participant_id"),
         schema="pepys",
     )
@@ -350,9 +437,18 @@ def upgrade():
         sa.Column("host", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("privacy_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["host"], ["pepys.Platforms.platform_id"],),
-        sa.ForeignKeyConstraint(["privacy_id"], ["pepys.Privacies.privacy_id"],),
-        sa.ForeignKeyConstraint(["sensor_type_id"], ["pepys.SensorTypes.sensor_type_id"],),
+        sa.ForeignKeyConstraint(
+            ["host"],
+            ["pepys.Platforms.platform_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["privacy_id"],
+            ["pepys.Privacies.privacy_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["sensor_type_id"],
+            ["pepys.SensorTypes.sensor_type_id"],
+        ),
         sa.PrimaryKeyConstraint("sensor_id"),
         schema="pepys",
     )
@@ -370,9 +466,18 @@ def upgrade():
         sa.Column("source_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("privacy_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["privacy_id"], ["pepys.Privacies.privacy_id"],),
-        sa.ForeignKeyConstraint(["sensor_id"], ["pepys.Sensors.sensor_id"],),
-        sa.ForeignKeyConstraint(["source_id"], ["pepys.Datafiles.datafile_id"],),
+        sa.ForeignKeyConstraint(
+            ["privacy_id"],
+            ["pepys.Privacies.privacy_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["sensor_id"],
+            ["pepys.Sensors.sensor_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["source_id"],
+            ["pepys.Datafiles.datafile_id"],
+        ),
         sa.PrimaryKeyConstraint("activation_id"),
         schema="pepys",
     )
@@ -403,10 +508,22 @@ def upgrade():
         sa.Column("source_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("privacy_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["privacy_id"], ["pepys.Privacies.privacy_id"],),
-        sa.ForeignKeyConstraint(["sensor_id"], ["pepys.Sensors.sensor_id"],),
-        sa.ForeignKeyConstraint(["source_id"], ["pepys.Datafiles.datafile_id"],),
-        sa.ForeignKeyConstraint(["subject_id"], ["pepys.Platforms.platform_id"],),
+        sa.ForeignKeyConstraint(
+            ["privacy_id"],
+            ["pepys.Privacies.privacy_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["sensor_id"],
+            ["pepys.Sensors.sensor_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["source_id"],
+            ["pepys.Datafiles.datafile_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["subject_id"],
+            ["pepys.Platforms.platform_id"],
+        ),
         sa.PrimaryKeyConstraint("contact_id"),
         schema="pepys",
     )
@@ -426,11 +543,26 @@ def upgrade():
         sa.Column("source_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("privacy_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["platform_id"], ["pepys.Platforms.platform_id"],),
-        sa.ForeignKeyConstraint(["privacy_id"], ["pepys.Privacies.privacy_id"],),
-        sa.ForeignKeyConstraint(["sensor_id"], ["pepys.Sensors.sensor_id"],),
-        sa.ForeignKeyConstraint(["source_id"], ["pepys.Datafiles.datafile_id"],),
-        sa.ForeignKeyConstraint(["subject_id"], ["pepys.Platforms.platform_id"],),
+        sa.ForeignKeyConstraint(
+            ["platform_id"],
+            ["pepys.Platforms.platform_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["privacy_id"],
+            ["pepys.Privacies.privacy_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["sensor_id"],
+            ["pepys.Sensors.sensor_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["source_id"],
+            ["pepys.Datafiles.datafile_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["subject_id"],
+            ["pepys.Platforms.platform_id"],
+        ),
         sa.PrimaryKeyConstraint("media_id"),
         schema="pepys",
     )
@@ -449,9 +581,18 @@ def upgrade():
         sa.Column("source_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("privacy_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("created_date", sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(["privacy_id"], ["pepys.Privacies.privacy_id"],),
-        sa.ForeignKeyConstraint(["sensor_id"], ["pepys.Sensors.sensor_id"],),
-        sa.ForeignKeyConstraint(["source_id"], ["pepys.Datafiles.datafile_id"],),
+        sa.ForeignKeyConstraint(
+            ["privacy_id"],
+            ["pepys.Privacies.privacy_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["sensor_id"],
+            ["pepys.Sensors.sensor_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["source_id"],
+            ["pepys.Datafiles.datafile_id"],
+        ),
         sa.PrimaryKeyConstraint("state_id"),
         schema="pepys",
     )

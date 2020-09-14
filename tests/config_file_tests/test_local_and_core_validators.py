@@ -11,10 +11,18 @@ from pepys_import.file.file_processor import FileProcessor
 
 DIRECTORY_PATH = os.path.dirname(__file__)
 REP_DATA_PATH = os.path.join(
-    os.path.dirname(DIRECTORY_PATH), "sample_data", "track_files", "rep_data", "rep_test1.rep",
+    os.path.dirname(DIRECTORY_PATH),
+    "sample_data",
+    "track_files",
+    "rep_data",
+    "rep_test1.rep",
 )
 OTHER_DATA_PATH = os.path.join(
-    os.path.dirname(DIRECTORY_PATH), "sample_data", "track_files", "other_data", "e_trac.txt",
+    os.path.dirname(DIRECTORY_PATH),
+    "sample_data",
+    "track_files",
+    "other_data",
+    "e_trac.txt",
 )
 BASIC_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "basic_tests")
 ENHANCED_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "enhanced_tests")

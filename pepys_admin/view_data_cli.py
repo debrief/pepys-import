@@ -182,7 +182,11 @@ class ViewDataShell(BaseShell):
                     results = connection.execute(query)
                     results = results.fetchall()
                     return query, results
-                except (ProgrammingError, OperationalError, InvalidRequestError,) as e:
+                except (
+                    ProgrammingError,
+                    OperationalError,
+                    InvalidRequestError,
+                ) as e:
                     print(
                         f"SQL Exception details: {e}\n\n"
                         "ERROR: Query couldn't be executed successfully.\n"

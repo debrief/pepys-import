@@ -72,7 +72,7 @@ class AdminShell(BaseShell):
 
     def do_initialise(self):
         """Runs the :code:`InitialiseShell` which offers to clear contents, import sample data,
-         create/delete schema."""
+        create/delete schema."""
         print("-" * 61)
         initialise = InitialiseShell(self.data_store, self, self.csv_path)
         initialise.cmdloop()
@@ -95,7 +95,7 @@ class AdminShell(BaseShell):
             report = reference_summary.report()
             print(f"## Reference\n{report}\n")
 
-        print(f"## Database Version")
+        print("## Database Version")
         command.current(self.cfg, verbose=True)
 
     def do_migrate(self):
