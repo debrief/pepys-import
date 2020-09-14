@@ -70,6 +70,8 @@ class ViewDataShell(BaseShell):
                 and not name.startswith("sql")
                 and not name.lower().startswith("spatial")
             ]
+        # Sort table names in alphabetical order
+        table_names = sorted(table_names, key=str.casefold, reverse=True)
         return table_names
 
     def do_view_table(self):
