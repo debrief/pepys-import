@@ -6,6 +6,7 @@ try {
     (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\python.zip")
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not download embedded Python - has the URL changed?"
     Exit
 }
@@ -16,6 +17,7 @@ try {
     Write-Output "INFO: Downloaded and extracted embedded Python"
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not extract Python zip file"
     Exit
 }
@@ -26,6 +28,7 @@ try {
     (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\get-pip.py")
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not download get-pip.py - has the URL changed?"
     Exit
 }
@@ -44,6 +47,7 @@ try {
     Write-Output "INFO: Installed pip"
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not run Python to install pip"
     Exit
 }
@@ -54,6 +58,7 @@ try {
     (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\sqlite.zip")
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not download SQLite - has the URL changed?"
     Exit
 }
@@ -65,6 +70,7 @@ try {
     Write-Output "INFO: Downloaded and extracted SQLite"
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not extract SQLite zip file"
     Exit
 }
@@ -75,6 +81,7 @@ try {
     (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\spatialite-loadable-modules-5.0.0-win-amd64.7z")
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not download Spatialite - has the URL changed?"
     Exit
 }
@@ -85,6 +92,7 @@ try {
     (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\7zip.zip")
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not download 7zip - has the URL changed?"
     Exit
 }
@@ -94,6 +102,7 @@ try {
     Expand-Archive -Path 7zip.zip -DestinationPath .\7zip -Force
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not extract 7zip"
     Exit
 }
@@ -110,6 +119,7 @@ try {
     Write-Output "INFO: Downloaded and extracted mod_spatialite"
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not run 7zip to extract spatialite"
     Exit
 }
@@ -137,6 +147,7 @@ pip\_vendor\pep517
     Write-Output "INFO: Set Python pth files"
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not write to path files"
     Exit
 }
@@ -154,6 +165,7 @@ try {
     Write-Output "INFO: Installed Python dependencies"
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not run Python to install requirements using pip"
     Exit
 }
@@ -167,6 +179,7 @@ try {
     Write-Output "INFO: Cleaned up all except 7zip"
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not delete old deployment files"
     Exit
 }
@@ -185,6 +198,7 @@ try {
     write-Output "INFO: Finished building documentation"
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not run sphinx-build.exe to build docs"
     Exit
 }
@@ -205,6 +219,7 @@ try {
     Write-Output "INFO: Written zipped deployment file to $output_filename"
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not run 7zip to create final deployment file"
     Exit
 }
@@ -217,6 +232,7 @@ try {
     Write-Output "INFO: Finished cleanup"
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not remove items in final cleanup"
     Exit
 }

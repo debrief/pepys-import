@@ -36,6 +36,7 @@ try {
     $Shortcut.Save()
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not create Pepys Import Send-To Shortcut"
     Exit 1
 }
@@ -58,6 +59,7 @@ try {
 
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not create Pepys Import (no archive) Send-To Shortcut"
     Exit 1
 }
@@ -84,6 +86,7 @@ try {
     $Shortcut.Save()
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not create Pepys Admin Start Menu shortcut"
     Exit 1
 }
@@ -103,6 +106,7 @@ try {
     }
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not add Pepys bin folder to user's PATH"
     Exit 1
 }
@@ -127,6 +131,7 @@ try {
     ie4uinit.exe -show
 }
 catch {
+    Write-Output $_
     Write-Output "ERROR: Could not create file assocations"
     Exit 1
 }
