@@ -9,7 +9,7 @@ $WshShell = New-Object -comObject WScript.Shell
 # Get the User's Send To folder location
 # This is safer than using a hard-coded PATH as network/user settings may mean the folder
 # is in an unexpected place
-$sendto_location = $WshShell.SpecialFolders("SendTo2")
+$sendto_location = $WshShell.SpecialFolders("SendTo")
 
 # On Windows icons are specified as a path, followed by a comma and a zero-based index into
 # the icons inside the file (as, some files like DLLs can have multiple icons in them)
