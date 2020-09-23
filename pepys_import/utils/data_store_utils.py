@@ -3,6 +3,7 @@ import json
 import os
 import sys
 from inspect import getfullargspec
+from math import ceil
 
 from sqlalchemy import func, inspect, select
 
@@ -56,9 +57,9 @@ def import_synonyms(data_store, filepath, change_id):
         header = next(reader)
         if not set(header).issubset({"synonym", "table", "target_name"}):
             print(
-                f"Headers of the Synonyms.csv file are wrong or missing!"
-                f"\nNecessary arguments: synonym,table,target_name"
-                f"\nPlease check your CSV file."
+                "Headers of the Synonyms.csv file are wrong or missing!"
+                "\nNecessary arguments: synonym,table,target_name"
+                "\nPlease check your CSV file."
             )
             return
         # For every row in the CSV
@@ -163,7 +164,7 @@ def is_schema_created(engine, db_type):
         if len(table_names) == 73 or len(table_names) == 71:
             return True
         else:
-            print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
+            print("Database tables are not found! (Hint: Did you initialise the DataStore?)")
             return False
     else:
         table_names = inspector.get_table_names(schema="pepys")
@@ -171,7 +172,7 @@ def is_schema_created(engine, db_type):
         if len(table_names) == 35:
             return True
         else:
-            print(f"Database tables are not found! (Hint: Did you initialise the DataStore?)")
+            print("Database tables are not found! (Hint: Did you initialise the DataStore?)")
             return False
 
 
@@ -268,3 +269,17 @@ def lowercase_or_none(obj):
         return None
     else:
         return obj.lower()
+
+
+def chunked_list(lst, size):
+    if len(lst) < size:
+        return [lst]
+
+    n_chunks = ceil(len(lst) / size)
+
+    result = []
+
+    for i in range(n_chunks):
+        result.append(lst[i * size : (i + 1) * size])
+
+    return result
