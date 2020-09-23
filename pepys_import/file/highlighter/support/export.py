@@ -1,3 +1,5 @@
+from tqdm import tqdm
+
 from .color_picker import color_for, html_color_for, mean_color_for
 
 
@@ -26,7 +28,7 @@ def export_report(filename, chars, dict_colors, include_key=False):
 
     last_hash = ""
 
-    for char in chars:
+    for char in tqdm(chars):
         letter = char.letter
         this_hash = ""
         this_message = ""

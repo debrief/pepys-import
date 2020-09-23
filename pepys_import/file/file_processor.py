@@ -287,6 +287,7 @@ class FileProcessor:
                 self.directory_path, f"{filename}_highlighted.html"
             )
 
+            print(f"Writing highlighted file for {basename}")
             highlighted_file.export(highlighted_output_path, include_key=True)
 
             # Run all validation tests

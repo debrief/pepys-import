@@ -13,7 +13,7 @@ from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
-from pepys_import.utils.data_store_utils import shorten_uuid
+from pepys_import.utils.data_store_utils import chunked_list, shorten_uuid
 from pepys_import.utils.import_utils import import_validators
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
@@ -544,19 +544,31 @@ class DatafileMixin:
         extraction_log = list()
         for parser in self.measurements:
             total_objects = 0
+            print(f"Submitting measurements extracted by {parser}.")
             for platform, objects in self.measurements[parser].items():
                 total_objects += len(objects)
-                print(f"Submitting measurements extracted by {parser}.")
-                # Bulk save table objects; state, etc.
-                data_store.session.bulk_save_objects(objects, return_defaults=True)
-                # Log saved objects
-                data_store.session.bulk_insert_mappings(
-                    data_store.db_classes.Log,
-                    [
-                        dict(table=t.__tablename__, id=inspect(t).identity[0], change_id=change_id)
-                        for t in objects
-                    ],
-                )
+
+                # Split the list of objects to submit to the database into chunks
+                # of 1000 objects each and submit in those chunks
+                # This is because bulk_save_objects has no progress bar, so to get
+                # a proper progress bar for submitting we need to chunk them
+                # (making it a bit less efficient, but giving the user more
+                # insight into the process)
+                for chunk_objects in tqdm(chunked_list(objects, size=1000)):
+                    # Bulk save table objects; state, etc.
+                    data_store.session.bulk_save_objects(chunk_objects, return_defaults=True)
+                    # Log saved objects
+                    data_store.session.bulk_insert_mappings(
+                        data_store.db_classes.Log,
+                        [
+                            dict(
+                                table=t.__tablename__,
+                                id=inspect(t).identity[0],
+                                change_id=change_id,
+                            )
+                            for t in chunk_objects
+                        ],
+                    )
 
             extraction_log.append(f"{total_objects} measurements extracted by {parser}.")
         return extraction_log
