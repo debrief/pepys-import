@@ -272,11 +272,23 @@ def lowercase_or_none(obj):
 
 
 def chunked_list(lst, size):
+    """Split a list into multiple chunks of length size.
+    Returns a list containing sublists of length size.
+
+    If the list doesn't divide by size exactly, then the
+    last sublist will have a length < size.
+    """
+    # Quick 'short-circuit' for a list less than size
     if len(lst) < size:
         return [lst]
 
     n_chunks = ceil(len(lst) / size)
 
+    # We're returning a list containing lots of sublists
+    # rather than yielding items as a generator
+    # This is because we use a tqdm progress bar around this
+    # function, and that needs to know the number of sublists
+    # to be able to show a proper progress bar
     result = []
 
     for i in range(n_chunks):

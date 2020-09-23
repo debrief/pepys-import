@@ -523,6 +523,12 @@ class DatafileMixin:
             for platform, objects in self.measurements[parser].items():
                 total_objects += len(objects)
 
+                # Split the list of objects to submit to the database into chunks
+                # of 1000 objects each and submit in those chunks
+                # This is because bulk_save_objects has no progress bar, so to get
+                # a proper progress bar for submitting we need to chunk them
+                # (making it a bit less efficient, but giving the user more
+                # insight into the process)
                 for chunk_objects in tqdm(chunked_list(objects, size=1000)):
                     # Bulk save table objects; state, etc.
                     data_store.session.bulk_save_objects(chunk_objects, return_defaults=True)
