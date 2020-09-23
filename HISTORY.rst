@@ -2,10 +2,15 @@
 History
 =======
 
+0.0.23 (2020-09-23)
+-------------------
+
+* Make UI more responsive for very large imports (10s of Mb)
+
 0.0.22 (2020-09-15)
 -------------------
 
-* New location for Spatialite sources
+* New URL for Spatialite sources
 
 0.0.21 (2020-09-14)
 -------------------
