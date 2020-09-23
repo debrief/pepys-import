@@ -520,7 +520,7 @@ class DatafileMixin:
         for parser in self.measurements:
             total_objects = 0
             print(f"Submitting measurements extracted by {parser}.")
-            for platform, objects in tqdm(self.measurements[parser].items()):
+            for platform, objects in self.measurements[parser].items():
                 total_objects += len(objects)
 
                 for chunk_objects in tqdm(chunked_list(objects, size=1000)):
