@@ -52,7 +52,11 @@ class ReplayImporter(Importer):
         )
 
         state = datafile.create_state(
-            data_store, platform, sensor, rep_line.timestamp, self.short_name,
+            data_store,
+            platform,
+            sensor,
+            rep_line.timestamp,
+            self.short_name,
         )
 
         if rep_line.depth is not None:

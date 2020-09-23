@@ -16,6 +16,8 @@ from pepys_admin.utils import get_default_export_folder
 from pepys_import.core.store import constants
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
+MAX_ROWS_DISPLAYED = 500
+
 
 def bottom_toolbar():
     return HTML("Press <b>ESC then Enter</b> to exit!")
@@ -68,11 +70,13 @@ class ViewDataShell(BaseShell):
                 and not name.startswith("sql")
                 and not name.lower().startswith("spatial")
             ]
+        # Sort table names in alphabetical order
+        table_names = sorted(table_names, key=str.casefold, reverse=True)
         return table_names
 
     def do_view_table(self):
         """Asks user to select a table name. Converts table name to class name,
-        fetches the first 50 objects, and prints them in table format.
+        fetches the objects up to the number of MAX_ROWS_DISPLAYED, and prints them in table format.
         """
         headers = list()
         associated_attributes = list()
@@ -120,12 +124,12 @@ class ViewDataShell(BaseShell):
                 name = f"{descriptor.target_collection}_{descriptor.value_attr}"
                 if name != "privacy_name":
                     associated_attributes.append(name)
-        # Fetch first 10 rows, create a table from these rows
+        # Fetch first rows up to MAX_ROWS_DISPLAYED, create a table from these rows
         with self.data_store.session_scope():
             values = (
                 self.data_store.session.query(table_cls)
                 .options(load_only(*headers))
-                .limit(50)
+                .limit(MAX_ROWS_DISPLAYED)
                 .all()
             )
             headers.extend(associated_attributes)
@@ -182,7 +186,11 @@ class ViewDataShell(BaseShell):
                     results = connection.execute(query)
                     results = results.fetchall()
                     return query, results
-                except (ProgrammingError, OperationalError, InvalidRequestError,) as e:
+                except (
+                    ProgrammingError,
+                    OperationalError,
+                    InvalidRequestError,
+                ) as e:
                     print(
                         f"SQL Exception details: {e}\n\n"
                         "ERROR: Query couldn't be executed successfully.\n"

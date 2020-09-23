@@ -75,7 +75,11 @@ class MigrateSQLiteTestCase(unittest.TestCase):
 class MigratePostgresTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.postgres = Postgresql(
-            database="test", host="localhost", user="postgres", password="postgres", port=55527,
+            database="test",
+            host="localhost",
+            user="postgres",
+            password="postgres",
+            port=55527,
         )
         self.store = DataStore(
             db_name="test",
@@ -230,7 +234,11 @@ class StepByStepMigrationTestCase(unittest.TestCase):
 
     def test_migrate_postgres(self):
         postgres = Postgresql(
-            database="test", host="localhost", user="postgres", password="postgres", port=55527,
+            database="test",
+            host="localhost",
+            user="postgres",
+            password="postgres",
+            port=55527,
         )
         data_store = DataStore(
             db_name="test",

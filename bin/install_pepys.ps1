@@ -20,82 +20,118 @@ $icon_string = "$icon_path,0"
 #
 # Add Pepys Import shortcut to Send To
 #
+try {
+    $shortcut_loc = $sendto_location + "\Pepys Import.lnk"
 
-$shortcut_loc = $sendto_location + "\Pepys Import.lnk"
+    if (Test-Path $shortcut_loc) { Remove-Item $shortcut_loc; }
 
-if (Test-Path $shortcut_loc) { Remove-Item $shortcut_loc; }
+    $Shortcut = $WshShell.CreateShortcut($shortcut_loc)
+    # We need to use full paths here or the shortcut will assume everything is relative to
+    # C:\
+    $Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_sendto.bat")
+    $Shortcut.IconLocation = $icon_string
+    # If we don't set the working directory then we won't be able to import other DLLs or use relative paths
+    # to our Python executable
+    $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
+    $Shortcut.Save()
+}
+catch {
+    Write-Output $_
+    Write-Output "ERROR: Could not create Pepys Import Send-To Shortcut"
+    Exit 1
+}
 
-$Shortcut = $WshShell.CreateShortcut($shortcut_loc)
-# We need to use full paths here or the shortcut will assume everything is relative to
-# C:\
-$Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_sendto.bat")
-$Shortcut.IconLocation = $icon_string
-# If we don't set the working directory then we won't be able to import other DLLs or use relative paths
-# to our Python executable
-$Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
-$Shortcut.Save()
 
 
 #
 # Add Pepys Import (no archive) shortcut to Send To
 #
+try {
+    $shortcut_loc = $sendto_location + "\Pepys Import (no archive).lnk"
 
-$shortcut_loc = $sendto_location + "\Pepys Import (no archive).lnk"
+    if (Test-Path $shortcut_loc) { Remove-Item $shortcut_loc; }
 
-if (Test-Path $shortcut_loc) { Remove-Item $shortcut_loc; }
+    $Shortcut = $WshShell.CreateShortcut($shortcut_loc)
+    $Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_no_archive_sendto.bat")
+    $Shortcut.IconLocation = $icon_string
+    $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
+    $Shortcut.Save()
 
-$Shortcut = $WshShell.CreateShortcut($shortcut_loc)
-$Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_no_archive_sendto.bat")
-$Shortcut.IconLocation = $icon_string
-$Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
-$Shortcut.Save()
+}
+catch {
+    Write-Output $_
+    Write-Output "ERROR: Could not create Pepys Import (no archive) Send-To Shortcut"
+    Exit 1
+}
 
 #
 # Add shortcut to Start Menu
 #
+try {
+    # Get the User's Start Menu folder
+    $startmenu_location = "$env:USERPROFILE\Start Menu\Programs\"
 
-# Get the User's Start Menu folder
-$startmenu_location = "$env:USERPROFILE\Start Menu\Programs\"
+    # Delete Pepys folder in Start Menu if it exists
+    $pepys_folder = $startmenu_location + "\Pepys"
 
-# Delete Pepys folder in Start Menu if it exists
-$pepys_folder = $startmenu_location + "\Pepys"
+    if (Test-Path $pepys_folder) { Remove-Item $pepys_folder -Recurse ; }
 
-if (Test-Path $pepys_folder) { Remove-Item $pepys_folder -Recurse ; }
+    # Create Pepys folder in Start Menu
+    New-Item -Path $startmenu_location -Name "Pepys" -ItemType "directory"
 
-# Create Pepys folder in Start Menu
-New-Item -Path $startmenu_location -Name "Pepys" -ItemType "directory"
+    $Shortcut = $WshShell.CreateShortcut($startmenu_location + "Pepys\Pepys Admin.lnk")
+    $Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_admin.bat")
+    $Shortcut.IconLocation = $icon_string
+    $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
+    $Shortcut.Save()
+}
+catch {
+    Write-Output $_
+    Write-Output "ERROR: Could not create Pepys Admin Start Menu shortcut"
+    Exit 1
+}
 
-$Shortcut = $WshShell.CreateShortcut($startmenu_location + "Pepys\Pepys Admin.lnk")
-$Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_admin.bat")
-$Shortcut.IconLocation = $icon_string
-$Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
-$Shortcut.Save()
 
 #
 # Add Pepys bin folder to User's PATH variable
 #
-$pepys_bin_path = [System.IO.Path]::GetFullPath(".")
+try {
+    $pepys_bin_path = [System.IO.Path]::GetFullPath(".")
 
-if (!($env:Path -split ';' -contains $pepys_bin_path)) {
-    [Environment]::SetEnvironmentVariable(
-        "PATH",
-        [Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::User) + ";" + $pepys_bin_path,
-        [EnvironmentVariableTarget]::User)
+    if (!($env:Path -split ';' -contains $pepys_bin_path)) {
+        [Environment]::SetEnvironmentVariable(
+            "PATH",
+            [Environment]::GetEnvironmentVariable("PATH", [EnvironmentVariableTarget]::User) + ";" + $pepys_bin_path,
+            [EnvironmentVariableTarget]::User)
+    }
+}
+catch {
+    Write-Output $_
+    Write-Output "ERROR: Could not add Pepys bin folder to user's PATH"
+    Exit 1
 }
 
-# Create file associations for .sqlite and .db files to open in Pepys Admin
-$pepys_admin_run_command = [System.IO.Path]::GetFullPath(".\pepys_admin.bat") + " --db %1"
 
-# All of the assigning to $null below is just to stop the default output showing exactly
-# what registry keys have been created
+try {
+    # Create file associations for .sqlite and .db files to open in Pepys Admin
+    $pepys_admin_run_command = [System.IO.Path]::GetFullPath(".\pepys_admin.bat") + " --db %1"
 
-# Create the file extension entry for .sqlite and assign it to the filetype sqlitefile
-$null = New-Item -Path HKCU:\Software\Classes -Name .sqlite -Value sqlitefile -Force
-# Do the same for the .db extension
-$null = New-Item -Path HKCU:\Software\Classes -Name .db -Value sqlitefile -Force
-# Specify the 'shell open' command for the filetype sqlitefile (that both extensions reference)
-$null = New-Item -Path HKCU:\Software\Classes\sqlitefile\shell\open -Force -Name command -Value "$pepys_admin_run_command"
-# Set the default icon for the filetype to the Pepys icon
-$null = New-Item -Path HKCU:\Software\Classes\sqlitefile -Force -Name DefaultIcon -Value $icon_string
-# Refresh the Windows Explorer icon cache, so the icons show immediately
-ie4uinit.exe -show
+    # All of the assigning to $null below is just to stop the default output showing exactly
+    # what registry keys have been created
+
+    # Create the file extension entry for .sqlite and assign it to the filetype sqlitefile
+    $null = New-Item -Path HKCU:\Software\Classes -Name .sqlite -Value sqlitefile -Force
+    # Do the same for the .db extension
+    $null = New-Item -Path HKCU:\Software\Classes -Name .db -Value sqlitefile -Force
+    # Specify the 'shell open' command for the filetype sqlitefile (that both extensions reference)
+    $null = New-Item -Path HKCU:\Software\Classes\sqlitefile\shell\open -Force -Name command -Value "$pepys_admin_run_command"
+    # Set the default icon for the filetype to the Pepys icon
+    $null = New-Item -Path HKCU:\Software\Classes\sqlitefile -Force -Name DefaultIcon -Value $icon_string
+    # Refresh the Windows Explorer icon cache, so the icons show immediately
+    ie4uinit.exe -show
+}
+catch {
+    Write-Output $_
+    Write-Output "ERROR: Could not create file assocations"
+    Exit 1
+}

@@ -68,7 +68,12 @@ class EnhancedValidator:
                 calculated_time = self.calculate_time(time, prev_time)
                 if calculated_time != 0:
                     self.speed_loose_match_with_location(
-                        location, prev_location, speed, calculated_time, errors, error_type,
+                        location,
+                        prev_location,
+                        speed,
+                        calculated_time,
+                        errors,
+                        error_type,
                     )
 
         if len(errors) > orig_errors_length:

@@ -33,7 +33,8 @@ def test_setting_longitude_fails():
 
 
 @pytest.mark.parametrize(
-    "latitude", [pytest.param(50.23, id="valid float"), pytest.param("23.07", id="valid string")],
+    "latitude",
+    [pytest.param(50.23, id="valid float"), pytest.param("23.07", id="valid string")],
 )
 def test_setting_latitude_valid(latitude):
     loc = Location()
@@ -54,7 +55,8 @@ def test_setting_latitude_invalid(latitude):
 
 
 @pytest.mark.parametrize(
-    "longitude", [pytest.param(50.23, id="valid float"), pytest.param("23.67", id="valid string")],
+    "longitude",
+    [pytest.param(50.23, id="valid float"), pytest.param("23.67", id="valid string")],
 )
 def test_setting_longitude_valid(longitude):
     loc = Location()

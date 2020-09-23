@@ -327,7 +327,8 @@ class FileProcessor:
 
                 # write extraction log to output folder
                 with open(
-                    os.path.join(self.directory_path, f"{filename}_output.log"), "w",
+                    os.path.join(self.directory_path, f"{filename}_output.log"),
+                    "w",
                 ) as file:
                     file.write("\n".join(log))
                 if self.archive is True:

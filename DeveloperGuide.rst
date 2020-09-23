@@ -131,7 +131,9 @@ Clone the repository
 
 Clone the pepys-import repository into a folder of your choice by running::
 
-    $ git clone git@github.com:debrief/pepys-import.git
+    $ git clone https://github.com/debrief/pepys-import.git
+
+(If preferred, you can clone using SSH by running ``git clone git@github.com:debrief/pepys-import.git``).
 
 Create Python virtual environment and install dependencies
 ----------------------------------------------------------

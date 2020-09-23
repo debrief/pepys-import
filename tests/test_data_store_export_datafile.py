@@ -20,7 +20,11 @@ class DataStoreExportPostGISDBTestCase(unittest.TestCase):
         self.store = None
         try:
             self.store = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -201,7 +205,7 @@ class CachePlatformAndSensorNamesTestCase(unittest.TestCase):
             with pytest.raises(Exception) as exception:
                 self.store.get_cached_platform_name()
             assert (
-                f"Either 'sensor_id' or 'platform_id' has to be provided to get 'platform name'"
+                "Either 'sensor_id' or 'platform_id' has to be provided to get 'platform name'"
                 in str(exception.value)
             )
             with pytest.raises(Exception) as exception:

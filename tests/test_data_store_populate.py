@@ -166,7 +166,11 @@ class DataStorePopulatePostGISTestCase(TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")

@@ -38,7 +38,8 @@ class BasicTests(unittest.TestCase):
     def test_error_reports(self):
         # too few fields
         rep_line = REPLine(
-            1, create_test_line_object(" 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "),
+            1,
+            create_test_line_object(" 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "),
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 

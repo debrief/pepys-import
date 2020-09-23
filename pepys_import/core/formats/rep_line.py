@@ -148,7 +148,10 @@ class REPLine:
 
         self.location = Location(errors, error_type)
         if not self.location.set_latitude_dms(
-            lat_degrees_token.text, lat_mins_token.text, lat_secs_token.text, lat_hemi_token.text,
+            lat_degrees_token.text,
+            lat_mins_token.text,
+            lat_secs_token.text,
+            lat_hemi_token.text,
         ):
             return False
         combine_tokens(lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token).record(

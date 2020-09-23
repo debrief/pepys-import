@@ -10,7 +10,13 @@ class DefaultResolverTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = DefaultResolver()
         self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
@@ -186,7 +192,13 @@ class DefaultResolverTestCaseWithNoRefLoaded(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = DefaultResolver()
         self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
