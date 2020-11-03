@@ -45,7 +45,7 @@ class BasicTests(unittest.TestCase):
         )
         self.assertFalse(rep_line.parse(self.error, self.message))
 
-        # time wit more than 3 microsecond digits
+        # time with more than 3 microsecond digits
         rep_line = REPLine(
             1,
             create_test_line_object(
