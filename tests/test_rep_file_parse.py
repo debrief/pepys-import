@@ -19,7 +19,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             1,
             create_test_line_object(
-                "19951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  NaN"
+                "19951212 120800.000 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  NaN"
             ),
         )
         self.assertTrue(rep_line.parse(self.error, self.message))
@@ -34,6 +34,25 @@ class BasicTests(unittest.TestCase):
         )
         self.assertTrue(rep_line.parse(self.error, self.message))
         self.assertEqual(str(rep_line.timestamp.time()), "12:08:00.555000")
+
+    def test_microsecond_digits_failure(self):
+        # time without microseconds
+        rep_line = REPLine(
+            1,
+            create_test_line_object(
+                "951212 120800 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
+            ),
+        )
+        self.assertFalse(rep_line.parse(self.error, self.message))
+
+        # time wit more than 3 microsecond digits
+        rep_line = REPLine(
+            1,
+            create_test_line_object(
+                "951212 120800.123456 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
+            ),
+        )
+        self.assertFalse(rep_line.parse(self.error, self.message))
 
     def test_error_reports(self):
         # too few fields
@@ -145,7 +164,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             line_number=1,
             line=create_test_line_object(
-                "100112\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel"
+                "100112\t120800.123\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel"
             ),
         )
         self.assertTrue(rep_line.parse(self.error, self.message))
@@ -157,7 +176,7 @@ class BasicTests(unittest.TestCase):
         output = temp_output.getvalue()
         assert "REP Line 1 - Timestamp: 2010-01-12 12:08:00" in output
         assert rep_line.line_num == 1
-        assert rep_line.timestamp == datetime.datetime(2010, 1, 12, 12, 8)
+        assert rep_line.timestamp == datetime.datetime(2010, 1, 12, 12, 8, 0, 123000)
         assert rep_line.get_platform() == "SUBJECT"
         assert rep_line.symbology == "VC"
         correct_loc = Location()
@@ -173,7 +192,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             line_number=1,
             line=create_test_line_object(
-                "100112\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel"
+                "100112\t120800.123\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.00\tLabel"
             ),
         )
         assert rep_line.parse(self.error, self.message)
@@ -186,7 +205,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             line_number=1,
             line=create_test_line_object(
-                "100112\t120800\tSUBJECT\tVC\t53.243\t0\t0\tS\t23.495\t00\t0\tE\t109.08\t6.00\t0.00\tLabel"
+                "100112\t120800.123\tSUBJECT\tVC\t53.243\t0\t0\tS\t23.495\t00\t0\tE\t109.08\t6.00\t0.00\tLabel"
             ),
         )
         assert rep_line.parse(self.error, self.message)
@@ -200,7 +219,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             line_number=1,
             line=create_test_line_object(
-                "100112\t120800\tSUBJECT\tVC\t53\t45.32\t0\tS\t23\t56.23\t0\tE\t109.08\t6.00\t0.00\tLabel"
+                "100112\t120800.123\tSUBJECT\tVC\t53\t45.32\t0\tS\t23\t56.23\t0\tE\t109.08\t6.00\t0.00\tLabel"
             ),
         )
         assert rep_line.parse(self.error, self.message)
@@ -214,7 +233,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             line_number=1,
             line=create_test_line_object(
-                "100112\t120800\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\tNaN\tLabel"
+                "100112\t120800.123\tSUBJECT\tVC\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\tNaN\tLabel"
             ),
         )
         assert rep_line.parse(self.error, self.message)
@@ -225,7 +244,7 @@ class BasicTests(unittest.TestCase):
         rep_line = REPLine(
             line_number=1,
             line=create_test_line_object(
-                "100112\t120800\tSUBJECT\t@C[SYMBOL=torpedo,LAYER=Support]\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.0\tLabel"
+                "100112\t120800.123\tSUBJECT\t@C[SYMBOL=torpedo,LAYER=Support]\t60\t23\t40.25\tS\t000\t01\t25.86\tE\t109.08\t6.00\t0.0\tLabel"
             ),
         )
         assert rep_line.parse(self.error, self.message)
