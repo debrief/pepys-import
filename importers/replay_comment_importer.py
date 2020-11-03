@@ -84,6 +84,13 @@ class ReplayCommentImporter(Importer):
             timestamp = parse_timestamp(date_token.text, time_token.text)
             if timestamp:
                 combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp)
+            else:
+                self.errors.append(
+                    {
+                        self.error_type: f"Line {line_number}. Error in timestamp parsing {date_token.text} {time_token.text}."
+                    }
+                )
+                return
 
             message = " ".join([t.text for t in message_tokens])
             combine_tokens(*message_tokens).record(self.name, "message", message)

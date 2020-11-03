@@ -204,6 +204,15 @@ class ReplayContactImporter(Importer):
             )
 
             timestamp = parse_timestamp(date_token.text, time_token.text)
+            if timestamp:
+                combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp)
+            else:
+                self.errors.append(
+                    {
+                        self.error_type: f"Line {line_number}. Error in timestamp parsing {date_token.text} {time_token.text}."
+                    }
+                )
+                return
             combine_tokens(date_token, time_token).record(self.name, "timestamp", timestamp)
 
             contact = datafile.create_contact(
