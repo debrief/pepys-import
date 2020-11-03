@@ -145,14 +145,14 @@ class RepContactTests(unittest.TestCase):
         )
 
         check_errors_for_file_contents(
-            ";SENSOR2: 100112 120000 SENSOR @A 6A 15 00.00 N 016 45 00.00 E  251.33 128.67 NULL NULL TA SUBJECT held on TA",
+            ";SENSOR2: 100112 120000.000 SENSOR @A 6A 15 00.00 N 016 45 00.00 E  251.33 128.67 NULL NULL TA SUBJECT held on TA",
             "Error in latitude decimal degrees value 6A. Couldn't convert to a number",
             contact_importer,
             filename="test.rep",
         )
 
         check_errors_for_file_contents(
-            ";SENSOR: 100112 120600 SENSOR @A 16 15 00.00 N 030 4587 00.00 E  252.41 107.26 TA SUBJECT held on TA",
+            ";SENSOR: 100112 120600.000 SENSOR @A 16 15 00.00 N 030 4587 00.00 E  252.41 107.26 TA SUBJECT held on TA",
             "Error in longitude minutes value 4587.0. Must be between 0 and 60",
             contact_importer,
             filename="test.rep",
@@ -162,7 +162,7 @@ class RepContactTests(unittest.TestCase):
         contact_importer = ReplayContactImporter()
 
         check_errors_for_file_contents(
-            ";SENSOR: 100112 120400 SENSOR @A NULL NULL 107.69 TA SUBJECT held on TA",
+            ";SENSOR: 100112 120400.000 SENSOR @A NULL NULL 107.69 TA SUBJECT held on TA",
             None,
             contact_importer,
             filename="test.rep",
