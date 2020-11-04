@@ -12,6 +12,7 @@ assignees: ''
 
 ## ☑️ Business impact
 <!-- detail how business will benefit from this feature -->
+
 ### Efficiency of analysis
 
 ### Effectiveness of analysis
