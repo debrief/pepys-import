@@ -24,6 +24,7 @@ class BasicTests(unittest.TestCase):
         )
         self.assertTrue(rep_line.parse(self.error, self.message))
         self.assertEqual(str(rep_line.timestamp.date()), "1995-12-12")
+        self.assertEqual(str(rep_line.timestamp.time()), "12:08:00")
 
         # long time
         rep_line = REPLine(
@@ -34,6 +35,61 @@ class BasicTests(unittest.TestCase):
         )
         self.assertTrue(rep_line.parse(self.error, self.message))
         self.assertEqual(str(rep_line.timestamp.time()), "12:08:00.555000")
+
+    def test_timestamp_with_different_decimals(self):
+        rep_line = REPLine(
+            1,
+            create_test_line_object(
+                "951212 120800.5 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
+            ),
+        )
+        self.assertTrue(rep_line.parse(self.error, self.message))
+        self.assertEqual(str(rep_line.timestamp.time()), "12:08:00.500000")
+
+        rep_line = REPLine(
+            1,
+            create_test_line_object(
+                "951212 120800.55 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
+            ),
+        )
+        self.assertTrue(rep_line.parse(self.error, self.message))
+        self.assertEqual(str(rep_line.timestamp.time()), "12:08:00.550000")
+
+        rep_line = REPLine(
+            1,
+            create_test_line_object(
+                "951212 120800.555 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
+            ),
+        )
+        self.assertTrue(rep_line.parse(self.error, self.message))
+        self.assertEqual(str(rep_line.timestamp.time()), "12:08:00.555000")
+
+        rep_line = REPLine(
+            1,
+            create_test_line_object(
+                "951212 120800.5555 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
+            ),
+        )
+        self.assertTrue(rep_line.parse(self.error, self.message))
+        self.assertEqual(str(rep_line.timestamp.time()), "12:08:00.555500")
+
+        rep_line = REPLine(
+            1,
+            create_test_line_object(
+                "951212 120800.55555 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
+            ),
+        )
+        self.assertTrue(rep_line.parse(self.error, self.message))
+        self.assertEqual(str(rep_line.timestamp.time()), "12:08:00.555550")
+
+        rep_line = REPLine(
+            1,
+            create_test_line_object(
+                "951212 120800.555555 SUBJECT VC 60 23 40.25 N 000 01 25.86 E 109.08  6.00  0.00 "
+            ),
+        )
+        self.assertTrue(rep_line.parse(self.error, self.message))
+        self.assertEqual(str(rep_line.timestamp.time()), "12:08:00.555555")
 
     def test_error_reports(self):
         # too few fields

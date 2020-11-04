@@ -101,7 +101,7 @@ class REPLine:
             return False
 
         # Times always in Zulu/GMT
-        if len(time_token.text) != 6 and len(time_token.text) != 10:
+        if len(time_token.text) < 6 or len(time_token.text) > 13:
             errors.append(
                 {
                     error_type: f"Line {self.line_num}. Error in Time format {time_token.text}. "
