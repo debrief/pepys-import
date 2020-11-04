@@ -341,6 +341,11 @@ class FileProcessor:
                 import_summary["succeeded"].append(summary_details)
 
             else:
+                # Delete the datafile entry, as we won't be importing any entries
+                # linked to it, because we had errors
+                data_store.session.delete(datafile)
+                data_store.session.commit()
+
                 failure_report_filename = os.path.join(
                     self.directory_path, f"{filename}_errors.log"
                 )
