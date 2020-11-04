@@ -34,7 +34,6 @@ Please ensure that you complete the following mandatory sections:
 ## Confirmations
 
 - [ ] I have chosen reviewers for my PR.
-- [ ] I have assigned myself to this PR.
 - [ ] I have chosen an appropriate label for the PR.
 - [ ] I have completed the mandatory sections of this document.
 - [ ] I have deleted any unused sections.
