@@ -14,6 +14,7 @@ DIRECTORY_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
 REP_DATA_PATH = os.path.join(DIRECTORY_PATH, "sample_data", "track_files", "rep_data")
 REP_FILE_PATH = os.path.join(REP_DATA_PATH, "rep_test1.rep")
+INVALID_REP_FILE_PATH = os.path.join(REP_DATA_PATH, "rep_test2.rep")
 
 
 class ReferenceTestCase(unittest.TestCase):
@@ -166,6 +167,28 @@ class DuplicatedFilesTestCase(unittest.TestCase):
 
         # Delete the copy file
         os.remove(copied_file_path)
+
+
+class InvalidFileTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.store = DataStore("", "", "", 0, "test.db", db_type="sqlite")
+        self.store.initialise()
+        self.processor = FileProcessor()
+        self.processor.register_importer(ReplayImporter())
+
+    def tearDown(self) -> None:
+        test_db = os.path.join(CURRENT_DIR, "test.db")
+        if os.path.exists(test_db):
+            os.remove(test_db)
+
+    def test_importing_file_with_errors(self):
+        """Test that if we import a file that has errors, then no datafile entry is left at the end"""
+        # Process the rep file
+        self.processor.process(INVALID_REP_FILE_PATH, self.store, False)
+
+        # There should be no datafiles now, as the file with the error shouldn't create a datafile entry
+        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+        assert len(datafiles) == 0
 
 
 if __name__ == "__main__":
