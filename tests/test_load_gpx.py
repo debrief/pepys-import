@@ -50,7 +50,7 @@ class GPXTests(unittest.TestCase):
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            assert len(datafiles) == 7
+            assert len(datafiles) == 4
 
             #
             # Test the actual values that are imported

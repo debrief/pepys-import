@@ -170,9 +170,9 @@ class TestLocalTestsFails(unittest.TestCase):
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             self.assertEqual(len(platforms), 18)
 
-            # there must be one datafile afterwards
+            # there must be no datafiles afterwards - as all files gave errors
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 1)
+            self.assertEqual(len(datafiles), 0)
 
     @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_FAILS_PATH)
     @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_FAILS_PATH)
@@ -210,9 +210,9 @@ class TestLocalTestsFails(unittest.TestCase):
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             self.assertEqual(len(platforms), 2)
 
-            # there must be one datafile afterwards
+            # there must be no datafiles afterwards - as all files gave errors
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 1)
+            self.assertEqual(len(datafiles), 0)
 
 
 if __name__ == "__main__":

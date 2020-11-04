@@ -37,10 +37,8 @@ class ViewDataCLITestCase(unittest.TestCase):
         print(output)
         assert "Datafiles\n" in output
         assert "| datafile_type_name   | reference                        | url   |\n" in output
-        assert "| E-Trac               | e_trac_bad.txt                   | None  |\n" in output
         assert "| E-Trac               | e_trac.txt                       | None  |\n" in output
         assert "| EAG                  | 20200305_ROBIN.eag.txt           | None  |" in output
-        assert "| NMEA                 | NMEA_bad.log                     | None  |" in output
 
     @patch("pepys_admin.view_data_cli.iterfzf", return_value="alembic_version")
     def test_do_view_table_alembic_version(self, patched_input):
@@ -68,7 +66,6 @@ class ViewDataCLITestCase(unittest.TestCase):
                     "datafile_id,simulated,privacy_id,datafile_type_id,reference,url,size,hash,created_date\n"
                     in data
                 )
-                assert "e_trac_bad.txt,,5261,7bbe513d9d253d2277435e0849ed8342" in data
                 assert "20200305_ROBIN.eag.txt,,386,f3d0a8a1760f312ea57912548b48b766" in data
                 assert (
                     "20200305_ROBINWithHeader.eag.txt,,479,ec2694c2cfe2eaa26181999a55aee5b4" in data
@@ -103,15 +100,7 @@ class ViewDataCLITestCase(unittest.TestCase):
         print(output)
         assert "SELECT * FROM Datafiles;" in output
         assert (
-            "| e_trac_bad.txt                   | None | 5261 | 7bbe513d9d253d2277435e0849ed8342"
-            in output
-        )
-        assert (
             "| e_trac.txt                       | None | 5315 | 577fad568cda2eb0b24178f5554f2b46"
-            in output
-        )
-        assert (
-            "| NMEA_bad.log                     | None |  243 | b201a229fb2c4a80bd657066e4bf9c8a"
             in output
         )
 
@@ -137,7 +126,6 @@ class ViewDataCLITestCase(unittest.TestCase):
             with open(path, "r") as f:
                 data = f.read()
                 assert "Executed Query: SELECT * FROM Datafiles;" in data
-                assert "e_trac_bad.txt,,5261,7bbe513d9d253d2277435e0849ed8342" in data
                 assert "20200305_ROBIN.eag.txt,,386,f3d0a8a1760f312ea57912548b48b766" in data
                 assert (
                     "20200305_ROBINWithHeader.eag.txt,,479,ec2694c2cfe2eaa26181999a55aee5b4" in data
@@ -237,10 +225,8 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
         print(output)
         assert "Datafiles\n" in output
         assert "| datafile_type_name   | reference                        | url   |\n" in output
-        assert "| E-Trac               | e_trac_bad.txt                   | None  |\n" in output
         assert "| E-Trac               | e_trac.txt                       | None  |\n" in output
         assert "| EAG                  | 20200305_ROBIN.eag.txt           | None  |" in output
-        assert "| NMEA                 | NMEA_bad.log                     | None  |" in output
 
     @patch("pepys_admin.view_data_cli.iterfzf", return_value="alembic_version")
     def test_do_view_table_alembic_version(self, patched_input):
@@ -268,7 +254,6 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
                     "datafile_id,simulated,privacy_id,datafile_type_id,reference,url,size,hash,created_date\n"
                     in data
                 )
-                assert "e_trac_bad.txt,,5261,7bbe513d9d253d2277435e0849ed8342" in data
                 assert "20200305_ROBIN.eag.txt,,386,f3d0a8a1760f312ea57912548b48b766" in data
                 assert (
                     "20200305_ROBINWithHeader.eag.txt,,479,ec2694c2cfe2eaa26181999a55aee5b4" in data
@@ -303,15 +288,7 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
         print(output)
         assert 'SELECT * FROM "pepys"."Datafiles";' in output
         assert (
-            "| e_trac_bad.txt                   | None | 5261 | 7bbe513d9d253d2277435e0849ed8342"
-            in output
-        )
-        assert (
             "| e_trac.txt                       | None | 5315 | 577fad568cda2eb0b24178f5554f2b46"
-            in output
-        )
-        assert (
-            "| NMEA_bad.log                     | None |  243 | b201a229fb2c4a80bd657066e4bf9c8a"
             in output
         )
 
@@ -341,7 +318,6 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
                 assert (
                     "20200305_ROBINWithHeader.eag.txt,,479,ec2694c2cfe2eaa26181999a55aee5b4" in data
                 )
-                assert "e_trac_bad.txt,,5261,7bbe513d9d253d2277435e0849ed8342" in data
                 assert "e_trac.txt,,5315,577fad568cda2eb0b24178f5554f2b46" in data
 
             os.remove(path)
