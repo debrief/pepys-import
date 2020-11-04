@@ -49,25 +49,25 @@ def test_rep_timestamp_parsing():
     result = parse_timestamp(date, time)
     assert result == datetime(2020, 10, 1, 12, 1, 5, 100000)
 
-    time = "120105.01"
+    time = "120105.11"
     result = parse_timestamp(date, time)
-    assert result == datetime(2020, 10, 1, 12, 1, 5, 10000)
+    assert result == datetime(2020, 10, 1, 12, 1, 5, 110000)
 
-    time = "120105.001"
+    time = "120105.111"
     result = parse_timestamp(date, time)
-    assert result == datetime(2020, 10, 1, 12, 1, 5, 1000)
+    assert result == datetime(2020, 10, 1, 12, 1, 5, 111000)
 
-    time = "120105.0001"
+    time = "120105.1111"
     result = parse_timestamp(date, time)
-    assert result == datetime(2020, 10, 1, 12, 1, 5, 100)
+    assert result == datetime(2020, 10, 1, 12, 1, 5, 111100)
 
-    time = "120105.00001"
+    time = "120105.11111"
     result = parse_timestamp(date, time)
-    assert result == datetime(2020, 10, 1, 12, 1, 5, 10)
+    assert result == datetime(2020, 10, 1, 12, 1, 5, 111110)
 
-    time = "120105.000001"
+    time = "120105.111111"
     result = parse_timestamp(date, time)
-    assert result == datetime(2020, 10, 1, 12, 1, 5, 1)
+    assert result == datetime(2020, 10, 1, 12, 1, 5, 111111)
 
     time = "120101.1234567"  # invalid decimals in time
     result = parse_timestamp(date, time)

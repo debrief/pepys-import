@@ -105,7 +105,7 @@ class REPLine:
             errors.append(
                 {
                     error_type: f"Line {self.line_num}. Error in Time format {time_token.text}. "
-                    f"Should be HHMMSS[.SSS]"
+                    f"Should be HHMMSS[.SSSSSS]"
                 }
             )
             return False
