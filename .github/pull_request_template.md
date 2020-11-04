@@ -13,11 +13,10 @@ Please ensure that you complete the following mandatory sections:
 ## 🧰 Issue
 <!-- [The issue the work was done for as an issue reference (e.g. `closes #1`)] -->
 
-
 ## 🚀 Overview: 
 <!-- [A summary of what you did in no more than one paragraph] -->
 
-## 🔗 Link to preview
+## 🔗 Link to preview (or screenshot, if relevant)
 <!-- [If you're on a project which auto-deploys branches, link to the branches preview link here] -->
 
 ## 🤔 Reason: 
@@ -39,7 +38,6 @@ Please ensure that you complete the following mandatory sections:
 - [ ] I have chosen an appropriate label for the PR.
 - [ ] I have completed the mandatory sections of this document.
 - [ ] I have deleted any unused sections.
-- [ ] I confirm that I have checked for required README updates and acted accordingly.
 
 ## 📝 Developer Notes:
 <!-- [Sometimes, extra notes are needed to add clarity to a PR, add them here] -->
