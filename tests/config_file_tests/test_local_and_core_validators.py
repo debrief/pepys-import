@@ -170,7 +170,7 @@ class TestLocalTestsFails(unittest.TestCase):
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             self.assertEqual(len(platforms), 18)
 
-            # there must be one datafile afterwards
+            # there must be no datafiles afterwards - as all files gave errors
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 0)
 
@@ -210,7 +210,7 @@ class TestLocalTestsFails(unittest.TestCase):
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             self.assertEqual(len(platforms), 2)
 
-            # there must be one datafile afterwards
+            # there must be no datafiles afterwards - as all files gave errors
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 0)
 
