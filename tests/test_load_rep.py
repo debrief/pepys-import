@@ -53,7 +53,7 @@ class TestLoadREP(unittest.TestCase):
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 8)
+            self.assertEqual(len(datafiles), 6)
 
             # There should be one state with no elevation, which comes from the NaN
             # in the elevation field in the first line of uk_track.rep
@@ -113,7 +113,7 @@ class TestLoadREP(unittest.TestCase):
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 8)
+            self.assertEqual(len(datafiles), 7)
 
             # There should be one state with no elevation, which comes from the NaN
             # in the elevation field in the first line of uk_track.rep

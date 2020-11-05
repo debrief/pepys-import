@@ -91,7 +91,7 @@ class RepCommentTests(unittest.TestCase):
 
         # check data got created
         with self.store.session_scope():
-            # there must be states after the import
+            # there must be no states after the import
             comments = self.store.session.query(self.store.db_classes.Comment).all()
             self.assertEqual(len(comments), 0)
 
@@ -99,9 +99,9 @@ class RepCommentTests(unittest.TestCase):
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             self.assertEqual(len(platforms), 2)
 
-            # there must be one datafile afterwards
+            # there must be no datafiles afterwards - because the file was invalid
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 1)
+            self.assertEqual(len(datafiles), 0)
 
 
 if __name__ == "__main__":
