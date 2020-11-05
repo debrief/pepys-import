@@ -18,11 +18,6 @@ jobs:
         run: |
           sudo apt install -y postgresql-13-postgis-3 sqlite3 libgdal-dev libproj-dev libproj-dev libsqlite3-dev spatialite-bin libsqlite3-mod-spatialite
 
-      - name: Set environment variables
-        shell: bash -l {0}
-        run: |
-          export PEPYS_SPATIALITE_PATH=/usr/lib/x86_64-linux-gnu/mod_spatialite.so
-  
       - name: Set up Python 3.7
         uses: actions/setup-python@v2
         with:
@@ -36,6 +31,8 @@ jobs:
 
       - name: Run tests
         shell: bash -l {0}
+        env:
+          PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
         run: |
           coverage3 run -m pytest -v tests/test_load_rep.py
 
