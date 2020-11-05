@@ -15,6 +15,9 @@ DATA_PATH_NO_HEADER = os.path.join(
 DATA_PATH_WITH_HEADER = os.path.join(
     FILE_PATH, "sample_data/track_files/other_data/20200305_ROBINWithHeader.eag.txt"
 )
+DATA_PATH_WITH_MISSING_ID = os.path.join(
+    FILE_PATH, "sample_data/track_files/other_data/20201105_WithMissingIDs.eag.txt"
+)
 
 
 class TestLoadEAG(unittest.TestCase):
@@ -137,6 +140,60 @@ class TestLoadEAG(unittest.TestCase):
             assert (104.2 * unit_registry.degree, "CALLSIGN 2") in data
             assert (156.8 * unit_registry.degree, "CALLSIGN 1") in data
 
+    def test_process_eag_data_with_missing_ids(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(EAGImporter())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 0)
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+        # parse the file
+        processor.process(DATA_PATH_WITH_MISSING_ID, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be 4 states after the import
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 4)
+
+            # there must be 4 platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 4
+
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 1)
+
+            # Get all the States entries
+            states = self.store.session.query(self.store.db_classes.State).all()
+
+            # Check that the platforms were assigned to the states correctly, based
+            # on the header and the track ID column.
+            # No need to check actual parsed values of other fields here, as they are the
+            # same as those checked in the previous test
+            assert platforms[0].name == "CALLSIGN 1"
+            assert platforms[1].name == "CALLSIGN 2"
+            assert platforms[2].name == "CALLSIGN 3"
+            assert platforms[3].name == "CALLSIGN 4"
+
+            data = [(s.heading, s.platform_name) for s in states]
+
+            assert (98.2 * unit_registry.degree, "CALLSIGN 1") in data
+            assert (104.2 * unit_registry.degree, "CALLSIGN 2") in data
+            assert (126.4 * unit_registry.degree, "CALLSIGN 3") in data
+            assert (156.8 * unit_registry.degree, "CALLSIGN 4") in data
+
     def test_process_eag_data_invalid(self):
         eag_importer = EAGImporter()
 
@@ -160,18 +217,6 @@ class TestLoadEAG(unittest.TestCase):
         check_errors_for_file_contents(
             "382517A00	2	123	456	3957216.04  -91183.85       4987436.42	0	0	126.3	10:15:17.00",
             "Cannot parse time since Sunday to float",
-            eag_importer,
-            filename="20200305_ROBIN.eag.txt",
-        )
-
-        # Track ID listed in row but not found in header
-        contents_with_header = """A   1   152 130 23  13  CALLSIGN 1
-        A   2   192 130 23  13  CALLSIGN 2
-        382507000	1	123	456	4021773.74  -98290.03       4934710.34	0	0	98.2	10:15:07.00
-        382512000	4	123	456	3978788.87  -93765.36       4969927.68	0	0	104.2	10:15:12.00"""
-        check_errors_for_file_contents(
-            contents_with_header,
-            "Track ID 4 not found in header",
             eag_importer,
             filename="20200305_ROBIN.eag.txt",
         )
