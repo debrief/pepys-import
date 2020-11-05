@@ -6,65 +6,64 @@ on:
   pull_request:
 
 jobs:
-  test-linux:
-    name: Linux
-    runs-on: ubuntu-latest
+  # test-linux:
+  #   name: Linux
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v2
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - name: Install apt dependencies
-        shell: bash -l {0}
-        run: |
-          sudo apt install -y postgresql-13-postgis-3 sqlite3 libgdal-dev libproj-dev libproj-dev libsqlite3-dev spatialite-bin libsqlite3-mod-spatialite
+  #     - name: Install apt dependencies
+  #       shell: bash -l {0}
+  #       run: |
+  #         sudo apt install -y postgresql-13-postgis-3 sqlite3 libgdal-dev libproj-dev libproj-dev libsqlite3-dev spatialite-bin libsqlite3-mod-spatialite
 
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
+  #     - name: Set up Python 3.7
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.7
   
-      - name: Install pip dependencies
-        shell: bash -l {0}
-        run: |
-          pip install -r requirements.txt
-          pip install -r requirements_dev.txt
+  #     - name: Install pip dependencies
+  #       shell: bash -l {0}
+  #       run: |
+  #         pip install -r requirements.txt
+  #         pip install -r requirements_dev.txt
 
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
-      - name: Install pytest GH Actions plugin
-        shell: bash -l {0}
-        run: pip install pytest-github-actions-annotate-failures
+  #     # - name: Setup tmate session
+  #     #   uses: mxschmitt/action-tmate@v3
+  #     - name: Install pytest GH Actions plugin
+  #       shell: bash -l {0}
+  #       run: pip install pytest-github-actions-annotate-failures
 
-      - name: Run tests
-        shell: bash -l {0}
-        env:
-          PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
-        run: |
-          coverage3 run -m pytest -v --color=yes tests
+  #     - name: Run tests
+  #       shell: bash -l {0}
+  #       env:
+  #         PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
+  #       run: |
+  #         coverage3 run -m pytest -v --color=yes tests
 
-      - name: Run black
-        shell: bash -l {0}
-        run: |
-          black --check --diff importers pepys_import pepys_admin
+  #     - name: Run black
+  #       shell: bash -l {0}
+  #       run: |
+  #         black --check --diff importers pepys_import pepys_admin
 
-      - name: Run isort
-        shell: bash -l {0}
-        run: |
-          isort --check-only --diff importers pepys_import pepys_admin
+  #     - name: Run isort
+  #       shell: bash -l {0}
+  #       run: |
+  #         isort --check-only --diff importers pepys_import pepys_admin
 
-      - name: Get coverage report
-        shell: bash -l {0}
-        run: |
-          coverage3 report
-          coverage3 xml
+  #     - name: Get coverage report
+  #       shell: bash -l {0}
+  #       run: |
+  #         coverage3 report
+  #         coverage3 xml
 
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ./coverage.xml
+  #     - uses: codecov/codecov-action@v1
+  #       with:
+  #         file: ./coverage.xml
   
-  
-  test-windows:
-    name: Windows
+  test-runas:
+    name: Test Runas
     runs-on: windows-latest
 
     steps:
@@ -75,10 +74,147 @@ jobs:
         with:
           python-version: 3.7
 
+      - name: Run setup Powershell script
+        shell: cmd
+        run: powershell.exe -executionpolicy remotesigned -File setup_windows.ps1
+
+      - name: Set up environment variables
+        shell: bash -l {0}
+        run: |
+          echo ".\lib\spatialite-loadable-modules-5.0.0-win-amd64" >> $GITHUB_PATH
+          echo "PYTHONPATH=.\lib\sqlite-python" >> $GITHUB_ENV
+
       - name: Install Postgres 12
         uses: crazy-max/ghaction-chocolatey@v1
         with:
           args: install postgresql12
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      - name: Install pip dependencies
+        shell: cmd
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements_dev.txt
+
+      - name: Run tests
+        shell: cmd
+        run: powershell.exe -executionpolicy remotesigned -File runas.ps1
+
+      # - name: Run runas
+      #   shell: cmd
+      #   run: runas /trustlevel:0x20000 test_runas.bat
+
+      # - name: Display file
+      #   shell: cmd
+      #   run: type output_python.txt
+
+      # - name: Setup tmate session
+      #   if: ${{ always() }}
+      #   uses: mxschmitt/action-tmate@v3
+      
+
+
+  # test-windows:
+  #   name: Windows
+  #   runs-on: windows-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v2
+
+  #     - name: Set up Python 3.7
+  #       uses: actions/setup-python@v2
+  #       with:
+  #         python-version: 3.7
+
+  #     - name: Install Postgres 12
+  #       uses: crazy-max/ghaction-chocolatey@v1
+  #       with:
+  #         args: install postgresql12
+
+  #     - name: Run setup Powershell script
+  #       shell: cmd
+  #       run: powershell.exe -executionpolicy remotesigned -File setup_windows.ps1
+
+  #     - name: Set up environment variables
+  #       shell: bash -l {0}
+  #       run: |
+  #         echo "C:\Program Files\PostgreSQL\12\bin" >> $GITHUB_PATH
+  #         echo ".\lib\spatialite-loadable-modules-5.0.0-win-amd64" >> $GITHUB_PATH
+  #         echo "PYTHONPATH=.\lib\sqlite-python" >> $GITHUB_ENV
+
+  #     - name: Install pip dependencies
+  #       shell: cmd
+  #       run: |
+  #         pip install -r requirements.txt
+  #         pip install -r requirements_dev.txt
+
+  #     - name: Install pytest GH Actions plugin
+  #       shell: cmd
+  #       run: pip install pytest-github-actions-annotate-failures
+
+  #     # - name: Run tests
+  #     #   shell: cmd
+  #     #   run: |
+  #     #     coverage3 run -m pytest -v --color=yes tests/test_data_store_api_postgis.py
+
+  #     - name: Add user
+  #       shell: cmd
+  #       run: net user postgres /add
+
+  #     # - name: Setup tmate session
+  #     #   uses: mxschmitt/action-tmate@v3
+
+  #     # - name: Run tests
+  #     #   shell: cmd
+  #     #   run: |
+  #     #     runas /user:postgres "python test_postgres.py"
+      
+  #     - name: Run tests (v1)
+  #       shell: C:\windows\system32\runas.EXE /trustlevel:0x20000 "cmd.exe /D /C {0}" 2>&1
+  #       run: c:\Python37\python.exe -c print('hello')
+
+  #     - name: Run tests (v1)
+  #       if: ${{ always() }}
+  #       shell: C:\windows\system32\runas.EXE /trustlevel:0x20000 "cmd.exe /D /C {0}" 2>&1
+  #       run: dir c:\
+
+  #     # - name: Run tests (v2)
+  #     #   if: ${{ always() }}
+  #     #   shell: runas /trustlevel:0x20000 cmd.exe /D /E:ON /V:OFF /S /C "CALL "{0}""
+  #     #   run: python.exe test_postgres.py > output.txt
+
+  #     # - name: Display output
+  #     #   if: ${{ always() }}
+  #     #   shell: cmd
+  #     #   run: type output.txt
+
+  #     - name: Run tests (v3)
+  #       if: ${{ always() }}
+  #       shell: cmd
+  #       run: runas /trustlevel:0x20000 .\.github\workflows\run_windows_tests.bat
+
+  #     - name: Display local output_python
+  #       if: ${{ always() }}
+  #       shell: cmd
+  #       run: type output_python.txt
+
+  #     - name: Display local output_postgres
+  #       if: ${{ always() }}
+  #       shell: cmd
+  #       run: type output_postgres.txt
+
+  #     - name: Display github output_python
+  #       if: ${{ always() }}
+  #       shell: cmd
+  #       run: type .\.github\workflows\output_python.txt
+
+  #     - name: Display github output_postgres
+  #       if: ${{ always() }}
+  #       shell: cmd
+  #       run: type .\.github\workflows\output_postgres.txt
+
+  #     - name: Display C output_postgres
+  #       if: ${{ always() }}
+  #       shell: cmd
+  #       run: type c:\output_postgres.txt
+
+      
