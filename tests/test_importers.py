@@ -25,6 +25,7 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 OUTPUT_PATH = os.path.join(DATA_PATH, "output_test")
 
 REP_DATA_PATH = os.path.join(DATA_PATH, "track_files", "rep_data")
+SINGLE_REP_FILE = os.path.join(DATA_PATH, "track_files", "rep_data", "rep_test1.rep")
 
 
 class SampleImporterTests(unittest.TestCase):
@@ -546,7 +547,7 @@ class ImporterGetCachedSensorTest(unittest.TestCase):
 
         processor.register_importer(ReplayImporter())
 
-        processor.process(REP_DATA_PATH, None, False)
+        processor.process(SINGLE_REP_FILE, None, False)
 
         cache = processor.importers[0].platform_sensor_mapping
 
