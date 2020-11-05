@@ -29,8 +29,11 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements_dev.txt
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
+      - name: Install pytest GH Actions plugin
+        shell: bash -l {0}
+        run: pip install pytest-github-actions-annotate-failures
 
       - name: Run tests
         shell: bash -l {0}
