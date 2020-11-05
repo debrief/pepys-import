@@ -1,4 +1,4 @@
-name: Test on Linux
+name: Test Pepys
 on:
   push:
     branches:
@@ -6,8 +6,8 @@ on:
   pull_request:
 
 jobs:
-  test-pepys:
-    name: Test Pepys
+  test-linux:
+    name: Linux
     runs-on: ubuntu-latest
 
     steps:
@@ -61,3 +61,24 @@ jobs:
       - uses: codecov/codecov-action@v1
         with:
           file: ./coverage.xml
+  
+  
+  test-windows:
+    name: Windows
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+
+      - name: Install Postgres 12
+        uses: crazy-max/ghaction-chocolatey@v1
+        with:
+          args: install postgresql12
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
