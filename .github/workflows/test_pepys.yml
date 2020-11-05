@@ -34,7 +34,7 @@ jobs:
         env:
           PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
         run: |
-          coverage3 run -m pytest -v --cov-report=xml tests
+          coverage3 run -m pytest -v tests
 
       - name: Run black
         shell: bash -l {0}
@@ -48,7 +48,9 @@ jobs:
 
       - name: Get coverage report
         shell: bash -l {0}
-        run: coverage3 report
+        run: |
+          coverage3 report
+          coverage3 xml
 
       - uses: codecov/codecov-action@v1
         with:
