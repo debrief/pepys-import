@@ -60,7 +60,7 @@ class EAGImporter(Importer):
             callsign_from_filename = filename[9:-8]
         except ValueError:  # pragma: no cover (can't test as filenames that don't match this pattern won't be processed)
             self.errors.append(
-                {self.error_type: f"Error in filename - cannot extract date and callsign"}
+                {self.error_type: "Error in filename - cannot extract date and callsign"}
             )
             return
 
@@ -130,12 +130,8 @@ class EAGImporter(Importer):
                 callsign = self.track_id_to_callsign.get(track_id_token.text)
                 track_id_token.record(self.name, "track ID", track_id_token.text)
                 if callsign is None:
-                    self.errors.append(
-                        {
-                            self.error_type: f"Error on line {line_number}. Track ID {track_id_token.text} not found in header: {line}"
-                        }
-                    )
-                    continue
+                    callsign = f"CALLSIGN {track_id_token.text}"
+                    self.track_id_to_callsign[track_id_token.text] = callsign
 
             # Platform is based on the callsign - the user will link this as a synonym to a defined Platform
             platform = self.get_cached_platform(
