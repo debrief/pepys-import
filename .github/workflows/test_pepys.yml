@@ -37,7 +37,7 @@ jobs:
       - name: Run tests
         shell: bash -l {0}
         run: |
-          coverage3 run -m pytest tests
+          coverage3 run -m pytest -v tests/test_load_rep.py
 
       - name: Run black
         shell: bash -l {0}
