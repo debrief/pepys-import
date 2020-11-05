@@ -16,8 +16,13 @@ jobs:
       - name: Install apt dependencies
         shell: bash -l {0}
         run: |
-          sudo apt install -y postgresql-10-postgis-2.5 sqlite3 libgdal-dev libproj-dev libproj-dev libsqlite3-dev spatialite-bin libsqlite3-mod-spatialite
+          sudo apt install -y postgresql-13-postgis-3 sqlite3 libgdal-dev libproj-dev libproj-dev libsqlite3-dev spatialite-bin libsqlite3-mod-spatialite
 
+      - name: Set environment variables
+        shell: bash -l {0}
+        run: |
+          export PEPYS_SPATIALITE_PATH=/usr/lib/x86_64-linux-gnu/mod_spatialite.so
+  
       - name: Set up Python 3.7
         uses: actions/setup-python@v2
         with:
@@ -29,9 +34,6 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements_dev.txt
           pip install codecov
-  
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
 
       - name: Run tests
         shell: bash -l {0}
