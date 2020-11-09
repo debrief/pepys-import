@@ -14,16 +14,17 @@ from pepys_import.utils.data_store_utils import is_schema_created
 class DataStoreInitialisePostGISTestCase(TestCase):
     def setUp(self):
         self.store = None
-        try:
-            self.store = Postgresql(
-                database="test",
-                host="localhost",
-                user="postgres",
-                password="postgres",
-                port=55527,
-            )
-        except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
+        # try:
+        self.store = Postgresql(
+            database="test",
+            host="localhost",
+            user="postgres",
+            password="postgres",
+            port=55527,
+        )
+        print(self.store)
+        # except RuntimeError:
+        #     print("PostgreSQL database couldn't be created! Test is skipping.")
 
     def tearDown(self):
         try:
