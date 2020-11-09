@@ -174,6 +174,7 @@ def clr_prompt_patch(*args, **kwargs):
         return response
 
 
+@pytest.mark.postgres
 class TestEndToEndAutomaton:
     """
     These tests use an 'automaton' to do end-to-end testing of the import command-line interface.

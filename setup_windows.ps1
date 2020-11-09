@@ -84,9 +84,12 @@ catch {
 }
 
 try {
-    # Extract PostGIS zip into the Postgres installation folder
-    Expand-Archive -Path postgis.zip -DestinationPath  "c:\Program Files\PostgreSQL\12" -Force
+    # Extract PostGIS zip into a local folder
+    Expand-Archive -Path postgis.zip -DestinationPath  "." -Force
     Write-Output "INFO: Downloaded and extracted PostGIS"
+    # Copy everything from inside that folder to the Postgres installation folder
+    Copy-Item -Path ".\postgis-bundle-pg12-3.0.2x64\*" -Destination "c:\Program Files\PostgreSQL\12" -Recurse -Force
+    Write-Output "INFO: Copied PostGIS into Postgres folder"
 }
 catch {
     Write-Output $_

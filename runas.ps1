@@ -1,22 +1,32 @@
-$filename = "python.exe"
-$arguments = "-m pytest tests/test_data_store_initialise.py::DataStoreInitialisePostGISTestCase -v -s"
+# This script creates a standard user account and runs the specified program under
+# that user account
+# In this context, it is used to run pytest so that when the tests then run postgres.exe,
+# postgres is running under a normal user rather than an admin user - as postgres
+# refuses to start under an admin user
+# 
+# Part of the reason the code is so long is that we are streaming the stdout and stderr
+# from the new process back into 
+#
+# This is an altered version of code from https://www.itdroplets.com/run-a-command-as-a-different-user-in-powershell/
+# and https://stackoverflow.com/questions/23239127/powershell-stream-process-output-and-errors-while-running-external-process
 
-# $filename = "python.exe"
-# $arguments = "-c `"import os; print(os.environ['APPDATA'])`""
+# Definitions
+$filename = "python.exe"
+$arguments = '-m pytest tests -v --color=yes -m "not postgres" --ignore=tests/test_admin_cli.py'
 
 $username = 'pepys'
 $password = 'cuKCr3gegNBrj4bP2USW'
 $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
+
+# Create a new user
 New-LocalUser -Name $username -Password $securePassword
 
-# $credential = New-Object System.Management.Automation.PSCredential ("username", (new-object System.Security.SecureString))
 $credential = New-Object System.Management.Automation.PSCredential $username, $securePassword
 
-#Use System.Diagnostics to start the process as UserB
 $ProcessInfo = New-Object System.Diagnostics.ProcessStartInfo
-#With FileName we're basically telling powershell to run another powershell process
+
 $ProcessInfo.FileName = $filename
-#CreateNoWindow helps avoiding a second window to appear whilst the process runs
+
 $ProcessInfo.CreateNoWindow = $true
 $ProcessInfo.RedirectStandardError = $true 
 $ProcessInfo.RedirectStandardOutput = $true 
@@ -25,17 +35,18 @@ $ProcessInfo.UseShellExecute = $false
 $ProcessInfo.Environment.Add("APPDATA", "C:\\Temp")
 
 $ProcessInfo.Arguments = $arguments
-#The next 3 lines are the credential for UserB, as you can see, we can't just pass $Credential
+$ProcessInfo.WorkingDirectory = $pwd
+
 $ProcessInfo.Username = $Credential.GetNetworkCredential().username
 $ProcessInfo.Domain = $Credential.GetNetworkCredential().Domain
 $ProcessInfo.Password = $Credential.Password
-$ProcessInfo.WorkingDirectory = $pwd
+
+
+
 #Finally start the process and wait for it to finish
 $Process = New-Object System.Diagnostics.Process 
 $Process.StartInfo = $ProcessInfo 
-# -ArgumentList "/c dir `"%systemdrive%\program files`""
-# -RedirectStandardOutput output.txt -RedirectStandardError error.txt -Wait
-# $process = Start-Process -PassThru -FilePath 'python.exe' -ArgumentList "count.py" -Credential $credential -RedirectStandardError "error.txt" -RedirectStandardOutput "output.txt"
+
 
 # Register Object Events for stdin\stdout reading
 $OutEvent = Register-ObjectEvent -Action {
@@ -60,7 +71,7 @@ while (!$Process.HasExited)
 $OutEvent.Name, $ErrEvent.Name |
     ForEach-Object {Unregister-Event -SourceIdentifier $_}
 
-Write-Output "Finished"
+Exit $Process.ExitCode
 
 # # $credential = New-Object System.Management.Automation.PSCredential ("username", (new-object System.Security.SecureString))
 # $credential = New-Object System.Management.Automation.PSCredential $username, $securePassword

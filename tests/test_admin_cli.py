@@ -828,6 +828,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
         assert "ERROR: Table summaries couldn't be printed." in output
 
 
+@pytest.mark.postgres
 class SnapshotPostgresTestCase(unittest.TestCase):
     @patch("pepys_import.core.store.common_db.prompt", return_value="2")
     def setUp(self, patched_prompt) -> None:

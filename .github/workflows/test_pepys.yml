@@ -63,7 +63,7 @@ jobs:
   #         file: ./coverage.xml
   
   test-runas:
-    name: Test Runas
+    name: Windows
     runs-on: windows-latest
 
     steps:
@@ -74,6 +74,18 @@ jobs:
         with:
           python-version: 3.7
 
+      - name: Install Postgres 12
+        uses: crazy-max/ghaction-chocolatey@v1
+        with:
+          args: install postgresql12
+
+      - name: Stop Postgres service
+        shell: powershell
+        run: |
+          Stop-Service postgresql-x64-12
+          Get-Process -Name postgres*
+          Write-Output "List of postgres processes above"
+
       - name: Run setup Powershell script
         shell: cmd
         run: powershell.exe -executionpolicy remotesigned -File setup_windows.ps1
@@ -81,13 +93,9 @@ jobs:
       - name: Set up environment variables
         shell: bash -l {0}
         run: |
+          echo "C:\Program Files\PostgreSQL\12\bin" >> $GITHUB_PATH
           echo ".\lib\spatialite-loadable-modules-5.0.0-win-amd64" >> $GITHUB_PATH
           echo "PYTHONPATH=.\lib\sqlite-python" >> $GITHUB_ENV
-
-      - name: Install Postgres 12
-        uses: crazy-max/ghaction-chocolatey@v1
-        with:
-          args: install postgresql12
 
       - name: Install pip dependencies
         shell: cmd
@@ -98,20 +106,6 @@ jobs:
       - name: Run tests
         shell: cmd
         run: powershell.exe -executionpolicy remotesigned -File runas.ps1
-
-      # - name: Run runas
-      #   shell: cmd
-      #   run: runas /trustlevel:0x20000 test_runas.bat
-
-      # - name: Display file
-      #   shell: cmd
-      #   run: type output_python.txt
-
-      # - name: Setup tmate session
-      #   if: ${{ always() }}
-      #   uses: mxschmitt/action-tmate@v3
-      
-
 
   # test-windows:
   #   name: Windows
