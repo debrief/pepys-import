@@ -31,7 +31,7 @@ def import_validators(path):
     """
     validators = list()
     if os.path.exists(path):
-        for file in os.scandir(path):
+        for file in sorted(os.scandir(path), key=lambda x: x.name):
             # import file using its name and full path
             if file.is_file():
                 classes = import_module_(file)

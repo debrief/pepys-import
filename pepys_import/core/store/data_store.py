@@ -224,7 +224,7 @@ class DataStore:
         if reference_data_folder is None:
             reference_data_folder = os.path.join(DEFAULT_DATA_PATH)
 
-        files = os.listdir(reference_data_folder)
+        files = sorted(os.listdir(reference_data_folder))
 
         reference_tables = []
         # Create reference table list
@@ -246,7 +246,7 @@ class DataStore:
         if sample_data_folder is None:
             sample_data_folder = os.path.join(DEFAULT_DATA_PATH)
 
-        files = os.listdir(sample_data_folder)
+        files = sorted(os.listdir(sample_data_folder))
 
         metadata_tables = []
         # Create metadata table list

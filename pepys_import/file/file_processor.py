@@ -165,7 +165,7 @@ class FileProcessor:
                         )
             else:
                 # loop through this path
-                for file in os.scandir(abs_path):
+                for file in sorted(os.scandir(abs_path), key=lambda x: x.name):
                     if file.is_file():
                         processed_ctr = self.process_file(
                             file, abs_path, data_store, processed_ctr, import_summary
@@ -411,7 +411,7 @@ class FileProcessor:
         :type path: String
         """
         if os.path.exists(path):
-            for file in os.scandir(path):
+            for file in sorted(os.scandir(path), key=lambda x: x.name):
                 # import file using its name and full path
                 if file.is_file():
                     classes = import_module_(file)
