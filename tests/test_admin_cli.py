@@ -900,6 +900,12 @@ class SnapshotPostgresTestCase(unittest.TestCase):
 
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     def test_do_export_reference_data_postgres(self, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data()
@@ -920,6 +926,12 @@ class SnapshotPostgresTestCase(unittest.TestCase):
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public", "Public Sensitive"])
     def test_do_export_reference_data_and_metadata_postgres(self, patched_iterfzf, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
@@ -954,6 +966,12 @@ class SnapshotPostgresTestCase(unittest.TestCase):
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
     def test_do_export_reference_data_and_metadata_public(self, patched_iterfzf, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
@@ -992,6 +1010,12 @@ class SnapshotPostgresTestCase(unittest.TestCase):
     def test_do_export_reference_data_and_metadata_public_sensitive(
         self, patched_iterfzf, patched_input
     ):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
@@ -1315,6 +1339,12 @@ class SnapshotShellTestCase(unittest.TestCase):
 
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     def test_do_export_reference_data(self, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data()
@@ -1334,6 +1364,12 @@ class SnapshotShellTestCase(unittest.TestCase):
 
     @patch("pepys_admin.snapshot_cli.input")
     def test_do_export_reference_data_invalid_filename(self, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         with open("already_existing_file.db", "w") as f:
             f.write("Hello, world")
 
@@ -1363,6 +1399,12 @@ class SnapshotShellTestCase(unittest.TestCase):
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public", "Public Sensitive"])
     def test_do_export_reference_data_and_metadata(self, patched_iterfzf, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
@@ -1397,6 +1439,12 @@ class SnapshotShellTestCase(unittest.TestCase):
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
     def test_do_export_reference_data_and_metadata_public(self, patched_iterfzf, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
@@ -1435,6 +1483,12 @@ class SnapshotShellTestCase(unittest.TestCase):
     def test_do_export_reference_data_and_metadata_public_sensitive(
         self, patched_iterfzf, patched_input
     ):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
@@ -1494,6 +1548,12 @@ class SnapshotShellTestCase(unittest.TestCase):
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=None)
     def test_do_export_reference_and_metadata_cancelling(self, patched_iterfzf, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(os.getcwd(), "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
