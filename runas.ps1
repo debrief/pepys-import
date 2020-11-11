@@ -12,7 +12,7 @@
 
 # Definitions
 $filename = "python.exe"
-$arguments = '-m pytest tests -v --color=yes -m "not postgres" --ignore=tests/test_admin_cli.py'
+$arguments = '-m pytest tests -v --color=yes'
 
 $username = 'pepys'
 $password = 'cuKCr3gegNBrj4bP2USW'
