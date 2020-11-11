@@ -912,12 +912,13 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Reference tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM DatafileTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "Replay" in names
-            assert "GPX" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM DatafileTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "Replay" in names
+        assert "GPX" in names
+        connection.close()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
@@ -938,26 +939,27 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Reference and metadata tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM SensorTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "GPS" in names
+        assert "Position" in names
 
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "SENSOR-1" in names
-            assert "New_SSK_FREQ" in names
-            assert "E-Trac" in names
-            assert "SENSOR-TEST" in names
+        results = connection.execute("SELECT name FROM Sensors;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "SENSOR-1" in names
+        assert "New_SSK_FREQ" in names
+        assert "E-Trac" in names
+        assert "SENSOR-TEST" in names
 
-            results = connection.execute("SELECT * FROM Synonyms;")
-            results = results.fetchall()
-            table_dict = {row[1]: row[3] for row in results}
-            assert "Platforms" in table_dict.keys()
-            assert "test" in table_dict.values()
+        results = connection.execute("SELECT * FROM Synonyms;")
+        results = results.fetchall()
+        table_dict = {row[1]: row[3] for row in results}
+        assert "Platforms" in table_dict.keys()
+        assert "test" in table_dict.values()
+        connection.close()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
@@ -978,28 +980,29 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Reference and metadata tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM SensorTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "GPS" in names
+        assert "Position" in names
 
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "SENSOR-1" in names
-            assert "New_SSK_FREQ" in names
-            assert "E-Trac" in names
-            assert "SENSOR-TEST" not in names
+        results = connection.execute("SELECT name FROM Sensors;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "SENSOR-1" in names
+        assert "New_SSK_FREQ" in names
+        assert "E-Trac" in names
+        assert "SENSOR-TEST" not in names
 
-            results = connection.execute("SELECT * FROM Synonyms;")
-            results = results.fetchall()
-            table_dict = {row[1]: row[3] for row in results}
-            assert "Platforms" in table_dict.keys()
-            assert "test" in table_dict.values()
-            assert "Sensors" not in table_dict.keys()
-            assert "test-2" not in table_dict.values()
+        results = connection.execute("SELECT * FROM Synonyms;")
+        results = results.fetchall()
+        table_dict = {row[1]: row[3] for row in results}
+        assert "Platforms" in table_dict.keys()
+        assert "test" in table_dict.values()
+        assert "Sensors" not in table_dict.keys()
+        assert "test-2" not in table_dict.values()
+        connection.close()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
@@ -1022,18 +1025,19 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Reference and metadata tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM SensorTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "GPS" in names
+        assert "Position" in names
 
-            # Even though there are Sensor objects with Public Sensitive level, their Platform objects
-            # have different privacy values. Therefore, none of platforms and sensors are exported.
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            assert len(results) == 0
+        # Even though there are Sensor objects with Public Sensitive level, their Platform objects
+        # have different privacy values. Therefore, none of platforms and sensors are exported.
+        results = connection.execute("SELECT name FROM Sensors;")
+        results = results.fetchall()
+        assert len(results) == 0
+        connection.close()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
@@ -1351,12 +1355,13 @@ class SnapshotShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Reference tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM DatafileTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "Replay" in names
-            assert "GPX" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM DatafileTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "Replay" in names
+        assert "GPX" in names
+        connection.close()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
@@ -1382,12 +1387,13 @@ class SnapshotShellTestCase(unittest.TestCase):
         assert "There is already a file named 'already_existing_file.db'" in output
         assert "Reference tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM DatafileTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "Replay" in names
-            assert "GPX" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM DatafileTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "Replay" in names
+        assert "GPX" in names
+        connection.close()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
@@ -1411,26 +1417,27 @@ class SnapshotShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Reference and metadata tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM SensorTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "GPS" in names
+        assert "Position" in names
 
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "SENSOR-1" in names
-            assert "New_SSK_FREQ" in names
-            assert "E-Trac" in names
-            assert "SENSOR-TEST" in names
+        results = connection.execute("SELECT name FROM Sensors;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "SENSOR-1" in names
+        assert "New_SSK_FREQ" in names
+        assert "E-Trac" in names
+        assert "SENSOR-TEST" in names
 
-            results = connection.execute("SELECT * FROM Synonyms;")
-            results = results.fetchall()
-            table_dict = {row[1]: row[3] for row in results}
-            assert "Platforms" in table_dict.keys()
-            assert "test" in table_dict.values()
+        results = connection.execute("SELECT * FROM Synonyms;")
+        results = results.fetchall()
+        table_dict = {row[1]: row[3] for row in results}
+        assert "Platforms" in table_dict.keys()
+        assert "test" in table_dict.values()
+        connection.close()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
@@ -1451,28 +1458,29 @@ class SnapshotShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Reference and metadata tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM SensorTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "GPS" in names
+        assert "Position" in names
 
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "SENSOR-1" in names
-            assert "New_SSK_FREQ" in names
-            assert "E-Trac" in names
-            assert "SENSOR-TEST" not in names
+        results = connection.execute("SELECT name FROM Sensors;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "SENSOR-1" in names
+        assert "New_SSK_FREQ" in names
+        assert "E-Trac" in names
+        assert "SENSOR-TEST" not in names
 
-            results = connection.execute("SELECT * FROM Synonyms;")
-            results = results.fetchall()
-            table_dict = {row[1]: row[3] for row in results}
-            assert "Platforms" in table_dict.keys()
-            assert "test" in table_dict.values()
-            assert "Sensors" not in table_dict.keys()
-            assert "test-2" not in table_dict.values()
+        results = connection.execute("SELECT * FROM Synonyms;")
+        results = results.fetchall()
+        table_dict = {row[1]: row[3] for row in results}
+        assert "Platforms" in table_dict.keys()
+        assert "test" in table_dict.values()
+        assert "Sensors" not in table_dict.keys()
+        assert "test-2" not in table_dict.values()
+        connection.close()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
@@ -1495,18 +1503,19 @@ class SnapshotShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Reference and metadata tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM SensorTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "GPS" in names
+        assert "Position" in names
 
-            # Even though there are Sensor objects with Public Sensitive level, their Platform objects
-            # have different privacy values. Therefore, none of platforms and sensors are exported.
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            assert len(results) == 0
+        # Even though there are Sensor objects with Public Sensitive level, their Platform objects
+        # have different privacy values. Therefore, none of platforms and sensors are exported.
+        results = connection.execute("SELECT name FROM Sensors;")
+        results = results.fetchall()
+        assert len(results) == 0
+        connection.close()
 
         path = os.path.join(os.getcwd(), "test.db")
         if os.path.exists(path):
