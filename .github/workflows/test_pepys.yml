@@ -62,7 +62,7 @@ jobs:
   #       with:
   #         file: ./coverage.xml
   
-  test-runas:
+  test-windows:
     name: Windows
     runs-on: windows-latest
 
@@ -83,12 +83,10 @@ jobs:
         shell: powershell
         run: |
           Stop-Service postgresql-x64-12
-          Get-Process -Name postgres*
-          Write-Output "List of postgres processes above"
 
       - name: Run setup Powershell script
         shell: cmd
-        run: powershell.exe -executionpolicy remotesigned -File setup_windows.ps1
+        run: powershell.exe -executionpolicy remotesigned -File .\.github\workflows\setup_windows.ps1
 
       - name: Set up environment variables
         shell: bash -l {0}
@@ -105,110 +103,15 @@ jobs:
 
       - name: Run tests
         shell: cmd
-        run: powershell.exe -executionpolicy remotesigned -File runas.ps1
+        run: powershell.exe -executionpolicy remotesigned -File .\.github\workflows\windows_run_tests.ps1
 
-  # test-windows:
-  #   name: Windows
-  #   runs-on: windows-latest
+      - name: Get coverage report
+        shell: bash -l {0}
+        run: |
+          coverage3.exe report
+          coverage3.exe xml
 
-  #   steps:
-  #     - uses: actions/checkout@v2
-
-  #     - name: Set up Python 3.7
-  #       uses: actions/setup-python@v2
-  #       with:
-  #         python-version: 3.7
-
-  #     - name: Install Postgres 12
-  #       uses: crazy-max/ghaction-chocolatey@v1
-  #       with:
-  #         args: install postgresql12
-
-  #     - name: Run setup Powershell script
-  #       shell: cmd
-  #       run: powershell.exe -executionpolicy remotesigned -File setup_windows.ps1
-
-  #     - name: Set up environment variables
-  #       shell: bash -l {0}
-  #       run: |
-  #         echo "C:\Program Files\PostgreSQL\12\bin" >> $GITHUB_PATH
-  #         echo ".\lib\spatialite-loadable-modules-5.0.0-win-amd64" >> $GITHUB_PATH
-  #         echo "PYTHONPATH=.\lib\sqlite-python" >> $GITHUB_ENV
-
-  #     - name: Install pip dependencies
-  #       shell: cmd
-  #       run: |
-  #         pip install -r requirements.txt
-  #         pip install -r requirements_dev.txt
-
-  #     - name: Install pytest GH Actions plugin
-  #       shell: cmd
-  #       run: pip install pytest-github-actions-annotate-failures
-
-  #     # - name: Run tests
-  #     #   shell: cmd
-  #     #   run: |
-  #     #     coverage3 run -m pytest -v --color=yes tests/test_data_store_api_postgis.py
-
-  #     - name: Add user
-  #       shell: cmd
-  #       run: net user postgres /add
-
-  #     # - name: Setup tmate session
-  #     #   uses: mxschmitt/action-tmate@v3
-
-  #     # - name: Run tests
-  #     #   shell: cmd
-  #     #   run: |
-  #     #     runas /user:postgres "python test_postgres.py"
-      
-  #     - name: Run tests (v1)
-  #       shell: C:\windows\system32\runas.EXE /trustlevel:0x20000 "cmd.exe /D /C {0}" 2>&1
-  #       run: c:\Python37\python.exe -c print('hello')
-
-  #     - name: Run tests (v1)
-  #       if: ${{ always() }}
-  #       shell: C:\windows\system32\runas.EXE /trustlevel:0x20000 "cmd.exe /D /C {0}" 2>&1
-  #       run: dir c:\
-
-  #     # - name: Run tests (v2)
-  #     #   if: ${{ always() }}
-  #     #   shell: runas /trustlevel:0x20000 cmd.exe /D /E:ON /V:OFF /S /C "CALL "{0}""
-  #     #   run: python.exe test_postgres.py > output.txt
-
-  #     # - name: Display output
-  #     #   if: ${{ always() }}
-  #     #   shell: cmd
-  #     #   run: type output.txt
-
-  #     - name: Run tests (v3)
-  #       if: ${{ always() }}
-  #       shell: cmd
-  #       run: runas /trustlevel:0x20000 .\.github\workflows\run_windows_tests.bat
-
-  #     - name: Display local output_python
-  #       if: ${{ always() }}
-  #       shell: cmd
-  #       run: type output_python.txt
-
-  #     - name: Display local output_postgres
-  #       if: ${{ always() }}
-  #       shell: cmd
-  #       run: type output_postgres.txt
-
-  #     - name: Display github output_python
-  #       if: ${{ always() }}
-  #       shell: cmd
-  #       run: type .\.github\workflows\output_python.txt
-
-  #     - name: Display github output_postgres
-  #       if: ${{ always() }}
-  #       shell: cmd
-  #       run: type .\.github\workflows\output_postgres.txt
-
-  #     - name: Display C output_postgres
-  #       if: ${{ always() }}
-  #       shell: cmd
-  #       run: type c:\output_postgres.txt
-
-      
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.xml
+  

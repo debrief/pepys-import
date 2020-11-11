@@ -11,8 +11,8 @@
 # and https://stackoverflow.com/questions/23239127/powershell-stream-process-output-and-errors-while-running-external-process
 
 # Definitions
-$filename = "python.exe"
-$arguments = '-m pytest tests -v --color=yes'
+$filename = "coverage.exe"
+$arguments = 'run -m pytest -v --color=yes tests'
 
 $username = 'pepys'
 $password = 'cuKCr3gegNBrj4bP2USW'
