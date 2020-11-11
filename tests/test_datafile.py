@@ -105,10 +105,11 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         # Process the rep file
         self.processor.process(REP_FILE_PATH, self.store, False)
 
-        # Query Datafile table, it should have one entity
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 1
-        assert datafiles[0].reference == "rep_test1.rep"
+        with self.store.session_scope():
+            # Query Datafile table, it should have one entity
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 1
+            assert datafiles[0].reference == "rep_test1.rep"
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -117,10 +118,12 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         # Assert that file is processed
         assert "Files got processed: 1 times" in output
+
         # Query Datafile table, it should have two entities now
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 2
-        assert datafiles[1].reference == "modified_rep_test1.rep"
+        with self.store.session_scope():
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 2
+            assert datafiles[1].reference == "modified_rep_test1.rep"
 
         # Delete the copy file
         os.remove(copied_file_path)
@@ -149,9 +152,10 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         self.processor.process(REP_FILE_PATH, self.store, False)
 
         # Query Datafile table, it should have one entity
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 1
-        assert datafiles[0].reference == "rep_test1.rep"
+        with self.store.session_scope():
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 1
+            assert datafiles[0].reference == "rep_test1.rep"
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -160,10 +164,12 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         # Assert that file is processed
         assert "Files got processed: 1 times" in output
+
         # Query Datafile table, it should have two entities now
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 2
-        assert datafiles[1].reference == "modified_rep_test1.rep"
+        with self.store.session_scope():
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 2
+            assert datafiles[1].reference == "modified_rep_test1.rep"
 
         # Delete the copy file
         os.remove(copied_file_path)
@@ -187,8 +193,9 @@ class InvalidFileTestCase(unittest.TestCase):
         self.processor.process(INVALID_REP_FILE_PATH, self.store, False)
 
         # There should be no datafiles now, as the file with the error shouldn't create a datafile entry
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 0
+        with self.store.session_scope():
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 0
 
 
 if __name__ == "__main__":

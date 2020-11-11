@@ -374,7 +374,8 @@ class ExportShellTestCase(unittest.TestCase):
             self.export_shell.do_export()
         output = temp_output.getvalue()
         assert "'rep_test1.rep' is going to be exported." in output
-        assert "Datafile successfully exported to ./exported_rep_test1_rep.rep." in output
+        output_path = os.path.join(".", "exported_rep_test1_rep.rep")
+        assert f"Datafile successfully exported to {output_path}." in output
 
         file_path = os.path.join(CURRENT_DIR, "exported_rep_test1_rep.rep")
         assert os.path.exists(file_path) is True
@@ -430,11 +431,11 @@ class ExportShellTestCase(unittest.TestCase):
             self.export_shell.do_export_by_platform_name()
         output = temp_output.getvalue()
 
-        assert "Objects are going to be exported to './exported_SENSOR-1.rep'." in output
-        assert "Objects successfully exported to ./exported_SENSOR-1.rep." in output
-
         file_path = os.path.join(CURRENT_DIR, "exported_SENSOR-1.rep")
         assert os.path.exists(file_path) is True
+
+        assert f"Objects are going to be exported to '{file_path}'." in output
+        assert f"Objects successfully exported to {file_path}" in output
 
         with open(file_path, "r") as file:
             data = file.read().splitlines()
@@ -613,11 +614,12 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.shell.do_export(search_platform_obj)
         output = temp_output.getvalue()
-        assert "Objects are going to be exported to './export_test.rep'." in output
-        assert "Objects successfully exported to ./export_test.rep." in output
 
         file_path = os.path.join(CURRENT_DIR, "export_test.rep")
         assert os.path.exists(file_path) is True
+
+        assert f"Objects are going to be exported to '{file_path}'." in output
+        assert f"Objects successfully exported to {file_path}" in output
 
         with open(file_path, "r") as file:
             data = file.read().splitlines()
