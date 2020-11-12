@@ -145,10 +145,14 @@ class CommandLineResolver(DataResolver):
                 )
             final_options[1] += f", default name '{platform_name}'"
         choices = platform_details + final_options
+
+        def is_valid_dynamic(option):  # pragma: no cover
+            return option in [str(i) for i in range(1, len(choices) + 1)] or option == "."
+
         choice = create_menu(
             f"Select a platform entry for {platform_name}:",
             choices,
-            validate_method=is_valid,
+            validate_method=is_valid_dynamic,
         )
         if choice == ".":
             print("Quitting")
