@@ -3,6 +3,8 @@
 # In this context, it is used to run pytest so that when the tests then run postgres.exe,
 # postgres is running under a normal user rather than an admin user - as postgres
 # refuses to start under an admin user
+#
+# It is not currently used in the automated tests, as we're currently running without Postgres
 # 
 # Part of the reason the code is so long is that we are streaming the stdout and stderr
 # from the new process back into 

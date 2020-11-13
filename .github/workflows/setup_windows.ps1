@@ -72,34 +72,37 @@ catch {
     Exit
 }
 
-try {
-    # Download PostGIS install
-    $url = 'http://download.osgeo.org/postgis/windows/pg12/postgis-bundle-pg12-3.0.2x64.zip'
-    (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\postgis.zip")
-}
-catch {
-    Write-Output $_
-    Write-Output "ERROR: Could not download PostGIS - has the URL changed?"
-    Exit
-}
+#
+# This section installs PostGIS - not needed at the moment as we're not using Postgres
+#
+# try {
+#     # Download PostGIS install
+#     $url = 'http://download.osgeo.org/postgis/windows/pg12/postgis-bundle-pg12-3.0.2x64.zip'
+#     (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\postgis.zip")
+# }
+# catch {
+#     Write-Output $_
+#     Write-Output "ERROR: Could not download PostGIS - has the URL changed?"
+#     Exit
+# }
 
-try {
-    # Extract PostGIS zip into a local folder
-    Expand-Archive -Path postgis.zip -DestinationPath  "." -Force
-    Write-Output "INFO: Downloaded and extracted PostGIS"
-    # Copy everything from inside that folder to the Postgres installation folder
-    Copy-Item -Path ".\postgis-bundle-pg12-3.0.2x64\*" -Destination "c:\Program Files\PostgreSQL\12" -Recurse -Force
-    Write-Output "INFO: Copied PostGIS into Postgres folder"
-}
-catch {
-    Write-Output $_
-    Write-Output "ERROR: Could not extract PostGIS zip file"
-    Exit
-}
+# try {
+#     # Extract PostGIS zip into a local folder
+#     Expand-Archive -Path postgis.zip -DestinationPath  "." -Force
+#     Write-Output "INFO: Downloaded and extracted PostGIS"
+#     # Copy everything from inside that folder to the Postgres installation folder
+#     Copy-Item -Path ".\postgis-bundle-pg12-3.0.2x64\*" -Destination "c:\Program Files\PostgreSQL\12" -Recurse -Force
+#     Write-Output "INFO: Copied PostGIS into Postgres folder"
+# }
+# catch {
+#     Write-Output $_
+#     Write-Output "ERROR: Could not extract PostGIS zip file"
+#     Exit
+# }
 
 # Get the DLLs folder for the Python install being used
 # (We can't hard-code this as we may get different point release versions)
-$DLL = python get_DLL.py | Out-String
+$DLL = python .\.github\workflows\get_DLL.py | Out-String
 Copy-Item $DLL.Trim() -Destination ".\lib\sqlite-python"
 
 Write-Output "INFO: Copied SQLite pyd file"
