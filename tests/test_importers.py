@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import stat
 import unittest
@@ -148,8 +149,10 @@ class SampleImporterTests(unittest.TestCase):
             names.append(f.name)
             # Assert that the moved file is read-only
             # Convert file permission to octal and keep only the last three bits
-            file_mode = oct(os.stat(f.path).st_mode & 0o777)
-            assert file_mode == oct(stat.S_IREAD)
+            if platform.system() != "Windows":
+                # Can only check file mode properly on Unix systems
+                file_mode = oct(os.stat(f.path).st_mode & 0o777)
+                assert file_mode == oct(stat.S_IREAD)
             # Move files back
             source_path = os.path.join(REP_DATA_PATH, f.name)
             shutil.move(f.path, source_path)
