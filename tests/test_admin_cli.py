@@ -1258,7 +1258,7 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
         processor.process(os.path.join(DATA_PATH), store, False)
 
         # Rename the latest_revisions.json file as a backup
-        os.rename(
+        move_and_overwrite(
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"),
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json_backup"),
         )
@@ -1268,10 +1268,8 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
 
         assert not database_at_latest_revision("uptodate.sqlite")
 
-        os.remove(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"))
-
         # Rename it back again for future use
-        os.rename(
+        move_and_overwrite(
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json_backup"),
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"),
         )
