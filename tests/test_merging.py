@@ -100,75 +100,77 @@ class TestSensorTypeMerge(unittest.TestCase):
         master_table = self.master_store.db_classes.SensorType
         slave_table = self.slave_store.db_classes.SensorType
 
-        # Check there are now 6 rows in the master database
-        results = self.master_store.session.query(master_table).all()
-        assert len(results) == 6
+        with self.master_store.session_scope():
+            with self.slave_store.session_scope():
+                # Check there are now 6 rows in the master database
+                results = self.master_store.session.query(master_table).all()
+                assert len(results) == 6
 
-        # Check the rows that were originally just in the slave db have been copied across
-        # and that all their fields match (including GUID, but excluding created_date)
-        master_results = (
-            self.master_store.session.query(master_table)
-            .filter(master_table.name.in_(["ST_Slave_1", "ST_Slave_2"]))
-            .all()
-        )
-        slave_results = (
-            self.slave_store.session.query(slave_table)
-            .filter(slave_table.name.in_(["ST_Slave_1", "ST_Slave_2"]))
-            .all()
-        )
+                # Check the rows that were originally just in the slave db have been copied across
+                # and that all their fields match (including GUID, but excluding created_date)
+                master_results = (
+                    self.master_store.session.query(master_table)
+                    .filter(master_table.name.in_(["ST_Slave_1", "ST_Slave_2"]))
+                    .all()
+                )
+                slave_results = (
+                    self.slave_store.session.query(slave_table)
+                    .filter(slave_table.name.in_(["ST_Slave_1", "ST_Slave_2"]))
+                    .all()
+                )
 
-        assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        added_ids = [d["id"] for d in id_results["added"]]
+                added_ids = [d["id"] for d in id_results["added"]]
 
-        assert slave_results[0].sensor_type_id in added_ids
-        assert slave_results[1].sensor_type_id in added_ids
+                assert slave_results[0].sensor_type_id in added_ids
+                assert slave_results[1].sensor_type_id in added_ids
 
-        # Check that the row that had the same name and same GUID in each db is still in both
-        # databases
-        master_results = (
-            self.master_store.session.query(master_table)
-            .filter(master_table.name == "ST_Shared_2GUIDMatch")
-            .all()
-        )
-        slave_results = (
-            self.slave_store.session.query(slave_table)
-            .filter(slave_table.name == "ST_Shared_2GUIDMatch")
-            .all()
-        )
+                # Check that the row that had the same name and same GUID in each db is still in both
+                # databases
+                master_results = (
+                    self.master_store.session.query(master_table)
+                    .filter(master_table.name == "ST_Shared_2GUIDMatch")
+                    .all()
+                )
+                slave_results = (
+                    self.slave_store.session.query(slave_table)
+                    .filter(slave_table.name == "ST_Shared_2GUIDMatch")
+                    .all()
+                )
 
-        assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert id_results["already_there"][0]["id"] == slave_results[0].sensor_type_id
+                assert id_results["already_there"][0]["id"] == slave_results[0].sensor_type_id
 
-        # Check that the row that had the same name but different GUID in each db now
-        # matches in both databases
-        master_results = (
-            self.master_store.session.query(master_table)
-            .filter(master_table.name == "ST_Shared_1")
-            .all()
-        )
-        slave_results = (
-            self.slave_store.session.query(slave_table)
-            .filter(slave_table.name == "ST_Shared_1")
-            .all()
-        )
-        new_guid = slave_results[0].sensor_type_id
+                # Check that the row that had the same name but different GUID in each db now
+                # matches in both databases
+                master_results = (
+                    self.master_store.session.query(master_table)
+                    .filter(master_table.name == "ST_Shared_1")
+                    .all()
+                )
+                slave_results = (
+                    self.slave_store.session.query(slave_table)
+                    .filter(slave_table.name == "ST_Shared_1")
+                    .all()
+                )
+                new_guid = slave_results[0].sensor_type_id
 
-        assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert id_results["modified"][0]["from"] == self.slave_shared_id
-        assert id_results["modified"][0]["to"] == new_guid
+                assert id_results["modified"][0]["from"] == self.slave_shared_id
+                assert id_results["modified"][0]["to"] == new_guid
 
-        # Check that the new GUID for this row has propagated to the Sensors table in the slave database
-        # (so we can copy this table later with no problems)
-        results = (
-            self.slave_store.session.query(self.slave_store.db_classes.Sensor)
-            .filter(self.slave_store.db_classes.Sensor.sensor_type_id == new_guid)
-            .all()
-        )
+                # Check that the new GUID for this row has propagated to the Sensors table in the slave database
+                # (so we can copy this table later with no problems)
+                results = (
+                    self.slave_store.session.query(self.slave_store.db_classes.Sensor)
+                    .filter(self.slave_store.db_classes.Sensor.sensor_type_id == new_guid)
+                    .all()
+                )
 
-        assert len(results) == 1
+                assert len(results) == 1
 
 
 class TestPlatformTypeMerge(unittest.TestCase):
