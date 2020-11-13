@@ -903,57 +903,63 @@ class TestMergeDatafiles(unittest.TestCase):
 
         id_results = self.merge_class.merge_metadata_table("Datafile")
 
-        # Check there are the right number of entries in the master database
-        results = self.master_store.session.query(self.master_store.db_classes.Datafile).all()
-        assert len(results) == 6
+        with self.master_store.session_scope():
+            with self.slave_store.session_scope():
+                # Check there are the right number of entries in the master database
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.Datafile
+                ).all()
+                assert len(results) == 6
 
-        # Check there are the right number of IDs in each section of the ID results
-        assert len(id_results["already_there"]) == 1
-        assert len(id_results["added"]) == 2
-        assert len(id_results["modified"]) == 1
+                # Check there are the right number of IDs in each section of the ID results
+                assert len(id_results["already_there"]) == 1
+                assert len(id_results["added"]) == 2
+                assert len(id_results["modified"]) == 1
 
-        # Check we have an entry called Slave_DF_1 in master now
-        results = (
-            self.master_store.session.query(self.master_store.db_classes.Datafile)
-            .filter(self.master_store.db_classes.Datafile.reference == "Slave_DF_1")
-            .all()
-        )
+                # Check we have an entry called Slave_DF_1 in master now
+                results = (
+                    self.master_store.session.query(self.master_store.db_classes.Datafile)
+                    .filter(self.master_store.db_classes.Datafile.reference == "Slave_DF_1")
+                    .all()
+                )
 
-        assert len(results) == 1
-        ids_added = [d["id"] for d in id_results["added"]]
-        assert results[0].datafile_id in ids_added
+                assert len(results) == 1
+                ids_added = [d["id"] for d in id_results["added"]]
+                assert results[0].datafile_id in ids_added
 
-        # Check that we mark the Shared_DF_2_GUIDSame entry as already there
-        results = (
-            self.master_store.session.query(self.master_store.db_classes.Datafile)
-            .filter(self.master_store.db_classes.Datafile.reference == "Shared_DF_2_GUIDSame")
-            .all()
-        )
+                # Check that we mark the Shared_DF_2_GUIDSame entry as already there
+                results = (
+                    self.master_store.session.query(self.master_store.db_classes.Datafile)
+                    .filter(
+                        self.master_store.db_classes.Datafile.reference == "Shared_DF_2_GUIDSame"
+                    )
+                    .all()
+                )
 
-        assert len(results) == 1
-        ids_already_there = [d["id"] for d in id_results["already_there"]]
-        assert results[0].datafile_id in ids_already_there
+                assert len(results) == 1
+                ids_already_there = [d["id"] for d in id_results["already_there"]]
+                assert results[0].datafile_id in ids_already_there
 
-        # Check that the GUID for Shared_DF_1 matches in both databases, and is correctly in the
-        # from and to sections of the list of modified IDs
-        master_results = (
-            self.master_store.session.query(self.master_store.db_classes.Datafile)
-            .filter(self.master_store.db_classes.Datafile.reference == "Shared_DF_1")
-            .all()
-        )
-        slave_results = (
-            self.slave_store.session.query(self.slave_store.db_classes.Datafile)
-            .filter(self.slave_store.db_classes.Datafile.reference == "Shared_DF_1")
-            .all()
-        )
+                # Check that the GUID for Shared_DF_1 matches in both databases, and is correctly in the
+                # from and to sections of the list of modified IDs
+                master_results = (
+                    self.master_store.session.query(self.master_store.db_classes.Datafile)
+                    .filter(self.master_store.db_classes.Datafile.reference == "Shared_DF_1")
+                    .all()
+                )
+                slave_results = (
+                    self.slave_store.session.query(self.slave_store.db_classes.Datafile)
+                    .filter(self.slave_store.db_classes.Datafile.reference == "Shared_DF_1")
+                    .all()
+                )
 
-        assert len(master_results) == 1
-        assert len(slave_results) == 1
+                assert len(master_results) == 1
+                assert len(slave_results) == 1
 
-        assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert id_results["modified"][0]["from"] == self.shared_guid
-        assert id_results["modified"][0]["to"] == master_results[0].datafile_id
+                assert id_results["modified"][0]["from"] == self.shared_guid
+                assert id_results["modified"][0]["to"] == master_results[0].datafile_id
 
 
 class TestMergeStateFromImport(unittest.TestCase):
@@ -1581,28 +1587,33 @@ class TestSynonymMergeWithRefTable(unittest.TestCase):
         self.merge_class.merge_metadata_table("Synonym")
 
         with self.master_store.session_scope():
-            # Check the synonym entry from the slave is now in master
-            slave_results = self.slave_store.session.query(
-                self.slave_store.db_classes.Synonym
-            ).all()
-            master_results = self.master_store.session.query(
-                self.master_store.db_classes.Synonym
-            ).all()
+            with self.slave_store.session_scope():
+                # Check the synonym entry from the slave is now in master
+                slave_results = self.slave_store.session.query(
+                    self.slave_store.db_classes.Synonym
+                ).all()
+                master_results = self.master_store.session.query(
+                    self.master_store.db_classes.Synonym
+                ).all()
 
-            assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-            # Check the synonym entry in master points to a SensorType in master
-            results = self.master_store.session.query(self.master_store.db_classes.Synonym).all()
+                # Check the synonym entry in master points to a SensorType in master
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.Synonym
+                ).all()
 
-            assert len(results) > 0
+                assert len(results) > 0
 
-            results = (
-                self.master_store.session.query(self.master_store.db_classes.SensorType)
-                .filter(self.master_store.db_classes.SensorType.sensor_type_id == results[0].entity)
-                .all()
-            )
+                results = (
+                    self.master_store.session.query(self.master_store.db_classes.SensorType)
+                    .filter(
+                        self.master_store.db_classes.SensorType.sensor_type_id == results[0].entity
+                    )
+                    .all()
+                )
 
-            assert len(results) > 0
+                assert len(results) > 0
 
 
 class TestSynonymMergeWithMetadataTable(unittest.TestCase):
