@@ -74,15 +74,15 @@ jobs:
         with:
           python-version: 3.7
 
-      - name: Install Postgres 12
-        uses: crazy-max/ghaction-chocolatey@v1
-        with:
-          args: install postgresql12
+      # - name: Install Postgres 12
+      #   uses: crazy-max/ghaction-chocolatey@v1
+      #   with:
+      #     args: install postgresql12
 
-      - name: Stop Postgres service
-        shell: powershell
-        run: |
-          Stop-Service postgresql-x64-12
+      # - name: Stop Postgres service
+      #   shell: powershell
+      #   run: |
+      #     Stop-Service postgresql-x64-12
 
       - name: Run setup Powershell script
         shell: cmd
@@ -101,9 +101,13 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements_dev.txt
 
-      - name: Run tests
+      # - name: Run tests
+      #   shell: cmd
+      #   run: powershell.exe -executionpolicy remotesigned -File .\.github\workflows\windows_run_tests.ps1
+
+      - name: Run tests (no Postgres)
         shell: cmd
-        run: powershell.exe -executionpolicy remotesigned -File .\.github\workflows\windows_run_tests.ps1
+        run: python.exe -m pytest -v --color=yes tests -m "not postgres"
 
       - name: Get coverage report
         shell: bash -l {0}
