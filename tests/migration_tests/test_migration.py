@@ -234,6 +234,7 @@ class StepByStepMigrationTestCase(unittest.TestCase):
         assert is_schema_created(data_store.engine, data_store.db_type) is True
         os.remove(COPY_DB_PATH)
 
+    @pytest.mark.postgres
     def test_migrate_postgres(self):
         postgres = Postgresql(
             database="test",
