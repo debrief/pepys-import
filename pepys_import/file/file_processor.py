@@ -9,7 +9,7 @@ from stat import S_IREAD
 from config import ARCHIVE_PATH, LOCAL_PARSERS
 from paths import IMPORTERS_DIRECTORY
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.core.store.table_summary import TableSummary, TableSummarySet, get_table_summaries
+from pepys_import.core.store.table_summary import get_table_summaries
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
 from pepys_import.utils.datafile_utils import hash_file
@@ -108,28 +108,14 @@ class FileProcessor:
         # If given path is a single file, then just process that file
         if os.path.isfile(path):
             with data_store.session_scope():
-                states_sum = TableSummary(data_store.session, data_store.db_classes.State)
-                contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
-                comments_sum = TableSummary(data_store.session, data_store.db_classes.Comment)
-                platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
-                first_table_summary_set = TableSummarySet(
-                    [states_sum, contacts_sum, comments_sum, platforms_sum]
-                )
-                print(first_table_summary_set.report("==Before=="))
-
+                table_summaries_before = get_table_summaries(data_store)
                 filename = os.path.abspath(path)
                 current_path = os.path.dirname(path)
                 processed_ctr = self.process_file(
                     filename, current_path, data_store, processed_ctr, import_summary
                 )
-                states_sum = TableSummary(data_store.session, data_store.db_classes.State)
-                contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
-                comments_sum = TableSummary(data_store.session, data_store.db_classes.Comment)
-                platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
-                second_table_summary_set = TableSummarySet(
-                    [states_sum, contacts_sum, comments_sum, platforms_sum]
-                )
-                print(second_table_summary_set.report("==After=="))
+                table_summaries_after = get_table_summaries(data_store)
+                print(table_summaries_after.show_delta_of_rows_added(table_summaries_before))
             self.display_import_summary(import_summary)
             print(f"Files got processed: {processed_ctr} times")
             abs_path = os.path.abspath(self.output_path)
@@ -144,10 +130,7 @@ class FileProcessor:
 
         # decide whether to descend tree, or just work on this folder
         with data_store.session_scope():
-
             table_summaries_before = get_table_summaries(data_store)
-            print(TableSummarySet(table_summaries_before).report("==Before=="))
-
             # capture path in absolute form
             abs_path = os.path.abspath(path)
             if descend_tree:
@@ -164,9 +147,8 @@ class FileProcessor:
                         processed_ctr = self.process_file(
                             file, abs_path, data_store, processed_ctr, import_summary
                         )
-
             table_summaries_after = get_table_summaries(data_store)
-            print(TableSummarySet(table_summaries_after).report("==After=="))
+            print(table_summaries_after.show_delta_of_rows_added(table_summaries_before))
 
         self.display_import_summary(import_summary)
         print(f"Files got processed: {processed_ctr} times")

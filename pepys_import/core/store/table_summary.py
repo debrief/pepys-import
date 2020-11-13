@@ -16,13 +16,12 @@ class TableSummary:
     :type table_name: SQLAlchemy Declarative Base
     """
 
-    def __init__(self, session, table, prev_count=0):
+    def __init__(self, session, table):
         self.session = session
         self.table = table
         self.table_name = self.table.__tablename__
         self.number_of_rows = None
         self.created_date = None
-        self.prev_count = prev_count
         self.table_summary()
 
     def table_summary(self):
@@ -38,23 +37,8 @@ class TableSummary:
         created_date = "-"
         if last_row:
             created_date = str(last_row.created_date)
-        self.number_of_rows = number_of_rows - self.prev_count
+        self.number_of_rows = number_of_rows
         self.created_date = created_date
-
-
-def table_delta(first_summary, second_summary):
-    """
-    A listing of changes between two TableSummarySet objects.
-
-    :param first_summary: First TableSummarySet object
-    :param second_summary: Second TableSummarySet object
-    :return: Change in number of rows
-    """
-    differences = []
-    for first, second in zip(first_summary, second_summary):
-        diff = first.number_of_rows - second.number_of_rows
-        differences.append(diff)
-    return differences
 
 
 class TableSummarySet:
@@ -64,14 +48,12 @@ class TableSummarySet:
         self.table_summaries = table_summaries
         self.headers = ["Table name", "Number of added rows", "Last item added"]
 
-    def report(self, title=None):
+    def report(self, title="REPORT"):
         """Produce an pretty-printed report of the contents of the summary.
 
         :return: String of text
         """
-        res = ""
-        if title:
-            res += title + "\n"
+        res = f"=={title}==\n"
         res += tabulate(
             [
                 (table.table_name, table.number_of_rows, table.created_date)
@@ -84,6 +66,21 @@ class TableSummarySet:
         res += "\n"
         return res
 
+    @staticmethod
+    def table_delta(first_summary, second_summary):
+        """
+        A listing of changes between two TableSummarySet objects.
+
+        :param first_summary: First TableSummarySet object
+        :param second_summary: Second TableSummarySet object
+        :return: Change in number of rows
+        """
+        differences = []
+        for first, second in zip(first_summary, second_summary):
+            diff = first.number_of_rows - second.number_of_rows
+            differences.append(diff)
+        return differences
+
     def compare_to(self, other: "TableSummarySet"):
         """Produce an pretty-printed report of the contents of the summary.
 
@@ -91,7 +88,13 @@ class TableSummarySet:
         :type other: TableSummarySet
         :return: An array of TableDelta items
         """
-        return table_delta(self.table_summaries, other.table_summaries)
+        return self.table_delta(self.table_summaries, other.table_summaries)
+
+    def show_delta_of_rows_added(self, other: "TableSummarySet"):
+        differences = self.table_delta(self.table_summaries, other.table_summaries)
+        for table, diff in zip(self.table_summaries, differences):
+            table.number_of_rows = diff
+        return self.report()
 
 
 def get_table_summaries(datastore):
@@ -104,4 +107,4 @@ def get_table_summaries(datastore):
         TableSummary(datastore.session, c) for c in tables if c.__tablename__ not in exclude
     ]
 
-    return table_summaries
+    return TableSummarySet(table_summaries)
