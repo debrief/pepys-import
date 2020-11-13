@@ -101,21 +101,10 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements_dev.txt
 
-      # - name: Run tests
+      # - name: Run tests (with Postgres)
       #   shell: cmd
       #   run: powershell.exe -executionpolicy remotesigned -File .\.github\workflows\windows_run_tests.ps1
 
       - name: Run tests (no Postgres)
         shell: cmd
         run: python.exe -m pytest -v --color=yes tests -m "not postgres"
-
-      - name: Get coverage report
-        shell: bash -l {0}
-        run: |
-          coverage3.exe report
-          coverage3.exe xml
-
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ./coverage.xml
-  
