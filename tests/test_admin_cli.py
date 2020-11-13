@@ -24,6 +24,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.sqlite_utils import load_spatialite
+from tests.utils import move_and_overwrite
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
@@ -374,10 +375,10 @@ class ExportShellTestCase(unittest.TestCase):
             self.export_shell.do_export()
         output = temp_output.getvalue()
         assert "'rep_test1.rep' is going to be exported." in output
-        output_path = os.path.join(".", "exported_rep_test1_rep.rep")
-        assert f"Datafile successfully exported to {output_path}." in output
 
-        file_path = os.path.join(CURRENT_DIR, "exported_rep_test1_rep.rep")
+        file_path = os.path.join(".", "exported_rep_test1_rep.rep")
+        assert f"Datafile successfully exported to {file_path}." in output
+
         assert os.path.exists(file_path) is True
         with open(file_path, "r") as file:
             data = file.read().splitlines()
@@ -431,7 +432,7 @@ class ExportShellTestCase(unittest.TestCase):
             self.export_shell.do_export_by_platform_name()
         output = temp_output.getvalue()
 
-        file_path = os.path.join(CURRENT_DIR, "exported_SENSOR-1.rep")
+        file_path = os.path.join(".", "exported_SENSOR-1.rep")
         assert os.path.exists(file_path) is True
 
         assert f"Objects are going to be exported to '{file_path}'." in output
@@ -615,7 +616,7 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
             self.shell.do_export(search_platform_obj)
         output = temp_output.getvalue()
 
-        file_path = os.path.join(CURRENT_DIR, "export_test.rep")
+        file_path = os.path.join(".", "export_test.rep")
         assert os.path.exists(file_path) is True
 
         assert f"Objects are going to be exported to '{file_path}'." in output
@@ -1224,7 +1225,7 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
         processor.process(os.path.join(DATA_PATH), store, False)
 
         # Rename the latest_revisions.json file as a backup
-        os.rename(
+        move_and_overwrite(
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"),
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json_backup"),
         )
@@ -1234,10 +1235,8 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
 
         assert not database_at_latest_revision("uptodate.sqlite")
 
-        os.remove(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"))
-
         # Rename it back again for future use
-        os.rename(
+        move_and_overwrite(
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json_backup"),
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"),
         )
