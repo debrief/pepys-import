@@ -1,0 +1,26 @@
+/* body.rise-enabled div.inner_cell>div.input_area {
+    font-size: 50%;
+}
+
+body.rise-enabled div.output_subarea.output_text.output_result {
+    font-size: 50%;
+}
+body.rise-enabled div.output_subarea.output_text.output_stream.output_stdout {
+  font-size: 50%;
+}
+
+body.rise-enabled div.output_subarea.output_html.rendered_html.output_result {
+  font-size: 50%;
+}
+
+body.rise-enabled td {
+  font-size: 50%;
+}
+
+body.rise-enabled th {
+  font-size: 50%;
+} */
+
+.terminal {
+  font-size: 50%;
+}
