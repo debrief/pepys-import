@@ -1,6 +1,9 @@
 from sqlalchemy.orm import undefer
 from tabulate import tabulate
 
+from pepys_import.core.store import constants
+from pepys_import.core.store.db_status import TableTypes
+
 
 class TableSummary:
     """
@@ -13,12 +16,13 @@ class TableSummary:
     :type table_name: SQLAlchemy Declarative Base
     """
 
-    def __init__(self, session, table):
+    def __init__(self, session, table, prev_count=0):
         self.session = session
         self.table = table
         self.table_name = self.table.__tablename__
         self.number_of_rows = None
         self.created_date = None
+        self.prev_count = prev_count
         self.table_summary()
 
     def table_summary(self):
@@ -34,7 +38,7 @@ class TableSummary:
         created_date = "-"
         if last_row:
             created_date = str(last_row.created_date)
-        self.number_of_rows = number_of_rows
+        self.number_of_rows = number_of_rows - self.prev_count
         self.created_date = created_date
 
 
@@ -58,7 +62,7 @@ class TableSummarySet:
 
     def __init__(self, table_summaries):
         self.table_summaries = table_summaries
-        self.headers = ["Table name", "Number of rows", "Last item added"]
+        self.headers = ["Table name", "Number of added rows", "Last item added"]
 
     def report(self, title=None):
         """Produce an pretty-printed report of the contents of the summary.
@@ -72,6 +76,7 @@ class TableSummarySet:
             [
                 (table.table_name, table.number_of_rows, table.created_date)
                 for table in self.table_summaries
+                if table.number_of_rows != 0
             ],
             headers=self.headers,
             tablefmt="github",
@@ -87,3 +92,16 @@ class TableSummarySet:
         :return: An array of TableDelta items
         """
         return table_delta(self.table_summaries, other.table_summaries)
+
+
+def get_table_summaries(datastore):
+    datastore.setup_table_type_mapping()
+    measurement_table_objects = datastore.meta_classes[TableTypes.MEASUREMENT]
+    metadata_table_objects = datastore.meta_classes[TableTypes.METADATA]
+    tables = measurement_table_objects + metadata_table_objects
+    exclude = [constants.LOG, constants.EXTRACTION, constants.CHANGE]
+    table_summaries = [
+        TableSummary(datastore.session, c) for c in tables if c.__tablename__ not in exclude
+    ]
+
+    return table_summaries

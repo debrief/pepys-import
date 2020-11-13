@@ -9,7 +9,7 @@ from stat import S_IREAD
 from config import ARCHIVE_PATH, LOCAL_PARSERS
 from paths import IMPORTERS_DIRECTORY
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
+from pepys_import.core.store.table_summary import TableSummary, TableSummarySet, get_table_summaries
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
 from pepys_import.utils.datafile_utils import hash_file
@@ -145,14 +145,8 @@ class FileProcessor:
         # decide whether to descend tree, or just work on this folder
         with data_store.session_scope():
 
-            states_sum = TableSummary(data_store.session, data_store.db_classes.State)
-            contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
-            comments_sum = TableSummary(data_store.session, data_store.db_classes.Comment)
-            platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
-            first_table_summary_set = TableSummarySet(
-                [states_sum, contacts_sum, comments_sum, platforms_sum]
-            )
-            print(first_table_summary_set.report("==Before=="))
+            table_summaries_before = get_table_summaries(data_store)
+            print(TableSummarySet(table_summaries_before).report("==Before=="))
 
             # capture path in absolute form
             abs_path = os.path.abspath(path)
@@ -171,14 +165,8 @@ class FileProcessor:
                             file, abs_path, data_store, processed_ctr, import_summary
                         )
 
-            states_sum = TableSummary(data_store.session, data_store.db_classes.State)
-            contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
-            comments_sum = TableSummary(data_store.session, data_store.db_classes.Comment)
-            platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
-            second_table_summary_set = TableSummarySet(
-                [states_sum, contacts_sum, comments_sum, platforms_sum]
-            )
-            print(second_table_summary_set.report("==After=="))
+            table_summaries_after = get_table_summaries(data_store)
+            print(TableSummarySet(table_summaries_after).report("==After=="))
 
         self.display_import_summary(import_summary)
         print(f"Files got processed: {processed_ctr} times")
