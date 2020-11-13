@@ -140,8 +140,10 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         # Change characters
         lines[0] = lines[0].replace("A", "x")
         lines[0] = lines[0].replace("B", "y")
-        # Strip first and last two lines, write it to the same file
-        with open(copied_file_path, "w") as file:
+        # Write these altered lines to the file
+        # (Note: force it to use Unix line-endings, otherwise on Windows
+        # the newly written file has CRLF rather than LF and that changes the size)
+        with open(copied_file_path, "w", newline="\n") as file:
             file.writelines(lines)
 
         # Assert that file hash is changed and file size is the same
