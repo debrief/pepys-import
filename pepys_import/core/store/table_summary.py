@@ -81,16 +81,13 @@ class TableSummarySet:
             differences.append(diff)
         return differences
 
-    def compare_to(self, other: "TableSummarySet"):
+    def show_delta_of_rows_added(self, other: "TableSummarySet"):
         """Produce an pretty-printed report of the contents of the summary.
 
         :param other: A TableSummarySet object to compare
         :type other: TableSummarySet
-        :return: An array of TableDelta items
+        :return: A string that includes report of the contents of the summary
         """
-        return self.table_delta(self.table_summaries, other.table_summaries)
-
-    def show_delta_of_rows_added(self, other: "TableSummarySet"):
         differences = self.table_delta(self.table_summaries, other.table_summaries)
         for table, diff in zip(self.table_summaries, differences):
             table.number_of_rows = diff

@@ -59,8 +59,8 @@ class TableSummaryTestCase(TestCase):
         self.assertIn("Nationalities", report)
         self.assertIn("2", report)
 
-    def test_compare_to_works_correctly(self):
-        """Test whether compare_to method returns correct values or not"""
+    def test_show_delta_of_rows_added_works_correctly(self):
+        """Test whether show_delta_of_rows_added method returns correct values or not"""
         first_table_summary_set = TableSummarySet(self.summaries)
 
         with self.store.session_scope():
@@ -70,10 +70,10 @@ class TableSummaryTestCase(TestCase):
             nationality_sum = TableSummary(self.store.session, self.store.db_classes.Nationality)
         second_summary = [privacy_sum, nationality_sum]
         second_table_summary_set = TableSummarySet(second_summary)
-        diff = second_table_summary_set.compare_to(first_table_summary_set)
+        result = second_table_summary_set.show_delta_of_rows_added(first_table_summary_set)
 
         # Privacy table has 2 new rows, no changes for Nationality table
-        self.assertEqual(diff, [2, 0])
+        assert "| Privacies    |                      2 |" in result
 
 
 if __name__ == "__main__":
