@@ -99,7 +99,7 @@ def get_table_summaries(datastore):
     measurement_table_objects = datastore.meta_classes[TableTypes.MEASUREMENT]
     metadata_table_objects = datastore.meta_classes[TableTypes.METADATA]
     tables = measurement_table_objects + metadata_table_objects
-    exclude = [constants.LOG, constants.EXTRACTION, constants.CHANGE]
+    exclude = [constants.LOG, constants.EXTRACTION, constants.CHANGE, constants.LOGS_HOLDING]
     table_summaries = [
         TableSummary(datastore.session, c) for c in tables if c.__tablename__ not in exclude
     ]
