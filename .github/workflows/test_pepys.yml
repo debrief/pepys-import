@@ -99,6 +99,10 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements_dev.txt
 
+      - name: Install pytest GH Actions plugin
+        shell: bash -l {0}
+        run: pip install pytest-github-actions-annotate-failures
+
       # This actions runs all tests under a different user so that Postgres doesn't complain
       # It has various issues - it seems to cause other tests to fail, seems to be slow to produce output on the online GH Actions
       # console, and seems to run into MemoryErrors. At the moment it isn't worth debugging these as running the Postgres tests
