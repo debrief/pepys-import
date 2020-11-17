@@ -22,5 +22,47 @@ body.rise-enabled th {
 } */
 
 .terminal {
+  font-size: 60%;
+}
+
+.notebook_title {
   font-size: 50%;
+}
+
+h2 {
+  margin-top: 0em;
+}
+
+h3 {
+  margin-top: 0em;
+}
+
+h4 {
+  margin-top: 0em;
+}
+
+h5 {
+  margin-top: 0em !important;
+}
+
+.CodeMirror {
+  margin-bottom: 0em !important;
+  font-size: 70% !important;
+}
+
+.CodeMirror-sizer {
+  min-height: 0px !important;
+}
+
+.prompt {
+  display: none;
+}
+
+div.text_cell_render {
+  padding: 0px;
+}
+
+section[id^=slide-] {
+  padding: 0px;
+  margin: 0px;
 }
