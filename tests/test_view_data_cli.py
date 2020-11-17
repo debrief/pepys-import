@@ -4,6 +4,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 from unittest.mock import patch
 
+import pytest
 from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
 
@@ -177,6 +178,7 @@ class ViewDataCLITestCase(unittest.TestCase):
         assert self.shell.intro in output
 
 
+@pytest.mark.postgres
 class ViewDataCLIPostgresTestCase(unittest.TestCase):
     def setUp(self) -> None:
         try:

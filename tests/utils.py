@@ -60,3 +60,15 @@ def check_errors_for_file_contents(file_contents, expected_errors, importer, fil
     else:
         for expected_error in expected_errors:
             assert expected_error in joined_errors
+
+
+def move_and_overwrite(from_path, to_path):
+    """
+    Moves a file from from_path to to_path, overwriting the destination file if it already exists.
+
+    Does this by deleting the to_path if it already exists, then doing the move
+    """
+    if os.path.exists(to_path):
+        os.remove(to_path)
+
+    os.rename(from_path, to_path)

@@ -105,10 +105,11 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         # Process the rep file
         self.processor.process(REP_FILE_PATH, self.store, False)
 
-        # Query Datafile table, it should have one entity
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 1
-        assert datafiles[0].reference == "rep_test1.rep"
+        with self.store.session_scope():
+            # Query Datafile table, it should have one entity
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 1
+            assert datafiles[0].reference == "rep_test1.rep"
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -117,10 +118,12 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         # Assert that file is processed
         assert "Files got processed: 1 times" in output
+
         # Query Datafile table, it should have two entities now
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 2
-        assert datafiles[1].reference == "modified_rep_test1.rep"
+        with self.store.session_scope():
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 2
+            assert datafiles[1].reference == "modified_rep_test1.rep"
 
         # Delete the copy file
         os.remove(copied_file_path)
@@ -137,8 +140,10 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         # Change characters
         lines[0] = lines[0].replace("A", "x")
         lines[0] = lines[0].replace("B", "y")
-        # Strip first and last two lines, write it to the same file
-        with open(copied_file_path, "w") as file:
+        # Write these altered lines to the file
+        # (Note: force it to use Unix line-endings, otherwise on Windows
+        # the newly written file has CRLF rather than LF and that changes the size)
+        with open(copied_file_path, "w", newline="\n") as file:
             file.writelines(lines)
 
         # Assert that file hash is changed and file size is the same
@@ -149,9 +154,10 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         self.processor.process(REP_FILE_PATH, self.store, False)
 
         # Query Datafile table, it should have one entity
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 1
-        assert datafiles[0].reference == "rep_test1.rep"
+        with self.store.session_scope():
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 1
+            assert datafiles[0].reference == "rep_test1.rep"
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -160,10 +166,12 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         # Assert that file is processed
         assert "Files got processed: 1 times" in output
+
         # Query Datafile table, it should have two entities now
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 2
-        assert datafiles[1].reference == "modified_rep_test1.rep"
+        with self.store.session_scope():
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 2
+            assert datafiles[1].reference == "modified_rep_test1.rep"
 
         # Delete the copy file
         os.remove(copied_file_path)
@@ -187,8 +195,9 @@ class InvalidFileTestCase(unittest.TestCase):
         self.processor.process(INVALID_REP_FILE_PATH, self.store, False)
 
         # There should be no datafiles now, as the file with the error shouldn't create a datafile entry
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 0
+        with self.store.session_scope():
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 0
 
 
 if __name__ == "__main__":

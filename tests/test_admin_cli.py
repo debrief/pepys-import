@@ -24,6 +24,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.sqlite_utils import load_spatialite
+from tests.utils import move_and_overwrite
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
@@ -374,9 +375,10 @@ class ExportShellTestCase(unittest.TestCase):
             self.export_shell.do_export()
         output = temp_output.getvalue()
         assert "'rep_test1.rep' is going to be exported." in output
-        assert "Datafile successfully exported to ./exported_rep_test1_rep.rep." in output
 
-        file_path = os.path.join(CURRENT_DIR, "exported_rep_test1_rep.rep")
+        file_path = os.path.join(".", "exported_rep_test1_rep.rep")
+        assert f"Datafile successfully exported to {file_path}." in output
+
         assert os.path.exists(file_path) is True
         with open(file_path, "r") as file:
             data = file.read().splitlines()
@@ -430,11 +432,11 @@ class ExportShellTestCase(unittest.TestCase):
             self.export_shell.do_export_by_platform_name()
         output = temp_output.getvalue()
 
-        assert "Objects are going to be exported to './exported_SENSOR-1.rep'." in output
-        assert "Objects successfully exported to ./exported_SENSOR-1.rep." in output
-
-        file_path = os.path.join(CURRENT_DIR, "exported_SENSOR-1.rep")
+        file_path = os.path.join(".", "exported_SENSOR-1.rep")
         assert os.path.exists(file_path) is True
+
+        assert f"Objects are going to be exported to '{file_path}'." in output
+        assert f"Objects successfully exported to {file_path}" in output
 
         with open(file_path, "r") as file:
             data = file.read().splitlines()
@@ -613,11 +615,12 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.shell.do_export(search_platform_obj)
         output = temp_output.getvalue()
-        assert "Objects are going to be exported to './export_test.rep'." in output
-        assert "Objects successfully exported to ./export_test.rep." in output
 
-        file_path = os.path.join(CURRENT_DIR, "export_test.rep")
+        file_path = os.path.join(".", "export_test.rep")
         assert os.path.exists(file_path) is True
+
+        assert f"Objects are going to be exported to '{file_path}'." in output
+        assert f"Objects successfully exported to {file_path}" in output
 
         with open(file_path, "r") as file:
             data = file.read().splitlines()
@@ -828,6 +831,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
         assert "ERROR: Table summaries couldn't be printed." in output
 
 
+@pytest.mark.postgres
 class SnapshotPostgresTestCase(unittest.TestCase):
     @patch("pepys_import.core.store.common_db.prompt", return_value="2")
     def setUp(self, patched_prompt) -> None:
@@ -899,90 +903,111 @@ class SnapshotPostgresTestCase(unittest.TestCase):
 
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     def test_do_export_reference_data_postgres(self, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(CURRENT_DIR, "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data()
         output = temp_output.getvalue()
         assert "Reference tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM DatafileTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "Replay" in names
-            assert "GPX" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM DatafileTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "Replay" in names
+        assert "GPX" in names
+        connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public", "Public Sensitive"])
     def test_do_export_reference_data_and_metadata_postgres(self, patched_iterfzf, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(CURRENT_DIR, "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
         assert "Reference and metadata tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM SensorTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "GPS" in names
+        assert "Position" in names
 
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "SENSOR-1" in names
-            assert "New_SSK_FREQ" in names
-            assert "E-Trac" in names
-            assert "SENSOR-TEST" in names
+        results = connection.execute("SELECT name FROM Sensors;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "SENSOR-1" in names
+        assert "New_SSK_FREQ" in names
+        assert "E-Trac" in names
+        assert "SENSOR-TEST" in names
 
-            results = connection.execute("SELECT * FROM Synonyms;")
-            results = results.fetchall()
-            table_dict = {row[1]: row[3] for row in results}
-            assert "Platforms" in table_dict.keys()
-            assert "test" in table_dict.values()
+        results = connection.execute("SELECT * FROM Synonyms;")
+        results = results.fetchall()
+        table_dict = {row[1]: row[3] for row in results}
+        assert "Platforms" in table_dict.keys()
+        assert "test" in table_dict.values()
+        connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
     def test_do_export_reference_data_and_metadata_public(self, patched_iterfzf, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(CURRENT_DIR, "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
         assert "Reference and metadata tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM SensorTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "GPS" in names
+        assert "Position" in names
 
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "SENSOR-1" in names
-            assert "New_SSK_FREQ" in names
-            assert "E-Trac" in names
-            assert "SENSOR-TEST" not in names
+        results = connection.execute("SELECT name FROM Sensors;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "SENSOR-1" in names
+        assert "New_SSK_FREQ" in names
+        assert "E-Trac" in names
+        assert "SENSOR-TEST" not in names
 
-            results = connection.execute("SELECT * FROM Synonyms;")
-            results = results.fetchall()
-            table_dict = {row[1]: row[3] for row in results}
-            assert "Platforms" in table_dict.keys()
-            assert "test" in table_dict.values()
-            assert "Sensors" not in table_dict.keys()
-            assert "test-2" not in table_dict.values()
+        results = connection.execute("SELECT * FROM Synonyms;")
+        results = results.fetchall()
+        table_dict = {row[1]: row[3] for row in results}
+        assert "Platforms" in table_dict.keys()
+        assert "test" in table_dict.values()
+        assert "Sensors" not in table_dict.keys()
+        assert "test-2" not in table_dict.values()
+        connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -991,26 +1016,33 @@ class SnapshotPostgresTestCase(unittest.TestCase):
     def test_do_export_reference_data_and_metadata_public_sensitive(
         self, patched_iterfzf, patched_input
     ):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(CURRENT_DIR, "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
         assert "Reference and metadata tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM SensorTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "GPS" in names
+        assert "Position" in names
 
-            # Even though there are Sensor objects with Public Sensitive level, their Platform objects
-            # have different privacy values. Therefore, none of platforms and sensors are exported.
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            assert len(results) == 0
+        # Even though there are Sensor objects with Public Sensitive level, their Platform objects
+        # have different privacy values. Therefore, none of platforms and sensors are exported.
+        results = connection.execute("SELECT name FROM Sensors;")
+        results = results.fetchall()
+        assert len(results) == 0
+        connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1193,7 +1225,7 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
         processor.process(os.path.join(DATA_PATH), store, False)
 
         # Rename the latest_revisions.json file as a backup
-        os.rename(
+        move_and_overwrite(
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"),
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json_backup"),
         )
@@ -1203,10 +1235,8 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
 
         assert not database_at_latest_revision("uptodate.sqlite")
 
-        os.remove(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"))
-
         # Rename it back again for future use
-        os.rename(
+        move_and_overwrite(
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json_backup"),
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"),
         )
@@ -1228,7 +1258,7 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
         processor.process(os.path.join(DATA_PATH), store, False)
 
         # Rename the latest_revisions.json file as a backup
-        os.rename(
+        move_and_overwrite(
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"),
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json_backup"),
         )
@@ -1238,10 +1268,8 @@ class TestDatabaseAtLatestRevision(unittest.TestCase):
 
         assert not database_at_latest_revision("uptodate.sqlite")
 
-        os.remove(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"))
-
         # Rename it back again for future use
-        os.rename(
+        move_and_overwrite(
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json_backup"),
             os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"),
         )
@@ -1314,25 +1342,38 @@ class SnapshotShellTestCase(unittest.TestCase):
 
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     def test_do_export_reference_data(self, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(CURRENT_DIR, "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data()
         output = temp_output.getvalue()
         assert "Reference tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM DatafileTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "Replay" in names
-            assert "GPX" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM DatafileTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "Replay" in names
+        assert "GPX" in names
+        connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
     @patch("pepys_admin.snapshot_cli.input")
     def test_do_export_reference_data_invalid_filename(self, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(CURRENT_DIR, "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         with open("already_existing_file.db", "w") as f:
             f.write("Hello, world")
 
@@ -1345,14 +1386,15 @@ class SnapshotShellTestCase(unittest.TestCase):
         assert "There is already a file named 'already_existing_file.db'" in output
         assert "Reference tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM DatafileTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "Replay" in names
-            assert "GPX" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM DatafileTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "Replay" in names
+        assert "GPX" in names
+        connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1362,70 +1404,84 @@ class SnapshotShellTestCase(unittest.TestCase):
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public", "Public Sensitive"])
     def test_do_export_reference_data_and_metadata(self, patched_iterfzf, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(CURRENT_DIR, "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
         assert "Reference and metadata tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM SensorTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "GPS" in names
+        assert "Position" in names
 
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "SENSOR-1" in names
-            assert "New_SSK_FREQ" in names
-            assert "E-Trac" in names
-            assert "SENSOR-TEST" in names
+        results = connection.execute("SELECT name FROM Sensors;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "SENSOR-1" in names
+        assert "New_SSK_FREQ" in names
+        assert "E-Trac" in names
+        assert "SENSOR-TEST" in names
 
-            results = connection.execute("SELECT * FROM Synonyms;")
-            results = results.fetchall()
-            table_dict = {row[1]: row[3] for row in results}
-            assert "Platforms" in table_dict.keys()
-            assert "test" in table_dict.values()
+        results = connection.execute("SELECT * FROM Synonyms;")
+        results = results.fetchall()
+        table_dict = {row[1]: row[3] for row in results}
+        assert "Platforms" in table_dict.keys()
+        assert "test" in table_dict.values()
+        connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
     def test_do_export_reference_data_and_metadata_public(self, patched_iterfzf, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(CURRENT_DIR, "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
         assert "Reference and metadata tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM SensorTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "GPS" in names
+        assert "Position" in names
 
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "SENSOR-1" in names
-            assert "New_SSK_FREQ" in names
-            assert "E-Trac" in names
-            assert "SENSOR-TEST" not in names
+        results = connection.execute("SELECT name FROM Sensors;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "SENSOR-1" in names
+        assert "New_SSK_FREQ" in names
+        assert "E-Trac" in names
+        assert "SENSOR-TEST" not in names
 
-            results = connection.execute("SELECT * FROM Synonyms;")
-            results = results.fetchall()
-            table_dict = {row[1]: row[3] for row in results}
-            assert "Platforms" in table_dict.keys()
-            assert "test" in table_dict.values()
-            assert "Sensors" not in table_dict.keys()
-            assert "test-2" not in table_dict.values()
+        results = connection.execute("SELECT * FROM Synonyms;")
+        results = results.fetchall()
+        table_dict = {row[1]: row[3] for row in results}
+        assert "Platforms" in table_dict.keys()
+        assert "test" in table_dict.values()
+        assert "Sensors" not in table_dict.keys()
+        assert "test-2" not in table_dict.values()
+        connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1434,26 +1490,33 @@ class SnapshotShellTestCase(unittest.TestCase):
     def test_do_export_reference_data_and_metadata_public_sensitive(
         self, patched_iterfzf, patched_input
     ):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(CURRENT_DIR, "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
         assert "Reference and metadata tables are successfully exported!" in output
 
-        with sqlite3.connect("test.db") as connection:
-            results = connection.execute("SELECT name FROM SensorTypes;")
-            results = results.fetchall()
-            names = [name for r in results for name in r]
-            assert "GPS" in names
-            assert "Position" in names
+        connection = sqlite3.connect("test.db")
+        results = connection.execute("SELECT name FROM SensorTypes;")
+        results = results.fetchall()
+        names = [name for r in results for name in r]
+        assert "GPS" in names
+        assert "Position" in names
 
-            # Even though there are Sensor objects with Public Sensitive level, their Platform objects
-            # have different privacy values. Therefore, none of platforms and sensors are exported.
-            results = connection.execute("SELECT name FROM Sensors;")
-            results = results.fetchall()
-            assert len(results) == 0
+        # Even though there are Sensor objects with Public Sensitive level, their Platform objects
+        # have different privacy values. Therefore, none of platforms and sensors are exported.
+        results = connection.execute("SELECT name FROM Sensors;")
+        results = results.fetchall()
+        assert len(results) == 0
+        connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1493,13 +1556,19 @@ class SnapshotShellTestCase(unittest.TestCase):
     @patch("pepys_admin.snapshot_cli.input", return_value="test.db")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=None)
     def test_do_export_reference_and_metadata_cancelling(self, patched_iterfzf, patched_input):
+        # Delete test.db file first, in case it is hanging around from another test
+        # If we don't do this, we can get into an infinite loop
+        path = os.path.join(CURRENT_DIR, "test.db")
+        if os.path.exists(path):
+            os.remove(path)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
         assert "Returning to the previous menu" in output
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 

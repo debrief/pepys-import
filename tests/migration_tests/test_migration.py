@@ -5,6 +5,7 @@ import sqlite3
 import unittest
 from unittest.mock import patch
 
+import pytest
 from alembic import command
 from testing.postgresql import Postgresql
 
@@ -72,6 +73,7 @@ class MigrateSQLiteTestCase(unittest.TestCase):
         os.remove(COPY_DB_PATH)
 
 
+@pytest.mark.postgres
 class MigratePostgresTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.postgres = Postgresql(
@@ -232,6 +234,7 @@ class StepByStepMigrationTestCase(unittest.TestCase):
         assert is_schema_created(data_store.engine, data_store.db_type) is True
         os.remove(COPY_DB_PATH)
 
+    @pytest.mark.postgres
     def test_migrate_postgres(self):
         postgres = Postgresql(
             database="test",
