@@ -25,7 +25,7 @@ def import_from_csv(data_store, path, files, change_id):
             # Get all arguments of the method, except the first argument which is 'self'
             arguments = getfullargspec(method_to_call).args[1:]
             possible_arguments = ",".join(arguments)
-            with open(os.path.join(path, file), "r", encoding="utf-8") as file_object:
+            with open(os.path.join(path, file), "r") as file_object:
                 reader = csv.reader(file_object)
                 # extract header
                 header = next(reader)
