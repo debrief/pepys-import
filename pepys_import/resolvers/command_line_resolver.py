@@ -144,20 +144,20 @@ class CommandLineResolver(DataResolver):
                     f"{platform.name} / {platform.identifier} / {platform.nationality_name}"
                 )
             final_options[1] += f", default name '{platform_name}'"
-        choices = platform_details + final_options
+        choices = final_options + platform_details
+
+        def is_valid_dynamic(option):  # pragma: no cover
+            return option in [str(i) for i in range(1, len(choices) + 1)] or option == "."
+
         choice = create_menu(
             f"Select a platform entry for {platform_name}:",
             choices,
-            validate_method=is_valid,
+            validate_method=is_valid_dynamic,
         )
         if choice == ".":
             print("Quitting")
             sys.exit(1)
-        if int(choice) <= len(platform_details):
-            # One of the pre-existing platforms was chosen
-            platform_index = int(choice) - 1
-            return platforms[platform_index]
-        elif choice == str(len(choices) - 1):
+        elif choice == str(1):
             return self.fuzzy_search_platform(
                 data_store,
                 platform_name,
@@ -166,7 +166,7 @@ class CommandLineResolver(DataResolver):
                 privacy,
                 change_id,
             )
-        elif choice == str(len(choices)):
+        elif choice == str(2):
             return self.add_to_platforms(
                 data_store,
                 platform_name,
@@ -175,6 +175,10 @@ class CommandLineResolver(DataResolver):
                 privacy,
                 change_id,
             )
+        elif 3 <= int(choice) <= len(choices):
+            # One of the pre-existing platforms was chosen
+            platform_index = int(choice) - 3
+            return platforms[platform_index]
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
         Platform = data_store.db_classes.Platform
