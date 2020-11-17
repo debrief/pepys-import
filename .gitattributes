@@ -1,0 +1,5 @@
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Make sure all sample data is kept as just LF line ending rather than converting to CRLF on Windows
+tests/sample_data/** text eol=lf
