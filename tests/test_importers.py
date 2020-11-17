@@ -18,6 +18,7 @@ from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.file.importer import Importer
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
+from pepys_import.utils.import_utils import sort_files
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
@@ -144,7 +145,7 @@ class SampleImporterTests(unittest.TestCase):
         assert os.path.exists(moved_files_path) is True
 
         # Scan the files in sources folder
-        for f in os.scandir(moved_files_path):
+        for f in sort_files(os.scandir(moved_files_path)):
             # Append the name of the file to test it later on
             names.append(f.name)
             # Assert that the moved file is read-only
@@ -336,7 +337,7 @@ class ImporterSummaryTest(unittest.TestCase):
         assert os.path.exists(moved_files_path) is True
 
         # Scan the files in sources folder
-        for f in os.scandir(moved_files_path):
+        for f in sort_files(os.scandir(moved_files_path)):
             # Move files back
             source_path = os.path.join(REP_DATA_PATH, f.name)
             shutil.move(f.path, source_path)
