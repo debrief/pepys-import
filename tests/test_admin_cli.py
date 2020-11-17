@@ -905,7 +905,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
     def test_do_export_reference_data_postgres(self, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -923,7 +923,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         assert "GPX" in names
         connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -932,7 +932,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
     def test_do_export_reference_data_and_metadata_postgres(self, patched_iterfzf, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -964,7 +964,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         assert "test" in table_dict.values()
         connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -973,7 +973,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
     def test_do_export_reference_data_and_metadata_public(self, patched_iterfzf, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1007,7 +1007,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         assert "test-2" not in table_dict.values()
         connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1018,7 +1018,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
     ):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1042,7 +1042,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         assert len(results) == 0
         connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1344,7 +1344,7 @@ class SnapshotShellTestCase(unittest.TestCase):
     def test_do_export_reference_data(self, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1362,7 +1362,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         assert "GPX" in names
         connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1370,7 +1370,7 @@ class SnapshotShellTestCase(unittest.TestCase):
     def test_do_export_reference_data_invalid_filename(self, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1394,7 +1394,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         assert "GPX" in names
         connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1406,7 +1406,7 @@ class SnapshotShellTestCase(unittest.TestCase):
     def test_do_export_reference_data_and_metadata(self, patched_iterfzf, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1438,7 +1438,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         assert "test" in table_dict.values()
         connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1447,7 +1447,7 @@ class SnapshotShellTestCase(unittest.TestCase):
     def test_do_export_reference_data_and_metadata_public(self, patched_iterfzf, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1481,7 +1481,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         assert "test-2" not in table_dict.values()
         connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1492,7 +1492,7 @@ class SnapshotShellTestCase(unittest.TestCase):
     ):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1516,7 +1516,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         assert len(results) == 0
         connection.close()
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1558,7 +1558,7 @@ class SnapshotShellTestCase(unittest.TestCase):
     def test_do_export_reference_and_metadata_cancelling(self, patched_iterfzf, patched_input):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
@@ -1568,7 +1568,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Returning to the previous menu" in output
 
-        path = os.path.join(os.getcwd(), "test.db")
+        path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
 
