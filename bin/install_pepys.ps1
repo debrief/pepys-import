@@ -65,7 +65,28 @@ catch {
 }
 
 #
-# Add shortcut to Start Menu
+# Add Pepys Import (training mode) shortcut to Send To
+#
+try {
+    $shortcut_loc = $sendto_location + "\Pepys Import (training mode).lnk"
+
+    if (Test-Path $shortcut_loc) { Remove-Item $shortcut_loc; }
+
+    $Shortcut = $WshShell.CreateShortcut($shortcut_loc)
+    $Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_training_sendto.bat")
+    $Shortcut.IconLocation = $icon_string
+    $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
+    $Shortcut.Save()
+
+}
+catch {
+    Write-Output $_
+    Write-Output "ERROR: Could not create Pepys Import (training mode) Send-To Shortcut"
+    Exit 1
+}
+
+#
+# Add shortcuts to Start Menu
 #
 try {
     # Get the User's Start Menu folder
@@ -84,10 +105,16 @@ try {
     $Shortcut.IconLocation = $icon_string
     $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
     $Shortcut.Save()
+
+    $Shortcut = $WshShell.CreateShortcut($startmenu_location + "Pepys\Pepys Admin (training mode).lnk")
+    $Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_admin_training.bat")
+    $Shortcut.IconLocation = $icon_string
+    $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
+    $Shortcut.Save()
 }
 catch {
     Write-Output $_
-    Write-Output "ERROR: Could not create Pepys Admin Start Menu shortcut"
+    Write-Output "ERROR: Could not create Pepys Admin Start Menu shortcuts"
     Exit 1
 }
 
