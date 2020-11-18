@@ -13,7 +13,7 @@ from pepys_import.core.store.table_summary import get_table_summaries
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
 from pepys_import.utils.datafile_utils import hash_file
-from pepys_import.utils.import_utils import import_module_
+from pepys_import.utils.import_utils import import_module_, sort_files
 
 USER = getuser()
 
@@ -142,7 +142,7 @@ class FileProcessor:
                         )
             else:
                 # loop through this path
-                for file in os.scandir(abs_path):
+                for file in sort_files(os.scandir(abs_path)):
                     if file.is_file():
                         processed_ctr = self.process_file(
                             file, abs_path, data_store, processed_ctr, import_summary
@@ -385,7 +385,7 @@ class FileProcessor:
         :type path: String
         """
         if os.path.exists(path):
-            for file in os.scandir(path):
+            for file in sort_files(os.scandir(path)):
                 # import file using its name and full path
                 if file.is_file():
                     classes = import_module_(file)
