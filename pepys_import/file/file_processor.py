@@ -6,14 +6,20 @@ from datetime import datetime
 from getpass import getuser
 from stat import S_IREAD
 
+from prompt_toolkit import prompt
+from prompt_toolkit.validation import Validator
+
 from config import ARCHIVE_PATH, LOCAL_PARSERS
 from paths import IMPORTERS_DIRECTORY
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.store.table_summary import get_table_summaries
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
 from pepys_import.utils.datafile_utils import hash_file
 from pepys_import.utils.import_utils import import_module_, sort_files
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 USER = getuser()
 
@@ -63,10 +69,11 @@ class FileProcessor:
             if not os.path.exists(self.output_path):
                 os.makedirs(self.output_path)
 
-        # Create dict to store success/failures in
+        # Create dict to store success/failures/skipped in
         import_summary = {}
         import_summary["succeeded"] = []
         import_summary["failed"] = []
+        import_summary["skipped"] = []
 
         # Take current timestamp without milliseconds
         now = datetime.utcnow()
@@ -108,14 +115,11 @@ class FileProcessor:
         # If given path is a single file, then just process that file
         if os.path.isfile(path):
             with data_store.session_scope():
-                table_summaries_before = get_table_summaries(data_store)
                 filename = os.path.abspath(path)
                 current_path = os.path.dirname(path)
                 processed_ctr = self.process_file(
                     filename, current_path, data_store, processed_ctr, import_summary
                 )
-                table_summaries_after = get_table_summaries(data_store)
-                print(table_summaries_after.show_delta_of_rows_added(table_summaries_before))
             self.display_import_summary(import_summary)
             print(f"Files got processed: {processed_ctr} times")
             abs_path = os.path.abspath(self.output_path)
@@ -130,7 +134,6 @@ class FileProcessor:
 
         # decide whether to descend tree, or just work on this folder
         with data_store.session_scope():
-            table_summaries_before = get_table_summaries(data_store)
             # capture path in absolute form
             abs_path = os.path.abspath(path)
             if descend_tree:
@@ -147,8 +150,6 @@ class FileProcessor:
                         processed_ctr = self.process_file(
                             file, abs_path, data_store, processed_ctr, import_summary
                         )
-            table_summaries_after = get_table_summaries(data_store)
-            print(table_summaries_after.show_delta_of_rows_added(table_summaries_before))
 
         self.display_import_summary(import_summary)
         print(f"Files got processed: {processed_ctr} times")
@@ -232,6 +233,9 @@ class FileProcessor:
                     privacy = importer.default_privacy
                     break
 
+            metadata_summaries_before, measurement_summaries_before = get_table_summaries(
+                data_store
+            )
             # We assume that good importers will have the same datafile-type values at the moment.
             # That's why we can create a datafile using the first importer's datafile_type.
             # They don't have different datafile-type values, but if necessary, we might iterate over
@@ -294,10 +298,70 @@ class FileProcessor:
             # If all tests pass for all parsers, commit datafile
             if not errors:
                 log = datafile.commit(data_store, change.change_id)
-
+                metadata_summaries_after, measurement_summaries_after = get_table_summaries(
+                    data_store
+                )
+                print(
+                    metadata_summaries_after.show_delta_of_rows_added(
+                        metadata_summaries_before, "METADATA REPORT"
+                    )
+                )
+                print(
+                    measurement_summaries_after.show_delta_of_rows_added(
+                        measurement_summaries_before, "MEASUREMENT REPORT"
+                    )
+                )
                 # Keep track of some details for the import summary
                 summary_details = {}
                 summary_details["filename"] = basename
+                choice = self._ask_user_for_finalizing_import()
+                if choice == "1":  # Import metadata
+                    # Remove measurement objects using Logs table
+                    objects_from_logs = (
+                        data_store.session.query(data_store.db_classes.Log)
+                        .filter(data_store.db_classes.Log.change_id == change.change_id)
+                        .all()
+                    )
+                    for obj in objects_from_logs:
+                        table_cls = getattr(
+                            data_store.db_classes, table_name_to_class_name(obj.table)
+                        )
+                        if table_cls.table_type == TableTypes.MEASUREMENT:
+                            primary_key_field = getattr(
+                                table_cls, get_primary_key_for_table(table_cls)
+                            )
+                            data_store.session.query(table_cls).filter(
+                                primary_key_field == obj.id
+                            ).delete()
+                            # Remove Logs entity
+                            data_store.session.delete(obj)
+                    data_store.session.commit()
+                    # Set log to an empty list because measurements are deleted
+                    log = []
+                elif choice == "2":  # Import metadata and measurements
+                    pass
+                else:  # Don't import data from this file.
+                    # CASCADING will handle the deletion of the all measurement objects of the datafile
+                    data_store.session.delete(datafile)
+                    # Remove metadata
+                    metadata_objects_from_logs = (
+                        data_store.session.query(data_store.db_classes.Log)
+                        .filter(data_store.db_classes.Log.change_id == change.change_id)
+                        .all()
+                    )
+                    for obj in metadata_objects_from_logs:
+                        table_cls = getattr(
+                            data_store.db_classes, table_name_to_class_name(obj.table)
+                        )
+                        primary_key_field = getattr(table_cls, get_primary_key_for_table(table_cls))
+                        data_store.session.query(table_cls).filter(
+                            primary_key_field == obj.id
+                        ).delete()
+                        # Remove Logs entity
+                        data_store.session.delete(obj)
+                    data_store.session.commit()
+                    import_summary["skipped"].append(summary_details)
+                    return processed_ctr
 
                 # write extraction log to output folder
                 with open(
@@ -365,6 +429,12 @@ class FileProcessor:
                     print(failed_validators_list)
                 print(f"    - Failure report at {details['report_location']}")
             print()
+        if len(import_summary["skipped"]) > 0:
+            print("Import skipped for:")
+            for details in import_summary["skipped"]:
+                print(f"  - {details['filename']}")
+
+            print()
 
     def register_importer(self, importer):
         """Adds the supplied importer to the list of import modules
@@ -417,3 +487,28 @@ class FileProcessor:
         with open(full_path, "r", encoding="windows-1252") as file:
             lines = file.read().split("\n")
         return lines
+
+    @staticmethod
+    def _input_validator():
+        def is_valid(option):
+            return option == str(1) or option == str(2) or option == str(3)
+
+        validator = Validator.from_callable(
+            is_valid,
+            error_message="You didn't select a valid option",
+            move_cursor_to_end=True,
+        )
+        return validator
+
+    def _ask_user_for_finalizing_import(self):
+        validator = self._input_validator()
+        input_text = "\n\nWould you like to\n"
+        choices = (
+            "Import metadata",
+            "Import metadata and measurements",
+            "Don't import data from this file.",
+        )
+        for index, choice in enumerate(choices, 1):
+            input_text += f"   {str(index)}) {choice}\n"
+        choice = prompt(input_text, validator=validator)
+        return choice
