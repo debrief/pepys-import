@@ -42,6 +42,7 @@ def main():  # pragma: no cover
             db_name=config.DB_NAME,
             db_type=config.DB_TYPE,
             welcome_text="Pepys_admin",
+            training_mode=args.training,
         )
     else:
         data_store = DataStore(
@@ -52,6 +53,7 @@ def main():  # pragma: no cover
             db_name=args.db,
             db_type="sqlite",
             welcome_text="Pepys_admin",
+            training_mode=args.training,
         )
 
     run_admin_shell(data_store, args.path)

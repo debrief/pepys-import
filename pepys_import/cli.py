@@ -78,6 +78,7 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
             db_name=config.DB_NAME,
             db_type=config.DB_TYPE,
             missing_data_resolver=resolver_obj,
+            training_mode=training,
         )
     elif type(db) is dict:
         data_store = DataStore(
@@ -88,6 +89,7 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
             db_name=db["name"],
             db_type=db["type"],
             missing_data_resolver=resolver_obj,
+            training_mode=training,
         )
     else:
         data_store = DataStore(
@@ -98,6 +100,7 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
             db_name=db,
             db_type="sqlite",
             missing_data_resolver=resolver_obj,
+            training_mode=training,
         )
     if not is_schema_created(data_store.engine, data_store.db_type):
         data_store.initialise()
@@ -114,9 +117,9 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
 
 def set_up_training_mode():
     # Training database will be located in user's home folder
-    db_path = os.path.expanduser("~/pepys_training_database.db")
+    db_path = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
 
-    config_file_path = os.path.expanduser("~/pepys_training_config.ini")
+    config_file_path = os.path.expanduser(os.path.join("~", "pepys_training_config.ini"))
 
     config_contents = f"""[database]
 db_username =
