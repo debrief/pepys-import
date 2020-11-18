@@ -46,9 +46,9 @@ class TableSummarySet:
 
     def __init__(self, table_summaries):
         self.table_summaries = table_summaries
-        self.headers = ["Table name", "Number of added rows", "Last item added"]
+        self.headers = ["Table name", "Number of rows", "Last item added"]
 
-    def report(self, title="REPORT"):
+    def report(self, title):
         """Produce an pretty-printed report of the contents of the summary.
 
         :return: String of text
@@ -81,7 +81,7 @@ class TableSummarySet:
             differences.append(diff)
         return differences
 
-    def show_delta_of_rows_added(self, other: "TableSummarySet"):
+    def show_delta_of_rows_added(self, other: "TableSummarySet", text="REPORT"):
         """Produce an pretty-printed report of the contents of the summary.
 
         :param other: A TableSummarySet object to compare
@@ -91,17 +91,24 @@ class TableSummarySet:
         differences = self.table_delta(self.table_summaries, other.table_summaries)
         for table, diff in zip(self.table_summaries, differences):
             table.number_of_rows = diff
-        return self.report()
+        return self.report(text)
 
 
 def get_table_summaries(datastore):
     datastore.setup_table_type_mapping()
-    measurement_table_objects = datastore.meta_classes[TableTypes.MEASUREMENT]
-    metadata_table_objects = datastore.meta_classes[TableTypes.METADATA]
-    tables = measurement_table_objects + metadata_table_objects
     exclude = [constants.LOG, constants.EXTRACTION, constants.CHANGE, constants.LOGS_HOLDING]
-    table_summaries = [
-        TableSummary(datastore.session, c) for c in tables if c.__tablename__ not in exclude
+
+    metadata_table_objects = datastore.meta_classes[TableTypes.METADATA]
+    measurement_table_objects = datastore.meta_classes[TableTypes.MEASUREMENT]
+    metadata_table_summaries = [
+        TableSummary(datastore.session, c)
+        for c in metadata_table_objects
+        if c.__tablename__ not in exclude
+    ]
+    measurement_table_summaries = [
+        TableSummary(datastore.session, c)
+        for c in measurement_table_objects
+        if c.__tablename__ not in exclude
     ]
 
-    return TableSummarySet(table_summaries)
+    return TableSummarySet(metadata_table_summaries), TableSummarySet(measurement_table_summaries)
