@@ -86,7 +86,7 @@ class Sensor(BasePostGIS, SensorMixin):
     )
     host = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade"),
+        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
     privacy_id = Column(
@@ -255,7 +255,7 @@ class Change(BasePostGIS):
     )
     datafile_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade"),
+        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade", ondelete="SET NULL"),
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -593,7 +593,7 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     _speed = deferred(Column("speed", DOUBLE_PRECISION))
     source_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade"),
+        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
     privacy_id = Column(
@@ -661,7 +661,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     )
     source_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade"),
+        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
     privacy_id = Column(
@@ -709,7 +709,7 @@ class Activation(BasePostGIS, ActivationMixin):
     _right_arc = deferred(Column("right_arc", DOUBLE_PRECISION))
     source_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade"),
+        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
     privacy_id = Column(
@@ -746,7 +746,7 @@ class LogsHolding(BasePostGIS, LogsHoldingMixin):
     comment = Column(Text, nullable=False)
     source_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade"),
+        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
     privacy_id = Column(
@@ -780,7 +780,7 @@ class Comment(BasePostGIS, CommentMixin):
     )
     source_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade"),
+        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
     privacy_id = Column(
@@ -819,7 +819,7 @@ class Geometry1(BasePostGIS, GeometryMixin):
     )
     source_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade"),
+        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
     privacy_id = Column(
@@ -858,7 +858,7 @@ class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin, LocationPropertyMix
     )
     source_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade"),
+        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
     privacy_id = Column(

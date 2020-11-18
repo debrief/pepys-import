@@ -32,6 +32,7 @@ def upgrade():
         source_schema="pepys",
         referent_schema="pepys",
         onupdate="cascade",
+        ondelete="SET NULL",
     )
     # ### end Alembic commands ###
 
