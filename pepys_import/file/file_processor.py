@@ -16,6 +16,7 @@ from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.store.table_summary import get_table_summaries
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
+from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 from pepys_import.utils.datafile_utils import hash_file
 from pepys_import.utils.import_utils import import_module_, sort_files
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
@@ -314,7 +315,11 @@ class FileProcessor:
                 # Keep track of some details for the import summary
                 summary_details = {}
                 summary_details["filename"] = basename
-                choice = self._ask_user_for_finalizing_import()
+                if isinstance(data_store.missing_data_resolver, CommandLineResolver):
+                    choice = self._ask_user_for_finalizing_import()
+                else:
+                    choice = "2"
+
                 if choice == "1":  # Import metadata
                     # Remove measurement objects using Logs table
                     objects_from_logs = (

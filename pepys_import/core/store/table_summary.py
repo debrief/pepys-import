@@ -48,7 +48,7 @@ class TableSummarySet:
         self.table_summaries = table_summaries
         self.headers = ["Table name", "Number of rows", "Last item added"]
 
-    def report(self, title):
+    def report(self, title=""):
         """Produce an pretty-printed report of the contents of the summary.
 
         :return: String of text
