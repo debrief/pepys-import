@@ -211,6 +211,7 @@ class Change(BaseSpatiaLite):
     reason = Column(
         String(500), CheckConstraint("reason <> ''", name="ck_Changes_reason"), nullable=False
     )
+    datafile_id = Column(UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 

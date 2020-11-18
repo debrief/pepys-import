@@ -253,6 +253,10 @@ class Change(BasePostGIS):
     reason = Column(
         String(500), CheckConstraint("reason <> ''", name="ck_Changes_reason"), nullable=False
     )
+    datafile_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Datafiles.datafile_id", onupdate="cascade"),
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
