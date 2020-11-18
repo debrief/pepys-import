@@ -1,7 +1,9 @@
 import argparse
+from importlib import reload
 
-from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
+import config
 from pepys_admin.admin_cli import AdminShell
+from pepys_import.cli import set_up_training_mode
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.utils.error_handling import handle_database_errors
 
@@ -15,19 +17,30 @@ def main():  # pragma: no cover
         "SQLite database file to use (overrides config file database settings). "
         "Use `:memory:` for temporary in-memory instance"
     )
+    training_help = (
+        "Uses training mode, where all interactions take place with a training database located "
+        "in the user's home folder. No actions will affect the database configured in the Pepys config file."
+    )
     parser = argparse.ArgumentParser(description="Pepys Admin CLI")
     parser.add_argument("--path", type=str, help="CSV files path")
     parser.add_argument("--db", help=db_help, required=False, default=None)
+    parser.add_argument(
+        "--training", help=training_help, dest="training", default=False, action="store_true"
+    )
     args = parser.parse_args()
+
+    if args.training:
+        set_up_training_mode()
+        reload(config)
 
     if args.db is None:
         data_store = DataStore(
-            db_username=DB_USERNAME,
-            db_password=DB_PASSWORD,
-            db_host=DB_HOST,
-            db_port=DB_PORT,
-            db_name=DB_NAME,
-            db_type=DB_TYPE,
+            db_username=config.DB_USERNAME,
+            db_password=config.DB_PASSWORD,
+            db_host=config.DB_HOST,
+            db_port=config.DB_PORT,
+            db_name=config.DB_NAME,
+            db_type=config.DB_TYPE,
             welcome_text="Pepys_admin",
         )
     else:

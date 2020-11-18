@@ -1,7 +1,8 @@
 import argparse
 import os
+from importlib import reload
 
-from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
+import config
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
@@ -28,6 +29,10 @@ def main():  # pragma: no cover
         "using static default values), 'command-line' (resolves using interactive command-line interface, "
         "default option)"
     )
+    training_help = (
+        "Uses training mode, where all interactions take place with a training database located "
+        "in the user's home folder. No actions will affect the database configured in the Pepys config file."
+    )
     parser.add_argument("--path", help=path_help, required=False, default=DIRECTORY_PATH)
     parser.add_argument(
         "--archive",
@@ -38,11 +43,20 @@ def main():  # pragma: no cover
     )
     parser.add_argument("--db", help=db_help, required=False, default=None)
     parser.add_argument("--resolver", help=resolver_help, required=False, default="command-line")
+    parser.add_argument(
+        "--training", help=training_help, dest="training", default=False, action="store_true"
+    )
     args = parser.parse_args()
-    process(path=args.path, archive=args.archive, db=args.db, resolver=args.resolver)
+    process(
+        path=args.path,
+        archive=args.archive,
+        db=args.db,
+        resolver=args.resolver,
+        training=args.training,
+    )
 
 
-def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"):
+def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line", training=False):
     if resolver == "command-line":
         resolver_obj = CommandLineResolver()
     elif resolver == "default":
@@ -51,14 +65,18 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
         print(f"Invalid option '{resolver}' for --resolver.")
         return
 
+    if training:
+        set_up_training_mode()
+        reload(config)
+
     if db is None:
         data_store = DataStore(
-            db_username=DB_USERNAME,
-            db_password=DB_PASSWORD,
-            db_host=DB_HOST,
-            db_port=DB_PORT,
-            db_name=DB_NAME,
-            db_type=DB_TYPE,
+            db_username=config.DB_USERNAME,
+            db_password=config.DB_PASSWORD,
+            db_host=config.DB_HOST,
+            db_port=config.DB_PORT,
+            db_name=config.DB_NAME,
+            db_type=config.DB_TYPE,
             missing_data_resolver=resolver_obj,
         )
     elif type(db) is dict:
@@ -92,6 +110,29 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
 
     with handle_database_errors():
         processor.process(path, data_store, True)
+
+
+def set_up_training_mode():
+    # Training database will be located in user's home folder
+    db_path = os.path.expanduser("~/pepys_training_database.db")
+
+    config_file_path = os.path.expanduser("~/pepys_training_config.ini")
+
+    config_contents = f"""[database]
+db_username =
+db_password =
+db_host =
+db_port = 0
+db_name = {db_path}
+db_type = sqlite"""
+
+    with open(config_file_path, "w") as f:
+        f.write(config_contents)
+
+    os.environ["PEPYS_CONFIG_FILE"] = config_file_path
+
+    # If the database doesn't already exist, then import some example data
+    # if not os.path.exists(db_path):
 
 
 if __name__ == "__main__":
