@@ -245,11 +245,9 @@ class FileProcessor:
                 privacy=privacy,
             )
 
-            # Connect change object with the datafile object
+            # Update change object
             change.datafile_id = datafile.datafile_id
-            # Delete and add the updated change object to the session
-            data_store.session.delete(change)
-            data_store.session.add(change)
+            data_store.session.flush()
 
             # Run all parsers
             for importer in good_importers:
