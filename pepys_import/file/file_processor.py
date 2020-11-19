@@ -11,9 +11,9 @@ from prompt_toolkit.validation import Validator
 
 from config import ARCHIVE_PATH, LOCAL_PARSERS
 from paths import IMPORTERS_DIRECTORY
+from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
-from pepys_import.core.store.table_summary import get_table_summaries
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
@@ -234,8 +234,16 @@ class FileProcessor:
                     privacy = importer.default_privacy
                     break
 
-            metadata_summaries_before, measurement_summaries_before = get_table_summaries(
-                data_store
+            exclude = [
+                constants.LOG,
+                constants.EXTRACTION,
+                constants.CHANGE,
+                constants.LOGS_HOLDING,
+            ]
+
+            metadata_summaries_before = data_store.get_status(report_metadata=True, exclude=exclude)
+            measurement_summaries_before = data_store.get_status(
+                report_measurement=True, exclude=exclude
             )
             # We assume that good importers will have the same datafile-type values at the moment.
             # That's why we can create a datafile using the first importer's datafile_type.
@@ -298,72 +306,47 @@ class FileProcessor:
 
             # If all tests pass for all parsers, commit datafile
             if not errors:
+                # Keep track of some details for the import summary
+                summary_details = {}
+                summary_details["filename"] = basename
+
                 log = datafile.commit(data_store, change.change_id)
-                metadata_summaries_after, measurement_summaries_after = get_table_summaries(
-                    data_store
+                metadata_summaries_after = data_store.get_status(
+                    report_metadata=True, exclude=exclude
+                )
+                measurement_summaries_after = data_store.get_status(
+                    report_measurement=True, exclude=exclude
                 )
                 print(
                     metadata_summaries_after.show_delta_of_rows_added(
-                        metadata_summaries_before, "METADATA REPORT"
+                        metadata_summaries_before, title="METADATA REPORT"
                     )
                 )
                 print(
                     measurement_summaries_after.show_delta_of_rows_added(
-                        measurement_summaries_before, "MEASUREMENT REPORT"
+                        measurement_summaries_before, title="MEASUREMENT REPORT"
                     )
                 )
-                # Keep track of some details for the import summary
-                summary_details = {}
-                summary_details["filename"] = basename
                 if isinstance(data_store.missing_data_resolver, CommandLineResolver):
-                    choice = self._ask_user_for_finalizing_import()
+                    choices = (
+                        "Import metadata",
+                        "Import metadata and measurements",
+                        "Don't import data from this file.",
+                    )
+                    choice = self._ask_user_for_finalizing_import(choices)
                 else:
                     choice = "2"
 
                 if choice == "1":  # Import metadata
-                    # Remove measurement objects using Logs table
-                    objects_from_logs = (
-                        data_store.session.query(data_store.db_classes.Log)
-                        .filter(data_store.db_classes.Log.change_id == change.change_id)
-                        .all()
-                    )
-                    for obj in objects_from_logs:
-                        table_cls = getattr(
-                            data_store.db_classes, table_name_to_class_name(obj.table)
-                        )
-                        if table_cls.table_type == TableTypes.MEASUREMENT:
-                            primary_key_field = getattr(
-                                table_cls, get_primary_key_for_table(table_cls)
-                            )
-                            data_store.session.query(table_cls).filter(
-                                primary_key_field == obj.id
-                            ).delete()
-                            # Remove Logs entity
-                            data_store.session.delete(obj)
+                    self._remove_measurement(data_store, datafile, change.change_id)
                     data_store.session.commit()
                     # Set log to an empty list because measurements are deleted
                     log = []
                 elif choice == "2":  # Import metadata and measurements
                     pass
                 else:  # Don't import data from this file.
-                    # CASCADING will handle the deletion of the all measurement objects of the datafile
-                    data_store.session.delete(datafile)
-                    # Remove metadata
-                    metadata_objects_from_logs = (
-                        data_store.session.query(data_store.db_classes.Log)
-                        .filter(data_store.db_classes.Log.change_id == change.change_id)
-                        .all()
-                    )
-                    for obj in metadata_objects_from_logs:
-                        table_cls = getattr(
-                            data_store.db_classes, table_name_to_class_name(obj.table)
-                        )
-                        primary_key_field = getattr(table_cls, get_primary_key_for_table(table_cls))
-                        data_store.session.query(table_cls).filter(
-                            primary_key_field == obj.id
-                        ).delete()
-                        # Remove Logs entity
-                        data_store.session.delete(obj)
+                    # Remove metadata and measurement
+                    self._remove_measurement_and_metadata(data_store, datafile, change.change_id)
                     data_store.session.commit()
                     import_summary["skipped"].append(summary_details)
                     return processed_ctr
@@ -384,9 +367,27 @@ class FileProcessor:
                 import_summary["succeeded"].append(summary_details)
 
             else:
-                # Delete the datafile entry, as we won't be importing any entries
-                # linked to it, because we had errors
-                data_store.session.delete(datafile)
+                metadata_summaries_after = data_store.get_status(
+                    report_metadata=True, exclude=exclude
+                )
+                print(
+                    metadata_summaries_after.show_delta_of_rows_added(
+                        metadata_summaries_before, title="METADATA REPORT"
+                    )
+                )
+                if isinstance(data_store.missing_data_resolver, CommandLineResolver):
+                    choices = (
+                        "Import metadata",
+                        "Don't import data from this file.",
+                    )
+                    choice = self._ask_user_for_finalizing_import(choices)
+                else:  # Default is import metadata
+                    choice = "1"
+
+                if choice == "1":  # Import metadata
+                    self._remove_measurement(data_store, datafile, change.change_id)
+                elif choice == "2":  # Don't import data from this file
+                    self._remove_measurement_and_metadata(data_store, datafile, change.change_id)
                 data_store.session.commit()
 
                 failure_report_filename = os.path.join(
@@ -406,7 +407,38 @@ class FileProcessor:
 
         return processed_ctr
 
-    def display_import_summary(self, import_summary):
+    def _remove_measurement_and_metadata(self, data_store, datafile, change_id):
+        # Remove measurement entities
+        self._remove_measurement(data_store, datafile, change_id)
+        # Remove metadata entities
+        self._remove_metadata(data_store, change_id)
+
+    @staticmethod
+    def _remove_measurement(data_store, datafile, change_id):
+        # Delete the datafile entry, as we won't be importing any entries linked to it,
+        # because we had errors. CASCADING will handle the deletion of the all measurement objects
+        # of the datafile
+        data_store.session.delete(datafile)
+        # Remove log objects
+        objects_from_logs = data_store.get_logs_by_change_id(change_id)
+        for obj in objects_from_logs:
+            table_cls = getattr(data_store.db_classes, table_name_to_class_name(obj.table))
+            if table_cls.table_type == TableTypes.MEASUREMENT:
+                data_store.session.delete(obj)
+
+    @staticmethod
+    def _remove_metadata(data_store, change_id):
+        objects_from_logs = data_store.get_logs_by_change_id(change_id)
+        for obj in objects_from_logs:
+            table_cls = getattr(data_store.db_classes, table_name_to_class_name(obj.table))
+            if table_cls.table_type == TableTypes.METADATA:
+                primary_key_field = getattr(table_cls, get_primary_key_for_table(table_cls))
+                data_store.session.query(table_cls).filter(primary_key_field == obj.id).delete()
+                # Remove Logs entity
+                data_store.session.delete(obj)
+
+    @staticmethod
+    def display_import_summary(import_summary):
         if len(import_summary["succeeded"]) > 0:
             print("Import succeeded for:")
             for details in import_summary["succeeded"]:
@@ -494,9 +526,9 @@ class FileProcessor:
         return lines
 
     @staticmethod
-    def _input_validator():
+    def _input_validator(options):
         def is_valid(option):
-            return option == str(1) or option == str(2) or option == str(3)
+            return option in [str(o) for o, _ in enumerate(options, 1)]
 
         validator = Validator.from_callable(
             is_valid,
@@ -505,14 +537,9 @@ class FileProcessor:
         )
         return validator
 
-    def _ask_user_for_finalizing_import(self):
-        validator = self._input_validator()
+    def _ask_user_for_finalizing_import(self, choices):
+        validator = self._input_validator(choices)
         input_text = "\n\nWould you like to\n"
-        choices = (
-            "Import metadata",
-            "Import metadata and measurements",
-            "Don't import data from this file.",
-        )
         for index, choice in enumerate(choices, 1):
             input_text += f"   {str(index)}) {choice}\n"
         choice = prompt(input_text, validator=validator)

@@ -692,9 +692,12 @@ class TestImportWithDuplicatePlatformNames(unittest.TestCase):
             self.store.populate_reference()
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
+    @patch("pepys_import.file.file_processor.prompt")
     @patch("pepys_import.resolvers.command_line_input.prompt")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_import_with_duplicate_platform_names(self, resolver_prompt, menu_prompt):
+    def test_import_with_duplicate_platform_names(
+        self, resolver_prompt, menu_prompt, file_processor_prompt
+    ):
         # Provide datafile name, and approve creation of datafile
         # Add platform with name DOLPHIN, identifier 123, trigraph and quadgraph
         # Select UK nationality, and select platform type, privacy etc
@@ -743,7 +746,9 @@ class TestImportWithDuplicatePlatformNames(unittest.TestCase):
             "3",
             "1",
         ]
-
+        file_processor_prompt.side_effect = [
+            "2",  # Import metadata and measurement
+        ]
         processor = FileProcessor(archive=False)
         processor.register_importer(ReplayImporter())
 

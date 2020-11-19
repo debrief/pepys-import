@@ -88,12 +88,12 @@ class AdminCLITestCase(unittest.TestCase):
             self.admin_shell.do_status()
         output = temp_output.getvalue()
 
-        states_text = "| States       |                    738 |"
-        contacts_text = "| Contacts     |                    110 |"
-        comments_text = "| Comments     |                      7 |"
-        sensors_text = "| Sensors      |                     13 |"
-        platforms_text = "| Platforms    |                      6 |"
-        datafiles_text = "| Datafiles    |                      5 |"
+        states_text = "| States       |              738 |"
+        contacts_text = "| Contacts     |              110 |"
+        comments_text = "| Comments     |                7 |"
+        sensors_text = "| Sensors      |               13 |"
+        platforms_text = "| Platforms    |                6 |"
+        datafiles_text = "| Datafiles    |                5 |"
         assert states_text in output
         assert contacts_text in output
         assert comments_text in output

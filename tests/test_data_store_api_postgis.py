@@ -670,9 +670,9 @@ class DataStoreStatusTestCase(TestCase):
         report = table_summary_object.report()
 
         assert report != ""
-        assert "| States       |                      8 |" in report
-        assert "| Contacts     |                      7 |" in report
-        assert "| Comments     |                      7 |" in report
+        assert "| States       |                8 |" in report
+        assert "| Contacts     |                7 |" in report
+        assert "| Comments     |                7 |" in report
 
     def test_get_status_of_metadata(self):
         """Test whether summary contents correct for metadata tables"""

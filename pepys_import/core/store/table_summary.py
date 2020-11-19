@@ -1,9 +1,6 @@
 from sqlalchemy.orm import undefer
 from tabulate import tabulate
 
-from pepys_import.core.store import constants
-from pepys_import.core.store.db_status import TableTypes
-
 
 class TableSummary:
     """
@@ -81,7 +78,7 @@ class TableSummarySet:
             differences.append(diff)
         return differences
 
-    def show_delta_of_rows_added(self, other: "TableSummarySet", text="REPORT"):
+    def show_delta_of_rows_added(self, other: "TableSummarySet", title="REPORT"):
         """Produce an pretty-printed report of the contents of the summary.
 
         :param other: A TableSummarySet object to compare
@@ -91,24 +88,4 @@ class TableSummarySet:
         differences = self.table_delta(self.table_summaries, other.table_summaries)
         for table, diff in zip(self.table_summaries, differences):
             table.number_of_rows = diff
-        return self.report(text)
-
-
-def get_table_summaries(datastore):
-    datastore.setup_table_type_mapping()
-    exclude = [constants.LOG, constants.EXTRACTION, constants.CHANGE, constants.LOGS_HOLDING]
-
-    metadata_table_objects = datastore.meta_classes[TableTypes.METADATA]
-    measurement_table_objects = datastore.meta_classes[TableTypes.MEASUREMENT]
-    metadata_table_summaries = [
-        TableSummary(datastore.session, c)
-        for c in metadata_table_objects
-        if c.__tablename__ not in exclude
-    ]
-    measurement_table_summaries = [
-        TableSummary(datastore.session, c)
-        for c in measurement_table_objects
-        if c.__tablename__ not in exclude
-    ]
-
-    return TableSummarySet(metadata_table_summaries), TableSummarySet(measurement_table_summaries)
+        return self.report(title)

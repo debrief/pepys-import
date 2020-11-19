@@ -73,7 +73,7 @@ class TableSummaryTestCase(TestCase):
         result = second_table_summary_set.show_delta_of_rows_added(first_table_summary_set)
 
         # Privacy table has 2 new rows, no changes for Nationality table
-        assert "| Privacies    |                      2 |" in result
+        assert "| Privacies    |                2 |" in result
 
 
 if __name__ == "__main__":
