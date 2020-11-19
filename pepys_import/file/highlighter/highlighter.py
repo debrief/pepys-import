@@ -103,8 +103,7 @@ class HighlightedFile:
             with open(self.filename, "r") as file:
                 file_contents = file.read()
         elif self.number_of_lines <= 0:
-            print("Non-positive number of lines. Please provide positive number")
-            exit(1)
+            raise ValueError("Non-positive number of lines. Please provide positive number")
         else:
             file_contents, _ = self.limited_contents()
 

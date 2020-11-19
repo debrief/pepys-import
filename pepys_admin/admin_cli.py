@@ -1,4 +1,3 @@
-import cmd
 import os
 import sys
 import webbrowser
@@ -7,6 +6,7 @@ from alembic import command
 from alembic.config import Config
 
 from paths import ROOT_DIRECTORY
+from pepys_admin.base_cli import BaseShell
 from pepys_admin.export_cli import ExportShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.snapshot_cli import SnapshotShell
@@ -17,7 +17,7 @@ from pepys_import.utils.error_handling import handle_status_errors
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
-class AdminShell(cmd.Cmd):
+class AdminShell(BaseShell):
     """Main Shell of Pepys Admin."""
 
     intro = """--- Menu ---
@@ -28,7 +28,7 @@ class AdminShell(cmd.Cmd):
 (5) Migrate
 (6) View Data
 (7) View Docs
-(0) Exit
+(.) Exit
 """
     prompt = "(pepys-admin) "
 
@@ -37,7 +37,7 @@ class AdminShell(cmd.Cmd):
         self.data_store = data_store
         self.csv_path = csv_path
         self.aliases = {
-            "0": self.do_exit,
+            ".": self.do_exit,
             "1": self.do_initialise,
             "2": self.do_status,
             "3": self.do_export,
@@ -59,7 +59,7 @@ class AdminShell(cmd.Cmd):
         export_shell = ExportShell(self.data_store)
         export_shell.cmdloop()
 
-    def do_view_docs(self):
+    def do_view_docs(self):  # pragma: no cover
         print("Loading docs in default web browser")
         path = os.path.abspath(os.path.join(ROOT_DIRECTORY, "docs", "_build", "html", "index.html"))
         webbrowser.open("file://" + path)
@@ -72,7 +72,7 @@ class AdminShell(cmd.Cmd):
 
     def do_initialise(self):
         """Runs the :code:`InitialiseShell` which offers to clear contents, import sample data,
-         create/delete schema."""
+        create/delete schema."""
         print("-" * 61)
         initialise = InitialiseShell(self.data_store, self, self.csv_path)
         initialise.cmdloop()
@@ -95,7 +95,7 @@ class AdminShell(cmd.Cmd):
             report = reference_summary.report()
             print(f"## Reference\n{report}\n")
 
-        print(f"## Database Version")
+        print("## Database Version")
         command.current(self.cfg, verbose=True)
 
     def do_migrate(self):
@@ -125,16 +125,3 @@ class AdminShell(cmd.Cmd):
         """Exit the application"""
         print("Thank you for using Pepys Admin")
         sys.exit()
-
-    def default(self, line):
-        command_, arg, line = self.parseline(line)
-        if command_ in self.aliases:
-            self.aliases[command_]()
-        else:
-            print(f"*** Unknown syntax: {line}")
-
-    def postcmd(self, stop, line):
-        if line != "0":
-            print("-" * 61)
-            print(self.intro)
-        return cmd.Cmd.postcmd(self, stop, line)

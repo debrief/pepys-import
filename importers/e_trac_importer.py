@@ -5,6 +5,7 @@ from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
+from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
 
 
@@ -15,6 +16,7 @@ class ETracImporter(Importer):
             validation_level=constants.BASIC_LEVEL,
             short_name="E-Trac Importer",
             default_privacy="Public",
+            datafile_type="E-Trac",
         )
         self.text_label = None
 
@@ -35,7 +37,7 @@ class ETracImporter(Importer):
         if line_number == 1:
             return
 
-        tokens = line.tokens(line.CSV_DELIM, ",")
+        tokens = line.tokens(line.CSV_TOKENISER, ",")
         if len(tokens) <= 1:
             # the last line may be empty, don't worry
             return
@@ -88,13 +90,16 @@ class ETracImporter(Importer):
             return
 
         # and finally store it
-        platform = data_store.get_platform(platform_name=vessel_name, change_id=change_id,)
+        platform = self.get_cached_platform(
+            data_store, platform_name=vessel_name, change_id=change_id
+        )
         sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
+        privacy = get_lowest_privacy(data_store)
         sensor = platform.get_sensor(
             data_store=data_store,
             sensor_name="E-Trac",
             sensor_type=sensor_type,
-            privacy="Public",
+            privacy=privacy,
             change_id=change_id,
         )
         state = datafile.create_state(data_store, platform, sensor, timestamp, self.short_name)
@@ -123,7 +128,11 @@ class ETracImporter(Importer):
             heading_token.record(self.name, "heading", heading)
 
         speed_valid, speed = convert_speed(
-            speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type,
+            speed_token.text,
+            unit_registry.knots,
+            line_number,
+            self.errors,
+            self.error_type,
         )
         if speed_valid:
             state.speed = speed

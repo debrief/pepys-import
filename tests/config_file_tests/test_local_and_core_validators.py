@@ -11,10 +11,18 @@ from pepys_import.file.file_processor import FileProcessor
 
 DIRECTORY_PATH = os.path.dirname(__file__)
 REP_DATA_PATH = os.path.join(
-    os.path.dirname(DIRECTORY_PATH), "sample_data", "track_files", "rep_data", "rep_test1.rep",
+    os.path.dirname(DIRECTORY_PATH),
+    "sample_data",
+    "track_files",
+    "rep_data",
+    "rep_test1.rep",
 )
 OTHER_DATA_PATH = os.path.join(
-    os.path.dirname(DIRECTORY_PATH), "sample_data", "track_files", "other_data", "e_trac.txt",
+    os.path.dirname(DIRECTORY_PATH),
+    "sample_data",
+    "track_files",
+    "other_data",
+    "e_trac.txt",
 )
 BASIC_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "basic_tests")
 ENHANCED_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "enhanced_tests")
@@ -162,9 +170,9 @@ class TestLocalTestsFails(unittest.TestCase):
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             self.assertEqual(len(platforms), 18)
 
-            # there must be one datafile afterwards
+            # there must be no datafiles afterwards - as all files gave errors
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 1)
+            self.assertEqual(len(datafiles), 0)
 
     @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_FAILS_PATH)
     @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_FAILS_PATH)
@@ -189,7 +197,8 @@ class TestLocalTestsFails(unittest.TestCase):
             self.assertEqual(len(datafiles), 0)
 
         # parse the folder
-        processor.process(REP_DATA_PATH, self.store, False)
+        with patch("pepys_import.core.store.common_db.prompt", return_value="2"):
+            processor.process(REP_DATA_PATH, self.store, False)
 
         # check data got created
         with self.store.session_scope():
@@ -201,9 +210,9 @@ class TestLocalTestsFails(unittest.TestCase):
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             self.assertEqual(len(platforms), 2)
 
-            # there must be one datafile afterwards
+            # there must be no datafiles afterwards - as all files gave errors
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 1)
+            self.assertEqual(len(datafiles), 0)
 
 
 if __name__ == "__main__":

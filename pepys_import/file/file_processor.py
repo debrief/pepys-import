@@ -13,7 +13,7 @@ from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
 from pepys_import.utils.datafile_utils import hash_file
-from pepys_import.utils.import_utils import import_module_
+from pepys_import.utils.import_utils import import_module_, sort_files
 
 USER = getuser()
 
@@ -132,6 +132,8 @@ class FileProcessor:
                 print(second_table_summary_set.report("==After=="))
             self.display_import_summary(import_summary)
             print(f"Files got processed: {processed_ctr} times")
+            abs_path = os.path.abspath(self.output_path)
+            print(f"Archive/report folders can be found at {abs_path}")
             return
 
         # If we've got to here then we're dealing with a folder
@@ -163,7 +165,7 @@ class FileProcessor:
                         )
             else:
                 # loop through this path
-                for file in os.scandir(abs_path):
+                for file in sort_files(os.scandir(abs_path)):
                     if file.is_file():
                         processed_ctr = self.process_file(
                             file, abs_path, data_store, processed_ctr, import_summary
@@ -185,6 +187,10 @@ class FileProcessor:
         # file may have full path, therefore extract basename and split it
         basename = os.path.basename(file_object)
         filename, file_extension = os.path.splitext(basename)
+
+        if basename == ".DS_Store":
+            return processed_ctr
+
         # make copy of list of importers
         good_importers = self.importers.copy()
 
@@ -221,7 +227,13 @@ class FileProcessor:
             highlighted_file = HighlightedFile(full_path)
 
             # Get the file contents, for the final check
-            file_contents = self.get_file_contents(full_path)
+            try:
+                file_contents = self.get_file_contents(full_path)
+            except Exception:
+                # Can't get the file contents - eg. because it's not a proper
+                # unicode text file (This can occur for binary files in the same folders)
+                # So skip the file
+                return processed_ctr
 
             # lastly the contents
             tmp_importers = good_importers.copy()
@@ -249,8 +261,18 @@ class FileProcessor:
                 if importer.default_privacy:
                     privacy = importer.default_privacy
                     break
+
+            # We assume that good importers will have the same datafile-type values at the moment.
+            # That's why we can create a datafile using the first importer's datafile_type.
+            # They don't have different datafile-type values, but if necessary, we might iterate over
+            # good importers and find a composite datafile-type.
             datafile = data_store.get_datafile(
-                basename, file_extension, file_size, file_hash, change.change_id, privacy=privacy,
+                basename,
+                good_importers[0].datafile_type,
+                file_size,
+                file_hash,
+                change.change_id,
+                privacy=privacy,
             )
 
             # Run all parsers
@@ -265,6 +287,7 @@ class FileProcessor:
                 self.directory_path, f"{filename}_highlighted.html"
             )
 
+            print(f"Writing highlighted file for {basename}")
             highlighted_file.export(highlighted_output_path, include_key=True)
 
             # Run all validation tests
@@ -304,7 +327,8 @@ class FileProcessor:
 
                 # write extraction log to output folder
                 with open(
-                    os.path.join(self.directory_path, f"{filename}_output.log"), "w",
+                    os.path.join(self.directory_path, f"{filename}_output.log"),
+                    "w",
                 ) as file:
                     file.write("\n".join(log))
                 if self.archive is True:
@@ -317,6 +341,11 @@ class FileProcessor:
                 import_summary["succeeded"].append(summary_details)
 
             else:
+                # Delete the datafile entry, as we won't be importing any entries
+                # linked to it, because we had errors
+                data_store.session.delete(datafile)
+                data_store.session.commit()
+
                 failure_report_filename = os.path.join(
                     self.directory_path, f"{filename}_errors.log"
                 )
@@ -382,7 +411,7 @@ class FileProcessor:
         :type path: String
         """
         if os.path.exists(path):
-            for file in os.scandir(path):
+            for file in sort_files(os.scandir(path)):
                 # import file using its name and full path
                 if file.is_file():
                     classes = import_module_(file)
@@ -411,9 +440,6 @@ class FileProcessor:
 
     @staticmethod
     def get_file_contents(full_path: str):
-        try:
-            with open(full_path, "r", encoding="windows-1252") as file:
-                lines = file.read().split("\n")
-            return lines
-        except UnicodeDecodeError:
-            return None
+        with open(full_path, "r", encoding="windows-1252") as file:
+            lines = file.read().split("\n")
+        return lines

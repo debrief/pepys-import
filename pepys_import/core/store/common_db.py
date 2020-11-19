@@ -1,3 +1,5 @@
+from prompt_toolkit import prompt
+from prompt_toolkit.validation import Validator
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -8,11 +10,10 @@ from tqdm import tqdm
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
-from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
-from pepys_import.utils.data_store_utils import shorten_uuid
+from pepys_import.utils.data_store_utils import chunked_list, shorten_uuid
 from pepys_import.utils.import_utils import import_validators
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
@@ -124,35 +125,6 @@ class SensorMixin:
 
         return None
 
-    @classmethod
-    def add_to_sensors(
-        cls, data_store, name, sensor_type, host, privacy_id, change_id, host_id=None
-    ):
-        session = data_store.session
-        sensor_type = data_store.search_sensor_type(sensor_type)
-        # Temporary fix for #399, until #362 is fixed
-        # This allows us to pass a host_id to this function. If it's passed, then
-        # we use this ID for the platform that hosts this sensor. If it isn't
-        # passed, then we look up the host_id from the name given in the `host` argument
-        # (If you pass `host_id` then just set `host` to None)
-        if host_id is None:
-            host = data_store.db_classes.Platform().search_platform(data_store, host)
-            host_id = host.platform_id
-
-        sensor_obj = data_store.db_classes.Sensor(
-            name=name,
-            sensor_type_id=sensor_type.sensor_type_id,
-            privacy_id=privacy_id,
-            host=host_id,
-        )
-        session.add(sensor_obj)
-        session.flush()
-
-        data_store.add_to_logs(
-            table=constants.SENSOR, row_id=sensor_obj.sensor_id, change_id=change_id
-        )
-        return sensor_obj
-
 
 class PlatformMixin:
     @declared_attr
@@ -183,14 +155,13 @@ class PlatformMixin:
     def privacy_name(self):
         return association_proxy("privacy", "name")
 
-    @classmethod
-    def search_platform(cls, data_store, name):
-        # search for any platform with this name
-        Platform = data_store.db_classes.Platform
-        return data_store.session.query(Platform).filter(Platform.name == name).first()
-
     def get_sensor(
-        self, data_store, sensor_name=None, sensor_type=None, privacy=None, change_id=None,
+        self,
+        data_store,
+        sensor_name=None,
+        sensor_type=None,
+        privacy=None,
+        change_id=None,
     ):
         """
          Lookup or create a sensor of this name for this :class:`Platform`.
@@ -226,7 +197,11 @@ class PlatformMixin:
             if isinstance(resolved_data, Sensor):
                 return resolved_data
             elif len(resolved_data) == 3:
-                (sensor_name, sensor_type_obj, privacy_obj,) = resolved_data
+                (
+                    sensor_name,
+                    sensor_type_obj,
+                    privacy_obj,
+                ) = resolved_data
 
         assert isinstance(
             sensor_type_obj, data_store.db_classes.SensorType
@@ -235,13 +210,14 @@ class PlatformMixin:
             privacy_obj, data_store.db_classes.Privacy
         ), "Type error for Privacy entity"
 
-        return Sensor().add_to_sensors(
-            data_store=data_store,
+        return data_store.add_to_sensors(
             name=sensor_name,
             sensor_type=sensor_type_obj.name,
-            host=None,
+            host_name=None,
+            host_nationality=None,
+            host_identifier=None,
             host_id=self.platform_id,
-            privacy_id=privacy_obj.privacy_id,
+            privacy=privacy_obj.name,
             change_id=change_id,
         )
 
@@ -366,7 +342,13 @@ class DatafileMixin:
         return contact
 
     def create_comment(
-        self, data_store, platform, timestamp, comment, comment_type, parser_name,
+        self,
+        data_store,
+        platform,
+        timestamp,
+        comment,
+        comment_type,
+        parser_name,
     ):
         """Creates a new Comment object to record textual information logged by a particular
         platform at a specific time.
@@ -400,15 +382,75 @@ class DatafileMixin:
         self.add_measurement_to_dict(comment, parser_name)
         return comment
 
-    def add_measurement_to_dict(self, measurement, parser_name):
-        # Cache objects according to their platform
-        if measurement.platform_name not in self.measurements[parser_name]:
-            self.measurements[parser_name][measurement.platform_name] = list()
+    def create_geometry(self, data_store, geom, geom_type_id, geom_sub_type_id, parser_name):
+        geometry = data_store.db_classes.Geometry1(
+            geometry=geom,
+            source_id=self.datafile_id,
+            geo_type_id=geom_type_id,
+            geo_sub_type_id=geom_sub_type_id,
+        )
+        self.add_measurement_to_dict(geometry, parser_name)
+        return geometry
 
-        self.measurements[parser_name][measurement.platform_name].append(measurement)
+    def create_activation(self, data_store, sensor, start, end, parser_name):
+        activation = data_store.db_classes.Activation(
+            sensor_id=sensor.sensor_id,
+            start=start,
+            end=end,
+            source_id=self.datafile_id,
+        )
+        self.add_measurement_to_dict(activation, parser_name)
+        return activation
+
+    def add_measurement_to_dict(self, measurement, parser_name):
+        try:
+            platform_id = measurement.platform_id
+        except AttributeError:
+            # Platform ID doesn't exist for Geometry1 objects, so
+            # use a platform of 'N/A'
+            platform_id = "N/A"
+
+        # Cache objects according to their platform
+        if platform_id not in self.measurements[parser_name]:
+            self.measurements[parser_name][platform_id] = list()
+
+        self.measurements[parser_name][platform_id].append(measurement)
+
+    def _input_validator(self):
+        def is_valid(option):
+            return option == str(1) or option == str(2)
+
+        validator = Validator.from_callable(
+            is_valid,
+            error_message="You didn't select a valid option",
+            move_cursor_to_end=True,
+        )
+        return validator
+
+    def _ask_user_what_they_want(self, error, ask_skipping_validator, skip_validator):
+        validator = self._input_validator()
+        input_text = f"\n\nError! Message: {error}\n.Would you like to\n"
+        choices = (
+            "Skip enhanced validator for this file",
+            "Carry on running the validator, logging errors",
+        )
+        for index, choice in enumerate(choices, 1):
+            input_text += f"   {str(index)}) {choice}\n"
+        choice = prompt(input_text, validator=validator)
+        delete = False
+        if choice == "1":
+            ask_skipping_validator = False
+            skip_validator = True
+            delete = True
+        elif choice == "2":
+            ask_skipping_validator = False
+        return ask_skipping_validator, skip_validator, delete
 
     def validate(
-        self, validation_level=validation_constants.NONE_LEVEL, errors=None, parser="Default",
+        self,
+        validation_level=validation_constants.NONE_LEVEL,
+        errors=None,
+        parser="Default",
     ):
         # If there is no parsing error, it will return None. If that's the case,
         # create a new list for validation errors.
@@ -437,6 +479,8 @@ class DatafileMixin:
                 return (True, failed_validators)
             return (False, failed_validators)
         elif validation_level == validation_constants.ENHANCED_LEVEL:
+            ask_skipping_validator = True
+            skip_validator = False
             # Create validator objects here, so we're only creating them once
             bv = BasicValidator(parser)
             ev = EnhancedValidator()
@@ -457,11 +501,35 @@ class DatafileMixin:
                         prev_object = prev_object_dict[curr_object.platform_name]
 
                     # Run the enhanced validators (standard one, plus configured local ones)
-                    if not ev.validate(curr_object, errors, parser, prev_object):
-                        failed_validators.append(ev.name)
-                    for local_ev in local_ev_objects:
-                        if not local_ev.validate(curr_object, errors, parser, prev_object):
+                    if not skip_validator:
+                        if not ev.validate(curr_object, errors, parser, prev_object):
                             failed_validators.append(ev.name)
+                            if ask_skipping_validator:
+                                (
+                                    ask_skipping_validator,
+                                    skip_validator,
+                                    delete,
+                                ) = self._ask_user_what_they_want(
+                                    errors[-1], ask_skipping_validator, skip_validator
+                                )
+                                if delete:
+                                    del errors[-1]
+                        for local_ev in local_ev_objects:
+                            if not local_ev.validate(curr_object, errors, parser, prev_object):
+                                failed_validators.append(ev.name)
+                                if ask_skipping_validator:
+                                    (
+                                        ask_skipping_validator,
+                                        skip_validator,
+                                        delete,
+                                    ) = self._ask_user_what_they_want(
+                                        errors[-1],
+                                        ask_skipping_validator,
+                                        skip_validator,
+                                    )
+                                    if delete:
+                                        del errors[-1]
+
                     prev_object_dict[curr_object.platform_name] = curr_object
 
             if not errors:
@@ -476,19 +544,31 @@ class DatafileMixin:
         extraction_log = list()
         for parser in self.measurements:
             total_objects = 0
+            print(f"Submitting measurements extracted by {parser}.")
             for platform, objects in self.measurements[parser].items():
                 total_objects += len(objects)
-                print(f"Submitting measurements extracted by {parser}.")
-                # Bulk save table objects; state, etc.
-                data_store.session.bulk_save_objects(objects, return_defaults=True)
-                # Log saved objects
-                data_store.session.bulk_insert_mappings(
-                    data_store.db_classes.Log,
-                    [
-                        dict(table=t.__tablename__, id=inspect(t).identity[0], change_id=change_id)
-                        for t in objects
-                    ],
-                )
+
+                # Split the list of objects to submit to the database into chunks
+                # of 1000 objects each and submit in those chunks
+                # This is because bulk_save_objects has no progress bar, so to get
+                # a proper progress bar for submitting we need to chunk them
+                # (making it a bit less efficient, but giving the user more
+                # insight into the process)
+                for chunk_objects in tqdm(chunked_list(objects, size=1000)):
+                    # Bulk save table objects; state, etc.
+                    data_store.session.bulk_save_objects(chunk_objects, return_defaults=True)
+                    # Log saved objects
+                    data_store.session.bulk_insert_mappings(
+                        data_store.db_classes.Log,
+                        [
+                            dict(
+                                table=t.__tablename__,
+                                id=inspect(t).identity[0],
+                                change_id=change_id,
+                            )
+                            for t in chunk_objects
+                        ],
+                    )
 
             extraction_log.append(f"{total_objects} measurements extracted by {parser}.")
         return extraction_log
@@ -533,6 +613,14 @@ class StateMixin:
     @declared_attr
     def sensor_name(self):
         return association_proxy("sensor", "name")
+
+    @declared_attr
+    def sensor_host(self):
+        return association_proxy("sensor", "host")
+
+    @declared_attr
+    def platform_id(self):
+        return association_proxy("sensor", "host")
 
     @declared_attr
     def source(self):
@@ -669,6 +757,14 @@ class ContactMixin:
     @declared_attr
     def sensor_name(self):
         return association_proxy("sensor", "name")
+
+    @declared_attr
+    def sensor_host(self):
+        return association_proxy("sensor", "host")
+
+    @declared_attr
+    def platform_id(self):
+        return association_proxy("sensor", "host")
 
     @declared_attr
     def subject(self):
@@ -1107,6 +1203,10 @@ class CommentMixin:
         return association_proxy("platform", "name")
 
     @declared_attr
+    def platform_id(self):
+        return association_proxy("platform", "platform_id")
+
+    @declared_attr
     def comment_type(self):
         return relationship(
             "CommentType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
@@ -1134,9 +1234,30 @@ class CommentMixin:
 
 
 class GeometryMixin:
+    @hybrid_property
+    def geometry(self):
+        return self._geometry
+
+    @geometry.setter
+    def geometry(self, geom):
+        if geom is None:
+            self._geometry = None
+            return
+
+        # If we're given a Location object then convert it to WKT and set it
+        # otherwise just pass through whatever we've been given
+        if isinstance(geom, Location):
+            self._geometry = geom.to_wkt()
+        else:
+            self._geometry = geom
+
+    @geometry.expression
+    def geometry(self):
+        return self._geometry
+
     @declared_attr
     def task(self):
-        return relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Task", lazy="joined", join_depth=1, uselist=False)
 
     # @declared_attr
     # def task_name(self):
@@ -1148,7 +1269,6 @@ class GeometryMixin:
             "Platform",
             lazy="joined",
             join_depth=1,
-            innerjoin=True,
             uselist=False,
             foreign_keys="Geometry1.subject_platform_id",
         )
@@ -1163,7 +1283,6 @@ class GeometryMixin:
             "Platform",
             lazy="joined",
             join_depth=1,
-            innerjoin=True,
             uselist=False,
             foreign_keys="Geometry1.sensor_platform_id",
         )
@@ -1240,6 +1359,10 @@ class MediaMixin:
     @declared_attr
     def platform_name(self):
         return association_proxy("platform", "name")
+
+    @declared_attr
+    def platform_id(self):
+        return association_proxy("platform", "platform_id")
 
     @declared_attr
     def subject(self):

@@ -4,7 +4,7 @@ import pytest
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
-from tests.benchmarks.benchmark_utils import running_on_travis
+from tests.benchmarks.benchmark_utils import running_on_ci
 
 FILE_DIR = os.path.dirname(__file__)
 
@@ -27,9 +27,9 @@ def test_single_rep_file_import_short(benchmark):
         file_path=os.path.join(FILE_DIR, "benchmark_data/rep_test1.rep"),
     )
 
-    TIME_THRESHOLD = 0.4
+    TIME_THRESHOLD = 0.45
 
-    if running_on_travis():
+    if running_on_ci():
         if benchmark.stats.stats.mean > TIME_THRESHOLD:
             pytest.fail(
                 f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of {TIME_THRESHOLD}s"
@@ -43,15 +43,18 @@ def test_single_rep_file_import_long(benchmark):
 
     benchmark.pedantic(
         run_import,
-        args=(processor, os.path.join(FILE_DIR, "benchmark_data/bulk_data.rep"),),
+        args=(
+            processor,
+            os.path.join(FILE_DIR, "benchmark_data/bulk_data.rep"),
+        ),
         iterations=1,
         rounds=1,
     )
 
-    TIME_THRESHOLD = 40
+    TIME_THRESHOLD = 60
 
-    if running_on_travis():
+    if running_on_ci():
         if benchmark.stats.stats.mean > TIME_THRESHOLD:
             pytest.fail(
-                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of {TIME_TRESHOLD}s"
+                f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of {TIME_THRESHOLD}s"
             )

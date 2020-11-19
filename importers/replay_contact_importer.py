@@ -17,6 +17,7 @@ class ReplayContactImporter(Importer):
             name="Replay Contact Importer",
             validation_level=constants.ENHANCED_LEVEL,
             short_name="REP Contact Importer",
+            datafile_type="Replay",
         )
         self.text_label = None
         self.depth = 0.0
@@ -166,7 +167,10 @@ class ReplayContactImporter(Importer):
                     return
 
                 combine_tokens(
-                    lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token,
+                    lat_degrees_token,
+                    lat_mins_token,
+                    lat_secs_token,
+                    lat_hemi_token,
                 ).record(self.name, "latitude", loc, "DMS")
 
                 if not loc.set_longitude_dms(
@@ -181,17 +185,22 @@ class ReplayContactImporter(Importer):
                     return
 
                 combine_tokens(
-                    long_degrees_token, long_mins_token, long_secs_token, long_hemi_token,
+                    long_degrees_token,
+                    long_mins_token,
+                    long_secs_token,
+                    long_hemi_token,
                 ).record(self.name, "longitude", loc, "DMS")
 
                 location = loc
 
-            platform = data_store.get_platform(
-                platform_name=vessel_name_token.text, change_id=change_id,
+            platform = self.get_cached_platform(
+                data_store, platform_name=vessel_name_token.text, change_id=change_id
             )
             vessel_name_token.record(self.name, "vessel name", vessel_name_token.text)
             sensor = platform.get_sensor(
-                data_store=data_store, sensor_name=sensor_name.text, change_id=change_id,
+                data_store=data_store,
+                sensor_name=sensor_name.text,
+                change_id=change_id,
             )
 
             timestamp = parse_timestamp(date_token.text, time_token.text)
@@ -218,7 +227,11 @@ class ReplayContactImporter(Importer):
 
             if range_token.text.upper() != "NULL":
                 range_valid, range_val = convert_distance(
-                    range_token.text, unit_registry.yard, line, self.errors, self.error_type,
+                    range_token.text,
+                    unit_registry.yard,
+                    line,
+                    self.errors,
+                    self.error_type,
                 )
                 if range_valid:
                     range_token.record(self.name, "range", range_val)
@@ -227,7 +240,11 @@ class ReplayContactImporter(Importer):
             if freq_token is not None:
                 if freq_token.text.upper() != "NULL":
                     freq_valid, freq_val = convert_frequency(
-                        freq_token.text, unit_registry.hertz, line, self.errors, self.error_type,
+                        freq_token.text,
+                        unit_registry.hertz,
+                        line,
+                        self.errors,
+                        self.error_type,
                     )
                     if freq_valid:
                         freq_token.record(self.name, "frequency", freq_val)

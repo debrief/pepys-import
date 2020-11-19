@@ -14,7 +14,7 @@ DIRECTORY_PATH = os.path.dirname(FILE_PATH)
 DEFAULT_DATABASE = ":memory:"
 
 
-def main():
+def main():  # pragma: no cover
     # Parse arguments
     parser = argparse.ArgumentParser()
     path_help = "The path to import data from (The default value is the directory of the script)"
@@ -30,7 +30,11 @@ def main():
     )
     parser.add_argument("--path", help=path_help, required=False, default=DIRECTORY_PATH)
     parser.add_argument(
-        "--archive", dest="archive", help=archive_help, action="store_true", default=False,
+        "--archive",
+        dest="archive",
+        help=archive_help,
+        action="store_true",
+        default=False,
     )
     parser.add_argument("--db", help=db_help, required=False, default=None)
     parser.add_argument("--resolver", help=resolver_help, required=False, default="command-line")

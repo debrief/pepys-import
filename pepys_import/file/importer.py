@@ -3,14 +3,17 @@ from abc import ABC, abstractmethod
 
 from tqdm import tqdm
 
+CANCEL_IMPORT = "CANCEL"
+
 
 class Importer(ABC):
-    def __init__(self, name, validation_level, short_name, default_privacy=None):
+    def __init__(self, name, validation_level, short_name, datafile_type, default_privacy=None):
         super().__init__()
         self.name = name
         self.validation_level = validation_level
         self.short_name = short_name
         self.default_privacy = default_privacy
+        self.datafile_type = datafile_type
         self.errors = None
         self.error_type = None
 
@@ -93,6 +96,10 @@ class Importer(ABC):
         # so that we get a separate mapping for each file that we process
         self.platform_sensor_mapping = {}
 
+        # Initialise the platform cache here
+        # so we get a separate cache for each file we process
+        self.platform_cache = {}
+
         # If we've turned off recording of extractions for this importer
         # then add this to the list of ignored importers for this HighlightedFile
         # object
@@ -120,7 +127,10 @@ class Importer(ABC):
         :type change_id: integer or UUID
         """
         for line_number, line in enumerate(tqdm(file_object.lines()), 1):
-            self._load_this_line(data_store, line_number, line, datafile, change_id)
+            result = self._load_this_line(data_store, line_number, line, datafile, change_id)
+            if result == CANCEL_IMPORT:
+                print(f"Error in file caused cancellation of import of {path}")
+                break
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
         """Process a line from this data-file
@@ -192,3 +202,22 @@ class Importer(ABC):
             )
 
         return resolved_sensor
+
+    def get_cached_platform(self, data_store, platform_name, change_id):
+        if platform_name:
+            # Look for this name in the cache first
+            platform_from_cache = self.platform_cache.get(platform_name)
+            if platform_from_cache is not None:
+                return platform_from_cache
+
+        # Otherwise use the resolver to find it
+        resolved_platform = data_store.get_platform(
+            platform_name=platform_name, change_id=change_id
+        )
+
+        # Put in the cache
+        data_store.session.expunge(resolved_platform)
+        # And store it in the cache for next time
+        self.platform_cache[platform_name] = resolved_platform
+
+        return resolved_platform

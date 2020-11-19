@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from geoalchemy2 import Geometry
-from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
@@ -10,7 +10,7 @@ from sqlalchemy.orm import (  # used to defer fetching attributes unless it's sp
     deferred,
     relationship,
 )
-from sqlalchemy.sql.schema import UniqueConstraint
+from sqlalchemy.sql.schema import CheckConstraint, UniqueConstraint
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
@@ -66,7 +66,9 @@ class Sensor(BaseSpatiaLite, SensorMixin):
     table_type_id = 2
 
     sensor_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(
+        String(150), CheckConstraint("name <> ''", name="ck_Sensors_name"), nullable=False
+    )
     sensor_type_id = Column(
         UUIDType, ForeignKey("SensorTypes.sensor_type_id", onupdate="cascade"), nullable=False
     )
@@ -85,8 +87,16 @@ class Platform(BaseSpatiaLite, PlatformMixin):
     table_type_id = 3
 
     platform_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
-    identifier = deferred(Column(String(10), nullable=False))
+    name = Column(
+        String(150), CheckConstraint("name <> ''", name="ck_Platforms_name"), nullable=False
+    )
+    identifier = deferred(
+        Column(
+            String(10),
+            CheckConstraint("identifier <> ''", name="ck_Platforms_identifier"),
+            nullable=False,
+        )
+    )
     trigraph = deferred(Column(String(3)))
     quadgraph = deferred(Column(String(4)))
     nationality_id = Column(
@@ -113,7 +123,7 @@ class Task(BaseSpatiaLite, TaskMixin):
     table_type_id = 4
 
     task_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150), CheckConstraint("name <> ''", name="ck_Tasks_name"), nullable=False)
     parent_id = Column(UUIDType, ForeignKey("Tasks.task_id", onupdate="cascade"), nullable=False)
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
@@ -164,7 +174,9 @@ class Datafile(BaseSpatiaLite, DatafileMixin):
     reference = Column(String(150))
     url = Column(String(150))
     size = deferred(Column(Integer, nullable=False))
-    hash = deferred(Column(String(32), nullable=False))
+    hash = deferred(
+        Column(String(32), CheckConstraint("hash <> ''", name="ck_Datafiles_hash"), nullable=False)
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
     __table_args__ = (UniqueConstraint("size", "hash", name="uq_Datafile_size_hash"),)
@@ -176,9 +188,13 @@ class Synonym(BaseSpatiaLite, SynonymMixin):
     table_type_id = 7
 
     synonym_id = Column(UUIDType, primary_key=True, default=uuid4)
-    table = Column(String(150), nullable=False)
+    table = Column(
+        String(150), CheckConstraint("\"table\" <> ''", name="ck_Synonyms_table"), nullable=False
+    )
     entity = Column(UUIDType, nullable=False)
-    synonym = Column(String(150), nullable=False)
+    synonym = Column(
+        String(150), CheckConstraint("synonym <> ''", name="ck_Synonyms_synonym"), nullable=False
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -188,9 +204,13 @@ class Change(BaseSpatiaLite):
     table_type_id = 8
 
     change_id = Column(UUIDType, primary_key=True, default=uuid4)
-    user = Column(String(150), nullable=False)
+    user = Column(
+        String(150), CheckConstraint("user <> ''", name="ck_Changes_user"), nullable=False
+    )
     modified = Column(DATE, nullable=False)
-    reason = Column(String(500), nullable=False)
+    reason = Column(
+        String(500), CheckConstraint("reason <> ''", name="ck_Changes_reason"), nullable=False
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -200,7 +220,9 @@ class Log(BaseSpatiaLite, LogMixin):
     table_type_id = 9
 
     log_id = Column(UUIDType, primary_key=True, default=uuid4)
-    table = Column(String(150), nullable=False)
+    table = Column(
+        String(150), CheckConstraint("\"table\" <> ''", name="ck_Logs_table"), nullable=False
+    )
     id = Column(UUIDType, nullable=False)
     field = Column(String(150))
     new_value = Column(String(150))
@@ -253,7 +275,12 @@ class PlatformType(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 13
 
     platform_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_PlatformTypes_name"),
+        nullable=False,
+        unique=True,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -263,7 +290,12 @@ class Nationality(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 14
 
     nationality_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_Nationalities_name"),
+        nullable=False,
+        unique=True,
+    )
     priority = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -274,7 +306,12 @@ class GeometryType(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 15
 
     geo_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_GeometryTypes_name"),
+        nullable=False,
+        unique=True,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -284,13 +321,15 @@ class GeometrySubType(BaseSpatiaLite):
     table_type_id = 16
 
     geo_sub_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(
+        String(150), CheckConstraint("name <> ''", name="ck_GeometrySubTypes_name"), nullable=False
+    )
     parent = Column(
         UUIDType, ForeignKey("GeometryTypes.geo_type_id", onupdate="cascade"), nullable=False
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    __table_args__ = (UniqueConstraint("name", "parent", name="uq_GeometrySubType_name_parent"),)
+    __table_args__ = (UniqueConstraint("name", "parent", name="uq_GeometrySubTypes_name_parent"),)
 
 
 class User(BaseSpatiaLite, ReferenceRepr):
@@ -299,7 +338,12 @@ class User(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 17
 
     user_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_Users_name"),
+        nullable=False,
+        unique=True,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -309,7 +353,12 @@ class UnitType(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 18
 
     unit_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_UnitTypes_name"),
+        nullable=False,
+        unique=True,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -319,7 +368,12 @@ class ClassificationType(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 19
 
     class_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_ClassificationTypes_name"),
+        nullable=False,
+        unique=True,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -329,7 +383,12 @@ class ContactType(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 20
 
     contact_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_ContactTypes_name"),
+        nullable=False,
+        unique=True,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -339,7 +398,12 @@ class SensorType(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 21
 
     sensor_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_SensorTypes_name"),
+        nullable=False,
+        unique=True,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -349,7 +413,12 @@ class Privacy(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 22
 
     privacy_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_Privacies_name"),
+        nullable=False,
+        unique=True,
+    )
     level = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -360,7 +429,12 @@ class DatafileType(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 23
 
     datafile_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_DatafileTypes_name"),
+        nullable=False,
+        unique=True,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -370,7 +444,12 @@ class MediaType(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 24
 
     media_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_MediaTypes_name"),
+        nullable=False,
+        unique=True,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -380,7 +459,12 @@ class CommentType(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 25
 
     comment_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_CommentTypes_name"),
+        nullable=False,
+        unique=True,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -390,7 +474,12 @@ class CommodityType(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 26
 
     commodity_type_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_CommodityTypes_name"),
+        nullable=False,
+        unique=True,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -400,7 +489,12 @@ class ConfidenceLevel(BaseSpatiaLite, ReferenceRepr):
     table_type_id = 27
 
     confidence_level_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False, unique=True)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_ConfidenceLevels_name"),
+        nullable=False,
+        unique=True,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -426,6 +520,7 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
     @declared_attr
@@ -474,11 +569,13 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     contact_type = deferred(Column(UUIDType, ForeignKey("ContactTypes.contact_type_id")))
     _mla = deferred(Column("mla", REAL))
     _soa = deferred(Column("soa", REAL))
+    track_number = Column(String(20))
     subject_id = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"))
     source_id = Column(
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    remarks = Column(Text)
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
     @declared_attr
@@ -505,12 +602,12 @@ class Activation(BaseSpatiaLite, ActivationMixin):
     table_type_id = 30
 
     activation_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), nullable=False)
+    name = Column(String(150))
     sensor_id = Column(
         UUIDType, ForeignKey("Sensors.sensor_id", onupdate="cascade"), nullable=False
     )
-    start = deferred(Column(TIMESTAMP, nullable=False))
-    end = deferred(Column(TIMESTAMP, nullable=False))
+    start = deferred(Column(TIMESTAMP))
+    end = deferred(Column(TIMESTAMP))
     _min_range = deferred(Column("min_range", REAL))
     _max_range = deferred(Column("max_range", REAL))
     _left_arc = deferred(Column("left_arc", REAL))
@@ -519,6 +616,7 @@ class Activation(BaseSpatiaLite, ActivationMixin):
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -539,7 +637,7 @@ class LogsHolding(BaseSpatiaLite, LogsHoldingMixin):
     platform_id = Column(
         UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"), nullable=False
     )
-    comment = Column(String(150), nullable=False)
+    comment = Column(Text(), nullable=False)
     source_id = Column(
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
@@ -562,7 +660,9 @@ class Comment(BaseSpatiaLite, CommentMixin):
     comment_type_id = Column(
         UUIDType, ForeignKey("CommentTypes.comment_type_id", onupdate="cascade"), nullable=False
     )
-    content = Column(String(150), nullable=False)
+    content = Column(
+        Text, CheckConstraint("content <> ''", name="ck_Comments_content"), nullable=False
+    )
     source_id = Column(
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
@@ -576,8 +676,12 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
     table_type_id = 33
 
     geometry_id = Column(UUIDType, primary_key=True, default=uuid4)
-    geometry = deferred(Column(Geometry(geometry_type="GEOMETRY", management=True), nullable=False))
-    name = Column(String(150), nullable=False)
+    _geometry = Column(
+        "geometry",
+        Geometry(geometry_type="GEOMETRY", srid=4326, management=True),
+        nullable=False,
+    )
+    name = Column(String(150))
     geo_type_id = Column(
         UUIDType, ForeignKey("GeometryTypes.geo_type_id", onupdate="cascade"), nullable=False
     )
@@ -593,6 +697,7 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -613,9 +718,12 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
     media_type_id = Column(
         UUIDType, ForeignKey("MediaTypes.media_type_id", onupdate="cascade"), nullable=False
     )
-    url = deferred(Column(String(150), nullable=False))
+    url = deferred(
+        Column(String(150), CheckConstraint("url <> ''", name="ck_Media_url"), nullable=False)
+    )
     source_id = Column(
         UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)

@@ -10,7 +10,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 
 FILE_PATH = os.path.dirname(__file__)
-DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/gpx")
+DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/gpx/gpx_1_1.gpx")
 
 
 def test_gpx_timezone_sqlite():
@@ -38,7 +38,11 @@ class TestGPXTimezonePostgres(unittest.TestCase):
 
         try:
             self.postgres = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -82,7 +86,11 @@ class TestTimesEqualDifferentDBs(unittest.TestCase):
 
         try:
             self.postgres = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")

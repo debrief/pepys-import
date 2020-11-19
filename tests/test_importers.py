@@ -1,4 +1,5 @@
 import os
+import platform
 import shutil
 import stat
 import unittest
@@ -8,12 +9,16 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from importers.nmea_importer import NMEAImporter
 from importers.replay_importer import ReplayImporter
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.file.importer import Importer
+from pepys_import.resolvers.command_line_resolver import CommandLineResolver
+from pepys_import.utils.import_utils import sort_files
 
 FILE_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
@@ -22,6 +27,7 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 OUTPUT_PATH = os.path.join(DATA_PATH, "output_test")
 
 REP_DATA_PATH = os.path.join(DATA_PATH, "track_files", "rep_data")
+SINGLE_REP_FILE = os.path.join(DATA_PATH, "track_files", "rep_data", "rep_test1.rep")
 
 
 class SampleImporterTests(unittest.TestCase):
@@ -54,7 +60,8 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, False)
 
-    def test_process_folders_descending(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_process_folders_descending(self, patched_prompt):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("descending.db", archive=False)
 
@@ -71,7 +78,8 @@ class SampleImporterTests(unittest.TestCase):
         # now good one
         processor.process(DATA_PATH, None, True)
 
-    def test_process_folders_descending_in_memory(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_process_folders_descending_in_memory(self, patched_prompt):
         """Test whether :memory: is used when no filename is given"""
         processor = FileProcessor(archive=False)
 
@@ -110,8 +118,9 @@ class SampleImporterTests(unittest.TestCase):
 
         self.assertIn("Files got processed: 0 times", output)
 
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
     @patch("pepys_import.file.file_processor.ARCHIVE_PATH", OUTPUT_PATH)
-    def test_archiving_files(self):
+    def test_archiving_files(self, patched_prompt):
         """Test whether archive flag correctly works for File Processor"""
         # Assert that REP files exist in the original location
         input_files = os.listdir(REP_DATA_PATH)
@@ -136,13 +145,15 @@ class SampleImporterTests(unittest.TestCase):
         assert os.path.exists(moved_files_path) is True
 
         # Scan the files in sources folder
-        for f in os.scandir(moved_files_path):
+        for f in sort_files(os.scandir(moved_files_path)):
             # Append the name of the file to test it later on
             names.append(f.name)
             # Assert that the moved file is read-only
             # Convert file permission to octal and keep only the last three bits
-            file_mode = oct(os.stat(f.path).st_mode & 0o777)
-            assert file_mode == oct(stat.S_IREAD)
+            if platform.system() != "Windows":
+                # Can only check file mode properly on Unix systems
+                file_mode = oct(os.stat(f.path).st_mode & 0o777)
+                assert file_mode == oct(stat.S_IREAD)
             # Move files back
             source_path = os.path.join(REP_DATA_PATH, f.name)
             shutil.move(f.path, source_path)
@@ -175,7 +186,8 @@ class ImporterSummaryTest(unittest.TestCase):
         if os.path.exists(descending_file):
             os.remove(descending_file)
 
-    def test_summary_no_archive(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_summary_no_archive(self, patched_prompt):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("import_status_test.db", archive=False)
 
@@ -246,8 +258,9 @@ class ImporterSummaryTest(unittest.TestCase):
         # Check there's nothing left in the dict
         assert len(failed_files) == 0
 
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
     @patch("pepys_import.file.file_processor.ARCHIVE_PATH", OUTPUT_PATH)
-    def test_summary_with_archive(self):
+    def test_summary_with_archive(self, patched_prompt):
         """Test whether descending processing works for the given path"""
         processor = FileProcessor("import_status_test2.db", archive=True)
 
@@ -324,7 +337,7 @@ class ImporterSummaryTest(unittest.TestCase):
         assert os.path.exists(moved_files_path) is True
 
         # Scan the files in sources folder
-        for f in os.scandir(moved_files_path):
+        for f in sort_files(os.scandir(moved_files_path)):
             # Move files back
             source_path = os.path.join(REP_DATA_PATH, f.name)
             shutil.move(f.path, source_path)
@@ -357,7 +370,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter("", "", ""))
+        processor.register_importer(TestImporter("", "", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -389,7 +402,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter("", "", ""))
+        processor.register_importer(TestImporter("", "", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -421,7 +434,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter("", "", ""))
+        processor.register_importer(TestImporter("", "", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -453,7 +466,7 @@ class ImporterRemoveTestCase(unittest.TestCase):
 
         processor = FileProcessor()
 
-        processor.register_importer(TestImporter("", "", ""))
+        processor.register_importer(TestImporter("", "", "", ""))
         self.assertEqual(len(processor.importers), 1)
         self.assertEqual(type(processor.importers[0]), TestImporter)
 
@@ -465,6 +478,39 @@ class ImporterRemoveTestCase(unittest.TestCase):
         self.assertIn("Files got processed: 0 times", output)
 
 
+class ImporterInvalidValidationLevelTest(unittest.TestCase):
+    def test_invalid_validation_level(self):
+        class TestImporter(Importer):
+            def __init__(self):
+                super().__init__(
+                    name="Test Importer",
+                    validation_level="invalid level",
+                    short_name="Test Importer",
+                    datafile_type="Importer",
+                )
+
+            def can_load_this_header(self, header) -> bool:
+                return True
+
+            def can_load_this_filename(self, filename):
+                return True
+
+            def can_load_this_type(self, suffix):
+                return True
+
+            def can_load_this_file(self, file_contents):
+                return True
+
+            def _load_this_file(self, data_store, path, file_object, datafile, change_id):
+                pass
+
+        with pytest.raises(ValueError, match="Invalid Validation Level"):
+            processor = FileProcessor()
+
+            processor.register_importer(TestImporter())
+            processor.process(DATA_PATH, None, False)
+
+
 class ImporterDisableRecordingTest(unittest.TestCase):
     def test_turn_off_recording(self):
         class TestImporter(Importer):
@@ -473,6 +519,7 @@ class ImporterDisableRecordingTest(unittest.TestCase):
                     name="Test Importer",
                     validation_level=validation_constants.BASIC_LEVEL,
                     short_name="Test Importer",
+                    datafile_type="Importer",
                 )
                 self.disable_recording()
 
@@ -498,12 +545,13 @@ class ImporterDisableRecordingTest(unittest.TestCase):
 
 
 class ImporterGetCachedSensorTest(unittest.TestCase):
-    def test_platform_sensor_mapping_has_sensible_values(self):
+    @patch("pepys_import.core.store.common_db.prompt", return_value="2")
+    def test_platform_sensor_mapping_has_sensible_values(self, patched_prompt):
         processor = FileProcessor(":memory:", archive=False)
 
         processor.register_importer(ReplayImporter())
 
-        processor.process(REP_DATA_PATH, None, False)
+        processor.process(SINGLE_REP_FILE, None, False)
 
         cache = processor.importers[0].platform_sensor_mapping
 
@@ -558,6 +606,53 @@ class ImporterGetCachedSensorTest(unittest.TestCase):
             assert len(replay_importer.platform_sensor_mapping) == 1
             assert sensor in replay_importer.platform_sensor_mapping.values()
 
+    def test_get_cached_sensor_specifying_sensor_name(self):
+        data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        data_store.initialise()
+
+        with data_store.session_scope():
+            replay_importer = ReplayImporter()
+            replay_importer.platform_sensor_mapping = {}
+
+            change_id = data_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+
+            platform = data_store.get_platform(
+                platform_name="TestPlatformName", change_id=change_id
+            )
+
+            # Should be nothing in the mapping to start with
+            assert len(replay_importer.platform_sensor_mapping) == 0
+
+            # Call first time - should create sensor and store in cache
+            sensor = replay_importer.get_cached_sensor(
+                data_store=data_store,
+                sensor_name=None,
+                sensor_type=None,
+                platform_id=platform.platform_id,
+                change_id=change_id,
+            )
+
+            assert sensor is not None
+
+            # Check stored in cache
+            assert len(replay_importer.platform_sensor_mapping) == 1
+            assert sensor in replay_importer.platform_sensor_mapping.values()
+
+            # Call a second time, but this time specify a name
+            sensor = replay_importer.get_cached_sensor(
+                data_store=data_store,
+                sensor_name="Test Sensor",
+                sensor_type=None,
+                platform_id=platform.platform_id,
+                change_id=change_id,
+            )
+
+            # Check name of returned sensor
+            assert sensor.name == "Test Sensor"
+
+            # Check cache still only has one sensor in it
+            assert len(replay_importer.platform_sensor_mapping) == 1
+
 
 class ReplayImporterTestCase(unittest.TestCase):
     def test_degrees_for(self):
@@ -579,6 +674,113 @@ class NMEAImporterTestCase(unittest.TestCase):
         timestamp = self.nmea_importer.parse_timestamp("010101", "010101")
         self.assertEqual(type(timestamp), datetime)
         self.assertEqual(str(timestamp), "2001-01-01 01:01:01")
+
+
+class TestImportWithDuplicatePlatformNames(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore(
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=CommandLineResolver(),
+        )
+        self.store.initialise()
+        with self.store.session_scope():
+            self.store.populate_reference()
+            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+
+    @patch("pepys_import.resolvers.command_line_input.prompt")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_import_with_duplicate_platform_names(self, resolver_prompt, menu_prompt):
+        # Provide datafile name, and approve creation of datafile
+        # Add platform with name DOLPHIN, identifier 123, trigraph and quadgraph
+        # Select UK nationality, and select platform type, privacy etc
+        # Appove creation
+        # Add sensor called TestSensor, type GPS, Public
+        # Add platform with name DOLPHIN, identifier 123, trigraph and quadgraph
+        # Select France nationality, plus platform type, privacy etc
+        # Add sensor called TestSensor, type GPS, Public
+
+        # The upshot of all of this is that we have two rows imported from this datafile
+        # both with the same name platform, but referring to two separate platforms that belong
+        # to UK and France
+        resolver_prompt.side_effect = [
+            "rep_duplicate_name_test.rep",
+            "DOLPHIN",
+            "123",
+            "DLP",
+            "DLPH",
+            "TestSensor",
+            "DOLPHIN",
+            "123",
+            "DLP",
+            "DLPH",
+            "TestSensor",
+        ]
+
+        menu_prompt.side_effect = [
+            "3",
+            "1",
+            "2",
+            "3",
+            "3",
+            "3",
+            "1",
+            "2",
+            "3",
+            "3",
+            "1",
+            "2",
+            "5",
+            "3",
+            "3",
+            "1",
+            "2",
+            "3",
+            "3",
+            "1",
+        ]
+
+        processor = FileProcessor(archive=False)
+        processor.register_importer(ReplayImporter())
+
+        processor.process(
+            os.path.join(DATA_PATH, "track_files", "other_data", "rep_duplicate_name_test.rep"),
+            self.store,
+            False,
+        )
+
+        with self.store.session_scope():
+            # Check the State entries refer to two different platforms, one that is UK and one that is France
+            states = self.store.session.query(self.store.db_classes.State).all()
+
+            assert len(states) == 2
+
+            plat1_id = states[0].platform_id
+            plat2_id = states[1].platform_id
+
+            plat1 = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.platform_id == plat1_id)
+                .all()
+            )
+
+            assert len(plat1) == 1
+            assert plat1[0].name == "DOLPHIN"
+            assert plat1[0].nationality_name == "United Kingdom"
+
+            plat2 = (
+                self.store.session.query(self.store.db_classes.Platform)
+                .filter(self.store.db_classes.Platform.platform_id == plat2_id)
+                .all()
+            )
+
+            assert len(plat2) == 1
+            assert plat2[0].name == "DOLPHIN"
+            assert plat2[0].nationality_name == "France"
 
 
 if __name__ == "__main__":

@@ -1,4 +1,6 @@
-from .color_picker import color_for, hex_color_for, mean_color_for
+from tqdm import tqdm
+
+from .color_picker import color_for, html_color_for, mean_color_for
 
 
 def export_report(filename, chars, dict_colors, include_key=False):
@@ -26,7 +28,7 @@ def export_report(filename, chars, dict_colors, include_key=False):
 
     last_hash = ""
 
-    for char in chars:
+    for char in tqdm(chars):
         letter = char.letter
         this_hash = ""
         this_message = ""
@@ -46,7 +48,7 @@ def export_report(filename, chars, dict_colors, include_key=False):
         if this_hash != "":
             # generate/retrieve a color for this hash
             new_color = mean_color_for(colors)
-            hex_color = hex_color_for(new_color)
+            hex_color = html_color_for(new_color)
 
             # are we already in hash?
             if last_hash != "":
@@ -82,7 +84,7 @@ def export_report(filename, chars, dict_colors, include_key=False):
         output_strings.append("<hr/><h3>Color Key</h3><ul>")
         for key in dict_colors:
             color = dict_colors[key]
-            hex_color = hex_color_for(color)
+            hex_color = html_color_for(color)
             output_strings.append(
                 f'<li><span style="background-color:{hex_color}">{key}</span></li>'
             )

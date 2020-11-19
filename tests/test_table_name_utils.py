@@ -4,7 +4,42 @@ import pytest
 from sqlalchemy.ext.declarative import DeclarativeMeta
 
 from pepys_import.core.store import sqlite_db
-from pepys_import.core.store.constants import *
+from pepys_import.core.store.constants import (
+    ACTIVATION,
+    CHANGE,
+    CLASSIFICATION_TYPE,
+    COMMENT,
+    COMMENT_TYPE,
+    COMMODITY_TYPE,
+    CONFIDENCE_LEVEL,
+    CONTACT,
+    CONTACT_TYPE,
+    DATAFILE,
+    DATAFILE_TYPE,
+    EXTRACTION,
+    GEOMETRY,
+    GEOMETRY_SUBTYPE,
+    GEOMETRY_TYPE,
+    HOSTED_BY,
+    LOG,
+    LOGS_HOLDING,
+    MEDIA,
+    MEDIA_TYPE,
+    NATIONALITY,
+    PARTICIPANT,
+    PLATFORM,
+    PLATFORM_TYPE,
+    PRIVACY,
+    SENSOR,
+    SENSOR_TYPE,
+    STATE,
+    SYNONYM,
+    TAG,
+    TAGGED_ITEM,
+    TASK,
+    UNIT_TYPE,
+    USER,
+)
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 TABLE_NAMES = [
@@ -46,7 +81,8 @@ TABLE_NAMES = [
 
 
 @pytest.mark.parametrize(
-    "table_name", TABLE_NAMES,
+    "table_name",
+    TABLE_NAMES,
 )
 def test_make_table_names_singular(table_name):
     table = table_name_to_class_name(table_name)
@@ -55,7 +91,8 @@ def test_make_table_names_singular(table_name):
 
 
 @pytest.mark.parametrize(
-    "table_name", ["alembic_version"],
+    "table_name",
+    ["alembic_version"],
 )
 def test_make_table_names_singular_alembic_version(table_name):
     table = table_name_to_class_name(table_name)

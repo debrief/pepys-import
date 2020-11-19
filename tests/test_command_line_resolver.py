@@ -9,7 +9,8 @@ from uuid import uuid4
 import pytest
 
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.resolvers.command_line_resolver import CommandLineResolver
+from pepys_import.resolvers.command_line_input import is_valid
+from pepys_import.resolvers.command_line_resolver import CommandLineResolver, is_number
 
 DIR_PATH = os.path.dirname(__file__)
 
@@ -18,7 +19,13 @@ class ReferenceDataTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = CommandLineResolver()
         self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
@@ -134,7 +141,11 @@ class ReferenceDataTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["1", "TYPE-TEST", "1"]
         with self.store.session_scope():
             platform_type = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.PlatformType,
+                "platform_type",
             )
             assert platform_type.__tablename__ == "PlatformTypes"
             assert platform_type.name == "TYPE-TEST"
@@ -148,7 +159,11 @@ class ReferenceDataTestCase(unittest.TestCase):
         with self.store.session_scope():
             self.store.add_to_platform_types("TYPE-TEST", self.change_id)
             platform_type = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.PlatformType,
+                "platform_type",
             )
             assert platform_type.__tablename__ == "PlatformTypes"
             assert platform_type.name == "TYPE-TEST"
@@ -166,7 +181,11 @@ class ReferenceDataTestCase(unittest.TestCase):
         with self.store.session_scope():
             self.store.add_to_privacies("TYPE-TEST", 0, self.change_id)
             platform_type = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.PlatformType,
+                "platform_type",
             )
             self.assertEqual(platform_type.name, "TYPE-TEST")
 
@@ -181,7 +200,11 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.store.add_to_platform_types("TYPE-1", self.change_id)
             self.store.add_to_platform_types("TYPE-2", self.change_id)
             platform_type = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.PlatformType,
+                "platform_type",
             )
             self.assertEqual(platform_type.name, "TYPE-1")
 
@@ -195,7 +218,11 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.store.add_to_platform_types("TYPE-1", self.change_id)
             self.store.add_to_platform_types("TYPE-2", self.change_id)
             platform_type = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.PlatformType, "platform_type",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.PlatformType,
+                "platform_type",
             )
             self.assertEqual(platform_type.name, "TYPE-1")
 
@@ -209,22 +236,38 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.store.add_to_nationalities("TR", self.change_id, priority=2)
             self.store.add_to_nationalities("AAA", self.change_id, priority=3)
             nationality = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Nationality,
+                "nationality",
             )
             assert nationality.name == "UK"
 
             nationality = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Nationality,
+                "nationality",
             )
             assert nationality.name == "FR"
 
             nationality = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Nationality,
+                "nationality",
             )
             assert nationality.name == "TR"
 
             nationality = self.resolver.resolve_reference(
-                self.store, self.change_id, "", self.store.db_classes.Nationality, "nationality",
+                self.store,
+                self.change_id,
+                "",
+                self.store.db_classes.Nationality,
+                "nationality",
             )
             assert nationality is None
 
@@ -298,7 +341,13 @@ class PlatformTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = CommandLineResolver()
         self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
@@ -309,13 +358,14 @@ class PlatformTestCase(unittest.TestCase):
         """Test whether entered platform name is added as a synonym or not"""
 
         # Search "PLATFORM-1"->Select "Yes"
-        menu_prompt.side_effect = ["PLATFORM-1", "1"]
+        menu_prompt.side_effect = ["PLATFORM-1 / 123 / UK", "1"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
-            platform = self.store.get_platform(
-                platform_name="PLATFORM-1",
+
+            platform = self.store.add_to_platforms(
+                "PLATFORM-1",
                 identifier="123",
                 nationality=nationality.name,
                 platform_type=platform_type.name,
@@ -340,13 +390,13 @@ class PlatformTestCase(unittest.TestCase):
         """Test whether a new platform entity is created or not"""
 
         # Search "PLATFORM-1"->Select "No"->Type name/trigraph/quadgraph/idedntification->Select "Yes"
-        menu_prompt.side_effect = ["PLATFORM-1", "2", "1"]
+        menu_prompt.side_effect = ["TEST", "1"]
         resolver_prompt.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
-            self.store.get_platform(
+            self.store.add_to_platforms(
                 "PLATFORM-1",
                 trigraph="PL1",
                 quadgraph="PLT1",
@@ -378,6 +428,52 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(trigraph, "TST")
             self.assertEqual(quadgraph, "TEST")
             self.assertEqual(identifier, "123")
+
+    @patch("pepys_import.resolvers.command_line_input.prompt")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolve_platform_select_existing_platform(self, resolver_prompt, menu_prompt):
+        """Test whether a new platform entity is created or not"""
+
+        menu_prompt.side_effect = ["3"]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id)
+            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            uk_nat = self.store.add_to_nationalities("UK", priority=1, change_id=self.change_id)
+            fr_nat = self.store.add_to_nationalities("France", priority=2, change_id=self.change_id)
+            self.store.add_to_platforms(
+                "PLATFORM-1",
+                trigraph="PL1",
+                quadgraph="PLT1",
+                identifier="123",
+                nationality=uk_nat.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+                change_id=self.change_id,
+            )
+
+            self.store.add_to_platforms(
+                "PLATFORM-1",
+                trigraph="PL1",
+                quadgraph="PLT1",
+                identifier="123",
+                nationality=fr_nat.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+                change_id=self.change_id,
+            )
+
+            resolved_platform = self.resolver.resolve_platform(
+                self.store,
+                "PLATFORM-1",
+                "",
+                "",
+                "",
+                change_id=self.change_id,
+            )
+
+            assert resolved_platform.name == "PLATFORM-1"
+            assert resolved_platform.nationality_name == "UK"
+            assert resolved_platform.identifier == "123"
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
@@ -433,7 +529,7 @@ class PlatformTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_platform_with_new_values(self, resolver_prompt, menu_prompt):
         """Test whether new platform type, nationality and privacy entities are created for Platform
-         or not"""
+        or not"""
 
         # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select
         # "Add a new nationality"->Select "UK"->Select "Add a new platform type"->Select "Warship
@@ -570,7 +666,13 @@ class DatafileTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = CommandLineResolver()
         self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
@@ -701,7 +803,13 @@ class SensorTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = CommandLineResolver()
         self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
@@ -1017,7 +1125,13 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = CommandLineResolver()
         self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
@@ -1051,17 +1165,39 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         """Test whether "." returns to resolve platform"""
 
         # Search "PLATFORM-1"->Select "."->Select "."->Select "."
-        menu_prompt.side_effect = ["PLATFORM-1", ".", ".", "."]
+        menu_prompt.side_effect = [".", ".", "."]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
             platform_type = self.store.add_to_platform_types("Warship", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
-            self.store.get_platform(
-                platform_name="PLATFORM-1",
-                identifier="123",
-                nationality=nationality.name,
-                platform_type=platform_type.name,
-                privacy=privacy.name,
+            self.store.add_to_platforms(
+                "PLATFORM-1",
+                "123",
+                nationality.name,
+                platform_type.name,
+                privacy.name,
+                change_id=self.change_id,
+            )
+            with self.assertRaises(SystemExit):
+                self.resolver.fuzzy_search_platform(self.store, "TEST", "", "", "", self.change_id)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_cancelling_fuzzy_search_platform_when_given_platform_name(self, menu_prompt):
+        """Test whether "." returns to resolve platform if we've given a platform name, and
+        therefore are asked whether we want to create a synonym"""
+
+        # Search "PLATFORM-1"->Select "."->Select "."->Select "."
+        menu_prompt.side_effect = ["PLATFORM-1 / 123 / UK", ".", ".", "."]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id)
+            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            nationality = self.store.add_to_nationalities("UK", self.change_id)
+            self.store.add_to_platforms(
+                "PLATFORM-1",
+                "123",
+                nationality.name,
+                platform_type.name,
+                privacy.name,
                 change_id=self.change_id,
             )
             with self.assertRaises(SystemExit):
@@ -1114,24 +1250,24 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         ]
         resolver_prompt.side_effect = [
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
             "UK",
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
             "UK",
             "TYPE-1",
             "TEST",
+            "123",
             "TST",
             "TEST",
-            "123",
             "UK",
             "TYPE-1",
             "Public",
@@ -1236,7 +1372,7 @@ class GetMethodsTestCase(unittest.TestCase):
             "Public",
             "1",
         ]
-        resolver_prompt.side_effect = ["Test Platform", "Tst", "Test", "123"]
+        resolver_prompt.side_effect = ["Test Platform", "123", "Tst", "Test"]
         with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             # there must be 2 entities at the beginning
@@ -1287,13 +1423,46 @@ class GetMethodsTestCase(unittest.TestCase):
             # there must be 2 entities at the beginning
             self.assertEqual(len(sensors), 2)
 
-            platform = self.store.get_platform("PLATFORM-1", change_id=self.change_id)
+            platform = self.store.get_platform(
+                platform_name="PLATFORM-1",
+                identifier="123",
+                nationality="United Kingdom",
+                change_id=self.change_id,
+            )
             platform.get_sensor(self.store, "SENSOR-TEST", change_id=self.change_id)
 
             # there must be 3 entities now
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
             self.assertEqual(len(sensors), 3)
             self.assertEqual(sensors[2].name, "SENSOR-TEST")
+
+
+@pytest.mark.parametrize(
+    "number,expected_result",
+    [
+        pytest.param("123", True, id="valid number1"),
+        pytest.param("9", True, id="valid number2"),
+        pytest.param("ABC", False, id="invalid number1"),
+        pytest.param("12#", False, id="invalid number2"),
+    ],
+)
+def test_is_number(number, expected_result):
+    assert is_number(number) == expected_result
+
+
+@pytest.mark.parametrize(
+    "s,expected_result",
+    [
+        pytest.param(".", True, id="valid_dot"),
+        pytest.param("1", True, id="valid_1"),
+        pytest.param("2", True, id="valid_2"),
+        pytest.param("3", False, id="invalid_3"),
+        pytest.param("9", False, id="invalid_9"),
+        pytest.param("#", False, id="invalid_#"),
+    ],
+)
+def test_is_valid(s, expected_result):
+    assert is_valid(s) == expected_result
 
 
 if __name__ == "__main__":

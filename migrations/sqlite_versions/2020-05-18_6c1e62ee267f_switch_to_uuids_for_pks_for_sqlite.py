@@ -5,7 +5,6 @@ Revises: ccc37f794db6
 Create Date: 2020-05-18 16:54:47.274410
 
 """
-import geoalchemy2
 import sqlalchemy as sa
 from alembic import op
 

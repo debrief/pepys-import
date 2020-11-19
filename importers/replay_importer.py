@@ -1,4 +1,3 @@
-from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
@@ -10,6 +9,7 @@ class ReplayImporter(Importer):
             name="Replay File Format Importer",
             validation_level=constants.ENHANCED_LEVEL,
             short_name="REP Importer",
+            datafile_type="Replay",
         )
         self.text_label = None
         self.depth = 0.0
@@ -41,7 +41,7 @@ class ReplayImporter(Importer):
             return
         # and finally store it
         vessel_name = rep_line.get_platform()
-        platform = data_store.get_platform(platform_name=vessel_name, change_id=change_id,)
+        platform = self.get_cached_platform(data_store, vessel_name, change_id=change_id)
 
         sensor = self.get_cached_sensor(
             data_store=data_store,
@@ -52,7 +52,11 @@ class ReplayImporter(Importer):
         )
 
         state = datafile.create_state(
-            data_store, platform, sensor, rep_line.timestamp, self.short_name,
+            data_store,
+            platform,
+            sensor,
+            rep_line.timestamp,
+            self.short_name,
         )
 
         if rep_line.depth is not None:

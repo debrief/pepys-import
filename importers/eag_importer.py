@@ -22,23 +22,28 @@ class EAGImporter(Importer):
         # the calculated time, which would mean it would match the
         # GPS time in Column K
         self.TIME_OFFSET = 0
+
+        self.track_id_to_callsign = {}
         super().__init__(
             name="EAG Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name="EAG Importer",
+            datafile_type="EAG",
         )
 
-    # EAG files end with .eag.txt
-    # BUT, can_load_this_type only provides the file extension
-    # which the Python splitext function thinks is .TXT - as it just
-    # looks for the last dot.
-    # Therefore, we check for a file extension of .TXT AND
-    # a filename ending with .EAG (in the next function)
+    # Criteria for determining that a file is an EAG file:
+    #
+    # filename ends in ".txt"
+    # filename starts with 8-digit integer
+    # in filename, last the chars before ".txt" are "EAG"
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".TXT"
 
     def can_load_this_filename(self, filename):
-        return filename.upper().endswith(".EAG")
+        starts_with_8_digit_integer = filename[:8].isdigit()
+        ends_with_eag = filename.upper().endswith("EAG")
+
+        return starts_with_8_digit_integer and ends_with_eag
 
     def can_load_this_header(self, header):
         return True
@@ -51,10 +56,11 @@ class EAGImporter(Importer):
 
         # Extract date of recording and callsign from filename
         try:
-            date_of_recording_str, callsign = filename.replace(".eag", "").split("_")
-        except ValueError:
+            date_of_recording_str = filename[:8]
+            callsign_from_filename = filename[9:-8]
+        except ValueError:  # pragma: no cover (can't test as filenames that don't match this pattern won't be processed)
             self.errors.append(
-                {self.error_type: f"Error in filename - cannot extract date and callsign"}
+                {self.error_type: "Error in filename - cannot extract date and callsign"}
             )
             return
 
@@ -71,7 +77,20 @@ class EAGImporter(Importer):
             if line.text.strip().startswith("#VALUE"):
                 # Skip line
                 continue
-            tokens = line.tokens(line.WHITESPACE_DELIM)
+            tokens = line.tokens(line.WHITESPACE_TOKENISER)
+
+            if tokens[0].text == "A":
+                # We're in a header line, so extract the callsign and the track ID number
+                if len(tokens) < 7:
+                    # Not enough tokens - so not a useable header line, so skip
+                    continue
+                track_id = tokens[1].text
+                tokens[1].record(self.name, "track id", tokens[1].text)
+                callsign = " ".join(t.text for t in tokens[6:])
+                combine_tokens(*tokens[6:]).record(self.name, "callsign", tokens[6].text)
+
+                self.track_id_to_callsign[track_id] = callsign
+                continue
 
             if len(tokens) != 11:
                 self.errors.append(
@@ -83,6 +102,7 @@ class EAGImporter(Importer):
 
             # separate token strings
             time_since_sun_ms_token = tokens[0]
+            track_id_token = tokens[1]
             ecef_x_token = tokens[4]
             ecef_y_token = tokens[5]
             ecef_z_token = tokens[6]
@@ -102,8 +122,21 @@ class EAGImporter(Importer):
             timestamp = self.calculate_timestamp(time_since_sun_ms, last_sun_date)
             time_since_sun_ms_token.record(self.name, "timestamp", timestamp)
 
+            if len(self.track_id_to_callsign) == 0:
+                # No header lines were provided, so there is only one platform in the file
+                # Take the callsign from the filename, and continue
+                callsign = callsign_from_filename
+            else:
+                callsign = self.track_id_to_callsign.get(track_id_token.text)
+                track_id_token.record(self.name, "track ID", track_id_token.text)
+                if callsign is None:
+                    callsign = f"CALLSIGN {track_id_token.text}"
+                    self.track_id_to_callsign[track_id_token.text] = callsign
+
             # Platform is based on the callsign - the user will link this as a synonym to a defined Platform
-            platform = data_store.get_platform(platform_name=callsign, change_id=change_id,)
+            platform = self.get_cached_platform(
+                data_store, platform_name=callsign, change_id=change_id
+            )
 
             sensor = self.get_cached_sensor(
                 data_store=data_store,
@@ -122,13 +155,10 @@ class EAGImporter(Importer):
 
             if success:
                 state.location = location
-                combine_tokens(ecef_x_token, ecef_y_token, ecef_z_token).record(
-                    self.name, "location", state.location, "ECEF X, Y and Z"
-                )
-
                 state.elevation = height * unit_registry.metre
+
                 combine_tokens(ecef_x_token, ecef_y_token, ecef_z_token).record(
-                    self.name, "altitude", state.elevation, "ECEF X, Y and Z"
+                    self.name, "location and elevation", state.location, "ECEF X, Y and Z"
                 )
             else:
                 self.errors.append(
@@ -167,7 +197,7 @@ class EAGImporter(Importer):
         latitude and longitude, plus a height value in metres.
 
         X, Y and Z should be provided in metres.
-        
+
         All formulae taken from https://microem.ru/files/2012/08/GPS.G1-X-00006.pdf
         """
         try:
@@ -177,7 +207,7 @@ class EAGImporter(Importer):
         except ValueError:
             self.errors.append(
                 {
-                    self.error_type: f"Error: cannot parse ECEF values to floats: X: {ecef_x}, Y: {ecef_y}, Z: {ecef_z}"
+                    self.error_type: f"Error: cannot parse ECEF values to floats: X: {ecef_x_token.text}, Y: {ecef_y_token.text}, Z: {ecef_z_token.text}"
                 }
             )
             return None, None, False

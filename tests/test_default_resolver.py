@@ -10,7 +10,13 @@ class DefaultResolverTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.resolver = DefaultResolver()
         self.store = DataStore(
-            "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=self.resolver,
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
         )
         self.store.initialise()
         with self.store.session_scope():
@@ -37,8 +43,6 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "Public")
 
     def test_resolve_sensor_gives_sensor_object_when_called_twice(self):
-        Sensor = self.store.db_classes.Sensor
-
         with self.store.session_scope():
             # Create a platform for it to belong to
             platform_obj = self.store.add_to_platforms(
@@ -68,12 +72,14 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(privacy.name, "Public")
 
             # Add to database (like in get_sensor() in common_db.py)
-            new_sensor_obj = Sensor().add_to_sensors(
-                data_store=self.store,
+            new_sensor_obj = self.store.add_to_sensors(
                 name=sensor_name,
                 sensor_type=sensor_type.name,
-                host=platform_obj.name,
-                privacy_id=privacy.privacy_id,
+                host_name=None,
+                host_nationality=None,
+                host_identifier=None,
+                host_id=platform_obj.platform_id,
+                privacy=privacy.name,
                 change_id=self.change_id,
             )
 
@@ -175,6 +181,53 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(datafile_name, "DATAFILE-1")
             self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
             self.assertEqual(privacy.name, "Public")
+
+
+class DefaultResolverTestCaseWithNoRefLoaded(unittest.TestCase):
+    """
+    Does the same as the test above, but doesn't load reference data into data store first, so we can test that
+    the privacy is created properly even if it doesn't exist
+    """
+
+    def setUp(self) -> None:
+        self.resolver = DefaultResolver()
+        self.store = DataStore(
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
+        )
+        self.store.initialise()
+        with self.store.session_scope():
+            self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+
+    def test_resolver_privacy(self):
+        with self.store.session_scope():
+            privacy = self.resolver.resolve_privacy(self.store, self.change_id)
+            self.assertEqual(privacy.name, "Public")
+
+    def test_resolve_sensor_with_given_privacy(self):
+        with self.store.session_scope():
+            self.store.add_to_platform_types("PlatType", change_id=self.change_id)
+            self.store.add_to_nationalities("UK", change_id=self.change_id)
+            self.store.add_to_privacies("Priv1", 0, change_id=self.change_id)
+            platform = self.store.add_to_platforms(
+                "TestPlatform", "P123", "UK", "PlatType", "Priv1", change_id=self.change_id
+            )
+            self.resolver.resolve_sensor(
+                self.store,
+                "TestSensorName",
+                "TestSensorType",
+                platform.platform_id,
+                "TestPrivacy",
+                self.change_id,
+            )
+
+            result = self.store.search_privacy("TestPrivacy")
+            assert result is not None
 
 
 if __name__ == "__main__":

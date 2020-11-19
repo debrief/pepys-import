@@ -101,11 +101,11 @@ class REPLine:
             return False
 
         # Times always in Zulu/GMT
-        if len(time_token.text) != 6 and len(time_token.text) != 10:
+        if len(time_token.text) < 6 or len(time_token.text) > 13:
             errors.append(
                 {
                     error_type: f"Line {self.line_num}. Error in Time format {time_token.text}. "
-                    f"Should be HHMMSS[.SSS]"
+                    f"Should be HHMMSS[.SSSSSS]"
                 }
             )
             return False
@@ -148,7 +148,10 @@ class REPLine:
 
         self.location = Location(errors, error_type)
         if not self.location.set_latitude_dms(
-            lat_degrees_token.text, lat_mins_token.text, lat_secs_token.text, lat_hemi_token.text,
+            lat_degrees_token.text,
+            lat_mins_token.text,
+            lat_secs_token.text,
+            lat_hemi_token.text,
         ):
             return False
         combine_tokens(lat_degrees_token, lat_mins_token, lat_secs_token, lat_hemi_token).record(

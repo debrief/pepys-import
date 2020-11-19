@@ -134,7 +134,10 @@ class CombineTokenTests(unittest.TestCase):
                     date_time = self.parse_timestamp(date_tok.text, time_tok.text)
 
                     loc = self.parse_location(
-                        lat_tok.text, lat_hem_tok.text, long_tok.text, long_hem_tok.text,
+                        lat_tok.text,
+                        lat_hem_tok.text,
+                        long_tok.text,
+                        long_hem_tok.text,
                     )
                     spd = float(spd_tok.text)
                     hdg = float(hdg_tok.text)
@@ -224,7 +227,10 @@ class CombineTokenTests(unittest.TestCase):
                     date_time = self.parse_timestamp(date_tok.text, time_tok.text)
 
                     loc = self.parse_location(
-                        lat_tok.text, lat_hem_tok.text, long_tok.text, long_hem_tok.text,
+                        lat_tok.text,
+                        lat_hem_tok.text,
+                        long_tok.text,
+                        long_hem_tok.text,
                     )
                     spd = float(spd_tok.text)
                     hdg = float(hdg_tok.text)

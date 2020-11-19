@@ -1,6 +1,7 @@
 from datetime import datetime
 from getpass import getuser
 
+from geoalchemy2.shape import to_shape
 from sqlalchemy.orm import undefer
 from sqlalchemy.orm.session import make_transient
 from tabulate import tabulate
@@ -13,6 +14,7 @@ from pepys_admin.utils import (
     print_names_added,
     statistics_to_table_data,
 )
+from pepys_import.core.formats.location import Location
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.table_name_utils import table_name_to_class_name
@@ -114,13 +116,13 @@ class MergeDatabases:
                             )
                             self.slave_store.session.add(slave_entry)
                             self.slave_store.session.commit()
-                        else:
+                        else:  # pragma: no cover
                             assert (
                                 False
                             ), "Fatal assertion error: multiple entries in master reference table with same name"
                     elif n_results == 1:
                         ids_already_there.append({"id": guid, "name": slave_entry.name})
-                    else:
+                    else:  # pragma: no cover
                         assert (
                             False
                         ), "Fatal assertion error: multiple entries in master reference table with same GUID"
@@ -286,7 +288,8 @@ class MergeDatabases:
                             # We also need to compare the fields of the slave entry and the master entry
                             # and update any master fields that are currently None with values from the slave entry
                             was_modified = self.update_master_from_slave_entry(
-                                search_by_all_fields_results[0], slave_entry,
+                                search_by_all_fields_results[0],
+                                slave_entry,
                             )
 
                             ids_modified.append(
@@ -297,7 +300,7 @@ class MergeDatabases:
                                     "data_changed": was_modified,
                                 }
                             )
-                        else:
+                        else:  # pragma: no cover
                             assert (
                                 False
                             ), "Fatal assertion error: multiple entries in master metadata table with same name"
@@ -306,7 +309,7 @@ class MergeDatabases:
                         ids_already_there.append(
                             {"id": guid, "name": get_name_for_obj(slave_entry)}
                         )
-                    else:
+                    else:  # pragma: no cover
                         # We should never get here: the GUID should always appear in the master database
                         # either zero or one times, never more
                         assert (
@@ -424,9 +427,15 @@ class MergeDatabases:
             if "location" in d:
                 d["_location"] = d["location"].to_wkt()
 
-            # TODO: This function will fail for Geometry1 objects at the moment, as the geometry field is
-            # not processed properly. This table isn't used at the moment, but this should be fixed
-            # before the table is used
+            # Deal with the geometry table where we have a generic geometry in the table
+            # If it is a Location object then convert to WKT. If not then, convert the
+            # WKB geometry field to a WKT field, going via Shapely
+            if "geometry" in d:
+                if isinstance(d["geometry"], Location):
+                    d["_geometry"] = d["geometry"].to_wkt()
+                else:
+                    shply_geom = to_shape(d["geometry"])
+                    d["_geometry"] = "SRID=4326;" + shply_geom.wkt
 
             dict_results.append(d)
 
@@ -554,7 +563,7 @@ class MergeDatabases:
                         # The GUID is in the master db - so the record must also be there
                         # (as GUIDs are unique)
                         pass
-                    else:
+                    else:  # pragma: no cover
                         # We should never get here: the GUID should always appear in the master database
                         # either zero or one times, never more
                         assert (

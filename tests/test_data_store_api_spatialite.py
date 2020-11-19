@@ -149,6 +149,61 @@ class DataStoreCacheTestCase(TestCase):
             # there must be only one entity at the beginning
             self.assertEqual(len(sensor_types), 1)
 
+    def test_cached_geometry_type(self):
+        """Test whether a new geometry type entity cached and returned"""
+        with self.store.session_scope():
+            geometry_types = self.store.session.query(self.store.db_classes.GeometryType).all()
+
+            # there must be no entity at the beginning
+            self.assertEqual(len(geometry_types), 0)
+
+            geometry_type_1 = self.store.add_to_geometry_types(
+                name="test", change_id=self.change_id
+            )
+            # This one shouldn't duplicate, it should return existing entity
+            geometry_type_2 = self.store.add_to_geometry_types(
+                name="test", change_id=self.change_id
+            )
+
+            # objects must be the same
+            self.assertEqual(geometry_type_1, geometry_type_2)
+            geometry_types = self.store.session.query(self.store.db_classes.GeometryType).all()
+
+            # there must be only one entity at the beginning
+            self.assertEqual(len(geometry_types), 1)
+
+    def test_cached_geometry_sub_type(self):
+        """Test whether a new geometry sub type entity cached and returned"""
+        with self.store.session_scope():
+            geometry_sub_types = self.store.session.query(
+                self.store.db_classes.GeometrySubType
+            ).all()
+
+            # there must be no entity at the beginning
+            self.assertEqual(len(geometry_sub_types), 0)
+
+            # Create Geometry Type as parent
+            geometry_type = self.store.add_to_geometry_types(
+                name="Test Parent", change_id=self.change_id
+            )
+
+            geometry_sub_type_1 = self.store.add_to_geometry_sub_types(
+                name="test", parent_name=geometry_type.name, change_id=self.change_id
+            )
+            # This one shouldn't duplicate, it should return existing entity
+            geometry_sub_type_2 = self.store.add_to_geometry_sub_types(
+                name="test", parent_name=geometry_type.name, change_id=self.change_id
+            )
+
+            # objects must be the same
+            self.assertEqual(geometry_sub_type_1, geometry_sub_type_2)
+            geometry_sub_types = self.store.session.query(
+                self.store.db_classes.GeometrySubType
+            ).all()
+
+            # there must be only one entity at the beginning
+            self.assertEqual(len(geometry_sub_types), 1)
+
 
 class LookUpDBAndAddToCacheTestCase(TestCase):
     """Test searching functionality and adding existing DB entities to the cache of
@@ -338,6 +393,22 @@ class PlatformAndDatafileTestCase(TestCase):
             self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
             self.assertEqual(found_datafile.reference, "test_file.csv")
 
+    def test_find_datafile_with_cache(self):
+        """Test whether find_datafile method returns the correct Datafile entity"""
+        with self.store.session_scope():
+            # Create a datafile
+            datafile = self.store.get_datafile(
+                "test_file.csv", "csv", 0, "HASHED-1", self.change_id
+            )
+            self.store.get_datafile("test_file_2.csv", "csv", 0, "HASHED-2", self.change_id)
+            found_datafile = self.store.find_datafile("test_file.csv")
+            found_datafile2 = self.store.find_datafile("test_file.csv")
+
+            self.assertEqual(datafile.datafile_id, found_datafile.datafile_id)
+            self.assertEqual(found_datafile.reference, "test_file.csv")
+
+            assert found_datafile == found_datafile2
+
     def test_find_datafile_synonym(self):
         """Test whether find_datafile method finds the correct Datafile entity from Synonyms table"""
         with self.store.session_scope():
@@ -415,40 +486,54 @@ class PlatformAndDatafileTestCase(TestCase):
     def test_find_platform(self):
         """Test whether find_platform method returns the correct Platform entity"""
         with self.store.session_scope():
-            # Create two platforms
+            nat1 = self.store.add_to_nationalities("Nat1", self.change_id).name
+            nat2 = self.store.add_to_nationalities("Nat2", self.change_id).name
+            # Create two platforms with same name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
-                nationality=self.nationality,
+                nationality=nat1,
+                identifier="123",
                 platform_type=self.platform_type,
                 privacy=self.privacy,
                 change_id=self.change_id,
             )
             self.store.get_platform(
-                platform_name="Test Platform 2",
-                nationality=self.nationality,
+                platform_name="Test Platform",
+                nationality=nat2,
+                identifier="123",
                 platform_type=self.platform_type,
                 privacy=self.privacy,
                 change_id=self.change_id,
             )
 
-            found_platform = self.store.find_platform("Test Platform")
-            self.assertEqual(platform.platform_id, found_platform.platform_id)
-            self.assertEqual(found_platform.name, "Test Platform")
+            found_platform = self.store.find_platform("Test Platform", "Nat1", "123")
+            assert found_platform.platform_id == platform.platform_id
+            assert "Test Platform" == found_platform.name
+
+    def test_find_platform_none(self):
+        """Test whether find_platform method returns None if it's given a name of None"""
+        found_platform = self.store.find_platform(name=None)
+        assert found_platform is None
 
     def test_find_platform_synonym(self):
         """Test whether find_platform method finds the correct Platform entity from Synonyms table"""
         with self.store.session_scope():
+            nat1 = self.store.add_to_nationalities("Nat1", self.change_id).name
+            nat2 = self.store.add_to_nationalities("Nat2", self.change_id).name
+
             # Create two platforms
             platform = self.store.get_platform(
                 platform_name="Test Platform",
-                nationality=self.nationality,
+                nationality=nat1,
+                identifier="123",
                 platform_type=self.platform_type,
                 privacy=self.privacy,
                 change_id=self.change_id,
             )
             self.store.get_platform(
-                platform_name="Test Platform 2",
-                nationality=self.nationality,
+                platform_name="Test Platform",
+                nationality=nat2,
+                identifier="123",
                 platform_type=self.platform_type,
                 privacy=self.privacy,
                 change_id=self.change_id,
@@ -460,7 +545,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 change_id=self.change_id,
             )
 
-            found_platform = self.store.find_platform("TEST")
+            found_platform = self.store.find_platform("TEST", identifier=None, nationality=None)
             self.assertEqual(platform.platform_id, found_platform.platform_id)
             self.assertEqual(found_platform.name, "Test Platform")
 
@@ -636,8 +721,9 @@ class MeasurementsTestCase(TestCase):
                 name="Test Importer",
                 validation_level=validation_constants.NONE_LEVEL,
                 short_name="Test Importer",
+                datafile_type="Test",
             ):
-                super().__init__(name, validation_level, short_name)
+                super().__init__(name, validation_level, short_name, datafile_type)
                 self.text_label = None
                 self.depth = 0.0
                 self.errors = list()
@@ -763,7 +849,7 @@ class SynonymsTestCase(TestCase):
 
 
 class FirstConnectionTestCase(TestCase):
-    def test_data_store_fails_at_the_beginning(self):
+    def test_data_store_invalid_db_name(self):
         temp_output = StringIO()
         db_name = os.path.join(FILE_PATH, "__init__.py")
         with pytest.raises(SystemExit), redirect_stdout(temp_output):
@@ -780,6 +866,22 @@ class FirstConnectionTestCase(TestCase):
         assert "Please check your database file and the config file's database section." in output
         assert "Current database URL: 'sqlite+pysqlite://:@:0/" in output
         assert "__init__.py" in output
+
+    def test_data_store_invalid_conn_string(self):
+        temp_output = StringIO()
+        db_name = os.path.join(FILE_PATH, "__init__.py")
+        with pytest.raises(SystemExit), redirect_stdout(temp_output):
+            DataStore(
+                db_host="blah",
+                db_username="blah",
+                db_password="blah",
+                db_port=0,
+                db_name=db_name,  # Give a file that is not a database
+                db_type="sqlite",
+            )
+        output = temp_output.getvalue()
+
+        assert "ERROR: Invalid Connection URL Error!" in output
 
 
 if __name__ == "__main__":

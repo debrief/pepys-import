@@ -2,6 +2,61 @@
 History
 =======
 
+0.0.23 (2020-09-23)
+-------------------
+
+* Make UI more responsive for very large imports (10s of Mb)
+
+0.0.22 (2020-09-15)
+-------------------
+
+* New URL for Spatialite sources
+
+0.0.21 (2020-09-14)
+-------------------
+
+* Sort tables in alpha order when selecting to view
+* Increase number of records shown in view table (500)
+* Add ability to export database table to CSV
+* Allow enhanced validator to be relaxed
+
+0.0.20 (2020-07-28)
+-------------------
+
+* Allow local override of Pepys config file
+* Improve importer writing guide
+* Associate SQLite database files with Pepys Admin (right-click editing)
+* Make highlight colors more distinctive
+* Fix to allow prompts to better handle spaces
+* Fix issues with EAG importer
+* Check that deployed database is at same version as master when merging
+
+0.0.19 (2020-07-03)
+-------------------
+
+* Hotfix for trailing field in Nisida file
+* Improve robustness of Import CSV
+* Support CSV load of GeometrySubTypes
+* Show path for archive folder location at end of import
+
+0.0.18 (2020-07-01)
+-------------------
+
+* Add support for Nisida file format
+* Add guidance for exporting and merging snapshots
+* Add steps to verify installation
+* Consistent use of "." to exit Pepys-Admin
+
+0.0.17 (2020-06-16)
+-------------------
+
+* Improve display of database version (diagnostics)
+* Multi-column unique constraints
+* Pause when Pepys-Admin closes (diagnostics)
+* Connect to database immediately when Pepys-Admin opens (diagnostics)
+* Introduce ability to merge snapshots back in
+* Add importer for EAG data
+* Double-check with user before destructive admin changes
 
 0.0.16 (2020-06-09)
 -------------------

@@ -4,11 +4,13 @@ import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from sqlite3 import OperationalError
+from unittest.mock import ANY, patch
 
 import pg8000
 import pytest
 from testing.postgresql import Postgresql
 
+from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from pepys_import.cli import process
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.utils.sqlite_utils import load_spatialite
@@ -65,7 +67,11 @@ class TestImportWithMissingDBFieldPostgres(unittest.TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -122,7 +128,11 @@ class TestImportWithWrongTypeDBFieldPostgres(unittest.TestCase):
         self.store = None
         try:
             self.postgres = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -172,3 +182,45 @@ class TestImportWithWrongTypeDBFieldPostgres(unittest.TestCase):
         output = temp_output.getvalue()
 
         assert "ERROR: SQL error when communicating with database" in output
+
+
+@patch("pepys_import.cli.DefaultResolver")
+def test_process_resolver_specification_default(patched_default_resolver):
+    process(resolver="default")
+    patched_default_resolver.assert_called_once()
+
+
+@patch("pepys_import.cli.CommandLineResolver")
+def test_process_resolver_specification_cli(patched_cl_resolver):
+    process(resolver="command-line")
+    patched_cl_resolver.assert_called_once()
+
+
+@patch("pepys_import.cli.CommandLineResolver")
+@patch("pepys_import.cli.DefaultResolver")
+def test_process_resolver_specification_invalid(patched_default_resolver, patched_cl_resolver):
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        process(resolver="invalid")
+    output = temp_output.getvalue()
+
+    assert "Invalid option" in output
+
+    patched_cl_resolver.assert_not_called()
+    patched_default_resolver.assert_not_called()
+
+
+@patch("pepys_import.cli.DataStore")
+@patch("pepys_import.cli.FileProcessor")
+def test_process_db_none(patched_file_proc, patched_data_store):
+    process()
+
+    patched_data_store.assert_called_with(
+        db_username=DB_USERNAME,
+        db_password=DB_PASSWORD,
+        db_host=DB_HOST,
+        db_port=DB_PORT,
+        db_name=DB_NAME,
+        db_type=DB_TYPE,
+        missing_data_resolver=ANY,  # We don't care about this argument, and it's hard to test
+    )

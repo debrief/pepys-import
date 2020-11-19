@@ -8,6 +8,7 @@ from io import StringIO
 from unittest.mock import patch
 
 import pytest
+from geoalchemy2.shape import to_shape
 from testing.postgresql import Postgresql
 
 from pepys_admin.merge import MergeDatabases
@@ -67,11 +68,18 @@ class TestSensorTypeMerge(unittest.TestCase):
             self.slave_store.add_to_platform_types("PlatformType1", change_id)
             self.slave_store.add_to_nationalities("UK", change_id)
             self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
-            self.slave_store.add_to_platforms(
+            platform = self.slave_store.add_to_platforms(
                 "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
             )
             self.slave_store.add_to_sensors(
-                "Sensor1", "ST_Shared_1", "Platform1", "Private", change_id
+                name="Sensor1",
+                sensor_type="ST_Shared_1",
+                host_id=platform.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
 
         self.merge_class = MergeDatabases(self.master_store, self.slave_store)
@@ -85,80 +93,84 @@ class TestSensorTypeMerge(unittest.TestCase):
 
     def test_sensor_type_merge(self):
         # Do the merge
-        id_results = self.merge_class.merge_reference_table("SensorType",)
+        id_results = self.merge_class.merge_reference_table(
+            "SensorType",
+        )
 
         master_table = self.master_store.db_classes.SensorType
         slave_table = self.slave_store.db_classes.SensorType
 
-        # Check there are now 6 rows in the master database
-        results = self.master_store.session.query(master_table).all()
-        assert len(results) == 6
+        with self.master_store.session_scope():
+            with self.slave_store.session_scope():
+                # Check there are now 6 rows in the master database
+                results = self.master_store.session.query(master_table).all()
+                assert len(results) == 6
 
-        # Check the rows that were originally just in the slave db have been copied across
-        # and that all their fields match (including GUID, but excluding created_date)
-        master_results = (
-            self.master_store.session.query(master_table)
-            .filter(master_table.name.in_(["ST_Slave_1", "ST_Slave_2"]))
-            .all()
-        )
-        slave_results = (
-            self.slave_store.session.query(slave_table)
-            .filter(slave_table.name.in_(["ST_Slave_1", "ST_Slave_2"]))
-            .all()
-        )
+                # Check the rows that were originally just in the slave db have been copied across
+                # and that all their fields match (including GUID, but excluding created_date)
+                master_results = (
+                    self.master_store.session.query(master_table)
+                    .filter(master_table.name.in_(["ST_Slave_1", "ST_Slave_2"]))
+                    .all()
+                )
+                slave_results = (
+                    self.slave_store.session.query(slave_table)
+                    .filter(slave_table.name.in_(["ST_Slave_1", "ST_Slave_2"]))
+                    .all()
+                )
 
-        assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        added_ids = [d["id"] for d in id_results["added"]]
+                added_ids = [d["id"] for d in id_results["added"]]
 
-        assert slave_results[0].sensor_type_id in added_ids
-        assert slave_results[1].sensor_type_id in added_ids
+                assert slave_results[0].sensor_type_id in added_ids
+                assert slave_results[1].sensor_type_id in added_ids
 
-        # Check that the row that had the same name and same GUID in each db is still in both
-        # databases
-        master_results = (
-            self.master_store.session.query(master_table)
-            .filter(master_table.name == "ST_Shared_2GUIDMatch")
-            .all()
-        )
-        slave_results = (
-            self.slave_store.session.query(slave_table)
-            .filter(slave_table.name == "ST_Shared_2GUIDMatch")
-            .all()
-        )
+                # Check that the row that had the same name and same GUID in each db is still in both
+                # databases
+                master_results = (
+                    self.master_store.session.query(master_table)
+                    .filter(master_table.name == "ST_Shared_2GUIDMatch")
+                    .all()
+                )
+                slave_results = (
+                    self.slave_store.session.query(slave_table)
+                    .filter(slave_table.name == "ST_Shared_2GUIDMatch")
+                    .all()
+                )
 
-        assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert id_results["already_there"][0]["id"] == slave_results[0].sensor_type_id
+                assert id_results["already_there"][0]["id"] == slave_results[0].sensor_type_id
 
-        # Check that the row that had the same name but different GUID in each db now
-        # matches in both databases
-        master_results = (
-            self.master_store.session.query(master_table)
-            .filter(master_table.name == "ST_Shared_1")
-            .all()
-        )
-        slave_results = (
-            self.slave_store.session.query(slave_table)
-            .filter(slave_table.name == "ST_Shared_1")
-            .all()
-        )
-        new_guid = slave_results[0].sensor_type_id
+                # Check that the row that had the same name but different GUID in each db now
+                # matches in both databases
+                master_results = (
+                    self.master_store.session.query(master_table)
+                    .filter(master_table.name == "ST_Shared_1")
+                    .all()
+                )
+                slave_results = (
+                    self.slave_store.session.query(slave_table)
+                    .filter(slave_table.name == "ST_Shared_1")
+                    .all()
+                )
+                new_guid = slave_results[0].sensor_type_id
 
-        assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert id_results["modified"][0]["from"] == self.slave_shared_id
-        assert id_results["modified"][0]["to"] == new_guid
+                assert id_results["modified"][0]["from"] == self.slave_shared_id
+                assert id_results["modified"][0]["to"] == new_guid
 
-        # Check that the new GUID for this row has propagated to the Sensors table in the slave database
-        # (so we can copy this table later with no problems)
-        results = (
-            self.slave_store.session.query(self.slave_store.db_classes.Sensor)
-            .filter(self.slave_store.db_classes.Sensor.sensor_type_id == new_guid)
-            .all()
-        )
+                # Check that the new GUID for this row has propagated to the Sensors table in the slave database
+                # (so we can copy this table later with no problems)
+                results = (
+                    self.slave_store.session.query(self.slave_store.db_classes.Sensor)
+                    .filter(self.slave_store.db_classes.Sensor.sensor_type_id == new_guid)
+                    .all()
+                )
 
-        assert len(results) == 1
+                assert len(results) == 1
 
 
 class TestPlatformTypeMerge(unittest.TestCase):
@@ -215,79 +227,83 @@ class TestPlatformTypeMerge(unittest.TestCase):
 
     def test_platform_type_merge(self):
         # Do the merge
-        id_results = self.merge_class.merge_reference_table("PlatformType",)
+        id_results = self.merge_class.merge_reference_table(
+            "PlatformType",
+        )
 
         master_table = self.master_store.db_classes.PlatformType
         slave_table = self.slave_store.db_classes.PlatformType
 
-        # Check there are now 6 rows in the master database
-        results = self.master_store.session.query(master_table).all()
-        assert len(results) == 6
+        with self.master_store.session_scope():
+            with self.slave_store.session_scope():
+                # Check there are now 6 rows in the master database
+                results = self.master_store.session.query(master_table).all()
+                assert len(results) == 6
 
-        # Check the rows that were originally just in the slave db have been copied across
-        # and that all their fields match (including GUID, but excluding created_date)
-        master_results = (
-            self.master_store.session.query(master_table)
-            .filter(master_table.name.in_(["PT_Slave_1", "PT_Slave_2"]))
-            .all()
-        )
-        slave_results = (
-            self.slave_store.session.query(slave_table)
-            .filter(slave_table.name.in_(["PT_Slave_1", "PT_Slave_2"]))
-            .all()
-        )
+                # Check the rows that were originally just in the slave db have been copied across
+                # and that all their fields match (including GUID, but excluding created_date)
+                master_results = (
+                    self.master_store.session.query(master_table)
+                    .filter(master_table.name.in_(["PT_Slave_1", "PT_Slave_2"]))
+                    .all()
+                )
+                slave_results = (
+                    self.slave_store.session.query(slave_table)
+                    .filter(slave_table.name.in_(["PT_Slave_1", "PT_Slave_2"]))
+                    .all()
+                )
 
-        assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        added_ids = [d["id"] for d in id_results["added"]]
-        assert slave_results[0].platform_type_id in added_ids
-        assert slave_results[1].platform_type_id in added_ids
+                added_ids = [d["id"] for d in id_results["added"]]
+                assert slave_results[0].platform_type_id in added_ids
+                assert slave_results[1].platform_type_id in added_ids
 
-        # Check that the row that had the same name and same GUID in each db is still in both
-        # databases
-        master_results = (
-            self.master_store.session.query(master_table)
-            .filter(master_table.name == "PT_Shared_2GUIDMatch")
-            .all()
-        )
-        slave_results = (
-            self.slave_store.session.query(slave_table)
-            .filter(slave_table.name == "PT_Shared_2GUIDMatch")
-            .all()
-        )
+                # Check that the row that had the same name and same GUID in each db is still in both
+                # databases
+                master_results = (
+                    self.master_store.session.query(master_table)
+                    .filter(master_table.name == "PT_Shared_2GUIDMatch")
+                    .all()
+                )
+                slave_results = (
+                    self.slave_store.session.query(slave_table)
+                    .filter(slave_table.name == "PT_Shared_2GUIDMatch")
+                    .all()
+                )
 
-        assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert id_results["already_there"][0]["id"] == slave_results[0].platform_type_id
+                assert id_results["already_there"][0]["id"] == slave_results[0].platform_type_id
 
-        # Check that the row that had the same name but different GUID in each db now
-        # matches in both databases
-        master_results = (
-            self.master_store.session.query(master_table)
-            .filter(master_table.name == "PT_Shared_1")
-            .all()
-        )
-        slave_results = (
-            self.slave_store.session.query(slave_table)
-            .filter(slave_table.name == "PT_Shared_1")
-            .all()
-        )
-        new_guid = slave_results[0].platform_type_id
+                # Check that the row that had the same name but different GUID in each db now
+                # matches in both databases
+                master_results = (
+                    self.master_store.session.query(master_table)
+                    .filter(master_table.name == "PT_Shared_1")
+                    .all()
+                )
+                slave_results = (
+                    self.slave_store.session.query(slave_table)
+                    .filter(slave_table.name == "PT_Shared_1")
+                    .all()
+                )
+                new_guid = slave_results[0].platform_type_id
 
-        assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert id_results["modified"][0]["from"] == self.slave_shared_id
-        assert id_results["modified"][0]["to"] == new_guid
+                assert id_results["modified"][0]["from"] == self.slave_shared_id
+                assert id_results["modified"][0]["to"] == new_guid
 
-        # Check that the new GUID for this row has propagated to the Platforms table in the slave database
-        # (so we can copy this table later with no problems)
-        results = (
-            self.slave_store.session.query(self.slave_store.db_classes.Platform)
-            .filter(self.slave_store.db_classes.Platform.platform_type_id == new_guid)
-            .all()
-        )
+                # Check that the new GUID for this row has propagated to the Platforms table in the slave database
+                # (so we can copy this table later with no problems)
+                results = (
+                    self.slave_store.session.query(self.slave_store.db_classes.Platform)
+                    .filter(self.slave_store.db_classes.Platform.platform_type_id == new_guid)
+                    .all()
+                )
 
-        assert len(results) == 1
+                assert len(results) == 1
 
 
 class TestMergeAllReferenceTables(unittest.TestCase):
@@ -375,68 +391,76 @@ class TestMergeAllReferenceTables(unittest.TestCase):
     def test_merge_all_reference_tables(self):
         self.merge_class.merge_all_reference_tables()
 
-        # Check there are the right number of rows for each table
+        with self.master_store.session_scope():
+            with self.slave_store.session_scope():
+                # Check there are the right number of rows for each table
 
-        results = self.master_store.session.query(self.master_store.db_classes.Nationality).all()
-        assert len(results) == 6
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.Nationality
+                ).all()
+                assert len(results) == 6
 
-        results = self.master_store.session.query(self.master_store.db_classes.CommentType).all()
-        assert len(results) == 6
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.CommentType
+                ).all()
+                assert len(results) == 6
 
-        results = self.master_store.session.query(self.master_store.db_classes.GeometryType).all()
-        assert len(results) == 5
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.GeometryType
+                ).all()
+                assert len(results) == 5
 
-        results = self.master_store.session.query(
-            self.master_store.db_classes.GeometrySubType
-        ).all()
-        assert len(results) == 2
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.GeometrySubType
+                ).all()
+                assert len(results) == 2
 
-        # Check a few selected objects to make sure they're correct
+                # Check a few selected objects to make sure they're correct
 
-        # Is there a GeometrySubType in master called GST_Slave_1, and does
-        # it point to the GeomType_Shared_1 type as its parent
-        gst_result = (
-            self.master_store.session.query(self.master_store.db_classes.GeometrySubType)
-            .filter(self.master_store.db_classes.GeometrySubType.name == "GST_Slave_1")
-            .all()
-        )
+                # Is there a GeometrySubType in master called GST_Slave_1, and does
+                # it point to the GeomType_Shared_1 type as its parent
+                gst_result = (
+                    self.master_store.session.query(self.master_store.db_classes.GeometrySubType)
+                    .filter(self.master_store.db_classes.GeometrySubType.name == "GST_Slave_1")
+                    .all()
+                )
 
-        gt_result = (
-            self.master_store.session.query(self.master_store.db_classes.GeometryType)
-            .filter(self.master_store.db_classes.GeometryType.name == "GeomType_Shared_1")
-            .all()
-        )
+                gt_result = (
+                    self.master_store.session.query(self.master_store.db_classes.GeometryType)
+                    .filter(self.master_store.db_classes.GeometryType.name == "GeomType_Shared_1")
+                    .all()
+                )
 
-        assert len(gst_result) == 1
-        assert len(gt_result) == 1
+                assert len(gst_result) == 1
+                assert len(gt_result) == 1
 
-        assert gst_result[0].parent == gt_result[0].geo_type_id
+                assert gst_result[0].parent == gt_result[0].geo_type_id
 
-        # Is there a Platform called Platform1 which refers to Nat_Shared_1 as its nationality, in
-        # the slave db and is this referring to the same GUID as Nat_Shared_1 in the master db
+                # Is there a Platform called Platform1 which refers to Nat_Shared_1 as its nationality, in
+                # the slave db and is this referring to the same GUID as Nat_Shared_1 in the master db
 
-        # Get platform obj
-        results = (
-            self.slave_store.session.query(self.slave_store.db_classes.Platform)
-            .filter(self.slave_store.db_classes.Platform.name == "Platform1")
-            .all()
-        )
+                # Get platform obj
+                results = (
+                    self.slave_store.session.query(self.slave_store.db_classes.Platform)
+                    .filter(self.slave_store.db_classes.Platform.name == "Platform1")
+                    .all()
+                )
 
-        # Check it has the right nationality name in the slave db
-        assert results[0].nationality_name == "Nat_Shared_1"
+                # Check it has the right nationality name in the slave db
+                assert results[0].nationality_name == "Nat_Shared_1"
 
-        # Get the nationality GUID
-        nat_guid = results[0].nationality.nationality_id
+                # Get the nationality GUID
+                nat_guid = results[0].nationality.nationality_id
 
-        # Search for that in the master db and check we get one result with correct name
-        results = (
-            self.slave_store.session.query(self.slave_store.db_classes.Nationality)
-            .filter(self.slave_store.db_classes.Nationality.nationality_id == nat_guid)
-            .all()
-        )
+                # Search for that in the master db and check we get one result with correct name
+                results = (
+                    self.slave_store.session.query(self.slave_store.db_classes.Nationality)
+                    .filter(self.slave_store.db_classes.Nationality.nationality_id == nat_guid)
+                    .all()
+                )
 
-        assert len(results) == 1
-        assert results[0].name == "Nat_Shared_1"
+                assert len(results) == 1
+                assert results[0].name == "Nat_Shared_1"
 
 
 class TestSensorPlatformMerge(unittest.TestCase):
@@ -478,7 +502,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
             self.master_store.session.add_all([st_shared, pt_shared, nat_shared, priv_shared])
             self.master_store.session.commit()
 
-            self.master_store.add_to_platforms(
+            plat_master_1 = self.master_store.add_to_platforms(
                 "Platform_Master_1",
                 "123",
                 "UK",
@@ -486,7 +510,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
                 "Private",
                 change_id=change_id,
             )
-            self.master_store.add_to_platforms(
+            plat_shared_1 = self.master_store.add_to_platforms(
                 "Platform_Shared_1",
                 "234",
                 "UK",
@@ -496,23 +520,54 @@ class TestSensorPlatformMerge(unittest.TestCase):
             )
 
             self.master_store.add_to_sensors(
-                "Sensor_Master_1", "SensorType_Master_1", "Platform_Master_1", "Private", change_id
+                name="Sensor_Master_1",
+                sensor_type="SensorType_Master_1",
+                host_id=plat_master_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.master_store.add_to_sensors(
-                "Sensor_Master_2", "SensorType_Shared_1", "Platform_Master_1", "Private", change_id
+                name="Sensor_Master_2",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_master_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.master_store.add_to_sensors(
-                "Sensor_Master_3", "SensorType_Master_2", "Platform_Shared_1", "Private", change_id
+                name="Sensor_Master_3",
+                sensor_type="SensorType_Master_2",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.master_store.add_to_sensors(
-                "Sensor_Shared_1", "SensorType_Shared_1", "Platform_Shared_1", "Private", change_id
+                name="Sensor_Shared_1",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             sensor_shared = self.master_store.add_to_sensors(
-                "Sensor_Shared_2_GUIDSame",
-                "SensorType_Shared_1",
-                "Platform_Shared_1",
-                "Private",
-                change_id,
+                name="Sensor_Shared_2_GUIDSame",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             sensor_shared_guid = sensor_shared.sensor_id
 
@@ -543,7 +598,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
             self.slave_store.session.add_all([st_shared, pt_shared, nat_shared, priv_shared])
             self.slave_store.session.commit()
 
-            self.slave_store.add_to_platforms(
+            plat_slave_1 = self.slave_store.add_to_platforms(
                 "Platform_Slave_1",
                 "123",
                 "UK",
@@ -551,7 +606,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
                 "Private",
                 change_id=change_id,
             )
-            self.slave_store.add_to_platforms(
+            plat_shared_1 = self.slave_store.add_to_platforms(
                 "Platform_Shared_1",
                 "234",
                 "UK",
@@ -561,23 +616,54 @@ class TestSensorPlatformMerge(unittest.TestCase):
             )
 
             self.slave_store.add_to_sensors(
-                "Sensor_Slave_1", "SensorType_Slave_1", "Platform_Slave_1", "Private", change_id
+                name="Sensor_Slave_1",
+                sensor_type="SensorType_Slave_1",
+                host_id=plat_slave_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.slave_store.add_to_sensors(
-                "Sensor_Slave_2", "SensorType_Shared_1", "Platform_Slave_1", "Private", change_id
+                name="Sensor_Slave_2",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_slave_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.slave_store.add_to_sensors(
-                "Sensor_Slave_3", "SensorType_Slave_2", "Platform_Shared_1", "Private", change_id
+                name="Sensor_Slave_3",
+                sensor_type="SensorType_Slave_2",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             self.slave_store.add_to_sensors(
-                "Sensor_Shared_1", "SensorType_Shared_1", "Platform_Shared_1", "Private", change_id
+                name="Sensor_Shared_1",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             sensor_shared = self.slave_store.add_to_sensors(
-                "Sensor_Shared_2_GUIDSame",
-                "SensorType_Shared_1",
-                "Platform_Shared_1",
-                "Private",
-                change_id,
+                name="Sensor_Shared_2_GUIDSame",
+                sensor_type="SensorType_Shared_1",
+                host_id=plat_shared_1.platform_id,
+                host_name=None,
+                host_identifier=None,
+                host_nationality=None,
+                privacy="Private",
+                change_id=change_id,
             )
             sensor_shared.sensor_id = sensor_shared_guid
 
@@ -595,7 +681,7 @@ class TestSensorPlatformMerge(unittest.TestCase):
 
     def test_sensor_platform_merge(self):
         with self.master_store.session_scope():
-            merge_change_id = self.master_store.add_to_changes(
+            self.master_store.add_to_changes(
                 user=getuser(),
                 modified=datetime.utcnow(),
                 reason=f"Merging from database {self.slave_store.db_name}",
@@ -607,88 +693,102 @@ class TestSensorPlatformMerge(unittest.TestCase):
         # Do the actual merge of the metadata tables
         self.merge_class.merge_all_metadata_tables()
 
-        # Check there are the right number of entries in each table
-        results = self.master_store.session.query(self.master_store.db_classes.SensorType).all()
-        assert len(results) == 6
+        with self.master_store.session_scope():
+            with self.slave_store.session_scope():
+                # Check there are the right number of entries in each table
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.SensorType
+                ).all()
+                assert len(results) == 6
 
-        results = self.master_store.session.query(self.master_store.db_classes.PlatformType).all()
-        assert len(results) == 4
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.PlatformType
+                ).all()
+                assert len(results) == 4
 
-        results = self.master_store.session.query(self.master_store.db_classes.Nationality).all()
-        assert len(results) == 1
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.Nationality
+                ).all()
+                assert len(results) == 1
 
-        results = self.master_store.session.query(self.master_store.db_classes.Privacy).all()
-        assert len(results) == 1
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.Privacy
+                ).all()
+                assert len(results) == 1
 
-        results = self.master_store.session.query(self.master_store.db_classes.Platform).all()
-        assert len(results) == 3
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.Platform
+                ).all()
+                assert len(results) == 3
 
-        results = self.master_store.session.query(self.master_store.db_classes.Sensor).all()
-        assert len(results) == 8
+                results = self.master_store.session.query(self.master_store.db_classes.Sensor).all()
+                assert len(results) == 8
 
-        # Check values of metadata tables
+                # Check values of metadata tables
 
-        # Check we have a Platform called Platform_Slave_1 that references a Platform Type of PlatformType_Slave_1
-        master_platform_results = (
-            self.master_store.session.query(self.master_store.db_classes.Platform)
-            .filter(self.master_store.db_classes.Platform.name == "Platform_Slave_1")
-            .all()
-        )
+                # Check we have a Platform called Platform_Slave_1 that references a Platform Type of PlatformType_Slave_1
+                master_platform_results = (
+                    self.master_store.session.query(self.master_store.db_classes.Platform)
+                    .filter(self.master_store.db_classes.Platform.name == "Platform_Slave_1")
+                    .all()
+                )
 
-        slave_pt_results = (
-            self.slave_store.session.query(self.slave_store.db_classes.PlatformType)
-            .filter(self.slave_store.db_classes.PlatformType.name == "PlatformType_Slave_1")
-            .all()
-        )
+                slave_pt_results = (
+                    self.slave_store.session.query(self.slave_store.db_classes.PlatformType)
+                    .filter(self.slave_store.db_classes.PlatformType.name == "PlatformType_Slave_1")
+                    .all()
+                )
 
-        assert len(master_platform_results) == 1
-        assert len(slave_pt_results) == 1
+                assert len(master_platform_results) == 1
+                assert len(slave_pt_results) == 1
 
-        assert master_platform_results[0].platform_type_name == "PlatformType_Slave_1"
-        assert (
-            master_platform_results[0].platform_type.platform_type_id
-            == slave_pt_results[0].platform_type_id
-        )
+                assert master_platform_results[0].platform_type_name == "PlatformType_Slave_1"
+                assert (
+                    master_platform_results[0].platform_type.platform_type_id
+                    == slave_pt_results[0].platform_type_id
+                )
 
-        # Check we have a Sensor called Sensor_Slave_1 in the master db now, with the right details
-        master_sensor_results = (
-            self.master_store.session.query(self.master_store.db_classes.Sensor)
-            .filter(self.master_store.db_classes.Sensor.name == "Sensor_Slave_1")
-            .all()
-        )
+                # Check we have a Sensor called Sensor_Slave_1 in the master db now, with the right details
+                master_sensor_results = (
+                    self.master_store.session.query(self.master_store.db_classes.Sensor)
+                    .filter(self.master_store.db_classes.Sensor.name == "Sensor_Slave_1")
+                    .all()
+                )
 
-        master_st_results = (
-            self.master_store.session.query(self.master_store.db_classes.SensorType)
-            .filter(self.master_store.db_classes.SensorType.name == "SensorType_Slave_1")
-            .all()
-        )
+                master_st_results = (
+                    self.master_store.session.query(self.master_store.db_classes.SensorType)
+                    .filter(self.master_store.db_classes.SensorType.name == "SensorType_Slave_1")
+                    .all()
+                )
 
-        slave_st_results = (
-            self.slave_store.session.query(self.slave_store.db_classes.SensorType)
-            .filter(self.slave_store.db_classes.SensorType.name == "SensorType_Slave_1")
-            .all()
-        )
+                slave_st_results = (
+                    self.slave_store.session.query(self.slave_store.db_classes.SensorType)
+                    .filter(self.slave_store.db_classes.SensorType.name == "SensorType_Slave_1")
+                    .all()
+                )
 
-        assert len(master_sensor_results) == 1
+                assert len(master_sensor_results) == 1
 
-        assert master_sensor_results[0].host == master_platform_results[0].platform_id
-        assert master_sensor_results[0].sensor_type_id == master_st_results[0].sensor_type_id
-        assert master_sensor_results[0].sensor_type_id == slave_st_results[0].sensor_type_id
+                assert master_sensor_results[0].host == master_platform_results[0].platform_id
+                assert (
+                    master_sensor_results[0].sensor_type_id == master_st_results[0].sensor_type_id
+                )
+                assert master_sensor_results[0].sensor_type_id == slave_st_results[0].sensor_type_id
 
-        # Check we have a Sensor called Sensor_Shared_1 in both dbs, and all fields match
-        master_results = (
-            self.master_store.session.query(self.master_store.db_classes.Sensor)
-            .filter(self.master_store.db_classes.Sensor.name == "Sensor_Shared_1")
-            .all()
-        )
+                # Check we have a Sensor called Sensor_Shared_1 in both dbs, and all fields match
+                master_results = (
+                    self.master_store.session.query(self.master_store.db_classes.Sensor)
+                    .filter(self.master_store.db_classes.Sensor.name == "Sensor_Shared_1")
+                    .all()
+                )
 
-        slave_results = (
-            self.slave_store.session.query(self.slave_store.db_classes.Sensor)
-            .filter(self.slave_store.db_classes.Sensor.name == "Sensor_Shared_1")
-            .all()
-        )
+                slave_results = (
+                    self.slave_store.session.query(self.slave_store.db_classes.Sensor)
+                    .filter(self.slave_store.db_classes.Sensor.name == "Sensor_Shared_1")
+                    .all()
+                )
 
-        assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
 
 class TestMergeDatafiles(unittest.TestCase):
@@ -795,7 +895,7 @@ class TestMergeDatafiles(unittest.TestCase):
 
     def test_merge_data_files(self):
         with self.master_store.session_scope():
-            merge_change_id = self.master_store.add_to_changes(
+            self.master_store.add_to_changes(
                 user=getuser(),
                 modified=datetime.utcnow(),
                 reason=f"Merging from database {self.slave_store.db_name}",
@@ -805,57 +905,63 @@ class TestMergeDatafiles(unittest.TestCase):
 
         id_results = self.merge_class.merge_metadata_table("Datafile")
 
-        # Check there are the right number of entries in the master database
-        results = self.master_store.session.query(self.master_store.db_classes.Datafile).all()
-        assert len(results) == 6
+        with self.master_store.session_scope():
+            with self.slave_store.session_scope():
+                # Check there are the right number of entries in the master database
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.Datafile
+                ).all()
+                assert len(results) == 6
 
-        # Check there are the right number of IDs in each section of the ID results
-        assert len(id_results["already_there"]) == 1
-        assert len(id_results["added"]) == 2
-        assert len(id_results["modified"]) == 1
+                # Check there are the right number of IDs in each section of the ID results
+                assert len(id_results["already_there"]) == 1
+                assert len(id_results["added"]) == 2
+                assert len(id_results["modified"]) == 1
 
-        # Check we have an entry called Slave_DF_1 in master now
-        results = (
-            self.master_store.session.query(self.master_store.db_classes.Datafile)
-            .filter(self.master_store.db_classes.Datafile.reference == "Slave_DF_1")
-            .all()
-        )
+                # Check we have an entry called Slave_DF_1 in master now
+                results = (
+                    self.master_store.session.query(self.master_store.db_classes.Datafile)
+                    .filter(self.master_store.db_classes.Datafile.reference == "Slave_DF_1")
+                    .all()
+                )
 
-        assert len(results) == 1
-        ids_added = [d["id"] for d in id_results["added"]]
-        assert results[0].datafile_id in ids_added
+                assert len(results) == 1
+                ids_added = [d["id"] for d in id_results["added"]]
+                assert results[0].datafile_id in ids_added
 
-        # Check that we mark the Shared_DF_2_GUIDSame entry as already there
-        results = (
-            self.master_store.session.query(self.master_store.db_classes.Datafile)
-            .filter(self.master_store.db_classes.Datafile.reference == "Shared_DF_2_GUIDSame")
-            .all()
-        )
+                # Check that we mark the Shared_DF_2_GUIDSame entry as already there
+                results = (
+                    self.master_store.session.query(self.master_store.db_classes.Datafile)
+                    .filter(
+                        self.master_store.db_classes.Datafile.reference == "Shared_DF_2_GUIDSame"
+                    )
+                    .all()
+                )
 
-        assert len(results) == 1
-        ids_already_there = [d["id"] for d in id_results["already_there"]]
-        assert results[0].datafile_id in ids_already_there
+                assert len(results) == 1
+                ids_already_there = [d["id"] for d in id_results["already_there"]]
+                assert results[0].datafile_id in ids_already_there
 
-        # Check that the GUID for Shared_DF_1 matches in both databases, and is correctly in the
-        # from and to sections of the list of modified IDs
-        master_results = (
-            self.master_store.session.query(self.master_store.db_classes.Datafile)
-            .filter(self.master_store.db_classes.Datafile.reference == "Shared_DF_1")
-            .all()
-        )
-        slave_results = (
-            self.slave_store.session.query(self.slave_store.db_classes.Datafile)
-            .filter(self.slave_store.db_classes.Datafile.reference == "Shared_DF_1")
-            .all()
-        )
+                # Check that the GUID for Shared_DF_1 matches in both databases, and is correctly in the
+                # from and to sections of the list of modified IDs
+                master_results = (
+                    self.master_store.session.query(self.master_store.db_classes.Datafile)
+                    .filter(self.master_store.db_classes.Datafile.reference == "Shared_DF_1")
+                    .all()
+                )
+                slave_results = (
+                    self.slave_store.session.query(self.slave_store.db_classes.Datafile)
+                    .filter(self.slave_store.db_classes.Datafile.reference == "Shared_DF_1")
+                    .all()
+                )
 
-        assert len(master_results) == 1
-        assert len(slave_results) == 1
+                assert len(master_results) == 1
+                assert len(slave_results) == 1
 
-        assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-        assert id_results["modified"][0]["from"] == self.shared_guid
-        assert id_results["modified"][0]["to"] == master_results[0].datafile_id
+                assert id_results["modified"][0]["from"] == self.shared_guid
+                assert id_results["modified"][0]["to"] == master_results[0].datafile_id
 
 
 class TestMergeStateFromImport(unittest.TestCase):
@@ -993,7 +1099,11 @@ class TestMergeStateFromImport_Postgres(unittest.TestCase):
 
         try:
             self.postgres = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -1395,7 +1505,7 @@ class TestMergeStateFromImport_Idempotent_DifferentFile(unittest.TestCase):
 
         # Run again merging from the original sqlite file
         # that hasn't been altered by the merge process
-        new_slave_store = DataStore("", "", "", 0, db_name="slave_orig.sqlite", db_type="sqlite")
+        DataStore("", "", "", 0, db_name="slave_orig.sqlite", db_type="sqlite")
         self.merge_class.merge_all_tables()
 
         self.do_checks()
@@ -1439,11 +1549,18 @@ class TestSynonymMergeWithRefTable(unittest.TestCase):
             self.slave_store.add_to_platform_types("PlatformType1", change_id)
             self.slave_store.add_to_nationalities("UK", change_id)
             self.slave_store.add_to_privacies("Private", level=0, change_id=change_id)
-            self.slave_store.add_to_platforms(
+            plat1 = self.slave_store.add_to_platforms(
                 "Platform1", "123", "UK", "PlatformType1", "Private", change_id=change_id
             )
             self.slave_store.add_to_sensors(
-                "Sensor1", "ST_Shared_1", "Platform1", "Private", change_id
+                name="Sensor1",
+                sensor_type="ST_Shared_1",
+                host_id=plat1.platform_id,
+                host_name=None,
+                host_nationality=None,
+                host_identifier=None,
+                privacy="Private",
+                change_id=change_id,
             )
 
             self.slave_store.add_to_synonyms(
@@ -1461,7 +1578,7 @@ class TestSynonymMergeWithRefTable(unittest.TestCase):
 
     def test_synonym_merge_reference_table(self):
         with self.master_store.session_scope():
-            merge_change_id = self.master_store.add_to_changes(
+            self.master_store.add_to_changes(
                 user=getuser(),
                 modified=datetime.utcnow(),
                 reason=f"Merging from database {self.slave_store.db_name}",
@@ -1472,28 +1589,33 @@ class TestSynonymMergeWithRefTable(unittest.TestCase):
         self.merge_class.merge_metadata_table("Synonym")
 
         with self.master_store.session_scope():
-            # Check the synonym entry from the slave is now in master
-            slave_results = self.slave_store.session.query(
-                self.slave_store.db_classes.Synonym
-            ).all()
-            master_results = self.master_store.session.query(
-                self.master_store.db_classes.Synonym
-            ).all()
+            with self.slave_store.session_scope():
+                # Check the synonym entry from the slave is now in master
+                slave_results = self.slave_store.session.query(
+                    self.slave_store.db_classes.Synonym
+                ).all()
+                master_results = self.master_store.session.query(
+                    self.master_store.db_classes.Synonym
+                ).all()
 
-            assert check_sqlalchemy_results_are_equal(master_results, slave_results)
+                assert check_sqlalchemy_results_are_equal(master_results, slave_results)
 
-            # Check the synonym entry in master points to a SensorType in master
-            results = self.master_store.session.query(self.master_store.db_classes.Synonym).all()
+                # Check the synonym entry in master points to a SensorType in master
+                results = self.master_store.session.query(
+                    self.master_store.db_classes.Synonym
+                ).all()
 
-            assert len(results) > 0
+                assert len(results) > 0
 
-            results = (
-                self.master_store.session.query(self.master_store.db_classes.SensorType)
-                .filter(self.master_store.db_classes.SensorType.sensor_type_id == results[0].entity)
-                .all()
-            )
+                results = (
+                    self.master_store.session.query(self.master_store.db_classes.SensorType)
+                    .filter(
+                        self.master_store.db_classes.SensorType.sensor_type_id == results[0].entity
+                    )
+                    .all()
+                )
 
-            assert len(results) > 0
+                assert len(results) > 0
 
 
 class TestSynonymMergeWithMetadataTable(unittest.TestCase):
@@ -1659,35 +1781,37 @@ class TestSynonymMergeWithMetadataTable(unittest.TestCase):
         self.merge_class.merge_all_tables()
 
         with self.master_store.session_scope():
-            # Check the synonym entry from the slave is now in master
-            slave_results = self.slave_store.session.query(
-                self.slave_store.db_classes.Synonym
-            ).all()
+            with self.slave_store.session_scope():
+                # Check the synonym entry from the slave is now in master
+                slave_results = self.slave_store.session.query(
+                    self.slave_store.db_classes.Synonym
+                ).all()
 
-            master_results = (
-                self.master_store.session.query(self.master_store.db_classes.Synonym)
-                .filter(
-                    self.master_store.db_classes.Synonym.synonym_id == slave_results[0].synonym_id
-                )
-                .all()
-            )
-
-            assert len(master_results) > 0
-
-            # Check the synonym entry in master points to a Platform in master
-            synonym_results = self.master_store.session.query(
-                self.master_store.db_classes.Synonym
-            ).all()
-            entities = [result.entity for result in synonym_results]
-            assert len(synonym_results) > 0
-
-            for entity in entities:
-                sensor_results = (
-                    self.master_store.session.query(self.master_store.db_classes.Platform)
-                    .filter(self.master_store.db_classes.Platform.platform_id == entity)
+                master_results = (
+                    self.master_store.session.query(self.master_store.db_classes.Synonym)
+                    .filter(
+                        self.master_store.db_classes.Synonym.synonym_id
+                        == slave_results[0].synonym_id
+                    )
                     .all()
                 )
-                assert len(sensor_results) > 0
+
+                assert len(master_results) > 0
+
+                # Check the synonym entry in master points to a Platform in master
+                synonym_results = self.master_store.session.query(
+                    self.master_store.db_classes.Synonym
+                ).all()
+                entities = [result.entity for result in synonym_results]
+                assert len(synonym_results) > 0
+
+                for entity in entities:
+                    sensor_results = (
+                        self.master_store.session.query(self.master_store.db_classes.Platform)
+                        .filter(self.master_store.db_classes.Platform.platform_id == entity)
+                        .all()
+                    )
+                    assert len(sensor_results) > 0
 
 
 class TestMergeLogsAndChanges(unittest.TestCase):
@@ -1892,61 +2016,64 @@ class TestMergeUpdatePlatformPrivacy(unittest.TestCase):
     def test_merge_update_platform(self):
         self.merge_class.merge_all_tables()
 
-        # Check that the trigraph that was additional data for Platform_Shared_1 has copied across
-        results = (
-            self.master_store.session.query(self.master_store.db_classes.Platform)
-            .filter(self.master_store.db_classes.Platform.name == "Platform_Shared_1")
-            .all()
-        )
+        with self.master_store.session_scope():
+            with self.slave_store.session_scope():
+                # Check that the trigraph that was additional data for Platform_Shared_1 has copied across
+                results = (
+                    self.master_store.session.query(self.master_store.db_classes.Platform)
+                    .filter(self.master_store.db_classes.Platform.name == "Platform_Shared_1")
+                    .all()
+                )
 
-        assert len(results) == 1
-        assert results[0].trigraph == "PLT"
+                assert len(results) == 1
+                assert results[0].trigraph == "PLT"
 
-        # Check that the Privacy for Platform_Shared_1 is now Very Private with level=20
-        assert results[0].privacy.name == "Very Private"
-        assert results[0].privacy.level == 20
+                # Check that the Privacy for Platform_Shared_1 is now Very Private with level=20
+                assert results[0].privacy.name == "Very Private"
+                assert results[0].privacy.level == 20
 
-        # Check that only one platform called Platform_Shared_2 exists, and that the trigraph is still
-        # what it was originally set to in master
-        results = (
-            self.master_store.session.query(self.master_store.db_classes.Platform)
-            .filter(self.master_store.db_classes.Platform.name == "Platform_Shared_2")
-            .all()
-        )
+                # Check that only one platform called Platform_Shared_2 exists, and that the trigraph is still
+                # what it was originally set to in master
+                results = (
+                    self.master_store.session.query(self.master_store.db_classes.Platform)
+                    .filter(self.master_store.db_classes.Platform.name == "Platform_Shared_2")
+                    .all()
+                )
 
-        assert len(results) == 1
+                assert len(results) == 1
 
-        assert results[0].trigraph == "PL1"
-        master_guid = results[0].platform_id
+                assert results[0].trigraph == "PL1"
+                master_guid = results[0].platform_id
 
-        # Check that the GUIDs match between Platform_Shared_2 in slave and master
-        results = (
-            self.slave_store.session.query(self.slave_store.db_classes.Platform)
-            .filter(self.slave_store.db_classes.Platform.name == "Platform_Shared_2")
-            .all()
-        )
+                # Check that the GUIDs match between Platform_Shared_2 in slave and master
+                results = (
+                    self.slave_store.session.query(self.slave_store.db_classes.Platform)
+                    .filter(self.slave_store.db_classes.Platform.name == "Platform_Shared_2")
+                    .all()
+                )
 
-        assert master_guid == results[0].platform_id
+                assert master_guid == results[0].platform_id
 
-        # Check a new change was added
-        results = (
-            self.master_store.session.query(self.master_store.db_classes.Change)
-            .filter(
-                self.master_store.db_classes.Change.reason == "Merging from database slave.sqlite"
-            )
-            .all()
-        )
+                # Check a new change was added
+                results = (
+                    self.master_store.session.query(self.master_store.db_classes.Change)
+                    .filter(
+                        self.master_store.db_classes.Change.reason
+                        == "Merging from database slave.sqlite"
+                    )
+                    .all()
+                )
 
-        assert len(results) == 1
+                assert len(results) == 1
 
-        # Check a log entry was added for updating the trigraph field
-        results = (
-            self.master_store.session.query(self.master_store.db_classes.Log)
-            .filter(self.master_store.db_classes.Log.new_value == "PLT")
-            .all()
-        )
+                # Check a log entry was added for updating the trigraph field
+                results = (
+                    self.master_store.session.query(self.master_store.db_classes.Log)
+                    .filter(self.master_store.db_classes.Log.new_value == "PLT")
+                    .all()
+                )
 
-        assert len(results) == 1
+                assert len(results) == 1
 
 
 class TestExportAlterAndMerge(unittest.TestCase):
@@ -2193,7 +2320,7 @@ class TestExportAlterAndMerge(unittest.TestCase):
 
                 platform_names = [p.name for p in platform_results]
 
-                assert len(platform_names) == 8
+                assert len(platform_names) == 9
 
                 assert "Master_Platform_1" in platform_names
                 assert "Slave_Platform_1" in platform_names
@@ -2229,7 +2356,11 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
 
         try:
             self.postgres = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -2455,7 +2586,7 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
 
                 platform_names = [p.name for p in platform_results]
 
-                assert len(platform_names) == 8
+                assert len(platform_names) == 9
 
                 assert "Master_Platform_1" in platform_names
                 assert "Slave_Platform_1" in platform_names
@@ -2548,6 +2679,91 @@ class TestExportDoNothingAndMerge(unittest.TestCase):
 
         # Check entries added list
         assert "No entries added" in output
+
+
+class TestGeometryMerge(unittest.TestCase):
+    def setUp(self):
+        if os.path.exists("master.sqlite"):
+            os.remove("master.sqlite")
+
+        if os.path.exists("slave.sqlite"):
+            os.remove("slave.sqlite")
+
+        self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
+        self.slave_store = DataStore("", "", "", 0, db_name="slave.sqlite", db_type="sqlite")
+
+        self.master_store.initialise()
+        self.slave_store.initialise()
+
+        with self.master_store.session_scope():
+            change_id = self.master_store.add_to_changes(
+                "TEST", datetime.utcnow(), "TEST"
+            ).change_id
+
+        with self.slave_store.session_scope():
+            change_id = self.slave_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+            self.slave_store.add_to_privacies("Public", level=0, change_id=change_id)
+            self.slave_store.add_to_datafile_types("TestDFT", change_id=change_id)
+            geom_type_obj = self.slave_store.add_to_geometry_types(
+                "TestGeomType", change_id=change_id
+            )
+            geom_sub_type_id = self.slave_store.add_to_geometry_sub_types(
+                "TestGeomSubType", parent_name=geom_type_obj.name, change_id=change_id
+            ).geo_sub_type_id
+            datafile = self.slave_store.add_to_datafiles(
+                "Public",
+                "TestDFT",
+                reference="TestDatafile",
+                file_hash="HASH",
+                file_size=100,
+                change_id=change_id,
+            )
+            datafile.measurements["TestParser"] = {}
+            datafile.create_geometry(
+                self.slave_store,
+                "SRID=4326;POINT (-1.5 50.5)",
+                geom_type_obj.geo_type_id,
+                geom_sub_type_id,
+                "TestParser",
+            )
+            datafile.create_geometry(
+                self.slave_store,
+                "SRID=4326;LINESTRING (-1 0, -2 0, -3 1)",
+                geom_type_obj.geo_type_id,
+                geom_sub_type_id,
+                "TestParser",
+            )
+            datafile.commit(self.slave_store, change_id=change_id)
+
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
+    def tearDown(self):
+        # if os.path.exists("master.sqlite"):
+        #     os.remove("master.sqlite")
+
+        # if os.path.exists("slave.sqlite"):
+        #     os.remove("slave.sqlite")
+        pass
+
+    def test_geometry_merge(self):
+        # Do the merge
+        self.merge_class.merge_all_tables()
+
+        with self.master_store.session_scope():
+            master_geoms = self.master_store.session.query(
+                self.master_store.db_classes.Geometry1
+            ).all()
+
+            assert len(master_geoms) == 2
+
+            assert master_geoms[0].geometry is not None
+            assert master_geoms[1].geometry is not None
+
+            shapely_geom = to_shape(master_geoms[0].geometry)
+            assert shapely_geom.wkt == "POINT (-1.5 50.5)"
+
+            shapely_geom = to_shape(master_geoms[1].geometry)
+            assert shapely_geom.wkt == "LINESTRING (-1 0, -2 0, -3 1)"
 
 
 if __name__ == "__main__":

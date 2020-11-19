@@ -20,7 +20,11 @@ class DataStoreExportPostGISDBTestCase(unittest.TestCase):
         self.store = None
         try:
             self.store = Postgresql(
-                database="test", host="localhost", user="postgres", password="postgres", port=55527,
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
             )
         except RuntimeError:
             print("PostgreSQL database couldn't be created! Test is skipping.")
@@ -142,6 +146,34 @@ class DataStoreExportSpatiaLiteTestCase(unittest.TestCase):
             )
             assert ";SENSOR:\t100112 120400.000\tSENSOR\t@@\tNULL\t251.99\t107.69\tTA\tN/A" in data
 
+    def test_sqlite_export_datafile_just_comments(self):
+        with self.store.session_scope():
+            datafiles = self.store.get_all_datafiles()
+            selected_datafile_id = datafiles[0].datafile_id
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            selected_platform_id = platforms[0].platform_id
+            self.store.export_datafile(
+                selected_datafile_id, self.path, platform_id=selected_platform_id
+            )
+
+            # Fetch data from the exported file
+            with open(self.path, "r") as file:
+                data = file.read().split("\n")
+                print(data)
+
+            assert ";NARRATIVE:\t100112 115800.000\tSENSOR\tContact detected on TA" in data
+            assert (
+                ";NARRATIVE:\t100112 120000.000\tSENSOR\tContact identified as SUBJECT on TA"
+                in data
+            )
+            assert (
+                ";NARRATIVE:\t100112 120000.000\tSENSOR\tContact identified as SUBJECT on TA"
+                in data
+            )
+            assert ";NARRATIVE:\t100112 120200.000\tSENSOR\tSUBJECT weakening on TA" in data
+            assert ";NARRATIVE:\t100112 120400.000\tSENSOR\tSUBJECT lost on TA" in data
+            assert ";NARRATIVE:\t100112 120600.000\tSENSOR\tSUBJECT regained on TA" in data
+
 
 class CachePlatformAndSensorNamesTestCase(unittest.TestCase):
     def setUp(self) -> None:
@@ -173,7 +205,7 @@ class CachePlatformAndSensorNamesTestCase(unittest.TestCase):
             with pytest.raises(Exception) as exception:
                 self.store.get_cached_platform_name()
             assert (
-                f"Either 'sensor_id' or 'platform_id' has to be provided to get 'platform name'"
+                "Either 'sensor_id' or 'platform_id' has to be provided to get 'platform name'"
                 in str(exception.value)
             )
             with pytest.raises(Exception) as exception:
@@ -207,7 +239,7 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
         Comment = self.store.db_classes.Comment
 
         with self.store.session_scope():
-            platform = self.store.search_platform("SUBJECT")
+            platform = self.store.search_platform("SUBJECT", "UK", "123")
             sensor_id = self.store.search_sensor("SENSOR-1", platform.platform_id).sensor_id
 
             state_values = self.store.find_min_and_max_date(State, State.sensor_id, sensor_id)
@@ -215,7 +247,7 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
             assert str(state_values[0]) == "2010-01-12 11:58:00"
             assert str(state_values[1]) == "2010-01-12 12:14:00"
 
-            platform = self.store.search_platform("SENSOR")
+            platform = self.store.search_platform("SENSOR", "UK", "123")
             sensor_id = self.store.search_sensor("TA", platform.platform_id).sensor_id
 
             contact_values = self.store.find_min_and_max_date(Contact, Contact.sensor_id, sensor_id)
@@ -224,7 +256,7 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
             assert str(contact_values[0]) == "2010-01-12 11:58:00"
             assert str(contact_values[1]) == "2010-01-12 12:06:00"
 
-            platform_id = self.store.search_platform("SEARCH_PLATFORM").platform_id
+            platform_id = self.store.search_platform("SEARCH_PLATFORM", "UK", "123").platform_id
             comment_values = self.store.find_min_and_max_date(
                 Comment, Comment.platform_id, platform_id
             )
@@ -237,7 +269,7 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
 
     def test_find_related_datafile_objects_of_comments(self):
         with self.store.session_scope():
-            platform_id = self.store.search_platform("SEARCH_PLATFORM").platform_id
+            platform_id = self.store.search_platform("SEARCH_PLATFORM", "UK", "123").platform_id
             objects = self.store.find_related_datafile_objects(platform_id, sensors_dict={})
             assert len(objects) == 1
             assert objects[0]["name"] == "Comment"
@@ -247,8 +279,8 @@ class FindRelatedDatafileObjectsTestCase(unittest.TestCase):
 
     def test_find_related_datafile_objects_of_states_and_contacts(self):
         with self.store.session_scope():
-            platform1 = self.store.search_platform("SUBJECT")
-            platform2 = self.store.search_platform("SENSOR")
+            platform1 = self.store.search_platform("SUBJECT", "UK", "123")
+            platform2 = self.store.search_platform("SENSOR", "UK", "123")
 
             sensors_dict = {
                 "SENSOR-1": self.store.search_sensor("SENSOR-1", platform1.platform_id).sensor_id,

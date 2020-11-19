@@ -4,12 +4,13 @@ from logging.config import fileConfig
 
 from alembic import context
 from alembic.script import write_hooks
-from sqlalchemy import engine_from_config
+from geoalchemy2.types import Geometry
+from sqlalchemy import NUMERIC, Integer, engine_from_config
 from sqlalchemy.event import listen
 
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from paths import MIGRATIONS_DIRECTORY
-from pepys_import.core.store import (  # Don't remove, they are necessary for the discovery of changes!
+from pepys_import.core.store import (  # noqa: F401,Don't remove,they're necessary for the discovery of changes!
     postgres_db,
     sqlite_db,
 )
@@ -88,6 +89,19 @@ def include_object_sqlite(object_, name, type_, reflected, compare_to):
         return True
 
 
+def special_compare_type(context, inspected_column, metadata_column, inspected_type, metadata_type):
+    # return False if the metadata_type is the same as the inspected_type
+    # or None to allow the default implementation to compare these
+    # types. a return value of True means the two types do not
+    # match and should result in a type change operation.
+    if (isinstance(inspected_type, NUMERIC) or isinstance(inspected_type, Integer)) and isinstance(
+        metadata_type, Geometry
+    ):
+        return False
+
+    return None
+
+
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
 
@@ -120,7 +134,6 @@ def run_migrations_offline():
             version_table_schema="pepys",
             include_schemas=True,
             include_object=include_object_postgres,
-            render_as_batch=True,
             compare_type=True,
         )
     with context.begin_transaction():
@@ -147,7 +160,8 @@ def run_migrations_online():
         # only create Engine if we don't have a Connection
         # from the outside
         connectable = engine_from_config(
-            config.get_section(config.config_ini_section), prefix="sqlalchemy.",
+            config.get_section(config.config_ini_section),
+            prefix="sqlalchemy.",
         )
         if db_type == "sqlite":
             listen(connectable, "connect", load_spatialite)
@@ -166,7 +180,6 @@ def run_migrations_online():
                 version_table_schema="pepys",
                 include_schemas=True,
                 include_object=include_object_postgres,
-                render_as_batch=True,
                 process_revision_directives=process_revision_directives,
                 compare_type=True,
             )
@@ -174,32 +187,26 @@ def run_migrations_online():
                 context.execute("SET search_path TO pepys,public")
                 context.run_migrations()
         else:
+            # Turn off the enforcement of foreign key constraints before running the migration
+            connection.execute("PRAGMA foreign_keys=OFF;")
             context.configure(
                 connection=connection,
                 target_metadata=target_metadata,
                 include_object=include_object_sqlite,
                 render_as_batch=True,
                 process_revision_directives=process_revision_directives,
-                compare_type=True,
+                compare_type=special_compare_type,
             )
             with context.begin_transaction():
                 context.run_migrations()
+            # Turn on the enforcement of foreign key constraints after the migration is done
+            connection.execute("PRAGMA foreign_keys=ON;")
 
 
 if context.is_offline_mode():
     run_migrations_offline()
 else:
     run_migrations_online()
-
-
-@write_hooks.register("include_geoalchemy2")
-def include_geoalchemy2(filename, options):
-    with open(filename) as file_:
-        lines = file_.readlines()
-    # insert geoalchemy clause to the imports, it will be reformatted with black and isort later on
-    lines.insert(10, "import geoalchemy2\n")
-    with open(filename, "w") as to_write:
-        to_write.writelines(lines)
 
 
 @write_hooks.register("update_latest_revision")

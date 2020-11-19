@@ -14,6 +14,7 @@ DIRECTORY_PATH = os.path.dirname(__file__)
 CURRENT_DIR = os.getcwd()
 REP_DATA_PATH = os.path.join(DIRECTORY_PATH, "sample_data", "track_files", "rep_data")
 REP_FILE_PATH = os.path.join(REP_DATA_PATH, "rep_test1.rep")
+INVALID_REP_FILE_PATH = os.path.join(REP_DATA_PATH, "rep_test2.rep")
 
 
 class ReferenceTestCase(unittest.TestCase):
@@ -104,10 +105,11 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         # Process the rep file
         self.processor.process(REP_FILE_PATH, self.store, False)
 
-        # Query Datafile table, it should have one entity
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 1
-        assert datafiles[0].reference == "rep_test1.rep"
+        with self.store.session_scope():
+            # Query Datafile table, it should have one entity
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 1
+            assert datafiles[0].reference == "rep_test1.rep"
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -116,10 +118,12 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         # Assert that file is processed
         assert "Files got processed: 1 times" in output
+
         # Query Datafile table, it should have two entities now
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 2
-        assert datafiles[1].reference == "modified_rep_test1.rep"
+        with self.store.session_scope():
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 2
+            assert datafiles[1].reference == "modified_rep_test1.rep"
 
         # Delete the copy file
         os.remove(copied_file_path)
@@ -136,8 +140,10 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         # Change characters
         lines[0] = lines[0].replace("A", "x")
         lines[0] = lines[0].replace("B", "y")
-        # Strip first and last two lines, write it to the same file
-        with open(copied_file_path, "w") as file:
+        # Write these altered lines to the file
+        # (Note: force it to use Unix line-endings, otherwise on Windows
+        # the newly written file has CRLF rather than LF and that changes the size)
+        with open(copied_file_path, "w", newline="\n") as file:
             file.writelines(lines)
 
         # Assert that file hash is changed and file size is the same
@@ -148,9 +154,10 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         self.processor.process(REP_FILE_PATH, self.store, False)
 
         # Query Datafile table, it should have one entity
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 1
-        assert datafiles[0].reference == "rep_test1.rep"
+        with self.store.session_scope():
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 1
+            assert datafiles[0].reference == "rep_test1.rep"
 
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -159,13 +166,38 @@ class DuplicatedFilesTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         # Assert that file is processed
         assert "Files got processed: 1 times" in output
+
         # Query Datafile table, it should have two entities now
-        datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-        assert len(datafiles) == 2
-        assert datafiles[1].reference == "modified_rep_test1.rep"
+        with self.store.session_scope():
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 2
+            assert datafiles[1].reference == "modified_rep_test1.rep"
 
         # Delete the copy file
         os.remove(copied_file_path)
+
+
+class InvalidFileTestCase(unittest.TestCase):
+    def setUp(self) -> None:
+        self.store = DataStore("", "", "", 0, "test.db", db_type="sqlite")
+        self.store.initialise()
+        self.processor = FileProcessor()
+        self.processor.register_importer(ReplayImporter())
+
+    def tearDown(self) -> None:
+        test_db = os.path.join(CURRENT_DIR, "test.db")
+        if os.path.exists(test_db):
+            os.remove(test_db)
+
+    def test_importing_file_with_errors(self):
+        """Test that if we import a file that has errors, then no datafile entry is left at the end"""
+        # Process the rep file
+        self.processor.process(INVALID_REP_FILE_PATH, self.store, False)
+
+        # There should be no datafiles now, as the file with the error shouldn't create a datafile entry
+        with self.store.session_scope():
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 0
 
 
 if __name__ == "__main__":

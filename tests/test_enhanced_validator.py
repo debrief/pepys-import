@@ -1,5 +1,7 @@
 import unittest
+from contextlib import redirect_stdout
 from datetime import datetime, timedelta
+from io import StringIO
 
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
@@ -49,8 +51,9 @@ class EnhancedValidatorTestCase(unittest.TestCase):
                 name="Test Importer",
                 validation_level=constants.NONE_LEVEL,
                 short_name="Test Importer",
+                datafile_type="Test",
             ):
-                super().__init__(name, validation_level, short_name)
+                super().__init__(name, validation_level, short_name, datafile_type)
                 self.text_label = None
                 self.depth = 0.0
                 self.errors = list()
@@ -157,6 +160,60 @@ class EnhancedValidatorTestCase(unittest.TestCase):
         assert (
             "Calculated speed (12382.753 meter / second) is more than the measured speed * 10 "
             "(100.000 meter / second)" in str(self.errors[0])
+        )
+
+    def test_course_and_speed_are_exactly_zero(self):
+        ev = EnhancedValidator()
+        temp_output = StringIO()
+        prev_state = self.file.create_state(
+            self.store,
+            self.platform,
+            self.sensor,
+            self.current_time,
+            parser_name=self.parser.short_name,
+        )
+        current_state = self.file.create_state(
+            self.store,
+            self.platform,
+            self.sensor,
+            self.current_time + timedelta(minutes=1),
+            parser_name=self.parser.short_name,
+        )
+        current_state.course = 0.0 * unit_registry.radian
+        current_state.speed = 0.0 * (unit_registry.metre / unit_registry.second)
+
+        with redirect_stdout(temp_output):
+            ev.validate(current_state, self.errors, "Test Parser", prev_state)
+        output = temp_output.getvalue()
+
+        assert (
+            "Both course and speed are exactly zero. Skipping the enhanced validator..." in output
+        )
+
+    def test_measured_speed_is_zero(self):
+        # The difference between the following locations is ~3.574 km
+        prev_loc = Location()
+        prev_loc.set_latitude_decimal_degrees(50)
+        prev_loc.set_longitude_decimal_degrees(75)
+
+        current_loc = Location()
+        current_loc.set_latitude_decimal_degrees(50)
+        current_loc.set_longitude_decimal_degrees(75.05)
+
+        speed = 0.0 * (unit_registry.metre / unit_registry.second)
+        time = 3600 * unit_registry.seconds
+
+        ev = EnhancedValidator()
+        assert (
+            ev.speed_loose_match_with_location(
+                prev_location=prev_loc,
+                curr_location=current_loc,
+                speed=speed,
+                time=time,
+                errors=self.errors,
+                error_type="Test Parser",
+            )
+            is True
         )
 
 

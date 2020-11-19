@@ -15,6 +15,7 @@ class NMEAImporter(Importer):
             validation_level=constants.BASIC_LEVEL,
             short_name="NMEA Importer",
             default_privacy="Private",
+            datafile_type="NMEA",
         )
 
         self.latitude = None
@@ -52,7 +53,7 @@ class NMEAImporter(Importer):
             # set it to None. Later we will set it to the returned value from the get_platform call
             # so that we don't have to ask about the platform again for each line in the file
             self.platform_name = None
-        tokens = line.tokens(line.CSV_DELIM, ",")
+        tokens = line.tokens(line.CSV_TOKENISER, ",")
 
         if len(tokens) > 1:
 
@@ -92,8 +93,8 @@ class NMEAImporter(Importer):
             ):
 
                 # and finally store it
-                platform = data_store.get_platform(
-                    platform_name=self.platform_name, change_id=change_id,
+                platform = self.get_cached_platform(
+                    data_store, self.platform_name, change_id=change_id
                 )
                 # Keep track of the platform name, so we don't have to ask for each line
                 self.platform_name = platform.name
@@ -123,7 +124,10 @@ class NMEAImporter(Importer):
                     data_store, platform, sensor, timestamp, self.short_name
                 )
 
-                self.location = Location(errors=self.errors, error_type=self.error_type,)
+                self.location = Location(
+                    errors=self.errors,
+                    error_type=self.error_type,
+                )
 
                 if not self.location.set_latitude_dms(
                     degrees=self.latitude[:2],
@@ -155,7 +159,11 @@ class NMEAImporter(Importer):
                     self.heading_token.record(self.name, "heading", heading)
 
                 speed_valid, speed = convert_speed(
-                    self.speed, unit_registry.knots, line_number, self.errors, self.error_type,
+                    self.speed,
+                    unit_registry.knots,
+                    line_number,
+                    self.errors,
+                    self.error_type,
                 )
                 if speed_valid:
                     state.speed = speed

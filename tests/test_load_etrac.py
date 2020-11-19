@@ -51,7 +51,7 @@ class TestLoadEtrac(unittest.TestCase):
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 2)
+            self.assertEqual(len(datafiles), 1)
 
             # Check that there is an elevation of 147 reported (test file was manually edited
             # to contain an elevation of 147m)

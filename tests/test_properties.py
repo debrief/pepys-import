@@ -63,6 +63,10 @@ class TestStateSpeedProperty(unittest.TestCase):
         assert state.speed == 10 * (unit_registry.metre / unit_registry.second)
         assert state.speed.check("[length]/[time]")
 
+    def test_state_speed_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.State.speed, "expression")
+
 
 class TestStateHeadingProperty(unittest.TestCase):
     def setUp(self):
@@ -97,6 +101,17 @@ class TestStateHeadingProperty(unittest.TestCase):
 
         assert "Heading must be a Quantity with a dimensionality of ''" in str(exception.value)
 
+    def test_state_heading_wrong_units_dimensionless(self):
+        state = self.store.db_classes.State()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            state.heading = unit_registry.Quantity(5)
+
+        assert "Heading must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_state_heading_right_units(self):
         state = self.store.db_classes.State()
 
@@ -114,6 +129,10 @@ class TestStateHeadingProperty(unittest.TestCase):
 
         assert state.heading == 157 * unit_registry.degree
         assert state.heading.check("")
+
+    def test_state_heading_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.State.heading, "expression")
 
 
 class TestStateCourseProperty(unittest.TestCase):
@@ -149,6 +168,17 @@ class TestStateCourseProperty(unittest.TestCase):
 
         assert "Course must be a Quantity with a dimensionality of ''" in str(exception.value)
 
+    def test_state_course_wrong_units_dimensionless(self):
+        state = self.store.db_classes.State()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            state.course = unit_registry.Quantity(5)
+
+        assert "Course must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_state_course_right_units(self):
         state = self.store.db_classes.State()
 
@@ -166,6 +196,10 @@ class TestStateCourseProperty(unittest.TestCase):
 
         assert state.course == 157 * unit_registry.degree
         assert state.course.check("")
+
+    def test_state_course_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.State.course, "expression")
 
 
 class TestContactBearingProperty(unittest.TestCase):
@@ -201,6 +235,17 @@ class TestContactBearingProperty(unittest.TestCase):
 
         assert "Bearing must be a Quantity with a dimensionality of ''" in str(exception.value)
 
+    def test_contact_bearing_wrong_units_dimensionless(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.bearing = unit_registry.Quantity(5)
+
+        assert "Bearing must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_contact_bearing_right_units(self):
         contact = self.store.db_classes.Contact()
 
@@ -218,6 +263,10 @@ class TestContactBearingProperty(unittest.TestCase):
 
         assert contact.bearing == 157 * unit_registry.degree
         assert contact.bearing.check("")
+
+    def test_contact_bearing_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Contact.bearing, "expression")
 
 
 class TestContactRelBearingProperty(unittest.TestCase):
@@ -255,6 +304,17 @@ class TestContactRelBearingProperty(unittest.TestCase):
             exception.value
         )
 
+    def test_contact_rel_bearing_wrong_units_dimensionless(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.rel_bearing = unit_registry.Quantity(5)
+
+        assert "Relative Bearing must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_contact_rel_bearing_right_units(self):
         contact = self.store.db_classes.Contact()
 
@@ -272,6 +332,10 @@ class TestContactRelBearingProperty(unittest.TestCase):
 
         assert contact.rel_bearing == 157 * unit_registry.degree
         assert contact.rel_bearing.check("")
+
+    def test_contact_rel_bearing_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Contact.rel_bearing, "expression")
 
 
 class TestContactAmbigBearingProperty(unittest.TestCase):
@@ -309,6 +373,17 @@ class TestContactAmbigBearingProperty(unittest.TestCase):
             exception.value
         )
 
+    def test_contact_ambig_bearing_wrong_units_dimensionless(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.ambig_bearing = unit_registry.Quantity(5)
+
+        assert "Ambig Bearing must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_contact_ambig_bearing_right_units(self):
         contact = self.store.db_classes.Contact()
 
@@ -326,6 +401,10 @@ class TestContactAmbigBearingProperty(unittest.TestCase):
 
         assert contact.ambig_bearing == 234 * unit_registry.degree
         assert contact.ambig_bearing.check("")
+
+    def test_contact_ambig_bearing_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Contact.ambig_bearing, "expression")
 
 
 class TestContactMLAProperty(unittest.TestCase):
@@ -361,6 +440,17 @@ class TestContactMLAProperty(unittest.TestCase):
 
         assert "MLA must be a Quantity with a dimensionality of ''" in str(exception.value)
 
+    def test_contact_mla_wrong_units_dimensionless(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.mla = unit_registry.Quantity(5)
+
+        assert "MLA must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_contact_mla_right_units(self):
         contact = self.store.db_classes.Contact()
 
@@ -378,6 +468,10 @@ class TestContactMLAProperty(unittest.TestCase):
 
         assert contact.mla == 234 * unit_registry.degree
         assert contact.mla.check("")
+
+    def test_contact_mla_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Contact.mla, "expression")
 
 
 class TestContactSLAProperty(unittest.TestCase):
@@ -433,6 +527,10 @@ class TestContactSLAProperty(unittest.TestCase):
         assert contact.soa == 19 * unit_registry.knot
         assert contact.soa.check("[length]/[time]")
 
+    def test_contact_soa_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Contact.soa, "expression")
+
 
 class TestContactOrientationProperty(unittest.TestCase):
     def setUp(self):
@@ -467,6 +565,17 @@ class TestContactOrientationProperty(unittest.TestCase):
 
         assert "Orientation must be a Quantity with a dimensionality of ''" in str(exception.value)
 
+    def test_contact_orientation_wrong_units_dimensionless(self):
+        contact = self.store.db_classes.Contact()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            contact.orientation = unit_registry.Quantity(5)
+
+        assert "Orientation must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_contact_orientation_right_units(self):
         contact = self.store.db_classes.Contact()
 
@@ -484,6 +593,10 @@ class TestContactOrientationProperty(unittest.TestCase):
 
         assert contact.orientation == 53 * unit_registry.degree
         assert contact.orientation.check("")
+
+    def test_contact_orientation_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Contact.orientation, "expression")
 
 
 class TestContactMajorProperty(unittest.TestCase):
@@ -537,6 +650,10 @@ class TestContactMajorProperty(unittest.TestCase):
         assert contact.major == 1234 * unit_registry.metre
         assert contact.major.check("[length]")
 
+    def test_contact_major_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Contact.major, "expression")
+
 
 class TestContactMinorProperty(unittest.TestCase):
     def setUp(self):
@@ -588,6 +705,10 @@ class TestContactMinorProperty(unittest.TestCase):
 
         assert contact.minor == 1023 * unit_registry.metre
         assert contact.minor.check("[length]")
+
+    def test_contact_minor_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Contact.minor, "expression")
 
 
 class TestContactRangeProperty(unittest.TestCase):
@@ -641,6 +762,10 @@ class TestContactRangeProperty(unittest.TestCase):
         assert contact.range == 976 * unit_registry.metre
         assert contact.range.check("[length]")
 
+    def test_contact_range_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Contact.range, "expression")
+
 
 class TestContactFreqProperty(unittest.TestCase):
     def setUp(self):
@@ -690,6 +815,10 @@ class TestContactFreqProperty(unittest.TestCase):
         assert contact.freq == 567 * unit_registry.hertz
         assert contact.freq.check("[time]^-1")
 
+    def test_contact_freq_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Contact.freq, "expression")
+
 
 CLASSES_WITH_ELEVATION = [
     pytest.param("State", id="state"),
@@ -698,6 +827,10 @@ CLASSES_WITH_ELEVATION = [
 ]
 
 
+@pytest.mark.parametrize(
+    "class_name",
+    CLASSES_WITH_ELEVATION,
+)
 class TestElevationProperty:
     def setup_class(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -706,9 +839,6 @@ class TestElevationProperty:
     def tearDown(self):
         pass
 
-    @pytest.mark.parametrize(
-        "class_name", CLASSES_WITH_ELEVATION,
-    )
     def test_elevation_none(self, class_name):
         obj = eval(f"self.store.db_classes.{class_name}()")
 
@@ -716,9 +846,6 @@ class TestElevationProperty:
 
         assert obj.elevation is None
 
-    @pytest.mark.parametrize(
-        "class_name", CLASSES_WITH_ELEVATION,
-    )
     def test_elevation_scalar(self, class_name):
         obj = eval(f"self.store.db_classes.{class_name}()")
 
@@ -728,9 +855,6 @@ class TestElevationProperty:
 
         assert "Elevation must be a Quantity" in str(exception.value)
 
-    @pytest.mark.parametrize(
-        "class_name", CLASSES_WITH_ELEVATION,
-    )
     def test_elevation_wrong_units(self, class_name):
         obj = eval(f"self.store.db_classes.{class_name}()")
 
@@ -742,9 +866,6 @@ class TestElevationProperty:
             exception.value
         )
 
-    @pytest.mark.parametrize(
-        "class_name", CLASSES_WITH_ELEVATION,
-    )
     def test_elevation_right_units(self, class_name):
         obj = eval(f"self.store.db_classes.{class_name}()")
 
@@ -754,9 +875,6 @@ class TestElevationProperty:
         # Check setting with a Quantity of strange but valid units succeeds
         obj.elevation = 5 * unit_registry.angstrom
 
-    @pytest.mark.parametrize(
-        "class_name", CLASSES_WITH_ELEVATION,
-    )
     def test_state_elevation_roundtrip(self, class_name):
         obj = eval(f"self.store.db_classes.{class_name}()")
 
@@ -766,6 +884,11 @@ class TestElevationProperty:
         assert obj.elevation == 10 * unit_registry.metre
         assert obj.elevation.check("[length]")
 
+    def test_elevation_class_attribute(self, class_name):
+        obj = eval(f"self.store.db_classes.{class_name}.elevation")
+
+        assert hasattr(obj, "expression")
+
 
 CLASSES_WITH_LOCATION = [
     pytest.param("State", id="state"),
@@ -774,6 +897,10 @@ CLASSES_WITH_LOCATION = [
 ]
 
 
+@pytest.mark.parametrize(
+    "class_name",
+    CLASSES_WITH_LOCATION,
+)
 class TestLocationProperty:
     def setup_class(self):
         self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -782,9 +909,6 @@ class TestLocationProperty:
     def tearDown(self):
         pass
 
-    @pytest.mark.parametrize(
-        "class_name", CLASSES_WITH_LOCATION,
-    )
     def test_location_property_none(self, class_name):
         obj = eval(f"self.store.db_classes.{class_name}()")
 
@@ -792,9 +916,6 @@ class TestLocationProperty:
 
         assert obj.location is None
 
-    @pytest.mark.parametrize(
-        "class_name", CLASSES_WITH_LOCATION,
-    )
     def test_location_property_invalid_type(self, class_name):
         obj = eval(f"self.store.db_classes.{class_name}()")
         with pytest.raises(TypeError) as exception:
@@ -802,9 +923,6 @@ class TestLocationProperty:
 
         assert "location value must be an instance of the Location class" in str(exception.value)
 
-    @pytest.mark.parametrize(
-        "class_name", CLASSES_WITH_LOCATION,
-    )
     def test_location_invalid_location(self, class_name):
         obj = eval(f"self.store.db_classes.{class_name}()")
 
@@ -814,9 +932,6 @@ class TestLocationProperty:
 
         assert "location object does not have valid values" in str(exception.value)
 
-    @pytest.mark.parametrize(
-        "class_name", CLASSES_WITH_LOCATION,
-    )
     def test_location_valid_location(self, class_name):
         obj = eval(f"self.store.db_classes.{class_name}()")
 
@@ -826,9 +941,6 @@ class TestLocationProperty:
 
         obj.location = loc
 
-    @pytest.mark.parametrize(
-        "class_name", CLASSES_WITH_LOCATION,
-    )
     def test_location_roundtrip_not_to_db(self, class_name):
         # Tests a roundtrip of a Location object, but without
         # actually committing to the DB - so the Location object
@@ -845,6 +957,11 @@ class TestLocationProperty:
 
         assert obj.location.latitude == 50.23
         assert obj.location.longitude == -1.34
+
+    def test_location_class_attribute(self, class_name):
+        obj = eval(f"self.store.db_classes.{class_name}.elevation")
+
+        assert hasattr(obj, "expression")
 
 
 class TestActivationMinRangeProperty(unittest.TestCase):
@@ -900,6 +1017,10 @@ class TestActivationMinRangeProperty(unittest.TestCase):
         assert activation.min_range == 99 * unit_registry.metre
         assert activation.min_range.check("[length]")
 
+    def test_activation_min_range_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Activation.min_range, "expression")
+
 
 class TestActivationMaxRangeProperty(unittest.TestCase):
     def setUp(self):
@@ -954,6 +1075,10 @@ class TestActivationMaxRangeProperty(unittest.TestCase):
         assert activation.max_range == 143 * unit_registry.metre
         assert activation.max_range.check("[length]")
 
+    def test_activation_max_range_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Activation.max_range, "expression")
+
 
 class TestActivationLeftArcProperty(unittest.TestCase):
     def setUp(self):
@@ -988,6 +1113,17 @@ class TestActivationLeftArcProperty(unittest.TestCase):
 
         assert "left_arc must be a Quantity with a dimensionality of ''" in str(exception.value)
 
+    def test_contact_left_arc_wrong_units_dimensionless(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.left_arc = unit_registry.Quantity(5)
+
+        assert "left_arc must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_activation_left_arc_right_units(self):
         activation = self.store.db_classes.Activation()
 
@@ -1005,6 +1141,10 @@ class TestActivationLeftArcProperty(unittest.TestCase):
 
         assert activation.left_arc == 157 * unit_registry.degree
         assert activation.left_arc.check("")
+
+    def test_activation_left_arc_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Activation.left_arc, "expression")
 
 
 class TestActivationRightArcProperty(unittest.TestCase):
@@ -1040,6 +1180,17 @@ class TestActivationRightArcProperty(unittest.TestCase):
 
         assert "right_arc must be a Quantity with a dimensionality of ''" in str(exception.value)
 
+    def test_contact_right_arc_wrong_units_dimensionless(self):
+        activation = self.store.db_classes.Activation()
+
+        # Check setting with a Quantity of the wrong units gives error
+        with pytest.raises(ValueError) as exception:
+            activation.right_arc = unit_registry.Quantity(5)
+
+        assert "right_arc must be a Quantity with angular units (degree or radian)" in str(
+            exception.value
+        )
+
     def test_activation_right_arc_right_units(self):
         activation = self.store.db_classes.Activation()
 
@@ -1057,6 +1208,48 @@ class TestActivationRightArcProperty(unittest.TestCase):
 
         assert activation.right_arc == 121 * unit_registry.degree
         assert activation.right_arc.check("")
+
+    def test_activation_right_arc_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Activation.right_arc, "expression")
+
+
+class TestGeometryGeometryProperty(unittest.TestCase):
+    def setUp(self):
+        self.store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+        self.store.initialise()
+
+    def tearDown(self):
+        pass
+
+    def test_geometry_geometry_none(self):
+        geometry = self.store.db_classes.Geometry1()
+
+        geometry.geometry = None
+
+        assert geometry.geometry is None
+
+    def test_geometry_geometry_loc(self):
+        geometry = self.store.db_classes.Geometry1()
+
+        loc = Location()
+        loc.set_latitude_decimal_degrees(50)
+        loc.set_longitude_decimal_degrees(-1)
+
+        geometry.geometry = loc
+
+        assert geometry.geometry == loc.to_wkt()
+
+    def test_geometry_geometry_other(self):
+        geometry = self.store.db_classes.Geometry1()
+
+        geometry.geometry = "Test String"
+
+        assert geometry.geometry == "Test String"
+
+    def test_geometry_class_attribute(self):
+        # Check this is a valid SQLAlchemy column when used as a class attribute
+        assert hasattr(self.store.db_classes.Geometry1.geometry, "expression")
 
 
 class TestLocationRoundtripToDB(unittest.TestCase):
@@ -1103,8 +1296,9 @@ class TestLocationRoundtripToDB(unittest.TestCase):
                 name="Test Importer",
                 validation_level=validation_constants.NONE_LEVEL,
                 short_name="Test Importer",
+                datafile_type="Test",
             ):
-                super().__init__(name, validation_level, short_name)
+                super().__init__(name, validation_level, short_name, datafile_type)
                 self.text_label = None
                 self.depth = 0.0
                 self.errors = list()
