@@ -1575,6 +1575,12 @@ class SnapshotShellTestCase(unittest.TestCase):
 
 @patch("cmd.input")
 def test_training_mode_message(patched_input):
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
+    # When asked for input, choose to exit
     patched_input.side_effect = ["."]
 
     temp_output = StringIO()
@@ -1584,13 +1590,22 @@ def test_training_mode_message(patched_input):
         except SystemExit:
             pass
     output = temp_output.getvalue()
+    print(output)
 
     assert "Running in Training Mode" in output
+
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
 
 
 @patch("pepys_admin.cli.DataStore")
 @patch("cmd.input")
 def test_training_mode_setup(patched_input, patched_data_store):
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
     patched_input.side_effect = ["."]
 
     db_name = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
@@ -1611,6 +1626,9 @@ def test_training_mode_setup(patched_input, patched_data_store):
         training_mode=True,
         welcome_text="Pepys_admin",
     )
+
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
 
 
 if __name__ == "__main__":

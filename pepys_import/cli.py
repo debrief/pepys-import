@@ -72,7 +72,10 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
 
     if training:
         set_up_training_mode()
-        reload(config)
+
+    # Reload the config file in case we're in a long-running process because of pytest and
+    # the config file details have changed since the last test
+    reload(config)
 
     if db is None:
         data_store = DataStore(

@@ -228,6 +228,11 @@ def test_process_db_none(patched_file_proc, patched_data_store):
 
 
 def test_training_mode_message():
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
     temp_output = StringIO()
     with redirect_stdout(temp_output):
         process(resolver="default", training=True)
@@ -235,9 +240,17 @@ def test_training_mode_message():
 
     assert "Running in Training Mode" in output
 
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+
 
 @patch("pepys_import.cli.DataStore")
 def test_training_mode_setup(patched_data_store):
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
     db_name = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
 
     process(resolver="default", training=True)
@@ -253,3 +266,6 @@ def test_training_mode_setup(patched_data_store):
         missing_data_resolver=ANY,  # We don't care about this argument, and it's hard to test
         training_mode=True,
     )
+
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file

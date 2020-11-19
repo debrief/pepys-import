@@ -47,7 +47,10 @@ def run_admin_shell(path, training=False, data_store=None, db=None):
 
     if training:
         set_up_training_mode()
-        reload(config)
+
+    # Reload the config file in case we're in a long-running process because of pytest and
+    # the config file details have changed since the last test
+    reload(config)
 
     if data_store is None:
         if db is None:
