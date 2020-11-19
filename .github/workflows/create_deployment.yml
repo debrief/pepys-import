@@ -1,9 +1,10 @@
 name: Create deployment
 on:
   push:
-    branches:
-    - master
+    tags:
+      - '*'
   pull_request:
+
 
 jobs:
   create-deployment:
@@ -26,7 +27,17 @@ jobs:
         shell: cmd
         run: cd bin & pepys_import.bat --path ../tests/sample_data/track_files/rep_data/rep_test1.rep --db ":memory:" --resolver default
 
-      - uses: actions/upload-artifact@v2
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
         with:
           name: Pepys Deployment
           path: ./*_pepys-import.zip
+
+      - name: Create release (only for tags)
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          draft: true
+          files: ./*_pepys-import.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
