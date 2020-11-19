@@ -1595,7 +1595,10 @@ def test_training_mode_message(patched_input):
     assert "Running in Training Mode" in output
 
     # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
-    os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+    if orig_pepys_config_file is None:
+        del os.environ["PEPYS_CONFIG_FILE"]
+    else:
+        os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
 
 
 @patch("pepys_admin.cli.DataStore")
@@ -1628,7 +1631,10 @@ def test_training_mode_setup(patched_input, patched_data_store):
     )
 
     # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
-    os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+    if orig_pepys_config_file is None:
+        del os.environ["PEPYS_CONFIG_FILE"]
+    else:
+        os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
 
 
 if __name__ == "__main__":
