@@ -701,7 +701,7 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             data_store = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
-            run_admin_shell(data_store, ".")
+            run_admin_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: SQL error when communicating with database" in output
@@ -736,7 +736,7 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
         temp_output = StringIO()
         with redirect_stdout(temp_output), pytest.raises(SystemExit):
             data_store = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
-            run_admin_shell(data_store, ".")
+            run_admin_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: Table summaries couldn't be printed." in output
@@ -799,7 +799,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
                 db_port=55527,
                 db_type="postgres",
             )
-            run_admin_shell(data_store, ".")
+            run_admin_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: SQL error when communicating with database" in output
@@ -825,7 +825,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
                 db_port=55527,
                 db_type="postgres",
             )
-            run_admin_shell(data_store, ".")
+            run_admin_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: Table summaries couldn't be printed." in output
@@ -1571,6 +1571,46 @@ class SnapshotShellTestCase(unittest.TestCase):
         path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
+
+
+@patch("cmd.input")
+def test_training_mode_message(patched_input):
+    patched_input.side_effect = ["."]
+
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        try:
+            run_admin_shell(db=None, training=True, path=".")
+        except SystemExit:
+            pass
+    output = temp_output.getvalue()
+
+    assert "Running in Training Mode" in output
+
+
+@patch("pepys_admin.cli.DataStore")
+@patch("cmd.input")
+def test_training_mode_setup(patched_input, patched_data_store):
+    patched_input.side_effect = ["."]
+
+    db_name = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
+
+    try:
+        run_admin_shell(db=None, training=True, path=".")
+    except SystemExit:
+        pass
+
+    # Check it is called with the right db path, and with training_mode=True
+    patched_data_store.assert_called_with(
+        db_username="",
+        db_password="",
+        db_host="",
+        db_port=0,
+        db_name=db_name,
+        db_type="sqlite",
+        training_mode=True,
+        welcome_text="Pepys_admin",
+    )
 
 
 if __name__ == "__main__":

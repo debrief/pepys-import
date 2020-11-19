@@ -32,45 +32,47 @@ def main():  # pragma: no cover
 
     args = parser.parse_args()
 
-    if args.training:
+    run_admin_shell(db=args.db, path=args.path, training=args.training)
+
+
+def run_admin_shell(path, training=False, data_store=None, db=None):
+    """Runs the admin shell.
+
+    Arguments allow specification of individual args from command-line
+    (db, path, training) or specification of a data_store instead of a db name,
+    to allow for advanced use in unit tests.
+    """
+    if data_store is not None and db is not None:
+        raise ValueError("Cannot specify both db and data_store")
+
+    if training:
         set_up_training_mode()
         reload(config)
 
-    if args.db is None:
-        data_store = DataStore(
-            db_username=config.DB_USERNAME,
-            db_password=config.DB_PASSWORD,
-            db_host=config.DB_HOST,
-            db_port=config.DB_PORT,
-            db_name=config.DB_NAME,
-            db_type=config.DB_TYPE,
-            welcome_text="Pepys_admin",
-            training_mode=args.training,
-        )
-    else:
-        data_store = DataStore(
-            db_username="",
-            db_password="",
-            db_host="",
-            db_port=0,
-            db_name=args.db,
-            db_type="sqlite",
-            welcome_text="Pepys_admin",
-            training_mode=args.training,
-        )
+    if data_store is None:
+        if db is None:
+            data_store = DataStore(
+                db_username=config.DB_USERNAME,
+                db_password=config.DB_PASSWORD,
+                db_host=config.DB_HOST,
+                db_port=config.DB_PORT,
+                db_name=config.DB_NAME,
+                db_type=config.DB_TYPE,
+                welcome_text="Pepys_admin",
+                training_mode=training,
+            )
+        else:
+            data_store = DataStore(
+                db_username="",
+                db_password="",
+                db_host="",
+                db_port=0,
+                db_name=db,
+                db_type="sqlite",
+                welcome_text="Pepys_admin",
+                training_mode=training,
+            )
 
-    run_admin_shell(data_store, args.path)
-
-
-def run_admin_shell(data_store, path):
-    """Runs the :code:`AdminShell`.
-
-    :param data_store: A :class:`DataStore` object
-    :type data_store: DataStore
-    :param path: CSV files path which will be used by import reference & metadata options
-    :type path: String
-    :return:
-    """
     with handle_database_errors():
         AdminShell(data_store, path).cmdloop()
 

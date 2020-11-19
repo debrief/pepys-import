@@ -225,3 +225,31 @@ def test_process_db_none(patched_file_proc, patched_data_store):
         missing_data_resolver=ANY,  # We don't care about this argument, and it's hard to test
         training_mode=False,
     )
+
+
+def test_training_mode_message():
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        process(resolver="default", training=True)
+    output = temp_output.getvalue()
+
+    assert "Running in Training Mode" in output
+
+
+@patch("pepys_import.cli.DataStore")
+def test_training_mode_setup(patched_data_store):
+    db_name = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
+
+    process(resolver="default", training=True)
+
+    # Check it is called with the right db path, and with training_mode=True
+    patched_data_store.assert_called_with(
+        db_username="",
+        db_password="",
+        db_host="",
+        db_port=0,
+        db_name=db_name,
+        db_type="sqlite",
+        missing_data_resolver=ANY,  # We don't care about this argument, and it's hard to test
+        training_mode=True,
+    )
