@@ -3,7 +3,10 @@ on:
   push:
     branches:
     - automatic-releases
+    tags:
+      - '*'
   #pull_request:
+
 
 jobs:
   create-deployment:
