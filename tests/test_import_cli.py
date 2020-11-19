@@ -223,4 +223,5 @@ def test_process_db_none(patched_file_proc, patched_data_store):
         db_name=DB_NAME,
         db_type=DB_TYPE,
         missing_data_resolver=ANY,  # We don't care about this argument, and it's hard to test
+        training_mode=False,
     )
