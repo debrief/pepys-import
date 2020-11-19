@@ -41,12 +41,17 @@ def main():  # pragma: no cover
         action="store_true",
         default=False,
     )
-    parser.add_argument("--db", help=db_help, required=False, default=None)
     parser.add_argument("--resolver", help=resolver_help, required=False, default="command-line")
-    parser.add_argument(
+
+    # Make --training and --db mutually exclusive, as --training automatically specifies the db
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         "--training", help=training_help, dest="training", default=False, action="store_true"
     )
+    group.add_argument("--db", help=db_help, required=False, default=None)
+
     args = parser.parse_args()
+
     process(
         path=args.path,
         archive=args.archive,

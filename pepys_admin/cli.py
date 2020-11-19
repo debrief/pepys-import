@@ -23,10 +23,13 @@ def main():  # pragma: no cover
     )
     parser = argparse.ArgumentParser(description="Pepys Admin CLI")
     parser.add_argument("--path", type=str, help="CSV files path")
-    parser.add_argument("--db", help=db_help, required=False, default=None)
-    parser.add_argument(
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
         "--training", help=training_help, dest="training", default=False, action="store_true"
     )
+    group.add_argument("--db", help=db_help, required=False, default=None)
+
     args = parser.parse_args()
 
     if args.training:
