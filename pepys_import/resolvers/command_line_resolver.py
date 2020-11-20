@@ -713,7 +713,7 @@ class CommandLineResolver(DataResolver):
                 chosen_privacy,
             )
         elif choice == str(2):
-            return self.add_to_platforms(data_store, platform_name, None, None, None, change_id)
+            return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)

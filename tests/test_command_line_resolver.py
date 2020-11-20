@@ -576,10 +576,12 @@ class PlatformTestCase(unittest.TestCase):
         """Test a new platform is created after make further edits option is selected"""
 
         # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select "No"->
-        # Type name/trigraph/quadgraph/identifier->Select "Search for an existing nationality"
-        # ->Select "UK"->Select "Search for an existing platform type"->Select "Warship"->Select
+        # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->
+        # Select "Search for an existing nationality"->Select "UK"->
+        # Select "Search for an existing platform type"->Select "Warship"->Select
         # "Search for an existing classification"->Select "Public"->Select "Yes"
         menu_prompt.side_effect = [
+            "2",
             "2",
             "2",
             "1",
