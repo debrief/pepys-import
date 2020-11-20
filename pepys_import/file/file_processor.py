@@ -239,7 +239,6 @@ class FileProcessor:
                 constants.DATAFILE,
                 constants.EXTRACTION,
                 constants.LOG,
-                constants.LOGS_HOLDING,
             ]
 
             metadata_summaries_before = data_store.get_status(report_metadata=True, exclude=exclude)
