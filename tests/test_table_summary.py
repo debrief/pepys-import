@@ -75,6 +75,94 @@ class TableSummaryTestCase(TestCase):
         # Privacy table has 2 new rows, no changes for Nationality table
         assert "| Privacies    |                2 |" in result
 
+    def test_show_delta_of_rows_added_metadata_works_correctly(self):
+        """Test whether show_delta_of_rows_added metadata method returns correct values or not"""
+
+        with self.store.session_scope():
+            platform_sum = TableSummary(self.store.session, self.store.db_classes.Platform)
+            sensor_sum = TableSummary(self.store.session, self.store.db_classes.Sensor)
+            first_table_summary_set = TableSummarySet([platform_sum, sensor_sum])
+
+            self.store.add_to_platform_types("PlatformType1", self.change_id)
+            self.store.add_to_sensor_types("GPS", self.change_id)
+            self.store.add_to_platforms(
+                "Platform1", "123", "NAT-1", "PlatformType1", "TEST-1", change_id=self.change_id
+            )
+            platform = self.store.add_to_platforms(
+                "Platform2", "234", "NAT-1", "PlatformType1", "TEST-1", change_id=self.change_id
+            )
+            self.store.add_to_sensors(
+                name="TestSensor",
+                sensor_type="GPS",
+                host_id=platform.platform_id,
+                host_name=None,
+                host_nationality=None,
+                host_identifier=None,
+                privacy="TEST-1",
+                change_id=self.change_id,
+            )
+            platform_sum = TableSummary(self.store.session, self.store.db_classes.Platform)
+            sensor_sum = TableSummary(self.store.session, self.store.db_classes.Sensor)
+        second_summary = [platform_sum, sensor_sum]
+        second_table_summary_set = TableSummarySet(second_summary)
+        result = second_table_summary_set.show_delta_of_rows_added_metadata(first_table_summary_set)
+
+        # Platforms table has 2 new entities and Sensors table has 1 new entities
+        assert "| Platforms    | Platform1,Platform2 |" in result
+        assert "| Sensors      | TestSensor          |" in result
+
+    def test_show_delta_of_rows_added_metadata_works_correctly_for_more_than_6_names(self):
+        """Test whether show_delta_of_rows_added metadata method returns normal report
+        if there are more than 6 entities for Platform or Sensor"""
+
+        with self.store.session_scope():
+            platform_sum = TableSummary(self.store.session, self.store.db_classes.Platform)
+            sensor_sum = TableSummary(self.store.session, self.store.db_classes.Sensor)
+            first_table_summary_set = TableSummarySet([platform_sum, sensor_sum])
+
+            self.store.add_to_platform_types("PlatformType1", self.change_id)
+            self.store.add_to_sensor_types("GPS", self.change_id)
+            self.store.add_to_platforms(
+                "Platform1", "123", "NAT-1", "PlatformType1", "TEST-1", change_id=self.change_id
+            )
+            self.store.add_to_platforms(
+                "Platform2", "234", "NAT-1", "PlatformType1", "TEST-1", change_id=self.change_id
+            )
+            self.store.add_to_platforms(
+                "Platform3", "123", "NAT-1", "PlatformType1", "TEST-1", change_id=self.change_id
+            )
+            self.store.add_to_platforms(
+                "Platform4", "234", "NAT-1", "PlatformType1", "TEST-1", change_id=self.change_id
+            )
+            self.store.add_to_platforms(
+                "Platform5", "123", "NAT-1", "PlatformType1", "TEST-1", change_id=self.change_id
+            )
+            self.store.add_to_platforms(
+                "Platform6", "123", "NAT-1", "PlatformType1", "TEST-1", change_id=self.change_id
+            )
+            platform = self.store.add_to_platforms(
+                "Platform7", "234", "NAT-1", "PlatformType1", "TEST-1", change_id=self.change_id
+            )
+            self.store.add_to_sensors(
+                name="TestSensor",
+                sensor_type="GPS",
+                host_id=platform.platform_id,
+                host_name=None,
+                host_nationality=None,
+                host_identifier=None,
+                privacy="TEST-1",
+                change_id=self.change_id,
+            )
+            platform_sum = TableSummary(self.store.session, self.store.db_classes.Platform)
+            sensor_sum = TableSummary(self.store.session, self.store.db_classes.Sensor)
+        second_summary = [platform_sum, sensor_sum]
+        second_table_summary_set = TableSummarySet(second_summary)
+        result = second_table_summary_set.show_delta_of_rows_added_metadata(first_table_summary_set)
+
+        # Platforms table has 2 new entities and Sensors table has 1 new entities
+        assert "| Platforms    |                7 |" in result
+        assert "| Sensors      |                1 |" in result
+
 
 if __name__ == "__main__":
     unittest.main()

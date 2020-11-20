@@ -79,7 +79,7 @@ class TableSummarySet:
         """
         res = f"=={title}==\n"
         res += tabulate(
-            [(table_name, ",".join(names)) for table_name, names in differences if names],
+            [(table_name, ",".join(sorted(names))) for table_name, names in differences if names],
             headers=self.metadata_headers,
             tablefmt="github",
         )
@@ -123,10 +123,13 @@ class TableSummarySet:
         :return: A list of tuples that have table name and entity names
         """
         differences = []
+        show_number_of_rows = False
         for first, second in zip(first_summary, second_summary):
             diff = list(set(first.names) - set(second.names))
+            if len(diff) > 6:  # If there are more than 6 names, show normal report
+                show_number_of_rows = True
             differences.append((first.table_name, diff))
-        return differences
+        return differences, show_number_of_rows
 
     def show_delta_of_rows_added_metadata(self, other: "TableSummarySet", title="REPORT"):
         """Produce an pretty-printed report of the contents of the summary.
@@ -135,5 +138,10 @@ class TableSummarySet:
         :type other: TableSummarySet
         :return: A string that includes report of the contents of the summary
         """
-        differences = self.table_delta_metadata(self.table_summaries, other.table_summaries)
+        differences, show_number_of_rows = self.table_delta_metadata(
+            self.table_summaries, other.table_summaries
+        )
+        if show_number_of_rows:
+            return self.show_delta_of_rows_added(other, title)
+
         return self.report_metadata_names(differences, title)
