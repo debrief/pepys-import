@@ -235,9 +235,10 @@ class FileProcessor:
                     break
 
             exclude = [
-                constants.LOG,
-                constants.EXTRACTION,
                 constants.CHANGE,
+                constants.DATAFILE,
+                constants.EXTRACTION,
+                constants.LOG,
                 constants.LOGS_HOLDING,
             ]
 
@@ -318,7 +319,7 @@ class FileProcessor:
                     report_measurement=True, exclude=exclude
                 )
                 print(
-                    metadata_summaries_after.show_delta_of_rows_added(
+                    metadata_summaries_after.show_delta_of_rows_added_metadata(
                         metadata_summaries_before, title="METADATA REPORT"
                     )
                 )
@@ -334,7 +335,7 @@ class FileProcessor:
                         "Don't import data from this file.",
                     )
                     choice = self._ask_user_for_finalizing_import(choices)
-                else:
+                else:  # default is Import metadata and measurements
                     choice = "2"
 
                 if choice == "1":  # Import metadata
@@ -371,7 +372,7 @@ class FileProcessor:
                     report_metadata=True, exclude=exclude
                 )
                 print(
-                    metadata_summaries_after.show_delta_of_rows_added(
+                    metadata_summaries_after.show_delta_of_rows_added_metadata(
                         metadata_summaries_before, title="METADATA REPORT"
                     )
                 )
