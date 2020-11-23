@@ -1,0 +1,22 @@
+name: Interactive PRs
+on:
+  pull_request:
+
+
+jobs:
+  setup-interactive-pr:
+    name: Setup interactive PR
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: s-weigand/trigger-mybinder-build@v1
+        with:
+          target-repo: debrief/pepys-import
+          target-state: ${{ github.sha }}
+
+      - name: Create comment
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{github.event.number}}
+          body: |
+            Test comment here!
