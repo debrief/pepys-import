@@ -150,7 +150,6 @@ class CommandLineResolver(DataResolver):
                 platform_details.append(
                     f"{platform.name} / {platform.identifier} / {platform.nationality_name}"
                 )
-            final_options[1] += f", default name '{platform_name}'"
         choices = final_options + platform_details
 
         def is_valid_dynamic(option):  # pragma: no cover
@@ -210,7 +209,6 @@ class CommandLineResolver(DataResolver):
         if len(objects_dict) <= 7:
             options.extend(objects_dict)
         if sensor_name:
-            options[1] += f", default name '{sensor_name}'"
             prompt = f"Sensor '{sensor_name}' on platform '{host_platform.name}' not found. Do you wish to: "
         else:
             prompt = f"Sensor on platform '{host_platform.name}' not found. Do you wish to: "
