@@ -40,10 +40,10 @@ def create_menu(title, choices, cancel="import", completer=None, validate_method
     for index, choice in enumerate(choices, 1):
         input_text += f"   {str(index)}) {choice}\n"
     input_text += f"   .) Cancel {cancel}\n > "
-    choice = prompt(format_text(input_text), completer=completer, validator=validator)
+    choice = prompt(format_command(input_text), completer=completer, validator=validator)
 
     return choice
 
 
-def format_text(text):
+def format_command(text):
     return FormattedText([("bold", text)])
