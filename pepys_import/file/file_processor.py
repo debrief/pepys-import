@@ -338,7 +338,7 @@ class FileProcessor:
                     choice = "2"
 
                 if choice == "1":  # Import metadata
-                    self._remove_measurement(data_store, datafile, change.change_id)
+                    self._remove_measurements(data_store, datafile, change.change_id)
                     data_store.session.commit()
                     # Set log to an empty list because measurements are deleted
                     log = []
@@ -385,7 +385,7 @@ class FileProcessor:
                     choice = "1"
 
                 if choice == "1":  # Import metadata
-                    self._remove_measurement(data_store, datafile, change.change_id)
+                    self._remove_measurements(data_store, datafile, change.change_id)
                 elif choice == "2":  # Don't import data from this file
                     self._remove_measurement_and_metadata(data_store, datafile, change.change_id)
                 data_store.session.commit()
@@ -409,12 +409,12 @@ class FileProcessor:
 
     def _remove_measurement_and_metadata(self, data_store, datafile, change_id):
         # Remove measurement entities
-        self._remove_measurement(data_store, datafile, change_id)
+        self._remove_measurements(data_store, datafile, change_id)
         # Remove metadata entities
         self._remove_metadata(data_store, change_id)
 
     @staticmethod
-    def _remove_measurement(data_store, datafile, change_id):
+    def _remove_measurements(data_store, datafile, change_id):
         # Delete the datafile entry, as we won't be importing any entries linked to it,
         # because we had errors. CASCADING will handle the deletion of the all measurement objects
         # of the datafile
