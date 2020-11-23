@@ -1,5 +1,6 @@
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
+from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import Validator
 
 
@@ -35,10 +36,14 @@ def create_menu(title, choices, cancel="import", completer=None, validate_method
             move_cursor_to_end=True,
         )
 
-    input_text = title + "\n"
+    input_text = "\n" + title + "\n"
     for index, choice in enumerate(choices, 1):
         input_text += f"   {str(index)}) {choice}\n"
     input_text += f"   .) Cancel {cancel}\n > "
-    choice = prompt(input_text, completer=completer, validator=validator)
+    choice = prompt(format_text(input_text), completer=completer, validator=validator)
 
     return choice
+
+
+def format_text(text):
+    return FormattedText([("bold", text)])
