@@ -69,7 +69,7 @@ jobs:
         uses: peter-evans/create-or-update-comment@v1
         with:
           issue-number: ${{github.event.number}}
-          comment-id: steps.findComment.outputs.comment-id
+          comment-id: ${{ steps.findComment.outputs.comment-id }}
           body: |
             :rocket: Interactive demo available via Binder [here](https://mybinder.org/v2/gh/debrief/pepys-import/${{github.head_ref}}?filepath=demos/).
 
