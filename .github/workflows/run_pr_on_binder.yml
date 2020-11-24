@@ -42,7 +42,7 @@ jobs:
         with:
           issue-number: ${{github.event.number}}
           comment-id: steps.findComment.outputs.comment-id
-          body: Building interactive demo on Binder, due to complete at ${{ buildFinish.outputs.finish_time }}.      
+          body: Building interactive demo on Binder, due to complete at ${{ steps.buildFinish.outputs.finish_time }}.      
 
       - uses: s-weigand/trigger-mybinder-build@v1
         if: ${{ steps.checkLabel.outputs.hasLabel }}
