@@ -3,6 +3,7 @@ import random
 from unittest.mock import patch
 
 import pytest
+from prompt_toolkit.formatted_text import FormattedText
 from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
 
@@ -169,6 +170,9 @@ def create_menu_patch(*args, **kwargs):
 
 def clr_prompt_patch(*args, **kwargs):
     prompt = args[0]
+    # FormattedText is a list of (style, text) tuples
+    if isinstance(prompt, FormattedText):
+        prompt = prompt[0][1]
     print(f"Prompt: {prompt}")
 
     if "Please type level of" in prompt:
