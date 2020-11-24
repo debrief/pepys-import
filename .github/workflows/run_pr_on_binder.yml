@@ -10,18 +10,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: Dreamcodeio/pr-has-label-action@master
+      - name: Check for 'interactive_review' label
+        uses: Dreamcodeio/pr-has-label-action@master
         id: checkLabel
         with:
           label: interactive_review
 
-      - name: Get build finish time
+      - name: Calculate build finish time
         id: buildFinish
         if: ${{ steps.checkLabel.outputs.hasLabel }}
         shell: bash
         run: echo ::set-output name=finish_time::`TZ='Europe/London' date --date 'now + 5 minutes' +%H:%M`
       
-      - name: Find Comment (in case it already exists)
+      - name: Find comment (in case one already exists)
         if: ${{ steps.checkLabel.outputs.hasLabel }}
         uses: peter-evans/find-comment@v1
         id: findComment
@@ -29,11 +30,7 @@ jobs:
           issue-number: ${{github.event.number}}
           body-includes: <!-- GH Actions Binder Comment -->
 
-      - name: Debug Find Comment
-        shell: bash
-        run: echo ${{ steps.findComment.outputs.comment-id }}
-
-      - name: Create comment
+      - name: Create comment (if it doesn't exist)
         id: createComment
         if: ${{ steps.checkLabel.outputs.hasLabel && (steps.findComment.outputs.comment-id == 0) }}
         uses: peter-evans/create-or-update-comment@v1
@@ -41,9 +38,9 @@ jobs:
           issue-number: ${{github.event.number}}
           body: |
             <!-- GH Actions Binder Comment -->
-            Building interactive demo on Binder, due to complete at ${{ steps.buildFinish.outputs.finish_time }}.
+            Building interactive demo on Binder, due to complete at ${{ steps.buildFinish.outputs.finish_time }} UK time.
 
-      - name: Update comment
+      - name: Update comment (if it already exists)
         if: ${{ steps.checkLabel.outputs.hasLabel && (steps.findComment.outputs.comment-id != 0) }}
         uses: peter-evans/create-or-update-comment@v1
         with:
@@ -52,9 +49,10 @@ jobs:
           edit-mode: replace
           body: |
             <!-- GH Actions Binder Comment -->
-            Building interactive demo on Binder, due to complete at ${{ steps.buildFinish.outputs.finish_time }}.      
+            Building interactive demo on Binder, due to complete at ${{ steps.buildFinish.outputs.finish_time }} UK time.      
 
-      - uses: s-weigand/trigger-mybinder-build@v1
+      - name: Trigger builds on Binder
+        uses: s-weigand/trigger-mybinder-build@v1
         if: ${{ steps.checkLabel.outputs.hasLabel }}
         with:
           target-repo: debrief/pepys-import
@@ -66,8 +64,8 @@ jobs:
         with:
           time: '5m'
 
-      # We can't just use the earlier output from findComment as we may have created a new one
-      - name: Find Comment from earlier
+      # We can't just use the earlier output from findComment as we may have created a new comment
+      - name: Find comment from earlier
         if: ${{ steps.checkLabel.outputs.hasLabel }}
         uses: peter-evans/find-comment@v1
         id: findComment2
