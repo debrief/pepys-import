@@ -15,6 +15,35 @@ jobs:
         with:
           label: interactive_review
 
+      - name: Get build finish time
+        id: buildFinish
+        if: ${{ steps.checkLabel.outputs.hasLabel }}
+        shell: bash
+        run: echo ::set-output name=finish_time::`TZ='Europe/London' date --date 'now + 5 minutes' +%H:%M`
+      
+      - name: Find Comment (in case it already exists)
+        if: ${{ steps.checkLabel.outputs.hasLabel }}
+        uses: peter-evans/find-comment@v1
+        id: findComment
+        with:
+          issue-number: ${{github.event.number}}
+          body-includes: <!-- GH Actions Binder Comment --!>
+
+      - name: Create comment
+        if: ${{ steps.checkLabel.outputs.hasLabel && (steps.findComment.outputs.comment-id == 0) }}
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{github.event.number}}
+          body: Building interactive demo on Binder, due to complete at ${{ steps.buildFinish.outputs.finish_time }}.
+
+      - name: Update comment
+        if: ${{ steps.checkLabel.outputs.hasLabel && (steps.findComment.outputs.comment-id != 0) }}
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{github.event.number}}
+          comment-id: steps.findComment.outputs.comment-id
+          body: Building interactive demo on Binder, due to complete at ${{ buildFinish.outputs.finish_time }}.      
+
       - uses: s-weigand/trigger-mybinder-build@v1
         if: ${{ steps.checkLabel.outputs.hasLabel }}
         with:
@@ -27,19 +56,20 @@ jobs:
         with:
           time: '5m'
 
-      - name: Find Comment (in case it already exists)
-        if: ${{ steps.checkLabel.outputs.hasLabel }}
-        uses: peter-evans/find-comment@v1
-        id: findComment
-        with:
-          issue-number: ${{github.event.number}}
-          body-includes: Interactive demo available via Binder
+      # - name: Find Comment (in case it already exists)
+      #   if: ${{ steps.checkLabel.outputs.hasLabel }}
+      #   uses: peter-evans/find-comment@v1
+      #   id: findComment
+      #   with:
+      #     issue-number: ${{github.event.number}}
+      #     body-includes: Interactive demo available via Binder
 
-      - name: Create comment (if it doesn't already exist)
-        if: ${{ steps.checkLabel.outputs.hasLabel && (steps.findComment.outputs.comment-id == 0) }}
+      - name: Update comment with link
+        if: ${{ steps.checkLabel.outputs.hasLabel }}
         uses: peter-evans/create-or-update-comment@v1
         with:
           issue-number: ${{github.event.number}}
+          comment-id: steps.findComment.outputs.comment-id
           body: |
             :rocket: Interactive demo available via Binder [here](https://mybinder.org/v2/gh/debrief/pepys-import/${{github.head_ref}}?filepath=demos/).
 
