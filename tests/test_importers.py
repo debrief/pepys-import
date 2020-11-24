@@ -863,13 +863,13 @@ class TestImportMetadataOnly(unittest.TestCase):
             "3",  # GPS
             "3",  # Public
             "1",  # Yes, create
-            # "3",  # New_SSK / 123 / United Kingdom
         ]
         file_processor_prompt.side_effect = [
             "2",  # Import metadata and measurement
             "1",  # Import metadata
         ]
 
+        # Import metadata and measurements
         self.processor.process(
             SINGLE_REP_FILE,
             self.store,
@@ -877,14 +877,12 @@ class TestImportMetadataOnly(unittest.TestCase):
         )
 
         with self.store.session_scope():
-            # Metadata is still in the database
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             assert len(platforms) == 4
 
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
             assert len(sensors) == 4
 
-            # Measurements should be the same
             states = len(self.store.session.query(self.store.db_classes.State).all())
             contacts = len(self.store.session.query(self.store.db_classes.Contact).all())
             comments = len(self.store.session.query(self.store.db_classes.Comment).all())
