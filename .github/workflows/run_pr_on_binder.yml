@@ -48,7 +48,7 @@ jobs:
         uses: peter-evans/create-or-update-comment@v1
         with:
           issue-number: ${{github.event.number}}
-          comment-id: steps.findComment.outputs.comment-id
+          comment-id: ${{ steps.findComment.outputs.comment-id }}
           edit-mode: replace
           body: |
             <!-- GH Actions Binder Comment -->
