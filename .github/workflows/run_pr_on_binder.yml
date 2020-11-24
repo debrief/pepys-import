@@ -84,9 +84,5 @@ jobs:
             <!-- GH Actions Binder Comment -->
             :rocket: Interactive demo available via Binder [here](https://mybinder.org/v2/gh/debrief/pepys-import/${{github.head_ref}}?filepath=demos/).
 
-            *Notes:*
-             - The Jupyter notebook browser will open in the `demos` folder. See comments above for which notebook to use,
-               otherwise use the `_Default_Demo.ipynb` notebook.
-             - Binder takes around five minutes to build the repository into an image. If you click this link less than five minutes
-               after a new commit has been pushed, then you will start another build. This won't break anything, but will cause you to
-               wait longer than you needed to as two builds will be running.
+            *Note:* The Jupyter notebook browser will open in the `demos` folder. See comments above for which notebook to use,
+            otherwise use the `_Default_Demo.ipynb` notebook.
