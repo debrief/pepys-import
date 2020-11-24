@@ -963,6 +963,52 @@ class SensorTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_sensor_return_sensor_selection_process(self, resolver_prompt, menu_prompt):
+        # Select "Add a new sensor"->Type "TEST"->Select "No, restart sensor selection process"
+        # ->Type "TEST"->Select "Search for an existing sensor-type"->Search "SENSOR-TYPE-2"->
+        # Select "Search for an existing classification"->Search "Public Sensitive"->Select "Yes"
+        menu_prompt.side_effect = [
+            "2",
+            "3",
+            "2",
+            "1",
+            "SENSOR-TYPE-2",
+            "1",
+            "Public Sensitive",
+            "1",
+        ]
+        resolver_prompt.side_effect = ["TEST", "TEST"]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
+            sensor_type_2 = self.store.add_to_sensor_types("SENSOR-TYPE-2", self.change_id)
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id)
+            privacy_2 = self.store.add_to_privacies("Public Sensitive", 0, self.change_id)
+            nationality = self.store.add_to_nationalities("UK", self.change_id)
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id)
+
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+                change_id=self.change_id,
+            )
+
+            (resolved_name, resolved_type, resolved_privacy,) = self.resolver.resolve_sensor(
+                self.store,
+                "TEST",
+                sensor_type.name,
+                platform.platform_id,
+                privacy.name,
+                self.change_id,
+            )
+            self.assertEqual(resolved_name, "TEST")
+            self.assertEqual(resolved_type.sensor_type_id, sensor_type_2.sensor_type_id)
+            self.assertEqual(resolved_privacy.privacy_id, privacy_2.privacy_id)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_fuzzy_search_add_sensor(self, resolver_prompt, menu_prompt):
         """Test whether a new Sensor entity created or not after searched
         and not founded in the Sensor Table."""
