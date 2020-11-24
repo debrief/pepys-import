@@ -575,12 +575,73 @@ class PlatformTestCase(unittest.TestCase):
     def test_resolver_platform_edit_given_values(self, resolver_prompt, menu_prompt):
         """Test a new platform is created after make further edits option is selected"""
 
-        # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select "No"->
-        # Type name/trigraph/quadgraph/identifier->Select "Search for an existing nationality"
-        # ->Select "UK"->Select "Search for an existing platform type"->Select "Warship"->Select
+        # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->
+        # Select "No, make further edits"->Type name/trigraph/quadgraph/identifier->
+        # Select "Search for an existing nationality"->Select "UK"->
+        # Select "Search for an existing platform type"->Select "Warship"->Select
         # "Search for an existing classification"->Select "Public"->Select "Yes"
         menu_prompt.side_effect = [
             "2",
+            "2",
+            "1",
+            "UK",
+            "1",
+            "Warship",
+            "1",
+            "Public",
+            "1",
+        ]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "123",
+            "TST",
+            "TEST",
+            "TEST",
+            "123",
+            "TST",
+            "TEST",
+        ]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            (
+                platform_name,
+                trigraph,
+                quadgraph,
+                identifier,
+                platform_type,
+                nationality,
+                privacy,
+            ) = self.resolver.resolve_platform(
+                data_store=self.store,
+                platform_name=None,
+                platform_type=platform_type,
+                nationality=nationality,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            self.assertEqual(platform_name, "TEST")
+            self.assertEqual(trigraph, "TST")
+            self.assertEqual(quadgraph, "TEST")
+            self.assertEqual(identifier, "123")
+            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(nationality.name, "UK")
+            self.assertEqual(privacy.name, "Public")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_platform_edit_given_values_2(self, resolver_prompt, menu_prompt):
+        """Test a new platform is created after make further edits option is selected"""
+
+        # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select "No"->
+        # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->
+        # Select "Search for an existing nationality"->Select "UK"->
+        # Select "Search for an existing platform type"->Select "Warship"->Select
+        # "Search for an existing classification"->Select "Public"->Select "Yes"
+        menu_prompt.side_effect = [
+            "2",
+            "3",
             "2",
             "1",
             "UK",
@@ -863,6 +924,52 @@ class SensorTestCase(unittest.TestCase):
         # Select "Search for an existing classification"->Search "Public Sensitive"->Select "Yes"
         menu_prompt.side_effect = [
             "2",
+            "2",
+            "1",
+            "SENSOR-TYPE-2",
+            "1",
+            "Public Sensitive",
+            "1",
+        ]
+        resolver_prompt.side_effect = ["TEST", "TEST"]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
+            sensor_type_2 = self.store.add_to_sensor_types("SENSOR-TYPE-2", self.change_id)
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id)
+            privacy_2 = self.store.add_to_privacies("Public Sensitive", 0, self.change_id)
+            nationality = self.store.add_to_nationalities("UK", self.change_id)
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id)
+
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+                change_id=self.change_id,
+            )
+
+            (resolved_name, resolved_type, resolved_privacy,) = self.resolver.resolve_sensor(
+                self.store,
+                "TEST",
+                sensor_type.name,
+                platform.platform_id,
+                privacy.name,
+                self.change_id,
+            )
+            self.assertEqual(resolved_name, "TEST")
+            self.assertEqual(resolved_type.sensor_type_id, sensor_type_2.sensor_type_id)
+            self.assertEqual(resolved_privacy.privacy_id, privacy_2.privacy_id)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_sensor_return_sensor_selection_process(self, resolver_prompt, menu_prompt):
+        # Select "Add a new sensor"->Type "TEST"->Select "No, restart sensor selection process"
+        # ->Type "TEST"->Select "Search for an existing sensor-type"->Search "SENSOR-TYPE-2"->
+        # Select "Search for an existing classification"->Search "Public Sensitive"->Select "Yes"
+        menu_prompt.side_effect = [
+            "2",
+            "3",
             "2",
             "1",
             "SENSOR-TYPE-2",
