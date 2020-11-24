@@ -36,13 +36,17 @@ def create_menu(title, choices, cancel="import", completer=None, validate_method
             move_cursor_to_end=True,
         )
 
-    input_text = "\n" + title + "\n"
+    title_, choices_ = "\n" + title + "\n", ""
     for index, choice in enumerate(choices, 1):
-        input_text += f"   {str(index)}) {choice}\n"
-    input_text += f"   .) Cancel {cancel}\n > "
-    choice = prompt(format_command(input_text), completer=completer, validator=validator)
+        choices_ += f"   {str(index)}) {choice}\n"
+    choices_ += f"   .) Cancel {cancel}\n > "
+    choice = prompt(format_menu(title_, choices_), completer=completer, validator=validator)
 
     return choice
+
+
+def format_menu(title, choices):
+    return FormattedText([("bold", title), ("", choices)])
 
 
 def format_command(text):
