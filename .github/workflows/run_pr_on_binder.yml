@@ -30,11 +30,14 @@ jobs:
           body-includes: <!-- GH Actions Binder Comment --!>
 
       - name: Create comment
+        id: createComment
         if: ${{ steps.checkLabel.outputs.hasLabel && (steps.findComment.outputs.comment-id == 0) }}
         uses: peter-evans/create-or-update-comment@v1
         with:
           issue-number: ${{github.event.number}}
-          body: Building interactive demo on Binder, due to complete at ${{ steps.buildFinish.outputs.finish_time }}.
+          body: |
+            <!-- GH Actions Binder Comment --!>
+            Building interactive demo on Binder, due to complete at ${{ steps.buildFinish.outputs.finish_time }}.
 
       - name: Update comment
         if: ${{ steps.checkLabel.outputs.hasLabel && (steps.findComment.outputs.comment-id != 0) }}
@@ -42,7 +45,9 @@ jobs:
         with:
           issue-number: ${{github.event.number}}
           comment-id: steps.findComment.outputs.comment-id
-          body: Building interactive demo on Binder, due to complete at ${{ steps.buildFinish.outputs.finish_time }}.      
+          body: |
+            <!-- GH Actions Binder Comment --!>
+            Building interactive demo on Binder, due to complete at ${{ steps.buildFinish.outputs.finish_time }}.      
 
       - uses: s-weigand/trigger-mybinder-build@v1
         if: ${{ steps.checkLabel.outputs.hasLabel }}
@@ -64,13 +69,23 @@ jobs:
       #     issue-number: ${{github.event.number}}
       #     body-includes: Interactive demo available via Binder
 
+      # We can't just use the earlier output from findComment as we may have created a new one
+      - name: Find Comment from earlier
+        if: ${{ steps.checkLabel.outputs.hasLabel }}
+        uses: peter-evans/find-comment@v1
+        id: findComment2
+        with:
+          issue-number: ${{github.event.number}}
+          body-includes: <!-- GH Actions Binder Comment --!>
+
       - name: Update comment with link
         if: ${{ steps.checkLabel.outputs.hasLabel }}
         uses: peter-evans/create-or-update-comment@v1
         with:
           issue-number: ${{github.event.number}}
-          comment-id: ${{ steps.findComment.outputs.comment-id }}
+          comment-id: ${{ steps.findComment2.outputs.comment-id }}
           body: |
+            <!-- GH Actions Binder Comment --!>
             :rocket: Interactive demo available via Binder [here](https://mybinder.org/v2/gh/debrief/pepys-import/${{github.head_ref}}?filepath=demos/).
 
             *Notes:*
