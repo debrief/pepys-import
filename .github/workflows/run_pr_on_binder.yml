@@ -29,6 +29,10 @@ jobs:
           issue-number: ${{github.event.number}}
           body-includes: <!-- GH Actions Binder Comment -->
 
+      - name: Debug Find Comment
+        shell: bash
+        run: echo ${{ steps.findComment.outputs.comment-id }}
+
       - name: Create comment
         id: createComment
         if: ${{ steps.checkLabel.outputs.hasLabel && (steps.findComment.outputs.comment-id == 0) }}
