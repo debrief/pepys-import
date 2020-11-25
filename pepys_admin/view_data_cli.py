@@ -33,9 +33,8 @@ class ViewDataShell(BaseShell):
     (4) Output SQL Results to CSV
     (.) Back
     """
-    prompt = "(pepys-admin) (view) "
 
-    def __init__(self, data_store):
+    def __init__(self, data_store, viewer=False):
         super(ViewDataShell, self).__init__()
         self.data_store = data_store
         self.aliases = {
@@ -46,10 +45,20 @@ class ViewDataShell(BaseShell):
             "4": self.do_output_sql_to_csv,
         }
 
-    @staticmethod
-    def do_cancel():
+        self.viewer = viewer
+
+        if viewer:
+            self.prompt = "(pepys-viewer) "
+            self.intro = self.intro.replace("(.) Back", "(.) Exit")
+        else:
+            self.prompt = "(pepys-admin) (view) "
+
+    def do_cancel(self):
         """Returns to the previous menu"""
-        print("Returning to the previous menu...")
+        if self.viewer:
+            print("Thank you for using Pepys Viewer")
+        else:
+            print("Returning to the previous menu...")
 
     def _get_table_names(self):
         """Gets the table names using SQL Alchemy's inspect db functionality."""
