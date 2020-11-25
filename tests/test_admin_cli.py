@@ -734,7 +734,7 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
         conn.close()
 
         temp_output = StringIO()
-        with redirect_stdout(temp_output), pytest.raises(SystemExit):
+        with redirect_stdout(temp_output):
             data_store = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
             run_admin_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
@@ -816,7 +816,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
         conn.close()
 
         temp_output = StringIO()
-        with redirect_stdout(temp_output), pytest.raises(SystemExit):
+        with redirect_stdout(temp_output):
             data_store = DataStore(
                 db_name="test",
                 db_host="localhost",
