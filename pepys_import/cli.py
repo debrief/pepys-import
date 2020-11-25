@@ -136,9 +136,11 @@ def set_up_training_mode():
     # Training database will be located in user's home folder
     db_path = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
 
-    print("====================================================")
-    print("              Running in Training Mode              ")
-    print("====================================================")
+    print("#" * 80)
+    print(" " * 28 + "Running in Training Mode" + " " * 28)
+    print("")
+    print("Changes are only made to a local training database (see full path below)")
+    print("#" * 80)
 
     if os.path.exists(db_path):
         # Training db already exists, ask if we want to clear it
