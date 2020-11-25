@@ -9,7 +9,6 @@ from stat import S_IREAD
 from halo import Halo
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
-from tqdm import tqdm
 
 from config import ARCHIVE_PATH, LOCAL_PARSERS
 from paths import IMPORTERS_DIRECTORY
@@ -418,24 +417,27 @@ class FileProcessor:
         spinner = Halo(text="@ Clearing measurements", spinner="dots")
         spinner.start()
         data_store.session.delete(datafile)
-        spinner.succeed("Measurements cleared")
         # Remove log objects
         objects_from_logs = data_store.get_logs_by_change_id(change_id)
-        for obj in tqdm(objects_from_logs, desc="Clearing log entities for measurements"):
+        for obj in objects_from_logs:
             table_cls = getattr(data_store.db_classes, table_name_to_class_name(obj.table))
             if table_cls.table_type == TableTypes.MEASUREMENT:
                 data_store.session.delete(obj)
+        spinner.succeed("Measurements cleared")
 
     @staticmethod
     def _remove_metadata(data_store, change_id):
+        spinner = Halo(text="@ Clearing metadata", spinner="dots")
+        spinner.start()
         objects_from_logs = data_store.get_logs_by_change_id(change_id)
-        for obj in tqdm(objects_from_logs, desc="Clearing metadata"):
+        for obj in objects_from_logs:
             table_cls = getattr(data_store.db_classes, table_name_to_class_name(obj.table))
             if table_cls.table_type == TableTypes.METADATA:
                 primary_key_field = getattr(table_cls, get_primary_key_for_table(table_cls))
                 data_store.session.query(table_cls).filter(primary_key_field == obj.id).delete()
                 # Remove Logs entity
                 data_store.session.delete(obj)
+        spinner.succeed("Metadata cleared")
 
     @staticmethod
     def display_import_summary(import_summary):
