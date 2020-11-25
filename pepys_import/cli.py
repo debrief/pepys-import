@@ -133,12 +133,12 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
 
 
 def set_up_training_mode():
-    print("====================================================")
-    print("              Running in training mode              ")
-    print("====================================================")
-
     # Training database will be located in user's home folder
     db_path = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
+
+    print("====================================================")
+    print("              Running in Training Mode              ")
+    print("====================================================")
 
     if os.path.exists(db_path):
         # Training db already exists, ask if we want to clear it
