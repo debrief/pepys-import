@@ -319,15 +319,12 @@ class FileProcessor:
                 measurement_summaries_after = data_store.get_status(
                     report_measurement=True, exclude=exclude
                 )
-                print(
-                    metadata_summaries_after.show_delta_of_rows_added_metadata(
-                        metadata_summaries_before, title="METADATA REPORT"
-                    )
+                metadata_summaries_after.show_delta_of_rows_added_metadata(
+                    metadata_summaries_before, title="METADATA REPORT"
                 )
-                print(
-                    measurement_summaries_after.show_delta_of_rows_added(
-                        measurement_summaries_before, title="MEASUREMENT REPORT"
-                    )
+
+                measurement_summaries_after.show_delta_of_rows_added(
+                    measurement_summaries_before, title="MEASUREMENT REPORT"
                 )
                 if isinstance(data_store.missing_data_resolver, CommandLineResolver):
                     choices = (
@@ -372,10 +369,8 @@ class FileProcessor:
                 metadata_summaries_after = data_store.get_status(
                     report_metadata=True, exclude=exclude
                 )
-                print(
-                    metadata_summaries_after.show_delta_of_rows_added_metadata(
-                        metadata_summaries_before, title="METADATA REPORT"
-                    )
+                metadata_summaries_after.show_delta_of_rows_added_metadata(
+                    metadata_summaries_before, title="METADATA REPORT"
                 )
                 if isinstance(data_store.missing_data_resolver, CommandLineResolver):
                     choices = (

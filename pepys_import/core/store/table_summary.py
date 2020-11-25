@@ -1,3 +1,5 @@
+from prompt_toolkit import print_formatted_text
+from prompt_toolkit.formatted_text import FormattedText
 from sqlalchemy.orm import undefer
 from tabulate import tabulate
 
@@ -59,8 +61,9 @@ class TableSummarySet:
 
         :return: String of text
         """
-        res = f"=={title}==\n"
-        res += tabulate(
+        title_text = FormattedText([("bold", f"=={title}==\n")])
+        print_formatted_text(title_text)
+        res = tabulate(
             [
                 (table.table_name, table.number_of_rows, table.created_date)
                 for table in self.table_summaries
@@ -70,6 +73,7 @@ class TableSummarySet:
             tablefmt="github",
         )
         res += "\n"
+        print(res)
         return res
 
     def report_metadata_names(self, differences, title):
@@ -77,13 +81,15 @@ class TableSummarySet:
 
         :return: String of text
         """
-        res = f"=={title}==\n"
-        res += tabulate(
+        title_text = FormattedText([("bold", f"=={title}==\n")])
+        print_formatted_text(title_text)
+        res = tabulate(
             [(table_name, ",".join(sorted(names))) for table_name, names in differences if names],
             headers=self.metadata_headers,
             tablefmt="github",
         )
         res += "\n"
+        print(res)
         return res
 
     @staticmethod
