@@ -226,7 +226,8 @@ def test_process_db_none(patched_file_proc, patched_data_store):
         training_mode=False,
     )
 
-@patch("pepys_import.cli.input")
+
+@patch("pepys_import.cli.prompt")
 def test_training_mode_message(patched_input):
     # Don't reset the database at the start or end - we test that in another test
     patched_input.side_effect = ["n", "n"]
@@ -251,11 +252,11 @@ def test_training_mode_message(patched_input):
 
 
 @patch("pepys_import.cli.DataStore")
-@patch("pepys_import.cli.input")
+@patch("pepys_import.cli.prompt")
 def test_training_mode_setup(patched_input, patched_data_store):
     # Don't reset the database at the start or end - we test that in another test
     patched_input.side_effect = ["n", "n"]
-    
+
     # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
     # (as setting training mode changes that for this process - and when
     # pytest is running tests it runs them all in one process)
@@ -283,7 +284,8 @@ def test_training_mode_setup(patched_input, patched_data_store):
     else:
         os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
 
-@patch("pepys_import.cli.input")
+
+@patch("pepys_import.cli.prompt")
 def test_training_mode_reset_at_end(patched_input):
     # Choose to reset at the end of the import
     patched_input.side_effect = ["n", "y"]
@@ -310,7 +312,7 @@ def test_training_mode_reset_at_end(patched_input):
         os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
 
 
-@patch("pepys_import.cli.input")
+@patch("pepys_import.cli.prompt")
 def test_training_mode_reset_at_start(patched_input):
     # Choose to reset at the start of the import
     patched_input.side_effect = ["y", "n"]
@@ -319,7 +321,7 @@ def test_training_mode_reset_at_start(patched_input):
 
     # Create an invalid database file, this should be deleted before it is tried to be read
     # so we won't get an error (if the reset hadn't worked then we'd get a 'File is not a database' error)
-    with open(db_path, 'w') as f:
+    with open(db_path, "w") as f:
         f.write("Invalid DB file contents")
 
     # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
