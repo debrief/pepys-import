@@ -10,12 +10,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: Dreamcodeio/pr-has-label-action@master
+      - name: Check for 'interactive_review' label
+        uses: Dreamcodeio/pr-has-label-action@master
         id: checkLabel
         with:
           label: interactive_review
 
-      - uses: s-weigand/trigger-mybinder-build@v1
+      - name: Calculate build finish time
+        id: buildFinish
+        if: ${{ steps.checkLabel.outputs.hasLabel }}
+        shell: bash
+        run: echo ::set-output name=finish_time::`TZ='Europe/London' date --date 'now + 5 minutes' +%H:%M`
+      
+      - name: Find comment (in case one already exists)
+        if: ${{ steps.checkLabel.outputs.hasLabel }}
+        uses: peter-evans/find-comment@v1
+        id: findComment
+        with:
+          issue-number: ${{github.event.number}}
+          body-includes: <!-- GH Actions Binder Comment -->
+
+      - name: Create comment (if it doesn't exist)
+        id: createComment
+        if: ${{ steps.checkLabel.outputs.hasLabel && (steps.findComment.outputs.comment-id == 0) }}
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{github.event.number}}
+          body: |
+            <!-- GH Actions Binder Comment -->
+            Building interactive demo on Binder, due to complete at ${{ steps.buildFinish.outputs.finish_time }} UK time.
+
+      - name: Update comment (if it already exists)
+        if: ${{ steps.checkLabel.outputs.hasLabel && (steps.findComment.outputs.comment-id != 0) }}
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{github.event.number}}
+          comment-id: ${{ steps.findComment.outputs.comment-id }}
+          edit-mode: replace
+          body: |
+            <!-- GH Actions Binder Comment -->
+            Building interactive demo on Binder, due to complete at ${{ steps.buildFinish.outputs.finish_time }} UK time.      
+
+      - name: Trigger builds on Binder
+        uses: s-weigand/trigger-mybinder-build@v1
         if: ${{ steps.checkLabel.outputs.hasLabel }}
         with:
           target-repo: debrief/pepys-import
@@ -27,25 +64,25 @@ jobs:
         with:
           time: '5m'
 
-      - name: Find Comment (in case it already exists)
+      # We can't just use the earlier output from findComment as we may have created a new comment
+      - name: Find comment from earlier
         if: ${{ steps.checkLabel.outputs.hasLabel }}
         uses: peter-evans/find-comment@v1
-        id: findComment
+        id: findComment2
         with:
           issue-number: ${{github.event.number}}
-          body-includes: Interactive demo available via Binder
+          body-includes: <!-- GH Actions Binder Comment -->
 
-      - name: Create comment (if it doesn't already exist)
-        if: ${{ steps.checkLabel.outputs.hasLabel && (steps.findComment.outputs.comment-id == 0) }}
+      - name: Update comment with link
+        if: ${{ steps.checkLabel.outputs.hasLabel }}
         uses: peter-evans/create-or-update-comment@v1
         with:
           issue-number: ${{github.event.number}}
+          comment-id: ${{ steps.findComment2.outputs.comment-id }}
+          edit-mode: replace
           body: |
+            <!-- GH Actions Binder Comment -->
             :rocket: Interactive demo available via Binder [here](https://mybinder.org/v2/gh/debrief/pepys-import/${{github.head_ref}}?filepath=demos/).
 
-            *Notes:*
-             - The Jupyter notebook browser will open in the `demos` folder. See comments above for which notebook to use,
-               otherwise use the `_Default_Demo.ipynb` notebook.
-             - Binder takes around five minutes to build the repository into an image. If you click this link less than five minutes
-               after a new commit has been pushed, then you will start another build. This won't break anything, but will cause you to
-               wait longer than you needed to as two builds will be running.
+            *Note:* The Jupyter notebook browser will open in the `demos` folder. See comments above for which notebook to use,
+            otherwise use the `_Default_Demo.ipynb` notebook.

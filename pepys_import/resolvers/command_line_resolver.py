@@ -7,7 +7,12 @@ from sqlalchemy import or_
 from tabulate import tabulate
 
 from pepys_import.core.store import constants
-from pepys_import.resolvers.command_line_input import create_menu, get_fuzzy_completer, is_valid
+from pepys_import.resolvers.command_line_input import (
+    create_menu,
+    format_command,
+    get_fuzzy_completer,
+    is_valid,
+)
 from pepys_import.resolvers.data_resolver import DataResolver
 
 
@@ -41,7 +46,9 @@ class CommandLineResolver(DataResolver):
         """
         print("Ok, adding new datafile.")
 
-        datafile_name = prompt("Please enter a name: ", default=datafile_name).strip()
+        datafile_name = prompt(
+            format_command("Please enter a name: "), default=datafile_name
+        ).strip()
 
         if datafile_name == "":
             print("You must provide a datafile name. Restarting data file entry.")
@@ -77,7 +84,7 @@ class CommandLineResolver(DataResolver):
             chosen_privacy = data_store.search_privacy(privacy)
             if chosen_privacy is None:
                 level = prompt(
-                    f"Please type level of new classification ({privacy}): ",
+                    format_command(f"Please type level of new classification ({privacy}): "),
                     validator=numeric_validator,
                 )
                 chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
@@ -307,7 +314,9 @@ class CommandLineResolver(DataResolver):
         elif choice == str(2):
             print(current_values)
             while True:
-                new_object = prompt(f"Please type name of new {text_name}: ").strip()
+                new_object = prompt(
+                    format_command(f"Please type name of new {text_name}: ")
+                ).strip()
                 # If not too long for the field
                 if len(new_object) <= 150:
                     break
@@ -321,7 +330,8 @@ class CommandLineResolver(DataResolver):
                 add_method = getattr(data_store, f"add_to_{plural_field}")
                 if plural_field == "privacies":
                     level = prompt(
-                        f"Please type level of new {text_name}: ", validator=numeric_validator
+                        format_command(f"Please type level of new {text_name}: "),
+                        validator=numeric_validator,
                     )
                     return add_method(new_object, level, change_id)
                 return add_method(new_object, change_id)
@@ -387,7 +397,8 @@ class CommandLineResolver(DataResolver):
                 add_method = getattr(data_store, f"add_to_{plural_field}")
                 if plural_field == "privacies":
                     level = prompt(
-                        f"Please type level of new {text_name}: ", validator=numeric_validator
+                        format_command(f"Please type level of new {text_name}: "),
+                        validator=numeric_validator,
                     )
                     return add_method(choice, level, change_id)
                 return add_method(choice, change_id)
@@ -590,7 +601,9 @@ class CommandLineResolver(DataResolver):
         if platform_name is None:
             platform_name = ""
 
-        platform_name = prompt("Please enter a name: ", default=platform_name).strip()
+        platform_name = prompt(
+            format_command("Please enter a name: "), default=platform_name
+        ).strip()
         if len(platform_name) > 150:
             print(
                 "Platform name too long, maximum length 150 characters. Restarting platform data entry."
@@ -599,7 +612,9 @@ class CommandLineResolver(DataResolver):
                 data_store, platform_name, platform_type, nationality, privacy, change_id
             )
 
-        identifier = prompt("Please enter identifier (pennant or tail number): ").strip()
+        identifier = prompt(
+            format_command("Please enter identifier (pennant or tail number): ")
+        ).strip()
         if len(identifier) > 10:
             print(
                 "Identifier too long, maximum length 10 characters. Restarting platform data entry."
@@ -608,14 +623,18 @@ class CommandLineResolver(DataResolver):
                 data_store, platform_name, platform_type, nationality, privacy, change_id
             )
 
-        trigraph = prompt("Please enter trigraph (optional): ", default=platform_name[:3]).strip()
+        trigraph = prompt(
+            format_command("Please enter trigraph (optional): "), default=platform_name[:3]
+        ).strip()
         if len(trigraph) > 3:
             print("Trigraph too long, maximum length 3 characters. Restarting platform data entry.")
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy, change_id
             )
 
-        quadgraph = prompt("Please enter quadgraph (optional): ", default=platform_name[:4]).strip()
+        quadgraph = prompt(
+            format_command("Please enter quadgraph (optional): "), default=platform_name[:4]
+        ).strip()
         if len(quadgraph) > 4:
             print(
                 "Quadgraph too long, maximum length 4 characters. Restarting platform data entry."
@@ -666,7 +685,7 @@ class CommandLineResolver(DataResolver):
             chosen_privacy = data_store.search_privacy(privacy)
             if chosen_privacy is None:
                 level = prompt(
-                    f"Please type level of new classification ({privacy}): ",
+                    format_command(f"Please type level of new classification ({privacy}): "),
                     validator=numeric_validator,
                 )
                 chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
@@ -694,10 +713,13 @@ class CommandLineResolver(DataResolver):
         print(f"Class: {chosen_platform_type.name}")
         print(f"Classification: {chosen_privacy.name}")
 
+        def is_valid_choice(option):  # pragma: no cover
+            return option == str(1) or option == str(2) or option == str(3) or option == "."
+
         choice = create_menu(
             "Create this platform?: ",
-            ["Yes", "No, make further edits"],
-            validate_method=is_valid,
+            ["Yes", "No, make further edits", "No, restart platform selection process"],
+            validate_method=is_valid_choice,
         )
 
         if choice == str(1):
@@ -712,6 +734,8 @@ class CommandLineResolver(DataResolver):
             )
         elif choice == str(2):
             return self.add_to_platforms(data_store, platform_name, None, None, None, change_id)
+        elif choice == str(3):
+            return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
@@ -740,7 +764,7 @@ class CommandLineResolver(DataResolver):
         if sensor_name is None:
             sensor_name = ""
 
-        sensor_name = prompt("Please enter a name: ", default=sensor_name).strip()
+        sensor_name = prompt(format_command("Please enter a name: "), default=sensor_name).strip()
 
         if sensor_name == "":
             print("You must provide a sensor name. Restarting sensor data entry")
@@ -774,7 +798,7 @@ class CommandLineResolver(DataResolver):
             chosen_privacy = data_store.search_privacy(privacy)
             if chosen_privacy is None:
                 level = prompt(
-                    f"Please type level of new classification ({privacy}): ",
+                    format_command(f"Please type level of new classification ({privacy}): "),
                     validator=numeric_validator,
                 )
                 chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
@@ -798,16 +822,21 @@ class CommandLineResolver(DataResolver):
         print(f"Type: {sensor_type.name}")
         print(f"Classification: {chosen_privacy.name}")
 
+        def is_valid_choice(option):  # pragma: no cover
+            return option == str(1) or option == str(2) or option == str(3) or option == "."
+
         choice = create_menu(
             "Create this sensor?: ",
-            ["Yes", "No, make further edits"],
-            validate_method=is_valid,
+            ["Yes", "No, make further edits", "No, restart sensor selection process"],
+            validate_method=is_valid_choice,
         )
 
         if choice == str(1):
             return sensor_name, sensor_type, chosen_privacy
         elif choice == str(2):
             return self.add_to_sensors(data_store, sensor_name, None, host_id, None, change_id)
+        elif choice == str(3):
+            return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
