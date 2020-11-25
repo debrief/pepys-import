@@ -6,8 +6,10 @@ from datetime import datetime
 from getpass import getuser
 from stat import S_IREAD
 
+from halo import Halo
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
+from tqdm import tqdm
 
 from config import ARCHIVE_PATH, LOCAL_PARSERS
 from paths import IMPORTERS_DIRECTORY
@@ -418,10 +420,13 @@ class FileProcessor:
         # Delete the datafile entry, as we won't be importing any entries linked to it,
         # because we had errors. CASCADING will handle the deletion of the all measurement objects
         # of the datafile
+        spinner = Halo(text="@ Clearing measurements", spinner="dots")
+        spinner.start()
         data_store.session.delete(datafile)
+        spinner.succeed("All measurements deleted from the database!")
         # Remove log objects
         objects_from_logs = data_store.get_logs_by_change_id(change_id)
-        for obj in objects_from_logs:
+        for obj in tqdm(objects_from_logs, desc="Clearing log entities for measurements"):
             table_cls = getattr(data_store.db_classes, table_name_to_class_name(obj.table))
             if table_cls.table_type == TableTypes.MEASUREMENT:
                 data_store.session.delete(obj)
@@ -429,7 +434,7 @@ class FileProcessor:
     @staticmethod
     def _remove_metadata(data_store, change_id):
         objects_from_logs = data_store.get_logs_by_change_id(change_id)
-        for obj in objects_from_logs:
+        for obj in tqdm(objects_from_logs, desc="Clearing metadata entities"):
             table_cls = getattr(data_store.db_classes, table_name_to_class_name(obj.table))
             if table_cls.table_type == TableTypes.METADATA:
                 primary_key_field = getattr(table_cls, get_primary_key_for_table(table_cls))
