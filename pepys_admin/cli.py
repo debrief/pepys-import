@@ -2,11 +2,16 @@ import argparse
 from importlib import reload
 import os
 
+from prompt_toolkit import prompt
+
+
 import config
 from pepys_admin.admin_cli import AdminShell
 from pepys_import.cli import set_up_training_mode
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.utils.error_handling import handle_database_errors
+from pepys_import.resolvers.command_line_input import format_command
+
 
 
 def main():  # pragma: no cover
@@ -86,7 +91,7 @@ def run_admin_shell(path, training=False, data_store=None, db=None):
         pass
 
     if training:
-        answer = input("Would you like to reset the training database? (y/n) ")
+        answer = prompt(format_command("Would you like to reset the training database? (y/n) "))
         if answer.upper() == "Y":
             if os.path.exists(config.DB_NAME):
                 os.remove(config.DB_NAME)

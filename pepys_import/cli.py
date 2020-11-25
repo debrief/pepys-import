@@ -2,10 +2,13 @@ import argparse
 import os
 from importlib import reload
 
+from prompt_toolkit import prompt
+
 import config
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
+from pepys_import.resolvers.command_line_input import format_command
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.error_handling import handle_database_errors
@@ -126,7 +129,7 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
         pass
 
     if training:
-        answer = input("Would you like to reset the training database? (y/n) ")
+        answer = prompt(format_command("Would you like to reset the training database? (y/n) "))
         if answer.upper() == "Y":
             if os.path.exists(config.DB_NAME):
                 os.remove(config.DB_NAME)
@@ -141,7 +144,7 @@ def set_up_training_mode():
         print("====================================================")
         print("              Running in training mode              ")
         print("====================================================")
-        answer = input("Would you like to reset the training database? (y/n) ")
+        answer = prompt(format_command("Would you like to reset the training database? (y/n) "))
         if answer.upper() == "Y":
             os.remove(db_path)
         
