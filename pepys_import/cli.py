@@ -7,8 +7,8 @@ from prompt_toolkit import prompt
 import config
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
-from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 from pepys_import.resolvers.command_line_input import format_command
+from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.error_handling import handle_database_errors
@@ -147,7 +147,6 @@ def set_up_training_mode():
         answer = prompt(format_command("Would you like to reset the training database? (y/n) "))
         if answer.upper() == "Y":
             os.remove(db_path)
-        
 
     config_file_path = os.path.expanduser(os.path.join("~", "pepys_training_config.ini"))
 
