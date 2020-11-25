@@ -713,10 +713,13 @@ class CommandLineResolver(DataResolver):
         print(f"Class: {chosen_platform_type.name}")
         print(f"Classification: {chosen_privacy.name}")
 
+        def is_valid_choice(option):  # pragma: no cover
+            return option == str(1) or option == str(2) or option == str(3) or option == "."
+
         choice = create_menu(
             "Create this platform?: ",
-            ["Yes", "No, make further edits"],
-            validate_method=is_valid,
+            ["Yes", "No, make further edits", "No, restart platform selection process"],
+            validate_method=is_valid_choice,
         )
 
         if choice == str(1):
@@ -731,6 +734,8 @@ class CommandLineResolver(DataResolver):
             )
         elif choice == str(2):
             return self.add_to_platforms(data_store, platform_name, None, None, None, change_id)
+        elif choice == str(3):
+            return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
@@ -817,16 +822,21 @@ class CommandLineResolver(DataResolver):
         print(f"Type: {sensor_type.name}")
         print(f"Classification: {chosen_privacy.name}")
 
+        def is_valid_choice(option):  # pragma: no cover
+            return option == str(1) or option == str(2) or option == str(3) or option == "."
+
         choice = create_menu(
             "Create this sensor?: ",
-            ["Yes", "No, make further edits"],
-            validate_method=is_valid,
+            ["Yes", "No, make further edits", "No, restart sensor selection process"],
+            validate_method=is_valid_choice,
         )
 
         if choice == str(1):
             return sensor_name, sensor_type, chosen_privacy
         elif choice == str(2):
             return self.add_to_sensors(data_store, sensor_name, None, host_id, None, change_id)
+        elif choice == str(3):
+            return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
         elif choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
