@@ -226,8 +226,11 @@ def test_process_db_none(patched_file_proc, patched_data_store):
         training_mode=False,
     )
 
+@patch("pepys_import.cli.input")
+def test_training_mode_message(patched_input):
+    # Don't reset the database at the start or end - we test that in another test
+    patched_input.side_effect = ["n", "n"]
 
-def test_training_mode_message():
     # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
     # (as setting training mode changes that for this process - and when
     # pytest is running tests it runs them all in one process)
@@ -248,7 +251,11 @@ def test_training_mode_message():
 
 
 @patch("pepys_import.cli.DataStore")
-def test_training_mode_setup(patched_data_store):
+@patch("pepys_import.cli.input")
+def test_training_mode_setup(patched_input, patched_data_store):
+    # Don't reset the database at the start or end - we test that in another test
+    patched_input.side_effect = ["n", "n"]
+    
     # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
     # (as setting training mode changes that for this process - and when
     # pytest is running tests it runs them all in one process)
@@ -269,6 +276,63 @@ def test_training_mode_setup(patched_data_store):
         missing_data_resolver=ANY,  # We don't care about this argument, and it's hard to test
         training_mode=True,
     )
+
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    if orig_pepys_config_file is None:
+        del os.environ["PEPYS_CONFIG_FILE"]
+    else:
+        os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+
+@patch("pepys_import.cli.input")
+def test_training_mode_reset_at_end(patched_input):
+    # Choose to reset at the end of the import
+    patched_input.side_effect = ["n", "y"]
+
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        process(resolver="default", training=True)
+    output = temp_output.getvalue()
+
+    assert "Running in Training Mode" in output
+
+    # As we've done a reset, the database file should have been deleted
+    assert not os.path.exists(os.path.expanduser(os.path.join("~", "pepys_training_database.db")))
+
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    if orig_pepys_config_file is None:
+        del os.environ["PEPYS_CONFIG_FILE"]
+    else:
+        os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+
+
+@patch("pepys_import.cli.input")
+def test_training_mode_reset_at_start(patched_input):
+    # Choose to reset at the start of the import
+    patched_input.side_effect = ["y", "n"]
+
+    db_path = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
+
+    # Create an invalid database file, this should be deleted before it is tried to be read
+    # so we won't get an error (if the reset hadn't worked then we'd get a 'File is not a database' error)
+    with open(db_path, 'w') as f:
+        f.write("Invalid DB file contents")
+
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        process(resolver="default", training=True)
+    output = temp_output.getvalue()
+
+    assert "Running in Training Mode" in output
 
     # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
     if orig_pepys_config_file is None:

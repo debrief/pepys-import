@@ -119,13 +119,32 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
     processor = FileProcessor(archive=archive)
     processor.load_importers_dynamically()
 
-    with handle_database_errors():
-        processor.process(path, data_store, True)
+    try:
+        with handle_database_errors():
+            processor.process(path, data_store, True)
+    except SystemExit:
+        pass
+
+    if training:
+        answer = input("Would you like to reset the training database? (y/n) ")
+        if answer.upper() == "Y":
+            if os.path.exists(config.DB_NAME):
+                os.remove(config.DB_NAME)
 
 
 def set_up_training_mode():
     # Training database will be located in user's home folder
     db_path = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
+
+    if os.path.exists(db_path):
+        # Training db already exists, ask if we want to clear it
+        print("====================================================")
+        print("              Running in training mode              ")
+        print("====================================================")
+        answer = input("Would you like to reset the training database? (y/n) ")
+        if answer.upper() == "Y":
+            os.remove(db_path)
+        
 
     config_file_path = os.path.expanduser(os.path.join("~", "pepys_training_config.ini"))
 

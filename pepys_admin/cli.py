@@ -1,5 +1,6 @@
 import argparse
 from importlib import reload
+import os
 
 import config
 from pepys_admin.admin_cli import AdminShell
@@ -76,8 +77,19 @@ def run_admin_shell(path, training=False, data_store=None, db=None):
                 training_mode=training,
             )
 
-    with handle_database_errors():
-        AdminShell(data_store, path).cmdloop()
+    try:
+        with handle_database_errors():
+            AdminShell(data_store, path).cmdloop()
+    except SystemExit:
+        # This makes sure that calling exit() from within our code doesn't actually exit immediately,
+        # instead it drops out to here, where we can still ask the final training mode question
+        pass
+
+    if training:
+        answer = input("Would you like to reset the training database? (y/n) ")
+        if answer.upper() == "Y":
+            if os.path.exists(config.DB_NAME):
+                os.remove(config.DB_NAME)
 
 
 if __name__ == "__main__":
