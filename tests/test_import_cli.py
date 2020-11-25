@@ -275,7 +275,6 @@ def test_training_mode_setup(patched_input, patched_data_store):
         db_name=db_name,
         db_type="sqlite",
         missing_data_resolver=ANY,  # We don't care about this argument, and it's hard to test
-        training_mode=True,
     )
 
     # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
