@@ -290,7 +290,7 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
         print(output)
         assert 'SELECT * FROM "pepys"."Datafiles";' in output
         assert (
-            "| e_trac.txt                       | None | 5315 | 577fad568cda2eb0b24178f5554f2b46"
+            "| e_trac.txt                       | None | 5271 | fcb69124d933924e564769b211cacdb7"
             in output
         )
 
@@ -320,7 +320,7 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
                 assert (
                     "20200305_ROBINWithHeader.eag.txt,,479,ec2694c2cfe2eaa26181999a55aee5b4" in data
                 )
-                assert "e_trac.txt,,5315,577fad568cda2eb0b24178f5554f2b46" in data
+                assert "e_trac.txt,,5271,fcb69124d933924e564769b211cacdb7" in data
 
             os.remove(path)
 
