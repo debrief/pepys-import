@@ -418,7 +418,7 @@ class FileProcessor:
         spinner = Halo(text="@ Clearing measurements", spinner="dots")
         spinner.start()
         data_store.session.delete(datafile)
-        spinner.succeed("All measurements deleted from the database!")
+        spinner.succeed("Measurements cleared")
         # Remove log objects
         objects_from_logs = data_store.get_logs_by_change_id(change_id)
         for obj in tqdm(objects_from_logs, desc="Clearing log entities for measurements"):
@@ -429,7 +429,7 @@ class FileProcessor:
     @staticmethod
     def _remove_metadata(data_store, change_id):
         objects_from_logs = data_store.get_logs_by_change_id(change_id)
-        for obj in tqdm(objects_from_logs, desc="Clearing metadata entities"):
+        for obj in tqdm(objects_from_logs, desc="Clearing metadata"):
             table_cls = getattr(data_store.db_classes, table_name_to_class_name(obj.table))
             if table_cls.table_type == TableTypes.METADATA:
                 primary_key_field = getattr(table_cls, get_primary_key_for_table(table_cls))
