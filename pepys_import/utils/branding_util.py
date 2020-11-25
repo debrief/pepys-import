@@ -44,10 +44,8 @@ def show_welcome_banner(banner_text):
     render_text(font, text)
 
 
-def show_software_meta_info(version, db_type, db_name, db_host, training_mode):
+def show_software_meta_info(version, db_type, db_name, db_host):
     print("Software Version : ", version, "\n\n")
     print("Database Type : ", db_type)
     print("Database Name : ", db_name)
     print("Database Host : ", db_host)
-    if training_mode:
-        print("\nRunning in Training Mode")

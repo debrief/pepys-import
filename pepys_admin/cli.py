@@ -66,7 +66,6 @@ def run_admin_shell(path, training=False, data_store=None, db=None):
                 db_name=config.DB_NAME,
                 db_type=config.DB_TYPE,
                 welcome_text="Pepys_admin",
-                training_mode=training,
             )
         else:
             data_store = DataStore(
@@ -77,7 +76,6 @@ def run_admin_shell(path, training=False, data_store=None, db=None):
                 db_name=db,
                 db_type="sqlite",
                 welcome_text="Pepys_admin",
-                training_mode=training,
             )
 
     try:
