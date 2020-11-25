@@ -56,6 +56,7 @@ class DataStore:
         missing_data_resolver=DefaultResolver(),
         welcome_text="Pepys_import",
         show_status=True,
+        training_mode=False,
     ):
         if db_type == "postgres":
             self.db_classes = import_module("pepys_import.core.store.postgres_db")
@@ -147,7 +148,7 @@ class DataStore:
         if self.welcome_text:
             show_welcome_banner(welcome_text)
         if self.show_status:
-            show_software_meta_info(__version__, self.db_type, self.db_name, db_host)
+            show_software_meta_info(__version__, self.db_type, self.db_name, db_host, training_mode)
             # The 'pepys-import' banner is 61 characters wide, so making a line
             # of the same length makes things prettier
             print("-" * 61)

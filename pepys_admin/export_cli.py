@@ -51,7 +51,7 @@ class ExportShell(BaseShell):
         selected_datafile = iterfzf(datafiles_dict.keys(), prompt=message)
 
         if selected_datafile is None or selected_datafile not in datafiles_dict.keys():
-            print(f"You haven't selected a valid option!")
+            print("You haven't selected a valid option!")
             return
 
         export_flag = input(f"Do you want to export {selected_datafile}? (Y/n)\n")
@@ -76,7 +76,7 @@ class ExportShell(BaseShell):
         elif export_flag in ["N", "n"]:
             print("You selected not to export!")
         else:
-            print(f"Please enter a valid input.")
+            print("Please enter a valid input.")
 
     def do_export_by_platform_name(self):
         """Exports datafiles by platform and sensor names. It asks user to select an existing
@@ -98,7 +98,7 @@ class ExportShell(BaseShell):
         selected_platform = iterfzf(platforms_dict.keys(), prompt=message)
 
         if selected_platform is None or selected_platform not in platforms_dict.keys():
-            print(f"You haven't selected a valid option!")
+            print("You haven't selected a valid option!")
             return
 
         # Find related sensors to the selected platform
@@ -159,7 +159,7 @@ class ExportShell(BaseShell):
         elif export_flag in ["N", "n"]:
             print("You selected not to export!")
         else:
-            print(f"Please enter a valid input.")
+            print("Please enter a valid input.")
 
 
 class ExportByPlatformNameShell(BaseShell):

@@ -101,7 +101,7 @@ class ViewDataCLITestCase(unittest.TestCase):
         print(output)
         assert "SELECT * FROM Datafiles;" in output
         assert (
-            "| e_trac.txt                       | None | 5315 | 577fad568cda2eb0b24178f5554f2b46"
+            "| e_trac.txt                       | None | 5271 | fcb69124d933924e564769b211cacdb7"
             in output
         )
 
