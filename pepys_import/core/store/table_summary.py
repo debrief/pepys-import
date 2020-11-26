@@ -1,9 +1,8 @@
-from prompt_toolkit import print_formatted_text
 from sqlalchemy.orm import undefer
 from tabulate import tabulate
 
 from pepys_import.core.store import constants
-from pepys_import.utils.text_formatting_utils import format_table
+from pepys_import.utils.text_formatting_utils import custom_print_formatted_text, format_table
 
 
 class TableSummary:
@@ -72,7 +71,7 @@ class TableSummarySet:
         )
         res += "\n"
         formatted_text = format_table(title, table_string=res)
-        print_formatted_text(formatted_text)
+        custom_print_formatted_text(formatted_text)
         return res
 
     def report_metadata_names(self, differences, title):
@@ -87,7 +86,7 @@ class TableSummarySet:
         )
         res += "\n"
         formatted_text = format_table(title, table_string=res)
-        print_formatted_text(formatted_text)
+        custom_print_formatted_text(formatted_text)
         return res
 
     @staticmethod
