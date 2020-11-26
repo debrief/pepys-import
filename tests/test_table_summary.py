@@ -160,7 +160,7 @@ class TableSummaryTestCase(TestCase):
         result = second_table_summary_set.show_delta_of_rows_added_metadata(first_table_summary_set)
 
         # Platforms table has 7 new entities and Sensors table has 1 new entities
-        assert "| Platforms    |                7 |" in result
+        assert "│ Platforms    │                7 │" in result
         assert "| Sensors      |                1 |" in result
 
 

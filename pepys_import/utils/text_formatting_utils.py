@@ -1,6 +1,13 @@
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import FormattedText
-from prompt_toolkit.output.win32 import NoConsoleScreenBufferError
+
+from pepys_import.utils.sqlite_utils import SYSTEM
+
+WINDOWS = False
+if SYSTEM == "Windows":  # pragma: no cover (tests only run on Linux)
+    from prompt_toolkit.output.win32 import NoConsoleScreenBufferError  # pragma: no cover
+
+    WINDOWS = True
 
 
 def format_table(title: str, table_string: str):
@@ -24,13 +31,24 @@ def format_command(text):
     return FormattedText([("bold", text)])
 
 
+def formatted_text_to_str(formatted_text: FormattedText) -> str:
+    """Converts FormattedText object to string"""
+    str_text = ""
+    for style, text in formatted_text:
+        str_text += text
+    return str_text
+
+
 def custom_print_formatted_text(text):
     """Try to print using prompt toolkit's print_formatted_text().
     If it throws an error, Use the normal print function."""
 
-    try:
+    if not WINDOWS:
         print_formatted_text(text)
-    # The following exception is expected when the application is not running inside a Windows Console
-    # If that's the case, the program will use the normal print() function to print the outputs
-    except NoConsoleScreenBufferError:
-        print(text)
+    else:
+        try:
+            print_formatted_text(text)
+        # The following exception is expected when the application is not running inside a Windows Console
+        # If that's the case, the program will use the normal print() function to print the outputs
+        except NoConsoleScreenBufferError:
+            print(formatted_text_to_str(text))
