@@ -67,7 +67,7 @@ class TableSummarySet:
                 if table.number_of_rows != 0
             ],
             headers=self.headers,
-            tablefmt="fancy_grid",
+            tablefmt="grid",
         )
         res += "\n"
         formatted_text = format_table(title, table_string=res)
@@ -82,7 +82,7 @@ class TableSummarySet:
         res = tabulate(
             [(table_name, ",".join(sorted(names))) for table_name, names in differences if names],
             headers=self.metadata_headers,
-            tablefmt="fancy_grid",
+            tablefmt="grid",
         )
         res += "\n"
         formatted_text = format_table(title, table_string=res)
