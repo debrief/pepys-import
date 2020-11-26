@@ -269,7 +269,7 @@ class CommandLineResolver(DataResolver):
             current_values += tabulate(
                 [[str(getattr(row, column)) for column in headers] for row in all_values],
                 headers=headers,
-                tablefmt="github",
+                tablefmt="fancy_grid",
                 floatfmt=".3f",
             )
             current_values += "\n"
