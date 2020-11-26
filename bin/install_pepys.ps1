@@ -1,4 +1,4 @@
-Function Make-Shortcut($ShortcutLocation, $TargetPath)
+Function Make-Shortcut($ShortcutLocation, $TargetPath, $Icon)
 {
     if (Test-Path $ShortcutLocation) { Remove-Item $ShortcutLocation; }
 
@@ -6,7 +6,7 @@ Function Make-Shortcut($ShortcutLocation, $TargetPath)
     # We need to use full paths here or the shortcut will assume everything is relative to
     # C:\
     $Shortcut.TargetPath = [System.IO.Path]::GetFullPath($TargetPath)
-    $Shortcut.IconLocation = $icon_string
+    $Shortcut.IconLocation = $Icon
     # If we don't set the working directory then we won't be able to import other DLLs or use relative paths
     # to our Python executable
     $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
@@ -36,7 +36,7 @@ $icon_string = "$icon_path,0"
 # Add Pepys Import shortcut to Send To
 #
 try {
-    Make-Shortcut -ShortcutLocation $sendto_location + "\Pepys Import.lnk" -TargetPath ".\pepys_import_sendto.bat"
+    Make-Shortcut -ShortcutLocation ($sendto_location + "\Pepys Import.lnk") -TargetPath ".\pepys_import_sendto.bat" -Icon $icon_string
 }
 catch {
     Write-Output $_
@@ -50,7 +50,7 @@ catch {
 # Add Pepys Import (no archive) shortcut to Send To
 #
 try {
-    Make-Shortcut -ShortcutLocation $sendto_location + "\Pepys Import (no archive).lnk"-TargetPath ".\pepys_import_no_archive_sendto.bat"
+    Make-Shortcut -ShortcutLocation ($sendto_location + "\Pepys Import (no archive).lnk") -TargetPath ".\pepys_import_no_archive_sendto.bat" -Icon $icon_string
 }
 catch {
     Write-Output $_
@@ -62,7 +62,7 @@ catch {
 # Add Pepys Import (training mode) shortcut to Send To
 #
 try {
-    Make-Shortcut -ShortcutLocation $sendto_location + "\Pepys Import (training mode).lnk" -TargetPath ".\pepys_import_training_sendto.bat"
+    Make-Shortcut -ShortcutLocation ($sendto_location + "\Pepys Import (training mode).lnk") -TargetPath ".\pepys_import_training_sendto.bat" -Icon $icon_string
 }
 catch {
     Write-Output $_
@@ -85,9 +85,9 @@ try {
     # Create Pepys folder in Start Menu
     New-Item -Path $startmenu_location -Name "Pepys" -ItemType "directory"
 
-    Make-Shortcut -ShortcutLocation $startmenu_location + "Pepys\Pepys Admin.lnk" -TargetPath ".\pepys_admin.bat"
-    
-    Make-Shortcut -ShortcutLocation $startmenu_location + "Pepys\Pepys Admin (training mode).lnk" -TargetPath ".\pepys_admin_training.bat"
+    Make-Shortcut -ShortcutLocation ($startmenu_location + "Pepys\Pepys Admin.lnk") -TargetPath ".\pepys_admin.bat" -Icon $icon_string
+
+    Make-Shortcut -ShortcutLocation ($startmenu_location + "Pepys\Pepys Admin (training mode).lnk") -TargetPath ".\pepys_admin_training.bat" -Icon $icon_string
 }
 catch {
     Write-Output $_
