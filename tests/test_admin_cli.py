@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
 from sqlite3 import OperationalError
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 import pg8000
 import pytest
@@ -1648,6 +1648,47 @@ def test_training_mode_setup(patched_prompt1, patched_prompt2, patched_input, pa
         del os.environ["PEPYS_CONFIG_FILE"]
     else:
         os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+
+
+@patch("pepys_admin.cli.DataStore")
+def test_viewer_mode_datastore(patched_ds):
+    run_shell(path=".", db=None, training=False, viewer=True)
+
+    patched_ds.assert_called_with(
+        db_username=ANY,
+        db_password=ANY,
+        db_host=ANY,
+        db_port=ANY,
+        db_name=ANY,
+        db_type=ANY,
+        welcome_text="Pepys_viewer",
+    )
+
+
+def test_viewer_mode_blank_db():
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        try:
+            run_shell(path=".", db=":memory:", training=False, viewer=True)
+        except SystemExit:
+            pass
+    output = temp_output.getvalue()
+    print(output)
+
+    assert "Database schema does not exist: tables cannot be viewed" in output
+
+
+@patch("pepys_admin.cli.ViewDataShell")
+def test_viewer_mode_valid_db(patched_vds):
+    if os.path.exists("created_db.db"):
+        os.remove("created_db.db")
+
+    store = DataStore("", "", "", 0, "created_db.db", db_type="sqlite")
+    store.initialise()
+
+    run_shell(path=".", db="created_db.db", training=False, viewer=True)
+
+    patched_vds.assert_called_with(ANY, viewer=True)
 
 
 if __name__ == "__main__":
