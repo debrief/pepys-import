@@ -14,7 +14,7 @@ from testing.postgresql import Postgresql
 
 from paths import MIGRATIONS_DIRECTORY
 from pepys_admin.admin_cli import AdminShell
-from pepys_admin.cli import run_admin_shell
+from pepys_admin.cli import run_shell
 from pepys_admin.export_cli import ExportByPlatformNameShell, ExportShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.snapshot_cli import SnapshotShell
@@ -705,7 +705,7 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             data_store = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
-            run_admin_shell(data_store=data_store, path=".")
+            run_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: SQL error when communicating with database" in output
@@ -740,7 +740,7 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             data_store = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
-            run_admin_shell(data_store=data_store, path=".")
+            run_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: Table summaries couldn't be printed." in output
@@ -803,7 +803,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
                 db_port=55527,
                 db_type="postgres",
             )
-            run_admin_shell(data_store=data_store, path=".")
+            run_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: SQL error when communicating with database" in output
@@ -829,7 +829,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
                 db_port=55527,
                 db_type="postgres",
             )
-            run_admin_shell(data_store=data_store, path=".")
+            run_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: Table summaries couldn't be printed." in output
@@ -1595,7 +1595,7 @@ def test_training_mode_message(patched_prompt1, patched_prompt2, patched_input):
     temp_output = StringIO()
     with redirect_stdout(temp_output):
         try:
-            run_admin_shell(db=None, training=True, path=".")
+            run_shell(db=None, training=True, path=".")
         except SystemExit:
             pass
     output = temp_output.getvalue()
@@ -1628,7 +1628,7 @@ def test_training_mode_setup(patched_prompt1, patched_prompt2, patched_input, pa
     db_name = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
 
     try:
-        run_admin_shell(db=None, training=True, path=".")
+        run_shell(db=None, training=True, path=".")
     except SystemExit:
         pass
 
