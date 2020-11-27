@@ -85,9 +85,13 @@ try {
     # Create Pepys folder in Start Menu
     New-Item -Path $startmenu_location -Name "Pepys" -ItemType "directory"
 
+    # Pepys Admin shortcuts
     Make-Shortcut -ShortcutLocation ($startmenu_location + "Pepys\Pepys Admin.lnk") -TargetPath ".\pepys_admin.bat" -Icon $icon_string
-
     Make-Shortcut -ShortcutLocation ($startmenu_location + "Pepys\Pepys Admin (training mode).lnk") -TargetPath ".\pepys_admin_training.bat" -Icon $icon_string
+    
+    # Pepys Viewer shortcuts
+    Make-Shortcut -ShortcutLocation ($startmenu_location + "Pepys\Pepys Viewer.lnk") -TargetPath ".\pepys_viewer.bat" -Icon $icon_string
+    Make-Shortcut -ShortcutLocation ($startmenu_location + "Pepys\Pepys Viewer (training mode).lnk") -TargetPath ".\pepys_viewer_training.bat" -Icon $icon_string
 }
 catch {
     Write-Output $_
