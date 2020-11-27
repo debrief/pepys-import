@@ -737,7 +737,7 @@ class MergeDatabases:
             tabulate(
                 statistics_to_table_data(self.ref_statistics),
                 headers=["Table", "Already present", "Added", "Modified"],
-                tablefmt="github",
+                tablefmt="grid",
             )
         )
 
@@ -746,7 +746,7 @@ class MergeDatabases:
             tabulate(
                 statistics_to_table_data(self.meta_statistics),
                 headers=["Table", "Already present", "Added", "Modified"],
-                tablefmt="github",
+                tablefmt="grid",
             )
         )
 
@@ -755,7 +755,7 @@ class MergeDatabases:
             tabulate(
                 list(self.measurement_statistics.items()),
                 headers=["Table", "Added"],
-                tablefmt="github",
+                tablefmt="grid",
             )
         )
 

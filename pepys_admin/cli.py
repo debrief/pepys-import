@@ -9,9 +9,9 @@ from pepys_admin.admin_cli import AdminShell
 from pepys_admin.view_data_cli import ViewDataShell
 from pepys_import.cli import set_up_training_mode
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.resolvers.command_line_input import format_command
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.error_handling import handle_database_errors
+from pepys_import.utils.text_formatting_utils import format_command
 
 
 def main():  # pragma: no cover
@@ -74,7 +74,6 @@ def run_shell(path, training=False, data_store=None, db=None, viewer=False):
                 db_name=config.DB_NAME,
                 db_type=config.DB_TYPE,
                 welcome_text=welcome_text,
-                training_mode=training,
             )
         else:
             data_store = DataStore(
@@ -85,7 +84,6 @@ def run_shell(path, training=False, data_store=None, db=None, viewer=False):
                 db_name=db,
                 db_type="sqlite",
                 welcome_text=welcome_text,
-                training_mode=training,
             )
 
     try:

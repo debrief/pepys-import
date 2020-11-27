@@ -108,7 +108,7 @@ class ViewDataShell(BaseShell):
                 res += tabulate(
                     [[str(column) for column in row] for row in result],
                     headers=["version_number"],
-                    tablefmt="github",
+                    tablefmt="grid",
                     floatfmt=".3f",
                 )
                 res += "\n"
@@ -148,7 +148,7 @@ class ViewDataShell(BaseShell):
             res += tabulate(
                 [[str(getattr(row, column)) for column in headers] for row in values],
                 headers=headers,
-                tablefmt="github",
+                tablefmt="grid",
                 floatfmt=".3f",
             )
         res += "\n"
@@ -214,7 +214,7 @@ class ViewDataShell(BaseShell):
             res = f"QUERY\n{'-' * 20}\n{query}\n{'-' * 20}\nRESULT\n"
             res += tabulate(
                 [[str(column) for column in row] for row in results],
-                tablefmt="github",
+                tablefmt="grid",
                 floatfmt=".3f",
             )
             res += "\n"

@@ -27,7 +27,7 @@ def test_single_rep_file_import_short(benchmark):
         file_path=os.path.join(FILE_DIR, "benchmark_data/rep_test1.rep"),
     )
 
-    TIME_THRESHOLD = 0.45
+    TIME_THRESHOLD = 0.6
 
     if running_on_ci():
         if benchmark.stats.stats.mean > TIME_THRESHOLD:
@@ -51,7 +51,7 @@ def test_single_rep_file_import_long(benchmark):
         rounds=1,
     )
 
-    TIME_THRESHOLD = 65
+    TIME_THRESHOLD = 75
 
     if running_on_ci():
         if benchmark.stats.stats.mean > TIME_THRESHOLD:

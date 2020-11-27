@@ -6,14 +6,22 @@ from datetime import datetime
 from getpass import getuser
 from stat import S_IREAD
 
+from halo import Halo
+from prompt_toolkit import prompt
+from prompt_toolkit.validation import Validator
+
 from config import ARCHIVE_PATH, LOCAL_PARSERS
 from paths import IMPORTERS_DIRECTORY
+from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.core.store.table_summary import TableSummary, TableSummarySet
+from pepys_import.core.store.db_status import TableTypes
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.importer import Importer
+from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 from pepys_import.utils.datafile_utils import hash_file
 from pepys_import.utils.import_utils import import_module_, sort_files
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 USER = getuser()
 
@@ -63,10 +71,11 @@ class FileProcessor:
             if not os.path.exists(self.output_path):
                 os.makedirs(self.output_path)
 
-        # Create dict to store success/failures in
+        # Create dict to store success/failures/skipped in
         import_summary = {}
         import_summary["succeeded"] = []
         import_summary["failed"] = []
+        import_summary["skipped"] = []
 
         # Take current timestamp without milliseconds
         now = datetime.utcnow()
@@ -108,28 +117,11 @@ class FileProcessor:
         # If given path is a single file, then just process that file
         if os.path.isfile(path):
             with data_store.session_scope():
-                states_sum = TableSummary(data_store.session, data_store.db_classes.State)
-                contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
-                comments_sum = TableSummary(data_store.session, data_store.db_classes.Comment)
-                platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
-                first_table_summary_set = TableSummarySet(
-                    [states_sum, contacts_sum, comments_sum, platforms_sum]
-                )
-                print(first_table_summary_set.report("==Before=="))
-
                 filename = os.path.abspath(path)
                 current_path = os.path.dirname(path)
                 processed_ctr = self.process_file(
                     filename, current_path, data_store, processed_ctr, import_summary
                 )
-                states_sum = TableSummary(data_store.session, data_store.db_classes.State)
-                contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
-                comments_sum = TableSummary(data_store.session, data_store.db_classes.Comment)
-                platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
-                second_table_summary_set = TableSummarySet(
-                    [states_sum, contacts_sum, comments_sum, platforms_sum]
-                )
-                print(second_table_summary_set.report("==After=="))
             self.display_import_summary(import_summary)
             print(f"Files got processed: {processed_ctr} times")
             abs_path = os.path.abspath(self.output_path)
@@ -144,16 +136,6 @@ class FileProcessor:
 
         # decide whether to descend tree, or just work on this folder
         with data_store.session_scope():
-
-            states_sum = TableSummary(data_store.session, data_store.db_classes.State)
-            contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
-            comments_sum = TableSummary(data_store.session, data_store.db_classes.Comment)
-            platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
-            first_table_summary_set = TableSummarySet(
-                [states_sum, contacts_sum, comments_sum, platforms_sum]
-            )
-            print(first_table_summary_set.report("==Before=="))
-
             # capture path in absolute form
             abs_path = os.path.abspath(path)
             if descend_tree:
@@ -170,15 +152,6 @@ class FileProcessor:
                         processed_ctr = self.process_file(
                             file, abs_path, data_store, processed_ctr, import_summary
                         )
-
-            states_sum = TableSummary(data_store.session, data_store.db_classes.State)
-            contacts_sum = TableSummary(data_store.session, data_store.db_classes.Contact)
-            comments_sum = TableSummary(data_store.session, data_store.db_classes.Comment)
-            platforms_sum = TableSummary(data_store.session, data_store.db_classes.Platform)
-            second_table_summary_set = TableSummarySet(
-                [states_sum, contacts_sum, comments_sum, platforms_sum]
-            )
-            print(second_table_summary_set.report("==After=="))
 
         self.display_import_summary(import_summary)
         print(f"Files got processed: {processed_ctr} times")
@@ -262,6 +235,17 @@ class FileProcessor:
                     privacy = importer.default_privacy
                     break
 
+            exclude = [
+                constants.CHANGE,
+                constants.DATAFILE,
+                constants.EXTRACTION,
+                constants.LOG,
+            ]
+
+            metadata_summaries_before = data_store.get_status(report_metadata=True, exclude=exclude)
+            measurement_summaries_before = data_store.get_status(
+                report_measurement=True, exclude=exclude
+            )
             # We assume that good importers will have the same datafile-type values at the moment.
             # That's why we can create a datafile using the first importer's datafile_type.
             # They don't have different datafile-type values, but if necessary, we might iterate over
@@ -274,6 +258,10 @@ class FileProcessor:
                 change.change_id,
                 privacy=privacy,
             )
+
+            # Update change object
+            change.datafile_id = datafile.datafile_id
+            data_store.session.flush()
 
             # Run all parsers
             for importer in good_importers:
@@ -319,11 +307,47 @@ class FileProcessor:
 
             # If all tests pass for all parsers, commit datafile
             if not errors:
-                log = datafile.commit(data_store, change.change_id)
-
                 # Keep track of some details for the import summary
                 summary_details = {}
                 summary_details["filename"] = basename
+
+                log = datafile.commit(data_store, change.change_id)
+                metadata_summaries_after = data_store.get_status(
+                    report_metadata=True, exclude=exclude
+                )
+                measurement_summaries_after = data_store.get_status(
+                    report_measurement=True, exclude=exclude
+                )
+                metadata_summaries_after.show_delta_of_rows_added_metadata(
+                    metadata_summaries_before, title="METADATA REPORT"
+                )
+
+                measurement_summaries_after.show_delta_of_rows_added(
+                    measurement_summaries_before, title="MEASUREMENT REPORT"
+                )
+                if isinstance(data_store.missing_data_resolver, CommandLineResolver):
+                    choices = (
+                        "Import metadata",
+                        "Import metadata and measurements",
+                        "Don't import data from this file.",
+                    )
+                    choice = self._ask_user_for_finalizing_import(choices)
+                else:  # default is Import metadata and measurements
+                    choice = "2"
+
+                if choice == "1":  # Import metadata
+                    self._remove_measurements(data_store, datafile, change.change_id)
+                    data_store.session.commit()
+                    # Set log to an empty list because measurements are deleted
+                    log = []
+                elif choice == "2":  # Import metadata and measurements
+                    pass
+                else:  # Don't import data from this file.
+                    # Remove metadata and measurement
+                    self._remove_measurement_and_metadata(data_store, datafile, change.change_id)
+                    data_store.session.commit()
+                    import_summary["skipped"].append(summary_details)
+                    return processed_ctr
 
                 # write extraction log to output folder
                 with open(
@@ -341,9 +365,25 @@ class FileProcessor:
                 import_summary["succeeded"].append(summary_details)
 
             else:
-                # Delete the datafile entry, as we won't be importing any entries
-                # linked to it, because we had errors
-                data_store.session.delete(datafile)
+                metadata_summaries_after = data_store.get_status(
+                    report_metadata=True, exclude=exclude
+                )
+                metadata_summaries_after.show_delta_of_rows_added_metadata(
+                    metadata_summaries_before, title="METADATA REPORT"
+                )
+                if isinstance(data_store.missing_data_resolver, CommandLineResolver):
+                    choices = (
+                        "Import metadata",
+                        "Don't import data from this file.",
+                    )
+                    choice = self._ask_user_for_finalizing_import(choices)
+                else:  # Default is import metadata
+                    choice = "1"
+
+                if choice == "1":  # Import metadata
+                    self._remove_measurements(data_store, datafile, change.change_id)
+                elif choice == "2":  # Don't import data from this file
+                    self._remove_measurement_and_metadata(data_store, datafile, change.change_id)
                 data_store.session.commit()
 
                 failure_report_filename = os.path.join(
@@ -363,7 +403,44 @@ class FileProcessor:
 
         return processed_ctr
 
-    def display_import_summary(self, import_summary):
+    def _remove_measurement_and_metadata(self, data_store, datafile, change_id):
+        # Remove measurement entities
+        self._remove_measurements(data_store, datafile, change_id)
+        # Remove metadata entities
+        self._remove_metadata(data_store, change_id)
+
+    @staticmethod
+    def _remove_measurements(data_store, datafile, change_id):
+        # Delete the datafile entry, as we won't be importing any entries linked to it,
+        # because we had errors. CASCADING will handle the deletion of the all measurement objects
+        # of the datafile
+        spinner = Halo(text="@ Clearing measurements", spinner="dots")
+        spinner.start()
+        data_store.session.delete(datafile)
+        # Remove log objects
+        objects_from_logs = data_store.get_logs_by_change_id(change_id)
+        for obj in objects_from_logs:
+            table_cls = getattr(data_store.db_classes, table_name_to_class_name(obj.table))
+            if table_cls.table_type == TableTypes.MEASUREMENT:
+                data_store.session.delete(obj)
+        spinner.succeed("Measurements cleared")
+
+    @staticmethod
+    def _remove_metadata(data_store, change_id):
+        spinner = Halo(text="@ Clearing metadata", spinner="dots")
+        spinner.start()
+        objects_from_logs = data_store.get_logs_by_change_id(change_id)
+        for obj in objects_from_logs:
+            table_cls = getattr(data_store.db_classes, table_name_to_class_name(obj.table))
+            if table_cls.table_type == TableTypes.METADATA:
+                primary_key_field = getattr(table_cls, get_primary_key_for_table(table_cls))
+                data_store.session.query(table_cls).filter(primary_key_field == obj.id).delete()
+                # Remove Logs entity
+                data_store.session.delete(obj)
+        spinner.succeed("Metadata cleared")
+
+    @staticmethod
+    def display_import_summary(import_summary):
         if len(import_summary["succeeded"]) > 0:
             print("Import succeeded for:")
             for details in import_summary["succeeded"]:
@@ -390,6 +467,12 @@ class FileProcessor:
                     print("    - Validators failing:")
                     print(failed_validators_list)
                 print(f"    - Failure report at {details['report_location']}")
+            print()
+        if len(import_summary["skipped"]) > 0:
+            print("Import skipped for:")
+            for details in import_summary["skipped"]:
+                print(f"  - {details['filename']}")
+
             print()
 
     def register_importer(self, importer):
@@ -443,3 +526,23 @@ class FileProcessor:
         with open(full_path, "r", encoding="windows-1252") as file:
             lines = file.read().split("\n")
         return lines
+
+    @staticmethod
+    def _input_validator(options):
+        def is_valid(option):
+            return option in [str(o) for o, _ in enumerate(options, 1)]
+
+        validator = Validator.from_callable(
+            is_valid,
+            error_message="You didn't select a valid option",
+            move_cursor_to_end=True,
+        )
+        return validator
+
+    def _ask_user_for_finalizing_import(self, choices):
+        validator = self._input_validator(choices)
+        input_text = "\n\nWould you like to\n"
+        for index, choice in enumerate(choices, 1):
+            input_text += f"   {str(index)}) {choice}\n"
+        choice = prompt(input_text, validator=validator)
+        return choice

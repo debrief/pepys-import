@@ -91,10 +91,14 @@ class AdminCLITestCase(unittest.TestCase):
         states_text = "| States       |              738 |"
         contacts_text = "| Contacts     |              110 |"
         comments_text = "| Comments     |                7 |"
+        sensors_text = "| Sensors      |               13 |"
+        platforms_text = "| Platforms    |                6 |"
         datafiles_text = "| Datafiles    |                5 |"
         assert states_text in output
         assert contacts_text in output
         assert comments_text in output
+        assert sensors_text in output
+        assert platforms_text in output
         assert datafiles_text in output
 
     @patch("cmd.input", return_value=".")
@@ -1574,11 +1578,16 @@ class SnapshotShellTestCase(unittest.TestCase):
 
 
 @patch("cmd.input")
-def test_training_mode_message(patched_input):
+@patch("pepys_admin.cli.prompt")
+@patch("pepys_import.cli.prompt")
+def test_training_mode_message(patched_prompt1, patched_prompt2, patched_input):
     # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
     # (as setting training mode changes that for this process - and when
     # pytest is running tests it runs them all in one process)
     orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
+    patched_prompt1.side_effect = ["n"]
+    patched_prompt2.side_effect = ["n"]
 
     # When asked for input, choose to exit
     patched_input.side_effect = ["."]
@@ -1603,11 +1612,16 @@ def test_training_mode_message(patched_input):
 
 @patch("pepys_admin.cli.DataStore")
 @patch("cmd.input")
-def test_training_mode_setup(patched_input, patched_data_store):
+@patch("pepys_admin.cli.prompt")
+@patch("pepys_import.cli.prompt")
+def test_training_mode_setup(patched_prompt1, patched_prompt2, patched_input, patched_data_store):
     # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
     # (as setting training mode changes that for this process - and when
     # pytest is running tests it runs them all in one process)
     orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
+    patched_prompt1.side_effect = ["n"]
+    patched_prompt2.side_effect = ["n"]
 
     patched_input.side_effect = ["."]
 
@@ -1626,7 +1640,6 @@ def test_training_mode_setup(patched_input, patched_data_store):
         db_port=0,
         db_name=db_name,
         db_type="sqlite",
-        training_mode=True,
         welcome_text="Pepys_admin",
     )
 

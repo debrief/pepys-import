@@ -56,7 +56,6 @@ class DataStore:
         missing_data_resolver=DefaultResolver(),
         welcome_text="Pepys_import",
         show_status=True,
-        training_mode=False,
     ):
         if db_type == "postgres":
             self.db_classes = import_module("pepys_import.core.store.postgres_db")
@@ -148,7 +147,7 @@ class DataStore:
         if self.welcome_text:
             show_welcome_banner(welcome_text)
         if self.show_status:
-            show_software_meta_info(__version__, self.db_type, self.db_name, db_host, training_mode)
+            show_software_meta_info(__version__, self.db_type, self.db_name, db_host)
             # The 'pepys-import' banner is 61 characters wide, so making a line
             # of the same length makes things prettier
             print("-" * 61)
@@ -911,6 +910,7 @@ class DataStore:
         report_measurement: bool = False,
         report_metadata: bool = False,
         report_reference: bool = False,
+        exclude=None,
     ):
         """
         Provides a summary of the contents of the :class:`DataStore`.
@@ -921,31 +921,38 @@ class DataStore:
         :type report_metadata: Boolean
         :param report_reference: Boolean flag includes Metadata Tables
         :type report_reference: Boolean
+        :param exclude: List of table names to exclude from the report
+        :type exclude: List
         :return: The summary of the contents of the :class:`DataStore`
         :rtype: TableSummarySet
         """
 
+        if exclude is None:
+            exclude = []
         table_summaries = []
         if report_measurement:
             # Create measurement table list
             measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
             for table_object in list(measurement_table_objects):
-                summary = TableSummary(self.session, table_object)
-                table_summaries.append(summary)
+                if table_object.__tablename__ not in exclude:
+                    summary = TableSummary(self.session, table_object)
+                    table_summaries.append(summary)
 
         if report_metadata:
             # Create metadata table list
             metadata_table_objects = self.meta_classes[TableTypes.METADATA]
             for table_object in list(metadata_table_objects):
-                summary = TableSummary(self.session, table_object)
-                table_summaries.append(summary)
+                if table_object.__tablename__ not in exclude:
+                    summary = TableSummary(self.session, table_object)
+                    table_summaries.append(summary)
 
         if report_reference:
             # Create reference table list
             reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
             for table_object in list(reference_table_objects):
-                summary = TableSummary(self.session, table_object)
-                table_summaries.append(summary)
+                if table_object.__tablename__ not in exclude:
+                    summary = TableSummary(self.session, table_object)
+                    table_summaries.append(summary)
 
         table_summaries_set = TableSummarySet(table_summaries)
 
@@ -1629,3 +1636,11 @@ class DataStore:
         if reference:
             return False
         return True
+
+    def get_logs_by_change_id(self, change_id):
+        """Returns Logs objects filtered by change_id"""
+        return (
+            self.session.query(self.db_classes.Log)
+            .filter(self.db_classes.Log.change_id == change_id)
+            .all()
+        )

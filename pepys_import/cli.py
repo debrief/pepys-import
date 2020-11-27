@@ -7,11 +7,11 @@ from prompt_toolkit import prompt
 import config
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
-from pepys_import.resolvers.command_line_input import format_command
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.error_handling import handle_database_errors
+from pepys_import.utils.text_formatting_utils import format_command
 
 FILE_PATH = os.path.abspath(__file__)
 DIRECTORY_PATH = os.path.dirname(FILE_PATH)
@@ -89,7 +89,6 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
             db_name=config.DB_NAME,
             db_type=config.DB_TYPE,
             missing_data_resolver=resolver_obj,
-            training_mode=training,
         )
     elif type(db) is dict:
         data_store = DataStore(
@@ -100,7 +99,6 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
             db_name=db["name"],
             db_type=db["type"],
             missing_data_resolver=resolver_obj,
-            training_mode=training,
         )
     else:
         data_store = DataStore(
@@ -111,7 +109,6 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
             db_name=db,
             db_type="sqlite",
             missing_data_resolver=resolver_obj,
-            training_mode=training,
         )
     if not is_schema_created(data_store.engine, data_store.db_type):
         data_store.initialise()
@@ -139,11 +136,14 @@ def set_up_training_mode():
     # Training database will be located in user's home folder
     db_path = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
 
+    print("#" * 80)
+    print(" " * 28 + "Running in Training Mode" + " " * 28)
+    print("")
+    print("Changes are only made to a local training database (see full path below)")
+    print("#" * 80)
+
     if os.path.exists(db_path):
         # Training db already exists, ask if we want to clear it
-        print("====================================================")
-        print("              Running in training mode              ")
-        print("====================================================")
         answer = prompt(format_command("Would you like to reset the training database? (y/n) "))
         if answer.upper() == "Y":
             os.remove(db_path)

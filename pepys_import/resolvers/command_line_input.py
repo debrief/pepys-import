@@ -1,7 +1,8 @@
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
-from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.validation import Validator
+
+from pepys_import.utils.text_formatting_utils import format_menu
 
 
 def get_fuzzy_completer(completer_list):
@@ -43,11 +44,3 @@ def create_menu(title, choices, cancel="import", completer=None, validate_method
     choice = prompt(format_menu(title_, choices_), completer=completer, validator=validator)
 
     return choice
-
-
-def format_menu(title, choices):
-    return FormattedText([("bold", title), ("", choices)])
-
-
-def format_command(text):
-    return FormattedText([("bold", text)])
