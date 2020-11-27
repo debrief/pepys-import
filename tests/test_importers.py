@@ -824,7 +824,6 @@ class TestImportMetadataOnly(unittest.TestCase):
             "SEAR",
             "TA",
             # For uk_track.rep import,
-            "uk_track.rep",
             "SPLENDID",
             "123",
             "SPL",
