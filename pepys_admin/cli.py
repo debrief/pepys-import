@@ -8,8 +8,8 @@ import config
 from pepys_admin.admin_cli import AdminShell
 from pepys_import.cli import set_up_training_mode
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.resolvers.command_line_input import format_command
 from pepys_import.utils.error_handling import handle_database_errors
+from pepys_import.utils.text_formatting_utils import format_command
 
 
 def main():  # pragma: no cover

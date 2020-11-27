@@ -7,11 +7,11 @@ from prompt_toolkit import prompt
 import config
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
-from pepys_import.resolvers.command_line_input import format_command
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.error_handling import handle_database_errors
+from pepys_import.utils.text_formatting_utils import format_command
 
 FILE_PATH = os.path.abspath(__file__)
 DIRECTORY_PATH = os.path.dirname(FILE_PATH)
