@@ -82,7 +82,7 @@ jobs:
           edit-mode: replace
           body: |
             <!-- GH Actions Binder Comment -->
-            :rocket: Interactive demo available via Binder [here](https://mybinder.org/v2/gh/debrief/pepys-import/${{github.head_ref}}?filepath=demos/).
+            :rocket: Interactive demo available via Binder [![logo](https://mybinder.org/static/logo.svg)](https://mybinder.org/v2/gh/debrief/pepys-import/${{github.head_ref}}?filepath=demos/).
 
             *Note:* The Jupyter notebook browser will open in the `demos` folder. See comments above for which notebook to use,
             otherwise use the `_Default_Demo.ipynb` notebook.
