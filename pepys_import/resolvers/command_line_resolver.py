@@ -7,13 +7,9 @@ from sqlalchemy import or_
 from tabulate import tabulate
 
 from pepys_import.core.store import constants
-from pepys_import.resolvers.command_line_input import (
-    create_menu,
-    format_command,
-    get_fuzzy_completer,
-    is_valid,
-)
+from pepys_import.resolvers.command_line_input import create_menu, get_fuzzy_completer, is_valid
 from pepys_import.resolvers.data_resolver import DataResolver
+from pepys_import.utils.text_formatting_utils import format_command
 
 
 def is_number(text):
@@ -273,7 +269,7 @@ class CommandLineResolver(DataResolver):
             current_values += tabulate(
                 [[str(getattr(row, column)) for column in headers] for row in all_values],
                 headers=headers,
-                tablefmt="github",
+                tablefmt="grid",
                 floatfmt=".3f",
             )
             current_values += "\n"
