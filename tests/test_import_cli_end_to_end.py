@@ -18,9 +18,10 @@ FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 
 
+@patch("pepys_import.file.file_processor.prompt")
 @patch("pepys_import.resolvers.command_line_input.prompt")
 @patch("pepys_import.resolvers.command_line_resolver.prompt")
-def test_rep_test_1_import(prompt, menu_prompt):
+def test_rep_test_1_import(prompt, menu_prompt, processor_prompt):
     """Tests a full run of an import of rep_test1.rep using the importer CLI
 
     **Note:** This will fail if the CLI interface changes at all!"""
@@ -66,6 +67,9 @@ def test_rep_test_1_import(prompt, menu_prompt):
         "TA",
         "SEARCH_PLATFORM / 123 / United Kingdom ",
     ]
+    processor_prompt.side_effect = [
+        "2",  # Import metadata and measurement
+    ]
 
     store = DataStore(
         "", "", "", 0, ":memory:", db_type="sqlite", missing_data_resolver=CommandLineResolver()
@@ -83,9 +87,10 @@ def test_rep_test_1_import(prompt, menu_prompt):
     )
 
 
+@patch("pepys_import.file.file_processor.prompt")
 @patch("pepys_import.resolvers.command_line_input.prompt")
 @patch("pepys_import.resolvers.command_line_resolver.prompt")
-def test_gpx_1_0_import(prompt, menu_prompt):
+def test_gpx_1_0_import(prompt, menu_prompt, processor_prompt):
     """Tests a full run of an import of gpx_1_0.gpx using the importer CLI.
 
     **Note:** This will fail if the CLI interface changes at all!"""
@@ -108,6 +113,9 @@ def test_gpx_1_0_import(prompt, menu_prompt):
         "NEL",
         "NELS",
         "GPS",
+    ]
+    processor_prompt.side_effect = [
+        "2",  # Import metadata and measurement
     ]
 
     store = DataStore(
@@ -178,6 +186,16 @@ def clr_prompt_patch(*args, **kwargs):
         return response
 
 
+def processor_prompt_patch(*args, **kwargs):
+    prompt = args[0]
+    print(f"Prompt: {prompt}")
+
+    response = str(random.randint(1, 3))
+    print(f"Response: {response}")
+
+    return response
+
+
 @pytest.mark.postgres
 class TestEndToEndAutomaton:
     """
@@ -245,6 +263,7 @@ class TestEndToEndAutomaton:
             return
 
     @pytest.mark.automaton
+    @patch("pepys_import.file.file_processor.prompt", new=processor_prompt_patch)
     @patch("pepys_import.resolvers.command_line_resolver.create_menu", new=create_menu_patch)
     @patch("pepys_import.resolvers.command_line_resolver.prompt", new=clr_prompt_patch)
     @pytest.mark.parametrize("execution_number", range(10))  # Used to just repeat the test 5 times
@@ -268,6 +287,7 @@ class TestEndToEndAutomaton:
         print("---- End of end-to-end autmaton test")
 
     @pytest.mark.automaton
+    @patch("pepys_import.file.file_processor.prompt", new=processor_prompt_patch)
     @patch("pepys_import.resolvers.command_line_resolver.create_menu", new=create_menu_patch)
     @patch("pepys_import.resolvers.command_line_resolver.prompt", new=clr_prompt_patch)
     @pytest.mark.parametrize("execution_number", range(10))  # Used to just repeat the test 5 times

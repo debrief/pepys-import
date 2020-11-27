@@ -910,6 +910,7 @@ class DataStore:
         report_measurement: bool = False,
         report_metadata: bool = False,
         report_reference: bool = False,
+        exclude=None,
     ):
         """
         Provides a summary of the contents of the :class:`DataStore`.
@@ -920,31 +921,38 @@ class DataStore:
         :type report_metadata: Boolean
         :param report_reference: Boolean flag includes Metadata Tables
         :type report_reference: Boolean
+        :param exclude: List of table names to exclude from the report
+        :type exclude: List
         :return: The summary of the contents of the :class:`DataStore`
         :rtype: TableSummarySet
         """
 
+        if exclude is None:
+            exclude = []
         table_summaries = []
         if report_measurement:
             # Create measurement table list
             measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
             for table_object in list(measurement_table_objects):
-                summary = TableSummary(self.session, table_object)
-                table_summaries.append(summary)
+                if table_object.__tablename__ not in exclude:
+                    summary = TableSummary(self.session, table_object)
+                    table_summaries.append(summary)
 
         if report_metadata:
             # Create metadata table list
             metadata_table_objects = self.meta_classes[TableTypes.METADATA]
             for table_object in list(metadata_table_objects):
-                summary = TableSummary(self.session, table_object)
-                table_summaries.append(summary)
+                if table_object.__tablename__ not in exclude:
+                    summary = TableSummary(self.session, table_object)
+                    table_summaries.append(summary)
 
         if report_reference:
             # Create reference table list
             reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
             for table_object in list(reference_table_objects):
-                summary = TableSummary(self.session, table_object)
-                table_summaries.append(summary)
+                if table_object.__tablename__ not in exclude:
+                    summary = TableSummary(self.session, table_object)
+                    table_summaries.append(summary)
 
         table_summaries_set = TableSummarySet(table_summaries)
 
@@ -1628,3 +1636,11 @@ class DataStore:
         if reference:
             return False
         return True
+
+    def get_logs_by_change_id(self, change_id):
+        """Returns Logs objects filtered by change_id"""
+        return (
+            self.session.query(self.db_classes.Log)
+            .filter(self.db_classes.Log.change_id == change_id)
+            .all()
+        )

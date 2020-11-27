@@ -10,10 +10,12 @@ import pytest
 from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
+from pepys_import.file.file_processor import FileProcessor
 from pepys_import.file.importer import Importer
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
+REP_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "track_files", "rep_data", "rep_test1.rep")
 
 
 class DataStoreCacheTestCase(TestCase):
@@ -563,14 +565,19 @@ class DataStoreStatusTestCase(TestCase):
 
     def test_get_status_of_measurement(self):
         """Test whether summary contents correct for measurement tables"""
+        # Add example measurements
+        processor = FileProcessor(archive=False)
+        processor.load_importers_dynamically()
+        processor.process(REP_DATA_PATH, self.store, False)
 
-        table_summary_object = self.store.get_status(report_measurement=True)
+        with self.store.session_scope():
+            table_summary_object = self.store.get_status(report_measurement=True)
         report = table_summary_object.report()
 
-        self.assertNotEqual(report, "")
-        self.assertIn("States", report)
-        self.assertIn("Contacts", report)
-        self.assertIn("Activations", report)
+        assert report != ""
+        assert "| States       |                8 |" in report
+        assert "| Contacts     |                7 |" in report
+        assert "| Comments     |                7 |" in report
 
     def test_get_status_of_metadata(self):
         """Test whether summary contents correct for metadata tables"""

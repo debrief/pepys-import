@@ -72,7 +72,11 @@ class Sensor(BaseSpatiaLite, SensorMixin):
     sensor_type_id = Column(
         UUIDType, ForeignKey("SensorTypes.sensor_type_id", onupdate="cascade"), nullable=False
     )
-    host = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"), nullable=False)
+    host = Column(
+        UUIDType,
+        ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="CASCADE"),
+        nullable=False,
+    )
     privacy_id = Column(
         UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"), nullable=False
     )
@@ -210,6 +214,9 @@ class Change(BaseSpatiaLite):
     modified = Column(DATE, nullable=False)
     reason = Column(
         String(500), CheckConstraint("reason <> ''", name="ck_Changes_reason"), nullable=False
+    )
+    datafile_id = Column(
+        UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="SET NULL")
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -517,7 +524,9 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     _course = deferred(Column("course", REAL))
     _speed = deferred(Column("speed", REAL))
     source_id = Column(
-        UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
+        nullable=False,
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
     remarks = Column(Text)
@@ -572,7 +581,9 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     track_number = Column(String(20))
     subject_id = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"))
     source_id = Column(
-        UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
+        nullable=False,
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
     remarks = Column(Text)
@@ -613,7 +624,9 @@ class Activation(BaseSpatiaLite, ActivationMixin):
     _left_arc = deferred(Column("left_arc", REAL))
     _right_arc = deferred(Column("right_arc", REAL))
     source_id = Column(
-        UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
+        nullable=False,
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
     remarks = Column(Text)
@@ -639,7 +652,9 @@ class LogsHolding(BaseSpatiaLite, LogsHoldingMixin):
     )
     comment = Column(Text(), nullable=False)
     source_id = Column(
-        UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
+        nullable=False,
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -664,7 +679,9 @@ class Comment(BaseSpatiaLite, CommentMixin):
         Text, CheckConstraint("content <> ''", name="ck_Comments_content"), nullable=False
     )
     source_id = Column(
-        UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
+        nullable=False,
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -694,7 +711,9 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
     subject_platform_id = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"))
     sensor_platform_id = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"))
     source_id = Column(
-        UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
+        nullable=False,
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
     remarks = Column(Text)
@@ -722,7 +741,9 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
         Column(String(150), CheckConstraint("url <> ''", name="ck_Media_url"), nullable=False)
     )
     source_id = Column(
-        UUIDType, ForeignKey("Datafiles.datafile_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
+        nullable=False,
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
     remarks = Column(Text)
