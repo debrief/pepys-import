@@ -40,24 +40,10 @@ class CommandLineResolver(DataResolver):
         :type change_id: UUID
         :return:
         """
-        print("Ok, adding new datafile.")
+        if datafile_name is None:
+            raise ValueError("You must specify a datafile name when calling resolve_datafile")
 
-        datafile_name = prompt(
-            format_command("Please enter a name: "), default=datafile_name
-        ).strip()
-
-        if datafile_name == "":
-            print("You must provide a datafile name. Restarting data file entry.")
-            return self.resolve_datafile(
-                data_store, datafile_name, datafile_type, privacy, change_id
-            )
-        if len(datafile_name) > 150:
-            print(
-                "Datafile name too long, maximum length 150 characters. Restarting data file entry."
-            )
-            return self.resolve_datafile(
-                data_store, datafile_name, datafile_type, privacy, change_id
-            )
+        print(f"Ok, adding new datafile {datafile_name}.")
 
         # Choose Datafile Type
         if datafile_type:
