@@ -705,7 +705,7 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             data_store = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
-            run_admin_shell(data_store, ".")
+            run_admin_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: SQL error when communicating with database" in output
@@ -738,9 +738,9 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
         conn.close()
 
         temp_output = StringIO()
-        with redirect_stdout(temp_output), pytest.raises(SystemExit):
+        with redirect_stdout(temp_output):
             data_store = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
-            run_admin_shell(data_store, ".")
+            run_admin_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: Table summaries couldn't be printed." in output
@@ -803,7 +803,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
                 db_port=55527,
                 db_type="postgres",
             )
-            run_admin_shell(data_store, ".")
+            run_admin_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: SQL error when communicating with database" in output
@@ -820,7 +820,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
         conn.close()
 
         temp_output = StringIO()
-        with redirect_stdout(temp_output), pytest.raises(SystemExit):
+        with redirect_stdout(temp_output):
             data_store = DataStore(
                 db_name="test",
                 db_host="localhost",
@@ -829,7 +829,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
                 db_port=55527,
                 db_type="postgres",
             )
-            run_admin_shell(data_store, ".")
+            run_admin_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: Table summaries couldn't be printed." in output
@@ -1575,6 +1575,79 @@ class SnapshotShellTestCase(unittest.TestCase):
         path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
+
+
+@patch("cmd.input")
+@patch("pepys_admin.cli.prompt")
+@patch("pepys_import.cli.prompt")
+def test_training_mode_message(patched_prompt1, patched_prompt2, patched_input):
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
+    patched_prompt1.side_effect = ["n"]
+    patched_prompt2.side_effect = ["n"]
+
+    # When asked for input, choose to exit
+    patched_input.side_effect = ["."]
+
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        try:
+            run_admin_shell(db=None, training=True, path=".")
+        except SystemExit:
+            pass
+    output = temp_output.getvalue()
+    print(output)
+
+    assert "Running in Training Mode" in output
+
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    if orig_pepys_config_file is None:
+        del os.environ["PEPYS_CONFIG_FILE"]
+    else:
+        os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+
+
+@patch("pepys_admin.cli.DataStore")
+@patch("cmd.input")
+@patch("pepys_admin.cli.prompt")
+@patch("pepys_import.cli.prompt")
+def test_training_mode_setup(patched_prompt1, patched_prompt2, patched_input, patched_data_store):
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
+    patched_prompt1.side_effect = ["n"]
+    patched_prompt2.side_effect = ["n"]
+
+    patched_input.side_effect = ["."]
+
+    db_name = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
+
+    try:
+        run_admin_shell(db=None, training=True, path=".")
+    except SystemExit:
+        pass
+
+    # Check it is called with the right db path, and with training_mode=True
+    patched_data_store.assert_called_with(
+        db_username="",
+        db_password="",
+        db_host="",
+        db_port=0,
+        db_name=db_name,
+        db_type="sqlite",
+        welcome_text="Pepys_admin",
+    )
+
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    if orig_pepys_config_file is None:
+        del os.environ["PEPYS_CONFIG_FILE"]
+    else:
+        os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
 
 
 if __name__ == "__main__":
