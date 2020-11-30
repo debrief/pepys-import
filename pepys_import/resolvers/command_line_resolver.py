@@ -285,6 +285,7 @@ class CommandLineResolver(DataResolver):
             title,
             options,
             validate_method=is_valid_dynamic,
+            cancel=f"import (Please cancel import & contact an expert Pepys user if you require a new {text_name} to be added to Pepys)",
         )
         if choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
