@@ -712,7 +712,6 @@ class TestImportWithDuplicatePlatformNames(unittest.TestCase):
         # both with the same name platform, but referring to two separate platforms that belong
         # to UK and France
         resolver_prompt.side_effect = [
-            "rep_duplicate_name_test.rep",
             "DOLPHIN",
             "123",
             "DLP",
@@ -814,7 +813,6 @@ class TestImportMetadataOnly(unittest.TestCase):
     def test_import_metadata_only(self, resolver_prompt, menu_prompt, file_processor_prompt):
         resolver_prompt.side_effect = [
             # For rep_test1.rep import
-            "rep_test1.rep",
             "SENSOR",
             "123",
             "SEN",
@@ -826,7 +824,6 @@ class TestImportMetadataOnly(unittest.TestCase):
             "SEAR",
             "TA",
             # For uk_track.rep import,
-            "uk_track.rep",
             "SPLENDID",
             "123",
             "SPL",
