@@ -1,3 +1,5 @@
+import textwrap
+
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import FormattedText
 
@@ -52,3 +54,12 @@ def custom_print_formatted_text(text):
         # If that's the case, the program will use the normal print() function to print the outputs
         except NoConsoleScreenBufferError:
             print(formatted_text_to_str(text))
+
+
+def print_new_section_title(text):
+    # Split text to lines with maximum length of 60
+    lines = textwrap.wrap(text, 60)
+    lines = [f"#{line.center(78)}#" for line in lines]
+    lines.insert(0, "#" * 80)
+    lines.append("#" * 80)
+    print(*lines, sep="\n")
