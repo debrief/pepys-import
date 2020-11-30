@@ -1,3 +1,18 @@
+Function Make-Shortcut($ShortcutLocation, $TargetPath, $Icon)
+{
+    if (Test-Path $ShortcutLocation) { Remove-Item $ShortcutLocation; }
+
+    $Shortcut = $WshShell.CreateShortcut($ShortcutLocation)
+    # We need to use full paths here or the shortcut will assume everything is relative to
+    # C:\
+    $Shortcut.TargetPath = [System.IO.Path]::GetFullPath($TargetPath)
+    $Shortcut.IconLocation = $Icon
+    # If we don't set the working directory then we won't be able to import other DLLs or use relative paths
+    # to our Python executable
+    $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
+    $Shortcut.Save()
+}
+
 # There is no built-in way to create shortcuts in Powershell, so we use the old-fashioned
 # Windows Scripting Host COM object
 $WshShell = New-Object -comObject WScript.Shell
@@ -21,19 +36,7 @@ $icon_string = "$icon_path,0"
 # Add Pepys Import shortcut to Send To
 #
 try {
-    $shortcut_loc = $sendto_location + "\Pepys Import.lnk"
-
-    if (Test-Path $shortcut_loc) { Remove-Item $shortcut_loc; }
-
-    $Shortcut = $WshShell.CreateShortcut($shortcut_loc)
-    # We need to use full paths here or the shortcut will assume everything is relative to
-    # C:\
-    $Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_sendto.bat")
-    $Shortcut.IconLocation = $icon_string
-    # If we don't set the working directory then we won't be able to import other DLLs or use relative paths
-    # to our Python executable
-    $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
-    $Shortcut.Save()
+    Make-Shortcut -ShortcutLocation ($sendto_location + "\Pepys Import.lnk") -TargetPath ".\pepys_import_sendto.bat" -Icon $icon_string
 }
 catch {
     Write-Output $_
@@ -47,16 +50,7 @@ catch {
 # Add Pepys Import (no archive) shortcut to Send To
 #
 try {
-    $shortcut_loc = $sendto_location + "\Pepys Import (no archive).lnk"
-
-    if (Test-Path $shortcut_loc) { Remove-Item $shortcut_loc; }
-
-    $Shortcut = $WshShell.CreateShortcut($shortcut_loc)
-    $Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_import_no_archive_sendto.bat")
-    $Shortcut.IconLocation = $icon_string
-    $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
-    $Shortcut.Save()
-
+    Make-Shortcut -ShortcutLocation ($sendto_location + "\Pepys Import (no archive).lnk") -TargetPath ".\pepys_import_no_archive_sendto.bat" -Icon $icon_string
 }
 catch {
     Write-Output $_
@@ -65,7 +59,19 @@ catch {
 }
 
 #
-# Add shortcut to Start Menu
+# Add Pepys Import (training mode) shortcut to Send To
+#
+try {
+    Make-Shortcut -ShortcutLocation ($sendto_location + "\Pepys Import (training mode).lnk") -TargetPath ".\pepys_import_training_sendto.bat" -Icon $icon_string
+}
+catch {
+    Write-Output $_
+    Write-Output "ERROR: Could not create Pepys Import (training mode) Send-To Shortcut"
+    Exit 1
+}
+
+#
+# Add shortcuts to Start Menu
 #
 try {
     # Get the User's Start Menu folder
@@ -79,15 +85,13 @@ try {
     # Create Pepys folder in Start Menu
     New-Item -Path $startmenu_location -Name "Pepys" -ItemType "directory"
 
-    $Shortcut = $WshShell.CreateShortcut($startmenu_location + "Pepys\Pepys Admin.lnk")
-    $Shortcut.TargetPath = [System.IO.Path]::GetFullPath(".\pepys_admin.bat")
-    $Shortcut.IconLocation = $icon_string
-    $Shortcut.WorkingDirectory = [System.IO.Path]::GetFullPath(".")
-    $Shortcut.Save()
+    Make-Shortcut -ShortcutLocation ($startmenu_location + "Pepys\Pepys Admin.lnk") -TargetPath ".\pepys_admin.bat" -Icon $icon_string
+
+    Make-Shortcut -ShortcutLocation ($startmenu_location + "Pepys\Pepys Admin (training mode).lnk") -TargetPath ".\pepys_admin_training.bat" -Icon $icon_string
 }
 catch {
     Write-Output $_
-    Write-Output "ERROR: Could not create Pepys Admin Start Menu shortcut"
+    Write-Output "ERROR: Could not create Pepys Admin Start Menu shortcuts"
     Exit 1
 }
 
