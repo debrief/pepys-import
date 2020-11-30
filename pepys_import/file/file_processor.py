@@ -27,7 +27,7 @@ USER = getuser()
 
 
 class FileProcessor:
-    def __init__(self, filename=None, archive=False):
+    def __init__(self, filename=None, archive=False, skip_validation=False):
         self.importers = []
         # Register local importers if any exists
         if LOCAL_PARSERS:
@@ -53,6 +53,7 @@ class FileProcessor:
                 os.makedirs(ARCHIVE_PATH)
             self.output_path = ARCHIVE_PATH
         self.archive = archive
+        self.skip_validation = skip_validation
 
     def process(self, path: str, data_store: DataStore = None, descend_tree: bool = True):
         """Process the data in the given path
@@ -295,6 +296,7 @@ class FileProcessor:
                     validation_level=importer.validation_level,
                     errors=validation_errors,
                     parser=importer.short_name,
+                    skip_validation=self.skip_validation,
                 )
                 # Add the list of failed validators from that importer to
                 # the overall list of validators with errors for this file
