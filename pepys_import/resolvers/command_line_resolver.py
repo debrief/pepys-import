@@ -149,7 +149,7 @@ class CommandLineResolver(DataResolver):
         choices = final_options + platform_details
 
         def is_valid_dynamic(option):  # pragma: no cover
-            return option in [str(i) for i in range(1, len(choices) + 1)] or option == "."
+            return option in [str(i) for i in range(1, len(choices) + 1)] + [".", "?", "HELP"]
 
         choice = create_menu(
             f"Select a platform entry for {platform_name}:",
@@ -210,7 +210,7 @@ class CommandLineResolver(DataResolver):
             prompt = f"Sensor on platform '{host_platform.name}' not found. Do you wish to: "
 
         def is_valid_dynamic(option):  # pragma: no cover
-            return option in [str(i) for i in range(1, len(options) + 1)] or option == "."
+            return option in [str(i) for i in range(1, len(options) + 1)] + [".", "?", "HELP"]
 
         choice = create_menu(prompt, options, validate_method=is_valid_dynamic)
         if choice == ".":
@@ -287,7 +287,7 @@ class CommandLineResolver(DataResolver):
         options.extend(objects_dict)
 
         def is_valid_dynamic(option):  # pragma: no cover
-            return option in [str(i) for i in range(1, len(options) + 1)] or option == "."
+            return option in [str(i) for i in range(1, len(options) + 1)] + [".", "?", "HELP"]
 
         choice = create_menu(
             title,
@@ -710,7 +710,7 @@ class CommandLineResolver(DataResolver):
         print(f"Classification: {chosen_privacy.name}")
 
         def is_valid_choice(option):  # pragma: no cover
-            return option == str(1) or option == str(2) or option == str(3) or option == "."
+            return option in [str(1), str(2), str(3), ".", "?", "HELP"]
 
         choice = create_menu(
             "Create this platform?: ",
@@ -819,7 +819,7 @@ class CommandLineResolver(DataResolver):
         print(f"Classification: {chosen_privacy.name}")
 
         def is_valid_choice(option):  # pragma: no cover
-            return option == str(1) or option == str(2) or option == str(3) or option == "."
+            return option in [str(1), str(2), str(3), ".", "?", "HELP"]
 
         choice = create_menu(
             "Create this sensor?: ",
