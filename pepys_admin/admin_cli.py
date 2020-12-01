@@ -13,6 +13,7 @@ from pepys_admin.snapshot_cli import SnapshotShell
 from pepys_admin.view_data_cli import ViewDataShell
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.error_handling import handle_status_errors
+from pepys_import.utils.text_formatting_utils import custom_print_formatted_text, format_table
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -86,13 +87,19 @@ class AdminShell(BaseShell):
             measurement_summary = self.data_store.get_status(
                 self.data_store.get_measurement_tables()
             )
-            measurement_summary.report("Measurements")
+            report = measurement_summary.report()
+            formatted_text = format_table("## Measurements", table_string=report)
+            custom_print_formatted_text(formatted_text)
 
             metadata_summary = self.data_store.get_status(self.data_store.get_metadata_tables())
-            metadata_summary.report("Metadata")
+            report = metadata_summary.report()
+            formatted_text = format_table("## Metadata", table_string=report)
+            custom_print_formatted_text(formatted_text)
 
             reference_summary = self.data_store.get_status(self.data_store.get_reference_tables())
-            reference_summary.report("Reference")
+            report = reference_summary.report()
+            formatted_text = format_table("## Reference", table_string=report)
+            custom_print_formatted_text(formatted_text)
 
         print("## Database Version")
         command.current(self.cfg, verbose=True)
