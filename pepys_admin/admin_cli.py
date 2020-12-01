@@ -84,16 +84,13 @@ class AdminShell(BaseShell):
 
         with self.data_store.session_scope(), handle_status_errors():
             measurement_summary = self.data_store.get_status(report_measurement=True)
-            report = measurement_summary.report()
-            print(f"## Measurements\n{report}\n")
+            measurement_summary.report("Measurements")
 
             metadata_summary = self.data_store.get_status(report_metadata=True)
-            report = metadata_summary.report()
-            print(f"## Metadata\n{report}\n")
+            metadata_summary.report("Metadata")
 
             reference_summary = self.data_store.get_status(report_reference=True)
-            report = reference_summary.report()
-            print(f"## Reference\n{report}\n")
+            reference_summary.report("Reference")
 
         print("## Database Version")
         command.current(self.cfg, verbose=True)
