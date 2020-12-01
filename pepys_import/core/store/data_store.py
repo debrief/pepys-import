@@ -907,14 +907,14 @@ class DataStore:
 
     def get_status(
         self,
-        tables: list,
+        table_type,
         exclude=None,
     ):
         """
         Provides a summary of the contents of the :class:`DataStore`.
 
-        :param tables: List of Tables
-        :type tables: List
+        :param table_type: one of Table Types
+        :type table_type: Enum
         :param exclude: List of table names to exclude from the report
         :type exclude: List
         :return: The summary of the contents of the :class:`DataStore`
@@ -924,7 +924,7 @@ class DataStore:
         if exclude is None:
             exclude = []
         table_summaries = []
-        for table_object in tables:
+        for table_object in list(self.meta_classes[table_type]):
             if table_object.__tablename__ not in exclude:
                 summary = TableSummary(self.session, table_object)
                 table_summaries.append(summary)
@@ -1618,12 +1618,3 @@ class DataStore:
             .filter(self.db_classes.Log.change_id == change_id)
             .all()
         )
-
-    def get_measurement_tables(self):
-        return list(self.meta_classes[TableTypes.MEASUREMENT])
-
-    def get_metadata_tables(self):
-        return list(self.meta_classes[TableTypes.METADATA])
-
-    def get_reference_tables(self):
-        return list(self.meta_classes[TableTypes.REFERENCE])

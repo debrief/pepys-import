@@ -11,6 +11,7 @@ from pepys_admin.export_cli import ExportShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.snapshot_cli import SnapshotShell
 from pepys_admin.view_data_cli import ViewDataShell
+from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.error_handling import handle_status_errors
 from pepys_import.utils.text_formatting_utils import custom_print_formatted_text, format_table
@@ -84,19 +85,17 @@ class AdminShell(BaseShell):
             return
 
         with self.data_store.session_scope(), handle_status_errors():
-            measurement_summary = self.data_store.get_status(
-                self.data_store.get_measurement_tables()
-            )
+            measurement_summary = self.data_store.get_status(TableTypes.MEASUREMENT)
             report = measurement_summary.report()
             formatted_text = format_table("## Measurements", table_string=report)
             custom_print_formatted_text(formatted_text)
 
-            metadata_summary = self.data_store.get_status(self.data_store.get_metadata_tables())
+            metadata_summary = self.data_store.get_status(TableTypes.METADATA)
             report = metadata_summary.report()
             formatted_text = format_table("## Metadata", table_string=report)
             custom_print_formatted_text(formatted_text)
 
-            reference_summary = self.data_store.get_status(self.data_store.get_reference_tables())
+            reference_summary = self.data_store.get_status(TableTypes.REFERENCE)
             report = reference_summary.report()
             formatted_text = format_table("## Reference", table_string=report)
             custom_print_formatted_text(formatted_text)
