@@ -17,6 +17,10 @@ from pepys_import.utils.sqlite_utils import load_spatialite
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data")
+REP_WITH_ERRORS_PATH = os.path.join(
+    FILE_PATH, "sample_data/track_files/rep_data/uk_track_failing_enh_validation.rep"
+)
+CURRENT_DIR = os.getcwd()
 
 
 class TestImportWithMissingDBFieldSQLite(unittest.TestCase):
@@ -339,3 +343,51 @@ def test_training_mode_reset_at_start(patched_input):
         del os.environ["PEPYS_CONFIG_FILE"]
     else:
         os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+
+
+@patch("pepys_import.core.store.common_db.prompt", return_value="2")
+def test_skip_validation(patched_prompt):
+    ds = DataStore("", "", "", 0, "cli_import_skip_validation.db", db_type="sqlite")
+    ds.initialise()
+
+    # Don't skip validation, and select "Carry on running the validator, logging errors"
+    process(
+        path=REP_WITH_ERRORS_PATH,
+        archive=False,
+        db="cli_import_skip_validation.db",
+        resolver="default",
+        skip_validation=False,
+    )
+    patched_prompt.assert_called_once()
+    with ds.session_scope():
+        assert len(ds.session.query(ds.db_classes.Datafile).all()) == 0
+        assert len(ds.session.query(ds.db_classes.State).all()) == 0
+
+    # Skip validation this time
+    patched_prompt.reset_mock()
+    process(
+        path=REP_WITH_ERRORS_PATH,
+        archive=False,
+        db="cli_import_skip_validation.db",
+        resolver="default",
+        skip_validation=True,
+    )
+    patched_prompt.assert_not_called()
+    with ds.session_scope():
+        datafile = ds.session.query(ds.db_classes.Datafile).all()
+        assert len(datafile) == 1
+        assert datafile[0].reference == "uk_track_failing_enh_validation.rep"
+
+        sensor = ds.session.query(ds.db_classes.Sensor).all()
+        assert len(sensor) == 1
+        assert sensor[0].name == "SENSOR-1"
+
+        platform = ds.session.query(ds.db_classes.Platform).all()
+        assert len(platform) == 1
+        assert platform[0].name == "SPLENDID"
+
+        states = ds.session.query(ds.db_classes.State).all()
+        assert len(states) == 7
+
+    # Remove created db
+    os.remove(os.path.join(CURRENT_DIR, "cli_import_skip_validation.db"))
