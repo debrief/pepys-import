@@ -24,6 +24,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.sqlite_utils import load_spatialite
+from pepys_import.utils.text_formatting_utils import formatted_text_to_str
 from tests.utils import move_and_overwrite
 
 FILE_PATH = os.path.dirname(__file__)
@@ -82,7 +83,14 @@ class AdminCLITestCase(unittest.TestCase):
         # Assert that Admin Shell redirects to the initialise menu
         assert shell.intro in output
 
-    def test_do_status(self):
+    @patch("pepys_admin.admin_cli.custom_print_formatted_text")
+    def test_do_status(self, patched_print):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        patched_print.side_effect = side_effect
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.admin_shell.do_status()
