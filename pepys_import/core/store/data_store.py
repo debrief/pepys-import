@@ -907,20 +907,14 @@ class DataStore:
 
     def get_status(
         self,
-        report_measurement: bool = False,
-        report_metadata: bool = False,
-        report_reference: bool = False,
+        table_type,
         exclude=None,
     ):
         """
         Provides a summary of the contents of the :class:`DataStore`.
 
-        :param report_measurement: Boolean flag includes Metadata Tables
-        :type report_measurement: Boolean
-        :param report_metadata: Boolean flag includes Metadata Tables
-        :type report_metadata: Boolean
-        :param report_reference: Boolean flag includes Metadata Tables
-        :type report_reference: Boolean
+        :param table_type: one of Table Types
+        :type table_type: Enum
         :param exclude: List of table names to exclude from the report
         :type exclude: List
         :return: The summary of the contents of the :class:`DataStore`
@@ -930,30 +924,10 @@ class DataStore:
         if exclude is None:
             exclude = []
         table_summaries = []
-        if report_measurement:
-            # Create measurement table list
-            measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
-            for table_object in list(measurement_table_objects):
-                if table_object.__tablename__ not in exclude:
-                    summary = TableSummary(self.session, table_object)
-                    table_summaries.append(summary)
-
-        if report_metadata:
-            # Create metadata table list
-            metadata_table_objects = self.meta_classes[TableTypes.METADATA]
-            for table_object in list(metadata_table_objects):
-                if table_object.__tablename__ not in exclude:
-                    summary = TableSummary(self.session, table_object)
-                    table_summaries.append(summary)
-
-        if report_reference:
-            # Create reference table list
-            reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
-            for table_object in list(reference_table_objects):
-                if table_object.__tablename__ not in exclude:
-                    summary = TableSummary(self.session, table_object)
-                    table_summaries.append(summary)
-
+        for table_object in list(self.meta_classes[table_type]):
+            if table_object.__tablename__ not in exclude:
+                summary = TableSummary(self.session, table_object)
+                table_summaries.append(summary)
         table_summaries_set = TableSummarySet(table_summaries)
 
         return table_summaries_set
