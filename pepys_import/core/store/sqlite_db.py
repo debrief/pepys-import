@@ -755,5 +755,6 @@ class HelpText(BaseSpatiaLite):
     table_type = TableTypes.REFERENCE
     table_type_id = 35
 
-    id = Column(UUIDType, primary_key=True, default=uuid4)
+    help_text_id = Column(UUIDType, primary_key=True, default=uuid4)
+    id = Column(Integer, nullable=False)
     guidance = Column(String(2000), nullable=False)

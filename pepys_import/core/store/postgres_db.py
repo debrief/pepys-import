@@ -874,5 +874,6 @@ class HelpText(BasePostGIS):
     table_type_id = 35
     __table_args__ = {"schema": "pepys"}
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    help_text_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id = Column(Integer, nullable=False)
     guidance = Column(String(2000), nullable=False)

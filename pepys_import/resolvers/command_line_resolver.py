@@ -9,7 +9,11 @@ from tabulate import tabulate
 from pepys_import.core.store import constants
 from pepys_import.resolvers.command_line_input import create_menu, get_fuzzy_completer, is_valid
 from pepys_import.resolvers.data_resolver import DataResolver
-from pepys_import.utils.text_formatting_utils import format_command
+from pepys_import.utils.text_formatting_utils import (
+    format_command,
+    print_help_text,
+    print_new_section_title,
+)
 
 
 def is_number(text):
@@ -43,6 +47,7 @@ class CommandLineResolver(DataResolver):
         if datafile_name is None:
             raise ValueError("You must specify a datafile name when calling resolve_datafile")
 
+        print_new_section_title("Resolve Datafile")
         print(f"Ok, adding new datafile {datafile_name}.")
 
         # Choose Datafile Type
@@ -55,6 +60,7 @@ class CommandLineResolver(DataResolver):
                 data_type="Datafile",
                 db_class=data_store.db_classes.DatafileType,
                 field_name="datafile_type",
+                help_id=1,
             )
 
         if chosen_datafile_type is None:
@@ -216,7 +222,7 @@ class CommandLineResolver(DataResolver):
                 return selected_object
 
     def resolve_reference(
-        self, data_store, change_id, data_type, db_class, field_name, text_name=None
+        self, data_store, change_id, data_type, db_class, field_name, text_name=None, help_id=1
     ):
         """
         This method resolves any reference data according to the given parameters.
@@ -283,6 +289,11 @@ class CommandLineResolver(DataResolver):
         if choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
+        elif choice in ["?", "HELP"]:
+            print_help_text(data_store, help_id)
+            return self.resolve_reference(
+                data_store, change_id, data_type, db_class, field_name, text_name, help_id
+            )
         elif choice == str(1):
             result = self.fuzzy_search_reference(
                 data_store, change_id, data_type, db_class, field_name, text_name
@@ -328,7 +339,7 @@ class CommandLineResolver(DataResolver):
                 return selected_object
 
     def fuzzy_search_reference(
-        self, data_store, change_id, data_type, db_class, field_name, text_name=None
+        self, data_store, change_id, data_type, db_class, field_name, text_name=None, help_id=1
     ):
         """
         This method parses any reference data according to the given parameters, and uses fuzzy
@@ -361,6 +372,11 @@ class CommandLineResolver(DataResolver):
         if choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
+        elif choice in ["?", "HELP"]:
+            print_help_text(data_store, help_id)
+            return self.fuzzy_search_reference(
+                data_store, change_id, data_type, db_class, field_name, text_name, help_id
+            )
         elif choice not in completer:
             new_choice = create_menu(
                 f"You didn't select an existing {text_name}. " f"Do you want to add '{choice}' ?",

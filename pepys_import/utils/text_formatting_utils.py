@@ -33,6 +33,11 @@ def format_command(text):
     return FormattedText([("bold", text)])
 
 
+def format_help_text(text):
+    """Create a FormattedText object which makes the given text italic."""
+    return FormattedText([("italic", text)])
+
+
 def formatted_text_to_str(formatted_text: FormattedText) -> str:
     """Converts FormattedText object to string"""
     str_text = ""
@@ -62,4 +67,12 @@ def print_new_section_title(text, line_width=60):
     lines = [f"#{line.center(line_width-2)}#" for line in lines]
     lines.insert(0, "#" * line_width)
     lines.append("#" * line_width)
+    lines.append("Type HELP or ? at any time to display contextual help.")
     print(*lines, sep="\n")
+
+
+def print_help_text(data_store, help_id):
+    HelpText = data_store.db_classes.HelpText
+    help_text = data_store.session.query(HelpText).filter(HelpText.id == help_id).first()
+    if help_text:
+        custom_print_formatted_text(format_help_text(help_text.guidance))
