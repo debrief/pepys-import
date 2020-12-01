@@ -571,7 +571,7 @@ class DataStoreStatusTestCase(TestCase):
         processor.process(REP_DATA_PATH, self.store, False)
 
         with self.store.session_scope():
-            table_summary_object = self.store.get_status(report_measurement=True)
+            table_summary_object = self.store.get_status(self.store.get_measurement_tables())
         report = table_summary_object.report()
 
         assert report != ""
@@ -582,7 +582,7 @@ class DataStoreStatusTestCase(TestCase):
     def test_get_status_of_metadata(self):
         """Test whether summary contents correct for metadata tables"""
 
-        table_summary_object = self.store.get_status(report_metadata=True)
+        table_summary_object = self.store.get_status(self.store.get_metadata_tables())
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")
@@ -593,7 +593,7 @@ class DataStoreStatusTestCase(TestCase):
     def test_get_status_of_reference(self):
         """Test whether summary contents correct for reference tables"""
 
-        table_summary_object = self.store.get_status(report_reference=True)
+        table_summary_object = self.store.get_status(self.store.get_reference_tables())
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")

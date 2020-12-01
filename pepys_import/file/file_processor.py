@@ -242,9 +242,11 @@ class FileProcessor:
                 constants.LOG,
             ]
 
-            metadata_summaries_before = data_store.get_status(report_metadata=True, exclude=exclude)
+            metadata_summaries_before = data_store.get_status(
+                data_store.get_metadata_tables(), exclude=exclude
+            )
             measurement_summaries_before = data_store.get_status(
-                report_measurement=True, exclude=exclude
+                data_store.get_measurement_tables(), exclude=exclude
             )
             # We assume that good importers will have the same datafile-type values at the moment.
             # That's why we can create a datafile using the first importer's datafile_type.
@@ -313,10 +315,10 @@ class FileProcessor:
 
                 log = datafile.commit(data_store, change.change_id)
                 metadata_summaries_after = data_store.get_status(
-                    report_metadata=True, exclude=exclude
+                    data_store.get_metadata_tables(), exclude=exclude
                 )
                 measurement_summaries_after = data_store.get_status(
-                    report_measurement=True, exclude=exclude
+                    data_store.get_measurement_tables(), exclude=exclude
                 )
                 metadata_summaries_after.show_delta_of_rows_added_metadata(
                     metadata_summaries_before, title="METADATA REPORT"
@@ -366,7 +368,7 @@ class FileProcessor:
 
             else:
                 metadata_summaries_after = data_store.get_status(
-                    report_metadata=True, exclude=exclude
+                    data_store.get_metadata_tables(), exclude=exclude
                 )
                 metadata_summaries_after.show_delta_of_rows_added_metadata(
                     metadata_summaries_before, title="METADATA REPORT"
