@@ -154,7 +154,7 @@ catch {
 
 try {
     # Do a standard pip install of the requirements and dev requirements, not warning us that scripts will be unavailable
-    .\python\python.exe -m pip install -r requirements.txt -r requirements_dev.txt --no-warn-script-location --no-cache-dir
+    .\python\python.exe -m pip install -r requirements.txt -r requirements_dev.txt --no-warn-script-location --no-cache-dir --use-deprecated=legacy-resolver
 
     if ($LastExitCode -ne 0)
     {
