@@ -703,13 +703,12 @@ class DatafileTestCase(unittest.TestCase):
             "Public",
             "1",
         ]
-        resolver_prompt.side_effect = ["TEST"]
         with self.store.session_scope():
             self.store.add_to_privacies("Public", 0, self.change_id)
             self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id)
             datafile_name, datafile_type, privacy = self.resolver.resolve_datafile(
                 data_store=self.store,
-                datafile_name=None,
+                datafile_name="TEST",
                 datafile_type=None,
                 privacy=None,
                 change_id=self.change_id,
@@ -1372,7 +1371,6 @@ class GetMethodsTestCase(unittest.TestCase):
             "Public",
             "1",
         ]
-        resolver_prompt.side_effect = ["DATAFILE-TEST"]
         with self.store.session_scope():
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             # there must be 2 entities at the beginning
@@ -1382,7 +1380,7 @@ class GetMethodsTestCase(unittest.TestCase):
 
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 3)
-            self.assertEqual(datafiles[2].reference, "DATAFILE-TEST")
+            self.assertEqual(datafiles[2].reference, "test")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
