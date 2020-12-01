@@ -748,3 +748,12 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class HelpText(BaseSpatiaLite):
+    __tablename__ = constants.HELP_TEXT
+    table_type = TableTypes.REFERENCE
+    table_type_id = 35
+
+    id = Column(UUIDType, primary_key=True, default=uuid4)
+    guidance = Column(String(2000), nullable=False)
