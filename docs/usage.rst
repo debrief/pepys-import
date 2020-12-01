@@ -22,7 +22,7 @@ Command-line options
 .. code-block:: none
 
   usage: cli.py [-h] [--path PATH] [--archive] [--db DB]
-                  [--resolver RESOLVER]
+                  [--resolver RESOLVER] [--skip-validation]
 
   optional arguments:
     -h, --help           show this help message and exit
@@ -37,6 +37,7 @@ Command-line options
                         'default' (resolves using static default values),
                         'command-line' (resolves using interactive command-line
                         interface, default option)
+    --skip-validation    Skip the validation steps
 
 Pepys-Admin
 -----------
