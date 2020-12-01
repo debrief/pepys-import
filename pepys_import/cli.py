@@ -36,6 +36,7 @@ def main():  # pragma: no cover
         "Uses training mode, where all interactions take place with a training database located "
         "in the user's home folder. No actions will affect the database configured in the Pepys config file."
     )
+    validation_help = "Skip the validation steps"
     parser.add_argument("--path", help=path_help, required=False, default=DIRECTORY_PATH)
     parser.add_argument(
         "--archive",
@@ -53,18 +54,32 @@ def main():  # pragma: no cover
     )
     group.add_argument("--db", help=db_help, required=False, default=None)
 
+    parser.add_argument(
+        "--skip-validation",
+        help=validation_help,
+        required=False,
+        action="store_true",
+        default=False,
+    )
     args = parser.parse_args()
-
     process(
         path=args.path,
         archive=args.archive,
         db=args.db,
         resolver=args.resolver,
+        skip_validation=args.skip_validation,
         training=args.training,
     )
 
 
-def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line", training=False):
+def process(
+    path=DIRECTORY_PATH,
+    archive=False,
+    db=None,
+    resolver="command-line",
+    training=False,
+    skip_validation=None,
+):
     if resolver == "command-line":
         resolver_obj = CommandLineResolver()
     elif resolver == "default":
@@ -116,7 +131,7 @@ def process(path=DIRECTORY_PATH, archive=False, db=None, resolver="command-line"
         if data_store.is_empty():
             data_store.populate_reference()
 
-    processor = FileProcessor(archive=archive)
+    processor = FileProcessor(archive=archive, skip_validation=skip_validation)
     processor.load_importers_dynamically()
 
     try:

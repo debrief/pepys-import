@@ -451,6 +451,7 @@ class DatafileMixin:
         validation_level=validation_constants.NONE_LEVEL,
         errors=None,
         parser="Default",
+        skip_validation=False,
     ):
         # If there is no parsing error, it will return None. If that's the case,
         # create a new list for validation errors.
@@ -460,7 +461,9 @@ class DatafileMixin:
 
         failed_validators = []
 
-        if validation_level == validation_constants.NONE_LEVEL:
+        # If skip_validation is True or validation_level is None,
+        # return True without running any validator
+        if skip_validation or validation_level == validation_constants.NONE_LEVEL:
             return (True, failed_validators)
         elif validation_level == validation_constants.BASIC_LEVEL:
             # Create validator objects here so we're only creating them once
