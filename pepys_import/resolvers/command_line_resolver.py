@@ -545,10 +545,7 @@ class CommandLineResolver(DataResolver):
             if platform_name:
                 while True:
                     new_choice = create_menu(
-                        f"Do you wish to keep {platform_name} as synonym for {choice}?\n"
-                        f"Warning: this should only be done when {platform_name} is a completely unique "
-                        f"identifier for this platform\nnot a name that could be shared across platforms "
-                        f"of different nationalities",
+                        f"Do you wish to keep {platform_name} as synonym for {choice}?\n",
                         ["Yes", "No"],
                         validate_method=is_valid,
                     )
