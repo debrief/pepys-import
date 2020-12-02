@@ -4,7 +4,7 @@ psycopg2==2.8.*
 pint==0.14
 tabulate>=0.8.7
 pyfiglet>=0.8.post1
-lxml==4.6.2*
+lxml==4.6.2
 python-dateutil==2.8.*
 prompt_toolkit==3.*
 iterfzf>=0.5.0.20.0
