@@ -276,7 +276,7 @@ class CommandLineResolver(DataResolver):
         """
         if text_name is None:
             text_name = field_name.replace("_", "-")
-        options = [f"Search an existing {text_name}", f"Add a new {text_name}"]
+        options = [f"Search an existing {text_name}"]
         title = f"Ok, please provide {text_name} for new {data_type}: "
         current_values = ""
         if db_class.__tablename__ == NATIONALITY:
@@ -288,7 +288,7 @@ class CommandLineResolver(DataResolver):
             )
         elif db_class.__tablename__ == PRIVACY:
             all_values = data_store.session.query(db_class).order_by(db_class.level).all()
-            objects = all_values[:7]
+            objects = all_values[:8]
             current_values = "\nCurrent Privacies in the Database\n"
             headers = ["name", "level"]
             current_values += tabulate(
@@ -299,16 +299,8 @@ class CommandLineResolver(DataResolver):
             )
             current_values += "\n"
         else:
-            objects = data_store.session.query(db_class).limit(7).all()
+            objects = data_store.session.query(db_class).limit(8).all()
         objects_dict = {obj.name: obj for obj in objects}
-        # CamelCase table names should be split into words, separated by "-" and converted to
-        # lowercase for matching with DataStore add methods (i.e. PlatformTypes -> platform_types)
-        plural_field = (
-            re.sub("([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r"\1", db_class.__tablename__))
-            .strip()
-            .lower()
-            .replace(" ", "_")
-        )
         options.extend(objects_dict)
 
         def is_valid_dynamic(option):  # pragma: no cover
@@ -318,6 +310,7 @@ class CommandLineResolver(DataResolver):
             title,
             options,
             validate_method=is_valid_dynamic,
+            cancel=f"import (Please contact an expert user if you need a new {text_name} to be added)",
         )
         if choice == ".":
             print("-" * 60, "\nReturning to the previous menu\n")
@@ -358,43 +351,7 @@ class CommandLineResolver(DataResolver):
                 )
             else:
                 return result
-        elif choice == str(2):
-            print(current_values)
-            while True:
-                new_object = prompt(
-                    format_command(f"Please type name of new {text_name}: ")
-                ).strip()
-                # If not too long for the field
-                if len(new_object) <= 150:
-                    break
-                else:
-                    print("Name too long, please enter a name less than 150 characters long")
-            search_method = getattr(data_store, f"search_{field_name}")
-            obj = search_method(new_object)
-            if obj:
-                return obj
-            elif new_object:
-                add_method = getattr(data_store, f"add_to_{plural_field}")
-                if plural_field == "privacies":
-                    level = prompt(
-                        format_command(f"Please type level of new {text_name}: "),
-                        validator=numeric_validator,
-                    )
-                    return add_method(new_object, level, change_id)
-                return add_method(new_object, change_id)
-            else:
-                print("You haven't entered an input!")
-                return self.resolve_reference(
-                    data_store,
-                    change_id,
-                    data_type,
-                    db_class,
-                    field_name,
-                    text_name,
-                    help_id,
-                    search_help_id,
-                )
-        elif 3 <= int(choice) <= len(options):
+        elif 2 <= int(choice) <= len(options):
             selected_object = objects_dict[options[int(choice) - 1]]
             if selected_object:
                 return selected_object

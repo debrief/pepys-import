@@ -725,26 +725,26 @@ class TestImportWithDuplicatePlatformNames(unittest.TestCase):
         ]
 
         menu_prompt.side_effect = [
-            "3",
-            "1",
-            "2",
-            "3",
-            "3",
-            "3",
-            "1",
-            "2",
-            "3",
-            "3",
-            "1",
-            "2",
-            "5",
-            "3",
-            "3",
-            "1",
-            "2",
-            "3",
-            "3",
-            "1",
+            "2",  # Public
+            "1",  # Yes, create
+            "2",  # Add new platform
+            "2",  # UK
+            "2",  # PLATFORM-TYPE-1
+            "2",  # Public
+            "1",  # Yes, create
+            "2",  # Add new sensor
+            "2",  # GPS
+            "2",  # Public
+            "1",  # Yes, create
+            "2",  # Add new platform
+            "4",  # France
+            "2",  # PLATFORM-TYPE-1
+            "2",  # Public
+            "1",  # Yes, create
+            "2",  # Add new sensor
+            "2",  # GPS
+            "2",  # Public
+            "1",  # Yes, create
         ]
         file_processor_prompt.side_effect = [
             "2",  # Import metadata and measurement

@@ -109,7 +109,6 @@ venv.bak/
 # Editor files
 *.code-workspace
 
-
 # binaries for distribution
 /python/*
 /lib
@@ -120,3 +119,6 @@ venv.bak/
 # Any subfolders called 'output'
 # to ignore the output logs, error logs, highlighted files etc
 **/*output*/**
+
+# pepys archive folder, including if it appears at lower levels
+archive/
