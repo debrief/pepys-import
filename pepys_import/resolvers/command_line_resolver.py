@@ -458,11 +458,17 @@ class CommandLineResolver(DataResolver):
                 search_help_id,
             )
         elif choice not in completer:
-            new_choice = create_menu(
-                f"You didn't select an existing {text_name}. " f"Do you want to add '{choice}' ?",
-                choices=["Yes", f"No, I'd like to select an existing {text_name}"],
-                validate_method=is_valid,
-            )
+            while True:
+                new_choice = create_menu(
+                    f"You didn't select an existing {text_name}. "
+                    f"Do you want to add '{choice}' ?",
+                    choices=["Yes", f"No, I'd like to select an existing {text_name}"],
+                    validate_method=is_valid,
+                )
+                if new_choice in ["?", "HELP"]:
+                    print_help_text(data_store, constants.DID_NOT_SELECT_EXISTING)
+                else:
+                    break
             if new_choice == str(1):
                 plural_field = (
                     re.sub(
