@@ -62,8 +62,8 @@ def custom_print_formatted_text(text):
 
 
 def print_new_section_title(text, line_width=60):
-    # Split text to lines with maximum length of 60
-    lines = textwrap.wrap(text, line_width)
+    # Split text to lines with maximum length of 50
+    lines = textwrap.wrap(text, line_width - 10)
     lines = [f"#{line.center(line_width-2)}#" for line in lines]
     lines.insert(0, "#" * line_width)
     lines.append("#" * line_width)
