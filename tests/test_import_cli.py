@@ -17,6 +17,10 @@ from pepys_import.utils.sqlite_utils import load_spatialite
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data")
+REP_WITH_ERRORS_PATH = os.path.join(
+    FILE_PATH, "sample_data/track_files/rep_data/uk_track_failing_enh_validation.rep"
+)
+CURRENT_DIR = os.getcwd()
 
 
 class TestImportWithMissingDBFieldSQLite(unittest.TestCase):
@@ -224,3 +228,166 @@ def test_process_db_none(patched_file_proc, patched_data_store):
         db_type=DB_TYPE,
         missing_data_resolver=ANY,  # We don't care about this argument, and it's hard to test
     )
+
+
+@patch("pepys_import.cli.prompt")
+def test_training_mode_message(patched_input):
+    # Don't reset the database at the start or end - we test that in another test
+    patched_input.side_effect = ["n", "n"]
+
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        process(resolver="default", training=True)
+    output = temp_output.getvalue()
+
+    assert "Running in Training Mode" in output
+
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    if orig_pepys_config_file is None:
+        del os.environ["PEPYS_CONFIG_FILE"]
+    else:
+        os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+
+
+@patch("pepys_import.cli.DataStore")
+@patch("pepys_import.cli.prompt")
+def test_training_mode_setup(patched_input, patched_data_store):
+    # Don't reset the database at the start or end - we test that in another test
+    patched_input.side_effect = ["n", "n"]
+
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
+    db_name = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
+
+    process(resolver="default", training=True)
+
+    # Check it is called with the right db path, and with training_mode=True
+    patched_data_store.assert_called_with(
+        db_username="",
+        db_password="",
+        db_host="",
+        db_port=0,
+        db_name=db_name,
+        db_type="sqlite",
+        missing_data_resolver=ANY,  # We don't care about this argument, and it's hard to test
+    )
+
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    if orig_pepys_config_file is None:
+        del os.environ["PEPYS_CONFIG_FILE"]
+    else:
+        os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+
+
+@patch("pepys_import.cli.prompt")
+def test_training_mode_reset_at_end(patched_input):
+    # Choose to reset at the end of the import
+    patched_input.side_effect = ["n", "y"]
+
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        process(resolver="default", training=True)
+    output = temp_output.getvalue()
+
+    assert "Running in Training Mode" in output
+
+    # As we've done a reset, the database file should have been deleted
+    assert not os.path.exists(os.path.expanduser(os.path.join("~", "pepys_training_database.db")))
+
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    if orig_pepys_config_file is None:
+        del os.environ["PEPYS_CONFIG_FILE"]
+    else:
+        os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+
+
+@patch("pepys_import.cli.prompt")
+def test_training_mode_reset_at_start(patched_input):
+    # Choose to reset at the start of the import
+    patched_input.side_effect = ["y", "n"]
+
+    db_path = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
+
+    # Create an invalid database file, this should be deleted before it is tried to be read
+    # so we won't get an error (if the reset hadn't worked then we'd get a 'File is not a database' error)
+    with open(db_path, "w") as f:
+        f.write("Invalid DB file contents")
+
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        process(resolver="default", training=True)
+    output = temp_output.getvalue()
+
+    assert "Running in Training Mode" in output
+
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    if orig_pepys_config_file is None:
+        del os.environ["PEPYS_CONFIG_FILE"]
+    else:
+        os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+
+
+@patch("pepys_import.core.store.common_db.prompt", return_value="2")
+def test_skip_validation(patched_prompt):
+    ds = DataStore("", "", "", 0, "cli_import_skip_validation.db", db_type="sqlite")
+    ds.initialise()
+
+    # Don't skip validation, and select "Carry on running the validator, logging errors"
+    process(
+        path=REP_WITH_ERRORS_PATH,
+        archive=False,
+        db="cli_import_skip_validation.db",
+        resolver="default",
+        skip_validation=False,
+    )
+    patched_prompt.assert_called_once()
+    with ds.session_scope():
+        assert len(ds.session.query(ds.db_classes.Datafile).all()) == 0
+        assert len(ds.session.query(ds.db_classes.State).all()) == 0
+
+    # Skip validation this time
+    patched_prompt.reset_mock()
+    process(
+        path=REP_WITH_ERRORS_PATH,
+        archive=False,
+        db="cli_import_skip_validation.db",
+        resolver="default",
+        skip_validation=True,
+    )
+    patched_prompt.assert_not_called()
+    with ds.session_scope():
+        datafile = ds.session.query(ds.db_classes.Datafile).all()
+        assert len(datafile) == 1
+        assert datafile[0].reference == "uk_track_failing_enh_validation.rep"
+
+        sensor = ds.session.query(ds.db_classes.Sensor).all()
+        assert len(sensor) == 1
+        assert sensor[0].name == "SENSOR-1"
+
+        platform = ds.session.query(ds.db_classes.Platform).all()
+        assert len(platform) == 1
+        assert platform[0].name == "SPLENDID"
+
+        states = ds.session.query(ds.db_classes.State).all()
+        assert len(states) == 7
+
+    # Remove created db
+    os.remove(os.path.join(CURRENT_DIR, "cli_import_skip_validation.db"))

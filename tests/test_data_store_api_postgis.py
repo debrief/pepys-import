@@ -11,6 +11,7 @@ from testing.postgresql import Postgresql
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.file.importer import Importer
@@ -666,7 +667,7 @@ class DataStoreStatusTestCase(TestCase):
         processor.process(REP_DATA_PATH, self.store, False)
 
         with self.store.session_scope():
-            table_summary_object = self.store.get_status(report_measurement=True)
+            table_summary_object = self.store.get_status(TableTypes.MEASUREMENT)
         report = table_summary_object.report()
 
         assert report != ""
@@ -678,7 +679,7 @@ class DataStoreStatusTestCase(TestCase):
         """Test whether summary contents correct for metadata tables"""
 
         with self.store.session_scope():
-            table_summary_object = self.store.get_status(report_metadata=True)
+            table_summary_object = self.store.get_status(TableTypes.METADATA)
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")
@@ -690,7 +691,7 @@ class DataStoreStatusTestCase(TestCase):
         """Test whether summary contents correct for reference tables"""
 
         with self.store.session_scope():
-            table_summary_object = self.store.get_status(report_reference=True)
+            table_summary_object = self.store.get_status(TableTypes.REFERENCE)
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")

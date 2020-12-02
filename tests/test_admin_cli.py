@@ -6,7 +6,7 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
 from sqlite3 import OperationalError
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 import pg8000
 import pytest
@@ -14,7 +14,7 @@ from testing.postgresql import Postgresql
 
 from paths import MIGRATIONS_DIRECTORY
 from pepys_admin.admin_cli import AdminShell
-from pepys_admin.cli import run_admin_shell
+from pepys_admin.cli import run_shell
 from pepys_admin.export_cli import ExportByPlatformNameShell, ExportShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.snapshot_cli import SnapshotShell
@@ -24,6 +24,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.sqlite_utils import load_spatialite
+from pepys_import.utils.text_formatting_utils import formatted_text_to_str
 from tests.utils import move_and_overwrite
 
 FILE_PATH = os.path.dirname(__file__)
@@ -82,7 +83,14 @@ class AdminCLITestCase(unittest.TestCase):
         # Assert that Admin Shell redirects to the initialise menu
         assert shell.intro in output
 
-    def test_do_status(self):
+    @patch("pepys_admin.admin_cli.custom_print_formatted_text")
+    def test_do_status(self, patched_print):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        patched_print.side_effect = side_effect
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.admin_shell.do_status()
@@ -705,7 +713,7 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             data_store = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
-            run_admin_shell(data_store, ".")
+            run_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: SQL error when communicating with database" in output
@@ -738,9 +746,9 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
         conn.close()
 
         temp_output = StringIO()
-        with redirect_stdout(temp_output), pytest.raises(SystemExit):
+        with redirect_stdout(temp_output):
             data_store = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
-            run_admin_shell(data_store, ".")
+            run_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: Table summaries couldn't be printed." in output
@@ -803,7 +811,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
                 db_port=55527,
                 db_type="postgres",
             )
-            run_admin_shell(data_store, ".")
+            run_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: SQL error when communicating with database" in output
@@ -820,7 +828,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
         conn.close()
 
         temp_output = StringIO()
-        with redirect_stdout(temp_output), pytest.raises(SystemExit):
+        with redirect_stdout(temp_output):
             data_store = DataStore(
                 db_name="test",
                 db_host="localhost",
@@ -829,7 +837,7 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
                 db_port=55527,
                 db_type="postgres",
             )
-            run_admin_shell(data_store, ".")
+            run_shell(data_store=data_store, path=".")
         output = temp_output.getvalue()
 
         assert "ERROR: Table summaries couldn't be printed." in output
@@ -1575,6 +1583,120 @@ class SnapshotShellTestCase(unittest.TestCase):
         path = os.path.join(CURRENT_DIR, "test.db")
         if os.path.exists(path):
             os.remove(path)
+
+
+@patch("cmd.input")
+@patch("pepys_admin.cli.prompt")
+@patch("pepys_import.cli.prompt")
+def test_training_mode_message(patched_prompt1, patched_prompt2, patched_input):
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
+    patched_prompt1.side_effect = ["n"]
+    patched_prompt2.side_effect = ["n"]
+
+    # When asked for input, choose to exit
+    patched_input.side_effect = ["."]
+
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        try:
+            run_shell(db=None, training=True, path=".")
+        except SystemExit:
+            pass
+    output = temp_output.getvalue()
+    print(output)
+
+    assert "Running in Training Mode" in output
+
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    if orig_pepys_config_file is None:
+        del os.environ["PEPYS_CONFIG_FILE"]
+    else:
+        os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+
+
+@patch("pepys_admin.cli.DataStore")
+@patch("cmd.input")
+@patch("pepys_admin.cli.prompt")
+@patch("pepys_import.cli.prompt")
+def test_training_mode_setup(patched_prompt1, patched_prompt2, patched_input, patched_data_store):
+    # Store original PEPYS_CONFIG_FILE variable so we can reset it at the end
+    # (as setting training mode changes that for this process - and when
+    # pytest is running tests it runs them all in one process)
+    orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
+
+    patched_prompt1.side_effect = ["n"]
+    patched_prompt2.side_effect = ["n"]
+
+    patched_input.side_effect = ["."]
+
+    db_name = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
+
+    try:
+        run_shell(db=None, training=True, path=".")
+    except SystemExit:
+        pass
+
+    # Check it is called with the right db path, and with training_mode=True
+    patched_data_store.assert_called_with(
+        db_username="",
+        db_password="",
+        db_host="",
+        db_port=0,
+        db_name=db_name,
+        db_type="sqlite",
+        welcome_text="Pepys_admin",
+    )
+
+    # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
+    if orig_pepys_config_file is None:
+        del os.environ["PEPYS_CONFIG_FILE"]
+    else:
+        os.environ["PEPYS_CONFIG_FILE"] = orig_pepys_config_file
+
+
+@patch("pepys_admin.cli.DataStore")
+def test_viewer_mode_datastore(patched_ds):
+    run_shell(path=".", db=None, training=False, viewer=True)
+
+    patched_ds.assert_called_with(
+        db_username=ANY,
+        db_password=ANY,
+        db_host=ANY,
+        db_port=ANY,
+        db_name=ANY,
+        db_type=ANY,
+        welcome_text="Pepys_viewer",
+    )
+
+
+def test_viewer_mode_blank_db():
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        try:
+            run_shell(path=".", db=":memory:", training=False, viewer=True)
+        except SystemExit:
+            pass
+    output = temp_output.getvalue()
+    print(output)
+
+    assert "Database schema does not exist: tables cannot be viewed" in output
+
+
+@patch("pepys_admin.cli.ViewDataShell")
+def test_viewer_mode_valid_db(patched_vds):
+    if os.path.exists("created_db.db"):
+        os.remove("created_db.db")
+
+    store = DataStore("", "", "", 0, "created_db.db", db_type="sqlite")
+    store.initialise()
+
+    run_shell(path=".", db="created_db.db", training=False, viewer=True)
+
+    patched_vds.assert_called_with(ANY, viewer=True)
 
 
 if __name__ == "__main__":

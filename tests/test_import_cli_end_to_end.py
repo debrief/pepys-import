@@ -54,7 +54,6 @@ def test_rep_test_1_import(prompt, menu_prompt, processor_prompt):
         "1",  # SEARCH_PLATFORM
     ]
     prompt.side_effect = [
-        "rep_test1.rep",
         "SENSOR",
         "123",
         "SEN",
@@ -107,7 +106,6 @@ def test_gpx_1_0_import(prompt, menu_prompt, processor_prompt):
         "1",  # Yes, create
     ]
     prompt.side_effect = [
-        "gpx_1_0.gpx",
         "NELSON",
         "N123",
         "NEL",
