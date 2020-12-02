@@ -95,7 +95,7 @@ class CommandLineResolver(DataResolver):
             sys.exit(1)
 
         while True:
-            print("-" * 61)
+            print("-" * 60)
             print("Input complete. About to create this datafile:")
             print(f"Name: {datafile_name}")
             print(f"Type: {chosen_datafile_type.name}")
@@ -122,6 +122,7 @@ class CommandLineResolver(DataResolver):
     def resolve_platform(
         self, data_store, platform_name, platform_type, nationality, privacy, change_id
     ):
+        print_new_section_title("Resolve Platform")
         platform_details = []
         final_options = ["Search for existing platform", "Add a new platform"]
         if platform_name:
@@ -189,6 +190,7 @@ class CommandLineResolver(DataResolver):
             return platforms[platform_index]
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
+        print_new_section_title("Resolve Sensor")
         Platform = data_store.db_classes.Platform
         host_platform = (
             data_store.session.query(Platform).filter(Platform.platform_id == host_id).first()
@@ -318,7 +320,7 @@ class CommandLineResolver(DataResolver):
             validate_method=is_valid_dynamic,
         )
         if choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
+            print("-" * 60, "\nReturning to the previous menu\n")
             return None
         elif choice in ["?", "HELP"]:
             print_help_text(data_store, help_id)
@@ -441,7 +443,7 @@ class CommandLineResolver(DataResolver):
             completer=get_fuzzy_completer(completer),
         )
         if choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
+            print("-" * 60, "\nReturning to the previous menu\n")
             return None
         elif choice in ["?", "HELP"]:
             print_help_text(data_store, search_help_id)
@@ -490,7 +492,7 @@ class CommandLineResolver(DataResolver):
                     search_help_id,
                 )
             elif new_choice == ".":
-                print("-" * 61, "\nReturning to the previous menu\n")
+                print("-" * 60, "\nReturning to the previous menu\n")
                 return self.resolve_reference(
                     data_store,
                     change_id,
@@ -601,7 +603,7 @@ class CommandLineResolver(DataResolver):
                 elif new_choice == str(2):
                     return platform
                 elif new_choice == ".":
-                    print("-" * 61, "\nReturning to the previous menu\n")
+                    print("-" * 60, "\nReturning to the previous menu\n")
                     return self.fuzzy_search_platform(
                         data_store,
                         platform_name,
@@ -612,7 +614,7 @@ class CommandLineResolver(DataResolver):
                     )
             return platform
         elif choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
+            print("-" * 60, "\nReturning to the previous menu\n")
             return self.resolve_platform(
                 data_store,
                 platform_name,
@@ -667,7 +669,7 @@ class CommandLineResolver(DataResolver):
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
         elif choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
+            print("-" * 60, "\nReturning to the previous menu\n")
             return self.resolve_sensor(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
@@ -824,7 +826,7 @@ class CommandLineResolver(DataResolver):
             return option in [str(1), str(2), str(3), ".", "?", "HELP"]
 
         while True:
-            print("-" * 61)
+            print("-" * 60)
             print("Input complete. About to create this platform:")
             print(f"Name: {platform_name}")
             print(f"Trigraph: {trigraph}")
@@ -859,7 +861,7 @@ class CommandLineResolver(DataResolver):
         elif choice == str(3):
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
         elif choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
+            print("-" * 60, "\nReturning to the previous menu\n")
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
 
     def add_to_sensors(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
@@ -946,7 +948,7 @@ class CommandLineResolver(DataResolver):
             return option in [str(1), str(2), str(3), ".", "?", "HELP"]
 
         while True:
-            print("-" * 61)
+            print("-" * 60)
             print("Input complete. About to create this sensor:")
             print(f"Name: {sensor_name}")
             print(f"Type: {sensor_type.name}")
@@ -969,5 +971,5 @@ class CommandLineResolver(DataResolver):
         elif choice == str(3):
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
         elif choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
+            print("-" * 60, "\nReturning to the previous menu\n")
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)

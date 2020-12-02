@@ -65,7 +65,7 @@ def print_new_section_title(text, line_width=60):
     # Split text to lines with maximum length of 50
     lines = textwrap.wrap(text, line_width - 10)
     lines = [f"#{line.center(line_width-2)}#" for line in lines]
-    lines.insert(0, "#" * line_width)
+    lines.insert(0, "\n" + "#" * line_width)
     lines.append("#" * line_width)
     lines.append("Type HELP or ? at any time to display contextual help.")
     print(*lines, sep="\n")
@@ -75,4 +75,5 @@ def print_help_text(data_store, help_id):
     HelpText = data_store.db_classes.HelpText
     help_text = data_store.session.query(HelpText).filter(HelpText.id == help_id).first()
     if help_text:
+        print("-" * 60)
         custom_print_formatted_text(format_help_text(help_text.guidance))
