@@ -2,7 +2,6 @@ from sqlalchemy.orm import undefer
 from tabulate import tabulate
 
 from pepys_import.core.store import constants
-from pepys_import.utils.text_formatting_utils import custom_print_formatted_text, format_table
 
 
 class TableSummary:
@@ -55,7 +54,7 @@ class TableSummarySet:
         self.headers = ["Table name", "Number of rows", "Last item added"]
         self.metadata_headers = ["Table name", "Names"]
 
-    def report(self, title=""):
+    def report(self):
         """Produce a pretty-printed report of the contents of the summary.
 
         :return: String of text
@@ -70,11 +69,9 @@ class TableSummarySet:
             tablefmt="grid",
         )
         res += "\n"
-        formatted_text = format_table(title, table_string=res)
-        custom_print_formatted_text(formatted_text)
         return res
 
-    def report_metadata_names(self, differences, title):
+    def report_metadata_names(self, differences):
         """Produce a pretty-printed report of the contents of the summary of metadata tables.
 
         :return: String of text
@@ -85,8 +82,6 @@ class TableSummarySet:
             tablefmt="grid",
         )
         res += "\n"
-        formatted_text = format_table(title, table_string=res)
-        custom_print_formatted_text(formatted_text)
         return res
 
     @staticmethod
@@ -104,7 +99,7 @@ class TableSummarySet:
             differences.append(diff)
         return differences
 
-    def show_delta_of_rows_added(self, other: "TableSummarySet", title="REPORT"):
+    def show_delta_of_rows_added(self, other: "TableSummarySet"):
         """Produce an pretty-printed report of the contents of the summary.
 
         :param other: A TableSummarySet object to compare
@@ -114,7 +109,7 @@ class TableSummarySet:
         differences = self.table_delta(self.table_summaries, other.table_summaries)
         for table, diff in zip(self.table_summaries, differences):
             table.number_of_rows = diff
-        return self.report(title)
+        return self.report()
 
     @staticmethod
     def table_delta_metadata(first_summary, second_summary):
@@ -134,7 +129,7 @@ class TableSummarySet:
             differences.append((first.table_name, diff))
         return differences, show_number_of_rows
 
-    def show_delta_of_rows_added_metadata(self, other: "TableSummarySet", title="REPORT"):
+    def show_delta_of_rows_added_metadata(self, other: "TableSummarySet"):
         """Produce an pretty-printed report of the contents of the summary.
 
         :param other: A TableSummarySet object to compare
@@ -145,6 +140,6 @@ class TableSummarySet:
             self.table_summaries, other.table_summaries
         )
         if show_number_of_rows:
-            return self.show_delta_of_rows_added(other, title)
+            return self.show_delta_of_rows_added(other)
 
-        return self.report_metadata_names(differences, title)
+        return self.report_metadata_names(differences)

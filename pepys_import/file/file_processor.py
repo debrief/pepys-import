@@ -22,12 +22,13 @@ from pepys_import.utils.datafile_utils import hash_file
 from pepys_import.utils.import_utils import import_module_, sort_files
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.table_name_utils import table_name_to_class_name
+from pepys_import.utils.text_formatting_utils import custom_print_formatted_text, format_table
 
 USER = getuser()
 
 
 class FileProcessor:
-    def __init__(self, filename=None, archive=False):
+    def __init__(self, filename=None, archive=False, skip_validation=False):
         self.importers = []
         # Register local importers if any exists
         if LOCAL_PARSERS:
@@ -53,6 +54,7 @@ class FileProcessor:
                 os.makedirs(ARCHIVE_PATH)
             self.output_path = ARCHIVE_PATH
         self.archive = archive
+        self.skip_validation = skip_validation
 
     def process(self, path: str, data_store: DataStore = None, descend_tree: bool = True):
         """Process the data in the given path
@@ -242,9 +244,9 @@ class FileProcessor:
                 constants.LOG,
             ]
 
-            metadata_summaries_before = data_store.get_status(report_metadata=True, exclude=exclude)
+            metadata_summaries_before = data_store.get_status(TableTypes.METADATA, exclude=exclude)
             measurement_summaries_before = data_store.get_status(
-                report_measurement=True, exclude=exclude
+                TableTypes.MEASUREMENT, exclude=exclude
             )
             # We assume that good importers will have the same datafile-type values at the moment.
             # That's why we can create a datafile using the first importer's datafile_type.
@@ -295,6 +297,7 @@ class FileProcessor:
                     validation_level=importer.validation_level,
                     errors=validation_errors,
                     parser=importer.short_name,
+                    skip_validation=self.skip_validation,
                 )
                 # Add the list of failed validators from that importer to
                 # the overall list of validators with errors for this file
@@ -313,18 +316,22 @@ class FileProcessor:
 
                 log = datafile.commit(data_store, change.change_id)
                 metadata_summaries_after = data_store.get_status(
-                    report_metadata=True, exclude=exclude
+                    TableTypes.METADATA, exclude=exclude
                 )
                 measurement_summaries_after = data_store.get_status(
-                    report_measurement=True, exclude=exclude
+                    TableTypes.MEASUREMENT, exclude=exclude
                 )
-                metadata_summaries_after.show_delta_of_rows_added_metadata(
-                    metadata_summaries_before, title="METADATA REPORT"
+                metadata_report = metadata_summaries_after.show_delta_of_rows_added_metadata(
+                    metadata_summaries_before
                 )
+                formatted_text = format_table("METADATA REPORT", table_string=metadata_report)
+                custom_print_formatted_text(formatted_text)
 
-                measurement_summaries_after.show_delta_of_rows_added(
-                    measurement_summaries_before, title="MEASUREMENT REPORT"
+                measurement_report = measurement_summaries_after.show_delta_of_rows_added(
+                    measurement_summaries_before
                 )
+                formatted_text = format_table("MEASUREMENT REPORT", table_string=measurement_report)
+                custom_print_formatted_text(formatted_text)
                 if isinstance(data_store.missing_data_resolver, CommandLineResolver):
                     choices = (
                         "Import metadata",
@@ -366,11 +373,13 @@ class FileProcessor:
 
             else:
                 metadata_summaries_after = data_store.get_status(
-                    report_metadata=True, exclude=exclude
+                    TableTypes.METADATA, exclude=exclude
                 )
-                metadata_summaries_after.show_delta_of_rows_added_metadata(
-                    metadata_summaries_before, title="METADATA REPORT"
+                metadata_report = metadata_summaries_after.show_delta_of_rows_added_metadata(
+                    metadata_summaries_before
                 )
+                formatted_text = format_table("METADATA REPORT", table_string=metadata_report)
+                custom_print_formatted_text(formatted_text)
                 if isinstance(data_store.missing_data_resolver, CommandLineResolver):
                     choices = (
                         "Import metadata",
