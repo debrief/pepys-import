@@ -212,6 +212,8 @@ class CommandLineResolver(DataResolver):
         elif 3 <= int(choice) <= len(options):
             selected_object = objects_dict[options[int(choice) - 1]]
             if selected_object:
+                # add sensor name and the selected sensor to sensor cache
+                data_store._sensor_cache[(sensor_name, host_platform.platform_id)] = selected_object
                 return selected_object
 
     def resolve_reference(
