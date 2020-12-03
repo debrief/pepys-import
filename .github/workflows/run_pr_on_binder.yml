@@ -10,6 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Debug Action
+        uses: hmarr/debug-action@v1.0.0
+
       - name: Check for 'interactive_review' label
         uses: Dreamcodeio/pr-has-label-action@master
         id: checkLabel
