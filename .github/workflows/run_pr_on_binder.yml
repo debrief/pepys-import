@@ -10,14 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Debug Action
-        uses: hmarr/debug-action@v1.0.0
+      - name: Check if this is a labelling event, and the 'interactive_review' label was added
+        if: ${{ github.event.action == "labeled" && github.event.label.name == "interactive_review" }}
+        id: checkLabelFromLabelling
+        shell: bash
+        run: echo "::set-output name=hasLabel::true"
 
-      - name: Check for 'interactive_review' label
+      - name: Check if this is a synchronise event and the 'interactive_review' label is present
         uses: Dreamcodeio/pr-has-label-action@master
-        id: checkLabel
+        if: ${{ github.event.action != "labeled" }}
+        id: checkLabelFromSync
         with:
           label: interactive_review
+
+      - name: Combine variables into a single output
+        if: ${{ steps.checkLabelFromLabelling.outputs.hasLabel || steps.checkLabelFromSync.outputs.hasLabel }}
+        shell: bash
+        id: checkLabel
+        run: echo "::set-output name=hasLabel::true"
 
       - name: Calculate build finish time
         id: buildFinish
