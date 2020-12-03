@@ -329,14 +329,14 @@ class CommandLineResolver(DataResolver):
             )
         elif choice == str(1):
             result = self.fuzzy_search_reference(
-                data_store,
-                change_id,
-                data_type,
-                db_class,
-                field_name,
-                text_name,
-                help_id,
-                search_help_id,
+                data_store=data_store,
+                change_id=change_id,
+                data_type=data_type,
+                db_class=db_class,
+                field_name=field_name,
+                help_id=help_id,
+                search_help_id=search_help_id,
+                text_name=text_name,
             )
             if result is None:
                 return self.resolve_reference(
@@ -405,14 +405,14 @@ class CommandLineResolver(DataResolver):
         elif choice in ["?", "HELP"]:
             print_help_text(data_store, search_help_id)
             return self.fuzzy_search_reference(
-                data_store,
-                change_id,
-                data_type,
-                db_class,
-                field_name,
-                text_name,
-                help_id,
-                search_help_id,
+                data_store=data_store,
+                change_id=change_id,
+                data_type=data_type,
+                db_class=db_class,
+                field_name=field_name,
+                help_id=help_id,
+                search_help_id=search_help_id,
+                text_name=text_name,
             )
         elif choice not in completer:
             while True:
@@ -445,14 +445,14 @@ class CommandLineResolver(DataResolver):
                 return add_method(choice, change_id)
             elif new_choice == str(2):
                 return self.fuzzy_search_reference(
-                    data_store,
-                    change_id,
-                    data_type,
-                    db_class,
-                    field_name,
-                    text_name,
-                    help_id,
-                    search_help_id,
+                    data_store=data_store,
+                    change_id=change_id,
+                    data_type=data_type,
+                    db_class=db_class,
+                    field_name=field_name,
+                    help_id=help_id,
+                    search_help_id=search_help_id,
+                    text_name=text_name,
                 )
             elif new_choice == ".":
                 print("-" * 60, "\nReturning to the previous menu\n")
