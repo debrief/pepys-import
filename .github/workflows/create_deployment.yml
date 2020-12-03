@@ -1,0 +1,43 @@
+name: Create deployment
+on:
+  push:
+    tags:
+      - '*'
+  pull_request:
+
+
+jobs:
+  create-deployment:
+    name: Create deployment
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Create the deployment itself
+      - name: Run create_deployment script
+        shell: cmd
+        run: create_deployment.bat
+
+      - name: Run Pepys install script
+        shell: cmd
+        run: powershell.exe -executionpolicy remotesigned -File .\bin\install_pepys.ps1
+
+      - name: Test a simple import
+        shell: cmd
+        run: cd bin & pepys_import.bat --path ../tests/sample_data/track_files/rep_data/rep_test1.rep --db ":memory:" --resolver default
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Pepys Deployment
+          path: ./*_pepys-import.zip
+
+      - name: Create release (only for tags)
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          draft: true
+          files: ./*_pepys-import.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

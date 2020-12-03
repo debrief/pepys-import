@@ -270,6 +270,7 @@ class TestNotEmptyStringSQLite(unittest.TestCase):
             session.flush()
 
 
+@pytest.mark.postgres
 class TestNotEmptyStringPostgres(unittest.TestCase):
     def setUp(self):
         self.postgres = None

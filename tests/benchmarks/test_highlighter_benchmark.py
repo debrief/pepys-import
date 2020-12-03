@@ -5,7 +5,7 @@ import pytest
 
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.highlighter.support.combine import combine_tokens
-from tests.benchmarks.benchmark_utils import running_on_travis
+from tests.benchmarks.benchmark_utils import running_on_ci
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -134,9 +134,9 @@ def run_highlighter_on_whole_file():
 def test_highlighter_on_whole_file_benchmark(benchmark):
     benchmark(run_highlighter_on_whole_file)
 
-    TIME_THRESHOLD = 7.2
+    TIME_THRESHOLD = 7.5
 
-    if running_on_travis():
+    if running_on_ci():
         if benchmark.stats.stats.mean > TIME_THRESHOLD:
             pytest.fail(
                 f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of {TIME_THRESHOLD}s"
@@ -155,9 +155,9 @@ def run_fill_char_array():
 def test_highlighter_fill_char_array_benchmark(benchmark):
     benchmark(run_fill_char_array)
 
-    TIME_THRESHOLD = 4
+    TIME_THRESHOLD = 5
 
-    if running_on_travis():
+    if running_on_ci():
         if benchmark.stats.stats.mean > TIME_THRESHOLD:
             pytest.fail(
                 f"Mean benchmark run time of {benchmark.stats.stats.mean}s exceeded maximum time of {TIME_THRESHOLD}s"
