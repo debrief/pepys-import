@@ -32,27 +32,6 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_fuzzy_search_add_new_privacy(self, resolver_prompt, menu_prompt):
-        """Test whether a new Privacy entity created or not
-        after searched and not founded in the Privacy Table."""
-
-        # Select "Search an existing classification"->Search "PRIVACY-TEST"->Type "0"->
-        # Select "Yes"
-        menu_prompt.side_effect = ["1", "PRIVACY-TEST", "1"]
-        resolver_prompt.side_effect = ["0"]
-        with self.store.session_scope():
-            privacy = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                self.store.db_classes.Privacy,
-                "privacy",
-                "classification",
-            )
-            self.assertEqual(privacy.name, "PRIVACY-TEST")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_select_existing_privacy(self, menu_prompt):
         """Test whether an existing Privacy entity searched and returned or not"""
 
@@ -116,8 +95,8 @@ class ReferenceDataTestCase(unittest.TestCase):
     def test_fuzzy_search_select_privacy_directly(self, menu_prompt):
         """Test whether recursive call works for privacy"""
 
-        # Select "3-Public"
-        menu_prompt.side_effect = ["3"]
+        # Select "2-Public"
+        menu_prompt.side_effect = ["2"]
         with self.store.session_scope():
             self.store.add_to_privacies("Public", 0, self.change_id)
             self.store.add_to_privacies("Public Sensitive", 0, self.change_id)
@@ -130,25 +109,6 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "classification",
             )
             self.assertEqual(privacy.name, "Public")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_add_new_platform_type(self, menu_prompt):
-        """Test whether a new PlatformType entity created or not
-        after searched and not founded in the Privacy Table."""
-
-        # Select "Search an existing platform-type"->Search "TYPE-TEST"->
-        # Select "Yes"
-        menu_prompt.side_effect = ["1", "TYPE-TEST", "1"]
-        with self.store.session_scope():
-            platform_type = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                self.store.db_classes.PlatformType,
-                "platform_type",
-            )
-            assert platform_type.__tablename__ == "PlatformTypes"
-            assert platform_type.name == "TYPE-TEST"
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_select_existing_platform_type(self, menu_prompt):
@@ -167,27 +127,6 @@ class ReferenceDataTestCase(unittest.TestCase):
             )
             assert platform_type.__tablename__ == "PlatformTypes"
             assert platform_type.name == "TYPE-TEST"
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_fuzzy_search_select_existing_platform_type_without_search(
-        self, resolver_prompt, menu_prompt
-    ):
-        """Test whether a new PlatformType entity created or not"""
-
-        # Select "Add a new platform-type"->Type "TYPE-TEST"
-        menu_prompt.side_effect = ["2"]
-        resolver_prompt.side_effect = ["TYPE-TEST"]
-        with self.store.session_scope():
-            self.store.add_to_privacies("TYPE-TEST", 0, self.change_id)
-            platform_type = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                self.store.db_classes.PlatformType,
-                "platform_type",
-            )
-            self.assertEqual(platform_type.name, "TYPE-TEST")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_recursive_platform_type(self, menu_prompt):
@@ -212,8 +151,8 @@ class ReferenceDataTestCase(unittest.TestCase):
     def test_fuzzy_search_select_platform_type_directly(self, menu_prompt):
         """Test whether recursive call works for platform_type"""
 
-        # Select "3-TYPE-1"
-        menu_prompt.side_effect = ["3"]
+        # Select "2-TYPE-1"
+        menu_prompt.side_effect = ["2"]
         with self.store.session_scope():
             self.store.add_to_platform_types("TYPE-1", self.change_id)
             self.store.add_to_platform_types("TYPE-2", self.change_id)
@@ -229,7 +168,7 @@ class ReferenceDataTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_resolver_reference_select_nationality_directly(self, menu_prompt):
         # Select "3-UK"
-        menu_prompt.side_effect = ["3", "4", "5", "6"]
+        menu_prompt.side_effect = ["2", "3", "4", "5"]
         with self.store.session_scope():
             self.store.add_to_nationalities("UK", self.change_id, priority=1)
             self.store.add_to_nationalities("FR", self.change_id, priority=2)
@@ -317,24 +256,6 @@ class ReferenceDataTestCase(unittest.TestCase):
             assert privacy is None
         output = temp_output.getvalue()
         assert "Returning to the previous menu" in output
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_resolve_reference_empty_input(self, resolver_prompt, menu_prompt):
-        resolver_prompt.side_effect = [""]
-        menu_prompt.side_effect = ["2", "."]
-        temp_output = StringIO()
-        with self.store.session_scope(), redirect_stdout(temp_output):
-            self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                self.store.db_classes.Privacy,
-                "privacy",
-                "classification",
-            )
-        output = temp_output.getvalue()
-        assert "You haven't entered an input!" in output
 
 
 class PlatformTestCase(unittest.TestCase):
@@ -501,51 +422,6 @@ class PlatformTestCase(unittest.TestCase):
             self.store.add_to_privacies("Public", 0, self.change_id)
             self.store.add_to_platform_types("Warship", self.change_id)
             self.store.add_to_nationalities("UK", self.change_id)
-            (
-                platform_name,
-                trigraph,
-                quadgraph,
-                identifier,
-                platform_type,
-                nationality,
-                privacy,
-            ) = self.resolver.resolve_platform(
-                data_store=self.store,
-                platform_name="TEST",
-                platform_type=None,
-                nationality=None,
-                privacy=None,
-                change_id=self.change_id,
-            )
-            self.assertEqual(platform_name, "TEST")
-            self.assertEqual(trigraph, "TST")
-            self.assertEqual(quadgraph, "TEST")
-            self.assertEqual(identifier, "123")
-            self.assertEqual(platform_type.name, "Warship")
-            self.assertEqual(nationality.name, "UK")
-            self.assertEqual(privacy.name, "Public")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_resolver_platform_with_new_values(self, resolver_prompt, menu_prompt):
-        """Test whether new platform type, nationality and privacy entities are created for Platform
-        or not"""
-
-        # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select
-        # "Add a new nationality"->Select "UK"->Select "Add a new platform type"->Select "Warship
-        # ->Select "Add a new classification"->Select "Public"->Select "0"->Select "Yes"
-        menu_prompt.side_effect = ["2", "2", "2", "2", "1"]
-        resolver_prompt.side_effect = [
-            "TEST",
-            "123",
-            "TST",
-            "TEST",
-            "UK",
-            "Warship",
-            "Public",
-            "0",
-        ]
-        with self.store.session_scope():
             (
                 platform_name,
                 trigraph,
@@ -1341,61 +1217,16 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         menu_prompt.side_effect = [
             ".",
             ".",
-            "2",
-            ".",
-            ".",
-            "2",
-            "2",
-            ".",
-            ".",
-            "2",
-            "2",
-            "2",
-            ".",
-            ".",
         ]
         resolver_prompt.side_effect = [
             "TEST",
             "123",
             "TST",
             "TEST",
-            "TEST",
-            "123",
-            "TST",
-            "TEST",
-            "UK",
-            "TEST",
-            "123",
-            "TST",
-            "TEST",
-            "UK",
-            "TYPE-1",
-            "TEST",
-            "123",
-            "TST",
-            "TEST",
-            "UK",
-            "TYPE-1",
-            "Public",
-            "0",
         ]
         with self.store.session_scope():
             # Type name/trigraph/quadgraph/identifier->Select "Cancel nationality search"->
             # Select "Cancel import"
-            with self.assertRaises(SystemExit):
-                self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
-            # Type name/trigraph/quadgraph/identifier->Select "Add new nationality"->Type "UK"->
-            # Select "Cancel platform type search"->Select "Cancel import"
-            with self.assertRaises(SystemExit):
-                self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
-            # Type name/trigraph/quadgraph/identifier->Select "Add new nationality"->Type "UK"->
-            # Select "Add a new platform type"->Type "TYPE-1"->Select "Cancel classification search"->
-            # Select "Cancel import"
-            with self.assertRaises(SystemExit):
-                self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
-            # Type name/trigraph/quadgraph/identification->Select "Add new nationality"->Type "UK"->
-            # Select "Add a new platform type"->Select "Add new classification"->Type "Public"->Type
-            # "0"->Select "Cancel import"->Select "Cancel import"
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
 

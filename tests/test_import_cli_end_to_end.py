@@ -94,11 +94,11 @@ def test_gpx_1_0_import(prompt, menu_prompt, processor_prompt):
 
     **Note:** This will fail if the CLI interface changes at all!"""
     menu_prompt.side_effect = [
-        "5",  # Private
+        "4",  # Private
         "1",  # Yes, create
         "2",  # Add new platform
-        "6",  # Germany
-        "6",  # Ferry
+        "5",  # Germany
+        "5",  # Ferry
         "5",  # Private
         "1",  # Yes, create
         "2",  # Add new sensor
