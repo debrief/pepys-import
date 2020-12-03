@@ -1,4 +1,3 @@
-import re
 import sys
 
 from prompt_toolkit import prompt
@@ -316,47 +315,20 @@ class CommandLineResolver(DataResolver):
         """
         objects = data_store.session.query(db_class).all()
         completer = [p.name for p in objects]
+
+        def is_valid_reference(option):  # pragma: no cover
+            return option in completer + ["."]
+
         choice = create_menu(
             "Please start typing to show suggested values",
             cancel=f"{text_name} search",
             choices=[],
             completer=get_fuzzy_completer(completer),
+            validate_method=is_valid_reference,
         )
         if choice == ".":
             print("-" * 61, "\nReturning to the previous menu\n")
             return None
-        elif choice not in completer:
-            new_choice = create_menu(
-                f"You didn't select an existing {text_name}. " f"Do you want to add '{choice}' ?",
-                choices=["Yes", f"No, I'd like to select an existing {text_name}"],
-                validate_method=is_valid,
-            )
-            if new_choice == str(1):
-                plural_field = (
-                    re.sub(
-                        "([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r"\1", db_class.__tablename__)
-                    )
-                    .strip()
-                    .lower()
-                    .replace(" ", "_")
-                )
-                add_method = getattr(data_store, f"add_to_{plural_field}")
-                if plural_field == "privacies":
-                    level = prompt(
-                        format_command(f"Please type level of new {text_name}: "),
-                        validator=numeric_validator,
-                    )
-                    return add_method(choice, level, change_id)
-                return add_method(choice, change_id)
-            elif new_choice == str(2):
-                return self.fuzzy_search_reference(
-                    data_store, change_id, data_type, db_class, field_name, text_name
-                )
-            elif new_choice == ".":
-                print("-" * 61, "\nReturning to the previous menu\n")
-                return self.resolve_reference(
-                    data_store, change_id, data_type, db_class, field_name, text_name
-                )
         else:
             return data_store.session.query(db_class).filter(db_class.name == choice).first()
 

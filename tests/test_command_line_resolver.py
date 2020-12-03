@@ -32,27 +32,6 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_fuzzy_search_add_new_privacy(self, resolver_prompt, menu_prompt):
-        """Test whether a new Privacy entity created or not
-        after searched and not founded in the Privacy Table."""
-
-        # Select "Search an existing classification"->Search "PRIVACY-TEST"->Type "0"->
-        # Select "Yes"
-        menu_prompt.side_effect = ["1", "PRIVACY-TEST", "1"]
-        resolver_prompt.side_effect = ["0"]
-        with self.store.session_scope():
-            privacy = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                self.store.db_classes.Privacy,
-                "privacy",
-                "classification",
-            )
-            self.assertEqual(privacy.name, "PRIVACY-TEST")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_select_existing_privacy(self, menu_prompt):
         """Test whether an existing Privacy entity searched and returned or not"""
 
@@ -130,25 +109,6 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "classification",
             )
             self.assertEqual(privacy.name, "Public")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_add_new_platform_type(self, menu_prompt):
-        """Test whether a new PlatformType entity created or not
-        after searched and not founded in the Privacy Table."""
-
-        # Select "Search an existing platform-type"->Search "TYPE-TEST"->
-        # Select "Yes"
-        menu_prompt.side_effect = ["1", "TYPE-TEST", "1"]
-        with self.store.session_scope():
-            platform_type = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                self.store.db_classes.PlatformType,
-                "platform_type",
-            )
-            assert platform_type.__tablename__ == "PlatformTypes"
-            assert platform_type.name == "TYPE-TEST"
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_select_existing_platform_type(self, menu_prompt):
