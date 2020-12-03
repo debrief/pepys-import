@@ -24,7 +24,7 @@ def upgrade():
         sa.Column(
             "help_text_id", pepys_import.utils.sqlalchemy_utils.UUIDType(length=16), nullable=False
         ),
-        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("id", sa.String(length=50), nullable=False),
         sa.Column("guidance", sa.String(length=2000), nullable=False),
         sa.PrimaryKeyConstraint("help_text_id", name=op.f("pk_HelpTexts")),
     )

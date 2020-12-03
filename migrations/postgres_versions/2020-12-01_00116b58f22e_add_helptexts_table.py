@@ -21,7 +21,7 @@ def upgrade():
     op.create_table(
         "HelpTexts",
         sa.Column("help_text_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("id", sa.String(length=50), nullable=False),
         sa.Column("guidance", sa.String(length=2000), nullable=False),
         sa.PrimaryKeyConstraint("help_text_id", name=op.f("pk_HelpTexts")),
         schema="pepys",
