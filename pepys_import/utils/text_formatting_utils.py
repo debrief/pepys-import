@@ -76,4 +76,4 @@ def print_help_text(data_store, help_id):
     help_text = data_store.session.query(HelpText).filter(HelpText.id == help_id).first()
     if help_text:
         print("-" * 60)
-        custom_print_formatted_text(format_help_text(help_text.guidance))
+        custom_print_formatted_text(format_help_text(help_text.guidance + f" ({help_id})"))

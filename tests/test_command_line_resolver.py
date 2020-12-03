@@ -9,8 +9,10 @@ from uuid import uuid4
 import pytest
 
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.resolvers import constants
 from pepys_import.resolvers.command_line_input import is_valid
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver, is_number
+from pepys_import.utils.text_formatting_utils import formatted_text_to_str
 
 DIR_PATH = os.path.dirname(__file__)
 
@@ -329,6 +331,58 @@ class ReferenceDataTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Returning to the previous menu" in output
 
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_resolve_reference_print_help_text(self, menu_prompt, mock_print):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        with self.store.session_scope():  # necessary for importing help texts
+            self.store.populate_reference()
+
+        menu_prompt.side_effect = ["?", "HELP", "3"]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.resolver.resolve_reference(
+                data_store=self.store,
+                change_id=self.change_id,
+                data_type="Platform",
+                db_class=self.store.db_classes.Nationality,
+                field_name="nationality",
+                help_id=constants.RESOLVE_NATIONALITY,
+                search_help_id=constants.FUZZY_SEARCH_NATIONALITY,
+            )
+        output = temp_output.getvalue()
+        assert constants.RESOLVE_NATIONALITY in output
+
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_reference_print_help_text(self, menu_prompt, mock_print):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        with self.store.session_scope():  # necessary for importing help texts
+            self.store.populate_reference()
+
+        menu_prompt.side_effect = ["?", "HELP", "United Kingdom"]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.resolver.fuzzy_search_reference(
+                data_store=self.store,
+                change_id=self.change_id,
+                data_type="Platform",
+                db_class=self.store.db_classes.Nationality,
+                field_name="nationality",
+                help_id=constants.RESOLVE_NATIONALITY,
+                search_help_id=constants.FUZZY_SEARCH_NATIONALITY,
+            )
+        output = temp_output.getvalue()
+        assert constants.FUZZY_SEARCH_NATIONALITY in output
+
 
 class PlatformTestCase(unittest.TestCase):
     def setUp(self) -> None:
@@ -344,6 +398,7 @@ class PlatformTestCase(unittest.TestCase):
         )
         self.store.initialise()
         with self.store.session_scope():
+            self.store.populate_reference()
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -670,6 +725,132 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(platform_name, "TEST")
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_fuzzy_search_platform_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        menu_prompt.side_effect = ["?", "HELP", "TEST", "1"]
+        resolver_prompt.side_effect = ["TEST", "123", "TST", "TEST"]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id)
+            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            nationality = self.store.add_to_nationalities("UK", self.change_id)
+            self.store.add_to_platforms(
+                "PLATFORM-1",
+                trigraph="PL1",
+                quadgraph="PLT1",
+                identifier="123",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+                change_id=self.change_id,
+            )
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.fuzzy_search_platform(
+                    self.store,
+                    "TEST",
+                    nationality=nationality.name,
+                    platform_type=platform_type.name,
+                    privacy=privacy.name,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.FUZZY_SEARCH_PLATFORM in output
+
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_platform_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+
+        menu_prompt.side_effect = [
+            "?",
+            "HELP",
+            "2",
+            "2",
+            "1",
+            "UK",
+            "1",
+            "Warship",
+            "1",
+            "Public",
+            "1",
+        ]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "123",
+            "TST",
+            "TEST",
+            "TEST",
+            "123",
+            "TST",
+            "TEST",
+        ]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.resolve_platform(
+                    data_store=self.store,
+                    platform_name=None,
+                    platform_type=platform_type,
+                    nationality=nationality,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.RESOLVE_PLATFORM in output
+
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_add_to_platforms_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+
+        menu_prompt.side_effect = [
+            "?",
+            "HELP",
+            "1",
+        ]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "123",
+            "TST",
+            "TEST",
+        ]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.add_to_platforms(
+                    data_store=self.store,
+                    platform_name=None,
+                    platform_type=platform_type,
+                    nationality=nationality,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.ADD_TO_PLATFORMS in output
+
 
 class DatafileTestCase(unittest.TestCase):
     def setUp(self) -> None:
@@ -685,6 +866,7 @@ class DatafileTestCase(unittest.TestCase):
         )
         self.store.initialise()
         with self.store.session_scope():
+            self.store.populate_reference()
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -806,6 +988,55 @@ class DatafileTestCase(unittest.TestCase):
             self.assertEqual(datafile_name, "TEST")
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_datafile_datafile_name_is_none(self, resolver_prompt, menu_prompt):
+        menu_prompt.side_effect = ["1"]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "10",
+        ]
+        with self.store.session_scope():
+            datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id).name
+            with pytest.raises(ValueError):
+                self.resolver.resolve_datafile(
+                    data_store=self.store,
+                    datafile_name=None,
+                    datafile_type=datafile_type,
+                    privacy="PRIVACY-TEST",
+                    change_id=self.change_id,
+                )
+
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_datafile_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        menu_prompt.side_effect = [
+            "?",
+            "HELP",
+            "1",
+        ]
+        resolver_prompt.side_effect = ["TEST", "TEST"]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id).name
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.resolve_datafile(
+                    data_store=self.store,
+                    datafile_name="TEST",
+                    datafile_type=datafile_type,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.RESOLVE_DATAFILE in output
+
 
 class SensorTestCase(unittest.TestCase):
     def setUp(self) -> None:
@@ -821,6 +1052,7 @@ class SensorTestCase(unittest.TestCase):
         )
         self.store.initialise()
         with self.store.session_scope():
+            self.store.populate_reference()
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -1173,6 +1405,135 @@ class SensorTestCase(unittest.TestCase):
             )
             self.assertEqual(resolved_name, "TEST")
             self.assertEqual(resolved_privacy.name, "PRIVACY-TEST")
+
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_fuzzy_search_sensor_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        menu_prompt.side_effect = [
+            "?",
+            "HELP",
+            "SENSOR-1",
+        ]
+        resolver_prompt.side_effect = ["SENSOR-1"]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy, self.change_id)
+
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.fuzzy_search_sensor(
+                    self.store,
+                    "SENSOR-TEST",
+                    host_id=platform.platform_id,
+                    sensor_type=sensor_type,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.FUZZY_SEARCH_SENSOR in output
+
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_sensor_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+
+        menu_prompt.side_effect = [
+            "?",
+            "HELP",
+            "1",
+            "SENSOR-1",
+        ]
+        resolver_prompt.side_effect = ["SENSOR-1"]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy, self.change_id)
+
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.resolve_sensor(
+                    self.store,
+                    "SENSOR-TEST",
+                    host_id=platform.platform_id,
+                    sensor_type=sensor_type,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.RESOLVE_SENSOR in output
+
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_add_to_sensors_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        menu_prompt.side_effect = ["?", "HELP", "1"]
+        resolver_prompt.side_effect = ["SENSOR-TEST"]
+        with self.store.session_scope():
+            # Create platform first, then create a Sensor object
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy, self.change_id)
+            platform.get_sensor(self.store, "SENSOR-2", sensor_type, privacy, self.change_id)
+
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.add_to_sensors(
+                    self.store,
+                    "SENSOR-TEST",
+                    host_id=platform.platform_id,
+                    sensor_type=sensor_type,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.ADD_TO_SENSORS in output
 
 
 class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
