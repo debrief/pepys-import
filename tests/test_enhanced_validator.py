@@ -216,6 +216,58 @@ class EnhancedValidatorTestCase(unittest.TestCase):
             is True
         )
 
+    def test_measured_speed_is_far_too_high(self):
+        # The difference between the following locations is ~3.574 km
+        prev_loc = Location()
+        prev_loc.set_latitude_decimal_degrees(50)
+        prev_loc.set_longitude_decimal_degrees(75)
+
+        current_loc = Location()
+        current_loc.set_latitude_decimal_degrees(50)
+        current_loc.set_longitude_decimal_degrees(75.05)
+
+        speed = 200 * (unit_registry.metre / unit_registry.second)
+        time = 3600 * unit_registry.seconds
+
+        ev = EnhancedValidator()
+        assert (
+            ev.speed_loose_match_with_location(
+                prev_location=prev_loc,
+                curr_location=current_loc,
+                speed=speed,
+                time=time,
+                errors=self.errors,
+                error_type="Test Parser",
+            )
+            is False
+        )
+
+    def test_measured_speed_is_far_too_low(self):
+        # The difference between the following locations is ~3.574 km
+        prev_loc = Location()
+        prev_loc.set_latitude_decimal_degrees(50)
+        prev_loc.set_longitude_decimal_degrees(75)
+
+        current_loc = Location()
+        current_loc.set_latitude_decimal_degrees(50)
+        current_loc.set_longitude_decimal_degrees(75.05)
+
+        speed = 0.02 * (unit_registry.metre / unit_registry.second)
+        time = 3600 * unit_registry.seconds
+
+        ev = EnhancedValidator()
+        assert (
+            ev.speed_loose_match_with_location(
+                prev_location=prev_loc,
+                curr_location=current_loc,
+                speed=speed,
+                time=time,
+                errors=self.errors,
+                error_type="Test Parser",
+            )
+            is False
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
