@@ -1052,7 +1052,6 @@ class SensorTestCase(unittest.TestCase):
         )
         self.store.initialise()
         with self.store.session_scope():
-            self.store.populate_reference()
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -1410,6 +1409,9 @@ class SensorTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_fuzzy_search_sensor_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+        with self.store.session_scope():
+            self.store.populate_reference()
+
         # Use normal print() to capture table reports
         def side_effect(text):
             print(formatted_text_to_str(text))
@@ -1453,6 +1455,9 @@ class SensorTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_sensor_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+        with self.store.session_scope():
+            self.store.populate_reference()
+
         # Use normal print() to capture table reports
         def side_effect(text):
             print(formatted_text_to_str(text))
@@ -1498,6 +1503,9 @@ class SensorTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_add_to_sensors_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+        with self.store.session_scope():
+            self.store.populate_reference()
+
         # Use normal print() to capture table reports
         def side_effect(text):
             print(formatted_text_to_str(text))
