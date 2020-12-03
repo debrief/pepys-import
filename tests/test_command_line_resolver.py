@@ -49,6 +49,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store.db_classes.Privacy,
                 "privacy",
                 "classification",
+                "",
+                "",
             )
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
@@ -67,6 +69,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store.db_classes.Privacy,
                 "privacy",
                 "classification",
+                "",
+                "",
             )
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
@@ -89,6 +93,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store.db_classes.Privacy,
                 "privacy",
                 "classification",
+                "",
+                "",
             )
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
@@ -109,6 +115,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store.db_classes.Privacy,
                 "privacy",
                 "classification",
+                "",
+                "",
             )
             self.assertEqual(privacy.name, "Public")
 
@@ -128,6 +136,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store.db_classes.Privacy,
                 "privacy",
                 "classification",
+                "",
+                "",
             )
             self.assertEqual(privacy.name, "Public")
 
@@ -146,6 +156,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.PlatformType,
                 "platform_type",
+                "",
+                "",
             )
             assert platform_type.__tablename__ == "PlatformTypes"
             assert platform_type.name == "TYPE-TEST"
@@ -164,6 +176,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.PlatformType,
                 "platform_type",
+                "",
+                "",
             )
             assert platform_type.__tablename__ == "PlatformTypes"
             assert platform_type.name == "TYPE-TEST"
@@ -184,6 +198,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.PlatformType,
                 "platform_type",
+                "",
+                "",
             )
             self.assertEqual(platform_type.name, "TYPE-1")
 
@@ -202,6 +218,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.PlatformType,
                 "platform_type",
+                "",
+                "",
             )
             self.assertEqual(platform_type.name, "TYPE-1")
 
@@ -220,6 +238,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.Nationality,
                 "nationality",
+                "",
+                "",
             )
             assert nationality.name == "UK"
 
@@ -229,6 +249,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.Nationality,
                 "nationality",
+                "",
+                "",
             )
             assert nationality.name == "FR"
 
@@ -238,6 +260,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.Nationality,
                 "nationality",
+                "",
+                "",
             )
             assert nationality.name == "TR"
 
@@ -247,6 +271,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.Nationality,
                 "nationality",
+                "",
+                "",
             )
             assert nationality is None
 
@@ -264,6 +290,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store.db_classes.Privacy,
                 "privacy",
                 "classification",
+                "",
+                "",
             )
             self.assertIsNone(privacy)
 
@@ -281,6 +309,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store.db_classes.Privacy,
                 "privacy",
                 "classification",
+                "",
+                "",
             )
             self.assertIsNone(privacy)
 
@@ -292,6 +322,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                     self.store.db_classes.Privacy,
                     "privacy",
                     "classification",
+                    "",
+                    "",
                 )
             assert privacy is None
         output = temp_output.getvalue()

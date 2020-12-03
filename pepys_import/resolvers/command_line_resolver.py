@@ -249,9 +249,9 @@ class CommandLineResolver(DataResolver):
         data_type,
         db_class,
         field_name,
+        help_id,
+        search_help_id,
         text_name=None,
-        help_id=1,
-        search_help_id=1,
     ):
         """
         This method resolves any reference data according to the given parameters.
@@ -323,9 +323,9 @@ class CommandLineResolver(DataResolver):
                 data_type,
                 db_class,
                 field_name,
-                text_name,
                 help_id,
                 search_help_id,
+                text_name,
             )
         elif choice == str(1):
             result = self.fuzzy_search_reference(
@@ -345,9 +345,9 @@ class CommandLineResolver(DataResolver):
                     data_type,
                     db_class,
                     field_name,
-                    text_name,
                     help_id,
                     search_help_id,
+                    text_name,
                 )
             else:
                 return result
@@ -363,9 +363,9 @@ class CommandLineResolver(DataResolver):
         data_type,
         db_class,
         field_name,
+        help_id,
+        search_help_id,
         text_name=None,
-        help_id=1,
-        search_help_id=1,
     ):
         """
         This method parses any reference data according to the given parameters, and uses fuzzy
@@ -462,9 +462,9 @@ class CommandLineResolver(DataResolver):
                     data_type,
                     db_class,
                     field_name,
-                    text_name,
                     help_id,
                     search_help_id,
+                    text_name,
                 )
         else:
             return data_store.session.query(db_class).filter(db_class.name == choice).first()
@@ -731,7 +731,7 @@ class CommandLineResolver(DataResolver):
                 change_id,
                 "Platform",
                 data_store.db_classes.Nationality,
-                "nationality",
+                field_name="nationality",
                 help_id=constants.RESOLVE_NATIONALITY,
                 search_help_id=constants.FUZZY_SEARCH_NATIONALITY,
             )
