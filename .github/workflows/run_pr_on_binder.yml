@@ -11,14 +11,14 @@ jobs:
 
     steps:
       - name: Check if this is a labelling event, and the 'interactive_review' label was added
-        if: ${{ github.event.action == "labeled" && github.event.label.name == "interactive_review" }}
+        if: ${{ github.event.action == 'labeled' && github.event.label.name == 'interactive_review' }}
         id: checkLabelFromLabelling
         shell: bash
         run: echo "::set-output name=hasLabel::true"
 
       - name: Check if this is a synchronise event and the 'interactive_review' label is present
         uses: Dreamcodeio/pr-has-label-action@master
-        if: ${{ github.event.action != "labeled" }}
+        if: ${{ github.event.action != 'labeled' }}
         id: checkLabelFromSync
         with:
           label: interactive_review
