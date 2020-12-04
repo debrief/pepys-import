@@ -1,6 +1,7 @@
+from xml.etree import ElementTree
+
 from dateutil.parser import parse
 from dateutil.tz import tzoffset
-from lxml import etree
 from tqdm import tqdm
 
 from pepys_import.core.formats import unit_registry
@@ -40,7 +41,7 @@ class GPXImporter(Importer):
         # Note: we can't use the file_object variable passed in, as lxml refuses
         # to parse a string that has an encoding attribute in the XML - it requires bytes instead
         try:
-            doc = etree.parse(path)
+            doc = ElementTree.parse(path)
         except Exception as e:
             self.errors.append(
                 {self.error_type: f'Invalid GPX file at {path}\nError from parsing was "{str(e)}"'}
@@ -49,7 +50,7 @@ class GPXImporter(Importer):
 
         # Iterate through <trk> elements - these should correspond to
         # a specific platform, with the platform name in the <name> element
-        for track_element in tqdm(doc.findall("//{*}trk")):
+        for track_element in tqdm(doc.findall(".//{*}trk")):
             track_name = track_element.find("{*}name").text
 
             # Get the platform and sensor details, as these will be the same for all
@@ -78,8 +79,8 @@ class GPXImporter(Importer):
                 if timestamp_str is None:
                     self.errors.append(
                         {
-                            self.error_type: f"Line {tpt.sourceline}. "
-                            f"Error: <trkpt> element must have child <time> element"
+                            self.error_type: "Line unknown. "
+                            "Error: <trkpt> element must have child <time> element"
                         }
                     )
                     continue
@@ -103,8 +104,9 @@ class GPXImporter(Importer):
 
                 # Add course
                 if course_str is not None:
+                    # Mark line number as Unknown here
                     course_valid, course = convert_absolute_angle(
-                        course_str, tpt.sourceline, self.errors, self.error_type
+                        course_str, "Unknown", self.errors, self.error_type
                     )
                     if course_valid:
                         state.course = course
