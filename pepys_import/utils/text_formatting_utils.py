@@ -25,12 +25,12 @@ def format_table(title: str, table_string: str):
 
 def format_menu(title: str, choices: str):
     """Create a FormattedText object which has title in bold and normal style for the choices."""
-    return FormattedText([("bold", title), ("", choices)])
+    return FormattedText([("#0e84b5 bold", title), ("#0e84b5", choices)])
 
 
 def format_command(text):
     """Create a FormattedText object which makes the given text bold."""
-    return FormattedText([("bold", text)])
+    return FormattedText([("#0e84b5 bold", text)])
 
 
 def format_help_text(text):
