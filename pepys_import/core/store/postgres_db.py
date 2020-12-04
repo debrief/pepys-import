@@ -866,3 +866,14 @@ class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin, LocationPropertyMix
     )
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class HelpText(BasePostGIS):
+    __tablename__ = constants.HELP_TEXT
+    table_type = TableTypes.REFERENCE
+    table_type_id = 35
+    __table_args__ = {"schema": "pepys"}
+
+    help_text_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id = Column(String(50), nullable=False)
+    guidance = Column(String(2000), nullable=False)

@@ -1173,6 +1173,32 @@ class DataStore:
         )
         return geom_sub_type
 
+    def add_to_help_texts(self, id, guidance, change_id):
+        """
+        Adds the specified help text to the :class:`HelpText` table if not already present.
+
+        :param id: ID of prompt question
+        :type id: Integer
+        :param guidance: Guidance text for contextual help
+        :type guidance: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
+        :return: Created :class:`HelpText` entity
+        :rtype: HelpText
+        """
+
+        # enough info to proceed and create entry
+        help_text = self.db_classes.HelpText(id=id, guidance=guidance)
+        self.session.add(help_text)
+        self.session.flush()
+
+        self.add_to_logs(
+            table=constants.SENSOR_TYPE,
+            row_id=help_text.help_text_id,
+            change_id=change_id,
+        )
+        return help_text
+
     # End of References
     #############################################################
     # Metadata Maintenance
