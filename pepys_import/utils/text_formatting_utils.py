@@ -35,7 +35,7 @@ def format_command(text):
 
 def format_help_text(text):
     """Create a FormattedText object which makes the given text italic."""
-    return FormattedText([("italic", text)])
+    return FormattedText([("#28a745", text)])
 
 
 def formatted_text_to_str(formatted_text: FormattedText) -> str:
@@ -62,8 +62,7 @@ def custom_print_formatted_text(text):
 
 
 def print_new_section_title(text, line_width=60):
-    # Split text to lines with maximum length of 50
-    lines = textwrap.wrap(text, line_width - 10)
+    lines = wrap_text(text, line_width - 10)
     lines = [f"#{line.center(line_width-2)}#" for line in lines]
     lines.insert(0, "\n" + "#" * line_width)
     lines.append("#" * line_width)
@@ -71,9 +70,17 @@ def print_new_section_title(text, line_width=60):
     print(*lines, sep="\n")
 
 
+def wrap_text(text, line_width=60):
+    return textwrap.wrap(text, line_width)
+
+
 def print_help_text(data_store, help_id):
     HelpText = data_store.db_classes.HelpText
     help_text = data_store.session.query(HelpText).filter(HelpText.id == help_id).first()
     if help_text:
         print("-" * 60)
-        custom_print_formatted_text(format_help_text(help_text.guidance + f" ({help_id})"))
+        lines = wrap_text(help_text.guidance)
+        lines.append(f"({help_id})")
+        wrapped_text = "\n".join(lines)
+        custom_print_formatted_text(format_help_text(wrapped_text))
+        input("<Press Enter to continue>")

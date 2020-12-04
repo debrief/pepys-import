@@ -287,14 +287,16 @@ class ReferenceDataTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Returning to the previous menu" in output
 
+    @patch("pepys_import.utils.text_formatting_utils.input")
     @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_resolve_reference_print_help_text(self, menu_prompt, mock_print):
+    def test_resolve_reference_print_help_text(self, menu_prompt, mock_print, mock_input):
         # Use normal print() to capture table reports
         def side_effect(text):
             print(formatted_text_to_str(text))
 
         mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
         with self.store.session_scope():  # necessary for importing help texts
             self.store.populate_reference()
 
@@ -313,14 +315,16 @@ class ReferenceDataTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert constants.RESOLVE_NATIONALITY in output
 
+    @patch("pepys_import.utils.text_formatting_utils.input")
     @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_reference_print_help_text(self, menu_prompt, mock_print):
+    def test_fuzzy_search_reference_print_help_text(self, menu_prompt, mock_print, mock_input):
         # Use normal print() to capture table reports
         def side_effect(text):
             print(formatted_text_to_str(text))
 
         mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
         with self.store.session_scope():  # necessary for importing help texts
             self.store.populate_reference()
 
@@ -681,15 +685,19 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(platform_name, "TEST")
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
+    @patch("pepys_import.utils.text_formatting_utils.input")
     @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_fuzzy_search_platform_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+    def test_fuzzy_search_platform_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
         # Use normal print() to capture table reports
         def side_effect(text):
             print(formatted_text_to_str(text))
 
         mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
         menu_prompt.side_effect = ["?", "HELP", "TEST", "1"]
         resolver_prompt.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
@@ -719,16 +727,19 @@ class PlatformTestCase(unittest.TestCase):
             output = temp_output.getvalue()
             assert constants.FUZZY_SEARCH_PLATFORM in output
 
+    @patch("pepys_import.utils.text_formatting_utils.input")
     @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_resolver_platform_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+    def test_resolver_platform_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
         # Use normal print() to capture table reports
         def side_effect(text):
             print(formatted_text_to_str(text))
 
         mock_print.side_effect = side_effect
-
+        mock_input.return_value = "Enter"
         menu_prompt.side_effect = [
             "?",
             "HELP",
@@ -769,16 +780,19 @@ class PlatformTestCase(unittest.TestCase):
             output = temp_output.getvalue()
             assert constants.RESOLVE_PLATFORM in output
 
+    @patch("pepys_import.utils.text_formatting_utils.input")
     @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_add_to_platforms_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+    def test_add_to_platforms_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
         # Use normal print() to capture table reports
         def side_effect(text):
             print(formatted_text_to_str(text))
 
         mock_print.side_effect = side_effect
-
+        mock_input.return_value = "Enter"
         menu_prompt.side_effect = [
             "?",
             "HELP",
@@ -963,15 +977,19 @@ class DatafileTestCase(unittest.TestCase):
                     change_id=self.change_id,
                 )
 
+    @patch("pepys_import.utils.text_formatting_utils.input")
     @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_resolver_datafile_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+    def test_resolver_datafile_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
         # Use normal print() to capture table reports
         def side_effect(text):
             print(formatted_text_to_str(text))
 
         mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
         menu_prompt.side_effect = [
             "?",
             "HELP",
@@ -1361,10 +1379,13 @@ class SensorTestCase(unittest.TestCase):
             self.assertEqual(resolved_name, "TEST")
             self.assertEqual(resolved_privacy.name, "PRIVACY-TEST")
 
+    @patch("pepys_import.utils.text_formatting_utils.input")
     @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_fuzzy_search_sensor_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+    def test_fuzzy_search_sensor_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
         with self.store.session_scope():
             self.store.populate_reference()
 
@@ -1373,6 +1394,7 @@ class SensorTestCase(unittest.TestCase):
             print(formatted_text_to_str(text))
 
         mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
         menu_prompt.side_effect = [
             "?",
             "HELP",
@@ -1407,10 +1429,13 @@ class SensorTestCase(unittest.TestCase):
             output = temp_output.getvalue()
             assert constants.FUZZY_SEARCH_SENSOR in output
 
+    @patch("pepys_import.utils.text_formatting_utils.input")
     @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_resolver_sensor_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+    def test_resolver_sensor_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
         with self.store.session_scope():
             self.store.populate_reference()
 
@@ -1419,7 +1444,7 @@ class SensorTestCase(unittest.TestCase):
             print(formatted_text_to_str(text))
 
         mock_print.side_effect = side_effect
-
+        mock_input.return_value = "Enter"
         menu_prompt.side_effect = [
             "?",
             "HELP",
@@ -1455,10 +1480,13 @@ class SensorTestCase(unittest.TestCase):
             output = temp_output.getvalue()
             assert constants.RESOLVE_SENSOR in output
 
+    @patch("pepys_import.utils.text_formatting_utils.input")
     @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_add_to_sensors_print_help_text(self, resolver_prompt, menu_prompt, mock_print):
+    def test_add_to_sensors_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
         with self.store.session_scope():
             self.store.populate_reference()
 
@@ -1467,6 +1495,7 @@ class SensorTestCase(unittest.TestCase):
             print(formatted_text_to_str(text))
 
         mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
         menu_prompt.side_effect = ["?", "HELP", "1"]
         resolver_prompt.side_effect = ["SENSOR-TEST"]
         with self.store.session_scope():
