@@ -62,8 +62,8 @@ class DataStoreInitialisePostGISTestCase(TestCase):
         table_names = inspector.get_table_names(schema="pepys")
         schema_names = inspector.get_schema_names()
 
-        # 34 tables + alembic_version table must be created to default schema
-        self.assertEqual(len(table_names), 35)
+        # 35 tables + alembic_version table must be created to default schema
+        self.assertEqual(len(table_names), 36)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
         self.assertIn("Datafiles", table_names)
@@ -135,11 +135,11 @@ class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
         system = platform.system()
 
         if system == "Windows":
-            correct_n_tables = 73
+            correct_n_tables = 74
         else:
-            correct_n_tables = 71
+            correct_n_tables = 72
 
-        # 36 tables + 36 spatial tables + 1 alembic_version table must be created. A few of them tested
+        # 37 tables + 36 spatial tables + 1 alembic_version table must be created. A few of them tested
         self.assertEqual(len(table_names), correct_n_tables)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)

@@ -10,7 +10,7 @@ def get_fuzzy_completer(completer_list):
 
 
 def is_valid(option):
-    return option == str(1) or option == str(2) or option == "."
+    return option in [str(1), str(2), ".", "?", "HELP"]
 
 
 def create_menu(title, choices, cancel="import", completer=None, validate_method=None):

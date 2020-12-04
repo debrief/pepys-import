@@ -594,7 +594,9 @@ class DataStoreStatusTestCase(TestCase):
     def test_get_status_of_reference(self):
         """Test whether summary contents correct for reference tables"""
 
-        table_summary_object = self.store.get_status(TableTypes.REFERENCE)
+        table_summary_object = self.store.get_status(
+            TableTypes.REFERENCE, exclude=[constants.HELP_TEXT]
+        )
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")
