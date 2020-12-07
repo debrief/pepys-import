@@ -11,6 +11,7 @@ from testing.postgresql import Postgresql
 from pepys_admin.view_data_cli import ViewDataShell
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from tests.utils import side_effect
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data")
@@ -101,7 +102,7 @@ class ViewDataCLITestCase(unittest.TestCase):
         print(output)
         assert "SELECT * FROM Datafiles;" in output
         assert (
-            "| e_trac.txt                       | None | 5271 | fcb69124d933924e564769b211cacdb7"
+            "| e_trac.txt                       | None | 5315 | 577fad568cda2eb0b24178f5554f2b46 |"
             in output
         )
 
@@ -162,20 +163,22 @@ class ViewDataCLITestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "*** Unknown syntax: 123456789" in output
 
-    def test_postcmd(self):
+    @patch("pepys_admin.base_cli.custom_print_formatted_text")
+    def test_postcmd(self, patched_print):
+        patched_print.side_effect = side_effect
         # postcmd method should print the menu again if the user didn't select cancel (".")
         # Select view table
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.postcmd(stop=False, line="1")
         output = temp_output.getvalue()
-        assert self.shell.intro in output
+        assert self.shell.choices in output
         # Select run sql
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.postcmd(stop=False, line="2")
         output = temp_output.getvalue()
-        assert self.shell.intro in output
+        assert self.shell.choices in output
 
 
 @pytest.mark.postgres
@@ -290,7 +293,7 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
         print(output)
         assert 'SELECT * FROM "pepys"."Datafiles";' in output
         assert (
-            "| e_trac.txt                       | None | 5271 | fcb69124d933924e564769b211cacdb7"
+            "| e_trac.txt                       | None | 5315 | 577fad568cda2eb0b24178f5554f2b46 |"
             in output
         )
 
@@ -320,7 +323,7 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
                 assert (
                     "20200305_ROBINWithHeader.eag.txt,,479,ec2694c2cfe2eaa26181999a55aee5b4" in data
                 )
-                assert "e_trac.txt,,5271,fcb69124d933924e564769b211cacdb7" in data
+                assert "e_trac.txt,,5315,577fad568cda2eb0b24178f5554f2b46" in data
 
             os.remove(path)
 
@@ -351,20 +354,22 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "*** Unknown syntax: 123456789" in output
 
-    def test_postcmd(self):
+    @patch("pepys_admin.base_cli.custom_print_formatted_text")
+    def test_postcmd(self, patched_print):
+        patched_print.side_effect = side_effect
         # postcmd method should print the menu again if the user didn't select cancel (".")
         # Select view table
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.postcmd(stop=False, line="1")
         output = temp_output.getvalue()
-        assert self.shell.intro in output
+        assert self.shell.choices in output
         # Select run sql
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.shell.postcmd(stop=False, line="2")
         output = temp_output.getvalue()
-        assert self.shell.intro in output
+        assert self.shell.choices in output
 
 
 def test_check_query_only_select():
