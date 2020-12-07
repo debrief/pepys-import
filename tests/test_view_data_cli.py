@@ -367,5 +367,30 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
         assert self.shell.intro in output
 
 
+def test_check_query_only_select():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    shell = ViewDataShell(store)
+
+    assert shell._check_query_only_select("SELECT * FROM Platforms;")
+    assert shell._check_query_only_select("SELECT    blah from Sensors WHERE sensor_id = 2 ;")
+    assert shell._check_query_only_select("SELECT    blah from Sensors WHERE sensor_id = 2 ;   ")
+    assert shell._check_query_only_select("SELECT    blah from Sensors WHERE sensor_id = 2 ;   ")
+    assert shell._check_query_only_select(
+        "\n  SELECT    blah from Sensors WHERE sensor_id = 2 ;   "
+    )
+
+    assert not shell._check_query_only_select(
+        "SELECT    blah from Sensors WHERE sensor_id = 2 ;  INSERT INTO Platforms Blah"
+    )
+    assert not shell._check_query_only_select(
+        "SELECT blah from Sensors WHERE sensor_id = 2 ;DELETE FROM Platforms WHERE True; "
+    )
+    assert not shell._check_query_only_select("DELETE FROM Platforms WHERE True; ")
+    assert not shell._check_query_only_select(
+        "SELECT blah from Sensors WHERE sensor_id = 2 ; SELECT * FROM Users;"
+    )
+
+
 if __name__ == "__main__":
     unittest.main()

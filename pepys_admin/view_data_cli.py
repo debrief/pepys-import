@@ -183,20 +183,49 @@ class ViewDataShell(BaseShell):
                 f"{selected_table} table is successfully exported!\nYou can find it here: '{path}'."
             )
 
+    def _check_query_only_select(self, query):
+        stripped = query.strip()
+
+        split_by_whitespace = stripped.split()
+
+        # If it doesn't start with SELECT then it is not acceptable
+        if split_by_whitespace[0].upper() != "SELECT":
+            return False
+
+        split_by_semicolon = stripped.split(";")
+        # If there is anything except whitespace after a ; then it is not acceptable
+        if len(split_by_semicolon) > 2 or split_by_semicolon[1].strip() != "":
+            return False
+
+        # If we've got here then we're ok
+        return True
+
     def _get_sql_results(self):
         """Asks user to enter a query, then runs it on the database.
         If there isn't any error, returns query and the results."""
-        print(
-            "This feature of Pepys allows you to run arbitrary SQL queries against the Pepys database."
-        )
-        print("Please use with care, in admin mode these queries can alter data.")
-        print("")
-        print("Example SQLite query: SELECT * FROM Platforms;")
-        print('Example Postgres query: SELECT * from "pepys"."Platforms";')
-        print("")
-        query = prompt(
-            "> ", multiline=True, bottom_toolbar=bottom_toolbar, lexer=PygmentsLexer(SqlLexer)
-        )
+        while True:
+            print(
+                "This feature of Pepys allows you to run arbitrary SQL queries against the Pepys database."
+            )
+            print("Please use with care, in admin mode these queries can alter data.")
+            print("")
+            print("Example SQLite query: SELECT * FROM Platforms;")
+            print('Example Postgres query: SELECT * from "pepys"."Platforms";')
+            print("")
+            query = prompt(
+                "> ", multiline=True, bottom_toolbar=bottom_toolbar, lexer=PygmentsLexer(SqlLexer)
+            )
+            if not self.viewer:
+                # In admin mode, accept all queries
+                break
+            only_select = self._check_query_only_select(query)
+            if only_select:
+                break
+            else:
+                print(
+                    "Error: Only SELECT queries are allowed in Pepys Viewer. Please enter another query."
+                )
+                print("")
         if query:
             with self.data_store.engine.connect() as connection:
                 try:
