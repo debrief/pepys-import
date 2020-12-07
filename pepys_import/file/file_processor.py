@@ -4,13 +4,14 @@ import os
 import shutil
 from datetime import datetime
 from getpass import getuser
+from importlib import reload
 from stat import S_IREAD
 
 from halo import Halo
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
 
-from config import ARCHIVE_PATH, LOCAL_PARSERS
+import config
 from paths import IMPORTERS_DIRECTORY
 from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import DataStore
@@ -29,16 +30,19 @@ USER = getuser()
 
 class FileProcessor:
     def __init__(self, filename=None, archive=False, skip_validation=False):
+        # Reload the config here, in case it changed because we went into training mode
+        reload(config)
+
         self.importers = []
         # Register local importers if any exists
-        if LOCAL_PARSERS:
-            if not os.path.exists(LOCAL_PARSERS):
+        if config.LOCAL_PARSERS:
+            if not os.path.exists(config.LOCAL_PARSERS):
                 print(
-                    f"No such file or directory: {LOCAL_PARSERS}. Only core "
+                    f"No such file or directory: {config.LOCAL_PARSERS}. Only core "
                     "parsers are going to work."
                 )
             else:
-                self.load_importers_dynamically(LOCAL_PARSERS)
+                self.load_importers_dynamically(config.LOCAL_PARSERS)
 
         if filename is None:
             self.filename = ":memory:"
@@ -48,11 +52,11 @@ class FileProcessor:
         self.input_files_path = None
         self.directory_path = None
         # Check if ARCHIVE_PATH is given in the config file
-        if ARCHIVE_PATH:
+        if config.ARCHIVE_PATH:
             # Create the path if it doesn't exist
-            if not os.path.exists(ARCHIVE_PATH):
-                os.makedirs(ARCHIVE_PATH)
-            self.output_path = ARCHIVE_PATH
+            if not os.path.exists(config.ARCHIVE_PATH):
+                os.makedirs(config.ARCHIVE_PATH)
+            self.output_path = config.ARCHIVE_PATH
         self.archive = archive
         self.skip_validation = skip_validation
 

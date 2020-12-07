@@ -1633,7 +1633,9 @@ def test_training_mode_setup(patched_prompt1, patched_prompt2, patched_input, pa
 
     patched_input.side_effect = ["."]
 
-    db_name = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
+    db_name = os.path.expanduser(
+        os.path.join("~", "Pepys_Training_Data", "pepys_training_database.db")
+    )
 
     try:
         run_shell(db=None, training=True, path=".")

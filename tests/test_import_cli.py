@@ -265,7 +265,9 @@ def test_training_mode_setup(patched_input, patched_data_store):
     # pytest is running tests it runs them all in one process)
     orig_pepys_config_file = os.environ.get("PEPYS_CONFIG_FILE")
 
-    db_name = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
+    db_name = os.path.expanduser(
+        os.path.join("~", "Pepys_Training_Data", "pepys_training_database.db")
+    )
 
     process(resolver="default", training=True)
 
@@ -305,7 +307,9 @@ def test_training_mode_reset_at_end(patched_input):
     assert "Running in Training Mode" in output
 
     # As we've done a reset, the database file should have been deleted
-    assert not os.path.exists(os.path.expanduser(os.path.join("~", "pepys_training_database.db")))
+    assert not os.path.exists(
+        os.path.expanduser(os.path.join("~", "Pepys_Training_Data", "pepys_training_database.db"))
+    )
 
     # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
     if orig_pepys_config_file is None:
