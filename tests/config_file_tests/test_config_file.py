@@ -87,14 +87,14 @@ class ConfigVariablesTestCase(unittest.TestCase):
 
 
 class FileProcessorVariablesTestCase(unittest.TestCase):
-    @patch("pepys_import.file.file_processor.LOCAL_PARSERS", TEST_IMPORTER_PATH)
+    @patch("pepys_import.file.file_processor.config.LOCAL_PARSERS", TEST_IMPORTER_PATH)
     def test_pepys_local_parsers(self):
         file_processor = FileProcessor()
 
         assert len(file_processor.importers) == 1
         assert file_processor.importers[0].name == "Test Importer"
 
-    @patch("pepys_import.file.file_processor.LOCAL_PARSERS", BAD_IMPORTER_PATH)
+    @patch("pepys_import.file.file_processor.config.LOCAL_PARSERS", BAD_IMPORTER_PATH)
     def test_bad_pepys_local_parsers_path(self):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -107,7 +107,7 @@ class FileProcessorVariablesTestCase(unittest.TestCase):
             == f"No such file or directory: {BAD_IMPORTER_PATH}. Only core parsers are going to work.\n"
         )
 
-    @patch("pepys_import.file.file_processor.ARCHIVE_PATH", OUTPUT_PATH)
+    @patch("pepys_import.file.file_processor.config.ARCHIVE_PATH", OUTPUT_PATH)
     def test_pepys_archive_location(self):
         file_processor = FileProcessor()
         assert os.path.exists(OUTPUT_PATH) is True
@@ -115,7 +115,7 @@ class FileProcessorVariablesTestCase(unittest.TestCase):
         # Remove the test_output directory
         os.rmdir(OUTPUT_PATH)
 
-    @patch("pepys_import.file.file_processor.ARCHIVE_PATH", None)
+    @patch("pepys_import.file.file_processor.config.ARCHIVE_PATH", None)
     def test_no_archive_path_given(self):
         store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         store.initialise()
