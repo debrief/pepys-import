@@ -747,7 +747,7 @@ class CommandLineResolver(DataResolver):
             print(f"Quadgraph: {quadgraph}")
             print(f"Identifier: {identifier}")
             print(f"Nationality: {chosen_nationality.name}")
-            print(f"Class: {chosen_platform_type.name}")
+            print(f"Platform type: {chosen_platform_type.name}")
             print(f"Classification: {chosen_privacy.name}")
 
             choice = create_menu(
