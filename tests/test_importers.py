@@ -120,7 +120,6 @@ class SampleImporterTests(unittest.TestCase):
         self.assertIn("Files got processed: 0 times", output)
 
     @patch("pepys_import.core.store.common_db.prompt", return_value="2")
-    @patch("pepys_import.file.file_processor.config.ARCHIVE_PATH", OUTPUT_PATH)
     def test_archiving_files(self, patched_prompt):
         """Test whether archive flag correctly works for File Processor"""
         # Assert that REP files exist in the original location
@@ -131,7 +130,7 @@ class SampleImporterTests(unittest.TestCase):
         assert "uk_track.rep" in input_files
 
         names = list()
-        processor = FileProcessor(archive=True)
+        processor = FileProcessor(archive=True, archive_path=OUTPUT_PATH)
         processor.register_importer(ReplayImporter())
         processor.process(REP_DATA_PATH, None, False)
 
@@ -260,10 +259,9 @@ class ImporterSummaryTest(unittest.TestCase):
         assert len(failed_files) == 0
 
     @patch("pepys_import.core.store.common_db.prompt", return_value="2")
-    @patch("pepys_import.file.file_processor.config.ARCHIVE_PATH", OUTPUT_PATH)
     def test_summary_with_archive(self, patched_prompt):
         """Test whether descending processing works for the given path"""
-        processor = FileProcessor("import_status_test2.db", archive=True)
+        processor = FileProcessor("import_status_test2.db", archive=True, archive_path=OUTPUT_PATH)
 
         processor.load_importers_dynamically()
 

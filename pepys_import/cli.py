@@ -131,7 +131,12 @@ def process(
         if data_store.is_empty():
             data_store.populate_reference()
 
-    processor = FileProcessor(archive=archive, skip_validation=skip_validation)
+    processor = FileProcessor(
+        archive=archive,
+        skip_validation=skip_validation,
+        archive_path=config.ARCHIVE_PATH,
+        local_parsers=config.LOCAL_PARSERS,
+    )
     processor.load_importers_dynamically()
 
     try:
