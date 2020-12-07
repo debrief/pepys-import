@@ -186,6 +186,14 @@ class ViewDataShell(BaseShell):
     def _get_sql_results(self):
         """Asks user to enter a query, then runs it on the database.
         If there isn't any error, returns query and the results."""
+        print(
+            "This feature of Pepys allows you to run arbitrary SQL queries against the Pepys database."
+        )
+        print("Please use with care, in admin mode these queries can alter data.")
+        print("")
+        print("Example SQLite query: SELECT * FROM Platforms;")
+        print('Example Postgres query: SELECT * from "pepys"."Platforms";')
+        print("")
         query = prompt(
             "> ", multiline=True, bottom_toolbar=bottom_toolbar, lexer=PygmentsLexer(SqlLexer)
         )
