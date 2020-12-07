@@ -1,5 +1,12 @@
 name
-GPS
-SENSOR-TYPE-1
-SENSOR-TYPE-2
-
+Acoustic Passive
+Acoustic Active
+Non Acoustic
+Radar
+Visual
+EM
+Comms
+Broadcast
+Location-Satelite
+Location-Inertial
+Location-Dead-reckoning
