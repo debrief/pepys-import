@@ -169,6 +169,8 @@ def set_up_training_mode():
 
     config_file_path = os.path.join(training_data_folder, "pepys_training_config.ini")
 
+    archive_folder = os.path.join(training_data_folder, "output")
+
     config_contents = f"""[database]
 db_username =
 db_password =
@@ -178,7 +180,7 @@ db_name = {db_path}
 db_type = sqlite
 
 [archive]
-path = {training_data_folder}"""
+path = {archive_folder}"""
 
     with open(config_file_path, "w") as f:
         f.write(config_contents)
