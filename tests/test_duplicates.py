@@ -64,7 +64,7 @@ def test_adding_duplicate_platform():
             "TestPlatform",
             "TestIdentifier",
             "United Kingdom",
-            "PLATFORM-TYPE-1",
+            "Fishing Vessel",
             "Public",
             change_id=change_id,
         )
@@ -80,7 +80,7 @@ def test_adding_duplicate_platform():
             "TestPlatform",
             "TestIdentifier",
             "United Kingdom",
-            "PLATFORM-TYPE-1",
+            "Fishing Vessel",
             "Public",
             change_id=change_id,
         )
@@ -103,7 +103,7 @@ def test_adding_duplicate_platform_with_case_difference():
             "TestPlatform",
             "TestIdentifier",
             "United Kingdom",
-            "PLATFORM-TYPE-1",
+            "Fishing Vessel",
             "Public",
             change_id=change_id,
         )
@@ -119,7 +119,7 @@ def test_adding_duplicate_platform_with_case_difference():
             "TESTPLATFORM",
             "TestIdentifier",
             "United Kingdom",
-            "PLATFORM-TYPE-1",
+            "Fishing Vessel",
             "Public",
             change_id=change_id,
         )
@@ -146,14 +146,14 @@ def test_adding_duplicate_sensor():
             "TestPlatform",
             "TestIdentifier",
             "United Kingdom",
-            "PLATFORM-TYPE-1",
+            "Fishing Vessel",
             "Public",
             change_id=change_id,
         ).platform_id
 
         store.add_to_sensors(
             name="TestSensor",
-            sensor_type="GPS",
+            sensor_type="Location-Satellite",
             host_id=platform_id,
             host_name=None,
             host_nationality=None,
@@ -171,7 +171,7 @@ def test_adding_duplicate_sensor():
         # Add Sensor with same details again
         store.add_to_sensors(
             name="TestSensor",
-            sensor_type="GPS",
+            sensor_type="Location-Satellite",
             host_id=platform_id,
             host_name=None,
             host_nationality=None,
@@ -199,14 +199,14 @@ def test_adding_duplicate_sensor_with_case_difference():
             "TestPlatform",
             "TestIdentifier",
             "United Kingdom",
-            "PLATFORM-TYPE-1",
+            "Fishing Vessel",
             "Public",
             change_id=change_id,
         ).platform_id
 
         store.add_to_sensors(
             name="TestSensor",
-            sensor_type="GPS",
+            sensor_type="Location-Satellite",
             host_id=platform_id,
             host_name=None,
             host_nationality=None,
@@ -224,7 +224,7 @@ def test_adding_duplicate_sensor_with_case_difference():
         # Add Sensor with same details again
         sensor = store.add_to_sensors(
             name="TESTSENSOR",
-            sensor_type="GPS",
+            sensor_type="Location-Satellite",
             host_id=platform_id,
             host_name=None,
             host_nationality=None,
@@ -251,7 +251,7 @@ def test_adding_duplicate_datafile():
         change_id = store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
         store.add_to_datafiles(
-            "Public", "DATAFILE-TYPE-1", file_size=500, file_hash="TestHash", change_id=change_id
+            "Public", "GPX", file_size=500, file_hash="TestHash", change_id=change_id
         )
 
         results = store.session.query(store.db_classes.Datafile).all()
@@ -262,7 +262,7 @@ def test_adding_duplicate_datafile():
     with store.session_scope():
         # Add Datafile with same details again
         store.add_to_datafiles(
-            "Public", "DATAFILE-TYPE-1", file_size=500, file_hash="TestHash", change_id=change_id
+            "Public", "GPX", file_size=500, file_hash="TestHash", change_id=change_id
         )
 
         results = store.session.query(store.db_classes.Datafile).all()
@@ -284,7 +284,7 @@ def test_adding_duplicate_synonym():
             "TestPlatform",
             "TestIdentifier",
             "United Kingdom",
-            "PLATFORM-TYPE-1",
+            "Fishing Vessel",
             "Public",
             change_id=change_id,
         )
@@ -321,7 +321,7 @@ def test_adding_duplicate_synonym_with_case_difference():
             "TestPlatform",
             "TestIdentifier",
             "United Kingdom",
-            "PLATFORM-TYPE-1",
+            "Fishing Vessel",
             "Public",
             change_id=change_id,
         )
