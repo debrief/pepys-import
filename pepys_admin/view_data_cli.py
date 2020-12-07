@@ -214,7 +214,7 @@ class ViewDataShell(BaseShell):
             print("Please use with care, in admin mode these queries can alter data.")
             print("")
             print("Example SQLite query: SELECT * FROM Platforms;")
-            print('Example Postgres query: SELECT * from "pepys"."Platforms";')
+            print('Example Postgres query: SELECT * from pepys."Platforms";')
             print("")
             query = prompt(
                 "> ", multiline=True, bottom_toolbar=bottom_toolbar, lexer=PygmentsLexer(SqlLexer)
