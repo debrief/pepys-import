@@ -141,7 +141,7 @@ def process(
         pass
 
     if training:
-        answer = prompt(format_command("Would you like to reset the training database? (y/n) "))
+        answer = prompt(format_command("Would you like to reset the training database? (y/N) "))
         if answer.upper() == "Y":
             if os.path.exists(config.DB_NAME):
                 os.remove(config.DB_NAME)
@@ -159,7 +159,7 @@ def set_up_training_mode():
 
     if os.path.exists(db_path):
         # Training db already exists, ask if we want to clear it
-        answer = prompt(format_command("Would you like to reset the training database? (y/n) "))
+        answer = prompt(format_command("Would you like to reset the training database? (y/N) "))
         if answer.upper() == "Y":
             os.remove(db_path)
 
