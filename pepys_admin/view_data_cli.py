@@ -188,13 +188,17 @@ class ViewDataShell(BaseShell):
 
         split_by_whitespace = stripped.split()
 
-        # If it doesn't start with SELECT then it is not acceptable
-        if split_by_whitespace[0].upper() != "SELECT":
-            return False
+        if len(split_by_whitespace) > 0:
+            # If it doesn't start with SELECT then it is not acceptable
+            if split_by_whitespace[0].upper() != "SELECT":
+                return False
 
         split_by_semicolon = stripped.split(";")
         # If there is anything except whitespace after a ; then it is not acceptable
-        if len(split_by_semicolon) > 2 or split_by_semicolon[1].strip() != "":
+        if len(split_by_semicolon) > 2:
+            return False
+
+        if len(split_by_semicolon) == 2 and split_by_semicolon[1].strip() != "":
             return False
 
         # If we've got here then we're ok
