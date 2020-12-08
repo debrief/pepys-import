@@ -132,7 +132,12 @@ def process(
             data_store.populate_reference()
             data_store.populate_metadata()
 
-    processor = FileProcessor(archive=archive, skip_validation=skip_validation)
+    processor = FileProcessor(
+        archive=archive,
+        skip_validation=skip_validation,
+        archive_path=config.ARCHIVE_PATH,
+        local_parsers=config.LOCAL_PARSERS,
+    )
     processor.load_importers_dynamically()
 
     try:
@@ -149,8 +154,9 @@ def process(
 
 
 def set_up_training_mode():
+    training_data_folder = os.path.expanduser(os.path.join("~", "Pepys_Training_Data"))
     # Training database will be located in user's home folder
-    db_path = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
+    db_path = os.path.join(training_data_folder, "pepys_training_database.db")
 
     print("#" * 80)
     print(" " * 28 + "Running in Training Mode" + " " * 28)
@@ -164,7 +170,12 @@ def set_up_training_mode():
         if answer.upper() == "Y":
             os.remove(db_path)
 
-    config_file_path = os.path.expanduser(os.path.join("~", "pepys_training_config.ini"))
+    if not os.path.exists(training_data_folder):
+        os.mkdir(training_data_folder)
+
+    config_file_path = os.path.join(training_data_folder, "pepys_training_config.ini")
+
+    archive_folder = os.path.join(training_data_folder, "output")
 
     config_contents = f"""[database]
 db_username =
@@ -172,7 +183,10 @@ db_password =
 db_host =
 db_port = 0
 db_name = {db_path}
-db_type = sqlite"""
+db_type = sqlite
+
+[archive]
+path = {archive_folder}"""
 
     with open(config_file_path, "w") as f:
         f.write(config_contents)
