@@ -1730,7 +1730,7 @@ class GetMethodsTestCase(unittest.TestCase):
             "1",
             "United Kingdom",
             "1",
-            "Fisher",
+            "Fishing Vessel",
             "1",
             "Public",
             "1",
@@ -1752,21 +1752,21 @@ class GetMethodsTestCase(unittest.TestCase):
     def test_get_datafile_adds_resolved_datafile_successfully(self, resolver_prompt, menu_prompt):
         menu_prompt.side_effect = [
             "1",
-            "DATAFILE-TYPE-1",
+            "Replay",
             "1",
             "Public",
             "1",
         ]
         with self.store.session_scope():
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            # there must be 2 entities at the beginning
-            self.assertEqual(len(datafiles), 2)
+            # there must be zero entities at the beginning
+            self.assertEqual(len(datafiles), 0)
 
             self.store.get_datafile("test", None, 0, "HASHED", change_id=self.change_id)
 
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 3)
-            self.assertEqual(datafiles[2].reference, "test")
+            self.assertEqual(len(datafiles), 1)
+            self.assertEqual(datafiles[0].reference, "test")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
@@ -1774,7 +1774,7 @@ class GetMethodsTestCase(unittest.TestCase):
         menu_prompt.side_effect = [
             "2",
             "1",
-            "SENSOR-TYPE-1",
+            "Location-Satellite",
             "1",
             "Public",
             "1",
@@ -1786,8 +1786,8 @@ class GetMethodsTestCase(unittest.TestCase):
             self.assertEqual(len(sensors), 2)
 
             platform = self.store.get_platform(
-                platform_name="PLATFORM-1",
-                identifier="123",
+                platform_name="ADRI",
+                identifier="A643",
                 nationality="United Kingdom",
                 change_id=self.change_id,
             )

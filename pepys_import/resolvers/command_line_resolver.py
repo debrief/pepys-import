@@ -2,7 +2,6 @@ import sys
 
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
-from sqlalchemy import or_
 from tabulate import tabulate
 
 from pepys_import.core.store.constants import NATIONALITY, PLATFORM, PRIVACY
@@ -450,17 +449,28 @@ class CommandLineResolver(DataResolver):
         completer = list()
         platforms = data_store.session.query(data_store.db_classes.Platform).all()
         for platform in platforms:
-            completer.append(
-                f"{platform.name} / {platform.identifier} / {platform.nationality_name}"
-            )
+            values = list()
+            values.append(platform.name)
             if platform.trigraph:
-                completer.append(
-                    f"{platform.trigraph} / {platform.identifier} / {platform.nationality_name}"
-                )
+                values.append(platform.trigraph)
             if platform.quadgraph:
-                completer.append(
-                    f"{platform.quadgraph} / {platform.identifier} / {platform.nationality_name}"
+                values.append(platform.quadgraph)
+            synonym = (
+                data_store.session.query(data_store.db_classes.Synonym)
+                .filter(
+                    data_store.db_classes.Synonym.table == PLATFORM,
+                    data_store.db_classes.Synonym.entity == platform.platform_id,
                 )
+                .all()
+            )
+            if synonym:
+                synonym_names = [s.synonym for s in synonym]
+                values.append(",".join(synonym_names))
+
+            values.append(platform.identifier)
+            values.append(platform.nationality_name)
+            line = " / ".join(values)
+            completer.append(line)
         choice = create_menu(
             "Please start typing to show suggested values",
             cancel="platform search",
@@ -479,17 +489,16 @@ class CommandLineResolver(DataResolver):
             )
         elif choice in completer:
             # Extract the platform details from the string
-            name_or_xgraph, identifier, nationality = choice.split(" / ")
+            platform_details = choice.split(" / ")
+            name, identifier, nationality = (
+                platform_details[0],
+                platform_details[-2],
+                platform_details[-1],
+            )
             # Get the platform from the database
             platform = (
                 data_store.session.query(data_store.db_classes.Platform)
-                .filter(
-                    or_(
-                        data_store.db_classes.Platform.name == name_or_xgraph,
-                        data_store.db_classes.Platform.trigraph == name_or_xgraph,
-                        data_store.db_classes.Platform.quadgraph == name_or_xgraph,
-                    )
-                )
+                .filter(data_store.db_classes.Platform.name == name)
                 .filter(data_store.db_classes.Platform.identifier == identifier)
                 .filter(data_store.db_classes.Platform.nationality_name == nationality)
                 .first()
