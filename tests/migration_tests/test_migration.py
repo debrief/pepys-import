@@ -37,14 +37,14 @@ class MigrateSQLiteTestCase(unittest.TestCase):
         if os.path.exists(file_path):
             os.remove(file_path)
 
-    @patch("pepys_admin.admin_cli.input", return_value="Y")
+    @patch("pepys_admin.admin_cli.prompt", return_value="Y")
     def test_do_migrate_empty_database(self, patched_input):
         assert is_schema_created(self.store.engine, self.store.db_type) is False
         # Migrate
         self.shell.do_migrate()
         assert is_schema_created(self.store.engine, self.store.db_type) is True
 
-    @patch("pepys_admin.admin_cli.input", return_value="Y")
+    @patch("pepys_admin.admin_cli.prompt", return_value="Y")
     @patch("pepys_import.core.store.common_db.prompt", return_value="2")
     def test_do_migrate_not_empty_database(self, patched_prompt, patched_input):
         self.store.initialise()
@@ -58,7 +58,7 @@ class MigrateSQLiteTestCase(unittest.TestCase):
         # Assert that it didn't break the schema
         assert is_schema_created(self.store.engine, self.store.db_type) is True
 
-    @patch("pepys_admin.admin_cli.input", return_value="Y")
+    @patch("pepys_admin.admin_cli.prompt", return_value="Y")
     def test_do_migrate_from_old_version_sqlite(self, patched_input):
         shutil.copyfile(src=SQLITE_PATH, dst=COPY_DB_PATH)
 
@@ -99,14 +99,14 @@ class MigratePostgresTestCase(unittest.TestCase):
         except AttributeError:
             return
 
-    @patch("pepys_admin.admin_cli.input", return_value="Y")
+    @patch("pepys_admin.admin_cli.prompt", return_value="Y")
     def test_do_migrate_empty_database(self, patched_input):
         assert is_schema_created(self.store.engine, self.store.db_type) is False
         # Migrate
         self.shell.do_migrate()
         assert is_schema_created(self.store.engine, self.store.db_type) is True
 
-    @patch("pepys_admin.admin_cli.input", return_value="Y")
+    @patch("pepys_admin.admin_cli.prompt", return_value="Y")
     @patch("pepys_import.core.store.common_db.prompt", return_value="2")
     def test_do_migrate_not_empty_database(self, patched_prompt, patched_input):
         self.store.initialise()
@@ -120,7 +120,7 @@ class MigratePostgresTestCase(unittest.TestCase):
         # Assert that it didn't break the schema
         assert is_schema_created(self.store.engine, self.store.db_type) is True
 
-    @patch("pepys_admin.admin_cli.input", return_value="Y")
+    @patch("pepys_admin.admin_cli.prompt", return_value="Y")
     def test_do_migrate_from_old_version_postgres(self, patched_input):
         with open(POSTGRES_SQL_PATH, "r") as f:
             sql_code = f.read()
