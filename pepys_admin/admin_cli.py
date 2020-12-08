@@ -4,6 +4,7 @@ import webbrowser
 
 from alembic import command
 from alembic.config import Config
+from prompt_toolkit import prompt
 
 from paths import ROOT_DIRECTORY
 from pepys_admin.base_cli import BaseShell
@@ -15,7 +16,11 @@ from pepys_import.core.store import constants
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.error_handling import handle_status_errors
-from pepys_import.utils.text_formatting_utils import custom_print_formatted_text, format_table
+from pepys_import.utils.text_formatting_utils import (
+    custom_print_formatted_text,
+    format_command,
+    format_table,
+)
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -23,8 +28,7 @@ DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 class AdminShell(BaseShell):
     """Main Shell of Pepys Admin."""
 
-    intro = """--- Menu ---
-(1) Initialise/Clear
+    choices = """(1) Initialise/Clear
 (2) Status
 (3) Export
 (4) Snapshot
@@ -58,7 +62,7 @@ class AdminShell(BaseShell):
 
     def do_export(self):
         """Runs the :code:`ExportShell` which offers to export datafiles."""
-        print("-" * 61)
+        print("-" * 60)
         export_shell = ExportShell(self.data_store)
         export_shell.cmdloop()
 
@@ -69,14 +73,14 @@ class AdminShell(BaseShell):
 
     def do_snapshot(self):
         """Runs the :code:`SnapshotShell` to take a snapshot of reference or/and metadata tables."""
-        print("-" * 61)
+        print("-" * 60)
         snapshot_shell = SnapshotShell(self.data_store)
         snapshot_shell.cmdloop()
 
     def do_initialise(self):
         """Runs the :code:`InitialiseShell` which offers to clear contents, import sample data,
         create/delete schema."""
-        print("-" * 61)
+        print("-" * 60)
         initialise = InitialiseShell(self.data_store, self, self.csv_path)
         initialise.cmdloop()
 
@@ -108,8 +112,10 @@ class AdminShell(BaseShell):
 
     def do_migrate(self):
         """Runs Alembic's :code:`upgrade` command to migrate the database to the latest version."""
-        confirmation = input(
-            "Your database schema is going to be updated. Are you sure to continue? (y/N) "
+        confirmation = prompt(
+            format_command(
+                "Your database schema is going to be updated. Are you sure to continue? (y/N) "
+            )
         )
         if confirmation.lower() == "y":
             print("Alembic migration command running, see output below.")
@@ -124,7 +130,7 @@ class AdminShell(BaseShell):
         """Runs the :code:`ViewDataShell` which offers to view a table and run SQL."""
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
-        print("-" * 61)
+        print("-" * 60)
         shell = ViewDataShell(self.data_store)
         shell.cmdloop()
 

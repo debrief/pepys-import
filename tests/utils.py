@@ -2,6 +2,7 @@ import os
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from pepys_import.utils.text_formatting_utils import formatted_text_to_str
 
 
 def check_errors_for_file_contents(file_contents, expected_errors, importer, filename=None):
@@ -72,3 +73,8 @@ def move_and_overwrite(from_path, to_path):
         os.remove(to_path)
 
     os.rename(from_path, to_path)
+
+
+# Use normal print() to capture table reports
+def side_effect(text):
+    print(formatted_text_to_str(text))

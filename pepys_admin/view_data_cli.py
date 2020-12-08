@@ -26,13 +26,12 @@ def bottom_toolbar():
 class ViewDataShell(BaseShell):
     """Offers to view table and run SQL."""
 
-    intro = """--- Menu ---
-    (1) View Table
-    (2) Output Table to CSV
-    (3) Run SQL
-    (4) Output SQL Results to CSV
-    (.) Back
-    """
+    choices = """(1) View Table
+(2) Output Table to CSV
+(3) Run SQL
+(4) Output SQL Results to CSV
+(.) Back
+"""
 
     def __init__(self, data_store, viewer=False):
         super(ViewDataShell, self).__init__()
@@ -49,7 +48,7 @@ class ViewDataShell(BaseShell):
 
         if viewer:
             self.prompt = "(pepys-viewer) "
-            self.intro = self.intro.replace("(.) Back", "(.) Exit")
+            self.choices = self.choices.replace("(.) Back", "(.) Exit")
         else:
             self.prompt = "(pepys-admin) (view) "
 
