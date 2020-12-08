@@ -130,6 +130,7 @@ def process(
     with data_store.session_scope():
         if data_store.is_empty():
             data_store.populate_reference()
+            data_store.populate_metadata()
 
     processor = FileProcessor(
         archive=archive,

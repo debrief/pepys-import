@@ -27,7 +27,7 @@ class MissingFieldsTestCase(unittest.TestCase):
                 self.store.add_to_platforms(
                     name="TestPlatform",
                     nationality="MissingNationality",
-                    platform_type="PLATFORM-TYPE-1",
+                    platform_type="Fishing Vessel",
                     privacy="Public",
                     trigraph="TPL",
                     quadgraph="TPLT",
@@ -51,7 +51,7 @@ class MissingFieldsTestCase(unittest.TestCase):
                 self.store.add_to_platforms(
                     name="TestPlatform",
                     nationality="United Kingdom",
-                    platform_type="PLATFORM-TYPE-1",
+                    platform_type="Fishing Vessel",
                     privacy="MissingPrivacy",
                     trigraph="TPL",
                     quadgraph="TPLT",
@@ -63,7 +63,7 @@ class MissingFieldsTestCase(unittest.TestCase):
             self.store.add_to_platforms(
                 name="TestPlatform",
                 nationality="United Kingdom",
-                platform_type="PLATFORM-TYPE-1",
+                platform_type="Fishing Vessel",
                 privacy="Public",
                 trigraph="TPL",
                 quadgraph="TPLT",
@@ -75,7 +75,7 @@ class MissingFieldsTestCase(unittest.TestCase):
         plat_id = self.store.add_to_platforms(
             name="TestPlatform",
             nationality="United Kingdom",
-            platform_type="PLATFORM-TYPE-1",
+            platform_type="Fishing Vessel",
             privacy="Public",
             trigraph="TPL",
             quadgraph="TPLT",
@@ -99,7 +99,7 @@ class MissingFieldsTestCase(unittest.TestCase):
             with pytest.raises(MissingDataException):
                 self.store.add_to_sensors(
                     name="TestSensor",
-                    sensor_type="GPS",
+                    sensor_type="Location-Satellite",
                     host_name="MissingPlatform",
                     host_identifier="123",
                     host_nationality="UK",
@@ -110,7 +110,7 @@ class MissingFieldsTestCase(unittest.TestCase):
             with pytest.raises(MissingDataException):
                 self.store.add_to_sensors(
                     name="TestSensor",
-                    sensor_type="GPS",
+                    sensor_type="Location-Satellite",
                     host_name=None,
                     host_identifier=None,
                     host_nationality=None,
@@ -122,7 +122,7 @@ class MissingFieldsTestCase(unittest.TestCase):
             # Shouldn't raise an exception, as all valid
             self.store.add_to_sensors(
                 name="TestSensor",
-                sensor_type="GPS",
+                sensor_type="Location-Satellite",
                 host_name=None,
                 host_identifier=None,
                 host_nationality=None,
@@ -136,7 +136,7 @@ class MissingFieldsTestCase(unittest.TestCase):
             with pytest.raises(MissingDataException):
                 self.store.add_to_datafiles(
                     "PRIVACY-DoesNotExist",
-                    "DATAFILE-TYPE-1",
+                    "GPX",
                     "DATAFILE-1",
                     True,
                     0,
@@ -158,7 +158,7 @@ class MissingFieldsTestCase(unittest.TestCase):
             # Shouldn't raise an exception, as all valid
             self.store.add_to_datafiles(
                 "Public",
-                "DATAFILE-TYPE-1",
+                "GPX",
                 "DATAFILE-1",
                 True,
                 0,
