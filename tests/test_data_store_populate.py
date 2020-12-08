@@ -56,14 +56,14 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
             nationalities = self.store.session.query(self.store.db_classes.Nationality).all()
             platform_types = self.store.session.query(self.store.db_classes.PlatformType).all()
             nationality_object = self.store.search_nationality("United Kingdom")
-            platform_type_object = self.store.search_platform_type("PLATFORM-TYPE-1")
+            platform_type_object = self.store.search_platform_type("Naval - frigate")
 
             # Check whether they are not empty anymore and filled with correct data
             self.assertNotEqual(len(nationalities), 0)
             self.assertNotEqual(len(platform_types), 0)
 
             self.assertIn(nationality_object.name, "United Kingdom")
-            self.assertIn(platform_type_object.name, "PLATFORM-TYPE-1")
+            self.assertIn(platform_type_object.name, "Naval - frigate")
 
             geo_types = self.store.session.query(self.store.db_classes.GeometryType).all()
             geo_sub_types = self.store.session.query(self.store.db_classes.GeometrySubType).all()
@@ -100,22 +100,19 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
 
         with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
-            platform_object = self.store.search_platform("PLATFORM-1", "United Kingdom", "123")
-            datafile_object = self.store.search_datafile("DATAFILE-1")
-            sensor_object = self.store.search_sensor("SENSOR-1", platform_object.platform_id)
+            platform_object = self.store.search_platform("ADRI", "United Kingdom", "A643")
+            sensor_object = self.store.search_sensor("GPS", platform_object.platform_id)
 
             # Check whether they are not empty anymore and filled with correct data
             self.assertNotEqual(len(platforms), 0)
-            self.assertNotEqual(len(datafiles), 0)
             self.assertNotEqual(len(sensors), 0)
 
             # The following assertions filter objects by foreign key ids and
             # compares values with the data from CSV
 
-            # Platform Object: PLATFORM-1, UNITED KINGDOM, TYPE-1, Public
+            # Platform Object: ADRI, UNITED KINGDOM, Naval - frigate, Public
             nationality = (
                 self.store.session.query(self.store.db_classes.Nationality)
                 .filter_by(nationality_id=platform_object.nationality_id)
@@ -127,7 +124,7 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
                 .filter_by(platform_type_id=platform_object.platform_type_id)
                 .first()
             )
-            self.assertEqual(platform_type.name, "PLATFORM-TYPE-1")
+            self.assertEqual(platform_type.name, "Naval - frigate")
             privacy = (
                 self.store.session.query(self.store.db_classes.Privacy)
                 .filter_by(privacy_id=platform_object.privacy_id)
@@ -135,28 +132,13 @@ class DataStorePopulateSpatiaLiteTestCase(TestCase):
             )
             self.assertEqual(privacy.name, "Public")
 
-            # Datafile Object: DATAFILE-1, True, Public, DATAFILE-TYPE-1
-            self.assertEqual(datafile_object.simulated, True)
-            privacy = (
-                self.store.session.query(self.store.db_classes.Privacy)
-                .filter_by(privacy_id=datafile_object.privacy_id)
-                .first()
-            )
-            self.assertEqual(privacy.name, "Public")
-            datafile_type = (
-                self.store.session.query(self.store.db_classes.DatafileType)
-                .filter_by(datafile_type_id=datafile_object.datafile_type_id)
-                .first()
-            )
-            self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
-
-            # Sensor Object: SENSOR-1, SENSOR-TYPE-1, PLATFORM-1
+            # Sensor Object: GPS, Location-Satellite, ADRI
             sensor_type = (
                 self.store.session.query(self.store.db_classes.SensorType)
                 .filter_by(sensor_type_id=sensor_object.sensor_type_id)
                 .first()
             )
-            self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
+            self.assertEqual(sensor_type.name, "Location-Satellite")
 
 
 @pytest.mark.postgres
@@ -215,14 +197,14 @@ class DataStorePopulatePostGISTestCase(TestCase):
             nationalities = self.store.session.query(self.store.db_classes.Nationality).all()
             platform_types = self.store.session.query(self.store.db_classes.PlatformType).all()
             nationality_object = self.store.search_nationality("United Kingdom")
-            platform_type_object = self.store.search_platform_type("PLATFORM-TYPE-1")
+            platform_type_object = self.store.search_platform_type("Naval - frigate")
 
             # Check whether they are not empty anymore and filled with correct data
             self.assertNotEqual(len(nationalities), 0)
             self.assertNotEqual(len(platform_types), 0)
 
             self.assertIn(nationality_object.name, "United Kingdom")
-            self.assertIn(platform_type_object.name, "PLATFORM-TYPE-1")
+            self.assertIn(platform_type_object.name, "Naval - frigate")
 
             geo_types = self.store.session.query(self.store.db_classes.GeometryType).all()
             geo_sub_types = self.store.session.query(self.store.db_classes.GeometrySubType).all()
@@ -259,22 +241,19 @@ class DataStorePopulatePostGISTestCase(TestCase):
 
         with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
 
-            platform_object = self.store.search_platform("PLATFORM-1", "United Kingdom", "123")
-            datafile_object = self.store.search_datafile("DATAFILE-1")
-            sensor_object = self.store.search_sensor("SENSOR-1", platform_object.platform_id)
+            platform_object = self.store.search_platform("ADRI", "United Kingdom", "A643")
+            sensor_object = self.store.search_sensor("GPS", platform_object.platform_id)
 
             # Check whether they are not empty anymore and filled with correct data
             self.assertNotEqual(len(platforms), 0)
-            self.assertNotEqual(len(datafiles), 0)
             self.assertNotEqual(len(sensors), 0)
 
             # The following assertions filter objects by foreign key ids and
             # compares values with the data from CSV
 
-            # Platform Object: PLATFORM-1, UNITED KINGDOM, TYPE-1, Public
+            # Platform Object: ADRI, UNITED KINGDOM, Naval - frigate, Public
             nationality = (
                 self.store.session.query(self.store.db_classes.Nationality)
                 .filter_by(nationality_id=platform_object.nationality_id)
@@ -286,7 +265,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
                 .filter_by(platform_type_id=platform_object.platform_type_id)
                 .first()
             )
-            self.assertEqual(platform_type.name, "PLATFORM-TYPE-1")
+            self.assertEqual(platform_type.name, "Naval - frigate")
             privacy = (
                 self.store.session.query(self.store.db_classes.Privacy)
                 .filter_by(privacy_id=platform_object.privacy_id)
@@ -294,28 +273,13 @@ class DataStorePopulatePostGISTestCase(TestCase):
             )
             self.assertEqual(privacy.name, "Public")
 
-            # Datafile Object: DATAFILE-1, True, Public, DATAFILE-TYPE-1
-            self.assertEqual(datafile_object.simulated, True)
-            privacy = (
-                self.store.session.query(self.store.db_classes.Privacy)
-                .filter_by(privacy_id=datafile_object.privacy_id)
-                .first()
-            )
-            self.assertEqual(privacy.name, "Public")
-            datafile_type = (
-                self.store.session.query(self.store.db_classes.DatafileType)
-                .filter_by(datafile_type_id=datafile_object.datafile_type_id)
-                .first()
-            )
-            self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
-
-            # Sensor Object: SENSOR-1, SENSOR-TYPE-1, PLATFORM-1
+            # Sensor Object: GPS, Location-Satellite, ADRI
             sensor_type = (
                 self.store.session.query(self.store.db_classes.SensorType)
                 .filter_by(sensor_type_id=sensor_object.sensor_type_id)
                 .first()
             )
-            self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
+            self.assertEqual(sensor_type.name, "Location-Satellite")
 
 
 # TODO: This test case should fail when all add_to_XXX methods are implemented.
@@ -369,19 +333,19 @@ class DataStorePopulateMissingData(TestCase):
             output = temp_output.getvalue()
 
             assert (
-                "Error importing row ['PRIVACY-Blah', 'DATAFILE-TYPE-1', 'DATAFILE-1', 'True', '0', 'HASHED-1', ''] from Datafiles.csv"
+                "Error importing row ['PRIVACY-Blah', 'GPX', 'DATAFILE-1', 'True', '0', 'HASHED-1', ''] from Datafiles.csv"
                 in output
             )
             assert "  Error was 'Privacy is invalid/missing'" in output
 
             assert (
-                "Error importing row ['PLATFORM-2', '234', 'MissingNationality', 'PLATFORM-TYPE-2', 'Public Sensitive'] from Platforms.csv"
+                "Error importing row ['PLATFORM-2', '234', 'MissingNationality', 'Naval - destroyer', 'Public Sensitive'] from Platforms.csv"
                 in output
             )
             assert "  Error was 'Nationality is invalid/missing'" in output
 
             assert (
-                "Error importing row ['SENSOR-2', 'SENSOR-TYPE-2', 'MissingPlatform', 'France', '234', 'Public Sensitive'] from Sensors.csv"
+                "Error importing row ['SENSOR-2', 'Radar', 'MissingPlatform', 'France', '234', 'Public Sensitive'] from Sensors.csv"
                 in output
             )
             assert "  Error was 'Host is missing/invalid'" in output
