@@ -449,11 +449,12 @@ class CommandLineResolver(DataResolver):
         completer = list()
         platforms = data_store.session.query(data_store.db_classes.Platform).all()
         for platform in platforms:
-            p = f"{platform.name} / "
+            values = list()
+            values.append(platform.name)
             if platform.trigraph:
-                p += f"{platform.trigraph} / "
+                values.append(platform.trigraph)
             if platform.quadgraph:
-                p += f"{platform.quadgraph} / "
+                values.append(platform.quadgraph)
             synonym = (
                 data_store.session.query(data_store.db_classes.Synonym)
                 .filter(
@@ -464,10 +465,12 @@ class CommandLineResolver(DataResolver):
             )
             if synonym:
                 synonym_names = [s.synonym for s in synonym]
-                p += f"{','.join(synonym_names)} / "
+                values.append(",".join(synonym_names))
 
-            p += f"{platform.identifier} / {platform.nationality_name}"
-            completer.append(p)
+            values.append(platform.identifier)
+            values.append(platform.nationality_name)
+            line = " / ".join(values)
+            completer.append(line)
         choice = create_menu(
             "Please start typing to show suggested values",
             cancel="platform search",
