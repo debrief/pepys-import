@@ -10,7 +10,6 @@ from halo import Halo
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
 
-from config import ARCHIVE_PATH, LOCAL_PARSERS
 from paths import IMPORTERS_DIRECTORY
 from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import DataStore
@@ -28,17 +27,24 @@ USER = getuser()
 
 
 class FileProcessor:
-    def __init__(self, filename=None, archive=False, skip_validation=False):
+    def __init__(
+        self,
+        filename=None,
+        archive=False,
+        skip_validation=False,
+        archive_path=None,
+        local_parsers=None,
+    ):
         self.importers = []
         # Register local importers if any exists
-        if LOCAL_PARSERS:
-            if not os.path.exists(LOCAL_PARSERS):
+        if local_parsers:
+            if not os.path.exists(local_parsers):
                 print(
-                    f"No such file or directory: {LOCAL_PARSERS}. Only core "
+                    f"No such file or directory: {local_parsers}. Only core "
                     "parsers are going to work."
                 )
             else:
-                self.load_importers_dynamically(LOCAL_PARSERS)
+                self.load_importers_dynamically(local_parsers)
 
         if filename is None:
             self.filename = ":memory:"
@@ -47,12 +53,12 @@ class FileProcessor:
         self.output_path = None
         self.input_files_path = None
         self.directory_path = None
-        # Check if ARCHIVE_PATH is given in the config file
-        if ARCHIVE_PATH:
+
+        if archive_path:
             # Create the path if it doesn't exist
-            if not os.path.exists(ARCHIVE_PATH):
-                os.makedirs(ARCHIVE_PATH)
-            self.output_path = ARCHIVE_PATH
+            if not os.path.exists(archive_path):
+                os.makedirs(archive_path)
+            self.output_path = archive_path
         self.archive = archive
         self.skip_validation = skip_validation
 

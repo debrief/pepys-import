@@ -51,7 +51,10 @@ def custom_print_formatted_text(text):
     If it throws an error, Use the normal print function."""
 
     if not WINDOWS:
-        print_formatted_text(text)
+        try:
+            print_formatted_text(text)
+        except TypeError:
+            print(formatted_text_to_str(text))
     else:
         try:
             print_formatted_text(text)
