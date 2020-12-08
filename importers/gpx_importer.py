@@ -58,7 +58,9 @@ class GPXImporter(Importer):
             platform = self.get_cached_platform(
                 data_store, platform_name=track_name, change_id=change_id
             )
-            sensor_type = data_store.add_to_sensor_types("GPS", change_id=change_id).name
+            sensor_type = data_store.add_to_sensor_types(
+                "Location-Satellite", change_id=change_id
+            ).name
             sensor = platform.get_sensor(
                 data_store=data_store,
                 sensor_name="GPS",

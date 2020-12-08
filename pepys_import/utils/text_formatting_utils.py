@@ -1,3 +1,5 @@
+import textwrap
+
 from prompt_toolkit import print_formatted_text
 from prompt_toolkit.formatted_text import FormattedText
 
@@ -23,12 +25,17 @@ def format_table(title: str, table_string: str):
 
 def format_menu(title: str, choices: str):
     """Create a FormattedText object which has title in bold and normal style for the choices."""
-    return FormattedText([("bold", title), ("", choices)])
+    return FormattedText([("#0e84b5 bold", title), ("#0e84b5", choices)])
 
 
 def format_command(text):
     """Create a FormattedText object which makes the given text bold."""
-    return FormattedText([("bold", text)])
+    return FormattedText([("#0e84b5 bold", text)])
+
+
+def format_help_text(text):
+    """Create a FormattedText object which makes the given text italic."""
+    return FormattedText([("#28a745", text)])
 
 
 def formatted_text_to_str(formatted_text: FormattedText) -> str:
@@ -44,7 +51,10 @@ def custom_print_formatted_text(text):
     If it throws an error, Use the normal print function."""
 
     if not WINDOWS:
-        print_formatted_text(text)
+        try:
+            print_formatted_text(text)
+        except TypeError:
+            print(formatted_text_to_str(text))
     else:
         try:
             print_formatted_text(text)
@@ -52,3 +62,28 @@ def custom_print_formatted_text(text):
         # If that's the case, the program will use the normal print() function to print the outputs
         except NoConsoleScreenBufferError:
             print(formatted_text_to_str(text))
+
+
+def print_new_section_title(text, line_width=60):
+    lines = wrap_text(text, line_width - 10)
+    lines = [f"#{line.center(line_width-2)}#" for line in lines]
+    lines.insert(0, "\n" + "#" * line_width)
+    lines.append("#" * line_width)
+    lines.append("Type HELP or ? at any time to display contextual help.")
+    print(*lines, sep="\n")
+
+
+def wrap_text(text, line_width=60):
+    return textwrap.wrap(text, line_width)
+
+
+def print_help_text(data_store, help_id):
+    HelpText = data_store.db_classes.HelpText
+    help_text = data_store.session.query(HelpText).filter(HelpText.id == help_id).first()
+    if help_text:
+        print("-" * 60)
+        lines = wrap_text(help_text.guidance)
+        lines.append(f"({help_id})")
+        wrapped_text = "\n".join(lines)
+        custom_print_formatted_text(format_help_text(wrapped_text))
+        input("<Press Enter to continue>")

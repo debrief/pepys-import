@@ -691,7 +691,9 @@ class DataStoreStatusTestCase(TestCase):
         """Test whether summary contents correct for reference tables"""
 
         with self.store.session_scope():
-            table_summary_object = self.store.get_status(TableTypes.REFERENCE)
+            table_summary_object = self.store.get_status(
+                TableTypes.REFERENCE, exclude=[constants.HELP_TEXT]
+            )
         report = table_summary_object.report()
 
         self.assertNotEqual(report, "")

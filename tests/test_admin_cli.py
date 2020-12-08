@@ -958,7 +958,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         results = connection.execute("SELECT name FROM SensorTypes;")
         results = results.fetchall()
         names = [name for r in results for name in r]
-        assert "GPS" in names
+        assert "Location-Satellite" in names
         assert "Position" in names
 
         results = connection.execute("SELECT name FROM Sensors;")
@@ -999,7 +999,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         results = connection.execute("SELECT name FROM SensorTypes;")
         results = results.fetchall()
         names = [name for r in results for name in r]
-        assert "GPS" in names
+        assert "Location-Satellite" in names
         assert "Position" in names
 
         results = connection.execute("SELECT name FROM Sensors;")
@@ -1044,7 +1044,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         results = connection.execute("SELECT name FROM SensorTypes;")
         results = results.fetchall()
         names = [name for r in results for name in r]
-        assert "GPS" in names
+        assert "Location-Satellite" in names
         assert "Position" in names
 
         # Even though there are Sensor objects with Public Sensitive level, their Platform objects
@@ -1432,7 +1432,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         results = connection.execute("SELECT name FROM SensorTypes;")
         results = results.fetchall()
         names = [name for r in results for name in r]
-        assert "GPS" in names
+        assert "Location-Satellite" in names
         assert "Position" in names
 
         results = connection.execute("SELECT name FROM Sensors;")
@@ -1473,7 +1473,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         results = connection.execute("SELECT name FROM SensorTypes;")
         results = results.fetchall()
         names = [name for r in results for name in r]
-        assert "GPS" in names
+        assert "Location-Satellite" in names
         assert "Position" in names
 
         results = connection.execute("SELECT name FROM Sensors;")
@@ -1518,7 +1518,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         results = connection.execute("SELECT name FROM SensorTypes;")
         results = results.fetchall()
         names = [name for r in results for name in r]
-        assert "GPS" in names
+        assert "Location-Satellite" in names
         assert "Position" in names
 
         # Even though there are Sensor objects with Public Sensitive level, their Platform objects
@@ -1633,7 +1633,9 @@ def test_training_mode_setup(patched_prompt1, patched_prompt2, patched_input, pa
 
     patched_input.side_effect = ["."]
 
-    db_name = os.path.expanduser(os.path.join("~", "pepys_training_database.db"))
+    db_name = os.path.expanduser(
+        os.path.join("~", "Pepys_Training_Data", "pepys_training_database.db")
+    )
 
     try:
         run_shell(db=None, training=True, path=".")
