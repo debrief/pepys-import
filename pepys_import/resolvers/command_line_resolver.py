@@ -206,7 +206,13 @@ class CommandLineResolver(DataResolver):
         if len(objects) == 0:
             # No sensors for this platform, so no point asking to search
             options = ["Add a new sensor"]
+            search_option = 0  # Invalid option number, as search not available in this situation
+            add_option = 1
+            other_options_base = 2
         else:
+            search_option = 1
+            add_option = 2
+            other_options_base = 3
             options = [
                 f"Search for existing sensor on platform '{host_platform.name}'",
                 "Add a new sensor",
@@ -233,15 +239,15 @@ class CommandLineResolver(DataResolver):
             return self.resolve_sensor(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
-        elif choice == str(1):
+        elif choice == str(search_option):
             return self.fuzzy_search_sensor(
                 data_store, sensor_name, sensor_type, host_platform.platform_id, privacy, change_id
             )
-        elif choice == str(2):
+        elif choice == str(add_option):
             return self.add_to_sensors(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
-        elif 3 <= int(choice) <= len(options):
+        elif other_options_base <= int(choice) <= len(options):
             selected_object = objects_dict[options[int(choice) - 1]]
             if selected_object:
                 # add sensor name and the selected sensor to sensor cache
