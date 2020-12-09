@@ -198,18 +198,24 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
-        options = [
-            f"Search for existing sensor on platform '{host_platform.name}'",
-            "Add a new sensor",
-        ]
         objects = (
             data_store.session.query(data_store.db_classes.Sensor)
             .filter(data_store.db_classes.Sensor.host == host_id)
             .all()
         )
-        objects_dict = {obj.name: obj for obj in objects}
-        if len(objects_dict) <= 7:
-            options.extend(objects_dict)
+        if len(objects) == 0:
+            # No sensors for this platform, so no point asking to search
+            options = ["Add a new sensor"]
+        else:
+            options = [
+                f"Search for existing sensor on platform '{host_platform.name}'",
+                "Add a new sensor",
+            ]
+
+            objects_dict = {obj.name: obj for obj in objects}
+            if len(objects_dict) <= 7:
+                options.extend(objects_dict)
+
         if sensor_name:
             prompt = f"Sensor '{sensor_name}' on platform '{host_platform.name}' not found. Do you wish to: "
         else:
