@@ -387,12 +387,12 @@ def test_skip_validation(patched_prompt):
         assert datafile[0].reference == "uk_track_failing_enh_validation.rep"
 
         sensor = ds.session.query(ds.db_classes.Sensor).all()
-        assert len(sensor) == 3  # Because of the 2 sensors imported by the default metadata
-        assert sensor[2].name == "SENSOR-1"
+        assert len(sensor) == 6  # Because of the 5 sensors imported by the default metadata
+        assert sensor[-1].name == "SENSOR-1"
 
         platform = ds.session.query(ds.db_classes.Platform).all()
-        assert len(platform) == 3  # Because of the 2 platforms imported by the default metadata
-        assert platform[2].name == "SPLENDID"
+        assert len(platform) == 5  # Because of the 2 platforms imported by the default metadata
+        assert platform[-1].name == "SPLENDID"
 
         states = ds.session.query(ds.db_classes.State).all()
         assert len(states) == 7
