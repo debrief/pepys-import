@@ -80,7 +80,7 @@ class CommandLineResolver(DataResolver):
             chosen_privacy = self.resolve_reference(
                 data_store,
                 change_id,
-                data_type="Datafile",
+                data_type=f"Datafile named '{datafile_name}'",
                 db_class=data_store.db_classes.Privacy,
                 field_name="privacy",
                 text_name="classification",
