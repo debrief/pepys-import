@@ -730,7 +730,7 @@ class TestImportWithDuplicatePlatformNames(unittest.TestCase):
             "2",  # PLATFORM-TYPE-1
             "2",  # Public
             "1",  # Yes, create
-            "2",  # Add new sensor
+            "1",  # Add new sensor
             "2",  # GPS
             "2",  # Public
             "1",  # Yes, create
@@ -739,7 +739,7 @@ class TestImportWithDuplicatePlatformNames(unittest.TestCase):
             "2",  # PLATFORM-TYPE-1
             "2",  # Public
             "1",  # Yes, create
-            "2",  # Add new sensor
+            "1",  # Add new sensor
             "2",  # GPS
             "2",  # Public
             "1",  # Yes, create
@@ -838,7 +838,7 @@ class TestImportMetadataOnly(unittest.TestCase):
             "3",  # PLATFORM-TYPE-1,
             "3",  # Public
             "1",  # Yes, create
-            "2",  # Add sensor
+            "1",  # Add sensor
             "3",  # GPS
             "3",  # Public
             "1",  # Yes, create
@@ -847,7 +847,7 @@ class TestImportMetadataOnly(unittest.TestCase):
             "5",  # Fisher
             "3",  # Public
             "1",  # Yes, create
-            "2",  # Add sensor
+            "1",  # Add sensor
             "4",  # SENSOR-TYPE-1
             "3",  # Public
             "1",  # Yes, create
@@ -859,7 +859,7 @@ class TestImportMetadataOnly(unittest.TestCase):
             "3",  # PLATFORM-TYPE-1,
             "3",  # Public
             "1",  # Yes, create
-            "2",  # Add sensor
+            "1",  # Add sensor
             "3",  # GPS
             "3",  # Public
             "1",  # Yes, create
@@ -966,7 +966,7 @@ class TestImportSkipFile(unittest.TestCase):
             "3",  # PLATFORM-TYPE-1,
             "3",  # Public
             "1",  # Yes, create
-            "2",  # Add sensor
+            "1",  # Add sensor
             "3",  # GPS
             "3",  # Public
             "1",  # Yes, create
@@ -975,7 +975,7 @@ class TestImportSkipFile(unittest.TestCase):
             "5",  # Fisher
             "3",  # Public
             "1",  # Yes, create
-            "2",  # Add sensor
+            "1",  # Add sensor
             "4",  # SENSOR-TYPE-1
             "3",  # Public
             "1",  # Yes, create
@@ -987,7 +987,7 @@ class TestImportSkipFile(unittest.TestCase):
             "3",  # PLATFORM-TYPE-1,
             "3",  # Public
             "1",  # Yes, create
-            "2",  # Add sensor
+            "1",  # Add sensor
             "3",  # GPS
             "3",  # Public
             "1",  # Yes, create

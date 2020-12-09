@@ -33,7 +33,7 @@ def test_rep_test_1_import(prompt, menu_prompt, processor_prompt):
         "3",  # PLATFORM-TYPE-1,
         "3",  # Public
         "1",  # Yes, create
-        "2",  # Add sensor
+        "1",  # Add sensor
         "3",  # GPS
         "3",  # Public
         "1",  # Yes, create
@@ -42,7 +42,7 @@ def test_rep_test_1_import(prompt, menu_prompt, processor_prompt):
         "5",  # Fisher
         "3",  # Public
         "1",  # Yes, create
-        "2",  # Add sensor
+        "1",  # Add sensor
         "4",  # SENSOR-TYPE-1
         "3",  # Public
         "1",  # Yes, create
@@ -101,7 +101,7 @@ def test_gpx_1_0_import(prompt, menu_prompt, processor_prompt):
         "5",  # Ferry
         "5",  # Private
         "1",  # Yes, create
-        "2",  # Add new sensor
+        "1",  # Add new sensor
         "5",  # Private
         "1",  # Yes, create
     ]
