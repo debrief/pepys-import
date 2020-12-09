@@ -878,10 +878,10 @@ class TestImportMetadataOnly(unittest.TestCase):
 
         with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 4
+            assert len(platforms) == 6
 
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            assert len(sensors) == 4
+            assert len(sensors) == 7
 
             states = len(self.store.session.query(self.store.db_classes.State).all())
             contacts = len(self.store.session.query(self.store.db_classes.Contact).all())
@@ -897,12 +897,12 @@ class TestImportMetadataOnly(unittest.TestCase):
         with self.store.session_scope():
             # SPLENDID platform should be added to the database
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 5
+            assert len(platforms) == 7
             assert platforms[-1].name == "SPLENDID"
 
             # GPS Sensor on SPLENDID platform should be added to the database
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            assert len(sensors) == 5
+            assert len(sensors) == 8
             assert sensors[-1].name == "GPS"
             assert sensors[-1].host__name == "SPLENDID"
 
@@ -999,11 +999,11 @@ class TestImportSkipFile(unittest.TestCase):
 
         with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 2
+            assert len(platforms) == 4
             platform_ids = [p.platform_id for p in platforms]
 
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            assert len(sensors) == 2
+            assert len(sensors) == 5
             sensor_ids = [p.sensor_id for p in sensors]
 
             states = len(self.store.session.query(self.store.db_classes.State).all())
@@ -1019,12 +1019,12 @@ class TestImportSkipFile(unittest.TestCase):
         with self.store.session_scope():
             # All tables should have the same number of rows
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 2
+            assert len(platforms) == 4
             new_platform_ids = [p.platform_id for p in platforms]
             assert platform_ids == new_platform_ids
 
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            assert len(sensors) == 2
+            assert len(sensors) == 5
             new_sensor_ids = [p.sensor_id for p in sensors]
             assert sensor_ids == new_sensor_ids
 
