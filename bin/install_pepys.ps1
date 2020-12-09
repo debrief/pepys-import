@@ -143,3 +143,15 @@ catch {
     Write-Output "ERROR: Could not create file assocations"
     Exit 1
 }
+
+
+# Copy tutorial files into folder in user's home directory
+try {
+    New-Item -Path $env:USERPROFILE -Name "Pepys_Training_Data" -ItemType "directory" -Force
+    Copy-Item -Path "..\tutorial" -Destination "$env:USERPROFILE\Pepys_Training_Data" -Recurse -Force
+}
+catch {
+    Write-Output $_
+    Write-Output "ERROR: Could not copy tutorial data to home folder"
+    Exit 1
+}
