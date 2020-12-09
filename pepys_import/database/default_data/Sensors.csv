@@ -1,3 +1,6 @@
 name,sensor_type,host_name,host_identifier,host_nationality,privacy
 GPS,Location-Satellite,ADRI,A643,United Kingdom,Public
 INS,Location-Inertial,ADRI,A643,United Kingdom,Public Sensitive
+Periscope,Visual,ADRI,A643,United Kingdom,Public Sensitive
+GPS,Location-Satellite,JEAN,A816,United Kingdom,Public
+GPS,Location-Satellite,SPAR,P543,France,Public

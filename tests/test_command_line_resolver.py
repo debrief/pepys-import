@@ -1738,14 +1738,14 @@ class GetMethodsTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["Test Platform", "123", "Tst", "Test"]
         with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            # there must be 2 entities at the beginning
-            self.assertEqual(len(platforms), 2)
+            # there must be 4 entities at the beginning (the default ones)
+            self.assertEqual(len(platforms), 4)
 
             self.store.get_platform("Test Platform", change_id=self.change_id)
 
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 3)
-            self.assertEqual(platforms[2].name, "Test Platform")
+            self.assertEqual(len(platforms), 5)
+            self.assertEqual(platforms[-1].name, "Test Platform")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
@@ -1782,8 +1782,8 @@ class GetMethodsTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["SENSOR-TEST"]
         with self.store.session_scope():
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            # there must be 2 entities at the beginning
-            self.assertEqual(len(sensors), 2)
+            # there must be 5 entities at the beginning (the default ones)
+            self.assertEqual(len(sensors), 5)
 
             platform = self.store.get_platform(
                 platform_name="ADRI",
@@ -1795,8 +1795,8 @@ class GetMethodsTestCase(unittest.TestCase):
 
             # there must be 3 entities now
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            self.assertEqual(len(sensors), 3)
-            self.assertEqual(sensors[2].name, "SENSOR-TEST")
+            self.assertEqual(len(sensors), 6)
+            self.assertEqual(sensors[-1].name, "SENSOR-TEST")
 
 
 @pytest.mark.parametrize(
