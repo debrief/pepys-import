@@ -43,7 +43,7 @@ to allow you to confirm everything is set correctly - just choose option :code:`
 continue.
 
 The next set of questions are about the Platform. You should choose to add a new platform (option
-:code:`2`), and then you'll be asked for details. It doesn't matter what name or details you give it, as
+:code:`1`), and then you'll be asked for details. It doesn't matter what name or details you give it, as
 this is just an example - but note that some fields are optional. Next is the search for a
 nationality - again, you'll get a list of the most common nationalities, but can search for others
 if you want to. For now, just choose :code:`3` for :code:`United Kingdom`. When you're given the list of
