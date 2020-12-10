@@ -20,7 +20,7 @@ MAX_ROWS_DISPLAYED = 500
 
 
 def bottom_toolbar():
-    return HTML("Press <b>ESC then Enter</b> to exit!")
+    return HTML("Press <b>ESC</b> then <b>Enter</b> to run query")
 
 
 class ViewDataShell(BaseShell):
