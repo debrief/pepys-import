@@ -149,7 +149,7 @@ class FileProcessor:
             if descend_tree:
                 # loop through this folder and children
                 for current_path, folders, files in os.walk(abs_path):
-                    for file in files:
+                    for file in sort_files(files):
                         processed_ctr = self.process_file(
                             file, current_path, data_store, processed_ctr, import_summary
                         )
