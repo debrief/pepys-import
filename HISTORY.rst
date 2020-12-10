@@ -2,6 +2,18 @@
 History
 =======
 
+
+0.0.24 (2020-12-10)
+-------------------
+
+* Don't allow users to create new entries in Reference tables
+* Add "training" mode, using private Pepys database
+* Use bold/colored text in application
+* Add "viewer" mode/app for Pepys-Admin for read-only interactions
+* Add context-sensitive help for all prompts
+* Copy tutorial content to user's Home folder on installation
+* Lots and lots of minor usability improvements
+
 0.0.23 (2020-09-23)
 -------------------
 
