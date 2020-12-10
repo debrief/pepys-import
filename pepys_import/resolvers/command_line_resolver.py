@@ -144,7 +144,7 @@ class CommandLineResolver(DataResolver):
             )
             for platform in platforms:
                 platform_details.append(
-                    f"{platform.name} / {platform.identifier} / {platform.nationality_name}"
+                    f"Select: {platform.name} / {platform.identifier} / {platform.nationality_name}"
                 )
         choices = final_options + platform_details
 
@@ -218,7 +218,7 @@ class CommandLineResolver(DataResolver):
                 f"Search for existing sensor on platform '{host_platform.name}'",
             ]
 
-            objects_dict = {obj.name: obj for obj in objects}
+            objects_dict = {f"Select: {obj.name}": obj for obj in objects}
             if len(objects_dict) <= 7:
                 options.extend(objects_dict)
 
@@ -312,7 +312,7 @@ class CommandLineResolver(DataResolver):
             current_values += "\n"
         else:
             objects = data_store.session.query(db_class).limit(8).all()
-        objects_dict = {obj.name: obj for obj in objects}
+        objects_dict = {f"Select: {obj.name}": obj for obj in objects}
         options.extend(objects_dict)
 
         def is_valid_dynamic(option):  # pragma: no cover
@@ -658,36 +658,52 @@ class CommandLineResolver(DataResolver):
                 data_store, platform_name, platform_type, nationality, privacy, change_id
             )
 
-        identifier = prompt(
-            format_command("Please enter identifier (pennant or tail number): ")
-        ).strip()
-        if len(identifier) > 10:
-            print(
-                "Identifier too long, maximum length 10 characters. Restarting platform data entry."
-            )
-            return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
-            )
+        while True:
+            identifier = prompt(
+                format_command("Please enter identifier (pennant or tail number): ")
+            ).strip()
+            if len(identifier) > 10:
+                print(
+                    "Identifier too long, maximum length 10 characters. Restarting platform data entry."
+                )
+                return self.add_to_platforms(
+                    data_store, platform_name, platform_type, nationality, privacy, change_id
+                )
+            elif identifier in ["?", "HELP"]:
+                print_help_text(data_store, constants.PLATFORM_IDENTIFIER)
+            else:
+                break
 
-        trigraph = prompt(
-            format_command("Please enter trigraph (optional): "), default=platform_name[:3]
-        ).strip()
-        if len(trigraph) > 3:
-            print("Trigraph too long, maximum length 3 characters. Restarting platform data entry.")
-            return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
-            )
-
-        quadgraph = prompt(
-            format_command("Please enter quadgraph (optional): "), default=platform_name[:4]
-        ).strip()
-        if len(quadgraph) > 4:
-            print(
-                "Quadgraph too long, maximum length 4 characters. Restarting platform data entry."
-            )
-            return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
-            )
+        while True:
+            trigraph = prompt(
+                format_command("Please enter trigraph (optional): "), default=platform_name[:3]
+            ).strip()
+            if len(trigraph) > 3:
+                print(
+                    "Trigraph too long, maximum length 3 characters. Restarting platform data entry."
+                )
+                return self.add_to_platforms(
+                    data_store, platform_name, platform_type, nationality, privacy, change_id
+                )
+            elif trigraph in ["?", "HELP"]:
+                print_help_text(data_store, constants.PLATFORM_TRIGRAPH)
+            else:
+                break
+        while True:
+            quadgraph = prompt(
+                format_command("Please enter quadgraph (optional): "), default=platform_name[:4]
+            ).strip()
+            if len(quadgraph) > 4:
+                print(
+                    "Quadgraph too long, maximum length 4 characters. Restarting platform data entry."
+                )
+                return self.add_to_platforms(
+                    data_store, platform_name, platform_type, nationality, privacy, change_id
+                )
+            elif quadgraph in ["?", "HELP"]:
+                print_help_text(data_store, constants.PLATFORM_QUADGRAPH)
+            else:
+                break
 
         if platform_name == "" or identifier == "":
             print(
