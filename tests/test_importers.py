@@ -902,7 +902,7 @@ class TestImportMetadataOnly(unittest.TestCase):
 
             # GPS Sensor on SPLENDID platform should be added to the database
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            assert len(sensors) == 8
+            assert len(sensors) == 9
             assert sensors[-1].name == "GPS"
             assert sensors[-1].host__name == "SPLENDID"
 

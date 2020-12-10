@@ -1759,7 +1759,7 @@ class GetMethodsTestCase(unittest.TestCase):
 
             # there must be 3 entities now
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            self.assertEqual(len(sensors), 6)
+            self.assertEqual(len(sensors), 7)
             self.assertEqual(sensors[-1].name, "SENSOR-TEST")
 
 
