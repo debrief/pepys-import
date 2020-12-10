@@ -210,12 +210,12 @@ class CommandLineResolver(DataResolver):
             add_option = 1
             other_options_base = 2
         else:
-            search_option = 1
-            add_option = 2
+            add_option = 1
+            search_option = 2
             other_options_base = 3
             options = [
-                f"Search for existing sensor on platform '{host_platform.name}'",
                 "Add a new sensor",
+                f"Search for existing sensor on platform '{host_platform.name}'",
             ]
 
             objects_dict = {obj.name: obj for obj in objects}
