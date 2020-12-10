@@ -11,7 +11,9 @@ Please ensure that you complete the following mandatory sections:
  -->
 
 ## 🧰 Issue
-<!-- [The issue the work was done for as an issue reference (e.g. `closes #1`)] -->
+<!-- [The issue the work was done for as an issue reference (e.g. `#1`)] 
+     [Please use `fixes` if it fully resolves an issue (e.g. `fixes #321`)]
+-->
 
 ## 🚀 Overview: 
 <!-- [A summary of what you did in no more than one paragraph] -->
@@ -34,7 +36,8 @@ Please ensure that you complete the following mandatory sections:
 ## Confirmations
 
 - [ ] I have chosen reviewers for my PR.
-- [ ] I have chosen an appropriate label for the PR.
+- [ ] I have chosen an appropriate label for the PR, adding `interactive_review` if reviewers will need to see UI
+- [ ] I have extended/updated the documentation in `\docs` folder
 - [ ] I have completed the mandatory sections of this document.
 - [ ] I have deleted any unused sections.
 

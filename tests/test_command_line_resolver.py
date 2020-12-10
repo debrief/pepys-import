@@ -9,8 +9,10 @@ from uuid import uuid4
 import pytest
 
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.resolvers import constants
 from pepys_import.resolvers.command_line_input import is_valid
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver, is_number
+from pepys_import.utils.text_formatting_utils import formatted_text_to_str
 
 DIR_PATH = os.path.dirname(__file__)
 
@@ -32,27 +34,6 @@ class ReferenceDataTestCase(unittest.TestCase):
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_fuzzy_search_add_new_privacy(self, resolver_prompt, menu_prompt):
-        """Test whether a new Privacy entity created or not
-        after searched and not founded in the Privacy Table."""
-
-        # Select "Search an existing classification"->Search "PRIVACY-TEST"->Type "0"->
-        # Select "Yes"
-        menu_prompt.side_effect = ["1", "PRIVACY-TEST", "1"]
-        resolver_prompt.side_effect = ["0"]
-        with self.store.session_scope():
-            privacy = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                self.store.db_classes.Privacy,
-                "privacy",
-                "classification",
-            )
-            self.assertEqual(privacy.name, "PRIVACY-TEST")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_select_existing_privacy(self, menu_prompt):
         """Test whether an existing Privacy entity searched and returned or not"""
 
@@ -67,6 +48,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store.db_classes.Privacy,
                 "privacy",
                 "classification",
+                "",
+                "",
             )
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
@@ -89,6 +72,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store.db_classes.Privacy,
                 "privacy",
                 "classification",
+                "",
+                "",
             )
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
@@ -109,6 +94,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store.db_classes.Privacy,
                 "privacy",
                 "classification",
+                "",
+                "",
             )
             self.assertEqual(privacy.name, "Public")
 
@@ -116,8 +103,8 @@ class ReferenceDataTestCase(unittest.TestCase):
     def test_fuzzy_search_select_privacy_directly(self, menu_prompt):
         """Test whether recursive call works for privacy"""
 
-        # Select "3-Public"
-        menu_prompt.side_effect = ["3"]
+        # Select "2-Public"
+        menu_prompt.side_effect = ["2"]
         with self.store.session_scope():
             self.store.add_to_privacies("Public", 0, self.change_id)
             self.store.add_to_privacies("Public Sensitive", 0, self.change_id)
@@ -128,27 +115,10 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store.db_classes.Privacy,
                 "privacy",
                 "classification",
+                "",
+                "",
             )
             self.assertEqual(privacy.name, "Public")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    def test_fuzzy_search_add_new_platform_type(self, menu_prompt):
-        """Test whether a new PlatformType entity created or not
-        after searched and not founded in the Privacy Table."""
-
-        # Select "Search an existing platform-type"->Search "TYPE-TEST"->
-        # Select "Yes"
-        menu_prompt.side_effect = ["1", "TYPE-TEST", "1"]
-        with self.store.session_scope():
-            platform_type = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                self.store.db_classes.PlatformType,
-                "platform_type",
-            )
-            assert platform_type.__tablename__ == "PlatformTypes"
-            assert platform_type.name == "TYPE-TEST"
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_select_existing_platform_type(self, menu_prompt):
@@ -164,30 +134,11 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.PlatformType,
                 "platform_type",
+                "",
+                "",
             )
             assert platform_type.__tablename__ == "PlatformTypes"
             assert platform_type.name == "TYPE-TEST"
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_fuzzy_search_select_existing_platform_type_without_search(
-        self, resolver_prompt, menu_prompt
-    ):
-        """Test whether a new PlatformType entity created or not"""
-
-        # Select "Add a new platform-type"->Type "TYPE-TEST"
-        menu_prompt.side_effect = ["2"]
-        resolver_prompt.side_effect = ["TYPE-TEST"]
-        with self.store.session_scope():
-            self.store.add_to_privacies("TYPE-TEST", 0, self.change_id)
-            platform_type = self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                self.store.db_classes.PlatformType,
-                "platform_type",
-            )
-            self.assertEqual(platform_type.name, "TYPE-TEST")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_recursive_platform_type(self, menu_prompt):
@@ -205,6 +156,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.PlatformType,
                 "platform_type",
+                "",
+                "",
             )
             self.assertEqual(platform_type.name, "TYPE-1")
 
@@ -212,8 +165,8 @@ class ReferenceDataTestCase(unittest.TestCase):
     def test_fuzzy_search_select_platform_type_directly(self, menu_prompt):
         """Test whether recursive call works for platform_type"""
 
-        # Select "3-TYPE-1"
-        menu_prompt.side_effect = ["3"]
+        # Select "2-TYPE-1"
+        menu_prompt.side_effect = ["2"]
         with self.store.session_scope():
             self.store.add_to_platform_types("TYPE-1", self.change_id)
             self.store.add_to_platform_types("TYPE-2", self.change_id)
@@ -223,13 +176,15 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.PlatformType,
                 "platform_type",
+                "",
+                "",
             )
             self.assertEqual(platform_type.name, "TYPE-1")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_resolver_reference_select_nationality_directly(self, menu_prompt):
         # Select "3-UK"
-        menu_prompt.side_effect = ["3", "4", "5", "6"]
+        menu_prompt.side_effect = ["2", "3", "4", "5"]
         with self.store.session_scope():
             self.store.add_to_nationalities("UK", self.change_id, priority=1)
             self.store.add_to_nationalities("FR", self.change_id, priority=2)
@@ -241,6 +196,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.Nationality,
                 "nationality",
+                "",
+                "",
             )
             assert nationality.name == "UK"
 
@@ -250,6 +207,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.Nationality,
                 "nationality",
+                "",
+                "",
             )
             assert nationality.name == "FR"
 
@@ -259,6 +218,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.Nationality,
                 "nationality",
+                "",
+                "",
             )
             assert nationality.name == "TR"
 
@@ -268,6 +229,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 "",
                 self.store.db_classes.Nationality,
                 "nationality",
+                "",
+                "",
             )
             assert nationality is None
 
@@ -285,6 +248,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store.db_classes.Privacy,
                 "privacy",
                 "classification",
+                "",
+                "",
             )
             self.assertIsNone(privacy)
 
@@ -302,6 +267,8 @@ class ReferenceDataTestCase(unittest.TestCase):
                 self.store.db_classes.Privacy,
                 "privacy",
                 "classification",
+                "",
+                "",
             )
             self.assertIsNone(privacy)
 
@@ -313,28 +280,68 @@ class ReferenceDataTestCase(unittest.TestCase):
                     self.store.db_classes.Privacy,
                     "privacy",
                     "classification",
+                    "",
+                    "",
                 )
             assert privacy is None
         output = temp_output.getvalue()
         assert "Returning to the previous menu" in output
 
+    @patch("pepys_import.utils.text_formatting_utils.input")
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_resolve_reference_empty_input(self, resolver_prompt, menu_prompt):
-        resolver_prompt.side_effect = [""]
-        menu_prompt.side_effect = ["2", "."]
+    def test_resolve_reference_print_help_text(self, menu_prompt, mock_print, mock_input):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
+        with self.store.session_scope():  # necessary for importing help texts
+            self.store.populate_reference()
+
+        menu_prompt.side_effect = ["?", "HELP", "3"]
         temp_output = StringIO()
-        with self.store.session_scope(), redirect_stdout(temp_output):
+        with redirect_stdout(temp_output):
             self.resolver.resolve_reference(
-                self.store,
-                self.change_id,
-                "",
-                self.store.db_classes.Privacy,
-                "privacy",
-                "classification",
+                data_store=self.store,
+                change_id=self.change_id,
+                data_type="Platform",
+                db_class=self.store.db_classes.Nationality,
+                field_name="nationality",
+                help_id=constants.RESOLVE_NATIONALITY,
+                search_help_id=constants.FUZZY_SEARCH_NATIONALITY,
             )
         output = temp_output.getvalue()
-        assert "You haven't entered an input!" in output
+        assert constants.RESOLVE_NATIONALITY in output
+
+    @patch("pepys_import.utils.text_formatting_utils.input")
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    def test_fuzzy_search_reference_print_help_text(self, menu_prompt, mock_print, mock_input):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
+        with self.store.session_scope():  # necessary for importing help texts
+            self.store.populate_reference()
+
+        menu_prompt.side_effect = ["?", "HELP", "United Kingdom"]
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.resolver.fuzzy_search_reference(
+                data_store=self.store,
+                change_id=self.change_id,
+                data_type="Platform",
+                db_class=self.store.db_classes.Nationality,
+                field_name="nationality",
+                help_id=constants.RESOLVE_NATIONALITY,
+                search_help_id=constants.FUZZY_SEARCH_NATIONALITY,
+            )
+        output = temp_output.getvalue()
+        assert constants.FUZZY_SEARCH_NATIONALITY in output
 
 
 class PlatformTestCase(unittest.TestCase):
@@ -351,6 +358,7 @@ class PlatformTestCase(unittest.TestCase):
         )
         self.store.initialise()
         with self.store.session_scope():
+            self.store.populate_reference()
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -486,7 +494,7 @@ class PlatformTestCase(unittest.TestCase):
         # platform type"->Select "Warship"->Select "Search for an existing classification"->Select
         # "Public"->Select "Yes"
         menu_prompt.side_effect = [
-            "1",
+            "2",
             "TEST",
             "1",
             "UK",
@@ -527,60 +535,16 @@ class PlatformTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_resolver_platform_with_new_values(self, resolver_prompt, menu_prompt):
-        """Test whether new platform type, nationality and privacy entities are created for Platform
-        or not"""
-
-        # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select
-        # "Add a new nationality"->Select "UK"->Select "Add a new platform type"->Select "Warship
-        # ->Select "Add a new classification"->Select "Public"->Select "0"->Select "Yes"
-        menu_prompt.side_effect = ["2", "2", "2", "2", "1"]
-        resolver_prompt.side_effect = [
-            "TEST",
-            "123",
-            "TST",
-            "TEST",
-            "UK",
-            "Warship",
-            "Public",
-            "0",
-        ]
-        with self.store.session_scope():
-            (
-                platform_name,
-                trigraph,
-                quadgraph,
-                identifier,
-                platform_type,
-                nationality,
-                privacy,
-            ) = self.resolver.resolve_platform(
-                data_store=self.store,
-                platform_name="TEST",
-                platform_type=None,
-                nationality=None,
-                privacy=None,
-                change_id=self.change_id,
-            )
-            self.assertEqual(platform_name, "TEST")
-            self.assertEqual(trigraph, "TST")
-            self.assertEqual(quadgraph, "TEST")
-            self.assertEqual(identifier, "123")
-            self.assertEqual(platform_type.name, "Warship")
-            self.assertEqual(nationality.name, "UK")
-            self.assertEqual(privacy.name, "Public")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_platform_edit_given_values(self, resolver_prompt, menu_prompt):
         """Test a new platform is created after make further edits option is selected"""
 
-        # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select "No"->
-        # Type name/trigraph/quadgraph/identifier->Select "Search for an existing nationality"
-        # ->Select "UK"->Select "Search for an existing platform type"->Select "Warship"->Select
+        # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->
+        # Select "No, make further edits"->Type name/trigraph/quadgraph/identifier->
+        # Select "Search for an existing nationality"->Select "UK"->
+        # Select "Search for an existing platform type"->Select "Warship"->Select
         # "Search for an existing classification"->Select "Public"->Select "Yes"
         menu_prompt.side_effect = [
-            "2",
+            "1",
             "2",
             "1",
             "UK",
@@ -630,8 +594,68 @@ class PlatformTestCase(unittest.TestCase):
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_platform_edit_given_values_2(self, resolver_prompt, menu_prompt):
+        """Test a new platform is created after make further edits option is selected"""
+
+        # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select "No"->
+        # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->
+        # Select "Search for an existing nationality"->Select "UK"->
+        # Select "Search for an existing platform type"->Select "Warship"->Select
+        # "Search for an existing classification"->Select "Public"->Select "Yes"
+        menu_prompt.side_effect = [
+            "1",
+            "3",
+            "1",
+            "1",
+            "UK",
+            "1",
+            "Warship",
+            "1",
+            "Public",
+            "1",
+        ]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "123",
+            "TST",
+            "TEST",
+            "TEST",
+            "123",
+            "TST",
+            "TEST",
+        ]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            (
+                platform_name,
+                trigraph,
+                quadgraph,
+                identifier,
+                platform_type,
+                nationality,
+                privacy,
+            ) = self.resolver.resolve_platform(
+                data_store=self.store,
+                platform_name=None,
+                platform_type=platform_type,
+                nationality=nationality,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            self.assertEqual(platform_name, "TEST")
+            self.assertEqual(trigraph, "TST")
+            self.assertEqual(quadgraph, "TEST")
+            self.assertEqual(identifier, "123")
+            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(nationality.name, "UK")
+            self.assertEqual(privacy.name, "Public")
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_platform_new_privacy_given(self, resolver_prompt, menu_prompt):
-        menu_prompt.side_effect = ["2", "1"]
+        menu_prompt.side_effect = ["1", "1"]
         resolver_prompt.side_effect = [
             "TEST",
             "123",
@@ -661,6 +685,148 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(platform_name, "TEST")
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
+    @patch("pepys_import.utils.text_formatting_utils.input")
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_fuzzy_search_platform_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
+        menu_prompt.side_effect = ["?", "HELP", "TEST", "1"]
+        resolver_prompt.side_effect = ["TEST", "123", "TST", "TEST"]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id)
+            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            nationality = self.store.add_to_nationalities("UK", self.change_id)
+            self.store.add_to_platforms(
+                "PLATFORM-1",
+                trigraph="PL1",
+                quadgraph="PLT1",
+                identifier="123",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+                change_id=self.change_id,
+            )
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.fuzzy_search_platform(
+                    self.store,
+                    "TEST",
+                    nationality=nationality.name,
+                    platform_type=platform_type.name,
+                    privacy=privacy.name,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.FUZZY_SEARCH_PLATFORM in output
+
+    @patch("pepys_import.utils.text_formatting_utils.input")
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_platform_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
+        menu_prompt.side_effect = [
+            "?",
+            "HELP",
+            "2",
+            "2",
+            "1",
+            "UK",
+            "1",
+            "Warship",
+            "1",
+            "Public",
+            "1",
+        ]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "123",
+            "TST",
+            "TEST",
+            "TEST",
+            "123",
+            "TST",
+            "TEST",
+        ]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.resolve_platform(
+                    data_store=self.store,
+                    platform_name=None,
+                    platform_type=platform_type,
+                    nationality=nationality,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.RESOLVE_PLATFORM in output
+
+    @patch("pepys_import.utils.text_formatting_utils.input")
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_add_to_platforms_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
+        menu_prompt.side_effect = [
+            "?",
+            "HELP",
+            "1",
+        ]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "?",
+            "123",
+            "?",
+            "TST",
+            "?",
+            "TEST",
+        ]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.add_to_platforms(
+                    data_store=self.store,
+                    platform_name=None,
+                    platform_type=platform_type,
+                    nationality=nationality,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.ADD_TO_PLATFORMS in output
+            assert constants.PLATFORM_IDENTIFIER in output
+            assert constants.PLATFORM_TRIGRAPH in output
+            assert constants.PLATFORM_QUADGRAPH in output
+
 
 class DatafileTestCase(unittest.TestCase):
     def setUp(self) -> None:
@@ -676,6 +842,7 @@ class DatafileTestCase(unittest.TestCase):
         )
         self.store.initialise()
         with self.store.session_scope():
+            self.store.populate_reference()
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
@@ -726,13 +893,12 @@ class DatafileTestCase(unittest.TestCase):
             "Public",
             "1",
         ]
-        resolver_prompt.side_effect = ["TEST"]
         with self.store.session_scope():
             self.store.add_to_privacies("Public", 0, self.change_id)
             self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id)
             datafile_name, datafile_type, privacy = self.resolver.resolve_datafile(
                 data_store=self.store,
-                datafile_name=None,
+                datafile_name="TEST",
                 datafile_type=None,
                 privacy=None,
                 change_id=self.change_id,
@@ -798,6 +964,59 @@ class DatafileTestCase(unittest.TestCase):
             self.assertEqual(datafile_name, "TEST")
             self.assertEqual(privacy.name, "PRIVACY-TEST")
 
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_datafile_datafile_name_is_none(self, resolver_prompt, menu_prompt):
+        menu_prompt.side_effect = ["1"]
+        resolver_prompt.side_effect = [
+            "TEST",
+            "10",
+        ]
+        with self.store.session_scope():
+            datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id).name
+            with pytest.raises(ValueError):
+                self.resolver.resolve_datafile(
+                    data_store=self.store,
+                    datafile_name=None,
+                    datafile_type=datafile_type,
+                    privacy="PRIVACY-TEST",
+                    change_id=self.change_id,
+                )
+
+    @patch("pepys_import.utils.text_formatting_utils.input")
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_datafile_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
+        menu_prompt.side_effect = [
+            "?",
+            "HELP",
+            "1",
+        ]
+        resolver_prompt.side_effect = ["TEST", "TEST"]
+        with self.store.session_scope():
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            datafile_type = self.store.add_to_datafile_types("DATAFILE-TYPE-1", self.change_id).name
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.resolve_datafile(
+                    data_store=self.store,
+                    datafile_name="TEST",
+                    datafile_type=datafile_type,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.RESOLVE_DATAFILE in output
+
 
 class SensorTestCase(unittest.TestCase):
     def setUp(self) -> None:
@@ -822,7 +1041,7 @@ class SensorTestCase(unittest.TestCase):
 
         # Select "Add a new sensor"->Type "TEST"->Select "Add a new sensor-type"->
         # Type "SENSOR-TYPE-1"->Select "Add a new classification"->Type "Public"->Select "Yes"
-        menu_prompt.side_effect = ["2", "2", "2", "1"]
+        menu_prompt.side_effect = ["1", "2", "2", "1"]
         resolver_prompt.side_effect = ["TEST", "SENSOR-TYPE-1", "Public"]
         with self.store.session_scope():
             self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
@@ -862,8 +1081,55 @@ class SensorTestCase(unittest.TestCase):
         # Select "Search for an existing sensor-type"->Search "SENSOR-TYPE-2"->
         # Select "Search for an existing classification"->Search "Public Sensitive"->Select "Yes"
         menu_prompt.side_effect = [
+            "1",
             "2",
-            "2",
+            "1",
+            "SENSOR-TYPE-2",
+            "1",
+            "Public Sensitive",
+            "1",
+        ]
+        resolver_prompt.side_effect = ["TEST", "TEST"]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
+            sensor_type_2 = self.store.add_to_sensor_types("SENSOR-TYPE-2", self.change_id)
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id)
+            privacy_2 = self.store.add_to_privacies("Public Sensitive", 0, self.change_id)
+            nationality = self.store.add_to_nationalities("UK", self.change_id)
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id)
+
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality.name,
+                platform_type=platform_type.name,
+                privacy=privacy.name,
+                change_id=self.change_id,
+            )
+
+            (resolved_name, resolved_type, resolved_privacy,) = self.resolver.resolve_sensor(
+                self.store,
+                "TEST",
+                sensor_type.name,
+                platform.platform_id,
+                privacy.name,
+                self.change_id,
+            )
+            self.assertEqual(resolved_name, "TEST")
+            self.assertEqual(resolved_type.sensor_type_id, sensor_type_2.sensor_type_id)
+            self.assertEqual(resolved_privacy.privacy_id, privacy_2.privacy_id)
+
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_sensor_return_sensor_selection_process(self, resolver_prompt, menu_prompt):
+        # Select "Add a new sensor"->Type "TEST"->Select "No, restart sensor selection process"->
+        # Select "Add a new sensor" ->Type "TEST"->Select "Search for an existing sensor-type"->
+        # Search "SENSOR-TYPE-2"->Select "Search for an existing classification"->
+        # Search "Public Sensitive"->Select "Yes"
+        menu_prompt.side_effect = [
+            "1",
+            "3",
+            "1",
             "1",
             "SENSOR-TYPE-2",
             "1",
@@ -910,7 +1176,7 @@ class SensorTestCase(unittest.TestCase):
         # Select "Search for an existing sensor-type"->Search "SENSOR-TYPE-1"->
         # Select "Search an existing classification"->Search "Public"->Select "Yes"
         menu_prompt.side_effect = [
-            "1",
+            "2",
             "Blah",
             "1",
             "SENSOR-TYPE-1",
@@ -948,44 +1214,6 @@ class SensorTestCase(unittest.TestCase):
             self.assertEqual(sensor_name, "SENSOR-TEST")
             self.assertEqual(sensor_type.name, "SENSOR-TYPE-1")
             self.assertEqual(privacy.name, "Public")
-
-    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_fuzzy_search_add_sensor_alternative(self, resolver_prompt, menu_prompt):
-        """Test whether a new Sensor entity created when the Sensor Table is empty."""
-
-        # Select "Search an existing sensor"->Search "SENSOR-1"->Type "SENSOR-TEST"->Select "Yes"
-        menu_prompt.side_effect = [
-            "1",
-            "SENSOR-1",
-            "1",
-        ]
-        resolver_prompt.side_effect = ["SENSOR-TEST"]
-        with self.store.session_scope():
-            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id)
-            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
-            nationality = self.store.add_to_nationalities("UK", self.change_id).name
-            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
-
-            platform = self.store.get_platform(
-                platform_name="Test Platform",
-                identifier="123",
-                nationality=nationality,
-                platform_type=platform_type,
-                privacy=privacy,
-                change_id=self.change_id,
-            )
-
-            sensor_name, sensor_type, privacy = self.resolver.resolve_sensor(
-                self.store,
-                "SENSOR-TEST",
-                sensor_type=sensor_type.name,
-                host_id=platform.platform_id,
-                privacy=privacy,
-                change_id=self.change_id,
-            )
-
-            self.assertEqual(sensor_name, "SENSOR-TEST")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_resolve_sensor_select_sensor_directly(self, menu_prompt):
@@ -1090,7 +1318,7 @@ class SensorTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_sensor_new_privacy_given(self, resolver_prompt, menu_prompt):
         menu_prompt.side_effect = [
-            "2",
+            "1",
             "1",
         ]
         resolver_prompt.side_effect = ["TEST", "10"]
@@ -1119,6 +1347,155 @@ class SensorTestCase(unittest.TestCase):
             )
             self.assertEqual(resolved_name, "TEST")
             self.assertEqual(resolved_privacy.name, "PRIVACY-TEST")
+
+    @patch("pepys_import.utils.text_formatting_utils.input")
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_fuzzy_search_sensor_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
+        with self.store.session_scope():
+            self.store.populate_reference()
+
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
+        menu_prompt.side_effect = [
+            "?",
+            "HELP",
+            "SENSOR-1",
+        ]
+        resolver_prompt.side_effect = ["SENSOR-1"]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy, self.change_id)
+
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.fuzzy_search_sensor(
+                    self.store,
+                    "SENSOR-TEST",
+                    host_id=platform.platform_id,
+                    sensor_type=sensor_type,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.FUZZY_SEARCH_SENSOR in output
+
+    @patch("pepys_import.utils.text_formatting_utils.input")
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolver_sensor_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
+        with self.store.session_scope():
+            self.store.populate_reference()
+
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
+        menu_prompt.side_effect = [
+            "?",
+            "HELP",
+            "1",
+            "SENSOR-1",
+        ]
+        resolver_prompt.side_effect = ["SENSOR-1"]
+        with self.store.session_scope():
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy, self.change_id)
+
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.resolve_sensor(
+                    self.store,
+                    "SENSOR-TEST",
+                    host_id=platform.platform_id,
+                    sensor_type=sensor_type,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.RESOLVE_SENSOR in output
+
+    @patch("pepys_import.utils.text_formatting_utils.input")
+    @patch("pepys_import.utils.text_formatting_utils.custom_print_formatted_text")
+    @patch("pepys_import.resolvers.command_line_resolver.create_menu")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_add_to_sensors_print_help_text(
+        self, resolver_prompt, menu_prompt, mock_print, mock_input
+    ):
+        with self.store.session_scope():
+            self.store.populate_reference()
+
+        # Use normal print() to capture table reports
+        def side_effect(text):
+            print(formatted_text_to_str(text))
+
+        mock_print.side_effect = side_effect
+        mock_input.return_value = "Enter"
+        menu_prompt.side_effect = ["?", "HELP", "1"]
+        resolver_prompt.side_effect = ["SENSOR-TEST"]
+        with self.store.session_scope():
+            # Create platform first, then create a Sensor object
+            sensor_type = self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
+            privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
+            nationality = self.store.add_to_nationalities("UK", self.change_id).name
+            platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                identifier="123",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=self.change_id,
+            )
+            platform.get_sensor(self.store, "SENSOR-1", sensor_type, privacy, self.change_id)
+            platform.get_sensor(self.store, "SENSOR-2", sensor_type, privacy, self.change_id)
+
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.resolver.add_to_sensors(
+                    self.store,
+                    "SENSOR-TEST",
+                    host_id=platform.platform_id,
+                    sensor_type=sensor_type,
+                    privacy=privacy,
+                    change_id=self.change_id,
+                )
+            output = temp_output.getvalue()
+            assert constants.ADD_TO_SENSORS in output
 
 
 class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
@@ -1235,61 +1612,16 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         menu_prompt.side_effect = [
             ".",
             ".",
-            "2",
-            ".",
-            ".",
-            "2",
-            "2",
-            ".",
-            ".",
-            "2",
-            "2",
-            "2",
-            ".",
-            ".",
         ]
         resolver_prompt.side_effect = [
             "TEST",
             "123",
             "TST",
             "TEST",
-            "TEST",
-            "123",
-            "TST",
-            "TEST",
-            "UK",
-            "TEST",
-            "123",
-            "TST",
-            "TEST",
-            "UK",
-            "TYPE-1",
-            "TEST",
-            "123",
-            "TST",
-            "TEST",
-            "UK",
-            "TYPE-1",
-            "Public",
-            "0",
         ]
         with self.store.session_scope():
             # Type name/trigraph/quadgraph/identifier->Select "Cancel nationality search"->
             # Select "Cancel import"
-            with self.assertRaises(SystemExit):
-                self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
-            # Type name/trigraph/quadgraph/identifier->Select "Add new nationality"->Type "UK"->
-            # Select "Cancel platform type search"->Select "Cancel import"
-            with self.assertRaises(SystemExit):
-                self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
-            # Type name/trigraph/quadgraph/identifier->Select "Add new nationality"->Type "UK"->
-            # Select "Add a new platform type"->Type "TYPE-1"->Select "Cancel classification search"->
-            # Select "Cancel import"
-            with self.assertRaises(SystemExit):
-                self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
-            # Type name/trigraph/quadgraph/identification->Select "Add new nationality"->Type "UK"->
-            # Select "Add a new platform type"->Select "Add new classification"->Type "Public"->Type
-            # "0"->Select "Cancel import"->Select "Cancel import"
             with self.assertRaises(SystemExit):
                 self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
 
@@ -1309,6 +1641,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             platform_type = self.store.add_to_platform_types("PLATFORM-TYPE-1", self.change_id).name
+            self.store.add_to_sensor_types("SENSOR-TYPE-1", self.change_id).name
             platform = self.store.get_platform(
                 platform_name="Test Platform",
                 identifier="123",
@@ -1363,11 +1696,11 @@ class GetMethodsTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_get_platform_adds_resolved_platform_successfully(self, resolver_prompt, menu_prompt):
         menu_prompt.side_effect = [
-            "2",
+            "1",
             "1",
             "United Kingdom",
             "1",
-            "Fisher",
+            "Fishing Vessel",
             "1",
             "Public",
             "1",
@@ -1375,44 +1708,43 @@ class GetMethodsTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["Test Platform", "123", "Tst", "Test"]
         with self.store.session_scope():
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            # there must be 2 entities at the beginning
-            self.assertEqual(len(platforms), 2)
+            # there must be 4 entities at the beginning (the default ones)
+            self.assertEqual(len(platforms), 4)
 
             self.store.get_platform("Test Platform", change_id=self.change_id)
 
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 3)
-            self.assertEqual(platforms[2].name, "Test Platform")
+            self.assertEqual(len(platforms), 5)
+            self.assertEqual(platforms[-1].name, "Test Platform")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_get_datafile_adds_resolved_datafile_successfully(self, resolver_prompt, menu_prompt):
         menu_prompt.side_effect = [
             "1",
-            "DATAFILE-TYPE-1",
+            "Replay",
             "1",
             "Public",
             "1",
         ]
-        resolver_prompt.side_effect = ["DATAFILE-TEST"]
         with self.store.session_scope():
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            # there must be 2 entities at the beginning
-            self.assertEqual(len(datafiles), 2)
+            # there must be zero entities at the beginning
+            self.assertEqual(len(datafiles), 0)
 
             self.store.get_datafile("test", None, 0, "HASHED", change_id=self.change_id)
 
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 3)
-            self.assertEqual(datafiles[2].reference, "DATAFILE-TEST")
+            self.assertEqual(len(datafiles), 1)
+            self.assertEqual(datafiles[0].reference, "test")
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_get_sensor_adds_resolved_sensor_successfully(self, resolver_prompt, menu_prompt):
         menu_prompt.side_effect = [
-            "2",
             "1",
-            "SENSOR-TYPE-1",
+            "1",
+            "Location-Satellite",
             "1",
             "Public",
             "1",
@@ -1420,12 +1752,12 @@ class GetMethodsTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["SENSOR-TEST"]
         with self.store.session_scope():
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            # there must be 2 entities at the beginning
-            self.assertEqual(len(sensors), 2)
+            # there must be 5 entities at the beginning (the default ones)
+            self.assertEqual(len(sensors), 6)
 
             platform = self.store.get_platform(
-                platform_name="PLATFORM-1",
-                identifier="123",
+                platform_name="ADRI",
+                identifier="A643",
                 nationality="United Kingdom",
                 change_id=self.change_id,
             )
@@ -1433,8 +1765,8 @@ class GetMethodsTestCase(unittest.TestCase):
 
             # there must be 3 entities now
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            self.assertEqual(len(sensors), 3)
-            self.assertEqual(sensors[2].name, "SENSOR-TEST")
+            self.assertEqual(len(sensors), 7)
+            self.assertEqual(sensors[-1].name, "SENSOR-TEST")
 
 
 @pytest.mark.parametrize(

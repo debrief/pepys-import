@@ -13,17 +13,17 @@ from pepys_admin.utils import database_at_latest_revision, get_default_export_fo
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import is_schema_created
+from pepys_import.utils.text_formatting_utils import format_command
 
 
 class SnapshotShell(BaseShell):
     """Offers to create snapshot with Reference data and create snapshot with reference data & metadata."""
 
-    intro = """--- Menu ---
-    (1) Create snapshot with Reference data
-    (2) Create snapshot with Reference data & Metadata
-    (3) Merge databases
-    (.) Back
-    """
+    choices = """(1) Create snapshot with Reference data
+(2) Create snapshot with Reference data & Metadata
+(3) Merge databases
+(.) Back
+"""
     prompt = "(pepys-admin) (snapshot) "
 
     def __init__(self, data_store):
@@ -39,7 +39,7 @@ class SnapshotShell(BaseShell):
     @staticmethod
     def _ask_for_db_name():
         while True:
-            destination_db_name = input("SQLite database file to use: ")
+            destination_db_name = ptk_prompt(format_command("SQLite database file to use: "))
             path = os.path.join(os.getcwd(), destination_db_name)
             if not os.path.exists(path):
                 break
@@ -125,9 +125,11 @@ class SnapshotShell(BaseShell):
             )
             return
 
-        confirmation = input(
-            f"Database to merge: {slave_db_path}\n"
-            f"Merging a snapshot can introduce significant volumes of new data, are you sure you want to perform merge? (y/N)"
+        confirmation = ptk_prompt(
+            format_command(
+                f"Database to merge: {slave_db_path}\n"
+                f"Merging a snapshot can introduce significant volumes of new data, are you sure you want to perform merge? (y/N)"
+            )
         )
         if confirmation.lower() == "y":
             # Copy the SQLite db to a temporary location, as the merge function modifies the slave

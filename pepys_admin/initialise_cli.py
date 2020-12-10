@@ -1,7 +1,10 @@
 import os
 
+from prompt_toolkit import prompt
+
 from pepys_admin.base_cli import BaseShell
 from pepys_import.utils.data_store_utils import is_schema_created
+from pepys_import.utils.text_formatting_utils import format_command
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -9,8 +12,7 @@ DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 class InitialiseShell(BaseShell):
     """Offers users to clear contents, import sample reference data and metadata, create/clear schema."""
 
-    intro = """--- Menu ---
-(1) Clear database contents
+    choices = """(1) Clear database contents
 (2) Clear database schema
 (3) Create Pepys schema
 (4) Import Reference data
@@ -40,14 +42,18 @@ class InitialiseShell(BaseShell):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
 
-        confirmation = input("Are you sure you wish to clear the contents of all tables? (y/N) ")
+        confirmation = prompt(
+            format_command("Are you sure you wish to clear the contents of all tables? (y/N) ")
+        )
         if confirmation.lower() == "y":
             self.data_store.clear_db_contents()
             print("Cleared database contents")
 
     def do_clear_db_schema(self):
         """Deletes the schema from the database, i.e. removes all created tables"""
-        confirmation = input("Are you sure you wish to completely wipe the database? (y/N) ")
+        confirmation = prompt(
+            format_command("Are you sure you wish to completely wipe the database? (y/N) ")
+        )
         if confirmation.lower() == "y":
             self.data_store.clear_db_schema()
             print("Cleared database schema")

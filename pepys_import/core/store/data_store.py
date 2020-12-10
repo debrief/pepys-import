@@ -907,45 +907,27 @@ class DataStore:
 
     def get_status(
         self,
-        report_measurement: bool = False,
-        report_metadata: bool = False,
-        report_reference: bool = False,
+        table_type,
+        exclude=None,
     ):
         """
         Provides a summary of the contents of the :class:`DataStore`.
 
-        :param report_measurement: Boolean flag includes Metadata Tables
-        :type report_measurement: Boolean
-        :param report_metadata: Boolean flag includes Metadata Tables
-        :type report_metadata: Boolean
-        :param report_reference: Boolean flag includes Metadata Tables
-        :type report_reference: Boolean
+        :param table_type: one of Table Types
+        :type table_type: Enum
+        :param exclude: List of table names to exclude from the report
+        :type exclude: List
         :return: The summary of the contents of the :class:`DataStore`
         :rtype: TableSummarySet
         """
 
+        if exclude is None:
+            exclude = []
         table_summaries = []
-        if report_measurement:
-            # Create measurement table list
-            measurement_table_objects = self.meta_classes[TableTypes.MEASUREMENT]
-            for table_object in list(measurement_table_objects):
+        for table_object in list(self.meta_classes[table_type]):
+            if table_object.__tablename__ not in exclude:
                 summary = TableSummary(self.session, table_object)
                 table_summaries.append(summary)
-
-        if report_metadata:
-            # Create metadata table list
-            metadata_table_objects = self.meta_classes[TableTypes.METADATA]
-            for table_object in list(metadata_table_objects):
-                summary = TableSummary(self.session, table_object)
-                table_summaries.append(summary)
-
-        if report_reference:
-            # Create reference table list
-            reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
-            for table_object in list(reference_table_objects):
-                summary = TableSummary(self.session, table_object)
-                table_summaries.append(summary)
-
         table_summaries_set = TableSummarySet(table_summaries)
 
         return table_summaries_set
@@ -1190,6 +1172,32 @@ class DataStore:
             change_id=change_id,
         )
         return geom_sub_type
+
+    def add_to_help_texts(self, id, guidance, change_id):
+        """
+        Adds the specified help text to the :class:`HelpText` table if not already present.
+
+        :param id: ID of prompt question
+        :type id: Integer
+        :param guidance: Guidance text for contextual help
+        :type guidance: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
+        :return: Created :class:`HelpText` entity
+        :rtype: HelpText
+        """
+
+        # enough info to proceed and create entry
+        help_text = self.db_classes.HelpText(id=id, guidance=guidance)
+        self.session.add(help_text)
+        self.session.flush()
+
+        self.add_to_logs(
+            table=constants.SENSOR_TYPE,
+            row_id=help_text.help_text_id,
+            change_id=change_id,
+        )
+        return help_text
 
     # End of References
     #############################################################
@@ -1628,3 +1636,11 @@ class DataStore:
         if reference:
             return False
         return True
+
+    def get_logs_by_change_id(self, change_id):
+        """Returns Logs objects filtered by change_id"""
+        return (
+            self.session.query(self.db_classes.Log)
+            .filter(self.db_classes.Log.change_id == change_id)
+            .all()
+        )

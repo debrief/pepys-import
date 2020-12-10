@@ -62,9 +62,12 @@ class EnhancedValidator:
             prev_time = prev_object.time
 
             if location and prev_location:
-                self.course_heading_loose_match_with_location(
-                    location, prev_location, heading, course, errors, error_type
-                )
+                # Only calculate bearing from the locations and compare to heading
+                # if the vessel has actually moved between the prev_location and the new location
+                if location != prev_location:
+                    self.course_heading_loose_match_with_location(
+                        location, prev_location, heading, course, errors, error_type
+                    )
                 calculated_time = self.calculate_time(time, prev_time)
                 if calculated_time != 0:
                     self.speed_loose_match_with_location(
@@ -166,7 +169,9 @@ class EnhancedValidator:
         """
         distance = distance_between_two_points_haversine(prev_location, curr_location)
         calculated_speed = distance / time
-        if speed is None or calculated_speed <= speed * 10:
+        if speed is None:
+            return True
+        elif (speed / 10) <= calculated_speed <= (speed * 10):
             return True
         elif speed == 0.0 * (
             unit_registry.metre / unit_registry.second

@@ -1,3 +1,5 @@
 name,identifier,nationality,platform_type,privacy
-PLATFORM-1,123,United Kingdom,PLATFORM-TYPE-1,Public
-PLATFORM-2,234,France,PLATFORM-TYPE-2,Public Sensitive
+ADRI,A643,United Kingdom,Naval - frigate,Public
+JEAN,A816,United Kingdom,Naval - frigate,Public
+NARV,C045,United Kingdom,Naval - patrol,Public
+SPAR,P543,France,Tug,Public

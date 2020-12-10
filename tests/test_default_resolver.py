@@ -49,7 +49,7 @@ class DefaultResolverTestCase(unittest.TestCase):
                 "TestPlatform",
                 "1234",
                 "United Kingdom",
-                "Fisher",
+                "Fishing Vessel",
                 "Private",
                 trigraph="PLT",
                 quadgraph="PLTT",

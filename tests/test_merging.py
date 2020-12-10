@@ -2077,7 +2077,7 @@ class TestMergeUpdatePlatformPrivacy(unittest.TestCase):
 
 
 class TestExportAlterAndMerge(unittest.TestCase):
-    @patch("pepys_admin.snapshot_cli.input", return_value="slave_exported.sqlite")
+    @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="slave_exported.sqlite")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
     def setUp(self, patched_input, patched_iterfzf):
         # Create a master database
@@ -2349,7 +2349,7 @@ class TestExportAlterAndMerge(unittest.TestCase):
 
 @pytest.mark.postgres
 class TestExportAlterAndMerge_Postgres(unittest.TestCase):
-    @patch("pepys_admin.snapshot_cli.input", return_value="slave_exported.sqlite")
+    @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="slave_exported.sqlite")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
     def setUp(self, patched_input, patched_iterfzf):
         self.postgres = None
@@ -2614,7 +2614,7 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
 
 
 class TestExportDoNothingAndMerge(unittest.TestCase):
-    @patch("pepys_admin.snapshot_cli.input", return_value="slave_exported.sqlite")
+    @patch("pepys_admin.snapshot_cli.ptk_prompt", return_value="slave_exported.sqlite")
     @patch("pepys_admin.snapshot_cli.iterfzf", return_value=["Public"])
     def setUp(self, patched_input, patched_iterfzf):
         # Create a master database

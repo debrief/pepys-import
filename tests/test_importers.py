@@ -28,6 +28,7 @@ OUTPUT_PATH = os.path.join(DATA_PATH, "output_test")
 
 REP_DATA_PATH = os.path.join(DATA_PATH, "track_files", "rep_data")
 SINGLE_REP_FILE = os.path.join(DATA_PATH, "track_files", "rep_data", "rep_test1.rep")
+SINGLE_REP_FILE_2 = os.path.join(DATA_PATH, "track_files", "rep_data", "uk_track.rep")
 
 
 class SampleImporterTests(unittest.TestCase):
@@ -119,7 +120,6 @@ class SampleImporterTests(unittest.TestCase):
         self.assertIn("Files got processed: 0 times", output)
 
     @patch("pepys_import.core.store.common_db.prompt", return_value="2")
-    @patch("pepys_import.file.file_processor.ARCHIVE_PATH", OUTPUT_PATH)
     def test_archiving_files(self, patched_prompt):
         """Test whether archive flag correctly works for File Processor"""
         # Assert that REP files exist in the original location
@@ -130,7 +130,7 @@ class SampleImporterTests(unittest.TestCase):
         assert "uk_track.rep" in input_files
 
         names = list()
-        processor = FileProcessor(archive=True)
+        processor = FileProcessor(archive=True, archive_path=OUTPUT_PATH)
         processor.register_importer(ReplayImporter())
         processor.process(REP_DATA_PATH, None, False)
 
@@ -259,10 +259,9 @@ class ImporterSummaryTest(unittest.TestCase):
         assert len(failed_files) == 0
 
     @patch("pepys_import.core.store.common_db.prompt", return_value="2")
-    @patch("pepys_import.file.file_processor.ARCHIVE_PATH", OUTPUT_PATH)
     def test_summary_with_archive(self, patched_prompt):
         """Test whether descending processing works for the given path"""
-        processor = FileProcessor("import_status_test2.db", archive=True)
+        processor = FileProcessor("import_status_test2.db", archive=True, archive_path=OUTPUT_PATH)
 
         processor.load_importers_dynamically()
 
@@ -692,9 +691,12 @@ class TestImportWithDuplicatePlatformNames(unittest.TestCase):
             self.store.populate_reference()
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
 
+    @patch("pepys_import.file.file_processor.prompt")
     @patch("pepys_import.resolvers.command_line_input.prompt")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_import_with_duplicate_platform_names(self, resolver_prompt, menu_prompt):
+    def test_import_with_duplicate_platform_names(
+        self, resolver_prompt, menu_prompt, file_processor_prompt
+    ):
         # Provide datafile name, and approve creation of datafile
         # Add platform with name DOLPHIN, identifier 123, trigraph and quadgraph
         # Select UK nationality, and select platform type, privacy etc
@@ -708,7 +710,6 @@ class TestImportWithDuplicatePlatformNames(unittest.TestCase):
         # both with the same name platform, but referring to two separate platforms that belong
         # to UK and France
         resolver_prompt.side_effect = [
-            "rep_duplicate_name_test.rep",
             "DOLPHIN",
             "123",
             "DLP",
@@ -722,28 +723,30 @@ class TestImportWithDuplicatePlatformNames(unittest.TestCase):
         ]
 
         menu_prompt.side_effect = [
-            "3",
-            "1",
-            "2",
-            "3",
-            "3",
-            "3",
-            "1",
-            "2",
-            "3",
-            "3",
-            "1",
-            "2",
-            "5",
-            "3",
-            "3",
-            "1",
-            "2",
-            "3",
-            "3",
-            "1",
+            "2",  # Public
+            "1",  # Yes, create
+            "1",  # Add new platform
+            "2",  # UK
+            "2",  # PLATFORM-TYPE-1
+            "2",  # Public
+            "1",  # Yes, create
+            "1",  # Add new sensor
+            "2",  # GPS
+            "2",  # Public
+            "1",  # Yes, create
+            "1",  # Add new platform
+            "4",  # France
+            "2",  # PLATFORM-TYPE-1
+            "2",  # Public
+            "1",  # Yes, create
+            "1",  # Add new sensor
+            "2",  # GPS
+            "2",  # Public
+            "1",  # Yes, create
         ]
-
+        file_processor_prompt.side_effect = [
+            "2",  # Import metadata and measurement
+        ]
         processor = FileProcessor(archive=False)
         processor.register_importer(ReplayImporter())
 
@@ -781,6 +784,253 @@ class TestImportWithDuplicatePlatformNames(unittest.TestCase):
             assert len(plat2) == 1
             assert plat2[0].name == "DOLPHIN"
             assert plat2[0].nationality_name == "France"
+
+
+class TestImportMetadataOnly(unittest.TestCase):
+    def setUp(self) -> None:
+        self.resolver = CommandLineResolver()
+        self.store = DataStore(
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
+        )
+        self.store.initialise()
+        with self.store.session_scope():
+            self.store.populate_reference()
+            self.store.populate_metadata()
+        self.processor = FileProcessor(archive=False)
+        self.processor.register_importer(ReplayImporter())
+
+    @patch("pepys_import.file.file_processor.prompt")
+    @patch("pepys_import.resolvers.command_line_input.prompt")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_import_metadata_only(self, resolver_prompt, menu_prompt, file_processor_prompt):
+        resolver_prompt.side_effect = [
+            # For rep_test1.rep import
+            "SENSOR",
+            "123",
+            "SEN",
+            "SENS",
+            "TA",
+            "SEARCH_PLATFORM",
+            "123",
+            "SEA",
+            "SEAR",
+            "TA",
+            # For uk_track.rep import,
+            "SPLENDID",
+            "123",
+            "SPL",
+            "SPLE",
+            "GPS",
+        ]
+
+        menu_prompt.side_effect = [
+            # For rep_test1.rep import
+            "3",  # Public
+            "1",  # Yes, correct
+            "1",  # Add platform
+            "3",  # UK
+            "3",  # PLATFORM-TYPE-1,
+            "3",  # Public
+            "1",  # Yes, create
+            "1",  # Add sensor
+            "3",  # GPS
+            "3",  # Public
+            "1",  # Yes, create
+            "1",  # Add platform
+            "3",  # UK
+            "5",  # Fisher
+            "3",  # Public
+            "1",  # Yes, create
+            "1",  # Add sensor
+            "4",  # SENSOR-TYPE-1
+            "3",  # Public
+            "1",  # Yes, create
+            # For uk_track.rep import
+            "3",  # Public
+            "1",  # Yes, correct
+            "1",  # Add platform
+            "3",  # UK
+            "3",  # PLATFORM-TYPE-1,
+            "3",  # Public
+            "1",  # Yes, create
+            "1",  # Add sensor
+            "3",  # GPS
+            "3",  # Public
+            "1",  # Yes, create
+        ]
+        file_processor_prompt.side_effect = [
+            "2",  # Import metadata and measurement
+            "1",  # Import metadata
+        ]
+
+        # Import metadata and measurements
+        self.processor.process(
+            SINGLE_REP_FILE,
+            self.store,
+            False,
+        )
+
+        with self.store.session_scope():
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 6
+
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
+            assert len(sensors) == 8
+
+            states = len(self.store.session.query(self.store.db_classes.State).all())
+            contacts = len(self.store.session.query(self.store.db_classes.Contact).all())
+            comments = len(self.store.session.query(self.store.db_classes.Comment).all())
+
+        # import metadata only this time
+        self.processor.process(
+            SINGLE_REP_FILE_2,
+            self.store,
+            False,
+        )
+
+        with self.store.session_scope():
+            # SPLENDID platform should be added to the database
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 7
+            assert platforms[-1].name == "SPLENDID"
+
+            # GPS Sensor on SPLENDID platform should be added to the database
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
+            assert len(sensors) == 9
+            assert sensors[-1].name == "GPS"
+            assert sensors[-1].host__name == "SPLENDID"
+
+            # Measurements should be the same
+            assert len(self.store.session.query(self.store.db_classes.State).all()) == states
+            assert len(self.store.session.query(self.store.db_classes.Contact).all()) == contacts
+            assert len(self.store.session.query(self.store.db_classes.Comment).all()) == comments
+
+
+class TestImportSkipFile(unittest.TestCase):
+    def setUp(self) -> None:
+        self.resolver = CommandLineResolver()
+        self.store = DataStore(
+            "",
+            "",
+            "",
+            0,
+            ":memory:",
+            db_type="sqlite",
+            missing_data_resolver=self.resolver,
+        )
+        self.store.initialise()
+        with self.store.session_scope():
+            self.store.populate_reference()
+            self.store.populate_metadata()
+        self.processor = FileProcessor(archive=False)
+        self.processor.register_importer(ReplayImporter())
+
+    @patch("pepys_import.file.file_processor.prompt")
+    @patch("pepys_import.resolvers.command_line_input.prompt")
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_skip_file(self, resolver_prompt, menu_prompt, file_processor_prompt):
+        resolver_prompt.side_effect = [
+            # For rep_test1.rep import
+            "rep_test1.rep",
+            "SENSOR",
+            "123",
+            "SEN",
+            "SENS",
+            "TA",
+            "SEARCH_PLATFORM",
+            "123",
+            "SEA",
+            "SEAR",
+            "TA",
+            # For sen_tracks.rep import,
+            "sen_tracks.rep",
+            "New_SSK",
+            "123",
+            "New",
+            "New_",
+            "New_SSK_FREQ",
+        ]
+
+        menu_prompt.side_effect = [
+            # For rep_test1.rep import
+            "3",  # Public
+            "1",  # Yes, correct
+            "1",  # Add platform
+            "3",  # UK
+            "3",  # PLATFORM-TYPE-1,
+            "3",  # Public
+            "1",  # Yes, create
+            "1",  # Add sensor
+            "3",  # GPS
+            "3",  # Public
+            "1",  # Yes, create
+            "1",  # Add platform
+            "3",  # UK
+            "5",  # Fisher
+            "3",  # Public
+            "1",  # Yes, create
+            "1",  # Add sensor
+            "4",  # SENSOR-TYPE-1
+            "3",  # Public
+            "1",  # Yes, create
+            # For sen_tracks.rep import
+            "3",  # Public
+            "1",  # Yes, correct
+            "1",  # Add platform
+            "3",  # UK
+            "3",  # PLATFORM-TYPE-1,
+            "3",  # Public
+            "1",  # Yes, create
+            "1",  # Add sensor
+            "3",  # GPS
+            "3",  # Public
+            "1",  # Yes, create
+            "3",  # New_SSK / 123 / United Kingdom
+        ]
+        file_processor_prompt.side_effect = [
+            "3",  # Don't import this file
+        ]
+
+        with self.store.session_scope():
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 4
+            platform_ids = [p.platform_id for p in platforms]
+
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
+            assert len(sensors) == 6
+            sensor_ids = [p.sensor_id for p in sensors]
+
+            states = len(self.store.session.query(self.store.db_classes.State).all())
+            contacts = len(self.store.session.query(self.store.db_classes.Contact).all())
+            comments = len(self.store.session.query(self.store.db_classes.Comment).all())
+
+        self.processor.process(
+            SINGLE_REP_FILE,
+            self.store,
+            False,
+        )
+
+        with self.store.session_scope():
+            # All tables should have the same number of rows
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 4
+            new_platform_ids = [p.platform_id for p in platforms]
+            assert platform_ids == new_platform_ids
+
+            sensors = self.store.session.query(self.store.db_classes.Sensor).all()
+            assert len(sensors) == 6
+            new_sensor_ids = [p.sensor_id for p in sensors]
+            assert sensor_ids == new_sensor_ids
+
+            assert len(self.store.session.query(self.store.db_classes.State).all()) == states
+            assert len(self.store.session.query(self.store.db_classes.Contact).all()) == contacts
+            assert len(self.store.session.query(self.store.db_classes.Comment).all()) == comments
 
 
 if __name__ == "__main__":

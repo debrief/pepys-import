@@ -1,8 +1,6 @@
 name
-DATAFILE-TYPE-1
-DATAFILE-TYPE-2
-.rep
-.dsf
-.gpx
-.log
-.txt
+Replay
+GPX
+NMEA
+E-Trac
+EAG

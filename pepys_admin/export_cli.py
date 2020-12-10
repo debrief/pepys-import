@@ -8,16 +8,16 @@ from prompt_toolkit.completion import PathCompleter
 from pepys_admin.base_cli import BaseShell
 from pepys_admin.utils import get_default_export_folder
 from pepys_import.utils.data_store_utils import is_schema_created
+from pepys_import.utils.text_formatting_utils import format_command
 
 
 class ExportShell(BaseShell):
     """Offers to export datafiles by name, by platform and sensor"""
 
-    intro = """--- Menu ---
-    (1) Export by name
-    (2) Export by Platform and sensor
-    (.) Back
-    """
+    choices = """(1) Export by name
+(2) Export by Platform and sensor
+(.) Back
+"""
 
     prompt = "(pepys-admin) (export) "
 
@@ -51,14 +51,16 @@ class ExportShell(BaseShell):
         selected_datafile = iterfzf(datafiles_dict.keys(), prompt=message)
 
         if selected_datafile is None or selected_datafile not in datafiles_dict.keys():
-            print(f"You haven't selected a valid option!")
+            print("You haven't selected a valid option!")
             return
 
-        export_flag = input(f"Do you want to export {selected_datafile}? (Y/n)\n")
+        export_flag = ptk_prompt(
+            format_command(f"Do you want to export {selected_datafile}? (Y/n)\n")
+        )
         if export_flag in ["", "Y", "y"]:
             folder_completer = PathCompleter(only_directories=True, expanduser=True)
             folder_path = ptk_prompt(
-                "Please provide a folder path for the exported file: ",
+                format_command("Please provide a folder path for the exported file: "),
                 default=get_default_export_folder(),
                 completer=folder_completer,
                 complete_while_typing=True,
@@ -76,7 +78,7 @@ class ExportShell(BaseShell):
         elif export_flag in ["N", "n"]:
             print("You selected not to export!")
         else:
-            print(f"Please enter a valid input.")
+            print("Please enter a valid input.")
 
     def do_export_by_platform_name(self):
         """Exports datafiles by platform and sensor names. It asks user to select an existing
@@ -98,7 +100,7 @@ class ExportShell(BaseShell):
         selected_platform = iterfzf(platforms_dict.keys(), prompt=message)
 
         if selected_platform is None or selected_platform not in platforms_dict.keys():
-            print(f"You haven't selected a valid option!")
+            print("You haven't selected a valid option!")
             return
 
         # Find related sensors to the selected platform
@@ -108,28 +110,34 @@ class ExportShell(BaseShell):
         with self.data_store.session_scope():
             objects = self.data_store.find_related_datafile_objects(platform_id, sensors_dict)
         # Create a dynamic menu for the found datafile objects
-        text = "Select from the found datafile objects.\n"
-        text += "--- Menu ---\n"
-        options = [
+        title = "Select from the found datafile objects.\n--- Menu ---\n"
+        choices_idx = [
             ".",
         ]
+        choices_full_text = ""
         for index, obj in enumerate(objects, 1):
-            text += f"({index}) {obj['name']} {obj['filename']} {obj['min']}-{obj['max']}\n"
-            options.append(str(index))
-        text += "(.) Cancel\n"
+            choices_full_text += (
+                f"({index}) {obj['name']} {obj['filename']} {obj['min']}-{obj['max']}\n"
+            )
+            choices_idx.append(str(index))
+        choices_full_text += "(.) Cancel\n"
         # Initialise a new menu
-        export_platform = ExportByPlatformNameShell(self.data_store, options, objects)
-        export_platform.cmdloop(intro=text)
+        export_platform = ExportByPlatformNameShell(
+            self.data_store, title, choices_full_text, choices_idx, objects
+        )
+        export_platform.cmdloop()
 
     def do_export_all(self):
         """Exports all datafiles."""
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
-        export_flag = input("Do you want to export all Datafiles. (Y/n)\n")
+        export_flag = ptk_prompt(format_command("Do you want to export all Datafiles. (Y/n)\n"))
         if export_flag in ["", "Y", "y"]:
             while True:
-                folder_name = input(
-                    "Please provide folder name (Press Enter for auto generated folder):"
+                folder_name = ptk_prompt(
+                    format_command(
+                        "Please provide folder name (Press Enter for auto generated folder):"
+                    )
                 )
                 if folder_name:
                     if os.path.isdir(folder_name):
@@ -159,7 +167,7 @@ class ExportShell(BaseShell):
         elif export_flag in ["N", "n"]:
             print("You selected not to export!")
         else:
-            print(f"Please enter a valid input.")
+            print("Please enter a valid input.")
 
 
 class ExportByPlatformNameShell(BaseShell):
@@ -167,10 +175,12 @@ class ExportByPlatformNameShell(BaseShell):
 
     prompt = "(pepys-admin) (export by platform) "
 
-    def __init__(self, data_store, options, objects):
+    def __init__(self, data_store, title, choices_full_text, choices_idx, objects):
         super(ExportByPlatformNameShell, self).__init__()
         self.data_store = data_store
-        self.options = options
+        self.title = title
+        self.choices = choices_full_text
+        self.choices_idx = choices_idx
         self.objects = objects
 
     @staticmethod
@@ -185,8 +195,11 @@ class ExportByPlatformNameShell(BaseShell):
         platform_id = option.get("platform_id")  # May be missing if it's a State or Contact object
         default_export_name = f"exported_{option['name']}.rep"
 
-        file_name = input(
-            f"Please provide a name (Press Enter for default value " f"({default_export_name})):"
+        file_name = ptk_prompt(
+            format_command(
+                f"Please provide a name (Press Enter for default value "
+                f"({default_export_name})):"
+            )
         )
         if file_name:
             if not file_name.endswith(".rep"):
@@ -195,7 +208,9 @@ class ExportByPlatformNameShell(BaseShell):
 
         folder_completer = PathCompleter(only_directories=True, expanduser=True)
         folder_path = ptk_prompt(
-            "Please provide a folder path for the exported file: ",
+            format_command(
+                "Please provide a folder path for the exported file: ",
+            ),
             default=get_default_export_folder(),
             completer=folder_completer,
             complete_while_typing=True,
@@ -216,7 +231,7 @@ class ExportByPlatformNameShell(BaseShell):
         # Therefore, "." is interpreted as an argument.
         if arg == "." and line == ".":
             return True
-        elif cmd_ in self.options:
+        elif cmd_ in self.choices_idx:
             selected_option = self.objects[int(cmd_) - 1]
             return self.do_export(selected_option)
         else:

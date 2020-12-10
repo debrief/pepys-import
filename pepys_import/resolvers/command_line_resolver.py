@@ -1,14 +1,18 @@
-import re
 import sys
 
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
-from sqlalchemy import or_
 from tabulate import tabulate
 
-from pepys_import.core.store import constants
+from pepys_import.core.store.constants import NATIONALITY, PLATFORM, PRIVACY
+from pepys_import.resolvers import constants
 from pepys_import.resolvers.command_line_input import create_menu, get_fuzzy_completer, is_valid
 from pepys_import.resolvers.data_resolver import DataResolver
+from pepys_import.utils.text_formatting_utils import (
+    format_command,
+    print_help_text,
+    print_new_section_title,
+)
 
 
 def is_number(text):
@@ -39,22 +43,11 @@ class CommandLineResolver(DataResolver):
         :type change_id: UUID
         :return:
         """
-        print("Ok, adding new datafile.")
+        if datafile_name is None:
+            raise ValueError("You must specify a datafile name when calling resolve_datafile")
 
-        datafile_name = prompt("Please enter a name: ", default=datafile_name).strip()
-
-        if datafile_name == "":
-            print("You must provide a datafile name. Restarting data file entry.")
-            return self.resolve_datafile(
-                data_store, datafile_name, datafile_type, privacy, change_id
-            )
-        if len(datafile_name) > 150:
-            print(
-                "Datafile name too long, maximum length 150 characters. Restarting data file entry."
-            )
-            return self.resolve_datafile(
-                data_store, datafile_name, datafile_type, privacy, change_id
-            )
+        print_new_section_title("Resolve Datafile")
+        print(f"Ok, adding new datafile {datafile_name}.")
 
         # Choose Datafile Type
         if datafile_type:
@@ -66,6 +59,8 @@ class CommandLineResolver(DataResolver):
                 data_type="Datafile",
                 db_class=data_store.db_classes.DatafileType,
                 field_name="datafile_type",
+                help_id=constants.RESOLVE_DATAFILE_TYPE,
+                search_help_id=constants.FUZZY_SEARCH_DATAFILE_TYPE,
             )
 
         if chosen_datafile_type is None:
@@ -77,7 +72,7 @@ class CommandLineResolver(DataResolver):
             chosen_privacy = data_store.search_privacy(privacy)
             if chosen_privacy is None:
                 level = prompt(
-                    f"Please type level of new classification ({privacy}): ",
+                    format_command(f"Please type level of new classification ({privacy}): "),
                     validator=numeric_validator,
                 )
                 chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
@@ -85,28 +80,35 @@ class CommandLineResolver(DataResolver):
             chosen_privacy = self.resolve_reference(
                 data_store,
                 change_id,
-                data_type="Datafile",
+                data_type=f"Datafile named '{datafile_name}'",
                 db_class=data_store.db_classes.Privacy,
                 field_name="privacy",
                 text_name="classification",
+                help_id=constants.RESOLVE_PRIVACY,
+                search_help_id=constants.FUZZY_SEARCH_PRIVACY,
             )
 
         if chosen_privacy is None:
             print("Quitting")
             sys.exit(1)
 
-        print("-" * 61)
-        print("Input complete. About to create this datafile:")
-        print(f"Name: {datafile_name}")
-        print(f"Type: {chosen_datafile_type.name}")
-        print(f"Classification: {chosen_privacy.name}")
+        while True:
+            print("-" * 60)
+            print("Input complete. About to create this datafile:")
+            print(f"Name: {datafile_name}")
+            print(f"Type: {chosen_datafile_type.name}")
+            print(f"Classification: {chosen_privacy.name}")
 
-        choice = create_menu(
-            "Create this datafile?: ",
-            ["Yes", "No, make further edits"],
-            validate_method=is_valid,
-        )
+            choice = create_menu(
+                "Create this datafile?: ",
+                ["Yes", "No, make further edits"],
+                validate_method=is_valid,
+            )
 
+            if choice in ["?", "HELP"]:
+                print_help_text(data_store, constants.RESOLVE_DATAFILE)
+            else:
+                break
         if choice == str(1):
             return datafile_name, chosen_datafile_type, chosen_privacy
         elif choice == str(2):
@@ -118,8 +120,9 @@ class CommandLineResolver(DataResolver):
     def resolve_platform(
         self, data_store, platform_name, platform_type, nationality, privacy, change_id
     ):
+        print_new_section_title("Resolve Platform")
         platform_details = []
-        final_options = ["Search for existing platform", "Add a new platform"]
+        final_options = ["Add a new platform", "Search for existing platform"]
         if platform_name:
             # If we've got a platform_name, then we can search for all platforms
             # with this name, and present a list to the user to choose from,
@@ -141,13 +144,12 @@ class CommandLineResolver(DataResolver):
             )
             for platform in platforms:
                 platform_details.append(
-                    f"{platform.name} / {platform.identifier} / {platform.nationality_name}"
+                    f"Select: {platform.name} / {platform.identifier} / {platform.nationality_name}"
                 )
-            final_options[1] += f", default name '{platform_name}'"
         choices = final_options + platform_details
 
         def is_valid_dynamic(option):  # pragma: no cover
-            return option in [str(i) for i in range(1, len(choices) + 1)] or option == "."
+            return option in [str(i) for i in range(1, len(choices) + 1)] + [".", "?", "HELP"]
 
         choice = create_menu(
             f"Select a platform entry for {platform_name}:",
@@ -157,8 +159,13 @@ class CommandLineResolver(DataResolver):
         if choice == ".":
             print("Quitting")
             sys.exit(1)
+        elif choice in ["?", "HELP"]:
+            print_help_text(data_store, constants.RESOLVE_PLATFORM)
+            return self.resolve_platform(
+                data_store, platform_name, platform_type, nationality, privacy, change_id
+            )
         elif choice == str(1):
-            return self.fuzzy_search_platform(
+            return self.add_to_platforms(
                 data_store,
                 platform_name,
                 platform_type,
@@ -167,7 +174,7 @@ class CommandLineResolver(DataResolver):
                 change_id,
             )
         elif choice == str(2):
-            return self.add_to_platforms(
+            return self.fuzzy_search_platform(
                 data_store,
                 platform_name,
                 platform_type,
@@ -181,6 +188,7 @@ class CommandLineResolver(DataResolver):
             return platforms[platform_index]
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
+        print_new_section_title("Resolve Sensor")
         Platform = data_store.db_classes.Platform
         host_platform = (
             data_store.session.query(Platform).filter(Platform.platform_id == host_id).first()
@@ -190,46 +198,72 @@ class CommandLineResolver(DataResolver):
             print("Quitting")
             sys.exit(1)
 
-        options = [
-            f"Search for existing sensor on platform '{host_platform.name}'",
-            "Add a new sensor",
-        ]
         objects = (
             data_store.session.query(data_store.db_classes.Sensor)
             .filter(data_store.db_classes.Sensor.host == host_id)
             .all()
         )
-        objects_dict = {obj.name: obj for obj in objects}
-        if len(objects_dict) <= 7:
-            options.extend(objects_dict)
+        if len(objects) == 0:
+            # No sensors for this platform, so no point asking to search
+            options = ["Add a new sensor"]
+            search_option = 0  # Invalid option number, as search not available in this situation
+            add_option = 1
+            other_options_base = 2
+        else:
+            add_option = 1
+            search_option = 2
+            other_options_base = 3
+            options = [
+                "Add a new sensor",
+                f"Search for existing sensor on platform '{host_platform.name}'",
+            ]
+
+            objects_dict = {f"Select: {obj.name}": obj for obj in objects}
+            if len(objects_dict) <= 7:
+                options.extend(objects_dict)
+
         if sensor_name:
-            options[1] += f", default name '{sensor_name}'"
             prompt = f"Sensor '{sensor_name}' on platform '{host_platform.name}' not found. Do you wish to: "
         else:
             prompt = f"Sensor on platform '{host_platform.name}' not found. Do you wish to: "
 
         def is_valid_dynamic(option):  # pragma: no cover
-            return option in [str(i) for i in range(1, len(options) + 1)] or option == "."
+            return option in [str(i) for i in range(1, len(options) + 1)] + [".", "?", "HELP"]
 
         choice = create_menu(prompt, options, validate_method=is_valid_dynamic)
         if choice == ".":
             print("Quitting")
             sys.exit(1)
-        elif choice == str(1):
+        elif choice in ["?", "HELP"]:
+            print_help_text(data_store, constants.RESOLVE_SENSOR)
+            return self.resolve_sensor(
+                data_store, sensor_name, sensor_type, host_id, privacy, change_id
+            )
+        elif choice == str(search_option):
             return self.fuzzy_search_sensor(
                 data_store, sensor_name, sensor_type, host_platform.platform_id, privacy, change_id
             )
-        elif choice == str(2):
+        elif choice == str(add_option):
             return self.add_to_sensors(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
-        elif 3 <= int(choice) <= len(options):
+        elif other_options_base <= int(choice) <= len(options):
             selected_object = objects_dict[options[int(choice) - 1]]
             if selected_object:
+                # add sensor name and the selected sensor to sensor cache
+                data_store._sensor_cache[(sensor_name, host_platform.platform_id)] = selected_object
                 return selected_object
 
     def resolve_reference(
-        self, data_store, change_id, data_type, db_class, field_name, text_name=None
+        self,
+        data_store,
+        change_id,
+        data_type,
+        db_class,
+        field_name,
+        help_id,
+        search_help_id,
+        text_name=None,
     ):
         """
         This method resolves any reference data according to the given parameters.
@@ -246,99 +280,104 @@ class CommandLineResolver(DataResolver):
         :type field_name: String
         :param text_name: Printed name of the resolved data
         :type text_name: String
+        :param help_id: Integer ID of the help text for resolve reference
+        :type help_id: Integer
+        :param search_help_id: Integer ID of the help text for fuzzy search reference
+        :type search_help_id: Integer
         :return:
         """
         if text_name is None:
             text_name = field_name.replace("_", "-")
-        options = [f"Search an existing {text_name}", f"Add a new {text_name}"]
+        options = [f"Search an existing {text_name}"]
         title = f"Ok, please provide {text_name} for new {data_type}: "
         current_values = ""
-        if db_class.__tablename__ == constants.NATIONALITY:
+        if db_class.__tablename__ == NATIONALITY:
             objects = (
                 data_store.session.query(db_class)
                 .filter(db_class.priority.in_([1, 2]))
                 .order_by(db_class.priority, db_class.name)
                 .all()
             )
-        elif db_class.__tablename__ == constants.PRIVACY:
+        elif db_class.__tablename__ == PRIVACY:
             all_values = data_store.session.query(db_class).order_by(db_class.level).all()
-            objects = all_values[:7]
+            objects = all_values[:8]
             current_values = "\nCurrent Privacies in the Database\n"
             headers = ["name", "level"]
             current_values += tabulate(
                 [[str(getattr(row, column)) for column in headers] for row in all_values],
                 headers=headers,
-                tablefmt="github",
+                tablefmt="grid",
                 floatfmt=".3f",
             )
             current_values += "\n"
         else:
-            objects = data_store.session.query(db_class).limit(7).all()
-        objects_dict = {obj.name: obj for obj in objects}
-        # CamelCase table names should be split into words, separated by "-" and converted to
-        # lowercase for matching with DataStore add methods (i.e. PlatformTypes -> platform_types)
-        plural_field = (
-            re.sub("([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r"\1", db_class.__tablename__))
-            .strip()
-            .lower()
-            .replace(" ", "_")
-        )
+            objects = data_store.session.query(db_class).limit(8).all()
+        objects_dict = {f"Select: {obj.name}": obj for obj in objects}
         options.extend(objects_dict)
 
         def is_valid_dynamic(option):  # pragma: no cover
-            return option in [str(i) for i in range(1, len(options) + 1)] or option == "."
+            return option in [str(i) for i in range(1, len(options) + 1)] + [".", "?", "HELP"]
 
         choice = create_menu(
             title,
             options,
             validate_method=is_valid_dynamic,
+            cancel=f"import (Please contact an expert user if you need a new {text_name} to be added)",
         )
         if choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
+            print("-" * 60, "\nReturning to the previous menu\n")
             return None
+        elif choice in ["?", "HELP"]:
+            print_help_text(data_store, help_id)
+            return self.resolve_reference(
+                data_store,
+                change_id,
+                data_type,
+                db_class,
+                field_name,
+                help_id,
+                search_help_id,
+                text_name,
+            )
         elif choice == str(1):
             result = self.fuzzy_search_reference(
-                data_store, change_id, data_type, db_class, field_name, text_name
+                data_store=data_store,
+                change_id=change_id,
+                data_type=data_type,
+                db_class=db_class,
+                field_name=field_name,
+                help_id=help_id,
+                search_help_id=search_help_id,
+                text_name=text_name,
             )
             if result is None:
                 return self.resolve_reference(
-                    data_store, change_id, data_type, db_class, field_name, text_name
+                    data_store,
+                    change_id,
+                    data_type,
+                    db_class,
+                    field_name,
+                    help_id,
+                    search_help_id,
+                    text_name,
                 )
             else:
                 return result
-        elif choice == str(2):
-            print(current_values)
-            while True:
-                new_object = prompt(f"Please type name of new {text_name}: ").strip()
-                # If not too long for the field
-                if len(new_object) <= 150:
-                    break
-                else:
-                    print("Name too long, please enter a name less than 150 characters long")
-            search_method = getattr(data_store, f"search_{field_name}")
-            obj = search_method(new_object)
-            if obj:
-                return obj
-            elif new_object:
-                add_method = getattr(data_store, f"add_to_{plural_field}")
-                if plural_field == "privacies":
-                    level = prompt(
-                        f"Please type level of new {text_name}: ", validator=numeric_validator
-                    )
-                    return add_method(new_object, level, change_id)
-                return add_method(new_object, change_id)
-            else:
-                print("You haven't entered an input!")
-                return self.resolve_reference(
-                    data_store, change_id, data_type, db_class, field_name, text_name
-                )
-        elif 3 <= int(choice) <= len(options):
+        elif 2 <= int(choice) <= len(options):
             selected_object = objects_dict[options[int(choice) - 1]]
             if selected_object:
                 return selected_object
 
     def fuzzy_search_reference(
-        self, data_store, change_id, data_type, db_class, field_name, text_name=None
+        self,
+        data_store,
+        change_id,
+        data_type,
+        db_class,
+        field_name,
+        help_id,
+        search_help_id,
+        text_name=None,
     ):
         """
         This method parses any reference data according to the given parameters, and uses fuzzy
@@ -358,50 +397,40 @@ class CommandLineResolver(DataResolver):
         :type field_name: String
         :param text_name: Printed name of the resolved data
         :type text_name: String
+        :param help_id: Integer ID of the help text for resolve reference
+        :type help_id: Integer
+        :param search_help_id: Integer ID of the help text for fuzzy search reference
+        :type search_help_id: Integer
         :return:
         """
         objects = data_store.session.query(db_class).all()
         completer = [p.name for p in objects]
+
+        def is_valid_reference(option):  # pragma: no cover
+            return option in completer + ["."]
+
         choice = create_menu(
             "Please start typing to show suggested values",
             cancel=f"{text_name} search",
             choices=[],
             completer=get_fuzzy_completer(completer),
+            validate_method=is_valid_reference,
         )
         if choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
+            print("-" * 60, "\nReturning to the previous menu\n")
             return None
-        elif choice not in completer:
-            new_choice = create_menu(
-                f"You didn't select an existing {text_name}. " f"Do you want to add '{choice}' ?",
-                choices=["Yes", f"No, I'd like to select an existing {text_name}"],
-                validate_method=is_valid,
+        elif choice in ["?", "HELP"]:
+            print_help_text(data_store, search_help_id)
+            return self.fuzzy_search_reference(
+                data_store=data_store,
+                change_id=change_id,
+                data_type=data_type,
+                db_class=db_class,
+                field_name=field_name,
+                help_id=help_id,
+                search_help_id=search_help_id,
+                text_name=text_name,
             )
-            if new_choice == str(1):
-                plural_field = (
-                    re.sub(
-                        "([A-Z][a-z]+)", r" \1", re.sub("([A-Z]+)", r"\1", db_class.__tablename__)
-                    )
-                    .strip()
-                    .lower()
-                    .replace(" ", "_")
-                )
-                add_method = getattr(data_store, f"add_to_{plural_field}")
-                if plural_field == "privacies":
-                    level = prompt(
-                        f"Please type level of new {text_name}: ", validator=numeric_validator
-                    )
-                    return add_method(choice, level, change_id)
-                return add_method(choice, change_id)
-            elif new_choice == str(2):
-                return self.fuzzy_search_reference(
-                    data_store, change_id, data_type, db_class, field_name, text_name
-                )
-            elif new_choice == ".":
-                print("-" * 61, "\nReturning to the previous menu\n")
-                return self.resolve_reference(
-                    data_store, change_id, data_type, db_class, field_name, text_name
-                )
         else:
             return data_store.session.query(db_class).filter(db_class.name == choice).first()
 
@@ -432,36 +461,56 @@ class CommandLineResolver(DataResolver):
         completer = list()
         platforms = data_store.session.query(data_store.db_classes.Platform).all()
         for platform in platforms:
-            completer.append(
-                f"{platform.name} / {platform.identifier} / {platform.nationality_name}"
-            )
+            values = list()
+            values.append(platform.name)
             if platform.trigraph:
-                completer.append(
-                    f"{platform.trigraph} / {platform.identifier} / {platform.nationality_name}"
-                )
+                values.append(platform.trigraph)
             if platform.quadgraph:
-                completer.append(
-                    f"{platform.quadgraph} / {platform.identifier} / {platform.nationality_name}"
+                values.append(platform.quadgraph)
+            synonym = (
+                data_store.session.query(data_store.db_classes.Synonym)
+                .filter(
+                    data_store.db_classes.Synonym.table == PLATFORM,
+                    data_store.db_classes.Synonym.entity == platform.platform_id,
                 )
+                .all()
+            )
+            if synonym:
+                synonym_names = [s.synonym for s in synonym]
+                values.append(",".join(synonym_names))
+
+            values.append(platform.identifier)
+            values.append(platform.nationality_name)
+            line = " / ".join(values)
+            completer.append(line)
         choice = create_menu(
             "Please start typing to show suggested values",
             cancel="platform search",
             choices=[],
             completer=get_fuzzy_completer(completer),
         )
-        if choice in completer:
+        if choice in ["?", "HELP"]:
+            print_help_text(data_store, constants.FUZZY_SEARCH_PLATFORM)
+            return self.fuzzy_search_platform(
+                data_store,
+                platform_name,
+                platform_type,
+                nationality,
+                privacy,
+                change_id,
+            )
+        elif choice in completer:
             # Extract the platform details from the string
-            name_or_xgraph, identifier, nationality = choice.split(" / ")
+            platform_details = choice.split(" / ")
+            name, identifier, nationality = (
+                platform_details[0],
+                platform_details[-2],
+                platform_details[-1],
+            )
             # Get the platform from the database
             platform = (
                 data_store.session.query(data_store.db_classes.Platform)
-                .filter(
-                    or_(
-                        data_store.db_classes.Platform.name == name_or_xgraph,
-                        data_store.db_classes.Platform.trigraph == name_or_xgraph,
-                        data_store.db_classes.Platform.quadgraph == name_or_xgraph,
-                    )
-                )
+                .filter(data_store.db_classes.Platform.name == name)
                 .filter(data_store.db_classes.Platform.identifier == identifier)
                 .filter(data_store.db_classes.Platform.nationality_name == nationality)
                 .first()
@@ -469,24 +518,27 @@ class CommandLineResolver(DataResolver):
             # If we've been given a platform name, then we might want to link
             # that platform name to the one we've picked, as a synonym
             if platform_name:
-                new_choice = create_menu(
-                    f"Do you wish to keep {platform_name} as synonym for {choice}?\n"
-                    f"Warning: this should only be done when {platform_name} is a completely unique identifier for this platform\n"
-                    f"not a name that could be shared across platforms of different nationalities",
-                    ["Yes", "No"],
-                    validate_method=is_valid,
-                )
+                while True:
+                    new_choice = create_menu(
+                        f"Do you wish to keep {platform_name} as synonym for {choice}?\n",
+                        ["Yes", "No"],
+                        validate_method=is_valid,
+                    )
+                    if new_choice in ["?", "HELP"]:
+                        print_help_text(data_store, constants.KEEP_PLATFORM_AS_SYNONYM)
+                    else:
+                        break
                 if new_choice == str(1):
                     # Add it to synonyms and return existing platform
                     data_store.add_to_synonyms(
-                        constants.PLATFORM, platform_name, platform.platform_id, change_id
+                        PLATFORM, platform_name, platform.platform_id, change_id
                     )
                     print(f"'{platform_name}' added to Synonyms!")
                     return platform
                 elif new_choice == str(2):
                     return platform
                 elif new_choice == ".":
-                    print("-" * 61, "\nReturning to the previous menu\n")
+                    print("-" * 60, "\nReturning to the previous menu\n")
                     return self.fuzzy_search_platform(
                         data_store,
                         platform_name,
@@ -497,7 +549,7 @@ class CommandLineResolver(DataResolver):
                     )
             return platform
         elif choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
+            print("-" * 60, "\nReturning to the previous menu\n")
             return self.resolve_platform(
                 data_store,
                 platform_name,
@@ -546,8 +598,13 @@ class CommandLineResolver(DataResolver):
             choices=[],
             completer=get_fuzzy_completer(completer),
         )
-        if choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
+        if choice in ["?", "HELP"]:
+            print_help_text(data_store, constants.FUZZY_SEARCH_SENSOR)
+            return self.fuzzy_search_sensor(
+                data_store, sensor_name, sensor_type, host_id, privacy, change_id
+            )
+        elif choice == ".":
+            print("-" * 60, "\nReturning to the previous menu\n")
             return self.resolve_sensor(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
@@ -574,8 +631,6 @@ class CommandLineResolver(DataResolver):
 
         :param data_store: A :class:`DataStore` object
         :type data_store: DataStore
-        :param identifier: Identifier string
-        :type identifier: String
         :param platform_name: Name of :class:`Platform`
         :type platform_name: String
         :param nationality: Name of :class:`Nationality`
@@ -592,7 +647,9 @@ class CommandLineResolver(DataResolver):
         if platform_name is None:
             platform_name = ""
 
-        platform_name = prompt("Please enter a name: ", default=platform_name).strip()
+        platform_name = prompt(
+            format_command("Please enter a name: "), default=platform_name
+        ).strip()
         if len(platform_name) > 150:
             print(
                 "Platform name too long, maximum length 150 characters. Restarting platform data entry."
@@ -601,33 +658,57 @@ class CommandLineResolver(DataResolver):
                 data_store, platform_name, platform_type, nationality, privacy, change_id
             )
 
-        identifier = prompt("Please enter identifier (pennant or tail number): ").strip()
-        if len(identifier) > 10:
-            print(
-                "Identifier too long, maximum length 10 characters. Restarting platform data entry."
-            )
-            return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
-            )
+        while True:
+            identifier = prompt(
+                format_command("Please enter identifier (pennant or tail number): ")
+            ).strip()
+            if len(identifier) > 10:
+                print(
+                    "Identifier too long, maximum length 10 characters. Restarting platform data entry."
+                )
+                return self.add_to_platforms(
+                    data_store, platform_name, platform_type, nationality, privacy, change_id
+                )
+            elif identifier in ["?", "HELP"]:
+                print_help_text(data_store, constants.PLATFORM_IDENTIFIER)
+            else:
+                break
 
-        trigraph = prompt("Please enter trigraph (optional): ", default=platform_name[:3]).strip()
-        if len(trigraph) > 3:
-            print("Trigraph too long, maximum length 3 characters. Restarting platform data entry.")
-            return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
-            )
-
-        quadgraph = prompt("Please enter quadgraph (optional): ", default=platform_name[:4]).strip()
-        if len(quadgraph) > 4:
-            print(
-                "Quadgraph too long, maximum length 4 characters. Restarting platform data entry."
-            )
-            return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
-            )
+        while True:
+            trigraph = prompt(
+                format_command("Please enter trigraph (optional): "), default=platform_name[:3]
+            ).strip()
+            if len(trigraph) > 3:
+                print(
+                    "Trigraph too long, maximum length 3 characters. Restarting platform data entry."
+                )
+                return self.add_to_platforms(
+                    data_store, platform_name, platform_type, nationality, privacy, change_id
+                )
+            elif trigraph in ["?", "HELP"]:
+                print_help_text(data_store, constants.PLATFORM_TRIGRAPH)
+            else:
+                break
+        while True:
+            quadgraph = prompt(
+                format_command("Please enter quadgraph (optional): "), default=platform_name[:4]
+            ).strip()
+            if len(quadgraph) > 4:
+                print(
+                    "Quadgraph too long, maximum length 4 characters. Restarting platform data entry."
+                )
+                return self.add_to_platforms(
+                    data_store, platform_name, platform_type, nationality, privacy, change_id
+                )
+            elif quadgraph in ["?", "HELP"]:
+                print_help_text(data_store, constants.PLATFORM_QUADGRAPH)
+            else:
+                break
 
         if platform_name == "" or identifier == "":
-            print("You must provide a platform name and identifier! Restarting plaform data entry.")
+            print(
+                "You must provide a platform name and identifier! Restarting platform data entry."
+            )
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy, change_id
             )
@@ -641,7 +722,9 @@ class CommandLineResolver(DataResolver):
                 change_id,
                 "Platform",
                 data_store.db_classes.Nationality,
-                "nationality",
+                field_name="nationality",
+                help_id=constants.RESOLVE_NATIONALITY,
+                search_help_id=constants.FUZZY_SEARCH_NATIONALITY,
             )
         if chosen_nationality is None:
             print("Nationality couldn't resolved. Returning to the previous menu!")
@@ -657,6 +740,8 @@ class CommandLineResolver(DataResolver):
                 data_type="Platform",
                 db_class=data_store.db_classes.PlatformType,
                 field_name="platform_type",
+                help_id=constants.RESOLVE_PLATFORM_TYPE,
+                search_help_id=constants.FUZZY_SEARCH_PLATFORM_TYPE,
             )
 
         if chosen_platform_type is None:
@@ -668,7 +753,7 @@ class CommandLineResolver(DataResolver):
             chosen_privacy = data_store.search_privacy(privacy)
             if chosen_privacy is None:
                 level = prompt(
-                    f"Please type level of new classification ({privacy}): ",
+                    format_command(f"Please type level of new classification ({privacy}): "),
                     validator=numeric_validator,
                 )
                 chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
@@ -680,27 +765,37 @@ class CommandLineResolver(DataResolver):
                 text_name="classification",
                 db_class=data_store.db_classes.Privacy,
                 field_name="privacy",
+                help_id=constants.RESOLVE_PRIVACY,
+                search_help_id=constants.FUZZY_SEARCH_PRIVACY,
             )
 
         if chosen_privacy is None:
             print("Classification couldn't resolved. Returning to the previous menu!")
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
 
-        print("-" * 61)
-        print("Input complete. About to create this platform:")
-        print(f"Name: {platform_name}")
-        print(f"Trigraph: {trigraph}")
-        print(f"Quadgraph: {quadgraph}")
-        print(f"Identifier: {identifier}")
-        print(f"Nationality: {chosen_nationality.name}")
-        print(f"Class: {chosen_platform_type.name}")
-        print(f"Classification: {chosen_privacy.name}")
+        def is_valid_choice(option):  # pragma: no cover
+            return option in [str(1), str(2), str(3), ".", "?", "HELP"]
 
-        choice = create_menu(
-            "Create this platform?: ",
-            ["Yes", "No, make further edits"],
-            validate_method=is_valid,
-        )
+        while True:
+            print("-" * 60)
+            print("Input complete. About to create this platform:")
+            print(f"Name: {platform_name}")
+            print(f"Trigraph: {trigraph}")
+            print(f"Quadgraph: {quadgraph}")
+            print(f"Identifier: {identifier}")
+            print(f"Nationality: {chosen_nationality.name}")
+            print(f"Platform type: {chosen_platform_type.name}")
+            print(f"Classification: {chosen_privacy.name}")
+
+            choice = create_menu(
+                "Create this platform?: ",
+                ["Yes", "No, make further edits", "No, restart platform selection process"],
+                validate_method=is_valid_choice,
+            )
+            if choice in ["?", "HELP"]:
+                print_help_text(data_store, constants.ADD_TO_PLATFORMS)
+            else:
+                break
 
         if choice == str(1):
             return (
@@ -714,8 +809,10 @@ class CommandLineResolver(DataResolver):
             )
         elif choice == str(2):
             return self.add_to_platforms(data_store, platform_name, None, None, None, change_id)
+        elif choice == str(3):
+            return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
         elif choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
+            print("-" * 60, "\nReturning to the previous menu\n")
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
 
     def add_to_sensors(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
@@ -742,7 +839,7 @@ class CommandLineResolver(DataResolver):
         if sensor_name is None:
             sensor_name = ""
 
-        sensor_name = prompt("Please enter a name: ", default=sensor_name).strip()
+        sensor_name = prompt(format_command("Please enter a name: "), default=sensor_name).strip()
 
         if sensor_name == "":
             print("You must provide a sensor name. Restarting sensor data entry")
@@ -766,6 +863,8 @@ class CommandLineResolver(DataResolver):
                 data_type="Sensor",
                 db_class=data_store.db_classes.SensorType,
                 field_name="sensor_type",
+                help_id=constants.RESOLVE_SENSOR_TYPE,
+                search_help_id=constants.FUZZY_SEARCH_SENSOR_TYPE,
             )
 
         if sensor_type is None:
@@ -776,7 +875,7 @@ class CommandLineResolver(DataResolver):
             chosen_privacy = data_store.search_privacy(privacy)
             if chosen_privacy is None:
                 level = prompt(
-                    f"Please type level of new classification ({privacy}): ",
+                    format_command(f"Please type level of new classification ({privacy}): "),
                     validator=numeric_validator,
                 )
                 chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
@@ -788,28 +887,40 @@ class CommandLineResolver(DataResolver):
                 text_name="classification",
                 db_class=data_store.db_classes.Privacy,
                 field_name="privacy",
+                help_id=constants.RESOLVE_PRIVACY,
+                search_help_id=constants.FUZZY_SEARCH_PRIVACY,
             )
 
         if chosen_privacy is None:
             print("Classification couldn't resolved. Returning to the previous menu!")
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
 
-        print("-" * 61)
-        print("Input complete. About to create this sensor:")
-        print(f"Name: {sensor_name}")
-        print(f"Type: {sensor_type.name}")
-        print(f"Classification: {chosen_privacy.name}")
+        def is_valid_choice(option):  # pragma: no cover
+            return option in [str(1), str(2), str(3), ".", "?", "HELP"]
 
-        choice = create_menu(
-            "Create this sensor?: ",
-            ["Yes", "No, make further edits"],
-            validate_method=is_valid,
-        )
+        while True:
+            print("-" * 60)
+            print("Input complete. About to create this sensor:")
+            print(f"Name: {sensor_name}")
+            print(f"Type: {sensor_type.name}")
+            print(f"Classification: {chosen_privacy.name}")
+
+            choice = create_menu(
+                "Create this sensor?: ",
+                ["Yes", "No, make further edits", "No, restart sensor selection process"],
+                validate_method=is_valid_choice,
+            )
+            if choice in ["?", "HELP"]:
+                print_help_text(data_store, constants.ADD_TO_SENSORS)
+            else:
+                break
 
         if choice == str(1):
             return sensor_name, sensor_type, chosen_privacy
         elif choice == str(2):
             return self.add_to_sensors(data_store, sensor_name, None, host_id, None, change_id)
+        elif choice == str(3):
+            return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
         elif choice == ".":
-            print("-" * 61, "\nReturning to the previous menu\n")
+            print("-" * 60, "\nReturning to the previous menu\n")
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)

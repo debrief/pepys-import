@@ -2,13 +2,15 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 from prompt_toolkit.validation import Validator
 
+from pepys_import.utils.text_formatting_utils import format_menu
+
 
 def get_fuzzy_completer(completer_list):
     return FuzzyCompleter(WordCompleter(completer_list), pattern="^[a-zA-Z0-9_ ]*")
 
 
 def is_valid(option):
-    return option == str(1) or option == str(2) or option == "."
+    return option in [str(1), str(2), ".", "?", "HELP"]
 
 
 def create_menu(title, choices, cancel="import", completer=None, validate_method=None):
@@ -35,10 +37,10 @@ def create_menu(title, choices, cancel="import", completer=None, validate_method
             move_cursor_to_end=True,
         )
 
-    input_text = title + "\n"
+    title_, choices_ = "\n" + title + "\n", ""
     for index, choice in enumerate(choices, 1):
-        input_text += f"   {str(index)}) {choice}\n"
-    input_text += f"   .) Cancel {cancel}\n > "
-    choice = prompt(input_text, completer=completer, validator=validator)
+        choices_ += f"   {str(index)}) {choice}\n"
+    choices_ += f"   .) Cancel {cancel}\n > "
+    choice = prompt(format_menu(title_, choices_), completer=completer, validator=validator)
 
     return choice

@@ -3,6 +3,7 @@ import random
 from unittest.mock import patch
 
 import pytest
+from prompt_toolkit.formatted_text import FormattedText
 from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
 
@@ -17,34 +18,35 @@ FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data")
 
 
+@patch("pepys_import.file.file_processor.prompt")
 @patch("pepys_import.resolvers.command_line_input.prompt")
 @patch("pepys_import.resolvers.command_line_resolver.prompt")
-def test_rep_test_1_import(prompt, menu_prompt):
+def test_rep_test_1_import(prompt, menu_prompt, processor_prompt):
     """Tests a full run of an import of rep_test1.rep using the importer CLI
 
     **Note:** This will fail if the CLI interface changes at all!"""
     menu_prompt.side_effect = [
         "3",  # Public
         "1",  # Yes, correct
-        "2",  # Add platform
+        "1",  # Add platform
         "3",  # UK
         "3",  # PLATFORM-TYPE-1,
         "3",  # Public
         "1",  # Yes, create
-        "2",  # Add sensor
+        "1",  # Add sensor
         "3",  # GPS
         "3",  # Public
         "1",  # Yes, create
-        "2",  # Add platform
+        "1",  # Add platform
         "3",  # UK
         "5",  # Fisher
         "3",  # Public
         "1",  # Yes, create
-        "2",  # Add sensor
+        "1",  # Add sensor
         "4",  # SENSOR-TYPE-1
         "3",  # Public
         "1",  # Yes, create
-        "1",  # Search for platform
+        "2",  # Search for platform
         "2",  # No to synonym creation
         "3",  # TA
         "1",  # SEARCH-PLATFORM
@@ -52,7 +54,6 @@ def test_rep_test_1_import(prompt, menu_prompt):
         "1",  # SEARCH_PLATFORM
     ]
     prompt.side_effect = [
-        "rep_test1.rep",
         "SENSOR",
         "123",
         "SEN",
@@ -64,6 +65,9 @@ def test_rep_test_1_import(prompt, menu_prompt):
         "SEAR",
         "TA",
         "SEARCH_PLATFORM / 123 / United Kingdom ",
+    ]
+    processor_prompt.side_effect = [
+        "2",  # Import metadata and measurement
     ]
 
     store = DataStore(
@@ -82,31 +86,34 @@ def test_rep_test_1_import(prompt, menu_prompt):
     )
 
 
+@patch("pepys_import.file.file_processor.prompt")
 @patch("pepys_import.resolvers.command_line_input.prompt")
 @patch("pepys_import.resolvers.command_line_resolver.prompt")
-def test_gpx_1_0_import(prompt, menu_prompt):
+def test_gpx_1_0_import(prompt, menu_prompt, processor_prompt):
     """Tests a full run of an import of gpx_1_0.gpx using the importer CLI.
 
     **Note:** This will fail if the CLI interface changes at all!"""
     menu_prompt.side_effect = [
+        "4",  # Private
+        "1",  # Yes, create
+        "1",  # Add new platform
+        "5",  # Germany
+        "5",  # Ferry
         "5",  # Private
         "1",  # Yes, create
-        "2",  # Add new platform
-        "6",  # Germany
-        "6",  # Ferry
-        "5",  # Private
-        "1",  # Yes, create
-        "2",  # Add new sensor
+        "1",  # Add new sensor
         "5",  # Private
         "1",  # Yes, create
     ]
     prompt.side_effect = [
-        "gpx_1_0.gpx",
         "NELSON",
         "N123",
         "NEL",
         "NELS",
         "GPS",
+    ]
+    processor_prompt.side_effect = [
+        "2",  # Import metadata and measurement
     ]
 
     store = DataStore(
@@ -161,6 +168,9 @@ def create_menu_patch(*args, **kwargs):
 
 def clr_prompt_patch(*args, **kwargs):
     prompt = args[0]
+    # FormattedText is a list of (style, text) tuples
+    if isinstance(prompt, FormattedText):
+        prompt = prompt[0][1]
     print(f"Prompt: {prompt}")
 
     if "Please type level of" in prompt:
@@ -172,6 +182,16 @@ def clr_prompt_patch(*args, **kwargs):
         print(f"Response: {response}")
 
         return response
+
+
+def processor_prompt_patch(*args, **kwargs):
+    prompt = args[0]
+    print(f"Prompt: {prompt}")
+
+    response = str(random.randint(1, 3))
+    print(f"Response: {response}")
+
+    return response
 
 
 @pytest.mark.postgres
@@ -241,6 +261,7 @@ class TestEndToEndAutomaton:
             return
 
     @pytest.mark.automaton
+    @patch("pepys_import.file.file_processor.prompt", new=processor_prompt_patch)
     @patch("pepys_import.resolvers.command_line_resolver.create_menu", new=create_menu_patch)
     @patch("pepys_import.resolvers.command_line_resolver.prompt", new=clr_prompt_patch)
     @pytest.mark.parametrize("execution_number", range(10))  # Used to just repeat the test 5 times
@@ -264,6 +285,7 @@ class TestEndToEndAutomaton:
         print("---- End of end-to-end autmaton test")
 
     @pytest.mark.automaton
+    @patch("pepys_import.file.file_processor.prompt", new=processor_prompt_patch)
     @patch("pepys_import.resolvers.command_line_resolver.create_menu", new=create_menu_patch)
     @patch("pepys_import.resolvers.command_line_resolver.prompt", new=clr_prompt_patch)
     @pytest.mark.parametrize("execution_number", range(10))  # Used to just repeat the test 5 times
