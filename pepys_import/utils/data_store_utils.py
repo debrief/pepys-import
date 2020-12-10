@@ -10,6 +10,10 @@ from sqlalchemy import func, inspect, select
 from paths import MIGRATIONS_DIRECTORY
 from pepys_import.resolvers.command_line_input import create_menu
 from pepys_import.utils.table_name_utils import table_name_to_class_name
+from pepys_import.utils.text_formatting_utils import (
+    custom_print_formatted_text,
+    format_error_message,
+)
 
 
 def import_from_csv(data_store, path, files, change_id):
@@ -30,10 +34,12 @@ def import_from_csv(data_store, path, files, change_id):
                 # extract header
                 header = next(reader)
                 if not set(header).issubset(set(arguments)):
-                    print(
-                        f"Headers and the arguments of DataStore.{possible_method}() don't match!"
-                        f"\nPossible arguments: {possible_arguments}"
-                        f"\nPlease check your CSV file."
+                    custom_print_formatted_text(
+                        format_error_message(
+                            f"Headers and the arguments of DataStore.{possible_method}() don't match!"
+                            f"\nPossible arguments: {possible_arguments}"
+                            f"\nPlease check your CSV file."
+                        )
                     )
                     return
                 for row_number, row in enumerate(reader):
@@ -44,10 +50,14 @@ def import_from_csv(data_store, path, files, change_id):
                     try:
                         method_to_call(**keyword_arguments, change_id=change_id)
                     except Exception as e:
-                        print(f"Error importing row {row} from {file}")
-                        print(f"  Error was '{str(e)}'")
+                        custom_print_formatted_text(
+                            format_error_message(f"Error importing row {row} from {file}")
+                        )
+                        custom_print_formatted_text(format_error_message(f"  Error was '{str(e)}'"))
         else:
-            print(f"Method({possible_method}) not found!")
+            custom_print_formatted_text(
+                format_error_message(f"Method({possible_method}) not found!")
+            )
 
 
 def import_synonyms(data_store, filepath, change_id):
@@ -56,10 +66,12 @@ def import_synonyms(data_store, filepath, change_id):
         # extract header
         header = next(reader)
         if not set(header).issubset({"synonym", "table", "target_name"}):
-            print(
-                "Headers of the Synonyms.csv file are wrong or missing!"
-                "\nNecessary arguments: synonym,table,target_name"
-                "\nPlease check your CSV file."
+            custom_print_formatted_text(
+                format_error_message(
+                    "Headers of the Synonyms.csv file are wrong or missing!"
+                    "\nNecessary arguments: synonym,table,target_name"
+                    "\nPlease check your CSV file."
+                )
             )
             return
         # For every row in the CSV
@@ -77,8 +89,10 @@ def import_synonyms(data_store, filepath, change_id):
                 db_class = getattr(data_store.db_classes, class_name)
                 pri_key_column_name = db_class.__table__.primary_key.columns.values()[0].name
             except AttributeError:
-                print(f"Error on row {row}")
-                print(f"  Invalid table name {values['table']}")
+                custom_print_formatted_text(format_error_message(f"Error on row {row}"))
+                custom_print_formatted_text(
+                    format_error_message(f"  Invalid table name {values['table']}")
+                )
                 continue
 
             # Try and find a name column to use
@@ -92,8 +106,10 @@ def import_synonyms(data_store, filepath, change_id):
                     continue
 
             if name_col is None:
-                print(f"Error on row {row}")
-                print(f"  Cannot find name column for table {values['table']}")
+                custom_print_formatted_text(format_error_message(f"Error on row {row}"))
+                custom_print_formatted_text(
+                    format_error_message(f"  Cannot find name column for table {values['table']}")
+                )
                 continue
 
             results = (
@@ -102,8 +118,12 @@ def import_synonyms(data_store, filepath, change_id):
 
             if len(results) == 0:
                 # Nothing to link synonym to so give error
-                print(f"Error on row {row}")
-                print(f"  Name '{values['target_name']}' is not found in table {values['table']}")
+                custom_print_formatted_text(format_error_message(f"Error on row {row}"))
+                custom_print_formatted_text(
+                    format_error_message(
+                        f"  Name '{values['target_name']}' is not found in table {values['table']}"
+                    )
+                )
                 continue
             elif len(results) == 1:
                 guid = getattr(results[0], pri_key_column_name)
@@ -111,10 +131,12 @@ def import_synonyms(data_store, filepath, change_id):
                 data_store.add_to_synonyms(values["table"], values["synonym"], guid, change_id)
             elif len(results) > 1:
                 if values["table"] != "Platforms":
-                    print(f"Error on row {row}")
-                    print(
-                        f"  Name '{values['target_name']}' occurs multiple times in table {values['table']}."
-                        f" Asking user to resolve is only supported for Platforms table."
+                    custom_print_formatted_text(format_error_message(f"Error on row {row}"))
+                    custom_print_formatted_text(
+                        format_error_message(
+                            f"  Name '{values['target_name']}' occurs multiple times in table {values['table']}."
+                            f" Asking user to resolve is only supported for Platforms table."
+                        )
                     )
                     continue
 
@@ -164,7 +186,11 @@ def is_schema_created(engine, db_type):
         if len(table_names) == 74 or len(table_names) == 72:
             return True
         else:
-            print("Database tables are not found! (Hint: Did you initialise the DataStore?)")
+            custom_print_formatted_text(
+                format_error_message(
+                    "Database tables are not found! (Hint: Did you initialise the DataStore?)"
+                )
+            )
             return False
     else:
         table_names = inspector.get_table_names(schema="pepys")
@@ -172,7 +198,11 @@ def is_schema_created(engine, db_type):
         if len(table_names) == 36:
             return True
         else:
-            print("Database tables are not found! (Hint: Did you initialise the DataStore?)")
+            custom_print_formatted_text(
+                format_error_message(
+                    "Database tables are not found! (Hint: Did you initialise the DataStore?)"
+                )
+            )
             return False
 
 
@@ -198,7 +228,7 @@ def create_alembic_version_table(engine, db_type):
     with open(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"), "r") as file:
         versions = json.load(file)
     if "LATEST_POSTGRES_VERSION" not in versions or "LATEST_SQLITE_VERSION" not in versions:
-        print("Latest revision IDs couldn't found!")
+        custom_print_formatted_text(format_error_message("Latest revision IDs couldn't found!"))
         return
 
     if db_type == "sqlite":

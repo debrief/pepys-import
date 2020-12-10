@@ -14,6 +14,7 @@ from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from pepys_import.cli import process
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.utils.sqlite_utils import load_spatialite
+from tests.utils import side_effect
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data")
@@ -31,7 +32,8 @@ class TestImportWithMissingDBFieldSQLite(unittest.TestCase):
     def tearDown(self):
         os.remove("cli_import_test.db")
 
-    def test_import_with_missing_db_field(self):
+    @patch("pepys_import.utils.error_handling.custom_print_formatted_text", side_effect=side_effect)
+    def test_import_with_missing_db_field(self, patched_print):
         conn = sqlite3.connect("cli_import_test.db")
         load_spatialite(conn, None)
 
@@ -99,7 +101,8 @@ class TestImportWithMissingDBFieldPostgres(unittest.TestCase):
         except AttributeError:
             return
 
-    def test_import_with_missing_db_field(self):
+    @patch("pepys_import.utils.error_handling.custom_print_formatted_text", side_effect=side_effect)
+    def test_import_with_missing_db_field(self, patched_print):
         conn = pg8000.connect(user="postgres", password="postgres", database="test", port=55527)
         cursor = conn.cursor()
         # Alter table to drop heading column
@@ -160,7 +163,8 @@ class TestImportWithWrongTypeDBFieldPostgres(unittest.TestCase):
         except AttributeError:
             return
 
-    def test_import_with_wrong_type_db_field(self):
+    @patch("pepys_import.utils.error_handling.custom_print_formatted_text", side_effect=side_effect)
+    def test_import_with_wrong_type_db_field(self, patched_print):
         conn = pg8000.connect(user="postgres", password="postgres", database="test", port=55527)
         cursor = conn.cursor()
         # Alter table to change heading column to be a timestamp
@@ -200,9 +204,12 @@ def test_process_resolver_specification_cli(patched_cl_resolver):
     patched_cl_resolver.assert_called_once()
 
 
+@patch("pepys_import.cli.custom_print_formatted_text", side_effect=side_effect)
 @patch("pepys_import.cli.CommandLineResolver")
 @patch("pepys_import.cli.DefaultResolver")
-def test_process_resolver_specification_invalid(patched_default_resolver, patched_cl_resolver):
+def test_process_resolver_specification_invalid(
+    patched_default_resolver, patched_cl_resolver, patched_print
+):
     temp_output = StringIO()
     with redirect_stdout(temp_output):
         process(resolver="invalid")

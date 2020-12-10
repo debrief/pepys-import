@@ -34,8 +34,13 @@ def format_command(text):
 
 
 def format_help_text(text):
-    """Create a FormattedText object which makes the given text italic."""
+    """Create a FormattedText object which makes the given text blue."""
     return FormattedText([("#28a745", text)])
+
+
+def format_error_message(text):
+    """Create a FormattedText object which makes the given text red."""
+    return FormattedText([("#dc3545", text)])
 
 
 def formatted_text_to_str(formatted_text: FormattedText) -> str:

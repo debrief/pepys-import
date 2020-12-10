@@ -9,7 +9,9 @@ from pepys_import.resolvers import constants
 from pepys_import.resolvers.command_line_input import create_menu, get_fuzzy_completer, is_valid
 from pepys_import.resolvers.data_resolver import DataResolver
 from pepys_import.utils.text_formatting_utils import (
+    custom_print_formatted_text,
     format_command,
+    format_error_message,
     print_help_text,
     print_new_section_title,
 )
@@ -194,7 +196,7 @@ class CommandLineResolver(DataResolver):
             data_store.session.query(Platform).filter(Platform.platform_id == host_id).first()
         )
         if not host_platform:
-            print("Invalid platform id specified")
+            custom_print_formatted_text(format_error_message("Invalid platform id specified"))
             print("Quitting")
             sys.exit(1)
 
@@ -559,7 +561,11 @@ class CommandLineResolver(DataResolver):
                 change_id,
             )
         elif choice not in completer:
-            print(f"'{choice}' could not be found! Redirecting to adding a new platform..")
+            custom_print_formatted_text(
+                format_error_message(
+                    f"'{choice}' could not be found! Redirecting to adding a new platform.."
+                )
+            )
             return self.add_to_platforms(
                 data_store, choice, platform_type, nationality, privacy, change_id
             )
@@ -609,7 +615,11 @@ class CommandLineResolver(DataResolver):
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
         elif choice not in completer:
-            print(f"'{choice}' could not be found! Redirecting to adding a new sensor..")
+            custom_print_formatted_text(
+                format_error_message(
+                    f"'{choice}' could not be found! Redirecting to adding a new sensor.."
+                )
+            )
             return self.add_to_sensors(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
@@ -651,8 +661,10 @@ class CommandLineResolver(DataResolver):
             format_command("Please enter a name: "), default=platform_name
         ).strip()
         if len(platform_name) > 150:
-            print(
-                "Platform name too long, maximum length 150 characters. Restarting platform data entry."
+            custom_print_formatted_text(
+                format_error_message(
+                    "Platform name too long, maximum length 150 characters. Restarting platform data entry."
+                )
             )
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy, change_id
@@ -662,8 +674,10 @@ class CommandLineResolver(DataResolver):
             format_command("Please enter identifier (pennant or tail number): ")
         ).strip()
         if len(identifier) > 10:
-            print(
-                "Identifier too long, maximum length 10 characters. Restarting platform data entry."
+            custom_print_formatted_text(
+                format_error_message(
+                    "Identifier too long, maximum length 10 characters. Restarting platform data entry."
+                )
             )
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy, change_id
@@ -673,7 +687,11 @@ class CommandLineResolver(DataResolver):
             format_command("Please enter trigraph (optional): "), default=platform_name[:3]
         ).strip()
         if len(trigraph) > 3:
-            print("Trigraph too long, maximum length 3 characters. Restarting platform data entry.")
+            custom_print_formatted_text(
+                format_error_message(
+                    "Trigraph too long, maximum length 3 characters. Restarting platform data entry."
+                )
+            )
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy, change_id
             )
@@ -682,16 +700,20 @@ class CommandLineResolver(DataResolver):
             format_command("Please enter quadgraph (optional): "), default=platform_name[:4]
         ).strip()
         if len(quadgraph) > 4:
-            print(
-                "Quadgraph too long, maximum length 4 characters. Restarting platform data entry."
+            custom_print_formatted_text(
+                format_error_message(
+                    "Quadgraph too long, maximum length 4 characters. Restarting platform data entry."
+                )
             )
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy, change_id
             )
 
         if platform_name == "" or identifier == "":
-            print(
-                "You must provide a platform name and identifier! Restarting platform data entry."
+            custom_print_formatted_text(
+                format_error_message(
+                    "You must provide a platform name and identifier! Restarting platform data entry."
+                )
             )
             return self.add_to_platforms(
                 data_store, platform_name, platform_type, nationality, privacy, change_id
@@ -711,7 +733,11 @@ class CommandLineResolver(DataResolver):
                 search_help_id=constants.FUZZY_SEARCH_NATIONALITY,
             )
         if chosen_nationality is None:
-            print("Nationality couldn't resolved. Returning to the previous menu!")
+            custom_print_formatted_text(
+                format_error_message(
+                    "Nationality couldn't resolved. Returning to the previous menu!"
+                )
+            )
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
 
         # Choose Platform Type
@@ -729,7 +755,11 @@ class CommandLineResolver(DataResolver):
             )
 
         if chosen_platform_type is None:
-            print("Platform Type couldn't resolved. Returning to the previous menu!")
+            custom_print_formatted_text(
+                format_error_message(
+                    "Platform Type couldn't resolved. Returning to the previous menu!"
+                )
+            )
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
 
         # Choose Privacy
@@ -754,7 +784,11 @@ class CommandLineResolver(DataResolver):
             )
 
         if chosen_privacy is None:
-            print("Classification couldn't resolved. Returning to the previous menu!")
+            custom_print_formatted_text(
+                format_error_message(
+                    "Classification couldn't resolved. Returning to the previous menu!"
+                )
+            )
             return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
 
         def is_valid_choice(option):  # pragma: no cover
@@ -826,13 +860,17 @@ class CommandLineResolver(DataResolver):
         sensor_name = prompt(format_command("Please enter a name: "), default=sensor_name).strip()
 
         if sensor_name == "":
-            print("You must provide a sensor name. Restarting sensor data entry")
+            custom_print_formatted_text(
+                format_error_message("You must provide a sensor name. Restarting sensor data entry")
+            )
             return self.add_to_sensors(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
             )
         if len(sensor_name) > 150:
-            print(
-                "Sensor name too long, maximum length 150 characters. Restarting sensor data entry."
+            custom_print_formatted_text(
+                format_error_message(
+                    "Sensor name too long, maximum length 150 characters. Restarting sensor data entry."
+                )
             )
             return self.add_to_sensors(
                 data_store, sensor_name, sensor_type, host_id, privacy, change_id
@@ -852,7 +890,11 @@ class CommandLineResolver(DataResolver):
             )
 
         if sensor_type is None:
-            print("Sensor Type couldn't resolved. Returning to the previous menu!")
+            custom_print_formatted_text(
+                format_error_message(
+                    "Sensor Type couldn't resolved. Returning to the previous menu!"
+                )
+            )
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
 
         if privacy:
@@ -876,7 +918,11 @@ class CommandLineResolver(DataResolver):
             )
 
         if chosen_privacy is None:
-            print("Classification couldn't resolved. Returning to the previous menu!")
+            custom_print_formatted_text(
+                format_error_message(
+                    "Classification couldn't resolved. Returning to the previous menu!"
+                )
+            )
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
 
         def is_valid_choice(option):  # pragma: no cover

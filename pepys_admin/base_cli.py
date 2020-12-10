@@ -1,6 +1,10 @@
 import cmd
 
-from pepys_import.utils.text_formatting_utils import custom_print_formatted_text, format_menu
+from pepys_import.utils.text_formatting_utils import (
+    custom_print_formatted_text,
+    format_error_message,
+    format_menu,
+)
 
 
 class BaseShell(cmd.Cmd):
@@ -14,7 +18,7 @@ class BaseShell(cmd.Cmd):
         elif cmd_ in self.aliases:
             self.aliases[cmd_]()
         else:
-            print(f"*** Unknown syntax: {line}")
+            custom_print_formatted_text(format_error_message(f"*** Unknown syntax: {line}"))
 
     def get_title(self):
         title = getattr(self, "title", None)
