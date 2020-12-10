@@ -144,7 +144,7 @@ class CommandLineResolver(DataResolver):
             )
             for platform in platforms:
                 platform_details.append(
-                    f"{platform.name} / {platform.identifier} / {platform.nationality_name}"
+                    f"Select: {platform.name} / {platform.identifier} / {platform.nationality_name}"
                 )
         choices = final_options + platform_details
 
@@ -218,7 +218,7 @@ class CommandLineResolver(DataResolver):
                 "Add a new sensor",
             ]
 
-            objects_dict = {obj.name: obj for obj in objects}
+            objects_dict = {f"Select: {obj.name}": obj for obj in objects}
             if len(objects_dict) <= 7:
                 options.extend(objects_dict)
 
@@ -312,7 +312,7 @@ class CommandLineResolver(DataResolver):
             current_values += "\n"
         else:
             objects = data_store.session.query(db_class).limit(8).all()
-        objects_dict = {obj.name: obj for obj in objects}
+        objects_dict = {f"Select: {obj.name}": obj for obj in objects}
         options.extend(objects_dict)
 
         def is_valid_dynamic(option):  # pragma: no cover
