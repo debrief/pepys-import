@@ -881,7 +881,7 @@ class TestImportMetadataOnly(unittest.TestCase):
             assert len(platforms) == 6
 
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            assert len(sensors) == 7
+            assert len(sensors) == 8
 
             states = len(self.store.session.query(self.store.db_classes.State).all())
             contacts = len(self.store.session.query(self.store.db_classes.Contact).all())
@@ -1003,7 +1003,7 @@ class TestImportSkipFile(unittest.TestCase):
             platform_ids = [p.platform_id for p in platforms]
 
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            assert len(sensors) == 5
+            assert len(sensors) == 6
             sensor_ids = [p.sensor_id for p in sensors]
 
             states = len(self.store.session.query(self.store.db_classes.State).all())
@@ -1024,7 +1024,7 @@ class TestImportSkipFile(unittest.TestCase):
             assert platform_ids == new_platform_ids
 
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            assert len(sensors) == 5
+            assert len(sensors) == 6
             new_sensor_ids = [p.sensor_id for p in sensors]
             assert sensor_ids == new_sensor_ids
 
