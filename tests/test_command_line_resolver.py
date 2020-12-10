@@ -800,8 +800,11 @@ class PlatformTestCase(unittest.TestCase):
         ]
         resolver_prompt.side_effect = [
             "TEST",
+            "?",
             "123",
+            "?",
             "TST",
+            "?",
             "TEST",
         ]
         with self.store.session_scope():
@@ -820,6 +823,9 @@ class PlatformTestCase(unittest.TestCase):
                 )
             output = temp_output.getvalue()
             assert constants.ADD_TO_PLATFORMS in output
+            assert constants.PLATFORM_IDENTIFIER in output
+            assert constants.PLATFORM_TRIGRAPH in output
+            assert constants.PLATFORM_QUADGRAPH in output
 
 
 class DatafileTestCase(unittest.TestCase):
