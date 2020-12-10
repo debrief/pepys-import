@@ -658,36 +658,52 @@ class CommandLineResolver(DataResolver):
                 data_store, platform_name, platform_type, nationality, privacy, change_id
             )
 
-        identifier = prompt(
-            format_command("Please enter identifier (pennant or tail number): ")
-        ).strip()
-        if len(identifier) > 10:
-            print(
-                "Identifier too long, maximum length 10 characters. Restarting platform data entry."
-            )
-            return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
-            )
+        while True:
+            identifier = prompt(
+                format_command("Please enter identifier (pennant or tail number): ")
+            ).strip()
+            if len(identifier) > 10:
+                print(
+                    "Identifier too long, maximum length 10 characters. Restarting platform data entry."
+                )
+                return self.add_to_platforms(
+                    data_store, platform_name, platform_type, nationality, privacy, change_id
+                )
+            elif identifier in ["?", "HELP"]:
+                print_help_text(data_store, constants.PLATFORM_IDENTIFIER)
+            else:
+                break
 
-        trigraph = prompt(
-            format_command("Please enter trigraph (optional): "), default=platform_name[:3]
-        ).strip()
-        if len(trigraph) > 3:
-            print("Trigraph too long, maximum length 3 characters. Restarting platform data entry.")
-            return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
-            )
-
-        quadgraph = prompt(
-            format_command("Please enter quadgraph (optional): "), default=platform_name[:4]
-        ).strip()
-        if len(quadgraph) > 4:
-            print(
-                "Quadgraph too long, maximum length 4 characters. Restarting platform data entry."
-            )
-            return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
-            )
+        while True:
+            trigraph = prompt(
+                format_command("Please enter trigraph (optional): "), default=platform_name[:3]
+            ).strip()
+            if len(trigraph) > 3:
+                print(
+                    "Trigraph too long, maximum length 3 characters. Restarting platform data entry."
+                )
+                return self.add_to_platforms(
+                    data_store, platform_name, platform_type, nationality, privacy, change_id
+                )
+            elif trigraph in ["?", "HELP"]:
+                print_help_text(data_store, constants.PLATFORM_TRIGRAPH)
+            else:
+                break
+        while True:
+            quadgraph = prompt(
+                format_command("Please enter quadgraph (optional): "), default=platform_name[:4]
+            ).strip()
+            if len(quadgraph) > 4:
+                print(
+                    "Quadgraph too long, maximum length 4 characters. Restarting platform data entry."
+                )
+                return self.add_to_platforms(
+                    data_store, platform_name, platform_type, nationality, privacy, change_id
+                )
+            elif quadgraph in ["?", "HELP"]:
+                print_help_text(data_store, constants.PLATFORM_QUADGRAPH)
+            else:
+                break
 
         if platform_name == "" or identifier == "":
             print(
