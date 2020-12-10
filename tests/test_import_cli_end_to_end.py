@@ -28,7 +28,7 @@ def test_rep_test_1_import(prompt, menu_prompt, processor_prompt):
     menu_prompt.side_effect = [
         "3",  # Public
         "1",  # Yes, correct
-        "2",  # Add platform
+        "1",  # Add platform
         "3",  # UK
         "3",  # PLATFORM-TYPE-1,
         "3",  # Public
@@ -37,7 +37,7 @@ def test_rep_test_1_import(prompt, menu_prompt, processor_prompt):
         "3",  # GPS
         "3",  # Public
         "1",  # Yes, create
-        "2",  # Add platform
+        "1",  # Add platform
         "3",  # UK
         "5",  # Fisher
         "3",  # Public
@@ -46,7 +46,7 @@ def test_rep_test_1_import(prompt, menu_prompt, processor_prompt):
         "4",  # SENSOR-TYPE-1
         "3",  # Public
         "1",  # Yes, create
-        "1",  # Search for platform
+        "2",  # Search for platform
         "2",  # No to synonym creation
         "3",  # TA
         "1",  # SEARCH-PLATFORM
@@ -96,7 +96,7 @@ def test_gpx_1_0_import(prompt, menu_prompt, processor_prompt):
     menu_prompt.side_effect = [
         "4",  # Private
         "1",  # Yes, create
-        "2",  # Add new platform
+        "1",  # Add new platform
         "5",  # Germany
         "5",  # Ferry
         "5",  # Private

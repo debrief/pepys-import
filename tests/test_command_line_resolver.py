@@ -494,7 +494,7 @@ class PlatformTestCase(unittest.TestCase):
         # platform type"->Select "Warship"->Select "Search for an existing classification"->Select
         # "Public"->Select "Yes"
         menu_prompt.side_effect = [
-            "1",
+            "2",
             "TEST",
             "1",
             "UK",
@@ -544,7 +544,7 @@ class PlatformTestCase(unittest.TestCase):
         # Select "Search for an existing platform type"->Select "Warship"->Select
         # "Search for an existing classification"->Select "Public"->Select "Yes"
         menu_prompt.side_effect = [
-            "2",
+            "1",
             "2",
             "1",
             "UK",
@@ -603,9 +603,9 @@ class PlatformTestCase(unittest.TestCase):
         # Select "Search for an existing platform type"->Select "Warship"->Select
         # "Search for an existing classification"->Select "Public"->Select "Yes"
         menu_prompt.side_effect = [
-            "2",
+            "1",
             "3",
-            "2",
+            "1",
             "1",
             "UK",
             "1",
@@ -655,7 +655,7 @@ class PlatformTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_resolver_platform_new_privacy_given(self, resolver_prompt, menu_prompt):
-        menu_prompt.side_effect = ["2", "1"]
+        menu_prompt.side_effect = ["1", "1"]
         resolver_prompt.side_effect = [
             "TEST",
             "123",
@@ -1176,7 +1176,7 @@ class SensorTestCase(unittest.TestCase):
         # Select "Search for an existing sensor-type"->Search "SENSOR-TYPE-1"->
         # Select "Search an existing classification"->Search "Public"->Select "Yes"
         menu_prompt.side_effect = [
-            "1",
+            "2",
             "Blah",
             "1",
             "SENSOR-TYPE-1",
@@ -1696,7 +1696,7 @@ class GetMethodsTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_get_platform_adds_resolved_platform_successfully(self, resolver_prompt, menu_prompt):
         menu_prompt.side_effect = [
-            "2",
+            "1",
             "1",
             "United Kingdom",
             "1",
@@ -1742,7 +1742,7 @@ class GetMethodsTestCase(unittest.TestCase):
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_get_sensor_adds_resolved_sensor_successfully(self, resolver_prompt, menu_prompt):
         menu_prompt.side_effect = [
-            "2",
+            "1",
             "1",
             "Location-Satellite",
             "1",
