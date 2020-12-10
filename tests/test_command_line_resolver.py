@@ -1753,7 +1753,7 @@ class GetMethodsTestCase(unittest.TestCase):
         with self.store.session_scope():
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
             # there must be 5 entities at the beginning (the default ones)
-            self.assertEqual(len(sensors), 5)
+            self.assertEqual(len(sensors), 6)
 
             platform = self.store.get_platform(
                 platform_name="ADRI",
@@ -1765,7 +1765,7 @@ class GetMethodsTestCase(unittest.TestCase):
 
             # there must be 3 entities now
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
-            self.assertEqual(len(sensors), 6)
+            self.assertEqual(len(sensors), 7)
             self.assertEqual(sensors[-1].name, "SENSOR-TEST")
 
 
