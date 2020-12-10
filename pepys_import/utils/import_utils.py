@@ -42,4 +42,12 @@ def import_validators(path):
 
 
 def sort_files(files):
-    return sorted(files, key=lambda x: x.name)
+    list_of_files = list(files)
+    if len(list_of_files) == 0:
+        return []
+    if type(list_of_files[0]) == str:
+        # They could be just string filenames
+        return sorted(list_of_files)
+    else:
+        # Or they could be actual file objects
+        return sorted(list_of_files, key=lambda x: x.name)
