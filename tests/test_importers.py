@@ -725,7 +725,7 @@ class TestImportWithDuplicatePlatformNames(unittest.TestCase):
         menu_prompt.side_effect = [
             "2",  # Public
             "1",  # Yes, create
-            "2",  # Add new platform
+            "1",  # Add new platform
             "2",  # UK
             "2",  # PLATFORM-TYPE-1
             "2",  # Public
@@ -734,7 +734,7 @@ class TestImportWithDuplicatePlatformNames(unittest.TestCase):
             "2",  # GPS
             "2",  # Public
             "1",  # Yes, create
-            "2",  # Add new platform
+            "1",  # Add new platform
             "4",  # France
             "2",  # PLATFORM-TYPE-1
             "2",  # Public
@@ -833,7 +833,7 @@ class TestImportMetadataOnly(unittest.TestCase):
             # For rep_test1.rep import
             "3",  # Public
             "1",  # Yes, correct
-            "2",  # Add platform
+            "1",  # Add platform
             "3",  # UK
             "3",  # PLATFORM-TYPE-1,
             "3",  # Public
@@ -842,7 +842,7 @@ class TestImportMetadataOnly(unittest.TestCase):
             "3",  # GPS
             "3",  # Public
             "1",  # Yes, create
-            "2",  # Add platform
+            "1",  # Add platform
             "3",  # UK
             "5",  # Fisher
             "3",  # Public
@@ -854,7 +854,7 @@ class TestImportMetadataOnly(unittest.TestCase):
             # For uk_track.rep import
             "3",  # Public
             "1",  # Yes, correct
-            "2",  # Add platform
+            "1",  # Add platform
             "3",  # UK
             "3",  # PLATFORM-TYPE-1,
             "3",  # Public
@@ -961,7 +961,7 @@ class TestImportSkipFile(unittest.TestCase):
             # For rep_test1.rep import
             "3",  # Public
             "1",  # Yes, correct
-            "2",  # Add platform
+            "1",  # Add platform
             "3",  # UK
             "3",  # PLATFORM-TYPE-1,
             "3",  # Public
@@ -970,7 +970,7 @@ class TestImportSkipFile(unittest.TestCase):
             "3",  # GPS
             "3",  # Public
             "1",  # Yes, create
-            "2",  # Add platform
+            "1",  # Add platform
             "3",  # UK
             "5",  # Fisher
             "3",  # Public
@@ -982,7 +982,7 @@ class TestImportSkipFile(unittest.TestCase):
             # For sen_tracks.rep import
             "3",  # Public
             "1",  # Yes, correct
-            "2",  # Add platform
+            "1",  # Add platform
             "3",  # UK
             "3",  # PLATFORM-TYPE-1,
             "3",  # Public

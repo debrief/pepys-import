@@ -43,7 +43,7 @@ to allow you to confirm everything is set correctly - just choose option :code:`
 continue.
 
 The next set of questions are about the Platform. You should choose to add a new platform (option
-:code:`2`), and then you'll be asked for details. It doesn't matter what name or details you give it, as
+:code:`1`), and then you'll be asked for details. It doesn't matter what name or details you give it, as
 this is just an example - but note that some fields are optional. Next is the search for a
 nationality - again, you'll get a list of the most common nationalities, but can search for others
 if you want to. For now, just choose :code:`3` for :code:`United Kingdom`. When you're given the list of
@@ -52,7 +52,7 @@ pre-defined platform types to choose from, choose :code:`2` to add a new platfor
 
 The next stage is entering data about the sensor used to collect the data that we're importing. In
 this case, we're importing a GPX file, which is a file format used by GPS systems - so the sensor
-name is pre-filled as :code:`GPS`. So, choose to add a new sensor (option :code:`2`), add a
+name is pre-filled as :code:`GPS`. So, choose to add a new sensor (option :code:`1`), add a
 classification and confirm the details are correct.
 
 You've now finished adding metadata, and the import itself will take place and a progress bar will
