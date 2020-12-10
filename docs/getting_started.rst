@@ -52,7 +52,7 @@ pre-defined platform types to choose from, choose :code:`2` to add a new platfor
 
 The next stage is entering data about the sensor used to collect the data that we're importing. In
 this case, we're importing a GPX file, which is a file format used by GPS systems - so the sensor
-name is pre-filled as :code:`GPS`. So, choose to add a new sensor (option :code:`2`), add a
+name is pre-filled as :code:`GPS`. So, choose to add a new sensor (option :code:`1`), add a
 classification and confirm the details are correct.
 
 You've now finished adding metadata, and the import itself will take place and a progress bar will
