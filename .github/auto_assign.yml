@@ -1,0 +1,8 @@
+addReviewers: true
+addAssignees: author
+reviewers:
+  - ianMayo
+skipKeywords:
+  - draft
+  - wip
+numberOfReviewers: 0
