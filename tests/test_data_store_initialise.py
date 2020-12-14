@@ -1,4 +1,3 @@
-import platform
 import unittest
 from unittest import TestCase
 
@@ -132,15 +131,13 @@ class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
         inspector = inspect(data_store_sqlite.engine)
         table_names = inspector.get_table_names()
 
-        system = platform.system()
+        # The number of spatial tables varies depending on the version of
+        # of spatialite: either 38 for the later version or 36 for the previous version. In total,
+        # including our normal tables, this leads to either 74 or 72 tables.
+        # On Windows we only support the pre-release version of spatialite, so we get 74, but this can also happen on
+        # other systems depending on configuration
+        assert len(table_names) == 74 or len(table_names) == 72
 
-        if system == "Windows":
-            correct_n_tables = 74
-        else:
-            correct_n_tables = 72
-
-        # 37 tables + 36 spatial tables + 1 alembic_version table must be created. A few of them tested
-        self.assertEqual(len(table_names), correct_n_tables)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
         self.assertIn("Datafiles", table_names)
