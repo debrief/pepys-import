@@ -1,5 +1,22 @@
-# Needed to stop the C version of the ElementTree XMLParser object being imported
-# See https://stackoverflow.com/a/55261552/1912
+# The complex importing code that is the first ~10 lines of this file is needed
+# because when you import xml.etree.ElementTree, Python automatically imports
+# the C versions of these modules from the _elementtree C library. We can't use
+# these versions we need to modify attributes that the C version doesn't provide
+# access to.
+# Normally, deleting _elementtree.XMLParser object works fine, as Python then can't
+# find it, and so imports the Python version instead. However, if we're running within
+# pytest then the XML ElementTree module will have already been imported by pytest,
+# so we need to delete it from the list of imported modules, so we can import it
+# ourselves without the C version being imported. Thus, the first try-except clause
+# below is only needed when running with pytest, and in other situations the module
+# won't already be imported, so it will do nothing.
+import sys
+
+try:
+    del sys.modules["xml.etree.ElementTree"]
+except KeyError:
+    pass
+
 import _elementtree
 
 try:
@@ -262,6 +279,7 @@ def parse(file_object, highlighted_file=None):
      - highlighted_file (optional): A HighlightedFile instance initialised from the same
        file as the file object, used to record extractions.
     """
+
     # Create a parser instance without giving it a TreeBuilder class
     parser = XMLParser(target=None)
 
