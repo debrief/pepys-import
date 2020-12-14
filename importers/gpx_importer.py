@@ -1,12 +1,11 @@
-from xml.etree import ElementTree
-
-from dateutil.parser import parse
+from dateutil.parser import parse as date_parse
 from dateutil.tz import tzoffset
 from tqdm import tqdm
 
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
+from pepys_import.file.highlighter.xml_parser import parse
 from pepys_import.file.importer import Importer
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
 
@@ -41,7 +40,7 @@ class GPXImporter(Importer):
         # Note: we can't use the file_object variable passed in, as lxml refuses
         # to parse a string that has an encoding attribute in the XML - it requires bytes instead
         try:
-            doc = ElementTree.parse(path)
+            doc = parse(path, highlighted_file=file_object)
         except Exception as e:
             self.errors.append(
                 {self.error_type: f'Invalid GPX file at {path}\nError from parsing was "{str(e)}"'}
@@ -51,7 +50,9 @@ class GPXImporter(Importer):
         # Iterate through <trk> elements - these should correspond to
         # a specific platform, with the platform name in the <name> element
         for track_element in tqdm(doc.findall(".//{*}trk")):
-            track_name = track_element.find("{*}name").text
+            track_name_element = track_element.find("{*}name")
+            track_name = track_name_element.text
+            track_name_element.record("tool", "name", track_name)
 
             # Get the platform and sensor details, as these will be the same for all
             # points in this track
@@ -73,9 +74,6 @@ class GPXImporter(Importer):
             # belong to this track)
             for tpt in track_element.findall(".//{*}trkpt"):
                 # Extract information (location, speed etc) from <trkpt> element
-                latitude_str = tpt.attrib["lat"]
-                longitude_str = tpt.attrib["lon"]
-
                 timestamp_str = self.get_child_text_if_exists(tpt, "{*}time")
 
                 if timestamp_str is None:
@@ -97,9 +95,14 @@ class GPXImporter(Importer):
                     data_store, platform, sensor, timestamp, self.short_name
                 )
 
+                latitude_str = tpt.attrib["lat"]
+                longitude_str = tpt.attrib["lon"]
+
                 location = Location(errors=self.errors, error_type=self.error_type)
                 lat_valid = location.set_latitude_decimal_degrees(latitude_str)
                 lon_valid = location.set_longitude_decimal_degrees(longitude_str)
+
+                tpt.record("tool", "location", location, xml_part="opening")
 
                 if lat_valid and lon_valid:
                     state.location = location
@@ -139,7 +142,7 @@ class GPXImporter(Importer):
         return None
 
     def parse_timestamp(self, s):
-        dt = parse(s)
+        dt = date_parse(s)
 
         # Create a UTC time zone object
         utc = tzoffset("UTC", 0)
