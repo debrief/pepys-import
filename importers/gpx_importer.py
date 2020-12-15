@@ -91,6 +91,9 @@ class GPXImporter(Importer):
 
                 # Parse timestamp and create state
                 timestamp = self.parse_timestamp(timestamp_str)
+                if not timestamp:
+                    continue
+
                 state = datafile.create_state(
                     data_store, platform, sensor, timestamp, self.short_name
                 )
@@ -142,7 +145,11 @@ class GPXImporter(Importer):
         return None
 
     def parse_timestamp(self, s):
-        dt = date_parse(s)
+        try:
+            dt = date_parse(s)
+        except Exception:
+            self.errors.append({self.error_type: "Line unknown. " f"Error: Invalid timestamp {s}"})
+            return False
 
         # Create a UTC time zone object
         utc = tzoffset("UTC", 0)
