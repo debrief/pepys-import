@@ -107,6 +107,11 @@ class HighlightedFile:
         else:
             file_contents, _ = self.limited_contents()
 
+        # We need to store the contents of the file as bytes so that
+        # the record call on an XML element can convert from bytes offsets to character offsets
+        with open(self.filename, "rb") as f:
+            self.file_byte_contents = f.read()
+
         # Initialise the char index (self.chars), with one Char entry for
         # each character in the file. (Note: a reference to this char array is
         # given to each SubToken)
@@ -114,6 +119,12 @@ class HighlightedFile:
         # add it to list that already exists in self.chars, as references have already
         # been made to this list
         self.chars += [Char(c) for c in tqdm(file_contents)]
+
+    def set_usages_for_slice(self, start, end, usage):
+        for i in range(start, end):
+            self.chars[i].usages.append(usage)
+
+        return (start, end)
 
     def create_lines(self, file_contents, lines_list):
         """
