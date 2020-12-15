@@ -37,6 +37,10 @@ class MyElement(Element):
     XML element. This subclass has various additional member variables to
     store byte offsets for the element and can take an optional highlighted_file
     and/or start_byte argument in the constructor.
+
+    Note: the offsets stored are *byte* offsets, not character offsets - so these
+    cannot be used for indexing into a non-ASCII Python string unless you convert byte offsets
+    to character offsets first.
     """
 
     def __init__(self, tag, attrib={}, highlighted_file=None, start_byte=None, **extra):
@@ -64,6 +68,21 @@ class MyElement(Element):
         super(MyElement, self).__init__(tag, attrib, **extra)
 
     def record(self, tool: str, field: str, value: str, units: str = None, xml_part="text"):
+        """
+        Record the usage of this element for a specific purpose
+
+        :param tool: Name of the importer handling the import (eg. "NMEA Importer)
+                     Should be set to `self.name` when called from an importer
+        :param field: The field that the token is being interpreted as (eg. "speed")
+        :param value: The parsed value of the token (eg. "5 knots") - where possible,
+                      pass a Quantity object with associated units
+        :param units: The units that the field was interpreted as using (optional - do not
+                      include if the value was a Quantity as that holds unit information itself
+        :param xml_part: Specifies which bit of the XML for the element to record, must be either
+                         "text" which records the text of the element, "opening" which records
+                         the opening tag, or "all" which records the opening tag and text.
+
+        """
         if self.highlighted_file is None:
             raise ValueError("No HighlightedFile instance is associated with this Element")
 
@@ -96,10 +115,16 @@ class MyElement(Element):
             start = self.opening_tag_start
             end = self.closing_tag_start
         else:
-            raise ValueError("Invalid xml_part. Must be on of 'text', 'opening', 'all'")
+            raise ValueError("Invalid xml_part. Must be one of 'text', 'opening', 'all'")
 
-        for i in range(start, end):
-            self.highlighted_file.chars[i].usages.append(usage)
+        # Convert from byte indexes to character indexes
+        start_in_chars = len(self.highlighted_file.file_byte_contents[:start].decode())
+        end_in_chars = start_in_chars + len(
+            self.highlighted_file.file_byte_contents[start:end].decode()
+        )
+
+        # This return returns the start and end index, mainly for use for testing
+        return self.highlighted_file.set_usages_for_slice(start_in_chars, end_in_chars, usage)
 
 
 class MyTreeBuilder:
