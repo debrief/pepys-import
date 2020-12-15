@@ -19,12 +19,12 @@
 			<p:trkpt lat="22.2862861" lon="-21.7978806">
 				<p:ele>0.000</p:ele>
 				<p:time>2012-04-27T16:30:38+01:00</p:time>
-				<p:course>264.7ṧ</p:course>
+				<p:course>264.7</p:course>
 				<p:speed>5.5</p:speed>
 			</p:trkpt>
 			<p:trkpt lat="22.4862861" lon="-21.2978806">
 				<p:ele>0.000</p:ele>
-				<p:time>∑⌠2012-04-27T16:31:38+01:00</p:time>
+				<p:time>∑2012-04-27T16:31:38+01:00</p:time>
 				<p:course>263.7</p:course>
 				<p:speed>7.5</p:speed>
 			</p:trkpt>
@@ -35,7 +35,7 @@
 				<p:speed>¿</p:speed>
 			</p:trkpt>
 			<p:trkpt lat="22.3862861" lon="-21.1978806">
-				<p:ele>✢</p:ele>
+				<p:ele>Ú</p:ele>
 				<p:time>2012-04-27T16:33:38+01:00</p:time>
 				<p:course>261.7</p:course>
 				<p:speed>3.5</p:speed>
