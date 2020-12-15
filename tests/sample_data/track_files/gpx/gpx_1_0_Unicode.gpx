@@ -24,15 +24,15 @@
 			</p:trkpt>
 			<p:trkpt lat="22.4862861" lon="-21.2978806">
 				<p:ele>0.000</p:ele>
-				<p:time>∑2012-04-27T16:31:38+01:00</p:time>
+				<p:time>2012-04-27T16:31:38+01:00</p:time>
 				<p:course>263.7</p:course>
 				<p:speed>7.5</p:speed>
 			</p:trkpt>
 			<p:trkpt lat="22.1862861" lon="-21.5978806">
-				<p:ele>0.↓💻000</p:ele>
+				<p:ele>0.000</p:ele>
 				<p:time>2012-04-27T16:32:38+01:00</p:time>
 				<p:course>262.7</p:course>
-				<p:speed>¿</p:speed>
+				<p:speed>ê</p:speed>
 			</p:trkpt>
 			<p:trkpt lat="22.3862861" lon="-21.1978806">
 				<p:ele>Ú</p:ele>
