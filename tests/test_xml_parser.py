@@ -77,7 +77,7 @@ def _check_element_record(el, file_contents):
 # To test with unicode we need to actually call the record method
 # and then get the locations it's used out from there
 def test_parser_record_works_correctly_unicode():
-    with open(UNICODE_GPX_PATH) as f:
+    with open(UNICODE_GPX_PATH, encoding="utf-8") as f:
         file_contents = f.read()
 
     hf = HighlightedFile(UNICODE_GPX_PATH)
