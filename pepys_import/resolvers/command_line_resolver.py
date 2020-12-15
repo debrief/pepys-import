@@ -1,4 +1,5 @@
 import sys
+from collections import OrderedDict
 
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
@@ -14,6 +15,8 @@ from pepys_import.utils.text_formatting_utils import (
     print_new_section_title,
 )
 
+TQDM_BAR_FORMAT = "{l_bar}{bar} | {n_fmt}/{total_fmt}"
+
 
 def is_number(text):
     return text.isdigit()
@@ -25,6 +28,13 @@ numeric_validator = Validator.from_callable(
 
 
 class CommandLineResolver(DataResolver):
+    def __init__(self):
+        self.platform_questions_responses = OrderedDict()
+        self.platform_questions_order = list()
+        self.sensor_questions_responses = OrderedDict()
+        self.sensor_questions_order = list()
+        self.validation_dict = dict()
+
     def resolve_datafile(self, data_store, datafile_name, datafile_type, privacy, change_id):
         """
         This method resolves datafile type and privacy. It asks user whether to create
@@ -56,7 +66,7 @@ class CommandLineResolver(DataResolver):
             chosen_datafile_type = self.resolve_reference(
                 data_store,
                 change_id,
-                data_type="Datafile",
+                data_type=f"Datafile named '{datafile_name}'",
                 db_class=data_store.db_classes.DatafileType,
                 field_name="datafile_type",
                 help_id=constants.RESOLVE_DATAFILE_TYPE,
@@ -330,15 +340,17 @@ class CommandLineResolver(DataResolver):
         elif choice in ["?", "HELP"]:
             print_help_text(data_store, help_id)
             return self.resolve_reference(
-                data_store,
-                change_id,
-                data_type,
-                db_class,
-                field_name,
-                help_id,
-                search_help_id,
-                text_name,
+                data_store=data_store,
+                change_id=change_id,
+                data_type=data_type,
+                db_class=db_class,
+                field_name=field_name,
+                help_id=help_id,
+                search_help_id=search_help_id,
+                text_name=text_name,
             )
+        # elif choice == ",":
+        #     return constants.ASK_PREVIOUS
         elif choice == str(1):
             result = self.fuzzy_search_reference(
                 data_store=data_store,
@@ -352,14 +364,14 @@ class CommandLineResolver(DataResolver):
             )
             if result is None:
                 return self.resolve_reference(
-                    data_store,
-                    change_id,
-                    data_type,
-                    db_class,
-                    field_name,
-                    help_id,
-                    search_help_id,
-                    text_name,
+                    data_store=data_store,
+                    change_id=change_id,
+                    data_type=data_type,
+                    db_class=db_class,
+                    field_name=field_name,
+                    help_id=help_id,
+                    search_help_id=search_help_id,
+                    text_name=text_name,
                 )
             else:
                 return result
@@ -620,6 +632,209 @@ class CommandLineResolver(DataResolver):
                 .first()
             )
 
+    def ask_platform_question(self, index, default=None):
+        func, params, _ = self.platform_questions_responses[index]
+        if default:
+            params.update({"default": default})
+            self.platform_questions_responses[index][2] = default
+        new_response = func(**params)
+        if isinstance(new_response, str):
+            new_response = new_response.strip()
+
+        if new_response in ["?", "HELP"]:
+            return new_response
+        elif self.validate_response(new_response, index):
+            self.platform_questions_responses[index][2] = new_response
+            return new_response
+        else:
+            _, return_func, return_params = self.validation_dict[index]
+            return_func(*return_params)
+
+    def create_platform_questions_dict(
+        self, data_store, platform_name, platform_type, nationality, privacy, change_id
+    ):
+        self.platform_questions_responses = dict()
+        if platform_name is None:
+            platform_name = ""
+        self.platform_questions_responses[constants.PLATFORM_NAME] = [
+            prompt,
+            {"message": format_command("Please enter a name: "), "default": platform_name},
+            platform_name,
+        ]
+        self.platform_questions_responses[constants.PLATFORM_IDENTIFIER] = [
+            prompt,
+            {"message": format_command("Please enter identifier (pennant or tail number): ")},
+            None,
+        ]
+        if platform_name and len(platform_name) >= 3:
+            trigraph = platform_name[:3]
+        else:
+            trigraph = ""
+        self.platform_questions_responses[constants.PLATFORM_TRIGRAPH] = [
+            prompt,
+            {"message": format_command("Please enter trigraph (optional): "), "default": trigraph},
+            trigraph,
+        ]
+        if platform_name and len(platform_name) >= 4:
+            quadgraph = platform_name[:4]
+        else:
+            quadgraph = ""
+        self.platform_questions_responses[constants.PLATFORM_QUADGRAPH] = [
+            prompt,
+            {
+                "message": format_command("Please enter quadgraph (optional): "),
+                "default": quadgraph,
+            },
+            quadgraph,
+        ]
+        if not nationality:
+            self.platform_questions_responses[constants.RESOLVE_NATIONALITY] = [
+                self.resolve_reference,
+                {
+                    "data_store": data_store,
+                    "change_id": change_id,
+                    "data_type": "Platform",
+                    "db_class": data_store.db_classes.Nationality,
+                    "field_name": "nationality",
+                    "help_id": constants.RESOLVE_NATIONALITY,
+                    "search_help_id": constants.FUZZY_SEARCH_NATIONALITY,
+                },
+                None,
+            ]
+        if not platform_type:
+            self.platform_questions_responses[constants.RESOLVE_PLATFORM_TYPE] = [
+                self.resolve_reference,
+                {
+                    "data_store": data_store,
+                    "change_id": change_id,
+                    "data_type": "Platform",
+                    "db_class": data_store.db_classes.PlatformType,
+                    "field_name": "platform_type",
+                    "help_id": constants.RESOLVE_PLATFORM_TYPE,
+                    "search_help_id": constants.FUZZY_SEARCH_PLATFORM_TYPE,
+                },
+                None,
+            ]
+        if not privacy:
+            self.platform_questions_responses[constants.RESOLVE_PRIVACY] = [
+                self.resolve_reference,
+                {
+                    "data_store": data_store,
+                    "change_id": change_id,
+                    "data_type": "Platform",
+                    "text_name": "classification",
+                    "db_class": data_store.db_classes.Privacy,
+                    "field_name": "privacy",
+                    "help_id": constants.RESOLVE_PRIVACY,
+                    "search_help_id": constants.FUZZY_SEARCH_PRIVACY,
+                },
+                None,
+            ]
+        self.platform_questions_order = list(self.platform_questions_responses.keys())
+
+    def create_platform_validation_dict(
+        self, data_store, platform_name, platform_type, nationality, privacy, change_id
+    ):
+        self.validation_dict = dict()
+        self.validation_dict[constants.PLATFORM_NAME] = (
+            self.validate_platform_name,
+            self.add_to_platforms,
+            [data_store, platform_name, platform_type, nationality, privacy, change_id],
+        )
+        self.validation_dict[constants.PLATFORM_IDENTIFIER] = (
+            self.validate_platform_identifier,
+            self.add_to_platforms,
+            [data_store, platform_name, platform_type, nationality, privacy, change_id],
+        )
+        self.validation_dict[constants.PLATFORM_TRIGRAPH] = (
+            self.validate_platform_trigraph,
+            self.add_to_platforms,
+            [data_store, platform_name, platform_type, nationality, privacy, change_id],
+        )
+        self.validation_dict[constants.PLATFORM_QUADGRAPH] = (
+            self.validate_platform_quadgraph,
+            self.add_to_platforms,
+            [data_store, platform_name, platform_type, nationality, privacy, change_id],
+        )
+        self.validation_dict[constants.RESOLVE_NATIONALITY] = (
+            self.validate_nationality,
+            self.resolve_platform,
+            [data_store, platform_name, None, None, None, change_id],
+        )
+        self.validation_dict[constants.RESOLVE_PLATFORM_TYPE] = (
+            self.validate_platform_type,
+            self.resolve_platform,
+            [data_store, platform_name, None, None, None, change_id],
+        )
+        self.validation_dict[constants.RESOLVE_PRIVACY] = (
+            self.validate_privacy,
+            self.resolve_platform,
+            [data_store, platform_name, None, None, None, change_id],
+        )
+
+    def validate_response(self, new_response, index):
+        func, _, _ = self.validation_dict[index]
+        return func(new_response)
+
+    @staticmethod
+    def validate_platform_name(platform_name):
+        if not platform_name or platform_name == "":
+            return False
+        if len(platform_name) > 150:
+            print(
+                "Platform name too long, maximum length 150 characters. Restarting platform data entry."
+            )
+            return False
+        return True
+
+    @staticmethod
+    def validate_platform_identifier(identifier):
+        if len(identifier) > 10:
+            print(
+                "Identifier too long, maximum length 10 characters. Restarting platform data entry."
+            )
+            return False
+        if not identifier or identifier == "":
+            return False
+        return True
+
+    @staticmethod
+    def validate_platform_trigraph(trigraph):
+        if len(trigraph) > 3:
+            print("Trigraph too long, maximum length 3 characters. Restarting platform data entry.")
+            return False
+        return True
+
+    @staticmethod
+    def validate_platform_quadgraph(quadgraph):
+        if len(quadgraph) > 4:
+            print(
+                "Quadgraph too long, maximum length 4 characters. Restarting platform data entry."
+            )
+            return False
+        return True
+
+    @staticmethod
+    def validate_nationality(nationality):
+        if not nationality:
+            print("Nationality couldn't resolved. Returning to the previous menu!")
+            return False
+        return True
+
+    @staticmethod
+    def validate_platform_type(platform_type):
+        if not platform_type:
+            print("Platform Type couldn't resolved. Returning to the previous menu!")
+            return False
+        return True
+
+    @staticmethod
+    def validate_privacy(privacy):
+        if not privacy:
+            print("Classification couldn't resolved. Returning to the previous menu!")
+            return False
+        return True
+
     def add_to_platforms(
         self, data_store, platform_name, platform_type, nationality, privacy, change_id
     ):
@@ -643,111 +858,65 @@ class CommandLineResolver(DataResolver):
         :type change_id: UUID
         :return:
         """
+        self.create_platform_questions_dict(
+            data_store, platform_name, platform_type, nationality, privacy, change_id
+        )
+        self.create_platform_validation_dict(
+            data_store, platform_name, platform_type, nationality, privacy, change_id
+        )
         print("Ok, adding new platform.")
-        if platform_name is None:
-            platform_name = ""
-
-        platform_name = prompt(
-            format_command("Please enter a name: "), default=platform_name
-        ).strip()
-        if len(platform_name) > 150:
-            print(
-                "Platform name too long, maximum length 150 characters. Restarting platform data entry."
-            )
-            return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
-            )
-
+        platform_name = self.ask_platform_question(constants.PLATFORM_NAME)
         while True:
-            identifier = prompt(
-                format_command("Please enter identifier (pennant or tail number): ")
-            ).strip()
-            if len(identifier) > 10:
-                print(
-                    "Identifier too long, maximum length 10 characters. Restarting platform data entry."
-                )
-                return self.add_to_platforms(
-                    data_store, platform_name, platform_type, nationality, privacy, change_id
-                )
-            elif identifier in ["?", "HELP"]:
+            response = self.ask_platform_question(constants.PLATFORM_IDENTIFIER)
+            if not response:
+                _, return_func, return_params = self.validation_dict[constants.PLATFORM_IDENTIFIER]
+                return return_func(*return_params)
+            else:
+                identifier = response
+            if identifier in ["?", "HELP"]:
                 print_help_text(data_store, constants.PLATFORM_IDENTIFIER)
+            # elif identifier == ",":
+            #     self.ask_platform_question(constants.PLATFORM_NAME)
             else:
                 break
-
         while True:
-            trigraph = prompt(
-                format_command("Please enter trigraph (optional): "), default=platform_name[:3]
-            ).strip()
-            if len(trigraph) > 3:
-                print(
-                    "Trigraph too long, maximum length 3 characters. Restarting platform data entry."
-                )
-                return self.add_to_platforms(
-                    data_store, platform_name, platform_type, nationality, privacy, change_id
-                )
-            elif trigraph in ["?", "HELP"]:
+            trigraph = self.ask_platform_question(
+                constants.PLATFORM_TRIGRAPH, default=platform_name[:3]
+            )
+            if trigraph in ["?", "HELP"]:
                 print_help_text(data_store, constants.PLATFORM_TRIGRAPH)
+            # elif trigraph == ",":
+            #     self.ask_platform_question(constants.PLATFORM_IDENTIFIER)
             else:
                 break
         while True:
-            quadgraph = prompt(
-                format_command("Please enter quadgraph (optional): "), default=platform_name[:4]
-            ).strip()
-            if len(quadgraph) > 4:
-                print(
-                    "Quadgraph too long, maximum length 4 characters. Restarting platform data entry."
-                )
-                return self.add_to_platforms(
-                    data_store, platform_name, platform_type, nationality, privacy, change_id
-                )
-            elif quadgraph in ["?", "HELP"]:
+            quadgraph = self.ask_platform_question(
+                constants.PLATFORM_QUADGRAPH, default=platform_name[:4]
+            )
+            if quadgraph in ["?", "HELP"]:
                 print_help_text(data_store, constants.PLATFORM_QUADGRAPH)
+            # elif quadgraph == ",":
+            #     self.ask_platform_question(constants.PLATFORM_TRIGRAPH)
             else:
                 break
-
-        if platform_name == "" or identifier == "":
-            print(
-                "You must provide a platform name and identifier! Restarting platform data entry."
-            )
-            return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
-            )
 
         # Choose Nationality
         if nationality:
             chosen_nationality = data_store.add_to_nationalities(nationality, change_id)
         else:
-            chosen_nationality = self.resolve_reference(
-                data_store,
-                change_id,
-                "Platform",
-                data_store.db_classes.Nationality,
-                field_name="nationality",
-                help_id=constants.RESOLVE_NATIONALITY,
-                search_help_id=constants.FUZZY_SEARCH_NATIONALITY,
-            )
-        if chosen_nationality is None:
-            print("Nationality couldn't resolved. Returning to the previous menu!")
-            return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
-
+            chosen_nationality = self.ask_platform_question(constants.RESOLVE_NATIONALITY)
+            # if isinstance(chosen_nationality, str) and chosen_nationality == constants.ASK_PREVIOUS:
+            #     self.ask_platform_question(constants.PLATFORM_QUADGRAPH)
         # Choose Platform Type
         if platform_type:
             chosen_platform_type = data_store.add_to_platform_types(platform_type, change_id)
         else:
-            chosen_platform_type = self.resolve_reference(
-                data_store,
-                change_id,
-                data_type="Platform",
-                db_class=data_store.db_classes.PlatformType,
-                field_name="platform_type",
-                help_id=constants.RESOLVE_PLATFORM_TYPE,
-                search_help_id=constants.FUZZY_SEARCH_PLATFORM_TYPE,
-            )
-
-        if chosen_platform_type is None:
-            print("Platform Type couldn't resolved. Returning to the previous menu!")
-            return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
-
+            chosen_platform_type = self.ask_platform_question(constants.RESOLVE_PLATFORM_TYPE)
+            # if (
+            #     isinstance(chosen_platform_type, str)
+            #     and chosen_platform_type == constants.ASK_PREVIOUS
+            # ):
+            #     self.ask_platform_question(constants.RESOLVE_NATIONALITY)
         # Choose Privacy
         if privacy:
             chosen_privacy = data_store.search_privacy(privacy)
@@ -758,20 +927,9 @@ class CommandLineResolver(DataResolver):
                 )
                 chosen_privacy = data_store.add_to_privacies(privacy, level, change_id)
         else:
-            chosen_privacy = self.resolve_reference(
-                data_store,
-                change_id,
-                data_type="Platform",
-                text_name="classification",
-                db_class=data_store.db_classes.Privacy,
-                field_name="privacy",
-                help_id=constants.RESOLVE_PRIVACY,
-                search_help_id=constants.FUZZY_SEARCH_PRIVACY,
-            )
-
-        if chosen_privacy is None:
-            print("Classification couldn't resolved. Returning to the previous menu!")
-            return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
+            chosen_privacy = self.ask_platform_question(constants.RESOLVE_PRIVACY)
+            # if isinstance(chosen_privacy, str) and chosen_privacy == constants.ASK_PREVIOUS:
+            #     self.ask_platform_question(constants.RESOLVE_PLATFORM_TYPE)
 
         def is_valid_choice(option):  # pragma: no cover
             return option in [str(1), str(2), str(3), ".", "?", "HELP"]

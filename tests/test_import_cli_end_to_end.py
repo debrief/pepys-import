@@ -167,7 +167,13 @@ def create_menu_patch(*args, **kwargs):
 
 
 def clr_prompt_patch(*args, **kwargs):
-    prompt = args[0]
+    prompt = ""
+    if args:
+        prompt = args[0]
+    if kwargs:
+        prompt = kwargs.get("message")
+    print(f"Prompt: {prompt}")
+
     # FormattedText is a list of (style, text) tuples
     if isinstance(prompt, FormattedText):
         prompt = prompt[0][1]
