@@ -867,12 +867,7 @@ class CommandLineResolver(DataResolver):
         print("Ok, adding new platform.")
         platform_name = self.ask_platform_question(constants.PLATFORM_NAME)
         while True:
-            response = self.ask_platform_question(constants.PLATFORM_IDENTIFIER)
-            if not response:
-                _, return_func, return_params = self.validation_dict[constants.PLATFORM_IDENTIFIER]
-                return return_func(*return_params)
-            else:
-                identifier = response
+            identifier = self.ask_platform_question(constants.PLATFORM_IDENTIFIER)
             if identifier in ["?", "HELP"]:
                 print_help_text(data_store, constants.PLATFORM_IDENTIFIER)
             # elif identifier == ",":
