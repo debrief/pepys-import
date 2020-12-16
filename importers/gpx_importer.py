@@ -52,7 +52,7 @@ class GPXImporter(Importer):
         for track_element in tqdm(doc.findall(".//{*}trk")):
             track_name_element = track_element.find("{*}name")
             track_name = track_name_element.text
-            track_name_element.record("tool", "name", track_name)
+            track_name_element.record(self.name, "name", track_name)
 
             # Get the platform and sensor details, as these will be the same for all
             # points in this track
@@ -74,7 +74,7 @@ class GPXImporter(Importer):
             # belong to this track)
             for tpt in track_element.findall(".//{*}trkpt"):
                 # Extract information (location, speed etc) from <trkpt> element
-                timestamp_str = self.get_child_text_if_exists(tpt, "{*}time")
+                timestamp_el, timestamp_str = self.get_child_and_text_if_exists(tpt, "{*}time")
 
                 if timestamp_str is None:
                     self.errors.append(
@@ -85,14 +85,15 @@ class GPXImporter(Importer):
                     )
                     continue
 
-                speed_str = self.get_child_text_if_exists(tpt, "{*}speed")
-                course_str = self.get_child_text_if_exists(tpt, "{*}course")
-                elevation_str = self.get_child_text_if_exists(tpt, "{*}ele")
-
-                # Parse timestamp and create state
                 timestamp = self.parse_timestamp(timestamp_str)
                 if not timestamp:
                     continue
+
+                timestamp_el.record(self.name, "timestamp", timestamp)
+
+                speed_el, speed_str = self.get_child_and_text_if_exists(tpt, "{*}speed")
+                course_el, course_str = self.get_child_and_text_if_exists(tpt, "{*}course")
+                elevation_el, elevation_str = self.get_child_and_text_if_exists(tpt, "{*}ele")
 
                 state = datafile.create_state(
                     data_store, platform, sensor, timestamp, self.short_name
@@ -105,7 +106,7 @@ class GPXImporter(Importer):
                 lat_valid = location.set_latitude_decimal_degrees(latitude_str)
                 lon_valid = location.set_longitude_decimal_degrees(longitude_str)
 
-                tpt.record("tool", "location", location, xml_part="opening")
+                tpt.record(self.name, "location", location, xml_part="opening")
 
                 if lat_valid and lon_valid:
                     state.location = location
@@ -116,6 +117,7 @@ class GPXImporter(Importer):
                     course_valid, course = convert_absolute_angle(
                         course_str, "Unknown", self.errors, self.error_type
                     )
+                    course_el.record(self.name, "course", course)
                     if course_valid:
                         state.course = course
 
@@ -128,6 +130,7 @@ class GPXImporter(Importer):
                         self.errors,
                         self.error_type,
                     )
+                    speed_el.record(self.name, "speed", speed)
                     if speed_valid:
                         state.speed = speed
 
@@ -135,14 +138,15 @@ class GPXImporter(Importer):
                     elevation_valid, elevation = convert_distance(
                         elevation_str, unit_registry.metre, None, self.errors, self.error_type
                     )
+                    elevation_el.record(self.name, "elevation", elevation)
                     if elevation_valid:
                         state.elevation = elevation
 
-    def get_child_text_if_exists(self, element, search_string):
+    def get_child_and_text_if_exists(self, element, search_string):
         child = element.find(search_string)
         if child is not None:
-            return child.text
-        return None
+            return child, child.text
+        return None, None
 
     def parse_timestamp(self, s):
         try:
