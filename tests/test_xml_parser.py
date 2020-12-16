@@ -85,3 +85,14 @@ def test_parser_record_works_correctly_unicode():
     doc = parse(UNICODE_GPX_PATH, hf)
 
     _check_element_record(doc.getroot(), file_contents)
+
+
+def test_parser_record_works_correctly_ascii():
+    with open(ASCII_GPX_PATH) as f:
+        file_contents = f.read()
+
+    hf = HighlightedFile(ASCII_GPX_PATH)
+
+    doc = parse(ASCII_GPX_PATH, hf)
+
+    _check_element_record(doc.getroot(), file_contents)
