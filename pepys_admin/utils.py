@@ -7,6 +7,10 @@ from sqlalchemy.sql.schema import UniqueConstraint
 
 from paths import MIGRATIONS_DIRECTORY
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
+from pepys_import.utils.text_formatting_utils import (
+    custom_print_formatted_text,
+    format_error_message,
+)
 
 
 def get_default_export_folder():
@@ -174,18 +178,24 @@ def database_at_latest_revision(db_path):
         slave_version = next(result)[0]
         conn.close()
     except Exception:
-        print("Could not read schema revision from database - is this a valid Pepys database file?")
+        custom_print_formatted_text(
+            format_error_message(
+                "Could not read schema revision from database - is this a valid Pepys database file?"
+            )
+        )
         return False
 
     try:
         with open(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"), "r") as file:
             versions = json.load(file)
     except Exception:
-        print("Could not find latest_revisions.json")
+        custom_print_formatted_text(format_error_message("Could not find latest_revisions.json"))
         return
 
     if "LATEST_SQLITE_VERSION" not in versions:
-        print("Latest revision IDs couldn't found from latest_revisions.json")
+        custom_print_formatted_text(
+            format_error_message("Latest revision IDs couldn't found from latest_revisions.json")
+        )
         return
 
     if slave_version == versions["LATEST_SQLITE_VERSION"]:

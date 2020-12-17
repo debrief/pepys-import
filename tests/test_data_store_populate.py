@@ -10,6 +10,7 @@ from sqlalchemy.exc import OperationalError
 from testing.postgresql import Postgresql
 
 from pepys_import.core.store.data_store import DataStore
+from tests.utils import side_effect
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -295,7 +296,10 @@ class DataStorePopulateNotImplementedMethodTestCase(TestCase):
     def tearDown(self):
         pass
 
-    def test_populate_reference(self):
+    @patch(
+        "pepys_import.utils.data_store_utils.custom_print_formatted_text", side_effect=side_effect
+    )
+    def test_populate_reference(self, patched_print):
         with self.store.session_scope():
             temp_output = StringIO()
             with redirect_stdout(temp_output):
@@ -303,7 +307,10 @@ class DataStorePopulateNotImplementedMethodTestCase(TestCase):
             output = temp_output.getvalue()
             self.assertIn("Method(add_to_confidence_levels) not found!", output)
 
-    def test_populate_metadata(self):
+    @patch(
+        "pepys_import.utils.data_store_utils.custom_print_formatted_text", side_effect=side_effect
+    )
+    def test_populate_metadata(self, patched_print):
         with self.store.session_scope():
             temp_output = StringIO()
             with redirect_stdout(temp_output):
@@ -325,7 +332,10 @@ class DataStorePopulateMissingData(TestCase):
     def tearDown(self):
         pass
 
-    def test_populate_missing_data(self):
+    @patch(
+        "pepys_import.utils.data_store_utils.custom_print_formatted_text", side_effect=side_effect
+    )
+    def test_populate_missing_data(self, patched_print):
         with self.store.session_scope():
             temp_output = StringIO()
             with redirect_stdout(temp_output):
@@ -433,7 +443,10 @@ class DataStorePopulateSynonyms(TestCase):
             # We imported 3 synonyms because we skipped the 4th one
             assert len(synonyms) == 3
 
-    def test_populate_synonyms_invalid(self):
+    @patch(
+        "pepys_import.utils.data_store_utils.custom_print_formatted_text", side_effect=side_effect
+    )
+    def test_populate_synonyms_invalid(self, patched_print):
         with self.store.session_scope():
             temp_output = StringIO()
             with redirect_stdout(temp_output):
@@ -502,7 +515,10 @@ class CSVHeadersTestCase(TestCase):
     def tearDown(self):
         pass
 
-    def test_wrong_header_name(self):
+    @patch(
+        "pepys_import.utils.data_store_utils.custom_print_formatted_text", side_effect=side_effect
+    )
+    def test_wrong_header_name(self, patched_print):
         temp_output = StringIO()
         with self.store.session_scope(), redirect_stdout(temp_output):
             self.store.populate_reference(WRONG_HEADER_NAME_PATH)
@@ -511,7 +527,10 @@ class CSVHeadersTestCase(TestCase):
         assert "Possible arguments: name,change_id" in output
         assert "Please check your CSV file." in output
 
-    def test_wrong_header_name_synonym(self):
+    @patch(
+        "pepys_import.utils.data_store_utils.custom_print_formatted_text", side_effect=side_effect
+    )
+    def test_wrong_header_name_synonym(self, patched_print):
         temp_output = StringIO()
         with self.store.session_scope(), redirect_stdout(temp_output):
             self.store.populate_reference()
