@@ -13,7 +13,11 @@ from pepys_admin.utils import database_at_latest_revision, get_default_export_fo
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import is_schema_created
-from pepys_import.utils.text_formatting_utils import format_command
+from pepys_import.utils.text_formatting_utils import (
+    custom_print_formatted_text,
+    format_command,
+    format_error_message,
+)
 
 
 class SnapshotShell(BaseShell):
@@ -44,9 +48,11 @@ class SnapshotShell(BaseShell):
             if not os.path.exists(path):
                 break
             else:
-                print(
-                    f"There is already a file named '{destination_db_name}' in '{os.getcwd()}'."
-                    f"\nPlease enter another name."
+                custom_print_formatted_text(
+                    format_error_message(
+                        f"There is already a file named '{destination_db_name}' in '{os.getcwd()}'."
+                        f"\nPlease enter another name."
+                    )
                 )
         return destination_db_name, path
 
@@ -115,13 +121,17 @@ class SnapshotShell(BaseShell):
             if os.path.exists(slave_db_path):
                 break
             else:
-                print("Invalid path entered, please try again")
+                custom_print_formatted_text(
+                    format_error_message("Invalid path entered, please try again")
+                )
 
         # Check whether slave database is at latest revision
         if not database_at_latest_revision(slave_db_path):
-            print(
-                "The schema of the selected slave database is not at the latest revision. Before merging can go ahead "
-                "you must connect to this database with Pepys Admin and run the 'Migrate' option."
+            custom_print_formatted_text(
+                format_error_message(
+                    "The schema of the selected slave database is not at the latest revision. Before merging can go ahead "
+                    "you must connect to this database with Pepys Admin and run the 'Migrate' option."
+                )
             )
             return
 

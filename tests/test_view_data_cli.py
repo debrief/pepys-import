@@ -152,7 +152,8 @@ class ViewDataCLITestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Returning to the previous menu..." in output
 
-    def test_default(self):
+    @patch("pepys_admin.base_cli.custom_print_formatted_text", side_effect=side_effect)
+    def test_default(self, patched_print):
         # Only cancel command (.) returns True, others return None
         result = self.shell.default(".")
         assert result is True
@@ -343,7 +344,8 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Returning to the previous menu..." in output
 
-    def test_default(self):
+    @patch("pepys_admin.base_cli.custom_print_formatted_text", side_effect=side_effect)
+    def test_default(self, patched_print):
         # Only cancel command (.) returns True, others return None
         result = self.shell.default(".")
         assert result is True
