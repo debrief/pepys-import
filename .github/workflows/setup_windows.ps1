@@ -9,7 +9,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not download SQLite - has the URL changed?"
-    Exit
+    Exit 1
 }
 
 try {
@@ -20,7 +20,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not extract SQLite zip file"
-    Exit
+    Exit 1
 }
 
 try {
@@ -31,7 +31,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not download Spatialite - has the URL changed?"
-    Exit
+    Exit 1
 }
 
 try {
@@ -42,7 +42,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not download 7zip - has the URL changed?"
-    Exit
+    Exit 1
 }
 
 try {
@@ -52,7 +52,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not extract 7zip"
-    Exit
+    Exit 1
 }
 
 try {
@@ -69,7 +69,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not run 7zip to extract spatialite"
-    Exit
+    Exit 1
 }
 
 #

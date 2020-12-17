@@ -8,7 +8,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not download embedded Python - has the URL changed?"
-    Exit
+    Exit 1
 }
 
 try {
@@ -19,7 +19,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not extract Python zip file"
-    Exit
+    Exit 1
 }
 
 try {
@@ -30,7 +30,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not download get-pip.py - has the URL changed?"
-    Exit
+    Exit 1
 }
 
 # Try-Catch block catches error finding/running the exe file
@@ -42,14 +42,14 @@ try {
     if ($LastExitCode -ne 0)
     {
         Write-Output "ERROR: Could not install pip"
-        Exit
+        Exit 1
     }
     Write-Output "INFO: Installed pip"
 }
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not run Python to install pip"
-    Exit
+    Exit 1
 }
 
 try {
@@ -60,7 +60,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not download SQLite - has the URL changed?"
-    Exit
+    Exit 1
 }
 
 try {
@@ -72,7 +72,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not extract SQLite zip file"
-    Exit
+    Exit 1
 }
 
 try {
@@ -83,7 +83,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not download Spatialite - has the URL changed?"
-    Exit
+    Exit 1
 }
 
 try {
@@ -94,7 +94,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not download 7zip - has the URL changed?"
-    Exit
+    Exit 1
 }
 
 try {
@@ -104,7 +104,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not extract 7zip"
-    Exit
+    Exit 1
 }
 
 try {
@@ -114,14 +114,14 @@ try {
     if ($LastExitCode -ne 0)
     {
         Write-Output "ERROR: Could not extract spatialiate"
-        Exit
+        Exit 1
     }
     Write-Output "INFO: Downloaded and extracted mod_spatialite"
 }
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not run 7zip to extract spatialite"
-    Exit
+    Exit 1
 }
 
 
@@ -149,7 +149,7 @@ pip\_vendor\pep517
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not write to path files"
-    Exit
+    Exit 1
 }
 
 try {
@@ -159,7 +159,7 @@ try {
     if ($LastExitCode -ne 0)
     {
         Write-Output "ERROR: Problem installing dependencies using pip"
-        Exit
+        Exit 1
     }
 
     Write-Output "INFO: Installed Python dependencies"
@@ -167,7 +167,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not run Python to install requirements using pip"
-    Exit
+    Exit 1
 }
 
 
@@ -181,7 +181,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not delete old deployment files"
-    Exit
+    Exit 1
 }
 
 
@@ -193,14 +193,14 @@ try {
     if ($LastExitCode -ne 0)
     {
         Write-Output "ERROR: Problem running sphinx-build.exe to build docs"
-        Exit
+        Exit 1
     }
     write-Output "INFO: Finished building documentation"
 }
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not run sphinx-build.exe to build docs"
-    Exit
+    Exit 1
 }
 
 try {
@@ -213,7 +213,7 @@ try {
     if ($LastExitCode -ne 0)
     {
         Write-Output "ERROR: Error returned from running 7zip to create final deployment file"
-        Exit
+        Exit 1
     }
 
     Write-Output "INFO: Written zipped deployment file to $output_filename"
@@ -221,7 +221,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not run 7zip to create final deployment file"
-    Exit
+    Exit 1
 }
 
 
@@ -234,5 +234,5 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not remove items in final cleanup"
-    Exit
+    Exit 1
 }
