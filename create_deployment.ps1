@@ -77,7 +77,7 @@ catch {
 
 try {
     # Download mod_spatialite DLL files
-    $url = 'http://www.gaia-gis.it/gaia-sins/windows-bin-amd64/spatialite-loadable-modules-5.0.0-win-amd64.7zTEST'
+    $url = 'http://www.gaia-gis.it/gaia-sins/windows-bin-amd64/spatialite-loadable-modules-5.0.0-win-amd64.7z'
     (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\spatialite-loadable-modules-5.0.0-win-amd64.7z")
 }
 catch {
