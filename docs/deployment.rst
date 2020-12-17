@@ -11,14 +11,30 @@ using::
     bumpversion patch
 
 
-**Note 1:** once the version has been incremented, a new entry should be
+**Note:** once the version has been incremented, a new entry should be
 included in `History.rst`.
 
-**Note 2:** _currently_ the substitution files on `pepys_import/__init__.py` and `setup.py`,
-and will need to be tidied manually.
+There are two ways to create a deployment: either automatically on Github Actions, or manually on a Windows 10 computer.
 
-To create a deployable release, follow the instructions below on a Windows 10 machine (this *cannot* be
-done from any other sort of computer):
+Automatic deployment
+--------------------
+1. Merge the :code:`develop` branch into the :code:`master` branch.
+
+2. Create, and push, a tag on the master branch, with a name like :code:`v0.5`.
+
+3. Github Actions will automatically build a deployable zip file, and upload it to a draft release on the Github project.
+
+4. Go to the `Pepys-Import releases page <https://github.com/debrief/pepys-import/releases>`_ and you should see a draft release. Edit
+   the release details to include a summary of changes, and publish the release.
+
+**Note:** Deployable releases are also automatically built for every PR, and can be accessed by clicking *Details* next to the
+*Create Deployment* check on a PR, and then clicking the *Artifacts* button. This will download a zip file, and *inside* this zip file
+will be the Pepys release zip file (ie. a double-zip).
+
+
+Manual deployment
+-----------------
+Follow the instructions below on a Windows 10 machine (this *cannot* be done from any other sort of computer):
 
 1. Clone a new copy of the `pepys-import repository <https://github.com/debrief/pepys-import/>`_, and make sure
 it is at the relevant commit for the version you want to release (we recommend creating a git tag for the commit
