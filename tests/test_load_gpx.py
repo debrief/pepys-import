@@ -44,9 +44,9 @@ class GPXTests(unittest.TestCase):
             states = self.store.session.query(self.store.db_classes.State).all()
             assert len(states) == 27
 
-            # there must be 3 platforms after import
+            # there must be 4 platforms after import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 3
+            assert len(platforms) == 4
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
