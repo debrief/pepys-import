@@ -77,7 +77,10 @@ catch {
 
 try {
     # Download mod_spatialite DLL files
-    $url = 'http://www.gaia-gis.it/gaia-sins/windows-bin-amd64/spatialite-loadable-modules-5.0.0-win-amd64.7z'
+    # This file is originally hosted at http://www.gaia-gis.it/gaia-sins/windows-bin-amd64/spatialite-loadable-modules-5.0.0-win-amd64.7z
+    # but this keeps giving errors, which makes our CI fail
+    # Therefore we've hosted it in the libs directory on our gh-pages branch, using the URL below
+    $url = 'https://debrief.github.io/pepys-import/libs/spatialite-loadable-modules-5.0.0-win-amd64.7z'
     (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\spatialite-loadable-modules-5.0.0-win-amd64.7z")
 }
 catch {
