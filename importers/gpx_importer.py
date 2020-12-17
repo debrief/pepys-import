@@ -79,7 +79,7 @@ class GPXImporter(Importer):
                 if timestamp_str is None:
                     self.errors.append(
                         {
-                            self.error_type: "Line unknown. "
+                            self.error_type: f"Line {tpt.get_sourceline()} "
                             "Error: <trkpt> element must have child <time> element"
                         }
                     )
@@ -87,6 +87,12 @@ class GPXImporter(Importer):
 
                 timestamp = self.parse_timestamp(timestamp_str)
                 if not timestamp:
+                    self.errors.append(
+                        {
+                            self.error_type: f"Line {timestamp_el.get_sourceline()}. "
+                            f"Error: Invalid timestamp {timestamp_str}"
+                        }
+                    )
                     continue
 
                 timestamp_el.record(self.name, "timestamp", timestamp)
@@ -152,7 +158,6 @@ class GPXImporter(Importer):
         try:
             dt = date_parse(s)
         except Exception:
-            self.errors.append({self.error_type: "Line unknown. " f"Error: Invalid timestamp {s}"})
             return False
 
         # Create a UTC time zone object

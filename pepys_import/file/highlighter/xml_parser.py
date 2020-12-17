@@ -67,6 +67,20 @@ class MyElement(Element):
 
         super(MyElement, self).__init__(tag, attrib, **extra)
 
+    def get_sourceline(self):
+        if self.highlighted_file is None:
+            raise ValueError(
+                "No HighlightedFile instance is associated with this Element "
+                "cannot get source line"
+            )
+
+        # Convert to a string, split by newlines
+        lines = (
+            self.highlighted_file.file_byte_contents[: self.opening_tag_start].decode().split("\n")
+        )
+
+        return len(lines)
+
     def record(self, tool: str, field: str, value: str, units: str = None, xml_part="text"):
         """
         Record the usage of this element for a specific purpose
