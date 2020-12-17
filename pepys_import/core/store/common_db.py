@@ -16,6 +16,7 @@ from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 from pepys_import.utils.data_store_utils import chunked_list, shorten_uuid
 from pepys_import.utils.import_utils import import_validators
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
+from pepys_import.utils.text_formatting_utils import format_error_menu
 
 LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
 LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
@@ -429,14 +430,15 @@ class DatafileMixin:
 
     def _ask_user_what_they_want(self, error, ask_skipping_validator, skip_validator):
         validator = self._input_validator()
-        input_text = f"\n\nError! Message: {error}\n.Would you like to\n"
+        title = f"\n\nError! Message: {error}.\nWould you like to\n"
         choices = (
             "Skip enhanced validator for this file",
             "Carry on running the validator, logging errors",
         )
+        choices_text = ""
         for index, choice in enumerate(choices, 1):
-            input_text += f"   {str(index)}) {choice}\n"
-        choice = prompt(input_text, validator=validator)
+            choices_text += f"   {str(index)}) {choice}\n"
+        choice = prompt(format_error_menu(title, choices_text), validator=validator)
         delete = False
         if choice == "1":
             ask_skipping_validator = False

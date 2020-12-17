@@ -135,7 +135,9 @@ class AdminCLITestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Thank you for using Pepys Admin" in output
 
-    def test_default(self):
+    @patch("pepys_admin.base_cli.custom_print_formatted_text")
+    def test_default(self, patched_print):
+        patched_print.side_effect = side_effect
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.admin_shell.default("123456789")
@@ -228,7 +230,9 @@ class InitialiseShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Returning to the previous menu..." in output
 
-    def test_default(self):
+    @patch("pepys_admin.base_cli.custom_print_formatted_text")
+    def test_default(self, patched_print):
+        patched_print.side_effect = side_effect
         # Only cancel command (0) returns True, others return None
         result = self.initialise_shell.default(".")
         assert result is True
@@ -315,7 +319,9 @@ class NotInitialisedDBTestCase(unittest.TestCase):
             self.store, self.admin_shell, self.admin_shell.csv_path
         )
 
-    def test_not_initialised_db(self):
+    @patch("pepys_import.utils.data_store_utils.custom_print_formatted_text")
+    def test_not_initialised_db(self, patched_print):
+        patched_print.side_effect = side_effect
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.export_shell.do_export()
@@ -407,17 +413,21 @@ class ExportShellTestCase(unittest.TestCase):
             data = file.read().splitlines()
         assert len(data) == 22  # 8 States, 7 Contacts, 7 Comments
 
+    @patch("pepys_admin.export_cli.custom_print_formatted_text")
     @patch("pepys_admin.export_cli.iterfzf", return_value="NOT_EXISTING_FILE.rep")
-    def test_do_export_invalid_datafile_name(self, patched_iterfzf):
+    def test_do_export_invalid_datafile_name(self, patched_iterfzf, patched_print):
+        patched_print.side_effect = side_effect
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.export_shell.do_export()
         output = temp_output.getvalue()
         assert "You haven't selected a valid option!" in output
 
+    @patch("pepys_admin.export_cli.custom_print_formatted_text")
     @patch("pepys_admin.export_cli.iterfzf")
     @patch("pepys_admin.export_cli.ptk_prompt")
-    def test_do_export_other_options(self, patched_input, patched_iterfzf):
+    def test_do_export_other_options(self, patched_input, patched_iterfzf, patched_print):
+        patched_print.side_effect = side_effect
         patched_iterfzf.side_effect = ["rep_test1.rep", "rep_test1.rep"]
         patched_input.side_effect = ["n", "RANDOM-INPUT"]
         temp_output = StringIO()
@@ -431,7 +441,8 @@ class ExportShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Please enter a valid input." in output
 
-    def test_do_export_empty_database(self):
+    @patch("pepys_admin.export_cli.custom_print_formatted_text", side_effect=side_effect)
+    def test_do_export_empty_database(self, patched_print):
         # Create an empty database
         new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         new_data_store.initialise()
@@ -464,15 +475,19 @@ class ExportShellTestCase(unittest.TestCase):
 
         os.remove(file_path)
 
+    @patch("pepys_admin.export_cli.custom_print_formatted_text")
     @patch("pepys_admin.export_cli.iterfzf", return_value="NOT_EXISTING_PLATFORM")
-    def test_do_export_by_platform_name_invalid_platform_name(self, patched_input):
+    def test_do_export_by_platform_name_invalid_platform_name(self, patched_input, patched_print):
+        patched_print.side_effect = side_effect
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             self.export_shell.do_export_by_platform_name()
         output = temp_output.getvalue()
         assert "You haven't selected a valid option!" in output
 
-    def test_do_export_by_platform_name_empty_database(self):
+    @patch("pepys_admin.export_cli.custom_print_formatted_text")
+    def test_do_export_by_platform_name_empty_database(self, patched_print):
+        patched_print.side_effect = side_effect
         # Create an empty database
         new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         new_data_store.initialise()
@@ -499,8 +514,9 @@ class ExportShellTestCase(unittest.TestCase):
 
         shutil.rmtree(folder_path)
 
+    @patch("pepys_admin.export_cli.custom_print_formatted_text", side_effect=side_effect)
     @patch("pepys_admin.export_cli.ptk_prompt")
-    def test_do_export_all_to_existing_folder(self, patched_input):
+    def test_do_export_all_to_existing_folder(self, patched_input, patched_print):
         patched_input.side_effect = ["Y", SAMPLE_DATA_PATH, "export_test"]
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -531,8 +547,10 @@ class ExportShellTestCase(unittest.TestCase):
         for folder in folders:
             shutil.rmtree(folder)
 
+    @patch("pepys_admin.export_cli.custom_print_formatted_text")
     @patch("pepys_admin.export_cli.ptk_prompt")
-    def test_do_export_all_other_options(self, patched_input):
+    def test_do_export_all_other_options(self, patched_input, patched_print):
+        patched_print.side_effect = side_effect
         patched_input.side_effect = ["n", "RANDOM-INPUT"]
         temp_output = StringIO()
         with redirect_stdout(temp_output):
@@ -545,8 +563,9 @@ class ExportShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Please enter a valid input." in output
 
+    @patch("pepys_admin.export_cli.custom_print_formatted_text", side_effect=side_effect)
     @patch("pepys_admin.export_cli.ptk_prompt")
-    def test_do_export_all_empty_database(self, patched_input):
+    def test_do_export_all_empty_database(self, patched_input, patched_print):
         patched_input.side_effect = ["Y", "export_test"]
         # Create an empty database
         new_data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -569,7 +588,9 @@ class ExportShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Returning to the previous menu..." in output
 
-    def test_default(self):
+    @patch("pepys_admin.base_cli.custom_print_formatted_text")
+    def test_default(self, patched_print):
+        patched_print.side_effect = side_effect
         # Only cancel command (0) returns True, others return None
         result = self.export_shell.default(".")
         assert result is True
@@ -665,7 +686,9 @@ class ExportByPlatformNameShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Returning to the previous menu..." in output
 
-    def test_default(self):
+    @patch("pepys_admin.export_cli.custom_print_formatted_text")
+    def test_default(self, patched_print):
+        patched_print.side_effect = side_effect
         result = self.shell.default(".")
         assert result is True
 
@@ -694,11 +717,15 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
     def tearDown(self):
         os.remove("cli_import_test.db")
 
+    @patch("pepys_import.utils.error_handling.custom_print_formatted_text")
     @patch("pepys_admin.base_cli.custom_print_formatted_text")
     @patch("pepys_admin.view_data_cli.iterfzf", return_value="States")
     @patch("cmd.input")
-    def test_missing_db_column_sqlite(self, patched_input, patched_iterfzf, patched_print):
+    def test_missing_db_column_sqlite(
+        self, patched_input, patched_iterfzf, patched_print, patched_print2
+    ):
         patched_print.side_effect = side_effect
+        patched_print2.side_effect = side_effect
         patched_input.side_effect = ["6", "1"]
         conn = sqlite3.connect("cli_import_test.db")
         load_spatialite(conn, None)
@@ -732,10 +759,12 @@ class AdminCLIMissingDBColumnTestCaseSQLite(unittest.TestCase):
 
         assert "ERROR: SQL error when communicating with database" in output
 
+    @patch("pepys_import.utils.error_handling.custom_print_formatted_text")
     @patch("pepys_admin.base_cli.custom_print_formatted_text")
     @patch("cmd.input")
-    def test_missing_db_column_sqlite_2(self, patched_input, patched_print):
+    def test_missing_db_column_sqlite_2(self, patched_input, patched_print, patched_print2):
         patched_print.side_effect = side_effect
+        patched_print2.side_effect = side_effect
         patched_input.side_effect = ["2", "."]
         conn = sqlite3.connect("cli_import_test.db")
         load_spatialite(conn, None)
@@ -805,11 +834,15 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
         except AttributeError:
             return
 
+    @patch("pepys_import.utils.error_handling.custom_print_formatted_text")
     @patch("pepys_admin.base_cli.custom_print_formatted_text")
     @patch("pepys_admin.view_data_cli.iterfzf", return_value="States")
     @patch("cmd.input")
-    def test_missing_db_column_postgres(self, patched_input, patched_iterfzf, patched_print):
+    def test_missing_db_column_postgres(
+        self, patched_input, patched_iterfzf, patched_print, patched_print2
+    ):
         patched_print.side_effect = side_effect
+        patched_print2.side_effect = side_effect
         patched_input.side_effect = ["6", "1"]
         conn = pg8000.connect(user="postgres", password="postgres", database="test", port=55527)
         cursor = conn.cursor()
@@ -834,10 +867,12 @@ class TestAdminCLIWithMissingDBFieldPostgres(unittest.TestCase):
 
         assert "ERROR: SQL error when communicating with database" in output
 
+    @patch("pepys_import.utils.error_handling.custom_print_formatted_text")
     @patch("pepys_admin.base_cli.custom_print_formatted_text")
     @patch("cmd.input")
-    def test_missing_db_column_postgres_2(self, patched_input, patched_print):
+    def test_missing_db_column_postgres_2(self, patched_input, patched_print, patched_print2):
         patched_print.side_effect = side_effect
+        patched_print2.side_effect = side_effect
         patched_input.side_effect = ["2", "."]
         conn = pg8000.connect(user="postgres", password="postgres", database="test", port=55527)
         cursor = conn.cursor()
@@ -1166,9 +1201,9 @@ class SnapshotShellMergingTestCase(unittest.TestCase):
 
         assert "Ok, returning to previous menu" in output
 
+    @patch("pepys_admin.snapshot_cli.custom_print_formatted_text", side_effect=side_effect)
     @patch("pepys_admin.snapshot_cli.ptk_prompt")
-    # @patch("pepys_admin.snapshot_cli.input", return_value="y")
-    def test_merge_db_not_up_to_date(self, patched_ptk_prompt):
+    def test_merge_db_not_up_to_date(self, patched_ptk_prompt, patched_print):
         patched_ptk_prompt.side_effect = [
             os.path.join(
                 FILE_PATH, "migration_tests", "database", "sqlite", "pepys_0.0.17_test.sqlite"
@@ -1395,8 +1430,9 @@ class SnapshotShellTestCase(unittest.TestCase):
         if os.path.exists(path):
             os.remove(path)
 
+    @patch("pepys_admin.snapshot_cli.custom_print_formatted_text", side_effect=side_effect)
     @patch("pepys_admin.snapshot_cli.ptk_prompt")
-    def test_do_export_reference_data_invalid_filename(self, patched_input):
+    def test_do_export_reference_data_invalid_filename(self, patched_input, patched_print):
         # Delete test.db file first, in case it is hanging around from another test
         # If we don't do this, we can get into an infinite loop
         path = os.path.join(CURRENT_DIR, "test.db")
@@ -1556,7 +1592,8 @@ class SnapshotShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
         assert "Returning to the previous menu..." in output
 
-    def test_default(self):
+    @patch("pepys_admin.base_cli.custom_print_formatted_text", side_effect=side_effect)
+    def test_default(self, patched_print):
         # Only cancel command (0) returns True, others return None
         result = self.shell.default(".")
         assert result is True
@@ -1700,7 +1737,8 @@ def test_viewer_mode_datastore(patched_ds):
     )
 
 
-def test_viewer_mode_blank_db():
+@patch("pepys_admin.cli.custom_print_formatted_text", side_effect=side_effect)
+def test_viewer_mode_blank_db(patched_print):
     temp_output = StringIO()
     with redirect_stdout(temp_output):
         try:

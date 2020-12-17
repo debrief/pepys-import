@@ -15,6 +15,10 @@ from pepys_admin.base_cli import BaseShell
 from pepys_admin.utils import get_default_export_folder
 from pepys_import.core.store import constants
 from pepys_import.utils.table_name_utils import table_name_to_class_name
+from pepys_import.utils.text_formatting_utils import (
+    custom_print_formatted_text,
+    format_error_message,
+)
 
 MAX_ROWS_DISPLAYED = 500
 
@@ -225,10 +229,11 @@ class ViewDataShell(BaseShell):
             if only_select:
                 break
             else:
-                print(
-                    "Error: Only SELECT queries are allowed in Pepys Viewer. Please enter another query."
+                custom_print_formatted_text(
+                    format_error_message(
+                        "Error: Only SELECT queries are allowed in Pepys Viewer. Please enter another query.\n"
+                    )
                 )
-                print("")
         if query:
             with self.data_store.engine.connect() as connection:
                 try:

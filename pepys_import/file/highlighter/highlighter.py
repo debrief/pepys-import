@@ -2,6 +2,7 @@ from tqdm import tqdm
 
 from pepys_import.file.highlighter.support.line import Line
 
+from ...utils.text_formatting_utils import custom_print_formatted_text, format_error_message
 from .support.char import Char
 from .support.export import export_report
 from .support.token import SubToken
@@ -43,7 +44,9 @@ class HighlightedFile:
         if self.number_of_lines is None:
             return self.not_limited_lines()
         elif self.number_of_lines <= 0:
-            print("Non-positive number of lines. Please provide positive number")
+            custom_print_formatted_text(
+                format_error_message("Non-positive number of lines. Please provide positive number")
+            )
             exit(1)
         else:
             return self.limited_lines()
