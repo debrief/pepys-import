@@ -25,6 +25,21 @@ def test_parser_returns_correct_tree():
     assert elev_els[0].text == "0.000"
 
 
+def test_parser_source_line():
+    hf = HighlightedFile(ASCII_GPX_PATH)
+
+    doc = parse(ASCII_GPX_PATH, hf)
+
+    trks = doc.findall(".//{*}trk")
+    assert trks[0].get_sourceline() == 10
+
+    trkpts = doc.findall(".//{*}trkpt")
+    assert trkpts[0].get_sourceline() == 13
+
+    elev_els = doc.findall(".//{*}ele")
+    assert elev_els[0].get_sourceline() == 14
+
+
 def _check_element(el, file_contents):
     el_name = el.tag
     if "{" in el_name:

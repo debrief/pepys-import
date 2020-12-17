@@ -74,6 +74,9 @@ class MyElement(Element):
                 "cannot get source line"
             )
 
+        # Make sure the file_byte_contents member variable exists
+        self.highlighted_file.fill_char_array_if_needed()
+
         # Convert to a string, split by newlines
         lines = (
             self.highlighted_file.file_byte_contents[: self.opening_tag_start].decode().split("\n")
