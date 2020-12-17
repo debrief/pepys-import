@@ -1,0 +1,8 @@
+Libraries folder
+----------------
+As part of the deployment and CI process we download various libraries such as SQLite
+and Spatialite. Some of the sites these are downloaded from are flaky, and often give
+errors - so we've hosted one of the files here.
+
+At the moment, only one file is hosted in this directory: the spatialite install file for
+Windows.
