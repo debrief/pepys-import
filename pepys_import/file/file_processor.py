@@ -21,7 +21,11 @@ from pepys_import.utils.datafile_utils import hash_file
 from pepys_import.utils.import_utils import import_module_, sort_files
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.table_name_utils import table_name_to_class_name
-from pepys_import.utils.text_formatting_utils import custom_print_formatted_text, format_table
+from pepys_import.utils.text_formatting_utils import (
+    custom_print_formatted_text,
+    format_error_message,
+    format_table,
+)
 
 USER = getuser()
 
@@ -39,9 +43,11 @@ class FileProcessor:
         # Register local importers if any exists
         if local_parsers:
             if not os.path.exists(local_parsers):
-                print(
-                    f"No such file or directory: {local_parsers}. Only core "
-                    "parsers are going to work."
+                custom_print_formatted_text(
+                    format_error_message(
+                        f"No such file or directory: {local_parsers}. Only core "
+                        "parsers are going to work."
+                    )
                 )
             else:
                 self.load_importers_dynamically(local_parsers)

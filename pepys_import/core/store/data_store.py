@@ -30,6 +30,7 @@ from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_
 from pepys_import.utils.value_transforming_utils import format_datetime
 
 from ...utils.error_handling import handle_first_connection_error
+from ...utils.text_formatting_utils import custom_print_formatted_text, format_error_message
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
 from .table_summary import TableSummary, TableSummarySet
@@ -86,11 +87,13 @@ class DataStore:
                 listen(self.engine, "connect", set_sqlite_foreign_keys_on)
                 BaseSpatiaLite.metadata.bind = self.engine
         except ArgumentError as e:
-            print(
-                f"SQL Exception details: {e}\n\n"
-                "ERROR: Invalid Connection URL Error!\n"
-                "Please check your config file. There might be missing/wrong values!\n"
-                "See above for the full error from SQLAlchemy."
+            custom_print_formatted_text(
+                format_error_message(
+                    f"SQL Exception details: {e}\n\n"
+                    "ERROR: Invalid Connection URL Error!\n"
+                    "Please check your config file. There might be missing/wrong values!\n"
+                    "See above for the full error from SQLAlchemy."
+                )
             )
             sys.exit(1)
 

@@ -5,6 +5,7 @@ from datetime import datetime
 from io import StringIO
 from sqlite3 import OperationalError
 from unittest import TestCase
+from unittest.mock import patch
 
 import pytest
 from testing.postgresql import Postgresql
@@ -15,6 +16,7 @@ from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.file.importer import Importer
+from tests.utils import side_effect
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -1025,7 +1027,8 @@ class FirstConnectionTestCase(TestCase):
         except AttributeError:
             return
 
-    def test_data_store_fails_at_the_beginning(self):
+    @patch("pepys_import.utils.error_handling.custom_print_formatted_text", side_effect=side_effect)
+    def test_data_store_fails_at_the_beginning(self, patched_print):
         temp_output = StringIO()
         with pytest.raises(SystemExit), redirect_stdout(temp_output):
             DataStore(

@@ -4,6 +4,7 @@ from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
 from unittest import TestCase
+from unittest.mock import patch
 
 import pytest
 
@@ -13,6 +14,7 @@ from pepys_import.core.store.db_status import TableTypes
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.file.importer import Importer
+from tests.utils import side_effect
 
 FILE_PATH = os.path.dirname(__file__)
 TEST_DATA_PATH = os.path.join(FILE_PATH, "sample_data", "csv_files")
@@ -859,7 +861,8 @@ class SynonymsTestCase(TestCase):
 
 
 class FirstConnectionTestCase(TestCase):
-    def test_data_store_invalid_db_name(self):
+    @patch("pepys_import.utils.error_handling.custom_print_formatted_text", side_effect=side_effect)
+    def test_data_store_invalid_db_name(self, patched_print):
         temp_output = StringIO()
         db_name = os.path.join(FILE_PATH, "__init__.py")
         with pytest.raises(SystemExit), redirect_stdout(temp_output):
@@ -877,7 +880,10 @@ class FirstConnectionTestCase(TestCase):
         assert "Current database URL: 'sqlite+pysqlite://:@:0/" in output
         assert "__init__.py" in output
 
-    def test_data_store_invalid_conn_string(self):
+    @patch(
+        "pepys_import.core.store.data_store.custom_print_formatted_text", side_effect=side_effect
+    )
+    def test_data_store_invalid_conn_string(self, patched_print):
         temp_output = StringIO()
         db_name = os.path.join(FILE_PATH, "__init__.py")
         with pytest.raises(SystemExit), redirect_stdout(temp_output):
