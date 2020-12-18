@@ -31,13 +31,13 @@ def test_parser_source_line():
     doc = parse(ASCII_GPX_PATH, hf)
 
     trks = doc.findall(".//{*}trk")
-    assert trks[0].get_sourceline() == 10
+    assert trks[0].sourceline == 10
 
     trkpts = doc.findall(".//{*}trkpt")
-    assert trkpts[0].get_sourceline() == 13
+    assert trkpts[0].sourceline == 13
 
     elev_els = doc.findall(".//{*}ele")
-    assert elev_els[0].get_sourceline() == 14
+    assert elev_els[0].sourceline == 14
 
 
 def _check_element(el, file_contents):

@@ -43,7 +43,9 @@ class MyElement(Element):
     to character offsets first.
     """
 
-    def __init__(self, tag, attrib={}, highlighted_file=None, start_byte=None, **extra):
+    def __init__(
+        self, tag, attrib={}, highlighted_file=None, start_byte=None, line_number=None, **extra
+    ):
         #
         # Example XML:
         #
@@ -65,24 +67,10 @@ class MyElement(Element):
         # Stores a highlighted_file instance, so that we can call .record on this element
         self.highlighted_file = highlighted_file
 
+        # Store the line number too
+        self.sourceline = line_number
+
         super(MyElement, self).__init__(tag, attrib, **extra)
-
-    def get_sourceline(self):
-        if self.highlighted_file is None:
-            raise ValueError(
-                "No HighlightedFile instance is associated with this Element "
-                "cannot get source line"
-            )
-
-        # Make sure the file_byte_contents member variable exists
-        self.highlighted_file.fill_char_array_if_needed()
-
-        # Convert to a string, split by newlines
-        lines = (
-            self.highlighted_file.file_byte_contents[: self.opening_tag_start].decode().split("\n")
-        )
-
-        return len(lines)
 
     def record(self, tool: str, field: str, value: str, units: str = None, xml_part="text"):
         """
@@ -255,6 +243,7 @@ class MyTreeBuilder:
             tag,
             attrs,
             start_byte=self._parser.parser.CurrentByteIndex,  # Pass the current byte index in to constructor
+            line_number=self._parser.parser.CurrentLineNumber,  # Pass the current line number in to the constructor
             highlighted_file=self._highlighted_file,
         )
         if self._elem:

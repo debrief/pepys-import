@@ -79,7 +79,7 @@ class GPXImporter(Importer):
                 if timestamp_str is None:
                     self.errors.append(
                         {
-                            self.error_type: f"Line {tpt.get_sourceline()} "
+                            self.error_type: f"Line {tpt.sourceline} "
                             "Error: <trkpt> element must have child <time> element"
                         }
                     )
@@ -89,7 +89,7 @@ class GPXImporter(Importer):
                 if not timestamp:
                     self.errors.append(
                         {
-                            self.error_type: f"Line {timestamp_el.get_sourceline()}. "
+                            self.error_type: f"Line {timestamp_el.sourceline}. "
                             f"Error: Invalid timestamp {timestamp_str}"
                         }
                     )
