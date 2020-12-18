@@ -1,7 +1,7 @@
 ---
 name: Importer
 about: Develop importer for new file format
-title: Title
+title: Importer for ...
 labels: Importer
 assignees: ''
 
