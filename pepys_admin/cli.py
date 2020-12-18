@@ -11,7 +11,11 @@ from pepys_import.cli import set_up_training_mode
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.error_handling import handle_database_errors
-from pepys_import.utils.text_formatting_utils import format_command
+from pepys_import.utils.text_formatting_utils import (
+    custom_print_formatted_text,
+    format_command,
+    format_error_message,
+)
 
 
 def main():  # pragma: no cover
@@ -90,7 +94,11 @@ def run_shell(path, training=False, data_store=None, db=None, viewer=False):
         if viewer:
             with handle_database_errors():
                 if is_schema_created(data_store.engine, data_store.db_type) is False:
-                    print("Database schema does not exist: tables cannot be viewed")
+                    custom_print_formatted_text(
+                        format_error_message(
+                            "Database schema does not exist: tables cannot be viewed"
+                        )
+                    )
                     return
                 ViewDataShell(data_store, viewer=True).cmdloop()
         else:

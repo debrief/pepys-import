@@ -8,7 +8,11 @@ from prompt_toolkit.completion import PathCompleter
 from pepys_admin.base_cli import BaseShell
 from pepys_admin.utils import get_default_export_folder
 from pepys_import.utils.data_store_utils import is_schema_created
-from pepys_import.utils.text_formatting_utils import format_command
+from pepys_import.utils.text_formatting_utils import (
+    custom_print_formatted_text,
+    format_command,
+    format_error_message,
+)
 
 
 class ExportShell(BaseShell):
@@ -44,14 +48,18 @@ class ExportShell(BaseShell):
         with self.data_store.session_scope():
             datafiles = self.data_store.get_all_datafiles()
             if not datafiles:
-                print("There is no datafile found in the database!")
+                custom_print_formatted_text(
+                    format_error_message("There is no datafile found in the database!")
+                )
                 return
             datafiles_dict = {d.reference: d.datafile_id for d in datafiles}
         message = "Select a datafile to export > "
         selected_datafile = iterfzf(datafiles_dict.keys(), prompt=message)
 
         if selected_datafile is None or selected_datafile not in datafiles_dict.keys():
-            print("You haven't selected a valid option!")
+            custom_print_formatted_text(
+                format_error_message("You haven't selected a valid option!")
+            )
             return
 
         export_flag = ptk_prompt(
@@ -78,7 +86,7 @@ class ExportShell(BaseShell):
         elif export_flag in ["N", "n"]:
             print("You selected not to export!")
         else:
-            print("Please enter a valid input.")
+            custom_print_formatted_text(format_error_message("Please enter a valid input."))
 
     def do_export_by_platform_name(self):
         """Exports datafiles by platform and sensor names. It asks user to select an existing
@@ -93,14 +101,18 @@ class ExportShell(BaseShell):
         with self.data_store.session_scope():
             platforms = self.data_store.session.query(self.data_store.db_classes.Platform).all()
             if not platforms:
-                print("There is no platform found in the database!")
+                custom_print_formatted_text(
+                    format_error_message("There is no platform found in the database!")
+                )
                 return
             platforms_dict = {p.name: p.platform_id for p in platforms}
         message = "Select a platform name to export datafiles that include it > "
         selected_platform = iterfzf(platforms_dict.keys(), prompt=message)
 
         if selected_platform is None or selected_platform not in platforms_dict.keys():
-            print("You haven't selected a valid option!")
+            custom_print_formatted_text(
+                format_error_message("You haven't selected a valid option!")
+            )
             return
 
         # Find related sensors to the selected platform
@@ -141,7 +153,9 @@ class ExportShell(BaseShell):
                 )
                 if folder_name:
                     if os.path.isdir(folder_name):
-                        print(f"{folder_name} already exists.")
+                        custom_print_formatted_text(
+                            format_error_message(f"{folder_name} already exists.")
+                        )
                     else:
                         os.mkdir(folder_name)
                         break
@@ -154,7 +168,9 @@ class ExportShell(BaseShell):
             with self.data_store.session_scope():
                 datafiles = self.data_store.get_all_datafiles()
                 if not datafiles:
-                    print("There is no datafile found in the database!")
+                    custom_print_formatted_text(
+                        format_error_message("There is no datafile found in the database!")
+                    )
                     return
                 for datafile in datafiles:
                     datafile_name = f"exported_{datafile.reference.replace('.', '_')}.rep"
@@ -167,7 +183,7 @@ class ExportShell(BaseShell):
         elif export_flag in ["N", "n"]:
             print("You selected not to export!")
         else:
-            print("Please enter a valid input.")
+            custom_print_formatted_text(format_error_message("Please enter a valid input."))
 
 
 class ExportByPlatformNameShell(BaseShell):
@@ -235,4 +251,4 @@ class ExportByPlatformNameShell(BaseShell):
             selected_option = self.objects[int(cmd_) - 1]
             return self.do_export(selected_option)
         else:
-            print(f"*** Unknown syntax: {line}")
+            custom_print_formatted_text(format_error_message(f"*** Unknown syntax: {line}"))

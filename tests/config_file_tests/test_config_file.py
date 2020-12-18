@@ -12,6 +12,7 @@ from importers.replay_importer import ReplayImporter
 from pepys_import.core.store import common_db
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from tests.utils import side_effect
 
 DIRECTORY_PATH = os.path.dirname(__file__)
 TEST_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "parsers")
@@ -93,7 +94,8 @@ class FileProcessorVariablesTestCase(unittest.TestCase):
         assert len(file_processor.importers) == 1
         assert file_processor.importers[0].name == "Test Importer"
 
-    def test_bad_pepys_local_parsers_path(self):
+    @patch("pepys_import.file.file_processor.custom_print_formatted_text", side_effect=side_effect)
+    def test_bad_pepys_local_parsers_path(self, patched_print):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             file_processor = FileProcessor(local_parsers=BAD_IMPORTER_PATH)

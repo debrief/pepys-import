@@ -3,6 +3,11 @@ from abc import ABC, abstractmethod
 
 from tqdm import tqdm
 
+from pepys_import.utils.text_formatting_utils import (
+    custom_print_formatted_text,
+    format_error_message,
+)
+
 CANCEL_IMPORT = "CANCEL"
 
 
@@ -129,7 +134,9 @@ class Importer(ABC):
         for line_number, line in enumerate(tqdm(file_object.lines()), 1):
             result = self._load_this_line(data_store, line_number, line, datafile, change_id)
             if result == CANCEL_IMPORT:
-                print(f"Error in file caused cancellation of import of {path}")
+                custom_print_formatted_text(
+                    format_error_message(f"Error in file caused cancellation of import of {path}")
+                )
                 break
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):

@@ -1,3 +1,5 @@
+import html
+
 from tqdm import tqdm
 
 from .color_picker import color_for, html_color_for, mean_color_for
@@ -72,7 +74,9 @@ def export_report(filename, chars, dict_colors, include_key=False):
         if letter == "\n":
             output_strings.append("<br>")
         else:
-            output_strings.append(letter)
+            # Escape the letter as otherwise the XML from XML files gets
+            # interpreted by browsers as (invalid) HTML
+            output_strings.append(html.escape(letter))
 
         last_hash = this_hash
 
