@@ -10,7 +10,7 @@ from sqlalchemy.orm import (  # used to defer fetching attributes unless it's sp
     deferred,
     relationship,
 )
-from sqlalchemy.sql.schema import CheckConstraint, UniqueConstraint
+from sqlalchemy.sql.schema import CheckConstraint, Index, UniqueConstraint
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
@@ -549,6 +549,8 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     def platform_name(self):
         return association_proxy("platform", "name")
 
+    __table_args__ = (Index("idx_states_comp_sensor_source", "sensor_id", "source_id"),)
+
 
 class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
     __tablename__ = constants.CONTACT
@@ -605,6 +607,8 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     @declared_attr
     def platform_name(self):
         return association_proxy("platform", "name")
+
+    __table_args__ = (Index("idx_contacts_comp_sensor_source", "sensor_id", "source_id"),)
 
 
 class Activation(BaseSpatiaLite, ActivationMixin):
@@ -685,6 +689,8 @@ class Comment(BaseSpatiaLite, CommentMixin):
     )
     privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
     created_date = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (Index("idx_comments_comp_platform_source", "platform_id", "source_id"),)
 
 
 class Geometry1(BaseSpatiaLite, GeometryMixin):
