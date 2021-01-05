@@ -10,7 +10,7 @@ from sqlalchemy.orm import (  # used to defer fetching attributes unless it's sp
     deferred,
     relationship,
 )
-from sqlalchemy.sql.schema import CheckConstraint, Index, UniqueConstraint
+from sqlalchemy.sql.schema import CheckConstraint, UniqueConstraint
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
@@ -554,7 +554,6 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     __tablename__ = constants.STATE
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
-    __table_args__ = (Index("idx_states_comp_sensor_source", "sensor_id", "source_id"),)
 
     state_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     time = Column(TIMESTAMP, nullable=False)
@@ -601,7 +600,6 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     __tablename__ = constants.CONTACT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
-    __table_args__ = (Index("idx_contacts_comp_sensor_source", "sensor_id", "source_id"),)
 
     contact_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150))
@@ -738,7 +736,6 @@ class Comment(BasePostGIS, CommentMixin):
     __tablename__ = constants.COMMENT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 32
-    __table_args__ = (Index("idx_comments_comp_platform_source", "platform_id", "source_id"),)
 
     comment_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     platform_id = Column(
