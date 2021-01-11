@@ -39,7 +39,8 @@ class WordNarrativeImporter(Importer):
         return True
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
-        ext = os.path.splitext(path)
+        print("Loading file")
+        _, ext = os.path.splitext(path)
         if ext.upper() == ".DOCX":
             header, entries, error = self.load_docx_file(path)
         elif ext.upper() == ".PDF":
@@ -62,11 +63,12 @@ class WordNarrativeImporter(Importer):
 
         # Loop through each entry in the file
         for entry in entries:
-            parts = entry.trim().split(",")
+            print(f"Entry {entry}")
+            parts = entry.strip().split(",")
 
             correct_length = len(parts) > 5
-            has_four_fig_datetime = correct_length and re.match(r"\d{4}", parts[0])
-            has_six_fig_datetime = correct_length and re.match(r"\d{6}", parts[0])
+            has_four_fig_datetime = correct_length and re.fullmatch(r"\d{4}", parts[0])
+            has_six_fig_datetime = correct_length and re.fullmatch(r"\d{6}", parts[0])
 
             has_datetime = has_four_fig_datetime or has_six_fig_datetime
 
@@ -77,7 +79,42 @@ class WordNarrativeImporter(Importer):
                     continue
 
                 # Process rest of entry
-                pass
+                entry_platform_name = parts[4].strip()
+
+                if entry_platform_name != header["platform"]:
+                    header_platform_name = header["platform"]
+                    self.errors.append(
+                        {
+                            self.error_type: f"Platform name in entry ('{entry_platform_name}') doesn't match platform name in header ('{header_platform_name}')"
+                        }
+                    )
+                    continue
+
+                message_type = parts[5].strip()
+
+                if len(message_type) > 20:
+                    # Sometimes there isn't the end comma on the message type field
+                    # which means it gets merged with the text field
+                    # If this field is very long then this is probably what happened
+                    # So we find the first location of a tab, and split on that
+                    index = message_type.find("\t")
+                    if index != -1:
+                        text = message_type[index:].strip()
+                        message_type = message_type[:index].strip()
+                    else:
+                        fulltext = ",".join(parts)
+                        self.errors.append(
+                            {
+                                self.error_type: f"Can't separate message type and text, are fields mangled or a comma missing? {fulltext}"
+                            }
+                        )
+                    continue
+                else:
+                    text = ",".join(parts[6:]).strip()
+
+                print(f"Timestamp: {timestamp}")
+                print(f"message_type: {message_type}")
+                print(f"text: {text}")
             else:
                 # Append to previous entry
                 pass
@@ -178,7 +215,7 @@ class WordNarrativeImporter(Importer):
             splitted = re.split("[\n\t]+", header_text.strip())
             header = {}
             header["privacy"] = splitted[0].strip()
-            header["vessel"] = splitted[1].strip()
+            header["platform"] = splitted[1].strip()
             header["exercise"] = splitted[4].strip()
             header["fulltext"] = header_text.strip()
         except Exception as e:
