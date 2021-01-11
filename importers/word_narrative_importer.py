@@ -67,59 +67,96 @@ class WordNarrativeImporter(Importer):
             parts = entry.strip().split(",")
 
             correct_length = len(parts) > 5
-            has_four_fig_datetime = correct_length and re.fullmatch(r"\d{4}", parts[0])
-            has_six_fig_datetime = correct_length and re.fullmatch(r"\d{6}", parts[0])
+            has_length_and_four_fig_datetime = correct_length and re.fullmatch(r"\d{4}", parts[0])
+            has_length_and_six_fig_datetime = correct_length and re.fullmatch(r"\d{6}", parts[0])
 
-            has_datetime = has_four_fig_datetime or has_six_fig_datetime
+            is_comma_sep_with_datetime = (
+                has_length_and_four_fig_datetime or has_length_and_six_fig_datetime
+            )
 
-            if has_datetime:
-                # Parse datetime
-                timestamp, error = self.parse_datetime(parts, four_fig=has_four_fig_datetime)
-                if error:
-                    continue
+            if is_comma_sep_with_datetime:
+                self.process_comma_sep_entry(header, parts, has_length_and_four_fig_datetime)
+            else:
+                # The entry isn't comma separated with a datetime at the start
+                # These entries mostly occur in PDFs not DOCXs - but we check for them
+                # everywhere.
+                # Even though it isn't comma separated, it might still have a date at the
+                # beginning and look like this:
+                # 120500 Message 1 (NB: the message could still include FCS entries etc)
+                # Or it could be a date block marker like this:
+                # 12 Dec 95
+                # Or it could be a bit of text that just needs adding on to the previous entry
+                # So, check for these one at a time
+                #
+                # Here we check if it starts with 4 or 6 digits
+                stripped_entry = entry.strip()
+                if re.match(r"\d{4}", stripped_entry) or re.match(r"\d{6}", stripped_entry):
+                    pass
 
-                # Process rest of entry
-                entry_platform_name = parts[4].strip()
+    def process_comma_sep_entry(self, header, parts, has_length_and_four_fig_datetime):
+        # Parse datetime
+        timestamp, error = self.parse_multipart_datetime(
+            parts, four_fig=has_length_and_four_fig_datetime
+        )
+        if error:
+            return
 
-                if entry_platform_name != header["platform"]:
-                    header_platform_name = header["platform"]
+        # Process rest of entry
+        entry_platform_name = parts[4].strip()
+
+        if entry_platform_name.upper() != header["platform"].upper():
+            header_platform_name = header["platform"]
+            self.errors.append(
+                {
+                    self.error_type: f"Platform name in entry ('{entry_platform_name}') doesn't match platform name in header ('{header_platform_name}')"
+                }
+            )
+            return
+
+        message_type = parts[5].strip()
+
+        if message_type.upper() == "FCS":
+            # It's a Fire Control Solution message
+            self.process_fcs_message(timestamp, entry_platform_name, parts[6:])
+        else:
+            # It's another type of message
+            if len(message_type) > 20:
+                # Sometimes there isn't the end comma on the message type field
+                # which means it gets merged with the text field
+                # If this field is very long then this is probably what happened
+                # So we find the first location of a tab, and split on that
+                index = message_type.find("\t")
+                if index != -1:
+                    text = message_type[index:].strip()
+                    message_type = message_type[:index].strip()
+                else:
+                    fulltext = ",".join(parts)
                     self.errors.append(
                         {
-                            self.error_type: f"Platform name in entry ('{entry_platform_name}') doesn't match platform name in header ('{header_platform_name}')"
+                            self.error_type: f"Can't separate message type and text, are fields mangled or a comma missing? {fulltext}"
                         }
                     )
-                    continue
-
-                message_type = parts[5].strip()
-
-                if len(message_type) > 20:
-                    # Sometimes there isn't the end comma on the message type field
-                    # which means it gets merged with the text field
-                    # If this field is very long then this is probably what happened
-                    # So we find the first location of a tab, and split on that
-                    index = message_type.find("\t")
-                    if index != -1:
-                        text = message_type[index:].strip()
-                        message_type = message_type[:index].strip()
-                    else:
-                        fulltext = ",".join(parts)
-                        self.errors.append(
-                            {
-                                self.error_type: f"Can't separate message type and text, are fields mangled or a comma missing? {fulltext}"
-                            }
-                        )
-                    continue
-                else:
-                    text = ",".join(parts[6:]).strip()
-
-                print(f"Timestamp: {timestamp}")
-                print(f"message_type: {message_type}")
-                print(f"text: {text}")
+                return
             else:
-                # Append to previous entry
-                pass
+                text = ",".join(parts[6:]).strip()
 
-    def parse_datetime(self, parts, four_fig):
+            print(f"Timestamp: {timestamp}")
+            print(f"message_type: {message_type}")
+            print(f"text: {text}")
+
+            # TODO: Work out here if we've got a state entry in the comment
+            # and if so then parse it and store it
+
+            # Store message data here
+            self.store_comment(timestamp, entry_platform_name, message_type, text)
+
+    def process_fcs_message(self, timestamp, platform_name, fcs_parts):
+        pass
+
+    def store_comment(self, timestamp, entry_platform_name, message_type, text):
+        pass
+
+    def parse_multipart_datetime(self, parts, four_fig):
         day_visible = None
 
         # Get the parts separated by commas, as they're always there
