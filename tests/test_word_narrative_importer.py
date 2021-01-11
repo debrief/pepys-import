@@ -86,3 +86,24 @@ def test_datetime_parsing_invalid_sixfig(input, timestamp):
     output_timestamp, error = imp.parse_datetime(input, four_fig=False)
 
     assert error
+
+
+@pytest.mark.parametrize(
+    "input,timestamp",
+    [
+        pytest.param(["1014", "99", "7", "2020"], datetime(2020, 7, 4, 10, 14), id="invalid day"),
+        pytest.param(["1014", "4", "99", "20"], datetime(2020, 7, 4, 10, 14), id="invalid month"),
+        pytest.param(["1014", "4", "7", "-1234"], datetime(1985, 7, 4, 10, 14), id="invalid year"),
+        pytest.param(["9914", "04", "07", "2020"], datetime(2020, 7, 4, 23, 14), id="invalid hour"),
+        pytest.param(
+            ["1099", "04", "07", "2020"], datetime(2020, 7, 4, 23, 14), id="invalid minute"
+        ),
+    ],
+)
+def test_datetime_parsing_invalid_fourfig(input, timestamp):
+    imp = WordNarrativeImporter()
+    imp.errors = []
+
+    output_timestamp, error = imp.parse_datetime(input, four_fig=True)
+
+    assert error
