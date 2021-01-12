@@ -39,6 +39,12 @@ class WordNarrativeImporter(Importer):
         return True
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
+        # Store datafile, data_store and change_id in the object so we don't have
+        # to keep passing them around
+        self.datafile = datafile
+        self.data_store = data_store
+        self.change_id = change_id
+
         _, ext = os.path.splitext(path)
         if ext.upper() == ".DOCX":
             header, entries, error = self.load_docx_file(path)
@@ -52,14 +58,14 @@ class WordNarrativeImporter(Importer):
             # Stop parsing if there was an error during loading that we can't recover from
             return
 
-        self.parse_file(header, entries, data_store, change_id)
+        self.parse_file(header, entries)
 
-    def parse_file(self, header, entries, data_store, change_id):
+    def parse_file(self, header, entries):
         platform_from_header = header.get("platform", None)
-        platform = self.get_cached_platform(
-            data_store, platform_name=platform_from_header, change_id=change_id
+        self.platform = self.get_cached_platform(
+            self.data_store, platform_name=platform_from_header, change_id=self.change_id
         )
-        print(platform)
+        print(self.platform)
 
         # Loop through each entry in the file
         for entry in entries:
@@ -124,7 +130,7 @@ class WordNarrativeImporter(Importer):
     def process_non_comma_entry(self, header, stripped_entry):
         print(f"Found non comma entry: {stripped_entry}")
         split_by_whitespace = stripped_entry.split()
-        timestamp_str = split_by_whitespace[0].trim()
+        timestamp_str = split_by_whitespace[0].strip()
 
         try:
             timestamp = self.parse_singlepart_datetime(timestamp_str)
@@ -134,7 +140,9 @@ class WordNarrativeImporter(Importer):
             )
             return
 
-        print(timestamp)
+        message_text = stripped_entry.replace(timestamp_str, "")
+
+        self.store_comment(timestamp, None, message_text)
 
     def parse_singlepart_datetime(self, timestamp_str):
         if self.last_day is None or self.last_month is None or self.last_year is None:
@@ -230,8 +238,20 @@ class WordNarrativeImporter(Importer):
     def process_fcs_message(self, timestamp, platform_name, fcs_parts):
         pass
 
-    def store_comment(self, timestamp, entry_platform_name, message_type, text):
-        pass
+    def store_comment(self, timestamp, message_type, text):
+        if message_type is None:
+            comment_type = self.data_store.add_to_comment_types("General Comment", self.change_id)
+        else:
+            comment_type = self.data_store.add_to_comment_types(message_type, self.change_id)
+
+        self.last_comment = self.datafile.create_comment(
+            data_store=self.data_store,
+            platform=self.platform,
+            timestamp=timestamp,
+            comment=text,
+            comment_type=comment_type,
+            parser_name=self.short_name,
+        )
 
     def parse_multipart_datetime(self, parts, four_fig):
         day_visible = None
