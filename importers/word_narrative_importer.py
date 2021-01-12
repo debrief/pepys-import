@@ -39,7 +39,6 @@ class WordNarrativeImporter(Importer):
         return True
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
-        print("Loading file")
         _, ext = os.path.splitext(path)
         if ext.upper() == ".DOCX":
             header, entries, error = self.load_docx_file(path)
@@ -56,15 +55,21 @@ class WordNarrativeImporter(Importer):
         self.parse_file(header, entries, data_store, change_id)
 
     def parse_file(self, header, entries, data_store, change_id):
+        platform_from_header = header.get("platform", None)
         platform = self.get_cached_platform(
-            data_store, platform_name=header["platform"], change_id=change_id
+            data_store, platform_name=platform_from_header, change_id=change_id
         )
         print(platform)
 
         # Loop through each entry in the file
         for entry in entries:
-            print(f"Entry {entry}")
-            parts = entry.strip().split(",")
+            stripped_entry = entry.strip()
+            print(f"Entry {stripped_entry}")
+            if stripped_entry == "":
+                # Skip blank entries
+                continue
+
+            parts = stripped_entry.split(",")
 
             correct_length = len(parts) > 5
             has_length_and_four_fig_datetime = correct_length and re.fullmatch(r"\d{4}", parts[0])
@@ -88,10 +93,82 @@ class WordNarrativeImporter(Importer):
                 # Or it could be a bit of text that just needs adding on to the previous entry
                 # So, check for these one at a time
                 #
-                # Here we check if it starts with 4 or 6 digits
-                stripped_entry = entry.strip()
-                if re.match(r"\d{4}", stripped_entry) or re.match(r"\d{6}", stripped_entry):
-                    pass
+                # Here we check if it starts with 4 or 6 digits, followed by whitespace
+                if re.match(r"\d{4}\w", stripped_entry) or re.match(r"\d{6}\w", stripped_entry):
+                    # If so, we process the entry
+                    self.process_non_comma_entry(header, stripped_entry)
+                else:
+                    # Try parsing the line as a date in the formats
+                    # dd MMM yy
+                    # dd MMM yyyy
+                    # For example, "12 DEC 1995"
+                    formats = ["%d %b %y", "%d %b %Y"]
+                    timestamp = None
+                    for date_format in formats:
+                        try:
+                            timestamp = datetime.strptime(stripped_entry, date_format)
+                        except ValueError:
+                            continue
+
+                    if timestamp is not None:
+                        # We've got a valid timestamp
+                        # So store the details ready for use with any lines that follow it
+                        self.last_day = timestamp.day
+                        self.last_month = timestamp.month
+                        self.last_year = timestamp.year
+                        continue
+
+                    # If we've got here, then we just have some text that needs appending to the previous entry
+                    # TODO: Append entry
+
+    def process_non_comma_entry(self, header, stripped_entry):
+        print(f"Found non comma entry: {stripped_entry}")
+        split_by_whitespace = stripped_entry.split()
+        timestamp_str = split_by_whitespace[0].trim()
+
+        try:
+            timestamp = self.parse_singlepart_datetime(timestamp_str)
+        except Exception as e:
+            self.errors.append(
+                {self.error_type: f"Error parsing timestamp {timestamp_str}, error was {str(e)}"}
+            )
+            return
+
+        print(timestamp)
+
+    def parse_singlepart_datetime(self, timestamp_str):
+        if self.last_day is None or self.last_month is None or self.last_year is None:
+            raise ValueError("No previous day/month/year block")
+
+        if len(timestamp_str) == 6:
+            day = int(timestamp_str[0:2])
+            hour = int(timestamp_str[2:4])
+            mins = int(timestamp_str[4:6])
+
+            if day < self.last_day:
+                # Day has gone down, so month must go up
+
+                # However, if month is 12 then it must go to 1 and year must go up
+                if self.last_month == 12:
+                    month = 1
+                    year = self.last_year + 1
+                else:
+                    month = self.last_month + 1
+                    year = self.last_year
+            else:
+                month = self.last_month
+                year = self.last_year
+
+            timestamp = datetime(year, month, day, hour, mins)
+            return timestamp
+        elif len(timestamp_str) == 4:
+            hour = int(timestamp_str[0:2])
+            mins = int(timestamp_str[2:4])
+
+            timestamp = datetime(self.last_year, self.last_month, self.last_day, hour, mins)
+            return timestamp
+        else:
+            raise ValueError("Timestamp must be 4 digits (HHMM) or 6 digits (DDHHMM)")
 
     def process_comma_sep_entry(self, header, parts, has_length_and_four_fig_datetime):
         # Parse datetime
@@ -255,11 +332,10 @@ class WordNarrativeImporter(Importer):
             header["platform"] = splitted[1].strip()
             header["exercise"] = splitted[4].strip()
             header["fulltext"] = header_text.strip()
-        except Exception as e:
-            self.errors.append(
-                {self.error_type: f'Cannot extract header\nError from parsing was "{str(e)}"'}
-            )
-            return None, None, True
+        except Exception:
+            # Couldn't extract header, so presumably doesn't have a header
+            # That's ok - we just create an empty dict
+            header = {}
 
         try:
             # Get each paragraph entry, after accepting any tracked changes
