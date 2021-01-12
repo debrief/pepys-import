@@ -6,6 +6,74 @@ from importers.word_narrative_importer import WordNarrativeImporter
 
 
 @pytest.mark.parametrize(
+    "input, last_day, last_month, last_year, timestamp",
+    [
+        pytest.param(
+            "141030",
+            14,
+            7,
+            2019,
+            datetime(2019, 7, 14, 10, 30),
+            id="valid timestamp with days matching",
+        ),
+        pytest.param(
+            "151030",
+            14,
+            7,
+            2019,
+            datetime(2019, 7, 15, 10, 30),
+            id="valid timestamp with day one more",
+        ),
+        pytest.param(
+            "011030", 30, 7, 2019, datetime(2019, 8, 1, 10, 30), id="end of month rollover"
+        ),
+        pytest.param(
+            "011030", 28, 12, 2019, datetime(2020, 1, 1, 10, 30), id="end of year rollover"
+        ),
+        pytest.param("1030", 28, 12, 2019, datetime(2019, 12, 28, 10, 30), id="four digit"),
+    ],
+)
+def test_singlepart_datetime_parsing_valid(input, last_day, last_month, last_year, timestamp):
+    imp = WordNarrativeImporter()
+    imp.errors = []
+
+    imp.last_day = last_day
+    imp.last_month = last_month
+    imp.last_year = last_year
+
+    output_timestamp = imp.parse_singlepart_datetime(input)
+
+    assert output_timestamp == timestamp
+
+
+@pytest.mark.parametrize(
+    "input, last_day, last_month, last_year",
+    [
+        pytest.param("141030", None, 7, 2019, id="missing last_day"),
+        pytest.param("151030", 14, None, 2019, id="missing last_month"),
+        pytest.param("011030", 30, 7, None, id="missing last_year"),
+        pytest.param("991030", 28, 12, 2019, id="invalid day"),
+        pytest.param("019930", 28, 12, 2019, id="invalid hour"),
+        pytest.param("011099", 28, 12, 2019, id="invalid min"),
+        pytest.param("9930", 28, 12, 2019, id="four digit invalid hour"),
+        pytest.param("1099", 28, 12, 2019, id="four digit invalid min"),
+        pytest.param("", 28, 12, 2019, id="empty"),
+        pytest.param("123456789", 28, 12, 2019, id="too long"),
+    ],
+)
+def test_singlepart_datetime_parsing_invalid(input, last_day, last_month, last_year):
+    imp = WordNarrativeImporter()
+    imp.errors = []
+
+    imp.last_day = last_day
+    imp.last_month = last_month
+    imp.last_year = last_year
+
+    with pytest.raises(ValueError):
+        _ = imp.parse_singlepart_datetime(input)
+
+
+@pytest.mark.parametrize(
     "input,timestamp",
     [
         pytest.param(
@@ -25,7 +93,7 @@ from importers.word_narrative_importer import WordNarrativeImporter
         ),
     ],
 )
-def test_datetime_parsing_valid_sixfig(input, timestamp):
+def test_multipart_datetime_parsing_valid_sixfig(input, timestamp):
     imp = WordNarrativeImporter()
     imp.errors = []
 
@@ -50,7 +118,7 @@ def test_datetime_parsing_valid_sixfig(input, timestamp):
         ),
     ],
 )
-def test_datetime_parsing_valid_fourfig(input, timestamp):
+def test_multipart_datetime_parsing_valid_fourfig(input, timestamp):
     imp = WordNarrativeImporter()
     imp.errors = []
 
@@ -79,7 +147,7 @@ def test_datetime_parsing_valid_fourfig(input, timestamp):
         ),
     ],
 )
-def test_datetime_parsing_invalid_sixfig(input, timestamp):
+def test_multipart_datetime_parsing_invalid_sixfig(input, timestamp):
     imp = WordNarrativeImporter()
     imp.errors = []
 
@@ -100,7 +168,7 @@ def test_datetime_parsing_invalid_sixfig(input, timestamp):
         ),
     ],
 )
-def test_datetime_parsing_invalid_fourfig(input, timestamp):
+def test_multipart_datetime_parsing_invalid_fourfig(input, timestamp):
     imp = WordNarrativeImporter()
     imp.errors = []
 
