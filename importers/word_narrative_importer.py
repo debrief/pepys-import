@@ -140,7 +140,7 @@ class WordNarrativeImporter(Importer):
             )
             return
 
-        message_text = stripped_entry.replace(timestamp_str, "")
+        message_text = stripped_entry.replace(timestamp_str, "").strip()
 
         self.store_comment(timestamp, None, message_text)
 
@@ -233,7 +233,7 @@ class WordNarrativeImporter(Importer):
             # and if so then parse it and store it
 
             # Store message data here
-            self.store_comment(timestamp, entry_platform_name, message_type, text)
+            self.store_comment(timestamp, message_type, text)
 
     def process_fcs_message(self, timestamp, platform_name, fcs_parts):
         pass
