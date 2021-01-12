@@ -29,7 +29,7 @@ def test_datetime_parsing_valid_sixfig(input, timestamp):
     imp = WordNarrativeImporter()
     imp.errors = []
 
-    output_timestamp, error = imp.parse_datetime(input, four_fig=False)
+    output_timestamp, error = imp.parse_multipart_datetime(input, four_fig=False)
 
     assert not error
     assert output_timestamp == timestamp
@@ -54,7 +54,7 @@ def test_datetime_parsing_valid_fourfig(input, timestamp):
     imp = WordNarrativeImporter()
     imp.errors = []
 
-    output_timestamp, error = imp.parse_datetime(input, four_fig=True)
+    output_timestamp, error = imp.parse_multipart_datetime(input, four_fig=True)
 
     assert not error
     assert output_timestamp == timestamp
@@ -83,7 +83,7 @@ def test_datetime_parsing_invalid_sixfig(input, timestamp):
     imp = WordNarrativeImporter()
     imp.errors = []
 
-    output_timestamp, error = imp.parse_datetime(input, four_fig=False)
+    output_timestamp, error = imp.parse_multipart_datetime(input, four_fig=False)
 
     assert error
 
@@ -104,6 +104,6 @@ def test_datetime_parsing_invalid_fourfig(input, timestamp):
     imp = WordNarrativeImporter()
     imp.errors = []
 
-    output_timestamp, error = imp.parse_datetime(input, four_fig=True)
+    output_timestamp, error = imp.parse_multipart_datetime(input, four_fig=True)
 
     assert error
