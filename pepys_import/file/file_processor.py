@@ -67,9 +67,14 @@ class FileProcessor:
             # to be doing archiving
             if archive_path:
                 # Create the path if it doesn't exist
-                if not os.path.exists(archive_path):
-                    os.makedirs(archive_path)
-                self.output_path = archive_path
+                try:
+                    if not os.path.exists(archive_path):
+                        os.makedirs(archive_path)
+                    self.output_path = archive_path
+                except Exception as e:
+                    raise ValueError(
+                        f"Could not create archive folder at {archive_path}. Original error: {str(e)}"
+                    )
 
         self.skip_validation = skip_validation
 
