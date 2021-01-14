@@ -108,7 +108,7 @@ class FileProcessorVariablesTestCase(unittest.TestCase):
         )
 
     def test_pepys_archive_location(self):
-        file_processor = FileProcessor(archive_path=OUTPUT_PATH)
+        file_processor = FileProcessor(archive_path=OUTPUT_PATH, archive=True)
         assert os.path.exists(OUTPUT_PATH) is True
         assert file_processor.output_path == OUTPUT_PATH
         # Remove the test_output directory
