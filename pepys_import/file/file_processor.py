@@ -60,12 +60,17 @@ class FileProcessor:
         self.input_files_path = None
         self.directory_path = None
 
-        if archive_path:
-            # Create the path if it doesn't exist
-            if not os.path.exists(archive_path):
-                os.makedirs(archive_path)
-            self.output_path = archive_path
         self.archive = archive
+
+        if self.archive:
+            # Only create the archive folder if we are actually going
+            # to be doing archiving
+            if archive_path:
+                # Create the path if it doesn't exist
+                if not os.path.exists(archive_path):
+                    os.makedirs(archive_path)
+                self.output_path = archive_path
+
         self.skip_validation = skip_validation
 
     def process(self, path: str, data_store: DataStore = None, descend_tree: bool = True):
