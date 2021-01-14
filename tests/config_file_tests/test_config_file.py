@@ -114,6 +114,17 @@ class FileProcessorVariablesTestCase(unittest.TestCase):
         # Remove the test_output directory
         os.rmdir(OUTPUT_PATH)
 
+    def test_pepys_invalid_archive_location_not_archiving(self):
+        # Tests that an invalid archive location doesn't give
+        # an error if we've got archiving turned off
+        _ = FileProcessor(archive_path=r"///blahblah/blah", archive=False)
+
+    def test_pepys_invalid_archive_location_with_archiving(self):
+        # Tests that an invalid archive location gives an error
+        # if we're running with archiving turned on
+        with pytest.raises(ValueError, match="Could not create archive folder"):
+            _ = FileProcessor(archive_path=r"///blahblah/blah", archive=True)
+
     def test_no_archive_path_given(self):
         store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
         store.initialise()
