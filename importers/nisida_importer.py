@@ -49,19 +49,16 @@ class NisidaImporter(Importer):
         self.platform = None
 
     def can_load_this_type(self, suffix):
-        return True
+        return suffix.upper() == ".TXT"
 
     def can_load_this_filename(self, filename):
         return True
 
     def can_load_this_header(self, header):
-        return True
+        return header.startswith("UNIT/")
 
     def can_load_this_file(self, file_contents):
-        for line in file_contents:
-            if line.startswith("UNIT/"):
-                return True
-        return False
+        return True
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
         self.current_line_no = line_number
