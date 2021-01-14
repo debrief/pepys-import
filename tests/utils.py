@@ -27,7 +27,7 @@ def check_errors_for_file_contents(file_contents, expected_errors, importer, fil
         assert len(datafiles) == 0
 
     if filename is None:
-        filename = "test_input"
+        filename = "test_input.txt"
 
     with open(filename, "w") as f:
         f.write(file_contents)
