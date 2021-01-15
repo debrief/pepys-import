@@ -43,7 +43,6 @@ class HostedBy(BasePostGIS, HostedByMixin):
     __tablename__ = constants.HOSTED_BY
     table_type = TableTypes.METADATA
     table_type_id = 1
-    __table_args__ = {"schema": "pepys"}
 
     hosted_by_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     subject_id = Column(
@@ -143,7 +142,6 @@ class Task(BasePostGIS, TaskMixin):
     __tablename__ = constants.TASK
     table_type = TableTypes.METADATA
     table_type_id = 4
-    __table_args__ = {"schema": "pepys"}
 
     task_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), CheckConstraint("name <> ''", name="ck_Tasks_name"), nullable=False)
@@ -166,7 +164,6 @@ class Participant(BasePostGIS, ParticipantMixin):
     __tablename__ = constants.PARTICIPANT
     table_type = TableTypes.METADATA
     table_type_id = 5
-    __table_args__ = {"schema": "pepys"}
 
     participant_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     platform_id = Column(
@@ -226,7 +223,6 @@ class Synonym(BasePostGIS, SynonymMixin):
     __tablename__ = constants.SYNONYM
     table_type = TableTypes.METADATA
     table_type_id = 7
-    __table_args__ = {"schema": "pepys"}
 
     synonym_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table = Column(
@@ -243,7 +239,6 @@ class Change(BasePostGIS):
     __tablename__ = constants.CHANGE
     table_type = TableTypes.METADATA
     table_type_id = 8
-    __table_args__ = {"schema": "pepys"}
 
     change_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user = Column(
@@ -264,7 +259,6 @@ class Log(BasePostGIS, LogMixin):
     __tablename__ = constants.LOG
     table_type = TableTypes.METADATA
     table_type_id = 9
-    __table_args__ = {"schema": "pepys"}
 
     log_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table = Column(
@@ -285,7 +279,6 @@ class Extraction(BasePostGIS):
     __tablename__ = constants.EXTRACTION
     table_type = TableTypes.METADATA
     table_type_id = 10
-    __table_args__ = {"schema": "pepys"}
 
     extraction_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
@@ -298,7 +291,6 @@ class Tag(BasePostGIS):
     __tablename__ = constants.TAG
     table_type = TableTypes.METADATA
     table_type_id = 11
-    __table_args__ = {"schema": "pepys"}
 
     tag_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), nullable=False)
@@ -309,7 +301,6 @@ class TaggedItem(BasePostGIS, TaggedItemMixin):
     __tablename__ = constants.TAGGED_ITEM
     table_type = TableTypes.METADATA
     table_type_id = 12
-    __table_args__ = {"schema": "pepys"}
 
     tagged_item_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     tag_id = Column(
@@ -329,7 +320,6 @@ class PlatformType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.PLATFORM_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 13
-    __table_args__ = {"schema": "pepys"}
 
     platform_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -345,7 +335,6 @@ class Nationality(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.NATIONALITY
     table_type = TableTypes.REFERENCE
     table_type_id = 14
-    __table_args__ = {"schema": "pepys"}
 
     nationality_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -362,7 +351,6 @@ class GeometryType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.GEOMETRY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 15
-    __table_args__ = {"schema": "pepys"}
 
     geo_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -399,7 +387,6 @@ class User(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.USER
     table_type = TableTypes.REFERENCE
     table_type_id = 17
-    __table_args__ = {"schema": "pepys"}
 
     user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -415,7 +402,6 @@ class UnitType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.UNIT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 18
-    __table_args__ = {"schema": "pepys"}
 
     unit_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -431,7 +417,6 @@ class ClassificationType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.CLASSIFICATION_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 19
-    __table_args__ = {"schema": "pepys"}
 
     class_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -447,7 +432,6 @@ class ContactType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.CONTACT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 20
-    __table_args__ = {"schema": "pepys"}
 
     contact_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -463,7 +447,6 @@ class SensorType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.SENSOR_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 21
-    __table_args__ = {"schema": "pepys"}
 
     sensor_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -479,7 +462,6 @@ class Privacy(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.PRIVACY
     table_type = TableTypes.REFERENCE
     table_type_id = 22
-    __table_args__ = {"schema": "pepys"}
 
     privacy_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     level = Column(Integer, nullable=False)
@@ -496,7 +478,6 @@ class DatafileType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.DATAFILE_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 23
-    __table_args__ = {"schema": "pepys"}
 
     datafile_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -512,7 +493,6 @@ class MediaType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.MEDIA_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 24
-    __table_args__ = {"schema": "pepys"}
 
     media_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -528,7 +508,6 @@ class CommentType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.COMMENT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 25
-    __table_args__ = {"schema": "pepys"}
 
     comment_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -544,7 +523,6 @@ class CommodityType(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.COMMODITY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 26
-    __table_args__ = {"schema": "pepys"}
 
     commodity_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -560,7 +538,6 @@ class ConfidenceLevel(BasePostGIS, ReferenceRepr):
     __tablename__ = constants.CONFIDENCE_LEVEL
     table_type = TableTypes.REFERENCE
     table_type_id = 27  # Only needed for tables referenced by Entry table
-    __table_args__ = {"schema": "pepys"}
 
     confidence_level_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -577,7 +554,6 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     __tablename__ = constants.STATE
     table_type = TableTypes.MEASUREMENT
     table_type_id = 28
-    __table_args__ = {"schema": "pepys"}
 
     state_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     time = Column(TIMESTAMP, nullable=False)
@@ -624,7 +600,6 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     __tablename__ = constants.CONTACT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 29
-    __table_args__ = {"schema": "pepys"}
 
     contact_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150))
@@ -692,7 +667,6 @@ class Activation(BasePostGIS, ActivationMixin):
     __tablename__ = constants.ACTIVATION
     table_type = TableTypes.MEASUREMENT
     table_type_id = 30
-    __table_args__ = {"schema": "pepys"}
 
     activation_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150))
@@ -723,7 +697,6 @@ class LogsHolding(BasePostGIS, LogsHoldingMixin):
     __tablename__ = constants.LOGS_HOLDING
     table_type = TableTypes.MEASUREMENT
     table_type_id = 31
-    __table_args__ = {"schema": "pepys"}
 
     logs_holding_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     time = Column(TIMESTAMP, nullable=False)
@@ -763,7 +736,6 @@ class Comment(BasePostGIS, CommentMixin):
     __tablename__ = constants.COMMENT
     table_type = TableTypes.MEASUREMENT
     table_type_id = 32
-    __table_args__ = {"schema": "pepys"}
 
     comment_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     platform_id = Column(
@@ -793,7 +765,6 @@ class Geometry1(BasePostGIS, GeometryMixin):
     __tablename__ = constants.GEOMETRY
     table_type = TableTypes.MEASUREMENT
     table_type_id = 33
-    __table_args__ = {"schema": "pepys"}
 
     geometry_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     _geometry = Column("geometry", Geometry(srid=4326), nullable=False)
@@ -833,7 +804,6 @@ class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin, LocationPropertyMix
     __tablename__ = constants.MEDIA
     table_type = TableTypes.MEASUREMENT
     table_type_id = 34
-    __table_args__ = {"schema": "pepys"}
 
     media_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     platform_id = Column(
@@ -872,7 +842,6 @@ class HelpText(BasePostGIS):
     __tablename__ = constants.HELP_TEXT
     table_type = TableTypes.REFERENCE
     table_type_id = 35
-    __table_args__ = {"schema": "pepys"}
 
     help_text_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     id = Column(String(50), nullable=False)

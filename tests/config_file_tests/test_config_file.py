@@ -12,6 +12,7 @@ from importers.replay_importer import ReplayImporter
 from pepys_import.core.store import common_db
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from tests.utils import side_effect
 
 DIRECTORY_PATH = os.path.dirname(__file__)
 TEST_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "parsers")
@@ -93,7 +94,8 @@ class FileProcessorVariablesTestCase(unittest.TestCase):
         assert len(file_processor.importers) == 1
         assert file_processor.importers[0].name == "Test Importer"
 
-    def test_bad_pepys_local_parsers_path(self):
+    @patch("pepys_import.file.file_processor.custom_print_formatted_text", side_effect=side_effect)
+    def test_bad_pepys_local_parsers_path(self, patched_print):
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             file_processor = FileProcessor(local_parsers=BAD_IMPORTER_PATH)
@@ -106,11 +108,22 @@ class FileProcessorVariablesTestCase(unittest.TestCase):
         )
 
     def test_pepys_archive_location(self):
-        file_processor = FileProcessor(archive_path=OUTPUT_PATH)
+        file_processor = FileProcessor(archive_path=OUTPUT_PATH, archive=True)
         assert os.path.exists(OUTPUT_PATH) is True
         assert file_processor.output_path == OUTPUT_PATH
         # Remove the test_output directory
         os.rmdir(OUTPUT_PATH)
+
+    def test_pepys_invalid_archive_location_not_archiving(self):
+        # Tests that an invalid archive location doesn't give
+        # an error if we've got archiving turned off
+        _ = FileProcessor(archive_path=r"///blahblah/blah", archive=False)
+
+    def test_pepys_invalid_archive_location_with_archiving(self):
+        # Tests that an invalid archive location gives an error
+        # if we're running with archiving turned on
+        with pytest.raises(ValueError, match="Could not create archive folder"):
+            _ = FileProcessor(archive_path=r"///blahblah/blah", archive=True)
 
     def test_no_archive_path_given(self):
         store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")

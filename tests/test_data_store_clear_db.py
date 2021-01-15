@@ -1,4 +1,3 @@
-import platform
 import unittest
 from unittest import TestCase
 
@@ -176,15 +175,11 @@ class DataStoreClearSchemaSpatiaLiteTestCase(TestCase):
         inspector = inspect(data_store_sqlite.engine)
         table_names = inspector.get_table_names()
 
-        SYSTEM = platform.system()
-
-        if SYSTEM == "Windows":
-            correct_n_tables = 38
-        else:
-            correct_n_tables = 36
-
-        # Only the spatial tables (36, or 38 on Windows) must be created. A few of them tested
-        self.assertEqual(len(table_names), correct_n_tables)
+        # Only the spatial tables should be created. The number of these varies depending on the version
+        # of spatialite: either 38 for the later version or 36 for the previous version
+        # On Windows we only support the pre-release version, so we get 38, but this can also happen on
+        # other systems depending on configuration
+        assert len(table_names) == 38 or len(table_names) == 36
 
 
 if __name__ == "__main__":

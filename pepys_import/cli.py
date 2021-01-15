@@ -11,7 +11,11 @@ from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.data_store_utils import is_schema_created
 from pepys_import.utils.error_handling import handle_database_errors
-from pepys_import.utils.text_formatting_utils import format_command
+from pepys_import.utils.text_formatting_utils import (
+    custom_print_formatted_text,
+    format_command,
+    format_error_message,
+)
 
 FILE_PATH = os.path.abspath(__file__)
 DIRECTORY_PATH = os.path.dirname(FILE_PATH)
@@ -85,7 +89,9 @@ def process(
     elif resolver == "default":
         resolver_obj = DefaultResolver()
     else:
-        print(f"Invalid option '{resolver}' for --resolver.")
+        custom_print_formatted_text(
+            format_error_message(f"Invalid option '{resolver}' for --resolver.")
+        )
         return
 
     if training:

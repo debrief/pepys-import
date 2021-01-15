@@ -28,14 +28,24 @@ def format_menu(title: str, choices: str):
     return FormattedText([("#0e84b5 bold", title), ("#0e84b5", choices)])
 
 
+def format_error_menu(title: str, choices: str):
+    """Create a FormattedText object which has title in red and normal style for the choices."""
+    return FormattedText([("#dc3545", title), ("", choices)])
+
+
 def format_command(text):
     """Create a FormattedText object which makes the given text bold."""
     return FormattedText([("#0e84b5 bold", text)])
 
 
 def format_help_text(text):
-    """Create a FormattedText object which makes the given text italic."""
+    """Create a FormattedText object which makes the given text blue."""
     return FormattedText([("#28a745", text)])
+
+
+def format_error_message(text):
+    """Create a FormattedText object which makes the given text red."""
+    return FormattedText([("#dc3545", text)])
 
 
 def formatted_text_to_str(formatted_text: FormattedText) -> str:

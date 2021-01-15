@@ -2,13 +2,13 @@ Write-Output "INFO: Starting to create Pepys deployment"
 
 # Download embedded Python distribution
 try {
-    $url = 'https://www.python.org/ftp/python/3.7.6/python-3.7.6-embed-amd64.zip'
+    $url = 'https://www.python.org/ftp/python/3.8.6/python-3.8.6-embed-amd64.zip'
     (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\python.zip")
 }
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not download embedded Python - has the URL changed?"
-    Exit
+    Exit 1
 }
 
 try {
@@ -19,7 +19,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not extract Python zip file"
-    Exit
+    Exit 1
 }
 
 try {
@@ -30,7 +30,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not download get-pip.py - has the URL changed?"
-    Exit
+    Exit 1
 }
 
 # Try-Catch block catches error finding/running the exe file
@@ -42,14 +42,14 @@ try {
     if ($LastExitCode -ne 0)
     {
         Write-Output "ERROR: Could not install pip"
-        Exit
+        Exit 1
     }
     Write-Output "INFO: Installed pip"
 }
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not run Python to install pip"
-    Exit
+    Exit 1
 }
 
 try {
@@ -60,7 +60,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not download SQLite - has the URL changed?"
-    Exit
+    Exit 1
 }
 
 try {
@@ -72,18 +72,21 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not extract SQLite zip file"
-    Exit
+    Exit 1
 }
 
 try {
     # Download mod_spatialite DLL files
-    $url = 'http://www.gaia-gis.it/gaia-sins/windows-bin-amd64/spatialite-loadable-modules-5.0.0-win-amd64.7z'
+    # This file is originally hosted at http://www.gaia-gis.it/gaia-sins/windows-bin-amd64/spatialite-loadable-modules-5.0.0-win-amd64.7z
+    # but this keeps giving errors, which makes our CI fail
+    # Therefore we've hosted it in the libs directory on our gh-pages branch, using the URL below
+    $url = 'https://debrief.github.io/pepys-import/libs/spatialite-loadable-modules-5.0.0-win-amd64.7z'
     (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\spatialite-loadable-modules-5.0.0-win-amd64.7z")
 }
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not download Spatialite - has the URL changed?"
-    Exit
+    Exit 1
 }
 
 try {
@@ -94,7 +97,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not download 7zip - has the URL changed?"
-    Exit
+    Exit 1
 }
 
 try {
@@ -104,7 +107,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not extract 7zip"
-    Exit
+    Exit 1
 }
 
 try {
@@ -114,14 +117,14 @@ try {
     if ($LastExitCode -ne 0)
     {
         Write-Output "ERROR: Could not extract spatialiate"
-        Exit
+        Exit 1
     }
     Write-Output "INFO: Downloaded and extracted mod_spatialite"
 }
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not run 7zip to extract spatialite"
-    Exit
+    Exit 1
 }
 
 
@@ -130,8 +133,8 @@ try {
     # the directory above the python folder (with pepys-import in it). This creates a ._pth file which
     # Python uses as it's *only* source for generating sys.path (ie. it does NOT take into account
     # environment variables such as PYTHONPATH)
-    Set-Content -Encoding ascii .\python\python37._pth @"
-python37.zip
+    Set-Content -Encoding ascii .\python\python38._pth @"
+python38.zip
 .
 Lib\site-packages
 ..
@@ -149,7 +152,7 @@ pip\_vendor\pep517
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not write to path files"
-    Exit
+    Exit 1
 }
 
 try {
@@ -159,7 +162,7 @@ try {
     if ($LastExitCode -ne 0)
     {
         Write-Output "ERROR: Problem installing dependencies using pip"
-        Exit
+        Exit 1
     }
 
     Write-Output "INFO: Installed Python dependencies"
@@ -167,7 +170,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not run Python to install requirements using pip"
-    Exit
+    Exit 1
 }
 
 
@@ -181,7 +184,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not delete old deployment files"
-    Exit
+    Exit 1
 }
 
 
@@ -193,14 +196,14 @@ try {
     if ($LastExitCode -ne 0)
     {
         Write-Output "ERROR: Problem running sphinx-build.exe to build docs"
-        Exit
+        Exit 1
     }
     write-Output "INFO: Finished building documentation"
 }
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not run sphinx-build.exe to build docs"
-    Exit
+    Exit 1
 }
 
 try {
@@ -213,7 +216,7 @@ try {
     if ($LastExitCode -ne 0)
     {
         Write-Output "ERROR: Error returned from running 7zip to create final deployment file"
-        Exit
+        Exit 1
     }
 
     Write-Output "INFO: Written zipped deployment file to $output_filename"
@@ -221,7 +224,7 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not run 7zip to create final deployment file"
-    Exit
+    Exit 1
 }
 
 
@@ -234,5 +237,5 @@ try {
 catch {
     Write-Output $_
     Write-Output "ERROR: Could not remove items in final cleanup"
-    Exit
+    Exit 1
 }
