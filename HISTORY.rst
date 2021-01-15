@@ -2,6 +2,13 @@
 History
 =======
 
+0.0.25 (2021-01-15)
+-------------------
+
+* Don't check ability to write to Archive folder if in (No archive) mode
+* Introduce ability to view config file contents in Pepys-Admin
+* Reduce instances where NISIDA import used (files ending in .txt, beginning with UNIT)
+* Add support for highlighting XML files
 
 0.0.24 (2020-12-10)
 -------------------
