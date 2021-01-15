@@ -6,6 +6,7 @@ from alembic import command
 from alembic.config import Config
 from prompt_toolkit import prompt
 
+import config
 from paths import ROOT_DIRECTORY
 from pepys_admin.base_cli import BaseShell
 from pepys_admin.export_cli import ExportShell
@@ -86,29 +87,37 @@ class AdminShell(BaseShell):
 
     def do_status(self):
         """Prints table summaries and database version."""
-        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
-            return
 
-        with self.data_store.session_scope(), handle_status_errors():
-            measurement_summary = self.data_store.get_status(TableTypes.MEASUREMENT)
-            report = measurement_summary.report()
-            formatted_text = format_table("## Measurements", table_string=report)
-            custom_print_formatted_text(formatted_text)
+        if is_schema_created(self.data_store.engine, self.data_store.db_type):
+            with self.data_store.session_scope(), handle_status_errors():
+                measurement_summary = self.data_store.get_status(TableTypes.MEASUREMENT)
+                report = measurement_summary.report()
+                formatted_text = format_table("## Measurements", table_string=report)
+                custom_print_formatted_text(formatted_text)
 
-            metadata_summary = self.data_store.get_status(TableTypes.METADATA)
-            report = metadata_summary.report()
-            formatted_text = format_table("## Metadata", table_string=report)
-            custom_print_formatted_text(formatted_text)
+                metadata_summary = self.data_store.get_status(TableTypes.METADATA)
+                report = metadata_summary.report()
+                formatted_text = format_table("## Metadata", table_string=report)
+                custom_print_formatted_text(formatted_text)
 
-            reference_summary = self.data_store.get_status(
-                TableTypes.REFERENCE, exclude=[constants.HELP_TEXT]
-            )
-            report = reference_summary.report()
-            formatted_text = format_table("## Reference", table_string=report)
-            custom_print_formatted_text(formatted_text)
+                reference_summary = self.data_store.get_status(
+                    TableTypes.REFERENCE, exclude=[constants.HELP_TEXT]
+                )
+                report = reference_summary.report()
+                formatted_text = format_table("## Reference", table_string=report)
+                custom_print_formatted_text(formatted_text)
 
-        print("## Database Version")
-        command.current(self.cfg, verbose=True)
+            print("## Database Version")
+            command.current(self.cfg, verbose=True)
+
+        print("## Config file")
+        print(f"Location: {config.CONFIG_FILE_PATH}")
+        try:
+            print("Contents:")
+            with open(config.CONFIG_FILE_PATH) as f:
+                print(f.read())
+        except Exception as e:
+            print(f"Error reading config file: {str(e)}")
 
     def do_migrate(self):
         """Runs Alembic's :code:`upgrade` command to migrate the database to the latest version."""
