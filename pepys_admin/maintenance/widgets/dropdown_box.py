@@ -117,7 +117,11 @@ class DropdownBox:
         self.handler = functools.partial(self.handler, self)
 
         # Work out the max length of any entry or the original text
-        max_len = max(max([len(entry) for entry in self.entries]), len(self.text))
+        if not callable(self.entries) and len(self.entries) > 0:
+            max_len = max(max([len(entry) for entry in self.entries]), len(self.text))
+        else:
+            max_len = len(self.text)
+
         self.width = max_len + 2
         self.control = FormattedTextControl(
             self._get_text_fragments,
@@ -142,13 +146,21 @@ class DropdownBox:
         )
 
     def handler(self, event):
+        if callable(self.entries):
+            entries = self.entries()
+        else:
+            entries = self.entries
+
+        if len(entries) == 0:
+            return
+
         # We have to define a coroutine (the name doesn't matter)
         # so that we can use await inside the function body.
         async def coroutine():
             app = get_app()
 
             # Create a ComboBox to display the dropdown list
-            menu = ComboBox(self.entries, self.width)
+            menu = ComboBox(entries, self.width)
 
             # Wrap this in a Float, so we can display it above the rest of the
             # display. The high Z index makes this appear on top of anything else

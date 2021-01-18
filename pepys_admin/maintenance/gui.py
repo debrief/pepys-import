@@ -9,7 +9,7 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Label
 
-from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
+from pepys_admin.maintenance.widgets.dropdown_box import ComboBox, DropdownBox
 
 logger.remove()
 logger.add("gui.log")
@@ -30,31 +30,32 @@ class MaintenanceGUI:
             width=Dimension(weight=0.4),
         )
 
+        self.dropdown_table = DropdownBox(
+            text="Select a table",
+            entries=[
+                "Platform",
+                "Sensor",
+                "PlatformType",
+                "SensorType",
+                "Privacy",
+                "CommentType",
+                "Nationality",
+            ],
+            on_select_handler=lambda: logger.debug("Selected!"),
+        )
         self.data_type_container = HSplit(
             children=[
                 Label(text="Select data type   F2", style="class:title-line"),
                 VSplit(
-                    [
-                        DropdownBox(
-                            text="Select a table",
-                            entries=[
-                                "Platform",
-                                "Sensor",
-                                "PlatformType",
-                                "SensorType",
-                                "Privacy",
-                                "CommentType",
-                                "Nationality",
-                            ],
-                            on_select_handler=lambda: logger.debug("Selected!"),
-                        )
-                    ],
+                    [self.dropdown_table],
                     align=HorizontalAlign.LEFT,
                 ),
             ],
             padding=1,
             height=Dimension(weight=0.05),
         )
+
+        self.dropdown_column = DropdownBox(text="Select column", entries=self.get_columns)
 
         self.filter_container = HSplit(
             [
@@ -65,6 +66,10 @@ class MaintenanceGUI:
                 Label(
                     text="Press TAB to go to next dropdown or line\nPress Shift + TAB to go to the previous dropdown or line",
                     style="fg:ansiblue",
+                ),
+                VSplit(
+                    [self.dropdown_column],
+                    align=HorizontalAlign.LEFT,
                 ),
             ],
             padding=1,
@@ -77,9 +82,8 @@ class MaintenanceGUI:
                     text="Choose actions  F6",
                     style="class:title-line",
                 ),
-                Label(
-                    text="Actions here",
-                    style="",
+                ComboBox(
+                    entries=["1 Action here", "2 Another action here", "3 A third action here"]
                 ),
             ],
             padding=1,
@@ -130,7 +134,28 @@ class MaintenanceGUI:
         return kb
 
     def get_style(self):
-        return Style([("title-line", "bg:ansigray fg:white")])
+        style = Style(
+            [
+                ("title-line", "bg:ansigray fg:white"),
+                ("button", "#000000"),
+                ("button-arrow", "#000000"),
+                ("button.focused", "bg:#ff0000"),
+                ("dropdown", "bg:ansigreen"),
+                ("dropdown.focused", "bg:ansidarkgreen"),
+                # ("select-box", "bg:ansiblue"),
+                ("text-area focused", "bg:#ff0000"),
+                ("dropdown-highlight", "#ff0000"),
+            ]
+        )
+        return style
+
+    def get_columns(self):
+        if self.dropdown_table.text == "Platform":
+            return ["Columns", "For", "Platform", "Table", "Here"]
+        elif self.dropdown_table.text == "Sensor":
+            return ["Columns", "For", "Sensor", "Table", "Here"]
+        else:
+            return []
 
 
 gui = MaintenanceGUI()
