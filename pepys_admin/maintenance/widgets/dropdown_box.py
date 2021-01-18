@@ -106,9 +106,10 @@ class DropdownBox:
     all the methods, so it was easier to just copy it.
     """
 
-    def __init__(self, text, entries) -> None:
+    def __init__(self, text, entries, on_select_handler=None) -> None:
         self.text = text
         self.entries = entries
+        self.on_select_handler = on_select_handler
 
         # Have to use partial to make this take a reference to self
         # (This could be avoided by making handler a classmethod,
@@ -175,6 +176,10 @@ class DropdownBox:
 
             # Update the display text to the option that was selected
             self.text = result
+
+            # Call the on_select_handler
+            if self.on_select_handler is not None:
+                self.on_select_handler()
 
         # Run the coroutine and wait to get the result
         ensure_future(coroutine())

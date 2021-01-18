@@ -1,3 +1,4 @@
+from loguru import logger
 from prompt_toolkit import Application
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.key_binding import KeyBindings
@@ -9,6 +10,9 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Label
 
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
+
+logger.remove()
+logger.add("gui.log")
 
 
 class MaintenanceGUI:
@@ -42,6 +46,7 @@ class MaintenanceGUI:
                                 "CommentType",
                                 "Nationality",
                             ],
+                            on_select_handler=lambda: logger.debug("Selected!"),
                         )
                     ],
                     align=HorizontalAlign.LEFT,
