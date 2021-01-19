@@ -1,7 +1,26 @@
 from prompt_toolkit.layout.containers import DynamicContainer, HorizontalAlign, HSplit, VSplit
-from prompt_toolkit.widgets.base import Button, TextArea
+from prompt_toolkit.validation import Validator
+from prompt_toolkit.widgets.base import Button
+from prompt_toolkit.widgets.toolbars import ValidationToolbar
 
+from pepys_admin.maintenance.widgets.custom_text_area import CustomTextArea
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
+
+
+def validate_float(s):
+    try:
+        _ = float(s)
+    except ValueError:
+        return False
+    return True
+
+
+def validate_int(s):
+    try:
+        _ = int(s)
+    except ValueError:
+        return False
+    return True
 
 
 class FilterWidget:
@@ -14,7 +33,14 @@ class FilterWidget:
         self.entries = [FilterWidgetEntry(self)]
 
     def get_container_contents(self):
-        return HSplit([HSplit([e.get_widgets() for e in self.entries]), self.button])
+        return HSplit(
+            [
+                HSplit([e.get_widgets() for e in self.entries], padding=1),
+                self.button,
+                ValidationToolbar(),
+            ],
+            padding=1,
+        )
 
     def add_entry(self):
         self.entries.append(FilterWidgetEntry(self))
@@ -30,12 +56,31 @@ class FilterWidgetEntry:
             text="Select column", entries=filter_widget.column_data.keys()
         )
         self.dropdown_operator = DropdownBox(text=" = ", entries=self.get_operators, filter=False)
+
+        float_validator = Validator.from_callable(
+            validate_float,
+            error_message="This input is not a valid floating point value",
+            move_cursor_to_end=True,
+        )
+
+        int_validator = Validator.from_callable(
+            validate_int,
+            error_message="This input is not a valid integer value",
+            move_cursor_to_end=True,
+        )
+
         # We have to create the widgets here in the init, or it doesn't work
         # because of some weird scoping issue
         # See https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1324
-        self.value_widget1 = TextArea("Text VW", multiline=False)
-        self.value_widget2 = TextArea("Numeric VW", multiline=False)
-        self.value_dropdown = DropdownBox("Select value", entries=self.get_value_dropdown_entries)
+        # vw = value_widget
+        self.vw_text = CustomTextArea(
+            "Enter value here", multiline=False, validator=float_validator
+        )
+        self.vw_float = CustomTextArea(
+            "Enter value here", multiline=False, validator=float_validator
+        )
+        self.vw_int = CustomTextArea("Enter value here", multiline=False, validator=int_validator)
+        self.vw_dropdown = DropdownBox("Select value", entries=self.get_value_dropdown_entries)
 
     def get_widgets(self):
         vw = self.choose_value_widget()
@@ -58,13 +103,15 @@ class FilterWidgetEntry:
             col_info = self.filter_widget.column_data[self.dropdown_column.text]
             col_type = col_info["type"]
         except KeyError:
-            return self.value_widget1
+            return self.vw_text
         if col_type == "float":
-            return self.value_widget2
+            return self.vw_float
+        elif col_type == "int":
+            return self.vw_int
         elif col_type == "id":
-            return self.value_dropdown
+            return self.vw_dropdown
         else:
-            return self.value_widget1
+            return self.vw_text
 
     def get_operators(self):
         try:
