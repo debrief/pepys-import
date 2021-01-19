@@ -49,6 +49,13 @@ class ComboBox:
 
         self.width = width
         self.selected_entry = 0
+
+        # Give extra space for the Filter line if we're filtering
+        if self.filter:
+            height = len(entries) + 1
+        else:
+            height = len(entries)
+
         # The content is just a FormattedTextControl containing the text
         # of the control
         self.container = Window(
@@ -58,7 +65,7 @@ class ComboBox:
                 key_bindings=self._get_key_bindings(),
             ),
             style="class:select-box",
-            height=len(entries),
+            height=height,
             width=self.width,
             right_margins=[
                 ScrollbarMargin(display_arrows=True),
@@ -159,11 +166,16 @@ class DropdownBox:
         # but we want access to member variables)
         self.handler = functools.partial(self.handler, self)
 
-        # Work out the max length of any entry or the original text
+        widths_for_max_calc = [len(self.text)]
+
+        if filter:
+            widths_for_max_calc.append(len("Type to filter"))
+
         if not callable(self.entries) and len(self.entries) > 0:
-            max_len = max(max([len(entry) for entry in self.entries]), len(self.text))
-        else:
-            max_len = len(self.text)
+            widths_for_max_calc += [len(entry) for entry in self.entries]
+
+        # Work out the max length of any entry or the original text
+        max_len = max(widths_for_max_calc)
 
         self.width = max_len + 2
         self.control = FormattedTextControl(
