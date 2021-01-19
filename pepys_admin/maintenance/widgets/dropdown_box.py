@@ -24,7 +24,9 @@ class ComboBox:
     (a PR by the author of prompt toolkit) and modified.
     """
 
-    def __init__(self, entries, width=None, filter=False, filter_method="contains") -> None:
+    def __init__(
+        self, entries, width=None, filter=False, filter_method="contains", disable_tab=True
+    ) -> None:
         """
         Provides a selectable list containing the given entries.
 
@@ -34,6 +36,8 @@ class ComboBox:
         # Create an asyncio Future which will be used to return
         # the value when this object is created
         self.future = Future()
+
+        self.disable_tab = disable_tab
 
         self.filter_text = ""
         self.filtered_entries = []
@@ -124,6 +128,13 @@ class ComboBox:
         def close_float(event) -> None:
             self.future.set_result(self.filtered_entries[self.selected_entry])
 
+        if self.disable_tab:
+
+            @kb.add("tab")
+            @kb.add("s-tab")
+            def _(event):
+                return None
+
         @kb.add("<any>")
         def _(event):
             logger.debug(f"Pressed a key, and caught it {event}")
@@ -132,6 +143,10 @@ class ComboBox:
                 self.filter_text = self.filter_text[:-1]
             elif len(key_str) == 1:
                 self.filter_text += key_str
+
+        @kb.add("escape")
+        def _(event):
+            self.future.set_result(None)
 
         return kb
 
@@ -241,12 +256,13 @@ class DropdownBox:
             if float_ in app.layout.container.floats:
                 app.layout.container.floats.remove(float_)
 
-            # Update the display text to the option that was selected
-            self.text = result
+            if result is not None:
+                # Update the display text to the option that was selected
+                self.text = result
 
-            # Call the on_select_handler
-            if self.on_select_handler is not None:
-                self.on_select_handler()
+                # Call the on_select_handler
+                if self.on_select_handler is not None:
+                    self.on_select_handler()
 
         # Run the coroutine and wait to get the result
         ensure_future(coroutine())
