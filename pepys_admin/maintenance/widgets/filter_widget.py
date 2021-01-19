@@ -1,3 +1,4 @@
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.layout.containers import DynamicContainer, HorizontalAlign, HSplit, VSplit
 from prompt_toolkit.validation import Validator
 from prompt_toolkit.widgets.base import Button
@@ -44,6 +45,7 @@ class FilterWidget:
 
     def add_entry(self):
         self.entries.append(FilterWidgetEntry(self))
+        get_app().layout.focus(self.entries[-1].get_widgets().get_children()[0])
 
     def __pt_container__(self):
         return self.container
@@ -73,9 +75,7 @@ class FilterWidgetEntry:
         # because of some weird scoping issue
         # See https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1324
         # vw = value_widget
-        self.vw_text = CustomTextArea(
-            "Enter value here", multiline=False, validator=float_validator
-        )
+        self.vw_text = CustomTextArea("Enter value here", multiline=False)
         self.vw_float = CustomTextArea(
             "Enter value here", multiline=False, validator=float_validator
         )
@@ -109,8 +109,21 @@ class FilterWidgetEntry:
         elif col_type == "int":
             return self.vw_int
         elif col_type == "id":
-            return self.vw_dropdown
+            if col_info.get("values") is not None:
+                # We have a list of values, so give a dropdown
+                return self.vw_dropdown
+            else:
+                # We don't have values, so just use a text box
+                return self.vw_text
+        elif col_type == "string":
+            if col_info.get("values") is not None:
+                # We have a list of values, so give a dropdown
+                return self.vw_dropdown
+            else:
+                # We don't have values, so just use a text box
+                return self.vw_text
         else:
+            # If we don't have any idea what to do, just return a text box!
             return self.vw_text
 
     def get_operators(self):
