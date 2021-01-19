@@ -1647,3 +1647,68 @@ class DataStore:
             .filter(self.db_classes.Log.change_id == change_id)
             .all()
         )
+
+    def merge_platforms(self, platform_list, master_id) -> bool:
+        """Merges given platforms. Moves sensors from other platforms to the Target platform.
+        If sensor with same name is already present on Target platform, moves measurements
+        to that sensor. Also moves all comments from other platforms to the Target platform.
+
+        :param platform_list: A list of platform IDs
+        :type platform_list: List
+        :param master_id: Target platform's ID
+        :type master_id: Integer or UUID
+        :return: True if merging completed successfully, False otherwise.
+        :rtype: bool
+        """
+        Platform = self.db_classes.Platform
+        Sensor = self.db_classes.Sensor
+        Comment = self.db_classes.Comment
+        State = self.db_classes.State
+        Contact = self.db_classes.Contact
+
+        master_platform = (
+            self.session.query(Platform).filter(Platform.platform_id == master_id).scalar()
+        )
+        if not master_platform:
+            print(f"No platform found with the given master_id: '{master_id}'!")
+            return False
+        master_sensor_names = self.session.query(Sensor.name).filter(Sensor.host == master_id).all()
+        master_sensor_names = set([n for (n,) in master_sensor_names])
+
+        sensor_list = list()
+        for p_id in platform_list:
+            if p_id == master_id:  # We don't need to change these sensors and comments
+                continue
+            # Move all comments to the target
+            self.session.query(Comment).filter(Comment.platform_id == p_id).update(
+                {"platform_id": master_id}
+            )
+
+            sensors = self.session.query(Sensor).filter(Sensor.host == p_id).all()
+            sensor_list.extend(sensors)
+
+        for sensor in sensor_list:
+            if sensor.name not in master_sensor_names:
+                (
+                    self.session.query(Sensor)
+                    .filter(Sensor.sensor_id == sensor.sensor_id)
+                    .update({"host": master_id})
+                )
+                master_sensor_names.add(sensor.name)
+            else:  # Move measurements only
+                master_sensor_id = (
+                    self.session.query(Sensor.sensor_id)
+                    .filter(Sensor.host == master_id, Sensor.name == sensor.name)
+                    .scalar()
+                )
+                (  # Update States
+                    self.session.query(State)
+                    .filter(State.sensor_id == sensor.sensor_id)
+                    .update({"sensor_id": master_sensor_id})
+                )
+                (  # Update Contacts
+                    self.session.query(Contact)
+                    .filter(Contact.sensor_id == sensor.sensor_id)
+                    .update({"sensor_id": master_sensor_id})
+                )
+        return True
