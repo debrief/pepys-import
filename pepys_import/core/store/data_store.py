@@ -1656,7 +1656,7 @@ class DataStore:
         :param platform_list: A list of platform IDs
         :type platform_list: List
         :param master_id: Target platform's ID
-        :type master_id: Integer or UUID
+        :type master_id: UUID
         :return: True if merging completed successfully, False otherwise.
         :rtype: bool
         """
@@ -1711,4 +1711,5 @@ class DataStore:
                     .filter(Contact.sensor_id == sensor.sensor_id)
                     .update({"sensor_id": master_sensor_id})
                 )
+        self.session.flush()
         return True
