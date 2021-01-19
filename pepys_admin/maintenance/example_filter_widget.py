@@ -26,7 +26,7 @@ def create_prompt_toolkit_app():
 
     column_data = {
         "platform_id": {"type": "id", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
-        "name": {"type": "string"},
+        "name": {"type": "string", "values": ["HMS Name1", "HMS Floaty", "USS Sinky"]},
         "identifier": {"type": "string"},
         "nationality_id": {"type": "id"},
         "nationality_name": {"type": "string"},
@@ -46,8 +46,6 @@ def create_prompt_toolkit_app():
     # Styling.
     style = Style(
         [
-            ("left-pane", "bg:#888800 #000000"),
-            ("right-pane", "bg:#00aa00 #000000"),
             ("button", "#000000"),
             ("button-arrow", "#000000"),
             ("button.focused", "bg:#ff0000"),
@@ -56,6 +54,7 @@ def create_prompt_toolkit_app():
             ("text-area focused", "bg:#ff0000"),
             ("completion-menu.completion.current", "bg:#ff0000"),
             ("dropdown-highlight", "#ff0000"),
+            ("filter-text", "fg:#0000ff"),
         ]
     )
 
