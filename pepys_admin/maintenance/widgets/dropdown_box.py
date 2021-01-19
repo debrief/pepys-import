@@ -1,6 +1,7 @@
 import functools
 from asyncio import Future, ensure_future
 
+from loguru import logger
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.formatted_text.base import merge_formatted_text
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
@@ -23,7 +24,7 @@ class ComboBox:
     (a PR by the author of prompt toolkit) and modified.
     """
 
-    def __init__(self, entries, width=None) -> None:
+    def __init__(self, entries, width=None, filter=False, filter_method="contains") -> None:
         """
         Provides a selectable list containing the given entries.
 
@@ -33,6 +34,16 @@ class ComboBox:
         # Create an asyncio Future which will be used to return
         # the value when this object is created
         self.future = Future()
+
+        self.filter_text = ""
+        self.filtered_entries = []
+
+        self.filter = filter
+
+        if filter_method == "contains":
+            self.filter_match_fn = self.contains
+        else:
+            self.filter_match_fn = self.startswith
 
         self.entries = entries
 
@@ -54,10 +65,32 @@ class ComboBox:
             ],
         )
 
+    def startswith(self, string, prefix):
+        return string.upper().startswith(prefix.upper())
+
+    def contains(self, string, substring):
+        if substring.upper() in string.upper():
+            return True
+        else:
+            return False
+
     def _get_formatted_text(self):
+        self.filtered_entries = []
         result = []
 
-        for i, entry in enumerate(self.entries):
+        if self.filter:
+            for entry in self.entries:
+                if self.filter_match_fn(entry, self.filter_text):
+                    self.filtered_entries.append(entry)
+
+            if len(self.filter_text) != 0:
+                result.append([("class:filter-text", f"Filter: {self.filter_text}\n")])
+            else:
+                result.append([("class:filter-text", "Type to filter\n")])
+        else:
+            self.filtered_entries = self.entries
+
+        for i, entry in enumerate(self.filtered_entries):
             if i == self.selected_entry:
                 result.append([("[SetCursorPosition]", "")])
                 result.append([("class:dropdown-highlight", entry)])
@@ -72,17 +105,26 @@ class ComboBox:
 
         @kb.add("up")
         def _go_up(event) -> None:
-            if len(self.entries):
-                self.selected_entry = (self.selected_entry - 1) % len(self.entries)
+            if len(self.filtered_entries):
+                self.selected_entry = (self.selected_entry - 1) % len(self.filtered_entries)
 
         @kb.add("down")
         def _go_down(event) -> None:
-            if len(self.entries):
-                self.selected_entry = (self.selected_entry + 1) % len(self.entries)
+            if len(self.filtered_entries):
+                self.selected_entry = (self.selected_entry + 1) % len(self.filtered_entries)
 
         @kb.add("enter")
         def close_float(event) -> None:
-            self.future.set_result(self.entries[self.selected_entry])
+            self.future.set_result(self.filtered_entries[self.selected_entry])
+
+        @kb.add("<any>")
+        def _(event):
+            logger.debug(f"Pressed a key, and caught it {event}")
+            key_str = event.key_sequence[0].key
+            if key_str == "c-h":
+                self.filter_text = self.filter_text[:-1]
+            elif len(key_str) == 1:
+                self.filter_text += key_str
 
         return kb
 
@@ -106,10 +148,11 @@ class DropdownBox:
     all the methods, so it was easier to just copy it.
     """
 
-    def __init__(self, text, entries, on_select_handler=None) -> None:
+    def __init__(self, text, entries, on_select_handler=None, filter=True) -> None:
         self.text = text
         self.entries = entries
         self.on_select_handler = on_select_handler
+        self.filter = filter
 
         # Have to use partial to make this take a reference to self
         # (This could be avoided by making handler a classmethod,
@@ -160,7 +203,7 @@ class DropdownBox:
             app = get_app()
 
             # Create a ComboBox to display the dropdown list
-            menu = ComboBox(entries, self.width)
+            menu = ComboBox(entries, self.width, filter=self.filter)
 
             # Wrap this in a Float, so we can display it above the rest of the
             # display. The high Z index makes this appear on top of anything else
