@@ -320,3 +320,121 @@ class MergePlatformsTestCase(TestCase):
             assert self.store.merge_platforms([], uuid) is False
         output = temp_output.getvalue()
         assert f"No platform found with the given master_id: '{uuid}'" in output
+
+    def test_merge_platforms_with_platform_objects_given(self):
+        State = self.store.db_classes.State
+        Sensor = self.store.db_classes.Sensor
+        Comment = self.store.db_classes.Comment
+        with self.store.session_scope():
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+                change_id=self.change_id,
+            )
+            sensor = platform.get_sensor(
+                self.store, "gps", self.sensor_type, change_id=self.change_id
+            ).sensor_id
+
+            platform_2 = self.store.get_platform(
+                platform_name="Test Platform 2",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+                change_id=self.change_id,
+            )
+            platform_3 = self.store.get_platform(
+                platform_name="Test Platform 3",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+                change_id=self.change_id,
+            )
+            sensor_2 = platform_2.get_sensor(
+                self.store, "gps_2", self.sensor_type, change_id=self.change_id
+            )
+            self.file.create_state(
+                self.store,
+                platform_2,
+                sensor_2,
+                self.current_time,
+                parser_name=self.parser_name,
+            )
+            self.file.create_state(
+                self.store,
+                platform_2,
+                sensor_2,
+                self.current_time,
+                parser_name=self.parser_name,
+            )
+            self.file.create_contact(
+                self.store,
+                platform_2,
+                sensor_2,
+                self.current_time,
+                parser_name=self.parser_name,
+            )
+            self.file.create_contact(
+                self.store,
+                platform_2,
+                sensor_2,
+                self.current_time,
+                parser_name=self.parser_name,
+            )
+            self.file.create_comment(
+                self.store,
+                platform_3,
+                self.current_time,
+                "Comment from Platform-3",
+                self.comment_type,
+                parser_name=self.parser_name,
+            )
+            if self.file.validate():
+                self.file.commit(self.store, self.change_id)
+
+            # Assert that target platform doesn't have any states or contacts
+            sensors_before_merge = (
+                self.store.session.query(Sensor).filter(Sensor.host == platform.platform_id).all()
+            )
+            states_before_merge = (
+                self.store.session.query(State).filter(State.sensor_id == sensor).all()
+            )
+            contacts_before_merge = (
+                self.store.session.query(State).filter(State.sensor_id == sensor).all()
+            )
+            comments_before_merge = (
+                self.store.session.query(Comment)
+                .filter(Comment.platform_id == platform.platform_id)
+                .all()
+            )
+            assert len(sensors_before_merge) == 1
+            assert len(states_before_merge) == 0
+            assert len(contacts_before_merge) == 0
+            assert len(comments_before_merge) == 0
+
+            # Give platform objects
+            self.store.merge_platforms([platform_2, platform_3], platform)
+
+            # There should be two sensors now, and new sensor should have two States and two Contacts
+            sensors_after_merge = (
+                self.store.session.query(Sensor).filter(Sensor.host == platform.platform_id).all()
+            )
+            states_after_merge = (
+                self.store.session.query(State).filter(State.sensor_id == sensor_2.sensor_id).all()
+            )
+            contacts_after_merge = (
+                self.store.session.query(State).filter(State.sensor_id == sensor_2.sensor_id).all()
+            )
+            comments_after_merge = (
+                self.store.session.query(Comment)
+                .filter(Comment.platform_id == platform.platform_id)
+                .all()
+            )
+            assert len(sensors_after_merge) == 2
+            assert len(states_after_merge) == 2
+            assert len(contacts_after_merge) == 2
+            assert len(comments_after_merge) == 1
+
+            # Assert that sensor_2 moved to Platform
+            assert sensors_after_merge[1] == sensor_2

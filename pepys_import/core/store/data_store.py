@@ -1653,10 +1653,10 @@ class DataStore:
         If sensor with same name is already present on Target platform, moves measurements
         to that sensor. Also moves all comments from other platforms to the Target platform.
 
-        :param platform_list: A list of platform IDs
+        :param platform_list: A list of platform IDs or platform objects
         :type platform_list: List
-        :param master_id: Target platform's ID
-        :type master_id: UUID
+        :param master_id: Target platform's ID or objects itself
+        :type master_id: UUID or Platform
         :return: True if merging completed successfully, False otherwise.
         :rtype: bool
         """
@@ -1665,6 +1665,9 @@ class DataStore:
         Comment = self.db_classes.Comment
         State = self.db_classes.State
         Contact = self.db_classes.Contact
+
+        if isinstance(master_id, Platform):
+            master_id = master_id.platform_id
 
         master_platform = (
             self.session.query(Platform).filter(Platform.platform_id == master_id).scalar()
@@ -1676,6 +1679,9 @@ class DataStore:
         master_sensor_names = set([n for (n,) in master_sensor_names])
 
         sensor_list = list()
+        if isinstance(platform_list[0], Platform):  # Extract platform_ids from platform objects
+            platform_list = [p.platform_id for p in platform_list]
+
         for p_id in platform_list:
             if p_id == master_id:  # We don't need to change these sensors and comments
                 continue
