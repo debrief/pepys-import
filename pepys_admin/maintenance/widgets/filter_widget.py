@@ -2,28 +2,12 @@ from itertools import chain, zip_longest
 
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.layout.containers import DynamicContainer, HorizontalAlign, HSplit, VSplit
-from prompt_toolkit.validation import Validator
 from prompt_toolkit.widgets.base import Button
 from prompt_toolkit.widgets.toolbars import ValidationToolbar
 
 from pepys_admin.maintenance.widgets.custom_text_area import CustomTextArea
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
-
-
-def validate_float(s):
-    try:
-        _ = float(s)
-    except ValueError:
-        return False
-    return True
-
-
-def validate_int(s):
-    try:
-        _ = int(s)
-    except ValueError:
-        return False
-    return True
+from pepys_admin.maintenance.widgets.utils import float_validator, int_validator
 
 
 def interleave_lists(l1, l2):
@@ -38,13 +22,12 @@ class FilterWidget:
         self.button = Button("Add filter condition", self.add_entry)
 
         self.entries = [FilterWidgetEntry(self)]
-        self.boolean_operators = [self.new_boolean_operator_widget()]
+        self.boolean_operators = []
 
     def get_container_contents(self):
         entry_widgets = [e.get_widgets() for e in self.entries]
-        boolean_operator_widgets = self.boolean_operators
 
-        display_widgets = interleave_lists(entry_widgets, boolean_operator_widgets)
+        display_widgets = interleave_lists(entry_widgets, self.boolean_operators)
 
         return HSplit(
             [
@@ -59,10 +42,14 @@ class FilterWidget:
         self.entries.append(FilterWidgetEntry(self))
         self.boolean_operators.append(self.new_boolean_operator_widget())
         # Set the focus to the first widget in the most recently created entry
-        get_app().layout.focus(self.entries[-1].get_widgets().get_children()[0])
+        # This is what we USED to do when we were just adding condition entries
+        # rather than adding boolean conditions in between them
+        # get_app().layout.focus(self.entries[-1].get_widgets().get_children()[0])
+        # Now we set the focus to the newly added boolean operator dropdown
+        get_app().layout.focus(self.boolean_operators[-1])
 
     def new_boolean_operator_widget(self):
-        dropdown = DropdownBox(text="Operator", entries=["AND", "OR"])
+        dropdown = DropdownBox(text="AND", entries=["AND", "OR"], filter=False)
         return VSplit([dropdown], align=HorizontalAlign.LEFT)
 
     def __pt_container__(self):
@@ -76,18 +63,6 @@ class FilterWidgetEntry:
             text="Select column", entries=filter_widget.column_data.keys()
         )
         self.dropdown_operator = DropdownBox(text=" = ", entries=self.get_operators, filter=False)
-
-        float_validator = Validator.from_callable(
-            validate_float,
-            error_message="This input is not a valid floating point value",
-            move_cursor_to_end=True,
-        )
-
-        int_validator = Validator.from_callable(
-            validate_int,
-            error_message="This input is not a valid integer value",
-            move_cursor_to_end=True,
-        )
 
         # We have to create the widgets here in the init, or it doesn't work
         # because of some weird scoping issue
