@@ -1662,14 +1662,8 @@ class DataStore:
         """
         Platform = self.db_classes.Platform
         Sensor = self.db_classes.Sensor
-        Comment = self.db_classes.Comment
         State = self.db_classes.State
         Contact = self.db_classes.Contact
-        Participant = self.db_classes.Participant
-        LogsHolding = self.db_classes.LogsHolding
-        Geometry1 = self.db_classes.Geometry1
-        Media = self.db_classes.Media
-        tables_with_platform_id_fields = [Comment, Participant, LogsHolding, Geometry1, Media]
 
         if isinstance(master_id, Platform):
             master_id = master_id.platform_id
@@ -1691,7 +1685,7 @@ class DataStore:
             if p_id == master_id:  # We don't need to change these sensors and comments
                 continue
 
-            self.update_platform_ids(tables_with_platform_id_fields, p_id, master_id)
+            self.update_platform_ids(p_id, master_id)
 
             sensors = self.session.query(Sensor).filter(Sensor.host == p_id).all()
             sensor_list.extend(sensors)
@@ -1725,7 +1719,13 @@ class DataStore:
         self.session.flush()
         return True
 
-    def update_platform_ids(self, table_list, merge_platform_id, master_platform_id):
+    def update_platform_ids(self, merge_platform_id, master_platform_id):
+        Comment = self.db_classes.Comment
+        Participant = self.db_classes.Participant
+        LogsHolding = self.db_classes.LogsHolding
+        Geometry1 = self.db_classes.Geometry1
+        Media = self.db_classes.Media
+        tables_with_platform_id_fields = [Comment, Participant, LogsHolding, Geometry1, Media]
         possible_field_names = [
             "platform_id",
             "subject_id",
@@ -1733,7 +1733,7 @@ class DataStore:
             "subject_platform_id",
             "sensor_platform_id",
         ]
-        for table in table_list:
+        for table in tables_with_platform_id_fields:
             for field in possible_field_names:
                 try:
                     table_platform_id = getattr(table, field)
