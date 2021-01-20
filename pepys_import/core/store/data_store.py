@@ -5,7 +5,7 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, or_
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker, undefer
@@ -1665,6 +1665,11 @@ class DataStore:
         Comment = self.db_classes.Comment
         State = self.db_classes.State
         Contact = self.db_classes.Contact
+        Participant = self.db_classes.Participant
+        LogsHolding = self.db_classes.LogsHolding
+        Geometry1 = self.db_classes.Geometry1
+        Media = self.db_classes.Media
+        tables_with_platform_id_fields = [Comment, Participant, LogsHolding, Geometry1, Media]
 
         if isinstance(master_id, Platform):
             master_id = master_id.platform_id
@@ -1685,10 +1690,8 @@ class DataStore:
         for p_id in platform_list:
             if p_id == master_id:  # We don't need to change these sensors and comments
                 continue
-            # Move all comments to the target
-            self.session.query(Comment).filter(Comment.platform_id == p_id).update(
-                {"platform_id": master_id}
-            )
+
+            self.update_platform_ids(tables_with_platform_id_fields, p_id, master_id)
 
             sensors = self.session.query(Sensor).filter(Sensor.host == p_id).all()
             sensor_list.extend(sensors)
@@ -1714,8 +1717,28 @@ class DataStore:
                 )
                 (  # Update Contacts
                     self.session.query(Contact)
-                    .filter(Contact.sensor_id == sensor.sensor_id)
+                    .filter(
+                        or_(Contact.sensor_id == sensor.sensor_id, Contact.subject_id == master_id)
+                    )
                     .update({"sensor_id": master_sensor_id})
                 )
         self.session.flush()
         return True
+
+    def update_platform_ids(self, table_list, merge_platform_id, master_platform_id):
+        possible_field_names = [
+            "platform_id",
+            "subject_id",
+            "host_id",
+            "subject_platform_id",
+            "sensor_platform_id",
+        ]
+        for table in table_list:
+            for field in possible_field_names:
+                try:
+                    table_platform_id = getattr(table, field)
+                    self.session.query(table).filter(table_platform_id == merge_platform_id).update(
+                        {field: master_platform_id}
+                    )
+                except Exception:
+                    pass
