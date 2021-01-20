@@ -112,12 +112,16 @@ class CustomTextArea:
         preview_search: FilterOrBool = True,
         prompt: AnyFormattedText = "",
         input_processors: Optional[List[Processor]] = None,
+        on_cursor_at_end=None,
+        key_bindings=None,
     ) -> None:
 
         search_control = None
 
         if input_processors is None:
             input_processors = []
+
+        self.on_cursor_at_end = on_cursor_at_end
 
         # Writeable attributes.
         self.completer = completer
@@ -157,6 +161,7 @@ class CustomTextArea:
             preview_search=preview_search,
             focusable=focusable,
             focus_on_click=focus_on_click,
+            key_bindings=key_bindings,
         )
 
         if multiline:
@@ -190,8 +195,18 @@ class CustomTextArea:
 
     def on_text_changed(self, event):
         if self.text[1:] == self.initial_text:
+            # We've typed a character into the box that contained the placeholder
+            # so remove the placeholder and just put in the new character
             self.text = self.text[0]
             self.buffer._set_cursor_position(1)
+
+        if self.on_cursor_at_end is not None:
+            # If we've filled the text box, but it isn't filled with the initial placeholder text
+            if self.text != self.initial_text and len(self.text) == len(self.initial_text):
+                # Move the cursor to the final position in the box
+                self.buffer._set_cursor_position(len(self.text) - 1)
+                # Call the event handler function
+                self.on_cursor_at_end()
 
     @property
     def text(self) -> str:
