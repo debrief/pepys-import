@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from loguru import logger
 from prompt_toolkit.auto_suggest import AutoSuggest, DynamicAutoSuggest
 from prompt_toolkit.buffer import Buffer, BufferAcceptHandler
 from prompt_toolkit.completion import Completer, DynamicCompleter
@@ -114,6 +115,7 @@ class CustomTextArea:
         input_processors: Optional[List[Processor]] = None,
         on_cursor_at_end=None,
         key_bindings=None,
+        limit_length=False,
     ) -> None:
 
         search_control = None
@@ -132,6 +134,9 @@ class CustomTextArea:
         self.wrap_lines = wrap_lines
         self.validator = validator
 
+        self.limit_length = limit_length
+
+        # Keep track of the initial placeholder text
         self.initial_text = text
 
         self.buffer = Buffer(
@@ -198,15 +203,44 @@ class CustomTextArea:
             # We've typed a character into the box that contained the placeholder
             # so remove the placeholder and just put in the new character
             self.text = self.text[0]
+            logger.debug("Setting cursor position to 1")
             self.buffer._set_cursor_position(1)
 
+        if self.limit_length:
+            if len(self.text) > len(self.initial_text):
+                # logger.debug(f"At start: {self.text=}")
+                # orig_cursor_pos = self.buffer.cursor_position
+                logger.debug(f"At start: {self.buffer.cursor_position=}")
+                index = self.buffer.cursor_position - 1
+                # logger.debug(f"{index=}")
+                first_part = self.text[: index + 1]
+                second_part = self.text[index + 2 :]
+                # logger.debug(f"{first_part=}")
+                # logger.debug(f"{second_part=}")
+
+                if second_part == "" and len(first_part) > len(self.initial_text):
+                    self.text = first_part[:-1]
+                else:
+                    self.text = first_part + second_part
+                logger.debug(f"Setting {self.text=}")
+
+                new_cursor_pos = min(index + 1, len(self.initial_text) + 1)
+                logger.debug(f"Setting cursor position to {new_cursor_pos}")
+                self.buffer._set_cursor_position(new_cursor_pos)
+
+        self.process_cursor_at_end()
+
+    def process_cursor_at_end(self):
         if self.on_cursor_at_end is not None:
-            # If we've filled the text box, but it isn't filled with the initial placeholder text
             if self.text != self.initial_text and len(self.text) == len(self.initial_text):
-                # Move the cursor to the final position in the box
-                self.buffer._set_cursor_position(len(self.text) - 1)
-                # Call the event handler function
-                self.on_cursor_at_end()
+                index = self.buffer.cursor_position - 1
+                if index == len(self.initial_text) - 1:
+                    # Move the cursor to the final position in the box
+                    logger.debug(f"Setting cursor position to {len(self.text) - 1}")
+                    self.buffer._set_cursor_position(len(self.text) - 1)
+                    # Call the event handler function
+                    logger.debug("Calling on cursor at end")
+                    self.on_cursor_at_end()
 
     @property
     def text(self) -> str:
