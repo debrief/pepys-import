@@ -529,7 +529,7 @@ class UpdatePlatformIDsTestCase(TestCase):
                 )
                 .all()
             )
-            assert len(media_before_update) == 2
+            assert len(media_before_update) == 0
 
             self.store.update_platform_ids(self.platform_2.platform_id, self.platform.platform_id)
 
