@@ -82,6 +82,17 @@ class MaskedInputWidget:
             # Can't use the standard focus_previous function as we need our custom logic
             self.go_to_prev_field(coming_from="right")
 
+        @kb.add("backspace")
+        def _(event):
+            if event.current_buffer.cursor_position == 0:
+                # If we're at the start of a field, then go to the previous field and delete
+                # the final character
+                self.go_to_prev_field(coming_from="right")
+                event.current_buffer.text = event.current_buffer.text[:-1]
+            else:
+                # Otherwise do the standard backspace
+                _ = event.current_buffer.delete_before_cursor(count=event.arg)
+
         @kb.add("right")
         def _(event):
             # Override the default handler for the right arrow key that comes with the Buffer,
