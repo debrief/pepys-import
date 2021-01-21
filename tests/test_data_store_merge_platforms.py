@@ -490,12 +490,66 @@ class UpdatePlatformIDsTestCase(TestCase):
             self.store.session.expunge(self.platform)
             self.store.session.expunge(self.platform_2)
 
-    def test_update_platform_ids(self):
+    def test_update_media_platforms(self):
+        Media = self.store.db_classes.Media
+        with self.store.session_scope():
+            media_type = self.store.db_classes.MediaType(name="Test Media")
+            self.store.session.add(media_type)
+            self.store.session.flush()
+            media = Media(
+                platform_id=self.platform_2.platform_id,
+                media_type_id=media_type.media_type_id,
+                url="http://123456789",
+                source_id=self.file.datafile_id,
+                _location=WKTElement("POINT(123456 123456)", srid=4326),
+                _elevation=1.0,
+                sensor_id=self.sensor,
+            )
+            media_2 = Media(
+                subject_id=self.platform_2.platform_id,
+                media_type_id=media_type.media_type_id,
+                url="http://123",
+                source_id=self.file.datafile_id,
+                _location=WKTElement("POINT(123456 123456)", srid=4326),
+                _elevation=1.0,
+                sensor_id=self.sensor,
+            )
+            self.store.session.add(media)
+            self.store.session.flush()
+            self.store.session.add(media_2)
+            self.store.session.flush()
+
+            media_before_update = (
+                self.store.session.query(Media)
+                .filter(
+                    or_(
+                        Media.platform_id == self.platform.platform_id,
+                        Media.subject_id == self.platform.platform_id,
+                    )
+                )
+                .all()
+            )
+            assert len(media_before_update) == 2
+
+            self.store.update_platform_ids(self.platform_2.platform_id, self.platform.platform_id)
+
+            media_after_update = (
+                self.store.session.query(Media)
+                .filter(
+                    or_(
+                        Media.platform_id == self.platform.platform_id,
+                        Media.subject_id == self.platform.platform_id,
+                    )
+                )
+                .all()
+            )
+            assert len(media_after_update) == 2
+
+    def test_update_platform_ids_except_media(self):
         Comment = self.store.db_classes.Comment
         Participant = self.store.db_classes.Participant
         LogsHolding = self.store.db_classes.LogsHolding
         Geometry1 = self.store.db_classes.Geometry1
-        Media = self.store.db_classes.Media
 
         # Create one object in each table using Platform 2
         with self.store.session_scope():
@@ -518,14 +572,12 @@ class UpdatePlatformIDsTestCase(TestCase):
             commodity = self.store.db_classes.CommodityType(name="Test Commodity")
             unit_type = self.store.db_classes.UnitType(name="Test Unit")
             geo_type = self.store.db_classes.GeometryType(name="Test GeoType")
-            media_type = self.store.db_classes.MediaType(name="Test Media")
             self.store.session.add_all(
                 [
                     task,
                     commodity,
                     unit_type,
                     geo_type,
-                    media_type,
                 ]
             )
             self.store.session.flush()
@@ -563,118 +615,76 @@ class UpdatePlatformIDsTestCase(TestCase):
                 geo_sub_type_id=geo_sub_type.geo_sub_type_id,
                 source_id=self.file.datafile_id,
             )
-            media = Media(
-                platform_id=self.platform_2.platform_id,
-                media_type_id=media_type.media_type_id,
-                url="http://123456789",
-                source_id=self.file.datafile_id,
-                _location=WKTElement("POINT(123456 123456)", srid=4326),
-                _elevation=1.0,
-                sensor_id=self.sensor,
-            )
-            media_2 = Media(
-                subject_id=self.platform_2.platform_id,
-                media_type_id=media_type.media_type_id,
-                url="http://123",
-                source_id=self.file.datafile_id,
-                _location=WKTElement("POINT(123456 123456)", srid=4326),
-                _elevation=1.0,
-                sensor_id=self.sensor,
-            )
             self.store.session.add_all(
                 [
                     participant,
                     logs_holding,
                     geometry,
                     geometry_2,
-                    media,
-                    media_2,
                 ]
             )
             self.store.session.flush()
 
-        comments_before_update = (
-            self.store.session.query(Comment)
-            .filter(Comment.platform_id == self.platform.platform_id)
-            .all()
-        )
-        participants_before_update = (
-            self.store.session.query(Participant)
-            .filter(Participant.platform_id == self.platform.platform_id)
-            .all()
-        )
-        logs_holdings_before_update = (
-            self.store.session.query(LogsHolding)
-            .filter(LogsHolding.platform_id == self.platform.platform_id)
-            .all()
-        )
-        geometry_before_update = (
-            self.store.session.query(Geometry1)
-            .filter(
-                or_(
-                    Geometry1.subject_platform_id == self.platform.platform_id,
-                    Geometry1.sensor_platform_id == self.platform.platform_id,
-                )
+            comments_before_update = (
+                self.store.session.query(Comment)
+                .filter(Comment.platform_id == self.platform.platform_id)
+                .all()
             )
-            .all()
-        )
-        media_before_update = (
-            self.store.session.query(Media)
-            .filter(
-                or_(
-                    Media.platform_id == self.platform.platform_id,
-                    Media.subject_id == self.platform.platform_id,
-                )
+            participants_before_update = (
+                self.store.session.query(Participant)
+                .filter(Participant.platform_id == self.platform.platform_id)
+                .all()
             )
-            .all()
-        )
-        assert len(comments_before_update) == 0
-        assert len(participants_before_update) == 0
-        assert len(logs_holdings_before_update) == 0
-        assert len(geometry_before_update) == 0
-        assert len(media_before_update) == 0
+            logs_holdings_before_update = (
+                self.store.session.query(LogsHolding)
+                .filter(LogsHolding.platform_id == self.platform.platform_id)
+                .all()
+            )
+            geometry_before_update = (
+                self.store.session.query(Geometry1)
+                .filter(
+                    or_(
+                        Geometry1.subject_platform_id == self.platform.platform_id,
+                        Geometry1.sensor_platform_id == self.platform.platform_id,
+                    )
+                )
+                .all()
+            )
+            assert len(comments_before_update) == 0
+            assert len(participants_before_update) == 0
+            assert len(logs_holdings_before_update) == 0
+            assert len(geometry_before_update) == 0
 
         # Update platform of objects
         with self.store.session_scope():
             self.store.update_platform_ids(self.platform_2.platform_id, self.platform.platform_id)
 
-        comments_after_update = (
-            self.store.session.query(Comment)
-            .filter(Comment.platform_id == self.platform.platform_id)
-            .all()
-        )
-        participants_after_update = (
-            self.store.session.query(Participant)
-            .filter(Participant.platform_id == self.platform.platform_id)
-            .all()
-        )
-        logs_holdings_after_update = (
-            self.store.session.query(LogsHolding)
-            .filter(LogsHolding.platform_id == self.platform.platform_id)
-            .all()
-        )
-        geometry_after_update = (
-            self.store.session.query(Geometry1)
-            .filter(
-                or_(
-                    Geometry1.subject_platform_id == self.platform.platform_id,
-                    Geometry1.sensor_platform_id == self.platform.platform_id,
-                )
+            comments_after_update = (
+                self.store.session.query(Comment)
+                .filter(Comment.platform_id == self.platform.platform_id)
+                .all()
             )
-            .all()
-        )
-        media_after_update = (
-            self.store.session.query(Media)
-            .filter(
-                or_(
-                    Media.platform_id == self.platform.platform_id,
-                    Media.subject_id == self.platform.platform_id,
-                )
+            participants_after_update = (
+                self.store.session.query(Participant)
+                .filter(Participant.platform_id == self.platform.platform_id)
+                .all()
             )
-            .all()
-        )
-        assert len(comments_after_update) == 1
-        assert len(participants_after_update) == 1
-        assert len(logs_holdings_after_update) == 1
-        assert len(geometry_after_update) == 2
-        assert len(media_after_update) == 2
+            logs_holdings_after_update = (
+                self.store.session.query(LogsHolding)
+                .filter(LogsHolding.platform_id == self.platform.platform_id)
+                .all()
+            )
+            geometry_after_update = (
+                self.store.session.query(Geometry1)
+                .filter(
+                    or_(
+                        Geometry1.subject_platform_id == self.platform.platform_id,
+                        Geometry1.sensor_platform_id == self.platform.platform_id,
+                    )
+                )
+                .all()
+            )
+            assert len(comments_after_update) == 1
+            assert len(participants_after_update) == 1
+            assert len(logs_holdings_after_update) == 1
+            assert len(geometry_after_update) == 2

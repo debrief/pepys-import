@@ -1742,3 +1742,4 @@ class DataStore:
                     )
                 except Exception:
                     pass
+        self.session.flush()
