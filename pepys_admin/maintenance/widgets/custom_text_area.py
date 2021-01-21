@@ -26,6 +26,19 @@ from prompt_toolkit.validation import DynamicValidator, Validator
 
 class CustomTextArea:
     """
+    This is mostly copied from the TextArea class that comes with prompt toolkit,
+    but has some extra functionality. The original docstring is at the bottom, after
+    we list the new parameters:
+
+    New parameters
+    :param on_cursor_at_end: A function to be called when the cursor is detected to be
+        at the end of the control
+    :param key_bindings: A KeyBindings object giving a  set of custom keybindings to be
+        applied to the control
+    :param limit_length: A Boolean specifying whether to limit the length of the field to the
+        length of the initial text
+
+
     A simple input field.
 
     This is a higher level abstraction on top of several other classes with
@@ -134,6 +147,7 @@ class CustomTextArea:
         self.wrap_lines = wrap_lines
         self.validator = validator
 
+        # Keep track of whether we're limiting the length or not
         self.limit_length = limit_length
 
         # Keep track of the initial placeholder text
@@ -150,7 +164,7 @@ class CustomTextArea:
             auto_suggest=DynamicAutoSuggest(lambda: self.auto_suggest),
             accept_handler=accept_handler,
             history=history,
-            on_text_changed=self.on_text_changed,
+            on_text_changed=self.on_text_changed,  # Added handler
         )
 
         self.control = BufferControl(
@@ -166,7 +180,7 @@ class CustomTextArea:
             preview_search=preview_search,
             focusable=focusable,
             focus_on_click=focus_on_click,
-            key_bindings=key_bindings,
+            key_bindings=key_bindings,  # Pass over the new keybindings
         )
 
         if multiline:
@@ -208,22 +222,34 @@ class CustomTextArea:
 
         if self.limit_length:
             if len(self.text) > len(self.initial_text):
-                # logger.debug(f"At start: {self.text=}")
-                # orig_cursor_pos = self.buffer.cursor_position
+                # If we're limiting the length, and we're currently over the maximum length
                 logger.debug(f"At start: {self.buffer.cursor_position=}")
                 index = self.buffer.cursor_position - 1
-                # logger.debug(f"{index=}")
+                # We use the character before the current cursor_position to tell us
+                # what character we just entered, as we want that character to replace
+                # the next character.
+                # This is, if the text was: abcd
+                # and we added the capital E here: abEcd
+                # we would want the result to be: abEd
+                # (that is, the E overwrites the next character)
+                # So, we split the text into the bits before/after the new character
                 first_part = self.text[: index + 1]
                 second_part = self.text[index + 2 :]
-                # logger.debug(f"{first_part=}")
-                # logger.debug(f"{second_part=}")
 
                 if second_part == "" and len(first_part) > len(self.initial_text):
+                    # If the second part is empty and the first part is too long then we
+                    # added something at the end, and we want to just take the first part
+                    # excluding the final character
                     self.text = first_part[:-1]
                 else:
+                    # Otherwise combine the two parts (which misses out the character that was
+                    # between them)
                     self.text = first_part + second_part
                 logger.debug(f"Setting {self.text=}")
 
+                # Set a new cursor position (as it gets reset to 0 when self.text is set)
+                # We want to go to index + 1 (ie. the next position), but we mustn't go over
+                # the length of the text + 1
                 new_cursor_pos = min(index + 1, len(self.initial_text) + 1)
                 logger.debug(f"Setting cursor position to {new_cursor_pos}")
                 self.buffer._set_cursor_position(new_cursor_pos)
@@ -232,7 +258,10 @@ class CustomTextArea:
 
     def process_cursor_at_end(self):
         if self.on_cursor_at_end is not None:
+            # If we've got an event handler to call
             if self.text != self.initial_text and len(self.text) == len(self.initial_text):
+                # If the text isn't the placeholder text, but it's the full length of the field
+                # then get the index of the character we entered
                 index = self.buffer.cursor_position - 1
                 if index == len(self.initial_text) - 1:
                     # Move the cursor to the final position in the box
