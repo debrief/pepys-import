@@ -74,13 +74,22 @@ class MaskedInputWidget:
 
         @kb.add("tab")
         def _(event):
+            app = get_app()
             # Can't use the standard focus_next function as we need our custom logic
-            self.go_to_next_field(coming_from="left")
+            if app.layout.current_window == self.controls[-1].window:
+                # In the last field, so just do normal tabbing
+                app.layout.focus_next()
+            else:
+                self.go_to_next_field(coming_from="left")
 
         @kb.add("s-tab")
         def _(event):
-            # Can't use the standard focus_previous function as we need our custom logic
-            self.go_to_prev_field(coming_from="right")
+            app = get_app()
+            if app.layout.current_window == self.controls[0].window:
+                app.layout.focus_previous()
+            else:
+                # Can't use the standard focus_previous function as we need our custom logic
+                self.go_to_prev_field(coming_from="right")
 
         @kb.add("backspace")
         def _(event):
