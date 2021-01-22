@@ -7,7 +7,8 @@ from prompt_toolkit.widgets.toolbars import ValidationToolbar
 
 from pepys_admin.maintenance.widgets.custom_text_area import CustomTextArea
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
-from pepys_admin.maintenance.widgets.utils import float_validator, int_validator
+from pepys_admin.maintenance.widgets.masked_input_widget import MaskedInputWidget
+from pepys_admin.maintenance.widgets.utils import datetime_validator, float_validator, int_validator
 
 
 def interleave_lists(l1, l2):
@@ -27,7 +28,9 @@ class FilterWidget:
     def get_container_contents(self):
         entry_widgets = [e.get_widgets() for e in self.entries]
 
-        display_widgets = interleave_lists(entry_widgets, self.boolean_operators)
+        boolean_widgets = [b.get_widgets() for b in self.boolean_operators]
+
+        display_widgets = interleave_lists(entry_widgets, boolean_widgets)
 
         return HSplit(
             [
@@ -40,20 +43,38 @@ class FilterWidget:
 
     def add_entry(self):
         self.entries.append(FilterWidgetEntry(self))
-        self.boolean_operators.append(self.new_boolean_operator_widget())
+        self.boolean_operators.append(BooleanOperatorEntry())
         # Set the focus to the first widget in the most recently created entry
         # This is what we USED to do when we were just adding condition entries
         # rather than adding boolean conditions in between them
         # get_app().layout.focus(self.entries[-1].get_widgets().get_children()[0])
         # Now we set the focus to the newly added boolean operator dropdown
-        get_app().layout.focus(self.boolean_operators[-1])
+        get_app().layout.focus(self.boolean_operators[-1].get_widgets())
 
-    def new_boolean_operator_widget(self):
-        dropdown = DropdownBox(text="AND", entries=["AND", "OR"], filter=False)
-        return VSplit([dropdown], align=HorizontalAlign.LEFT)
+    @property
+    def filters(self):
+        entries_and_booleans = interleave_lists(self.entries, self.boolean_operators)
+
+        filter_output = []
+
+        for entry_or_boolean in entries_and_booleans:
+            filter_output.append(entry_or_boolean.get_string_values())
+
+        return filter_output
 
     def __pt_container__(self):
         return self.container
+
+
+class BooleanOperatorEntry:
+    def __init__(self):
+        self.dropdown = DropdownBox(text="AND", entries=["AND", "OR"], filter=False)
+
+    def get_widgets(self):
+        return VSplit([self.dropdown], align=HorizontalAlign.LEFT)
+
+    def get_string_values(self):
+        return [self.dropdown.text]
 
 
 class FilterWidgetEntry:
@@ -77,6 +98,11 @@ class FilterWidgetEntry:
         )
         self.vw_int = CustomTextArea("Enter value here", multiline=False, validator=int_validator)
         self.vw_dropdown = DropdownBox("Select value", entries=self.get_value_dropdown_entries)
+        self.vw_datetime = MaskedInputWidget(
+            ["yyyy", "!-", "mm", "!-", "dd", "! ", "HH", "!:", "MM", "!:", "SS"],
+            overall_validator=datetime_validator,
+            part_validator=int_validator,
+        )
 
     def get_widgets(self):
         vw = self.choose_value_widget()
@@ -85,6 +111,10 @@ class FilterWidgetEntry:
             align=HorizontalAlign.LEFT,
             padding=2,
         )
+
+    def get_string_values(self):
+        vw = self.choose_value_widget()
+        return [self.dropdown_column.text.strip(), self.dropdown_operator.text.strip(), vw.text]
 
     def get_value_dropdown_entries(self):
         try:
@@ -130,6 +160,8 @@ class FilterWidgetEntry:
             else:
                 # We don't have values, so just use a text box
                 return self.vw_text
+        elif col_type == "datetime":
+            return self.vw_datetime
         else:
             # If we don't have any idea what to do, just return a text box!
             return self.vw_text
