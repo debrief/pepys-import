@@ -15,7 +15,7 @@ from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 logger.remove()
 logger.add("gui.log")
 
-column_data = {
+platform_column_data = {
     "platform_id": {"type": "id", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
     "name": {"type": "string", "values": ["HMS Name1", "HMS Floaty", "USS Sinky"]},
     "identifier": {"type": "string"},
@@ -24,6 +24,15 @@ column_data = {
     "timestamp": {"type": "datetime"},
     "speed": {"type": "float"},
 }
+
+sensor_column_data = {
+    "sensor_id": {"type": "id"},
+    "name": {"type": "string"},
+    "sensor_type": {"type": "string", "values": ["GPS", "Sonar", "Inertial"]},
+    "host": {"type": "string"},
+}
+
+column_data = {"Platform": platform_column_data, "Sensor": sensor_column_data}
 
 
 class MaintenanceGUI:
@@ -54,6 +63,7 @@ class MaintenanceGUI:
                 "CommentType",
                 "Nationality",
             ],
+            on_select_handler=self.on_table_select,
         )
         self.data_type_container = HSplit(
             children=[
@@ -67,6 +77,8 @@ class MaintenanceGUI:
             height=Dimension(weight=0.05),
         )
 
+        self.filter_widget = FilterWidget()
+
         self.filter_container = HSplit(
             [
                 Label(
@@ -77,7 +89,7 @@ class MaintenanceGUI:
                     text="Press TAB to go to next dropdown or line\nPress Shift + TAB to go to the previous dropdown or line",
                     style="fg:ansiblue",
                 ),
-                FilterWidget(column_data),
+                self.filter_widget,
             ],
             padding=1,
             height=Dimension(weight=0.5),
@@ -128,6 +140,9 @@ class MaintenanceGUI:
             style=self.get_style(),
         )
 
+    def on_table_select(self, value):
+        self.filter_widget.set_column_data(column_data[value])
+
     def run_action(self, selected_value):
         logger.debug(f"Running action {selected_value}")
 
@@ -140,12 +155,12 @@ class MaintenanceGUI:
             print("exiting")
             event.app.exit()
 
-        @kb.add("c-a")
-        def _(event):
-            self.add_filter_entry()
-
         kb.add("tab")(focus_next)
         kb.add("s-tab")(focus_previous)
+
+        @kb.add("c-a")
+        def _(event):
+            self.filter_widget.set_column_data({})
 
         @kb.add("f6")
         def _(event):
