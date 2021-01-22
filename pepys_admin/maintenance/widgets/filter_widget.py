@@ -16,11 +16,23 @@ def interleave_lists(l1, l2):
 
 
 class FilterWidget:
-    def __init__(self, column_data):
+    def __init__(self, column_data=None):
         self.column_data = column_data
+
+        if self.column_data is None:
+            self.column_data = {}
 
         self.container = DynamicContainer(self.get_container_contents)
         self.button = Button("Add filter condition", self.add_entry)
+
+        self.entries = [FilterWidgetEntry(self)]
+        self.boolean_operators = []
+
+    def set_column_data(self, column_data):
+        self.column_data = column_data
+
+        if self.column_data is None:
+            self.column_data = {}
 
         self.entries = [FilterWidgetEntry(self)]
         self.boolean_operators = []
