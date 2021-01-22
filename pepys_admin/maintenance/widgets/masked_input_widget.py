@@ -11,7 +11,7 @@ from pepys_admin.maintenance.widgets.custom_text_area import CustomTextArea
 
 
 class MaskedInputWidget:
-    def __init__(self, format_list, overall_validator=None, part_validator=None):
+    def __init__(self, format_list, overall_validator=None, part_validator=None, on_change=None):
         """Displays a masked text control using the format given in format_list.
 
         format_list should be a list of strings. Strings starting with ! will be
@@ -25,17 +25,20 @@ class MaskedInputWidget:
 
         The text property will then return something like "2020-01-02"
         """
-
+        self.on_change = on_change
         self.overall_validator = overall_validator
         self.start_validating = False
         self.buffer_to_max_len = {}
 
         self.controls = []
 
+        initial_text_list = []
+
         for entry in format_list:
             if entry.startswith("!"):
                 # This is an entry containing static text to be displayed
                 self.controls.append(Label(entry[1:], width=len(entry[1:])))
+                initial_text_list.append(entry[1:])
             else:
                 # This is an entry with placeholder text that can be edited
                 text_area = CustomTextArea(
@@ -46,13 +49,16 @@ class MaskedInputWidget:
                     validator=part_validator,
                     key_bindings=self.get_keybindings(),
                     limit_length=True,
+                    on_change=self.on_change,
                 )
                 self.controls.append(text_area)
                 # Keep track of the max length of this text area, so we can
                 # find it when we look at the current_buffer later
                 self.buffer_to_max_len[text_area.buffer] = len(text_area.initial_text)
+                initial_text_list.append(entry)
 
         self.container = VSplit(self.controls, align=HorizontalAlign.LEFT)
+        self.initial_text = "".join(initial_text_list)
 
     def focus_next_field(self):
         app = get_app()
