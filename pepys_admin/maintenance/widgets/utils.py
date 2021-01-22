@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from prompt_toolkit.validation import Validator
 
 
@@ -17,6 +19,14 @@ def validate_int(s):
     return True
 
 
+def validate_datetime(s):
+    try:
+        datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return False
+    return True
+
+
 float_validator = Validator.from_callable(
     validate_float,
     error_message="This input is not a valid floating point value",
@@ -26,5 +36,11 @@ float_validator = Validator.from_callable(
 int_validator = Validator.from_callable(
     validate_int,
     error_message="This input is not a valid integer value",
+    move_cursor_to_end=True,
+)
+
+datetime_validator = Validator.from_callable(
+    validate_datetime,
+    error_message="This input is not a valid datetime value",
     move_cursor_to_end=True,
 )
