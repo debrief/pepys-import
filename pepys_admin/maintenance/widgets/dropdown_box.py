@@ -25,7 +25,13 @@ class ComboBox:
     """
 
     def __init__(
-        self, entries, width=None, filter=False, filter_method="contains", disable_tab=True
+        self,
+        entries,
+        width=None,
+        filter=False,
+        filter_method="contains",
+        popup=False,
+        enter_handler=None,
     ) -> None:
         """
         Provides a selectable list containing the given entries.
@@ -37,10 +43,12 @@ class ComboBox:
         # the value when this object is created
         self.future = Future()
 
-        self.disable_tab = disable_tab
+        self.popup = popup
 
         self.filter_text = ""
         self.filtered_entries = []
+
+        self.enter_handler = enter_handler
 
         self.filter = filter
 
@@ -124,16 +132,28 @@ class ComboBox:
             if len(self.filtered_entries):
                 self.selected_entry = (self.selected_entry + 1) % len(self.filtered_entries)
 
-        @kb.add("enter")
-        def close_float(event) -> None:
-            self.future.set_result(self.filtered_entries[self.selected_entry])
-
-        if self.disable_tab:
+        if self.popup:
 
             @kb.add("tab")
             @kb.add("s-tab")
             def _(event):
                 return None
+
+            @kb.add("escape")
+            def _(event):
+                self.future.set_result(None)
+
+            @kb.add("enter")
+            def close_float(event) -> None:
+                self.future.set_result(self.filtered_entries[self.selected_entry])
+
+        else:
+
+            @kb.add("enter")
+            def set_result(event) -> None:
+                self.value = self.filtered_entries[self.selected_entry]
+                if self.enter_handler:
+                    self.enter_handler(self.value)
 
         @kb.add("<any>")
         def _(event):
@@ -143,10 +163,6 @@ class ComboBox:
                 self.filter_text = self.filter_text[:-1]
             elif len(key_str) == 1:
                 self.filter_text += key_str
-
-        @kb.add("escape")
-        def _(event):
-            self.future.set_result(None)
 
         return kb
 
@@ -230,7 +246,7 @@ class DropdownBox:
             app = get_app()
 
             # Create a ComboBox to display the dropdown list
-            menu = ComboBox(entries, self.width, filter=self.filter)
+            menu = ComboBox(entries, self.width, filter=self.filter, popup=True)
 
             # Wrap this in a Float, so we can display it above the rest of the
             # display. The high Z index makes this appear on top of anything else
