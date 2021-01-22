@@ -3,30 +3,31 @@ from prompt_toolkit import Application
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
-from prompt_toolkit.layout.containers import (
-    DynamicContainer,
-    FloatContainer,
-    HorizontalAlign,
-    HSplit,
-    VSplit,
-    Window,
-)
+from prompt_toolkit.layout.containers import FloatContainer, HorizontalAlign, HSplit, VSplit, Window
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
-from prompt_toolkit.widgets.base import Button, Label, TextArea
+from prompt_toolkit.widgets.base import Label
 
 from pepys_admin.maintenance.widgets.dropdown_box import ComboBox, DropdownBox
+from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 
 logger.remove()
 logger.add("gui.log")
 
-ta = TextArea("blah")
+column_data = {
+    "platform_id": {"type": "id", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
+    "name": {"type": "string", "values": ["HMS Name1", "HMS Floaty", "USS Sinky"]},
+    "identifier": {"type": "string"},
+    "nationality_id": {"type": "id"},
+    "nationality_name": {"type": "string"},
+    "timestamp": {"type": "datetime"},
+    "speed": {"type": "float"},
+}
 
 
 class MaintenanceGUI:
     def __init__(self):
-        self.filter_entries = [FilterEntry(self), FilterEntry(self)]
         self.preview_buffer = Buffer()
         self.preview_container = HSplit(
             children=[
@@ -66,7 +67,21 @@ class MaintenanceGUI:
             height=Dimension(weight=0.05),
         )
 
-        self.filter_container = DynamicContainer(self.get_filter_container)
+        self.filter_container = HSplit(
+            [
+                Label(
+                    text="Apply filters   F3 | Filter Query  F4 | Complete query  F5",
+                    style="class:title-line",
+                ),
+                Label(
+                    text="Press TAB to go to next dropdown or line\nPress Shift + TAB to go to the previous dropdown or line",
+                    style="fg:ansiblue",
+                ),
+                FilterWidget(column_data),
+            ],
+            padding=1,
+            height=Dimension(weight=0.5),
+        )
 
         self.actions_container = HSplit(
             [
@@ -75,7 +90,8 @@ class MaintenanceGUI:
                     style="class:title-line",
                 ),
                 ComboBox(
-                    entries=["1 Action here", "2 Another action here", "3 A third action here"]
+                    entries=["1 Action here", "2 Another action here", "3 A third action here"],
+                    enter_handler=self.run_action,
                 ),
             ],
             padding=1,
@@ -112,10 +128,14 @@ class MaintenanceGUI:
             style=self.get_style(),
         )
 
+    def run_action(self, selected_value):
+        logger.debug(f"Running action {selected_value}")
+
     def get_keybindings(self):
         kb = KeyBindings()
 
         @kb.add("c-q")
+        @kb.add("escape")
         def _(event):
             print("exiting")
             event.app.exit()
@@ -127,6 +147,10 @@ class MaintenanceGUI:
         kb.add("tab")(focus_next)
         kb.add("s-tab")(focus_previous)
 
+        @kb.add("f6")
+        def _(event):
+            event.app.layout.focus(self.actions_container)
+
         return kb
 
     def get_style(self):
@@ -135,9 +159,9 @@ class MaintenanceGUI:
                 ("title-line", "bg:ansigray fg:white"),
                 ("button", "#000000"),
                 ("button-arrow", "#000000"),
-                ("button.focused", "fg:#ff0000"),
-                ("dropdown", "bg:ansigreen"),
-                ("dropdown.focused", "bg:ansired"),
+                ("button.focused", "bg:#ff0000"),
+                ("dropdown", "bg:#ffff00"),
+                ("dropdown.focused", "bg:#ff0000"),
                 # ("select-box", "bg:ansiblue"),
                 ("text-area focused", "bg:#ff0000"),
                 ("dropdown-highlight", "#ff0000"),
@@ -153,53 +177,6 @@ class MaintenanceGUI:
             return ["sensor_id", "name", "sensor_type", "host", "etc"]
         else:
             return []
-
-    def get_filter_container(self):
-        filter_entry_widgets = [entry.get_widgets() for entry in self.filter_entries]
-        labels = [
-            Label(
-                text="Apply filters   F3 | Filter Query  F4 | Complete query  F5",
-                style="class:title-line",
-            ),
-            Label(
-                text="Press TAB to go to next dropdown or line\nPress Shift + TAB to go to the previous dropdown or line",
-                style="fg:ansiblue",
-            ),
-        ]
-        self.button = Button(text="Add new entry", handler=lambda: logger.debug("Clicked!!"))
-        self.h_split_contents = labels + filter_entry_widgets + [ta]
-        # self.h_split_contents = [ta]
-        result = HSplit(
-            self.h_split_contents,
-            padding=1,
-            height=Dimension(weight=0.5),
-        )
-
-        return result
-
-    def add_filter_entry(self):
-        self.filter_entries.append(FilterEntry(self))
-
-
-class FilterEntry:
-    def __init__(self, gui):
-        self.gui = gui
-        self.dropdown_column = DropdownBox(text="Select column", entries=self.gui.get_columns)
-        self.dropdown_operator = DropdownBox(
-            text=" = ", entries=["=", "!=", ">", "<"], filter=False
-        )
-        self.value_widget = ta
-
-    def get_widgets(self):
-        if self.dropdown_column.text == "identifier":
-            self.value_widget.text = "Enter identifier"
-        else:
-            self.value_widget.text = "Enter something else"
-        return VSplit(
-            [self.dropdown_column, self.dropdown_operator, self.value_widget],
-            align=HorizontalAlign.LEFT,
-            padding=2,
-        )
 
 
 gui = MaintenanceGUI()
