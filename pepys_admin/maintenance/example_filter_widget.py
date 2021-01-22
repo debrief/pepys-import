@@ -12,6 +12,18 @@ from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 logger.remove()
 logger.add("gui.log")
 
+column_data = {
+    "platform_id": {"type": "id", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
+    "name": {"type": "string", "values": ["HMS Name1", "HMS Floaty", "USS Sinky"]},
+    "identifier": {"type": "string"},
+    "nationality_id": {"type": "id"},
+    "nationality_name": {"type": "string"},
+    "timestamp": {"type": "datetime"},
+    "speed": {"type": "float"},
+}
+
+filter_widget = FilterWidget(column_data)
+
 
 def create_prompt_toolkit_app():
     kb = KeyBindings()
@@ -24,17 +36,9 @@ def create_prompt_toolkit_app():
         "Button handler that exits the app"
         get_app().exit()
 
-    column_data = {
-        "platform_id": {"type": "id", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
-        "name": {"type": "string", "values": ["HMS Name1", "HMS Floaty", "USS Sinky"]},
-        "identifier": {"type": "string"},
-        "nationality_id": {"type": "id"},
-        "nationality_name": {"type": "string"},
-        "timestamp": {"type": "datetime"},
-        "speed": {"type": "float"},
-    }
-
-    filter_widget = FilterWidget(column_data)
+    @kb.add("c-a")
+    def _(event):
+        logger.debug(filter_widget.filters)
 
     root_container = FloatContainer(
         filter_widget,
