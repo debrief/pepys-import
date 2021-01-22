@@ -26,6 +26,7 @@ class DropdownBox:
 
     def __init__(self, text, entries, on_select_handler=None, filter=True) -> None:
         self.text = text
+        self.initial_text = text
         self.entries = entries
         self.on_select_handler = on_select_handler
         self.filter = filter
