@@ -129,6 +129,7 @@ class CustomTextArea:
         on_cursor_at_end=None,
         key_bindings=None,
         limit_length=False,
+        on_change=None,
     ) -> None:
 
         search_control = None
@@ -136,7 +137,8 @@ class CustomTextArea:
         if input_processors is None:
             input_processors = []
 
-        self.on_cursor_at_end = on_cursor_at_end
+        self.on_cursor_at_end_handler = on_cursor_at_end
+        self.on_change_handler = on_change
 
         # Writeable attributes.
         self.completer = completer
@@ -256,8 +258,11 @@ class CustomTextArea:
 
         self.process_cursor_at_end()
 
+        if self.on_change_handler is not None:
+            self.on_change_handler()
+
     def process_cursor_at_end(self):
-        if self.on_cursor_at_end is not None:
+        if self.on_cursor_at_end_handler is not None:
             # If we've got an event handler to call
             if self.text != self.initial_text and len(self.text) == len(self.initial_text):
                 # If the text isn't the placeholder text, but it's the full length of the field
@@ -269,7 +274,7 @@ class CustomTextArea:
                     self.buffer._set_cursor_position(len(self.text) - 1)
                     # Call the event handler function
                     logger.debug("Calling on cursor at end")
-                    self.on_cursor_at_end()
+                    self.on_cursor_at_end_handler()
 
     @property
     def text(self) -> str:
