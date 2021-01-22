@@ -278,7 +278,7 @@ class DropdownBox:
 
                 # Call the on_select_handler
                 if self.on_select_handler is not None:
-                    self.on_select_handler()
+                    self.on_select_handler(self.text)
 
         # Run the coroutine and wait to get the result
         ensure_future(coroutine())
