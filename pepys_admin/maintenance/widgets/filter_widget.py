@@ -11,6 +11,7 @@ from pepys_admin.maintenance.widgets.utils import (
     float_validator,
     int_validator,
     interleave_lists,
+    list_deep_equals,
 )
 
 
@@ -18,6 +19,8 @@ class FilterWidget:
     def __init__(self, column_data=None, on_change_handler=None):
         self.column_data = column_data
         self.on_change_handler = on_change_handler
+
+        self.last_filters_output = []
 
         # We can handle None for column_data if we turn it into an
         # empty dict, as all the dropdowns just default to not having
@@ -40,7 +43,14 @@ class FilterWidget:
     def trigger_on_change(self, event=None):
         """Triggers the on_change_handler, if it is defined"""
         if self.on_change_handler is not None:
-            self.on_change_handler(self.filters)
+            if not list_deep_equals(self.filters, self.last_filters_output):
+                # Only call event there is a difference from last time we called
+                # the handler
+                # (we have to use a custom list_deep_equals function as doing
+                # == for lists of lists doesn't compare fully)
+                self.on_change_handler(self.filters)
+
+                self.last_filters_output = self.filters
 
     def set_column_data(self, column_data):
         """Updates the column_data, and removes all the filter entries

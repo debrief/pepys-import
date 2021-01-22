@@ -49,3 +49,16 @@ datetime_validator = Validator.from_callable(
 
 def interleave_lists(l1, l2):
     return [x for x in chain(*zip_longest(l1, l2)) if x is not None]
+
+
+def list_deep_equals(a, b):
+    if type(a) != type(b):
+        return False
+    if type(a) != list:
+        return a == b
+    if len(a) != len(b):
+        return False
+    for a_, b_ in zip(a, b):
+        if not list_deep_equals(a_, b_):
+            return False
+    return True
