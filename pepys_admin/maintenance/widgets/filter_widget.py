@@ -15,19 +15,36 @@ from pepys_admin.maintenance.widgets.utils import (
 
 
 class FilterWidget:
-    def __init__(self, column_data=None):
+    def __init__(self, column_data=None, on_change_handler=None):
         self.column_data = column_data
+        self.on_change_handler = on_change_handler
 
+        # We can handle None for column_data if we turn it into an
+        # empty dict, as all the dropdowns just default to not having
+        # any entries
         if self.column_data is None:
             self.column_data = {}
+
+        # For consistency, keep these here, and reference them in the widgets
+        # so we only have to change them in one place
+        self.column_prompt = "Select column"
+        self.value_prompt = "Enter value here"
 
         self.container = DynamicContainer(self.get_container_contents)
         self.button = Button("Add filter condition", self.add_entry)
 
+        # Start with one entry and no boolean operators
         self.entries = [FilterWidgetEntry(self)]
         self.boolean_operators = []
 
+    def trigger_on_change(self, event=None):
+        """Triggers the on_change_handler, if it is defined"""
+        if self.on_change_handler is not None:
+            self.on_change_handler(self.filters)
+
     def set_column_data(self, column_data):
+        """Updates the column_data, and removes all the filter entries
+        so we can start again with a new table"""
         self.column_data = column_data
 
         if self.column_data is None:
@@ -54,13 +71,14 @@ class FilterWidget:
 
     def add_entry(self):
         self.entries.append(FilterWidgetEntry(self))
-        self.boolean_operators.append(BooleanOperatorEntry())
+        self.boolean_operators.append(BooleanOperatorEntry(self))
         # Set the focus to the first widget in the most recently created entry
         # This is what we USED to do when we were just adding condition entries
         # rather than adding boolean conditions in between them
         # get_app().layout.focus(self.entries[-1].get_widgets().get_children()[0])
         # Now we set the focus to the newly added boolean operator dropdown
         get_app().layout.focus(self.boolean_operators[-1].get_widgets())
+        self.trigger_on_change()
 
     @property
     def filters(self):
@@ -69,7 +87,15 @@ class FilterWidget:
         filter_output = []
 
         for entry_or_boolean in entries_and_booleans:
-            filter_output.append(entry_or_boolean.get_string_values())
+            strings = entry_or_boolean.get_string_values()
+            if strings[0] == self.column_prompt:
+                continue
+            elif len(strings) == 3 and strings[2] == entry_or_boolean.get_initial_prompt():
+                continue
+            filter_output.append(strings)
+
+        if len(filter_output) > 0 and filter_output[-1][0] in ["AND", "OR"]:
+            del filter_output[-1]
 
         return filter_output
 
@@ -78,8 +104,14 @@ class FilterWidget:
 
 
 class BooleanOperatorEntry:
-    def __init__(self):
-        self.dropdown = DropdownBox(text="AND", entries=["AND", "OR"], filter=False)
+    def __init__(self, filter_widget):
+        self.filter_widget = filter_widget
+        self.dropdown = DropdownBox(
+            text="AND",
+            entries=["AND", "OR"],
+            filter=False,
+            on_select_handler=filter_widget.trigger_on_change,
+        )
 
     def get_widgets(self):
         return VSplit([self.dropdown], align=HorizontalAlign.LEFT)
@@ -87,14 +119,24 @@ class BooleanOperatorEntry:
     def get_string_values(self):
         return [self.dropdown.text]
 
+    def get_initial_prompt(self):
+        return ""
+
 
 class FilterWidgetEntry:
     def __init__(self, filter_widget):
         self.filter_widget = filter_widget
         self.dropdown_column = DropdownBox(
-            text="Select column", entries=filter_widget.column_data.keys()
+            text=filter_widget.column_prompt,
+            entries=filter_widget.column_data.keys(),
+            on_select_handler=self.filter_widget.trigger_on_change,
         )
-        self.dropdown_operator = DropdownBox(text=" = ", entries=self.get_operators, filter=False)
+        self.dropdown_operator = DropdownBox(
+            text=" = ",
+            entries=self.get_operators,
+            filter=False,
+            on_select_handler=self.filter_widget.trigger_on_change,
+        )
 
         # We have to create the widgets here in the init, or it doesn't work
         # because of some weird scoping issue
@@ -103,16 +145,33 @@ class FilterWidgetEntry:
         # Inside get_widgets we then just get a reference to the relevant one of these
         # (These don't make things much more inefficient, as they aren't displayed anywhere)
         # until they're added into a layout
-        self.vw_text = CustomTextArea("Enter value here", multiline=False)
-        self.vw_float = CustomTextArea(
-            "Enter value here", multiline=False, validator=float_validator
+        self.vw_text = CustomTextArea(
+            self.filter_widget.value_prompt,
+            multiline=False,
+            on_change=self.filter_widget.trigger_on_change,
         )
-        self.vw_int = CustomTextArea("Enter value here", multiline=False, validator=int_validator)
-        self.vw_dropdown = DropdownBox("Select value", entries=self.get_value_dropdown_entries)
+        self.vw_float = CustomTextArea(
+            self.filter_widget.value_prompt,
+            multiline=False,
+            validator=float_validator,
+            on_change=self.filter_widget.trigger_on_change,
+        )
+        self.vw_int = CustomTextArea(
+            self.filter_widget.value_prompt,
+            multiline=False,
+            validator=int_validator,
+            on_change=self.filter_widget.trigger_on_change,
+        )
         self.vw_datetime = MaskedInputWidget(
             ["yyyy", "!-", "mm", "!-", "dd", "! ", "HH", "!:", "MM", "!:", "SS"],
             overall_validator=datetime_validator,
             part_validator=int_validator,
+            on_change=self.filter_widget.trigger_on_change,
+        )
+        self.vw_dropdown = DropdownBox(
+            self.filter_widget.value_prompt,
+            entries=self.get_value_dropdown_entries,
+            on_select_handler=self.filter_widget.trigger_on_change,
         )
 
     def get_widgets(self):
@@ -122,6 +181,10 @@ class FilterWidgetEntry:
             align=HorizontalAlign.LEFT,
             padding=2,
         )
+
+    def get_initial_prompt(self):
+        vw = self.choose_value_widget()
+        return vw.initial_text
 
     def get_string_values(self):
         vw = self.choose_value_widget()

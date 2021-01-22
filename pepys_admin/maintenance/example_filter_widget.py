@@ -12,6 +12,11 @@ from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 logger.remove()
 logger.add("gui.log")
 
+
+def on_filter_widget_change(filters):
+    logger.debug(filters)
+
+
 column_data = {
     "platform_id": {"type": "id", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
     "name": {"type": "string", "values": ["HMS Name1", "HMS Floaty", "USS Sinky"]},
@@ -22,7 +27,7 @@ column_data = {
     "speed": {"type": "float"},
 }
 
-filter_widget = FilterWidget(column_data)
+filter_widget = FilterWidget(column_data, on_change_handler=on_filter_widget_change)
 
 
 def create_prompt_toolkit_app():
