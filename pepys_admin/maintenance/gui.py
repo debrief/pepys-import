@@ -9,7 +9,8 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Label
 
-from pepys_admin.maintenance.widgets.dropdown_box import ComboBox, DropdownBox
+from pepys_admin.maintenance.widgets.combo_box import ComboBox
+from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 
 logger.remove()
