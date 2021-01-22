@@ -1,4 +1,5 @@
 from datetime import datetime
+from itertools import chain, zip_longest
 
 from prompt_toolkit.validation import Validator
 
@@ -44,3 +45,7 @@ datetime_validator = Validator.from_callable(
     error_message="This input is not a valid datetime value",
     move_cursor_to_end=True,
 )
+
+
+def interleave_lists(l1, l2):
+    return [x for x in chain(*zip_longest(l1, l2)) if x is not None]

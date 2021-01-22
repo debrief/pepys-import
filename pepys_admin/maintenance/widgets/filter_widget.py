@@ -1,5 +1,3 @@
-from itertools import chain, zip_longest
-
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.layout.containers import DynamicContainer, HorizontalAlign, HSplit, VSplit
 from prompt_toolkit.widgets.base import Button
@@ -8,11 +6,12 @@ from prompt_toolkit.widgets.toolbars import ValidationToolbar
 from pepys_admin.maintenance.widgets.custom_text_area import CustomTextArea
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 from pepys_admin.maintenance.widgets.masked_input_widget import MaskedInputWidget
-from pepys_admin.maintenance.widgets.utils import datetime_validator, float_validator, int_validator
-
-
-def interleave_lists(l1, l2):
-    return [x for x in chain(*zip_longest(l1, l2)) if x is not None]
+from pepys_admin.maintenance.widgets.utils import (
+    datetime_validator,
+    float_validator,
+    int_validator,
+    interleave_lists,
+)
 
 
 class FilterWidget:
