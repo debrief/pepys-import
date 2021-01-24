@@ -67,7 +67,9 @@ def create_prompt_toolkit_app():
         ]
     )
 
-    app = Application(layout=layout, full_screen=True, key_bindings=kb, style=style)
+    app = Application(
+        layout=layout, full_screen=True, key_bindings=kb, style=style, mouse_support=True
+    )
 
     return app
 

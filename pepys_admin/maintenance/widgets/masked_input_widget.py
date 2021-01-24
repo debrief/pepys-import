@@ -50,6 +50,7 @@ class MaskedInputWidget:
                     key_bindings=self.get_keybindings(),
                     limit_length=True,
                     on_change=self.on_change,
+                    focus_on_click=True,
                 )
                 self.controls.append(text_area)
                 # Keep track of the max length of this text area, so we can

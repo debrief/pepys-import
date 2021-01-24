@@ -159,18 +159,21 @@ class FilterWidgetEntry:
             self.filter_widget.value_prompt,
             multiline=False,
             on_change=self.filter_widget.trigger_on_change,
+            focus_on_click=True,
         )
         self.vw_float = CustomTextArea(
             self.filter_widget.value_prompt,
             multiline=False,
             validator=float_validator,
             on_change=self.filter_widget.trigger_on_change,
+            focus_on_click=True,
         )
         self.vw_int = CustomTextArea(
             self.filter_widget.value_prompt,
             multiline=False,
             validator=int_validator,
             on_change=self.filter_widget.trigger_on_change,
+            focus_on_click=True,
         )
         self.vw_datetime = MaskedInputWidget(
             ["yyyy", "!-", "mm", "!-", "dd", "! ", "HH", "!:", "MM", "!:", "SS"],

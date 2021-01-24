@@ -1,11 +1,11 @@
 from asyncio import Future
 
-from loguru import logger
 from prompt_toolkit.formatted_text.base import merge_formatted_text
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.margins import ScrollbarMargin
+from prompt_toolkit.mouse_events import MouseEventType
 
 
 class ComboBox:
@@ -114,7 +114,27 @@ class ComboBox:
                 result.append(entry)
             result.append("\n")
 
-        return merge_formatted_text(result)
+        merged_text = merge_formatted_text(result)()
+
+        # Go through the resulting tuples and add the mouse click handler to each of them
+        for i in range(len(merged_text)):
+            merged_text[i] = (merged_text[i][0], merged_text[i][1], self.handle_mouse_click)
+
+        return merged_text
+
+    def handle_mouse_click(self, mouse_event):
+        if mouse_event.event_type == MouseEventType.MOUSE_UP:
+            # If we have an extra row at the top of the combo box
+            # for showing the filter text, then we need to take 1
+            # off the index when we work out which entry to use
+            offset = 1 if self.filter else 0
+
+            if self.popup:
+                self.future.set_result(self.filtered_entries[mouse_event.position.y - offset])
+            else:
+                self.value = self.filtered_entries[mouse_event.position.y - offset]
+                if self.enter_handler:
+                    self.enter_handler(self.value)
 
     def _get_key_bindings(self) -> KeyBindings:
         kb = KeyBindings()
@@ -154,7 +174,6 @@ class ComboBox:
 
         @kb.add("<any>")
         def _(event):
-            logger.debug(f"Pressed a key, and caught it {event}")
             key_str = event.key_sequence[0].key
             if key_str == "c-h":
                 self.filter_text = self.filter_text[:-1]
