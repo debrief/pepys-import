@@ -33,6 +33,8 @@ class FilterWidget:
         self.column_prompt = "Select column"
         self.value_prompt = "Enter value here"
 
+        # The main container is a DynamicContainer, so it displays whatever the
+        # result of a function is
         self.container = DynamicContainer(self.get_container_contents)
         self.button = Button("Add filter condition", self.add_entry)
 
@@ -54,7 +56,7 @@ class FilterWidget:
 
     def set_column_data(self, column_data):
         """Updates the column_data, and removes all the filter entries
-        so we can start again with a new table"""
+        so we can start again filtering a new table"""
         self.column_data = column_data
 
         if self.column_data is None:
@@ -68,8 +70,15 @@ class FilterWidget:
 
         boolean_widgets = [b.get_widgets() for b in self.boolean_operators]
 
+        # For now, just interleave the lists, so we get
+        # FilterWidgetEntry
+        # BooleanOperatorEntry
+        # FilterWidgetEntry
+        # ...
         display_widgets = interleave_lists(entry_widgets, boolean_widgets)
 
+        # Important to have the validation toolbar here, or errors aren't
+        # displayed
         return HSplit(
             [
                 HSplit(display_widgets, padding=1),
@@ -92,6 +101,11 @@ class FilterWidget:
 
     @property
     def filters(self):
+        """
+        Returns the filters that are currently defined in the widget.
+
+        TODO: Put output format here
+        """
         entries_and_booleans = interleave_lists(self.entries, self.boolean_operators)
 
         filter_output = []
@@ -99,12 +113,17 @@ class FilterWidget:
         for entry_or_boolean in entries_and_booleans:
             strings = entry_or_boolean.get_string_values()
             if strings[0] == self.column_prompt:
+                # The column dropdown is still at the default value
                 continue
             elif len(strings) == 3 and strings[2] == entry_or_boolean.get_initial_prompt():
+                # We've got a full entry (not a boolean operator)
+                # and the value widget is still at the default value
                 continue
             filter_output.append(strings)
 
         if len(filter_output) > 0 and filter_output[-1][0] in ["AND", "OR"]:
+            # If there is an AND/OR at the end of the list, then remove it
+            # because there is no second operand for the AND/OR
             del filter_output[-1]
 
         return filter_output
@@ -114,12 +133,14 @@ class FilterWidget:
 
 
 class BooleanOperatorEntry:
+    """Represents a boolean operator (AND/OR) entry in the FilterWidget"""
+
     def __init__(self, filter_widget):
         self.filter_widget = filter_widget
         self.dropdown = DropdownBox(
             text="AND",
             entries=["AND", "OR"],
-            filter=False,
+            filter=False,  # No need to be able to filter, as just two entries
             on_select_handler=filter_widget.trigger_on_change,
         )
 
@@ -130,17 +151,26 @@ class BooleanOperatorEntry:
         return [self.dropdown.text]
 
     def get_initial_prompt(self):
+        # We'll never need to call this for a BooleanOperatorEntry,
+        # so we can just return the empty string
         return ""
 
 
 class FilterWidgetEntry:
+    """Represents a full entry in the FilterWidget, consisting
+    of a column name, an operator, and a value"""
+
     def __init__(self, filter_widget):
         self.filter_widget = filter_widget
+        # Dropdown for list of column names
         self.dropdown_column = DropdownBox(
             text=filter_widget.column_prompt,
             entries=filter_widget.column_data.keys(),
             on_select_handler=self.filter_widget.trigger_on_change,
         )
+        # Dropdown for list of operators
+        # (This is automatically updated to show the list of entries
+        # returned by self.get_operators, depending on the column chosen)
         self.dropdown_operator = DropdownBox(
             text=" = ",
             entries=self.get_operators,
@@ -151,10 +181,10 @@ class FilterWidgetEntry:
         # We have to create the widgets here in the init, or it doesn't work
         # because of some weird scoping issue
         # See https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1324
-        # vw = value_widget
+        # vw is shorthand for value_widget
         # Inside get_widgets we then just get a reference to the relevant one of these
-        # (These don't make things much more inefficient, as they aren't displayed anywhere)
-        # until they're added into a layout
+        # (These don't make things much more inefficient, as they aren't displayed anywhere
+        # until they're added into a layout)
         self.vw_text = CustomTextArea(
             self.filter_widget.value_prompt,
             multiline=False,
@@ -188,6 +218,7 @@ class FilterWidgetEntry:
         )
 
     def get_widgets(self):
+        """Gets the widgets to display this entry"""
         vw = self.choose_value_widget()
         return VSplit(
             [self.dropdown_column, self.dropdown_operator, vw],
@@ -196,14 +227,20 @@ class FilterWidgetEntry:
         )
 
     def get_initial_prompt(self):
+        """Get the initial text value of the value_widget,
+        so we can see if it has changed from it's default."""
         vw = self.choose_value_widget()
         return vw.initial_text
 
     def get_string_values(self):
+        """Get the string values of the widgets - ie. the text that
+        has been chosen by the user, as a list of three entries."""
         vw = self.choose_value_widget()
         return [self.dropdown_column.text.strip(), self.dropdown_operator.text.strip(), vw.text]
 
     def get_value_dropdown_entries(self):
+        """Gives the entries for the value widget dropdown
+        (only called if that's being used)"""
         try:
             col_info = self.filter_widget.column_data[self.dropdown_column.text]
             col_values = col_info["values"]
@@ -216,6 +253,8 @@ class FilterWidgetEntry:
             return []
 
     def choose_value_widget(self):
+        """Decide which value widget to use, depending on the col_type
+        in the column data"""
         try:
             col_info = self.filter_widget.column_data[self.dropdown_column.text]
             col_type = col_info["type"]
@@ -254,6 +293,8 @@ class FilterWidgetEntry:
             return self.vw_text
 
     def get_operators(self):
+        """Get the list of entries for the operators dropdown, based on the
+        col_type entry in the column data"""
         try:
             col_info = self.filter_widget.column_data[self.dropdown_column.text]
             col_type = col_info["type"]
@@ -262,6 +303,8 @@ class FilterWidgetEntry:
         return self.get_operators_for_column_type(col_type)
 
     def get_operators_for_column_type(self, col_type):
+        """Get the list of entries for the operators dropdown, based on the
+        col_type entry in the column data"""
         if col_type == "string":
             return ["=", "!=", "LIKE"]
         elif col_type == "id":
