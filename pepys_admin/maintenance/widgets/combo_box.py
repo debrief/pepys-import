@@ -35,6 +35,13 @@ class ComboBox:
 
         Parameters:
         - `entries`: list of strings containing entries
+        - `width`: width of control, in characters
+        - `filter`: whether to provide 'type to filter' functionality (boolean)
+        - `filter_method`: how to filter - must be either 'contains' or 'startswith'
+        - `popup`: whether this ComboBox is being used as a popup menu (boolean) - if it
+          is a popup then async features will be used to return values, and tab/shift-tab/esc
+          will be captured
+        - `enter_handler`: event handler function to be called when an entry is selected
         """
         # Create an asyncio Future which will be used to return
         # the value when this object is created
@@ -95,15 +102,18 @@ class ComboBox:
         result = []
 
         if self.filter:
+            # Filter entries
             for entry in self.entries:
                 if self.filter_match_fn(entry, self.filter_text):
                     self.filtered_entries.append(entry)
 
             if len(self.filter_text) != 0:
+                # Show an extra line at the top, showing the current filter
                 result.append([("class:filter-text", f"Filter: {self.filter_text}\n")])
             else:
                 result.append([("class:filter-text", "Type to filter\n")])
         else:
+            # Just include all entries
             self.filtered_entries = self.entries
 
         for i, entry in enumerate(self.filtered_entries):
@@ -158,16 +168,19 @@ class ComboBox:
 
             @kb.add("escape")
             def _(event):
+                # User cancelled
                 self.future.set_result(None)
 
             @kb.add("enter")
-            def close_float(event) -> None:
+            def _(event) -> None:
+                # Return entry to the asyncio future
                 self.future.set_result(self.filtered_entries[self.selected_entry])
 
         else:
 
             @kb.add("enter")
-            def set_result(event) -> None:
+            def _(event) -> None:
+                # Return entry in a non-async way, calling handler
                 self.value = self.filtered_entries[self.selected_entry]
                 if self.enter_handler:
                     self.enter_handler(self.value)

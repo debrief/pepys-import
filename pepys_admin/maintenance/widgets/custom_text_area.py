@@ -37,7 +37,7 @@ class CustomTextArea:
         applied to the control
     :param limit_length: A Boolean specifying whether to limit the length of the field to the
         length of the initial text
-
+    :param on_change: An event handler function to be called every time the content changes
 
     A simple input field.
 

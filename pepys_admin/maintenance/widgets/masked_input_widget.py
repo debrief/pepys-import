@@ -24,6 +24,14 @@ class MaskedInputWidget:
         ["yyyy", "!-", "mm", "!-", "dd"]
 
         The text property will then return something like "2020-01-02"
+
+        Parameters:
+        - `format_list`: Specification for the masked input (see above)
+        - `overall_validator`: Validator to use for validating the whole output
+          (including the static masking text)
+        - `part_validator`: Validator to use for each individual part - for example
+          an integer validator to check all parts are valid numbers
+        - `on_change`: event handler function to be called when the value changes
         """
         self.on_change = on_change
         self.overall_validator = overall_validator
@@ -100,6 +108,7 @@ class MaskedInputWidget:
 
         @kb.add("backspace")
         def _(event):
+            # We handle this so that we can backspace across TextArea boundaries
             if event.current_buffer.cursor_position == 0:
                 # If we're at the start of a field, then go to the previous field and delete
                 # the final character
