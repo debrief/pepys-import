@@ -3,12 +3,21 @@ from prompt_toolkit import Application
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
-from prompt_toolkit.layout.containers import FloatContainer, HorizontalAlign, HSplit, VSplit, Window
+from prompt_toolkit.layout.containers import (
+    DynamicContainer,
+    FloatContainer,
+    HorizontalAlign,
+    HSplit,
+    VSplit,
+    Window,
+)
+from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Label
 
+from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
@@ -38,7 +47,17 @@ column_data = {"Platform": platform_column_data, "Sensor": sensor_column_data}
 
 class MaintenanceGUI:
     def __init__(self):
-        self.preview_buffer = Buffer()
+        table_data = [
+            ["Name", "Type", "Nat."],
+            ["NELSON", "Frigate", "UK"],
+            ["SARK", "Destroyer", "UK"],
+            ["ADRI", "Frigate", "UK"],
+            ["JEAN", "Corvette", "FR"],
+        ]
+        table_objects = [None, 1, 2, 3, 4]
+
+        self.filters_tab = "filters"
+
         self.preview_container = HSplit(
             children=[
                 Label(text="Preview List   F7 | Preview Graph  F8", style="class:title-line"),
@@ -46,6 +65,7 @@ class MaintenanceGUI:
                     text="Select specific fields to display in preview",
                     style="fg:ansiblue",
                 ),
+                CheckboxTable(table_data=table_data, table_objects=table_objects),
             ],
             padding=1,
             width=Dimension(weight=0.4),
@@ -78,23 +98,11 @@ class MaintenanceGUI:
             height=Dimension(weight=0.05),
         )
 
-        self.filter_widget = FilterWidget()
+        self.filter_widget = FilterWidget(on_change_handler=self.on_filter_widget_change)
 
-        self.filter_container = HSplit(
-            [
-                Label(
-                    text="Apply filters   F3 | Filter Query  F4 | Complete query  F5",
-                    style="class:title-line",
-                ),
-                Label(
-                    text="Press TAB to go to next dropdown or line\nPress Shift + TAB to go to the previous dropdown or line",
-                    style="fg:ansiblue",
-                ),
-                self.filter_widget,
-            ],
-            padding=1,
-            height=Dimension(weight=0.5),
-        )
+        self.filter_container = DynamicContainer(self.get_filter_container)
+        self.filter_query_buffer = Buffer()
+        self.filter_query = BufferControl(self.filter_query_buffer)
 
         self.actions_container = HSplit(
             [
@@ -144,6 +152,9 @@ class MaintenanceGUI:
     def on_table_select(self, value):
         self.filter_widget.set_column_data(column_data[value])
 
+    def on_filter_widget_change(self, value):
+        self.filter_query_buffer.text = repr(value)
+
     def run_action(self, selected_value):
         logger.debug(f"Running action {selected_value}")
 
@@ -167,6 +178,21 @@ class MaintenanceGUI:
         def _(event):
             event.app.layout.focus(self.actions_container)
 
+        @kb.add("f3")
+        def _(event):
+            self.filters_tab = "filters"
+            event.app.layout.focus(self.filter_container)
+
+        @kb.add("f4")
+        def _(event):
+            self.filters_tab = "filter_query"
+            event.app.layout.focus(self.filter_container)
+
+        @kb.add("f5")
+        def _(event):
+            self.filters_tab = "complete_query"
+            event.app.layout.focus(self.filter_container)
+
         return kb
 
     def get_style(self):
@@ -182,17 +208,50 @@ class MaintenanceGUI:
                 ("text-area focused", "bg:#ff0000"),
                 ("dropdown-highlight", "#ff0000"),
                 ("filter-text", "fg:#0000ff"),
+                ("table-title", "fg:#ff0000"),
+                ("checkbox-selected", "bg:ansiyellow"),
             ]
         )
         return style
 
-    def get_columns(self):
-        if self.dropdown_table.text == "Platform":
-            return ["platform_id", "name", "identifier", "trigraph", "quadgraph", "etc"]
-        elif self.dropdown_table.text == "Sensor":
-            return ["sensor_id", "name", "sensor_type", "host", "etc"]
-        else:
-            return []
+    def get_filter_container(self):
+        top_label = Label(
+            text="Apply filters   F3 | Filter Query  F4 | Complete query  F5",
+            style="class:title-line",
+        )
+        if self.filters_tab == "filters":
+            return HSplit(
+                [
+                    top_label,
+                    Label(
+                        text="Press TAB to go to next dropdown or line\nPress Shift + TAB to go to the previous dropdown or line",
+                        style="fg:ansiblue",
+                    ),
+                    self.filter_widget,
+                ],
+                padding=1,
+                height=Dimension(weight=0.5),
+            )
+        elif self.filters_tab == "filter_query":
+            return HSplit(
+                [
+                    top_label,
+                    Window(self.filter_query),
+                ],
+                padding=1,
+                height=Dimension(weight=0.5),
+            )
+        elif self.filters_tab == "complete_query":
+            buffer = Buffer()
+            buffer.text = "Not implemented yet"
+            return HSplit(
+                [
+                    top_label,
+                    Window(BufferControl(buffer)),
+                ],
+                padding=1,
+                height=Dimension(weight=0.5),
+            )
 
 
 gui = MaintenanceGUI()
