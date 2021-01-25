@@ -1,3 +1,4 @@
+import asyncio
 from asyncio.tasks import ensure_future
 
 from loguru import logger
@@ -23,6 +24,7 @@ from prompt_toolkit.widgets.base import Label
 
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.platform_merge_dialog import PlatformMergeDialog
+from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
@@ -118,7 +120,7 @@ class MaintenanceGUI:
                 ComboBox(
                     entries=[
                         "1 - Merge Platforms",
-                        "2 - Another action here",
+                        "2 - Test Progressbar",
                         "3 - A third action here",
                     ],
                     enter_handler=self.run_action,
@@ -189,8 +191,22 @@ class MaintenanceGUI:
                     self.show_messagebox("Result", dialog_result)
 
             ensure_future(coroutine())
+        elif selected_value == "2 - Test Progressbar":
+
+            async def coroutine():
+                dialog = ProgressDialog("Test progressbar", self.run_slowly)
+                _ = await self.show_dialog_as_float(dialog)
+
+            ensure_future(coroutine())
         else:
             self.show_messagebox("Action", f"Running action {selected_value}")
+
+    async def run_slowly(self, set_percentage, is_cancelled):
+        for i in range(11):
+            await asyncio.sleep(0.4)
+            set_percentage((i / 10.0) * 100.0)
+            if is_cancelled():
+                return
 
     def get_keybindings(self):
         kb = KeyBindings()
