@@ -50,21 +50,24 @@ sensor_column_data = {
 
 column_data = {"Platform": platform_column_data, "Sensor": sensor_column_data}
 
-table_data = [
-    ["Name", "Type", "Nat."],
-    ["NELSON", "Frigate", "UK"],
-    ["SARK", "Destroyer", "UK"],
-    ["ADRI", "Frigate", "UK"],
-    ["JEAN", "Corvette", "FR"],
-]
-table_objects = [None, 1, 2, 3, 4]
-
 
 class MaintenanceGUI:
     def __init__(self):
         self.filters_tab = "filters"
 
-        self.preview_table = CheckboxTable(table_data=table_data, table_objects=table_objects)
+        self.table_data = [
+            ["Name", "Type", "Nat."],
+            ["NELSON", "Frigate", "UK"],
+            ["SARK", "Destroyer", "UK"],
+            ["ADRI", "Frigate", "UK"],
+            ["JEAN", "Corvette", "FR"],
+        ]
+
+        self.table_objects = []
+        self.preview_table = CheckboxTable(
+            table_data=self.get_table_data, table_objects=self.get_table_objects
+        )
+
         self.preview_container = HSplit(
             children=[
                 Label(text="Preview List   F7 | Preview Graph  F8", style="class:title-line"),
@@ -155,6 +158,14 @@ class MaintenanceGUI:
             style=self.get_style(),
         )
 
+    def get_table_data(self):
+        return self.table_data
+
+    def get_table_objects(self):
+        self.table_objects = list(range(len(self.table_data)))
+
+        return self.table_objects
+
     def on_table_select(self, value):
         self.filter_widget.set_column_data(column_data[value])
 
@@ -164,8 +175,12 @@ class MaintenanceGUI:
     def run_action(self, selected_value):
         if selected_value == "1 - Merge Platforms":
             items = []
+            # Note: Only works at the moment because we have
+            # table objects as integer indices for the table_data
+            # list. This won't work when we have objects (eg. SQLAlchemy)
+            # instead
             for index in self.preview_table.current_values:
-                items.append(" - ".join(table_data[index]))
+                items.append(" - ".join(self.table_data[index]))
 
             async def coroutine():
                 dialog = PlatformMergeDialog(items)
