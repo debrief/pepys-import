@@ -24,6 +24,24 @@ class CheckboxTable(CheckboxList):
         """
         self.values = []
 
+        self.table_data = table_data
+        self.table_objects = table_objects
+
+        self.create_values_from_parameters()
+
+        super().__init__(self.values)
+
+    def create_values_from_parameters(self):
+        if callable(self.table_data):
+            table_data = self.table_data()
+        else:
+            table_data = self.table_data
+
+        if callable(self.table_objects):
+            table_objects = self.table_objects()
+        else:
+            table_objects = self.table_objects
+
         # Work out the maximum length of each column
         # col_max_length[col_index] will be the maximum
         # length of strings for that column
@@ -42,8 +60,6 @@ class CheckboxTable(CheckboxList):
                 justified_cols.append(col.ljust(col_max_lengths[col_index]))
             self.values.append((obj, " | ".join(justified_cols)))
 
-        super().__init__(self.values)
-
     def _get_text_fragments(self):
         # Mostly copied from the prompt_toolkit CheckboxList
         # class, with some minor alterations to:
@@ -58,6 +74,10 @@ class CheckboxTable(CheckboxList):
             if mouse_event.event_type == MouseEventType.MOUSE_UP:
                 self._selected_index = mouse_event.position.y
                 self._handle_enter()
+
+        self.values = []
+
+        self.create_values_from_parameters()
 
         result = []
         for i, value in enumerate(self.values):
@@ -100,5 +120,6 @@ class CheckboxTable(CheckboxList):
         for i in range(len(result)):
             result[i] = (result[i][0], result[i][1], mouse_handler)
 
-        result.pop()  # Remove last newline.
+        if len(result) > 0:
+            result.pop()  # Remove last newline.
         return result
