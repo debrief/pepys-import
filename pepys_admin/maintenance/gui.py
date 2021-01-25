@@ -85,11 +85,6 @@ class MaintenanceGUI:
             entries=[
                 "Platform",
                 "Sensor",
-                "PlatformType",
-                "SensorType",
-                "Privacy",
-                "CommentType",
-                "Nationality",
             ],
             on_select_handler=self.on_table_select,
         )
@@ -127,7 +122,7 @@ class MaintenanceGUI:
                 ),
             ],
             padding=1,
-            height=Dimension(weight=0.4),
+            height=Dimension(weight=0.2),
         )
 
         self.root_container = FloatContainer(
@@ -175,7 +170,8 @@ class MaintenanceGUI:
             async def coroutine():
                 dialog = PlatformMergeDialog(items)
                 dialog_result = await self.show_dialog_as_float(dialog)
-                self.show_messagebox("Result", dialog_result)
+                if dialog_result is not None:
+                    self.show_messagebox("Result", dialog_result)
 
             ensure_future(coroutine())
         else:
@@ -280,7 +276,7 @@ class MaintenanceGUI:
                     self.filter_widget,
                 ],
                 padding=1,
-                height=Dimension(weight=0.5),
+                height=Dimension(weight=0.75),
             )
         elif self.filters_tab == "filter_query":
             return HSplit(
