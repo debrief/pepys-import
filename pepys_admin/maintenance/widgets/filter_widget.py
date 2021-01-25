@@ -110,6 +110,15 @@ class FilterWidget:
 
         filter_output = []
 
+        # Set up the mapping between human and system names,
+        # defaulting to the human name if there is no system name defined
+        human_to_system_name_mapping = {}
+        for human_name in self.column_data.keys():
+            system_name = self.column_data[human_name].get("system_name", None)
+            if system_name is None:
+                system_name = human_name
+            human_to_system_name_mapping[human_name] = system_name
+
         for entry_or_boolean in entries_and_booleans:
             strings = entry_or_boolean.get_string_values()
             if strings[0] == self.column_prompt:
@@ -119,6 +128,10 @@ class FilterWidget:
                 # We've got a full entry (not a boolean operator)
                 # and the value widget is still at the default value
                 continue
+            elif len(strings) == 3:
+                # Convert the column name to the system name for that column
+                # (if there is no system name, then this just keeps the column as it is)
+                strings[0] = human_to_system_name_mapping[strings[0]]
             filter_output.append(strings)
 
         if len(filter_output) > 0 and filter_output[-1][0] in ["AND", "OR"]:

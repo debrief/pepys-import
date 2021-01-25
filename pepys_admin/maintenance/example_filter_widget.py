@@ -21,8 +21,8 @@ column_data = {
     "platform_id": {"type": "id", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
     "name": {"type": "string", "values": ["HMS Name1", "HMS Floaty", "USS Sinky"]},
     "identifier": {"type": "string"},
-    "nationality_id": {"type": "id"},
-    "nationality_name": {"type": "string"},
+    "nationality_id": {"type": "id", "system_name": "Nationality.nationality_id"},
+    "nationality_name": {"type": "string", "system_name": "Nationality.name"},
     "timestamp": {"type": "datetime"},
     "speed": {"type": "float"},
 }
