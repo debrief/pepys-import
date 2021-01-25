@@ -1,4 +1,5 @@
 import asyncio
+import time
 from asyncio.tasks import ensure_future
 
 from loguru import logger
@@ -201,9 +202,18 @@ class MaintenanceGUI:
         else:
             self.show_messagebox("Action", f"Running action {selected_value}")
 
-    async def run_slowly(self, set_percentage, is_cancelled):
+    async def async_run_slowly(self, set_percentage, is_cancelled):
         for i in range(11):
             await asyncio.sleep(0.4)
+            logger.debug(f"At iteration {i}")
+            set_percentage((i / 10.0) * 100.0)
+            if is_cancelled():
+                return
+
+    def run_slowly(self, set_percentage, is_cancelled):
+        for i in range(11):
+            time.sleep(1)
+            logger.debug(f"At iteration {i}")
             set_percentage((i / 10.0) * 100.0)
             if is_cancelled():
                 return

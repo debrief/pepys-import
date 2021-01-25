@@ -1,5 +1,7 @@
+import asyncio
 from asyncio import Future
 from asyncio.tasks import ensure_future
+from functools import partial
 
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.layout.containers import HSplit
@@ -40,12 +42,24 @@ class ProgressDialog:
         # def _(event) -> None:
         #     set_done()
 
+        # OLD code for running with async function
+        # async def coroutine():
+        #     await self.run_callback(self.set_percentage, self.is_cancelled)
+
+        # ensure_future(coroutine())
+
         async def coroutine():
-            await self.run_callback(self.set_percentage, self.is_cancelled)
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(
+                None, partial(self.run_callback, self.set_percentage, self.is_cancelled)
+            )
 
         ensure_future(coroutine())
 
     def set_percentage(self, value: int) -> None:
+        if value == 100:
+            self.future.set_result(None)
+
         self.progressbar.percentage = int(value)
         app = get_app()
         app.invalidate()
