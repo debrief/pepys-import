@@ -1351,8 +1351,22 @@ class MediaMixin:
         return association_proxy("sensor", "name")
 
     @declared_attr
+    def platform(self):
+        return relationship(
+            "Platform",
+            foreign_keys="Media.platform_id",
+        )
+
+    @declared_attr
     def platform_name(self):
         return association_proxy("platform", "name")
+
+    @declared_attr
+    def subject(self):
+        return relationship(
+            "Platform",
+            foreign_keys="Media.subject_id",
+        )
 
     @declared_attr
     def subject_name(self):
