@@ -23,6 +23,12 @@ class PlatformMergeDialog:
             modal=True,
         )
 
+        # Get the keybindings for the dialog and add a binding for Esc
+        # to close the dialog
+        dialog_kb = self.dialog.container.container.content.key_bindings
+
+        dialog_kb.add("escape")(lambda x: self.handle_ok(None))
+
     def handle_ok(self, value):
         logger.debug(value)
         self.future.set_result(value)
