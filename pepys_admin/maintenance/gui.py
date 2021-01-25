@@ -1,10 +1,14 @@
+from asyncio.tasks import ensure_future
+
 from loguru import logger
 from prompt_toolkit import Application
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.layout.containers import (
     DynamicContainer,
+    Float,
     FloatContainer,
     HorizontalAlign,
     HSplit,
@@ -17,6 +21,8 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Label
 
+from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
+from pepys_admin.maintenance.dialogs.platform_merge_dialog import PlatformMergeDialog
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
@@ -44,20 +50,21 @@ sensor_column_data = {
 
 column_data = {"Platform": platform_column_data, "Sensor": sensor_column_data}
 
+table_data = [
+    ["Name", "Type", "Nat."],
+    ["NELSON", "Frigate", "UK"],
+    ["SARK", "Destroyer", "UK"],
+    ["ADRI", "Frigate", "UK"],
+    ["JEAN", "Corvette", "FR"],
+]
+table_objects = [None, 1, 2, 3, 4]
+
 
 class MaintenanceGUI:
     def __init__(self):
-        table_data = [
-            ["Name", "Type", "Nat."],
-            ["NELSON", "Frigate", "UK"],
-            ["SARK", "Destroyer", "UK"],
-            ["ADRI", "Frigate", "UK"],
-            ["JEAN", "Corvette", "FR"],
-        ]
-        table_objects = [None, 1, 2, 3, 4]
-
         self.filters_tab = "filters"
 
+        self.preview_table = CheckboxTable(table_data=table_data, table_objects=table_objects)
         self.preview_container = HSplit(
             children=[
                 Label(text="Preview List   F7 | Preview Graph  F8", style="class:title-line"),
@@ -65,7 +72,7 @@ class MaintenanceGUI:
                     text="Select specific fields to display in preview",
                     style="fg:ansiblue",
                 ),
-                CheckboxTable(table_data=table_data, table_objects=table_objects),
+                self.preview_table,
             ],
             padding=1,
             width=Dimension(weight=0.4),
@@ -111,7 +118,11 @@ class MaintenanceGUI:
                     style="class:title-line",
                 ),
                 ComboBox(
-                    entries=["1 Action here", "2 Another action here", "3 A third action here"],
+                    entries=[
+                        "1 - Merge Platforms",
+                        "2 - Another action here",
+                        "3 - A third action here",
+                    ],
                     enter_handler=self.run_action,
                 ),
             ],
@@ -156,7 +167,19 @@ class MaintenanceGUI:
         self.filter_query_buffer.text = repr(value)
 
     def run_action(self, selected_value):
-        logger.debug(f"Running action {selected_value}")
+        if selected_value == "1 - Merge Platforms":
+            items = []
+            for index in self.preview_table.current_values:
+                items.append(" - ".join(table_data[index]))
+
+            async def coroutine():
+                dialog = PlatformMergeDialog(items)
+                dialog_result = await self.show_dialog_as_float(dialog)
+                self.show_messagebox("Result", dialog_result)
+
+            ensure_future(coroutine())
+        else:
+            self.show_messagebox("Action", f"Running action {selected_value}")
 
     def get_keybindings(self):
         kb = KeyBindings()
@@ -164,7 +187,6 @@ class MaintenanceGUI:
         @kb.add("c-q")
         @kb.add("escape")
         def _(event):
-            print("exiting")
             event.app.exit()
 
         kb.add("tab")(focus_next)
@@ -177,6 +199,10 @@ class MaintenanceGUI:
         @kb.add("f6")
         def _(event):
             event.app.layout.focus(self.actions_container)
+
+        @kb.add("f7")
+        def _(event):
+            event.app.layout.focus(self.preview_container)
 
         @kb.add("f3")
         def _(event):
@@ -213,6 +239,30 @@ class MaintenanceGUI:
             ]
         )
         return style
+
+    async def show_dialog_as_float(self, dialog):
+        " Coroutine. "
+        float_ = Float(content=dialog)
+        self.root_container.floats.insert(0, float_)
+
+        app = get_app()
+
+        focused_before = app.layout.current_window
+        app.layout.focus(dialog)
+        result = await dialog.future
+        app.layout.focus(focused_before)
+
+        if float_ in self.root_container.floats:
+            self.root_container.floats.remove(float_)
+
+        return result
+
+    def show_messagebox(self, title, text):
+        async def coroutine():
+            dialog = MessageDialog(title, text)
+            await self.show_dialog_as_float(dialog)
+
+        ensure_future(coroutine())
 
     def get_filter_container(self):
         top_label = Label(
