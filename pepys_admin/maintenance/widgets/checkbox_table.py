@@ -32,6 +32,8 @@ class CheckboxTable(CheckboxList):
         super().__init__(self.values)
 
     def create_values_from_parameters(self):
+        self.values = []
+
         if callable(self.table_data):
             table_data = self.table_data()
         else:
@@ -41,6 +43,14 @@ class CheckboxTable(CheckboxList):
             table_objects = self.table_objects()
         else:
             table_objects = self.table_objects
+
+        if len(table_data) == 0 or len(table_objects) == 0:
+            # The underlying CheckboxList implementation
+            # has an assert statement checking there is at least one entry
+            # in the values list.
+            # So, we fake it with an empty string.
+            self.values = [(None, "")]
+            return
 
         # Work out the maximum length of each column
         # col_max_length[col_index] will be the maximum
@@ -74,8 +84,6 @@ class CheckboxTable(CheckboxList):
             if mouse_event.event_type == MouseEventType.MOUSE_UP:
                 self._selected_index = mouse_event.position.y
                 self._handle_enter()
-
-        self.values = []
 
         self.create_values_from_parameters()
 
