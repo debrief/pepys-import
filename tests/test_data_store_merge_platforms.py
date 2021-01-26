@@ -1,9 +1,8 @@
-from contextlib import redirect_stdout
 from datetime import datetime
-from io import StringIO
 from unittest import TestCase
 from uuid import UUID
 
+import pytest
 from geoalchemy2 import WKTElement
 from sqlalchemy import or_
 
@@ -37,7 +36,7 @@ class MergePlatformsTestCase(TestCase):
             self.store.session.expunge(self.comment_type)
 
     def test_merge_platforms_with_same_sensor_names(self):
-        """Create two platforms, each platform will have a sensor named TEST-SENSOR.
+        """Create two platforms, each platform will have a sensor named gps.
         Check whether measurements moved to target platform"""
         State = self.store.db_classes.State
         Sensor = self.store.db_classes.Sensor
@@ -317,12 +316,10 @@ class MergePlatformsTestCase(TestCase):
             assert len(comments_after_merge) == 0
 
     def test_merge_platforms_invalid_master_platform(self):
-        temp_output = StringIO()
         uuid = UUID("12345678123456781234567812345678")
-        with self.store.session_scope(), redirect_stdout(temp_output):
-            assert self.store.merge_platforms([], uuid) is False
-        output = temp_output.getvalue()
-        assert f"No platform found with the given master_id: '{uuid}'" in output
+        with self.store.session_scope(), pytest.raises(ValueError) as error:
+            self.store.merge_platforms([], uuid)
+        assert f"No platform found with the given master_id: '{uuid}'" in error.value.args[0]
 
     def test_merge_platforms_with_platform_objects_given(self):
         State = self.store.db_classes.State
@@ -490,7 +487,7 @@ class UpdatePlatformIDsTestCase(TestCase):
             self.store.session.expunge(self.platform)
             self.store.session.expunge(self.platform_2)
 
-    def test_update_platform_ids_except_media(self):
+    def test_update_platform_ids(self):
         Comment = self.store.db_classes.Comment
         Participant = self.store.db_classes.Participant
         LogsHolding = self.store.db_classes.LogsHolding

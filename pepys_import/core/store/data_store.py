@@ -1651,7 +1651,8 @@ class DataStore:
     def merge_platforms(self, platform_list, master_id) -> bool:
         """Merges given platforms. Moves sensors from other platforms to the Target platform.
         If sensor with same name is already present on Target platform, moves measurements
-        to that sensor. Also moves all comments from other platforms to the Target platform.
+        to that sensor. Also moves entities in Comments, Participants, LogsHoldings, Geometry, Media
+        tables from other platforms to the Target platform.
 
         :param platform_list: A list of platform IDs or platform objects
         :type platform_list: List
@@ -1672,8 +1673,7 @@ class DataStore:
             self.session.query(Platform).filter(Platform.platform_id == master_id).scalar()
         )
         if not master_platform:
-            print(f"No platform found with the given master_id: '{master_id}'!")
-            return False
+            raise ValueError(f"No platform found with the given master_id: '{master_id}'!")
         master_sensor_names = self.session.query(Sensor.name).filter(Sensor.host == master_id).all()
         master_sensor_names = set([n for (n,) in master_sensor_names])
 
@@ -1682,7 +1682,7 @@ class DataStore:
             platform_list = [p.platform_id for p in platform_list]
 
         for p_id in platform_list:
-            if p_id == master_id:  # We don't need to change these sensors and comments
+            if p_id == master_id:  # We don't need to change these values
                 continue
 
             self.update_platform_ids(p_id, master_id)
