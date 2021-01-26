@@ -21,7 +21,7 @@ from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
-from prompt_toolkit.widgets.base import Label
+from prompt_toolkit.widgets.base import Border, Label
 
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.platform_merge_dialog import PlatformMergeDialog
@@ -133,22 +133,39 @@ class MaintenanceGUI:
             height=Dimension(weight=0.2),
         )
 
+        self.status_bar_container = VSplit(
+            [
+                Label("ESC - Exit", style="class:status-bar-text", width=10),
+                Label("F1 - Help", style="class:status-bar-text", width=9),
+            ],
+            padding=3,
+            align=HorizontalAlign.LEFT,
+            height=1,
+        )
+
         self.root_container = FloatContainer(
-            VSplit(
+            HSplit(
                 [
-                    HSplit(
+                    VSplit(
                         [
-                            self.data_type_container,
-                            Window(height=1, char="-"),
-                            self.filter_container,
-                            Window(height=1, char="-"),
-                            self.actions_container,
+                            HSplit(
+                                [
+                                    self.data_type_container,
+                                    Window(height=1, char=Border.HORIZONTAL),
+                                    self.filter_container,
+                                    Window(height=1, char=Border.HORIZONTAL),
+                                    self.actions_container,
+                                ],
+                                width=Dimension(weight=0.6),
+                            ),
+                            Window(width=1, char=Border.VERTICAL),
+                            self.preview_container,
                         ],
-                        width=Dimension(weight=0.6),
+                        height=Dimension(weight=1),
                     ),
-                    Window(width=1, char="|"),
-                    self.preview_container,
-                ]
+                    Window(height=1, char=Border.HORIZONTAL),
+                    self.status_bar_container,
+                ],
             ),
             floats=[],
         )
@@ -275,6 +292,7 @@ class MaintenanceGUI:
                 ("filter-text", "fg:#0000ff"),
                 ("table-title", "fg:#ff0000"),
                 ("checkbox-selected", "bg:ansiyellow"),
+                ("status-bar-text", "bg:ansigray"),
             ]
         )
         return style
@@ -319,7 +337,7 @@ class MaintenanceGUI:
                     self.filter_widget,
                 ],
                 padding=1,
-                height=Dimension(weight=0.75),
+                height=Dimension(weight=0.70),
             )
         elif self.filters_tab == "filter_query":
             return HSplit(
