@@ -23,6 +23,7 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Border, Label
 
+from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.platform_merge_dialog import PlatformMergeDialog
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
@@ -243,7 +244,13 @@ class MaintenanceGUI:
         @kb.add("c-q")
         @kb.add("escape")
         def _(event):
-            event.app.exit()
+            async def coroutine():
+                dialog = ConfirmationDialog("Exit?", "Do you want to exit?")
+                result = await self.show_dialog_as_float(dialog)
+                if result:
+                    event.app.exit()
+
+            ensure_future(coroutine())
 
         kb.add("tab")(focus_next)
         kb.add("s-tab")(focus_previous)
