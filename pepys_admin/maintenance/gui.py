@@ -24,6 +24,7 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Border, Label
 
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
+from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.platform_merge_dialog import PlatformMergeDialog
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
@@ -249,6 +250,14 @@ class MaintenanceGUI:
                 result = await self.show_dialog_as_float(dialog)
                 if result:
                     event.app.exit()
+
+            ensure_future(coroutine())
+
+        @kb.add("f1")
+        def _(event):
+            async def coroutine():
+                dialog = HelpDialog("Help", "Help text here\n" * 50)
+                await self.show_dialog_as_float(dialog)
 
             ensure_future(coroutine())
 
