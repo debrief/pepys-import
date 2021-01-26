@@ -1354,10 +1354,6 @@ class MediaMixin:
     def platform(self):
         return relationship(
             "Platform",
-            lazy="joined",
-            join_depth=1,
-            innerjoin=True,
-            uselist=False,
             foreign_keys="Media.platform_id",
         )
 
@@ -1366,17 +1362,9 @@ class MediaMixin:
         return association_proxy("platform", "name")
 
     @declared_attr
-    def platform_id(self):
-        return association_proxy("platform", "platform_id")
-
-    @declared_attr
     def subject(self):
         return relationship(
             "Platform",
-            lazy="joined",
-            join_depth=1,
-            innerjoin=True,
-            uselist=False,
             foreign_keys="Media.subject_id",
         )
 

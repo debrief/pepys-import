@@ -5,7 +5,7 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, or_
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker, undefer
@@ -1647,3 +1647,99 @@ class DataStore:
             .filter(self.db_classes.Log.change_id == change_id)
             .all()
         )
+
+    def merge_platforms(self, platform_list, master_id) -> bool:
+        """Merges given platforms. Moves sensors from other platforms to the Target platform.
+        If sensor with same name is already present on Target platform, moves measurements
+        to that sensor. Also moves entities in Comments, Participants, LogsHoldings, Geometry, Media
+        tables from other platforms to the Target platform.
+
+        :param platform_list: A list of platform IDs or platform objects
+        :type platform_list: List
+        :param master_id: Target platform's ID or objects itself
+        :type master_id: UUID or Platform
+        :return: True if merging completed successfully, False otherwise.
+        :rtype: bool
+        """
+        Platform = self.db_classes.Platform
+        Sensor = self.db_classes.Sensor
+        State = self.db_classes.State
+        Contact = self.db_classes.Contact
+
+        if isinstance(master_id, Platform):
+            master_id = master_id.platform_id
+
+        master_platform = (
+            self.session.query(Platform).filter(Platform.platform_id == master_id).scalar()
+        )
+        if not master_platform:
+            raise ValueError(f"No platform found with the given master_id: '{master_id}'!")
+        master_sensor_names = self.session.query(Sensor.name).filter(Sensor.host == master_id).all()
+        master_sensor_names = set([n for (n,) in master_sensor_names])
+
+        sensor_list = list()
+        if isinstance(platform_list[0], Platform):  # Extract platform_ids from platform objects
+            platform_list = [p.platform_id for p in platform_list]
+
+        for p_id in platform_list:
+            if p_id == master_id:  # We don't need to change these values
+                continue
+
+            self.update_platform_ids(p_id, master_id)
+
+            sensors = self.session.query(Sensor).filter(Sensor.host == p_id).all()
+            sensor_list.extend(sensors)
+
+        for sensor in sensor_list:
+            if sensor.name not in master_sensor_names:
+                (
+                    self.session.query(Sensor)
+                    .filter(Sensor.sensor_id == sensor.sensor_id)
+                    .update({"host": master_id})
+                )
+                master_sensor_names.add(sensor.name)
+            else:  # Move measurements only
+                master_sensor_id = (
+                    self.session.query(Sensor.sensor_id)
+                    .filter(Sensor.host == master_id, Sensor.name == sensor.name)
+                    .scalar()
+                )
+                (  # Update States
+                    self.session.query(State)
+                    .filter(State.sensor_id == sensor.sensor_id)
+                    .update({"sensor_id": master_sensor_id})
+                )
+                (  # Update Contacts
+                    self.session.query(Contact)
+                    .filter(
+                        or_(Contact.sensor_id == sensor.sensor_id, Contact.subject_id == master_id)
+                    )
+                    .update({"sensor_id": master_sensor_id})
+                )
+        self.session.flush()
+        return True
+
+    def update_platform_ids(self, merge_platform_id, master_platform_id):
+        Comment = self.db_classes.Comment
+        Participant = self.db_classes.Participant
+        LogsHolding = self.db_classes.LogsHolding
+        Geometry1 = self.db_classes.Geometry1
+        Media = self.db_classes.Media
+        tables_with_platform_id_fields = [Comment, Participant, LogsHolding, Geometry1, Media]
+        possible_field_names = [
+            "platform_id",
+            "subject_id",
+            "host_id",
+            "subject_platform_id",
+            "sensor_platform_id",
+        ]
+        for table in tables_with_platform_id_fields:
+            for field in possible_field_names:
+                try:
+                    table_platform_id = getattr(table, field)
+                    self.session.query(table).filter(table_platform_id == merge_platform_id).update(
+                        {field: master_platform_id}
+                    )
+                except Exception:
+                    pass
+        self.session.flush()
