@@ -16,9 +16,10 @@ from pepys_admin.maintenance.widgets.utils import (
 
 
 class FilterWidget:
-    def __init__(self, column_data=None, on_change_handler=None):
+    def __init__(self, column_data=None, on_change_handler=None, max_filters=None):
         self.column_data = column_data
         self.on_change_handler = on_change_handler
+        self.max_filters = max_filters
 
         self.last_filters_output = []
 
@@ -37,6 +38,7 @@ class FilterWidget:
         # result of a function is
         self.container = DynamicContainer(self.get_container_contents)
         self.button = Button("Add filter condition", self.add_entry)
+        self.validation_toolbar = ValidationToolbar()
 
         # Start with one entry and no boolean operators
         self.entries = [FilterWidgetEntry(self)]
@@ -83,12 +85,17 @@ class FilterWidget:
             [
                 HSplit(display_widgets, padding=1),
                 self.button,
-                ValidationToolbar(),
+                self.validation_toolbar,
             ],
             padding=1,
         )
 
     def add_entry(self):
+        if self.max_filters is not None and len(self.entries) == self.max_filters:
+            # TODO: Show some sort of error here - but we don't have access
+            # to all the nice messagebox functionality int he main GUI
+            # so I'm not sure how best to do it...
+            return
         self.entries.append(FilterWidgetEntry(self))
         self.boolean_operators.append(BooleanOperatorEntry(self))
         # Set the focus to the first widget in the most recently created entry

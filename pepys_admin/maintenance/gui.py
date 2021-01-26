@@ -106,7 +106,9 @@ class MaintenanceGUI:
             height=Dimension(weight=0.05),
         )
 
-        self.filter_widget = FilterWidget(on_change_handler=self.on_filter_widget_change)
+        self.filter_widget = FilterWidget(
+            on_change_handler=self.on_filter_widget_change, max_filters=6
+        )
 
         self.filter_container = DynamicContainer(self.get_filter_container)
         self.filter_query_buffer = Buffer()
