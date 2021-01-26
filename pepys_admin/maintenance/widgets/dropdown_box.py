@@ -132,7 +132,11 @@ class DropdownBox:
         return [
             ("[SetMenuPosition]", ""),  # This sets the menu positon to be at the start of the text
             ("class:button.text", text, handler),
-            ("class:button.arrow", " ▼", handler),  # TODO: Test the unicode character on Windows
+            (
+                "class:button.arrow",
+                " \u25BC",
+                handler,
+            ),
         ]
 
     def _get_key_bindings(self) -> KeyBindings:
