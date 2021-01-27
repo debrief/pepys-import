@@ -1,3 +1,5 @@
+# Example prompt_toolkit code showing where we want to use a scrollable window
+# By Robin Wilson (robin@rtwilson.com)
 from prompt_toolkit import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
@@ -50,6 +52,8 @@ class ExampleApp:
 
         contents.append(self.add_button)
 
+        # Here is where we'd like to add the scrollable window
+        # (or potentially wrapping the self.dyn_container above)
         return HSplit(contents, padding=2, height=Dimension(weight=0.5))
 
     def add_entry(self):
