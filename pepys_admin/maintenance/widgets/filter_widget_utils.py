@@ -2,11 +2,11 @@ import operator
 from typing import List
 
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.utils.table_name_utils import table_name_to_class_name
+from pepys_import.utils.table_name_utils import camel_to_snake, table_name_to_class_name
 
 operator_dict = {
     "=": operator.eq,
-    "!=": not operator.eq,
+    "!=": operator.ne,
     ">": operator.gt,
     "<": operator.lt,
     ">=": operator.ge,
@@ -19,22 +19,20 @@ and_or_dict = {
 
 
 def filter_widget_output_to_query(outputs: List[List], table_name: str, data_store: DataStore):
-    # Example: [["name", "=", "HMS Floaty"], ["AND"], ["Nationality.name", "=", "name here"]], Platforms
     class_name = table_name_to_class_name(table_name)
     class_obj = getattr(data_store.db_classes, class_name)
     queries = list()
-    for idx, output in outputs:
+    and_or_list = list()
+    for idx, output in enumerate(outputs):
         if len(output) == 3:
             column, ops, value = output
             if "." in column:
-                column = column.lower().replace(".", "_")
+                col = camel_to_snake(column).replace(".", "_")
+            else:
+                col = column
 
             try:  # Try to get table field
-                col = getattr(class_obj, column)
-            except AttributeError:
-                pass
-            try:  # Try to create relationship, raise only if this attempt fails, too
-                ...
+                col = getattr(class_obj, col)
             except AttributeError:
                 raise AttributeError(f"Column not found! Error in {idx}: '{column}'")
 
@@ -46,11 +44,18 @@ def filter_widget_output_to_query(outputs: List[List], table_name: str, data_sto
                 raise ValueError(f"Operator Error in {idx}: '{ops}'!")
         elif len(output) == 1:
             if output[0] in and_or_dict:
-                queries.append(and_or_dict[output[0]])
+                and_or_list.append(and_or_dict[output[0]])
             else:
                 raise ValueError(f"Operator Error in {idx}: '{output}'!")
         else:
             raise ValueError(
                 f"There should be one or three variables in each filter. Error in {idx}: '{output}'!"
             )
-    # TODO: iterate over queries list, and merge them according to "and" or "or" between two elements
+
+    i, j = 1, 0
+    query = queries[0]
+    while i < len(queries) and j < len(and_or_list):
+        query = and_or_list[j](query, queries[i])
+        i += 1
+        j += 1
+    return query
