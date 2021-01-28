@@ -25,6 +25,7 @@ from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Border, Label
+from sqlalchemy.orm import undefer
 
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
@@ -183,15 +184,17 @@ class MaintenanceGUI:
     def run_query(self):
         logger.debug("Running query")
         with self.data_store.session_scope():
-            results = self.data_store.session.query(self.data_store.db_classes.Platform).all()
+            results = (
+                self.data_store.session.query(self.data_store.db_classes.Platform)
+                .options(undefer("*"))
+                .all()
+            )
 
             self.table_data = []
 
             self.table_data = [self.get_table_titles(self.preview_selected_fields)]
             self.table_objects = [None]
 
-            for result in results:
-                self.data_store.session.refresh(result)
             self.data_store.session.expunge_all()
 
             for result in results:
