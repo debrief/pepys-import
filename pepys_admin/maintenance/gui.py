@@ -131,15 +131,8 @@ class MaintenanceGUI:
             height=Dimension(weight=0.2),
         )
 
-        self.status_bar_container = VSplit(
-            [
-                Label("ESC - Exit", style="class:status-bar-text", width=10),
-                Label("F1 - Help", style="class:status-bar-text", width=9),
-            ],
-            padding=3,
-            align=HorizontalAlign.LEFT,
-            height=1,
-        )
+        self.status_bar_shortcuts = ["Ctrl-F - Select fields"]
+        self.status_bar_container = DynamicContainer(self.get_status_bar_container)
 
         self.root_container = FloatContainer(
             HSplit(
@@ -342,11 +335,13 @@ class MaintenanceGUI:
         @kb.add("f6")
         def _(event):
             self.preview_tab = "table"
+            self.status_bar_shortcuts = ["Ctrl-F - Select fields"]
             event.app.layout.focus(self.preview_container)
 
         @kb.add("f7")
         def _(event):
             self.preview_tab = "graph"
+            self.status_bar_shortcuts = ["Ctrl-U - Update graph"]
             event.app.layout.focus(self.preview_container)
 
         @kb.add("f8")
@@ -400,6 +395,22 @@ class MaintenanceGUI:
         ensure_future(coroutine())
 
     def get_filter_container(self):
+        # top_label = VSplit(
+        #     [
+        #         Label(
+        #             text="Build filters  F3",
+        #             style="class:title-line",
+        #             dont_extend_width=True
+        #         ),
+        #         Label(text=" | ", style="class:title-line", width=3),
+        #         Label(text="Show Filter Query  F4", style="class:title-line", dont_extend_width=True),
+        #         Label(text=" | ", style="class:title-line", width=3),
+        #         Label(text="Show complete query  F5", style="class:title-line", dont_extend_width=True),
+        #         Label(" ", style="class:title-line", width=Dimension(weight=10))
+        #     ],
+        #     align=HorizontalAlign.LEFT,
+        #     padding=0
+        # )
         top_label = Label(
             text="Build filters  F3 | Show Filter Query  F4 | Show complete query  F5",
             style="class:title-line",
@@ -462,6 +473,34 @@ class MaintenanceGUI:
                 padding=1,
                 width=Dimension(weight=0.4),
             )
+
+    def get_status_bar_container(self):
+        return VSplit(
+            [
+                VSplit(
+                    [
+                        Label("ESC - Exit", style="class:status-bar-text", dont_extend_width=True),
+                        Label("F1 - Help", style="class:status-bar-text", dont_extend_width=True),
+                    ],
+                    padding=3,
+                    align=HorizontalAlign.LEFT,
+                    height=1,
+                ),
+                VSplit(
+                    [
+                        Label(
+                            text,
+                            style="class:status-bar-text",
+                            dont_extend_width=True,
+                        )
+                        for text in self.status_bar_shortcuts
+                    ],
+                    padding=3,
+                    align=HorizontalAlign.RIGHT,
+                    height=1,
+                ),
+            ]
+        )
 
 
 if __name__ == "__main__":
