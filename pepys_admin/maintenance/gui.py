@@ -8,6 +8,7 @@ from loguru import logger
 from prompt_toolkit import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.document import Document
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.layout.containers import (
@@ -72,25 +73,16 @@ class MaintenanceGUI:
         self.run_query()
 
         self.filters_tab = "filters"
+        self.preview_tab = "table"
 
         self.preview_table = CheckboxTable(
             table_data=self.get_table_data, table_objects=self.get_table_objects
         )
-
-        self.preview_container = HSplit(
-            children=[
-                Label(text="Preview List   F7 | Preview Graph  F8", style="class:title-line"),
-                Label(
-                    text="Select specific fields to display in preview",
-                    style="fg:ansiblue",
-                ),
-                self.preview_table,
-            ],
-            padding=1,
-            width=Dimension(weight=0.4),
+        self.preview_graph = Window(
+            BufferControl(Buffer(document=Document("Graph here", 0), read_only=True))
         )
 
-        self.button = None
+        self.preview_container = DynamicContainer(self.get_preview_container)
 
         self.dropdown_table = DropdownBox(
             text="Select a table",
@@ -123,7 +115,7 @@ class MaintenanceGUI:
         self.actions_container = HSplit(
             [
                 Label(
-                    text="Choose actions  F6",
+                    text="Choose actions  F8",
                     style="class:title-line",
                 ),
                 ComboBox(
@@ -328,13 +320,9 @@ class MaintenanceGUI:
         def _(event):
             self.run_query()
 
-        @kb.add("f6")
+        @kb.add("f2")
         def _(event):
-            event.app.layout.focus(self.actions_container)
-
-        @kb.add("f7")
-        def _(event):
-            event.app.layout.focus(self.preview_container)
+            event.app.layout.focus(self.data_type_container)
 
         @kb.add("f3")
         def _(event):
@@ -350,6 +338,20 @@ class MaintenanceGUI:
         def _(event):
             self.filters_tab = "complete_query"
             event.app.layout.focus(self.filter_container)
+
+        @kb.add("f6")
+        def _(event):
+            self.preview_tab = "table"
+            event.app.layout.focus(self.preview_container)
+
+        @kb.add("f7")
+        def _(event):
+            self.preview_tab = "graph"
+            event.app.layout.focus(self.preview_container)
+
+        @kb.add("f8")
+        def _(event):
+            event.app.layout.focus(self.actions_container)
 
         return kb
 
@@ -399,7 +401,7 @@ class MaintenanceGUI:
 
     def get_filter_container(self):
         top_label = Label(
-            text="Apply filters   F3 | Filter Query  F4 | Complete query  F5",
+            text="Build filters  F3 | Show Filter Query  F4 | Show complete query  F5",
             style="class:title-line",
         )
         if self.filters_tab == "filters":
@@ -434,6 +436,31 @@ class MaintenanceGUI:
                 ],
                 padding=1,
                 height=Dimension(weight=0.5),
+            )
+
+    def get_preview_container(self):
+        title_label = Label(text="Preview List   F6 | Preview Graph  F7", style="class:title-line")
+        if self.preview_tab == "table":
+            return HSplit(
+                children=[
+                    title_label,
+                    Label(
+                        text="Use Ctrl-F to select fields to display",
+                        style="fg:ansiblue",
+                    ),
+                    self.preview_table,
+                ],
+                padding=1,
+                width=Dimension(weight=0.4),
+            )
+        elif self.preview_tab == "graph":
+            return HSplit(
+                children=[
+                    title_label,
+                    self.preview_graph,
+                ],
+                padding=1,
+                width=Dimension(weight=0.4),
             )
 
 
