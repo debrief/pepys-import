@@ -60,23 +60,19 @@ column_data = {"Platform": platform_column_data, "Sensor": sensor_column_data}
 
 
 class MaintenanceGUI:
-    def __init__(self):
-        self.data_store = DataStore("", "", "", 0, "test_gui.db", db_type="sqlite")
-        self.data_store.initialise()
-        self.create_platforms()
+    def __init__(self, data_store=None):
+        if data_store is not None:
+            self.data_store = data_store
+        else:
+            # TODO: Remove this, it's just for ease of testing/development at the moment
+            self.data_store = DataStore("", "", "", 0, "test_gui.db", db_type="sqlite")
+            self.data_store.initialise()
+            self.create_platforms()
+
         self.run_query()
 
         self.filters_tab = "filters"
 
-        # self.table_data = [
-        #     ["Name", "Type", "Nat."],
-        #     ["NELSON", "Frigate", "UK"],
-        #     ["SARK", "Destroyer", "UK"],
-        #     ["ADRI", "Frigate", "UK"],
-        #     ["JEAN", "Corvette", "FR"],
-        # ]
-
-        # self.table_objects = []
         self.preview_table = CheckboxTable(
             table_data=self.get_table_data, table_objects=self.get_table_objects
         )

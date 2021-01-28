@@ -82,7 +82,7 @@ class AdminShell(BaseShell):
         snapshot_shell.cmdloop()
 
     def do_maintenance_gui(self):
-        gui = MaintenanceGUI()
+        gui = MaintenanceGUI(self.data_store)
         gui.app.run()
 
     def do_initialise(self):
