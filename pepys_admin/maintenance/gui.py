@@ -1,6 +1,8 @@
 import asyncio
 import time
 from asyncio.tasks import ensure_future
+from datetime import datetime
+from functools import partial
 
 from loguru import logger
 from prompt_toolkit import Application
@@ -32,6 +34,7 @@ from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
+from pepys_import.core.store.data_store import DataStore
 
 logger.remove()
 logger.add("gui.log")
@@ -58,17 +61,22 @@ column_data = {"Platform": platform_column_data, "Sensor": sensor_column_data}
 
 class MaintenanceGUI:
     def __init__(self):
+        self.data_store = DataStore("", "", "", 0, "test_gui.db", db_type="sqlite")
+        self.data_store.initialise()
+        self.create_platforms()
+        self.run_query()
+
         self.filters_tab = "filters"
 
-        self.table_data = [
-            ["Name", "Type", "Nat."],
-            ["NELSON", "Frigate", "UK"],
-            ["SARK", "Destroyer", "UK"],
-            ["ADRI", "Frigate", "UK"],
-            ["JEAN", "Corvette", "FR"],
-        ]
+        # self.table_data = [
+        #     ["Name", "Type", "Nat."],
+        #     ["NELSON", "Frigate", "UK"],
+        #     ["SARK", "Destroyer", "UK"],
+        #     ["ADRI", "Frigate", "UK"],
+        #     ["JEAN", "Corvette", "FR"],
+        # ]
 
-        self.table_objects = []
+        # self.table_objects = []
         self.preview_table = CheckboxTable(
             table_data=self.get_table_data, table_objects=self.get_table_objects
         )
@@ -182,12 +190,55 @@ class MaintenanceGUI:
             style=self.get_style(),
         )
 
+    def run_query(self):
+        logger.debug("Running query")
+        with self.data_store.session_scope():
+            results = self.data_store.session.query(self.data_store.db_classes.Platform).all()
+
+            self.table_data = []
+
+            self.table_data = [["Name", "Type", "Nationality"]]
+            self.table_objects = [None]
+
+            self.data_store.session.expunge_all()
+
+            for result in results:
+                self.table_data.append(
+                    [result.name, result.platform_type_name, result.nationality_name]
+                )
+                self.table_objects.append(result)
+        app = get_app()
+        app.invalidate()
+        logger.debug("Ran query")
+        logger.debug(f"{self.table_data=}")
+
+    def create_platforms(self):
+        with self.data_store.session_scope():
+            change_id = self.data_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
+            nationality = self.data_store.add_to_nationalities("test_nationality", change_id).name
+            platform_type = self.data_store.add_to_platform_types(
+                "test_platform_type", change_id
+            ).name
+            privacy = self.data_store.add_to_privacies("test_privacy", 0, change_id).name
+            _ = self.data_store.get_platform(
+                platform_name="Test Platform 1",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=change_id,
+            )
+            _ = self.data_store.get_platform(
+                platform_name="Test Platform 2",
+                nationality=nationality,
+                platform_type=platform_type,
+                privacy=privacy,
+                change_id=change_id,
+            )
+
     def get_table_data(self):
         return self.table_data
 
     def get_table_objects(self):
-        self.table_objects = list(range(len(self.table_data)))
-
         return self.table_objects
 
     def on_table_select(self, value):
@@ -198,21 +249,7 @@ class MaintenanceGUI:
 
     def run_action(self, selected_value):
         if selected_value == "1 - Merge Platforms":
-            items = []
-            # Note: Only works at the moment because we have
-            # table objects as integer indices for the table_data
-            # list. This won't work when we have objects (eg. SQLAlchemy)
-            # instead
-            for index in self.preview_table.current_values:
-                items.append(" - ".join(self.table_data[index]))
-
-            async def coroutine():
-                dialog = PlatformMergeDialog(items)
-                dialog_result = await self.show_dialog_as_float(dialog)
-                if dialog_result is not None:
-                    self.show_messagebox("Result", dialog_result)
-
-            ensure_future(coroutine())
+            self.run_merge_platforms()
         elif selected_value == "2 - Test Progressbar":
 
             async def coroutine():
@@ -222,6 +259,33 @@ class MaintenanceGUI:
             ensure_future(coroutine())
         else:
             self.show_messagebox("Action", f"Running action {selected_value}")
+
+    def run_merge_platforms(self):
+        display_to_object = {}
+        for platform_obj in self.preview_table.current_values:
+            display_str = " - ".join([platform_obj.name, platform_obj.nationality_name])
+            display_to_object[display_str] = platform_obj
+
+        def do_merge(platform_list, master_platform):
+            with self.data_store.session_scope():
+                self.data_store.merge_platforms(platform_list, master_platform)
+            time.sleep(3)
+
+        async def coroutine():
+            dialog = PlatformMergeDialog(list(display_to_object.keys()))
+            dialog_result = await self.show_dialog_as_float(dialog)
+            if dialog_result is not None:
+                master_platform_obj = display_to_object[dialog_result]
+                logger.debug("Got result")
+                loop = asyncio.get_running_loop()
+                await loop.run_in_executor(
+                    None, partial(do_merge, self.preview_table.current_values, master_platform_obj)
+                )
+                self.show_messagebox("Merged", "Merged")
+                self.run_query()
+                logger.debug("Ran query")
+
+        ensure_future(coroutine())
 
     async def async_run_slowly(self, set_percentage, is_cancelled):
         for i in range(11):
@@ -264,9 +328,9 @@ class MaintenanceGUI:
         kb.add("tab")(focus_next)
         kb.add("s-tab")(focus_previous)
 
-        @kb.add("c-a")
+        @kb.add("c-r")
         def _(event):
-            self.filter_widget.set_column_data({})
+            self.run_query()
 
         @kb.add("f6")
         def _(event):
