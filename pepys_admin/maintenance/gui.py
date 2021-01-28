@@ -441,5 +441,6 @@ class MaintenanceGUI:
             )
 
 
-gui = MaintenanceGUI()
-gui.app.run()
+if __name__ == "__main__":
+    gui = MaintenanceGUI()
+    gui.app.run()

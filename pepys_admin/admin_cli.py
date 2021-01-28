@@ -11,6 +11,7 @@ from paths import ROOT_DIRECTORY
 from pepys_admin.base_cli import BaseShell
 from pepys_admin.export_cli import ExportShell
 from pepys_admin.initialise_cli import InitialiseShell
+from pepys_admin.maintenance.gui import MaintenanceGUI
 from pepys_admin.snapshot_cli import SnapshotShell
 from pepys_admin.view_data_cli import ViewDataShell
 from pepys_import.core.store import constants
@@ -36,6 +37,7 @@ class AdminShell(BaseShell):
 (5) Migrate
 (6) View Data
 (7) View Docs
+(8) Maintenance
 (.) Exit
 """
     prompt = "(pepys-admin) "
@@ -53,6 +55,7 @@ class AdminShell(BaseShell):
             "5": self.do_migrate,
             "6": self.do_view_data,
             "7": self.do_view_docs,
+            "8": self.do_maintenance_gui,
         }
 
         self.cfg = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
@@ -77,6 +80,10 @@ class AdminShell(BaseShell):
         print("-" * 60)
         snapshot_shell = SnapshotShell(self.data_store)
         snapshot_shell.cmdloop()
+
+    def do_maintenance_gui(self):
+        gui = MaintenanceGUI()
+        gui.app.run()
 
     def do_initialise(self):
         """Runs the :code:`InitialiseShell` which offers to clear contents, import sample data,
