@@ -40,7 +40,7 @@ from pepys_import.core.store.constants import (
     UNIT_TYPE,
     USER,
 )
-from pepys_import.utils.table_name_utils import table_name_to_class_name
+from pepys_import.utils.table_name_utils import camel_to_snake, table_name_to_class_name
 
 TABLE_NAMES = [
     HOSTED_BY,
@@ -97,6 +97,18 @@ def test_make_table_names_singular(table_name):
 def test_make_table_names_singular_alembic_version(table_name):
     table = table_name_to_class_name(table_name)
     assert table == "alembic_version"
+
+
+@pytest.mark.parametrize(
+    "name,expected_name",
+    [
+        ("Platform", "platform"),
+        ("Nationality.name", "nationality.name"),
+        ("PlatformType.name", "platform_type.name"),
+    ],
+)
+def test_camel_to_snake(name, expected_name):
+    assert expected_name == camel_to_snake(name)
 
 
 if __name__ == "__main__":
