@@ -1681,10 +1681,10 @@ class DataStore:
         if isinstance(platform_list[0], Platform):  # Extract platform_ids from platform objects
             platform_list = [p.platform_id for p in platform_list]
 
-        for p_id in platform_list:
-            if p_id == master_id:  # We don't need to change these values
-                continue
+        if master_id in platform_list:
+            platform_list.remove(master_id)  # We don't need to change these values
 
+        for p_id in platform_list:
             self.update_platform_ids(p_id, master_id)
 
             sensors = self.session.query(Sensor).filter(Sensor.host == p_id).all()
@@ -1716,6 +1716,9 @@ class DataStore:
                     )
                     .update({"sensor_id": master_sensor_id})
                 )
+
+        for p_id in platform_list:  # Delete merged platforms
+            self.session.query(Platform).filter(Platform.platform_id == p_id).delete()
         self.session.flush()
         return True
 
