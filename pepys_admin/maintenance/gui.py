@@ -70,6 +70,8 @@ class MaintenanceGUI:
             self.data_store.initialise()
             self.create_platforms()
 
+        self.preview_selected_fields = ["name", "identifier", "nationality_name"]
+
         self.run_query()
 
         self.filters_tab = "filters"
@@ -171,6 +173,13 @@ class MaintenanceGUI:
             style=self.get_style(),
         )
 
+    def get_table_titles(self, fields):
+        results = []
+        for field in fields:
+            results.append(field.replace("_", " ").capitalize())
+
+        return results
+
     def run_query(self):
         logger.debug("Running query")
         with self.data_store.session_scope():
@@ -178,14 +187,16 @@ class MaintenanceGUI:
 
             self.table_data = []
 
-            self.table_data = [["Name", "Type", "Nationality"]]
+            self.table_data = [self.get_table_titles(self.preview_selected_fields)]
             self.table_objects = [None]
 
+            for result in results:
+                self.data_store.session.refresh(result)
             self.data_store.session.expunge_all()
 
             for result in results:
                 self.table_data.append(
-                    [result.name, result.platform_type_name, result.nationality_name]
+                    [getattr(result, field_name) for field_name in self.preview_selected_fields]
                 )
                 self.table_objects.append(result)
         app = get_app()
@@ -244,7 +255,9 @@ class MaintenanceGUI:
     def run_merge_platforms(self):
         display_to_object = {}
         for platform_obj in self.preview_table.current_values:
-            display_str = " - ".join([platform_obj.name, platform_obj.nationality_name])
+            display_str = " - ".join(
+                [platform_obj.name, platform_obj.nationality_name, platform_obj.identifier]
+            )
             display_to_object[display_str] = platform_obj
 
         def do_merge(platform_list, master_platform):
@@ -262,7 +275,7 @@ class MaintenanceGUI:
                 await loop.run_in_executor(
                     None, partial(do_merge, self.preview_table.current_values, master_platform_obj)
                 )
-                self.show_messagebox("Merged", "Merged")
+                self.show_messagebox("Merge completed", "Merge completed")
                 self.run_query()
                 logger.debug("Ran query")
 
