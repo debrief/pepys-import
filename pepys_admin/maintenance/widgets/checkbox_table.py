@@ -52,6 +52,9 @@ class CheckboxTable(CheckboxList):
             self.values = [(None, "")]
             return
 
+        if len(table_data) != len(table_objects):
+            raise ValueError("table_data and table_objects lists must be the same length")
+
         # Work out the maximum length of each column
         # col_max_length[col_index] will be the maximum
         # length of strings for that column
