@@ -145,9 +145,7 @@ class Task(BasePostGIS, TaskMixin):
 
     task_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), CheckConstraint("name <> ''", name="ck_Tasks_name"), nullable=False)
-    parent_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Tasks.task_id", onupdate="cascade"), nullable=False
-    )
+    parent_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Tasks.task_id", onupdate="cascade"))
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     environment = deferred(Column(String(150)))

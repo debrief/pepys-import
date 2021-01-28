@@ -98,6 +98,10 @@ class NMEAImporter(Importer):
                 )
                 # Keep track of the platform name, so we don't have to ask for each line
                 self.platform_name = platform.name
+                # Explicitly store this new platform in the cache under the new platform name
+                # It won't be stored by default as the first time we called get_cached_platform
+                # we passed None as a name, and so it wouldn't have cached
+                self.platform_cache[self.platform_name] = platform
 
                 sensor = self.get_cached_sensor(
                     data_store=data_store,

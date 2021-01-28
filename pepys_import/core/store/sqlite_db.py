@@ -128,7 +128,7 @@ class Task(BaseSpatiaLite, TaskMixin):
 
     task_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(String(150), CheckConstraint("name <> ''", name="ck_Tasks_name"), nullable=False)
-    parent_id = Column(UUIDType, ForeignKey("Tasks.task_id", onupdate="cascade"), nullable=False)
+    parent_id = Column(UUIDType, ForeignKey("Tasks.task_id", onupdate="cascade"))
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     environment = deferred(Column(String(150)))
