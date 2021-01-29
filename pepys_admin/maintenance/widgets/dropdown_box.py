@@ -134,7 +134,7 @@ class DropdownBox:
             ("class:button.text", text, handler),
             (
                 "class:button.arrow",
-                " \u25BC",
+                " \u25BC",  # Down arrow symbol
                 handler,
             ),
         ]
