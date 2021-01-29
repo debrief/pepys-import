@@ -40,6 +40,7 @@ class MergePlatformsTestCase(TestCase):
         Check whether measurements moved to target platform"""
         State = self.store.db_classes.State
         Sensor = self.store.db_classes.Sensor
+        Platform = self.store.db_classes.Platform
         with self.store.session_scope():
             platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -133,11 +134,19 @@ class MergePlatformsTestCase(TestCase):
             assert len(states_after_merge) == 0
             assert len(contacts_after_merge) == 0
 
+            # Assert that merged platform deleted
+            assert (
+                not self.store.session.query(Platform)
+                .filter(Platform.platform_id == platform_2.platform_id)
+                .scalar()
+            )
+
     def test_merge_platforms_with_different_sensor_names(self):
         """Create two platforms, each platform will have a sensor named TEST-SENSOR.
         Check whether measurements moved to target platform"""
         State = self.store.db_classes.State
         Sensor = self.store.db_classes.Sensor
+        Platform = self.store.db_classes.Platform
         with self.store.session_scope():
             platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -224,10 +233,18 @@ class MergePlatformsTestCase(TestCase):
             # Assert that sensor_2 moved to Platform
             assert sensors_after_merge[1] == sensor_2
 
+            # Assert that merged platform deleted
+            assert (
+                not self.store.session.query(Platform)
+                .filter(Platform.platform_id == platform_2.platform_id)
+                .scalar()
+            )
+
     def test_merge_platforms_with_only_comments(self):
         """Create three platforms, each platform will have a sensor named TEST-SENSOR.
         Check whether measurements moved to target platform"""
         Comment = self.store.db_classes.Comment
+        Platform = self.store.db_classes.Platform
         with self.store.session_scope():
             platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -315,6 +332,13 @@ class MergePlatformsTestCase(TestCase):
             )
             assert len(comments_after_merge) == 0
 
+            # Assert that merged platforms deleted
+            assert (
+                not self.store.session.query(Platform)
+                .filter(Platform.platform_id.in_([platform_2.platform_id, platform_3.platform_id]))
+                .scalar()
+            )
+
     def test_merge_platforms_invalid_master_platform(self):
         uuid = UUID("12345678123456781234567812345678")
         with self.store.session_scope(), pytest.raises(ValueError) as error:
@@ -325,6 +349,7 @@ class MergePlatformsTestCase(TestCase):
         State = self.store.db_classes.State
         Sensor = self.store.db_classes.Sensor
         Comment = self.store.db_classes.Comment
+        Platform = self.store.db_classes.Platform
         with self.store.session_scope():
             platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -438,6 +463,13 @@ class MergePlatformsTestCase(TestCase):
 
             # Assert that sensor_2 moved to Platform
             assert sensors_after_merge[1] == sensor_2
+
+            # Assert that merged platforms deleted
+            assert (
+                not self.store.session.query(Platform)
+                .filter(Platform.platform_id.in_([platform_2.platform_id, platform_3.platform_id]))
+                .scalar()
+            )
 
 
 class UpdatePlatformIDsTestCase(TestCase):
