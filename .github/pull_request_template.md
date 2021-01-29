@@ -38,6 +38,7 @@ Please ensure that you complete the following mandatory sections:
 - [ ] I have chosen reviewers for my PR.
 - [ ] I have chosen an appropriate label for the PR, adding `interactive_review` if reviewers will need to see UI
 - [ ] I have extended/updated the documentation in `\docs` folder
+- [ ] Any database changes are recorded in the Log/Changes tables
 - [ ] I have completed the mandatory sections of this document.
 - [ ] I have deleted any unused sections.
 
