@@ -1,5 +1,5 @@
 from prompt_toolkit.application.current import get_app
-from prompt_toolkit.layout.containers import DynamicContainer, HorizontalAlign, HSplit, VSplit
+from prompt_toolkit.layout import DynamicContainer, HorizontalAlign, HSplit, ScrollablePane, VSplit
 from prompt_toolkit.widgets.base import Button
 from prompt_toolkit.widgets.toolbars import ValidationToolbar
 
@@ -28,6 +28,8 @@ class FilterWidget:
         # any entries
         if self.column_data is None:
             self.column_data = {}
+
+        self.scrollable_pane = None
 
         # For consistency, keep these here, and reference them in the widgets
         # so we only have to change them in one place
@@ -78,10 +80,7 @@ class FilterWidget:
         # FilterWidgetEntry
         # ...
         display_widgets = interleave_lists(entry_widgets, boolean_widgets)
-
-        # Important to have the validation toolbar here, or errors aren't
-        # displayed
-        return HSplit(
+        content = HSplit(
             [
                 HSplit(display_widgets, padding=1),
                 self.button,
@@ -89,6 +88,17 @@ class FilterWidget:
             ],
             padding=1,
         )
+
+        if self.scrollable_pane is None:
+            self.scrollable_pane = ScrollablePane(
+                content,
+            )
+        else:
+            self.scrollable_pane.content = content
+
+        # Important to have the validation toolbar here, or errors aren't
+        # displayed
+        return self.scrollable_pane
 
     def add_entry(self):
         if self.max_filters is not None and len(self.entries) == self.max_filters:
