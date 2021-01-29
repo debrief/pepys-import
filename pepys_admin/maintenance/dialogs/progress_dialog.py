@@ -11,14 +11,14 @@ from prompt_toolkit.widgets.dialogs import Dialog
 
 
 class ProgressDialog:
-    def __init__(self, title, run_callback):
+    def __init__(self, title, run_callback, show_cancel=True):
         self.future = Future()
 
         def set_cancelled():
             self.cancelled = True
             self.future.set_result(None)
 
-        ok_button = Button(text="Cancel", handler=(lambda: set_cancelled()))
+        cancel_button = Button(text="Cancel", handler=(lambda: set_cancelled()))
 
         self.progressbar = ProgressBar()
         self.progressbar.percentage = 0
@@ -29,29 +29,20 @@ class ProgressDialog:
         self.dialog = Dialog(
             title=title,
             body=HSplit([Label(text="In progress..."), self.progressbar]),
-            buttons=[ok_button],
+            buttons=[cancel_button] if show_cancel else [],
             width=D(preferred=80),
             modal=True,
         )
 
-        # Get the keybindings for the dialog and add a binding for Esc
-        # to close the dialog
-        # dialog_kb = self.dialog.container.container.content.key_bindings
-
-        # @dialog_kb.add("escape")
-        # def _(event) -> None:
-        #     set_done()
-
-        # OLD code for running with async function
-        # async def coroutine():
-        #     await self.run_callback(self.set_percentage, self.is_cancelled)
-
-        # ensure_future(coroutine())
-
         async def coroutine():
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(
-                None, partial(self.run_callback, self.set_percentage, self.is_cancelled)
+                None,
+                partial(
+                    self.run_callback,
+                    set_percentage=self.set_percentage,
+                    is_cancelled=self.is_cancelled,
+                ),
             )
 
         ensure_future(coroutine())

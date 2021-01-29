@@ -108,7 +108,7 @@ class MaintenanceGUI:
         )
 
         self.filter_widget = FilterWidget(
-            on_change_handler=self.on_filter_widget_change, max_filters=6
+            on_change_handler=self.on_filter_widget_change, max_filters=None
         )
 
         self.filter_container = DynamicContainer(self.get_filter_container)
@@ -263,10 +263,14 @@ class MaintenanceGUI:
             )
             display_to_object[display_str] = platform_obj
 
-        def do_merge(platform_list, master_platform):
+        def do_merge(platform_list, master_platform, set_percentage=None, is_cancelled=None):
+            set_percentage(10)
             with self.data_store.session_scope():
                 self.data_store.merge_platforms(platform_list, master_platform)
             time.sleep(3)
+            set_percentage(90)
+            time.sleep(1)
+            set_percentage(100)
 
         async def coroutine():
             dialog = PlatformMergeDialog(list(display_to_object.keys()))
@@ -274,11 +278,14 @@ class MaintenanceGUI:
             if dialog_result is not None:
                 master_platform_obj = display_to_object[dialog_result]
                 logger.debug("Got result")
-                loop = asyncio.get_running_loop()
-                await loop.run_in_executor(
-                    None, partial(do_merge, self.preview_table.current_values, master_platform_obj)
+
+                dialog = ProgressDialog(
+                    "Merging platforms",
+                    partial(do_merge, self.preview_table.current_values, master_platform_obj),
+                    show_cancel=False,
                 )
-                self.show_messagebox("Merge completed", "Merge completed")
+                _ = await self.show_dialog_as_float(dialog)
+                await self.show_messagebox_async("Merge completed")
                 self.run_query()
                 logger.debug("Ran query")
 
@@ -327,6 +334,9 @@ class MaintenanceGUI:
 
         @kb.add("c-r")
         def _(event):
+            # for attr_name in dir(self.data_store.db_classes.Platform):
+            #     attr = getattr(self.data_store.db_classes.Platform, attr_name)
+            #     logger.debug(f"{attr_name}: {type(attr)}")
             self.run_query()
 
         @kb.add("f2")
@@ -394,7 +404,11 @@ class MaintenanceGUI:
         app = get_app()
 
         focused_before = app.layout.current_window
-        app.layout.focus(dialog)
+        try:
+            app.layout.focus(dialog)
+        except ValueError:
+            pass
+
         result = await dialog.future
         app.layout.focus(focused_before)
 
@@ -403,12 +417,12 @@ class MaintenanceGUI:
 
         return result
 
-    def show_messagebox(self, title, text):
-        async def coroutine():
-            dialog = MessageDialog(title, text)
-            await self.show_dialog_as_float(dialog)
+    async def show_messagebox_async(self, title, text=None):
+        dialog = MessageDialog(title, text)
+        await self.show_dialog_as_float(dialog)
 
-        ensure_future(coroutine())
+    def show_messagebox(self, title, text=None):
+        ensure_future(self.show_messagebox_async(title, text))
 
     def get_filter_container(self):
         # top_label = VSplit(

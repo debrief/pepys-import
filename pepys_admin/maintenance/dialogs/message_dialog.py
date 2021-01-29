@@ -7,8 +7,11 @@ from prompt_toolkit.widgets.dialogs import Dialog
 
 
 class MessageDialog:
-    def __init__(self, title, text):
+    def __init__(self, title, text=None):
         self.future = Future()
+
+        if text is None:
+            text = title
 
         def set_done():
             self.future.set_result(None)
