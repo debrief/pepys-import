@@ -45,10 +45,12 @@ platform_column_data = {
     "platform_id": {"type": "id", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
     "name": {"type": "string", "values": ["HMS Name1", "HMS Floaty", "USS Sinky"]},
     "identifier": {"type": "string"},
+    "trigraph": {"type": "string"},
+    "quadgraph": {"type": "string"},
     "nationality_id": {"type": "id"},
-    "nationality_name": {"type": "string"},
-    "timestamp": {"type": "datetime"},
-    "speed": {"type": "float"},
+    "nationality name": {"type": "string", "system_name": "nationality_name"},
+    "platform type name": {"type": "string", "system_name": "platform_type_name"},
+    "privacy name": {"type": "string", "system_name": "privacy_name"},
 }
 
 sensor_column_data = {
@@ -71,7 +73,12 @@ class MaintenanceGUI:
             self.data_store.initialise()
             self.create_platforms()
 
-        self.preview_selected_fields = ["name", "identifier", "nationality_name"]
+        self.preview_selected_fields = [
+            "name",
+            "identifier",
+            "nationality_name",
+            "platform_type_name",
+        ]
 
         self.run_query()
 
@@ -177,7 +184,13 @@ class MaintenanceGUI:
     def get_table_titles(self, fields):
         results = []
         for field in fields:
-            results.append(field.replace("_", " ").capitalize())
+            splitted = field.split("_")
+            if len(splitted) > 1 and splitted[-1] == "name":
+                field_title = " ".join(splitted[:-1])
+            else:
+                field_title = " ".join(splitted)
+
+            results.append(field_title.capitalize())
 
         return results
 
