@@ -131,9 +131,11 @@ class MaintenanceGUI:
             on_change_handler=self.on_filter_widget_change, max_filters=None
         )
         self.filter_container = DynamicContainer(self.get_filter_container)
+        # Buffer to hold just the filter part of the query in SQL form
         self.filter_query_buffer = Buffer(document=Document("Filter query here", 0))
         self.filter_query = BufferControl(self.filter_query_buffer)
 
+        # Buffer to hold the complete query in SQL form
         self.complete_query_buffer = Buffer()
         self.complete_query = BufferControl(self.complete_query_buffer)
 
@@ -212,32 +214,48 @@ class MaintenanceGUI:
         return results
 
     def run_query(self):
-        logger.debug("Running query")
+        """Runs the query as defined by the FilterWidget,
+        and displays the result in the preview table."""
+        app = get_app()
+        # As this property is computed each time, get the output and store it
+        # to save time
         filters = self.filter_widget.filters
         with self.data_store.session_scope():
             if filters == []:
+                # If there are no filters then just return the table with no filtering
                 query_obj = self.data_store.session.query(self.data_store.db_classes.Platform)
             else:
+                # Otherwise, convert the filter widget output to a SQLAlchemy filter and run it
                 filter_query = filter_widget_output_to_query(filters, "Platforms", self.data_store)
                 query_obj = self.data_store.session.query(
                     self.data_store.db_classes.Platform
                 ).filter(filter_query)
+
+            # Get all the results, while undefering all fields to make sure everything is
+            # available once it's been expunged (disconnected) from the database
             results = query_obj.options(undefer("*")).all()
             logger.debug(results)
 
             if len(results) == 0:
+                # If we've got no results then set everything to empty lists
+                # and refresh the app
                 self.table_data = []
                 self.table_objects = []
-                app = get_app()
                 app.invalidate()
                 return
 
+            # Convert the selected fields to sensible table titles
             self.table_data = [self.get_table_titles(self.preview_selected_fields)]
+            # The first of the table objects should be None, as that is the header field
+            # and doesn't have a table object associated with it
             self.table_objects = [None]
 
+            # Disconnect all the objects we've returned in our query from the database
+            # so we can store them outside of the session without any problems
             self.data_store.session.expunge_all()
 
             for result in results:
+                # Get the right fields and append them
                 self.table_data.append(
                     [
                         str(getattr(result, field_name))
@@ -246,7 +264,7 @@ class MaintenanceGUI:
                 )
                 self.table_objects.append(result)
 
-        app = get_app()
+        # Refresh the app display
         app.invalidate()
         logger.debug("Ran query")
         logger.debug(f"{self.table_data=}")
@@ -281,21 +299,28 @@ class MaintenanceGUI:
         return self.table_objects
 
     def on_table_select(self, value):
+        """Called when an entry is selected from the Table dropdown at the top-left."""
+        # Set the data used to parameterise the FilterWidget
         self.filter_widget.set_column_data(column_data[value])
         self.run_query()
 
     def on_filter_widget_change(self, value):
+        """Called when the filter widget notifies us that it has changed. The filter
+        widget is sensible about this and only raises this event if there has actually been
+        a change in the output of the filters property. That means we can run a query
+        each time this is called, and the query shouldn't get run more often than is needed."""
         if value != []:
+            # Convert the filter object to a SQL string to display in the Complete Query tab
             filter_query = filter_widget_output_to_query(value, "Platforms", self.data_store)
             query_obj = self.data_store.session.query(self.data_store.db_classes.Platform).filter(
                 filter_query
             )
             sql_string = str(query_obj.statement.compile(compile_kwargs={"literal_binds": True}))
             self.filter_query_buffer.text = textwrap.fill(sql_string, width=50)
-        logger.debug(f"Filter widget output = {value}")
         self.run_query()
 
     def run_action(self, selected_value):
+        """Runs an action from the actions ComboBox. Called when Enter is pressed."""
         if selected_value == "1 - Merge Platforms":
             self.run_merge_platforms()
         elif selected_value == "2 - Test Progressbar":
@@ -319,6 +344,10 @@ class MaintenanceGUI:
             display_to_object[display_str] = platform_obj
 
         def do_merge(platform_list, master_platform, set_percentage=None, is_cancelled=None):
+            # Does the actual merge, while also setting the percentage complete
+            # TODO: In the future, we can move the set_percentage calls *inside* the merge_platforms
+            # function (as an optional argument, only called if it exists, so it works fine
+            # outside of the GUI context too)
             set_percentage(10)
             with self.data_store.session_scope():
                 self.data_store.merge_platforms(platform_list, master_platform)
