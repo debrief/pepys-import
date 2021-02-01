@@ -1,4 +1,5 @@
 import asyncio
+import textwrap
 import time
 from asyncio.tasks import ensure_future
 from datetime import datetime
@@ -90,15 +91,20 @@ class MaintenanceGUI:
         self.filters_tab = "filters"
         self.preview_tab = "table"
 
-        self.preview_table = CheckboxTable(
-            table_data=self.get_table_data, table_objects=self.get_table_objects
-        )
-        self.preview_graph = Window(
-            BufferControl(Buffer(document=Document("Graph here", 0), read_only=True))
+        self.init_ui_components()
+
+        layout = Layout(self.root_container)
+
+        self.app = Application(
+            layout=layout,
+            key_bindings=self.get_keybindings(),
+            full_screen=True,
+            mouse_support=True,
+            style=self.get_style(),
         )
 
-        self.preview_container = DynamicContainer(self.get_preview_container)
-
+    def init_ui_components(self):
+        # Dropdown box to select table, plus pane that it is in
         self.dropdown_table = DropdownBox(
             text="Select a table",
             entries=[
@@ -119,14 +125,19 @@ class MaintenanceGUI:
             height=Dimension(weight=0.1),
         )
 
+        # Filter pane, containing FilterWidget plus buffers for the
+        # text showing the SQL
         self.filter_widget = FilterWidget(
             on_change_handler=self.on_filter_widget_change, max_filters=None
         )
-
         self.filter_container = DynamicContainer(self.get_filter_container)
-        self.filter_query_buffer = Buffer()
+        self.filter_query_buffer = Buffer(document=Document("Filter query here", 0))
         self.filter_query = BufferControl(self.filter_query_buffer)
 
+        self.complete_query_buffer = Buffer()
+        self.complete_query = BufferControl(self.complete_query_buffer)
+
+        # Actions container, containing a list of actions that can be run
         self.actions_container = HSplit(
             [
                 Label(
@@ -146,9 +157,20 @@ class MaintenanceGUI:
             height=Dimension(weight=0.2),
         )
 
+        # Preview container, with two tabs: a preview table and a preview graph
+        self.preview_table = CheckboxTable(
+            table_data=self.get_table_data, table_objects=self.get_table_objects
+        )
+        self.preview_graph = Window(
+            BufferControl(Buffer(document=Document("Graph here", 0), read_only=True))
+        )
+        self.preview_container = DynamicContainer(self.get_preview_container)
+
+        # Status bar
         self.status_bar_shortcuts = ["Ctrl-F - Select fields"]
         self.status_bar_container = DynamicContainer(self.get_status_bar_container)
 
+        # Putting everything together in panes
         self.root_container = FloatContainer(
             HSplit(
                 [
@@ -174,16 +196,6 @@ class MaintenanceGUI:
                 ],
             ),
             floats=[],
-        )
-
-        layout = Layout(self.root_container)
-
-        self.app = Application(
-            layout=layout,
-            key_bindings=self.get_keybindings(),
-            full_screen=True,
-            mouse_support=True,
-            style=self.get_style(),
         )
 
     def get_table_titles(self, fields):
@@ -278,7 +290,8 @@ class MaintenanceGUI:
             query_obj = self.data_store.session.query(self.data_store.db_classes.Platform).filter(
                 filter_query
             )
-            self.filter_query_buffer.text = str(query_obj)
+            sql_string = str(query_obj.statement.compile(compile_kwargs={"literal_binds": True}))
+            self.filter_query_buffer.text = textwrap.fill(sql_string, width=50)
         logger.debug(f"Filter widget output = {value}")
         self.run_query()
 
@@ -296,6 +309,8 @@ class MaintenanceGUI:
             self.show_messagebox("Action", f"Running action {selected_value}")
 
     def run_merge_platforms(self):
+        # Generate a mapping of nice display strings
+        # to the actual underlying Platform objects
         display_to_object = {}
         for platform_obj in self.preview_table.current_values:
             display_str = " - ".join(
@@ -313,21 +328,31 @@ class MaintenanceGUI:
             set_percentage(100)
 
         async def coroutine():
+            # Show the dialog with a list of platforms, to allow the user
+            # to choose which platoform should be the master
             dialog = PlatformMergeDialog(list(display_to_object.keys()))
             dialog_result = await self.show_dialog_as_float(dialog)
             if dialog_result is not None:
                 master_platform_obj = display_to_object[dialog_result]
-                logger.debug("Got result")
 
+                # This runs the `do_merge` function, passing it the
+                # list of selected platforms, and the master platform object
+                # This function is defined inline above, and is given extra
+                # arguments of set_percentage and is_cancelled to
+                # allow the function to return percentage process
                 dialog = ProgressDialog(
                     "Merging platforms",
                     partial(do_merge, self.preview_table.current_values, master_platform_obj),
                     show_cancel=False,
                 )
                 _ = await self.show_dialog_as_float(dialog)
+                # Once the platform merge is done, show a message box
+                # We use the async version of this function as we're calling
+                # from within a coroutine
                 await self.show_messagebox_async("Merge completed")
+                # Re-run the query, so we get an updated list in the preview
+                # and can see that some platforms have disappeared
                 self.run_query()
-                logger.debug("Ran query")
 
         ensure_future(coroutine())
 
@@ -370,35 +395,7 @@ class MaintenanceGUI:
 
         @kb.add("c-f")
         def _(event):
-            async def coroutine():
-                (
-                    system_name_to_display_name,
-                    display_name_to_system_name,
-                ) = self.get_system_name_mappings(column_data["Platform"])
-
-                # Get lists of left-hand and right-hand side entries
-                # The left-hand entries are all available fields (minus those that already appear on the right)
-                # and the right-hand entries are the currently selected fields
-                left_entries = list(display_name_to_system_name.keys())
-                right_entries = [
-                    system_name_to_display_name[entry] for entry in self.preview_selected_fields
-                ]
-
-                left_entries = list(set(left_entries).difference(set(right_entries)))
-
-                dialog = SelectionDialog(left_entries, right_entries, "Select fields")
-                selected_fields = await self.show_dialog_as_float(dialog)
-
-                if selected_fields is None:
-                    return
-
-                # Convert these back to system names
-                self.preview_selected_fields = [
-                    display_name_to_system_name[entry] for entry in selected_fields
-                ]
-                self.run_query()
-
-            ensure_future(coroutine())
+            self.choose_fields()
 
         @kb.add("f1")
         def _(event):
@@ -445,6 +442,37 @@ class MaintenanceGUI:
 
         return kb
 
+    def choose_fields(self):
+        async def coroutine():
+            (
+                system_name_to_display_name,
+                display_name_to_system_name,
+            ) = self.get_system_name_mappings(column_data["Platform"])
+
+            # Get lists of left-hand and right-hand side entries
+            # The left-hand entries are all available fields (minus those that already appear on the right)
+            # and the right-hand entries are the currently selected fields
+            left_entries = list(display_name_to_system_name.keys())
+            right_entries = [
+                system_name_to_display_name[entry] for entry in self.preview_selected_fields
+            ]
+            left_entries = list(set(left_entries).difference(set(right_entries)))
+
+            dialog = SelectionDialog(left_entries, right_entries, "Select fields")
+            selected_fields = await self.show_dialog_as_float(dialog)
+
+            if selected_fields is None:
+                return
+
+            # Convert these back to system names
+            self.preview_selected_fields = [
+                display_name_to_system_name[entry] for entry in selected_fields
+            ]
+            # Re-run the query with the new fields
+            self.run_query()
+
+        ensure_future(coroutine())
+
     def get_system_name_mappings(self, column_data):
         system_name_to_display_name = {}
         display_name_to_system_name = {}
@@ -484,20 +512,36 @@ class MaintenanceGUI:
         return style
 
     async def show_dialog_as_float(self, dialog):
-        " Coroutine. "
+        """Function to show a dialog as a float.
+
+        Taken mostly from the text-editor.py example
+        that comes with prompt_toolkit.
+
+        This is an async function, and thus must be awaited
+        from within another async function.
+        """
         float_ = Float(content=dialog)
+        # Put it at the top of the float list in the root container
+        # (which is a FloatContainer)
         self.root_container.floats.insert(0, float_)
 
         app = get_app()
 
         focused_before = app.layout.current_window
+        # Make sure we don't crash if we can't set the focus
+        # on the dialog - as some dialogs have no focusable elements
+        # (eg. a progress bar dialog with no cancel button)
         try:
             app.layout.focus(dialog)
         except ValueError:
             pass
 
+        # Wait for the dialog to return
         result = await dialog.future
 
+        # Make sure we don't give an error if we can't put the focus back
+        # to previous location, as if we're exiting the app at the time
+        # this gives an error
         try:
             app.layout.focus(focused_before)
         except Exception:
@@ -509,13 +553,18 @@ class MaintenanceGUI:
         return result
 
     async def show_messagebox_async(self, title, text=None):
+        # This is the async function, for awaiting within another
+        # coroutine
         dialog = MessageDialog(title, text)
         await self.show_dialog_as_float(dialog)
 
     def show_messagebox(self, title, text=None):
+        # This is the non-async version, that just runs a task to
+        # ensure the output of the async version
         ensure_future(self.show_messagebox_async(title, text))
 
     def get_filter_container(self):
+        """Called by the DynamicContainer which displays the filter container"""
         # top_label = VSplit(
         #     [
         #         Label(
@@ -536,6 +585,7 @@ class MaintenanceGUI:
             text="Build filters  F3 | Show Filter Query  F4 | Show complete query  F5",
             style="class:title-line",
         )
+        # Show different widgets, depending on the tab selected
         if self.filters_tab == "filters":
             return HSplit(
                 [
@@ -559,18 +609,17 @@ class MaintenanceGUI:
                 height=Dimension(weight=0.5),
             )
         elif self.filters_tab == "complete_query":
-            buffer = Buffer()
-            buffer.text = "Not implemented yet"
             return HSplit(
                 [
                     top_label,
-                    Window(BufferControl(buffer)),
+                    Window(self.complete_query),
                 ],
                 padding=1,
                 height=Dimension(weight=0.5),
             )
 
     def get_preview_container(self):
+        """Called by the DynamicContainer that displays the preview pane"""
         title_label = Label(text="Preview List   F6 | Preview Graph  F7", style="class:title-line")
         if self.preview_tab == "table":
             return HSplit(
@@ -596,6 +645,7 @@ class MaintenanceGUI:
             )
 
     def get_status_bar_container(self):
+        """Called by the DynamicContainer that displays the status bar"""
         return VSplit(
             [
                 VSplit(
