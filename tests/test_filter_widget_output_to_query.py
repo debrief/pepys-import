@@ -116,12 +116,12 @@ class TestConversions(TestCase):
     def test_query_by_declared_attrs(self):
         with self.store.session_scope():
             Platform = self.store.db_classes.Platform
-            query_list = [["nationality_name", "=", self.nationality_2]]
+            query_list = [["nationality_name", "=", self.nationality_2.name]]
             filter_query = filter_widget_output_to_query(query_list, "Platforms", self.store)
             result = self.store.session.query(Platform).filter(filter_query).all()
             assert len(result) == 1
             assert result[0].platform_id == self.platform_2.platform_id
-            assert result[0].nationality_name == self.nationality_2
+            assert result[0].nationality_name == self.nationality_2.name
 
     def test_gt_and_lt_query(self):
         with self.store.session_scope():
