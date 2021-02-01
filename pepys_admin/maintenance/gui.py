@@ -210,7 +210,6 @@ class MaintenanceGUI:
                 query_obj = self.data_store.session.query(
                     self.data_store.db_classes.Platform
                 ).filter(filter_query)
-            logger.debug(f"{query_obj=!s}")
             results = query_obj.options(undefer("*")).all()
             logger.debug(results)
 
@@ -390,6 +389,9 @@ class MaintenanceGUI:
                 dialog = SelectionDialog(left_entries, right_entries, "Select fields")
                 selected_fields = await self.show_dialog_as_float(dialog)
 
+                if selected_fields is None:
+                    return
+
                 # Convert these back to system names
                 self.preview_selected_fields = [
                     display_name_to_system_name[entry] for entry in selected_fields
@@ -464,10 +466,10 @@ class MaintenanceGUI:
                 ("title-line", "bg:ansibrightblack fg:white"),
                 # ("button", "#000000"),
                 # ("button-arrow", "#000000"),
-                #("button", "bg:ansibrightblack"),
-                #("button.focused", "bg:ansired"),
+                # ("button", "bg:ansibrightblack"),
+                # ("button.focused", "bg:ansired"),
                 ("button.focused", "bg:ansired"),
-                #("dropdown", "bg:ansigray"),
+                # ("dropdown", "bg:ansigray"),
                 ("dropdown.focused", "bg:ansired"),
                 ("text-area focused", "bg:ansibrightred"),
                 ("dropdown-highlight", "fg:ansibrightred"),
@@ -476,7 +478,7 @@ class MaintenanceGUI:
                 ("checkbox-selected", "bg:ansiyellow"),
                 ("status-bar-text", "bg:ansibrightblack"),
                 ("instruction-text", "fg:ansibrightcyan"),
-                ("dropdown.box", "bg:ansiwhite fg:ansiblack")
+                ("dropdown.box", "bg:ansiwhite fg:ansiblack"),
             ]
         )
         return style
