@@ -14,10 +14,10 @@ class TestConversions(TestCase):
 
         with self.store.session_scope():
             self.change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
-            self.nationality = self.store.add_to_nationalities("France", self.change_id).name
+            self.nationality = self.store.add_to_nationalities("France", self.change_id, priority=2)
             self.nationality_2 = self.store.add_to_nationalities(
-                "United Kingdom", self.change_id
-            ).name
+                "United Kingdom", self.change_id, priority=5
+            )
             self.platform_type = self.store.add_to_platform_types(
                 "Platform Type", self.change_id
             ).name
@@ -30,12 +30,12 @@ class TestConversions(TestCase):
             self.comment_type = self.store.add_to_comment_types("test_type", self.change_id)
             self.privacy = self.store.add_to_privacies("test_privacy", 0, self.change_id)
             self.privacy_id = self.privacy.privacy_id
-            self.file = self.store.get_datafile("test_file", "csv", 0, "HASHED", self.change_id)
+            self.file = self.store.get_datafile("test_file", "csv", 100, "HASHED", self.change_id)
             self.file.measurements[self.parser_name] = dict()
 
             self.platform = self.store.get_platform(
                 platform_name="Test Platform",
-                nationality=self.nationality,
+                nationality=self.nationality.name,
                 platform_type=self.platform_type,
                 privacy=self.privacy.name,
                 change_id=self.change_id,
@@ -45,7 +45,7 @@ class TestConversions(TestCase):
             ).sensor_id
             self.platform_2 = self.store.get_platform(
                 platform_name="Test Platform 2",
-                nationality=self.nationality_2,
+                nationality=self.nationality_2.name,
                 platform_type=self.platform_type_2,
                 privacy=self.privacy.name,
                 change_id=self.change_id,
@@ -65,7 +65,7 @@ class TestConversions(TestCase):
             assert len(result) == 1
             assert result[0].platform_id == self.platform.platform_id
 
-    def test_two_with_and(self):
+    def test_two_query_with_and(self):
         with self.store.session_scope():
             Platform = self.store.db_classes.Platform
             query_list = [
@@ -112,3 +112,43 @@ class TestConversions(TestCase):
             assert len(result) == 1
             assert result[0].name != self.platform.name
             assert result[0].platform_id == self.platform_2.platform_id
+
+    def test_query_by_declared_attrs(self):
+        with self.store.session_scope():
+            Platform = self.store.db_classes.Platform
+            query_list = [["nationality_name", "=", self.nationality_2]]
+            filter_query = filter_widget_output_to_query(query_list, "Platforms", self.store)
+            result = self.store.session.query(Platform).filter(filter_query).all()
+            assert len(result) == 1
+            assert result[0].platform_id == self.platform_2.platform_id
+            assert result[0].nationality_name == self.nationality_2
+
+    def test_gt_and_lt_query(self):
+        with self.store.session_scope():
+            Nationality = self.store.db_classes.Nationality
+            query_list = [
+                ["priority", ">=", self.nationality.priority],
+                ["AND"],
+                ["priority", "<=", self.nationality_2.priority - 1],
+            ]
+            filter_query = filter_widget_output_to_query(query_list, "Nationalities", self.store)
+            result = self.store.session.query(Nationality).filter(filter_query).all()
+            assert len(result) == 1
+            assert result[0].nationality_id == self.nationality.nationality_id
+            assert (
+                self.nationality.priority <= result[0].priority <= self.nationality_2.priority - 1
+            )
+
+    def test_ge_and_le_query(self):
+        with self.store.session_scope():
+            Nationality = self.store.db_classes.Nationality
+            query_list = [
+                ["priority", ">", self.nationality.priority],
+                ["AND"],
+                ["priority", "<", self.nationality_2.priority + 1],
+            ]
+            filter_query = filter_widget_output_to_query(query_list, "Nationalities", self.store)
+            result = self.store.session.query(Nationality).filter(filter_query).all()
+            assert len(result) == 1
+            assert result[0].nationality_id == self.nationality_2.nationality_id
+            assert self.nationality.priority < result[0].priority < self.nationality_2.priority + 1

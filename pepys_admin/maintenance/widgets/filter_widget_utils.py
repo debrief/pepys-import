@@ -2,7 +2,7 @@ import operator
 from typing import List
 
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.utils.table_name_utils import camel_to_snake, table_name_to_class_name
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 operator_dict = {
     "=": operator.eq,
@@ -26,13 +26,8 @@ def filter_widget_output_to_query(outputs: List[List], table_name: str, data_sto
     for idx, output in enumerate(outputs):
         if len(output) == 3:
             column, ops, value = output
-            if "." in column:
-                col = camel_to_snake(column).replace(".", "_")
-            else:
-                col = column
-
             try:  # Try to get table field
-                col = getattr(class_obj, col)
+                col = getattr(class_obj, column)
             except AttributeError:
                 raise AttributeError(f"Column not found! Error in {idx}: '{column}'")
 
