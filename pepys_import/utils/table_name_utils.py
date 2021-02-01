@@ -1,5 +1,3 @@
-import re
-
 from pepys_import.core.store import constants
 
 
@@ -20,8 +18,3 @@ def table_name_to_class_name(table_name):
     else:
         table = table_name[:-1]
     return table
-
-
-def camel_to_snake(name):
-    name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
-    return re.sub("([a-z0-9])([A-Z])", r"\1_\2", name).lower()
