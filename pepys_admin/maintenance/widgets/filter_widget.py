@@ -96,8 +96,6 @@ class FilterWidget:
         else:
             self.scrollable_pane.content = content
 
-        # Important to have the validation toolbar here, or errors aren't
-        # displayed
         return self.scrollable_pane
 
     def add_entry(self):
