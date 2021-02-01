@@ -25,6 +25,7 @@ class ComboBox:
         self,
         entries,
         width=None,
+        height=None,
         filter=False,
         filter_method="contains",
         popup=False,
@@ -66,11 +67,12 @@ class ComboBox:
         self.width = width
         self.selected_entry = 0
 
-        # Give extra space for the Filter line if we're filtering
-        if self.filter:
-            height = len(entries) + 1
-        else:
-            height = len(entries)
+        if height is None:
+            # Give extra space for the Filter line if we're filtering
+            if self.filter:
+                height = len(entries) + 1
+            else:
+                height = len(entries)
 
         # The content is just a FormattedTextControl containing the text
         # of the control
@@ -181,7 +183,10 @@ class ComboBox:
             @kb.add("enter")
             def _(event) -> None:
                 # Return entry in a non-async way, calling handler
-                self.value = self.filtered_entries[self.selected_entry]
+                try:
+                    self.value = self.filtered_entries[self.selected_entry]
+                except IndexError:
+                    return
                 if self.enter_handler:
                     self.enter_handler(self.value)
 
