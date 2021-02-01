@@ -116,7 +116,7 @@ class MaintenanceGUI:
                 ),
             ],
             padding=1,
-            height=Dimension(weight=0.05),
+            height=Dimension(weight=0.1),
         )
 
         self.filter_widget = FilterWidget(
@@ -464,16 +464,19 @@ class MaintenanceGUI:
                 ("title-line", "bg:ansibrightblack fg:white"),
                 # ("button", "#000000"),
                 # ("button-arrow", "#000000"),
-                ("button.focused", "bg:#ff0000"),
-                ("dropdown", "bg:ansigray"),
-                ("dropdown.focused", "bg:#ff0000"),
-                # ("select-box", "bg:ansiblue"),
-                ("text-area focused", "bg:#ff0000"),
-                ("dropdown-highlight", "#ff0000"),
-                ("filter-text", "fg:#0000ff"),
-                ("table-title", "fg:#ff0000"),
+                #("button", "bg:ansibrightblack"),
+                #("button.focused", "bg:ansired"),
+                ("button.focused", "bg:ansired"),
+                #("dropdown", "bg:ansigray"),
+                ("dropdown.focused", "bg:ansired"),
+                ("text-area focused", "bg:ansibrightred"),
+                ("dropdown-highlight", "fg:ansibrightred"),
+                ("filter-text", "fg:ansibrightblue"),
+                ("table-title", "fg:ansibrightred"),
                 ("checkbox-selected", "bg:ansiyellow"),
-                ("status-bar-text", "bg:ansigray"),
+                ("status-bar-text", "bg:ansibrightblack"),
+                ("instruction-text", "fg:ansibrightcyan"),
+                ("dropdown.box", "bg:ansiwhite fg:ansiblack")
             ]
         )
         return style
@@ -537,7 +540,7 @@ class MaintenanceGUI:
                     top_label,
                     Label(
                         text="Press TAB to go to next dropdown or line\nPress Shift + TAB to go to the previous dropdown or line",
-                        style="fg:ansiblue",
+                        style="class:instruction-text",
                     ),
                     self.filter_widget,
                 ],
@@ -573,7 +576,7 @@ class MaintenanceGUI:
                     title_label,
                     Label(
                         text="Use Ctrl-F to select fields to display",
-                        style="fg:ansiblue",
+                        style="class:instruction-text",
                     ),
                     self.preview_table,
                 ],

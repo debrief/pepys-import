@@ -85,7 +85,7 @@ class DropdownBox:
             app = get_app()
 
             # Create a ComboBox to display the dropdown list
-            menu = ComboBox(entries, self.width, filter=self.filter, popup=True)
+            menu = ComboBox(entries, self.width, filter=self.filter, popup=True, style="class:dropdown.box")
 
             # Wrap this in a Float, so we can display it above the rest of the
             # display. The high Z index makes this appear on top of anything else
@@ -131,16 +131,16 @@ class DropdownBox:
 
         return [
             ("[SetMenuPosition]", ""),  # This sets the menu positon to be at the start of the text
-            ("class:button.text", text, handler),
+            ("class:dropdown.text", text, handler),
             (
-                "class:button.arrow",
+                "class:dropdown.arrow",
                 " \u25BC",  # Down arrow symbol
                 handler,
             ),
         ]
 
     def _get_key_bindings(self) -> KeyBindings:
-        " Key bindings for the Button. "
+        " Key bindings for the Dropdown Box. "
         kb = KeyBindings()
 
         # Make space, enter or down-arrow open the dropdown

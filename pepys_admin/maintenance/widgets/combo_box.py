@@ -30,6 +30,7 @@ class ComboBox:
         filter_method="contains",
         popup=False,
         enter_handler=None,
+        style=None
     ) -> None:
         """
         Provides a selectable list containing the given entries.
@@ -74,6 +75,9 @@ class ComboBox:
             else:
                 height = len(entries)
 
+        if style is None:
+            style = ""
+
         # The content is just a FormattedTextControl containing the text
         # of the control
         self.container = Window(
@@ -82,7 +86,7 @@ class ComboBox:
                 focusable=True,
                 key_bindings=self._get_key_bindings(),
             ),
-            style="class:select-box",
+            style=style,
             height=height,
             width=self.width,
             right_margins=[
