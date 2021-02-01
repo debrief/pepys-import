@@ -250,10 +250,7 @@ class FilterWidgetEntry:
     def get_widgets(self):
         """Gets the widgets to display this entry"""
         vw = self.choose_value_widget()
-        if len(self.filter_widget.entries) == 1 and self.filter_widget.entries.index(self) == 0:
-            elements = [self.dropdown_column, self.dropdown_operator, vw]
-        else:
-            elements = [self.dropdown_column, self.dropdown_operator, vw, self.delete_button]
+        elements = [self.dropdown_column, self.dropdown_operator, vw, self.delete_button]
         return VSplit(
             elements,
             align=HorizontalAlign.LEFT,
@@ -262,8 +259,15 @@ class FilterWidgetEntry:
 
     def handle_delete(self):
         index = self.filter_widget.entries.index(self)
-        self.filter_widget.entries.remove(self)
-        self.filter_widget.boolean_operators.remove(self.filter_widget.boolean_operators[index - 1])
+        if index == 0:
+            # If it's the first one, then delete and immediately add a new blank entry
+            self.filter_widget.entries.remove(self)
+            self.filter_widget.entries.append(FilterWidgetEntry(self.filter_widget))
+        else:
+            self.filter_widget.entries.remove(self)
+            self.filter_widget.boolean_operators.remove(
+                self.filter_widget.boolean_operators[index - 1]
+            )
         app = get_app()
         app.layout.focus_next()
         self.filter_widget.trigger_on_change()
