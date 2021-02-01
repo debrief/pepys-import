@@ -37,6 +37,7 @@ from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
+from pepys_admin.maintenance.widgets.filter_widget_utils import filter_widget_output_to_query
 from pepys_import.core.store.data_store import DataStore
 
 logger.remove()
@@ -44,7 +45,7 @@ logger.add("gui.log")
 
 platform_column_data = {
     "platform_id": {"type": "id", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
-    "name": {"type": "string", "values": ["HMS Name1", "HMS Floaty", "USS Sinky"]},
+    "name": {"type": "string", "values": ["ADRI", "JEAN", "HMS Floaty", "USS Sinky"]},
     "identifier": {"type": "string"},
     "trigraph": {"type": "string"},
     "quadgraph": {"type": "string"},
@@ -72,7 +73,9 @@ class MaintenanceGUI:
             # TODO: Remove this, it's just for ease of testing/development at the moment
             self.data_store = DataStore("", "", "", 0, "test_gui.db", db_type="sqlite")
             self.data_store.initialise()
-            self.create_platforms()
+            with self.data_store.session_scope():
+                self.data_store.populate_reference()
+                self.data_store.populate_metadata()
 
         self.preview_selected_fields = [
             "name",
@@ -81,7 +84,8 @@ class MaintenanceGUI:
             "platform_type_name",
         ]
 
-        self.run_query()
+        self.table_data = []
+        self.table_objects = []
 
         self.filters_tab = "filters"
         self.preview_tab = "table"
@@ -197,14 +201,25 @@ class MaintenanceGUI:
 
     def run_query(self):
         logger.debug("Running query")
+        filters = self.filter_widget.filters
         with self.data_store.session_scope():
-            results = (
-                self.data_store.session.query(self.data_store.db_classes.Platform)
-                .options(undefer("*"))
-                .all()
-            )
+            if filters == []:
+                query_obj = self.data_store.session.query(self.data_store.db_classes.Platform)
+            else:
+                filter_query = filter_widget_output_to_query(filters, "Platforms", self.data_store)
+                query_obj = self.data_store.session.query(
+                    self.data_store.db_classes.Platform
+                ).filter(filter_query)
+            logger.debug(f"{query_obj=!s}")
+            results = query_obj.options(undefer("*")).all()
+            logger.debug(results)
 
-            self.table_data = []
+            if len(results) == 0:
+                self.table_data = []
+                self.table_objects = []
+                app = get_app()
+                app.invalidate()
+                return
 
             self.table_data = [self.get_table_titles(self.preview_selected_fields)]
             self.table_objects = [None]
@@ -213,9 +228,13 @@ class MaintenanceGUI:
 
             for result in results:
                 self.table_data.append(
-                    [getattr(result, field_name) for field_name in self.preview_selected_fields]
+                    [
+                        str(getattr(result, field_name))
+                        for field_name in self.preview_selected_fields
+                    ]
                 )
                 self.table_objects.append(result)
+
         app = get_app()
         app.invalidate()
         logger.debug("Ran query")
@@ -252,9 +271,17 @@ class MaintenanceGUI:
 
     def on_table_select(self, value):
         self.filter_widget.set_column_data(column_data[value])
+        self.run_query()
 
     def on_filter_widget_change(self, value):
-        self.filter_query_buffer.text = repr(value)
+        if value != []:
+            filter_query = filter_widget_output_to_query(value, "Platforms", self.data_store)
+            query_obj = self.data_store.session.query(self.data_store.db_classes.Platform).filter(
+                filter_query
+            )
+            self.filter_query_buffer.text = str(query_obj)
+        logger.debug(f"Filter widget output = {value}")
+        self.run_query()
 
     def run_action(self, selected_value):
         if selected_value == "1 - Merge Platforms":
@@ -465,7 +492,11 @@ class MaintenanceGUI:
             pass
 
         result = await dialog.future
-        app.layout.focus(focused_before)
+
+        try:
+            app.layout.focus(focused_before)
+        except Exception:
+            pass
 
         if float_ in self.root_container.floats:
             self.root_container.floats.remove(float_)
