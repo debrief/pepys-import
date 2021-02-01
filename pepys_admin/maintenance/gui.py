@@ -32,6 +32,7 @@ from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.platform_merge_dialog import PlatformMergeDialog
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
+from pepys_admin.maintenance.dialogs.selection_dialog import SelectionDialog
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
@@ -334,6 +335,42 @@ class MaintenanceGUI:
 
             ensure_future(coroutine())
 
+        kb.add("tab")(focus_next)
+        kb.add("s-tab")(focus_previous)
+
+        @kb.add("c-r")
+        def _(event):
+            self.run_query()
+
+        @kb.add("c-f")
+        def _(event):
+            async def coroutine():
+                (
+                    system_name_to_display_name,
+                    display_name_to_system_name,
+                ) = self.get_system_name_mappings(column_data["Platform"])
+
+                # Get lists of left-hand and right-hand side entries
+                # The left-hand entries are all available fields (minus those that already appear on the right)
+                # and the right-hand entries are the currently selected fields
+                left_entries = list(display_name_to_system_name.keys())
+                right_entries = [
+                    system_name_to_display_name[entry] for entry in self.preview_selected_fields
+                ]
+
+                left_entries = list(set(left_entries).difference(set(right_entries)))
+
+                dialog = SelectionDialog(left_entries, right_entries, "Select fields")
+                selected_fields = await self.show_dialog_as_float(dialog)
+
+                # Convert these back to system names
+                self.preview_selected_fields = [
+                    display_name_to_system_name[entry] for entry in selected_fields
+                ]
+                self.run_query()
+
+            ensure_future(coroutine())
+
         @kb.add("f1")
         def _(event):
             async def coroutine():
@@ -341,16 +378,6 @@ class MaintenanceGUI:
                 await self.show_dialog_as_float(dialog)
 
             ensure_future(coroutine())
-
-        kb.add("tab")(focus_next)
-        kb.add("s-tab")(focus_previous)
-
-        @kb.add("c-r")
-        def _(event):
-            # for attr_name in dir(self.data_store.db_classes.Platform):
-            #     attr = getattr(self.data_store.db_classes.Platform, attr_name)
-            #     logger.debug(f"{attr_name}: {type(attr)}")
-            self.run_query()
 
         @kb.add("f2")
         def _(event):
@@ -388,6 +415,21 @@ class MaintenanceGUI:
             event.app.layout.focus(self.actions_container)
 
         return kb
+
+    def get_system_name_mappings(self, column_data):
+        system_name_to_display_name = {}
+        display_name_to_system_name = {}
+
+        for key, entry in column_data.items():
+            if entry.get("system_name", None) is not None:
+                system_name = entry.get("system_name")
+            else:
+                system_name = key
+
+            system_name_to_display_name[system_name] = key
+            display_name_to_system_name[key] = system_name
+
+        return system_name_to_display_name, display_name_to_system_name
 
     def get_style(self):
         style = Style(
