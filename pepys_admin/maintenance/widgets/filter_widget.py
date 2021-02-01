@@ -259,8 +259,8 @@ class FilterWidgetEntry:
 
     def handle_delete(self):
         index = self.filter_widget.entries.index(self)
-        if index == 0:
-            # If it's the first one, then delete and immediately add a new blank entry
+        if index == 0 and len(self.filter_widget.entries) == 1:
+            # If it's the only one, then delete and immediately add a new blank entry
             self.filter_widget.entries.remove(self)
             self.filter_widget.entries.append(FilterWidgetEntry(self.filter_widget))
         else:
