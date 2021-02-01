@@ -206,6 +206,8 @@ class FilterWidgetEntry:
             on_select_handler=self.filter_widget.trigger_on_change,
         )
 
+        self.delete_button = Button(text="Delete", handler=self.handle_delete)
+
         # We have to create the widgets here in the init, or it doesn't work
         # because of some weird scoping issue
         # See https://github.com/prompt-toolkit/python-prompt-toolkit/issues/1324
@@ -248,11 +250,23 @@ class FilterWidgetEntry:
     def get_widgets(self):
         """Gets the widgets to display this entry"""
         vw = self.choose_value_widget()
+        if len(self.filter_widget.entries) == 1 and self.filter_widget.entries.index(self) == 0:
+            elements = [self.dropdown_column, self.dropdown_operator, vw]
+        else:
+            elements = [self.dropdown_column, self.dropdown_operator, vw, self.delete_button]
         return VSplit(
-            [self.dropdown_column, self.dropdown_operator, vw],
+            elements,
             align=HorizontalAlign.LEFT,
             padding=2,
         )
+
+    def handle_delete(self):
+        index = self.filter_widget.entries.index(self)
+        self.filter_widget.entries.remove(self)
+        self.filter_widget.boolean_operators.remove(self.filter_widget.boolean_operators[index - 1])
+        app = get_app()
+        app.layout.focus_next()
+        self.filter_widget.trigger_on_change()
 
     def get_initial_prompt(self):
         """Get the initial text value of the value_widget,
