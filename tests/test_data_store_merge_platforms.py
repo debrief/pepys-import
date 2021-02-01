@@ -665,7 +665,9 @@ class UpdatePlatformIDsTestCase(TestCase):
 
         # Update platform of objects
         with self.store.session_scope():
-            self.store.update_platform_ids(self.platform_2.platform_id, self.platform.platform_id)
+            self.store.update_platform_ids(
+                self.platform_2.platform_id, self.platform.platform_id, self.change_id
+            )
 
             comments_after_update = (
                 self.store.session.query(Comment)
