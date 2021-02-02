@@ -9,6 +9,7 @@ from prompt_toolkit import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
+from prompt_toolkit.filters.utils import to_filter
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.layout.containers import (
@@ -40,6 +41,7 @@ from pepys_admin.maintenance.utils import (
 )
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
+from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 from pepys_admin.maintenance.widgets.filter_widget_utils import filter_widget_output_to_query
 from pepys_import.core.store.data_store import DataStore
@@ -87,26 +89,29 @@ class MaintenanceGUI:
 
     def init_ui_components(self):
         # Dropdown box to select table, plus pane that it is in
-        # FUTURE: Not needed until we want to be able to select a table at the top
-        # self.dropdown_table = DropdownBox(
-        #     text="Select a table",
-        #     entries=[
-        #         "Platform",
-        #         "Sensor",
-        #     ],
-        #     on_select_handler=self.on_table_select,
-        # )
-        # self.data_type_container = HSplit(
-        #     children=[
-        #         Label(text="Select data type   F2", style="class:title-line"),
-        #         VSplit(
-        #             [self.dropdown_table],
-        #             align=HorizontalAlign.LEFT,
-        #         ),
-        #     ],
-        #     padding=1,
-        #     height=Dimension(weight=0.1),
-        # )
+        self.dropdown_table = DropdownBox(
+            text="Platform",  # FUTURE: This is currently hard-coded to Platform
+            entries=[
+                "Platform",
+            ],
+            # FUTURE: This is needed to be able to select from this dropdown
+            # on_select_handler=self.on_table_select,
+        )
+        # Makes the dropdown box not focusable, so users can't tab to it
+        self.dropdown_table.control.focusable = to_filter(False)
+        # Also make it disabled, so clicking doesn't work
+        self.dropdown_table.disabled = True
+        self.data_type_container = HSplit(
+            children=[
+                Label(text="Select data type   F2", style="class:title-line"),
+                VSplit(
+                    [self.dropdown_table],
+                    align=HorizontalAlign.LEFT,
+                ),
+            ],
+            padding=1,
+            height=Dimension(weight=0.1),
+        )
 
         # Filter pane, containing FilterWidget plus buffers for the
         # text showing the SQL
@@ -163,9 +168,8 @@ class MaintenanceGUI:
                         [
                             HSplit(
                                 [
-                                    # FUTURE: Not needed until we want to select a table at the top
-                                    # self.data_type_container,
-                                    # Window(height=1, char=Border.HORIZONTAL),
+                                    self.data_type_container,
+                                    Window(height=1, char=Border.HORIZONTAL),
                                     self.filter_container,
                                     Window(height=1, char=Border.HORIZONTAL),
                                     self.actions_container,

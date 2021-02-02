@@ -31,6 +31,8 @@ class DropdownBox:
         self.on_select_handler = on_select_handler
         self.filter = filter
 
+        self.disabled = False
+
         # Have to use partial to make this take a reference to self
         # (This could be avoided by making handler a classmethod,
         # but we want access to member variables)
@@ -71,6 +73,9 @@ class DropdownBox:
         )
 
     def handler(self, event):
+        if self.disabled:
+            return
+
         if callable(self.entries):
             entries = self.entries()
         else:
@@ -85,7 +90,9 @@ class DropdownBox:
             app = get_app()
 
             # Create a ComboBox to display the dropdown list
-            menu = ComboBox(entries, self.width, filter=self.filter, popup=True, style="class:dropdown.box")
+            menu = ComboBox(
+                entries, self.width, filter=self.filter, popup=True, style="class:dropdown.box"
+            )
 
             # Wrap this in a Float, so we can display it above the rest of the
             # display. The high Z index makes this appear on top of anything else
