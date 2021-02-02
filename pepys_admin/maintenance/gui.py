@@ -1,7 +1,6 @@
 import asyncio
 import time
 from asyncio.tasks import ensure_future
-from datetime import datetime
 from functools import partial
 
 from loguru import logger
@@ -56,6 +55,8 @@ class MaintenanceGUI:
             self.data_store = data_store
         else:
             # TODO: Remove this, it's just for ease of testing/development at the moment
+            # This won't cause problems for users, as they will access via Pepys Admin
+            # where data store will be defined
             self.data_store = DataStore("", "", "", 0, "test_gui.db", db_type="sqlite")
             self.data_store.initialise()
             with self.data_store.session_scope():
@@ -69,6 +70,7 @@ class MaintenanceGUI:
             "platform_type_name",
         ]
 
+        # Start with an empty table
         self.table_data = []
         self.table_objects = []
 
@@ -88,6 +90,7 @@ class MaintenanceGUI:
         )
 
     def init_ui_components(self):
+        """Initialise all of the UI components, controls, containers and widgets"""
         # Dropdown box to select table, plus pane that it is in
         self.dropdown_table = DropdownBox(
             text="Platform",  # FUTURE: This is currently hard-coded to Platform
@@ -194,6 +197,11 @@ class MaintenanceGUI:
         self.run_query()
 
     def create_column_data(self):
+        """Creates the column_data needed for the FilterWidget.
+
+        At the moment this is hard-coded to be the column data for
+        the Platforms table, with database queries being used to populate
+        the 'values' entry in the dict."""
         Platform = self.data_store.db_classes.Platform
         Nationality = self.data_store.db_classes.Nationality
         PlatformType = self.data_store.db_classes.PlatformType
@@ -304,29 +312,6 @@ class MaintenanceGUI:
         logger.debug("Ran query")
         logger.debug(f"{self.table_data=}")
 
-    def create_platforms(self):
-        with self.data_store.session_scope():
-            change_id = self.data_store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
-            nationality = self.data_store.add_to_nationalities("test_nationality", change_id).name
-            platform_type = self.data_store.add_to_platform_types(
-                "test_platform_type", change_id
-            ).name
-            privacy = self.data_store.add_to_privacies("test_privacy", 0, change_id).name
-            _ = self.data_store.get_platform(
-                platform_name="Test Platform 1",
-                nationality=nationality,
-                platform_type=platform_type,
-                privacy=privacy,
-                change_id=change_id,
-            )
-            _ = self.data_store.get_platform(
-                platform_name="Test Platform 2",
-                nationality=nationality,
-                platform_type=platform_type,
-                privacy=privacy,
-                change_id=change_id,
-            )
-
     def get_table_data(self):
         return self.table_data
 
@@ -371,6 +356,17 @@ class MaintenanceGUI:
             self.show_messagebox("Action", f"Running action {selected_value}")
 
     def run_merge_platforms(self):
+        """Runs the action to merge platforms.
+
+        Takes the list of platforms to merge from the selected items in the preview table,
+        then opens a dialog to select the master platform, then runs the merge with a
+        progress dialog, and displays a messagebox when it is finished.
+        """
+        if len(self.preview_table.current_values) == 0:
+            self.show_messagebox(
+                "Error", "You must select platforms to merge before running the merge action."
+            )
+            return
         # Generate a mapping of nice display strings
         # to the actual underlying Platform objects
         display_to_object = {}

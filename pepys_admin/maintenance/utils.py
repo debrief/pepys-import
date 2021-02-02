@@ -40,6 +40,7 @@ def get_system_name_mappings(column_data):
 
 
 def remove_duplicates_and_nones(items):
+    """Removes all duplicates and None values from a list"""
     new_list = [item for item in items if item is not None]
 
     return list(set(new_list))
