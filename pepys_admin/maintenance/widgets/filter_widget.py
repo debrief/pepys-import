@@ -194,7 +194,7 @@ class FilterWidgetEntry:
         self.dropdown_column = DropdownBox(
             text=filter_widget.column_prompt,
             entries=filter_widget.column_data.keys(),
-            on_select_handler=self.filter_widget.trigger_on_change,
+            on_select_handler=self.on_dropdown_column_select,
         )
         # Dropdown for list of operators
         # (This is automatically updated to show the list of entries
@@ -246,6 +246,14 @@ class FilterWidgetEntry:
             entries=self.get_value_dropdown_entries,
             on_select_handler=self.filter_widget.trigger_on_change,
         )
+
+    def on_dropdown_column_select(self, value):
+        """Called when an entry is selected from the column dropdown.
+        Resets the other widgets in that line back to their default."""
+        self.dropdown_operator.text = " = "
+        self.vw_dropdown.text = self.filter_widget.value_prompt
+
+        self.filter_widget.trigger_on_change()
 
     def get_widgets(self):
         """Gets the widgets to display this entry"""
