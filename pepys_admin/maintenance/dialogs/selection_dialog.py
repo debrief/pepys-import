@@ -22,7 +22,7 @@ class SelectionDialog:
         body = HSplit(
             [
                 Label(
-                    "Press TAB to move between lists, and Enter to move an item to the other list"
+                    "Press TAB or arrow keys to move between lists, and Enter to move an item to the other list"
                 ),
                 VSplit(
                     [
