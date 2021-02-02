@@ -33,7 +33,11 @@ from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.platform_merge_dialog import PlatformMergeDialog
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
 from pepys_admin.maintenance.dialogs.selection_dialog import SelectionDialog
-from pepys_admin.maintenance.utils import get_system_name_mappings, get_table_titles
+from pepys_admin.maintenance.utils import (
+    get_system_name_mappings,
+    get_table_titles,
+    remove_duplicates_and_nones,
+)
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
@@ -186,16 +190,58 @@ class MaintenanceGUI:
         self.run_query()
 
     def create_column_data(self):
+        Platform = self.data_store.db_classes.Platform
+        Nationality = self.data_store.db_classes.Nationality
+        PlatformType = self.data_store.db_classes.PlatformType
+        Privacy = self.data_store.db_classes.Privacy
+        with self.data_store.session_scope():
+            all_platforms = self.data_store.session.query(Platform).all()
+
+            platform_ids = [str(platform.platform_id) for platform in all_platforms]
+            platform_names = [platform.name for platform in all_platforms]
+            platform_identifiers = [platform.identifier for platform in all_platforms]
+            platform_trigraphs = [platform.trigraph for platform in all_platforms]
+            platform_quadgraphs = [platform.quadgraph for platform in all_platforms]
+
+            all_nationalities = self.data_store.session.query(Nationality).all()
+            nationality_names = [nationality.name for nationality in all_nationalities]
+
+            all_platform_types = self.data_store.session.query(PlatformType).all()
+            platform_type_names = [pt.name for pt in all_platform_types]
+
+            all_privacies = self.data_store.session.query(Privacy).all()
+            privacy_names = [priv.name for priv in all_privacies]
+
         platform_column_data = {
-            "platform_id": {"type": "id", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
-            "name": {"type": "string", "values": ["ADRI", "JEAN", "HMS Floaty", "USS Sinky"]},
-            "identifier": {"type": "string"},
-            "trigraph": {"type": "string"},
-            "quadgraph": {"type": "string"},
-            "nationality_id": {"type": "id"},
-            "nationality name": {"type": "string", "system_name": "nationality_name"},
-            "platform type name": {"type": "string", "system_name": "platform_type_name"},
-            "privacy name": {"type": "string", "system_name": "privacy_name"},
+            "platform_id": {"type": "id", "values": platform_ids},
+            "name": {"type": "string", "values": remove_duplicates_and_nones(platform_names)},
+            "identifier": {
+                "type": "string",
+                "values": remove_duplicates_and_nones(platform_identifiers),
+            },
+            "trigraph": {
+                "type": "string",
+                "values": remove_duplicates_and_nones(platform_trigraphs),
+            },
+            "quadgraph": {
+                "type": "string",
+                "values": remove_duplicates_and_nones(platform_quadgraphs),
+            },
+            "nationality name": {
+                "type": "string",
+                "system_name": "nationality_name",
+                "values": nationality_names,
+            },
+            "platform type name": {
+                "type": "string",
+                "system_name": "platform_type_name",
+                "values": platform_type_names,
+            },
+            "privacy name": {
+                "type": "string",
+                "system_name": "privacy_name",
+                "values": privacy_names,
+            },
         }
 
         self.column_data = platform_column_data

@@ -37,3 +37,9 @@ def get_system_name_mappings(column_data):
         display_name_to_system_name[key] = system_name
 
     return system_name_to_display_name, display_name_to_system_name
+
+
+def remove_duplicates_and_nones(items):
+    new_list = [item for item in items if item is not None]
+
+    return list(set(new_list))
