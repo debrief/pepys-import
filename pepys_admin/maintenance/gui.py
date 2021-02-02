@@ -1,5 +1,4 @@
 import asyncio
-import textwrap
 import time
 from asyncio.tasks import ensure_future
 from datetime import datetime
@@ -37,34 +36,12 @@ from pepys_admin.maintenance.dialogs.selection_dialog import SelectionDialog
 from pepys_admin.maintenance.utils import get_system_name_mappings, get_table_titles
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
-from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 from pepys_admin.maintenance.widgets.filter_widget_utils import filter_widget_output_to_query
 from pepys_import.core.store.data_store import DataStore
 
 logger.remove()
 logger.add("gui.log")
-
-platform_column_data = {
-    "platform_id": {"type": "id", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
-    "name": {"type": "string", "values": ["ADRI", "JEAN", "HMS Floaty", "USS Sinky"]},
-    "identifier": {"type": "string"},
-    "trigraph": {"type": "string"},
-    "quadgraph": {"type": "string"},
-    "nationality_id": {"type": "id"},
-    "nationality name": {"type": "string", "system_name": "nationality_name"},
-    "platform type name": {"type": "string", "system_name": "platform_type_name"},
-    "privacy name": {"type": "string", "system_name": "privacy_name"},
-}
-
-sensor_column_data = {
-    "sensor_id": {"type": "id"},
-    "name": {"type": "string"},
-    "sensor_type": {"type": "string", "values": ["GPS", "Sonar", "Inertial"]},
-    "host": {"type": "string"},
-}
-
-column_data = {"Platform": platform_column_data, "Sensor": sensor_column_data}
 
 
 class MaintenanceGUI:
@@ -106,25 +83,26 @@ class MaintenanceGUI:
 
     def init_ui_components(self):
         # Dropdown box to select table, plus pane that it is in
-        self.dropdown_table = DropdownBox(
-            text="Select a table",
-            entries=[
-                "Platform",
-                "Sensor",
-            ],
-            on_select_handler=self.on_table_select,
-        )
-        self.data_type_container = HSplit(
-            children=[
-                Label(text="Select data type   F2", style="class:title-line"),
-                VSplit(
-                    [self.dropdown_table],
-                    align=HorizontalAlign.LEFT,
-                ),
-            ],
-            padding=1,
-            height=Dimension(weight=0.1),
-        )
+        # FUTURE: Not needed in current release, but kept for future
+        # self.dropdown_table = DropdownBox(
+        #     text="Select a table",
+        #     entries=[
+        #         "Platform",
+        #         "Sensor",
+        #     ],
+        #     on_select_handler=self.on_table_select,
+        # )
+        # self.data_type_container = HSplit(
+        #     children=[
+        #         Label(text="Select data type   F2", style="class:title-line"),
+        #         VSplit(
+        #             [self.dropdown_table],
+        #             align=HorizontalAlign.LEFT,
+        #         ),
+        #     ],
+        #     padding=1,
+        #     height=Dimension(weight=0.1),
+        # )
 
         # Filter pane, containing FilterWidget plus buffers for the
         # text showing the SQL
@@ -181,8 +159,9 @@ class MaintenanceGUI:
                         [
                             HSplit(
                                 [
-                                    self.data_type_container,
-                                    Window(height=1, char=Border.HORIZONTAL),
+                                    # FUTURE: Not needed for current release, kept for future
+                                    # self.data_type_container,
+                                    # Window(height=1, char=Border.HORIZONTAL),
                                     self.filter_container,
                                     Window(height=1, char=Border.HORIZONTAL),
                                     self.actions_container,
@@ -200,6 +179,26 @@ class MaintenanceGUI:
             ),
             floats=[],
         )
+
+        self.create_column_data()
+
+        self.filter_widget.set_column_data(self.column_data)
+        self.run_query()
+
+    def create_column_data(self):
+        platform_column_data = {
+            "platform_id": {"type": "id", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
+            "name": {"type": "string", "values": ["ADRI", "JEAN", "HMS Floaty", "USS Sinky"]},
+            "identifier": {"type": "string"},
+            "trigraph": {"type": "string"},
+            "quadgraph": {"type": "string"},
+            "nationality_id": {"type": "id"},
+            "nationality name": {"type": "string", "system_name": "nationality_name"},
+            "platform type name": {"type": "string", "system_name": "platform_type_name"},
+            "privacy name": {"type": "string", "system_name": "privacy_name"},
+        }
+
+        self.column_data = platform_column_data
 
     def run_query(self):
         """Runs the query as defined by the FilterWidget,
@@ -284,25 +283,27 @@ class MaintenanceGUI:
     def get_table_objects(self):
         return self.table_objects
 
-    def on_table_select(self, value):
-        """Called when an entry is selected from the Table dropdown at the top-left."""
-        # Set the data used to parameterise the FilterWidget
-        self.filter_widget.set_column_data(column_data[value])
-        self.run_query()
+    # FUTURE: Not needed for current release, kept for future
+    # def on_table_select(self, value):
+    #     """Called when an entry is selected from the Table dropdown at the top-left."""
+    #     # Set the data used to parameterise the FilterWidget
+    #     self.filter_widget.set_column_data(column_data[value])
+    #     self.run_query()
 
     def on_filter_widget_change(self, value):
         """Called when the filter widget notifies us that it has changed. The filter
         widget is sensible about this and only raises this event if there has actually been
         a change in the output of the filters property. That means we can run a query
         each time this is called, and the query shouldn't get run more often than is needed."""
-        if value != []:
-            # Convert the filter object to a SQL string to display in the Complete Query tab
-            filter_query = filter_widget_output_to_query(value, "Platforms", self.data_store)
-            query_obj = self.data_store.session.query(self.data_store.db_classes.Platform).filter(
-                filter_query
-            )
-            sql_string = str(query_obj.statement.compile(compile_kwargs={"literal_binds": True}))
-            self.filter_query_buffer.text = textwrap.fill(sql_string, width=50)
+        # Convert the filter object to a SQL string to display in the Complete Query tab
+        # FUTURE: Not currently implemented, but will be in a later phase
+        # if value != []:
+        # filter_query = filter_widget_output_to_query(value, "Platforms", self.data_store)
+        # query_obj = self.data_store.session.query(self.data_store.db_classes.Platform).filter(
+        #     filter_query
+        # )
+        # sql_string = str(query_obj.statement.compile(compile_kwargs={"literal_binds": True}))
+        # self.filter_query_buffer.text = textwrap.fill(sql_string, width=50)
         self.run_query()
 
     def run_action(self, selected_value):
@@ -462,7 +463,7 @@ class MaintenanceGUI:
             (
                 system_name_to_display_name,
                 display_name_to_system_name,
-            ) = get_system_name_mappings(column_data["Platform"])
+            ) = get_system_name_mappings(self.column_data)
 
             # Get lists of left-hand and right-hand side entries
             # The left-hand entries are all available fields (minus those that already appear on the right)
