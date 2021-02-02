@@ -419,6 +419,10 @@ class MaintenanceGUI:
                 # Re-run the query, so we get an updated list in the preview
                 # and can see that some platforms have disappeared
                 self.run_query()
+                # Regenerate the column_data, so we don't have entries in the dropdowns
+                # that don't exist anymore
+                self.create_column_data()
+                self.filter_widget.set_column_data(self.column_data, clear_entries=False)
 
         ensure_future(coroutine())
 

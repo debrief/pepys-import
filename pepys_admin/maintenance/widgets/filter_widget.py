@@ -58,7 +58,7 @@ class FilterWidget:
 
                 self.last_filters_output = self.filters
 
-    def set_column_data(self, column_data):
+    def set_column_data(self, column_data, clear_entries=True):
         """Updates the column_data, and removes all the filter entries
         so we can start again filtering a new table"""
         self.column_data = column_data
@@ -66,8 +66,9 @@ class FilterWidget:
         if self.column_data is None:
             self.column_data = {}
 
-        self.entries = [FilterWidgetEntry(self)]
-        self.boolean_operators = []
+        if clear_entries:
+            self.entries = [FilterWidgetEntry(self)]
+            self.boolean_operators = []
 
     def get_container_contents(self):
         entry_widgets = [e.get_widgets() for e in self.entries]
