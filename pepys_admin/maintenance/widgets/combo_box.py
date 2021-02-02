@@ -174,13 +174,19 @@ class ComboBox:
 
             @kb.add("escape")
             def _(event):
-                # User cancelled
-                self.future.set_result(None)
+                try:
+                    # User cancelled
+                    self.future.set_result(None)
+                except Exception:
+                    pass
 
             @kb.add("enter")
             def _(event) -> None:
-                # Return entry to the asyncio future
-                self.future.set_result(self.filtered_entries[self.selected_entry])
+                try:
+                    # Return entry to the asyncio future
+                    self.future.set_result(self.filtered_entries[self.selected_entry])
+                except Exception:
+                    pass
 
         else:
 

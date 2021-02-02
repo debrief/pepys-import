@@ -112,7 +112,10 @@ class DropdownBox:
             # This is the key bit - it waits until the ComboBox returns a result
             result = await menu.future
 
-            app.layout.focus(focused_before)
+            try:
+                app.layout.focus(focused_before)
+            except Exception:
+                pass
 
             # Remove the float from the FloatContainer
             if float_ in app.layout.container.floats:
