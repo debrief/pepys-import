@@ -90,13 +90,24 @@ class CheckboxTable(CheckboxList):
 
         self.create_values_from_parameters()
 
+        # the 1's in the code below are to deal with the header row
+        all_selected = len(self.current_values) == len(self.values) - 1
+        none_selected = len(self.current_values) == 0
+
         result = []
         for i, value in enumerate(self.values):
             if i == 0:
-                result.append(("", " "))
+                result.append(("class:table-title", self.open_character))
                 if i == self._selected_index:
                     result.append(("[SetCursorPosition]", ""))
-                result.append(("", "   "))
+                if all_selected:
+                    result.append(("class:table-title", "x"))
+                elif none_selected:
+                    result.append(("class:table-title", " "))
+                else:
+                    result.append(("class:table-title", ":"))
+                result.append(("class:table-title", self.close_character))
+                result.append(("", " "))
                 result.extend(to_formatted_text(value[1], style="class:table-title"))
                 result.append(("", "\n"))
                 continue
@@ -134,3 +145,21 @@ class CheckboxTable(CheckboxList):
         if len(result) > 0:
             result.pop()  # Remove last newline.
         return result
+
+    def _handle_enter(self) -> None:
+        if self._selected_index == 0:
+            # If we've pressed enter (or clicked) on the header row
+            # then turn them all on/off as required
+            all_selected = len(self.current_values) >= len(self.values) - 1
+            if all_selected:
+                self.current_values = []
+            else:
+                # This sets current_values to all of the entries of the table objects
+                # excluding the None value for the header row
+                self.current_values = [val[0] for val in self.values[1:]]
+            return
+        val = self.values[self._selected_index][0]
+        if val in self.current_values:
+            self.current_values.remove(val)
+        else:
+            self.current_values.append(val)
