@@ -548,22 +548,18 @@ class MaintenanceGUI:
     def get_style(self):
         style = Style(
             [
-                ("title-line", "bg:ansibrightblack fg:white"),
-                # ("button", "#000000"),
-                # ("button-arrow", "#000000"),
-                # ("button", "bg:ansibrightblack"),
-                # ("button.focused", "bg:ansired"),
+                ("title-line", "bg:ansibrightblack fg:ansiwhite"),
+                ("button", "fg:ansibrightblack"),
                 ("button.focused", "bg:ansired"),
-                # ("dropdown", "bg:ansigray"),
                 ("dropdown.focused", "bg:ansired"),
                 ("text-area focused", "bg:ansibrightred"),
-                ("dropdown-highlight", "fg:ansibrightred"),
+                ("dropdown-highlight", "fg:ansibrightgreen"),
                 ("filter-text", "fg:ansibrightblue"),
-                ("table-title", "fg:ansibrightred"),
+                ("table-title", "fg:ansibrightmagenta"),
                 ("checkbox-selected", "bg:ansiyellow"),
                 ("status-bar-text", "bg:ansibrightblack"),
                 ("instruction-text", "fg:ansibrightcyan"),
-                ("dropdown.box", "bg:ansiwhite fg:ansiblack"),
+                ("dropdown.box", "bg:ansibrightblack fg:ansiblack"),
             ]
         )
         return style
