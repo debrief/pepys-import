@@ -138,16 +138,12 @@ class MaintenanceGUI:
                     style="class:title-line",
                 ),
                 ComboBox(
-                    entries=[
-                        "1 - Merge Platforms",
-                        "2 - Test Progressbar",
-                        "3 - A third action here",
-                    ],
+                    entries=["1 - Merge Platforms"],
                     enter_handler=self.run_action,
                 ),
             ],
             padding=1,
-            height=Dimension(weight=0.2),
+            height=Dimension(weight=0.1),
         )
 
         # Preview container, with two tabs: a preview table and a preview graph
@@ -345,13 +341,6 @@ class MaintenanceGUI:
         """Runs an action from the actions ComboBox. Called when Enter is pressed."""
         if selected_value == "1 - Merge Platforms":
             self.run_merge_platforms()
-        elif selected_value == "2 - Test Progressbar":
-
-            async def coroutine():
-                dialog = ProgressDialog("Test progressbar", self.run_slowly)
-                _ = await self.show_dialog_as_float(dialog)
-
-            ensure_future(coroutine())
         else:
             self.show_messagebox("Action", f"Running action {selected_value}")
 
