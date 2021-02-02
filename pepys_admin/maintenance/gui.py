@@ -25,6 +25,7 @@ from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Border, Label
+from sqlalchemy import nullslast
 from sqlalchemy.orm import undefer
 
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
@@ -211,13 +212,20 @@ class MaintenanceGUI:
             platform_trigraphs = [platform.trigraph for platform in all_platforms]
             platform_quadgraphs = [platform.quadgraph for platform in all_platforms]
 
-            all_nationalities = self.data_store.session.query(Nationality).all()
+            # nullslast in the expression below makes NULL entries appear at the end
+            # of the sorted list - if we don't have this then they sort as 'zero'
+            # and come before the prioritised ones
+            all_nationalities = (
+                self.data_store.session.query(Nationality)
+                .order_by(nullslast(Nationality.priority.asc()))
+                .all()
+            )
             nationality_names = [nationality.name for nationality in all_nationalities]
 
             all_platform_types = self.data_store.session.query(PlatformType).all()
             platform_type_names = [pt.name for pt in all_platform_types]
 
-            all_privacies = self.data_store.session.query(Privacy).all()
+            all_privacies = self.data_store.session.query(Privacy).order_by(Privacy.level).all()
             privacy_names = [priv.name for priv in all_privacies]
 
         platform_column_data = {
