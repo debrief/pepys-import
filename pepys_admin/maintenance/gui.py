@@ -83,7 +83,7 @@ class MaintenanceGUI:
 
     def init_ui_components(self):
         # Dropdown box to select table, plus pane that it is in
-        # FUTURE: Not needed in current release, but kept for future
+        # FUTURE: Not needed until we want to be able to select a table at the top
         # self.dropdown_table = DropdownBox(
         #     text="Select a table",
         #     entries=[
@@ -159,7 +159,7 @@ class MaintenanceGUI:
                         [
                             HSplit(
                                 [
-                                    # FUTURE: Not needed for current release, kept for future
+                                    # FUTURE: Not needed until we want to select a table at the top
                                     # self.data_type_container,
                                     # Window(height=1, char=Border.HORIZONTAL),
                                     self.filter_container,
@@ -283,7 +283,7 @@ class MaintenanceGUI:
     def get_table_objects(self):
         return self.table_objects
 
-    # FUTURE: Not needed for current release, kept for future
+    # FUTURE: Not needed until we want to select a table at the top
     # def on_table_select(self, value):
     #     """Called when an entry is selected from the Table dropdown at the top-left."""
     #     # Set the data used to parameterise the FilterWidget
@@ -296,7 +296,7 @@ class MaintenanceGUI:
         a change in the output of the filters property. That means we can run a query
         each time this is called, and the query shouldn't get run more often than is needed."""
         # Convert the filter object to a SQL string to display in the Complete Query tab
-        # FUTURE: Not currently implemented, but will be in a later phase
+        # FUTURE: Not needed until we want to display raw SQL
         # if value != []:
         # filter_query = filter_widget_output_to_query(value, "Platforms", self.data_store)
         # query_obj = self.data_store.session.query(self.data_store.db_classes.Platform).filter(
@@ -430,15 +430,16 @@ class MaintenanceGUI:
             self.filters_tab = "filters"
             event.app.layout.focus(self.filter_container)
 
-        @kb.add("f4")
-        def _(event):
-            self.filters_tab = "filter_query"
-            event.app.layout.focus(self.filter_container)
+        # FUTURE: Not needed until we want to display the raw SQL
+        # @kb.add("f4")
+        # def _(event):
+        #     self.filters_tab = "filter_query"
+        #     event.app.layout.focus(self.filter_container)
 
-        @kb.add("f5")
-        def _(event):
-            self.filters_tab = "complete_query"
-            event.app.layout.focus(self.filter_container)
+        # @kb.add("f5")
+        # def _(event):
+        #     self.filters_tab = "complete_query"
+        #     event.app.layout.focus(self.filter_container)
 
         @kb.add("f6")
         def _(event):
@@ -446,11 +447,12 @@ class MaintenanceGUI:
             self.status_bar_shortcuts = ["Ctrl-F - Select fields"]
             event.app.layout.focus(self.preview_container)
 
-        @kb.add("f7")
-        def _(event):
-            self.preview_tab = "graph"
-            self.status_bar_shortcuts = ["Ctrl-U - Update graph"]
-            event.app.layout.focus(self.preview_container)
+        # FUTURE: Not needed until we want to display the graph
+        # @kb.add("f7")
+        # def _(event):
+        #     self.preview_tab = "graph"
+        #     self.status_bar_shortcuts = ["Ctrl-U - Update graph"]
+        #     event.app.layout.focus(self.preview_container)
 
         @kb.add("f8")
         def _(event):
@@ -583,7 +585,8 @@ class MaintenanceGUI:
         #     padding=0
         # )
         top_label = Label(
-            text="Build filters  F3 | Show Filter Query  F4 | Show complete query  F5",
+            # text="Build filters  F3 | Show Filter Query  F4 | Show complete query  F5",
+            text="Build filters  F3",
             style="class:title-line",
         )
         # Show different widgets, depending on the tab selected
@@ -600,28 +603,30 @@ class MaintenanceGUI:
                 padding=1,
                 height=Dimension(weight=0.70),
             )
-        elif self.filters_tab == "filter_query":
-            return HSplit(
-                [
-                    top_label,
-                    Window(self.filter_query),
-                ],
-                padding=1,
-                height=Dimension(weight=0.5),
-            )
-        elif self.filters_tab == "complete_query":
-            return HSplit(
-                [
-                    top_label,
-                    Window(self.complete_query),
-                ],
-                padding=1,
-                height=Dimension(weight=0.5),
-            )
+        # FUTURE: Not needed until we want to display raw SQL queries
+        # elif self.filters_tab == "filter_query":
+        #     return HSplit(
+        #         [
+        #             top_label,
+        #             Window(self.filter_query),
+        #         ],
+        #         padding=1,
+        #         height=Dimension(weight=0.5),
+        #     )
+        # elif self.filters_tab == "complete_query":
+        #     return HSplit(
+        #         [
+        #             top_label,
+        #             Window(self.complete_query),
+        #         ],
+        #         padding=1,
+        #         height=Dimension(weight=0.5),
+        #     )
 
     def get_preview_container(self):
         """Called by the DynamicContainer that displays the preview pane"""
-        title_label = Label(text="Preview List   F6 | Preview Graph  F7", style="class:title-line")
+        # title_label = Label(text="Preview List   F6 | Preview Graph  F7", style="class:title-line")
+        title_label = Label(text="Preview List   F6", style="class:title-line")
         if self.preview_tab == "table":
             return HSplit(
                 children=[
@@ -635,15 +640,16 @@ class MaintenanceGUI:
                 padding=1,
                 width=Dimension(weight=0.4),
             )
-        elif self.preview_tab == "graph":
-            return HSplit(
-                children=[
-                    title_label,
-                    self.preview_graph,
-                ],
-                padding=1,
-                width=Dimension(weight=0.4),
-            )
+        # FUTURE: Not needed until we want to display a graph
+        # elif self.preview_tab == "graph":
+        #     return HSplit(
+        #         children=[
+        #             title_label,
+        #             self.preview_graph,
+        #         ],
+        #         padding=1,
+        #         width=Dimension(weight=0.4),
+        #     )
 
     def get_status_bar_container(self):
         """Called by the DynamicContainer that displays the status bar"""
