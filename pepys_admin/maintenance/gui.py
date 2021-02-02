@@ -34,6 +34,7 @@ from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.platform_merge_dialog import PlatformMergeDialog
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
 from pepys_admin.maintenance.dialogs.selection_dialog import SelectionDialog
+from pepys_admin.maintenance.utils import get_system_name_mappings, get_table_titles
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
@@ -200,19 +201,6 @@ class MaintenanceGUI:
             floats=[],
         )
 
-    def get_table_titles(self, fields):
-        results = []
-        for field in fields:
-            splitted = field.split("_")
-            if len(splitted) > 1 and splitted[-1] == "name":
-                field_title = " ".join(splitted[:-1])
-            else:
-                field_title = " ".join(splitted)
-
-            results.append(field_title.capitalize())
-
-        return results
-
     def run_query(self):
         """Runs the query as defined by the FilterWidget,
         and displays the result in the preview table."""
@@ -237,7 +225,7 @@ class MaintenanceGUI:
             logger.debug(results)
 
             # Convert the selected fields to sensible table titles
-            self.table_data = [self.get_table_titles(self.preview_selected_fields)]
+            self.table_data = [get_table_titles(self.preview_selected_fields)]
             # The first of the table objects should be None, as that is the header field
             # and doesn't have a table object associated with it
             self.table_objects = [None]
@@ -474,7 +462,7 @@ class MaintenanceGUI:
             (
                 system_name_to_display_name,
                 display_name_to_system_name,
-            ) = self.get_system_name_mappings(column_data["Platform"])
+            ) = get_system_name_mappings(column_data["Platform"])
 
             # Get lists of left-hand and right-hand side entries
             # The left-hand entries are all available fields (minus those that already appear on the right)
@@ -499,21 +487,6 @@ class MaintenanceGUI:
             self.run_query()
 
         ensure_future(coroutine())
-
-    def get_system_name_mappings(self, column_data):
-        system_name_to_display_name = {}
-        display_name_to_system_name = {}
-
-        for key, entry in column_data.items():
-            if entry.get("system_name", None) is not None:
-                system_name = entry.get("system_name")
-            else:
-                system_name = key
-
-            system_name_to_display_name[system_name] = key
-            display_name_to_system_name[key] = system_name
-
-        return system_name_to_display_name, display_name_to_system_name
 
     def get_style(self):
         style = Style(
