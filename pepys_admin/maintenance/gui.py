@@ -236,19 +236,17 @@ class MaintenanceGUI:
             results = query_obj.options(undefer("*")).all()
             logger.debug(results)
 
-            if len(results) == 0:
-                # If we've got no results then set everything to empty lists
-                # and refresh the app
-                self.table_data = []
-                self.table_objects = []
-                app.invalidate()
-                return
-
             # Convert the selected fields to sensible table titles
             self.table_data = [self.get_table_titles(self.preview_selected_fields)]
             # The first of the table objects should be None, as that is the header field
             # and doesn't have a table object associated with it
             self.table_objects = [None]
+
+            if len(results) == 0:
+                # If we've got no results then just update the app display
+                # which will just show the headers that we mentioned above
+                app.invalidate()
+                return
 
             # Disconnect all the objects we've returned in our query from the database
             # so we can store them outside of the session without any problems
