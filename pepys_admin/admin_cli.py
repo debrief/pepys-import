@@ -82,7 +82,14 @@ class AdminShell(BaseShell):
         snapshot_shell.cmdloop()
 
     def do_maintenance_gui(self):
-        gui = MaintenanceGUI(self.data_store)
+        try:
+            gui = MaintenanceGUI(self.data_store)
+        except Exception as e:
+            print(str(e))
+            print(
+                "Database error: You must initialise the database before running maintenance mode. See full error above."
+            )
+            return
         gui.app.run()
 
     def do_initialise(self):
