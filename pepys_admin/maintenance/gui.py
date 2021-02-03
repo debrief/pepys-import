@@ -40,6 +40,7 @@ from pepys_admin.maintenance.utils import (
     get_table_titles,
     remove_duplicates_and_nones,
 )
+from pepys_admin.maintenance.widgets.blank_border import BlankBorder
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
@@ -168,28 +169,30 @@ class MaintenanceGUI:
 
         # Putting everything together in panes
         self.root_container = FloatContainer(
-            HSplit(
-                [
-                    VSplit(
-                        [
-                            HSplit(
-                                [
-                                    self.data_type_container,
-                                    Window(height=1, char=Border.HORIZONTAL),
-                                    self.filter_container,
-                                    Window(height=1, char=Border.HORIZONTAL),
-                                    self.actions_container,
-                                ],
-                                width=Dimension(weight=0.6),
-                            ),
-                            Window(width=1, char=Border.VERTICAL),
-                            self.preview_container,
-                        ],
-                        height=Dimension(weight=1),
-                    ),
-                    Window(height=1, char=Border.HORIZONTAL),
-                    self.status_bar_container,
-                ],
+            BlankBorder(
+                HSplit(
+                    [
+                        VSplit(
+                            [
+                                HSplit(
+                                    [
+                                        self.data_type_container,
+                                        Window(height=1, char=Border.HORIZONTAL),
+                                        self.filter_container,
+                                        Window(height=1, char=Border.HORIZONTAL),
+                                        self.actions_container,
+                                    ],
+                                    width=Dimension(weight=0.6),
+                                ),
+                                Window(width=1, char=Border.VERTICAL),
+                                self.preview_container,
+                            ],
+                            height=Dimension(weight=1),
+                        ),
+                        Window(height=1, char=Border.HORIZONTAL),
+                        self.status_bar_container,
+                    ],
+                )
             ),
             floats=[],
         )
