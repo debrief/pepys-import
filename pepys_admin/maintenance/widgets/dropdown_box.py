@@ -32,6 +32,7 @@ class DropdownBox:
         filter=True,
         filter_method="special",
         open_on_any_key=True,
+        max_width=30,
     ) -> None:
         self.text = text
         self.initial_text = text
@@ -40,6 +41,7 @@ class DropdownBox:
         self.filter = filter
         self.filter_method = filter_method
         self.open_on_any_key = open_on_any_key
+        self.max_width = max_width
 
         self.menu = None
         self.disabled = False
@@ -49,18 +51,8 @@ class DropdownBox:
         # but we want access to member variables)
         self.handler = functools.partial(self.handler, self)
 
-        widths_for_max_calc = [len(self.text)]
+        self.calculate_width()
 
-        if filter:
-            widths_for_max_calc.append(len("Type to filter"))
-
-        if not callable(self.entries) and len(self.entries) > 0:
-            widths_for_max_calc += [len(entry) for entry in self.entries]
-
-        # Work out the max length of any entry or the original text
-        max_len = max(widths_for_max_calc)
-
-        self.width = max_len + 2
         self.control = FormattedTextControl(
             self._get_text_fragments,
             key_bindings=self._get_key_bindings(),
@@ -83,6 +75,27 @@ class DropdownBox:
             dont_extend_height=True,
         )
 
+    def calculate_width(self):
+        widths_for_max_calc = [len(self.text)]
+
+        if self.filter:
+            widths_for_max_calc.append(len("Type to filter"))
+
+        if not callable(self.entries) and len(self.entries) > 0:
+            widths_for_max_calc += [len(entry) for entry in self.entries]
+        elif callable(self.entries):
+            entries = self.entries()
+            widths_for_max_calc += [len(entry) for entry in entries]
+        # Work out the max length of any entry or the original text
+        max_len = max(widths_for_max_calc)
+
+        calc_width = max_len + 2
+
+        if calc_width > self.max_width:
+            self.width = self.max_width
+        else:
+            self.width = calc_width
+
     def handler(self, event):
         if self.disabled:
             return
@@ -94,6 +107,8 @@ class DropdownBox:
 
         if len(entries) == 0:
             return
+
+        self.calculate_width()
 
         # Create a ComboBox to display the dropdown list
         self.menu = ComboBox(
@@ -149,6 +164,16 @@ class DropdownBox:
         ensure_future(coroutine())
 
     def _get_text_fragments(self):
+        # Update the width calculation, but only
+        # refresh the whole screen if the window width
+        # actually needs to change
+        prev_window_width = self.window.width
+        self.calculate_width()
+        if self.width != prev_window_width:
+            self.window.width = self.width
+            app = get_app()
+            app.invalidate()
+
         text = ("{:^%s}" % (self.width - 2)).format(self.text)
 
         def handler(mouse_event) -> None:
