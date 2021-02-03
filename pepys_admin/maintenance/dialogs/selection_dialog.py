@@ -22,12 +22,24 @@ class SelectionDialog:
         body = HSplit(
             [
                 Label(
-                    "Press TAB or arrow keys to move between lists, and Enter to move an item to the other list"
+                    "Press TAB or arrow keys to move between lists, and Enter to move an item to\nthe other list."
                 ),
                 VSplit(
                     [
-                        HSplit([Label("Available fields:"), self.left_list], padding=1),
-                        HSplit([Label("Selected fields:"), self.right_list], padding=1),
+                        HSplit(
+                            [
+                                Label("Available fields:", style="class:instruction-text"),
+                                self.left_list,
+                            ],
+                            padding=1,
+                        ),
+                        HSplit(
+                            [
+                                Label("Selected fields:", style="class:instruction-text"),
+                                self.right_list,
+                            ],
+                            padding=1,
+                        ),
                     ],
                     padding=2,
                 ),
