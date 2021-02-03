@@ -105,7 +105,7 @@ class CheckboxTable(CheckboxList):
                 elif none_selected:
                     result.append(("class:table-title", " "))
                 else:
-                    result.append(("class:table-title", ":"))
+                    result.append(("class:table-title", "-"))
                 result.append(("class:table-title", self.close_character))
                 result.append(("", " "))
                 result.extend(to_formatted_text(value[1], style="class:table-title"))
