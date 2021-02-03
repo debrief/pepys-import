@@ -551,7 +551,7 @@ class MaintenanceGUI:
                 ("dropdown.focused", "bg:ansired"),
                 ("text-area focused", "bg:ansibrightred"),
                 ("dropdown-highlight", "fg:ansibrightgreen"),
-                ("filter-text", "fg:ansibrightblue"),
+                ("filter-text", "fg:ansibrightcyan"),
                 ("table-title", "fg:ansibrightmagenta"),
                 ("checkbox-selected", "bg:ansiyellow"),
                 ("status-bar-text", "bg:ansibrightblack"),
