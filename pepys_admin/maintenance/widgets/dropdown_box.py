@@ -30,7 +30,7 @@ class DropdownBox:
         entries,
         on_select_handler=None,
         filter=True,
-        filter_method="startswith",
+        filter_method="special",
         open_on_any_key=True,
     ) -> None:
         self.text = text

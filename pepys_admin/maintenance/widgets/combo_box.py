@@ -30,7 +30,7 @@ class ComboBox:
         filter_method="contains",
         popup=False,
         enter_handler=None,
-        style=None
+        style=None,
     ) -> None:
         """
         Provides a selectable list containing the given entries.
@@ -59,9 +59,11 @@ class ComboBox:
         self.filter = filter
 
         if filter_method == "contains":
-            self.filter_match_fn = self.contains
-        else:
-            self.filter_match_fn = self.startswith
+            self.filter_function = self.filter_contains
+        elif filter_method == "startswith":
+            self.filter_function = self.filter_startswith
+        elif filter_method == "special":
+            self.filter_function = self.filter_special
 
         self.entries = entries
 
@@ -103,15 +105,39 @@ class ComboBox:
         else:
             return False
 
+    def filter_contains(self):
+        for entry in self.entries:
+            if self.contains(entry, self.filter_text):
+                self.filtered_entries.append(entry)
+
+    def filter_startswith(self):
+        for entry in self.entries:
+            if self.startswith(entry, self.filter_text):
+                self.filtered_entries.append(entry)
+
+    def filter_special(self):
+        startswith = []
+        contains = []
+        for entry in self.entries:
+            if self.startswith(entry, self.filter_text):
+                startswith.append(entry)
+            elif self.contains(entry, self.filter_text):
+                # Note: as this is in an elif, an entry
+                # will only be added to the contains list
+                # if it is not in the startswith list
+                # Therefore when we combine them below
+                # we won't get duplicates
+                contains.append(entry)
+
+        self.filtered_entries = startswith + contains
+
     def _get_formatted_text(self):
         self.filtered_entries = []
         result = []
 
         if self.filter:
             # Filter entries
-            for entry in self.entries:
-                if self.filter_match_fn(entry, self.filter_text):
-                    self.filtered_entries.append(entry)
+            self.filter_function()
 
             if len(self.filter_text) != 0:
                 # Show an extra line at the top, showing the current filter
