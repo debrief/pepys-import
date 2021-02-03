@@ -24,13 +24,24 @@ class DropdownBox:
     all the methods, so it was easier to just copy it.
     """
 
-    def __init__(self, text, entries, on_select_handler=None, filter=True) -> None:
+    def __init__(
+        self,
+        text,
+        entries,
+        on_select_handler=None,
+        filter=True,
+        filter_method="startswith",
+        open_on_any_key=True,
+    ) -> None:
         self.text = text
         self.initial_text = text
         self.entries = entries
         self.on_select_handler = on_select_handler
         self.filter = filter
+        self.filter_method = filter_method
+        self.open_on_any_key = open_on_any_key
 
+        self.menu = None
         self.disabled = False
 
         # Have to use partial to make this take a reference to self
@@ -84,22 +95,27 @@ class DropdownBox:
         if len(entries) == 0:
             return
 
+        # Create a ComboBox to display the dropdown list
+        self.menu = ComboBox(
+            entries,
+            self.width,
+            filter=self.filter,
+            popup=True,
+            style="class:dropdown.box",
+            filter_method=self.filter_method,
+        )
+
         # We have to define a coroutine (the name doesn't matter)
         # so that we can use await inside the function body.
         async def coroutine():
             app = get_app()
-
-            # Create a ComboBox to display the dropdown list
-            menu = ComboBox(
-                entries, self.width, filter=self.filter, popup=True, style="class:dropdown.box"
-            )
 
             # Wrap this in a Float, so we can display it above the rest of the
             # display. The high Z index makes this appear on top of anything else
             # By attaching it to a window, we get to use the window's menu position
             # (defined in _get_text_fragments) as the location
             float_ = Float(
-                content=menu, z_index=1000, xcursor=True, ycursor=True, attach_to_window=self
+                content=self.menu, z_index=1000, xcursor=True, ycursor=True, attach_to_window=self
             )
 
             # Add the floats to the FloatContainer, so it displays
@@ -107,10 +123,10 @@ class DropdownBox:
 
             # Keep track of focus so we can retun to the previously focused control
             focused_before = app.layout.current_window
-            app.layout.focus(menu)
+            app.layout.focus(self.menu)
 
             # This is the key bit - it waits until the ComboBox returns a result
-            result = await menu.future
+            result = await self.menu.future
 
             try:
                 app.layout.focus(focused_before)
@@ -160,6 +176,14 @@ class DropdownBox:
         def _(event) -> None:
             if self.handler is not None:
                 self.handler()
+
+        @kb.add("<any>")
+        def _(event):
+            key_str = event.key_sequence[0].key
+            if len(key_str) == 1:
+                if self.open_on_any_key and self.handler is not None:
+                    self.handler()
+                    self.menu.filter_text += key_str
 
         return kb
 
