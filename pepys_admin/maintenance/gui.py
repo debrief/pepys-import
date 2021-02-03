@@ -560,6 +560,7 @@ class MaintenanceGUI:
                 ("status-bar-text", "bg:ansibrightblack"),
                 ("instruction-text", "fg:ansibrightcyan"),
                 ("dropdown.box", "bg:ansibrightblack fg:ansiblack"),
+                ("combobox-highlight", "bg:ansiyellow"),
             ]
         )
         return style

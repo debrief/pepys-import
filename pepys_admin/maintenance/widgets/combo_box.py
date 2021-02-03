@@ -1,5 +1,6 @@
 from asyncio import Future
 
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.formatted_text.base import merge_formatted_text
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import Window
@@ -148,10 +149,16 @@ class ComboBox:
             # Just include all entries
             self.filtered_entries = self.entries
 
+        app = get_app()
         for i, entry in enumerate(self.filtered_entries):
             if i == self.selected_entry:
                 result.append([("[SetCursorPosition]", "")])
-                result.append([("class:dropdown-highlight", entry)])
+                if self.popup:
+                    result.append([("class:dropdown-highlight", entry)])
+                elif app.layout.has_focus(self):
+                    result.append([("class:combobox-highlight", entry)])
+                else:
+                    result.append([("", entry)])
             else:
                 result.append(entry)
             result.append("\n")
