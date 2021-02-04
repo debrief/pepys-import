@@ -1,4 +1,3 @@
-import asyncio
 import time
 from asyncio.tasks import ensure_future
 from functools import partial
@@ -426,22 +425,6 @@ class MaintenanceGUI:
 
         ensure_future(coroutine())
 
-    async def async_run_slowly(self, set_percentage, is_cancelled):
-        for i in range(11):
-            await asyncio.sleep(0.4)
-            logger.debug(f"At iteration {i}")
-            set_percentage((i / 10.0) * 100.0)
-            if is_cancelled():
-                return
-
-    def run_slowly(self, set_percentage, is_cancelled):
-        for i in range(11):
-            time.sleep(1)
-            logger.debug(f"At iteration {i}")
-            set_percentage((i / 10.0) * 100.0)
-            if is_cancelled():
-                return
-
     def get_keybindings(self):
         kb = KeyBindings()
 
@@ -623,22 +606,6 @@ class MaintenanceGUI:
 
     def get_filter_container(self):
         """Called by the DynamicContainer which displays the filter container"""
-        # top_label = VSplit(
-        #     [
-        #         Label(
-        #             text="Build filters  F3",
-        #             style="class:title-line",
-        #             dont_extend_width=True
-        #         ),
-        #         Label(text=" | ", style="class:title-line", width=3),
-        #         Label(text="Show Filter Query  F4", style="class:title-line", dont_extend_width=True),
-        #         Label(text=" | ", style="class:title-line", width=3),
-        #         Label(text="Show complete query  F5", style="class:title-line", dont_extend_width=True),
-        #         Label(" ", style="class:title-line", width=Dimension(weight=10))
-        #     ],
-        #     align=HorizontalAlign.LEFT,
-        #     padding=0
-        # )
         top_label = Label(
             # text="Build filters  F3 | Show Filter Query  F4 | Show complete query  F5",
             text="Build filters  F3",
