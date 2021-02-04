@@ -17,6 +17,41 @@ from pepys_admin.maintenance.widgets.utils import (
 
 class FilterWidget:
     def __init__(self, column_data=None, on_change_handler=None, max_filters=None):
+        """A widget that allows the creation of SQL-style filter constraints, in the style
+        of <column_name> <operator> <value> such as "name == 'Robin'" or "speed >= 23.5". Also
+        provides the ability to combine these constraints with boolean AND or OR operators.
+
+        :param column_data: Dictionary data structure defining the columns that can be selected,
+        and their types and values, defaults to None. Can be set after creation with `set_column_data`.
+        See below for an example.
+        :type column_data: dict, optional
+        :param on_change_handler: Function to be called whenever the output (as provided by the .filters
+        property) changes, defaults to None
+        :type on_change_handler: Function, optional
+        :param max_filters: Maximum number of filters to allow, defaults to None
+        :type max_filters: int, optional
+
+        Column Data structure
+        =====================
+        The column data structure is a dictionary with the column display names as its keys, and details about
+        the column in the values. Each value is another dictionary which can contain keys of "type" (column
+        data type), "values" (a list of values to select from) and "system_name" (an internal name to be used
+        for this column in the output). Recognised types are "id", "string", "float", "int" and "datetime",
+        and different widgets will be displayed to select entries of these different types - including a masked
+        input widget for datetime, and numerical validation for int and float. The only compulsory entry is the
+        "type" specifying the column data type.
+
+        A full example of a valid column_data dictionary is:
+        {
+            "platform_id": {"type": "id", "values": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]},
+            "name": {"type": "string", "values": ["HMS Name1", "HMS Floaty", "USS Sinky"]},
+            "identifier": {"type": "string"},
+            "nationality_id": {"type": "id", "system_name": "Nationality.nationality_id"},
+            "nationality_name": {"type": "string", "system_name": "Nationality.name"},
+            "timestamp": {"type": "datetime"},
+            "speed": {"type": "float"},
+        }
+        """
         self.column_data = column_data
         self.on_change_handler = on_change_handler
         self.max_filters = max_filters
@@ -120,7 +155,14 @@ class FilterWidget:
         """
         Returns the filters that are currently defined in the widget.
 
-        TODO: Put output format here
+        Currently, the output is a very simple list of lists that looks like this:
+
+        [
+            ["col_name", "operator", "value"],
+            ["AND"]
+            ["col_name2", "operator2", "value2"],
+            ...
+        ]
         """
         entries_and_booleans = interleave_lists(self.entries, self.boolean_operators)
 
@@ -267,6 +309,7 @@ class FilterWidgetEntry:
         )
 
     def handle_delete(self):
+        "Called when the delete button is pressed for this row"
         index = self.filter_widget.entries.index(self)
         if index == 0 and len(self.filter_widget.entries) == 1:
             # If it's the only one, then delete and immediately add a new blank entry

@@ -27,13 +27,5 @@ class ConfirmationDialog:
             modal=True,
         )
 
-        # # Get the keybindings for the dialog and add a binding for Esc
-        # # to close the dialog
-        # dialog_kb = self.dialog.container.container.content.key_bindings
-
-        # @dialog_kb.add("escape")
-        # def _(event) -> None:
-        #     handle_no()
-
     def __pt_container__(self):
         return self.dialog

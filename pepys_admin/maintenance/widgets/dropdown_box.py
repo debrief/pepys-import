@@ -34,6 +34,34 @@ class DropdownBox:
         open_on_any_key=True,
         max_width=30,
     ) -> None:
+        """Dropdown box widget
+
+        :param text: Initial text for the dropdown - could be one of the entries, or could be
+        text like "Select an item here"
+        :type text: str
+        :param entries: Entries to be shown in the dropdown box. Can be either a list of strings
+        or a function that returns a list of strings. The function will be called just before
+        the popup list is displayed, so can be used to display an always-updated list of entries.
+        :type entries: Function or List of strings.
+        :param on_select_handler: Function to be called when an item is selected from the dropdown,
+        defaults to None
+        :type on_select_handler: Function, optional
+        :param filter: Whether to provide the ability to type to filter the dropdown, defaults to True
+        :type filter: bool, optional
+        :param filter_method: Method used for filtering based on text typed. Must be either "contains"
+        (checks if the entries contain the filter text), "startswith" (checks if the entries start with the
+        filter text) or "special" (displays the list of entries that start with the filter text, followed by any other
+        entries that contain the text but do not start with it), defaults to "special"
+        :type filter_method: str, optional
+        :param open_on_any_key: Whether to automatically open the dropdown box and start filtering when any alphanumeric
+        key is pressed, defaults to True
+        :type open_on_any_key: bool, optional
+        :param max_width: Maximum width of the control. The control will automatically adjust its width based on the entries
+        but this can be used to stop long entries leading to a very large dropdown, defaults to 30
+        :type max_width: int, optional
+        :return: None
+        :rtype: None
+        """
         self.text = text
         self.initial_text = text
         self.entries = entries

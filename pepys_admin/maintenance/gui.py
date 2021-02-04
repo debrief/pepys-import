@@ -546,6 +546,10 @@ class MaintenanceGUI:
         ensure_future(coroutine())
 
     def get_style(self):
+        # We deliberately use the 'ansiXXX' colours here, as they are the standard
+        # colours that are available on the Windows Command Prompt
+        # See https://python-prompt-toolkit.readthedocs.io/en/master/pages/advanced_topics/styling.html
+        # for a list of them
         style = Style(
             [
                 ("title-line", "bg:ansibrightblack fg:ansiwhite"),

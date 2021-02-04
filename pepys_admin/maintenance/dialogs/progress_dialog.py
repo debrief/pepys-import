@@ -11,7 +11,25 @@ from prompt_toolkit.widgets.dialogs import Dialog
 
 
 class ProgressDialog:
+    """Dialog showing a progress bar, with an optional Cancel button."""
+
     def __init__(self, title, run_callback, show_cancel=True):
+        """Creates a dialog object which will show a dialog with a progress bar
+        and an optional cancel button.
+
+        Arguments:
+        - `title`: Title for the dialog box
+        - `run_callback`: Function to be called to do the actual work. This must be a
+          normal, non-async function. It must take two keyword arguments: set_percentage
+          and is_cancelled. When the function is called, two separate functions will
+          be passed in as those two arguments. The set_percentage argument can be called
+          with a number between 0 and 100 to set the progress bar to that value, and the
+          is_cancelled function will return True if the cancel button has been pressed.
+          The function given will be called with those two arguments only, if other
+          arguments need passing then use functools.partial to pass them. The function
+          must be thread-safe, as it is called in a separate thread.
+        - `show_cancel`: Whether to show a cancel button or not (boolean, default True)
+        """
         self.future = Future()
 
         def set_cancelled():
@@ -35,6 +53,9 @@ class ProgressDialog:
         )
 
         async def coroutine():
+            # This runs the run_callback function in a separate thread
+            # but as part of the asyncio loop, so the GUI can still update
+            # while a potentially-blocking function runs in the background
             loop = asyncio.get_running_loop()
             await loop.run_in_executor(
                 None,
@@ -48,10 +69,12 @@ class ProgressDialog:
         ensure_future(coroutine())
 
     def set_percentage(self, value: int) -> None:
+        # If we get to 100% then close the dialog
         if value == 100:
             self.future.set_result(None)
 
         self.progressbar.percentage = int(value)
+        # Refresh the GUI
         app = get_app()
         app.invalidate()
 

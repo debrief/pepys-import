@@ -45,6 +45,7 @@ class ComboBox:
           is a popup then async features will be used to return values, and tab/shift-tab/esc
           will be captured
         - `enter_handler`: event handler function to be called when an entry is selected
+        - `style`: Any custom style to be passed to the underlying control
         """
         # Create an asyncio Future which will be used to return
         # the value when this object is created
