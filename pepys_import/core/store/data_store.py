@@ -30,6 +30,7 @@ from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_
 from pepys_import.utils.value_transforming_utils import format_datetime
 
 from ...utils.error_handling import handle_first_connection_error
+from ...utils.sqlalchemy_utils import get_primary_key_for_table
 from ...utils.text_formatting_utils import custom_print_formatted_text, format_error_message
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
@@ -1684,19 +1685,31 @@ class DataStore:
         if master_id in platform_list:
             platform_list.remove(master_id)  # We don't need to change these values
 
+        reason_platform_list = ",".join([str(p) for p in platform_list])
+        change_id = self.add_to_changes(
+            user=USER,
+            modified=datetime.utcnow(),
+            reason=f"Merging Platforms '{reason_platform_list}' to '{master_id}'.",
+        ).change_id
         for p_id in platform_list:
-            self.update_platform_ids(p_id, master_id)
+            self.update_platform_ids(p_id, master_id, change_id)
 
             sensors = self.session.query(Sensor).filter(Sensor.host == p_id).all()
             sensor_list.extend(sensors)
-
         for sensor in sensor_list:
             if sensor.name not in master_sensor_names:
-                (
-                    self.session.query(Sensor)
-                    .filter(Sensor.sensor_id == sensor.sensor_id)
-                    .update({"host": master_id})
-                )
+                query = self.session.query(Sensor).filter(Sensor.sensor_id == sensor.sensor_id)
+                [
+                    self.add_to_logs(
+                        table=constants.SENSOR,
+                        row_id=s.sensor_id,
+                        field="host",
+                        new_value=str(s.host),
+                        change_id=change_id,
+                    )
+                    for s in query.all()
+                ]
+                query.update({"host": master_id})
                 master_sensor_names.add(sensor.name)
             else:  # Move measurements only
                 master_sensor_id = (
@@ -1704,25 +1717,40 @@ class DataStore:
                     .filter(Sensor.host == master_id, Sensor.name == sensor.name)
                     .scalar()
                 )
-                (  # Update States
-                    self.session.query(State)
-                    .filter(State.sensor_id == sensor.sensor_id)
-                    .update({"sensor_id": master_sensor_id})
-                )
-                (  # Update Contacts
-                    self.session.query(Contact)
-                    .filter(
-                        or_(Contact.sensor_id == sensor.sensor_id, Contact.subject_id == master_id)
+                query = self.session.query(State).filter(State.sensor_id == sensor.sensor_id)
+                [
+                    self.add_to_logs(
+                        table=constants.STATE,
+                        row_id=s.sensor_id,
+                        field="sensor_id",
+                        new_value=str(sensor.sensor_id),
+                        change_id=change_id,
                     )
-                    .update({"sensor_id": master_sensor_id})
+                    for s in query.all()
+                ]
+                query.update({"sensor_id": master_sensor_id})  # Update States
+
+                query = self.session.query(Contact).filter(
+                    or_(Contact.sensor_id == sensor.sensor_id, Contact.subject_id == master_id)
                 )
+                [
+                    self.add_to_logs(
+                        table=constants.CONTACT,
+                        row_id=s.sensor_id,
+                        field="sensor_id",
+                        new_value=str(sensor.sensor_id),
+                        change_id=change_id,
+                    )
+                    for s in query.all()
+                ]
+                query.update({"sensor_id": master_sensor_id})  # Update Contacts
 
         for p_id in platform_list:  # Delete merged platforms
             self.session.query(Platform).filter(Platform.platform_id == p_id).delete()
         self.session.flush()
         return True
 
-    def update_platform_ids(self, merge_platform_id, master_platform_id):
+    def update_platform_ids(self, merge_platform_id, master_platform_id, change_id):
         Comment = self.db_classes.Comment
         Participant = self.db_classes.Participant
         LogsHolding = self.db_classes.LogsHolding
@@ -1740,9 +1768,19 @@ class DataStore:
             for field in possible_field_names:
                 try:
                     table_platform_id = getattr(table, field)
-                    self.session.query(table).filter(table_platform_id == merge_platform_id).update(
-                        {field: master_platform_id}
-                    )
+                    primary_key_field = get_primary_key_for_table(table)
+                    query = self.session.query(table).filter(table_platform_id == merge_platform_id)
+                    [
+                        self.add_to_logs(
+                            table=table.__tablename__,
+                            row_id=getattr(s, primary_key_field),
+                            field=field,
+                            new_value=str(merge_platform_id),
+                            change_id=change_id,
+                        )
+                        for s in query.all()
+                    ]
+                    query.update({field: master_platform_id})
                 except Exception:
                     pass
         self.session.flush()
