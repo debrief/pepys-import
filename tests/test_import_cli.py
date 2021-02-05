@@ -18,6 +18,7 @@ from tests.utils import side_effect
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/track_files/other_data")
+EMPTY_FOLDER = os.path.join(FILE_PATH, "sample_data/track_files/empty_folder")
 REP_WITH_ERRORS_PATH = os.path.join(
     FILE_PATH, "sample_data/track_files/rep_data/uk_track_failing_enh_validation.rep"
 )
@@ -190,18 +191,6 @@ class TestImportWithWrongTypeDBFieldPostgres(unittest.TestCase):
         output = temp_output.getvalue()
 
         assert "ERROR: SQL error when communicating with database" in output
-
-
-@patch("pepys_import.cli.DefaultResolver")
-def test_process_resolver_specification_default(patched_default_resolver):
-    process(resolver="default")
-    patched_default_resolver.assert_called_once()
-
-
-@patch("pepys_import.cli.CommandLineResolver")
-def test_process_resolver_specification_cli(patched_cl_resolver):
-    process(resolver="command-line")
-    patched_cl_resolver.assert_called_once()
 
 
 @patch("pepys_import.cli.custom_print_formatted_text", side_effect=side_effect)

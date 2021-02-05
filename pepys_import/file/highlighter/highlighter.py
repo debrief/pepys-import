@@ -89,8 +89,22 @@ class HighlightedFile:
         """
         Return a list of Line objects for each line in the file
         """
-        with open(self.filename, "r") as file:
-            file_contents = file.read()
+        try:
+            with open(self.filename, "r") as file:
+                file_contents = file.read()
+        except UnicodeDecodeError:
+            # If we get a unicode error then it means that the file we're trying to read
+            # is a binary file, and we can't do highlighting on it, so we return an empty
+            # list of lines
+            # Note: This will mean that any importer that tries to process this file
+            # using the HighlightedFile.lines() method will get nothing, and therefore
+            # the loop over lines will never execute
+            # This could potentially cause some files to be skipped incorrectly,
+            # if they are text files but have unicode errors in them.
+            print(
+                f"Warning: trying to process highlighting for a binary file {self.filename} - skipping"
+            )
+            return []
 
         lines_list = file_contents.splitlines()
         lines = self.create_lines(file_contents, lines_list)

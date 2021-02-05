@@ -226,17 +226,17 @@ class FileProcessor:
             # Get the file contents, for the final check
             try:
                 file_contents = self.get_file_contents(full_path)
+
+                # lastly the contents
+                tmp_importers = good_importers.copy()
+                for importer in tmp_importers:
+                    if not importer.can_load_this_file(file_contents):
+                        good_importers.remove(importer)
             except Exception:
                 # Can't get the file contents - eg. because it's not a proper
                 # unicode text file (This can occur for binary files in the same folders)
-                # So skip the file
-                return processed_ctr
-
-            # lastly the contents
-            tmp_importers = good_importers.copy()
-            for importer in tmp_importers:
-                if not importer.can_load_this_file(file_contents):
-                    good_importers.remove(importer)
+                # So continue to try and process it without checking the file contents
+                pass
 
             # if good importers list is empty, return processed_ctr,
             # which means the file is not processed
