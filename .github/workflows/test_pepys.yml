@@ -19,6 +19,10 @@ jobs:
           sudo apt update
           sudo apt install -y postgresql-13-postgis-3 sqlite3 libgdal-dev libproj-dev libproj-dev libsqlite3-dev spatialite-bin libsqlite3-mod-spatialite
 
+      - name: Get SQLite version
+        shell: bash -l {0}
+        run: sqlite3 --version
+
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
