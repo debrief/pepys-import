@@ -17,6 +17,7 @@ jobs:
         shell: bash -l {0}
         run: |
           sudo apt update
+          sudo apt-get upgrade
           sudo apt install -y postgresql-13-postgis-3 sqlite3 libgdal-dev libproj-dev libproj-dev libsqlite3-dev spatialite-bin libsqlite3-mod-spatialite
 
       - name: Get SQLite version
