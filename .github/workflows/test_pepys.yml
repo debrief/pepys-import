@@ -39,14 +39,14 @@ jobs:
         env:
           PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
         run: |
-          coverage3 run -m pytest -v --color=yes --ignore=tests/gui tests/
+          coverage3 run -m pytest -v --color=yes --ignore=tests/gui_tests tests/
 
       - name: Run tests (GUI)
         shell: bash -l {0}
         env:
           PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
         run: |
-          coverage3 run -a -m pytest -v --color=yes -s tests/gui
+          coverage3 run -a -m pytest -v --color=yes -s tests/gui_tests
 
       - name: Run black
         shell: bash -l {0}
