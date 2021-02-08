@@ -1,9 +1,14 @@
 from unittest.mock import Mock
 
+import pytest
+
 from pepys_admin.maintenance.gui import MaintenanceGUI
 
 
-def test_generating_column_data():
+def test_generating_column_data(pytestconfig):
+    if pytestconfig.getoption("capture") != "no":
+        pytest.skip("Skipped because pytest was not run with -s option")
+
     gui = MaintenanceGUI()
 
     correct_col_data = {
@@ -327,7 +332,10 @@ def test_generating_column_data():
     assert output_col_data == correct_col_data
 
 
-def test_running_query_single_condition():
+def test_running_query_single_condition(pytestconfig):
+    if pytestconfig.getoption("capture") != "no":
+        pytest.skip("Skipped because pytest was not run with -s option")
+
     gui = MaintenanceGUI()
 
     gui.filter_widget = Mock()
@@ -348,7 +356,10 @@ def test_running_query_single_condition():
     assert gui.table_objects[1].name == "ADRI"
 
 
-def test_running_query_two_conditions_or():
+def test_running_query_two_conditions_or(pytestconfig):
+    if pytestconfig.getoption("capture") != "no":
+        pytest.skip("Skipped because pytest was not run with -s option")
+
     gui = MaintenanceGUI()
 
     gui.filter_widget = Mock()
@@ -369,7 +380,10 @@ def test_running_query_two_conditions_or():
     assert gui.table_objects[2].name == "JEAN"
 
 
-def test_running_query_two_conditions_and():
+def test_running_query_two_conditions_and(pytestconfig):
+    if pytestconfig.getoption("capture") != "no":
+        pytest.skip("Skipped because pytest was not run with -s option")
+
     gui = MaintenanceGUI()
 
     gui.filter_widget = Mock()

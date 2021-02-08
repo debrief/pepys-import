@@ -36,7 +36,7 @@ def test_get_system_name_mappings():
 def test_remove_duplicates_and_nones():
     input_list = ["a", "b", None, "c", "a", None]
 
-    assert remove_duplicates_and_nones(input_list) == ["a", "b", "c"]
+    assert sorted(remove_duplicates_and_nones(input_list)) == ["a", "b", "c"]
 
     input_list_2 = [None, None, None, None, None]
 
