@@ -7,9 +7,13 @@ from tests.gui.gui_test_utils import run_gui
 pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="Don't run on Windows")
 
 
-def test_gui_opens(keep_stdin):
-    with keep_stdin():
-        result = run_gui(print_output=True)
+def test_gui_opens(pytestconfig):
+    # with keep_stdin():
+
+    capmanager = pytestconfig.pluginmanager.getplugin("capturemanager")
+    capmanager.suspend_global_capture(in_=True)
+    result = run_gui(print_output=True)
+    capmanager.resume_global_capture()
 
     assert "Build filters  F3" in result
     assert "Preview List   F6" in result
