@@ -11,12 +11,9 @@ def test_gui_opens(keep_stdin):
     with keep_stdin():
         result = run_gui()
 
-    assert "Select data type   F2" in result
     assert "Build filters  F3" in result
-    assert "Choose actions  F8" in result
     assert "Preview List   F6" in result
     assert "Platform    ▼" in result
-    assert "1 - Merge Platforms" in result
 
 
 def test_gui_help(keep_stdin):

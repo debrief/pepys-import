@@ -19,14 +19,6 @@ jobs:
           sudo apt update
           sudo apt install -y postgresql-13-postgis-3 sqlite3 libgdal-dev libproj-dev libproj-dev libsqlite3-dev spatialite-bin libsqlite3-mod-spatialite
 
-      - name: Get SQLite version
-        shell: bash -l {0}
-        run: sqlite3 --version
-
-      - name: Get available SQLite versions
-        shell: bash -l {0}
-        run: sudo apt list -a sqlite3
-
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
@@ -42,12 +34,19 @@ jobs:
         shell: bash -l {0}
         run: pip install pytest-github-actions-annotate-failures
 
+      # - name: Run tests
+      #   shell: bash -l {0}
+      #   env:
+      #     PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
+      #   run: |
+      #     coverage3 run -m pytest -v --color=yes tests
+
       - name: Run tests
         shell: bash -l {0}
         env:
           PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
         run: |
-          coverage3 run -m pytest -v --color=yes tests
+          coverage3 run -m pytest -v --color=yes tests/gui
 
       - name: Run black
         shell: bash -l {0}
