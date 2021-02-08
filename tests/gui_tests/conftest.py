@@ -2,6 +2,9 @@ from contextlib import contextmanager
 
 import pytest
 
+# Not currently used
+# Kept for future work in trying to not capture stdin
+
 
 @pytest.fixture
 def keep_stdin(pytestconfig):
