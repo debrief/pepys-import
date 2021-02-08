@@ -595,7 +595,7 @@ class MaintenanceGUI:
 
             ensure_future(coroutine())
 
-        @kb.add("c-f1")
+        @kb.add("c-h")
         def _(event):
             async def coroutine():
                 # Show a help dialog, with the dialog scrolled to the position
@@ -835,7 +835,16 @@ class MaintenanceGUI:
                 VSplit(
                     [
                         Label("ESC - Exit", style="class:status-bar-text", dont_extend_width=True),
-                        Label("F1 - Help", style="class:status-bar-text", dont_extend_width=True),
+                        Label(
+                            "F1 - Contextual Help",
+                            style="class:status-bar-text",
+                            dont_extend_width=True,
+                        ),
+                        Label(
+                            "Ctrl-H - General Help",
+                            style="class:status-bar-text",
+                            dont_extend_width=True,
+                        ),
                     ],
                     padding=3,
                     align=HorizontalAlign.LEFT,
