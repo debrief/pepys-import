@@ -23,6 +23,10 @@ jobs:
         shell: bash -l {0}
         run: sqlite3 --version
 
+      - name: Get available SQLite versions
+        shell: bash -l {0}
+        run: sudo apt list -a sqlite3
+
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
