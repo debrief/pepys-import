@@ -50,6 +50,106 @@ from pepys_import.core.store.data_store import DataStore
 logger.remove()
 logger.add("gui.log")
 
+INTRO_HELP_TEXT = """# Maintenance Interface Documentation
+You can use the maintenance interface to build custom queries and
+do specific actions such as merging assets, exporting data, etc.
+
+The interface is composed of 4 panels:
+
+## First panel: Select data type F2
+You can select the data table you want to query data from.
+(Platform table is the only one available for now)
+
+## Second panel: Build filters F3
+You can filter the data in the table selected above based by
+selecting specific fields and values for these fields. You can
+combine several filters using AND or OR operators.
+
+## Third panel: Preview list F6
+The selected and filtered data is visible here.
+
+## Fourth panel: Choose actions F8
+Through this panel, you can perform several actions on the data you selected.
+
+# Main navigation principles
+You can select a specific panel by pressing the corresponding F key:
+F2: Select data type
+F3: Build filters
+F4: Show Filter Query (TBI)
+F5: Show Complete Query (TBI)
+F6: Preview List
+F7: Preview Graph (TBI)
+F8: Choose actions
+
+You can also press Tab to go forward or Shift + Tab to go backward.
+"""
+
+HELP_TEXT = """# First panel: Select data type (F2)
+Type the first letter(s) of the table you are looking for.
+
+Press Enter to expand the list of available tables, use arrow
+keys to select the table you want and press Enter again.
+
+# Second panel: Build filters (F3)
+Each line is either a query or a standalone operator.
+
+You move from one line or one field to another using TAB or Shift
++ TAB
+
+## Query line:
+Each query is built in the following way:
+
+Select column: you can select any field from the table
+
+Operator: = is ‘equal to’ (perfect match), != is ‘not equal to’,
+LIKE is ‘contains’
+
+Enter value here: you can start typing and a list of existing
+values will be filtered based on your input.
+
+At the end of each line, there is a < Delete > button: select the
+button and press Enter to delete the corresponding line.
+
+To add a new line, select < Add a filter condition > button and
+press Enter.
+
+## Operator line:
+A single dropdown allows you to choose between AND and OR.
+
+# Third panel: Preview List (F6)
+This panel displays the list of data contained on the selected
+table according to the filter you selected.
+
+In the list, you can go up and down the list using arrow keys,
+select/un-select an item using Enter.
+
+You can select the entire list by placing the cursor on the
+header row.
+
+## Selecting fields
+You can customize which fields are shown in the preview using
+Ctrl + F: this opens a popup, where you can add or remove fields.
+
+To add a field: navigate to the field you want to appear using
+arrow keys and press Enter to add it.
+
+To remove a field: press TAB to change from one column to the
+other, navigate using the arrows to select the field you want to
+remove and press Enter.
+
+To validate, navigate to the <  OK  >  button using TAB and press
+Enter
+
+# Fourth panel: Choose actions (F8)
+Merge Platforms is the only available action for now.
+
+The action applies to the platforms you selected in the preview
+list if any. When merging, you will be prompted to select the
+target platform in a popup. Select the platform and press Enter.
+Once the platforms are merged, press Enter and the Preview List
+will be updated.
+"""
+
 
 class MaintenanceGUI:
     def __init__(self, data_store=None):
@@ -59,7 +159,9 @@ class MaintenanceGUI:
             # TODO: Remove this, it's just for ease of testing/development at the moment
             # This won't cause problems for users, as they will access via Pepys Admin
             # where data store will be defined
-            self.data_store = DataStore("", "", "", 0, "test_gui.db", db_type="sqlite")
+            self.data_store = DataStore(
+                "", "", "", 0, "test_gui.db", db_type="sqlite", show_status=False, welcome_text=""
+            )
             self.data_store.initialise()
             with self.data_store.session_scope():
                 self.data_store.populate_reference()
@@ -78,6 +180,9 @@ class MaintenanceGUI:
 
         self.filters_tab = "filters"
         self.preview_tab = "table"
+
+        self.contextual_help = {}
+        self.current_dialog = None
 
         self.init_ui_components()
 
@@ -111,6 +216,7 @@ class MaintenanceGUI:
         self.dropdown_table.control.focusable = to_filter(False)
         # Also make it disabled, so clicking doesn't work
         self.dropdown_table.disabled = True
+
         self.data_type_container = HSplit(
             children=[
                 Label(text="Select data type   F2", style="class:title-line"),
@@ -126,8 +232,11 @@ class MaintenanceGUI:
         # Filter pane, containing FilterWidget plus buffers for the
         # text showing the SQL
         self.filter_widget = FilterWidget(
-            on_change_handler=self.on_filter_widget_change, max_filters=None
+            on_change_handler=self.on_filter_widget_change,
+            max_filters=None,
+            contextual_help_setter=self.set_contextual_help,
         )
+        self.set_contextual_help(self.filter_widget, "# Second panel: Build filters F3")
         self.filter_container = DynamicContainer(self.get_filter_container)
         # Buffer to hold just the filter part of the query in SQL form
         self.filter_query_buffer = Buffer(document=Document("Filter query here", 0))
@@ -138,16 +247,18 @@ class MaintenanceGUI:
         self.complete_query = BufferControl(self.complete_query_buffer)
 
         # Actions container, containing a list of actions that can be run
+        self.actions_combo = ComboBox(
+            entries=["1 - Merge Platforms"],
+            enter_handler=self.run_action,
+        )
+        self.set_contextual_help(self.actions_combo, "# Fourth panel: Choose actions (F8)")
         self.actions_container = HSplit(
             [
                 Label(
                     text="Choose actions  F8",
                     style="class:title-line",
                 ),
-                ComboBox(
-                    entries=["1 - Merge Platforms"],
-                    enter_handler=self.run_action,
-                ),
+                self.actions_combo,
             ],
             padding=1,
             height=Dimension(weight=0.1),
@@ -157,6 +268,7 @@ class MaintenanceGUI:
         self.preview_table = CheckboxTable(
             table_data=self.get_table_data, table_objects=self.get_table_objects
         )
+        self.set_contextual_help(self.preview_table, "# Third panel: Preview List (F6)")
         self.preview_graph = Window(
             BufferControl(Buffer(document=Document("Graph here", 0), read_only=True))
         )
@@ -195,6 +307,9 @@ class MaintenanceGUI:
             ),
             floats=[],
         )
+
+    def set_contextual_help(self, widget, text):
+        self.contextual_help[widget.__pt_container__()] = text
 
     def create_column_data(self):
         """Creates the column_data needed for the FilterWidget.
@@ -442,18 +557,28 @@ class MaintenanceGUI:
         kb.add("tab")(focus_next)
         kb.add("s-tab")(focus_previous)
 
-        @kb.add("c-r")
-        def _(event):
-            self.run_query()
-
         @kb.add("c-f")
         def _(event):
             self.choose_fields()
 
         @kb.add("f1")
         def _(event):
+            app = get_app()
+            if self.current_dialog is not None:
+                try:
+                    help_message = self.current_dialog.contextual_help
+                except AttributeError:
+                    help_message = None
+            else:
+                help_message = self.contextual_help.get(app.layout.current_window)
+
+            try:
+                position = HELP_TEXT.index(help_message)
+            except (TypeError, ValueError):
+                position = 0
+
             async def coroutine():
-                dialog = HelpDialog("Help", "Help text here\n" * 50)
+                dialog = HelpDialog("Help", HELP_TEXT, position)
                 await self.show_dialog_as_float(dialog)
 
             ensure_future(coroutine())
@@ -564,7 +689,8 @@ class MaintenanceGUI:
         float_ = Float(content=dialog)
         # Put it at the top of the float list in the root container
         # (which is a FloatContainer)
-        self.root_container.floats.insert(0, float_)
+        # self.root_container.floats.insert(0, float_)
+        self.root_container.floats.append(float_)
 
         app = get_app()
 
@@ -577,8 +703,15 @@ class MaintenanceGUI:
         except ValueError:
             pass
 
+        # Keep track of the last dialog, in case we have dialogs on top of dialogs
+        prev_current_dialog = self.current_dialog
+        self.current_dialog = dialog
+
         # Wait for the dialog to return
         result = await dialog.future
+
+        # Reset to the previous dialog, in case we have dialogs on top of dialogs
+        self.current_dialog = prev_current_dialog
 
         # Make sure we don't give an error if we can't put the focus back
         # to previous location, as if we're exiting the app at the time

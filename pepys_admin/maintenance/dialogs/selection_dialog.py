@@ -13,6 +13,8 @@ class SelectionDialog:
     def __init__(self, values_left, values_right, title):
         self.future = Future()
 
+        self.contextual_help = "## Selecting fields"
+
         ok_button = Button(text="OK", handler=self.handle_ok)
         cancel_button = Button(text="Cancel", handler=self.handle_cancel)
 

@@ -14,9 +14,17 @@ from pepys_admin.maintenance.widgets.utils import (
     list_deep_equals,
 )
 
+CONTEXTUAL_HELP_STRING = "# Second panel: Build filters (F3)"
+
 
 class FilterWidget:
-    def __init__(self, column_data=None, on_change_handler=None, max_filters=None):
+    def __init__(
+        self,
+        column_data=None,
+        on_change_handler=None,
+        max_filters=None,
+        contextual_help_setter=None,
+    ):
         """A widget that allows the creation of SQL-style filter constraints, in the style
         of <column_name> <operator> <value> such as "name == 'Robin'" or "speed >= 23.5". Also
         provides the ability to combine these constraints with boolean AND or OR operators.
@@ -55,6 +63,7 @@ class FilterWidget:
         self.column_data = column_data
         self.on_change_handler = on_change_handler
         self.max_filters = max_filters
+        self.contextual_help_setter = contextual_help_setter
 
         self.last_filters_output = []
 
@@ -75,11 +84,16 @@ class FilterWidget:
         # result of a function is
         self.container = DynamicContainer(self.get_container_contents)
         self.button = Button("Add filter condition", self.add_entry)
+        self.set_contextual_help(self.button, CONTEXTUAL_HELP_STRING)
         self.validation_toolbar = ValidationToolbar()
 
         # Start with one entry and no boolean operators
         self.entries = [FilterWidgetEntry(self)]
         self.boolean_operators = []
+
+    def set_contextual_help(self, widget, text):
+        if self.contextual_help_setter is not None:
+            self.contextual_help_setter(widget, text)
 
     def trigger_on_change(self, event=None):
         """Triggers the on_change_handler, if it is defined"""
@@ -214,6 +228,7 @@ class BooleanOperatorEntry:
             filter=False,  # No need to be able to filter, as just two entries
             on_select_handler=filter_widget.trigger_on_change,
         )
+        self.filter_widget.set_contextual_help(self.dropdown, "## Operator line")
 
     def get_widgets(self):
         return VSplit([self.dropdown], align=HorizontalAlign.LEFT)
@@ -239,6 +254,7 @@ class FilterWidgetEntry:
             entries=filter_widget.column_data.keys(),
             on_select_handler=self.on_dropdown_column_select,
         )
+        self.filter_widget.set_contextual_help(self.dropdown_column, CONTEXTUAL_HELP_STRING)
         # Dropdown for list of operators
         # (This is automatically updated to show the list of entries
         # returned by self.get_operators, depending on the column chosen)
@@ -248,8 +264,10 @@ class FilterWidgetEntry:
             filter=False,
             on_select_handler=self.filter_widget.trigger_on_change,
         )
+        self.filter_widget.set_contextual_help(self.dropdown_operator, CONTEXTUAL_HELP_STRING)
 
         self.delete_button = Button(text="Delete", handler=self.handle_delete)
+        self.filter_widget.set_contextual_help(self.delete_button, CONTEXTUAL_HELP_STRING)
 
         # We have to create the widgets here in the init, or it doesn't work
         # because of some weird scoping issue
@@ -264,6 +282,7 @@ class FilterWidgetEntry:
             on_change=self.filter_widget.trigger_on_change,
             focus_on_click=True,
         )
+        self.filter_widget.set_contextual_help(self.vw_text, CONTEXTUAL_HELP_STRING)
         self.vw_float = CustomTextArea(
             self.filter_widget.value_prompt,
             multiline=False,
@@ -271,6 +290,7 @@ class FilterWidgetEntry:
             on_change=self.filter_widget.trigger_on_change,
             focus_on_click=True,
         )
+        self.filter_widget.set_contextual_help(self.vw_float, CONTEXTUAL_HELP_STRING)
         self.vw_int = CustomTextArea(
             self.filter_widget.value_prompt,
             multiline=False,
@@ -278,17 +298,20 @@ class FilterWidgetEntry:
             on_change=self.filter_widget.trigger_on_change,
             focus_on_click=True,
         )
+        self.filter_widget.set_contextual_help(self.vw_int, CONTEXTUAL_HELP_STRING)
         self.vw_datetime = MaskedInputWidget(
             ["yyyy", "!-", "mm", "!-", "dd", "! ", "HH", "!:", "MM", "!:", "SS"],
             overall_validator=datetime_validator,
             part_validator=int_validator,
             on_change=self.filter_widget.trigger_on_change,
         )
+        self.filter_widget.set_contextual_help(self.vw_datetime, CONTEXTUAL_HELP_STRING)
         self.vw_dropdown = DropdownBox(
             self.filter_widget.value_prompt,
             entries=self.get_value_dropdown_entries,
             on_select_handler=self.filter_widget.trigger_on_change,
         )
+        self.filter_widget.set_contextual_help(self.vw_dropdown, CONTEXTUAL_HELP_STRING)
 
     def on_dropdown_column_select(self, value):
         """Called when an entry is selected from the column dropdown.
