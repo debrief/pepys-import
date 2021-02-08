@@ -9,7 +9,7 @@ pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="Don't run on Wi
 
 def test_gui_opens(keep_stdin):
     with keep_stdin():
-        result = run_gui()
+        result = run_gui(print_output=True)
 
     assert "Build filters  F3" in result
     assert "Preview List   F6" in result
