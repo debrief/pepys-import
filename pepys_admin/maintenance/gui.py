@@ -160,7 +160,7 @@ class MaintenanceGUI:
             # This won't cause problems for users, as they will access via Pepys Admin
             # where data store will be defined
             self.data_store = DataStore(
-                "", "", "", 0, "test_gui.db", db_type="sqlite", show_status=False, welcome_text=""
+                "", "", "", 0, ":memory:", db_type="sqlite", show_status=False, welcome_text=""
             )
             self.data_store.initialise()
             with self.data_store.session_scope():
