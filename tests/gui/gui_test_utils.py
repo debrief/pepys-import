@@ -34,7 +34,7 @@ if sys.platform != "win32":
             screen = pyte.Screen(181, 46)
             stream = pyte.ByteStream(screen)
             # SEND KEYS
-            time.sleep(2)
+            time.sleep(5)
             if keys is not None:
                 if isinstance(keys, list):
                     for key in keys:
