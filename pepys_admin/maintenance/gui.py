@@ -156,8 +156,8 @@ class MaintenanceGUI:
         if data_store is not None:
             self.data_store = data_store
         else:
-            # TODO: Remove this, it's just for ease of testing/development at the moment
-            # This won't cause problems for users, as they will access via Pepys Admin
+            # This is for testing/development.
+            # It won't cause problems for users, as they will access via Pepys Admin
             # where data store will be defined
             self.data_store = DataStore(
                 "", "", "", 0, ":memory:", db_type="sqlite", show_status=False, welcome_text=""

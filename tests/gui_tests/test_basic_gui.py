@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from tests.gui.gui_test_utils import run_gui
+from tests.gui_tests.gui_test_utils import run_gui
 
 pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="Don't run on Windows")
 
