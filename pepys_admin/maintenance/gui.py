@@ -357,18 +357,21 @@ class MaintenanceGUI:
 
         platform_column_data = {
             "platform_id": {"type": "id", "values": platform_ids},
-            "name": {"type": "string", "values": remove_duplicates_and_nones(platform_names)},
+            "name": {
+                "type": "string",
+                "values": sorted(remove_duplicates_and_nones(platform_names)),
+            },
             "identifier": {
                 "type": "string",
-                "values": remove_duplicates_and_nones(platform_identifiers),
+                "values": sorted(remove_duplicates_and_nones(platform_identifiers)),
             },
             "trigraph": {
                 "type": "string",
-                "values": remove_duplicates_and_nones(platform_trigraphs),
+                "values": sorted(remove_duplicates_and_nones(platform_trigraphs)),
             },
             "quadgraph": {
                 "type": "string",
-                "values": remove_duplicates_and_nones(platform_quadgraphs),
+                "values": sorted(remove_duplicates_and_nones(platform_quadgraphs)),
             },
             "nationality name": {
                 "type": "string",
@@ -440,8 +443,6 @@ class MaintenanceGUI:
 
         # Refresh the app display
         app.invalidate()
-        logger.debug("Ran query")
-        logger.debug(f"{self.table_data=}")
 
     def get_table_data(self):
         return self.table_data
@@ -595,15 +596,15 @@ class MaintenanceGUI:
 
             ensure_future(coroutine())
 
-        @kb.add("c-h")
-        def _(event):
-            async def coroutine():
-                # Show a help dialog, with the dialog scrolled to the position
-                # of the text
-                dialog = HelpDialog("General Help", INTRO_HELP_TEXT, 0)
-                await self.show_dialog_as_float(dialog)
+        # @kb.add("c-h")
+        # def _(event):
+        #     async def coroutine():
+        #         # Show a help dialog, with the dialog scrolled to the position
+        #         # of the text
+        #         dialog = HelpDialog("General Help", INTRO_HELP_TEXT, 0)
+        #         await self.show_dialog_as_float(dialog)
 
-            ensure_future(coroutine())
+        #     ensure_future(coroutine())
 
         @kb.add("f2")
         def _(event):
