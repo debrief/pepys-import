@@ -1,4 +1,3 @@
-from loguru import logger
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import ValidationState
 from prompt_toolkit.document import Document
@@ -157,7 +156,6 @@ class MaskedInputWidget:
         return kb
 
     def go_to_next_field(self, coming_from=None):
-        logger.debug("go_to_next_field")
         app = get_app()
         if self.start_validating:
             # If we're validating now (because we've already filled it to the end)
@@ -168,14 +166,12 @@ class MaskedInputWidget:
 
         if coming_from == "left":
             # If we've come from the left-hand side, then set the cursor to the beginning of the field
-            logger.debug("Setting cursor position to 0")
             app.layout.current_buffer._set_cursor_position(0)
         elif coming_from == "right":
             # If we've come from the right-hand side, then set the cursor to the end of the field
             app.layout.current_buffer._set_cursor_position(len(app.layout.current_buffer.text) - 1)
 
     def go_to_prev_field(self, coming_from=None):
-        logger.debug("go_to_prev_field")
         app = get_app()
         if self.start_validating:
             # If we're validating now (because we've already filled it to the end)

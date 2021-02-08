@@ -1,6 +1,5 @@
 from typing import List, Optional
 
-from loguru import logger
 from prompt_toolkit.auto_suggest import AutoSuggest, DynamicAutoSuggest
 from prompt_toolkit.buffer import Buffer, BufferAcceptHandler
 from prompt_toolkit.completion import Completer, DynamicCompleter
@@ -219,13 +218,11 @@ class CustomTextArea:
             # We've typed a character into the box that contained the placeholder
             # so remove the placeholder and just put in the new character
             self.text = self.text[0]
-            logger.debug("Setting cursor position to 1")
             self.buffer._set_cursor_position(1)
 
         if self.limit_length:
             if len(self.text) > len(self.initial_text):
                 # If we're limiting the length, and we're currently over the maximum length
-                logger.debug(f"At start: {self.buffer.cursor_position=}")
                 index = self.buffer.cursor_position - 1
                 # We use the character before the current cursor_position to tell us
                 # what character we just entered, as we want that character to replace
@@ -247,13 +244,11 @@ class CustomTextArea:
                     # Otherwise combine the two parts (which misses out the character that was
                     # between them)
                     self.text = first_part + second_part
-                logger.debug(f"Setting {self.text=}")
 
                 # Set a new cursor position (as it gets reset to 0 when self.text is set)
                 # We want to go to index + 1 (ie. the next position), but we mustn't go over
                 # the length of the text + 1
                 new_cursor_pos = min(index + 1, len(self.initial_text) + 1)
-                logger.debug(f"Setting cursor position to {new_cursor_pos}")
                 self.buffer._set_cursor_position(new_cursor_pos)
 
         self.process_cursor_at_end()
@@ -270,10 +265,8 @@ class CustomTextArea:
                 index = self.buffer.cursor_position - 1
                 if index == len(self.initial_text) - 1:
                     # Move the cursor to the final position in the box
-                    logger.debug(f"Setting cursor position to {len(self.text) - 1}")
                     self.buffer._set_cursor_position(len(self.text) - 1)
                     # Call the event handler function
-                    logger.debug("Calling on cursor at end")
                     self.on_cursor_at_end_handler()
 
     @property

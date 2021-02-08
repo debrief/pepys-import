@@ -1,6 +1,5 @@
 from asyncio import Future
 
-from loguru import logger
 from prompt_toolkit.layout.containers import HSplit
 from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.widgets import Label
@@ -30,7 +29,6 @@ class PlatformMergeDialog:
         dialog_kb.add("escape")(lambda x: self.handle_ok(None))
 
     def handle_ok(self, value):
-        logger.debug(value)
         self.future.set_result(value)
 
     def __pt_container__(self):
