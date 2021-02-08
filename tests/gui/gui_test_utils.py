@@ -12,7 +12,6 @@ if sys.platform != "win32":
 
     from pepys_admin.maintenance.gui import MaintenanceGUI
 
-
     def run_gui(keys=None, print_output=False):
         """Runs the GUI, sending the given keypresses to the GUI and returning
         a string of the output on the screen.
@@ -66,6 +65,9 @@ if sys.platform != "win32":
                     print(line)
 
             return "\n".join(screen.display)
+
+
 else:
+
     def run_gui():
         pass

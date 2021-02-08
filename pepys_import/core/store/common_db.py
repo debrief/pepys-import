@@ -136,6 +136,7 @@ class PlatformMixin:
 
     @declared_attr
     def platform_type_name(self):
+        # return association_proxy("platform_type", "name", info={"name":"platform_type_name"})
         return association_proxy("platform_type", "name")
 
     @declared_attr
