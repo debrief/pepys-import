@@ -46,7 +46,7 @@ jobs:
         env:
           PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
         run: |
-          coverage3 run -m pytest -v --color=yes -s tests/gui
+          coverage3 run -a -m pytest -v --color=yes -s tests/gui
 
       - name: Run black
         shell: bash -l {0}
