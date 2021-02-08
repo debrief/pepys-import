@@ -181,6 +181,10 @@ class MaintenanceGUI:
         self.filters_tab = "filters"
         self.preview_tab = "table"
 
+        # A dict to link Window objects to strings to search for in the help
+        # text. This is used to display contextual help by getting the current
+        # window, looking up the text to search for, and displaying a help dialog
+        # focused on that text
         self.contextual_help = {}
         self.current_dialog = None
 
@@ -309,6 +313,8 @@ class MaintenanceGUI:
         )
 
     def set_contextual_help(self, widget, text):
+        """Sets the contextual help dictionary based on the widget's
+        container"""
         self.contextual_help[widget.__pt_container__()] = text
 
     def create_column_data(self):
@@ -565,19 +571,25 @@ class MaintenanceGUI:
         def _(event):
             app = get_app()
             if self.current_dialog is not None:
+                # Look for help in the current dialog, if it exists
                 try:
                     help_message = self.current_dialog.contextual_help
                 except AttributeError:
                     help_message = None
             else:
+                # Otherwise look in the dict using the current window
                 help_message = self.contextual_help.get(app.layout.current_window)
 
             try:
+                # Try and find the position of the contextual help string in the
+                # main help text string - if we fail, just default to the beginning
                 position = HELP_TEXT.index(help_message)
             except (TypeError, ValueError):
                 position = 0
 
             async def coroutine():
+                # Show a help dialog, with the dialog scrolled to the position
+                # of the text
                 dialog = HelpDialog("Help", HELP_TEXT, position)
                 await self.show_dialog_as_float(dialog)
 
