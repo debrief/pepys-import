@@ -595,6 +595,16 @@ class MaintenanceGUI:
 
             ensure_future(coroutine())
 
+        @kb.add("c-f1")
+        def _(event):
+            async def coroutine():
+                # Show a help dialog, with the dialog scrolled to the position
+                # of the text
+                dialog = HelpDialog("General Help", INTRO_HELP_TEXT, 0)
+                await self.show_dialog_as_float(dialog)
+
+            ensure_future(coroutine())
+
         @kb.add("f2")
         def _(event):
             event.app.layout.focus(self.data_type_container)
