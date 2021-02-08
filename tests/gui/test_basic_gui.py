@@ -11,7 +11,7 @@ def test_gui_opens(pytestconfig):
     if pytestconfig.getoption("capture") != "no":
         pytest.skip("Skipped because pytest was not run with -s option")
 
-    result = run_gui(print_output=True)
+    result = run_gui()
 
     assert "Build filters  F3" in result
     assert "Preview List   F6" in result
