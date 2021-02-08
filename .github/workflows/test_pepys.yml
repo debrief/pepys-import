@@ -34,12 +34,19 @@ jobs:
         shell: bash -l {0}
         run: pip install pytest-github-actions-annotate-failures
 
-      - name: Run tests
+      - name: Run tests (non GUI)
         shell: bash -l {0}
         env:
           PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
         run: |
-          coverage3 run -m pytest -v --color=yes tests/test_load_etrac.py tests/config_file_tests tests/gui
+          coverage3 run -m pytest -v --color=yes tests/
+
+      - name: Run tests (GUI)
+        shell: bash -l {0}
+        env:
+          PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
+        run: |
+          coverage3 run -m pytest -v --color=yes -s tests/gui
 
       - name: Run black
         shell: bash -l {0}
