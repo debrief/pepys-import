@@ -133,9 +133,6 @@ class DropdownBox:
         else:
             entries = self.entries
 
-        if len(entries) == 0:
-            return
-
         self.calculate_width()
 
         # Create a ComboBox to display the dropdown list

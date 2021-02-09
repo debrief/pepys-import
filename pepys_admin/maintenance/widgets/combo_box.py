@@ -137,7 +137,9 @@ class ComboBox:
         self.filtered_entries = []
         result = []
 
-        if self.filter:
+        if len(self.entries) == 0:
+            result.append([("class:filter-text", "No entries!\n")])
+        elif self.filter:
             # Filter entries
             self.filter_function()
 
@@ -220,7 +222,7 @@ class ComboBox:
                     # Return entry to the asyncio future
                     self.future.set_result(self.filtered_entries[self.selected_entry])
                 except Exception:
-                    pass
+                    self.future.set_result(None)
 
         else:
 
