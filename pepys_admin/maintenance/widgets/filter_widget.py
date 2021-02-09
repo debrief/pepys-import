@@ -206,10 +206,17 @@ class FilterWidget:
                 strings[0] = human_to_system_name_mapping[strings[0]]
             filter_output.append(strings)
 
-        if len(filter_output) > 0 and filter_output[-1][0] in ["AND", "OR"]:
-            # If there is an AND/OR at the end of the list, then remove it
-            # because there is no second operand for the AND/OR
-            del filter_output[-1]
+        # Remove any trailing AND or OR values from the list
+        # These can occur if we have multiple empty filter entries
+        # at the end of the list
+        # This also catches the situation where the result is *all*
+        # AND/OR values (ie. all filter entries are empty)
+        if len(filter_output) > 0:
+            for i in range(len(filter_output), 0, -1):
+                if filter_output[i - 1] == ["AND"] or filter_output[i - 1] == ["OR"]:
+                    del filter_output[i - 1]
+                else:
+                    break
 
         return filter_output
 

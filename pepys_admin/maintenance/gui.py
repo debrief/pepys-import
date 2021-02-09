@@ -3,6 +3,7 @@ from asyncio.tasks import ensure_future
 from functools import partial
 
 import sqlalchemy
+from loguru import logger
 from prompt_toolkit import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
@@ -45,6 +46,9 @@ from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 from pepys_admin.maintenance.widgets.filter_widget_utils import filter_widget_output_to_query
 from pepys_import.core.store.data_store import DataStore
+
+logger.remove()
+logger.add("gui.log")
 
 INTRO_HELP_TEXT = """# Maintenance Interface Documentation
 You can use the maintenance interface to build custom queries and
@@ -395,6 +399,13 @@ class MaintenanceGUI:
         # As this property is computed each time, get the output and store it
         # to save time
         filters = self.filter_widget.filters
+
+        # Convert the selected fields to sensible table titles
+        self.table_data = [get_table_titles(self.preview_selected_fields)]
+        # The first of the table objects should be None, as that is the header field
+        # and doesn't have a table object associated with it
+        self.table_objects = [None]
+
         with self.data_store.session_scope():
             if filters == []:
                 # If there are no filters then just return the table with no filtering
@@ -402,6 +413,9 @@ class MaintenanceGUI:
             else:
                 # Otherwise, convert the filter widget output to a SQLAlchemy filter and run it
                 filter_query = filter_widget_output_to_query(filters, "Platforms", self.data_store)
+                if filter_query is None:
+                    app.invalidate()
+                    return
                 query_obj = self.data_store.session.query(
                     self.data_store.db_classes.Platform
                 ).filter(filter_query)
@@ -409,12 +423,6 @@ class MaintenanceGUI:
             # Get all the results, while undefering all fields to make sure everything is
             # available once it's been expunged (disconnected) from the database
             results = query_obj.options(undefer("*")).all()
-
-            # Convert the selected fields to sensible table titles
-            self.table_data = [get_table_titles(self.preview_selected_fields)]
-            # The first of the table objects should be None, as that is the header field
-            # and doesn't have a table object associated with it
-            self.table_objects = [None]
 
             if len(results) == 0:
                 # If we've got no results then just update the app display

@@ -47,6 +47,9 @@ def filter_widget_output_to_query(outputs: List[List], table_name: str, data_sto
                 f"There should be one or three variables in each filter. Error in {idx}: '{output}'!"
             )
 
+    if len(queries) == 0:
+        return None
+
     i, j = 1, 0
     query = queries[0]
     while i < len(queries) and j < len(and_or_list):
