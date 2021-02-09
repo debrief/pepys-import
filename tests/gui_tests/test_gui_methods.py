@@ -4,6 +4,19 @@ import pytest
 
 from pepys_admin.maintenance.gui import MaintenanceGUI
 
+# These tests only work properly if pytest is run with the -s option
+# that stops pytest trying to change where stdin is pointing to.
+# This is because the constructor of the prompt_toolkit Application class
+# tries to sort out input/output terminals, even if we don't call
+# the run method.
+# I tried various ways to configure this programatically, and they all
+# failed in various interesting and intermittent ways - so it is best
+# just to run these tests with -s.
+# The first few lines of each test skip the test if pytest hasn't been
+# run with -s - otherwise they would fail.
+# The CI configuration has been updated to do two test runs: one
+# for most of the tests without -s, and then the GUI tests with -s.
+
 
 def test_generating_column_data(pytestconfig):
     if pytestconfig.getoption("capture") != "no":
