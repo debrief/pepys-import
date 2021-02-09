@@ -591,15 +591,15 @@ class MaintenanceGUI:
 
             ensure_future(coroutine())
 
-        # @kb.add("c-h")
-        # def _(event):
-        #     async def coroutine():
-        #         # Show a help dialog, with the dialog scrolled to the position
-        #         # of the text
-        #         dialog = HelpDialog("General Help", INTRO_HELP_TEXT, 0)
-        #         await self.show_dialog_as_float(dialog)
+        @kb.add("f12")
+        def _(event):
+            async def coroutine():
+                # Show a help dialog, with the dialog scrolled to the position
+                # of the text
+                dialog = HelpDialog("General Help", INTRO_HELP_TEXT, 0)
+                await self.show_dialog_as_float(dialog)
 
-        #     ensure_future(coroutine())
+            ensure_future(coroutine())
 
         @kb.add("f2")
         def _(event):
@@ -837,7 +837,7 @@ class MaintenanceGUI:
                             dont_extend_width=True,
                         ),
                         Label(
-                            "Ctrl-H - General Help",
+                            "F12 - General Help",
                             style="class:status-bar-text",
                             dont_extend_width=True,
                         ),
