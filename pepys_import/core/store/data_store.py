@@ -1784,3 +1784,69 @@ class DataStore:
                 except Exception:
                     pass
         self.session.flush()
+
+    def _check_master_id(self, table_obj, master_id):
+        master_obj = (
+            self.session.query(table_obj)
+            .filter(getattr(table_obj, get_primary_key_for_table(table_obj)) == master_id)
+            .scalar()
+        )
+        if not master_obj:
+            raise ValueError(f"No object found with the given master_id: '{master_id}'!")
+
+    def merge_measurements(self, table_name, id_list, master_id, change_id, reason_list):
+        Datafile = self.db_classes.Datafile
+        Sensor = self.db_classes.Sensor
+        State = self.db_classes.State
+        Contact = self.db_classes.Contact
+        if table_name == constants.SENSOR:
+            field = "sensor_id"
+            self._check_master_id(Sensor, master_id)
+        elif table_name == constants.DATAFILE:
+            field = "source_id"
+            self._check_master_id(Datafile, master_id)
+        else:
+            raise ValueError(
+                f"You should give one of the following tables to merge measurements: {constants.SENSOR}, {constants.DATAFILE}"
+            )
+
+        for t_name, t_obj in zip([constants.STATE, constants.CONTACT], [State, Contact]):
+            print(f"Updating {t_name}")
+            query = self.session.query(t_obj).filter(getattr(t_obj, field).in_(id_list))
+            [
+                self.add_to_logs(
+                    table=t_name,
+                    row_id=getattr(s, field),
+                    field=field,
+                    new_value=reason_list,
+                    change_id=change_id,
+                )
+                for s in query.all()
+            ]
+            query.update({field: master_id})
+
+    # def merge_references(self, table_name, id_list, master_id):
+    #     class_to_include = set()
+    #     foreign_key_tables = list()
+    #     # Table names are plural in the database, therefore make it singular
+    #     table = table_name_to_class_name(table_name)
+    #     # Get class
+    #     table_obj = getattr(self.db_classes, table)
+    #     # Find all necessary foreign keyed table definitions
+    #     find_foreign_key_table_names_recursively(self.db_classes, table_obj, foreign_key_tables)
+    #     # For each foreign key table names, find the class and include it's string to the set
+    #     for foreign_key_table in foreign_key_tables:
+    #         foreign_key_table_obj = getattr(self.db_classes, foreign_key_table)
+
+    def merge_generic(self, table_name, id_list, master_id) -> bool:
+        reason_list = ",".join([str(p) for p in id_list])
+        change_id = self.add_to_changes(
+            user=USER,
+            modified=datetime.utcnow(),
+            reason=f"Merging {table_name} '{reason_list}' to '{master_id}'.",
+        ).change_id
+        if table_name in [constants.SENSOR, constants.DATAFILE]:
+            self.merge_measurements(table_name, id_list, master_id, change_id, reason_list)
+        # else:
+        #     self.merge_references(table_name, id_list, master_id)
+        return True
