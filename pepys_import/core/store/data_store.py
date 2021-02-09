@@ -1799,18 +1799,45 @@ class DataStore:
         Sensor = self.db_classes.Sensor
         State = self.db_classes.State
         Contact = self.db_classes.Contact
+        Activation = self.db_classes.Activation
+        LogsHolding = self.db_classes.LogsHolding
+        Comment = self.db_classes.Comment
+        Geometry1 = self.db_classes.Geometry1
+        Media = self.db_classes.Media
         if table_name == constants.SENSOR:
             field = "sensor_id"
+            table_obj = Sensor
             self._check_master_id(Sensor, master_id)
+            table_names = [constants.STATE, constants.CONTACT]
+            table_objects = [State, Contact]
         elif table_name == constants.DATAFILE:
             field = "source_id"
+            table_obj = Datafile
             self._check_master_id(Datafile, master_id)
+            table_names = [
+                constants.STATE,
+                constants.CONTACT,
+                constants.ACTIVATION,
+                constants.LOGS_HOLDING,
+                constants.COMMENT,
+                constants.GEOMETRY,
+                constants.MEDIA,
+            ]
+            table_objects = [
+                State,
+                Contact,
+                Activation,
+                LogsHolding,
+                Comment,
+                Geometry1,
+                Media,
+            ]
         else:
             raise ValueError(
                 f"You should give one of the following tables to merge measurements: {constants.SENSOR}, {constants.DATAFILE}"
             )
 
-        for t_name, t_obj in zip([constants.STATE, constants.CONTACT], [State, Contact]):
+        for t_name, t_obj in zip(table_names, table_objects):
             print(f"Updating {t_name}")
             query = self.session.query(t_obj).filter(getattr(t_obj, field).in_(id_list))
             [
@@ -1824,6 +1851,12 @@ class DataStore:
                 for s in query.all()
             ]
             query.update({field: master_id})
+
+        # Delete merged objects
+        self.session.query(table_obj).filter(
+            getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
+        ).delete()
+        self.session.flush()
 
     # def merge_references(self, table_name, id_list, master_id):
     #     class_to_include = set()
