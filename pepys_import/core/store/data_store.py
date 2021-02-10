@@ -10,6 +10,7 @@ from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker, undefer
 from sqlalchemy.sql import func
+from sqlalchemy_utils import merge_references
 
 from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import import __version__
@@ -31,6 +32,7 @@ from pepys_import.utils.value_transforming_utils import format_datetime
 
 from ...utils.error_handling import handle_first_connection_error
 from ...utils.sqlalchemy_utils import get_primary_key_for_table
+from ...utils.table_name_utils import table_name_to_class_name
 from ...utils.text_formatting_utils import custom_print_formatted_text, format_error_message
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
@@ -1793,6 +1795,14 @@ class DataStore:
         )
         if not master_obj:
             raise ValueError(f"No object found with the given master_id: '{master_id}'!")
+        return master_obj
+
+    def _delete_merged_objects(self, table_obj, id_list):
+        # Delete merged objects
+        self.session.query(table_obj).filter(
+            getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
+        ).delete(synchronize_session="fetch")
+        self.session.flush()
 
     def merge_measurements(self, table_name, id_list, master_id, change_id, reason_list):
         Datafile = self.db_classes.Datafile
@@ -1853,25 +1863,36 @@ class DataStore:
             query.update({field: master_id}, synchronize_session="fetch")
 
         # Delete merged objects
-        self.session.query(table_obj).filter(
-            getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
-        ).delete(synchronize_session="fetch")
-        self.session.flush()
+        self._delete_merged_objects(table_obj, id_list)
 
-    # def merge_references(self, table_name, id_list, master_id):
-    #     class_to_include = set()
-    #     foreign_key_tables = list()
-    #     # Table names are plural in the database, therefore make it singular
-    #     table = table_name_to_class_name(table_name)
-    #     # Get class
-    #     table_obj = getattr(self.db_classes, table)
-    #     # Find all necessary foreign keyed table definitions
-    #     find_foreign_key_table_names_recursively(self.db_classes, table_obj, foreign_key_tables)
-    #     # For each foreign key table names, find the class and include it's string to the set
-    #     for foreign_key_table in foreign_key_tables:
-    #         foreign_key_table_obj = getattr(self.db_classes, foreign_key_table)
+    def merge_references(self, table_name, id_list, master_id, change_id, reason_list):
+        # Table names are plural in the database, therefore make it singular
+        table = table_name_to_class_name(table_name)
+        table_obj = getattr(self.db_classes, table)
+        to_obj = self._check_master_id(table_obj, master_id)
+
+        for obj_id in id_list:
+            primary_key_field = get_primary_key_for_table(table_obj)
+            from_obj = (
+                self.session.query(table_obj)
+                .filter(getattr(table_obj, primary_key_field) == obj_id)
+                .scalar()
+            )
+            merge_references(from_obj, to_obj)
+            self.add_to_logs(
+                table=table_obj.__tablename__,
+                row_id=getattr(from_obj, primary_key_field),
+                field=primary_key_field,
+                new_value=reason_list,
+                change_id=change_id,
+            )
+            self.session.flush()
+        # Delete merged objects
+        self._delete_merged_objects(table_obj, id_list)
 
     def merge_generic(self, table_name, id_list, master_id) -> bool:
+        reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
+        reference_table_names = [obj.__tablename__ for obj in reference_table_objects]
         reason_list = ",".join([str(p) for p in id_list])
         change_id = self.add_to_changes(
             user=USER,
@@ -1880,6 +1901,8 @@ class DataStore:
         ).change_id
         if table_name in [constants.SENSOR, constants.DATAFILE]:
             self.merge_measurements(table_name, id_list, master_id, change_id, reason_list)
-        # else:
-        #     self.merge_references(table_name, id_list, master_id)
+        elif table_name in reference_table_names:
+            self.merge_references(table_name, id_list, master_id, change_id, reason_list)
+        else:
+            return False
         return True
