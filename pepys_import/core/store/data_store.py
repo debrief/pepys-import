@@ -1850,12 +1850,12 @@ class DataStore:
                 )
                 for s in query.all()
             ]
-            query.update({field: master_id})
+            query.update({field: master_id}, synchronize_session="fetch")
 
         # Delete merged objects
         self.session.query(table_obj).filter(
             getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
-        ).delete()
+        ).delete(synchronize_session="fetch")
         self.session.flush()
 
     # def merge_references(self, table_name, id_list, master_id):
