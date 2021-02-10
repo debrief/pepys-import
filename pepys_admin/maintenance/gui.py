@@ -2,7 +2,6 @@ import time
 from asyncio.tasks import ensure_future
 from functools import partial
 
-import sqlalchemy
 from loguru import logger
 from prompt_toolkit import Application
 from prompt_toolkit.application.current import get_app
@@ -25,7 +24,6 @@ from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Border, Label
-from sqlalchemy import nullslast
 from sqlalchemy.orm import undefer
 
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
@@ -34,10 +32,11 @@ from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.platform_merge_dialog import PlatformMergeDialog
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
 from pepys_admin.maintenance.dialogs.selection_dialog import SelectionDialog
+from pepys_admin.maintenance.help import HELP_TEXT, INTRO_HELP_TEXT
 from pepys_admin.maintenance.utils import (
+    create_column_data,
     get_system_name_mappings,
     get_table_titles,
-    remove_duplicates_and_nones,
 )
 from pepys_admin.maintenance.widgets.blank_border import BlankBorder
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
@@ -49,106 +48,6 @@ from pepys_import.core.store.data_store import DataStore
 
 logger.remove()
 logger.add("gui.log")
-
-INTRO_HELP_TEXT = """# Maintenance Interface Documentation
-You can use the maintenance interface to build custom queries and
-do specific actions such as merging assets, exporting data, etc.
-
-The interface is composed of 4 panels:
-
-## First panel: Select data type F2
-You can select the data table you want to query data from.
-(Platform table is the only one available for now)
-
-## Second panel: Build filters F3
-You can filter the data in the table selected above based by
-selecting specific fields and values for these fields. You can
-combine several filters using AND or OR operators.
-
-## Third panel: Preview list F6
-The selected and filtered data is visible here.
-
-## Fourth panel: Choose actions F8
-Through this panel, you can perform several actions on the data you selected.
-
-# Main navigation principles
-You can select a specific panel by pressing the corresponding F key:
-F2: Select data type
-F3: Build filters
-F4: Show Filter Query (TBI)
-F5: Show Complete Query (TBI)
-F6: Preview List
-F7: Preview Graph (TBI)
-F8: Choose actions
-
-You can also press Tab to go forward or Shift + Tab to go backward.
-"""
-
-HELP_TEXT = """# First panel: Select data type (F2)
-Type the first letter(s) of the table you are looking for.
-
-Press Enter to expand the list of available tables, use arrow
-keys to select the table you want and press Enter again.
-
-# Second panel: Build filters (F3)
-Each line is either a query or a standalone operator.
-
-You move from one line or one field to another using TAB or Shift
-+ TAB
-
-## Query line:
-Each query is built in the following way:
-
-Select column: you can select any field from the table
-
-Operator: = is ‘equal to’ (perfect match), != is ‘not equal to’,
-LIKE is ‘contains’
-
-Enter value here: you can start typing and a list of existing
-values will be filtered based on your input.
-
-At the end of each line, there is a < Delete > button: select the
-button and press Enter to delete the corresponding line.
-
-To add a new line, select < Add a filter condition > button and
-press Enter.
-
-## Operator line:
-A single dropdown allows you to choose between AND and OR.
-
-# Third panel: Preview List (F6)
-This panel displays the list of data contained on the selected
-table according to the filter you selected.
-
-In the list, you can go up and down the list using arrow keys,
-select/un-select an item using Enter.
-
-You can select the entire list by placing the cursor on the
-header row.
-
-## Selecting fields
-You can customize which fields are shown in the preview using
-Ctrl + F: this opens a popup, where you can add or remove fields.
-
-To add a field: navigate to the field you want to appear using
-arrow keys and press Enter to add it.
-
-To remove a field: press TAB to change from one column to the
-other, navigate using the arrows to select the field you want to
-remove and press Enter.
-
-To validate, navigate to the <  OK  >  button using TAB and press
-Enter
-
-# Fourth panel: Choose actions (F8)
-Merge Platforms is the only available action for now.
-
-The action applies to the platforms you selected in the preview
-list if any. When merging, you will be prompted to select the
-target platform in a popup. Select the platform and press Enter.
-Once the platforms are merged, press Enter and the Preview List
-will be updated.
-"""
 
 
 class MaintenanceGUI:
@@ -190,7 +89,7 @@ class MaintenanceGUI:
 
         self.init_ui_components()
 
-        self.create_column_data()
+        self.column_data = create_column_data(self.data_store)
 
         self.filter_widget.set_column_data(self.column_data)
         self.run_query()
@@ -316,81 +215,6 @@ class MaintenanceGUI:
         """Sets the contextual help dictionary based on the widget's
         container"""
         self.contextual_help[widget.__pt_container__()] = text
-
-    def create_column_data(self):
-        """Creates the column_data needed for the FilterWidget.
-
-        At the moment this is hard-coded to be the column data for
-        the Platforms table, with database queries being used to populate
-        the 'values' entry in the dict."""
-        Platform = self.data_store.db_classes.Platform
-        Nationality = self.data_store.db_classes.Nationality
-        PlatformType = self.data_store.db_classes.PlatformType
-        Privacy = self.data_store.db_classes.Privacy
-        try:
-            with self.data_store.session_scope():
-                all_platforms = self.data_store.session.query(Platform).all()
-
-                platform_ids = [str(platform.platform_id) for platform in all_platforms]
-                platform_names = [platform.name for platform in all_platforms]
-                platform_identifiers = [platform.identifier for platform in all_platforms]
-                platform_trigraphs = [platform.trigraph for platform in all_platforms]
-                platform_quadgraphs = [platform.quadgraph for platform in all_platforms]
-
-                # nullslast in the expression below makes NULL entries appear at the end
-                # of the sorted list - if we don't have this then they sort as 'zero'
-                # and come before the prioritised ones
-                all_nationalities = (
-                    self.data_store.session.query(Nationality)
-                    .order_by(nullslast(Nationality.priority.asc()))
-                    .all()
-                )
-                nationality_names = [nationality.name for nationality in all_nationalities]
-
-                all_platform_types = self.data_store.session.query(PlatformType).all()
-                platform_type_names = [pt.name for pt in all_platform_types]
-
-                all_privacies = self.data_store.session.query(Privacy).order_by(Privacy.level).all()
-                privacy_names = [priv.name for priv in all_privacies]
-        except sqlalchemy.exc.OperationalError:
-            raise Exception("Database not initialised error")
-
-        platform_column_data = {
-            "platform_id": {"type": "id", "values": platform_ids},
-            "name": {
-                "type": "string",
-                "values": sorted(remove_duplicates_and_nones(platform_names)),
-            },
-            "identifier": {
-                "type": "string",
-                "values": sorted(remove_duplicates_and_nones(platform_identifiers)),
-            },
-            "trigraph": {
-                "type": "string",
-                "values": sorted(remove_duplicates_and_nones(platform_trigraphs)),
-            },
-            "quadgraph": {
-                "type": "string",
-                "values": sorted(remove_duplicates_and_nones(platform_quadgraphs)),
-            },
-            "nationality name": {
-                "type": "string",
-                "system_name": "nationality_name",
-                "values": nationality_names,
-            },
-            "platform type name": {
-                "type": "string",
-                "system_name": "platform_type_name",
-                "values": platform_type_names,
-            },
-            "privacy name": {
-                "type": "string",
-                "system_name": "privacy_name",
-                "values": privacy_names,
-            },
-        }
-
-        self.column_data = platform_column_data
 
     def run_query(self):
         """Runs the query as defined by the FilterWidget,
@@ -545,7 +369,7 @@ class MaintenanceGUI:
                 self.run_query()
                 # Regenerate the column_data, so we don't have entries in the dropdowns
                 # that don't exist anymore
-                self.create_column_data()
+                self.column_data = create_column_data(self.data_store)
                 self.filter_widget.set_column_data(self.column_data, clear_entries=False)
 
         ensure_future(coroutine())
