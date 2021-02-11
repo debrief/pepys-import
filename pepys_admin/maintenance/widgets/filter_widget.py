@@ -83,7 +83,7 @@ class FilterWidget:
         # The main container is a DynamicContainer, so it displays whatever the
         # result of a function is
         self.container = DynamicContainer(self.get_container_contents)
-        self.button = Button("Add filter condition", self.add_entry)
+        self.button = Button("Add filter condition", self.add_entry, width=22)
         self.set_contextual_help(self.button, CONTEXTUAL_HELP_STRING)
         self.validation_toolbar = ValidationToolbar()
 
@@ -133,7 +133,7 @@ class FilterWidget:
         content = HSplit(
             [
                 HSplit(display_widgets, padding=1),
-                self.button,
+                VSplit([self.button], align=HorizontalAlign.CENTER),
                 self.validation_toolbar,
             ],
             padding=1,
