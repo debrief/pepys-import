@@ -8,7 +8,7 @@ from importlib import import_module
 from sqlalchemy import create_engine, inspect, or_
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
-from sqlalchemy.orm import sessionmaker, undefer
+from sqlalchemy.orm import scoped_session, sessionmaker, undefer
 from sqlalchemy.sql import func
 
 from paths import PEPYS_IMPORT_DIRECTORY
@@ -147,6 +147,9 @@ class DataStore:
         self._search_geometry_type_cache = dict()
         self._search_geometry_subtype_cache = dict()
 
+        db_session = sessionmaker(bind=self.engine)
+        self.scoped_session_creator = scoped_session(db_session)
+
         # Branding Text
         if self.welcome_text:
             show_welcome_banner(welcome_text)
@@ -189,8 +192,7 @@ class DataStore:
     @contextmanager
     def session_scope(self):
         """Provide a transactional scope around a series of operations."""
-        db_session = sessionmaker(bind=self.engine)
-        self.session = db_session()
+        self.session = self.scoped_session_creator()
         try:
             yield self
             self.session.commit()
