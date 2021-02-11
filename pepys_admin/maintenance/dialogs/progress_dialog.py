@@ -69,14 +69,14 @@ class ProgressDialog:
         ensure_future(coroutine())
 
     def set_percentage(self, value: int) -> None:
-        # If we get to 100% then close the dialog
-        if value == 100:
-            self.future.set_result(None)
-
         self.progressbar.percentage = int(value)
         # Refresh the GUI
         app = get_app()
         app.invalidate()
+
+        # If we get to 100% then close the dialog
+        if value >= 100:
+            self.future.set_result(None)
 
     def is_cancelled(self):
         return self.cancelled
