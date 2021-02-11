@@ -1120,9 +1120,28 @@ class MergeObjectsTestCase(TestCase):
                 change_id=self.change_id,
                 privacy=self.privacy.name,
             )
+            self.state = self.store.db_classes.State(
+                sensor_id=self.sensor_2.sensor_id,
+                time=self.current_time,
+                source_id=self.file.datafile_id,
+                sensor=self.sensor_2,
+                platform=self.platform_2,
+                privacy_id=self.privacy_id,
+            )
+            self.state_2 = self.store.db_classes.State(
+                sensor_id=self.sensor_2.sensor_id,
+                time=self.current_time,
+                source_id=self.file.datafile_id,
+                sensor=self.sensor_2,
+                platform=self.platform_2,
+                privacy_id=self.privacy_id,
+            )
+            self.store.session.add_all([self.state, self.state_2])
+            self.store.session.commit()
 
     def test_merge_objects_of_privacies(self):
         Privacy = self.store.db_classes.Privacy
+        State = self.store.db_classes.State
         with self.store.session_scope():
             new_privacy = self.store.add_to_privacies("NEW PRIVACY", 20, self.change_id)
             # Assert that target privacy doesn't have any dependent objects
@@ -1130,7 +1149,13 @@ class MergeObjectsTestCase(TestCase):
             assert len(dependent_objs) == 0
             old_privacy = self.store.session.merge(self.privacy)
             source_dependent_objs = list(dependent_objects(old_privacy))
-            assert len(source_dependent_objs) == 6  # 2 Platforms, 2 Datafiles, 2 Sensors
+            assert len(source_dependent_objs) == 8  # 2 Platforms, 2 Datafiles, 2 Sensors, 2 States
+            states_before_merge = (  # As an example, check there is no state with new privacy
+                self.store.session.query(State)
+                .filter(State.privacy_id == new_privacy.privacy_id)
+                .all()
+            )
+            assert len(states_before_merge) == 0
 
             # Merge test_privacy to new_privacy
             self.store.merge_objects(
@@ -1139,10 +1164,15 @@ class MergeObjectsTestCase(TestCase):
 
             # Assert that target privacy has all dependent objects
             dependent_objs = list(dependent_objects(new_privacy))
-            assert len(dependent_objs) == 6
+            assert len(dependent_objs) == 8
             source_dependent_objs = list(dependent_objects(old_privacy))
             assert len(source_dependent_objs) == 0
-
+            states_after_merge = (  # Check again whether privacies of states are changed
+                self.store.session.query(State)
+                .filter(State.privacy_id == new_privacy.privacy_id)
+                .all()
+            )
+            assert len(states_after_merge) == 2
             # Assert that merged privacy deleted
             assert (
                 not self.store.session.query(Privacy)
