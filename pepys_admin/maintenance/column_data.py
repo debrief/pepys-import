@@ -73,14 +73,17 @@ def str_if_not_none(value):
         return str(value)
 
 
-def create_column_data(data_store, table_object):
+def create_column_data(data_store, table_object, set_percentage=None):
     cols = get_normal_column_objects(table_object)
     assoc_proxy_names, assoc_proxy_objs = get_assoc_proxy_names_and_objects(table_object)
+
+    total_iterations = len(cols) + len(assoc_proxy_names) + 1
+    iteration_perc = 100.0 / total_iterations
+    i = 1
 
     column_data = {}
     for col in cols:
         sys_name = col.key
-        print(col.key)
         # Deal with columns where the actual column member
         # variable is something like `_speed`, because we're
         # using a `speed` property to access the column
@@ -100,6 +103,10 @@ def create_column_data(data_store, table_object):
                 details["values"] = sorted(remove_duplicates_and_nones(values))
 
         column_data[get_display_name(sys_name)] = details
+
+        if callable(set_percentage):
+            set_percentage(i * iteration_perc)
+        i += 1
 
     for ap_name, ap_obj in zip(assoc_proxy_names, assoc_proxy_objs):
         ap_type = getattr(ap_obj.target_class, ap_obj.value_attr).type
@@ -141,5 +148,13 @@ def create_column_data(data_store, table_object):
                     details["values"] = sorted(remove_duplicates_and_nones(values))
 
         column_data[get_display_name(ap_name)] = details
+
+        if callable(set_percentage):
+            set_percentage(i * iteration_perc)
+        i += 1
+
+    if callable(set_percentage):
+        # In case rounding errors in the iteration_perc meant that we didn't get to 100
+        set_percentage(100)
 
     return column_data
