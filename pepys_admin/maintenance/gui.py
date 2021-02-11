@@ -7,7 +7,6 @@ from prompt_toolkit import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.document import Document
-from prompt_toolkit.filters.utils import to_filter
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.layout.containers import (
@@ -56,7 +55,7 @@ class MaintenanceGUI:
             # It won't cause problems for users, as they will access via Pepys Admin
             # where data store will be defined
             self.data_store = DataStore(
-                "", "", "", 0, ":memory:", db_type="sqlite", show_status=False, welcome_text=""
+                "", "", "", 0, "test_gui2.db", db_type="sqlite", show_status=False, welcome_text=""
             )
             self.data_store.initialise()
             with self.data_store.session_scope():
@@ -105,17 +104,10 @@ class MaintenanceGUI:
         """Initialise all of the UI components, controls, containers and widgets"""
         # Dropdown box to select table, plus pane that it is in
         self.dropdown_table = DropdownBox(
-            text="Platform",  # FUTURE: This is currently hard-coded to Platform
-            entries=[
-                "Platform",
-            ],
-            # FUTURE: This is needed to be able to select from this dropdown
-            # on_select_handler=self.on_table_select,
+            text="Platform",
+            entries=["Platform", "Sensor"],
+            on_select_handler=self.on_table_select,
         )
-        # Makes the dropdown box not focusable, so users can't tab to it
-        self.dropdown_table.control.focusable = to_filter(False)
-        # Also make it disabled, so clicking doesn't work
-        self.dropdown_table.disabled = True
 
         self.data_type_container = HSplit(
             children=[
@@ -274,12 +266,27 @@ class MaintenanceGUI:
     def get_table_objects(self):
         return self.table_objects
 
-    # FUTURE: Not needed until we want to select a table at the top
-    # def on_table_select(self, value):
-    #     """Called when an entry is selected from the Table dropdown at the top-left."""
-    #     # Set the data used to parameterise the FilterWidget
-    #     self.filter_widget.set_column_data(column_data[value])
-    #     self.run_query()
+    def get_column_data(self, table_object, set_percentage=None, is_cancelled=None):
+        self.column_data = create_column_data(
+            self.data_store, getattr(self.data_store.db_classes, table_object), set_percentage
+        )
+
+    def on_table_select(self, value):
+        """Called when an entry is selected from the Table dropdown at the top-left."""
+
+        # Set the data used to parameterise the FilterWidget
+        async def coroutine():
+            dialog = ProgressDialog(
+                "Loading table data",
+                partial(self.get_column_data, value),
+                show_cancel=True,
+            )
+            _ = await self.show_dialog_as_float(dialog)
+
+            self.filter_widget.set_column_data(self.column_data)
+            self.run_query()
+
+        ensure_future(coroutine())
 
     def on_filter_widget_change(self, value):
         """Called when the filter widget notifies us that it has changed. The filter
@@ -366,9 +373,7 @@ class MaintenanceGUI:
                 self.run_query()
                 # Regenerate the column_data, so we don't have entries in the dropdowns
                 # that don't exist anymore
-                self.column_data = create_column_data(
-                    self.data_store, self.data_store.db_classes.Platform
-                )
+                self.column_data = create_column_data(self.data_store, self.dropdown_table.text)
                 self.filter_widget.set_column_data(self.column_data, clear_entries=False)
 
         ensure_future(coroutine())
