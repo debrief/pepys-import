@@ -345,7 +345,7 @@ class MergePlatformsTestCase(TestCase):
         uuid = UUID("12345678123456781234567812345678")
         with self.store.session_scope(), pytest.raises(ValueError) as error:
             self.store.merge_platforms([], uuid)
-        assert f"No platform found with the given master_id: '{uuid}'" in error.value.args[0]
+        assert f"No object found with the given master_id: '{uuid}'" in error.value.args[0]
 
     def test_merge_platforms_with_platform_objects_given(self):
         State = self.store.db_classes.State

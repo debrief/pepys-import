@@ -1672,11 +1672,7 @@ class DataStore:
         if isinstance(master_id, Platform):
             master_id = master_id.platform_id
 
-        master_platform = (
-            self.session.query(Platform).filter(Platform.platform_id == master_id).scalar()
-        )
-        if not master_platform:
-            raise ValueError(f"No platform found with the given master_id: '{master_id}'!")
+        self._check_master_id(Platform, master_id)
         master_sensor_names = self.session.query(Sensor.name).filter(Sensor.host == master_id).all()
         master_sensor_names = set([n for (n,) in master_sensor_names])
 
@@ -1838,12 +1834,10 @@ class DataStore:
             )
 
         for t_obj in table_objects:
-            t_name = t_obj.__tablename__
-            print(f"Updating {t_name}")
             query = self.session.query(t_obj).filter(getattr(t_obj, field).in_(id_list))
             [
                 self.add_to_logs(
-                    table=t_name,
+                    table=t_obj.__tablename__,
                     row_id=getattr(s, field),
                     field=field,
                     new_value=str(getattr(s, field)),
