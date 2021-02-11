@@ -25,15 +25,24 @@ def test_generating_column_data(pytestconfig):
     gui = MaintenanceGUI()
 
     correct_col_data = {
-        "platform_id": {
+        "platform id": {
             "type": "id",
+            "system_name": "platform_id"
             # Values entry deleted here, as we can't compare GUIDs
             # Values is deleted in the output from the code below too
         },
-        "name": {"type": "string", "values": ["ADRI", "JEAN", "NARV", "SPAR"]},
-        "identifier": {"type": "string", "values": ["A643", "A816", "C045", "P543"]},
-        "trigraph": {"type": "string", "values": []},
-        "quadgraph": {"type": "string", "values": []},
+        "name": {
+            "type": "string",
+            "values": ["ADRI", "JEAN", "NARV", "SPAR"],
+            "system_name": "name",
+        },
+        "identifier": {
+            "type": "string",
+            "values": ["A643", "A816", "C045", "P543"],
+            "system_name": "identifier",
+        },
+        "trigraph": {"type": "string", "values": [], "system_name": "trigraph"},
+        "quadgraph": {"type": "string", "values": [], "system_name": "quadgraph"},
         "nationality name": {
             "type": "string",
             "system_name": "nationality_name",
@@ -300,25 +309,25 @@ def test_generating_column_data(pytestconfig):
             "type": "string",
             "system_name": "platform_type_name",
             "values": [
+                "Fishing Vessel",
+                "High Speed Craft",
+                "Law Enforcement",
+                "Merchant",
                 "Naval - aircraft",
-                "Naval - frigate",
+                "Naval - aircraft carrier",
                 "Naval - auxiliary",
                 "Naval - destroyer",
-                "Naval - survey",
+                "Naval - frigate",
                 "Naval - minesweeper",
-                "Naval - patrol",
-                "Naval - aircraft carrier",
-                "Naval - submarine",
                 "Naval - miscellaneous",
-                "Merchant",
-                "Tug",
-                "Tanker",
-                "Law Enforcement",
+                "Naval - patrol",
+                "Naval - submarine",
+                "Naval - survey",
+                "Passenger/Ferry",
                 "Pleasure Craft",
                 "Search and Rescue",
-                "Fishing Vessel",
-                "Passenger/Ferry",
-                "High Speed Craft",
+                "Tanker",
+                "Tug",
             ],
         },
         "privacy name": {
@@ -335,12 +344,31 @@ def test_generating_column_data(pytestconfig):
                 "Very Private",
             ],
         },
+        "platform type id": {
+            "system_name": "platform_type_id",
+            "type": "id",
+            # Values deleted as they are IDs
+        },
+        "privacy id": {
+            "system_name": "privacy_id",
+            "type": "id",
+            # Values deleted as they are IDs
+        },
+        "created date": {"system_name": "created_date", "type": "datetime"},
+        "nationality id": {
+            "system_name": "nationality_id",
+            "type": "id",
+            # Values deleted as they are IDs,
+        },
     }
 
     output_col_data = gui.column_data
 
     # Remove the uncomparable values entry
-    del output_col_data["platform_id"]["values"]
+    del output_col_data["platform id"]["values"]
+    del output_col_data["platform type id"]["values"]
+    del output_col_data["privacy id"]["values"]
+    del output_col_data["nationality id"]["values"]
 
     assert output_col_data == correct_col_data
 
