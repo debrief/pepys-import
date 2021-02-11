@@ -1801,36 +1801,28 @@ class DataStore:
         self.session.flush()
 
     def merge_measurements(self, table_name, id_list, master_id, change_id):
-        Datafile = self.db_classes.Datafile
-        Sensor = self.db_classes.Sensor
-        State = self.db_classes.State
-        Contact = self.db_classes.Contact
-        Activation = self.db_classes.Activation
-        LogsHolding = self.db_classes.LogsHolding
-        Comment = self.db_classes.Comment
-        Geometry1 = self.db_classes.Geometry1
-        Media = self.db_classes.Media
         if table_name == constants.SENSOR:
-            table_obj = Sensor
+            table_obj = self.db_classes.Sensor
             field = get_primary_key_for_table(table_obj)
             self._check_master_id(table_obj, master_id)
-            table_objects = [State, Contact]
+            table_objects = [self.db_classes.State, self.db_classes.Contact]
         elif table_name == constants.DATAFILE:
-            table_obj = Datafile
+            table_obj = self.db_classes.Datafile
             field = "source_id"
             self._check_master_id(table_obj, master_id)
             table_objects = [
-                State,
-                Contact,
-                Activation,
-                LogsHolding,
-                Comment,
-                Geometry1,
-                Media,
+                self.db_classes.State,
+                self.db_classes.Contact,
+                self.db_classes.Activation,
+                self.db_classes.LogsHolding,
+                self.db_classes.Comment,
+                self.db_classes.Geometry1,
+                self.db_classes.Media,
             ]
         else:
             raise ValueError(
-                f"You should give one of the following tables to merge measurements: {constants.SENSOR}, {constants.DATAFILE}"
+                f"You should give one of the following tables to merge measurements: "
+                f"{constants.SENSOR}, {constants.DATAFILE}"
             )
 
         for t_obj in table_objects:
