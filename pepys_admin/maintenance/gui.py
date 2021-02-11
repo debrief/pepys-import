@@ -26,6 +26,7 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Border, Label
 from sqlalchemy.orm import undefer
 
+from pepys_admin.maintenance.column_data import create_column_data
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
@@ -33,11 +34,7 @@ from pepys_admin.maintenance.dialogs.platform_merge_dialog import PlatformMergeD
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
 from pepys_admin.maintenance.dialogs.selection_dialog import SelectionDialog
 from pepys_admin.maintenance.help import HELP_TEXT, INTRO_HELP_TEXT
-from pepys_admin.maintenance.utils import (
-    create_column_data,
-    get_system_name_mappings,
-    get_table_titles,
-)
+from pepys_admin.maintenance.utils import get_system_name_mappings, get_table_titles
 from pepys_admin.maintenance.widgets.blank_border import BlankBorder
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
@@ -89,7 +86,7 @@ class MaintenanceGUI:
 
         self.init_ui_components()
 
-        self.column_data = create_column_data(self.data_store)
+        self.column_data = create_column_data(self.data_store, self.data_store.db_classes.Platform)
 
         self.filter_widget.set_column_data(self.column_data)
         self.run_query()
@@ -369,7 +366,9 @@ class MaintenanceGUI:
                 self.run_query()
                 # Regenerate the column_data, so we don't have entries in the dropdowns
                 # that don't exist anymore
-                self.column_data = create_column_data(self.data_store)
+                self.column_data = create_column_data(
+                    self.data_store, self.data_store.db_classes.Platform
+                )
                 self.filter_widget.set_column_data(self.column_data, clear_entries=False)
 
         ensure_future(coroutine())
