@@ -1747,8 +1747,8 @@ class DataStore:
                 ]
                 query.update({"sensor_id": master_sensor_id})  # Update Contacts
 
-        for p_id in platform_list:  # Delete merged platforms
-            self.session.query(Platform).filter(Platform.platform_id == p_id).delete()
+        # Delete merged platforms
+        self._delete_merged_objects(Platform, platform_list)
         self.session.flush()
         return True
 
@@ -1804,7 +1804,7 @@ class DataStore:
         ).delete(synchronize_session="fetch")
         self.session.flush()
 
-    def merge_measurements(self, table_name, id_list, master_id, change_id, reason_list):
+    def merge_measurements(self, table_name, id_list, master_id, change_id):
         Datafile = self.db_classes.Datafile
         Sensor = self.db_classes.Sensor
         State = self.db_classes.State
@@ -1815,24 +1815,14 @@ class DataStore:
         Geometry1 = self.db_classes.Geometry1
         Media = self.db_classes.Media
         if table_name == constants.SENSOR:
-            field = "sensor_id"
             table_obj = Sensor
-            self._check_master_id(Sensor, master_id)
-            table_names = [constants.STATE, constants.CONTACT]
+            field = get_primary_key_for_table(table_obj)
+            self._check_master_id(table_obj, master_id)
             table_objects = [State, Contact]
         elif table_name == constants.DATAFILE:
-            field = "source_id"
             table_obj = Datafile
-            self._check_master_id(Datafile, master_id)
-            table_names = [
-                constants.STATE,
-                constants.CONTACT,
-                constants.ACTIVATION,
-                constants.LOGS_HOLDING,
-                constants.COMMENT,
-                constants.GEOMETRY,
-                constants.MEDIA,
-            ]
+            field = "source_id"
+            self._check_master_id(table_obj, master_id)
             table_objects = [
                 State,
                 Contact,
@@ -1847,7 +1837,8 @@ class DataStore:
                 f"You should give one of the following tables to merge measurements: {constants.SENSOR}, {constants.DATAFILE}"
             )
 
-        for t_name, t_obj in zip(table_names, table_objects):
+        for t_obj in table_objects:
+            t_name = t_obj.__tablename__
             print(f"Updating {t_name}")
             query = self.session.query(t_obj).filter(getattr(t_obj, field).in_(id_list))
             [
@@ -1855,7 +1846,7 @@ class DataStore:
                     table=t_name,
                     row_id=getattr(s, field),
                     field=field,
-                    new_value=reason_list,
+                    new_value=str(getattr(s, field)),
                     change_id=change_id,
                 )
                 for s in query.all()
@@ -1865,7 +1856,7 @@ class DataStore:
         # Delete merged objects
         self._delete_merged_objects(table_obj, id_list)
 
-    def merge_references(self, table_name, id_list, master_id, change_id, reason_list):
+    def merge_objects(self, table_name, id_list, master_id, change_id):
         # Table names are plural in the database, therefore make it singular
         table = table_name_to_class_name(table_name)
         table_obj = getattr(self.db_classes, table)
@@ -1883,7 +1874,7 @@ class DataStore:
                 table=table_obj.__tablename__,
                 row_id=getattr(from_obj, primary_key_field),
                 field=primary_key_field,
-                new_value=reason_list,
+                new_value=str(obj_id),
                 change_id=change_id,
             )
             self.session.flush()
@@ -1900,9 +1891,9 @@ class DataStore:
             reason=f"Merging {table_name} '{reason_list}' to '{master_id}'.",
         ).change_id
         if table_name in [constants.SENSOR, constants.DATAFILE]:
-            self.merge_measurements(table_name, id_list, master_id, change_id, reason_list)
+            self.merge_measurements(table_name, id_list, master_id, change_id)
         elif table_name in reference_table_names:
-            self.merge_references(table_name, id_list, master_id, change_id, reason_list)
+            self.merge_objects(table_name, id_list, master_id, change_id)
         else:
             return False
         return True
