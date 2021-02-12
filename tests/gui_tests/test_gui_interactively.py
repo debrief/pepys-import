@@ -28,7 +28,7 @@ def test_gui_opens(pytestconfig):
 
     assert "Build filters  F3" in result
     assert "Preview List   F6" in result
-    assert "Platform    ▼" in result
+    assert "Platform" in result
 
 
 def test_gui_help(pytestconfig):
