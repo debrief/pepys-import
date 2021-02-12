@@ -75,6 +75,11 @@ class DataStore:
         self.meta_classes = {}
         self.setup_table_type_mapping()
 
+        if db_name == ":memory:":
+            self.in_memory_database = True
+        else:
+            self.in_memory_database = False
+
         connection_string = "{}://{}:{}@{}:{}/{}".format(
             driver, db_username, db_password, db_host, db_port, db_name
         )

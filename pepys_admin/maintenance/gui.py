@@ -28,8 +28,8 @@ from sqlalchemy.orm import undefer
 from pepys_admin.maintenance.column_data import create_column_data
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
+from pepys_admin.maintenance.dialogs.merge_dialog import MergeDialog
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
-from pepys_admin.maintenance.dialogs.platform_merge_dialog import PlatformMergeDialog
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
 from pepys_admin.maintenance.dialogs.selection_dialog import SelectionDialog
 from pepys_admin.maintenance.help import HELP_TEXT, INTRO_HELP_TEXT
@@ -41,6 +41,7 @@ from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 from pepys_admin.maintenance.widgets.filter_widget_utils import filter_widget_output_to_query
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 logger.remove()
 logger.add("gui.log")
@@ -55,19 +56,22 @@ class MaintenanceGUI:
             # It won't cause problems for users, as they will access via Pepys Admin
             # where data store will be defined
             self.data_store = DataStore(
-                "", "", "", 0, "test_gui2.db", db_type="sqlite", show_status=False, welcome_text=""
+                "", "", "", 0, "test_gui.db", db_type="sqlite", show_status=False, welcome_text=""
             )
             self.data_store.initialise()
             with self.data_store.session_scope():
                 self.data_store.populate_reference()
                 self.data_store.populate_metadata()
 
-        self.preview_selected_fields = [
-            "name",
-            "identifier",
-            "nationality_name",
-            "platform_type_name",
-        ]
+        if self.data_store.in_memory_database:
+            raise ValueError("Cannot run the GUI on an in-memory SQLite database")
+
+        # self.preview_selected_fields = [
+        #     "name",
+        #     "identifier",
+        #     "nationality_name",
+        #     "platform_type_name",
+        # ]
 
         # Start with an empty table
         self.table_data = []
@@ -85,7 +89,10 @@ class MaintenanceGUI:
 
         self.init_ui_components()
 
+        self.current_table_object = self.data_store.db_classes.Platform
+
         self.column_data = create_column_data(self.data_store, self.data_store.db_classes.Platform)
+        self.get_default_preview_fields()
 
         self.filter_widget.set_column_data(self.column_data)
         self.run_query()
@@ -104,8 +111,8 @@ class MaintenanceGUI:
         """Initialise all of the UI components, controls, containers and widgets"""
         # Dropdown box to select table, plus pane that it is in
         self.dropdown_table = DropdownBox(
-            text="Platform",
-            entries=["Platform", "Sensor"],
+            text="Platforms",
+            entries=["Platforms", "Sensors"],
             on_select_handler=self.on_table_select,
         )
 
@@ -140,7 +147,7 @@ class MaintenanceGUI:
 
         # Actions container, containing a list of actions that can be run
         self.actions_combo = ComboBox(
-            entries=["1 - Merge Platforms"],
+            entries=["1 - Merge"],
             enter_handler=self.run_action,
         )
         self.set_contextual_help(self.actions_combo, "# Fourth panel: Choose actions (F8)")
@@ -205,11 +212,14 @@ class MaintenanceGUI:
         container"""
         self.contextual_help[widget.__pt_container__()] = text
 
+    def get_default_preview_fields(self):
+        self.preview_selected_fields = self.current_table_object._default_preview_fields
+
     def run_query(self):
         """Runs the query as defined by the FilterWidget,
         and displays the result in the preview table."""
         app = get_app()
-        # As this property is computed each time, get the output and store it
+        # As this property is computed each time we access it, get the output and store it
         # to save time
         filters = self.filter_widget.filters
 
@@ -222,16 +232,18 @@ class MaintenanceGUI:
         with self.data_store.session_scope():
             if filters == []:
                 # If there are no filters then just return the table with no filtering
-                query_obj = self.data_store.session.query(self.data_store.db_classes.Platform)
+                query_obj = self.data_store.session.query(self.current_table_object)
             else:
                 # Otherwise, convert the filter widget output to a SQLAlchemy filter and run it
-                filter_query = filter_widget_output_to_query(filters, "Platforms", self.data_store)
+                filter_query = filter_widget_output_to_query(
+                    filters, self.dropdown_table.text, self.data_store
+                )
                 if filter_query is None:
                     app.invalidate()
                     return
-                query_obj = self.data_store.session.query(
-                    self.data_store.db_classes.Platform
-                ).filter(filter_query)
+                query_obj = self.data_store.session.query(self.current_table_object).filter(
+                    filter_query
+                )
 
             # Get all the results, while undefering all fields to make sure everything is
             # available once it's been expunged (disconnected) from the database
@@ -267,23 +279,25 @@ class MaintenanceGUI:
         return self.table_objects
 
     def get_column_data(self, table_object, set_percentage=None, is_cancelled=None):
-        self.column_data = create_column_data(
-            self.data_store, getattr(self.data_store.db_classes, table_object), set_percentage
-        )
+        self.column_data = create_column_data(self.data_store, table_object, set_percentage)
 
     def on_table_select(self, value):
         """Called when an entry is selected from the Table dropdown at the top-left."""
+        class_name = table_name_to_class_name(value)
+        self.current_table_object = getattr(self.data_store.db_classes, class_name)
 
         # Set the data used to parameterise the FilterWidget
         async def coroutine():
             dialog = ProgressDialog(
                 "Loading table data",
-                partial(self.get_column_data, value),
+                partial(self.get_column_data, self.current_table_object),
                 show_cancel=True,
             )
-            _ = await self.show_dialog_as_float(dialog)
+            res = await self.show_dialog_as_float(dialog)
+            logger.debug(f"{res=}")
 
             self.filter_widget.set_column_data(self.column_data)
+            self.get_default_preview_fields()
             self.run_query()
 
         ensure_future(coroutine())
@@ -306,31 +320,31 @@ class MaintenanceGUI:
 
     def run_action(self, selected_value):
         """Runs an action from the actions ComboBox. Called when Enter is pressed."""
-        if selected_value == "1 - Merge Platforms":
-            self.run_merge_platforms()
+        if selected_value == "1 - Merge":
+            self.run_merge()
         else:
             self.show_messagebox("Action", f"Running action {selected_value}")
 
-    def run_merge_platforms(self):
-        """Runs the action to merge platforms.
+    def run_merge(self):
+        """Runs the action to merge entries
 
-        Takes the list of platforms to merge from the selected items in the preview table,
-        then opens a dialog to select the master platform, then runs the merge with a
+        Takes the list of entries to merge from the selected items in the preview table,
+        then opens a dialog to select the master entry, then runs the merge with a
         progress dialog, and displays a messagebox when it is finished.
         """
         if len(self.preview_table.current_values) == 0:
             self.show_messagebox(
-                "Error", "You must select platforms to merge before running the merge action."
+                "Error", "You must select entries to merge before running the merge action."
             )
             return
         # Generate a mapping of nice display strings
-        # to the actual underlying Platform objects
+        # to the actual underlying entry objects
         display_to_object = {}
-        for platform_obj in self.preview_table.current_values:
+        for entry_obj in self.preview_table.current_values:
             display_str = " - ".join(
-                [platform_obj.name, platform_obj.nationality_name, platform_obj.identifier]
+                [getattr(entry_obj, field_name) for field_name in entry_obj._default_preview_fields]
             )
-            display_to_object[display_str] = platform_obj
+            display_to_object[display_str] = entry_obj
 
         def do_merge(platform_list, master_platform, set_percentage=None, is_cancelled=None):
             # Does the actual merge, while also setting the percentage complete
@@ -340,18 +354,18 @@ class MaintenanceGUI:
             set_percentage(10)
             with self.data_store.session_scope():
                 self.data_store.merge_platforms(platform_list, master_platform)
-            time.sleep(3)
-            set_percentage(90)
             time.sleep(1)
             set_percentage(100)
 
         async def coroutine():
             # Show the dialog with a list of platforms, to allow the user
             # to choose which platoform should be the master
-            dialog = PlatformMergeDialog(list(display_to_object.keys()))
+            table_name = table_name_to_class_name(self.dropdown_table.text)
+
+            dialog = MergeDialog(f"Select target {table_name}", list(display_to_object.keys()))
             dialog_result = await self.show_dialog_as_float(dialog)
             if dialog_result is not None:
-                master_platform_obj = display_to_object[dialog_result]
+                master_obj = display_to_object[dialog_result]
 
                 # This runs the `do_merge` function, passing it the
                 # list of selected platforms, and the master platform object
@@ -359,8 +373,8 @@ class MaintenanceGUI:
                 # arguments of set_percentage and is_cancelled to
                 # allow the function to return percentage process
                 dialog = ProgressDialog(
-                    "Merging platforms",
-                    partial(do_merge, self.preview_table.current_values, master_platform_obj),
+                    "Merging {table_name} entries",
+                    partial(do_merge, self.preview_table.current_values, master_obj),
                     show_cancel=False,
                 )
                 _ = await self.show_dialog_as_float(dialog)
@@ -373,7 +387,7 @@ class MaintenanceGUI:
                 self.run_query()
                 # Regenerate the column_data, so we don't have entries in the dropdowns
                 # that don't exist anymore
-                self.column_data = create_column_data(self.data_store, self.dropdown_table.text)
+                self.column_data = create_column_data(self.data_store, self.current_table_object)
                 self.filter_widget.set_column_data(self.column_data, clear_entries=False)
 
         ensure_future(coroutine())
@@ -700,5 +714,9 @@ class MaintenanceGUI:
 
 
 if __name__ == "__main__":
-    gui = MaintenanceGUI()
-    gui.app.run()
+    try:
+        gui = MaintenanceGUI()
+        gui.app.run()
+    except Exception as e:
+        print(str(e))
+        print("Error running GUI, see error message above")

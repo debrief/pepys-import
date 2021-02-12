@@ -21,6 +21,8 @@ class CheckboxTable(CheckboxList):
           These are the objects that are returned when a row is selected. They could, for instance,
           be row IDs, SQLAlchemy objects, or similar. (We can't just return one of the columns,
           as we don't know if any of them will be a unique column)
+
+        Both of these arguments can be functions which return a list containing the relevant data
         """
         self.values = []
 

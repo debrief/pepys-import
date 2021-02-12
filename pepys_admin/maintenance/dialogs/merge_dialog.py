@@ -8,15 +8,15 @@ from prompt_toolkit.widgets.dialogs import Dialog
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 
 
-class PlatformMergeDialog:
-    def __init__(self, selected_items):
+class MergeDialog:
+    def __init__(self, title, items):
         self.future = Future()
 
-        self.combo = ComboBox(selected_items, enter_handler=self.handle_ok)
+        self.combo = ComboBox(items, enter_handler=self.handle_ok)
 
         self.dialog = Dialog(
-            title="Select target platform",
-            body=HSplit([Label("Select target platform:"), self.combo], padding=1),
+            title=title,
+            body=HSplit([Label(title + ":"), self.combo], padding=1),
             buttons=[],
             width=D(preferred=80),
             modal=True,
