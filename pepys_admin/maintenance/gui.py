@@ -1,4 +1,5 @@
 import time
+import traceback
 from asyncio.tasks import ensure_future
 from functools import partial
 
@@ -41,6 +42,7 @@ from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 from pepys_admin.maintenance.widgets.filter_widget_utils import filter_widget_output_to_query
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 logger.remove()
@@ -66,12 +68,7 @@ class MaintenanceGUI:
         if self.data_store.in_memory_database:
             raise ValueError("Cannot run the GUI on an in-memory SQLite database")
 
-        # self.preview_selected_fields = [
-        #     "name",
-        #     "identifier",
-        #     "nationality_name",
-        #     "platform_type_name",
-        # ]
+        self.data_store.setup_table_type_mapping()
 
         # Start with an empty table
         self.table_data = []
@@ -110,9 +107,14 @@ class MaintenanceGUI:
     def init_ui_components(self):
         """Initialise all of the UI components, controls, containers and widgets"""
         # Dropdown box to select table, plus pane that it is in
+        metadata_tables = ["Platforms", "Sensors", "Datafiles"]
+        reference_tables = [
+            mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.REFERENCE]
+        ]
+        tables_list = metadata_tables + reference_tables
         self.dropdown_table = DropdownBox(
             text="Platforms",
-            entries=["Platforms", "Sensors"],
+            entries=tables_list,
             on_select_handler=self.on_table_select,
         )
 
@@ -718,5 +720,6 @@ if __name__ == "__main__":
         gui = MaintenanceGUI()
         gui.app.run()
     except Exception as e:
+        print(traceback.format_exc())
         print(str(e))
         print("Error running GUI, see error message above")
