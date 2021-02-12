@@ -249,14 +249,6 @@ class MaintenanceGUI:
                 )
 
             count = query_obj.count()
-            if count > 100:
-                self.preview_table_message.text = (
-                    "More than 100 entries selected, please apply more filters"
-                )
-                app.invalidate()
-                return
-            else:
-                self.preview_table_message.text = ""
 
             # Get all the results, while undefering all fields to make sure everything is
             # available once it's been expunged (disconnected) from the database
@@ -272,7 +264,7 @@ class MaintenanceGUI:
             # so we can store them outside of the session without any problems
             self.data_store.session.expunge_all()
 
-            for result in results:
+            for result in results[:100]:
                 # Get the right fields and append them
                 self.table_data.append(
                     [
@@ -281,6 +273,15 @@ class MaintenanceGUI:
                     ]
                 )
                 self.table_objects.append(result)
+
+            if count > 100:
+                self.preview_table_message.text = (
+                    f"More than 100 entries selected, {count - 100} not displayed"
+                )
+                app.invalidate()
+                return
+            else:
+                self.preview_table_message.text = ""
 
         # Refresh the app display
         app.invalidate()
