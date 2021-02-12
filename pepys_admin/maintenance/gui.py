@@ -166,6 +166,7 @@ class MaintenanceGUI:
         )
 
         # Preview container, with two tabs: a preview table and a preview graph
+        self.preview_table_message = Label("")
         self.preview_table = CheckboxTable(
             table_data=self.get_table_data, table_objects=self.get_table_objects
         )
@@ -246,6 +247,16 @@ class MaintenanceGUI:
                 query_obj = self.data_store.session.query(self.current_table_object).filter(
                     filter_query
                 )
+
+            count = query_obj.count()
+            if count > 100:
+                self.preview_table_message.text = (
+                    "More than 100 entries selected, please apply more filters"
+                )
+                app.invalidate()
+                return
+            else:
+                self.preview_table_message.text = ""
 
             # Get all the results, while undefering all fields to make sure everything is
             # available once it's been expunged (disconnected) from the database
@@ -661,6 +672,7 @@ class MaintenanceGUI:
                         style="class:instruction-text",
                     ),
                     self.preview_table,
+                    self.preview_table_message,
                 ],
                 padding=1,
                 width=Dimension(weight=0.4),
