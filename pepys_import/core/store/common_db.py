@@ -132,7 +132,7 @@ class SensorMixin:
 
 
 class PlatformMixin:
-    _default_preview_fields = ["name", "identifier", "nationality_name"]
+    _default_preview_fields = ["name", "identifier", "nationality_name", "platform_type_name"]
 
     @declared_attr
     def platform_type(self):
