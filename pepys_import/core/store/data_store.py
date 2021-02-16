@@ -1,11 +1,12 @@
 import os
 import sys
+import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from sqlalchemy import create_engine, inspect, or_
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker, undefer
@@ -1651,7 +1652,7 @@ class DataStore:
             .all()
         )
 
-    def merge_platforms(self, platform_list, master_id) -> bool:
+    def merge_platforms(self, platform_list, master_id, change_id) -> bool:
         """Merges given platforms. Moves sensors from other platforms to the Target platform.
         If sensor with same name is already present on Target platform, moves measurements
         to that sensor. Also moves entities in Comments, Participants, LogsHoldings, Geometry, Media
@@ -1666,29 +1667,10 @@ class DataStore:
         """
         Platform = self.db_classes.Platform
         Sensor = self.db_classes.Sensor
-        State = self.db_classes.State
-        Contact = self.db_classes.Contact
-
-        if isinstance(master_id, Platform):
-            master_id = master_id.platform_id
-
         self._check_master_id(Platform, master_id)
         master_sensor_names = self.session.query(Sensor.name).filter(Sensor.host == master_id).all()
         master_sensor_names = set([n for (n,) in master_sensor_names])
-
         sensor_list = list()
-        if isinstance(platform_list[0], Platform):  # Extract platform_ids from platform objects
-            platform_list = [p.platform_id for p in platform_list]
-
-        if master_id in platform_list:
-            platform_list.remove(master_id)  # We don't need to change these values
-
-        reason_platform_list = ",".join([str(p) for p in platform_list])
-        change_id = self.add_to_changes(
-            user=USER,
-            modified=datetime.utcnow(),
-            reason=f"Merging Platforms '{reason_platform_list}' to '{master_id}'.",
-        ).change_id
         for p_id in platform_list:
             self.update_platform_ids(p_id, master_id, change_id)
 
@@ -1715,33 +1697,9 @@ class DataStore:
                     .filter(Sensor.host == master_id, Sensor.name == sensor.name)
                     .scalar()
                 )
-                query = self.session.query(State).filter(State.sensor_id == sensor.sensor_id)
-                [
-                    self.add_to_logs(
-                        table=constants.STATE,
-                        row_id=s.sensor_id,
-                        field="sensor_id",
-                        new_value=str(sensor.sensor_id),
-                        change_id=change_id,
-                    )
-                    for s in query.all()
-                ]
-                query.update({"sensor_id": master_sensor_id})  # Update States
-
-                query = self.session.query(Contact).filter(
-                    or_(Contact.sensor_id == sensor.sensor_id, Contact.subject_id == master_id)
+                self.merge_measurements(
+                    constants.SENSOR, [sensor.sensor_id], master_sensor_id, change_id
                 )
-                [
-                    self.add_to_logs(
-                        table=constants.CONTACT,
-                        row_id=s.sensor_id,
-                        field="sensor_id",
-                        new_value=str(sensor.sensor_id),
-                        change_id=change_id,
-                    )
-                    for s in query.all()
-                ]
-                query.update({"sensor_id": master_sensor_id})  # Update Contacts
 
         # Delete merged platforms
         self._delete_merged_objects(Platform, platform_list)
@@ -1803,7 +1761,7 @@ class DataStore:
     def merge_measurements(self, table_name, id_list, master_id, change_id):
         if table_name == constants.SENSOR:
             table_obj = self.db_classes.Sensor
-            field = get_primary_key_for_table(table_obj)
+            field = "sensor_id"
             self._check_master_id(table_obj, master_id)
             table_objects = [self.db_classes.State, self.db_classes.Contact]
         elif table_name == constants.DATAFILE:
@@ -1824,7 +1782,7 @@ class DataStore:
                 f"You should give one of the following tables to merge measurements: "
                 f"{constants.SENSOR}, {constants.DATAFILE}"
             )
-
+        values = ",".join(map(str, id_list))
         for t_obj in table_objects:
             query = self.session.query(t_obj).filter(getattr(t_obj, field).in_(id_list))
             [
@@ -1832,7 +1790,7 @@ class DataStore:
                     table=t_obj.__tablename__,
                     row_id=getattr(s, field),
                     field=field,
-                    new_value=str(getattr(s, field)),
+                    new_value=values,
                     change_id=change_id,
                 )
                 for s in query.all()
@@ -1870,15 +1828,30 @@ class DataStore:
     def merge_generic(self, table_name, id_list, master_id) -> bool:
         reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
         reference_table_names = [obj.__tablename__ for obj in reference_table_objects]
+
+        table = table_name_to_class_name(table_name)
+        table_obj = getattr(self.db_classes, table)
+        if not isinstance(id_list[0], uuid.UUID):
+            id_list = [getattr(i, get_primary_key_for_table(table_obj)) for i in id_list]
+
+        if not isinstance(master_id, uuid.UUID):
+            master_id = getattr(master_id, get_primary_key_for_table(table_obj))
+
         reason_list = ",".join([str(p) for p in id_list])
         change_id = self.add_to_changes(
             user=USER,
             modified=datetime.utcnow(),
             reason=f"Merging {table_name} '{reason_list}' to '{master_id}'.",
         ).change_id
+
+        if master_id in id_list:
+            id_list.remove(master_id)  # We don't need to change these values
+
+        if table_name == constants.PLATFORM:
+            self.merge_platforms(id_list, master_id, change_id)
         if table_name in [constants.SENSOR, constants.DATAFILE]:
             self.merge_measurements(table_name, id_list, master_id, change_id)
-        elif table_name in reference_table_names:
+        elif table_name in reference_table_names + [constants.TAG, constants.TASK]:
             self.merge_objects(table_name, id_list, master_id, change_id)
         else:
             return False

@@ -110,7 +110,9 @@ class MergePlatformsTestCase(TestCase):
             assert len(states_before_merge) == 0
             assert len(contacts_before_merge) == 0
 
-            self.store.merge_platforms([platform_2.platform_id], platform.platform_id)
+            self.store.merge_platforms(
+                [platform_2.platform_id], platform.platform_id, self.change_id
+            )
 
             # There should be still one sensor, but that sensor should have two States and two Contacts
             sensors_after_merge = (
@@ -216,7 +218,9 @@ class MergePlatformsTestCase(TestCase):
             assert len(states_before_merge) == 0
             assert len(contacts_before_merge) == 0
 
-            self.store.merge_platforms([platform_2.platform_id], platform.platform_id)
+            self.store.merge_platforms(
+                [platform_2.platform_id], platform.platform_id, self.change_id
+            )
 
             # There should be two sensors now, and new sensor should have two States and two Contacts
             sensors_after_merge = (
@@ -310,7 +314,9 @@ class MergePlatformsTestCase(TestCase):
             assert len(comments_before_merge) == 1
 
             self.store.merge_platforms(
-                [platform_2.platform_id, platform_3.platform_id], platform.platform_id
+                [platform_2.platform_id, platform_3.platform_id],
+                platform.platform_id,
+                self.change_id,
             )
 
             # There should be two Comments in the target platform
@@ -344,7 +350,7 @@ class MergePlatformsTestCase(TestCase):
     def test_merge_platforms_invalid_master_platform(self):
         uuid = UUID("12345678123456781234567812345678")
         with self.store.session_scope(), pytest.raises(ValueError) as error:
-            self.store.merge_platforms([], uuid)
+            self.store.merge_platforms([], uuid, uuid)
         assert f"No object found with the given master_id: '{uuid}'" in error.value.args[0]
 
     def test_merge_platforms_with_platform_objects_given(self):
@@ -441,7 +447,7 @@ class MergePlatformsTestCase(TestCase):
             assert len(comments_before_merge) == 0
 
             # Give platform objects
-            self.store.merge_platforms([platform_2, platform_3], platform)
+            self.store.merge_generic(constants.PLATFORM, [platform_2, platform_3], platform)
 
             # There should be two sensors now, and new sensor should have two States and two Contacts
             sensors_after_merge = (
@@ -528,7 +534,7 @@ class MergePlatformsTestCase(TestCase):
             )
             assert "TEST" == last_change.reason
             # Merge platform-2 and platform-3 to platform
-            self.store.merge_platforms([platform_2, platform_3], platform)
+            self.store.merge_generic(constants.PLATFORM, [platform_2, platform_3], platform)
 
             last_change = (
                 self.store.session.query(Change).order_by(Change.created_date.desc()).first()
