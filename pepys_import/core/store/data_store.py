@@ -1849,7 +1849,7 @@ class DataStore:
 
         if table_name == constants.PLATFORM:
             self.merge_platforms(id_list, master_id, change_id)
-        if table_name in [constants.SENSOR, constants.DATAFILE]:
+        elif table_name in [constants.SENSOR, constants.DATAFILE]:
             self.merge_measurements(table_name, id_list, master_id, change_id)
         elif table_name in reference_table_names + [constants.TAG, constants.TASK]:
             self.merge_objects(table_name, id_list, master_id, change_id)

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest import TestCase
 from uuid import UUID
 
@@ -1381,6 +1381,73 @@ class MergeGenericTestCase(TestCase):
                 not self.store.session.query(Privacy)
                 .filter(Privacy.privacy_id == self.privacy_id)
                 .scalar()
+            )
+
+    def test_merge_generic_tasks(self):
+        Task = self.store.db_classes.Task
+        Geometry1 = self.store.db_classes.Geometry1
+        GeometrySubType = self.store.db_classes.GeometrySubType
+        Participant = self.store.db_classes.Participant
+        with self.store.session_scope():
+            start = datetime.now()
+            end = start + timedelta(seconds=100)
+            old_task = Task(
+                name="TEST TASK",
+                start=start,
+                end=end,
+                privacy_id=self.privacy_id,
+            )
+            geo_type = self.store.db_classes.GeometryType(name="Test GeoType")
+            self.store.session.add(old_task)
+            self.store.session.add(geo_type)
+            self.store.session.flush()
+            geo_sub_type = GeometrySubType(name="Test GeoSubType", parent=geo_type.geo_type_id)
+            self.store.session.add(geo_sub_type)
+            self.store.session.flush()
+            geometry = Geometry1(
+                subject_platform_id=self.platform_2.platform_id,
+                _geometry=WKTElement("POINT(123456 123456)", srid=4326),
+                geo_type_id=geo_type.geo_type_id,
+                geo_sub_type_id=geo_sub_type.geo_sub_type_id,
+                source_id=self.file.datafile_id,
+                task_id=old_task.task_id,
+            )
+            participant = Participant(
+                platform_id=self.platform_2.platform_id,
+                task_id=old_task.task_id,
+                privacy_id=self.privacy_id,
+            )
+            self.store.session.add(geometry)
+            self.store.session.add(participant)
+            self.store.session.flush()
+
+            new_task = Task(
+                name="NEW TASK",
+                start=start,
+                end=end,
+                privacy_id=self.privacy_id,
+            )
+            self.store.session.add(new_task)
+            self.store.session.commit()
+
+            # Assert that target task doesn't have any dependent objects
+            dependent_objs = list(dependent_objects(new_task))
+            assert len(dependent_objs) == 0
+            source_dependent_objs = list(dependent_objects(old_task))
+            assert len(source_dependent_objs) == 2  # 1 Geometry, 1 Participant
+
+            # Merge old_task to new_task
+            assert self.store.merge_generic(constants.TASK, [old_task.task_id], new_task.task_id)
+
+            # Assert that target task has all dependent objects
+            dependent_objs = list(dependent_objects(new_task))
+            assert len(dependent_objs) == 2
+            source_dependent_objs = list(dependent_objects(old_task))
+            assert len(source_dependent_objs) == 0
+
+            # Assert that merged task deleted
+            assert (
+                not self.store.session.query(Task).filter(Task.task_id == old_task.task_id).scalar()
             )
 
     def test_merge_generic_wrong_table_name(self):
