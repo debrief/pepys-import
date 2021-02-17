@@ -430,7 +430,9 @@ class MaintenanceGUI:
 
         @kb.add("c-f")
         def _(event):
-            self.choose_fields()
+            # Don't do anything if we haven't selected a table yet
+            if self.current_table_object is not None:
+                self.choose_fields()
 
         @kb.add("f1")
         def _(event):
