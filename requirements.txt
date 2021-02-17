@@ -16,3 +16,4 @@ Pygments>=2.6.1
 geopy>=1.22
 halo>=0.0.31
 loguru
+sqlalchemy-utils==0.36.8

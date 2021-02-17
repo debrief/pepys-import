@@ -55,7 +55,7 @@ class HostedBy(BaseSpatiaLite, HostedByMixin):
     hosted_from = Column(DATE, nullable=False)
     host_to = Column(DATE, nullable=False)
     privacy_id = Column(
-        Integer, ForeignKey("Privacies.privacy_id", onupdate="cascade"), nullable=False
+        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"), nullable=False
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
