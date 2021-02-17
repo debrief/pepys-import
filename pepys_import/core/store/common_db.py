@@ -234,7 +234,7 @@ class TaskMixin:
 
     @declared_attr
     def parent(self):
-        return relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Task")
 
     @declared_attr
     def parent_name(self):

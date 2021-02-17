@@ -41,6 +41,7 @@ from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 from pepys_admin.maintenance.widgets.filter_widget_utils import filter_widget_output_to_query
+from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.table_name_utils import table_name_to_class_name
@@ -367,7 +368,9 @@ class MaintenanceGUI:
             # outside of the GUI context too)
             set_percentage(10)
             with self.data_store.session_scope():
-                self.data_store.merge_platforms(platform_list, master_platform)
+                self.data_store.merge_generic(constants.PLATFORM, platform_list, master_platform)
+            time.sleep(1)
+            set_percentage(90)
             time.sleep(1)
             set_percentage(100)
 
