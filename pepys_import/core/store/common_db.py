@@ -1657,6 +1657,16 @@ class ReferenceDefaultFields:
 class GeometrySubTypeMixin:
     _default_preview_fields = ["name", "parent__name"]
 
+    @declared_attr
+    def parent_(self):
+        return relationship(
+            "GeometryType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+        )
+
+    @declared_attr
+    def parent__name(self):
+        return association_proxy("parent_", "name")
+
 
 class NationalityMixin:
     _default_preview_fields = ["name", "priority"]

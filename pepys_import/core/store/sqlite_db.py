@@ -341,15 +341,6 @@ class GeometrySubType(BaseSpatiaLite, GeometrySubTypeMixin):
 
     __table_args__ = (UniqueConstraint("name", "parent", name="uq_GeometrySubTypes_name_parent"),)
 
-    def parent_(self):
-        return relationship(
-            "GeometryType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
-
-    @declared_attr
-    def parent__name(self):
-        return association_proxy("parent_", "name")
-
 
 class User(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.USER
