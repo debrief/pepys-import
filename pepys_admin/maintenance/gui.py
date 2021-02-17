@@ -85,10 +85,10 @@ class MaintenanceGUI:
 
         self.init_ui_components()
 
-        self.current_table_object = self.data_store.db_classes.Platform
+        self.current_table_object = None
 
-        self.column_data = create_column_data(self.data_store, self.data_store.db_classes.Platform)
-        self.get_default_preview_fields()
+        self.column_data = None
+        self.preview_selected_fields = []
 
         self.filter_widget.set_column_data(self.column_data)
         self.run_query()
@@ -112,7 +112,7 @@ class MaintenanceGUI:
         ]
         tables_list = metadata_tables + reference_tables
         self.dropdown_table = DropdownBox(
-            text="Platforms",
+            text="Select a table",
             entries=tables_list,
             on_select_handler=self.on_table_select,
         )
@@ -220,6 +220,9 @@ class MaintenanceGUI:
     def run_query(self):
         """Runs the query as defined by the FilterWidget,
         and displays the result in the preview table."""
+        if self.current_table_object is None:
+            return
+
         app = get_app()
         # As this property is computed each time we access it, get the output and store it
         # to save time
