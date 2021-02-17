@@ -306,8 +306,7 @@ class MaintenanceGUI:
                 partial(self.get_column_data, self.current_table_object),
                 show_cancel=True,
             )
-            res = await self.show_dialog_as_float(dialog)
-            logger.debug(f"{res=}")
+            _ = await self.show_dialog_as_float(dialog)
 
             self.filter_widget.set_column_data(self.column_data)
             self.get_default_preview_fields()
@@ -355,7 +354,10 @@ class MaintenanceGUI:
         display_to_object = {}
         for entry_obj in self.preview_table.current_values:
             display_str = " - ".join(
-                [getattr(entry_obj, field_name) for field_name in entry_obj._default_preview_fields]
+                [
+                    str(getattr(entry_obj, field_name))
+                    for field_name in entry_obj._default_preview_fields
+                ]
             )
             display_to_object[display_str] = entry_obj
 
@@ -604,6 +606,8 @@ class MaintenanceGUI:
 
         if float_ in self.root_container.floats:
             self.root_container.floats.remove(float_)
+
+        app.invalidate()
 
         return result
 
