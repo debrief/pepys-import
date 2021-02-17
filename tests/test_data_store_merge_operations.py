@@ -110,8 +110,8 @@ class MergePlatformsTestCase(TestCase):
             assert len(states_before_merge) == 0
             assert len(contacts_before_merge) == 0
 
-            self.store.merge_platforms(
-                [platform_2.platform_id], platform.platform_id, self.change_id
+            self.store.merge_generic(
+                constants.PLATFORM, [platform_2.platform_id], platform.platform_id
             )
 
             # There should be still one sensor, but that sensor should have two States and two Contacts
@@ -218,8 +218,8 @@ class MergePlatformsTestCase(TestCase):
             assert len(states_before_merge) == 0
             assert len(contacts_before_merge) == 0
 
-            self.store.merge_platforms(
-                [platform_2.platform_id], platform.platform_id, self.change_id
+            self.store.merge_generic(
+                constants.PLATFORM, [platform_2.platform_id], platform.platform_id
             )
 
             # There should be two sensors now, and new sensor should have two States and two Contacts
@@ -313,10 +313,10 @@ class MergePlatformsTestCase(TestCase):
             )
             assert len(comments_before_merge) == 1
 
-            self.store.merge_platforms(
+            self.store.merge_generic(
+                constants.PLATFORM,
                 [platform_2.platform_id, platform_3.platform_id],
                 platform.platform_id,
-                self.change_id,
             )
 
             # There should be two Comments in the target platform
@@ -350,7 +350,7 @@ class MergePlatformsTestCase(TestCase):
     def test_merge_platforms_invalid_master_platform(self):
         uuid = UUID("12345678123456781234567812345678")
         with self.store.session_scope(), pytest.raises(ValueError) as error:
-            self.store.merge_platforms([], uuid, uuid)
+            self.store.merge_generic(constants.PLATFORM, [], uuid)
         assert f"No object found with the given master_id: '{uuid}'" in error.value.args[0]
 
     def test_merge_platforms_with_platform_objects_given(self):

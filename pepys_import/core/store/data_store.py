@@ -1831,7 +1831,7 @@ class DataStore:
 
         table = table_name_to_class_name(table_name)
         table_obj = getattr(self.db_classes, table)
-        if not isinstance(id_list[0], uuid.UUID):
+        if id_list and not isinstance(id_list[0], uuid.UUID):
             id_list = [getattr(i, get_primary_key_for_table(table_obj)) for i in id_list]
 
         if not isinstance(master_id, uuid.UUID):
