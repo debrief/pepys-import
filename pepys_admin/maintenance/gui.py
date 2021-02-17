@@ -1,4 +1,3 @@
-import time
 import traceback
 from asyncio.tasks import ensure_future
 from functools import partial
@@ -362,15 +361,13 @@ class MaintenanceGUI:
 
         def do_merge(object_list, master_obj, set_percentage=None, is_cancelled=None):
             # Does the actual merge, while also setting the percentage complete
-            # TODO: In the future, we can move the set_percentage calls *inside* the merge_platforms
-            # function (as an optional argument, only called if it exists, so it works fine
-            # outside of the GUI context too)
-            set_percentage(10)
             with self.data_store.session_scope():
-                self.data_store.merge_generic(self.dropdown_table.text, object_list, master_obj)
-            time.sleep(1)
-            set_percentage(90)
-            time.sleep(1)
+                self.data_store.merge_generic(
+                    self.dropdown_table.text, object_list, master_obj, set_percentage
+                )
+            # Force the percentage complete to 100 in case rounding errors inside the function
+            # meant it didn't quite make 100%. Setting to >= 100 causes the progress dialog
+            # to close, which is what we want
             set_percentage(100)
 
         async def coroutine():
@@ -389,7 +386,7 @@ class MaintenanceGUI:
                 # arguments of set_percentage and is_cancelled to
                 # allow the function to return percentage process
                 dialog = ProgressDialog(
-                    "Merging {table_name} entries",
+                    f"Merging {table_name} entries",
                     partial(do_merge, self.preview_table.current_values, master_obj),
                     show_cancel=False,
                 )
