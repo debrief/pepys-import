@@ -1,8 +1,10 @@
+import os
 from unittest.mock import Mock
 
 import pytest
 
 from pepys_admin.maintenance.gui import MaintenanceGUI
+from pepys_import.core.store.data_store import DataStore
 
 # These tests only work properly if pytest is run with the -s option
 # that stops pytest trying to change where stdin is pointing to.
@@ -18,11 +20,34 @@ from pepys_admin.maintenance.gui import MaintenanceGUI
 # for most of the tests without -s, and then the GUI tests with -s.
 
 
+def get_test_datastore():
+    if os.path.exists("test_gui.db"):
+        os.remove("test_gui.db")
+
+    ds = DataStore("", "", "", 0, "test_gui.db", db_type="sqlite")
+    ds.initialise()
+    with ds.session_scope():
+        ds.populate_reference()
+        ds.populate_metadata()
+
+    return ds
+
+
+def set_selected_table_to_platform(gui):
+    gui.current_table_object = gui.data_store.db_classes.Platform
+    gui.get_column_data(gui.current_table_object)
+    gui.dropdown_table.text = "Platforms"
+    gui.get_default_preview_fields()
+
+
 def test_generating_column_data(pytestconfig):
     if pytestconfig.getoption("capture") != "no":
         pytest.skip("Skipped because pytest was not run with -s option")
 
-    gui = MaintenanceGUI()
+    ds = get_test_datastore()
+
+    gui = MaintenanceGUI(ds)
+    set_selected_table_to_platform(gui)
 
     correct_col_data = {
         "platform id": {
@@ -377,7 +402,10 @@ def test_running_query_single_condition(pytestconfig):
     if pytestconfig.getoption("capture") != "no":
         pytest.skip("Skipped because pytest was not run with -s option")
 
-    gui = MaintenanceGUI()
+    ds = get_test_datastore()
+
+    gui = MaintenanceGUI(ds)
+    set_selected_table_to_platform(gui)
 
     gui.filter_widget = Mock()
     gui.filter_widget.filters = [["name", "=", "ADRI"]]
@@ -401,7 +429,10 @@ def test_running_query_two_conditions_or(pytestconfig):
     if pytestconfig.getoption("capture") != "no":
         pytest.skip("Skipped because pytest was not run with -s option")
 
-    gui = MaintenanceGUI()
+    ds = get_test_datastore()
+
+    gui = MaintenanceGUI(ds)
+    set_selected_table_to_platform(gui)
 
     gui.filter_widget = Mock()
     gui.filter_widget.filters = [["name", "=", "ADRI"], ["OR"], ["name", "=", "JEAN"]]
@@ -425,7 +456,10 @@ def test_running_query_two_conditions_and(pytestconfig):
     if pytestconfig.getoption("capture") != "no":
         pytest.skip("Skipped because pytest was not run with -s option")
 
-    gui = MaintenanceGUI()
+    ds = get_test_datastore()
+
+    gui = MaintenanceGUI(ds)
+    set_selected_table_to_platform(gui)
 
     gui.filter_widget = Mock()
     gui.filter_widget.filters = [
