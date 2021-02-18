@@ -149,9 +149,9 @@ def create_column_data(data_store, table_object, set_percentage=None):
 
             column_data[get_display_name(ap_name)] = details
 
-        if callable(set_percentage):
-            set_percentage(i * iteration_perc)
-        i += 1
+            if callable(set_percentage):
+                set_percentage(i * iteration_perc)
+            i += 1
 
     if callable(set_percentage):
         # In case rounding errors in the iteration_perc meant that we didn't get to 100
