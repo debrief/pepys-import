@@ -93,7 +93,7 @@ def create_column_data(data_store, table_object, set_percentage=None):
 
             details = {"type": get_type_name(col.type), "system_name": sys_name}
 
-            if details["type"] in ["string", "id"]:
+            if details["type"] == "string":
                 # Get values
 
                 all_records = data_store.session.query(table_object).all()
@@ -114,7 +114,7 @@ def create_column_data(data_store, table_object, set_percentage=None):
 
             details = {"type": get_type_name(ap_type), "system_name": ap_name}
 
-            if details["type"] in ["string", "id"]:
+            if details["type"] == "string":
                 if details["system_name"] == "nationality_name":
                     # Get nationality names as a special case, as we want to sort by
                     # priority

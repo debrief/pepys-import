@@ -14,12 +14,7 @@ def test_column_data_platform():
     col_data = create_column_data(store, store.db_classes.Platform)
 
     correct_col_data = {
-        "platform id": {
-            "type": "id",
-            "system_name": "platform_id"
-            # Values entry deleted here, as we can't compare GUIDs
-            # Values is deleted in the output from the code below too
-        },
+        "platform id": {"type": "id", "system_name": "platform_id"},
         "name": {
             "type": "string",
             "values": ["ADRI", "JEAN", "NARV", "SPAR"],
@@ -336,26 +331,17 @@ def test_column_data_platform():
         "platform type id": {
             "system_name": "platform_type_id",
             "type": "id",
-            # Values deleted as they are IDs
         },
         "privacy id": {
             "system_name": "privacy_id",
             "type": "id",
-            # Values deleted as they are IDs
         },
         "created date": {"system_name": "created_date", "type": "datetime"},
         "nationality id": {
             "system_name": "nationality_id",
             "type": "id",
-            # Values deleted as they are IDs,
         },
     }
-
-    # Remove the uncomparable values entry
-    del col_data["platform id"]["values"]
-    del col_data["platform type id"]["values"]
-    del col_data["privacy id"]["values"]
-    del col_data["nationality id"]["values"]
 
     assert col_data == correct_col_data
 
@@ -399,12 +385,8 @@ def test_column_data_platform_type():
         "platform type id": {
             "system_name": "platform_type_id",
             "type": "id",
-            # Values removed as IDs
         },
     }
-
-    # # Remove the uncomparable values entry
-    del col_data["platform type id"]["values"]
 
     assert col_data == correct_col_data
 
@@ -429,7 +411,6 @@ def test_column_data_state():
         "platform id": {
             "system_name": "platform_id",
             "type": "id",
-            # Values deleted as IDs
         },
         "platform name": {
             "system_name": "platform_name",
@@ -439,7 +420,6 @@ def test_column_data_state():
         "privacy id": {
             "system_name": "privacy_id",
             "type": "id",
-            # Values deleted as IDs
         },
         "privacy name": {
             "system_name": "privacy_name",
@@ -460,7 +440,6 @@ def test_column_data_state():
         "sensor id": {
             "system_name": "sensor_id",
             "type": "id",
-            # Values deleted as IDs
         },
         "sensor name": {
             "system_name": "sensor_name",
@@ -470,24 +449,14 @@ def test_column_data_state():
         "source id": {
             "system_name": "source_id",
             "type": "id",
-            # Values deleted as IDs
         },
         "source reference": {"system_name": "source_reference", "type": "string", "values": []},
         "speed": {"system_name": "speed", "type": "float"},
         "state id": {
             "system_name": "state_id",
             "type": "id",
-            # Values deleted as IDs
         },
         "time": {"system_name": "time", "type": "datetime"},
     }
-
-    # # Remove the uncomparable values entry
-    del col_data["sensor id"]["values"]
-    del col_data["source id"]["values"]
-    del col_data["state id"]["values"]
-    del col_data["privacy id"]["values"]
-    del col_data["platform id"]["values"]
-    del col_data["sensor host"]["values"]
 
     assert col_data == correct_col_data
