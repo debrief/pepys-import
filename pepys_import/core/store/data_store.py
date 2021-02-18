@@ -11,7 +11,7 @@ from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import sessionmaker, undefer
 from sqlalchemy.sql import func
-from sqlalchemy_utils import merge_references
+from sqlalchemy_utils import dependent_objects, merge_references
 
 from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import import __version__
@@ -1856,3 +1856,35 @@ class DataStore:
         else:
             return False
         return True
+
+    def _find_datafiles_for_platform(self, platform) -> list:
+        objects = list(dependent_objects(platform))
+        datafile_ids = list()
+        while objects:
+            obj = objects.pop(0)
+            if isinstance(obj, self.db_classes.Sensor):
+                objects.extend(list(dependent_objects(obj)))
+            elif isinstance(obj, self.db_classes.HostedBy):
+                ...
+            elif isinstance(obj, self.db_classes.Participant):
+                ...
+            else:
+                if obj.source_id not in datafile_ids:
+                    datafile_ids.append(obj.source_id)
+        return datafile_ids
+
+    def split_platform(self, platform_id) -> bool:
+        Platform = self.db_classes.Platform
+        if isinstance(platform_id, Platform):
+            platform_id = platform_id.platform_id
+
+        platform = self._check_master_id(Platform, platform_id)
+        datafile_ids = self._find_datafiles_for_platform(platform)
+        print(datafile_ids)
+        # for i, d_id in enumerate(datafile_ids):
+        #     self.session.expunge(platform)
+        #     make_transient(platform)
+        #     platform.platform_id = None
+        #     platform.identifier = str(i+10)
+        #     self.session.add(platform)
+        #     self.session.commit()
