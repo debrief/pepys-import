@@ -50,12 +50,7 @@ def test_generating_column_data(pytestconfig):
     set_selected_table_to_platform(gui)
 
     correct_col_data = {
-        "platform id": {
-            "type": "id",
-            "system_name": "platform_id"
-            # Values entry deleted here, as we can't compare GUIDs
-            # Values is deleted in the output from the code below too
-        },
+        "platform id": {"type": "id", "system_name": "platform_id"},
         "name": {
             "type": "string",
             "values": ["ADRI", "JEAN", "NARV", "SPAR"],
@@ -372,28 +367,19 @@ def test_generating_column_data(pytestconfig):
         "platform type id": {
             "system_name": "platform_type_id",
             "type": "id",
-            # Values deleted as they are IDs
         },
         "privacy id": {
             "system_name": "privacy_id",
             "type": "id",
-            # Values deleted as they are IDs
         },
         "created date": {"system_name": "created_date", "type": "datetime"},
         "nationality id": {
             "system_name": "nationality_id",
             "type": "id",
-            # Values deleted as they are IDs,
         },
     }
 
     output_col_data = gui.column_data
-
-    # Remove the uncomparable values entry
-    del output_col_data["platform id"]["values"]
-    del output_col_data["platform type id"]["values"]
-    del output_col_data["privacy id"]["values"]
-    del output_col_data["nationality id"]["values"]
 
     assert output_col_data == correct_col_data
 
