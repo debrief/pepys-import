@@ -353,6 +353,15 @@ class MaintenanceGUI:
                 "Error", "You must select entries to merge before running the merge action."
             )
             return
+
+        if self.current_table_object == self.data_store.db_classes.Sensor:
+            host_ids = set([s.host for s in self.preview_table.current_values])
+            if len(host_ids) > 1:
+                self.show_messagebox(
+                    "Error", "You can only merge sensors belonging to the same platform."
+                )
+                return
+
         # Generate a mapping of nice display strings
         # to the actual underlying entry objects
         display_to_object = {}
