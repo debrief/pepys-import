@@ -235,56 +235,61 @@ class MaintenanceGUI:
         # and doesn't have a table object associated with it
         self.table_objects = [None]
 
-        with self.data_store.session_scope():
-            if filters == []:
-                # If there are no filters then just return the table with no filtering
-                query_obj = self.data_store.session.query(self.current_table_object)
-            else:
-                # Otherwise, convert the filter widget output to a SQLAlchemy filter and run it
-                filter_query = filter_widget_output_to_query(
-                    filters, self.dropdown_table.text, self.data_store
-                )
-                if filter_query is None:
+        try:
+            with self.data_store.session_scope():
+                if filters == []:
+                    # If there are no filters then just return the table with no filtering
+                    query_obj = self.data_store.session.query(self.current_table_object)
+                else:
+                    # Otherwise, convert the filter widget output to a SQLAlchemy filter and run it
+                    filter_query = filter_widget_output_to_query(
+                        filters, self.dropdown_table.text, self.data_store
+                    )
+                    if filter_query is None:
+                        app.invalidate()
+                        return
+                    query_obj = self.data_store.session.query(self.current_table_object).filter(
+                        filter_query
+                    )
+
+                count = query_obj.count()
+
+                # Get all the results, while undefering all fields to make sure everything is
+                # available once it's been expunged (disconnected) from the database
+                results = query_obj.options(undefer("*")).all()
+
+                if len(results) == 0:
+                    # If we've got no results then just update the app display
+                    # which will just show the headers that we mentioned above
                     app.invalidate()
                     return
-                query_obj = self.data_store.session.query(self.current_table_object).filter(
-                    filter_query
-                )
 
-            count = query_obj.count()
+                # Disconnect all the objects we've returned in our query from the database
+                # so we can store them outside of the session without any problems
+                self.data_store.session.expunge_all()
 
-            # Get all the results, while undefering all fields to make sure everything is
-            # available once it's been expunged (disconnected) from the database
-            results = query_obj.options(undefer("*")).all()
+                for result in results[:100]:
+                    # Get the right fields and append them
+                    self.table_data.append(
+                        [
+                            str(getattr(result, field_name))
+                            for field_name in self.preview_selected_fields
+                        ]
+                    )
+                    self.table_objects.append(result)
 
-            if len(results) == 0:
-                # If we've got no results then just update the app display
-                # which will just show the headers that we mentioned above
-                app.invalidate()
-                return
-
-            # Disconnect all the objects we've returned in our query from the database
-            # so we can store them outside of the session without any problems
-            self.data_store.session.expunge_all()
-
-            for result in results[:100]:
-                # Get the right fields and append them
-                self.table_data.append(
-                    [
-                        str(getattr(result, field_name))
-                        for field_name in self.preview_selected_fields
-                    ]
-                )
-                self.table_objects.append(result)
-
-            if count > 100:
-                self.preview_table_message.text = (
-                    f"More than 100 entries selected, {count - 100} not displayed"
-                )
-                app.invalidate()
-                return
-            else:
-                self.preview_table_message.text = ""
+                if count > 100:
+                    self.preview_table_message.text = (
+                        f"More than 100 entries selected, {count - 100} not displayed"
+                    )
+                    app.invalidate()
+                    return
+                else:
+                    self.preview_table_message.text = ""
+        except Exception:
+            # Just ignore it if the query doesn't work - as we're updating live
+            # and the user might type something correct soon anyway
+            pass
 
         # Refresh the app display
         app.invalidate()
