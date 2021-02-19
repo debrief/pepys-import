@@ -24,7 +24,7 @@ def test_gui_opens(pytestconfig, test_datastore):
     if pytestconfig.getoption("capture") != "no":
         pytest.skip("Skipped because pytest was not run with -s option")
 
-    result = run_gui(test_datastore)
+    result = run_gui(test_datastore, print_output=True)
 
     assert "Build filters  F3" in result
     assert "Preview List   F6" in result
@@ -34,6 +34,6 @@ def test_gui_help(pytestconfig, test_datastore):
     if pytestconfig.getoption("capture") != "no":
         pytest.skip("Skipped because pytest was not run with -s option")
 
-    result = run_gui(test_datastore, keys=b"\x1bOP")  # Escape sequence for F1
+    result = run_gui(test_datastore, keys=b"\x1bOP", print_output=True)  # Escape sequence for F1
 
     assert "─| Help |─" in result
