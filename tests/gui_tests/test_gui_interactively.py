@@ -20,20 +20,20 @@ pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="Don't run on Wi
 # for most of the tests without -s, and then the GUI tests with -s.
 
 
-def test_gui_opens(pytestconfig):
+def test_gui_opens(pytestconfig, test_datastore):
     if pytestconfig.getoption("capture") != "no":
         pytest.skip("Skipped because pytest was not run with -s option")
 
-    result = run_gui()
+    result = run_gui(test_datastore)
 
     assert "Build filters  F3" in result
     assert "Preview List   F6" in result
 
 
-def test_gui_help(pytestconfig):
+def test_gui_help(pytestconfig, test_datastore):
     if pytestconfig.getoption("capture") != "no":
         pytest.skip("Skipped because pytest was not run with -s option")
 
-    result = run_gui(keys=b"\x1bOP")  # Escape sequence for F1
+    result = run_gui(test_datastore, keys=b"\x1bOP")  # Escape sequence for F1
 
     assert "─| Help |─" in result

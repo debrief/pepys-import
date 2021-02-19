@@ -1,10 +1,8 @@
-import os
 from unittest.mock import Mock
 
 import pytest
 
 from pepys_admin.maintenance.gui import MaintenanceGUI
-from pepys_import.core.store.data_store import DataStore
 
 # These tests only work properly if pytest is run with the -s option
 # that stops pytest trying to change where stdin is pointing to.
@@ -20,19 +18,6 @@ from pepys_import.core.store.data_store import DataStore
 # for most of the tests without -s, and then the GUI tests with -s.
 
 
-def get_test_datastore():
-    if os.path.exists("test_gui.db"):
-        os.remove("test_gui.db")
-
-    ds = DataStore("", "", "", 0, "test_gui.db", db_type="sqlite")
-    ds.initialise()
-    with ds.session_scope():
-        ds.populate_reference()
-        ds.populate_metadata()
-
-    return ds
-
-
 def set_selected_table_to_platform(gui):
     gui.current_table_object = gui.data_store.db_classes.Platform
     gui.get_column_data(gui.current_table_object)
@@ -40,13 +25,11 @@ def set_selected_table_to_platform(gui):
     gui.get_default_preview_fields()
 
 
-def test_generating_column_data(pytestconfig):
+def test_generating_column_data(pytestconfig, test_datastore):
     if pytestconfig.getoption("capture") != "no":
         pytest.skip("Skipped because pytest was not run with -s option")
 
-    ds = get_test_datastore()
-
-    gui = MaintenanceGUI(ds)
+    gui = MaintenanceGUI(test_datastore)
     set_selected_table_to_platform(gui)
 
     correct_col_data = {
@@ -384,13 +367,11 @@ def test_generating_column_data(pytestconfig):
     assert output_col_data == correct_col_data
 
 
-def test_running_query_single_condition(pytestconfig):
+def test_running_query_single_condition(pytestconfig, test_datastore):
     if pytestconfig.getoption("capture") != "no":
         pytest.skip("Skipped because pytest was not run with -s option")
 
-    ds = get_test_datastore()
-
-    gui = MaintenanceGUI(ds)
+    gui = MaintenanceGUI(test_datastore)
     set_selected_table_to_platform(gui)
 
     gui.filter_widget = Mock()
@@ -411,13 +392,11 @@ def test_running_query_single_condition(pytestconfig):
     assert gui.table_objects[1].name == "ADRI"
 
 
-def test_running_query_two_conditions_or(pytestconfig):
+def test_running_query_two_conditions_or(pytestconfig, test_datastore):
     if pytestconfig.getoption("capture") != "no":
         pytest.skip("Skipped because pytest was not run with -s option")
 
-    ds = get_test_datastore()
-
-    gui = MaintenanceGUI(ds)
+    gui = MaintenanceGUI(test_datastore)
     set_selected_table_to_platform(gui)
 
     gui.filter_widget = Mock()
@@ -438,13 +417,11 @@ def test_running_query_two_conditions_or(pytestconfig):
     assert gui.table_objects[2].name == "JEAN"
 
 
-def test_running_query_two_conditions_and(pytestconfig):
+def test_running_query_two_conditions_and(pytestconfig, test_datastore):
     if pytestconfig.getoption("capture") != "no":
         pytest.skip("Skipped because pytest was not run with -s option")
 
-    ds = get_test_datastore()
-
-    gui = MaintenanceGUI(ds)
+    gui = MaintenanceGUI(test_datastore)
     set_selected_table_to_platform(gui)
 
     gui.filter_widget = Mock()

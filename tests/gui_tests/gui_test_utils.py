@@ -12,7 +12,7 @@ if sys.platform != "win32":
 
     from pepys_admin.maintenance.gui import MaintenanceGUI
 
-    def run_gui(keys=None, print_output=False):
+    def run_gui(ds, keys=None, print_output=False):
         """Runs the GUI, sending the given keypresses to the GUI and returning
         a string of the output on the screen.
 
@@ -23,7 +23,7 @@ if sys.platform != "win32":
 
         if pid == 0:
             # child process spawns TUI
-            gui = MaintenanceGUI()
+            gui = MaintenanceGUI(ds)
             gui.app.run()
         else:
             buf = array.array("h", [46, 181, 1000, 1000])
