@@ -69,6 +69,14 @@ class MaintenanceGUI:
 
         self.data_store.setup_table_type_mapping()
 
+        # try:
+        #     # This calls a simple function to check if the Privacies table has entries
+        #     # We don't actually care if it has entries, but it is a good simple query
+        #     # to run which checks if the database has been initialised
+        #     _ = self.data_store.is_empty()
+        # except Exception:
+        #     raise ValueError("Cannot run GUI on a non-initialised database. Please run initialise first.")
+
         # Start with an empty table
         self.table_data = []
         self.table_objects = []
@@ -315,7 +323,12 @@ class MaintenanceGUI:
                 partial(self.get_column_data, self.current_table_object),
                 show_cancel=True,
             )
-            _ = await self.show_dialog_as_float(dialog)
+            result = await self.show_dialog_as_float(dialog)
+
+            if isinstance(result, Exception):
+                await self.show_messagebox_async(
+                    "Error", "Error accessing database - is it initialised?"
+                )
 
             self.filter_widget.set_column_data(self.column_data)
             self.get_default_preview_fields()

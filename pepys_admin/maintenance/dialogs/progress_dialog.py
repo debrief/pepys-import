@@ -56,15 +56,18 @@ class ProgressDialog:
             # This runs the run_callback function in a separate thread
             # but as part of the asyncio loop, so the GUI can still update
             # while a potentially-blocking function runs in the background
-            loop = asyncio.get_running_loop()
-            await loop.run_in_executor(
-                None,
-                partial(
-                    self.run_callback,
-                    set_percentage=self.set_percentage,
-                    is_cancelled=self.is_cancelled,
-                ),
-            )
+            try:
+                loop = asyncio.get_running_loop()
+                await loop.run_in_executor(
+                    None,
+                    partial(
+                        self.run_callback,
+                        set_percentage=self.set_percentage,
+                        is_cancelled=self.is_cancelled,
+                    ),
+                )
+            except Exception as e:
+                self.future.set_result(e)
 
         ensure_future(coroutine())
 
