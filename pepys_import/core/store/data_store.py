@@ -1890,8 +1890,8 @@ class DataStore:
             reason=f"Splitting platform: '{platform_id}'.",
         ).change_id
         datafile_ids = self._find_datafiles_for_platform(platform)
-        objects = list(dependent_objects(platform))
         for key, value in datafile_ids.items():
+            objects = list(dependent_objects(platform))
             new_platform = self.add_to_platforms(
                 name=platform.name,
                 nationality=platform.nationality_name,
@@ -1924,9 +1924,39 @@ class DataStore:
                     ...
                 else:
                     if key == obj.source_id:
-                        self.update_platform_ids(
-                            platform.platform_id, new_platform.platform_id, change_id
-                        )
+                        possible_field_names = [
+                            "platform_id",
+                            "subject_id",
+                            "host_id",
+                            "subject_platform_id",
+                            "sensor_platform_id",
+                        ]
+                        for field in possible_field_names:
+                            try:
+                                table_platform_id = getattr(type(obj), field)
+                                source_field = getattr(type(obj), "source_id")
+                                primary_key_field = get_primary_key_for_table(obj)
+                                query = self.session.query(type(obj)).filter(
+                                    table_platform_id == platform.platform_id, source_field == key
+                                )
+                                [
+                                    self.add_to_logs(
+                                        table=obj.__tablename__,
+                                        row_id=getattr(s, primary_key_field),
+                                        field=field,
+                                        new_value=str(platform.platform_id),
+                                        change_id=change_id,
+                                    )
+                                    for s in query.all()
+                                ]
+                                query.update(
+                                    {field: new_platform.platform_id}, synchronize_session="fetch"
+                                )
+                            except Exception as e:
+                                print(e)
+                                pass
+                        self.session.flush()
+
         # delete the split platform
         self.session.delete(platform)
         self.session.flush()
