@@ -9,6 +9,8 @@ from pepys_admin.maintenance.utils import remove_duplicates_and_nones
 
 
 def get_type_name(type_object):
+    """Get a type name suitable for use with a FilterWidget
+    from the SQLAlchemy type of a column."""
     if isinstance(type_object, pepys_import.utils.sqlalchemy_utils.UUIDType):
         return "id"
     elif isinstance(type_object, sqlalchemy.sql.sqltypes.String):
@@ -61,12 +63,16 @@ def get_assoc_proxy_names_and_objects(table_object):
 
 
 def get_display_name(system_name):
+    """Get a display name from a system name, by replacing
+    any number of _'s with spaces"""
     display_name = re.sub("_+", " ", system_name)
 
     return display_name
 
 
 def str_if_not_none(value):
+    """Return the string value of the argument, unless
+    it is None, in which case return None"""
     if value is None:
         return None
     else:
@@ -74,6 +80,19 @@ def str_if_not_none(value):
 
 
 def create_column_data(data_store, table_object, set_percentage=None):
+    """Create column data suitable for use in a FilterWidget.
+
+    :param data_store: DataStore object to use to communicate with the database
+    :type data_store: DataStore
+    :param table_object: Table object (such as data_store.db_classes.Platform) for the table
+    to create the column data for
+    :type table_object: SQLAlchemy Table object
+    :param set_percentage: Function to call to set percentage complete, used for displaying a progress
+    bar when used in the GUI, defaults to None
+    :type set_percentage: Callable, optional
+    :return: Column data structure
+    :rtype: Dict
+    """
     cols = get_normal_column_objects(table_object)
     assoc_proxy_names, assoc_proxy_objs = get_assoc_proxy_names_and_objects(table_object)
 
