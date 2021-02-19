@@ -19,6 +19,8 @@ def get_type_name(type_object):
         return "datetime"
     elif isinstance(type_object, sqlalchemy.sql.sqltypes.REAL):
         return "float"
+    elif isinstance(type_object, sqlalchemy.sql.sqltypes.Integer):
+        return "int"
     elif isinstance(type_object, geoalchemy2.types.Geometry):
         return "geometry"
 

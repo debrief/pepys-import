@@ -442,6 +442,8 @@ class FilterWidgetEntry:
             return ["LIKE"]
         elif col_type == "float":
             return ["=", "!=", ">", "<", ">=", "<="]
+        elif col_type == "int":
+            return ["=", "!=", ">", "<", ">=", "<="]
         elif col_type == "datetime":
             return ["=", "!=", ">", "<", ">=", "<="]
         else:

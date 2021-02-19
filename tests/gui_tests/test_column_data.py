@@ -460,3 +460,35 @@ def test_column_data_state():
     }
 
     assert col_data == correct_col_data
+
+
+def test_column_data_privacies():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
+
+    col_data = create_column_data(store, store.db_classes.Privacy)
+
+    print(pprint(col_data))
+
+    assert col_data == {
+        "created date": {"system_name": "created_date", "type": "datetime"},
+        "level": {"system_name": "level", "type": "int"},
+        "name": {
+            "system_name": "name",
+            "type": "string",
+            "values": [
+                "Private",
+                "Private UK/IE",
+                "Private UK/IE/FR",
+                "Public",
+                "Public Sensitive",
+                "Very Private",
+                "Very Private UK/IE",
+                "Very Private UK/IE/FR",
+            ],
+        },
+        "privacy id": {"system_name": "privacy_id", "type": "id"},
+    }
