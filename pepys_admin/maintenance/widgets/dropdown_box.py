@@ -233,14 +233,14 @@ class DropdownBox:
         @kb.add("enter")
         @kb.add("down")
         def _(event) -> None:
-            if self.handler is not None:
+            if self.handler is not None and not self.dropdown_opened:
                 self.handler()
 
         @kb.add("<any>")
         def _(event):
             key_str = event.key_sequence[0].key
             if len(key_str) == 1:
-                if self.open_on_any_key and self.handler is not None:
+                if self.open_on_any_key and self.handler is not None and not self.dropdown_opened:
                     self.handler()
                     self.menu.filter_text += key_str
 
