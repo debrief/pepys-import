@@ -27,7 +27,7 @@ def test_column_data_platform():
         },
         "trigraph": {"type": "string", "values": [], "system_name": "trigraph"},
         "quadgraph": {"type": "string", "values": [], "system_name": "quadgraph"},
-        "nationality name": {
+        "nationality": {
             "type": "string",
             "system_name": "nationality_name",
             "values": [
@@ -289,7 +289,7 @@ def test_column_data_platform():
                 "Zimbabwe",
             ],
         },
-        "platform type name": {
+        "platform type": {
             "type": "string",
             "system_name": "platform_type_name",
             "values": [
@@ -314,7 +314,7 @@ def test_column_data_platform():
                 "Tug",
             ],
         },
-        "privacy name": {
+        "privacy": {
             "type": "string",
             "system_name": "privacy_name",
             "values": [
@@ -328,19 +328,7 @@ def test_column_data_platform():
                 "Very Private",
             ],
         },
-        "platform type id": {
-            "system_name": "platform_type_id",
-            "type": "id",
-        },
-        "privacy id": {
-            "system_name": "privacy_id",
-            "type": "id",
-        },
         "created date": {"system_name": "created_date", "type": "datetime"},
-        "nationality id": {
-            "system_name": "nationality_id",
-            "type": "id",
-        },
     }
 
     assert col_data == correct_col_data
@@ -408,20 +396,12 @@ def test_column_data_state():
         "elevation": {"system_name": "elevation", "type": "float"},
         "heading": {"system_name": "heading", "type": "float"},
         "location": {"system_name": "location", "type": "geometry"},
-        "platform id": {
-            "system_name": "platform_id",
-            "type": "id",
-        },
-        "platform name": {
+        "platform": {
             "system_name": "platform_name",
             "type": "string",
             "values": ["ADRI", "JEAN", "NARV", "SPAR"],
         },
-        "privacy id": {
-            "system_name": "privacy_id",
-            "type": "id",
-        },
-        "privacy name": {
+        "privacy": {
             "system_name": "privacy_name",
             "type": "string",
             "values": [
@@ -436,19 +416,10 @@ def test_column_data_state():
             ],
         },
         "remarks": {"system_name": "remarks", "type": "string", "values": []},
-        "sensor host": {"system_name": "sensor_host", "type": "id"},
-        "sensor id": {
-            "system_name": "sensor_id",
-            "type": "id",
-        },
-        "sensor name": {
+        "sensor": {
             "system_name": "sensor_name",
             "type": "string",
             "values": ["GPS", "INS", "Periscope", "Radar"],
-        },
-        "source id": {
-            "system_name": "source_id",
-            "type": "id",
         },
         "source reference": {"system_name": "source_reference", "type": "string", "values": []},
         "speed": {"system_name": "speed", "type": "float"},

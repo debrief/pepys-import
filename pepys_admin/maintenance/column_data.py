@@ -1,11 +1,10 @@
-import re
-
 import geoalchemy2
 import sqlalchemy
 from sqlalchemy import nullslast
 
 import pepys_import
-from pepys_admin.maintenance.utils import remove_duplicates_and_nones
+from pepys_admin.maintenance.utils import get_display_name, remove_duplicates_and_nones
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
 
 def get_type_name(type_object):
@@ -64,14 +63,6 @@ def get_assoc_proxy_names_and_objects(table_object):
     return assoc_proxy_names, assoc_proxy_objs
 
 
-def get_display_name(system_name):
-    """Get a display name from a system name, by replacing
-    any number of _'s with spaces"""
-    display_name = re.sub("_+", " ", system_name)
-
-    return display_name
-
-
 def str_if_not_none(value):
     """Return the string value of the argument, unless
     it is None, in which case return None"""
@@ -114,6 +105,9 @@ def create_column_data(data_store, table_object, set_percentage=None):
 
             details = {"type": get_type_name(col.type), "system_name": sys_name}
 
+            if details["type"] == "id" and col.key != get_primary_key_for_table(table_object):
+                continue
+
             if details["type"] == "string":
                 # Get values
 
@@ -134,6 +128,9 @@ def create_column_data(data_store, table_object, set_percentage=None):
             ap_type = getattr(ap_obj.target_class, ap_obj.value_attr).type
 
             details = {"type": get_type_name(ap_type), "system_name": ap_name}
+
+            if details["type"] == "id":
+                continue
 
             if details["type"] == "string":
                 if details["system_name"] == "nationality_name":

@@ -33,7 +33,7 @@ from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
 from pepys_admin.maintenance.dialogs.selection_dialog import SelectionDialog
 from pepys_admin.maintenance.help import HELP_TEXT, INTRO_HELP_TEXT
-from pepys_admin.maintenance.utils import get_system_name_mappings, get_table_titles
+from pepys_admin.maintenance.utils import get_display_names, get_system_name_mappings
 from pepys_admin.maintenance.widgets.blank_border import BlankBorder
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
@@ -238,7 +238,7 @@ class MaintenanceGUI:
         filters = self.filter_widget.filters
 
         # Convert the selected fields to sensible table titles
-        self.table_data = [get_table_titles(self.preview_selected_fields)]
+        self.table_data = [get_display_names(self.preview_selected_fields, capitalized=True)]
         # The first of the table objects should be None, as that is the header field
         # and doesn't have a table object associated with it
         self.table_objects = [None]
@@ -327,7 +327,8 @@ class MaintenanceGUI:
 
             if isinstance(result, Exception):
                 await self.show_messagebox_async(
-                    "Error", "Error accessing database - is it initialised?"
+                    "Error",
+                    f"Error accessing database - is it initialised?\n\nOriginal error:{str(result)}",
                 )
 
             self.filter_widget.set_column_data(self.column_data)

@@ -1,4 +1,7 @@
-def get_table_titles(fields):
+import re
+
+
+def get_display_names(fields, capitalized=False):
     """
     Takes a list of field names, and returns a list of
     nicely formatted table titles.
@@ -6,17 +9,27 @@ def get_table_titles(fields):
     """
     results = []
     for field in fields:
-        splitted = field.split("_")
-        if len(splitted) > 1 and splitted[-1] == "name":
-            # Remove 'name' from the end of the title, but only if it's
-            # not the only word in the title
-            field_title = " ".join(splitted[:-1])
-        else:
-            field_title = " ".join(splitted)
+        field_title = get_display_name(field, capitalized)
 
-        results.append(field_title.capitalize())
+        results.append(field_title)
 
     return results
+
+
+def get_display_name(field, capitalized=False):
+    field = re.sub("_+", "_", field)
+    splitted = field.split("_")
+    if len(splitted) > 1 and splitted[-1] == "name":
+        # Remove 'name' from the end of the title, but only if it's
+        # not the only word in the title
+        field_title = " ".join(splitted[:-1])
+    else:
+        field_title = " ".join(splitted)
+
+    if capitalized:
+        field_title = field_title.capitalize()
+
+    return field_title
 
 
 def get_system_name_mappings(column_data):

@@ -1,14 +1,14 @@
 from pepys_admin.maintenance.utils import (
+    get_display_names,
     get_system_name_mappings,
-    get_table_titles,
     remove_duplicates_and_nones,
 )
 
 
-def test_get_table_titles():
+def test_get_display_names():
     fields = ["nationality_name", "name", "platform_type_name", "other"]
 
-    titles = get_table_titles(fields)
+    titles = get_display_names(fields, capitalized=True)
 
     assert titles == ["Nationality", "Name", "Platform type", "Other"]
 

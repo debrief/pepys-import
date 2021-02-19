@@ -46,7 +46,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
         },
         "trigraph": {"type": "string", "values": [], "system_name": "trigraph"},
         "quadgraph": {"type": "string", "values": [], "system_name": "quadgraph"},
-        "nationality name": {
+        "nationality": {
             "type": "string",
             "system_name": "nationality_name",
             "values": [
@@ -308,7 +308,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
                 "Zimbabwe",
             ],
         },
-        "platform type name": {
+        "platform type": {
             "type": "string",
             "system_name": "platform_type_name",
             "values": [
@@ -333,7 +333,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
                 "Tug",
             ],
         },
-        "privacy name": {
+        "privacy": {
             "type": "string",
             "system_name": "privacy_name",
             "values": [
@@ -347,19 +347,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
                 "Very Private",
             ],
         },
-        "platform type id": {
-            "system_name": "platform_type_id",
-            "type": "id",
-        },
-        "privacy id": {
-            "system_name": "privacy_id",
-            "type": "id",
-        },
         "created date": {"system_name": "created_date", "type": "datetime"},
-        "nationality id": {
-            "system_name": "nationality_id",
-            "type": "id",
-        },
     }
 
     output_col_data = gui.column_data
