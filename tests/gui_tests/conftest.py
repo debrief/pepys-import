@@ -31,7 +31,9 @@ def test_datastore():
     if os.path.exists(TEST_DB_NAME):
         os.remove(TEST_DB_NAME)
 
-    ds = DataStore("", "", "", 0, TEST_DB_NAME, db_type="sqlite")
+    ds = DataStore(
+        "", "", "", 0, TEST_DB_NAME, db_type="sqlite", welcome_text="", show_status=False
+    )
     ds.initialise()
     with ds.session_scope():
         ds.populate_reference()
