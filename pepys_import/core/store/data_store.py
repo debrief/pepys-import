@@ -1857,34 +1857,76 @@ class DataStore:
             return False
         return True
 
-    def _find_datafiles_for_platform(self, platform) -> list:
+    def _find_datafiles_for_platform(self, platform) -> dict:
         objects = list(dependent_objects(platform))
-        datafile_ids = list()
+        datafile_ids = dict()
         while objects:
             obj = objects.pop(0)
             if isinstance(obj, self.db_classes.Sensor):
-                objects.extend(list(dependent_objects(obj)))
+                objects.extend(list(dependent_objects(obj).limit(1)))
             elif isinstance(obj, self.db_classes.HostedBy):
                 ...
             elif isinstance(obj, self.db_classes.Participant):
                 ...
             else:
                 if obj.source_id not in datafile_ids:
-                    datafile_ids.append(obj.source_id)
+                    datafile_ids[obj.source_id] = obj.created_date
+
+                if obj.created_date < datafile_ids[obj.source_id]:
+                    datafile_ids[obj.source_id] = obj.created_date
+
         return datafile_ids
 
     def split_platform(self, platform_id) -> bool:
         Platform = self.db_classes.Platform
+        Sensor = self.db_classes.Sensor
         if isinstance(platform_id, Platform):
             platform_id = platform_id.platform_id
 
         platform = self._check_master_id(Platform, platform_id)
+        change_id = self.add_to_changes(
+            user=USER,
+            modified=datetime.utcnow(),
+            reason=f"Splitting platform: '{platform_id}'.",
+        ).change_id
         datafile_ids = self._find_datafiles_for_platform(platform)
-        print(datafile_ids)
-        # for i, d_id in enumerate(datafile_ids):
-        #     self.session.expunge(platform)
-        #     make_transient(platform)
-        #     platform.platform_id = None
-        #     platform.identifier = str(i+10)
-        #     self.session.add(platform)
-        #     self.session.commit()
+        objects = list(dependent_objects(platform))
+        for key, value in datafile_ids.items():
+            new_platform = self.add_to_platforms(
+                name=platform.name,
+                nationality=platform.nationality_name,
+                platform_type=platform.platform_type_name,
+                privacy=platform.privacy_name,
+                trigraph=platform.trigraph,
+                quadgraph=platform.quadgraph,
+                identifier=f"{value:%Y%m%d-%H%M%S%f}",
+                change_id=change_id,
+            )
+            for obj in objects:
+                if isinstance(obj, Sensor):
+                    sub_objs = list(dependent_objects(obj).limit(1))
+                    if sub_objs and key == sub_objs[0].source_id:
+                        query = self.session.query(Sensor).filter(Sensor.sensor_id == obj.sensor_id)
+                        [
+                            self.add_to_logs(
+                                table=constants.SENSOR,
+                                row_id=s.sensor_id,
+                                field="host",
+                                new_value=str(s.host),
+                                change_id=change_id,
+                            )
+                            for s in query.all()
+                        ]
+                        query.update({"host": new_platform.platform_id})
+                elif isinstance(obj, self.db_classes.HostedBy):
+                    ...
+                elif isinstance(obj, self.db_classes.Participant):
+                    ...
+                else:
+                    if key == obj.source_id:
+                        self.update_platform_ids(
+                            platform.platform_id, new_platform.platform_id, change_id
+                        )
+        # delete the split platform
+        self.session.delete(platform)
+        self.session.flush()
