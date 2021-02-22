@@ -9,7 +9,7 @@ from importlib import import_module
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
-from sqlalchemy.orm import sessionmaker, undefer
+from sqlalchemy.orm import scoped_session, sessionmaker, undefer
 from sqlalchemy.sql import func
 from sqlalchemy_utils import dependent_objects, merge_references
 
@@ -77,6 +77,11 @@ class DataStore:
         # setup meta_class data
         self.meta_classes = {}
         self.setup_table_type_mapping()
+
+        if db_name == ":memory:":
+            self.in_memory_database = True
+        else:
+            self.in_memory_database = False
 
         connection_string = "{}://{}:{}@{}:{}/{}".format(
             driver, db_username, db_password, db_host, db_port, db_name
@@ -150,6 +155,9 @@ class DataStore:
         self._search_geometry_type_cache = dict()
         self._search_geometry_subtype_cache = dict()
 
+        db_session = sessionmaker(bind=self.engine)
+        self.scoped_session_creator = scoped_session(db_session)
+
         # Branding Text
         if self.welcome_text:
             show_welcome_banner(welcome_text)
@@ -187,13 +195,13 @@ class DataStore:
                 )
                 sys.exit(1)
         create_alembic_version_table(self.engine, self.db_type)
-        print("Database tables were created by DataStore's initialisation.")
+        if self.show_status:
+            print("Database tables were created by DataStore's initialisation.")
 
     @contextmanager
     def session_scope(self):
         """Provide a transactional scope around a series of operations."""
-        db_session = sessionmaker(bind=self.engine)
-        self.session = db_session()
+        self.session = self.scoped_session_creator()
         try:
             yield self
             self.session.commit()
@@ -1652,7 +1660,7 @@ class DataStore:
             .all()
         )
 
-    def merge_platforms(self, platform_list, master_id, change_id) -> bool:
+    def merge_platforms(self, platform_list, master_id, change_id, set_percentage=None) -> bool:
         """Merges given platforms. Moves sensors from other platforms to the Target platform.
         If sensor with same name is already present on Target platform, moves measurements
         to that sensor. Also moves entities in Comments, Participants, LogsHoldings, Geometry, Media
@@ -1671,11 +1679,21 @@ class DataStore:
         master_sensor_names = self.session.query(Sensor.name).filter(Sensor.host == master_id).all()
         master_sensor_names = set([n for (n,) in master_sensor_names])
         sensor_list = list()
-        for p_id in platform_list:
+
+        # Make this bit of the processing take up 40% of the progress bar
+        percentage_per_iteration = 40.0 / len(platform_list)
+
+        for i, p_id in enumerate(platform_list):
             self.update_platform_ids(p_id, master_id, change_id)
 
             sensors = self.session.query(Sensor).filter(Sensor.host == p_id).all()
             sensor_list.extend(sensors)
+            if callable(set_percentage):
+                set_percentage(10 + (i * percentage_per_iteration))
+
+        # Make this bit of the processing take up 50% of the progress bar
+        percentage_per_iteration = 50.0 / len(platform_list)
+
         for sensor in sensor_list:
             if sensor.name not in master_sensor_names:
                 query = self.session.query(Sensor).filter(Sensor.sensor_id == sensor.sensor_id)
@@ -1700,6 +1718,8 @@ class DataStore:
                 self.merge_measurements(
                     constants.SENSOR, [sensor.sensor_id], master_sensor_id, change_id
                 )
+            if callable(set_percentage):
+                set_percentage(50 + (i * percentage_per_iteration))
 
         # Delete merged platforms
         self._delete_merged_objects(Platform, platform_list)
@@ -1758,7 +1778,7 @@ class DataStore:
         ).delete(synchronize_session="fetch")
         self.session.flush()
 
-    def merge_measurements(self, table_name, id_list, master_id, change_id):
+    def merge_measurements(self, table_name, id_list, master_id, change_id, set_percentage=None):
         if table_name == constants.SENSOR:
             table_obj = self.db_classes.Sensor
             field = "sensor_id"
@@ -1783,7 +1803,11 @@ class DataStore:
                 f"{constants.SENSOR}, {constants.DATAFILE}"
             )
         values = ",".join(map(str, id_list))
-        for t_obj in table_objects:
+
+        # We've already used 10% of the progress bar in merge_generic
+        percentage_per_iteration = 90.0 / len(table_objects)
+
+        for i, t_obj in enumerate(table_objects):
             query = self.session.query(t_obj).filter(getattr(t_obj, field).in_(id_list))
             [
                 self.add_to_logs(
@@ -1797,16 +1821,23 @@ class DataStore:
             ]
             query.update({field: master_id}, synchronize_session="fetch")
 
+            if callable(set_percentage):
+                set_percentage(10 + (i * percentage_per_iteration))
+
         # Delete merged objects
         self._delete_merged_objects(table_obj, id_list)
 
-    def merge_objects(self, table_name, id_list, master_id, change_id):
+    def merge_objects(self, table_name, id_list, master_id, change_id, set_percentage=None):
         # Table names are plural in the database, therefore make it singular
         table = table_name_to_class_name(table_name)
         table_obj = getattr(self.db_classes, table)
         to_obj = self._check_master_id(table_obj, master_id)
 
-        for obj_id in id_list:
+        # We've already used 10% of the progress bar in merge_generic,
+        # and want to keep 10% for deleting objects
+        percentage_per_iteration = 80.0 / len(id_list)
+
+        for i, obj_id in enumerate(id_list):
             primary_key_field = get_primary_key_for_table(table_obj)
             from_obj = (
                 self.session.query(table_obj)
@@ -1822,10 +1853,13 @@ class DataStore:
                 change_id=change_id,
             )
             self.session.flush()
+
+            if callable(set_percentage):
+                set_percentage(10 + (i * percentage_per_iteration))
         # Delete merged objects
         self._delete_merged_objects(table_obj, id_list)
 
-    def merge_generic(self, table_name, id_list, master_id) -> bool:
+    def merge_generic(self, table_name, id_list, master_id, set_percentage=None) -> bool:
         reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
         reference_table_names = [obj.__tablename__ for obj in reference_table_objects]
 
@@ -1844,17 +1878,23 @@ class DataStore:
             reason=f"Merging {table_name} '{reason_list}' to '{master_id}'.",
         ).change_id
 
+        if callable(set_percentage):
+            set_percentage(10)
+
         if master_id in id_list:
             id_list.remove(master_id)  # We don't need to change these values
 
         if table_name == constants.PLATFORM:
-            self.merge_platforms(id_list, master_id, change_id)
+            self.merge_platforms(id_list, master_id, change_id, set_percentage)
         elif table_name in [constants.SENSOR, constants.DATAFILE]:
-            self.merge_measurements(table_name, id_list, master_id, change_id)
+            self.merge_measurements(table_name, id_list, master_id, change_id, set_percentage)
         elif table_name in reference_table_names + [constants.TAG, constants.TASK]:
-            self.merge_objects(table_name, id_list, master_id, change_id)
+            self.merge_objects(table_name, id_list, master_id, change_id, set_percentage)
         else:
             return False
+
+        if callable(set_percentage):
+            set_percentage(100)
         return True
 
     def _find_datafiles_for_platform(self, platform) -> dict:

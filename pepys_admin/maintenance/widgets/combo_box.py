@@ -169,7 +169,8 @@ class ComboBox:
         merged_text = merge_formatted_text(result)()
 
         # Go through the resulting tuples and add the mouse click handler to each of them
-        for i in range(len(merged_text)):
+        start_index = 1 if self.filter else 0
+        for i in range(start_index, len(merged_text)):
             merged_text[i] = (merged_text[i][0], merged_text[i][1], self.handle_mouse_click)
 
         return merged_text

@@ -23,6 +23,8 @@ LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
 
 
 class HostedByMixin:
+    _default_preview_fields = ["subject_name", "host_name", "hosted_from", "hosted_to"]
+
     @declared_attr
     def subject(self):
         return relationship(
@@ -57,6 +59,8 @@ class HostedByMixin:
 
 
 class SensorMixin:
+    _default_preview_fields = ["name", "host__name", "sensor_type_name"]
+
     @declared_attr
     def sensor_type(self):
         return relationship(
@@ -128,6 +132,8 @@ class SensorMixin:
 
 
 class PlatformMixin:
+    _default_preview_fields = ["name", "identifier", "nationality_name", "platform_type_name"]
+
     @declared_attr
     def platform_type(self):
         return relationship(
@@ -224,6 +230,8 @@ class PlatformMixin:
 
 
 class TaskMixin:
+    _default_preview_fields = ["name", "start", "end"]
+
     @declared_attr
     def parent(self):
         return relationship("Task")
@@ -242,6 +250,8 @@ class TaskMixin:
 
 
 class ParticipantMixin:
+    _default_preview_fields = ["platform_name", "start", "end"]
+
     @declared_attr
     def task(self):
         return relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
@@ -260,6 +270,8 @@ class ParticipantMixin:
 
 
 class DatafileMixin:
+    _default_preview_fields = ["reference", "datafile_type_name"]
+
     @declared_attr
     def privacy(self):
         return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
@@ -593,6 +605,8 @@ class LogMixin:
 
 
 class TaggedItemMixin:
+    _default_preview_fields = ["tag_name"]
+
     @declared_attr
     def tag(self):
         return relationship("Tag", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
@@ -1634,3 +1648,25 @@ class ReferenceRepr:
 class SynonymMixin:
     def __repr__(self):
         return f"Synonym(id={shorten_uuid(self.synonym_id)}, table={self.table}, entity={shorten_uuid(self.entity)}, synonym={self.synonym})"
+
+
+class ReferenceDefaultFields:
+    _default_preview_fields = ["name"]
+
+
+class GeometrySubTypeMixin:
+    _default_preview_fields = ["name", "parent__name"]
+
+    @declared_attr
+    def parent_(self):
+        return relationship(
+            "GeometryType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
+        )
+
+    @declared_attr
+    def parent__name(self):
+        return association_proxy("parent_", "name")
+
+
+class NationalityMixin:
+    _default_preview_fields = ["name", "priority"]

@@ -21,11 +21,15 @@ class CheckboxTable(CheckboxList):
           These are the objects that are returned when a row is selected. They could, for instance,
           be row IDs, SQLAlchemy objects, or similar. (We can't just return one of the columns,
           as we don't know if any of them will be a unique column)
+
+        Both of these arguments can be functions which return a list containing the relevant data
         """
         self.values = []
 
         self.table_data = table_data
         self.table_objects = table_objects
+
+        self.old_table_objects = None
 
         self.create_values_from_parameters()
 
@@ -43,6 +47,12 @@ class CheckboxTable(CheckboxList):
             table_objects = self.table_objects()
         else:
             table_objects = self.table_objects
+
+        if table_objects != self.old_table_objects:
+            # We've got a change to the data
+            # So clear the list of current values
+            self.current_values = []
+            self.old_table_objects = table_objects
 
         if len(table_data) == 0 or len(table_objects) == 0:
             # The underlying CheckboxList implementation

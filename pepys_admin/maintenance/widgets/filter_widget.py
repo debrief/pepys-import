@@ -326,6 +326,9 @@ class FilterWidgetEntry:
         self.dropdown_operator.text = " = "
         self.vw_dropdown.text = self.filter_widget.value_prompt
 
+        if self.filter_widget.column_data[value]["type"] == "id":
+            self.dropdown_operator.text = "LIKE"
+
         self.filter_widget.trigger_on_change()
 
     def get_widgets(self):
@@ -436,8 +439,10 @@ class FilterWidgetEntry:
         if col_type == "string":
             return ["=", "!=", "LIKE"]
         elif col_type == "id":
-            return ["=", "!=", "LIKE"]
+            return ["LIKE"]
         elif col_type == "float":
+            return ["=", "!=", ">", "<", ">=", "<="]
+        elif col_type == "int":
             return ["=", "!=", ">", "<", ">=", "<="]
         elif col_type == "datetime":
             return ["=", "!=", ">", "<", ">=", "<="]
