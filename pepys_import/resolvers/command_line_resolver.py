@@ -120,7 +120,7 @@ class CommandLineResolver(DataResolver):
             sys.exit(1)
 
     def resolve_platform(
-        self, data_store, platform_name, platform_type, nationality, privacy, change_id
+        self, data_store, platform_name, identifier, platform_type, nationality, privacy, change_id
     ):
         print_new_section_title("Resolve Platform")
         platform_details = []
@@ -164,12 +164,19 @@ class CommandLineResolver(DataResolver):
         elif choice in ["?", "HELP"]:
             print_help_text(data_store, constants.RESOLVE_PLATFORM)
             return self.resolve_platform(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
+                data_store,
+                platform_name,
+                identifier,
+                platform_type,
+                nationality,
+                privacy,
+                change_id,
             )
         elif choice == str(1):
             return self.add_to_platforms(
                 data_store,
                 platform_name,
+                identifier,
                 platform_type,
                 nationality,
                 privacy,
@@ -179,6 +186,7 @@ class CommandLineResolver(DataResolver):
             return self.fuzzy_search_platform(
                 data_store,
                 platform_name,
+                identifier,
                 platform_type,
                 nationality,
                 privacy,
@@ -438,7 +446,7 @@ class CommandLineResolver(DataResolver):
 
     # Helper methods
     def fuzzy_search_platform(
-        self, data_store, platform_name, platform_type, nationality, privacy, change_id
+        self, data_store, platform_name, identifier, platform_type, nationality, privacy, change_id
     ):
         """
         This method parses all platforms in the DB, and uses fuzzy search when
@@ -496,6 +504,7 @@ class CommandLineResolver(DataResolver):
             return self.fuzzy_search_platform(
                 data_store,
                 platform_name,
+                identifier,
                 platform_type,
                 nationality,
                 privacy,
@@ -544,6 +553,7 @@ class CommandLineResolver(DataResolver):
                     return self.fuzzy_search_platform(
                         data_store,
                         platform_name,
+                        identifier,
                         platform_type,
                         nationality,
                         privacy,
@@ -555,6 +565,7 @@ class CommandLineResolver(DataResolver):
             return self.resolve_platform(
                 data_store,
                 platform_name,
+                identifier,
                 nationality,
                 platform_type,
                 privacy,
@@ -567,7 +578,7 @@ class CommandLineResolver(DataResolver):
                 )
             )
             return self.add_to_platforms(
-                data_store, choice, platform_type, nationality, privacy, change_id
+                data_store, choice, identifier, platform_type, nationality, privacy, change_id
             )
 
     def fuzzy_search_sensor(
@@ -631,7 +642,7 @@ class CommandLineResolver(DataResolver):
             )
 
     def add_to_platforms(
-        self, data_store, platform_name, platform_type, nationality, privacy, change_id
+        self, data_store, platform_name, identifier, platform_type, nationality, privacy, change_id
     ):
         """
         This method resolves platform type, nationality and privacy. It asks user
@@ -667,12 +678,21 @@ class CommandLineResolver(DataResolver):
                 )
             )
             return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
+                data_store,
+                platform_name,
+                identifier,
+                platform_type,
+                nationality,
+                privacy,
+                change_id,
             )
 
         while True:
+            if identifier is None:
+                identifier = ""
             identifier = prompt(
-                format_command("Please enter identifier (pennant or tail number): ")
+                format_command("Please enter identifier (pennant or tail number): "),
+                default=identifier,
             ).strip()
             if len(identifier) > 10:
                 custom_print_formatted_text(
@@ -681,7 +701,13 @@ class CommandLineResolver(DataResolver):
                     )
                 )
                 return self.add_to_platforms(
-                    data_store, platform_name, platform_type, nationality, privacy, change_id
+                    data_store,
+                    platform_name,
+                    identifier,
+                    platform_type,
+                    nationality,
+                    privacy,
+                    change_id,
                 )
             elif identifier in ["?", "HELP"]:
                 print_help_text(data_store, constants.PLATFORM_IDENTIFIER)
@@ -699,7 +725,13 @@ class CommandLineResolver(DataResolver):
                     )
                 )
                 return self.add_to_platforms(
-                    data_store, platform_name, platform_type, nationality, privacy, change_id
+                    data_store,
+                    platform_name,
+                    identifier,
+                    platform_type,
+                    nationality,
+                    privacy,
+                    change_id,
                 )
             elif trigraph in ["?", "HELP"]:
                 print_help_text(data_store, constants.PLATFORM_TRIGRAPH)
@@ -716,7 +748,13 @@ class CommandLineResolver(DataResolver):
                     )
                 )
                 return self.add_to_platforms(
-                    data_store, platform_name, platform_type, nationality, privacy, change_id
+                    data_store,
+                    platform_name,
+                    identifier,
+                    platform_type,
+                    nationality,
+                    privacy,
+                    change_id,
                 )
             elif quadgraph in ["?", "HELP"]:
                 print_help_text(data_store, constants.PLATFORM_QUADGRAPH)
@@ -730,7 +768,13 @@ class CommandLineResolver(DataResolver):
                 )
             )
             return self.add_to_platforms(
-                data_store, platform_name, platform_type, nationality, privacy, change_id
+                data_store,
+                platform_name,
+                identifier,
+                platform_type,
+                nationality,
+                privacy,
+                change_id,
             )
 
         # Choose Nationality
@@ -752,7 +796,9 @@ class CommandLineResolver(DataResolver):
                     "Nationality couldn't resolved. Returning to the previous menu!"
                 )
             )
-            return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
+            return self.resolve_platform(
+                data_store, platform_name, None, None, None, None, change_id
+            )
 
         # Choose Platform Type
         if platform_type:
@@ -774,7 +820,9 @@ class CommandLineResolver(DataResolver):
                     "Platform Type couldn't resolved. Returning to the previous menu!"
                 )
             )
-            return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
+            return self.resolve_platform(
+                data_store, platform_name, None, None, None, None, change_id
+            )
 
         # Choose Privacy
         if privacy:
@@ -803,7 +851,9 @@ class CommandLineResolver(DataResolver):
                     "Classification couldn't resolved. Returning to the previous menu!"
                 )
             )
-            return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
+            return self.resolve_platform(
+                data_store, platform_name, None, None, None, None, change_id
+            )
 
         def is_valid_choice(option):  # pragma: no cover
             return option in [str(1), str(2), str(3), ".", "?", "HELP"]
@@ -840,12 +890,18 @@ class CommandLineResolver(DataResolver):
                 chosen_privacy,
             )
         elif choice == str(2):
-            return self.add_to_platforms(data_store, platform_name, None, None, None, change_id)
+            return self.add_to_platforms(
+                data_store, platform_name, None, None, None, None, change_id
+            )
         elif choice == str(3):
-            return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
+            return self.resolve_platform(
+                data_store, platform_name, None, None, None, None, change_id
+            )
         elif choice == ".":
             print("-" * 60, "\nReturning to the previous menu\n")
-            return self.resolve_platform(data_store, platform_name, None, None, None, change_id)
+            return self.resolve_platform(
+                data_store, platform_name, None, None, None, None, change_id
+            )
 
     def add_to_sensors(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
         """
