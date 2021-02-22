@@ -124,6 +124,7 @@ class SplitPlatformTestCase(TestCase):
 
     def test_split_platform_with_direct_foreign_key_relationships(self):
         Platform = self.store.db_classes.Platform
+        Comment = self.store.db_classes.Comment
         LogsHolding = self.store.db_classes.LogsHolding
         Geometry1 = self.store.db_classes.Geometry1
         Media = self.store.db_classes.Media
@@ -135,26 +136,24 @@ class SplitPlatformTestCase(TestCase):
                 privacy=self.privacy,
                 change_id=self.change_id,
             )
-            comment = self.file.create_comment(
-                self.store,
-                platform,
-                self.current_time,
-                "Comment",
-                self.comment_type,
-                parser_name=self.parser_name,
+            comment = Comment(
+                platform_id=platform.platform_id,
+                time=self.current_time,
+                content="Comment",
+                comment_type_id=self.comment_type.comment_type_id,
+                source_id=self.file.datafile_id,
+                platform=platform,
             )
-            comment_2 = self.file_2.create_comment(
-                self.store,
-                platform,
-                self.current_time + timedelta(seconds=10),
-                "Comment from datafile-2",
-                self.comment_type,
-                parser_name=self.parser_name,
+            comment_2 = Comment(
+                platform_id=platform.platform_id,
+                time=self.current_time + timedelta(seconds=10),
+                content="Comment from datafile-2",
+                comment_type_id=self.comment_type.comment_type_id,
+                source_id=self.file_2.datafile_id,
+                platform=platform,
             )
-            if self.file.validate():
-                self.file.commit(self.store, self.change_id)
-            if self.file_2.validate():
-                self.file_2.commit(self.store, self.change_id)
+            self.store.session.add_all([comment, comment_2])
+            self.store.session.flush()
             # task = self.store.db_classes.Task(
             #     name="TEST Task",
             #     start=self.current_time,
@@ -255,6 +254,14 @@ class SplitPlatformTestCase(TestCase):
             assert len(platforms_before_merge) == 1
             # 2 Geometry, 2 LogsHoldings, 2 Media, 2 Comment
             assert len(dependent_objects_before_merge) == 8
+            assert comment.platform_id == platform.platform_id
+            assert logs_holding.platform_id == platform.platform_id
+            assert media.platform_id == platform.platform_id
+            assert geometry.subject_platform_id == platform.platform_id
+            assert comment_2.platform_id == platform.platform_id
+            assert logs_holding_2.platform_id == platform.platform_id
+            assert media_2.subject_id == platform.platform_id
+            assert geometry_2.sensor_platform_id == platform.platform_id
 
             self.store.split_platform(platform.platform_id)
 
@@ -268,16 +275,16 @@ class SplitPlatformTestCase(TestCase):
                 # 1 Geometry, 1 LogsHoldings, 1 Media, 1 Comment
                 assert len(dependent_objects_after_merge) == 4
 
-                if comment.platform_id == p.platform_id:  # first datafile
-                    comment.platform_id = p.platform_id
-                    logs_holding.platform_id = p.platform_id
-                    media.platform_id = p.platform_id
-                    geometry.subject_platform_id = p.platform_id
+                if logs_holding.platform_id == p.platform_id:  # first datafile
+                    assert comment.platform_id == p.platform_id
+                    assert logs_holding.platform_id == p.platform_id
+                    assert media.platform_id == p.platform_id
+                    assert geometry.subject_platform_id == p.platform_id
                 else:
-                    comment_2.platform_id = p.platform_id
-                    logs_holding_2.platform_id = p.platform_id
-                    media_2.subject_id = p.platform_id
-                    geometry_2.sensor_platform_id = p.platform_id
+                    assert comment_2.platform_id == p.platform_id
+                    assert logs_holding_2.platform_id == p.platform_id
+                    assert media_2.subject_id == p.platform_id
+                    assert geometry_2.sensor_platform_id == p.platform_id
 
             # Assert that split platform deleted
             assert (
