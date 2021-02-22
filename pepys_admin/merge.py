@@ -97,8 +97,9 @@ class MergeDatabases:
 
                         if n_name_results == 0:
                             ids_added.append({"id": guid, "name": slave_entry.name})
+                            self.slave_store.session.expunge(slave_entry)
                             make_transient(slave_entry)
-                            self.master_store.session.add(slave_entry)
+                            self.master_store.session.merge(slave_entry)
                         elif n_name_results == 1:
                             ids_modified.append(
                                 {

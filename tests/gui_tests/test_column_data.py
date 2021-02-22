@@ -1,36 +1,17 @@
-from unittest.mock import Mock
+from pprint import pprint
 
-import pytest
-
-from pepys_admin.maintenance.gui import MaintenanceGUI
-
-# These tests only work properly if pytest is run with the -s option
-# that stops pytest trying to change where stdin is pointing to.
-# This is because the constructor of the prompt_toolkit Application class
-# tries to sort out input/output terminals, even if we don't call
-# the run method.
-# I tried various ways to configure this programatically, and they all
-# failed in various interesting and intermittent ways - so it is best
-# just to run these tests with -s.
-# The first few lines of each test skip the test if pytest hasn't been
-# run with -s - otherwise they would fail.
-# The CI configuration has been updated to do two test runs: one
-# for most of the tests without -s, and then the GUI tests with -s.
+from pepys_admin.maintenance.column_data import create_column_data
+from pepys_import.core.store.data_store import DataStore
 
 
-def set_selected_table_to_platform(gui):
-    gui.current_table_object = gui.data_store.db_classes.Platform
-    gui.get_column_data(gui.current_table_object)
-    gui.dropdown_table.text = "Platforms"
-    gui.get_default_preview_fields()
+def test_column_data_platform():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
 
-
-def test_generating_column_data(pytestconfig, test_datastore):
-    if pytestconfig.getoption("capture") != "no":
-        pytest.skip("Skipped because pytest was not run with -s option")
-
-    gui = MaintenanceGUI(test_datastore)
-    set_selected_table_to_platform(gui)
+    col_data = create_column_data(store, store.db_classes.Platform)
 
     correct_col_data = {
         "platform id": {"type": "id", "system_name": "platform_id"},
@@ -350,87 +331,135 @@ def test_generating_column_data(pytestconfig, test_datastore):
         "created date": {"system_name": "created_date", "type": "datetime"},
     }
 
-    output_col_data = gui.column_data
-
-    assert output_col_data == correct_col_data
+    assert col_data == correct_col_data
 
 
-def test_running_query_single_condition(pytestconfig, test_datastore):
-    if pytestconfig.getoption("capture") != "no":
-        pytest.skip("Skipped because pytest was not run with -s option")
+def test_column_data_platform_type():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
 
-    gui = MaintenanceGUI(test_datastore)
-    set_selected_table_to_platform(gui)
+    col_data = create_column_data(store, store.db_classes.PlatformType)
 
-    gui.filter_widget = Mock()
-    gui.filter_widget.filters = [["name", "=", "ADRI"]]
+    correct_col_data = {
+        "created date": {"system_name": "created_date", "type": "datetime"},
+        "name": {
+            "system_name": "name",
+            "type": "string",
+            "values": [
+                "Fishing Vessel",
+                "High Speed Craft",
+                "Law Enforcement",
+                "Merchant",
+                "Naval - aircraft",
+                "Naval - aircraft carrier",
+                "Naval - auxiliary",
+                "Naval - destroyer",
+                "Naval - frigate",
+                "Naval - minesweeper",
+                "Naval - miscellaneous",
+                "Naval - patrol",
+                "Naval - submarine",
+                "Naval - survey",
+                "Passenger/Ferry",
+                "Pleasure Craft",
+                "Search and Rescue",
+                "Tanker",
+                "Tug",
+            ],
+        },
+        "platform type id": {
+            "system_name": "platform_type_id",
+            "type": "id",
+        },
+    }
 
-    gui.run_query()
-
-    # Should be 2 entries because of the header line,
-    # plus the one result
-    assert len(gui.table_data) == 2
-    assert len(gui.table_objects) == 2
-
-    assert gui.table_data[0] == ["Name", "Identifier", "Nationality", "Platform type"]
-    assert gui.table_data[1] == ["ADRI", "A643", "United Kingdom", "Naval - frigate"]
-
-    assert isinstance(gui.table_objects[1], gui.data_store.db_classes.Platform)
-    assert gui.table_objects[0] is None
-    assert gui.table_objects[1].name == "ADRI"
-
-
-def test_running_query_two_conditions_or(pytestconfig, test_datastore):
-    if pytestconfig.getoption("capture") != "no":
-        pytest.skip("Skipped because pytest was not run with -s option")
-
-    gui = MaintenanceGUI(test_datastore)
-    set_selected_table_to_platform(gui)
-
-    gui.filter_widget = Mock()
-    gui.filter_widget.filters = [["name", "=", "ADRI"], ["OR"], ["name", "=", "JEAN"]]
-
-    gui.run_query()
-
-    # Should be 3 entries because of the header line,
-    # plus the two results
-    assert len(gui.table_data) == 3
-    assert len(gui.table_objects) == 3
-
-    assert gui.table_data[0] == ["Name", "Identifier", "Nationality", "Platform type"]
-    assert gui.table_data[2] == ["JEAN", "A816", "United Kingdom", "Naval - frigate"]
-
-    assert isinstance(gui.table_objects[2], gui.data_store.db_classes.Platform)
-    assert gui.table_objects[0] is None
-    assert gui.table_objects[2].name == "JEAN"
+    assert col_data == correct_col_data
 
 
-def test_running_query_two_conditions_and(pytestconfig, test_datastore):
-    if pytestconfig.getoption("capture") != "no":
-        pytest.skip("Skipped because pytest was not run with -s option")
+def test_column_data_state():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
 
-    gui = MaintenanceGUI(test_datastore)
-    set_selected_table_to_platform(gui)
+    col_data = create_column_data(store, store.db_classes.State)
 
-    gui.filter_widget = Mock()
-    gui.filter_widget.filters = [
-        ["nationality_name", "=", "United Kingdom"],
-        ["AND"],
-        ["identifier", "LIKE", "A"],
-    ]
+    print(pprint(col_data))
 
-    gui.run_query()
+    correct_col_data = {
+        "course": {"system_name": "course", "type": "float"},
+        "created date": {"system_name": "created_date", "type": "datetime"},
+        "elevation": {"system_name": "elevation", "type": "float"},
+        "heading": {"system_name": "heading", "type": "float"},
+        "location": {"system_name": "location", "type": "geometry"},
+        "platform": {
+            "system_name": "platform_name",
+            "type": "string",
+            "values": ["ADRI", "JEAN", "NARV", "SPAR"],
+        },
+        "privacy": {
+            "system_name": "privacy_name",
+            "type": "string",
+            "values": [
+                "Public",
+                "Public Sensitive",
+                "Private",
+                "Private UK/IE",
+                "Very Private UK/IE",
+                "Private UK/IE/FR",
+                "Very Private UK/IE/FR",
+                "Very Private",
+            ],
+        },
+        "remarks": {"system_name": "remarks", "type": "string", "values": []},
+        "sensor": {
+            "system_name": "sensor_name",
+            "type": "string",
+            "values": ["GPS", "INS", "Periscope", "Radar"],
+        },
+        "source reference": {"system_name": "source_reference", "type": "string", "values": []},
+        "speed": {"system_name": "speed", "type": "float"},
+        "state id": {
+            "system_name": "state_id",
+            "type": "id",
+        },
+        "time": {"system_name": "time", "type": "datetime"},
+    }
 
-    # Should be 3 entries because of the header line,
-    # plus the two results
-    assert len(gui.table_data) == 3
-    assert len(gui.table_objects) == 3
+    assert col_data == correct_col_data
 
-    assert gui.table_data[0] == ["Name", "Identifier", "Nationality", "Platform type"]
-    assert gui.table_data[1] == ["ADRI", "A643", "United Kingdom", "Naval - frigate"]
-    assert gui.table_data[2] == ["JEAN", "A816", "United Kingdom", "Naval - frigate"]
 
-    assert isinstance(gui.table_objects[2], gui.data_store.db_classes.Platform)
-    assert gui.table_objects[0] is None
-    assert gui.table_objects[1].name == "ADRI"
-    assert gui.table_objects[2].name == "JEAN"
+def test_column_data_privacies():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
+
+    col_data = create_column_data(store, store.db_classes.Privacy)
+
+    print(pprint(col_data))
+
+    assert col_data == {
+        "created date": {"system_name": "created_date", "type": "datetime"},
+        "level": {"system_name": "level", "type": "int"},
+        "name": {
+            "system_name": "name",
+            "type": "string",
+            "values": [
+                "Private",
+                "Private UK/IE",
+                "Private UK/IE/FR",
+                "Public",
+                "Public Sensitive",
+                "Very Private",
+                "Very Private UK/IE",
+                "Very Private UK/IE/FR",
+            ],
+        },
+        "privacy id": {"system_name": "privacy_id", "type": "id"},
+    }

@@ -73,6 +73,7 @@ class DropdownBox:
 
         self.menu = None
         self.disabled = False
+        self.dropdown_opened = False
 
         # Have to use partial to make this take a reference to self
         # (This could be avoided by making handler a classmethod,
@@ -161,6 +162,8 @@ class DropdownBox:
             # Add the floats to the FloatContainer, so it displays
             app.layout.container.floats.insert(0, float_)
 
+            self.dropdown_opened = True
+
             # Keep track of focus so we can retun to the previously focused control
             focused_before = app.layout.current_window
             app.layout.focus(self.menu)
@@ -176,6 +179,8 @@ class DropdownBox:
             # Remove the float from the FloatContainer
             if float_ in app.layout.container.floats:
                 app.layout.container.floats.remove(float_)
+
+            self.dropdown_opened = False
 
             if result is not None:
                 # Update the display text to the option that was selected
@@ -202,7 +207,11 @@ class DropdownBox:
         text = ("{:^%s}" % (self.width - 2)).format(self.text)
 
         def handler(mouse_event) -> None:
-            if self.handler is not None and mouse_event.event_type == MouseEventType.MOUSE_UP:
+            if (
+                self.handler is not None
+                and mouse_event.event_type == MouseEventType.MOUSE_UP
+                and not self.dropdown_opened
+            ):
                 self.handler()
 
         return [
@@ -224,14 +233,14 @@ class DropdownBox:
         @kb.add("enter")
         @kb.add("down")
         def _(event) -> None:
-            if self.handler is not None:
+            if self.handler is not None and not self.dropdown_opened:
                 self.handler()
 
         @kb.add("<any>")
         def _(event):
             key_str = event.key_sequence[0].key
             if len(key_str) == 1:
-                if self.open_on_any_key and self.handler is not None:
+                if self.open_on_any_key and self.handler is not None and not self.dropdown_opened:
                     self.handler()
                     self.menu.filter_text += key_str
 

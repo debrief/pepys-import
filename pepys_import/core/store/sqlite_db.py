@@ -20,13 +20,16 @@ from pepys_import.core.store.common_db import (
     DatafileMixin,
     ElevationPropertyMixin,
     GeometryMixin,
+    GeometrySubTypeMixin,
     HostedByMixin,
     LocationPropertyMixin,
     LogMixin,
     LogsHoldingMixin,
     MediaMixin,
+    NationalityMixin,
     ParticipantMixin,
     PlatformMixin,
+    ReferenceDefaultFields,
     ReferenceRepr,
     SensorMixin,
     StateMixin,
@@ -251,7 +254,7 @@ class Extraction(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Tag(BaseSpatiaLite):
+class Tag(BaseSpatiaLite, ReferenceDefaultFields):
     __tablename__ = constants.TAG
     table_type = TableTypes.METADATA
     table_type_id = 11
@@ -276,7 +279,7 @@ class TaggedItem(BaseSpatiaLite, TaggedItemMixin):
 
 
 # Reference Tables
-class PlatformType(BaseSpatiaLite, ReferenceRepr):
+class PlatformType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.PLATFORM_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 13
@@ -291,7 +294,7 @@ class PlatformType(BaseSpatiaLite, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Nationality(BaseSpatiaLite, ReferenceRepr):
+class Nationality(BaseSpatiaLite, ReferenceRepr, NationalityMixin):
     __tablename__ = constants.NATIONALITY
     table_type = TableTypes.REFERENCE
     table_type_id = 14
@@ -307,7 +310,7 @@ class Nationality(BaseSpatiaLite, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class GeometryType(BaseSpatiaLite, ReferenceRepr):
+class GeometryType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.GEOMETRY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 15
@@ -322,7 +325,7 @@ class GeometryType(BaseSpatiaLite, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class GeometrySubType(BaseSpatiaLite):
+class GeometrySubType(BaseSpatiaLite, GeometrySubTypeMixin):
     __tablename__ = constants.GEOMETRY_SUBTYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 16
@@ -339,10 +342,11 @@ class GeometrySubType(BaseSpatiaLite):
     __table_args__ = (UniqueConstraint("name", "parent", name="uq_GeometrySubTypes_name_parent"),)
 
 
-class User(BaseSpatiaLite, ReferenceRepr):
+class User(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.USER
     table_type = TableTypes.REFERENCE
     table_type_id = 17
+    _default_preview_fields = ["name"]
 
     user_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(
@@ -354,10 +358,11 @@ class User(BaseSpatiaLite, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class UnitType(BaseSpatiaLite, ReferenceRepr):
+class UnitType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.UNIT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 18
+    _default_preview_fields = ["name"]
 
     unit_type_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(
@@ -369,10 +374,11 @@ class UnitType(BaseSpatiaLite, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ClassificationType(BaseSpatiaLite, ReferenceRepr):
+class ClassificationType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.CLASSIFICATION_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 19
+    _default_preview_fields = ["name"]
 
     class_type_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(
@@ -384,10 +390,11 @@ class ClassificationType(BaseSpatiaLite, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ContactType(BaseSpatiaLite, ReferenceRepr):
+class ContactType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.CONTACT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 20
+    _default_preview_fields = ["name"]
 
     contact_type_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(
@@ -399,10 +406,11 @@ class ContactType(BaseSpatiaLite, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class SensorType(BaseSpatiaLite, ReferenceRepr):
+class SensorType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.SENSOR_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 21
+    _default_preview_fields = ["name"]
 
     sensor_type_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(
@@ -414,10 +422,11 @@ class SensorType(BaseSpatiaLite, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Privacy(BaseSpatiaLite, ReferenceRepr):
+class Privacy(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.PRIVACY
     table_type = TableTypes.REFERENCE
     table_type_id = 22
+    _default_preview_fields = ["name"]
 
     privacy_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(
@@ -430,10 +439,11 @@ class Privacy(BaseSpatiaLite, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class DatafileType(BaseSpatiaLite, ReferenceRepr):
+class DatafileType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.DATAFILE_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 23
+    _default_preview_fields = ["name"]
 
     datafile_type_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(
@@ -445,10 +455,11 @@ class DatafileType(BaseSpatiaLite, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class MediaType(BaseSpatiaLite, ReferenceRepr):
+class MediaType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.MEDIA_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 24
+    _default_preview_fields = ["name"]
 
     media_type_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(
@@ -460,10 +471,11 @@ class MediaType(BaseSpatiaLite, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class CommentType(BaseSpatiaLite, ReferenceRepr):
+class CommentType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.COMMENT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 25
+    _default_preview_fields = ["name"]
 
     comment_type_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(
@@ -475,7 +487,7 @@ class CommentType(BaseSpatiaLite, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class CommodityType(BaseSpatiaLite, ReferenceRepr):
+class CommodityType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.COMMODITY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 26
@@ -490,7 +502,7 @@ class CommodityType(BaseSpatiaLite, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ConfidenceLevel(BaseSpatiaLite, ReferenceRepr):
+class ConfidenceLevel(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.CONFIDENCE_LEVEL
     table_type = TableTypes.REFERENCE
     table_type_id = 27

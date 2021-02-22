@@ -56,27 +56,36 @@ class ProgressDialog:
             # This runs the run_callback function in a separate thread
             # but as part of the asyncio loop, so the GUI can still update
             # while a potentially-blocking function runs in the background
-            loop = asyncio.get_running_loop()
-            await loop.run_in_executor(
-                None,
-                partial(
-                    self.run_callback,
-                    set_percentage=self.set_percentage,
-                    is_cancelled=self.is_cancelled,
-                ),
-            )
+            try:
+                loop = asyncio.get_running_loop()
+                await loop.run_in_executor(
+                    None,
+                    partial(
+                        self.run_callback,
+                        set_percentage=self.set_percentage,
+                        is_cancelled=self.is_cancelled,
+                    ),
+                )
+            except Exception as e:
+                self.future.set_result(e)
 
         ensure_future(coroutine())
 
     def set_percentage(self, value: int) -> None:
-        # If we get to 100% then close the dialog
-        if value == 100:
-            self.future.set_result(None)
-
         self.progressbar.percentage = int(value)
         # Refresh the GUI
         app = get_app()
         app.invalidate()
+
+        # If we get to 100% then close the dialog
+        if value >= 100:
+            # Wrap this in a try/except, in case we've already set to
+            # 100% somewhere else, and therefore we try to set the Future
+            # value twice, giving an error
+            try:
+                self.future.set_result(None)
+            except Exception:
+                pass
 
     def is_cancelled(self):
         return self.cancelled
