@@ -1899,15 +1899,12 @@ class DataStore:
 
     def _find_datafiles_for_platform(self, platform) -> dict:
         objects = list(dependent_objects(platform))
+        objects = [obj for obj in objects if isinstance(obj, self.db_classes.Sensor)]
         datafile_ids = dict()
         while objects:
             obj = objects.pop(0)
             if isinstance(obj, self.db_classes.Sensor):
-                objects.extend(list(dependent_objects(obj).limit(1)))
-            elif isinstance(obj, self.db_classes.HostedBy):
-                ...
-            elif isinstance(obj, self.db_classes.Participant):
-                ...
+                objects.extend(list(dependent_objects(obj)))
             else:
                 if obj.source_id not in datafile_ids:
                     datafile_ids[obj.source_id] = obj.created_date
@@ -1958,43 +1955,6 @@ class DataStore:
                             for s in query.all()
                         ]
                         query.update({"host": new_platform.platform_id})
-                elif isinstance(obj, self.db_classes.HostedBy):
-                    ...
-                elif isinstance(obj, self.db_classes.Participant):
-                    ...
-                else:
-                    if key == obj.source_id:
-                        possible_field_names = [
-                            "platform_id",
-                            "subject_id",
-                            "host_id",
-                            "subject_platform_id",
-                            "sensor_platform_id",
-                        ]
-                        for field in possible_field_names:
-                            try:
-                                table_platform_id = getattr(type(obj), field)
-                                source_field = getattr(type(obj), "source_id")
-                                primary_key_field = get_primary_key_for_table(obj)
-                                query = self.session.query(type(obj)).filter(
-                                    table_platform_id == platform.platform_id, source_field == key
-                                )
-                                [
-                                    self.add_to_logs(
-                                        table=obj.__tablename__,
-                                        row_id=getattr(s, primary_key_field),
-                                        field=field,
-                                        new_value=str(platform.platform_id),
-                                        change_id=change_id,
-                                    )
-                                    for s in query.all()
-                                ]
-                                query.update(
-                                    {field: new_platform.platform_id}, synchronize_session="fetch"
-                                )
-                            except Exception as e:
-                                print(e)
-                                pass
                         self.session.flush()
 
         # delete the split platform
