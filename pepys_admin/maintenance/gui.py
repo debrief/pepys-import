@@ -372,7 +372,43 @@ class MaintenanceGUI:
         if len(self.preview_table.current_values) != 1:
             self.show_messagebox("Error", "To split a platform you must select only one platform.")
             return
-        # Do split platform here
+
+        def do_split(selected_platform, set_percentage=None, is_cancelled=None):
+            with self.data_store.session_scope():
+                self.data_store.split_platform(selected_platform)
+                set_percentage(100)
+
+        async def coroutine():
+            selected_platform = self.preview_table.current_values[0]
+            platform_details = " - ".join(
+                [
+                    selected_platform.name,
+                    selected_platform.identifier,
+                    selected_platform.nationality_name,
+                ]
+            )
+            conf_dialog = ConfirmationDialog(
+                "Split platform", f"Do you want to split platform:\n{platform_details}?"
+            )
+            result = await self.show_dialog_as_float(conf_dialog)
+            if not result:
+                return
+
+            dialog = ProgressDialog(
+                "Splitting Platform",
+                partial(do_split, selected_platform),
+                show_cancel=False,
+            )
+            result = await self.show_dialog_as_float(dialog)
+            # Once the platform merge is done, show a message box
+            # We use the async version of this function as we're calling
+            # from within a coroutine
+            await self.show_messagebox_async("Split completed")
+            # Re-run the query, so we get an updated list in the preview
+            # and can see that some platforms have disappeared
+            self.run_query()
+
+        ensure_future(coroutine())
 
     def run_merge(self):
         """Runs the action to merge entries
