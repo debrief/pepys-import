@@ -694,7 +694,7 @@ class CommandLineResolver(DataResolver):
                 format_command("Please enter identifier (pennant or tail number): "),
                 default=identifier,
             ).strip()
-            if len(identifier) > 10:
+            if len(identifier) > 30:
                 custom_print_formatted_text(
                     format_error_message(
                         "Identifier too long, maximum length 10 characters. Restarting platform data entry."
