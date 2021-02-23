@@ -1898,8 +1898,10 @@ class DataStore:
         return True
 
     def _find_datafiles_for_platform(self, platform) -> dict:
+        Sensor = self.db_classes.Sensor
+        Comment = self.db_classes.Comment
         objects = list(dependent_objects(platform))
-        objects = [obj for obj in objects if isinstance(obj, self.db_classes.Sensor)]
+        objects = [obj for obj in objects if isinstance(obj, Sensor) or isinstance(obj, Comment)]
         datafile_ids = dict()
         while objects:
             obj = objects.pop(0)
@@ -1956,7 +1958,27 @@ class DataStore:
                         ]
                         query.update({"host": new_platform.platform_id})
                         self.session.flush()
-
+                else:
+                    if key == obj.source_id:
+                        table = type(obj)
+                        field = "platform_id"
+                        table_platform_id = getattr(table, field)
+                        source_field = getattr(table, "source_id")
+                        primary_key_field = get_primary_key_for_table(obj)
+                        query = self.session.query(table).filter(
+                            table_platform_id == platform.platform_id, source_field == key
+                        )
+                        [
+                            self.add_to_logs(
+                                table=obj.__tablename__,
+                                row_id=getattr(s, primary_key_field),
+                                field=field,
+                                new_value=str(platform.platform_id),
+                                change_id=change_id,
+                            )
+                            for s in query.all()
+                        ]
+                        query.update({field: new_platform.platform_id}, synchronize_session="fetch")
         # delete the split platform
         self.session.delete(platform)
         self.session.flush()

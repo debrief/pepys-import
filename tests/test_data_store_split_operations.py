@@ -40,6 +40,7 @@ class SplitPlatformTestCase(TestCase):
             self.store.session.expunge(self.comment_type)
 
     def test_split_platform_with_sensors(self):
+        Comment = self.store.db_classes.Comment
         Platform = self.store.db_classes.Platform
         with self.store.session_scope():
             platform = self.store.get_platform(
@@ -69,6 +70,14 @@ class SplitPlatformTestCase(TestCase):
                 self.current_time + timedelta(seconds=5),
                 parser_name=self.parser_name,
             )
+            self.file.create_comment(
+                self.store,
+                platform,
+                self.current_time,
+                "Comment",
+                self.comment_type,
+                parser_name=self.parser_name,
+            )
             self.file_2.create_contact(
                 self.store,
                 platform,
@@ -83,6 +92,14 @@ class SplitPlatformTestCase(TestCase):
                 self.current_time + timedelta(seconds=15),
                 parser_name=self.parser_name,
             )
+            self.file_2.create_comment(
+                self.store,
+                platform,
+                self.current_time,
+                "Comment from Datafile-2",
+                self.comment_type,
+                parser_name=self.parser_name,
+            )
             if self.file.validate():
                 self.file.commit(self.store, self.change_id)
             if self.file_2.validate():
@@ -94,10 +111,17 @@ class SplitPlatformTestCase(TestCase):
             )
             dependent_objects_before_merge = list(dependent_objects(platforms_before_merge[0]))
             assert len(platforms_before_merge) == 1
-            assert len(dependent_objects_before_merge) == 2  # 2 Sensors
+            assert len(dependent_objects_before_merge) == 4  # 2 Sensors, 2 Comments
             assert sensor.host == platform.platform_id
             assert sensor_2.host == platform.platform_id
-
+            assert (
+                len(
+                    self.store.session.query(Comment)
+                    .filter(Comment.platform_id == platform.platform_id)
+                    .all()
+                )
+                == 2
+            )
             self.store.split_platform(platform.platform_id)
 
             # There should be 2 platforms, per each datafile
@@ -107,7 +131,15 @@ class SplitPlatformTestCase(TestCase):
             assert len(platforms_after_merge) == 2
             for p in platforms_after_merge:
                 dependent_objects_after_merge = list(dependent_objects(p))
-                assert len(dependent_objects_after_merge) == 1  # 1 Sensor
+                assert len(dependent_objects_after_merge) == 2  # 1 Sensor, 1 Comment
+                assert (
+                    len(
+                        self.store.session.query(Comment)
+                        .filter(Comment.platform_id == p.platform_id)
+                        .all()
+                    )
+                    == 1
+                )
 
                 if sensor.host == p.platform_id:  # first datafile
                     assert sensor.host == p.platform_id
