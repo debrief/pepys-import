@@ -1,4 +1,5 @@
-"""Increase identifier
+"""
+Increase identifier
 
 Revision ID: e3a836917a21
 Revises: a382a0f4b1be
