@@ -11,7 +11,7 @@ from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker, undefer
 from sqlalchemy.sql import func
-from sqlalchemy_utils import merge_references
+from sqlalchemy_utils import dependent_objects, merge_references
 
 from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import import __version__
@@ -885,7 +885,7 @@ class DataStore:
             or privacy_obj is None
         ):
             resolved_data = self.missing_data_resolver.resolve_platform(
-                self, platform_name, platform_type, nationality, privacy, change_id
+                self, platform_name, identifier, platform_type, nationality, privacy, change_id
             )
             # It means that new platform added as a synonym and existing platform returned
             if isinstance(resolved_data, self.db_classes.Platform):
@@ -1896,3 +1896,89 @@ class DataStore:
         if callable(set_percentage):
             set_percentage(100)
         return True
+
+    def _find_datafiles_for_platform(self, platform) -> dict:
+        Sensor = self.db_classes.Sensor
+        Comment = self.db_classes.Comment
+        objects = list(dependent_objects(platform))
+        objects = [obj for obj in objects if isinstance(obj, Sensor) or isinstance(obj, Comment)]
+        datafile_ids = dict()
+        while objects:
+            obj = objects.pop(0)
+            if isinstance(obj, self.db_classes.Sensor):
+                objects.extend(list(dependent_objects(obj)))
+            else:
+                if obj.source_id not in datafile_ids:
+                    datafile_ids[obj.source_id] = obj.created_date
+
+                if obj.created_date < datafile_ids[obj.source_id]:
+                    datafile_ids[obj.source_id] = obj.created_date
+
+        return datafile_ids
+
+    def split_platform(self, platform_id) -> bool:
+        Platform = self.db_classes.Platform
+        Sensor = self.db_classes.Sensor
+        if isinstance(platform_id, Platform):
+            platform_id = platform_id.platform_id
+
+        platform = self._check_master_id(Platform, platform_id)
+        change_id = self.add_to_changes(
+            user=USER,
+            modified=datetime.utcnow(),
+            reason=f"Splitting platform: '{platform_id}'.",
+        ).change_id
+        datafile_ids = self._find_datafiles_for_platform(platform)
+        for key, value in datafile_ids.items():
+            objects = list(dependent_objects(platform))
+            new_platform = self.add_to_platforms(
+                name=platform.name,
+                nationality=platform.nationality_name,
+                platform_type=platform.platform_type_name,
+                privacy=platform.privacy_name,
+                trigraph=platform.trigraph,
+                quadgraph=platform.quadgraph,
+                identifier=f"{value:%Y%m%d-%H%M%S%f}",
+                change_id=change_id,
+            )
+            for obj in objects:
+                if isinstance(obj, Sensor):
+                    sub_objs = list(dependent_objects(obj).limit(1))
+                    if sub_objs and key == sub_objs[0].source_id:
+                        query = self.session.query(Sensor).filter(Sensor.sensor_id == obj.sensor_id)
+                        [
+                            self.add_to_logs(
+                                table=constants.SENSOR,
+                                row_id=s.sensor_id,
+                                field="host",
+                                new_value=str(s.host),
+                                change_id=change_id,
+                            )
+                            for s in query.all()
+                        ]
+                        query.update({"host": new_platform.platform_id})
+                        self.session.flush()
+                else:
+                    if key == obj.source_id:
+                        table = type(obj)
+                        field = "platform_id"
+                        table_platform_id = getattr(table, field)
+                        source_field = getattr(table, "source_id")
+                        primary_key_field = get_primary_key_for_table(obj)
+                        query = self.session.query(table).filter(
+                            table_platform_id == platform.platform_id, source_field == key
+                        )
+                        [
+                            self.add_to_logs(
+                                table=obj.__tablename__,
+                                row_id=getattr(s, primary_key_field),
+                                field=field,
+                                new_value=str(platform.platform_id),
+                                change_id=change_id,
+                            )
+                            for s in query.all()
+                        ]
+                        query.update({field: new_platform.platform_id}, synchronize_session="fetch")
+        # delete the split platform
+        self.session.delete(platform)
+        self.session.flush()

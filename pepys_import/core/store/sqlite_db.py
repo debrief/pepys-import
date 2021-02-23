@@ -99,7 +99,7 @@ class Platform(BaseSpatiaLite, PlatformMixin):
     )
     identifier = deferred(
         Column(
-            String(10),
+            String(30),
             CheckConstraint("identifier <> ''", name="ck_Platforms_identifier"),
             nullable=False,
         )

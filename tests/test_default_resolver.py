@@ -109,6 +109,7 @@ class DefaultResolverTestCase(unittest.TestCase):
             ) = self.resolver.resolve_platform(
                 data_store=self.store,
                 platform_name=None,
+                identifier=None,
                 platform_type=None,
                 nationality=None,
                 privacy=None,
@@ -128,6 +129,7 @@ class DefaultResolverTestCase(unittest.TestCase):
             result = self.resolver.resolve_platform(
                 data_store=self.store,
                 platform_name=None,
+                identifier=None,
                 platform_type="Fisher",
                 nationality="UK",
                 privacy="Private",
@@ -161,6 +163,7 @@ class DefaultResolverTestCase(unittest.TestCase):
             result = self.resolver.resolve_platform(
                 data_store=self.store,
                 platform_name=None,
+                identifier=identifier,
                 platform_type="Fisher",
                 nationality="UK",
                 privacy="Private",
