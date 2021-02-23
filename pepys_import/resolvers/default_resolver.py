@@ -17,11 +17,14 @@ class DefaultResolver(DataResolver):
     default_datafile_type = "DATAFILE-TYPE-1"
 
     def resolve_platform(
-        self, data_store, platform_name, platform_type, nationality, privacy, change_id
+        self, data_store, platform_name, identifier, platform_type, nationality, privacy, change_id
     ):
         # needs to establish defaults for platform_name, platform_type, nationality and privacy
         if not platform_name:
             platform_name = self.default_platform_name
+
+        if not identifier:
+            identifier = self.default_identifier
 
         if platform_type:
             platform_type = data_store.add_to_platform_types(platform_type, change_id)
@@ -44,9 +47,7 @@ class DefaultResolver(DataResolver):
         results_from_db = (
             data_store.session.query(data_store.db_classes.Platform)
             .filter(data_store.db_classes.Platform.name == platform_name)
-            .filter(
-                data_store.db_classes.Platform.platform_type_id == platform_type.platform_type_id
-            )
+            .filter(data_store.db_classes.Platform.identifier == identifier)
             .filter(data_store.db_classes.Platform.nationality_id == nationality.nationality_id)
             .all()
         )
@@ -57,7 +58,7 @@ class DefaultResolver(DataResolver):
                 platform_name,
                 self.default_trigraph,
                 self.default_quadgraph,
-                self.default_identifier,
+                identifier,
                 platform_type,
                 nationality,
                 privacy,
