@@ -160,7 +160,7 @@ class DropdownBox:
             )
 
             # Add the floats to the FloatContainer, so it displays
-            app.layout.container.floats.insert(0, float_)
+            app.layout.container.floats.append(float_)
 
             self.dropdown_opened = True
 
