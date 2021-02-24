@@ -27,6 +27,7 @@ from sqlalchemy.orm import undefer
 
 from pepys_admin.maintenance.column_data import create_column_data
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
+from pepys_admin.maintenance.dialogs.edit_dialog import EditDialog
 from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
 from pepys_admin.maintenance.dialogs.merge_dialog import MergeDialog
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
@@ -157,7 +158,7 @@ class MaintenanceGUI:
 
         # Actions container, containing a list of actions that can be run
         self.actions_combo = ComboBox(
-            entries=["1 - Merge", "2 - Split platform"],
+            entries=["1 - Merge", "2 - Split platform", "3 - Edit values"],
             enter_handler=self.run_action,
         )
         self.set_contextual_help(self.actions_combo, "# Fourth panel: Choose actions (F8)")
@@ -359,8 +360,24 @@ class MaintenanceGUI:
             self.run_merge()
         elif selected_value == "2 - Split platform":
             self.run_split_platform()
+        elif selected_value == "3 - Edit values":
+            self.run_edit_values()
         else:
             self.show_messagebox("Action", f"Running action {selected_value}")
+
+    def run_edit_values(self):
+        async def coroutine():
+            if len(self.preview_table.current_values) == 0:
+                await self.show_messagebox_async(
+                    "Error", "You must select at least one entry before editing."
+                )
+                return
+            dialog = EditDialog(
+                self.column_data, self.current_table_object, self.preview_table.current_values
+            )
+            await self.show_dialog_as_float(dialog)
+
+        ensure_future(coroutine())
 
     def run_split_platform(self):
         if self.current_table_object != self.data_store.db_classes.Platform:
@@ -658,7 +675,6 @@ class MaintenanceGUI:
         float_ = Float(content=dialog)
         # Put it at the top of the float list in the root container
         # (which is a FloatContainer)
-        # self.root_container.floats.insert(0, float_)
         self.root_container.floats.append(float_)
 
         app = get_app()
