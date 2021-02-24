@@ -33,6 +33,7 @@ class DropdownBox:
         filter_method="special",
         open_on_any_key=True,
         max_width=30,
+        width=None,
     ) -> None:
         """Dropdown box widget
 
@@ -71,6 +72,8 @@ class DropdownBox:
         self.open_on_any_key = open_on_any_key
         self.max_width = max_width
 
+        self.fixed_width = width
+
         self.menu = None
         self.disabled = False
         self.dropdown_opened = False
@@ -105,6 +108,10 @@ class DropdownBox:
         )
 
     def calculate_width(self):
+        if self.fixed_width is not None:
+            self.width = self.fixed_width
+            return
+
         widths_for_max_calc = [len(self.text)]
 
         if self.filter:
