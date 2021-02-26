@@ -1,0 +1,74 @@
+with
+ui_filter_input as
+(select
+		'2001-09-01 10:00:30.000000' as start_time,--Input should be same as for Phase 1
+		'2020-12-31 10:00:30.000000' as end_time,--Input should be same as for Phase 1
+		'search text' comment_search_string,--Input should be same as for Phase 1
+		'2f069a16867447d686e46f5dec1af89a,c2fc09a0829945d192ee659e80371f31' source_id,  --Input from Phase 2 of import, can be set as null: null as source_id
+		'f1a978c03f2841759b37529bed57573d,de6e06f8abbd4b2282c7b75a82651711' platform_id,  --Input from Phase 2 of import, can be set as null: null as platform_id
+		1 page_no, --Pagination input. Page No
+		100 page_size --Pagination input - No. of records per page
+),
+processed_ui_filter_values as
+(select
+		case when (trim(ui_input.start_time)='' OR ui_input.start_time is null) 
+			then datetime('1000-01-01 00:00:00.000000') 
+			else datetime(ui_input.start_time) end as start_time,
+		case when (trim(ui_input.end_time)='' OR ui_input.end_time is null) 
+			then datetime('9999-12-12 23:59:59.000000') 
+			else datetime(ui_input.end_time) end as end_time,
+		case when (trim(ui_input.comment_search_string)='' OR ui_input.comment_search_string is null) 
+			then null 
+			else '%'||upper(ui_input.comment_search_string)||'%' end as comment_search_string,
+		case when (trim(ui_input.source_id)='' OR ui_input.source_id is null) then null else ui_input.source_id || ',' end as source_id,
+		case when (trim(ui_input.platform_id)='' OR ui_input.platform_id is null) then null else ui_input.platform_id || ',' end as platform_id,
+		case when (ui_input.page_no is null OR ui_input.page_no <=0) then 1 else ui_input.page_no end as page_no,
+		case when (ui_input.page_size is null OR ui_input.page_size <=0) then 100 else ui_input.page_size end as page_size
+	from
+			ui_filter_input as ui_input
+	),
+source_id_split(word, input_str) as (
+		select '',(select source_id from processed_ui_filter_values)
+		union all 
+		select
+			substr(input_str, 0, case when instr(input_str, ',') then instr(input_str, ',') else length(input_str)+1 end),
+			substr(input_str, instr(input_str, ',')+1)
+		from source_id_split where input_str!=''),
+platform_id_split(word, input_str) as (
+		select '',(select platform_id from processed_ui_filter_values)
+		union all 
+		select
+			substr(input_str, 0, case when instr(input_str, ',') then instr(input_str, ',') else length(input_str)+1 end),
+			substr(input_str, instr(input_str, ',')+1)
+		from platform_id_split where input_str!='')
+select filtered_comments.comment_id,
+		filtered_comments.time,
+		Platforms.name,
+		PlatformTypes.name,
+		Nationalities.name,
+		filtered_comments.content,
+		CommentTypes.name
+	from
+		"Comments" as filtered_comments inner join
+		"Platforms" as Platforms on filtered_comments.platform_id=Platforms.platform_id inner join
+		"PlatformTypes" as PlatformTypes on Platforms.platform_type_id = PlatformTypes.platform_type_id inner join
+		"Nationalities" as Nationalities on Platforms.nationality_id = Nationalities.nationality_id inner join
+		"CommentTypes" as CommentTypes on filtered_comments.comment_type_id = CommentTypes.comment_type_id
+	WHERE
+			--Start and End Time criteria from the UI
+			(filtered_comments.time between (select start_time from processed_ui_filter_values)
+			and (select end_time from processed_ui_filter_values)) AND
+			--Comment search criteria from the UI
+			((select comment_search_string from processed_ui_filter_values) is null 
+			OR upper(filtered_comments.content) like (select comment_search_string from processed_ui_filter_values)) AND
+			--Source criteria from the UI
+			((select source_id from processed_ui_filter_values) is null 
+			OR filtered_comments.source_id in (select word from source_id_split where word!='')) AND
+			--Platform criteria from the UI
+			((select platform_id from processed_ui_filter_values) is null 
+			OR filtered_comments.platform_id in (select word from platform_id_split where word!=''))
+			--Sort clause for pagination
+	order by filtered_comments.comment_id asc 
+	limit (select page_size from processed_ui_filter_values)
+	offset (select page_size*(page_no -1) from processed_ui_filter_values);
+

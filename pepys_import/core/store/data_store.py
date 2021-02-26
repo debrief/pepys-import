@@ -1898,26 +1898,33 @@ class DataStore:
             set_percentage(100)
         return True
 
-    def _find_datafiles_for_platform(self, platform) -> dict:
+    def _get_comments_and_sensors_of_platform(self, platform) -> list:
         Sensor = self.db_classes.Sensor
         Comment = self.db_classes.Comment
         objects = list(dependent_objects(platform))
         objects = [obj for obj in objects if isinstance(obj, Sensor) or isinstance(obj, Comment)]
+        return objects
+
+    def _find_datafiles_and_measurements_for_platform(self, platform) -> dict:
+        objects = self._get_comments_and_sensors_of_platform(platform)
         datafile_ids = dict()
+
         while objects:
             obj = objects.pop(0)
             if isinstance(obj, self.db_classes.Sensor):
                 objects.extend(list(dependent_objects(obj)))
             else:
                 if obj.source_id not in datafile_ids:
-                    datafile_ids[obj.source_id] = obj.created_date
-
-                if obj.created_date < datafile_ids[obj.source_id]:
-                    datafile_ids[obj.source_id] = obj.created_date
+                    datafile_ids[obj.source_id] = {"time": obj.time, "objects": []}
+                if obj.time < datafile_ids[obj.source_id]["time"]:
+                    datafile_ids[obj.source_id]["time"] = obj.time
+                if not isinstance(obj, self.db_classes.Comment):  # They are handled differently
+                    datafile_ids[obj.source_id]["objects"].append(obj)
 
         return datafile_ids
 
     def split_platform(self, platform_id, set_percentage=None) -> bool:
+        to_delete = list()
         Platform = self.db_classes.Platform
         Sensor = self.db_classes.Sensor
         if isinstance(platform_id, Platform):
@@ -1929,12 +1936,13 @@ class DataStore:
             modified=datetime.utcnow(),
             reason=f"Splitting platform: '{platform_id}'.",
         ).change_id
-        datafile_ids = self._find_datafiles_for_platform(platform)
+        datafile_ids = self._find_datafiles_and_measurements_for_platform(platform)
         i = 0
         percent_per_iteration = 100.0 / len(datafile_ids)
 
-        for key, value in datafile_ids.items():
-            objects = list(dependent_objects(platform))
+        objects = self._get_comments_and_sensors_of_platform(platform)
+        for key, values in datafile_ids.items():
+            time, measurement_objects = values["time"], values["objects"]
             new_platform = self.add_to_platforms(
                 name=platform.name,
                 nationality=platform.nationality_name,
@@ -1942,33 +1950,39 @@ class DataStore:
                 privacy=platform.privacy_name,
                 trigraph=platform.trigraph,
                 quadgraph=platform.quadgraph,
-                identifier=f"{value:%Y%m%d-%H%M%S%f}",
+                identifier=f"{time:%Y%m%d-%H%M%S}-{str(key)[-4:]}",
                 change_id=change_id,
             )
             for obj in objects:
+                primary_key_field = get_primary_key_for_table(obj)
                 if isinstance(obj, Sensor):
-                    sub_objs = list(dependent_objects(obj).limit(1))
-                    if sub_objs and key == sub_objs[0].source_id:
-                        query = self.session.query(Sensor).filter(Sensor.sensor_id == obj.sensor_id)
-                        [
-                            self.add_to_logs(
-                                table=constants.SENSOR,
-                                row_id=s.sensor_id,
-                                field="host",
-                                new_value=str(s.host),
+                    for m_obj in measurement_objects:
+                        if m_obj.sensor_id == obj.sensor_id:
+                            new_sensor = new_platform.get_sensor(
+                                data_store=self,
+                                sensor_name=obj.name,
+                                sensor_type=obj.sensor_type_name,
+                                privacy=obj.privacy_name,
                                 change_id=change_id,
                             )
-                            for s in query.all()
-                        ]
-                        query.update({"host": new_platform.platform_id})
-                        self.session.flush()
+                            old_id = m_obj.sensor_id
+                            m_obj.sensor_id = new_sensor.sensor_id
+                            self.add_to_logs(
+                                table=obj.__tablename__,
+                                row_id=getattr(obj, primary_key_field),
+                                field="sensor_id",
+                                new_value=str(old_id),
+                                change_id=change_id,
+                            )
+                    if obj not in to_delete:
+                        to_delete.append(obj)
+                    self.session.flush()
                 else:
                     if key == obj.source_id:
                         table = type(obj)
                         field = "platform_id"
                         table_platform_id = getattr(table, field)
                         source_field = getattr(table, "source_id")
-                        primary_key_field = get_primary_key_for_table(obj)
                         query = self.session.query(table).filter(
                             table_platform_id == platform.platform_id, source_field == key
                         )
@@ -1989,6 +2003,8 @@ class DataStore:
 
         # delete the split platform
         self.session.delete(platform)
+        for s in to_delete:
+            self.session.delete(s)
         self.session.flush()
 
     def edit_items(self, items, edit_dict):
