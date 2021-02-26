@@ -34,9 +34,38 @@ class EditDialog:
         self.entry_edit_widget = EntryEditWidget(edit_data)
         self.entry_display_widget = EntryDisplayWidget(edit_data, entries)
 
-        lh_side = HSplit([Label("Current values:"), self.entry_display_widget], padding=1)
-        rh_side = HSplit([Label("New values:"), self.entry_edit_widget], padding=1)
-        self.body = VSplit([lh_side, rh_side], padding=2)
+        lh_side = HSplit(
+            [Label("Current values:", style="class:table-title"), self.entry_display_widget],
+            padding=1,
+        )
+        rh_side = HSplit(
+            [Label("New values:", style="class:table-title"), self.entry_edit_widget], padding=1
+        )
+
+        instructions = Label(
+            "Press TAB to move between fields. Only non-empty new values will replace current values",
+            style="class:instruction-text",
+        )
+
+        if len(entries) < 10:
+            display_strs = []
+            for entry in entries:
+                display_str = " - ".join(
+                    [
+                        str(getattr(entry, field_name))
+                        for field_name in entry._default_preview_fields
+                    ]
+                )
+                display_strs.append(display_str)
+            selected_items_text = "\n".join(display_strs)
+        else:
+            selected_items_text = f"{len(entries)} items selected"
+        selected_items_ui = HSplit(
+            [Label("Selected items: ", style="class:table-title"), Label(selected_items_text)]
+        )
+        self.body = HSplit(
+            [instructions, selected_items_ui, VSplit([lh_side, rh_side], padding=2)], padding=1
+        )
 
         self.dialog = Dialog(
             title="Edit item(s)",
