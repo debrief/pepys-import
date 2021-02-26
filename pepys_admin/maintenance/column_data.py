@@ -146,7 +146,11 @@ def create_column_data(data_store, table_object, set_percentage=None):
                         .all()
                     )
                     nationality_names = [nationality.name for nationality in all_nationalities]
+                    nationality_ids = [
+                        str(nationality.nationality_id) for nationality in all_nationalities
+                    ]
                     details["values"] = nationality_names
+                    details["ids"] = nationality_ids
                 elif details["system_name"] == "privacy_name":
                     # Get privacy names as a special case, as we want to sort by level
                     all_privacies = (
@@ -155,7 +159,9 @@ def create_column_data(data_store, table_object, set_percentage=None):
                         .all()
                     )
                     privacy_names = [priv.name for priv in all_privacies]
+                    privacy_ids = [str(priv.privacy_id) for priv in all_privacies]
                     details["values"] = privacy_names
+                    details["ids"] = privacy_ids
                 else:
                     # For all other columns, no special processing is needed
                     all_records = data_store.session.query(ap_obj.target_class).all()
@@ -163,7 +169,12 @@ def create_column_data(data_store, table_object, set_percentage=None):
                         str_if_not_none(getattr(record, ap_obj.value_attr))
                         for record in all_records
                     ]
+                    ids = [
+                        str(getattr(record, get_primary_key_for_table(ap_obj.target_class)))
+                        for record in all_records
+                    ]
                     details["values"] = sorted(remove_duplicates_and_nones(values))
+                    details["ids"] = ids
 
             column_data[get_display_name(ap_name)] = details
 

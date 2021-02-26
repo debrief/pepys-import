@@ -35,7 +35,8 @@ class EntryEditWidget:
 
         for row in self.entry_rows:
             if row.value_widget.text != PROMPT:
-                output[row.display_name] = row.value_widget.text
+                system_name = display_name_to_system_name[row.display_name]
+                output[system_name] = row.get_value()
 
         return output
 
@@ -47,6 +48,8 @@ class EntryEditWidgetRow:
     def __init__(self, display_name, col_config, label_width, edit_width):
         self.display_name = display_name
         self.label_width = label_width
+        self.col_config = col_config
+        self.value_ids = None
 
         if col_config["type"] == "float":
             self.value_widget = CustomTextArea(
@@ -65,13 +68,17 @@ class EntryEditWidgetRow:
                 width=edit_width,
             )
         elif col_config["type"] == "string":
-            if col_config.get("values") is not None:
+            if "values" in col_config:
                 # A list of values, so use a dropdown
                 self.value_widget = DropdownBox(
                     PROMPT,
                     entries=col_config["values"],
                     width=edit_width,
                 )
+                if "ids" in col_config:
+                    self.value_ids = col_config["ids"]
+                else:
+                    self.value_ids = None
             else:
                 self.value_widget = CustomTextArea(
                     PROMPT,
@@ -86,6 +93,13 @@ class EntryEditWidgetRow:
                 focus_on_click=True,
                 width=edit_width,
             )
+
+    def get_value(self):
+        if self.value_ids is not None:
+            index = self.col_config["values"].index(self.value_widget.text)
+            return self.value_ids[index]
+        else:
+            return self.value_widget.text
 
     def get_widgets(self, width):
         return VSplit(
