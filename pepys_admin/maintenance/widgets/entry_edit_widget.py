@@ -26,7 +26,7 @@ class EntryEditWidget:
             for key, value in edit_data.items()
         ]
 
-        self.widgets = [row.get_widgets(max_label_len) for row in self.entry_rows]
+        self.widgets = [row.get_widgets() for row in self.entry_rows]
 
         self.container = ScrollablePane(content=HSplit(self.widgets, padding=1))
 
