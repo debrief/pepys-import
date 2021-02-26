@@ -44,7 +44,7 @@ class EditDialog:
 
         instructions = Label(
             "Press TAB to move between fields. Only non-empty new values will replace current values",
-            style="class:instruction-text",
+            style="class:instruction-text-dark",
         )
 
         if len(entries) < 10:

@@ -393,7 +393,7 @@ class MaintenanceGUI:
                 self.column_data, self.current_table_object, self.preview_table.current_values
             )
             edit_dict = await self.show_dialog_as_float(dialog)
-            if edit_dict is None:
+            if edit_dict is None or len(edit_dict) == 0:
                 # Dialog was cancelled
                 return
 
@@ -719,10 +719,13 @@ class MaintenanceGUI:
                 ("checkbox-selected", "bg:ansiyellow"),
                 ("status-bar-text", "bg:ansibrightblack"),
                 ("instruction-text", "fg:ansibrightcyan"),
+                ("instruction-text-dark", "fg:ansicyan"),
                 ("dropdown.box", "bg:ansibrightblack fg:ansiblack"),
                 ("combobox-highlight", "bg:ansiyellow"),
                 ("frame dialog.body text-area", "nounderline bg:ansiwhite"),
                 ("frame dialog.body text-area last-line", "nounderline bg:ansiwhite"),
+                ("frame dialog.body button.text", "fg:ansiblack"),
+                ("frame dialog.body button.focused button.text", "fg:ansiwhite"),
             ]
         )
         return style
