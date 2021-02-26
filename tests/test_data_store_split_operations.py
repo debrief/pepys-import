@@ -39,9 +39,10 @@ class SplitPlatformTestCase(TestCase):
             self.store.session.expunge(self.file_2)
             self.store.session.expunge(self.comment_type)
 
-    def test_split_platform_with_sensors(self):
+    def test_split_platform_with_different_sensors(self):
         Comment = self.store.db_classes.Comment
         Platform = self.store.db_classes.Platform
+        Sensor = self.store.db_classes.Sensor
         with self.store.session_scope():
             platform = self.store.get_platform(
                 platform_name="Test Platform",
@@ -141,14 +142,97 @@ class SplitPlatformTestCase(TestCase):
                     == 1
                 )
 
-                if sensor.host == p.platform_id:  # first datafile
-                    assert sensor.host == p.platform_id
-                else:
-                    assert sensor_2.host == p.platform_id
+                new_sensor = (
+                    self.store.session.query(Sensor).filter(Sensor.host == p.platform_id).scalar()
+                )
+                assert new_sensor is not None
 
-            # Assert that split platform deleted
+            # Assert that split platform and sensors deleted
             assert (
                 not self.store.session.query(Platform)
                 .filter(Platform.platform_id == platform.platform_id)
+                .scalar()
+            )
+            assert (
+                not self.store.session.query(Sensor)
+                .filter(Sensor.sensor_id == sensor.sensor_id)
+                .scalar()
+            )
+            assert (
+                not self.store.session.query(Sensor)
+                .filter(Sensor.sensor_id == sensor_2.sensor_id)
+                .scalar()
+            )
+
+    def test_split_platform_with_one_sensor(self):
+        Platform = self.store.db_classes.Platform
+        Sensor = self.store.db_classes.Sensor
+        with self.store.session_scope():
+            platform = self.store.get_platform(
+                platform_name="Test Platform",
+                nationality=self.nationality,
+                platform_type=self.platform_type,
+                privacy=self.privacy,
+                change_id=self.change_id,
+            )
+            sensor = platform.get_sensor(
+                self.store, "gps", self.sensor_type, change_id=self.change_id
+            )
+            self.file.create_state(
+                self.store,
+                platform,
+                sensor,
+                self.current_time,
+                parser_name=self.parser_name,
+            )
+            self.file_2.create_state(
+                self.store,
+                platform,
+                sensor,
+                self.current_time + timedelta(seconds=5),
+                parser_name=self.parser_name,
+            )
+            if self.file.validate():
+                self.file.commit(self.store, self.change_id)
+            if self.file_2.validate():
+                self.file_2.commit(self.store, self.change_id)
+
+            # Assert that there is only 1 platform with the given name
+            platforms_before_merge = (
+                self.store.session.query(Platform).filter(Platform.name == platform.name).all()
+            )
+            dependent_objects_before_merge = list(dependent_objects(platforms_before_merge[0]))
+            assert len(platforms_before_merge) == 1
+            assert len(dependent_objects_before_merge) == 1  # 1 Sensor
+            assert sensor.host == platform.platform_id
+
+            self.store.split_platform(platform.platform_id)
+
+            # There should be 2 platforms, per each datafile
+            platforms_after_merge = (
+                self.store.session.query(Platform).filter(Platform.name == platform.name).all()
+            )
+            assert len(platforms_after_merge) == 2
+            for p in platforms_after_merge:
+                dependent_objects_after_merge = list(dependent_objects(p))
+                assert len(dependent_objects_after_merge) == 1  # 1 Sensor
+
+                new_sensor = (
+                    self.store.session.query(Sensor).filter(Sensor.host == p.platform_id).scalar()
+                )
+                assert new_sensor is not None
+
+                measurement_objects = list(dependent_objects(new_sensor))
+                assert len(measurement_objects) == 1  # 1 State
+
+            # Assert that split platform and sensors deleted
+            assert (
+                not self.store.session.query(Platform)
+                .filter(Platform.platform_id == platform.platform_id)
+                .scalar()
+            )
+            assert (
+                not self.store.session.query(Sensor)
+                .filter(Sensor.sensor_id == sensor.sensor_id)
                 .scalar()
             )
