@@ -157,7 +157,7 @@ class MaintenanceGUI:
 
         # Actions container, containing a list of actions that can be run
         self.actions_combo = ComboBox(
-            entries=["1 - Merge"],
+            entries=["1 - Merge", "2 - Split platform"],
             enter_handler=self.run_action,
         )
         self.set_contextual_help(self.actions_combo, "# Fourth panel: Choose actions (F8)")
@@ -357,8 +357,58 @@ class MaintenanceGUI:
         """Runs an action from the actions ComboBox. Called when Enter is pressed."""
         if selected_value == "1 - Merge":
             self.run_merge()
+        elif selected_value == "2 - Split platform":
+            self.run_split_platform()
         else:
             self.show_messagebox("Action", f"Running action {selected_value}")
+
+    def run_split_platform(self):
+        if self.current_table_object != self.data_store.db_classes.Platform:
+            self.show_messagebox(
+                "Error",
+                "The split platform operation only works on the Platform table.\nPlease select this table first.",
+            )
+            return
+        if len(self.preview_table.current_values) != 1:
+            self.show_messagebox("Error", "To split a platform you must select only one platform.")
+            return
+
+        def do_split(selected_platform, set_percentage=None, is_cancelled=None):
+            with self.data_store.session_scope():
+                self.data_store.split_platform(selected_platform)
+                set_percentage(100)
+
+        async def coroutine():
+            selected_platform = self.preview_table.current_values[0]
+            platform_details = " - ".join(
+                [
+                    selected_platform.name,
+                    selected_platform.identifier,
+                    selected_platform.nationality_name,
+                ]
+            )
+            conf_dialog = ConfirmationDialog(
+                "Split platform", f"Do you want to split platform:\n{platform_details}?"
+            )
+            result = await self.show_dialog_as_float(conf_dialog)
+            if not result:
+                return
+
+            dialog = ProgressDialog(
+                "Splitting Platform",
+                partial(do_split, selected_platform),
+                show_cancel=False,
+            )
+            result = await self.show_dialog_as_float(dialog)
+            # Once the platform merge is done, show a message box
+            # We use the async version of this function as we're calling
+            # from within a coroutine
+            await self.show_messagebox_async("Split completed")
+            # Re-run the query, so we get an updated list in the preview
+            # and can see that some platforms have disappeared
+            self.run_query()
+
+        ensure_future(coroutine())
 
     def run_merge(self):
         """Runs the action to merge entries
