@@ -384,6 +384,7 @@ class PlatformTestCase(unittest.TestCase):
             synonym_platform = self.resolver.fuzzy_search_platform(
                 self.store,
                 "TEST",
+                identifier=None,
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
@@ -426,6 +427,7 @@ class PlatformTestCase(unittest.TestCase):
             ) = self.resolver.fuzzy_search_platform(
                 self.store,
                 "TEST",
+                identifier=None,
                 nationality=nationality.name,
                 platform_type=platform_type.name,
                 privacy=privacy.name,
@@ -476,6 +478,7 @@ class PlatformTestCase(unittest.TestCase):
                 "",
                 "",
                 "",
+                "",
                 change_id=self.change_id,
             )
 
@@ -520,6 +523,7 @@ class PlatformTestCase(unittest.TestCase):
             ) = self.resolver.resolve_platform(
                 data_store=self.store,
                 platform_name="TEST",
+                identifier=None,
                 platform_type=None,
                 nationality=None,
                 privacy=None,
@@ -579,6 +583,7 @@ class PlatformTestCase(unittest.TestCase):
             ) = self.resolver.resolve_platform(
                 data_store=self.store,
                 platform_name=None,
+                identifier=None,
                 platform_type=platform_type,
                 nationality=nationality,
                 privacy=privacy,
@@ -639,6 +644,7 @@ class PlatformTestCase(unittest.TestCase):
             ) = self.resolver.resolve_platform(
                 data_store=self.store,
                 platform_name=None,
+                identifier=None,
                 platform_type=platform_type,
                 nationality=nationality,
                 privacy=privacy,
@@ -677,6 +683,7 @@ class PlatformTestCase(unittest.TestCase):
             ) = self.resolver.resolve_platform(
                 data_store=self.store,
                 platform_name="TEST",
+                identifier=None,
                 platform_type=platform_type,
                 nationality=nationality,
                 privacy="PRIVACY-TEST",
@@ -719,6 +726,7 @@ class PlatformTestCase(unittest.TestCase):
                 self.resolver.fuzzy_search_platform(
                     self.store,
                     "TEST",
+                    identifier=None,
                     nationality=nationality.name,
                     platform_type=platform_type.name,
                     privacy=privacy.name,
@@ -772,6 +780,7 @@ class PlatformTestCase(unittest.TestCase):
                 self.resolver.resolve_platform(
                     data_store=self.store,
                     platform_name=None,
+                    identifier=None,
                     platform_type=platform_type,
                     nationality=nationality,
                     privacy=privacy,
@@ -816,6 +825,7 @@ class PlatformTestCase(unittest.TestCase):
                 self.resolver.add_to_platforms(
                     data_store=self.store,
                     platform_name=None,
+                    identifier=None,
                     platform_type=platform_type,
                     nationality=nationality,
                     privacy=privacy,
@@ -1531,7 +1541,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
                 change_id=self.change_id,
             )
             with self.assertRaises(SystemExit):
-                self.resolver.resolve_platform(self.store, "", "", "", "", self.change_id)
+                self.resolver.resolve_platform(self.store, "", "", "", "", "", self.change_id)
             with self.assertRaises(SystemExit):
                 self.resolver.resolve_sensor(
                     self.store, "", "", platform.platform_id, "", self.change_id
@@ -1556,7 +1566,9 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
                 change_id=self.change_id,
             )
             with self.assertRaises(SystemExit):
-                self.resolver.fuzzy_search_platform(self.store, "TEST", "", "", "", self.change_id)
+                self.resolver.fuzzy_search_platform(
+                    self.store, "TEST", "", "", "", "", self.change_id
+                )
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_cancelling_fuzzy_search_platform_when_given_platform_name(self, menu_prompt):
@@ -1578,7 +1590,9 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
                 change_id=self.change_id,
             )
             with self.assertRaises(SystemExit):
-                self.resolver.fuzzy_search_platform(self.store, "TEST", "", "", "", self.change_id)
+                self.resolver.fuzzy_search_platform(
+                    self.store, "TEST", "", "", "", "", self.change_id
+                )
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_cancelling_fuzzy_search_sensor(self, menu_prompt):
@@ -1623,7 +1637,9 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
             # Type name/trigraph/quadgraph/identifier->Select "Cancel nationality search"->
             # Select "Cancel import"
             with self.assertRaises(SystemExit):
-                self.resolver.add_to_platforms(self.store, "PLATFORM-1", "", "", "", self.change_id)
+                self.resolver.add_to_platforms(
+                    self.store, "PLATFORM-1", "", "", "", "", self.change_id
+                )
 
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     @patch("pepys_import.resolvers.command_line_resolver.prompt")
