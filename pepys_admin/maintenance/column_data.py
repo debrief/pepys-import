@@ -191,3 +191,38 @@ def create_column_data(data_store, table_object, set_percentage=None):
         set_percentage(100)
 
     return column_data
+
+
+def column_data_to_edit_data(column_data, table_object):
+    """
+    Converts the original column_data dictionary into a dictionary of data
+    for configuring the editing UI.
+
+    :param column_data: column_data dictionary, as provided by create_column_data and used in FilterWidget
+    :type column_data: dict
+    :param table_object: SQLAlchemy Table object, such as Platform or Nationality
+    :type table_object: SQLAlchemy Table object
+    :return: Dictionary giving structure of columns for editing GUI
+    :rtype: dict
+    """
+    edit_data = {}
+
+    for key, value in column_data.items():
+        if key == "created date":
+            # Don't allow to edit the created date
+            continue
+        if value["type"] == "id":
+            # Don't allow to edit ID columns
+            continue
+        table_attr = getattr(table_object, value["system_name"])
+        if not isinstance(
+            table_attr, sqlalchemy.ext.associationproxy.ColumnAssociationProxyInstance
+        ):
+            if "values" in value:
+                # If this isn't a foreign keyed column then don't provide a dropdown list
+                # as we only want dropdown lists for foreign keyed columns
+                del value["values"]
+
+        edit_data[key] = value
+
+    return edit_data

@@ -5,7 +5,8 @@ from prompt_toolkit.widgets import Label
 
 class EntryDisplayWidget:
     def __init__(self, edit_data, entries):
-        """Widget to display values from the database as multiple rows.
+        """
+        Widget to display values from the database as multiple rows.
 
         :param edit_data: edit_data dictionary giving structure of columns for editing UI
         :type edit_data: dict

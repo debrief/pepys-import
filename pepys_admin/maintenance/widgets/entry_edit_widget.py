@@ -12,7 +12,8 @@ PROMPT = "Enter new value"
 
 class EntryEditWidget:
     def __init__(self, edit_data):
-        """Widget for editing table data.
+        """
+        Widget for editing table data.
 
         :param edit_data: Dictionary giving data structure of columns to edit
         :type edit_data: dict
@@ -32,7 +33,8 @@ class EntryEditWidget:
 
     @property
     def output(self):
-        """Output of the editing, showing which fields are to be edited, and what the new values are
+        """
+        Output of the editing, showing which fields are to be edited, and what the new values are
 
         :return: Dictionary where keys are fields to be edited, and values are new values
         :rtype: dict
@@ -56,7 +58,8 @@ class EntryEditWidget:
 
 class EntryEditWidgetRow:
     def __init__(self, display_name, col_config, label_width, edit_width):
-        """Representation of a row in the EntryEditWidget. Each of these rows
+        """
+        Representation of a row in the EntryEditWidget. Each of these rows
         is for editing a single column.
 
         :param display_name: Display name for the row (used in the label)
@@ -119,7 +122,8 @@ class EntryEditWidgetRow:
             )
 
     def get_value(self):
-        """Gets the value of this edit row, looking up the ID for the selected dropdown entry
+        """
+        Gets the value of this edit row, looking up the ID for the selected dropdown entry
         if necessary.
 
         :return: Value or ID

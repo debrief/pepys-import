@@ -2008,7 +2008,8 @@ class DataStore:
         self.session.flush()
 
     def edit_items(self, items, edit_dict):
-        """Edits the given list of items, changing the fields to the new ones specified in edit_dict
+        """
+        Edits the given list of items, changing the fields to the new ones specified in edit_dict
 
         :param items: List of objects to edit
         :type items: Database objects (eg. Platform, Sensor, Nationality)
@@ -2052,11 +2053,11 @@ class DataStore:
         # Add a log entry for each field we've updated
         # (We do all the updates in one SQL query above, for efficiency, but have to loop through the items
         # and fields here to create the logs entries)
-        for id in ids:
+        for current_id in ids:
             for col_name, new_value in update_dict.items():
                 self.add_to_logs(
                     table_object.__tablename__,
-                    row_id=id,
+                    row_id=current_id,
                     field=col_name,
                     new_value=str(new_value),
                     change_id=change_id,
