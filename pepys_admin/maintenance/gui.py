@@ -659,6 +659,8 @@ class MaintenanceGUI:
                 ("instruction-text", "fg:ansibrightcyan"),
                 ("dropdown.box", "bg:ansibrightblack fg:ansiblack"),
                 ("combobox-highlight", "bg:ansiyellow"),
+                ("frame dialog.body text-area", "nounderline bg:ansiwhite"),
+                ("frame dialog.body text-area last-line", "nounderline bg:ansiwhite"),
             ]
         )
         return style
