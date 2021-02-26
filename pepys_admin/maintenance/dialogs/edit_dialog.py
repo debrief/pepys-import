@@ -12,11 +12,22 @@ from pepys_admin.maintenance.widgets.entry_edit_widget import EntryEditWidget
 
 class EditDialog:
     def __init__(self, column_data, table_object, entries):
+        """A dialog for editing object values.
+
+        :param column_data: The column_data dictionary for the given table object
+        :type column_data: dict
+        :param table_object: SQLAlchemy Table object, such as Platform, Sensor or Nationality
+        :type table_object: SQLAlchemy Table Object
+        :param entries: List of SQLAlchemy objects representing the objects to be edited
+        :type entries: list
+        """
         self.future = Future()
 
         ok_button = Button(text="OK", handler=self.handle_ok)
         cancel_button = Button(text="Cancel", handler=self.handle_cancel)
 
+        # Convert the column_data into the structure we need for editing the data
+        # This removes un-needed columns, and un-needed values lists
         edit_data = self.column_data_to_edit_data(column_data, table_object)
 
         self.entry_edit_widget = EntryEditWidget(edit_data)
@@ -49,6 +60,16 @@ class EditDialog:
         self.future.set_result(None)
 
     def column_data_to_edit_data(self, column_data, table_object):
+        """Converts the original column_data dictionary into a dictionary of data
+        for configuring the editing UI.
+
+        :param column_data: column_data dictionary, as provided by create_column_data and used in FilterWidget
+        :type column_data: dict
+        :param table_object: SQLAlchemy Table object, such as Platform or Nationality
+        :type table_object: SQLAlchemy Table object
+        :return: Dictionary giving structure of columns for editing GUI
+        :rtype: dict
+        """
         edit_data = {}
 
         for key, value in column_data.items():
