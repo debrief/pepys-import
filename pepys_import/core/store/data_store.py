@@ -1922,7 +1922,7 @@ class DataStore:
 
         return datafile_ids
 
-    def split_platform(self, platform_id) -> bool:
+    def split_platform(self, platform_id, set_percentage=None) -> bool:
         to_delete = list()
         Platform = self.db_classes.Platform
         Sensor = self.db_classes.Sensor
@@ -1936,6 +1936,9 @@ class DataStore:
             reason=f"Splitting platform: '{platform_id}'.",
         ).change_id
         datafile_ids = self._find_datafiles_and_measurements_for_platform(platform)
+        i = 0
+        percent_per_iteration = 100.0 / len(datafile_ids)
+
         objects = self._get_comments_and_sensors_of_platform(platform)
         for key, values in datafile_ids.items():
             time, measurement_objects = values["time"], values["objects"]
@@ -1993,6 +1996,10 @@ class DataStore:
                             for s in query.all()
                         ]
                         query.update({field: new_platform.platform_id}, synchronize_session="fetch")
+
+            if callable(set_percentage):
+                set_percentage(i * percent_per_iteration)
+
         # delete the split platform
         self.session.delete(platform)
         for s in to_delete:
