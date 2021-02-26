@@ -1,7 +1,6 @@
 from asyncio import Future
 
 import sqlalchemy
-from loguru import logger
 from prompt_toolkit.layout.containers import HSplit, VSplit
 from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.widgets import Button, Label
@@ -44,8 +43,7 @@ class EditDialog:
             self.handle_cancel()
 
     def handle_ok(self):
-        logger.debug(self.entry_edit_widget.output)
-        self.future.set_result(True)
+        self.future.set_result(self.entry_edit_widget.output)
 
     def handle_cancel(self):
         self.future.set_result(None)

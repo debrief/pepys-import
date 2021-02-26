@@ -165,16 +165,20 @@ def create_column_data(data_store, table_object, set_percentage=None):
                 else:
                     # For all other columns, no special processing is needed
                     all_records = data_store.session.query(ap_obj.target_class).all()
-                    values = [
-                        str_if_not_none(getattr(record, ap_obj.value_attr))
+                    # Sort the values and IDs lists together, so that ids[x] is still the
+                    # ID for values[x]
+                    values_and_ids = [
+                        (
+                            str_if_not_none(getattr(record, ap_obj.value_attr)),
+                            str(getattr(record, get_primary_key_for_table(ap_obj.target_class))),
+                        )
                         for record in all_records
                     ]
-                    ids = [
-                        str(getattr(record, get_primary_key_for_table(ap_obj.target_class)))
-                        for record in all_records
-                    ]
-                    details["values"] = sorted(remove_duplicates_and_nones(values))
-                    details["ids"] = ids
+                    sorted_values_and_ids = sorted(values_and_ids, key=lambda x: x[0])
+                    sorted_values = [item[0] for item in sorted_values_and_ids]
+                    sorted_ids = [item[1] for item in sorted_values_and_ids]
+                    details["values"] = sorted_values
+                    details["ids"] = sorted_ids
 
             column_data[get_display_name(ap_name)] = details
 

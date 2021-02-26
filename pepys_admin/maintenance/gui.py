@@ -1,7 +1,9 @@
+import textwrap
 import traceback
 from asyncio.tasks import ensure_future
 from functools import partial
 
+import sqlalchemy
 from loguru import logger
 from prompt_toolkit import Application
 from prompt_toolkit.application.current import get_app
@@ -366,6 +368,11 @@ class MaintenanceGUI:
             self.show_messagebox("Action", f"Running action {selected_value}")
 
     def run_edit_values(self):
+        def do_edit(items, edit_dict, set_percentage=None, is_cancelled=None):
+            with self.data_store.session_scope():
+                self.data_store.edit_items(items, edit_dict)
+            set_percentage(100)
+
         async def coroutine():
             if len(self.preview_table.current_values) == 0:
                 await self.show_messagebox_async(
@@ -375,7 +382,41 @@ class MaintenanceGUI:
             dialog = EditDialog(
                 self.column_data, self.current_table_object, self.preview_table.current_values
             )
-            await self.show_dialog_as_float(dialog)
+            edit_dict = await self.show_dialog_as_float(dialog)
+            if edit_dict is None:
+                # Dialog was cancelled
+                return
+
+            dialog = ProgressDialog(
+                "Editing items",
+                partial(do_edit, self.preview_table.current_values, edit_dict),
+                show_cancel=False,
+            )
+            result = await self.show_dialog_as_float(dialog)
+
+            if isinstance(result, Exception):
+                if isinstance(result, sqlalchemy.exc.IntegrityError):
+                    await self.show_messagebox_async(
+                        "Constraint Error",
+                        "Error setting values in the database due to a database constraint.\n\n"
+                        "This probably means you have tried to set values which violate a\n"
+                        "uniqueness constraint - for example, setting multiple platforms to have the\n"
+                        f"same name, identifier and nationality.\n\nOriginal error: {textwrap.fill(str(result), 60)}",
+                    )
+                    return
+                else:
+                    await self.show_messagebox_async(
+                        "Error",
+                        f"Error editing values\n\nOriginal error:{textwrap.fill(str(result), 60)}",
+                    )
+                    return
+            # Once the platform merge is done, show a message box
+            # We use the async version of this function as we're calling
+            # from within a coroutine
+            await self.show_messagebox_async("Edit completed")
+            # Re-run the query, so we get an updated list in the preview
+            # and can see that some platforms have disappeared
+            self.run_query()
 
         ensure_future(coroutine())
 
@@ -417,6 +458,12 @@ class MaintenanceGUI:
                 show_cancel=False,
             )
             result = await self.show_dialog_as_float(dialog)
+            if isinstance(result, Exception):
+                await self.show_messagebox_async(
+                    "Error",
+                    f"Error running split\n\nOriginal error:{textwrap.fill(str(result), 60)}",
+                )
+                return
             # Once the platform merge is done, show a message box
             # We use the async version of this function as we're calling
             # from within a coroutine
@@ -491,7 +538,13 @@ class MaintenanceGUI:
                     partial(do_merge, self.preview_table.current_values, master_obj),
                     show_cancel=False,
                 )
-                _ = await self.show_dialog_as_float(dialog)
+                result = await self.show_dialog_as_float(dialog)
+                if isinstance(result, Exception):
+                    await self.show_messagebox_async(
+                        "Error",
+                        f"Error running merge\n\nOriginal error:{textwrap.fill(str(result), 60)}",
+                    )
+                    return
                 # Once the platform merge is done, show a message box
                 # We use the async version of this function as we're calling
                 # from within a coroutine

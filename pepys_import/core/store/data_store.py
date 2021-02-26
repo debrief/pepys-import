@@ -6,6 +6,7 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
+import sqlalchemy
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
@@ -1989,3 +1990,58 @@ class DataStore:
         # delete the split platform
         self.session.delete(platform)
         self.session.flush()
+
+    def edit_items(self, items, edit_dict):
+        """Edits the given list of items, changing the fields to the new ones specified in edit_dict
+
+        :param items: List of objects to edit
+        :type items: Database objects (eg. Platform, Sensor, Nationality)
+        :param edit_dict: Dictionary with keys specifying the fields to be edited, and values specifying the new value.
+        For foreign keyed fields, the new value should be the ID of an existing entry in the foreign table
+        :type edit_dict: Dict
+        """
+        table_object = type(items[0])
+
+        ids = [str(getattr(item, get_primary_key_for_table(table_object))) for item in items]
+        ids_list_str = ", ".join(ids)
+
+        change_id = self.add_to_changes(
+            user=USER,
+            modified=datetime.utcnow(),
+            reason=f"Editing {table_object.__tablename__} items: {ids_list_str}",
+        ).change_id
+
+        # Get a query for all objects that match the IDs
+        query = self.session.query(table_object).filter(
+            getattr(table_object, get_primary_key_for_table(table_object)).in_(ids)
+        )
+        update_dict = {}
+        # Convert the edit_dict we get from the GUI into a dict suitable for use in the update function
+        # This involves converting any association proxy column names into the relevant foreign key name to set
+        for col_name, new_value in edit_dict.items():
+            attr_from_db_class = getattr(table_object, col_name)
+            if isinstance(
+                attr_from_db_class, sqlalchemy.ext.associationproxy.ColumnAssociationProxyInstance
+            ):
+                relationship_name = attr_from_db_class.target_collection
+                relationship_obj = getattr(table_object, relationship_name)
+                foreign_key_col_name = list(relationship_obj.property.local_columns)[0].key
+                update_dict[foreign_key_col_name] = new_value
+            else:
+                update_dict[col_name] = new_value
+
+        query.update(update_dict, synchronize_session="fetch")
+        self.session.commit()
+
+        # Add a log entry for each field we've updated
+        # (We do all the updates in one SQL query above, for efficiency, but have to loop through the items
+        # and fields here to create the logs entries)
+        for id in ids:
+            for col_name, new_value in update_dict.items():
+                self.add_to_logs(
+                    table_object.__tablename__,
+                    row_id=id,
+                    field=col_name,
+                    new_value=str(new_value),
+                    change_id=change_id,
+                )
