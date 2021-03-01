@@ -8,6 +8,8 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.margins import ScrollbarMargin
 from prompt_toolkit.mouse_events import MouseEventType
 
+DISABLED_TEXT = " (unavailable, click for more information)"
+
 
 class AdvancedComboBox:
     """
@@ -99,43 +101,39 @@ class AdvancedComboBox:
                         result.append([("class:combobox-highlight", entry_text)])
                     else:
                         result.append(
-                            [("class:combobox-highlight class:disabled-entry", entry_text)]
+                            [
+                                (
+                                    "class:combobox-highlight class:disabled-entry",
+                                    entry_text + DISABLED_TEXT,
+                                )
+                            ]
                         )
                 else:
                     if enabled:
                         result.append([("", entry_text)])
                     else:
-                        result.append([("class:disabled-entry", entry_text)])
+                        result.append([("class:disabled-entry", entry_text + DISABLED_TEXT)])
             else:
                 if enabled:
                     result.append(entry_text)
                 else:
-                    result.append([("class:disabled-entry", entry_text)])
+                    result.append([("class:disabled-entry", entry_text + DISABLED_TEXT)])
 
             result.append("\n")
 
         merged_text = merge_formatted_text(result)()
 
         # Go through the resulting tuples and add the mouse click handler to each of them
-        start_index = 0
-        for i in range(start_index, len(merged_text)):
+        for i in range(0, len(merged_text)):
             merged_text[i] = (merged_text[i][0], merged_text[i][1], self.handle_mouse_click)
 
         return merged_text
 
     def handle_mouse_click(self, mouse_event):
         if mouse_event.event_type == MouseEventType.MOUSE_UP:
-            # If we have an extra row at the top of the combo box
-            # for showing the filter text, then we need to take 1
-            # off the index when we work out which entry to use
-            offset = 1 if self.filter else 0
-
-            if self.popup:
-                self.future.set_result(self.entry_values[mouse_event.position.y - offset])
-            else:
-                self.value = self.entry_values[mouse_event.position.y - offset][0]
-                if self.enter_handler:
-                    self.enter_handler(self.value)
+            self.value = self.entry_values[mouse_event.position.y][0]
+            if self.enter_handler:
+                self.enter_handler(self.value)
 
     def _get_key_bindings(self) -> KeyBindings:
         kb = KeyBindings()
