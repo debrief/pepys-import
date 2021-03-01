@@ -1941,6 +1941,10 @@ class DataStore:
         percent_per_iteration = 100.0 / len(datafile_ids)
 
         objects = self._get_comments_and_sensors_of_platform(platform)
+
+        i = 0
+        percent_per_iteration = 100.0 / len(datafile_ids)
+
         for key, values in datafile_ids.items():
             time, measurement_objects = values["time"], values["objects"]
             new_platform = self.add_to_platforms(
