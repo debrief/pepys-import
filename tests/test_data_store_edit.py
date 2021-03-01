@@ -36,6 +36,7 @@ class EditDataTestCase(TestCase):
 
         assert result[0].name == self.platforms[0].name
         assert result[0].nationality_name == self.platforms[0].nationality_name
+        assert result[0].identifier == "NEWIDENT"
 
     def test_edit_platform_identifier_multiple(self):
         self.store.edit_items([self.platforms[0], self.platforms[1]], {"identifier": "NEWIDENT"})
@@ -52,9 +53,11 @@ class EditDataTestCase(TestCase):
 
         assert result[0].name == self.platforms[0].name
         assert result[0].nationality_name == self.platforms[0].nationality_name
+        assert result[0].identifier == "NEWIDENT"
 
         assert result[1].name == self.platforms[1].name
         assert result[1].nationality_name == self.platforms[1].nationality_name
+        assert result[1].identifier == "NEWIDENT"
 
     def test_edit_platform_multiple_fields_single_object(self):
         self.store.edit_items([self.platforms[0]], {"identifier": "NEWIDENT", "name": "TestName"})

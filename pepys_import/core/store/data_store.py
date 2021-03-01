@@ -2053,12 +2053,12 @@ class DataStore:
         # Add a log entry for each field we've updated
         # (We do all the updates in one SQL query above, for efficiency, but have to loop through the items
         # and fields here to create the logs entries)
-        for current_id in ids:
+        for item in items:
             for col_name, new_value in update_dict.items():
                 self.add_to_logs(
                     table_object.__tablename__,
-                    row_id=current_id,
+                    row_id=getattr(item, get_primary_key_for_table(table_object)),
                     field=col_name,
-                    new_value=str(new_value),
+                    new_value=str(getattr(item, col_name)),
                     change_id=change_id,
                 )
