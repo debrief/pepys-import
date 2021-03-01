@@ -39,9 +39,9 @@ from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
 from pepys_admin.maintenance.dialogs.selection_dialog import SelectionDialog
 from pepys_admin.maintenance.help import HELP_TEXT, INTRO_HELP_TEXT
 from pepys_admin.maintenance.utils import get_display_names, get_system_name_mappings
+from pepys_admin.maintenance.widgets.advanced_combo_box import AdvancedComboBox
 from pepys_admin.maintenance.widgets.blank_border import BlankBorder
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
-from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 from pepys_admin.maintenance.widgets.filter_widget_utils import filter_widget_output_to_query
@@ -166,8 +166,8 @@ class MaintenanceGUI:
         self.complete_query_window = Window(self.complete_query)
 
         # Actions container, containing a list of actions that can be run
-        self.actions_combo = ComboBox(
-            entries=["1 - Merge", "2 - Split platform", "3 - Edit values"],
+        self.actions_combo = AdvancedComboBox(
+            entries=self.get_actions_list,
             enter_handler=self.run_action,
         )
         self.set_contextual_help(self.actions_combo, "# Fourth panel: Choose actions (F8)")
@@ -227,6 +227,24 @@ class MaintenanceGUI:
             ),
             floats=[],
         )
+
+    def get_actions_list(self):
+        def is_merge_enabled():
+            return len(self.preview_table.current_values) > 1
+
+        def is_split_platform_enabled():
+            return (self.current_table_object == self.data_store.db_classes.Platform) and (
+                len(self.preview_table.current_values) == 1
+            )
+
+        def is_edit_values_enabled():
+            return len(self.preview_table.current_values) > 0
+
+        return [
+            ("1 - Merge", is_merge_enabled()),
+            ("2 - Split platform", is_split_platform_enabled()),
+            ("3 - Edit values", is_edit_values_enabled()),
+        ]
 
     def set_contextual_help(self, widget, text):
         """Sets the contextual help dictionary based on the widget's
@@ -726,6 +744,7 @@ class MaintenanceGUI:
                 ("frame dialog.body text-area last-line", "nounderline bg:ansiwhite"),
                 ("frame dialog.body button.text", "fg:ansiblack"),
                 ("frame dialog.body button.focused button.text", "fg:ansiwhite"),
+                ("disabled-entry", "fg:ansibrightblack"),
             ]
         )
         return style
