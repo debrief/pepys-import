@@ -509,9 +509,10 @@ class MaintenanceGUI:
         then opens a dialog to select the master entry, then runs the merge with a
         progress dialog, and displays a messagebox when it is finished.
         """
-        if len(self.preview_table.current_values) == 0:
+        if len(self.preview_table.current_values) <= 1:
             self.show_messagebox(
-                "Error", "You must select entries to merge before running the merge action."
+                "Error",
+                "You must select multiple entries to merge before running the merge action.",
             )
             return
 
