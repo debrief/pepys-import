@@ -32,7 +32,7 @@ F8: Choose actions
 You can also press Tab to go forward or Shift + Tab to go backward.
 """
 
-HELP_TEXT = """# First panel: Select data type (F2)
+HELP_TEXT = """ # First panel: Select data type (F2)
 Type the first letter(s) of the table you are looking for.
 
 Press Enter to expand the list of available tables, use arrow
@@ -89,11 +89,23 @@ To validate, navigate to the <  OK  >  button using TAB and press
 Enter
 
 # Fourth panel: Choose actions (F8)
-Merge Platforms is the only available action for now.
 
-The action applies to the platforms you selected in the preview
-list if any. When merging, you will be prompted to select the
-target platform in a popup. Select the platform and press Enter.
-Once the platforms are merged, press Enter and the Preview List
-will be updated.
+## 1 - Merge
+When multiple rows from a table are selected, the user is invited
+to merge the rows. The merge action starts with the user
+selecting the target row that that the data is to be merged into.
+When merging platforms, the sensors of the platforms to be merged
+are moved to the target platform. If a sensor with that name
+already exists then the measurements are moved to the existing
+sensor.
+
+## 2 - Split platforms
+If the data-type is Platform, and just one row is selected, the
+user is able to split that platform into multiple new platform
+instances. The platforms are split according to the datafiles
+their measurements are imported from.
+
+## 3 - Edit values
+If one or more rows are selected then Edit Values can be used to
+edit one  or more fields for those data items.
 """

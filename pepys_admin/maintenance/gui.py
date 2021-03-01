@@ -1,7 +1,9 @@
+import textwrap
 import traceback
 from asyncio.tasks import ensure_future
 from functools import partial
 
+import sqlalchemy
 from loguru import logger
 from prompt_toolkit import Application
 from prompt_toolkit.application.current import get_app
@@ -21,12 +23,15 @@ from prompt_toolkit.layout.containers import (
 from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.lexers.pygments import PygmentsLexer
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Border, Label
+from pygments.lexers.sql import SqlLexer
 from sqlalchemy.orm import undefer
 
 from pepys_admin.maintenance.column_data import create_column_data
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
+from pepys_admin.maintenance.dialogs.edit_dialog import EditDialog
 from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
 from pepys_admin.maintenance.dialogs.merge_dialog import MergeDialog
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
@@ -147,17 +152,22 @@ class MaintenanceGUI:
         )
         self.set_contextual_help(self.filter_widget, "# Second panel: Build filters F3")
         self.filter_container = DynamicContainer(self.get_filter_container)
+
+        lexer = PygmentsLexer(SqlLexer)
+
         # Buffer to hold just the filter part of the query in SQL form
-        self.filter_query_buffer = Buffer(document=Document("Filter query here", 0))
-        self.filter_query = BufferControl(self.filter_query_buffer)
+        self.filter_query_buffer = Buffer()
+        self.filter_query = BufferControl(self.filter_query_buffer, lexer=lexer)
+        self.filter_query_window = Window(self.filter_query)
 
         # Buffer to hold the complete query in SQL form
         self.complete_query_buffer = Buffer()
-        self.complete_query = BufferControl(self.complete_query_buffer)
+        self.complete_query = BufferControl(self.complete_query_buffer, lexer=lexer)
+        self.complete_query_window = Window(self.complete_query)
 
         # Actions container, containing a list of actions that can be run
         self.actions_combo = ComboBox(
-            entries=["1 - Merge", "2 - Split platform"],
+            entries=["1 - Merge", "2 - Split platform", "3 - Edit values"],
             enter_handler=self.run_action,
         )
         self.set_contextual_help(self.actions_combo, "# Fourth panel: Choose actions (F8)")
@@ -343,14 +353,17 @@ class MaintenanceGUI:
         a change in the output of the filters property. That means we can run a query
         each time this is called, and the query shouldn't get run more often than is needed."""
         # Convert the filter object to a SQL string to display in the Complete Query tab
-        # FUTURE: Not needed until we want to display raw SQL
-        # if value != []:
-        # filter_query = filter_widget_output_to_query(value, "Platforms", self.data_store)
-        # query_obj = self.data_store.session.query(self.data_store.db_classes.Platform).filter(
-        #     filter_query
-        # )
-        # sql_string = str(query_obj.statement.compile(compile_kwargs={"literal_binds": True}))
-        # self.filter_query_buffer.text = textwrap.fill(sql_string, width=50)
+        if value != []:
+            filter_query = filter_widget_output_to_query(
+                value, self.dropdown_table.text, self.data_store
+            )
+            query_obj = self.data_store.session.query(self.data_store.db_classes.Platform).filter(
+                filter_query
+            )
+            sql_string = str(query_obj.statement.compile(compile_kwargs={"literal_binds": True}))
+            self.complete_query_buffer.text = textwrap.fill(sql_string, width=70)
+            just_where_clause = sql_string[sql_string.index("WHERE") :]
+            self.filter_query_buffer.text = textwrap.fill(just_where_clause, width=70)
         self.run_query()
 
     def run_action(self, selected_value):
@@ -359,8 +372,63 @@ class MaintenanceGUI:
             self.run_merge()
         elif selected_value == "2 - Split platform":
             self.run_split_platform()
+        elif selected_value == "3 - Edit values":
+            self.run_edit_values()
         else:
             self.show_messagebox("Action", f"Running action {selected_value}")
+
+    def run_edit_values(self):
+        def do_edit(items, edit_dict, set_percentage=None, is_cancelled=None):
+            with self.data_store.session_scope():
+                self.data_store.edit_items(items, edit_dict)
+            set_percentage(100)
+
+        async def coroutine():
+            if len(self.preview_table.current_values) == 0:
+                await self.show_messagebox_async(
+                    "Error", "You must select at least one entry before editing."
+                )
+                return
+            dialog = EditDialog(
+                self.column_data, self.current_table_object, self.preview_table.current_values
+            )
+            edit_dict = await self.show_dialog_as_float(dialog)
+            if edit_dict is None or len(edit_dict) == 0:
+                # Dialog was cancelled
+                return
+
+            dialog = ProgressDialog(
+                "Editing items",
+                partial(do_edit, self.preview_table.current_values, edit_dict),
+                show_cancel=False,
+            )
+            result = await self.show_dialog_as_float(dialog)
+
+            if isinstance(result, Exception):
+                if isinstance(result, sqlalchemy.exc.IntegrityError):
+                    await self.show_messagebox_async(
+                        "Constraint Error",
+                        "Error setting values in the database due to a database constraint.\n\n"
+                        "This probably means you have tried to set values which violate a\n"
+                        "uniqueness constraint - for example, setting multiple platforms to have the\n"
+                        f"same name, identifier and nationality.\n\nOriginal error: {textwrap.fill(str(result), 60)}",
+                    )
+                    return
+                else:
+                    await self.show_messagebox_async(
+                        "Error",
+                        f"Error editing values\n\nOriginal error:{textwrap.fill(str(result), 60)}",
+                    )
+                    return
+            # Once the platform merge is done, show a message box
+            # We use the async version of this function as we're calling
+            # from within a coroutine
+            await self.show_messagebox_async("Edit completed")
+            # Re-run the query, so we get an updated list in the preview
+            # and can see that some platforms have disappeared
+            self.run_query()
+
+        ensure_future(coroutine())
 
     def run_split_platform(self):
         if self.current_table_object != self.data_store.db_classes.Platform:
@@ -400,6 +468,12 @@ class MaintenanceGUI:
                 show_cancel=False,
             )
             result = await self.show_dialog_as_float(dialog)
+            if isinstance(result, Exception):
+                await self.show_messagebox_async(
+                    "Error",
+                    f"Error running split\n\nOriginal error:{textwrap.fill(str(result), 60)}",
+                )
+                return
             # Once the platform merge is done, show a message box
             # We use the async version of this function as we're calling
             # from within a coroutine
@@ -474,7 +548,13 @@ class MaintenanceGUI:
                     partial(do_merge, self.preview_table.current_values, master_obj),
                     show_cancel=False,
                 )
-                _ = await self.show_dialog_as_float(dialog)
+                result = await self.show_dialog_as_float(dialog)
+                if isinstance(result, Exception):
+                    await self.show_messagebox_async(
+                        "Error",
+                        f"Error running merge\n\nOriginal error:{textwrap.fill(str(result), 60)}",
+                    )
+                    return
                 # Once the platform merge is done, show a message box
                 # We use the async version of this function as we're calling
                 # from within a coroutine
@@ -559,16 +639,15 @@ class MaintenanceGUI:
             self.filters_tab = "filters"
             event.app.layout.focus(self.filter_container)
 
-        # FUTURE: Not needed until we want to display the raw SQL
-        # @kb.add("f4")
-        # def _(event):
-        #     self.filters_tab = "filter_query"
-        #     event.app.layout.focus(self.filter_container)
+        @kb.add("f4")
+        def _(event):
+            self.filters_tab = "filter_query"
+            event.app.layout.focus(self.filter_query)
 
-        # @kb.add("f5")
-        # def _(event):
-        #     self.filters_tab = "complete_query"
-        #     event.app.layout.focus(self.filter_container)
+        @kb.add("f5")
+        def _(event):
+            self.filters_tab = "complete_query"
+            event.app.layout.focus(self.complete_query)
 
         @kb.add("f6")
         def _(event):
@@ -640,8 +719,13 @@ class MaintenanceGUI:
                 ("checkbox-selected", "bg:ansiyellow"),
                 ("status-bar-text", "bg:ansibrightblack"),
                 ("instruction-text", "fg:ansibrightcyan"),
+                ("instruction-text-dark", "fg:ansicyan"),
                 ("dropdown.box", "bg:ansibrightblack fg:ansiblack"),
                 ("combobox-highlight", "bg:ansiyellow"),
+                ("frame dialog.body text-area", "nounderline bg:ansiwhite"),
+                ("frame dialog.body text-area last-line", "nounderline bg:ansiwhite"),
+                ("frame dialog.body button.text", "fg:ansiblack"),
+                ("frame dialog.body button.focused button.text", "fg:ansiwhite"),
             ]
         )
         return style
@@ -658,7 +742,6 @@ class MaintenanceGUI:
         float_ = Float(content=dialog)
         # Put it at the top of the float list in the root container
         # (which is a FloatContainer)
-        # self.root_container.floats.insert(0, float_)
         self.root_container.floats.append(float_)
 
         app = get_app()
@@ -711,8 +794,7 @@ class MaintenanceGUI:
     def get_filter_container(self):
         """Called by the DynamicContainer which displays the filter container"""
         top_label = Label(
-            # text="Build filters  F3 | Show Filter Query  F4 | Show complete query  F5",
-            text="Build filters  F3",
+            text="Build filters  F3 | Show Filter Query  F4 | Show complete query  F5",
             style="class:title-line",
         )
         # Show different widgets, depending on the tab selected
@@ -729,25 +811,24 @@ class MaintenanceGUI:
                 padding=1,
                 height=Dimension(weight=0.70),
             )
-        # FUTURE: Not needed until we want to display raw SQL queries
-        # elif self.filters_tab == "filter_query":
-        #     return HSplit(
-        #         [
-        #             top_label,
-        #             Window(self.filter_query),
-        #         ],
-        #         padding=1,
-        #         height=Dimension(weight=0.5),
-        #     )
-        # elif self.filters_tab == "complete_query":
-        #     return HSplit(
-        #         [
-        #             top_label,
-        #             Window(self.complete_query),
-        #         ],
-        #         padding=1,
-        #         height=Dimension(weight=0.5),
-        #     )
+        elif self.filters_tab == "filter_query":
+            return HSplit(
+                [
+                    top_label,
+                    self.filter_query_window,
+                ],
+                padding=1,
+                height=Dimension(weight=0.5),
+            )
+        elif self.filters_tab == "complete_query":
+            return HSplit(
+                [
+                    top_label,
+                    self.complete_query_window,
+                ],
+                padding=1,
+                height=Dimension(weight=0.5),
+            )
 
     def get_preview_container(self):
         """Called by the DynamicContainer that displays the preview pane"""
