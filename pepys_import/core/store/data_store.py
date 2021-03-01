@@ -1936,9 +1936,6 @@ class DataStore:
             reason=f"Splitting platform: '{platform_id}'.",
         ).change_id
         datafile_ids = self._find_datafiles_and_measurements_for_platform(platform)
-        i = 0
-        percent_per_iteration = 100.0 / len(datafile_ids)
-
         objects = self._get_comments_and_sensors_of_platform(platform)
 
         i = 0
