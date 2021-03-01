@@ -44,7 +44,7 @@ class AddDialog:
         self.body = HSplit([instructions, self.entry_edit_widget, self.error_message], padding=1)
 
         self.dialog = Dialog(
-            title="Add item",
+            title=f"Add {table_object.__name__}",
             body=self.body,
             buttons=[ok_button, cancel_button],
             width=D(preferred=80),
