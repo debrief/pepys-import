@@ -41,7 +41,7 @@ class EntryEditWidget:
         """
         output = {}
         (
-            system_name_to_display_name,
+            _,
             display_name_to_system_name,
         ) = get_system_name_mappings(self.edit_data)
 
