@@ -30,6 +30,7 @@ from pygments.lexers.sql import SqlLexer
 from sqlalchemy.orm import undefer
 
 from pepys_admin.maintenance.column_data import create_column_data
+from pepys_admin.maintenance.dialogs.add_dialog import AddDialog
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.dialogs.edit_dialog import EditDialog
 from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
@@ -167,7 +168,13 @@ class MaintenanceGUI:
 
         # Actions container, containing a list of actions that can be run
         self.actions_combo = ComboBox(
-            entries=["1 - Merge", "2 - Split platform", "3 - Edit values"],
+            entries=[
+                "1 - Merge",
+                "2 - Split platform",
+                "3 - Edit values",
+                "4 - Delete entries",
+                "5 - Add entry",
+            ],
             enter_handler=self.run_action,
         )
         self.set_contextual_help(self.actions_combo, "# Fourth panel: Choose actions (F8)")
@@ -180,7 +187,7 @@ class MaintenanceGUI:
                 self.actions_combo,
             ],
             padding=1,
-            height=Dimension(weight=0.1),
+            height=Dimension(weight=0.2),
         )
 
         # Preview container, with two tabs: a preview table and a preview graph
@@ -374,8 +381,92 @@ class MaintenanceGUI:
             self.run_split_platform()
         elif selected_value == "3 - Edit values":
             self.run_edit_values()
+        elif selected_value == "4 - Delete entries":
+            self.run_delete()
+        elif selected_value == "5 - Add entry":
+            self.run_add()
         else:
             self.show_messagebox("Action", f"Running action {selected_value}")
+
+    def run_add(self):
+        def do_add(table_object, edit_dict, set_percentage=None, is_cancelled=None):
+            with self.data_store.session_scope():
+                self.data_store.add_item(table_object, edit_dict)
+            set_percentage(100)
+
+        async def coroutine():
+            dialog = AddDialog(self.column_data, self.current_table_object)
+            edit_dict = await self.show_dialog_as_float(dialog)
+            if edit_dict is None or len(edit_dict) == 0:
+                # Dialog was cancelled
+                return
+
+            logger.debug(edit_dict)
+
+            dialog = ProgressDialog(
+                "Adding items",
+                partial(do_add, self.current_table_object, edit_dict),
+                show_cancel=False,
+            )
+            result = await self.show_dialog_as_float(dialog)
+
+            if isinstance(result, Exception):
+                if isinstance(result, sqlalchemy.exc.IntegrityError):
+                    await self.show_messagebox_async(
+                        "Constraint Error",
+                        "Error setting values in the database due to a database constraint.\n\n"
+                        "This probably means you have either not set some required values,\n"
+                        "tried to set values which violate a uniqueness constraint (for example,\n"
+                        "setting multiple platforms to have the same name, identifier and\n"
+                        "nationality), or set an invalid value for a column - for example\n"
+                        f"a value which is too long.\n\nOriginal error: {textwrap.fill(str(result), 60)}",
+                    )
+                    return
+                else:
+                    await self.show_messagebox_async(
+                        "Error",
+                        f"Error editing values\n\nOriginal error:{textwrap.fill(str(result), 60)}",
+                    )
+                    return
+            # Once the platform merge is done, show a message box
+            # We use the async version of this function as we're calling
+            # from within a coroutine
+            await self.show_messagebox_async("Add completed")
+            # Re-run the query, so we get an updated list in the preview
+            # and can see that a new entry has been added
+            self.run_query()
+
+        ensure_future(coroutine())
+
+    def run_delete(self):
+        async def coroutine():
+            entries = self.preview_table.current_values
+            if len(entries) < 10:
+                display_strs = []
+                for entry in entries:
+                    display_str = " - ".join(
+                        [
+                            str(getattr(entry, field_name))
+                            for field_name in entry._default_preview_fields
+                        ]
+                    )
+                    display_strs.append(display_str)
+                selected_items_text = "\n".join(display_strs)
+            else:
+                selected_items_text = f"{len(entries)} items selected"
+
+            dialog = ConfirmationDialog(
+                "Delete?",
+                f"Are you sure you want to delete the following entries:\n\n{selected_items_text}",
+            )
+            result = await self.show_dialog_as_float(dialog)
+
+            if not result:
+                return
+
+            # TODO: Do actual delete here
+
+        ensure_future(coroutine())
 
     def run_edit_values(self):
         def do_edit(items, edit_dict, set_percentage=None, is_cancelled=None):
@@ -727,6 +818,7 @@ class MaintenanceGUI:
                 ("frame dialog.body text-area last-line", "nounderline bg:ansiwhite"),
                 ("frame dialog.body button.text", "fg:ansiblack"),
                 ("frame dialog.body button.focused button.text", "fg:ansiwhite"),
+                ("error-message", "fg:ansibrightred"),
             ]
         )
         return style
