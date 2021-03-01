@@ -92,17 +92,17 @@ Enter
 
 ## 1 - Merge
 When multiple rows from a table are selected, the user is invited
-to merge the e rows.  The merge action starts with the user
+to merge the rows. The merge action starts with the user
 selecting the target row that that the data is to be merged into.
 When merging platforms, the sensors of the platforms to be merged
-are moved to the target platform.  If a sensor with that name
+are moved to the target platform. If a sensor with that name
 already exists then the measurements are moved to the existing
 sensor.
 
 ## 2 - Split platforms
 If the data-type is Platform, and just one row is selected, the
 user is able to split that platform into multiple new platform
-instances.  The platforms are split according to the datafiles
+instances. The platforms are split according to the datafiles
 their measurements are imported from.
 
 ## 3 - Edit values
