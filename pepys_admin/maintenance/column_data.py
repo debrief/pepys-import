@@ -146,7 +146,11 @@ def create_column_data(data_store, table_object, set_percentage=None):
                         .all()
                     )
                     nationality_names = [nationality.name for nationality in all_nationalities]
+                    nationality_ids = [
+                        str(nationality.nationality_id) for nationality in all_nationalities
+                    ]
                     details["values"] = nationality_names
+                    details["ids"] = nationality_ids
                 elif details["system_name"] == "privacy_name":
                     # Get privacy names as a special case, as we want to sort by level
                     all_privacies = (
@@ -155,15 +159,26 @@ def create_column_data(data_store, table_object, set_percentage=None):
                         .all()
                     )
                     privacy_names = [priv.name for priv in all_privacies]
+                    privacy_ids = [str(priv.privacy_id) for priv in all_privacies]
                     details["values"] = privacy_names
+                    details["ids"] = privacy_ids
                 else:
                     # For all other columns, no special processing is needed
                     all_records = data_store.session.query(ap_obj.target_class).all()
-                    values = [
-                        str_if_not_none(getattr(record, ap_obj.value_attr))
+                    # Sort the values and IDs lists together, so that ids[x] is still the
+                    # ID for values[x]
+                    values_and_ids = [
+                        (
+                            str_if_not_none(getattr(record, ap_obj.value_attr)),
+                            str(getattr(record, get_primary_key_for_table(ap_obj.target_class))),
+                        )
                         for record in all_records
                     ]
-                    details["values"] = sorted(remove_duplicates_and_nones(values))
+                    sorted_values_and_ids = sorted(values_and_ids, key=lambda x: x[0])
+                    sorted_values = [item[0] for item in sorted_values_and_ids]
+                    sorted_ids = [item[1] for item in sorted_values_and_ids]
+                    details["values"] = sorted_values
+                    details["ids"] = sorted_ids
 
             column_data[get_display_name(ap_name)] = details
 
@@ -176,3 +191,38 @@ def create_column_data(data_store, table_object, set_percentage=None):
         set_percentage(100)
 
     return column_data
+
+
+def column_data_to_edit_data(column_data, table_object):
+    """
+    Converts the original column_data dictionary into a dictionary of data
+    for configuring the editing UI.
+
+    :param column_data: column_data dictionary, as provided by create_column_data and used in FilterWidget
+    :type column_data: dict
+    :param table_object: SQLAlchemy Table object, such as Platform or Nationality
+    :type table_object: SQLAlchemy Table object
+    :return: Dictionary giving structure of columns for editing GUI
+    :rtype: dict
+    """
+    edit_data = {}
+
+    for key, value in column_data.items():
+        if key == "created date":
+            # Don't allow to edit the created date
+            continue
+        if value["type"] == "id":
+            # Don't allow to edit ID columns
+            continue
+        table_attr = getattr(table_object, value["system_name"])
+        if not isinstance(
+            table_attr, sqlalchemy.ext.associationproxy.ColumnAssociationProxyInstance
+        ):
+            if "values" in value:
+                # If this isn't a foreign keyed column then don't provide a dropdown list
+                # as we only want dropdown lists for foreign keyed columns
+                del value["values"]
+
+        edit_data[key] = value
+
+    return edit_data
