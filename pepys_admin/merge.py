@@ -198,7 +198,6 @@ class MergeDatabases:
                         table=master_entry.__table__.name,
                         row_id=getattr(master_entry, primary_key),
                         field=col_name,
-                        new_value=getattr(slave_entry, col_name),
                         change_id=self.merge_change_id,
                     )
                     # Note that we modified it, so we can update in DB if necessary
