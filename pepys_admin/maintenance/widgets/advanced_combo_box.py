@@ -124,10 +124,9 @@ class AdvancedComboBox:
         merged_text = merge_formatted_text(result)()
 
         # Go through the resulting tuples and add the mouse click handler to each of them
-        for i in range(0, len(merged_text)):
-            merged_text[i] = (merged_text[i][0], merged_text[i][1], self.handle_mouse_click)
+        output_text = [(entry[0], entry[1], self.handle_mouse_click) for entry in merged_text]
 
-        return merged_text
+        return output_text
 
     def handle_mouse_click(self, mouse_event):
         if mouse_event.event_type == MouseEventType.MOUSE_UP:
