@@ -267,7 +267,7 @@ class Log(BasePostGIS, LogMixin):
     )
     id = Column(UUID(as_uuid=True), nullable=False)
     field = Column(String(150))
-    new_value = Column(String(150))
+    previous_value = Column(String(150))
     change_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.Changes.change_id", onupdate="cascade"),
