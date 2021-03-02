@@ -17,11 +17,13 @@ RETURNS TABLE (
 	platformtype_name varchar(150),
 	nationality_name varchar(150),
 	content text,
-	comment_type_name varchar(150))
+	comment_type_name varchar(150),
+	reference varchar(150))
+
 AS
 $$
 --Name: Comments_For 
---Version: v0.15
+--Version: v0.16
 	with
 	ui_filter_input as
 		(select
@@ -48,8 +50,10 @@ $$
 			)
 	select filtered_comments.comment_id, filtered_comments.time, Platforms.name,
 			PlatformTypes.name, Nationalities.name,
-			filtered_comments.content, CommentTypes.name from
+			filtered_comments.content, CommentTypes.name,
+			Datafiles.reference from
 			pepys."Comments" as filtered_comments inner join
+			pepys."Datafiles" as Datafiles on Datafiles.datafile_id=filtered_comments.source_id inner join
 			pepys."Platforms" as Platforms on filtered_comments.platform_id=Platforms.platform_id inner join
 			pepys."PlatformTypes" as PlatformTypes on Platforms.platform_type_id = PlatformTypes.platform_type_id inner join
 			pepys."Nationalities" as Nationalities on Platforms.nationality_id = Nationalities.nationality_id inner join

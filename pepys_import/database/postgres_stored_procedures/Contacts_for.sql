@@ -20,11 +20,12 @@ RETURNS TABLE (
 	nationality_name varchar(150),
 	bearing double precision,
 	range double precision,
-	contact_location public.geometry(Point,4326))
+	contact_location public.geometry(Point,4326),
+	reference varchar(150))
 AS
 $$
 --Name: Contacts_For 
---Version: v0.15
+--Version: v0.16
 	with
 	ui_filter_input as
 		(select
@@ -53,8 +54,10 @@ $$
 			)
 	select filtered_contacts.contact_id, filtered_contacts.time, Sensors.name, Platforms.name,
 			PlatformTypes.name, Nationalities.name,
-			filtered_contacts.bearing, filtered_contacts.range, filtered_contacts.location from
+			filtered_contacts.bearing, filtered_contacts.range, filtered_contacts.location,
+			Datafiles.reference from
 		pepys."Contacts" as filtered_contacts inner join
+		pepys."Datafiles" as Datafiles on Datafiles.datafile_id=filtered_contacts.source_id inner join
 		pepys."Sensors" as Sensors on filtered_contacts.sensor_id = Sensors.sensor_id inner join
 		pepys."Platforms" as Platforms on Sensors.host=Platforms.platform_id inner join
 		pepys."PlatformTypes" as PlatformTypes on Platforms.platform_type_id = PlatformTypes.platform_type_id inner join
