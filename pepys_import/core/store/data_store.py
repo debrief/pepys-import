@@ -2060,6 +2060,6 @@ class DataStore:
                     table_object.__tablename__,
                     row_id=getattr(item, get_primary_key_for_table(table_object)),
                     field=col_name,
-                    new_value=str(getattr(item, col_name)),
+                    previous_value=str(getattr(item, col_name)),
                     change_id=change_id,
                 )
