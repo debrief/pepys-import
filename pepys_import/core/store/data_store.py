@@ -1723,7 +1723,7 @@ class DataStore:
                 set_percentage(50 + (i * percentage_per_iteration))
 
         # Delete merged platforms
-        self._delete_merged_objects(Platform, platform_list)
+        self.delete_objects(Platform, platform_list)
         self.session.flush()
         return True
 
@@ -1772,12 +1772,19 @@ class DataStore:
             raise ValueError(f"No object found with the given master_id: '{master_id}'!")
         return master_obj
 
-    def _delete_merged_objects(self, table_obj, id_list):
+    def delete_objects(self, table_obj, id_list):
+        if isinstance(table_obj, str):
+            table_obj = self._get_table_object(table_obj)
         # Delete merged objects
         self.session.query(table_obj).filter(
             getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
         ).delete(synchronize_session="fetch")
         self.session.flush()
+
+    def _get_table_object(self, table_name):
+        # Table names are plural in the database, therefore make it singular
+        table = table_name_to_class_name(table_name)
+        return getattr(self.db_classes, table)
 
     def merge_measurements(self, table_name, id_list, master_id, change_id, set_percentage=None):
         if table_name == constants.SENSOR:
@@ -1826,12 +1833,10 @@ class DataStore:
                 set_percentage(10 + (i * percentage_per_iteration))
 
         # Delete merged objects
-        self._delete_merged_objects(table_obj, id_list)
+        self.delete_objects(table_obj, id_list)
 
     def merge_objects(self, table_name, id_list, master_id, change_id, set_percentage=None):
-        # Table names are plural in the database, therefore make it singular
-        table = table_name_to_class_name(table_name)
-        table_obj = getattr(self.db_classes, table)
+        table_obj = self._get_table_object(table_name)
         to_obj = self._check_master_id(table_obj, master_id)
 
         # We've already used 10% of the progress bar in merge_generic,
@@ -1858,14 +1863,13 @@ class DataStore:
             if callable(set_percentage):
                 set_percentage(10 + (i * percentage_per_iteration))
         # Delete merged objects
-        self._delete_merged_objects(table_obj, id_list)
+        self.delete_objects(table_obj, id_list)
 
     def merge_generic(self, table_name, id_list, master_id, set_percentage=None) -> bool:
         reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
         reference_table_names = [obj.__tablename__ for obj in reference_table_objects]
 
-        table = table_name_to_class_name(table_name)
-        table_obj = getattr(self.db_classes, table)
+        table_obj = self._get_table_object(table_name)
         if id_list and not isinstance(id_list[0], uuid.UUID):
             id_list = [getattr(i, get_primary_key_for_table(table_obj)) for i in id_list]
 
@@ -2066,3 +2070,23 @@ class DataStore:
                     new_value=str(getattr(item, col_name)),
                     change_id=change_id,
                 )
+
+    def find_dependent_objects(self, table_name, id_list):
+        output = {table_name: len(id_list)}
+        objects = list()
+        table_obj = self._get_table_object(table_name)
+        object_list = (
+            self.session.query(table_obj)
+            .filter(getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list))
+            .all()
+        )
+        for obj in object_list:
+            objects.extend(list(dependent_objects(obj)))
+        for o in objects:
+            table_name = type(o).__tablename__
+            if table_name not in output:
+                output[table_name] = 1
+            else:
+                output[table_name] += 1
+
+        return output
