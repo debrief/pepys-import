@@ -22,11 +22,12 @@ RETURNS TABLE (
 	elevation double precision,
 	heading double precision,
 	course double precision,
-	speed double precision)
+	speed double precision,
+	reference varchar(150))
 AS
 $$
 --Name: States_For 
---Version: v0.15
+--Version: v0.16
 	 with
 	ui_filter_input as
 		(select
@@ -55,8 +56,10 @@ $$
 			)
 	select filtered_states.state_id, filtered_states.time, Sensors.name, Platforms.name,
 		PlatformTypes.name, Nationalities.name,
-		filtered_states.location, filtered_states.elevation, filtered_states.heading, filtered_states.course, filtered_states.speed from
+		filtered_states.location, filtered_states.elevation, filtered_states.heading, filtered_states.course, filtered_states.speed,
+		Datafiles.reference from
 		pepys."States" as filtered_states inner join
+		pepys."Datafiles" as Datafiles on Datafiles.datafile_id=filtered_states.source_id inner join
 		pepys."Sensors" as Sensors on filtered_states.sensor_id = Sensors.sensor_id inner join
 		pepys."Platforms" as Platforms on Sensors.host=Platforms.platform_id inner join
 		pepys."PlatformTypes" as PlatformTypes on Platforms.platform_type_id = PlatformTypes.platform_type_id inner join

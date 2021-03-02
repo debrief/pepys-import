@@ -47,9 +47,11 @@ select filtered_comments.comment_id,
 		PlatformTypes.name,
 		Nationalities.name,
 		filtered_comments.content,
-		CommentTypes.name
+		CommentTypes.name,
+		Datafiles.reference
 	from
 		"Comments" as filtered_comments inner join
+		"Datafiles" as Datafiles on Datafiles.datafile_id=filtered_comments.source_id inner join
 		"Platforms" as Platforms on filtered_comments.platform_id=Platforms.platform_id inner join
 		"PlatformTypes" as PlatformTypes on Platforms.platform_type_id = PlatformTypes.platform_type_id inner join
 		"Nationalities" as Nationalities on Platforms.nationality_id = Nationalities.nationality_id inner join
