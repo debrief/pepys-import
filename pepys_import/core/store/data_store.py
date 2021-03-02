@@ -1219,14 +1219,14 @@ class DataStore:
     #############################################################
     # Metadata Maintenance
 
-    def add_to_logs(self, table, row_id, field=None, new_value=None, change_id=None):
+    def add_to_logs(self, table, row_id, field=None, previous_value=None, change_id=None):
         """
         Adds the specified event to the :class:`Logs` table if not already present.
 
         :param table: Name of the table
         :param row_id: Entity ID of the tale
         :param field:  Name of the field
-        :param new_value:  New value of the field
+        :param previous_value:  Previous value of the field
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :param change_id:  Row ID of entity of :class:`Changes` about the change
@@ -1236,7 +1236,7 @@ class DataStore:
             table=table,
             id=row_id,
             field=field,
-            new_value=new_value,
+            previous_value=previous_value,
             change_id=change_id,
         )
         self.session.add(log)
@@ -1703,7 +1703,7 @@ class DataStore:
                         table=constants.SENSOR,
                         row_id=s.sensor_id,
                         field="host",
-                        new_value=str(s.host),
+                        previous_value=str(s.host),
                         change_id=change_id,
                     )
                     for s in query.all()
@@ -1752,7 +1752,7 @@ class DataStore:
                             table=table.__tablename__,
                             row_id=getattr(s, primary_key_field),
                             field=field,
-                            new_value=str(merge_platform_id),
+                            previous_value=str(merge_platform_id),
                             change_id=change_id,
                         )
                         for s in query.all()
@@ -1815,7 +1815,7 @@ class DataStore:
                     table=t_obj.__tablename__,
                     row_id=getattr(s, field),
                     field=field,
-                    new_value=values,
+                    previous_value=values,
                     change_id=change_id,
                 )
                 for s in query.all()
@@ -1850,7 +1850,7 @@ class DataStore:
                 table=table_obj.__tablename__,
                 row_id=getattr(from_obj, primary_key_field),
                 field=primary_key_field,
-                new_value=str(obj_id),
+                previous_value=str(obj_id),
                 change_id=change_id,
             )
             self.session.flush()
@@ -1937,9 +1937,6 @@ class DataStore:
             reason=f"Splitting platform: '{platform_id}'.",
         ).change_id
         datafile_ids = self._find_datafiles_and_measurements_for_platform(platform)
-        i = 0
-        percent_per_iteration = 100.0 / len(datafile_ids)
-
         objects = self._get_comments_and_sensors_of_platform(platform)
 
         i = 0
@@ -1975,7 +1972,7 @@ class DataStore:
                                 table=obj.__tablename__,
                                 row_id=getattr(obj, primary_key_field),
                                 field="sensor_id",
-                                new_value=str(old_id),
+                                previous_value=str(old_id),
                                 change_id=change_id,
                             )
                     if obj not in to_delete:
@@ -1995,7 +1992,7 @@ class DataStore:
                                 table=obj.__tablename__,
                                 row_id=getattr(s, primary_key_field),
                                 field=field,
-                                new_value=str(platform.platform_id),
+                                previous_value=str(platform.platform_id),
                                 change_id=change_id,
                             )
                             for s in query.all()
@@ -2063,6 +2060,6 @@ class DataStore:
                     table_object.__tablename__,
                     row_id=getattr(item, get_primary_key_for_table(table_object)),
                     field=col_name,
-                    new_value=str(getattr(item, col_name)),
+                    previous_value=str(getattr(item, col_name)),
                     change_id=change_id,
                 )

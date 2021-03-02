@@ -2069,7 +2069,7 @@ class TestMergeUpdatePlatformPrivacy(unittest.TestCase):
                 # Check a log entry was added for updating the trigraph field
                 results = (
                     self.master_store.session.query(self.master_store.db_classes.Log)
-                    .filter(self.master_store.db_classes.Log.new_value == "PLT")
+                    .filter(self.master_store.db_classes.Log.field == "trigraph")
                     .all()
                 )
 
