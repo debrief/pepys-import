@@ -19,7 +19,9 @@ class Location:
         return f"Location(lon={self.longitude}, lat={self.latitude})"
 
     def __str__(self):
-        return f"{self.longitude:.3f}, {self.latitude:.3f}"
+        lon_format = f"{self.longitude:.3f}" if self.longitude is not None else None
+        lat_format = f"{self.latitude:.3f}" if self.latitude is not None else None
+        return f"{lon_format}, {lat_format}"
 
     def __eq__(self, other):
         if not isinstance(other, Location):
