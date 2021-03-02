@@ -2070,11 +2070,13 @@ class DataStore:
             setattr(new_item, col_name, value)
 
         self.session.add(new_item)
+        # Must commit first, so that the primary key field is filled with the
+        # new ID, before we reference it below in the add_to_logs function
+        self.session.commit()
 
         self.add_to_logs(
             table_object.__tablename__,
             row_id=getattr(new_item, get_primary_key_for_table(table_object)),
             change_id=change_id,
         )
-
         self.session.commit()
