@@ -1,5 +1,7 @@
 import re
 
+import pint
+
 
 def get_display_names(fields, capitalized=False):
     """
@@ -57,3 +59,13 @@ def remove_duplicates_and_nones(items):
     new_list = [item for item in items if item is not None]
 
     return list(set(new_list))
+
+
+def get_str_for_field(value):
+    if type(value) is float:
+        # For floats, display to 2 decimal places
+        return f"{value:.2f}"
+    if isinstance(value, pint.Quantity):
+        return f"{value:~.2fP}"
+    else:
+        return str(value)

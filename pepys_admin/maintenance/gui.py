@@ -39,7 +39,11 @@ from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
 from pepys_admin.maintenance.dialogs.selection_dialog import SelectionDialog
 from pepys_admin.maintenance.help import HELP_TEXT, INTRO_HELP_TEXT
-from pepys_admin.maintenance.utils import get_display_names, get_system_name_mappings
+from pepys_admin.maintenance.utils import (
+    get_display_names,
+    get_str_for_field,
+    get_system_name_mappings,
+)
 from pepys_admin.maintenance.widgets.blank_border import BlankBorder
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
@@ -121,11 +125,14 @@ class MaintenanceGUI:
         """Initialise all of the UI components, controls, containers and widgets"""
         # Dropdown box to select table, plus pane that it is in
         metadata_tables = ["Platforms", "Sensors", "Datafiles"]
+        measurement_tables = sorted(
+            [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.MEASUREMENT]]
+        )
         reference_tables = sorted(
             [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.REFERENCE]]
         )
         reference_tables.remove("HelpTexts")
-        tables_list = metadata_tables + reference_tables
+        tables_list = metadata_tables + measurement_tables + reference_tables
         self.dropdown_table = DropdownBox(
             text="Select a table",
             entries=tables_list,
@@ -281,7 +288,7 @@ class MaintenanceGUI:
 
                 # Get all the results, while undefering all fields to make sure everything is
                 # available once it's been expunged (disconnected) from the database
-                results = query_obj.options(undefer("*")).all()
+                results = query_obj.options(undefer("*")).limit(100).all()
 
                 if len(results) == 0:
                     # If we've got no results then just update the app display
@@ -297,7 +304,7 @@ class MaintenanceGUI:
                     # Get the right fields and append them
                     self.table_data.append(
                         [
-                            str(getattr(result, field_name))
+                            get_str_for_field(getattr(result, field_name))
                             for field_name in self.preview_selected_fields
                         ]
                     )

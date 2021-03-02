@@ -18,6 +18,9 @@ class Location:
     def __repr__(self):
         return f"Location(lon={self.longitude}, lat={self.latitude})"
 
+    def __str__(self):
+        return f"{self.longitude:.3f}, {self.latitude:.3f}"
+
     def __eq__(self, other):
         if not isinstance(other, Location):
             # don't attempt to compare against unrelated types
