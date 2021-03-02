@@ -352,6 +352,10 @@ def test_generating_column_data(pytestconfig, test_datastore):
 
     output_col_data = gui.column_data
 
+    del output_col_data["nationality"]["ids"]
+    del output_col_data["platform type"]["ids"]
+    del output_col_data["privacy"]["ids"]
+
     assert output_col_data == correct_col_data
 
 

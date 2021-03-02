@@ -331,6 +331,10 @@ def test_column_data_platform():
         "created date": {"system_name": "created_date", "type": "datetime"},
     }
 
+    del col_data["nationality"]["ids"]
+    del col_data["platform type"]["ids"]
+    del col_data["privacy"]["ids"]
+
     assert col_data == correct_col_data
 
 
@@ -374,60 +378,6 @@ def test_column_data_platform_type():
             "system_name": "platform_type_id",
             "type": "id",
         },
-    }
-
-    assert col_data == correct_col_data
-
-
-def test_column_data_state():
-    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
-    store.initialise()
-    with store.session_scope():
-        store.populate_reference()
-        store.populate_metadata()
-
-    col_data = create_column_data(store, store.db_classes.State)
-
-    print(pprint(col_data))
-
-    correct_col_data = {
-        "course": {"system_name": "course", "type": "float"},
-        "created date": {"system_name": "created_date", "type": "datetime"},
-        "elevation": {"system_name": "elevation", "type": "float"},
-        "heading": {"system_name": "heading", "type": "float"},
-        "location": {"system_name": "location", "type": "geometry"},
-        "platform": {
-            "system_name": "platform_name",
-            "type": "string",
-            "values": ["ADRI", "JEAN", "NARV", "SPAR"],
-        },
-        "privacy": {
-            "system_name": "privacy_name",
-            "type": "string",
-            "values": [
-                "Public",
-                "Public Sensitive",
-                "Private",
-                "Private UK/IE",
-                "Very Private UK/IE",
-                "Private UK/IE/FR",
-                "Very Private UK/IE/FR",
-                "Very Private",
-            ],
-        },
-        "remarks": {"system_name": "remarks", "type": "string", "values": []},
-        "sensor": {
-            "system_name": "sensor_name",
-            "type": "string",
-            "values": ["GPS", "INS", "Periscope", "Radar"],
-        },
-        "source reference": {"system_name": "source_reference", "type": "string", "values": []},
-        "speed": {"system_name": "speed", "type": "float"},
-        "state id": {
-            "system_name": "state_id",
-            "type": "id",
-        },
-        "time": {"system_name": "time", "type": "datetime"},
     }
 
     assert col_data == correct_col_data
