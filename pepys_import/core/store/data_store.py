@@ -1798,7 +1798,7 @@ class DataStore:
                 set_percentage(50 + (i * percentage_per_iteration))
 
         # Delete merged platforms
-        self.delete_objects(Platform, platform_list)
+        self.delete_objects(constants.PLATFORM, platform_list)
         self.session.flush()
         return True
 
@@ -1849,7 +1849,7 @@ class DataStore:
                 set_percentage(10 + (i * percentage_per_iteration))
 
         # Delete merged objects
-        self.delete_objects(table_obj, id_list)
+        self.delete_objects(table_name, id_list)
 
     def merge_objects(self, table_name, id_list, master_id, change_id, set_percentage=None):
         table_obj = self._get_table_object(table_name)
@@ -1879,7 +1879,7 @@ class DataStore:
             if callable(set_percentage):
                 set_percentage(10 + (i * percentage_per_iteration))
         # Delete merged objects
-        self.delete_objects(table_obj, id_list)
+        self.delete_objects(table_name, id_list)
 
     def merge_generic(self, table_name, id_list, master_id, set_percentage=None) -> bool:
         reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
@@ -2096,17 +2096,16 @@ class DataStore:
 
         return output
 
-    def delete_objects(self, table_obj, id_list):
+    def delete_objects(self, table_name, id_list):
         """
         Deletes the given objects.
 
-        :param table_obj: A table object, or name of the table that IDs belong to
-        :type table_obj: SQLAlchemy Model or str
+        :param table_name: Name of the table that IDs belong to
+        :type table_name: str
         :param id_list: List of objects IDs
         :type id_list: list
         """
-        if isinstance(table_obj, str):
-            table_obj = self._get_table_object(table_obj)
+        table_obj = self._get_table_object(table_name)
         # Delete merged objects
         self.session.query(table_obj).filter(
             getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
