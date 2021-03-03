@@ -38,6 +38,7 @@ from pepys_admin.maintenance.dialogs.merge_dialog import MergeDialog
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
 from pepys_admin.maintenance.dialogs.selection_dialog import SelectionDialog
+from pepys_admin.maintenance.dialogs.view_dialog import ViewDialog
 from pepys_admin.maintenance.help import HELP_TEXT, INTRO_HELP_TEXT
 from pepys_admin.maintenance.utils import (
     get_display_names,
@@ -254,12 +255,16 @@ class MaintenanceGUI:
         def is_add_entries_enabled():
             return self.current_table_object is not None
 
+        def is_view_entry_enabled():
+            return len(self.preview_table.current_values) == 1
+
         return [
             ("1 - Merge", is_merge_enabled()),
             ("2 - Split platform", is_split_platform_enabled()),
             ("3 - Edit values", is_edit_values_enabled()),
             ("4 - Delete entries", is_delete_entries_enabled()),
             ("5 - Add entry", is_add_entries_enabled()),
+            ("6 - View entry", is_view_entry_enabled()),
         ]
 
     def set_contextual_help(self, widget, text):
@@ -412,8 +417,24 @@ class MaintenanceGUI:
             self.run_delete()
         elif selected_value == "5 - Add entry":
             self.run_add()
+        elif selected_value == "6 - View entry":
+            self.run_view()
         else:
             self.show_messagebox("Action", f"Running action {selected_value}")
+
+    def run_view(self):
+        async def coroutine():
+            if len(self.preview_table.current_values) != 1:
+                await self.show_messagebox_async(
+                    "Error", "You must select exactly one entry before editing."
+                )
+                return
+            dialog = ViewDialog(
+                self.column_data, self.current_table_object, self.preview_table.current_values
+            )
+            await self.show_dialog_as_float(dialog)
+
+        ensure_future(coroutine())
 
     def run_add(self):
         def do_add(table_object, edit_dict, set_percentage=None, is_cancelled=None):
