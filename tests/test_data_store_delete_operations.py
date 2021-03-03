@@ -72,12 +72,14 @@ class FindDependentObjectsTestCase(TestCase):
             assert "Datafiles" in result and result["Datafiles"] == 2  # self.file and self.file_2
             assert "Platforms" in result and result["Platforms"] == 1  # self.platform
             assert "Sensors" in result and result["Sensors"] == 1  # self.sensor
+            assert "States" in result and result["States"] == 2  # self.state and self.state_2
 
     def test_find_dependent_objects_platform(self):
         with self.store.session_scope():
             result = self.store.find_dependent_objects(constants.PLATFORM, [self.platform_id])
             assert "Platforms" in result and result["Platforms"] == 1  # self.platform
             assert "Sensors" in result and result["Sensors"] == 1  # self.sensor
+            assert "States" in result and result["States"] == 2  # self.state and self.state_2
 
     def test_find_dependent_objects_sensor(self):
         with self.store.session_scope():

@@ -2080,17 +2080,22 @@ class DataStore:
         :type id_list: list
         """
         output = dict()
-        objects = list()
+        object_list = list()
         table_obj = self._get_table_object(table_name)
-        object_list = (
+        objects = (
             self.session.query(table_obj)
             .filter(getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list))
             .all()
         )
-        output[table_name] = len(object_list)
-        for obj in object_list:
-            objects.extend(list(dependent_objects(obj)))
-        for o in objects:
+        output[table_name] = len(objects)
+        while objects:  # find all dependent objects and add them to object_list
+            curr_obj = objects.pop(0)
+            dependent_objs = list(dependent_objects(curr_obj))
+            objects.extend(dependent_objs)
+            object_list.extend(dependent_objs)
+        # remove duplicated entities
+        object_list = list(set(object_list))
+        for o in object_list:
             table_name = type(o).__tablename__
             if table_name not in output:
                 output[table_name] = 1
