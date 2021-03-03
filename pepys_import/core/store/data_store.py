@@ -2079,7 +2079,7 @@ class DataStore:
         :param id_list: List of objects IDs
         :type id_list: list
         """
-        output = {table_name: len(id_list)}
+        output = dict()
         objects = list()
         table_obj = self._get_table_object(table_name)
         object_list = (
@@ -2087,6 +2087,7 @@ class DataStore:
             .filter(getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list))
             .all()
         )
+        output[table_name] = len(object_list)
         for obj in object_list:
             objects.extend(list(dependent_objects(obj)))
         for o in objects:
