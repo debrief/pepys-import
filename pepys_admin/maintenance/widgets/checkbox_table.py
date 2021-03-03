@@ -4,7 +4,7 @@ from prompt_toolkit.widgets.base import CheckboxList
 
 
 class CheckboxTable(CheckboxList):
-    def __init__(self, table_data, table_objects):
+    def __init__(self, table_data, table_objects, any_keybinding=None):
         """Creates a table view with checkboxes on the left-hand side.
 
         Parameters:
@@ -34,6 +34,13 @@ class CheckboxTable(CheckboxList):
         self.create_values_from_parameters()
 
         super().__init__(self.values)
+
+        if callable(any_keybinding):
+            kb = self.control.key_bindings
+
+            @kb.add("<any>")
+            def _(event):
+                any_keybinding(event)
 
     def create_values_from_parameters(self):
         self.values = []

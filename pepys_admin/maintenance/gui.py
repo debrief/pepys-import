@@ -195,7 +195,9 @@ class MaintenanceGUI:
         # Preview container, with two tabs: a preview table and a preview graph
         self.preview_table_message = Label("")
         self.preview_table = CheckboxTable(
-            table_data=self.get_table_data, table_objects=self.get_table_objects
+            table_data=self.get_table_data,
+            table_objects=self.get_table_objects,
+            any_keybinding=self.handle_preview_table_keypress,
         )
         self.set_contextual_help(self.preview_table, "# Third panel: Preview List (F6)")
         self.preview_graph = Window(
@@ -236,6 +238,9 @@ class MaintenanceGUI:
             ),
             floats=[],
         )
+
+    def handle_preview_table_keypress(self, event):
+        self.actions_combo.handle_numeric_key(event)
 
     def get_actions_list(self):
         def is_merge_enabled():
@@ -443,6 +448,11 @@ class MaintenanceGUI:
             set_percentage(100)
 
         async def coroutine():
+            if self.current_table_object is None:
+                await self.show_messagebox_async(
+                    "Error", "You must select a table before adding an entry"
+                )
+                return
             dialog = AddDialog(self.column_data, self.current_table_object)
             edit_dict = await self.show_dialog_as_float(dialog)
             if edit_dict is None or len(edit_dict) == 0:
@@ -489,6 +499,13 @@ class MaintenanceGUI:
     def run_delete(self):
         async def coroutine():
             entries = self.preview_table.current_values
+
+            if len(entries) == 0:
+                await self.show_messagebox_async(
+                    "Error", "You must select at least one item before deleting"
+                )
+                return
+
             if len(entries) < 10:
                 display_strs = []
                 for entry in entries:
