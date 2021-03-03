@@ -534,7 +534,7 @@ class MaintenanceGUI:
                 for entry in self.preview_table.current_values
             ]
             dependent_objects = self.data_store.find_dependent_objects(
-                self.current_table_object.__tablename__, selected_ids
+                self.current_table_object, selected_ids
             )
 
             dep_objs_text = "\n".join(
