@@ -2064,7 +2064,10 @@ class DataStore:
         self.session.add(new_item)
         # Must commit first, so that the primary key field is filled with the
         # new ID, before we reference it below in the add_to_logs function
-        self.session.commit()
+        try:
+            self.session.commit()
+        except Exception:
+            raise
 
         self.add_to_logs(
             table_object.__tablename__,
