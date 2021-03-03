@@ -2068,7 +2068,17 @@ class DataStore:
                     change_id=change_id,
                 )
 
-    def find_dependent_objects(self, table_name, id_list):
+    def find_dependent_objects(self, table_name: str, id_list: list) -> dict:
+        """
+        Finds the dependent objects of the given list of items. Counts them by their type,
+        i.e. X Sensors, Y Platforms. Returns a dictionary that has table names as keys,
+        and number of dependent objects as values.
+
+        :param table_name: Name of the table that IDs belong to
+        :type table_name: str
+        :param id_list: List of objects IDs
+        :type id_list: list
+        """
         output = {table_name: len(id_list)}
         objects = list()
         table_obj = self._get_table_object(table_name)
