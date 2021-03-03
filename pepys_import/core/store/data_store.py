@@ -2078,7 +2078,8 @@ class DataStore:
             .filter(getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list))
             .all()
         )
-        output[table_name] = len(objects)
+        if objects:
+            output[table_name] = len(objects)
         while objects:  # find all dependent objects and add them to object_list
             curr_obj = objects.pop(0)
             dependent_objs = list(dependent_objects(curr_obj))
