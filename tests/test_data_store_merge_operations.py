@@ -553,10 +553,10 @@ class MergePlatformsTestCase(TestCase):
             for log in logs:
                 if log.table == constants.SENSOR:
                     assert log.id == sensor_2.sensor_id
-                    assert log.new_value == str(platform_2.platform_id)
+                    assert log.previous_value == str(platform_2.platform_id)
                 elif log.table == constants.COMMENT:
                     assert log.id == comment.comment_id
-                    assert log.new_value == str(platform_3.platform_id)
+                    assert log.previous_value == str(platform_3.platform_id)
 
 
 class UpdatePlatformIDsTestCase(TestCase):
