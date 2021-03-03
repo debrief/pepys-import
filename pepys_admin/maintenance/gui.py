@@ -53,6 +53,7 @@ from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 from pepys_admin.maintenance.widgets.filter_widget_utils import filter_widget_output_to_query
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 logger.remove()
@@ -483,7 +484,7 @@ class MaintenanceGUI:
                 else:
                     await self.show_messagebox_async(
                         "Error",
-                        f"Error editing values\n\nOriginal error:{textwrap.fill(str(result), 60)}",
+                        f"Error adding entry\n\nOriginal error:{textwrap.fill(str(result), 60)}",
                     )
                     return
             # Once the platform merge is done, show a message box
@@ -497,6 +498,11 @@ class MaintenanceGUI:
         ensure_future(coroutine())
 
     def run_delete(self):
+        def do_delete(table_object, ids, set_percentage=None, is_cancelled=None):
+            with self.data_store.session_scope():
+                self.data_store.delete_objects(table_object, ids)
+            set_percentage(100)
+
         async def coroutine():
             entries = self.preview_table.current_values
 
@@ -520,16 +526,52 @@ class MaintenanceGUI:
             else:
                 selected_items_text = f"{len(entries)} items selected"
 
+            selected_ids = [
+                getattr(entry, get_primary_key_for_table(self.current_table_object))
+                for entry in self.preview_table.current_values
+            ]
+            dependent_objects = self.data_store.find_dependent_objects(
+                self.current_table_object.__tablename__, selected_ids
+            )
+
+            dep_objs_text = "\n".join(
+                f"{number} {table_name}" for table_name, number in dependent_objects.items()
+            )
+
             dialog = ConfirmationDialog(
                 "Delete?",
-                f"Are you sure you want to delete the following entries:\n\n{selected_items_text}",
+                f"Deleting these entries:\n\n{selected_items_text}\n\nwill delete the following dependent objects:\n\n{dep_objs_text}",
             )
             result = await self.show_dialog_as_float(dialog)
 
             if not result:
+                # User cancelled
                 return
 
-            # TODO: Do actual delete here
+            dialog = ProgressDialog(
+                "Deleting items",
+                partial(do_delete, self.current_table_object, selected_ids),
+                show_cancel=False,
+            )
+            result = await self.show_dialog_as_float(dialog)
+
+            if isinstance(result, Exception):
+                if isinstance(result, sqlalchemy.exc.IntegrityError):
+                    await self.show_messagebox_async(
+                        "Constraint Error",
+                        "Error deleting entries in the database due to a database constraint.\n\n"
+                        "This probably means dependent objects haven't been deleted properly.\n"
+                        f"\n\nOriginal error: {textwrap.fill(str(result), 60)}",
+                    )
+                    return
+                else:
+                    await self.show_messagebox_async(
+                        "Error",
+                        f"Error deleting values\n\nOriginal error:{textwrap.fill(str(result), 60)}",
+                    )
+                    return
+            await self.show_messagebox_async("Delete completed")
+            self.run_query()
 
         ensure_future(coroutine())
 
