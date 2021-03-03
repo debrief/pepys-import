@@ -55,14 +55,14 @@ def get_system_name_mappings(column_data):
 
 
 def remove_duplicates_and_nones(items):
-    """Removes all duplicates and None values from a list"""
+    """Removes all duplicates and None values from a list."""
     new_list = [item for item in items if item is not None]
 
     return list(set(new_list))
 
 
 def get_str_for_field(value):
-    if type(value) is float:
+    if isinstance(value, float):
         # For floats, display to 2 decimal places
         return f"{value:.2f}"
     if isinstance(value, pint.Quantity):
