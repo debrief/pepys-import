@@ -50,15 +50,21 @@ class HostedBy(BaseSpatiaLite, HostedByMixin):
 
     hosted_by_id = Column(UUIDType, primary_key=True, default=uuid4)
     subject_id = Column(
-        UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     host_id = Column(
-        UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     hosted_from = Column(DATE, nullable=False)
     host_to = Column(DATE, nullable=False)
     privacy_id = Column(
-        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -73,7 +79,9 @@ class Sensor(BaseSpatiaLite, SensorMixin):
         String(150), CheckConstraint("name <> ''", name="ck_Sensors_name"), nullable=False
     )
     sensor_type_id = Column(
-        UUIDType, ForeignKey("SensorTypes.sensor_type_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("SensorTypes.sensor_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     host = Column(
         UUIDType,
@@ -81,7 +89,9 @@ class Sensor(BaseSpatiaLite, SensorMixin):
         nullable=False,
     )
     privacy_id = Column(
-        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -107,13 +117,19 @@ class Platform(BaseSpatiaLite, PlatformMixin):
     trigraph = deferred(Column(String(3)))
     quadgraph = deferred(Column(String(4)))
     nationality_id = Column(
-        UUIDType, ForeignKey("Nationalities.nationality_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Nationalities.nationality_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     platform_type_id = Column(
-        UUIDType, ForeignKey("PlatformTypes.platform_type_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("PlatformTypes.platform_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     privacy_id = Column(
-        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -131,13 +147,17 @@ class Task(BaseSpatiaLite, TaskMixin):
 
     task_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(String(150), CheckConstraint("name <> ''", name="ck_Tasks_name"), nullable=False)
-    parent_id = Column(UUIDType, ForeignKey("Tasks.task_id", onupdate="cascade"))
+    parent_id = Column(
+        UUIDType, ForeignKey("Tasks.task_id", onupdate="cascade", ondelete="cascade")
+    )
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     environment = deferred(Column(String(150)))
     location = deferred(Column(String(150)))
     privacy_id = Column(
-        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -149,14 +169,22 @@ class Participant(BaseSpatiaLite, ParticipantMixin):
 
     participant_id = Column(UUIDType, primary_key=True, default=uuid4)
     platform_id = Column(
-        UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
-    task_id = Column(UUIDType, ForeignKey("Tasks.task_id", onupdate="cascade"), nullable=False)
+    task_id = Column(
+        UUIDType,
+        ForeignKey("Tasks.task_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     force = Column(String(150))
     privacy_id = Column(
-        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -173,10 +201,14 @@ class Datafile(BaseSpatiaLite, DatafileMixin):
     datafile_id = Column(UUIDType, primary_key=True, default=uuid4)
     simulated = deferred(Column(Boolean, nullable=False))
     privacy_id = Column(
-        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     datafile_type_id = Column(
-        UUIDType, ForeignKey("DatafileTypes.datafile_type_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("DatafileTypes.datafile_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     reference = Column(String(150))
     url = Column(String(150))
@@ -237,7 +269,9 @@ class Log(BaseSpatiaLite, LogMixin):
     field = Column(String(150))
     previous_value = Column(String(150))
     change_id = Column(
-        UUIDType, ForeignKey("Changes.change_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Changes.change_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -270,9 +304,15 @@ class TaggedItem(BaseSpatiaLite, TaggedItemMixin):
     table_type_id = 12
 
     tagged_item_id = Column(UUIDType, primary_key=True, default=uuid4)
-    tag_id = Column(UUIDType, ForeignKey("Tags.tag_id", onupdate="cascade"), nullable=False)
+    tag_id = Column(
+        UUIDType, ForeignKey("Tags.tag_id", onupdate="cascade", ondelete="cascade"), nullable=False
+    )
     item_id = Column(UUIDType, nullable=False)
-    tagged_by_id = Column(UUIDType, ForeignKey("Users.user_id", onupdate="cascade"), nullable=False)
+    tagged_by_id = Column(
+        UUIDType,
+        ForeignKey("Users.user_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
     private = Column(Boolean, nullable=False)
     tagged_on = Column(DATE, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -335,7 +375,9 @@ class GeometrySubType(BaseSpatiaLite, GeometrySubTypeMixin):
         String(150), CheckConstraint("name <> ''", name="ck_GeometrySubTypes_name"), nullable=False
     )
     parent = Column(
-        UUIDType, ForeignKey("GeometryTypes.geo_type_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("GeometryTypes.geo_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -526,7 +568,9 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     state_id = Column(UUIDType, primary_key=True, default=uuid4)
     time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(
-        UUIDType, ForeignKey("Sensors.sensor_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Sensors.sensor_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     _location = deferred(
         Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
@@ -540,7 +584,9 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
         ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
-    privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    privacy_id = Column(
+        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade")
+    )
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -570,7 +616,9 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     contact_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(String(150))
     sensor_id = Column(
-        UUIDType, ForeignKey("Sensors.sensor_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Sensors.sensor_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     time = Column(TIMESTAMP, nullable=False)
     _bearing = deferred(Column("bearing", REAL))
@@ -591,13 +639,17 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     _mla = deferred(Column("mla", REAL))
     _soa = deferred(Column("soa", REAL))
     track_number = Column(String(20))
-    subject_id = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"))
+    subject_id = Column(
+        UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade")
+    )
     source_id = Column(
         UUIDType,
         ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
-    privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    privacy_id = Column(
+        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade")
+    )
     remarks = Column(Text)
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
 
@@ -627,7 +679,9 @@ class Activation(BaseSpatiaLite, ActivationMixin):
     activation_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(String(150))
     sensor_id = Column(
-        UUIDType, ForeignKey("Sensors.sensor_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Sensors.sensor_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     start = deferred(Column(TIMESTAMP))
     end = deferred(Column(TIMESTAMP))
@@ -640,7 +694,9 @@ class Activation(BaseSpatiaLite, ActivationMixin):
         ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
-    privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    privacy_id = Column(
+        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade")
+    )
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -653,14 +709,20 @@ class LogsHolding(BaseSpatiaLite, LogsHoldingMixin):
     logs_holding_id = Column(UUIDType, primary_key=True, default=uuid4)
     time = Column(TIMESTAMP, nullable=False)
     commodity_id = Column(
-        UUIDType, ForeignKey("CommodityTypes.commodity_type_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("CommodityTypes.commodity_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     quantity = Column(REAL, nullable=False)
     unit_type_id = Column(
-        UUIDType, ForeignKey("UnitTypes.unit_type_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("UnitTypes.unit_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     platform_id = Column(
-        UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     comment = Column(Text(), nullable=False)
     source_id = Column(
@@ -668,7 +730,9 @@ class LogsHolding(BaseSpatiaLite, LogsHoldingMixin):
         ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
-    privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    privacy_id = Column(
+        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade")
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -682,10 +746,14 @@ class Comment(BaseSpatiaLite, CommentMixin):
     table_type_id = 32
 
     comment_id = Column(UUIDType, primary_key=True, default=uuid4)
-    platform_id = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"))
+    platform_id = Column(
+        UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade")
+    )
     time = Column(TIMESTAMP, nullable=False)
     comment_type_id = Column(
-        UUIDType, ForeignKey("CommentTypes.comment_type_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("CommentTypes.comment_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     content = Column(
         Text, CheckConstraint("content <> ''", name="ck_Comments_content"), nullable=False
@@ -695,7 +763,9 @@ class Comment(BaseSpatiaLite, CommentMixin):
         ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
-    privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    privacy_id = Column(
+        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade")
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -712,22 +782,32 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
     )
     name = Column(String(150))
     geo_type_id = Column(
-        UUIDType, ForeignKey("GeometryTypes.geo_type_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("GeometryTypes.geo_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     geo_sub_type_id = Column(
-        UUIDType, ForeignKey("GeometrySubTypes.geo_sub_type_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("GeometrySubTypes.geo_sub_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    task_id = Column(UUIDType, ForeignKey("Tasks.task_id", onupdate="cascade"))
-    subject_platform_id = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"))
-    sensor_platform_id = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"))
+    task_id = Column(UUIDType, ForeignKey("Tasks.task_id", onupdate="cascade", ondelete="cascade"))
+    subject_platform_id = Column(
+        UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade")
+    )
+    sensor_platform_id = Column(
+        UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade")
+    )
     source_id = Column(
         UUIDType,
         ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
-    privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    privacy_id = Column(
+        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade")
+    )
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -738,16 +818,24 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
     table_type_id = 34
 
     media_id = Column(UUIDType, primary_key=True, default=uuid4)
-    platform_id = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"))
-    subject_id = Column(UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade"))
-    sensor_id = Column(UUIDType, ForeignKey("Sensors.sensor_id", onupdate="cascade"))
+    platform_id = Column(
+        UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade")
+    )
+    subject_id = Column(
+        UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade")
+    )
+    sensor_id = Column(
+        UUIDType, ForeignKey("Sensors.sensor_id", onupdate="cascade", ondelete="cascade")
+    )
     _location = deferred(
         Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
     )
     _elevation = deferred(Column("elevation", REAL))
     time = Column(TIMESTAMP)
     media_type_id = Column(
-        UUIDType, ForeignKey("MediaTypes.media_type_id", onupdate="cascade"), nullable=False
+        UUIDType,
+        ForeignKey("MediaTypes.media_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     url = deferred(
         Column(String(150), CheckConstraint("url <> ''", name="ck_Media_url"), nullable=False)
@@ -757,7 +845,9 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
         ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="CASCADE"),
         nullable=False,
     )
-    privacy_id = Column(UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade"))
+    privacy_id = Column(
+        UUIDType, ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade")
+    )
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
