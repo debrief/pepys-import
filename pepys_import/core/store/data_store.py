@@ -2059,27 +2059,28 @@ class DataStore:
                     change_id=change_id,
                 )
 
-    def find_dependent_objects(self, table_name: str, id_list: list) -> dict:
+    def find_dependent_objects(self, table_obj: str, id_list: list) -> dict:
         """
         Finds the dependent objects of the given list of items. Counts them by their type,
         i.e. X Sensors, Y Platforms. Returns a dictionary that has table names as keys,
         and number of dependent objects as values.
 
-        :param table_name: Name of the table that IDs belong to
-        :type table_name: str
+        :param table_obj: A table object, or name of the table that IDs belong to
+        :type table_obj: SQLAlchemy Model or str
         :param id_list: List of objects IDs
         :type id_list: list
         """
         output = dict()
         object_list = list()
-        table_obj = self._get_table_object(table_name)
+        if isinstance(table_obj, str):
+            table_obj = self._get_table_object(table_obj)
         objects = (
             self.session.query(table_obj)
             .filter(getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list))
             .all()
         )
         if objects:
-            output[table_name] = len(objects)
+            output[table_obj.__tablename__] = len(objects)
         while objects:  # find all dependent objects and add them to object_list
             curr_obj = objects.pop(0)
             dependent_objs = list(dependent_objects(curr_obj))
@@ -2096,16 +2097,17 @@ class DataStore:
 
         return output
 
-    def delete_objects(self, table_name, id_list):
+    def delete_objects(self, table_obj, id_list):
         """
         Deletes the given objects.
 
-        :param table_name: Name of the table that IDs belong to
-        :type table_name: str
+        :param table_obj: A table object, or name of the table that IDs belong to
+        :type table_obj: SQLAlchemy Model or str
         :param id_list: List of objects IDs
         :type id_list: list
         """
-        table_obj = self._get_table_object(table_name)
+        if isinstance(table_obj, str):
+            table_obj = self._get_table_object(table_obj)
         # Delete merged objects
         self.session.query(table_obj).filter(
             getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
