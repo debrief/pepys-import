@@ -127,14 +127,17 @@ class MaintenanceGUI:
         """Initialise all of the UI components, controls, containers and widgets"""
         # Dropdown box to select table, plus pane that it is in
         metadata_tables = ["Platforms", "Sensors", "Datafiles"]
-        measurement_tables = sorted(
-            [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.MEASUREMENT]]
-        )
+        # FUTURE: For use when we want to let the user operate on Measurement tables
+        # measurement_tables = sorted(
+        #     [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.MEASUREMENT]]
+        # )
         reference_tables = sorted(
             [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.REFERENCE]]
         )
         reference_tables.remove("HelpTexts")
-        tables_list = metadata_tables + measurement_tables + reference_tables
+        # FUTURE: For use when we want to let the user operate on Measurement tables
+        # tables_list = metadata_tables + measurement_tables + reference_tables
+        tables_list = metadata_tables + reference_tables
         self.dropdown_table = DropdownBox(
             text="Select a table",
             entries=tables_list,
