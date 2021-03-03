@@ -1661,6 +1661,81 @@ class DataStore:
             .all()
         )
 
+    def _check_master_id(self, table_obj, master_id):
+        master_obj = (
+            self.session.query(table_obj)
+            .filter(getattr(table_obj, get_primary_key_for_table(table_obj)) == master_id)
+            .scalar()
+        )
+        if not master_obj:
+            raise ValueError(f"No object found with the given master_id: '{master_id}'!")
+        return master_obj
+
+    def _get_table_object(self, table_name):
+        # Table names are plural in the database, therefore make it singular
+        table = table_name_to_class_name(table_name)
+        return getattr(self.db_classes, table)
+
+    def _get_comments_and_sensors_of_platform(self, platform) -> list:
+        Sensor = self.db_classes.Sensor
+        Comment = self.db_classes.Comment
+        objects = list(dependent_objects(platform))
+        objects = [obj for obj in objects if isinstance(obj, Sensor) or isinstance(obj, Comment)]
+        return objects
+
+    def _find_datafiles_and_measurements_for_platform(self, platform) -> dict:
+        objects = self._get_comments_and_sensors_of_platform(platform)
+        datafile_ids = dict()
+
+        while objects:
+            obj = objects.pop(0)
+            if isinstance(obj, self.db_classes.Sensor):
+                objects.extend(list(dependent_objects(obj)))
+            else:
+                if obj.source_id not in datafile_ids:
+                    datafile_ids[obj.source_id] = {"time": obj.time, "objects": []}
+                if obj.time < datafile_ids[obj.source_id]["time"]:
+                    datafile_ids[obj.source_id]["time"] = obj.time
+                if not isinstance(obj, self.db_classes.Comment):  # They are handled differently
+                    datafile_ids[obj.source_id]["objects"].append(obj)
+
+        return datafile_ids
+
+    def update_platform_ids(self, merge_platform_id, master_platform_id, change_id):
+        Comment = self.db_classes.Comment
+        Participant = self.db_classes.Participant
+        LogsHolding = self.db_classes.LogsHolding
+        Geometry1 = self.db_classes.Geometry1
+        Media = self.db_classes.Media
+        tables_with_platform_id_fields = [Comment, Participant, LogsHolding, Geometry1, Media]
+        possible_field_names = [
+            "platform_id",
+            "subject_id",
+            "host_id",
+            "subject_platform_id",
+            "sensor_platform_id",
+        ]
+        for table in tables_with_platform_id_fields:
+            for field in possible_field_names:
+                try:
+                    table_platform_id = getattr(table, field)
+                    primary_key_field = get_primary_key_for_table(table)
+                    query = self.session.query(table).filter(table_platform_id == merge_platform_id)
+                    [
+                        self.add_to_logs(
+                            table=table.__tablename__,
+                            row_id=getattr(s, primary_key_field),
+                            field=field,
+                            previous_value=str(merge_platform_id),
+                            change_id=change_id,
+                        )
+                        for s in query.all()
+                    ]
+                    query.update({field: master_platform_id})
+                except Exception:
+                    pass
+        self.session.flush()
+
     def merge_platforms(self, platform_list, master_id, change_id, set_percentage=None) -> bool:
         """Merges given platforms. Moves sensors from other platforms to the Target platform.
         If sensor with same name is already present on Target platform, moves measurements
@@ -1726,65 +1801,6 @@ class DataStore:
         self.delete_objects(Platform, platform_list)
         self.session.flush()
         return True
-
-    def update_platform_ids(self, merge_platform_id, master_platform_id, change_id):
-        Comment = self.db_classes.Comment
-        Participant = self.db_classes.Participant
-        LogsHolding = self.db_classes.LogsHolding
-        Geometry1 = self.db_classes.Geometry1
-        Media = self.db_classes.Media
-        tables_with_platform_id_fields = [Comment, Participant, LogsHolding, Geometry1, Media]
-        possible_field_names = [
-            "platform_id",
-            "subject_id",
-            "host_id",
-            "subject_platform_id",
-            "sensor_platform_id",
-        ]
-        for table in tables_with_platform_id_fields:
-            for field in possible_field_names:
-                try:
-                    table_platform_id = getattr(table, field)
-                    primary_key_field = get_primary_key_for_table(table)
-                    query = self.session.query(table).filter(table_platform_id == merge_platform_id)
-                    [
-                        self.add_to_logs(
-                            table=table.__tablename__,
-                            row_id=getattr(s, primary_key_field),
-                            field=field,
-                            previous_value=str(merge_platform_id),
-                            change_id=change_id,
-                        )
-                        for s in query.all()
-                    ]
-                    query.update({field: master_platform_id})
-                except Exception:
-                    pass
-        self.session.flush()
-
-    def _check_master_id(self, table_obj, master_id):
-        master_obj = (
-            self.session.query(table_obj)
-            .filter(getattr(table_obj, get_primary_key_for_table(table_obj)) == master_id)
-            .scalar()
-        )
-        if not master_obj:
-            raise ValueError(f"No object found with the given master_id: '{master_id}'!")
-        return master_obj
-
-    def delete_objects(self, table_obj, id_list):
-        if isinstance(table_obj, str):
-            table_obj = self._get_table_object(table_obj)
-        # Delete merged objects
-        self.session.query(table_obj).filter(
-            getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
-        ).delete(synchronize_session="fetch")
-        self.session.flush()
-
-    def _get_table_object(self, table_name):
-        # Table names are plural in the database, therefore make it singular
-        table = table_name_to_class_name(table_name)
-        return getattr(self.db_classes, table)
 
     def merge_measurements(self, table_name, id_list, master_id, change_id, set_percentage=None):
         if table_name == constants.SENSOR:
@@ -1901,31 +1917,6 @@ class DataStore:
         if callable(set_percentage):
             set_percentage(100)
         return True
-
-    def _get_comments_and_sensors_of_platform(self, platform) -> list:
-        Sensor = self.db_classes.Sensor
-        Comment = self.db_classes.Comment
-        objects = list(dependent_objects(platform))
-        objects = [obj for obj in objects if isinstance(obj, Sensor) or isinstance(obj, Comment)]
-        return objects
-
-    def _find_datafiles_and_measurements_for_platform(self, platform) -> dict:
-        objects = self._get_comments_and_sensors_of_platform(platform)
-        datafile_ids = dict()
-
-        while objects:
-            obj = objects.pop(0)
-            if isinstance(obj, self.db_classes.Sensor):
-                objects.extend(list(dependent_objects(obj)))
-            else:
-                if obj.source_id not in datafile_ids:
-                    datafile_ids[obj.source_id] = {"time": obj.time, "objects": []}
-                if obj.time < datafile_ids[obj.source_id]["time"]:
-                    datafile_ids[obj.source_id]["time"] = obj.time
-                if not isinstance(obj, self.db_classes.Comment):  # They are handled differently
-                    datafile_ids[obj.source_id]["objects"].append(obj)
-
-        return datafile_ids
 
     def split_platform(self, platform_id, set_percentage=None) -> bool:
         to_delete = list()
@@ -2103,3 +2094,20 @@ class DataStore:
                 output[table_name] += 1
 
         return output
+
+    def delete_objects(self, table_obj, id_list):
+        """
+        Deletes the given objects.
+
+        :param table_obj: A table object, or name of the table that IDs belong to
+        :type table_obj: SQLAlchemy Model or str
+        :param id_list: List of objects IDs
+        :type id_list: list
+        """
+        if isinstance(table_obj, str):
+            table_obj = self._get_table_object(table_obj)
+        # Delete merged objects
+        self.session.query(table_obj).filter(
+            getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
+        ).delete(synchronize_session="fetch")
+        self.session.flush()
