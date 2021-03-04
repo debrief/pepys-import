@@ -1,11 +1,15 @@
+from datetime import datetime
+
 from prompt_toolkit.layout.containers import HorizontalAlign, HSplit, VSplit
 from prompt_toolkit.layout.scrollable_pane import ScrollablePane
 from prompt_toolkit.widgets.base import Label
+from prompt_toolkit.widgets.toolbars import ValidationToolbar
 
 from pepys_admin.maintenance.utils import get_system_name_mappings
 from pepys_admin.maintenance.widgets.custom_text_area import CustomTextArea
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
-from pepys_admin.maintenance.widgets.utils import float_validator, int_validator
+from pepys_admin.maintenance.widgets.masked_input_widget import MaskedInputWidget
+from pepys_admin.maintenance.widgets.utils import datetime_validator, float_validator, int_validator
 
 PROMPT = "Enter new value"
 
@@ -30,6 +34,8 @@ class EntryEditWidget:
         ]
 
         self.widgets = [row.get_widgets() for row in self.entry_rows]
+        self.validation_toolbar = ValidationToolbar()
+        self.widgets.append(self.validation_toolbar)
 
         self.container = ScrollablePane(content=HSplit(self.widgets, padding=1))
 
@@ -48,7 +54,7 @@ class EntryEditWidget:
         ) = get_system_name_mappings(self.edit_data)
 
         for row in self.entry_rows:
-            if row.value_widget.text != PROMPT:
+            if row.value_widget.text != row.prompt_text:
                 system_name = display_name_to_system_name[row.display_name]
                 output[system_name] = row.get_value()
 
@@ -78,6 +84,7 @@ class EntryEditWidgetRow:
         self.label_width = label_width
         self.col_config = col_config
         self.value_ids = None
+        self.prompt_text = PROMPT
 
         if col_config["type"] == "float":
             self.value_widget = CustomTextArea(
@@ -95,6 +102,13 @@ class EntryEditWidgetRow:
                 focus_on_click=True,
                 width=edit_width,
             )
+        elif col_config["type"] == "datetime":
+            self.value_widget = MaskedInputWidget(
+                ["yyyy", "!-", "mm", "!-", "dd", "! ", "HH", "!:", "MM", "!:", "SS"],
+                overall_validator=datetime_validator,
+                part_validator=int_validator,
+            )
+            self.prompt_text = "yyyy-mm-dd HH:MM:SS"
         elif col_config["type"] == "string":
             if "values" in col_config:
                 # A list of values, so use a dropdown
@@ -135,6 +149,9 @@ class EntryEditWidgetRow:
             index = self.col_config["values"].index(self.value_widget.text)
             return self.value_ids[index]
         else:
+            if self.col_config["type"] == "datetime":
+                parsed_value = datetime.strptime(self.value_widget.text, "%Y-%m-%d %H:%M:%S")
+                return parsed_value
             return self.value_widget.text
 
     def get_widgets(self):

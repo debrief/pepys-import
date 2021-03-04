@@ -59,8 +59,17 @@ class EditDialog:
         selected_items_ui = HSplit(
             [Label("Selected items: ", style="class:table-title"), Label(selected_items_text)]
         )
+
+        self.error_message = Label("", style="class:error-message")
+
         self.body = HSplit(
-            [instructions, selected_items_ui, VSplit([lh_side, rh_side], padding=2)], padding=1
+            [
+                instructions,
+                selected_items_ui,
+                VSplit([lh_side, rh_side], padding=2),
+                self.error_message,
+            ],
+            padding=1,
         )
 
         self.dialog = Dialog(
@@ -80,7 +89,12 @@ class EditDialog:
             self.handle_cancel()
 
     def handle_ok(self):
-        self.future.set_result(self.entry_edit_widget.output)
+        try:
+            output = self.entry_edit_widget.output
+        except Exception:
+            self.error_message.text = "Error converting values, please edit and try again"
+            return
+        self.future.set_result(output)
 
     def handle_cancel(self):
         self.future.set_result(None)

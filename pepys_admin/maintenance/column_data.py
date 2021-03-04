@@ -278,9 +278,9 @@ def convert_column_data_to_edit_data(column_data, table_object, data_store):
             for entry in all_entries:
                 field_values = [
                     str(getattr(entry, field_name))
-                    for field_name in foreign_table_object._default_preview_fields
+                    for field_name in foreign_table_object._default_dropdown_fields
                 ]
-                str_entries.append("/".join(field_values))
+                str_entries.append(" / ".join(field_values))
             ids = [
                 getattr(entry, get_primary_key_for_table(foreign_table_object))
                 for entry in all_entries

@@ -57,10 +57,16 @@ class AddDialog:
             self.handle_cancel()
 
     def handle_ok(self):
-        provided_cols = set(self.entry_edit_widget.output.keys())
+        try:
+            output = self.entry_edit_widget.output
+        except Exception:
+            self.error_message.text = "Error converting values, please edit and try again"
+            return
+
+        provided_cols = set(output.keys())
         if self.required_columns.issubset(provided_cols):
             # In this case, the user has entered values for all of the required columns
-            self.future.set_result(self.entry_edit_widget.output)
+            self.future.set_result(output)
         else:
             # In this case they haven't, so display a sensible error message
             diff_list = self.required_columns.difference(provided_cols)

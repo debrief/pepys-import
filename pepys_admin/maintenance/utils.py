@@ -70,7 +70,7 @@ def get_str_for_field(value):
     elif isinstance(value, pint.Quantity):
         return f"{value:~.2fP}"
     elif isinstance(value, BasePostGIS) or isinstance(value, BaseSpatiaLite):
-        strings = [str(getattr(value, field_name)) for field_name in value._default_preview_fields]
+        strings = [str(getattr(value, field_name)) for field_name in value._default_dropdown_fields]
         return " / ".join(strings)
     else:
         return str(value)

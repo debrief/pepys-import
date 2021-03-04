@@ -24,6 +24,7 @@ LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
 
 class HostedByMixin:
     _default_preview_fields = ["subject_name", "host_name", "hosted_from", "hosted_to"]
+    _default_dropdown_fields = ["subject_name", "host_name"]
 
     @declared_attr
     def subject(self):
@@ -60,6 +61,7 @@ class HostedByMixin:
 
 class SensorMixin:
     _default_preview_fields = ["name", "host__name", "sensor_type_name"]
+    _default_dropdown_fields = ["name", "host__name", "host__identifier", "host__nationality_name"]
 
     @declared_attr
     def sensor_type(self):
@@ -76,6 +78,14 @@ class SensorMixin:
     @declared_attr
     def host__name(self):
         return association_proxy("host_", "name")
+
+    @declared_attr
+    def host__identifier(self):
+        return association_proxy("host_", "identifier")
+
+    @declared_attr
+    def host__nationality_name(self):
+        return association_proxy("host_", "nationality_name")
 
     @declared_attr
     def privacy(self):
@@ -131,6 +141,7 @@ class SensorMixin:
 
 class PlatformMixin:
     _default_preview_fields = ["name", "identifier", "nationality_name", "platform_type_name"]
+    _default_dropdown_fields = ["name", "identifier", "nationality_name"]
 
     @declared_attr
     def platform_type(self):
@@ -225,6 +236,7 @@ class PlatformMixin:
 
 class TaskMixin:
     _default_preview_fields = ["name", "start", "end"]
+    _default_dropdown_fields = ["name"]
 
     @declared_attr
     def parent(self):
@@ -245,6 +257,7 @@ class TaskMixin:
 
 class ParticipantMixin:
     _default_preview_fields = ["platform_name", "start", "end"]
+    _default_dropdown_fields = ["platform_name"]
 
     @declared_attr
     def task(self):
@@ -265,6 +278,7 @@ class ParticipantMixin:
 
 class DatafileMixin:
     _default_preview_fields = ["reference", "datafile_type_name"]
+    _default_dropdown_fields = ["reference"]
 
     @declared_attr
     def privacy(self):
@@ -1650,10 +1664,12 @@ class SynonymMixin:
 
 class ReferenceDefaultFields:
     _default_preview_fields = ["name"]
+    _default_dropdown_fields = ["name"]
 
 
 class GeometrySubTypeMixin:
     _default_preview_fields = ["name", "parent__name"]
+    _default_dropdown_fields = ["name", "parent__name"]
 
     @declared_attr
     def parent_(self):
@@ -1666,3 +1682,4 @@ class GeometrySubTypeMixin:
 
 class NationalityMixin:
     _default_preview_fields = ["name", "priority"]
+    _default_dropdown_fields = ["name"]

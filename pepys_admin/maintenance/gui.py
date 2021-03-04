@@ -444,6 +444,7 @@ class MaintenanceGUI:
                     "Error", "You must select exactly one entry before editing."
                 )
                 return
+
             dialog = ViewDialog(
                 self.column_data, self.current_table_object, self.preview_table.current_values
             )
