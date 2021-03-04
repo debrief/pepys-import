@@ -44,9 +44,9 @@ class AddDataTestCase(TestCase):
                     "name": "NewPlatform",
                     "trigraph": "ABC",
                     "identifier": "NewIdent",
-                    "nationality_name": nat_id,
-                    "platform_type_name": pt_id,
-                    "privacy_name": priv_id,
+                    "nationality": nat_id,
+                    "platform_type": pt_id,
+                    "privacy": priv_id,
                 },
             )
 
@@ -81,8 +81,8 @@ class AddDataTestCase(TestCase):
                     Platform,
                     {
                         "name": "NewPlatform",
-                        "nationality_name": nat_id,
-                        "platform_type_name": pt_id,
-                        "privacy_name": priv_id,
+                        "nationality": nat_id,
+                        "platform_type": pt_id,
+                        "privacy": priv_id,
                     },
                 )
