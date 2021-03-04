@@ -23,13 +23,17 @@ class EntryEditWidget:
         :type edit_data: dict
         """
         self.edit_data = edit_data
+        self.show_required_fields = show_required_fields
 
         max_label_len = max([len(key) for key, value in edit_data.items()])
         edit_width = 30
+        # We add three to the width to give space for " *" (to mark a required field)
+        # plus an extra space to make it look nicer
+        length = max_label_len + 3 if self.show_required_fields else max_label_len + 1
         self.entry_rows = [
-            # We add three to the width to give space for " *" (to mark a required field)
-            # plus an extra space to make it look nicer
-            EntryEditWidgetRow(key, value, max_label_len + 3, edit_width)
+            EntryEditWidgetRow(
+                key, value, length, edit_width, show_required_fields=self.show_required_fields
+            )
             for key, value in edit_data.items()
         ]
 
@@ -65,7 +69,9 @@ class EntryEditWidget:
 
 
 class EntryEditWidgetRow:
-    def __init__(self, display_name, col_config, label_width, edit_width):
+    def __init__(
+        self, display_name, col_config, label_width, edit_width, show_required_fields=False
+    ):
         """
         Representation of a row in the EntryEditWidget. Each of these rows
         is for editing a single column.
@@ -85,6 +91,7 @@ class EntryEditWidgetRow:
         self.col_config = col_config
         self.value_ids = None
         self.prompt_text = PROMPT
+        self.show_required_fields = show_required_fields
 
         if col_config["type"] == "float":
             self.value_widget = CustomTextArea(
@@ -161,7 +168,7 @@ class EntryEditWidgetRow:
         :rtype: VSplit object
         """
         label_text = self.display_name
-        if self.col_config["required"]:
+        if self.show_required_fields and self.col_config["required"]:
             label_text += " *"
         return VSplit(
             [
