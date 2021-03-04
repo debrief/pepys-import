@@ -6,7 +6,6 @@ from inspect import getfullargspec
 from math import ceil
 
 import sqlalchemy
-from loguru import logger
 from sqlalchemy import func, inspect, select
 
 from paths import MIGRATIONS_DIRECTORY
@@ -334,17 +333,12 @@ def convert_edit_dict_columns(edit_dict, table_object):
     # Convert the edit_dict we get from the GUI into a dict suitable for use in the update function
     # This involves converting any relationship columns into their ID column
     for col_name, new_value in edit_dict.items():
-        logger.debug(f"{col_name=}")
         attr_from_db_class = getattr(table_object, col_name)
-        logger.debug(f"{attr_from_db_class=}")
-        logger.debug(f"{type(attr_from_db_class)=}")
         try:
             if isinstance(
                 attr_from_db_class.prop, sqlalchemy.orm.relationships.RelationshipProperty
             ):
-                logger.debug("Is rel instance")
                 local_column = list(attr_from_db_class.prop.local_columns)[0].key
-                logger.debug(f"{local_column=}")
                 update_dict[local_column] = new_value
             else:
                 update_dict[col_name] = new_value

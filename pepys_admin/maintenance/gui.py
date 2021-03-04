@@ -477,8 +477,6 @@ class MaintenanceGUI:
                 # Dialog was cancelled
                 return
 
-            logger.debug(edit_dict)
-
             dialog = ProgressDialog(
                 "Adding items",
                 partial(do_add, self.current_table_object, edit_dict),
@@ -613,22 +611,17 @@ class MaintenanceGUI:
                 )
                 return
 
-            logger.debug(f"{self.edit_data=}")
             if self.edit_data is None:
                 dialog = ProgressDialog(
                     "Preparing to edit", self.create_edit_data, show_cancel=False
                 )
                 result = await self.show_dialog_as_float(dialog)
 
-                from pprint import pformat
-
-                logger.debug(pformat(self.edit_data))
-
                 if isinstance(result, BaseException):
-                    tb_str = traceback.format_exception(
-                        etype=type(result), value=result, tb=result.__traceback__
+                    await self.show_messagebox_async(
+                        "Error", f"Error preparing edit data\n\nOriginal error: {str(result)}"
                     )
-                    logger.debug("".join(tb_str))
+                    return
 
             dialog = EditDialog(
                 self.edit_data, self.current_table_object, self.preview_table.current_values
