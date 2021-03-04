@@ -1,5 +1,4 @@
 from prompt_toolkit.layout.containers import HorizontalAlign, HSplit, VSplit
-from prompt_toolkit.layout.scrollable_pane import ScrollablePane
 from prompt_toolkit.widgets.base import Label
 
 from pepys_admin.maintenance.utils import get_system_name_mappings
@@ -31,7 +30,7 @@ class EntryEditWidget:
 
         self.widgets = [row.get_widgets() for row in self.entry_rows]
 
-        self.container = ScrollablePane(content=HSplit(self.widgets, padding=1))
+        self.container = HSplit(self.widgets, padding=1)
 
     @property
     def output(self):
