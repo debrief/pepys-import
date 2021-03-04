@@ -1,3 +1,4 @@
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.formatted_text.base import to_formatted_text
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.widgets.base import CheckboxList
@@ -104,6 +105,10 @@ class CheckboxTable(CheckboxList):
             if mouse_event.event_type == MouseEventType.MOUSE_UP:
                 self._selected_index = mouse_event.position.y
                 self._handle_enter()
+                # Set focus to this control when we've clicked in it
+                # so that the keyboard shortcuts from this control (like
+                # activating actions) work
+                get_app().layout.focus(self)
 
         self.create_values_from_parameters()
 
