@@ -263,6 +263,11 @@ def convert_column_data_to_edit_data(column_data, table_object, data_store):
         column_config = {"system_name": rel_name, "type": "string"}
 
         rel = getattr(table_object, rel_name)
+        if rel.prop.secondary is not None:
+            # Skip all second-level relationships
+            # Eg. this will skip State.platform, which is a relationship that passes
+            # through State.sensor
+            continue
         column = list(rel.prop.local_columns)[0]
         fk = list(column.foreign_keys)[0]
         foreign_table_object = data_store._get_table_object(fk._column_tokens[1])
