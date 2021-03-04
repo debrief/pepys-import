@@ -29,7 +29,7 @@ from prompt_toolkit.widgets.base import Border, Label
 from pygments.lexers.sql import SqlLexer
 from sqlalchemy.orm import undefer
 
-from pepys_admin.maintenance.column_data import create_column_data
+from pepys_admin.maintenance.column_data import convert_column_data_to_edit_data, create_column_data
 from pepys_admin.maintenance.dialogs.add_dialog import AddDialog
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.dialogs.edit_dialog import EditDialog
@@ -108,6 +108,7 @@ class MaintenanceGUI:
         self.current_table_object = None
 
         self.column_data = None
+        self.edit_data = None
         self.preview_selected_fields = []
 
         self.filter_widget.set_column_data(self.column_data)
@@ -127,17 +128,14 @@ class MaintenanceGUI:
         """Initialise all of the UI components, controls, containers and widgets"""
         # Dropdown box to select table, plus pane that it is in
         metadata_tables = ["Platforms", "Sensors", "Datafiles"]
-        # FUTURE: For use when we want to let the user operate on Measurement tables
-        # measurement_tables = sorted(
-        #     [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.MEASUREMENT]]
-        # )
+        measurement_tables = sorted(
+            [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.MEASUREMENT]]
+        )
         reference_tables = sorted(
             [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.REFERENCE]]
         )
         reference_tables.remove("HelpTexts")
-        # FUTURE: For use when we want to let the user operate on Measurement tables
-        # tables_list = metadata_tables + measurement_tables + reference_tables
-        tables_list = metadata_tables + reference_tables
+        tables_list = metadata_tables + measurement_tables + reference_tables
         self.dropdown_table = DropdownBox(
             text="Select a table",
             entries=tables_list,
@@ -248,7 +246,10 @@ class MaintenanceGUI:
 
     def get_actions_list(self):
         def is_merge_enabled():
-            return len(self.preview_table.current_values) > 1
+            return (
+                len(self.preview_table.current_values) > 1
+                and self.current_table_object.table_type != TableTypes.MEASUREMENT
+            )
 
         def is_split_platform_enabled():
             return (self.current_table_object == self.data_store.db_classes.Platform) and (
@@ -333,6 +334,8 @@ class MaintenanceGUI:
                 # Disconnect all the objects we've returned in our query from the database
                 # so we can store them outside of the session without any problems
                 self.data_store.session.expunge_all()
+                # for result in results:
+                #     recursive_expunge(result, self.data_store.session)
 
                 for result in results[:100]:
                     # Get the right fields and append them
@@ -368,6 +371,9 @@ class MaintenanceGUI:
 
     def get_column_data(self, table_object, set_percentage=None, is_cancelled=None):
         self.column_data = create_column_data(self.data_store, table_object, set_percentage)
+        # Reset this to None now that we've got new column data (basically invalidating
+        # the cache of the edit data)
+        self.edit_data = None
 
     def on_table_select(self, value):
         """Called when an entry is selected from the Table dropdown at the top-left."""
@@ -457,7 +463,14 @@ class MaintenanceGUI:
                     "Error", "You must select a table before adding an entry"
                 )
                 return
-            dialog = AddDialog(self.column_data, self.current_table_object)
+
+            if self.edit_data is None:
+                dialog = ProgressDialog(
+                    "Preparing to edit", self.create_edit_data, show_cancel=False
+                )
+                result = await self.show_dialog_as_float(dialog)
+
+            dialog = AddDialog(self.edit_data, self.current_table_object)
             edit_dict = await self.show_dialog_as_float(dialog)
             if edit_dict is None or len(edit_dict) == 0:
                 # Dialog was cancelled
@@ -578,6 +591,14 @@ class MaintenanceGUI:
 
         ensure_future(coroutine())
 
+    def create_edit_data(self, set_percentage=None, is_cancelled=None):
+        # Convert the column_data into the structure we need for editing the data
+        # This removes un-needed columns, and un-needed values lists
+        self.edit_data = convert_column_data_to_edit_data(
+            self.column_data, self.current_table_object, self.data_store
+        )
+        set_percentage(100)
+
     def run_edit_values(self):
         def do_edit(items, edit_dict, set_percentage=None, is_cancelled=None):
             with self.data_store.session_scope():
@@ -590,9 +611,28 @@ class MaintenanceGUI:
                     "Error", "You must select at least one entry before editing."
                 )
                 return
+
+            logger.debug(f"{self.edit_data=}")
+            if self.edit_data is None:
+                dialog = ProgressDialog(
+                    "Preparing to edit", self.create_edit_data, show_cancel=False
+                )
+                result = await self.show_dialog_as_float(dialog)
+
+                from pprint import pformat
+
+                logger.debug(pformat(self.edit_data))
+
+                if isinstance(result, BaseException):
+                    tb_str = traceback.format_exception(
+                        etype=type(result), value=result, tb=result.__traceback__
+                    )
+                    logger.debug("".join(tb_str))
+
             dialog = EditDialog(
-                self.column_data, self.current_table_object, self.preview_table.current_values
+                self.edit_data, self.current_table_object, self.preview_table.current_values
             )
+
             edit_dict = await self.show_dialog_as_float(dialog)
             if edit_dict is None or len(edit_dict) == 0:
                 # Dialog was cancelled
@@ -699,6 +739,13 @@ class MaintenanceGUI:
             )
             return
 
+        if self.current_table_object.table_type == TableTypes.MEASUREMENT:
+            self.show_messagebox(
+                "Error",
+                "Merging can only be performed on metadata or reference tables.",
+            )
+            return
+
         if self.current_table_object == self.data_store.db_classes.Sensor:
             host_ids = set([s.host for s in self.preview_table.current_values])
             if len(host_ids) > 1:
@@ -766,7 +813,7 @@ class MaintenanceGUI:
                 self.run_query()
                 # Regenerate the column_data, so we don't have entries in the dropdowns
                 # that don't exist anymore
-                self.column_data = create_column_data(self.data_store, self.current_table_object)
+                self.get_column_data(self.current_table_object)
                 self.filter_widget.set_column_data(self.column_data, clear_entries=False)
 
         ensure_future(coroutine())

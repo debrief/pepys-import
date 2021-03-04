@@ -5,13 +5,13 @@ from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.widgets import Button, Label
 from prompt_toolkit.widgets.dialogs import Dialog
 
-from pepys_admin.maintenance.column_data import column_data_to_edit_data
+from pepys_admin.maintenance.utils import get_str_for_field
 from pepys_admin.maintenance.widgets.entry_display_widget import EntryDisplayWidget
 from pepys_admin.maintenance.widgets.entry_edit_widget import EntryEditWidget
 
 
 class EditDialog:
-    def __init__(self, column_data, table_object, entries):
+    def __init__(self, edit_data, table_object, entries):
         """
         A dialog for editing object values.
 
@@ -26,10 +26,6 @@ class EditDialog:
 
         ok_button = Button(text="OK", handler=self.handle_ok)
         cancel_button = Button(text="Cancel", handler=self.handle_cancel)
-
-        # Convert the column_data into the structure we need for editing the data
-        # This removes un-needed columns, and un-needed values lists
-        edit_data = column_data_to_edit_data(column_data, table_object)
 
         self.entry_edit_widget = EntryEditWidget(edit_data)
         self.entry_display_widget = EntryDisplayWidget(edit_data, entries)
@@ -52,7 +48,7 @@ class EditDialog:
             for entry in entries:
                 display_str = " - ".join(
                     [
-                        str(getattr(entry, field_name))
+                        get_str_for_field(getattr(entry, field_name))
                         for field_name in entry._default_preview_fields
                     ]
                 )

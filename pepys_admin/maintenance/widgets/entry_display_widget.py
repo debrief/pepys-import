@@ -2,6 +2,8 @@ from prompt_toolkit.layout.containers import HSplit, VSplit
 from prompt_toolkit.layout.scrollable_pane import ScrollablePane
 from prompt_toolkit.widgets import Label
 
+from pepys_admin.maintenance.utils import get_str_for_field
+
 
 class EntryDisplayWidget:
     def __init__(self, edit_data, entries):
@@ -26,7 +28,9 @@ class EntryDisplayWidget:
         max_width = max([len(key) for key in self.edit_data.keys()])
 
         for key, value in self.edit_data.items():
-            values_list = [str(getattr(entry, value["system_name"])) for entry in self.entries]
+            values_list = [
+                get_str_for_field(getattr(entry, value["system_name"])) for entry in self.entries
+            ]
             # Just list the unique values
             values_list = list(set(values_list))
             value = ", ".join(values_list)

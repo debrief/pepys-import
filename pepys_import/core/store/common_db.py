@@ -42,7 +42,7 @@ class HostedByMixin:
     @declared_attr
     def host(self):
         return relationship(
-            "Platform", lazy="joined", join_depth=1, uselist=False, foreign_keys="HostedBy.host_id"
+            "Platform", lazy="joined", uselist=False, foreign_keys="HostedBy.host_id"
         )
 
     @declared_attr
@@ -51,7 +51,7 @@ class HostedByMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -63,9 +63,7 @@ class SensorMixin:
 
     @declared_attr
     def sensor_type(self):
-        return relationship(
-            "SensorType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("SensorType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def sensor_type_name(self):
@@ -73,7 +71,7 @@ class SensorMixin:
 
     @declared_attr
     def host_(self):
-        return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Platform", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def host__name(self):
@@ -81,7 +79,7 @@ class SensorMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -136,9 +134,7 @@ class PlatformMixin:
 
     @declared_attr
     def platform_type(self):
-        return relationship(
-            "PlatformType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("PlatformType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def platform_type_name(self):
@@ -146,9 +142,7 @@ class PlatformMixin:
 
     @declared_attr
     def nationality(self):
-        return relationship(
-            "Nationality", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("Nationality", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def nationality_name(self):
@@ -156,7 +150,7 @@ class PlatformMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -242,7 +236,7 @@ class TaskMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -254,7 +248,7 @@ class ParticipantMixin:
 
     @declared_attr
     def task(self):
-        return relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Task", lazy="joined", innerjoin=True, uselist=False)
 
     # @declared_attr
     # def task_name(self):
@@ -262,7 +256,7 @@ class ParticipantMixin:
 
     @declared_attr
     def platform(self):
-        return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Platform", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def platform_name(self):
@@ -274,7 +268,7 @@ class DatafileMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -282,9 +276,7 @@ class DatafileMixin:
 
     @declared_attr
     def datafile_type(self):
-        return relationship(
-            "DatafileType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("DatafileType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def datafile_type_name(self):
@@ -594,7 +586,7 @@ class DatafileMixin:
 class LogMixin:
     @declared_attr
     def change(self):
-        return relationship("Change", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Change", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def change_reason(self):
@@ -609,7 +601,7 @@ class TaggedItemMixin:
 
     @declared_attr
     def tag(self):
-        return relationship("Tag", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Tag", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def tag_name(self):
@@ -617,7 +609,7 @@ class TaggedItemMixin:
 
     @declared_attr
     def tagged_by(self):
-        return relationship("User", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("User", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def tagged_by_name(self):
@@ -629,7 +621,7 @@ class StateMixin:
 
     @declared_attr
     def sensor(self):
-        return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Sensor", lazy="joined", uselist=False)
 
     @declared_attr
     def sensor_name(self):
@@ -645,7 +637,7 @@ class StateMixin:
 
     @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     @declared_attr
     def source_reference(self):
@@ -653,7 +645,7 @@ class StateMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -775,7 +767,7 @@ class ContactMixin:
 
     @declared_attr
     def sensor(self):
-        return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Sensor", lazy="joined", uselist=False)
 
     @declared_attr
     def sensor_name(self):
@@ -791,7 +783,7 @@ class ContactMixin:
 
     @declared_attr
     def subject(self):
-        return relationship("Platform", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Platform", lazy="joined", uselist=False)
 
     @declared_attr
     def subject_name(self):
@@ -799,7 +791,7 @@ class ContactMixin:
 
     @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     @declared_attr
     def source_reference(self):
@@ -807,7 +799,7 @@ class ContactMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -1177,7 +1169,7 @@ class LogsHoldingMixin:
 
     @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     @declared_attr
     def source_reference(self):
@@ -1185,7 +1177,7 @@ class LogsHoldingMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -1193,7 +1185,7 @@ class LogsHoldingMixin:
 
     @declared_attr
     def platform(self):
-        return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Platform", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def platform_name(self):
@@ -1201,7 +1193,7 @@ class LogsHoldingMixin:
 
     @declared_attr
     def unit_type(self):
-        return relationship("UnitType", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("UnitType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def unit_type_name(self):
@@ -1209,9 +1201,7 @@ class LogsHoldingMixin:
 
     @declared_attr
     def commodity_type(self):
-        return relationship(
-            "CommodityType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("CommodityType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def commodity_type_name(self):
@@ -1223,7 +1213,7 @@ class CommentMixin:
 
     @declared_attr
     def platform(self):
-        return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Platform", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def platform_name(self):
@@ -1235,9 +1225,7 @@ class CommentMixin:
 
     @declared_attr
     def comment_type(self):
-        return relationship(
-            "CommentType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("CommentType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def comment_type_name(self):
@@ -1245,7 +1233,7 @@ class CommentMixin:
 
     @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     @declared_attr
     def source_reference(self):
@@ -1253,7 +1241,7 @@ class CommentMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -1286,7 +1274,7 @@ class GeometryMixin:
 
     @declared_attr
     def task(self):
-        return relationship("Task", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Task", lazy="joined", uselist=False)
 
     # @declared_attr
     # def task_name(self):
@@ -1322,9 +1310,7 @@ class GeometryMixin:
 
     @declared_attr
     def geo_type(self):
-        return relationship(
-            "GeometryType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("GeometryType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def geo_type_name(self):
@@ -1332,9 +1318,7 @@ class GeometryMixin:
 
     @declared_attr
     def geo_sub_type(self):
-        return relationship(
-            "GeometrySubType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("GeometrySubType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def geo_sub_type_name(self):
@@ -1342,7 +1326,7 @@ class GeometryMixin:
 
     @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     # @declared_attr
     # def source_reference(self):
@@ -1350,7 +1334,7 @@ class GeometryMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -1362,7 +1346,7 @@ class MediaMixin:
 
     @declared_attr
     def media_type(self):
-        return relationship("MediaType", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("MediaType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def media_type_name(self):
@@ -1370,7 +1354,7 @@ class MediaMixin:
 
     @declared_attr
     def sensor(self):
-        return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Sensor", lazy="joined", uselist=False)
 
     @declared_attr
     def sensor_name(self):
@@ -1400,7 +1384,7 @@ class MediaMixin:
 
     @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     # @declared_attr
     # def source_reference(self):
@@ -1408,7 +1392,7 @@ class MediaMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -1483,7 +1467,7 @@ class ActivationMixin:
 
     @declared_attr
     def sensor(self):
-        return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Sensor", lazy="joined", uselist=False)
 
     @declared_attr
     def sensor_name(self):
@@ -1491,7 +1475,7 @@ class ActivationMixin:
 
     @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     # @declared_attr
     # def source_reference(self):
@@ -1499,7 +1483,7 @@ class ActivationMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -1673,9 +1657,7 @@ class GeometrySubTypeMixin:
 
     @declared_attr
     def parent_(self):
-        return relationship(
-            "GeometryType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("GeometryType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def parent__name(self):

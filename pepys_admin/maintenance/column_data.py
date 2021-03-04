@@ -63,6 +63,20 @@ def get_assoc_proxy_names_and_objects(table_object):
     return assoc_proxy_names, assoc_proxy_objs
 
 
+def get_relationship_columns(table_object):
+    attr_names = dir(table_object)
+    rel_columns = []
+    for attr_name in attr_names:
+        attr = getattr(table_object, attr_name)
+        try:
+            if isinstance(attr.prop, sqlalchemy.orm.relationships.RelationshipProperty):
+                rel_columns.append(attr_name)
+        except Exception:
+            pass
+
+    return rel_columns
+
+
 def str_if_not_none(value):
     """Return the string value of the argument, unless
     it is None, in which case return None"""
@@ -103,7 +117,11 @@ def create_column_data(data_store, table_object, set_percentage=None):
             if sys_name.startswith("_"):
                 sys_name = sys_name[1:]
 
-            details = {"type": get_type_name(col.type), "system_name": sys_name}
+            details = {
+                "type": get_type_name(col.type),
+                "system_name": sys_name,
+                "assoc_proxy": False,
+            }
 
             details["required"] = not col.prop.columns[0].nullable
 
@@ -129,7 +147,7 @@ def create_column_data(data_store, table_object, set_percentage=None):
         for ap_name, ap_obj in zip(assoc_proxy_names, assoc_proxy_objs):
             ap_type = getattr(ap_obj.target_class, ap_obj.value_attr).type
 
-            details = {"type": get_type_name(ap_type), "system_name": ap_name}
+            details = {"type": get_type_name(ap_type), "system_name": ap_name, "assoc_proxy": True}
 
             # This reflects whether the ID field for the relationship that is
             # linked to this association proxy is required or not
@@ -203,7 +221,7 @@ def create_column_data(data_store, table_object, set_percentage=None):
     return column_data
 
 
-def column_data_to_edit_data(column_data, table_object):
+def convert_column_data_to_edit_data(column_data, table_object, data_store):
     """
     Converts the original column_data dictionary into a dictionary of data
     for configuring the editing UI.
@@ -217,22 +235,57 @@ def column_data_to_edit_data(column_data, table_object):
     """
     edit_data = {}
 
+    # Take the existing column_data information and process it
+    # to make it the basis of the edit_data
     for key, value in column_data.items():
         if key == "created date":
             # Don't allow to edit the created date
             continue
+
         if value["type"] == "id":
             # Don't allow to edit ID columns
             continue
-        table_attr = getattr(table_object, value["system_name"])
-        if not isinstance(
-            table_attr, sqlalchemy.ext.associationproxy.ColumnAssociationProxyInstance
-        ):
+
+        if not value["assoc_proxy"]:
             if "values" in value:
                 # If this isn't a foreign keyed column then don't provide a dropdown list
                 # as we only want dropdown lists for foreign keyed columns
                 del value["values"]
 
-        edit_data[key] = value
+        if not value["assoc_proxy"]:
+            # Don't add Assoc Proxy columns to the resulting edit_data dict
+            # as we'll deal with those foreign keys through the full relationship columns instead below
+            edit_data[key] = value
+
+    rel_columns = get_relationship_columns(table_object)
+
+    for rel_name in rel_columns:
+        column_config = {"system_name": rel_name, "type": "string"}
+
+        rel = getattr(table_object, rel_name)
+        column = list(rel.prop.local_columns)[0]
+        fk = list(column.foreign_keys)[0]
+        foreign_table_object = data_store._get_table_object(fk._column_tokens[1])
+
+        with data_store.session_scope():
+            all_entries = data_store.session.query(foreign_table_object).all()
+            str_entries = []
+            for entry in all_entries:
+                field_values = [
+                    str(getattr(entry, field_name))
+                    for field_name in foreign_table_object._default_preview_fields
+                ]
+                str_entries.append("/".join(field_values))
+            ids = [
+                getattr(entry, get_primary_key_for_table(foreign_table_object))
+                for entry in all_entries
+            ]
+
+        column_config["values"] = str_entries
+        column_config["ids"] = ids
+
+        column_config["required"] = not column.nullable
+
+        edit_data[get_display_name(rel_name)] = column_config
 
     return edit_data

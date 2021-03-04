@@ -6,13 +6,12 @@ from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.widgets import Button, Label
 from prompt_toolkit.widgets.dialogs import Dialog
 
-from pepys_admin.maintenance.column_data import column_data_to_edit_data
 from pepys_admin.maintenance.utils import get_system_name_mappings
 from pepys_admin.maintenance.widgets.entry_edit_widget import EntryEditWidget
 
 
 class AddDialog:
-    def __init__(self, column_data, table_object):
+    def __init__(self, edit_data, table_object):
         """
         A dialog for adding entries to a table
 
@@ -26,9 +25,7 @@ class AddDialog:
         ok_button = Button(text="Add", handler=self.handle_ok)
         cancel_button = Button(text="Cancel", handler=self.handle_cancel)
 
-        # Convert the column_data into the structure we need for editing the data
-        # This removes un-needed columns, and un-needed values lists
-        self.edit_data = column_data_to_edit_data(column_data, table_object)
+        self.edit_data = edit_data
 
         self.required_columns = set(
             [value["system_name"] for key, value in self.edit_data.items() if value["required"]]

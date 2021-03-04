@@ -2,6 +2,8 @@ import re
 
 import pint
 
+from pepys_import.core.store.db_base import BasePostGIS, BaseSpatiaLite
+
 
 def get_display_names(fields, capitalized=False):
     """
@@ -65,7 +67,10 @@ def get_str_for_field(value):
     if isinstance(value, float):
         # For floats, display to 2 decimal places
         return f"{value:.2f}"
-    if isinstance(value, pint.Quantity):
+    elif isinstance(value, pint.Quantity):
         return f"{value:~.2fP}"
+    elif isinstance(value, BasePostGIS) or isinstance(value, BaseSpatiaLite):
+        strings = [str(getattr(value, field_name)) for field_name in value._default_preview_fields]
+        return " / ".join(strings)
     else:
         return str(value)

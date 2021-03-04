@@ -6,6 +6,7 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
+from loguru import logger
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
@@ -2029,8 +2030,9 @@ class DataStore:
             getattr(table_object, get_primary_key_for_table(table_object)).in_(ids)
         )
 
+        logger.debug(f"{edit_dict=}")
         update_dict = convert_edit_dict_columns(edit_dict, table_object)
-
+        logger.debug(f"{update_dict=}")
         query.update(update_dict, synchronize_session="fetch")
         self.session.commit()
 
