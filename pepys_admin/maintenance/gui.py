@@ -463,8 +463,6 @@ class MaintenanceGUI:
                 # Dialog was cancelled
                 return
 
-            logger.debug(edit_dict)
-
             dialog = ProgressDialog(
                 "Adding items",
                 partial(do_add, self.current_table_object, edit_dict),
