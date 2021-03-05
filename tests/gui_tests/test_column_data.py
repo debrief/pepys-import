@@ -1,6 +1,6 @@
 from pprint import pprint
 
-from pepys_admin.maintenance.column_data import create_column_data
+from pepys_admin.maintenance.column_data import convert_column_data_to_edit_data, create_column_data
 from pepys_import.core.store.data_store import DataStore
 
 
@@ -14,27 +14,42 @@ def test_column_data_platform():
     col_data = create_column_data(store, store.db_classes.Platform)
 
     correct_col_data = {
-        "platform id": {"required": True, "type": "id", "system_name": "platform_id"},
+        "platform id": {
+            "required": True,
+            "assoc_proxy": False,
+            "type": "id",
+            "system_name": "platform_id",
+        },
         "name": {
+            "assoc_proxy": False,
             "required": True,
             "type": "string",
             "values": ["ADRI", "JEAN", "NARV", "SPAR"],
             "system_name": "name",
         },
         "identifier": {
+            "assoc_proxy": False,
             "required": True,
             "type": "string",
             "values": ["A643", "A816", "C045", "P543"],
             "system_name": "identifier",
         },
-        "trigraph": {"required": False, "type": "string", "values": [], "system_name": "trigraph"},
+        "trigraph": {
+            "assoc_proxy": False,
+            "required": False,
+            "type": "string",
+            "values": [],
+            "system_name": "trigraph",
+        },
         "quadgraph": {
+            "assoc_proxy": False,
             "required": False,
             "type": "string",
             "values": [],
             "system_name": "quadgraph",
         },
         "nationality": {
+            "assoc_proxy": True,
             "required": True,
             "type": "string",
             "system_name": "nationality_name",
@@ -298,6 +313,7 @@ def test_column_data_platform():
             ],
         },
         "platform type": {
+            "assoc_proxy": True,
             "required": True,
             "type": "string",
             "system_name": "platform_type_name",
@@ -325,6 +341,7 @@ def test_column_data_platform():
         },
         "privacy": {
             "required": True,
+            "assoc_proxy": True,
             "type": "string",
             "system_name": "privacy_name",
             "values": [
@@ -338,7 +355,12 @@ def test_column_data_platform():
                 "Very Private",
             ],
         },
-        "created date": {"required": False, "system_name": "created_date", "type": "datetime"},
+        "created date": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "created_date",
+            "type": "datetime",
+        },
     }
 
     del col_data["nationality"]["ids"]
@@ -358,8 +380,14 @@ def test_column_data_platform_type():
     col_data = create_column_data(store, store.db_classes.PlatformType)
 
     correct_col_data = {
-        "created date": {"required": False, "system_name": "created_date", "type": "datetime"},
+        "created date": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "created_date",
+            "type": "datetime",
+        },
         "name": {
+            "assoc_proxy": False,
             "required": True,
             "system_name": "name",
             "type": "string",
@@ -386,6 +414,7 @@ def test_column_data_platform_type():
             ],
         },
         "platform type id": {
+            "assoc_proxy": False,
             "required": True,
             "system_name": "platform_type_id",
             "type": "id",
@@ -409,9 +438,15 @@ def test_column_data_privacies():
     print(pprint(col_data))
 
     assert col_data == {
-        "created date": {"required": False, "system_name": "created_date", "type": "datetime"},
-        "level": {"required": True, "system_name": "level", "type": "int"},
+        "created date": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "created_date",
+            "type": "datetime",
+        },
+        "level": {"assoc_proxy": False, "required": True, "system_name": "level", "type": "int"},
         "name": {
+            "assoc_proxy": False,
             "required": True,
             "system_name": "name",
             "type": "string",
@@ -426,5 +461,580 @@ def test_column_data_privacies():
                 "Very Private UK/IE/FR",
             ],
         },
-        "privacy id": {"required": True, "system_name": "privacy_id", "type": "id"},
+        "privacy id": {
+            "assoc_proxy": False,
+            "required": True,
+            "system_name": "privacy_id",
+            "type": "id",
+        },
+    }
+
+
+def test_column_data_state():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
+
+    col_data = create_column_data(store, store.db_classes.State)
+
+    print(pprint(col_data))
+
+    del col_data["platform"]["ids"]
+    del col_data["privacy"]["ids"]
+    del col_data["sensor"]["ids"]
+
+    assert col_data == {
+        "course": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "course",
+            "type": "float",
+        },
+        "created date": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "created_date",
+            "type": "datetime",
+        },
+        "elevation": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "elevation",
+            "type": "float",
+        },
+        "heading": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "heading",
+            "type": "float",
+        },
+        "location": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "location",
+            "type": "geometry",
+        },
+        "platform": {
+            "assoc_proxy": True,
+            "required": True,
+            "system_name": "platform_name",
+            "type": "string",
+            "values": ["ADRI", "JEAN", "NARV", "SPAR"],
+        },
+        "privacy": {
+            "assoc_proxy": True,
+            "required": False,
+            "system_name": "privacy_name",
+            "type": "string",
+            "values": [
+                "Public",
+                "Public Sensitive",
+                "Private",
+                "Private UK/IE",
+                "Very Private UK/IE",
+                "Private UK/IE/FR",
+                "Very Private UK/IE/FR",
+                "Very Private",
+            ],
+        },
+        "remarks": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "remarks",
+            "type": "string",
+            "values": [],
+        },
+        "sensor": {
+            "assoc_proxy": True,
+            "required": True,
+            "system_name": "sensor_name",
+            "type": "string",
+            "values": ["GPS", "GPS", "GPS", "INS", "Periscope", "Radar"],
+        },
+        "source reference": {
+            "assoc_proxy": True,
+            "ids": [],
+            "required": True,
+            "system_name": "source_reference",
+            "type": "string",
+            "values": [],
+        },
+        "speed": {"assoc_proxy": False, "required": False, "system_name": "speed", "type": "float"},
+        "state id": {
+            "assoc_proxy": False,
+            "required": True,
+            "system_name": "state_id",
+            "type": "id",
+        },
+        "time": {"assoc_proxy": False, "required": True, "system_name": "time", "type": "datetime"},
+    }
+
+
+def test_edit_data_platform_type():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
+
+    col_data = create_column_data(store, store.db_classes.PlatformType)
+
+    edit_data = convert_column_data_to_edit_data(col_data, store.db_classes.PlatformType, store)
+
+    pprint(edit_data)
+
+    assert edit_data == {
+        "name": {"assoc_proxy": False, "required": True, "system_name": "name", "type": "string"}
+    }
+
+
+def test_edit_data_privacy():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
+
+    col_data = create_column_data(store, store.db_classes.Privacy)
+
+    edit_data = convert_column_data_to_edit_data(col_data, store.db_classes.Privacy, store)
+
+    pprint(edit_data)
+
+    assert edit_data == {
+        "level": {"assoc_proxy": False, "required": True, "system_name": "level", "type": "int"},
+        "name": {"assoc_proxy": False, "required": True, "system_name": "name", "type": "string"},
+    }
+
+
+def test_edit_data_platform():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
+
+    col_data = create_column_data(store, store.db_classes.Platform)
+
+    edit_data = convert_column_data_to_edit_data(col_data, store.db_classes.Platform, store)
+
+    del edit_data["privacy"]["ids"]
+    del edit_data["nationality"]["ids"]
+    del edit_data["platform type"]["ids"]
+
+    pprint(edit_data)
+
+    assert edit_data == {
+        "identifier": {
+            "assoc_proxy": False,
+            "required": True,
+            "system_name": "identifier",
+            "type": "string",
+        },
+        "name": {"assoc_proxy": False, "required": True, "system_name": "name", "type": "string"},
+        "nationality": {
+            "required": True,
+            "system_name": "nationality",
+            "type": "string",
+            "values": [
+                "United Kingdom",
+                "Canada",
+                "France",
+                "Germany",
+                "Italy",
+                "Netherlands",
+                "United States",
+                "Afghanistan",
+                "Albania",
+                "Algeria",
+                "American Samoa",
+                "Andorra",
+                "Angola",
+                "Anguilla",
+                "Antarctica",
+                "Antigua and Barbuda",
+                "Argentina",
+                "Armenia",
+                "Aruba",
+                "Australia",
+                "Austria",
+                "Azerbaijan",
+                "Bahamas",
+                "Bahrain",
+                "Bangladesh",
+                "Barbados",
+                "Belarus",
+                "Belgium",
+                "Belize",
+                "Benin",
+                "Bermuda",
+                "Bhutan",
+                "Bolivia, Plurinational State of",
+                "Bolivia",
+                "Bosnia and Herzegovina",
+                "Botswana",
+                "Bouvet Island",
+                "Brazil",
+                "British Indian Ocean Territory",
+                "Brunei Darussalam",
+                "Brunei",
+                "Bulgaria",
+                "Burkina Faso",
+                "Burundi",
+                "Cambodia",
+                "Cameroon",
+                "Cape Verde",
+                "Cayman Islands",
+                "Central African Republic",
+                "Chad",
+                "Chile",
+                "China",
+                "Christmas Island",
+                "Cocos (Keeling) Islands",
+                "Colombia",
+                "Comoros",
+                "Congo",
+                "Congo, the Democratic Republic of the",
+                "Cook Islands",
+                "Costa Rica",
+                "Cote d'Ivoire",
+                "Ivory Coast",
+                "Croatia",
+                "Cuba",
+                "Cyprus",
+                "Czech Republic",
+                "Denmark",
+                "Djibouti",
+                "Dominica",
+                "Dominican Republic",
+                "Ecuador",
+                "Egypt",
+                "El Salvador",
+                "Equatorial Guinea",
+                "Eritrea",
+                "Estonia",
+                "Ethiopia",
+                "Falkland Islands (Malvinas)",
+                "Faroe Islands",
+                "Fiji",
+                "Finland",
+                "French Guiana",
+                "French Polynesia",
+                "French Southern Territories",
+                "Gabon",
+                "Gambia",
+                "Georgia",
+                "Ghana",
+                "Gibraltar",
+                "Greece",
+                "Greenland",
+                "Grenada",
+                "Guadeloupe",
+                "Guam",
+                "Guatemala",
+                "Guernsey",
+                "Guinea",
+                "Guinea-Bissau",
+                "Guyana",
+                "Haiti",
+                "Heard Island and McDonald Islands",
+                "Holy See (Vatican City State)",
+                "Honduras",
+                "Hong Kong",
+                "Hungary",
+                "Iceland",
+                "India",
+                "Indonesia",
+                "Iran, Islamic Republic of",
+                "Iraq",
+                "Ireland",
+                "Isle of Man",
+                "Israel",
+                "Jamaica",
+                "Japan",
+                "Jersey",
+                "Jordan",
+                "Kazakhstan",
+                "Kenya",
+                "Kiribati",
+                "Korea, Democratic People's Republic of",
+                "Korea, Republic of",
+                "South Korea",
+                "Kuwait",
+                "Kyrgyzstan",
+                "Lao People's Democratic Republic",
+                "Latvia",
+                "Lebanon",
+                "Lesotho",
+                "Liberia",
+                "Libyan Arab Jamahiriya",
+                "Libya",
+                "Liechtenstein",
+                "Lithuania",
+                "Luxembourg",
+                "Macao",
+                "Macedonia, the former Yugoslav Republic of",
+                "Madagascar",
+                "Malawi",
+                "Malaysia",
+                "Maldives",
+                "Mali",
+                "Malta",
+                "Marshall Islands",
+                "Martinique",
+                "Mauritania",
+                "Mauritius",
+                "Mayotte",
+                "Mexico",
+                "Micronesia, Federated States of",
+                "Moldova, Republic of",
+                "Monaco",
+                "Mongolia",
+                "Montenegro",
+                "Montserrat",
+                "Morocco",
+                "Mozambique",
+                "Myanmar",
+                "Burma",
+                "Namibia",
+                "Nauru",
+                "Nepal",
+                "Netherlands Antilles",
+                "New Caledonia",
+                "New Zealand",
+                "Nicaragua",
+                "Niger",
+                "Nigeria",
+                "Niue",
+                "Norfolk Island",
+                "Northern Mariana Islands",
+                "Norway",
+                "Oman",
+                "Pakistan",
+                "Palau",
+                "Palestinian Territory, Occupied",
+                "Panama",
+                "Papua New Guinea",
+                "Paraguay",
+                "Peru",
+                "Philippines",
+                "Pitcairn",
+                "Poland",
+                "Portugal",
+                "Puerto Rico",
+                "Qatar",
+                "Reunion",
+                "Romania",
+                "Russian Federation",
+                "Russia",
+                "Rwanda",
+                "Saint Helena, Ascension and Tristan da Cunha",
+                "Saint Kitts and Nevis",
+                "Saint Lucia",
+                "Saint Pierre and Miquelon",
+                "Saint Vincent and the Grenadines",
+                "Saint Vincent & the Grenadines",
+                "St. Vincent and the Grenadines",
+                "Samoa",
+                "San Marino",
+                "Sao Tome and Principe",
+                "Saudi Arabia",
+                "Senegal",
+                "Serbia",
+                "Seychelles",
+                "Sierra Leone",
+                "Singapore",
+                "Slovakia",
+                "Slovenia",
+                "Solomon Islands",
+                "Somalia",
+                "South Africa",
+                "South Georgia and the South Sandwich Islands",
+                "South Sudan",
+                "Spain",
+                "Sri Lanka",
+                "Sudan",
+                "Suriname",
+                "Svalbard and Jan Mayen",
+                "Swaziland",
+                "Sweden",
+                "Switzerland",
+                "Syrian Arab Republic",
+                "Taiwan, Province of China",
+                "Taiwan",
+                "Tajikistan",
+                "Tanzania, United Republic of",
+                "Thailand",
+                "Timor-Leste",
+                "Togo",
+                "Tokelau",
+                "Tonga",
+                "Trinidad and Tobago",
+                "Tunisia",
+                "Turkey",
+                "Turkmenistan",
+                "Turks and Caicos Islands",
+                "Tuvalu",
+                "Uganda",
+                "Ukraine",
+                "United Arab Emirates",
+                "United States Minor Outlying Islands",
+                "Uruguay",
+                "Uzbekistan",
+                "Vanuatu",
+                "Venezuela, Bolivarian Republic of",
+                "Venezuela",
+                "Viet Nam",
+                "Vietnam",
+                "Virgin Islands, British",
+                "Virgin Islands, U.S.",
+                "Wallis and Futuna",
+                "Western Sahara",
+                "Yemen",
+                "Zambia",
+                "Zimbabwe",
+            ],
+        },
+        "platform type": {
+            "required": True,
+            "system_name": "platform_type",
+            "type": "string",
+            "values": [
+                "Naval - aircraft",
+                "Naval - frigate",
+                "Naval - auxiliary",
+                "Naval - destroyer",
+                "Naval - survey",
+                "Naval - minesweeper",
+                "Naval - patrol",
+                "Naval - aircraft carrier",
+                "Naval - submarine",
+                "Naval - miscellaneous",
+                "Merchant",
+                "Tug",
+                "Tanker",
+                "Law Enforcement",
+                "Pleasure Craft",
+                "Search and Rescue",
+                "Fishing Vessel",
+                "Passenger/Ferry",
+                "High Speed Craft",
+            ],
+        },
+        "privacy": {
+            "required": True,
+            "system_name": "privacy",
+            "type": "string",
+            "values": [
+                "Public",
+                "Public Sensitive",
+                "Private",
+                "Private UK/IE",
+                "Very Private UK/IE",
+                "Private UK/IE/FR",
+                "Very Private UK/IE/FR",
+                "Very Private",
+            ],
+        },
+        "quadgraph": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "quadgraph",
+            "type": "string",
+        },
+        "trigraph": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "trigraph",
+            "type": "string",
+        },
+    }
+
+
+def test_edit_data_state():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
+
+    col_data = create_column_data(store, store.db_classes.State)
+
+    edit_data = convert_column_data_to_edit_data(col_data, store.db_classes.State, store)
+
+    del edit_data["sensor"]["ids"]
+    del edit_data["privacy"]["ids"]
+
+    pprint(edit_data)
+
+    assert edit_data == {
+        "course": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "course",
+            "type": "float",
+        },
+        "elevation": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "elevation",
+            "type": "float",
+        },
+        "heading": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "heading",
+            "type": "float",
+        },
+        "location": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "location",
+            "type": "geometry",
+        },
+        "privacy": {
+            "required": False,
+            "system_name": "privacy",
+            "type": "string",
+            "values": [
+                "Public",
+                "Public Sensitive",
+                "Private",
+                "Private UK/IE",
+                "Very Private UK/IE",
+                "Private UK/IE/FR",
+                "Very Private UK/IE/FR",
+                "Very Private",
+            ],
+        },
+        "remarks": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "remarks",
+            "type": "string",
+        },
+        "sensor": {
+            "required": True,
+            "system_name": "sensor",
+            "type": "string",
+            "values": [
+                "GPS / ADRI / A643 / United Kingdom",
+                "INS / ADRI / A643 / United Kingdom",
+                "Radar / ADRI / A643 / United Kingdom",
+                "Periscope / ADRI / A643 / United Kingdom",
+                "GPS / JEAN / A816 / United Kingdom",
+                "GPS / SPAR / P543 / France",
+            ],
+        },
+        "source": {
+            "ids": [],
+            "required": True,
+            "system_name": "source",
+            "type": "string",
+            "values": [],
+        },
+        "speed": {"assoc_proxy": False, "required": False, "system_name": "speed", "type": "float"},
+        "time": {"assoc_proxy": False, "required": True, "system_name": "time", "type": "datetime"},
     }

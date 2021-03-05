@@ -222,7 +222,7 @@ def create_column_data(data_store, table_object, set_percentage=None):
     return column_data
 
 
-def convert_column_data_to_edit_data(column_data, table_object, data_store):
+def convert_column_data_to_edit_data(column_data, table_object, data_store, set_percentage=None):
     """
     Converts the original column_data dictionary into a dictionary of data
     for configuring the editing UI.
@@ -258,9 +258,15 @@ def convert_column_data_to_edit_data(column_data, table_object, data_store):
             # as we'll deal with those foreign keys through the full relationship columns instead below
             edit_data[key] = value
 
+    if callable(set_percentage):
+        set_percentage(20)
+
     rel_columns = get_relationship_columns(table_object)
 
-    for rel_name in rel_columns:
+    denominator = 1 if len(rel_columns) <= 0 else len(rel_columns)
+    perc_per_iteration = 80.0 / denominator
+
+    for i, rel_name in enumerate(rel_columns):
         column_config = {"system_name": rel_name, "type": "string"}
 
         rel = getattr(table_object, rel_name)
@@ -269,23 +275,41 @@ def convert_column_data_to_edit_data(column_data, table_object, data_store):
             # Eg. this will skip State.platform, which is a relationship that passes
             # through State.sensor
             continue
+        # Get the object for the foreign table in this relationship
         column = list(rel.prop.local_columns)[0]
         fk = list(column.foreign_keys)[0]
         foreign_table_object = data_store._get_table_object(fk._column_tokens[1])
 
         with data_store.session_scope():
-            all_entries = data_store.session.query(foreign_table_object).all()
-            str_entries = []
-            for entry in all_entries:
-                field_values = [
-                    str(getattr(entry, field_name))
-                    for field_name in foreign_table_object._default_dropdown_fields
+            if foreign_table_object == data_store.db_classes.Nationality:
+                all_nationalities = (
+                    data_store.session.query(data_store.db_classes.Nationality)
+                    .order_by(nullslast(data_store.db_classes.Nationality.priority.asc()))
+                    .all()
+                )
+                str_entries = [nationality.name for nationality in all_nationalities]
+                ids = [str(nationality.nationality_id) for nationality in all_nationalities]
+            elif foreign_table_object == data_store.db_classes.Privacy:
+                all_privacies = (
+                    data_store.session.query(data_store.db_classes.Privacy)
+                    .order_by(data_store.db_classes.Privacy.level)
+                    .all()
+                )
+                str_entries = [priv.name for priv in all_privacies]
+                ids = [str(priv.privacy_id) for priv in all_privacies]
+            else:
+                all_entries = data_store.session.query(foreign_table_object).all()
+                str_entries = []
+                for entry in all_entries:
+                    field_values = [
+                        str(getattr(entry, field_name))
+                        for field_name in foreign_table_object._default_dropdown_fields
+                    ]
+                    str_entries.append(" / ".join(field_values))
+                ids = [
+                    getattr(entry, get_primary_key_for_table(foreign_table_object))
+                    for entry in all_entries
                 ]
-                str_entries.append(" / ".join(field_values))
-            ids = [
-                getattr(entry, get_primary_key_for_table(foreign_table_object))
-                for entry in all_entries
-            ]
 
         column_config["values"] = str_entries
         column_config["ids"] = ids
@@ -293,5 +317,8 @@ def convert_column_data_to_edit_data(column_data, table_object, data_store):
         column_config["required"] = not column.nullable
 
         edit_data[get_display_name(rel_name)] = column_config
+
+        if callable(set_percentage):
+            set_percentage(20 + (i * perc_per_iteration))
 
     return edit_data

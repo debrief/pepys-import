@@ -33,27 +33,42 @@ def test_generating_column_data(pytestconfig, test_datastore):
     set_selected_table_to_platform(gui)
 
     correct_col_data = {
-        "platform id": {"required": True, "type": "id", "system_name": "platform_id"},
+        "platform id": {
+            "required": True,
+            "assoc_proxy": False,
+            "type": "id",
+            "system_name": "platform_id",
+        },
         "name": {
+            "assoc_proxy": False,
             "required": True,
             "type": "string",
             "values": ["ADRI", "JEAN", "NARV", "SPAR"],
             "system_name": "name",
         },
         "identifier": {
+            "assoc_proxy": False,
             "required": True,
             "type": "string",
             "values": ["A643", "A816", "C045", "P543"],
             "system_name": "identifier",
         },
-        "trigraph": {"required": False, "type": "string", "values": [], "system_name": "trigraph"},
+        "trigraph": {
+            "assoc_proxy": False,
+            "required": False,
+            "type": "string",
+            "values": [],
+            "system_name": "trigraph",
+        },
         "quadgraph": {
+            "assoc_proxy": False,
             "required": False,
             "type": "string",
             "values": [],
             "system_name": "quadgraph",
         },
         "nationality": {
+            "assoc_proxy": True,
             "required": True,
             "type": "string",
             "system_name": "nationality_name",
@@ -317,6 +332,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
             ],
         },
         "platform type": {
+            "assoc_proxy": True,
             "required": True,
             "type": "string",
             "system_name": "platform_type_name",
@@ -344,6 +360,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
         },
         "privacy": {
             "required": True,
+            "assoc_proxy": True,
             "type": "string",
             "system_name": "privacy_name",
             "values": [
@@ -357,7 +374,12 @@ def test_generating_column_data(pytestconfig, test_datastore):
                 "Very Private",
             ],
         },
-        "created date": {"required": False, "system_name": "created_date", "type": "datetime"},
+        "created date": {
+            "assoc_proxy": False,
+            "required": False,
+            "system_name": "created_date",
+            "type": "datetime",
+        },
     }
 
     output_col_data = gui.column_data

@@ -612,7 +612,10 @@ class MaintenanceGUI:
         # Convert the column_data into the structure we need for editing the data
         # This removes un-needed columns, and un-needed values lists
         self.edit_data = convert_column_data_to_edit_data(
-            self.column_data, self.current_table_object, self.data_store
+            self.column_data,
+            self.current_table_object,
+            self.data_store,
+            set_percentage=set_percentage,
         )
         set_percentage(100)
 
