@@ -24,6 +24,7 @@ class FilterWidget:
         on_change_handler=None,
         max_filters=None,
         contextual_help_setter=None,
+        filter_function=None,
     ):
         """A widget that allows the creation of SQL-style filter constraints, in the style
         of <column_name> <operator> <value> such as "name == 'Robin'" or "speed >= 23.5". Also
@@ -38,6 +39,9 @@ class FilterWidget:
         :type on_change_handler: Function, optional
         :param max_filters: Maximum number of filters to allow, defaults to None
         :type max_filters: int, optional
+        :param filter_function: Function called with the column_data as an argument whenever column data is set/reset.
+        This should return a new column_data dict to be used, and is designed to allow filtering out elements of the column
+        data so they don't get offered as options for filtering (eg. filtering out specific fields)
 
         Column Data structure
         =====================
@@ -64,7 +68,7 @@ class FilterWidget:
         self.on_change_handler = on_change_handler
         self.max_filters = max_filters
         self.contextual_help_setter = contextual_help_setter
-
+        self.filter_function = filter_function
         self.last_filters_output = []
 
         # We can handle None for column_data if we turn it into an
@@ -72,6 +76,9 @@ class FilterWidget:
         # any entries
         if self.column_data is None:
             self.column_data = {}
+        else:
+            if callable(self.filter_function):
+                self.column_data = self.filter_function(self.column_data)
 
         self.scrollable_pane = None
 
@@ -110,10 +117,12 @@ class FilterWidget:
     def set_column_data(self, column_data, clear_entries=True):
         """Updates the column_data, and removes all the filter entries
         so we can start again filtering a new table"""
-        self.column_data = column_data
-
-        if self.column_data is None:
+        if column_data is None:
             self.column_data = {}
+        elif callable(self.filter_function):
+            self.column_data = self.filter_function(column_data)
+        else:
+            self.column_data = column_data
 
         if clear_entries:
             self.entries = [FilterWidgetEntry(self)]

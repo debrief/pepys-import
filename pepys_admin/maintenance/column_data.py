@@ -126,6 +126,7 @@ def create_column_data(data_store, table_object, set_percentage=None):
             details["required"] = not col.prop.columns[0].nullable
 
             if details["type"] == "id" and col.key != get_primary_key_for_table(table_object):
+                # Skip all ID columns except the primary key
                 continue
 
             if details["type"] == "string":

@@ -160,6 +160,7 @@ class MaintenanceGUI:
             on_change_handler=self.on_filter_widget_change,
             max_filters=None,
             contextual_help_setter=self.set_contextual_help,
+            filter_function=self.filter_column_data,
         )
         self.set_contextual_help(self.filter_widget, "# Second panel: Build filters F3")
         self.filter_container = DynamicContainer(self.get_filter_container)
@@ -284,6 +285,23 @@ class MaintenanceGUI:
 
     def get_default_preview_fields(self):
         self.preview_selected_fields = self.current_table_object._default_preview_fields
+
+    def filter_column_data(self, column_data):
+        """
+        Filters the column_data dict in the FilterWidget to remove entries
+        that we don't currently want the user to be able to select - such as location,
+        or float columns
+        """
+        # FUTURE: Remove this when we want to be able to filter by measurements or location
+        new_column_data = {}
+        for display_name, col_config in column_data.items():
+            if display_name == "location":
+                continue
+            elif col_config["type"] == "float":
+                continue
+            new_column_data[display_name] = col_config
+
+        return new_column_data
 
     def run_query(self):
         """Runs the query as defined by the FilterWidget,
