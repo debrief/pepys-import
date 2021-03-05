@@ -186,25 +186,18 @@ def is_schema_created(engine, db_type):
         # or 72 if on another platform (with the stable release of mod_spatialite)
         if len(table_names) == 74 or len(table_names) == 72:
             return True
-        else:
-            custom_print_formatted_text(
-                format_error_message(
-                    "Database tables are not found! (Hint: Did you initialise the DataStore?)"
-                )
-            )
-            return False
     else:
         table_names = inspector.get_table_names(schema="pepys")
         # We expect 36 tables on Postgres
         if len(table_names) == 36:
             return True
-        else:
-            custom_print_formatted_text(
-                format_error_message(
-                    "Database tables are not found! (Hint: Did you initialise the DataStore?)"
-                )
-            )
-            return False
+
+    if len(table_names) == 0:
+        message = "Database tables are not found! (Hint: Did you initialise the DataStore?)"
+    else:
+        message = "Please run database migration to bring tables up to date."
+    custom_print_formatted_text(format_error_message(message))
+    return False
 
 
 def create_spatial_tables_for_sqlite(engine):
