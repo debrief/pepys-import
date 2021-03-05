@@ -14,20 +14,28 @@ def test_column_data_platform():
     col_data = create_column_data(store, store.db_classes.Platform)
 
     correct_col_data = {
-        "platform id": {"type": "id", "system_name": "platform_id"},
+        "platform id": {"required": True, "type": "id", "system_name": "platform_id"},
         "name": {
+            "required": True,
             "type": "string",
             "values": ["ADRI", "JEAN", "NARV", "SPAR"],
             "system_name": "name",
         },
         "identifier": {
+            "required": True,
             "type": "string",
             "values": ["A643", "A816", "C045", "P543"],
             "system_name": "identifier",
         },
-        "trigraph": {"type": "string", "values": [], "system_name": "trigraph"},
-        "quadgraph": {"type": "string", "values": [], "system_name": "quadgraph"},
+        "trigraph": {"required": False, "type": "string", "values": [], "system_name": "trigraph"},
+        "quadgraph": {
+            "required": False,
+            "type": "string",
+            "values": [],
+            "system_name": "quadgraph",
+        },
         "nationality": {
+            "required": True,
             "type": "string",
             "system_name": "nationality_name",
             "values": [
@@ -290,6 +298,7 @@ def test_column_data_platform():
             ],
         },
         "platform type": {
+            "required": True,
             "type": "string",
             "system_name": "platform_type_name",
             "values": [
@@ -315,6 +324,7 @@ def test_column_data_platform():
             ],
         },
         "privacy": {
+            "required": True,
             "type": "string",
             "system_name": "privacy_name",
             "values": [
@@ -328,7 +338,7 @@ def test_column_data_platform():
                 "Very Private",
             ],
         },
-        "created date": {"system_name": "created_date", "type": "datetime"},
+        "created date": {"required": False, "system_name": "created_date", "type": "datetime"},
     }
 
     del col_data["nationality"]["ids"]
@@ -348,8 +358,9 @@ def test_column_data_platform_type():
     col_data = create_column_data(store, store.db_classes.PlatformType)
 
     correct_col_data = {
-        "created date": {"system_name": "created_date", "type": "datetime"},
+        "created date": {"required": False, "system_name": "created_date", "type": "datetime"},
         "name": {
+            "required": True,
             "system_name": "name",
             "type": "string",
             "values": [
@@ -375,10 +386,13 @@ def test_column_data_platform_type():
             ],
         },
         "platform type id": {
+            "required": True,
             "system_name": "platform_type_id",
             "type": "id",
         },
     }
+
+    print(pprint(col_data))
 
     assert col_data == correct_col_data
 
@@ -395,9 +409,10 @@ def test_column_data_privacies():
     print(pprint(col_data))
 
     assert col_data == {
-        "created date": {"system_name": "created_date", "type": "datetime"},
-        "level": {"system_name": "level", "type": "int"},
+        "created date": {"required": False, "system_name": "created_date", "type": "datetime"},
+        "level": {"required": True, "system_name": "level", "type": "int"},
         "name": {
+            "required": True,
             "system_name": "name",
             "type": "string",
             "values": [
@@ -411,5 +426,5 @@ def test_column_data_privacies():
                 "Very Private UK/IE/FR",
             ],
         },
-        "privacy id": {"system_name": "privacy_id", "type": "id"},
+        "privacy id": {"required": True, "system_name": "privacy_id", "type": "id"},
     }

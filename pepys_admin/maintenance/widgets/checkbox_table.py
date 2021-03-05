@@ -1,10 +1,11 @@
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.formatted_text.base import to_formatted_text
 from prompt_toolkit.mouse_events import MouseEventType
 from prompt_toolkit.widgets.base import CheckboxList
 
 
 class CheckboxTable(CheckboxList):
-    def __init__(self, table_data, table_objects):
+    def __init__(self, table_data, table_objects, any_keybinding=None):
         """Creates a table view with checkboxes on the left-hand side.
 
         Parameters:
@@ -34,6 +35,13 @@ class CheckboxTable(CheckboxList):
         self.create_values_from_parameters()
 
         super().__init__(self.values)
+
+        if callable(any_keybinding):
+            kb = self.control.key_bindings
+
+            @kb.add("<any>")
+            def _(event):
+                any_keybinding(event)
 
     def create_values_from_parameters(self):
         self.values = []
@@ -97,6 +105,10 @@ class CheckboxTable(CheckboxList):
             if mouse_event.event_type == MouseEventType.MOUSE_UP:
                 self._selected_index = mouse_event.position.y
                 self._handle_enter()
+                # Set focus to this control when we've clicked in it
+                # so that the keyboard shortcuts from this control (like
+                # activating actions) work
+                get_app().layout.focus(self)
 
         self.create_values_from_parameters()
 

@@ -1,5 +1,4 @@
 from prompt_toolkit.layout.containers import HorizontalAlign, HSplit, VSplit
-from prompt_toolkit.layout.scrollable_pane import ScrollablePane
 from prompt_toolkit.widgets.base import Label
 
 from pepys_admin.maintenance.utils import get_system_name_mappings
@@ -11,7 +10,7 @@ PROMPT = "Enter new value"
 
 
 class EntryEditWidget:
-    def __init__(self, edit_data):
+    def __init__(self, edit_data, show_required_fields=False):
         """
         Widget for editing table data.
 
@@ -23,13 +22,15 @@ class EntryEditWidget:
         max_label_len = max([len(key) for key, value in edit_data.items()])
         edit_width = 30
         self.entry_rows = [
-            EntryEditWidgetRow(key, value, max_label_len + 1, edit_width)
+            # We add three to the width to give space for " *" (to mark a required field)
+            # plus an extra space to make it look nicer
+            EntryEditWidgetRow(key, value, max_label_len + 3, edit_width)
             for key, value in edit_data.items()
         ]
 
         self.widgets = [row.get_widgets() for row in self.entry_rows]
 
-        self.container = ScrollablePane(content=HSplit(self.widgets, padding=1))
+        self.container = HSplit(self.widgets, padding=1)
 
     @property
     def output(self):
@@ -141,9 +142,12 @@ class EntryEditWidgetRow:
         :return: VSplit object, containing the relevant widgets
         :rtype: VSplit object
         """
+        label_text = self.display_name
+        if self.col_config["required"]:
+            label_text += " *"
         return VSplit(
             [
-                Label(self.display_name, width=self.label_width),
+                Label(label_text, width=self.label_width),
                 Label(" = ", width=3),
                 self.value_widget,
             ],

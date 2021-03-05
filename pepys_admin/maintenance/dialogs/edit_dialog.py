@@ -68,7 +68,7 @@ class EditDialog:
         )
 
         self.dialog = Dialog(
-            title="Edit item(s)",
+            title=f"Edit {table_object.__name__}(s)",
             body=self.body,
             buttons=[ok_button, cancel_button],
             width=D(preferred=100),

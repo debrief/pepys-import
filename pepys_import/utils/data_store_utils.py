@@ -5,6 +5,7 @@ import sys
 from inspect import getfullargspec
 from math import ceil
 
+import sqlalchemy
 from sqlalchemy import func, inspect, select
 
 from paths import MIGRATIONS_DIRECTORY
@@ -325,3 +326,22 @@ def chunked_list(lst, size):
         result.append(lst[i * size : (i + 1) * size])
 
     return result
+
+
+def convert_edit_dict_columns(edit_dict, table_object):
+    update_dict = {}
+    # Convert the edit_dict we get from the GUI into a dict suitable for use in the update function
+    # This involves converting any association proxy column names into the relevant foreign key name to set
+    for col_name, new_value in edit_dict.items():
+        attr_from_db_class = getattr(table_object, col_name)
+        if isinstance(
+            attr_from_db_class, sqlalchemy.ext.associationproxy.ColumnAssociationProxyInstance
+        ):
+            relationship_name = attr_from_db_class.target_collection
+            relationship_obj = getattr(table_object, relationship_name)
+            foreign_key_col_name = list(relationship_obj.property.local_columns)[0].key
+            update_dict[foreign_key_col_name] = new_value
+        else:
+            update_dict[col_name] = new_value
+
+    return update_dict

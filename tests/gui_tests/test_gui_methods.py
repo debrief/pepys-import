@@ -33,20 +33,28 @@ def test_generating_column_data(pytestconfig, test_datastore):
     set_selected_table_to_platform(gui)
 
     correct_col_data = {
-        "platform id": {"type": "id", "system_name": "platform_id"},
+        "platform id": {"required": True, "type": "id", "system_name": "platform_id"},
         "name": {
+            "required": True,
             "type": "string",
             "values": ["ADRI", "JEAN", "NARV", "SPAR"],
             "system_name": "name",
         },
         "identifier": {
+            "required": True,
             "type": "string",
             "values": ["A643", "A816", "C045", "P543"],
             "system_name": "identifier",
         },
-        "trigraph": {"type": "string", "values": [], "system_name": "trigraph"},
-        "quadgraph": {"type": "string", "values": [], "system_name": "quadgraph"},
+        "trigraph": {"required": False, "type": "string", "values": [], "system_name": "trigraph"},
+        "quadgraph": {
+            "required": False,
+            "type": "string",
+            "values": [],
+            "system_name": "quadgraph",
+        },
         "nationality": {
+            "required": True,
             "type": "string",
             "system_name": "nationality_name",
             "values": [
@@ -309,6 +317,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
             ],
         },
         "platform type": {
+            "required": True,
             "type": "string",
             "system_name": "platform_type_name",
             "values": [
@@ -334,6 +343,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
             ],
         },
         "privacy": {
+            "required": True,
             "type": "string",
             "system_name": "privacy_name",
             "values": [
@@ -347,7 +357,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
                 "Very Private",
             ],
         },
-        "created date": {"system_name": "created_date", "type": "datetime"},
+        "created date": {"required": False, "system_name": "created_date", "type": "datetime"},
     }
 
     output_col_data = gui.column_data

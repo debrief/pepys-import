@@ -6,7 +6,6 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-import sqlalchemy
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
@@ -23,6 +22,7 @@ from pepys_import.utils.branding_util import show_software_meta_info, show_welco
 from pepys_import.utils.data_store_utils import (
     MissingDataException,
     cache_results_if_not_none,
+    convert_edit_dict_columns,
     create_alembic_version_table,
     create_spatial_tables_for_postgres,
     create_spatial_tables_for_sqlite,
@@ -2028,20 +2028,8 @@ class DataStore:
         query = self.session.query(table_object).filter(
             getattr(table_object, get_primary_key_for_table(table_object)).in_(ids)
         )
-        update_dict = {}
-        # Convert the edit_dict we get from the GUI into a dict suitable for use in the update function
-        # This involves converting any association proxy column names into the relevant foreign key name to set
-        for col_name, new_value in edit_dict.items():
-            attr_from_db_class = getattr(table_object, col_name)
-            if isinstance(
-                attr_from_db_class, sqlalchemy.ext.associationproxy.ColumnAssociationProxyInstance
-            ):
-                relationship_name = attr_from_db_class.target_collection
-                relationship_obj = getattr(table_object, relationship_name)
-                foreign_key_col_name = list(relationship_obj.property.local_columns)[0].key
-                update_dict[foreign_key_col_name] = new_value
-            else:
-                update_dict[col_name] = new_value
+
+        update_dict = convert_edit_dict_columns(edit_dict, table_object)
 
         query.update(update_dict, synchronize_session="fetch")
         self.session.commit()
@@ -2058,6 +2046,35 @@ class DataStore:
                     previous_value=str(getattr(item, col_name)),
                     change_id=change_id,
                 )
+
+    def add_item(self, table_object, edit_dict):
+        change_id = self.add_to_changes(
+            user=USER,
+            modified=datetime.utcnow(),
+            reason=f"Manual add item to {table_object.__tablename__}",
+        ).change_id
+
+        new_item = table_object()
+
+        add_dict = convert_edit_dict_columns(edit_dict, table_object)
+
+        for col_name, value in add_dict.items():
+            setattr(new_item, col_name, value)
+
+        self.session.add(new_item)
+        # Must commit first, so that the primary key field is filled with the
+        # new ID, before we reference it below in the add_to_logs function
+        try:
+            self.session.commit()
+        except Exception:
+            raise
+
+        self.add_to_logs(
+            table_object.__tablename__,
+            row_id=getattr(new_item, get_primary_key_for_table(table_object)),
+            change_id=change_id,
+        )
+        self.session.commit()
 
     def find_dependent_objects(self, table_obj, id_list: list) -> dict:
         """
