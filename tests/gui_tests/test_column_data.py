@@ -988,12 +988,6 @@ def test_edit_data_state():
             "system_name": "heading",
             "type": "float",
         },
-        "location": {
-            "assoc_proxy": False,
-            "required": False,
-            "system_name": "location",
-            "type": "geometry",
-        },
         "privacy": {
             "required": False,
             "system_name": "privacy",

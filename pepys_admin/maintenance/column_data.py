@@ -243,6 +243,12 @@ def convert_column_data_to_edit_data(column_data, table_object, data_store, set_
             # Don't allow to edit the created date
             continue
 
+        if key == "location":
+            # Don't allow to edit location at the moment
+            # as we don't have a sensible UI for doing it
+            # FUTURE: Remove when we want to edit locations
+            continue
+
         if value["type"] == "id":
             # Don't allow to edit ID columns
             continue
