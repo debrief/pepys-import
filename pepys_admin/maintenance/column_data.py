@@ -105,6 +105,8 @@ def create_column_data(data_store, table_object, set_percentage=None):
 
             details = {"type": get_type_name(col.type), "system_name": sys_name}
 
+            details["required"] = not col.prop.columns[0].nullable
+
             if details["type"] == "id" and col.key != get_primary_key_for_table(table_object):
                 continue
 
@@ -128,6 +130,14 @@ def create_column_data(data_store, table_object, set_percentage=None):
             ap_type = getattr(ap_obj.target_class, ap_obj.value_attr).type
 
             details = {"type": get_type_name(ap_type), "system_name": ap_name}
+
+            # This reflects whether the ID field for the relationship that is
+            # linked to this association proxy is required or not
+            relationship_name = ap_obj.target_collection
+            relationship_obj = getattr(table_object, relationship_name)
+            foreign_key_col_name = list(relationship_obj.property.local_columns)[0].key
+            foreign_key_col = getattr(table_object, foreign_key_col_name)
+            details["required"] = not foreign_key_col.prop.columns[0].nullable
 
             if details["type"] == "id":
                 continue

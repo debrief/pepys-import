@@ -8,7 +8,7 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.margins import ScrollbarMargin
 from prompt_toolkit.mouse_events import MouseEventType
 
-DISABLED_TEXT = " (unavailable, click for more information)"
+DISABLED_TEXT = " (unavailable, select for more information)"
 
 
 class AdvancedComboBox:
@@ -149,15 +149,30 @@ class AdvancedComboBox:
 
         @kb.add("enter")
         def _(event) -> None:
-            # Return entry in a non-async way, calling handler
-            try:
-                self.value = self.entry_values[self.selected_entry][0]
-            except IndexError:
-                return
-            if self.enter_handler:
-                self.enter_handler(self.value)
+            self.select_handler()
+
+        @kb.add("<any>")
+        def _(event):
+            self.handle_numeric_key(event)
 
         return kb
+
+    def handle_numeric_key(self, event):
+        key_str = event.key_sequence[0].key
+        if len(key_str) == 1 and key_str.isdigit():
+            int_value = int(key_str)
+            if 1 <= int_value <= len(self.entry_values):
+                self.selected_entry = int_value - 1
+                self.select_handler()
+
+    def select_handler(self):
+        # Return entry in a non-async way, calling handler
+        try:
+            self.value = self.entry_values[self.selected_entry][0]
+        except IndexError:
+            return
+        if self.enter_handler:
+            self.enter_handler(self.value)
 
     # This is part of the API that makes this object behave as a
     # valid container

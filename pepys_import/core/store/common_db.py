@@ -625,6 +625,8 @@ class TaggedItemMixin:
 
 
 class StateMixin:
+    _default_preview_fields = ["time", "sensor_name", "speed"]
+
     @declared_attr
     def sensor(self):
         return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
@@ -769,6 +771,8 @@ class StateMixin:
 
 
 class ContactMixin:
+    _default_preview_fields = ["time", "name", "bearing"]
+
     @declared_attr
     def sensor(self):
         return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
@@ -1169,6 +1173,8 @@ class ContactMixin:
 
 
 class LogsHoldingMixin:
+    _default_preview_fields = ["time", "platform_name", "quantity"]
+
     @declared_attr
     def source(self):
         return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
@@ -1213,6 +1219,8 @@ class LogsHoldingMixin:
 
 
 class CommentMixin:
+    _default_preview_fields = ["time", "platform_name", "content"]
+
     @declared_attr
     def platform(self):
         return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
@@ -1253,6 +1261,8 @@ class CommentMixin:
 
 
 class GeometryMixin:
+    _default_preview_fields = ["name", "geo_type_name"]
+
     @hybrid_property
     def geometry(self):
         return self._geometry
@@ -1348,6 +1358,8 @@ class GeometryMixin:
 
 
 class MediaMixin:
+    _default_preview_fields = ["time", "platform_name", "sensor_name"]
+
     @declared_attr
     def media_type(self):
         return relationship("MediaType", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
@@ -1467,6 +1479,8 @@ class LocationPropertyMixin:
 
 
 class ActivationMixin:
+    _default_preview_fields = ["name", "sensor_name", "start", "end"]
+
     @declared_attr
     def sensor(self):
         return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)

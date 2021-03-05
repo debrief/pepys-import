@@ -30,6 +30,7 @@ from pygments.lexers.sql import SqlLexer
 from sqlalchemy.orm import undefer
 
 from pepys_admin.maintenance.column_data import create_column_data
+from pepys_admin.maintenance.dialogs.add_dialog import AddDialog
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.dialogs.edit_dialog import EditDialog
 from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
@@ -37,8 +38,13 @@ from pepys_admin.maintenance.dialogs.merge_dialog import MergeDialog
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
 from pepys_admin.maintenance.dialogs.selection_dialog import SelectionDialog
+from pepys_admin.maintenance.dialogs.view_dialog import ViewDialog
 from pepys_admin.maintenance.help import HELP_TEXT, INTRO_HELP_TEXT
-from pepys_admin.maintenance.utils import get_display_names, get_system_name_mappings
+from pepys_admin.maintenance.utils import (
+    get_display_names,
+    get_str_for_field,
+    get_system_name_mappings,
+)
 from pepys_admin.maintenance.widgets.advanced_combo_box import AdvancedComboBox
 from pepys_admin.maintenance.widgets.blank_border import BlankBorder
 from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
@@ -47,6 +53,7 @@ from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 from pepys_admin.maintenance.widgets.filter_widget_utils import filter_widget_output_to_query
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 logger.remove()
@@ -120,10 +127,16 @@ class MaintenanceGUI:
         """Initialise all of the UI components, controls, containers and widgets"""
         # Dropdown box to select table, plus pane that it is in
         metadata_tables = ["Platforms", "Sensors", "Datafiles"]
+        # FUTURE: For use when we want to let the user operate on Measurement tables
+        # measurement_tables = sorted(
+        #     [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.MEASUREMENT]]
+        # )
         reference_tables = sorted(
             [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.REFERENCE]]
         )
         reference_tables.remove("HelpTexts")
+        # FUTURE: For use when we want to let the user operate on Measurement tables
+        # tables_list = metadata_tables + measurement_tables + reference_tables
         tables_list = metadata_tables + reference_tables
         self.dropdown_table = DropdownBox(
             text="Select a table",
@@ -180,13 +193,15 @@ class MaintenanceGUI:
                 self.actions_combo,
             ],
             padding=1,
-            height=Dimension(weight=0.1),
+            height=Dimension(weight=0.2),
         )
 
         # Preview container, with two tabs: a preview table and a preview graph
         self.preview_table_message = Label("")
         self.preview_table = CheckboxTable(
-            table_data=self.get_table_data, table_objects=self.get_table_objects
+            table_data=self.get_table_data,
+            table_objects=self.get_table_objects,
+            any_keybinding=self.handle_preview_table_keypress,
         )
         self.set_contextual_help(self.preview_table, "# Third panel: Preview List (F6)")
         self.preview_graph = Window(
@@ -228,6 +243,9 @@ class MaintenanceGUI:
             floats=[],
         )
 
+    def handle_preview_table_keypress(self, event):
+        self.actions_combo.handle_numeric_key(event)
+
     def get_actions_list(self):
         def is_merge_enabled():
             return len(self.preview_table.current_values) > 1
@@ -240,10 +258,22 @@ class MaintenanceGUI:
         def is_edit_values_enabled():
             return len(self.preview_table.current_values) > 0
 
+        def is_delete_entries_enabled():
+            return len(self.preview_table.current_values) > 0
+
+        def is_add_entries_enabled():
+            return self.current_table_object is not None
+
+        def is_view_entry_enabled():
+            return len(self.preview_table.current_values) == 1
+
         return [
             ("1 - Merge", is_merge_enabled()),
             ("2 - Split platform", is_split_platform_enabled()),
             ("3 - Edit values", is_edit_values_enabled()),
+            ("4 - Delete entries", is_delete_entries_enabled()),
+            ("5 - Add entry", is_add_entries_enabled()),
+            ("6 - View entry", is_view_entry_enabled()),
         ]
 
     def set_contextual_help(self, widget, text):
@@ -292,7 +322,7 @@ class MaintenanceGUI:
 
                 # Get all the results, while undefering all fields to make sure everything is
                 # available once it's been expunged (disconnected) from the database
-                results = query_obj.options(undefer("*")).all()
+                results = query_obj.options(undefer("*")).limit(100).all()
 
                 if len(results) == 0:
                     # If we've got no results then just update the app display
@@ -308,7 +338,7 @@ class MaintenanceGUI:
                     # Get the right fields and append them
                     self.table_data.append(
                         [
-                            str(getattr(result, field_name))
+                            get_str_for_field(getattr(result, field_name))
                             for field_name in self.preview_selected_fields
                         ]
                     )
@@ -392,8 +422,159 @@ class MaintenanceGUI:
             self.run_split_platform()
         elif selected_value == "3 - Edit values":
             self.run_edit_values()
+        elif selected_value == "4 - Delete entries":
+            self.run_delete()
+        elif selected_value == "5 - Add entry":
+            self.run_add()
+        elif selected_value == "6 - View entry":
+            self.run_view()
         else:
             self.show_messagebox("Action", f"Running action {selected_value}")
+
+    def run_view(self):
+        async def coroutine():
+            if len(self.preview_table.current_values) != 1:
+                await self.show_messagebox_async(
+                    "Error", "You must select exactly one entry before editing."
+                )
+                return
+            dialog = ViewDialog(
+                self.column_data, self.current_table_object, self.preview_table.current_values
+            )
+            await self.show_dialog_as_float(dialog)
+
+        ensure_future(coroutine())
+
+    def run_add(self):
+        def do_add(table_object, edit_dict, set_percentage=None, is_cancelled=None):
+            with self.data_store.session_scope():
+                self.data_store.add_item(table_object, edit_dict)
+            set_percentage(100)
+
+        async def coroutine():
+            if self.current_table_object is None:
+                await self.show_messagebox_async(
+                    "Error", "You must select a table before adding an entry"
+                )
+                return
+            dialog = AddDialog(self.column_data, self.current_table_object)
+            edit_dict = await self.show_dialog_as_float(dialog)
+            if edit_dict is None or len(edit_dict) == 0:
+                # Dialog was cancelled
+                return
+
+            dialog = ProgressDialog(
+                "Adding items",
+                partial(do_add, self.current_table_object, edit_dict),
+                show_cancel=False,
+            )
+            result = await self.show_dialog_as_float(dialog)
+
+            if isinstance(result, Exception):
+                if isinstance(result, sqlalchemy.exc.IntegrityError):
+                    await self.show_messagebox_async(
+                        "Constraint Error",
+                        "Error setting values in the database due to a database constraint.\n\n"
+                        "This probably means you have either not set some required values,\n"
+                        "tried to set values which violate a uniqueness constraint (for example,\n"
+                        "setting multiple platforms to have the same name, identifier and\n"
+                        "nationality), or set an invalid value for a column - for example\n"
+                        f"a value which is too long.\n\nOriginal error: {textwrap.fill(str(result), 60)}",
+                    )
+                    return
+                else:
+                    await self.show_messagebox_async(
+                        "Error",
+                        f"Error adding entry\n\nOriginal error:{textwrap.fill(str(result), 60)}",
+                    )
+                    return
+            # Once the platform merge is done, show a message box
+            # We use the async version of this function as we're calling
+            # from within a coroutine
+            await self.show_messagebox_async("Add completed")
+            # Re-run the query, so we get an updated list in the preview
+            # and can see that a new entry has been added
+            self.run_query()
+
+        ensure_future(coroutine())
+
+    def run_delete(self):
+        def do_delete(table_object, ids, set_percentage=None, is_cancelled=None):
+            with self.data_store.session_scope():
+                self.data_store.delete_objects(table_object, ids)
+            set_percentage(100)
+
+        async def coroutine():
+            entries = self.preview_table.current_values
+
+            if len(entries) == 0:
+                await self.show_messagebox_async(
+                    "Error", "You must select at least one item before deleting"
+                )
+                return
+
+            if len(entries) < 10:
+                display_strs = []
+                for entry in entries:
+                    display_str = " - ".join(
+                        [
+                            str(getattr(entry, field_name))
+                            for field_name in entry._default_preview_fields
+                        ]
+                    )
+                    display_strs.append(display_str)
+                selected_items_text = "\n".join(display_strs)
+            else:
+                selected_items_text = f"{len(entries)} items selected"
+
+            selected_ids = [
+                getattr(entry, get_primary_key_for_table(self.current_table_object))
+                for entry in self.preview_table.current_values
+            ]
+            dependent_objects = self.data_store.find_dependent_objects(
+                self.current_table_object, selected_ids
+            )
+
+            dep_objs_text = "\n".join(
+                f"{number} {table_name}" for table_name, number in dependent_objects.items()
+            )
+
+            dialog = ConfirmationDialog(
+                "Delete?",
+                f"Deleting these entries:\n\n{selected_items_text}\n\nwill delete the following dependent objects:\n\n{dep_objs_text}",
+            )
+            result = await self.show_dialog_as_float(dialog)
+
+            if not result:
+                # User cancelled
+                return
+
+            dialog = ProgressDialog(
+                "Deleting items",
+                partial(do_delete, self.current_table_object, selected_ids),
+                show_cancel=False,
+            )
+            result = await self.show_dialog_as_float(dialog)
+
+            if isinstance(result, Exception):
+                if isinstance(result, sqlalchemy.exc.IntegrityError):
+                    await self.show_messagebox_async(
+                        "Constraint Error",
+                        "Error deleting entries in the database due to a database constraint.\n\n"
+                        "This probably means dependent objects haven't been deleted properly.\n"
+                        f"\n\nOriginal error: {textwrap.fill(str(result), 60)}",
+                    )
+                    return
+                else:
+                    await self.show_messagebox_async(
+                        "Error",
+                        f"Error deleting values\n\nOriginal error:{textwrap.fill(str(result), 60)}",
+                    )
+                    return
+            await self.show_messagebox_async("Delete completed")
+            self.run_query()
+
+        ensure_future(coroutine())
 
     def run_edit_values(self):
         def do_edit(items, edit_dict, set_percentage=None, is_cancelled=None):
@@ -745,6 +926,7 @@ class MaintenanceGUI:
                 ("frame dialog.body text-area last-line", "nounderline bg:ansiwhite"),
                 ("frame dialog.body button.text", "fg:ansiblack"),
                 ("frame dialog.body button.focused button.text", "fg:ansiwhite"),
+                ("error-message", "fg:ansibrightred"),
                 ("disabled-entry", "fg:ansibrightblack"),
             ]
         )
