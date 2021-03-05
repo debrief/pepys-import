@@ -108,7 +108,10 @@ class MaskedInputWidget:
         @kb.add("backspace")
         def _(event):
             # We handle this so that we can backspace across TextArea boundaries
-            if event.current_buffer.cursor_position == 0:
+            if (
+                event.current_buffer.cursor_position == 0
+                and get_app().layout.current_window != self.controls[0].window
+            ):
                 # If we're at the start of a field, then go to the previous field and delete
                 # the final character
                 self.go_to_prev_field(coming_from="right")
