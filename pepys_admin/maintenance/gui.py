@@ -1,3 +1,4 @@
+import os
 import textwrap
 import traceback
 from asyncio.tasks import ensure_future
@@ -34,6 +35,7 @@ from pepys_admin.maintenance.dialogs.add_dialog import AddDialog
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.dialogs.edit_dialog import EditDialog
 from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
+from pepys_admin.maintenance.dialogs.initial_help_dialog import InitialHelpDialog
 from pepys_admin.maintenance.dialogs.merge_dialog import MergeDialog
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
@@ -81,13 +83,15 @@ class MaintenanceGUI:
 
         self.data_store.setup_table_type_mapping()
 
-        # try:
-        #     # This calls a simple function to check if the Privacies table has entries
-        #     # We don't actually care if it has entries, but it is a good simple query
-        #     # to run which checks if the database has been initialised
-        #     _ = self.data_store.is_empty()
-        # except Exception:
-        #     raise ValueError("Cannot run GUI on a non-initialised database. Please run initialise first.")
+        try:
+            # This calls a simple function to check if the Privacies table has entries
+            # We don't actually care if it has entries, but it is a good simple query
+            # to run which checks if the database has been initialised
+            _ = self.data_store.is_empty()
+        except Exception:
+            raise ValueError(
+                "Cannot run GUI on a non-initialised database. Please run initialise first."
+            )
 
         # Start with an empty table
         self.table_data = []
@@ -114,10 +118,8 @@ class MaintenanceGUI:
         self.filter_widget.set_column_data(self.column_data)
         self.run_query()
 
-        layout = Layout(self.root_container)
-
         self.app = Application(
-            layout=layout,
+            layout=self.layout,
             key_bindings=self.get_keybindings(),
             full_screen=True,
             mouse_support=True,
@@ -212,6 +214,16 @@ class MaintenanceGUI:
         self.status_bar_shortcuts = ["Ctrl-F - Select fields"]
         self.status_bar_container = DynamicContainer(self.get_status_bar_container)
 
+        show_initial_help = not os.path.exists(
+            os.path.expanduser(os.path.join("~", ".pepys_maintenance_help.txt"))
+        )
+
+        if show_initial_help:
+            initial_help_dialog = InitialHelpDialog("Getting started", INTRO_HELP_TEXT)
+            initial_floats = [Float(initial_help_dialog)]
+        else:
+            initial_floats = []
+
         # Putting everything together in panes
         self.root_container = FloatContainer(
             BlankBorder(
@@ -239,8 +251,15 @@ class MaintenanceGUI:
                     ],
                 )
             ),
-            floats=[],
+            floats=initial_floats,
         )
+
+        if show_initial_help:
+            self.layout = Layout(
+                self.root_container, focused_element=initial_help_dialog.close_button
+            )
+        else:
+            self.layout = Layout(self.root_container)
 
     def handle_preview_table_keypress(self, event):
         self.actions_combo.handle_numeric_key(event)
