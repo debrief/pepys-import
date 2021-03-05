@@ -41,7 +41,7 @@ class ViewDialog:
 
         @dialog_kb.add("escape")
         def _(event) -> None:
-            self.handle_cancel()
+            self.handle_ok()
 
     def handle_ok(self):
         self.future.set_result(None)
