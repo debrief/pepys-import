@@ -32,7 +32,7 @@ class EntryDisplayWidget:
             ]
             # Just list the unique values
             values_list = list(set(values_list))
-            value = ", ".join(values_list)
+            value = "; ".join(values_list)
             # The widgets are just a series of Labels
             rows.append(VSplit([Label(key, width=max_width), Label(" = ", width=3), Label(value)]))
 
