@@ -1,7 +1,7 @@
 from asyncio import Future
 
 from prompt_toolkit.layout.containers import HSplit, VSplit
-from prompt_toolkit.layout.dimension import D
+from prompt_toolkit.layout.dimension import D, Dimension
 from prompt_toolkit.widgets import Button, Label
 from prompt_toolkit.widgets.dialogs import Dialog
 
@@ -33,9 +33,12 @@ class EditDialog:
         lh_side = HSplit(
             [Label("Current values:", style="class:table-title"), self.entry_display_widget],
             padding=1,
+            width=Dimension(weight=0.5),
         )
         rh_side = HSplit(
-            [Label("New values:", style="class:table-title"), self.entry_edit_widget], padding=1
+            [Label("New values:", style="class:table-title"), self.entry_edit_widget],
+            padding=1,
+            width=Dimension(weight=0.6),
         )
 
         instructions = Label(
@@ -76,7 +79,7 @@ class EditDialog:
             title=f"Edit {table_object.__name__}(s)",
             body=self.body,
             buttons=[ok_button, cancel_button],
-            width=D(preferred=100),
+            width=D(preferred=120),
             modal=True,
         )
 

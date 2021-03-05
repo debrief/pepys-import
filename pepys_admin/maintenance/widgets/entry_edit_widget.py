@@ -25,7 +25,7 @@ class EntryEditWidget:
         self.show_required_fields = show_required_fields
 
         max_label_len = max([len(key) for key, value in edit_data.items()])
-        edit_width = 30
+        edit_width = 40
         # We add three to the width to give space for " *" (to mark a required field)
         # plus an extra space to make it look nicer
         length = max_label_len + 3 if self.show_required_fields else max_label_len + 1
