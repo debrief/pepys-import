@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from prompt_toolkit.layout.containers import HorizontalAlign, HSplit, VSplit
-from prompt_toolkit.layout.scrollable_pane import ScrollablePane
 from prompt_toolkit.widgets.base import Label
 from prompt_toolkit.widgets.toolbars import ValidationToolbar
 
@@ -41,7 +40,7 @@ class EntryEditWidget:
         self.validation_toolbar = ValidationToolbar()
         self.widgets.append(self.validation_toolbar)
 
-        self.container = ScrollablePane(content=HSplit(self.widgets, padding=1))
+        self.container = HSplit(self.widgets, padding=1)
 
     @property
     def output(self):

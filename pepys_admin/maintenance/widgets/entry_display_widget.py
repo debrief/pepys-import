@@ -1,5 +1,4 @@
 from prompt_toolkit.layout.containers import HSplit, VSplit
-from prompt_toolkit.layout.scrollable_pane import ScrollablePane
 from prompt_toolkit.widgets import Label
 
 from pepys_admin.maintenance.utils import get_str_for_field
@@ -20,7 +19,7 @@ class EntryDisplayWidget:
 
         self.widgets = self.generate_widgets()
 
-        self.container = ScrollablePane(content=HSplit(self.widgets, padding=1))
+        self.container = HSplit(self.widgets, padding=1)
 
     def generate_widgets(self):
         rows = []

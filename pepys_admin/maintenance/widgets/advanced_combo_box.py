@@ -8,7 +8,7 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.margins import ScrollbarMargin
 from prompt_toolkit.mouse_events import MouseEventType
 
-DISABLED_TEXT = " (unavailable, click for more information)"
+DISABLED_TEXT = " (unavailable, select for more information)"
 
 
 class AdvancedComboBox:
