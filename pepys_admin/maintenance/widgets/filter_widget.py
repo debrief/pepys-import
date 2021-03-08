@@ -454,15 +454,17 @@ class FilterWidgetEntry:
         col_type entry in the column data"""
         try:
             col_info = self.filter_widget.column_data[self.dropdown_column.text]
-            col_type = col_info["type"]
         except KeyError:
             return []
-        return self.get_operators_for_column_type(col_type)
+        return self.get_operators_for_column(col_info)
 
-    def get_operators_for_column_type(self, col_type):
+    def get_operators_for_column(self, col_info):
         """Get the list of entries for the operators dropdown, based on the
         col_type entry in the column data"""
-        if col_type == "string":
+        col_type = col_info["type"]
+        if col_info["sqlalchemy_type"] == "relationship":
+            return ["=", "!="]
+        elif col_type == "string":
             return ["=", "!=", "LIKE"]
         elif col_type == "id":
             return ["LIKE"]
