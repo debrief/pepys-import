@@ -2,10 +2,8 @@ import operator
 from typing import List
 
 import sqlalchemy
-from sqlalchemy.sql.expression import cast
 
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.utils.sqlalchemy_utils import UUIDType
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 operator_dict = {
@@ -51,10 +49,7 @@ def filter_widget_output_to_query(outputs: List[List], table_name: str, data_sto
                 pass
 
             if ops == "LIKE":
-                if isinstance(col.type, UUIDType):
-                    queries.append(cast(col, sqlalchemy.String).like(f"%{value}%"))
-                else:
-                    queries.append(col.like(f"%{value}%"))
+                queries.append(col.like(f"%{value}%"))
             elif ops in operator_dict:
                 queries.append(operator_dict[ops](col, value))
             else:
