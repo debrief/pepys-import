@@ -22,18 +22,12 @@ def get_display_names(fields, capitalized=False):
 
 def get_display_name(field, capitalized=False):
     field = re.sub("_+", "_", field)
-    splitted = field.split("_")
-    if len(splitted) > 1 and splitted[-1] == "name":
-        # Remove 'name' from the end of the title, but only if it's
-        # not the only word in the title
-        field_title = " ".join(splitted[:-1])
-    else:
-        field_title = " ".join(splitted)
+    field_title = field.replace("_", " ")
 
     if capitalized:
         field_title = field_title.capitalize()
 
-    return field_title
+    return field_title.strip()
 
 
 def get_system_name_mappings(column_data):

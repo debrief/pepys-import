@@ -314,9 +314,17 @@ class MaintenanceGUI:
         # FUTURE: Remove this when we want to be able to filter by measurements or location
         new_column_data = {}
         for display_name, col_config in column_data.items():
+            # Don't allow the location field
             if display_name == "location":
                 continue
+            # Don't allow any float columns
             elif col_config["type"] == "float":
+                continue
+            # Don't allow any relationship columns to reference tables - we deal with those by their association proxies
+            elif (
+                col_config["sqlalchemy_type"] == "relationship"
+                and col_config["foreign_table_type"] == TableTypes.REFERENCE
+            ):
                 continue
             new_column_data[display_name] = col_config
 
@@ -633,8 +641,6 @@ class MaintenanceGUI:
         # This removes un-needed columns, and un-needed values lists
         self.edit_data = convert_column_data_to_edit_data(
             self.column_data,
-            self.current_table_object,
-            self.data_store,
             set_percentage=set_percentage,
         )
         set_percentage(100)
@@ -962,7 +968,22 @@ class MaintenanceGUI:
             # Get lists of left-hand and right-hand side entries
             # The left-hand entries are all available fields (minus those that already appear on the right)
             # and the right-hand entries are the currently selected fields
-            left_entries = list(display_name_to_system_name.keys())
+            all_entries = list(display_name_to_system_name.keys())
+
+            # Exclude entries that are relationships to reference tables, as otherwise
+            # we duplicate the relevant association proxy
+            # (ie. we don't want `nationality` (the relationship) and `nationality_name` (the association proxy)
+            # to both appear in the list of fields to choose - so we get rid of the relationship one)
+            left_entries = []
+            for entry in all_entries:
+                col_config = self.column_data[entry]
+                if (
+                    col_config["sqlalchemy_type"] == "relationship"
+                    and col_config["foreign_table_type"] == TableTypes.REFERENCE
+                ):
+                    continue
+                left_entries.append(entry)
+
             right_entries = [
                 system_name_to_display_name[entry] for entry in self.preview_selected_fields
             ]

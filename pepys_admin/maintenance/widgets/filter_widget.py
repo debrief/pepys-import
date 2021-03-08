@@ -376,7 +376,24 @@ class FilterWidgetEntry:
         """Get the string values of the widgets - ie. the text that
         has been chosen by the user, as a list of three entries."""
         vw = self.choose_value_widget()
-        return [self.dropdown_column.text.strip(), self.dropdown_operator.text.strip(), vw.text]
+
+        # If the column AND the value aren't set to the default prompts
+        if (
+            self.dropdown_column.text != self.filter_widget.column_prompt
+            and vw.text != self.filter_widget.value_prompt
+        ):
+            # Get the column info and if it has a list of IDs then
+            # return the ID of the entry the user selected rather than the text of the entry
+            col_config = self.filter_widget.column_data[self.dropdown_column.text]
+            if "ids" in col_config:
+                index = col_config["values"].index(vw.text)
+                value_str = col_config["ids"][index]
+            else:
+                value_str = vw.text
+        else:
+            value_str = vw.text
+
+        return [self.dropdown_column.text.strip(), self.dropdown_operator.text.strip(), value_str]
 
     def get_value_dropdown_entries(self):
         """Gives the entries for the value widget dropdown

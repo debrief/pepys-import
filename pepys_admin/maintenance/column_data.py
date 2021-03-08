@@ -86,10 +86,27 @@ def str_if_not_none(value):
         return str(value)
 
 
-def create_assoc_proxy_data(ap_name, ap_obj, data_store, table_object, set_percentage=None):
+def create_assoc_proxy_data(ap_name, ap_obj, data_store, table_object):
+    """Creates the column data for an association proxy column.
+
+    :param ap_name: Association proxy name
+    :type ap_name: str
+    :param ap_obj: Association proxy object
+    :type ap_obj: AssociationProxyInstance
+    :param data_store: DataStore instance
+    :type data_store: DataStore
+    :param table_object: SQLAlchemy table object
+    :type table_object: SQLAlchemy table object
+    :return: Tuple of display name for this column, and a dictionary of column details
+    :rtype: tuple (str, dict)
+    """
     ap_type = getattr(ap_obj.target_class, ap_obj.value_attr).type
 
-    details = {"type": get_type_name(ap_type), "system_name": ap_name, "assoc_proxy": True}
+    details = {
+        "type": get_type_name(ap_type),
+        "system_name": ap_name,
+        "sqlalchemy_type": "assoc_proxy",
+    }
 
     # This reflects whether the ID field for the relationship that is
     # linked to this association proxy is required or not
@@ -116,9 +133,7 @@ def create_assoc_proxy_data(ap_name, ap_obj, data_store, table_object, set_perce
                 .all()
             )
             nationality_names = [nationality.name for nationality in all_nationalities]
-            nationality_ids = [str(nationality.nationality_id) for nationality in all_nationalities]
             details["values"] = nationality_names
-            details["ids"] = nationality_ids
         elif details["system_name"] == "privacy_name":
             # Get privacy names as a special case, as we want to sort by level
             all_privacies = (
@@ -127,31 +142,31 @@ def create_assoc_proxy_data(ap_name, ap_obj, data_store, table_object, set_perce
                 .all()
             )
             privacy_names = [priv.name for priv in all_privacies]
-            privacy_ids = [str(priv.privacy_id) for priv in all_privacies]
             details["values"] = privacy_names
-            details["ids"] = privacy_ids
         else:
             # For all other columns, no special processing is needed
             all_records = data_store.session.query(ap_obj.target_class).all()
             # Sort the values and IDs lists together, so that ids[x] is still the
             # ID for values[x]
-            values_and_ids = [
-                (
-                    str_if_not_none(getattr(record, ap_obj.value_attr)),
-                    str(getattr(record, get_primary_key_for_table(ap_obj.target_class))),
-                )
-                for record in all_records
-            ]
-            sorted_values_and_ids = sorted(values_and_ids, key=lambda x: x[0])
-            sorted_values = [item[0] for item in sorted_values_and_ids]
-            sorted_ids = [item[1] for item in sorted_values_and_ids]
+            values = [str_if_not_none(getattr(record, ap_obj.value_attr)) for record in all_records]
+            sorted_values = sorted(set(values))
             details["values"] = sorted_values
-            details["ids"] = sorted_ids
 
     return get_display_name(ap_name), details
 
 
 def create_normal_column_data(col, data_store, table_object):
+    """Creates the column data for a normal column (ie. not an association proxy or a relationship)
+
+    :param col: Column name
+    :type col: str
+    :param data_store: DataStore
+    :type data_store: DataStore
+    :param table_object: SQLAlchemy table object - such as Platform or Sensor
+    :type table_object: SQLAlchemy table object
+    :return: Tuple of display name of the column and a dict of column details
+    :rtype: tuple (str, dict)
+    """
     sys_name = col.key
     # Deal with columns where the actual column member
     # variable is something like `_speed`, because we're
@@ -162,7 +177,7 @@ def create_normal_column_data(col, data_store, table_object):
     details = {
         "type": get_type_name(col.type),
         "system_name": sys_name,
-        "assoc_proxy": False,
+        "sqlalchemy_type": "column",
     }
 
     details["required"] = not col.prop.columns[0].nullable
@@ -183,6 +198,76 @@ def create_normal_column_data(col, data_store, table_object):
     return get_display_name(sys_name), details
 
 
+def create_relationship_data(rel_name, data_store, table_object):
+    """Creates the column data for a relationship column.
+
+    :param rel_name: Relationship name
+    :type rel_name: str
+    :param data_store: DataStore
+    :type data_store: DataStore
+    :param table_object: SQLAlchemy table object, like Platform or Sensor
+    :type table_object: SQLAlchemy table object
+    :return: Tuple of display name of the column and a dict of column details
+    :rtype: tuple (str, dict)
+    """
+    column_config = {"system_name": rel_name, "type": "string", "sqlalchemy_type": "relationship"}
+
+    rel = getattr(table_object, rel_name)
+    if rel.prop.secondary is not None:
+        # Mark all second-level relationships so we can skip them when editing
+        # Eg. this will mark State.platform, which is a relationship that passes
+        # through State.sensor
+        column_config["second_level"] = True
+    else:
+        column_config["second_level"] = False
+
+    # Get the object for the foreign table in this relationship
+    column = list(rel.prop.local_columns)[0]
+    foreign_table_object = rel.prop.entity.class_
+
+    column_config["foreign_table_type"] = foreign_table_object.table_type
+
+    with data_store.session_scope():
+        # Treat Nationalities as a special case, so we can sort them the way we want
+        if foreign_table_object == data_store.db_classes.Nationality:
+            all_nationalities = (
+                data_store.session.query(data_store.db_classes.Nationality)
+                .order_by(nullslast(data_store.db_classes.Nationality.priority.asc()))
+                .all()
+            )
+            str_entries = [nationality.name for nationality in all_nationalities]
+            ids = [str(nationality.nationality_id) for nationality in all_nationalities]
+        # Treat Privacies as a special case so we can sort them the way we want
+        elif foreign_table_object == data_store.db_classes.Privacy:
+            all_privacies = (
+                data_store.session.query(data_store.db_classes.Privacy)
+                .order_by(data_store.db_classes.Privacy.level)
+                .all()
+            )
+            str_entries = [priv.name for priv in all_privacies]
+            ids = [str(priv.privacy_id) for priv in all_privacies]
+        else:
+            all_entries = data_store.session.query(foreign_table_object).all()
+            str_entries = []
+            for entry in all_entries:
+                field_values = [
+                    str(getattr(entry, field_name))
+                    for field_name in foreign_table_object._default_dropdown_fields
+                ]
+                str_entries.append(" / ".join(field_values))
+            ids = [
+                getattr(entry, get_primary_key_for_table(foreign_table_object))
+                for entry in all_entries
+            ]
+
+    column_config["values"] = str_entries
+    column_config["ids"] = ids
+
+    column_config["required"] = not column.nullable
+
+    return get_display_name(rel_name), column_config
+
+
 def create_column_data(data_store, table_object, set_percentage=None):
     """Create column data suitable for use in a FilterWidget.
 
@@ -199,8 +284,9 @@ def create_column_data(data_store, table_object, set_percentage=None):
     """
     cols = get_normal_column_objects(table_object)
     assoc_proxy_names, assoc_proxy_objs = get_assoc_proxy_names_and_objects(table_object)
+    relationships = get_relationship_columns(table_object)
 
-    total_iterations = len(cols) + len(assoc_proxy_names) + 1
+    total_iterations = len(cols) + len(assoc_proxy_names) + len(relationships) + 1
     iteration_perc = 100.0 / total_iterations
     i = 1
 
@@ -231,6 +317,17 @@ def create_column_data(data_store, table_object, set_percentage=None):
                 set_percentage(i * iteration_perc)
             i += 1
 
+        # Get details for all the association proxies
+        for rel_name in relationships:
+            display_name, details = create_relationship_data(rel_name, data_store, table_object)
+
+            if display_name is not None:
+                column_data[display_name] = details
+
+            if callable(set_percentage):
+                set_percentage(i * iteration_perc)
+            i += 1
+
     if callable(set_percentage):
         # In case rounding errors in the iteration_perc meant that we didn't get to 100
         set_percentage(100)
@@ -238,7 +335,7 @@ def create_column_data(data_store, table_object, set_percentage=None):
     return column_data
 
 
-def convert_column_data_to_edit_data(column_data, table_object, data_store, set_percentage=None):
+def convert_column_data_to_edit_data(column_data, set_percentage=None):
     """
     Converts the original column_data dictionary into a dictionary of data
     for configuring the editing UI.
@@ -269,78 +366,21 @@ def convert_column_data_to_edit_data(column_data, table_object, data_store, set_
             # Don't allow to edit ID columns
             continue
 
-        if not value["assoc_proxy"]:
+        if value["sqlalchemy_type"] == "relationship" and value["second_level"]:
+            continue
+
+        if value["sqlalchemy_type"] == "column":
             if "values" in value:
-                # If this isn't a foreign keyed column then don't provide a dropdown list
+                # If this is a normal column (ie. not a foreign keyed column)
+                # then don't provide a dropdown list
                 # as we only want dropdown lists for foreign keyed columns
                 del value["values"]
+        elif value["sqlalchemy_type"] == "assoc_proxy":
+            continue
 
-        if not value["assoc_proxy"]:
-            # Don't add Assoc Proxy columns to the resulting edit_data dict
-            # as we'll deal with those foreign keys through the full relationship columns instead below
-            edit_data[key] = value
+        edit_data[key] = value
 
     if callable(set_percentage):
-        set_percentage(20)
-
-    rel_columns = get_relationship_columns(table_object)
-
-    denominator = 1 if len(rel_columns) <= 0 else len(rel_columns)
-    perc_per_iteration = 80.0 / denominator
-
-    for i, rel_name in enumerate(rel_columns):
-        column_config = {"system_name": rel_name, "type": "string"}
-
-        rel = getattr(table_object, rel_name)
-        if rel.prop.secondary is not None:
-            # Skip all second-level relationships
-            # Eg. this will skip State.platform, which is a relationship that passes
-            # through State.sensor
-            continue
-        # Get the object for the foreign table in this relationship
-        column = list(rel.prop.local_columns)[0]
-        fk = list(column.foreign_keys)[0]
-        foreign_table_object = data_store._get_table_object(fk._column_tokens[1])
-
-        with data_store.session_scope():
-            if foreign_table_object == data_store.db_classes.Nationality:
-                all_nationalities = (
-                    data_store.session.query(data_store.db_classes.Nationality)
-                    .order_by(nullslast(data_store.db_classes.Nationality.priority.asc()))
-                    .all()
-                )
-                str_entries = [nationality.name for nationality in all_nationalities]
-                ids = [str(nationality.nationality_id) for nationality in all_nationalities]
-            elif foreign_table_object == data_store.db_classes.Privacy:
-                all_privacies = (
-                    data_store.session.query(data_store.db_classes.Privacy)
-                    .order_by(data_store.db_classes.Privacy.level)
-                    .all()
-                )
-                str_entries = [priv.name for priv in all_privacies]
-                ids = [str(priv.privacy_id) for priv in all_privacies]
-            else:
-                all_entries = data_store.session.query(foreign_table_object).all()
-                str_entries = []
-                for entry in all_entries:
-                    field_values = [
-                        str(getattr(entry, field_name))
-                        for field_name in foreign_table_object._default_dropdown_fields
-                    ]
-                    str_entries.append(" / ".join(field_values))
-                ids = [
-                    getattr(entry, get_primary_key_for_table(foreign_table_object))
-                    for entry in all_entries
-                ]
-
-        column_config["values"] = str_entries
-        column_config["ids"] = ids
-
-        column_config["required"] = not column.nullable
-
-        edit_data[get_display_name(rel_name)] = column_config
-
-        if callable(set_percentage):
-            set_percentage(20 + (i * perc_per_iteration))
+        set_percentage(100)
 
     return edit_data
