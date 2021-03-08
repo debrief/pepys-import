@@ -363,6 +363,7 @@ class MaintenanceGUI:
                 results = query_obj.options(undefer("*")).limit(100).all()
 
                 if len(results) == 0:
+                    self.preview_table_message.text = ""
                     # If we've got no results then just update the app display
                     # which will just show the headers that we mentioned above
                     app.invalidate()
