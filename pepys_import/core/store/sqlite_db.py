@@ -4,11 +4,8 @@ from uuid import uuid4
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
-from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
     deferred,
-    relationship,
 )
 from sqlalchemy.sql.schema import CheckConstraint, UniqueConstraint
 
@@ -590,23 +587,6 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
-    @declared_attr
-    def platform(self):
-        return relationship(
-            "Platform",
-            secondary=constants.SENSOR,
-            primaryjoin="State.sensor_id == Sensor.sensor_id",
-            secondaryjoin="Platform.platform_id == Sensor.host",
-            lazy="joined",
-            join_depth=1,
-            uselist=False,
-            viewonly=True,
-        )
-
-    @declared_attr
-    def platform_name(self):
-        return association_proxy("platform", "name")
-
 
 class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
     __tablename__ = constants.CONTACT
@@ -652,23 +632,6 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     )
     remarks = Column(Text)
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
-
-    @declared_attr
-    def platform(self):
-        return relationship(
-            "Platform",
-            secondary=constants.SENSOR,
-            primaryjoin="Contact.sensor_id == Sensor.sensor_id",
-            secondaryjoin="Platform.platform_id == Sensor.host",
-            lazy="joined",
-            join_depth=1,
-            uselist=False,
-            viewonly=True,
-        )
-
-    @declared_attr
-    def platform_name(self):
-        return association_proxy("platform", "name")
 
 
 class Activation(BaseSpatiaLite, ActivationMixin):
