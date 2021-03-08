@@ -86,6 +86,103 @@ def str_if_not_none(value):
         return str(value)
 
 
+def create_assoc_proxy_data(ap_name, ap_obj, data_store, table_object, set_percentage=None):
+    ap_type = getattr(ap_obj.target_class, ap_obj.value_attr).type
+
+    details = {"type": get_type_name(ap_type), "system_name": ap_name, "assoc_proxy": True}
+
+    # This reflects whether the ID field for the relationship that is
+    # linked to this association proxy is required or not
+    relationship_name = ap_obj.target_collection
+    relationship_obj = getattr(table_object, relationship_name)
+    foreign_key_col_name = list(relationship_obj.property.local_columns)[0].key
+    foreign_key_col = getattr(table_object, foreign_key_col_name)
+    details["required"] = not foreign_key_col.prop.columns[0].nullable
+
+    if details["type"] == "id":
+        return None, None
+
+    if details["type"] == "string":
+        if details["system_name"] == "nationality_name":
+            # Get nationality names as a special case, as we want to sort by
+            # priority
+
+            # nullslast in the expression below makes NULL entries appear at the end
+            # of the sorted list - if we don't have this then they sort as 'zero'
+            # and come before the prioritised ones
+            all_nationalities = (
+                data_store.session.query(data_store.db_classes.Nationality)
+                .order_by(nullslast(data_store.db_classes.Nationality.priority.asc()))
+                .all()
+            )
+            nationality_names = [nationality.name for nationality in all_nationalities]
+            nationality_ids = [str(nationality.nationality_id) for nationality in all_nationalities]
+            details["values"] = nationality_names
+            details["ids"] = nationality_ids
+        elif details["system_name"] == "privacy_name":
+            # Get privacy names as a special case, as we want to sort by level
+            all_privacies = (
+                data_store.session.query(data_store.db_classes.Privacy)
+                .order_by(data_store.db_classes.Privacy.level)
+                .all()
+            )
+            privacy_names = [priv.name for priv in all_privacies]
+            privacy_ids = [str(priv.privacy_id) for priv in all_privacies]
+            details["values"] = privacy_names
+            details["ids"] = privacy_ids
+        else:
+            # For all other columns, no special processing is needed
+            all_records = data_store.session.query(ap_obj.target_class).all()
+            # Sort the values and IDs lists together, so that ids[x] is still the
+            # ID for values[x]
+            values_and_ids = [
+                (
+                    str_if_not_none(getattr(record, ap_obj.value_attr)),
+                    str(getattr(record, get_primary_key_for_table(ap_obj.target_class))),
+                )
+                for record in all_records
+            ]
+            sorted_values_and_ids = sorted(values_and_ids, key=lambda x: x[0])
+            sorted_values = [item[0] for item in sorted_values_and_ids]
+            sorted_ids = [item[1] for item in sorted_values_and_ids]
+            details["values"] = sorted_values
+            details["ids"] = sorted_ids
+
+    return get_display_name(ap_name), details
+
+
+def create_normal_column_data(col, data_store, table_object):
+    sys_name = col.key
+    # Deal with columns where the actual column member
+    # variable is something like `_speed`, because we're
+    # using a `speed` property to access the column
+    if sys_name.startswith("_"):
+        sys_name = sys_name[1:]
+
+    details = {
+        "type": get_type_name(col.type),
+        "system_name": sys_name,
+        "assoc_proxy": False,
+    }
+
+    details["required"] = not col.prop.columns[0].nullable
+
+    if details["type"] == "id" and col.key != get_primary_key_for_table(table_object):
+        # Skip all ID columns except the primary key
+        return None, None
+
+    if details["type"] == "string":
+        # Get values
+
+        all_records = data_store.session.query(table_object).all()
+        values = [
+            str_if_not_none(getattr(record, details["system_name"])) for record in all_records
+        ]
+        details["values"] = sorted(remove_duplicates_and_nones(values))
+
+    return get_display_name(sys_name), details
+
+
 def create_column_data(data_store, table_object, set_percentage=None):
     """Create column data suitable for use in a FilterWidget.
 
@@ -109,107 +206,26 @@ def create_column_data(data_store, table_object, set_percentage=None):
 
     with data_store.session_scope():
         column_data = {}
+
+        # Get details for normal columns
         for col in cols:
-            sys_name = col.key
-            # Deal with columns where the actual column member
-            # variable is something like `_speed`, because we're
-            # using a `speed` property to access the column
-            if sys_name.startswith("_"):
-                sys_name = sys_name[1:]
+            display_name, details = create_normal_column_data(col, data_store, table_object)
 
-            details = {
-                "type": get_type_name(col.type),
-                "system_name": sys_name,
-                "assoc_proxy": False,
-            }
-
-            details["required"] = not col.prop.columns[0].nullable
-
-            if details["type"] == "id" and col.key != get_primary_key_for_table(table_object):
-                # Skip all ID columns except the primary key
-                continue
-
-            if details["type"] == "string":
-                # Get values
-
-                all_records = data_store.session.query(table_object).all()
-                values = [
-                    str_if_not_none(getattr(record, details["system_name"]))
-                    for record in all_records
-                ]
-                details["values"] = sorted(remove_duplicates_and_nones(values))
-
-            column_data[get_display_name(sys_name)] = details
+            if display_name is not None:
+                column_data[display_name] = details
 
             if callable(set_percentage):
                 set_percentage(i * iteration_perc)
             i += 1
 
+        # Get details for all the association proxies
         for ap_name, ap_obj in zip(assoc_proxy_names, assoc_proxy_objs):
-            ap_type = getattr(ap_obj.target_class, ap_obj.value_attr).type
+            display_name, details = create_assoc_proxy_data(
+                ap_name, ap_obj, data_store, table_object
+            )
 
-            details = {"type": get_type_name(ap_type), "system_name": ap_name, "assoc_proxy": True}
-
-            # This reflects whether the ID field for the relationship that is
-            # linked to this association proxy is required or not
-            relationship_name = ap_obj.target_collection
-            relationship_obj = getattr(table_object, relationship_name)
-            foreign_key_col_name = list(relationship_obj.property.local_columns)[0].key
-            foreign_key_col = getattr(table_object, foreign_key_col_name)
-            details["required"] = not foreign_key_col.prop.columns[0].nullable
-
-            if details["type"] == "id":
-                continue
-
-            if details["type"] == "string":
-                if details["system_name"] == "nationality_name":
-                    # Get nationality names as a special case, as we want to sort by
-                    # priority
-
-                    # nullslast in the expression below makes NULL entries appear at the end
-                    # of the sorted list - if we don't have this then they sort as 'zero'
-                    # and come before the prioritised ones
-                    all_nationalities = (
-                        data_store.session.query(data_store.db_classes.Nationality)
-                        .order_by(nullslast(data_store.db_classes.Nationality.priority.asc()))
-                        .all()
-                    )
-                    nationality_names = [nationality.name for nationality in all_nationalities]
-                    nationality_ids = [
-                        str(nationality.nationality_id) for nationality in all_nationalities
-                    ]
-                    details["values"] = nationality_names
-                    details["ids"] = nationality_ids
-                elif details["system_name"] == "privacy_name":
-                    # Get privacy names as a special case, as we want to sort by level
-                    all_privacies = (
-                        data_store.session.query(data_store.db_classes.Privacy)
-                        .order_by(data_store.db_classes.Privacy.level)
-                        .all()
-                    )
-                    privacy_names = [priv.name for priv in all_privacies]
-                    privacy_ids = [str(priv.privacy_id) for priv in all_privacies]
-                    details["values"] = privacy_names
-                    details["ids"] = privacy_ids
-                else:
-                    # For all other columns, no special processing is needed
-                    all_records = data_store.session.query(ap_obj.target_class).all()
-                    # Sort the values and IDs lists together, so that ids[x] is still the
-                    # ID for values[x]
-                    values_and_ids = [
-                        (
-                            str_if_not_none(getattr(record, ap_obj.value_attr)),
-                            str(getattr(record, get_primary_key_for_table(ap_obj.target_class))),
-                        )
-                        for record in all_records
-                    ]
-                    sorted_values_and_ids = sorted(values_and_ids, key=lambda x: x[0])
-                    sorted_values = [item[0] for item in sorted_values_and_ids]
-                    sorted_ids = [item[1] for item in sorted_values_and_ids]
-                    details["values"] = sorted_values
-                    details["ids"] = sorted_ids
-
-            column_data[get_display_name(ap_name)] = details
+            if display_name is not None:
+                column_data[display_name] = details
 
             if callable(set_percentage):
                 set_percentage(i * iteration_perc)
