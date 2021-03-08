@@ -30,7 +30,10 @@ class HelpDialog:
             title=title,
             body=HSplit(
                 [
-                    Label("Use up/down to scroll, and Esc to exit", style="class:instruction-text"),
+                    Label(
+                        "Use up/down to scroll, and Esc to exit",
+                        style="class:instruction-text-dark",
+                    ),
                     Window(buffer_control, wrap_lines=True),
                 ],
                 padding=1,
