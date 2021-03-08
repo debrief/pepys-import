@@ -81,13 +81,16 @@ class MaintenanceGUI:
 
         self.data_store.setup_table_type_mapping()
 
-        # try:
-        #     # This calls a simple function to check if the Privacies table has entries
-        #     # We don't actually care if it has entries, but it is a good simple query
-        #     # to run which checks if the database has been initialised
-        #     _ = self.data_store.is_empty()
-        # except Exception:
-        #     raise ValueError("Cannot run GUI on a non-initialised database. Please run initialise first.")
+        try:
+            # This calls a simple function to check if the Privacies table has entries
+            # We don't actually care if it has entries, but it is a good simple query
+            # to run which checks if the database has been initialised
+            with self.data_store.session_scope():
+                _ = self.data_store.is_empty()
+        except Exception:
+            raise ValueError(
+                "Cannot run GUI on a non-initialised database. Please run initialise first."
+            )
 
         # Start with an empty table
         self.table_data = []
