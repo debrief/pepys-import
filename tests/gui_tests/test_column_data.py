@@ -2,6 +2,7 @@ from pprint import pprint
 
 from pepys_admin.maintenance.column_data import convert_column_data_to_edit_data, create_column_data
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store.db_status import TableTypes
 
 
 def test_column_data_platform():
@@ -14,45 +15,33 @@ def test_column_data_platform():
     col_data = create_column_data(store, store.db_classes.Platform)
 
     correct_col_data = {
-        "platform id": {
-            "required": True,
-            "assoc_proxy": False,
-            "type": "id",
-            "system_name": "platform_id",
-        },
-        "name": {
-            "assoc_proxy": False,
-            "required": True,
-            "type": "string",
-            "values": ["ADRI", "JEAN", "NARV", "SPAR"],
-            "system_name": "name",
+        "created date": {
+            "required": False,
+            "sqlalchemy_type": "column",
+            "system_name": "created_date",
+            "type": "datetime",
         },
         "identifier": {
-            "assoc_proxy": False,
             "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "identifier",
             "type": "string",
             "values": ["A643", "A816", "C045", "P543"],
-            "system_name": "identifier",
         },
-        "trigraph": {
-            "assoc_proxy": False,
-            "required": False,
+        "name": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "name",
             "type": "string",
-            "values": [],
-            "system_name": "trigraph",
-        },
-        "quadgraph": {
-            "assoc_proxy": False,
-            "required": False,
-            "type": "string",
-            "values": [],
-            "system_name": "quadgraph",
+            "values": ["ADRI", "JEAN", "NARV", "SPAR"],
         },
         "nationality": {
-            "assoc_proxy": True,
+            "foreign_table_type": TableTypes.REFERENCE,
             "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
+            "system_name": "nationality",
             "type": "string",
-            "system_name": "nationality_name",
             "values": [
                 "United Kingdom",
                 "Canada",
@@ -312,11 +301,310 @@ def test_column_data_platform():
                 "Zimbabwe",
             ],
         },
-        "platform type": {
-            "assoc_proxy": True,
+        "nationality name": {
             "required": True,
+            "sqlalchemy_type": "assoc_proxy",
+            "system_name": "nationality_name",
             "type": "string",
+            "values": [
+                "United Kingdom",
+                "Canada",
+                "France",
+                "Germany",
+                "Italy",
+                "Netherlands",
+                "United States",
+                "Afghanistan",
+                "Albania",
+                "Algeria",
+                "American Samoa",
+                "Andorra",
+                "Angola",
+                "Anguilla",
+                "Antarctica",
+                "Antigua and Barbuda",
+                "Argentina",
+                "Armenia",
+                "Aruba",
+                "Australia",
+                "Austria",
+                "Azerbaijan",
+                "Bahamas",
+                "Bahrain",
+                "Bangladesh",
+                "Barbados",
+                "Belarus",
+                "Belgium",
+                "Belize",
+                "Benin",
+                "Bermuda",
+                "Bhutan",
+                "Bolivia, Plurinational State of",
+                "Bolivia",
+                "Bosnia and Herzegovina",
+                "Botswana",
+                "Bouvet Island",
+                "Brazil",
+                "British Indian Ocean Territory",
+                "Brunei Darussalam",
+                "Brunei",
+                "Bulgaria",
+                "Burkina Faso",
+                "Burundi",
+                "Cambodia",
+                "Cameroon",
+                "Cape Verde",
+                "Cayman Islands",
+                "Central African Republic",
+                "Chad",
+                "Chile",
+                "China",
+                "Christmas Island",
+                "Cocos (Keeling) Islands",
+                "Colombia",
+                "Comoros",
+                "Congo",
+                "Congo, the Democratic Republic of the",
+                "Cook Islands",
+                "Costa Rica",
+                "Cote d'Ivoire",
+                "Ivory Coast",
+                "Croatia",
+                "Cuba",
+                "Cyprus",
+                "Czech Republic",
+                "Denmark",
+                "Djibouti",
+                "Dominica",
+                "Dominican Republic",
+                "Ecuador",
+                "Egypt",
+                "El Salvador",
+                "Equatorial Guinea",
+                "Eritrea",
+                "Estonia",
+                "Ethiopia",
+                "Falkland Islands (Malvinas)",
+                "Faroe Islands",
+                "Fiji",
+                "Finland",
+                "French Guiana",
+                "French Polynesia",
+                "French Southern Territories",
+                "Gabon",
+                "Gambia",
+                "Georgia",
+                "Ghana",
+                "Gibraltar",
+                "Greece",
+                "Greenland",
+                "Grenada",
+                "Guadeloupe",
+                "Guam",
+                "Guatemala",
+                "Guernsey",
+                "Guinea",
+                "Guinea-Bissau",
+                "Guyana",
+                "Haiti",
+                "Heard Island and McDonald Islands",
+                "Holy See (Vatican City State)",
+                "Honduras",
+                "Hong Kong",
+                "Hungary",
+                "Iceland",
+                "India",
+                "Indonesia",
+                "Iran, Islamic Republic of",
+                "Iraq",
+                "Ireland",
+                "Isle of Man",
+                "Israel",
+                "Jamaica",
+                "Japan",
+                "Jersey",
+                "Jordan",
+                "Kazakhstan",
+                "Kenya",
+                "Kiribati",
+                "Korea, Democratic People's Republic of",
+                "Korea, Republic of",
+                "South Korea",
+                "Kuwait",
+                "Kyrgyzstan",
+                "Lao People's Democratic Republic",
+                "Latvia",
+                "Lebanon",
+                "Lesotho",
+                "Liberia",
+                "Libyan Arab Jamahiriya",
+                "Libya",
+                "Liechtenstein",
+                "Lithuania",
+                "Luxembourg",
+                "Macao",
+                "Macedonia, the former Yugoslav Republic of",
+                "Madagascar",
+                "Malawi",
+                "Malaysia",
+                "Maldives",
+                "Mali",
+                "Malta",
+                "Marshall Islands",
+                "Martinique",
+                "Mauritania",
+                "Mauritius",
+                "Mayotte",
+                "Mexico",
+                "Micronesia, Federated States of",
+                "Moldova, Republic of",
+                "Monaco",
+                "Mongolia",
+                "Montenegro",
+                "Montserrat",
+                "Morocco",
+                "Mozambique",
+                "Myanmar",
+                "Burma",
+                "Namibia",
+                "Nauru",
+                "Nepal",
+                "Netherlands Antilles",
+                "New Caledonia",
+                "New Zealand",
+                "Nicaragua",
+                "Niger",
+                "Nigeria",
+                "Niue",
+                "Norfolk Island",
+                "Northern Mariana Islands",
+                "Norway",
+                "Oman",
+                "Pakistan",
+                "Palau",
+                "Palestinian Territory, Occupied",
+                "Panama",
+                "Papua New Guinea",
+                "Paraguay",
+                "Peru",
+                "Philippines",
+                "Pitcairn",
+                "Poland",
+                "Portugal",
+                "Puerto Rico",
+                "Qatar",
+                "Reunion",
+                "Romania",
+                "Russian Federation",
+                "Russia",
+                "Rwanda",
+                "Saint Helena, Ascension and Tristan da Cunha",
+                "Saint Kitts and Nevis",
+                "Saint Lucia",
+                "Saint Pierre and Miquelon",
+                "Saint Vincent and the Grenadines",
+                "Saint Vincent & the Grenadines",
+                "St. Vincent and the Grenadines",
+                "Samoa",
+                "San Marino",
+                "Sao Tome and Principe",
+                "Saudi Arabia",
+                "Senegal",
+                "Serbia",
+                "Seychelles",
+                "Sierra Leone",
+                "Singapore",
+                "Slovakia",
+                "Slovenia",
+                "Solomon Islands",
+                "Somalia",
+                "South Africa",
+                "South Georgia and the South Sandwich Islands",
+                "South Sudan",
+                "Spain",
+                "Sri Lanka",
+                "Sudan",
+                "Suriname",
+                "Svalbard and Jan Mayen",
+                "Swaziland",
+                "Sweden",
+                "Switzerland",
+                "Syrian Arab Republic",
+                "Taiwan, Province of China",
+                "Taiwan",
+                "Tajikistan",
+                "Tanzania, United Republic of",
+                "Thailand",
+                "Timor-Leste",
+                "Togo",
+                "Tokelau",
+                "Tonga",
+                "Trinidad and Tobago",
+                "Tunisia",
+                "Turkey",
+                "Turkmenistan",
+                "Turks and Caicos Islands",
+                "Tuvalu",
+                "Uganda",
+                "Ukraine",
+                "United Arab Emirates",
+                "United States Minor Outlying Islands",
+                "Uruguay",
+                "Uzbekistan",
+                "Vanuatu",
+                "Venezuela, Bolivarian Republic of",
+                "Venezuela",
+                "Viet Nam",
+                "Vietnam",
+                "Virgin Islands, British",
+                "Virgin Islands, U.S.",
+                "Wallis and Futuna",
+                "Western Sahara",
+                "Yemen",
+                "Zambia",
+                "Zimbabwe",
+            ],
+        },
+        "platform id": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "platform_id",
+            "type": "id",
+        },
+        "platform type": {
+            "foreign_table_type": TableTypes.REFERENCE,
+            "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
+            "system_name": "platform_type",
+            "type": "string",
+            "values": [
+                "Naval - aircraft",
+                "Naval - frigate",
+                "Naval - auxiliary",
+                "Naval - destroyer",
+                "Naval - survey",
+                "Naval - minesweeper",
+                "Naval - patrol",
+                "Naval - aircraft carrier",
+                "Naval - submarine",
+                "Naval - miscellaneous",
+                "Merchant",
+                "Tug",
+                "Tanker",
+                "Law Enforcement",
+                "Pleasure Craft",
+                "Search and Rescue",
+                "Fishing Vessel",
+                "Passenger/Ferry",
+                "High Speed Craft",
+            ],
+        },
+        "platform type name": {
+            "required": True,
+            "sqlalchemy_type": "assoc_proxy",
             "system_name": "platform_type_name",
+            "type": "string",
             "values": [
                 "Fishing Vessel",
                 "High Speed Craft",
@@ -340,10 +628,12 @@ def test_column_data_platform():
             ],
         },
         "privacy": {
+            "foreign_table_type": TableTypes.REFERENCE,
             "required": True,
-            "assoc_proxy": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
+            "system_name": "privacy",
             "type": "string",
-            "system_name": "privacy_name",
             "values": [
                 "Public",
                 "Public Sensitive",
@@ -355,17 +645,43 @@ def test_column_data_platform():
                 "Very Private",
             ],
         },
-        "created date": {
-            "assoc_proxy": False,
+        "privacy name": {
+            "required": True,
+            "sqlalchemy_type": "assoc_proxy",
+            "system_name": "privacy_name",
+            "type": "string",
+            "values": [
+                "Public",
+                "Public Sensitive",
+                "Private",
+                "Private UK/IE",
+                "Very Private UK/IE",
+                "Private UK/IE/FR",
+                "Very Private UK/IE/FR",
+                "Very Private",
+            ],
+        },
+        "quadgraph": {
             "required": False,
-            "system_name": "created_date",
-            "type": "datetime",
+            "sqlalchemy_type": "column",
+            "system_name": "quadgraph",
+            "type": "string",
+            "values": [],
+        },
+        "trigraph": {
+            "required": False,
+            "sqlalchemy_type": "column",
+            "system_name": "trigraph",
+            "type": "string",
+            "values": [],
         },
     }
 
     del col_data["nationality"]["ids"]
     del col_data["platform type"]["ids"]
     del col_data["privacy"]["ids"]
+
+    pprint(col_data)
 
     assert col_data == correct_col_data
 
@@ -381,14 +697,14 @@ def test_column_data_platform_type():
 
     correct_col_data = {
         "created date": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "created_date",
             "type": "datetime",
         },
         "name": {
-            "assoc_proxy": False,
             "required": True,
+            "sqlalchemy_type": "column",
             "system_name": "name",
             "type": "string",
             "values": [
@@ -414,8 +730,8 @@ def test_column_data_platform_type():
             ],
         },
         "platform type id": {
-            "assoc_proxy": False,
             "required": True,
+            "sqlalchemy_type": "column",
             "system_name": "platform_type_id",
             "type": "id",
         },
@@ -439,15 +755,20 @@ def test_column_data_privacies():
 
     assert col_data == {
         "created date": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "created_date",
             "type": "datetime",
         },
-        "level": {"assoc_proxy": False, "required": True, "system_name": "level", "type": "int"},
-        "name": {
-            "assoc_proxy": False,
+        "level": {
             "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "level",
+            "type": "int",
+        },
+        "name": {
+            "required": True,
+            "sqlalchemy_type": "column",
             "system_name": "name",
             "type": "string",
             "values": [
@@ -462,8 +783,8 @@ def test_column_data_privacies():
             ],
         },
         "privacy id": {
-            "assoc_proxy": False,
             "required": True,
+            "sqlalchemy_type": "column",
             "system_name": "privacy_id",
             "type": "id",
         },
@@ -487,45 +808,77 @@ def test_column_data_state():
 
     assert col_data == {
         "course": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "course",
             "type": "float",
         },
         "created date": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "created_date",
             "type": "datetime",
         },
         "elevation": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "elevation",
             "type": "float",
         },
         "heading": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "heading",
             "type": "float",
         },
         "location": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "location",
             "type": "geometry",
         },
         "platform": {
-            "assoc_proxy": True,
+            "foreign_table_type": TableTypes.METADATA,
             "required": True,
+            "second_level": True,
+            "sqlalchemy_type": "relationship",
+            "system_name": "platform",
+            "type": "string",
+            "values": [
+                "ADRI / A643 / United Kingdom",
+                "JEAN / A816 / United Kingdom",
+                "NARV / C045 / United Kingdom",
+                "SPAR / P543 / France",
+            ],
+        },
+        "platform name": {
+            "required": True,
+            "sqlalchemy_type": "assoc_proxy",
             "system_name": "platform_name",
             "type": "string",
             "values": ["ADRI", "JEAN", "NARV", "SPAR"],
         },
         "privacy": {
-            "assoc_proxy": True,
+            "foreign_table_type": TableTypes.REFERENCE,
             "required": False,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
+            "system_name": "privacy",
+            "type": "string",
+            "values": [
+                "Public",
+                "Public Sensitive",
+                "Private",
+                "Private UK/IE",
+                "Very Private UK/IE",
+                "Private UK/IE/FR",
+                "Very Private UK/IE/FR",
+                "Very Private",
+            ],
+        },
+        "privacy name": {
+            "required": False,
+            "sqlalchemy_type": "assoc_proxy",
             "system_name": "privacy_name",
             "type": "string",
             "values": [
@@ -540,35 +893,70 @@ def test_column_data_state():
             ],
         },
         "remarks": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "remarks",
             "type": "string",
             "values": [],
         },
         "sensor": {
-            "assoc_proxy": True,
+            "foreign_table_type": TableTypes.METADATA,
             "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
+            "system_name": "sensor",
+            "type": "string",
+            "values": [
+                "GPS / ADRI / A643 / United Kingdom",
+                "INS / ADRI / A643 / United Kingdom",
+                "Radar / ADRI / A643 / United Kingdom",
+                "Periscope / ADRI / A643 / United Kingdom",
+                "GPS / JEAN / A816 / United Kingdom",
+                "GPS / SPAR / P543 / France",
+            ],
+        },
+        "sensor name": {
+            "required": True,
+            "sqlalchemy_type": "assoc_proxy",
             "system_name": "sensor_name",
             "type": "string",
-            "values": ["GPS", "GPS", "GPS", "INS", "Periscope", "Radar"],
+            "values": ["GPS", "INS", "Periscope", "Radar"],
         },
-        "source reference": {
-            "assoc_proxy": True,
+        "source": {
+            "foreign_table_type": TableTypes.METADATA,
             "ids": [],
             "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
+            "system_name": "source",
+            "type": "string",
+            "values": [],
+        },
+        "source reference": {
+            "required": True,
+            "sqlalchemy_type": "assoc_proxy",
             "system_name": "source_reference",
             "type": "string",
             "values": [],
         },
-        "speed": {"assoc_proxy": False, "required": False, "system_name": "speed", "type": "float"},
+        "speed": {
+            "required": False,
+            "sqlalchemy_type": "column",
+            "system_name": "speed",
+            "type": "float",
+        },
         "state id": {
-            "assoc_proxy": False,
             "required": True,
+            "sqlalchemy_type": "column",
             "system_name": "state_id",
             "type": "id",
         },
-        "time": {"assoc_proxy": False, "required": True, "system_name": "time", "type": "datetime"},
+        "time": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "time",
+            "type": "datetime",
+        },
     }
 
 
@@ -581,12 +969,17 @@ def test_edit_data_platform_type():
 
     col_data = create_column_data(store, store.db_classes.PlatformType)
 
-    edit_data = convert_column_data_to_edit_data(col_data, store.db_classes.PlatformType, store)
+    edit_data = convert_column_data_to_edit_data(col_data)
 
     pprint(edit_data)
 
     assert edit_data == {
-        "name": {"assoc_proxy": False, "required": True, "system_name": "name", "type": "string"}
+        "name": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "name",
+            "type": "string",
+        }
     }
 
 
@@ -599,13 +992,23 @@ def test_edit_data_privacy():
 
     col_data = create_column_data(store, store.db_classes.Privacy)
 
-    edit_data = convert_column_data_to_edit_data(col_data, store.db_classes.Privacy, store)
+    edit_data = convert_column_data_to_edit_data(col_data)
 
     pprint(edit_data)
 
     assert edit_data == {
-        "level": {"assoc_proxy": False, "required": True, "system_name": "level", "type": "int"},
-        "name": {"assoc_proxy": False, "required": True, "system_name": "name", "type": "string"},
+        "level": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "level",
+            "type": "int",
+        },
+        "name": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "name",
+            "type": "string",
+        },
     }
 
 
@@ -618,7 +1021,7 @@ def test_edit_data_platform():
 
     col_data = create_column_data(store, store.db_classes.Platform)
 
-    edit_data = convert_column_data_to_edit_data(col_data, store.db_classes.Platform, store)
+    edit_data = convert_column_data_to_edit_data(col_data)
 
     del edit_data["privacy"]["ids"]
     del edit_data["nationality"]["ids"]
@@ -628,14 +1031,22 @@ def test_edit_data_platform():
 
     assert edit_data == {
         "identifier": {
-            "assoc_proxy": False,
             "required": True,
+            "sqlalchemy_type": "column",
             "system_name": "identifier",
             "type": "string",
         },
-        "name": {"assoc_proxy": False, "required": True, "system_name": "name", "type": "string"},
-        "nationality": {
+        "name": {
             "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "name",
+            "type": "string",
+        },
+        "nationality": {
+            "foreign_table_type": TableTypes.REFERENCE,
+            "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
             "system_name": "nationality",
             "type": "string",
             "values": [
@@ -898,7 +1309,10 @@ def test_edit_data_platform():
             ],
         },
         "platform type": {
+            "foreign_table_type": TableTypes.REFERENCE,
             "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
             "system_name": "platform_type",
             "type": "string",
             "values": [
@@ -924,7 +1338,10 @@ def test_edit_data_platform():
             ],
         },
         "privacy": {
+            "foreign_table_type": TableTypes.REFERENCE,
             "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
             "system_name": "privacy",
             "type": "string",
             "values": [
@@ -939,14 +1356,14 @@ def test_edit_data_platform():
             ],
         },
         "quadgraph": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "quadgraph",
             "type": "string",
         },
         "trigraph": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "trigraph",
             "type": "string",
         },
@@ -962,7 +1379,7 @@ def test_edit_data_state():
 
     col_data = create_column_data(store, store.db_classes.State)
 
-    edit_data = convert_column_data_to_edit_data(col_data, store.db_classes.State, store)
+    edit_data = convert_column_data_to_edit_data(col_data)
 
     del edit_data["sensor"]["ids"]
     del edit_data["privacy"]["ids"]
@@ -971,25 +1388,28 @@ def test_edit_data_state():
 
     assert edit_data == {
         "course": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "course",
             "type": "float",
         },
         "elevation": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "elevation",
             "type": "float",
         },
         "heading": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "heading",
             "type": "float",
         },
         "privacy": {
+            "foreign_table_type": TableTypes.REFERENCE,
             "required": False,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
             "system_name": "privacy",
             "type": "string",
             "values": [
@@ -1004,13 +1424,16 @@ def test_edit_data_state():
             ],
         },
         "remarks": {
-            "assoc_proxy": False,
             "required": False,
+            "sqlalchemy_type": "column",
             "system_name": "remarks",
             "type": "string",
         },
         "sensor": {
+            "foreign_table_type": TableTypes.METADATA,
             "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
             "system_name": "sensor",
             "type": "string",
             "values": [
@@ -1023,12 +1446,25 @@ def test_edit_data_state():
             ],
         },
         "source": {
+            "foreign_table_type": TableTypes.METADATA,
             "ids": [],
             "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
             "system_name": "source",
             "type": "string",
             "values": [],
         },
-        "speed": {"assoc_proxy": False, "required": False, "system_name": "speed", "type": "float"},
-        "time": {"assoc_proxy": False, "required": True, "system_name": "time", "type": "datetime"},
+        "speed": {
+            "required": False,
+            "sqlalchemy_type": "column",
+            "system_name": "speed",
+            "type": "float",
+        },
+        "time": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "time",
+            "type": "datetime",
+        },
     }
