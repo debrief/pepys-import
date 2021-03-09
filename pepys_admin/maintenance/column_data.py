@@ -1,16 +1,17 @@
 import geoalchemy2
 import sqlalchemy
 from sqlalchemy import nullslast
+from sqlalchemy.dialects.postgresql import UUID
 
-import pepys_import
 from pepys_admin.maintenance.utils import get_display_name, remove_duplicates_and_nones
-from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
+from pepys_import.utils.sqlalchemy_utils import UUIDType, get_primary_key_for_table
 
 
 def get_type_name(type_object):
     """Get a type name suitable for use with a FilterWidget
     from the SQLAlchemy type of a column."""
-    if isinstance(type_object, pepys_import.utils.sqlalchemy_utils.UUIDType):
+    # Check for both the SQLite UUID type or the Postgres UUID type
+    if isinstance(type_object, UUIDType) or isinstance(type_object, UUID):
         return "id"
     elif isinstance(type_object, sqlalchemy.sql.sqltypes.String):
         return "string"
