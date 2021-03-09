@@ -1,3 +1,4 @@
+import asyncio
 from asyncio import Future
 
 from prompt_toolkit.application.current import get_app
@@ -221,9 +222,16 @@ class ComboBox:
             def _(event) -> None:
                 try:
                     # Return entry to the asyncio future
+                    # Try setting the value to the correct filtered entry
+                    # if that fails, then try returning None
+                    # if that fails because the future has already had a result set
+                    # then just do nothing
                     self.future.set_result(self.filtered_entries[self.selected_entry])
                 except Exception:
-                    self.future.set_result(None)
+                    try:
+                        self.future.set_result(None)
+                    except asyncio.InvalidStateError:
+                        pass
 
         else:
 
