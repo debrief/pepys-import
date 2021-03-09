@@ -1,6 +1,14 @@
 import re
+from datetime import datetime, timedelta
 
 import pint
+import sqlalchemy
+from sqlalchemy.dialects.postgresql import TIMESTAMP as PSQL_TIMESTAMP
+from sqlalchemy.dialects.sqlite import TIMESTAMP as SQLITE_TIMESTAMP
+
+from pepys_admin.maintenance import constants
+from pepys_import.core.store.data_store import DataStore
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 from pepys_import.core.store.db_base import BasePostGIS, BaseSpatiaLite
 
@@ -68,3 +76,72 @@ def get_str_for_field(value):
         return " / ".join(strings)
     else:
         return str(value)
+
+
+def create_time_filter_dict() -> dict:
+    """Creates a dictionary that has the filter strings as keys, and related datetimes as values."""
+    today = datetime.today()
+    today_as_date = today.date()
+    one_day_delta = timedelta(hours=24)
+    time_filter_dict = {
+        constants.DAY_BEFORE_YESTERDAY: (
+            today_as_date - one_day_delta * 2,
+            today_as_date - one_day_delta,
+        ),
+        constants.IN_PAST_24_HOURS: (today - one_day_delta, today),
+        constants.YESTERDAY: (today_as_date - one_day_delta, today_as_date),
+        constants.TODAY: (today_as_date, today_as_date + one_day_delta),
+        constants.IN_NEXT_24_HOURS: (today, today + one_day_delta),
+        constants.TOMORROW: (today_as_date + one_day_delta, today_as_date + one_day_delta * 2),
+    }
+    return time_filter_dict
+
+
+def table_has_any_timestamp_fields(table_object) -> bool:
+    """
+    Returns true if there is any field of type 'TIMESTAMP'.
+
+    :param table_object: A table object
+    :type table_object: Base SQLAlchemy Model
+    """
+    mapper = sqlalchemy.inspect(table_object)
+    for column in mapper.all_orm_descriptors:
+        try:
+            if isinstance(column.type, PSQL_TIMESTAMP) or isinstance(column.type, SQLITE_TIMESTAMP):
+                return True
+        except Exception:
+            pass
+    return False
+
+
+def convert_relative_time_string_to_sqlalchemy_filter(
+    relative_time: str, table_name: str, data_store: DataStore
+):
+    """
+    Filters objects by given relative time and returns them.
+
+    :param relative_time: Selected relative time in the GUI
+    :type relative_time: str
+    :param table_name: Name of the table
+    :type table_name: str
+    :param data_store: DataStore object to use to communicate with the database
+    :type data_store: DataStore
+    """
+    class_name = table_name_to_class_name(table_name)
+    class_obj = getattr(data_store.db_classes, class_name)
+    if not table_has_any_timestamp_fields(class_obj):
+        raise ValueError(f"This table doesn't have any type of 'time' fields: {table_name}")
+
+    filter_dict = create_time_filter_dict()
+    start, end = filter_dict.get(relative_time)
+    if start is None or end is None:
+        raise ValueError(f"Given relative time couldn't be converted: {relative_time}")
+
+    if isinstance(class_obj, data_store.db_classes.Participant) or isinstance(
+        class_obj, data_store.db_classes.Task
+    ):
+        start_field, end_field = getattr(class_obj, "start"), getattr(class_obj, "end")
+    else:
+        start_field, end_field = getattr(class_obj, "time"), getattr(class_obj, "time")
+
+    return start <= start_field, end_field <= end
