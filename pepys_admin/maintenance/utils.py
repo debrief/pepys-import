@@ -115,7 +115,7 @@ def table_has_any_timestamp_fields(table_object) -> bool:
     return False
 
 
-def convert_relative_time_filter_to_query(
+def convert_relative_time_string_to_sqlalchemy_filter(
     relative_time: str, table_name: str, data_store: DataStore
 ):
     """
@@ -145,7 +145,4 @@ def convert_relative_time_filter_to_query(
     else:
         start_field, end_field = getattr(class_obj, "time"), getattr(class_obj, "time")
 
-    objects = (
-        data_store.session.query(class_obj).filter(start <= start_field, end_field <= end).all()
-    )
-    return objects
+    return start <= start_field, end_field <= end

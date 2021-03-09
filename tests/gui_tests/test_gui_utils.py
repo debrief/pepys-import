@@ -5,7 +5,7 @@ from freezegun import freeze_time
 
 from pepys_admin.maintenance import constants
 from pepys_admin.maintenance.utils import (
-    convert_relative_time_filter_to_query,
+    convert_relative_time_string_to_sqlalchemy_filter,
     create_time_filter_dict,
     get_display_names,
     get_system_name_mappings,
@@ -145,15 +145,13 @@ class RelativeTimeFilterTests(unittest.TestCase):
             )
             self.store.session.flush()
 
-            assert convert_relative_time_filter_to_query(
-                constants.DAY_BEFORE_YESTERDAY, "States", self.store
-            ) == [state_day_before_yesterday]
-            assert convert_relative_time_filter_to_query(
-                constants.YESTERDAY, "States", self.store
-            ) == [state_yesterday]
-            assert convert_relative_time_filter_to_query(
-                constants.IN_PAST_24_HOURS, "States", self.store
-            ) == [state_in_past_24_hours]
+            assert get_states(constants.DAY_BEFORE_YESTERDAY, "States", self.store) == [
+                state_day_before_yesterday
+            ]
+            assert get_states(constants.YESTERDAY, "States", self.store) == [state_yesterday]
+            assert get_states(constants.IN_PAST_24_HOURS, "States", self.store) == [
+                state_in_past_24_hours
+            ]
 
     def test_convert_relative_time_filter_to_query_2(self):
         State = self.store.db_classes.State
@@ -188,16 +186,18 @@ class RelativeTimeFilterTests(unittest.TestCase):
             )
             self.store.session.flush()
 
-            assert convert_relative_time_filter_to_query(constants.TODAY, "States", self.store) == [
-                state_today
+            assert get_states(constants.TODAY, "States", self.store) == [state_today]
+            assert get_states(constants.IN_NEXT_24_HOURS, "States", self.store) == [
+                state_in_next_24_hours
             ]
-            assert convert_relative_time_filter_to_query(
-                constants.IN_NEXT_24_HOURS, "States", self.store
-            ) == [state_in_next_24_hours]
             # state_tomorrow is not included "in the next 24 hours", but it should when filtering by "tomorrow"
-            assert set(
-                convert_relative_time_filter_to_query(constants.TOMORROW, "States", self.store)
-            ) == {
+            assert set(get_states(constants.TOMORROW, "States", self.store)) == {
                 state_tomorrow,
                 state_in_next_24_hours,
             }
+
+
+def get_states(time, table_name, data_store):
+    filter_query = convert_relative_time_string_to_sqlalchemy_filter(time, table_name, data_store)
+    objects = data_store.session.query(data_store.db_classes.State).filter(*filter_query).all()
+    return objects
