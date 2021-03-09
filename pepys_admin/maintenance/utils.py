@@ -8,9 +8,8 @@ from sqlalchemy.dialects.sqlite import TIMESTAMP as SQLITE_TIMESTAMP
 
 from pepys_admin.maintenance import constants
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.utils.table_name_utils import table_name_to_class_name
-
 from pepys_import.core.store.db_base import BasePostGIS, BaseSpatiaLite
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 
 def get_display_names(fields, capitalized=False):
