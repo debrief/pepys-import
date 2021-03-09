@@ -53,9 +53,9 @@ def filter_widget_output_to_query(outputs: List[List], table_name: str, data_sto
             if ops == "LIKE":
                 try:
                     if isinstance(col.type, UUIDType):
-                        queries.append(cast(col, sqlalchemy.String).like(f"%{value}%"))
+                        queries.append(cast(col, sqlalchemy.String).ilike(f"%{value}%"))
                     else:
-                        queries.append(col.like(f"%{value}%"))
+                        queries.append(col.ilike(f"%{value}%"))
                 except Exception:
                     queries.append(col.like(f"%{value}%"))
 
