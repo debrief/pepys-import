@@ -3,6 +3,7 @@ from datetime import date, datetime
 
 from freezegun import freeze_time
 
+from pepys_admin.maintenance import constants
 from pepys_admin.maintenance.utils import (
     convert_relative_time_filter_to_query,
     create_time_filter_dict,
@@ -59,18 +60,18 @@ def test_remove_duplicates_and_nones():
 @freeze_time("2021-03-09 12:00:00")
 def test_create_time_filter_dict():
     filter_dict = create_time_filter_dict()
-    assert filter_dict["In past 24 hours"] == (
+    assert filter_dict[constants.IN_PAST_24_HOURS] == (
         datetime(2021, 3, 8, hour=12, minute=0),
         datetime(2021, 3, 9, hour=12, minute=0),
     )
-    assert filter_dict["In next 24 hours"] == (
+    assert filter_dict[constants.IN_NEXT_24_HOURS] == (
         datetime(2021, 3, 9, hour=12, minute=0),
         datetime(2021, 3, 10, hour=12, minute=0),
     )
-    assert filter_dict["Yesterday"] == (date(2021, 3, 8), date(2021, 3, 9))
-    assert filter_dict["Day before yesterday"] == (date(2021, 3, 7), date(2021, 3, 8))
-    assert filter_dict["Today"] == (date(2021, 3, 9), date(2021, 3, 10))
-    assert filter_dict["Tomorrow"] == (date(2021, 3, 10), date(2021, 3, 11))
+    assert filter_dict[constants.YESTERDAY] == (date(2021, 3, 8), date(2021, 3, 9))
+    assert filter_dict[constants.DAY_BEFORE_YESTERDAY] == (date(2021, 3, 7), date(2021, 3, 8))
+    assert filter_dict[constants.TODAY] == (date(2021, 3, 9), date(2021, 3, 10))
+    assert filter_dict[constants.TOMORROW] == (date(2021, 3, 10), date(2021, 3, 11))
 
 
 def test_table_has_any_timestamp_fields():
@@ -145,13 +146,13 @@ class RelativeTimeFilterTests(unittest.TestCase):
             self.store.session.flush()
 
             assert convert_relative_time_filter_to_query(
-                "Day before yesterday", "States", self.store
+                constants.DAY_BEFORE_YESTERDAY, "States", self.store
             ) == [state_day_before_yesterday]
-            assert convert_relative_time_filter_to_query("Yesterday", "States", self.store) == [
-                state_yesterday
-            ]
             assert convert_relative_time_filter_to_query(
-                "In past 24 hours", "States", self.store
+                constants.YESTERDAY, "States", self.store
+            ) == [state_yesterday]
+            assert convert_relative_time_filter_to_query(
+                constants.IN_PAST_24_HOURS, "States", self.store
             ) == [state_in_past_24_hours]
 
     def test_convert_relative_time_filter_to_query_2(self):
@@ -187,14 +188,16 @@ class RelativeTimeFilterTests(unittest.TestCase):
             )
             self.store.session.flush()
 
-            assert convert_relative_time_filter_to_query("Today", "States", self.store) == [
+            assert convert_relative_time_filter_to_query(constants.TODAY, "States", self.store) == [
                 state_today
             ]
             assert convert_relative_time_filter_to_query(
-                "In next 24 hours", "States", self.store
+                constants.IN_NEXT_24_HOURS, "States", self.store
             ) == [state_in_next_24_hours]
             # state_tomorrow is not included "in the next 24 hours", but it should when filtering by "tomorrow"
-            assert set(convert_relative_time_filter_to_query("Tomorrow", "States", self.store)) == {
+            assert set(
+                convert_relative_time_filter_to_query(constants.TOMORROW, "States", self.store)
+            ) == {
                 state_tomorrow,
                 state_in_next_24_hours,
             }

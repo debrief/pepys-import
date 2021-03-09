@@ -6,6 +6,7 @@ import sqlalchemy
 from sqlalchemy.dialects.postgresql import TIMESTAMP as PSQL_TIMESTAMP
 from sqlalchemy.dialects.sqlite import TIMESTAMP as SQLITE_TIMESTAMP
 
+from pepys_admin.maintenance import constants
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
@@ -84,12 +85,15 @@ def create_time_filter_dict() -> dict:
     today_as_date = today.date()
     one_day_delta = timedelta(hours=24)
     time_filter_dict = {
-        "In past 24 hours": (today - one_day_delta, today),
-        "In next 24 hours": (today, today + one_day_delta),
-        "Yesterday": (today_as_date - one_day_delta, today_as_date),
-        "Day before yesterday": (today_as_date - one_day_delta * 2, today_as_date - one_day_delta),
-        "Today": (today_as_date, today_as_date + one_day_delta),
-        "Tomorrow": (today_as_date + one_day_delta, today_as_date + one_day_delta * 2),
+        constants.DAY_BEFORE_YESTERDAY: (
+            today_as_date - one_day_delta * 2,
+            today_as_date - one_day_delta,
+        ),
+        constants.IN_PAST_24_HOURS: (today - one_day_delta, today),
+        constants.YESTERDAY: (today_as_date - one_day_delta, today_as_date),
+        constants.TODAY: (today_as_date, today_as_date + one_day_delta),
+        constants.IN_NEXT_24_HOURS: (today, today + one_day_delta),
+        constants.TOMORROW: (today_as_date + one_day_delta, today_as_date + one_day_delta * 2),
     }
     return time_filter_dict
 
