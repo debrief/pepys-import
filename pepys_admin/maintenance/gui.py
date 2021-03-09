@@ -127,6 +127,8 @@ class MaintenanceGUI:
             style=self.get_style(),
         )
 
+        self.app.dropdown_opened = False
+
     def init_ui_components(self):
         """Initialise all of the UI components, controls, containers and widgets"""
         # Dropdown box to select table, plus pane that it is in
