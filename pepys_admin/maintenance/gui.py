@@ -1,3 +1,4 @@
+import os
 import textwrap
 import traceback
 from asyncio.tasks import ensure_future
@@ -29,11 +30,12 @@ from prompt_toolkit.widgets.base import Border, Label
 from pygments.lexers.sql import SqlLexer
 from sqlalchemy.orm import undefer
 
-from pepys_admin.maintenance.column_data import create_column_data
+from pepys_admin.maintenance.column_data import convert_column_data_to_edit_data, create_column_data
 from pepys_admin.maintenance.dialogs.add_dialog import AddDialog
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.dialogs.edit_dialog import EditDialog
 from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
+from pepys_admin.maintenance.dialogs.initial_help_dialog import InitialHelpDialog
 from pepys_admin.maintenance.dialogs.merge_dialog import MergeDialog
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.dialogs.progress_dialog import ProgressDialog
@@ -111,36 +113,34 @@ class MaintenanceGUI:
         self.current_table_object = None
 
         self.column_data = None
+        self.edit_data = None
         self.preview_selected_fields = []
 
         self.filter_widget.set_column_data(self.column_data)
         self.run_query()
 
-        layout = Layout(self.root_container)
-
         self.app = Application(
-            layout=layout,
+            layout=self.layout,
             key_bindings=self.get_keybindings(),
             full_screen=True,
             mouse_support=True,
             style=self.get_style(),
         )
 
+        self.app.dropdown_opened = False
+
     def init_ui_components(self):
         """Initialise all of the UI components, controls, containers and widgets"""
         # Dropdown box to select table, plus pane that it is in
         metadata_tables = ["Platforms", "Sensors", "Datafiles"]
-        # FUTURE: For use when we want to let the user operate on Measurement tables
-        # measurement_tables = sorted(
-        #     [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.MEASUREMENT]]
-        # )
+        measurement_tables = sorted(
+            [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.MEASUREMENT]]
+        )
         reference_tables = sorted(
             [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.REFERENCE]]
         )
         reference_tables.remove("HelpTexts")
-        # FUTURE: For use when we want to let the user operate on Measurement tables
-        # tables_list = metadata_tables + measurement_tables + reference_tables
-        tables_list = metadata_tables + reference_tables
+        tables_list = metadata_tables + measurement_tables + reference_tables
         self.dropdown_table = DropdownBox(
             text="Select a table",
             entries=tables_list,
@@ -165,6 +165,7 @@ class MaintenanceGUI:
             on_change_handler=self.on_filter_widget_change,
             max_filters=None,
             contextual_help_setter=self.set_contextual_help,
+            filter_function=self.filter_column_data,
         )
         self.set_contextual_help(self.filter_widget, "# Second panel: Build filters F3")
         self.filter_container = DynamicContainer(self.get_filter_container)
@@ -216,6 +217,16 @@ class MaintenanceGUI:
         self.status_bar_shortcuts = ["Ctrl-F - Select fields"]
         self.status_bar_container = DynamicContainer(self.get_status_bar_container)
 
+        show_initial_help = not os.path.exists(
+            os.path.expanduser(os.path.join("~", ".pepys_maintenance_help.txt"))
+        )
+
+        if show_initial_help:
+            initial_help_dialog = InitialHelpDialog("Getting started", INTRO_HELP_TEXT)
+            initial_floats = [Float(initial_help_dialog)]
+        else:
+            initial_floats = []
+
         # Putting everything together in panes
         self.root_container = FloatContainer(
             BlankBorder(
@@ -243,15 +254,25 @@ class MaintenanceGUI:
                     ],
                 )
             ),
-            floats=[],
+            floats=initial_floats,
         )
+
+        if show_initial_help:
+            self.layout = Layout(
+                self.root_container, focused_element=initial_help_dialog.close_button
+            )
+        else:
+            self.layout = Layout(self.root_container)
 
     def handle_preview_table_keypress(self, event):
         self.actions_combo.handle_numeric_key(event)
 
     def get_actions_list(self):
         def is_merge_enabled():
-            return len(self.preview_table.current_values) > 1
+            return (
+                len(self.preview_table.current_values) > 1
+                and self.current_table_object.table_type != TableTypes.MEASUREMENT
+            )
 
         def is_split_platform_enabled():
             return (self.current_table_object == self.data_store.db_classes.Platform) and (
@@ -286,6 +307,31 @@ class MaintenanceGUI:
 
     def get_default_preview_fields(self):
         self.preview_selected_fields = self.current_table_object._default_preview_fields
+
+    def filter_column_data(self, column_data):
+        """
+        Filters the column_data dict in the FilterWidget to remove entries
+        that we don't currently want the user to be able to select - such as location,
+        or float columns
+        """
+        # FUTURE: Remove this when we want to be able to filter by measurements or location
+        new_column_data = {}
+        for display_name, col_config in column_data.items():
+            # Don't allow the location field
+            if display_name == "location":
+                continue
+            # Don't allow any float columns
+            elif col_config["type"] == "float":
+                continue
+            # Don't allow any relationship columns to reference tables - we deal with those by their association proxies
+            elif (
+                col_config["sqlalchemy_type"] == "relationship"
+                and col_config["foreign_table_type"] == TableTypes.REFERENCE
+            ):
+                continue
+            new_column_data[display_name] = col_config
+
+        return new_column_data
 
     def run_query(self):
         """Runs the query as defined by the FilterWidget,
@@ -328,6 +374,7 @@ class MaintenanceGUI:
                 results = query_obj.options(undefer("*")).limit(100).all()
 
                 if len(results) == 0:
+                    self.preview_table_message.text = ""
                     # If we've got no results then just update the app display
                     # which will just show the headers that we mentioned above
                     app.invalidate()
@@ -336,6 +383,8 @@ class MaintenanceGUI:
                 # Disconnect all the objects we've returned in our query from the database
                 # so we can store them outside of the session without any problems
                 self.data_store.session.expunge_all()
+                # for result in results:
+                #     recursive_expunge(result, self.data_store.session)
 
                 for result in results[:100]:
                     # Get the right fields and append them
@@ -371,6 +420,9 @@ class MaintenanceGUI:
 
     def get_column_data(self, table_object, set_percentage=None, is_cancelled=None):
         self.column_data = create_column_data(self.data_store, table_object, set_percentage)
+        # Reset this to None now that we've got new column data (basically invalidating
+        # the cache of the edit data)
+        self.edit_data = None
 
     def on_table_select(self, value):
         """Called when an entry is selected from the Table dropdown at the top-left."""
@@ -441,6 +493,7 @@ class MaintenanceGUI:
                     "Error", "You must select exactly one entry before editing."
                 )
                 return
+
             dialog = ViewDialog(
                 self.column_data, self.current_table_object, self.preview_table.current_values
             )
@@ -460,7 +513,14 @@ class MaintenanceGUI:
                     "Error", "You must select a table before adding an entry"
                 )
                 return
-            dialog = AddDialog(self.column_data, self.current_table_object)
+
+            if self.edit_data is None:
+                dialog = ProgressDialog(
+                    "Preparing to edit", self.create_edit_data, show_cancel=False
+                )
+                result = await self.show_dialog_as_float(dialog)
+
+            dialog = AddDialog(self.edit_data, self.current_table_object)
             edit_dict = await self.show_dialog_as_float(dialog)
             if edit_dict is None or len(edit_dict) == 0:
                 # Dialog was cancelled
@@ -579,6 +639,15 @@ class MaintenanceGUI:
 
         ensure_future(coroutine())
 
+    def create_edit_data(self, set_percentage=None, is_cancelled=None):
+        # Convert the column_data into the structure we need for editing the data
+        # This removes un-needed columns, and un-needed values lists
+        self.edit_data = convert_column_data_to_edit_data(
+            self.column_data,
+            set_percentage=set_percentage,
+        )
+        set_percentage(100)
+
     def run_edit_values(self):
         def do_edit(items, edit_dict, set_percentage=None, is_cancelled=None):
             with self.data_store.session_scope():
@@ -591,9 +660,23 @@ class MaintenanceGUI:
                     "Error", "You must select at least one entry before editing."
                 )
                 return
+
+            if self.edit_data is None:
+                dialog = ProgressDialog(
+                    "Preparing to edit", self.create_edit_data, show_cancel=False
+                )
+                result = await self.show_dialog_as_float(dialog)
+
+                if isinstance(result, BaseException):
+                    await self.show_messagebox_async(
+                        "Error", f"Error preparing edit data\n\nOriginal error: {str(result)}"
+                    )
+                    return
+
             dialog = EditDialog(
-                self.column_data, self.current_table_object, self.preview_table.current_values
+                self.edit_data, self.current_table_object, self.preview_table.current_values
             )
+
             edit_dict = await self.show_dialog_as_float(dialog)
             if edit_dict is None or len(edit_dict) == 0:
                 # Dialog was cancelled
@@ -700,6 +783,13 @@ class MaintenanceGUI:
             )
             return
 
+        if self.current_table_object.table_type == TableTypes.MEASUREMENT:
+            self.show_messagebox(
+                "Error",
+                "Merging can only be performed on metadata or reference tables.",
+            )
+            return
+
         if self.current_table_object == self.data_store.db_classes.Sensor:
             host_ids = set([s.host for s in self.preview_table.current_values])
             if len(host_ids) > 1:
@@ -767,7 +857,7 @@ class MaintenanceGUI:
                 self.run_query()
                 # Regenerate the column_data, so we don't have entries in the dropdowns
                 # that don't exist anymore
-                self.column_data = create_column_data(self.data_store, self.current_table_object)
+                self.get_column_data(self.current_table_object)
                 self.filter_widget.set_column_data(self.column_data, clear_entries=False)
 
         ensure_future(coroutine())
@@ -881,7 +971,22 @@ class MaintenanceGUI:
             # Get lists of left-hand and right-hand side entries
             # The left-hand entries are all available fields (minus those that already appear on the right)
             # and the right-hand entries are the currently selected fields
-            left_entries = list(display_name_to_system_name.keys())
+            all_entries = list(display_name_to_system_name.keys())
+
+            # Exclude entries that are relationships to reference tables, as otherwise
+            # we duplicate the relevant association proxy
+            # (ie. we don't want `nationality` (the relationship) and `nationality_name` (the association proxy)
+            # to both appear in the list of fields to choose - so we get rid of the relationship one)
+            left_entries = []
+            for entry in all_entries:
+                col_config = self.column_data[entry]
+                if (
+                    col_config["sqlalchemy_type"] == "relationship"
+                    and col_config["foreign_table_type"] == TableTypes.REFERENCE
+                ):
+                    continue
+                left_entries.append(entry)
+
             right_entries = [
                 system_name_to_display_name[entry] for entry in self.preview_selected_fields
             ]

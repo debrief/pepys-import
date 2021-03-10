@@ -17,14 +17,11 @@ class HelpDialog:
     def __init__(self, title, text, position=0):
         self.future = Future()
 
-        def set_done():
-            self.future.set_result(None)
-
         from pygments.lexers.markup import MarkdownLexer
 
         lexer = PygmentsLexer(MarkdownLexer)
 
-        close_button = Button(text="Close", handler=(lambda: set_done()))
+        self.close_button = Button(text="Close", handler=self.set_done)
         doc = Document(text, position)
         buffer = Buffer(read_only=True, document=doc, multiline=True)
         buffer_control = BufferControl(buffer, lexer=lexer)
@@ -33,12 +30,15 @@ class HelpDialog:
             title=title,
             body=HSplit(
                 [
-                    Label("Use up/down to scroll, and Esc to exit", style="class:instruction-text"),
+                    Label(
+                        "Use up/down to scroll, and Esc to exit",
+                        style="class:instruction-text-dark",
+                    ),
                     Window(buffer_control, wrap_lines=True),
                 ],
                 padding=1,
             ),
-            buttons=[close_button],
+            buttons=[self.close_button],
             width=D(preferred=80),
             modal=True,
         )
@@ -49,7 +49,10 @@ class HelpDialog:
 
         @dialog_kb.add("escape")
         def _(event) -> None:
-            set_done()
+            self.set_done()
+
+    def set_done(self):
+        self.future.set_result(None)
 
     def __pt_container__(self):
         return self.dialog

@@ -8,6 +8,7 @@ from sqlalchemy.dialects.sqlite import TIMESTAMP as SQLITE_TIMESTAMP
 
 from pepys_admin.maintenance import constants
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store.db_base import BasePostGIS, BaseSpatiaLite
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 
@@ -28,18 +29,12 @@ def get_display_names(fields, capitalized=False):
 
 def get_display_name(field, capitalized=False):
     field = re.sub("_+", "_", field)
-    splitted = field.split("_")
-    if len(splitted) > 1 and splitted[-1] == "name":
-        # Remove 'name' from the end of the title, but only if it's
-        # not the only word in the title
-        field_title = " ".join(splitted[:-1])
-    else:
-        field_title = " ".join(splitted)
+    field_title = field.replace("_", " ")
 
     if capitalized:
         field_title = field_title.capitalize()
 
-    return field_title
+    return field_title.strip()
 
 
 def get_system_name_mappings(column_data):
@@ -73,8 +68,11 @@ def get_str_for_field(value):
     if isinstance(value, float):
         # For floats, display to 2 decimal places
         return f"{value:.2f}"
-    if isinstance(value, pint.Quantity):
+    elif isinstance(value, pint.Quantity):
         return f"{value:~.2fP}"
+    elif isinstance(value, BasePostGIS) or isinstance(value, BaseSpatiaLite):
+        strings = [str(getattr(value, field_name)) for field_name in value._default_dropdown_fields]
+        return " / ".join(strings)
     else:
         return str(value)
 

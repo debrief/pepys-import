@@ -20,7 +20,7 @@ def test_get_display_names():
 
     titles = get_display_names(fields, capitalized=True)
 
-    assert titles == ["Nationality", "Name", "Platform type", "Other"]
+    assert titles == ["Nationality name", "Name", "Platform type name", "Other"]
 
 
 def test_get_system_name_mappings():
