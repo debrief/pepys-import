@@ -207,6 +207,18 @@ catch {
 }
 
 try {
+    # Add the build date into the source code, so it can be displayed in the
+    # welcome text
+    $timestamp_str = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    (Get-Content .\pepys_import\__init__.py).replace('__build_timestamp__ = None', '__build_timestamp__ = "' + $timestamp_str + '"') | Set-Content .\pepys_import\__init__.py
+}
+catch {
+    Write-Output $_
+    Write-Output "ERROR: Could not set build timestamp in __init__.py"
+    Exit 1
+}
+
+try {
     # Zip up whole folder into a zip-file with the current date in the filename
     # excluding the 7zip folder
     $date_str = Get-Date -Format "yyyyMMdd"
