@@ -14,7 +14,7 @@ from sqlalchemy.sql import func
 from sqlalchemy_utils import dependent_objects, merge_references
 
 from paths import PEPYS_IMPORT_DIRECTORY
-from pepys_import import __version__
+from pepys_import import __build_timestamp__, __version__
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
@@ -163,7 +163,9 @@ class DataStore:
         if self.welcome_text:
             show_welcome_banner(welcome_text)
         if self.show_status:
-            show_software_meta_info(__version__, self.db_type, self.db_name, db_host)
+            show_software_meta_info(
+                __version__, __build_timestamp__, self.db_type, self.db_name, db_host
+            )
             # The 'pepys-import' banner is 61 characters wide, so making a line
             # of the same length makes things prettier
             print("-" * 61)
