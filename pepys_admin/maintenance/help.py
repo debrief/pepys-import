@@ -6,7 +6,6 @@ The interface is composed of 4 panels:
 
 ## First panel: Select data type F2
 You can select the data table you want to query data from.
-(Platform table is the only one available for now)
 
 ## Second panel: Build filters F3
 You can filter the data in the table selected above based by

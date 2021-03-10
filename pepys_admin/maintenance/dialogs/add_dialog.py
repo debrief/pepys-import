@@ -6,13 +6,12 @@ from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.widgets import Button, Label
 from prompt_toolkit.widgets.dialogs import Dialog
 
-from pepys_admin.maintenance.column_data import column_data_to_edit_data
 from pepys_admin.maintenance.utils import get_system_name_mappings
 from pepys_admin.maintenance.widgets.entry_edit_widget import EntryEditWidget
 
 
 class AddDialog:
-    def __init__(self, column_data, table_object):
+    def __init__(self, edit_data, table_object):
         """
         A dialog for adding entries to a table
 
@@ -26,9 +25,7 @@ class AddDialog:
         ok_button = Button(text="Add", handler=self.handle_ok)
         cancel_button = Button(text="Cancel", handler=self.handle_cancel)
 
-        # Convert the column_data into the structure we need for editing the data
-        # This removes un-needed columns, and un-needed values lists
-        self.edit_data = column_data_to_edit_data(column_data, table_object)
+        self.edit_data = edit_data
 
         self.required_columns = set(
             [value["system_name"] for key, value in self.edit_data.items() if value["required"]]
@@ -60,10 +57,16 @@ class AddDialog:
             self.handle_cancel()
 
     def handle_ok(self):
-        provided_cols = set(self.entry_edit_widget.output.keys())
+        try:
+            output = self.entry_edit_widget.output
+        except Exception:
+            self.error_message.text = "Error converting values, please edit and try again"
+            return
+
+        provided_cols = set(output.keys())
         if self.required_columns.issubset(provided_cols):
             # In this case, the user has entered values for all of the required columns
-            self.future.set_result(self.entry_edit_widget.output)
+            self.future.set_result(output)
         else:
             # In this case they haven't, so display a sensible error message
             diff_list = self.required_columns.difference(provided_cols)

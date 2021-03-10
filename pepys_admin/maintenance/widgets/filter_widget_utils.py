@@ -35,11 +35,30 @@ def filter_widget_output_to_query(outputs: List[List], table_name: str, data_sto
             except AttributeError:
                 raise AttributeError(f"Column not found! Error in {idx}: '{column}'")
 
+            # If we're trying to filter on a relationship column, then look for the
+            # relevant ID column to filter on instead
+            # This will either be the local column for the foreign key relationship
+            # or the manually-defined local column in the relationship's info
+            # dict, if it is a secondary relationship
+            try:
+                if isinstance(col.prop, sqlalchemy.orm.relationships.RelationshipProperty):
+                    if "local_column" in col.prop.info:
+                        id_col_name = col.prop.info["local_column"]
+                    else:
+                        id_col_name = list(col.prop.local_columns)[0].key
+                    col = getattr(class_obj, id_col_name)
+            except Exception:
+                pass
+
             if ops == "LIKE":
-                if isinstance(col.type, UUIDType):
-                    queries.append(cast(col, sqlalchemy.String).like(f"%{value}%"))
-                else:
+                try:
+                    if isinstance(col.type, UUIDType):
+                        queries.append(cast(col, sqlalchemy.String).ilike(f"%{value}%"))
+                    else:
+                        queries.append(col.ilike(f"%{value}%"))
+                except Exception:
                     queries.append(col.like(f"%{value}%"))
+
             elif ops in operator_dict:
                 queries.append(operator_dict[ops](col, value))
             else:

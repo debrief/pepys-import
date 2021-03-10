@@ -81,7 +81,7 @@ class EditDataTestCase(TestCase):
             self.store.session.query(self.store.db_classes.Nationality).options(undefer("*")).all()
         )
         new_nat_id = nationalities[-1].nationality_id
-        self.store.edit_items([self.platforms[0]], {"nationality_name": new_nat_id})
+        self.store.edit_items([self.platforms[0]], {"nationality": new_nat_id})
 
         all_platforms = self.store.session.query(self.store.db_classes.Platform).all()
         assert len((all_platforms)) == 4
@@ -98,7 +98,7 @@ class EditDataTestCase(TestCase):
             self.store.session.query(self.store.db_classes.PlatformType).options(undefer("*")).all()
         )
         new_pt_id = plat_types[0].platform_type_id
-        self.store.edit_items([self.platforms[0]], {"platform_type_name": new_pt_id})
+        self.store.edit_items([self.platforms[0]], {"platform_type": new_pt_id})
 
         all_platforms = self.store.session.query(self.store.db_classes.Platform).all()
         assert len((all_platforms)) == 4

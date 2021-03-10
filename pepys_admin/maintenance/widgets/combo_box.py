@@ -170,7 +170,13 @@ class ComboBox:
         merged_text = merge_formatted_text(result)()
 
         # Go through the resulting tuples and add the mouse click handler to each of them
-        start_index = 1 if self.filter else 0
+        if len(self.entries) == 0:
+            start_index = 0
+        elif self.filter:
+            start_index = 1
+        else:
+            start_index = 0
+
         for i in range(start_index, len(merged_text)):
             merged_text[i] = (merged_text[i][0], merged_text[i][1], self.handle_mouse_click)
 
@@ -181,6 +187,10 @@ class ComboBox:
             # If we have an extra row at the top of the combo box
             # for showing the filter text, then we need to take 1
             # off the index when we work out which entry to use
+            if len(self.filtered_entries) == 0:
+                self.future.set_result(None)
+                return
+
             offset = 1 if self.filter else 0
 
             if self.popup:

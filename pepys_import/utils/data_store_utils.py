@@ -324,17 +324,18 @@ def chunked_list(lst, size):
 def convert_edit_dict_columns(edit_dict, table_object):
     update_dict = {}
     # Convert the edit_dict we get from the GUI into a dict suitable for use in the update function
-    # This involves converting any association proxy column names into the relevant foreign key name to set
+    # This involves converting any relationship columns into their ID column
     for col_name, new_value in edit_dict.items():
         attr_from_db_class = getattr(table_object, col_name)
-        if isinstance(
-            attr_from_db_class, sqlalchemy.ext.associationproxy.ColumnAssociationProxyInstance
-        ):
-            relationship_name = attr_from_db_class.target_collection
-            relationship_obj = getattr(table_object, relationship_name)
-            foreign_key_col_name = list(relationship_obj.property.local_columns)[0].key
-            update_dict[foreign_key_col_name] = new_value
-        else:
+        try:
+            if isinstance(
+                attr_from_db_class.prop, sqlalchemy.orm.relationships.RelationshipProperty
+            ):
+                local_column = list(attr_from_db_class.prop.local_columns)[0].key
+                update_dict[local_column] = new_value
+            else:
+                update_dict[col_name] = new_value
+        except Exception:
             update_dict[col_name] = new_value
 
     return update_dict

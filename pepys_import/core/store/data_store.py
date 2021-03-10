@@ -2030,7 +2030,6 @@ class DataStore:
         )
 
         update_dict = convert_edit_dict_columns(edit_dict, table_object)
-
         query.update(update_dict, synchronize_session="fetch")
         self.session.commit()
 

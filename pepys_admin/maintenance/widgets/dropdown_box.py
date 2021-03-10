@@ -76,6 +76,7 @@ class DropdownBox:
 
         self.menu = None
         self.disabled = False
+
         self.dropdown_opened = False
 
         # Have to use partial to make this take a reference to self
@@ -162,14 +163,20 @@ class DropdownBox:
             # display. The high Z index makes this appear on top of anything else
             # By attaching it to a window, we get to use the window's menu position
             # (defined in _get_text_fragments) as the location
-            float_ = Float(
+            self.float_ = Float(
                 content=self.menu, z_index=1000, xcursor=True, ycursor=True, attach_to_window=self
             )
 
             # Add the floats to the FloatContainer, so it displays
-            app.layout.container.floats.append(float_)
+            app.layout.container.floats.append(self.float_)
 
+            # We need to keep track of both whether *this* dropdown was opened
+            # (with an attribute on self) and whether *any* dropdown in the app is
+            # opened (with an attribute on the Application instance)
+            # Then we can close this dropdown if we click on the dropdown itself
+            # but also we can stop multiple dropdowns opening at once
             self.dropdown_opened = True
+            app.dropdown_opened = True
 
             # Keep track of focus so we can retun to the previously focused control
             focused_before = app.layout.current_window
@@ -184,9 +191,10 @@ class DropdownBox:
                 pass
 
             # Remove the float from the FloatContainer
-            if float_ in app.layout.container.floats:
-                app.layout.container.floats.remove(float_)
+            if self.float_ in app.layout.container.floats:
+                app.layout.container.floats.remove(self.float_)
 
+            app.dropdown_opened = False
             self.dropdown_opened = False
 
             if result is not None:
@@ -214,12 +222,16 @@ class DropdownBox:
         text = ("{:^%s}" % (self.width - 2)).format(self.text)
 
         def handler(mouse_event) -> None:
+            app = get_app()
+
             if (
                 self.handler is not None
                 and mouse_event.event_type == MouseEventType.MOUSE_UP
-                and not self.dropdown_opened
+                and not app.dropdown_opened
             ):
                 self.handler()
+            elif self.dropdown_opened and mouse_event.event_type == MouseEventType.MOUSE_UP:
+                self.close_dropdown()
 
         return [
             ("[SetMenuPosition]", ""),  # This sets the menu positon to be at the start of the text
@@ -231,6 +243,15 @@ class DropdownBox:
             ),
         ]
 
+    def close_dropdown(self):
+        app = get_app()
+        try:
+            self.menu.future.set_result(None)
+        except Exception:
+            pass
+        if self.float_ in app.layout.container.floats:
+            app.layout.container.floats.remove(self.float_)
+
     def _get_key_bindings(self) -> KeyBindings:
         " Key bindings for the Dropdown Box. "
         kb = KeyBindings()
@@ -240,14 +261,16 @@ class DropdownBox:
         @kb.add("enter")
         @kb.add("down")
         def _(event) -> None:
-            if self.handler is not None and not self.dropdown_opened:
+            app = get_app()
+            if self.handler is not None and not app.dropdown_opened:
                 self.handler()
 
         @kb.add("<any>")
         def _(event):
+            app = get_app()
             key_str = event.key_sequence[0].key
             if len(key_str) == 1:
-                if self.open_on_any_key and self.handler is not None and not self.dropdown_opened:
+                if self.open_on_any_key and self.handler is not None and not app.dropdown_opened:
                     self.handler()
                     self.menu.filter_text += key_str
 
