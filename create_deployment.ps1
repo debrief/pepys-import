@@ -222,7 +222,9 @@ try {
     # Zip up whole folder into a zip-file with the current date in the filename
     # excluding the 7zip folder
     $date_str = Get-Date -Format "yyyyMMdd"
-    $output_filename = $date_str + "_pepys-import.zip"
+    $gitcommit = git rev-parse --short HEAD
+    $gitbranch = git branch --show-current
+    $output_filename = "pepys_import-$date_str-$gitbranch-$gitcommit.zip"
     .\7zip\7za.exe a .\$output_filename .\* -xr!7zip/ -xr!"bin\distlib-0.3.0-py2.py3-none-any.whl"
 
     if ($LastExitCode -ne 0)
