@@ -223,10 +223,12 @@ try {
     # excluding the 7zip folder
     $date_str = Get-Date -Format "yyyyMMdd"
     $gitcommit = git rev-parse --short HEAD
-    # Get the branch name from the GITHUB_REF env var if it exists (which it will if
+    # Get the branch name from the GITHUB_HEAD_REF/GITHUB_REF env var if it exists (which it will if
     # we're running on GH Actions), otherwise use a git command (the git command doesn't
     # work on Github actions)
-    if (Test-Path env:GITHUB_REF) {
+    if (Test-Path env:GITHUB_HEAD_REF) {
+        $gitbranch = $env:GITHUB_HEAD_REF
+    } elseif (Test-Path env:GITHUB_REF) {
         $gitbranch = $env:GITHUB_REF.Replace("refs/heads/", "")
     } else {
         $gitbranch = git branch --show-current
