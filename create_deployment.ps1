@@ -227,7 +227,7 @@ try {
     # we're running on GH Actions), otherwise use a git command (the git command doesn't
     # work on Github actions)
     if (Test-Path env:GITHUB_REF) {
-        $gitbranch = $GITHUB_REF -replace "refs/heads/" ""
+        $gitbranch = $GITHUB_REF.Replace("refs/heads/", "")
     } else {
         $gitbranch = git branch --show-current
     }
