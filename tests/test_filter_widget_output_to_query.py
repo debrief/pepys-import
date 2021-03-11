@@ -152,3 +152,52 @@ class TestConversions(TestCase):
             assert len(result) == 1
             assert result[0].nationality_id == self.nationality_2.nationality_id
             assert self.nationality.priority < result[0].priority < self.nationality_2.priority + 1
+
+    def test_nested_booleans(self):
+        Nationality = self.store.db_classes.Nationality
+        with self.store.session_scope():
+            query_list = [
+                ["name", "=", self.nationality_2.name],
+                ["AND"],
+                ["name", "=", self.nationality.name],
+                ["OR"],
+                ["priority", "=", self.nationality.priority],
+            ]
+            filter_query = filter_widget_output_to_query(query_list, "Nationalities", self.store)
+            result = self.store.session.query(Nationality).filter(filter_query).all()
+            # As default 'AND' has precedence, So it will be evaluated like this: (X AND Y) OR Z.
+            # Our AND clause returns None, and OR returns self.nationality. So result has one object.
+            assert len(result) == 1
+            assert result[0].nationality_id == self.nationality.nationality_id
+
+            query_list = [
+                ["("],
+                ["name", "=", self.nationality_2.name],
+                ["AND"],
+                ["name", "=", self.nationality.name],
+                [")"],
+                ["OR"],
+                ["priority", "=", self.nationality.priority],
+            ]
+            filter_query = filter_widget_output_to_query(query_list, "Nationalities", self.store)
+            # This has the same precedence as default. Let's assert that parentheses didn't change
+            # the default behaviour
+            result = self.store.session.query(Nationality).filter(filter_query).all()
+            assert len(result) == 1
+            assert result[0].nationality_id == self.nationality.nationality_id
+
+            query_list = [
+                ["name", "=", self.nationality_2.name],
+                ["AND"],
+                ["("],
+                ["name", "=", self.nationality.name],
+                ["OR"],
+                ["priority", "=", self.nationality.priority],
+                [")"],
+            ]
+            filter_query = filter_widget_output_to_query(query_list, "Nationalities", self.store)
+            # Now, we changed the precedence, So it will be evaluated like this: X AND (Y OR Z).
+            # Our OR clause returns self.nationality, and AND returns None because X is self.nationality_2.
+            # So result is empty.
+            result = self.store.session.query(Nationality).filter(filter_query).all()
+            assert len(result) == 0
