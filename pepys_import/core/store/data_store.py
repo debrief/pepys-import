@@ -11,7 +11,7 @@ from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker, undefer
 from sqlalchemy.sql import func
-from sqlalchemy_utils import dependent_objects, merge_references
+from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, merge_references
 
 from paths import PEPYS_IMPORT_DIRECTORY
 from pepys_import import __build_timestamp__, __version__
@@ -2077,7 +2077,9 @@ class DataStore:
         )
         self.session.commit()
 
-    def find_dependent_objects(self, table_obj, id_list: list) -> dict:
+    def find_dependent_objects(
+        self, table_obj, id_list: list, set_percentage=None, is_cancelled=None
+    ) -> dict:
         """
         Finds the dependent objects of the given list of items. Counts them by their type,
         i.e. X Sensors, Y Platforms. Returns a dictionary that has table names as keys,
@@ -2097,13 +2099,41 @@ class DataStore:
             .filter(getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list))
             .all()
         )
+
+        foreign_keys_for_table = {}
         if objects:
             output[table_obj.__tablename__] = len(objects)
+
+        i = 0
+        last_perc_complete = 0
         while objects:  # find all dependent objects and add them to object_list
             curr_obj = objects.pop(0)
-            dependent_objs = list(dependent_objects(curr_obj))
+
+            if type(curr_obj) in foreign_keys_for_table:
+                foreign_keys = foreign_keys_for_table[type(curr_obj)]
+            else:
+                foreign_keys = get_referencing_foreign_keys(curr_obj)
+                foreign_keys_for_table[type(curr_obj)] = foreign_keys
+
+            dependent_objs = list(dependent_objects(curr_obj, foreign_keys=foreign_keys))
             objects.extend(dependent_objs)
             object_list.extend(dependent_objs)
+            if i % 10 == 0:
+                if callable(is_cancelled) and is_cancelled():
+                    return None
+                # Only do calculate and update percentage complete
+                # every 10 iterations, otherwise the showing of the percentage
+                # slows down the actual processing
+                if len(object_list) > 0:
+                    perc_complete = ((len(object_list) - len(objects)) / len(object_list)) * 100
+                else:
+                    perc_complete = 0
+                if callable(set_percentage):
+                    perc_complete = 0 if perc_complete < 0 else perc_complete
+                    if perc_complete > last_perc_complete:
+                        set_percentage(perc_complete)
+                        last_perc_complete = perc_complete
+            i += 1
         # remove duplicated entities
         object_list = list(set(object_list))
         for o in object_list:
