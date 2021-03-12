@@ -187,7 +187,8 @@ def create_normal_column_data(col, data_store, table_object):
         # Skip all ID columns except the primary key
         return None, None
 
-    if details["type"] == "string":
+    # Skip getting values for the remarks column, as we don't need a dropdown for that
+    if details["type"] == "string" and details["system_name"] != "remarks":
         # Get values
 
         all_records = data_store.session.query(table_object).all()
