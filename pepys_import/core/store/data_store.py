@@ -2109,15 +2109,21 @@ class DataStore:
         while objects:  # find all dependent objects and add them to object_list
             curr_obj = objects.pop(0)
 
+            # Get the list of foreign keys for the table from the cache, if it exists
+            # otherwise calculate it and put it into the cache
             if type(curr_obj) in foreign_keys_for_table:
                 foreign_keys = foreign_keys_for_table[type(curr_obj)]
             else:
                 foreign_keys = get_referencing_foreign_keys(curr_obj)
                 foreign_keys_for_table[type(curr_obj)] = foreign_keys
 
-            dependent_objs = list(dependent_objects(curr_obj, foreign_keys=foreign_keys))
-            objects.extend(dependent_objs)
-            object_list.extend(dependent_objs)
+            # If the current object has any foreign key relationships pointing to it
+            # then do the calculation - otherwise just skip (eg. for State which isn't
+            # referenced by anything)
+            if len(foreign_keys) > 0:
+                dependent_objs = list(dependent_objects(curr_obj, foreign_keys=foreign_keys))
+                objects.extend(dependent_objs)
+                object_list.extend(dependent_objs)
             if i % 10 == 0:
                 if callable(is_cancelled) and is_cancelled():
                     return None
