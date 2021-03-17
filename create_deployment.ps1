@@ -222,7 +222,19 @@ try {
     # Zip up whole folder into a zip-file with the current date in the filename
     # excluding the 7zip folder
     $date_str = Get-Date -Format "yyyyMMdd"
-    $output_filename = $date_str + "_pepys-import.zip"
+    $gitcommit = git rev-parse --short HEAD
+    # Get the branch name from the GITHUB_HEAD_REF/GITHUB_REF env var if it exists (which it will if
+    # we're running on GH Actions), otherwise use a git command (the git command doesn't
+    # work on Github actions)
+    if (Test-Path env:GITHUB_HEAD_REF) {
+        $gitbranch = $env:GITHUB_HEAD_REF
+    } elseif (Test-Path env:GITHUB_REF) {
+        $gitbranch = $env:GITHUB_REF.Replace("refs/heads/", "")
+    } else {
+        $gitbranch = git branch --show-current
+    }
+    
+    $output_filename = "pepys_import-$date_str-$gitbranch-$gitcommit.zip"
     .\7zip\7za.exe a .\$output_filename .\* -xr!7zip/ -xr!"bin\distlib-0.3.0-py2.py3-none-any.whl"
 
     if ($LastExitCode -ne 0)
