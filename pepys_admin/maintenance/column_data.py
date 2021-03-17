@@ -151,8 +151,6 @@ def create_assoc_proxy_data(ap_name, ap_obj, data_store, table_object):
         else:
             # For all other columns, no special processing is needed
             all_records = data_store.session.query(ap_obj.target_class).all()
-            # Sort the values and IDs lists together, so that ids[x] is still the
-            # ID for values[x]
             values = [str_if_not_none(getattr(record, ap_obj.value_attr)) for record in all_records]
             sorted_values = sorted(set(values))
             details["values"] = sorted_values
@@ -262,7 +260,7 @@ def create_relationship_data(rel_name, data_store, table_object):
                 ]
                 str_entries.append(" / ".join(field_values))
             ids = [
-                getattr(entry, get_primary_key_for_table(foreign_table_object))
+                str(getattr(entry, get_primary_key_for_table(foreign_table_object)))
                 for entry in all_entries
             ]
 
