@@ -31,7 +31,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Pepys Deployment
-          path: ./*_pepys-import.zip
+          path: ./pepys_import*.zip
 
       - name: Calculate release name
         id: get_name

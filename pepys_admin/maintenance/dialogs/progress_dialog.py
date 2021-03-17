@@ -58,7 +58,7 @@ class ProgressDialog:
             # while a potentially-blocking function runs in the background
             try:
                 loop = asyncio.get_running_loop()
-                await loop.run_in_executor(
+                result = await loop.run_in_executor(
                     None,
                     partial(
                         self.run_callback,
@@ -66,8 +66,12 @@ class ProgressDialog:
                         is_cancelled=self.is_cancelled,
                     ),
                 )
+                self.future.set_result(result)
             except Exception as e:
-                self.future.set_result(e)
+                try:
+                    self.future.set_result(e)
+                except asyncio.InvalidStateError:
+                    pass
 
         ensure_future(coroutine())
 
@@ -76,16 +80,6 @@ class ProgressDialog:
         # Refresh the GUI
         app = get_app()
         app.invalidate()
-
-        # If we get to 100% then close the dialog
-        if value >= 100:
-            # Wrap this in a try/except, in case we've already set to
-            # 100% somewhere else, and therefore we try to set the Future
-            # value twice, giving an error
-            try:
-                self.future.set_result(None)
-            except Exception:
-                pass
 
     def is_cancelled(self):
         return self.cancelled
