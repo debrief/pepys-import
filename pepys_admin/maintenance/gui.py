@@ -61,6 +61,12 @@ from pepys_import.utils.table_name_utils import table_name_to_class_name
 logger.remove()
 logger.add("gui.log")
 
+# Uncomment the lines below to get logging of the SQL queries run by SQLAlchemy
+# to the file sql.log
+# import logging
+# logging.basicConfig(filename='sql.log', level=logging.DEBUG)
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
 
 class MaintenanceGUI:
     def __init__(self, data_store=None):
