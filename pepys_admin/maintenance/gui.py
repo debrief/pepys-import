@@ -61,6 +61,12 @@ from pepys_import.utils.table_name_utils import table_name_to_class_name
 logger.remove()
 logger.add("gui.log")
 
+# Uncomment the lines below to get logging of the SQL queries run by SQLAlchemy
+# to the file sql.log
+# import logging
+# logging.basicConfig(filename='sql.log', level=logging.DEBUG)
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
 
 class MaintenanceGUI:
     def __init__(self, data_store=None):
@@ -369,7 +375,7 @@ class MaintenanceGUI:
 
                 count = query_obj.count()
 
-                # Get all the results, while undefering all fields to make sure everything is
+                # Get the first 100 results, while undefering all fields to make sure everything is
                 # available once it's been expunged (disconnected) from the database
                 results = query_obj.options(undefer("*")).limit(100).all()
 
@@ -434,7 +440,7 @@ class MaintenanceGUI:
             dialog = ProgressDialog(
                 "Loading table data",
                 partial(self.get_column_data, self.current_table_object),
-                show_cancel=True,
+                show_cancel=False,
             )
             result = await self.show_dialog_as_float(dialog)
 
@@ -567,6 +573,15 @@ class MaintenanceGUI:
                 self.data_store.delete_objects(table_object, ids)
             set_percentage(100)
 
+        def do_find_dependent_objects(
+            table_object, selected_ids, set_percentage=None, is_cancelled=None
+        ):
+            dependent_objects = self.data_store.find_dependent_objects(
+                table_object, selected_ids, set_percentage=set_percentage, is_cancelled=is_cancelled
+            )
+            set_percentage(100)
+            return dependent_objects
+
         async def coroutine():
             entries = self.preview_table.current_values
 
@@ -594,9 +609,22 @@ class MaintenanceGUI:
                 getattr(entry, get_primary_key_for_table(self.current_table_object))
                 for entry in self.preview_table.current_values
             ]
-            dependent_objects = self.data_store.find_dependent_objects(
-                self.current_table_object, selected_ids
+
+            dialog = ProgressDialog(
+                "Finding dependent items (may take a while)",
+                partial(do_find_dependent_objects, self.current_table_object, selected_ids),
+                show_cancel=True,
             )
+            dependent_objects = await self.show_dialog_as_float(dialog)
+
+            if isinstance(dependent_objects, Exception):
+                await self.show_messagebox_async(
+                    "Error",
+                    f"Error deleting values\n\nOriginal error:{textwrap.fill(str(dependent_objects), 60)}",
+                )
+                return
+            elif dependent_objects is None:
+                return
 
             dep_objs_text = "\n".join(
                 f"{number} {table_name}" for table_name, number in dependent_objects.items()
