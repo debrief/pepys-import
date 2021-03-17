@@ -897,7 +897,6 @@ def test_column_data_state():
             "sqlalchemy_type": "column",
             "system_name": "remarks",
             "type": "string",
-            "values": [],
         },
         "sensor": {
             "foreign_table_type": TableTypes.METADATA,
