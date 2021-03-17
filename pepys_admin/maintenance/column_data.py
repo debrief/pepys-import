@@ -1,7 +1,7 @@
 import geoalchemy2
 import sqlalchemy
 from sqlalchemy import nullslast
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
 
 from pepys_admin.maintenance.utils import get_display_name, remove_duplicates_and_nones
 from pepys_import.utils.sqlalchemy_utils import UUIDType, get_primary_key_for_table
@@ -15,9 +15,13 @@ def get_type_name(type_object):
         return "id"
     elif isinstance(type_object, sqlalchemy.sql.sqltypes.String):
         return "string"
-    elif isinstance(type_object, sqlalchemy.sql.sqltypes.DateTime):
+    elif isinstance(type_object, sqlalchemy.sql.sqltypes.DateTime) or isinstance(
+        type_object, TIMESTAMP
+    ):
         return "datetime"
-    elif isinstance(type_object, sqlalchemy.sql.sqltypes.REAL):
+    elif isinstance(type_object, sqlalchemy.sql.sqltypes.REAL) or isinstance(
+        type_object, DOUBLE_PRECISION
+    ):
         return "float"
     elif isinstance(type_object, sqlalchemy.sql.sqltypes.Integer):
         return "int"
