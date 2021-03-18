@@ -1,6 +1,7 @@
 import os
 import textwrap
 import traceback
+import uuid
 from asyncio.tasks import ensure_future
 from functools import partial
 
@@ -55,6 +56,7 @@ from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 from pepys_admin.maintenance.widgets.filter_widget_utils import filter_widget_output_to_query
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
+from pepys_import.utils.data_store_utils import convert_objects_to_ids
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
@@ -66,6 +68,8 @@ logger.add("gui.log")
 # import logging
 # logging.basicConfig(filename='sql.log', level=logging.DEBUG)
 # logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
+MAX_PREVIEW_TABLE_RESULTS = 100
 
 
 class MaintenanceGUI:
@@ -212,6 +216,7 @@ class MaintenanceGUI:
             table_data=self.get_table_data,
             table_objects=self.get_table_objects,
             any_keybinding=self.handle_preview_table_keypress,
+            on_select=self.update_selected_items_label,
         )
         self.set_contextual_help(self.preview_table, "# Third panel: Preview List (F6)")
         self.preview_graph = Window(
@@ -272,6 +277,17 @@ class MaintenanceGUI:
 
     def handle_preview_table_keypress(self, event):
         self.actions_combo.handle_numeric_key(event)
+
+    def update_selected_items_label(self):
+        # The `- 1` is because table_objects has a None entry for the header row
+        total_items = len(self.table_objects) - 1 + self.preview_table.non_visible_items_count
+        visible_items = len(self.table_objects) - 1
+        selected_items = len(self.preview_table.current_values)
+        if self.preview_table.non_visible_selected:
+            selected_items += self.preview_table.non_visible_items_count
+
+        self.preview_table_message.text = f"{visible_items} of {total_items} matching entries displayed, {selected_items} selected"
+        get_app().invalidate()
 
     def get_actions_list(self):
         def is_merge_enabled():
@@ -377,7 +393,7 @@ class MaintenanceGUI:
 
                 # Get the first 100 results, while undefering all fields to make sure everything is
                 # available once it's been expunged (disconnected) from the database
-                results = query_obj.options(undefer("*")).limit(100).all()
+                results = query_obj.options(undefer("*")).limit(MAX_PREVIEW_TABLE_RESULTS).all()
 
                 if len(results) == 0:
                     self.preview_table_message.text = ""
@@ -392,7 +408,7 @@ class MaintenanceGUI:
                 # for result in results:
                 #     recursive_expunge(result, self.data_store.session)
 
-                for result in results[:100]:
+                for result in results[:MAX_PREVIEW_TABLE_RESULTS]:
                     # Get the right fields and append them
                     self.table_data.append(
                         [
@@ -402,27 +418,83 @@ class MaintenanceGUI:
                     )
                     self.table_objects.append(result)
 
-                if count > 100:
-                    self.preview_table_message.text = (
-                        f"More than 100 entries selected, {count - 100} not displayed"
-                    )
-                    app.invalidate()
-                    return
+                if count > MAX_PREVIEW_TABLE_RESULTS:
+                    self.preview_table.non_visible_items_count = count - MAX_PREVIEW_TABLE_RESULTS
                 else:
-                    self.preview_table_message.text = ""
+                    self.preview_table.non_visible_items_count = 0
+                    self.preview_table.non_visible_selected = False
         except Exception:
             # Just ignore it if the query doesn't work - as we're updating live
             # and the user might type something correct soon anyway
             pass
 
-        # Refresh the app display
-        app.invalidate()
+        self.update_selected_items_label()
 
     def get_table_data(self):
         return self.table_data
 
     def get_table_objects(self):
         return self.table_objects
+
+    def get_non_visible_entries_from_database(self, set_percentage=None, is_cancelled=None):
+        filters = self.filter_widget.filters
+
+        id_column = getattr(
+            self.current_table_object,
+            get_primary_key_for_table(self.current_table_object),
+        )
+
+        set_percentage(10)
+
+        with self.data_store.session_scope():
+            if filters == []:
+                # If there are no filters then just return the table primary key with no filtering
+                query_obj = self.data_store.session.query(id_column)
+            else:
+                # Otherwise, convert the filter widget output to a SQLAlchemy filter and run it
+                filter_query = filter_widget_output_to_query(
+                    filters, self.dropdown_table.text, self.data_store
+                )
+                query_obj = self.data_store.session.query(id_column).filter(filter_query)
+
+            set_percentage(20)
+
+            # Get all result IDs
+            results = query_obj.all()
+            results = [result[0] for result in results]
+
+            set_percentage(90)
+
+            # Remove the IDs that we already have in the preview table
+            visible_ids = [
+                getattr(entry, get_primary_key_for_table(self.current_table_object))
+                for entry in self.preview_table.current_values
+            ]
+            just_non_visible_ids = list(set(results) - set(visible_ids))
+
+        set_percentage(100)
+
+        return just_non_visible_ids
+
+    async def get_all_selected_entries(self):
+        if not self.preview_table.non_visible_selected:
+            # No non-visible selected, so just return the selected ones from the preview table
+            return self.preview_table.current_values
+
+        dialog = ProgressDialog(
+            "Loading selected items data",
+            self.get_non_visible_entries_from_database,
+            show_cancel=False,
+        )
+        result = await self.show_dialog_as_float(dialog)
+
+        if isinstance(result, Exception):
+            await self.show_messagebox_async(
+                "Error",
+                f"Error accessing database\n\nOriginal error:{str(result)}",
+            )
+
+        return self.preview_table.current_values + result
 
     def get_column_data(self, table_object, set_percentage=None, is_cancelled=None):
         self.column_data = create_column_data(self.data_store, table_object, set_percentage)
@@ -583,7 +655,7 @@ class MaintenanceGUI:
             return dependent_objects
 
         async def coroutine():
-            entries = self.preview_table.current_values
+            entries = await self.get_all_selected_entries()
 
             if len(entries) == 0:
                 await self.show_messagebox_async(
@@ -594,6 +666,8 @@ class MaintenanceGUI:
             if len(entries) < 10:
                 display_strs = []
                 for entry in entries:
+                    if isinstance(entry, uuid.UUID):
+                        continue
                     display_str = " - ".join(
                         [
                             str(getattr(entry, field_name))
@@ -605,10 +679,7 @@ class MaintenanceGUI:
             else:
                 selected_items_text = f"{len(entries)} items selected"
 
-            selected_ids = [
-                getattr(entry, get_primary_key_for_table(self.current_table_object))
-                for entry in self.preview_table.current_values
-            ]
+            selected_ids = convert_objects_to_ids(entries, self.current_table_object)
 
             dialog = ProgressDialog(
                 "Finding dependent items (may take a while)",
@@ -679,11 +750,13 @@ class MaintenanceGUI:
     def run_edit_values(self):
         def do_edit(items, edit_dict, set_percentage=None, is_cancelled=None):
             with self.data_store.session_scope():
-                self.data_store.edit_items(items, edit_dict)
+                self.data_store.edit_items(items, edit_dict, self.current_table_object)
             set_percentage(100)
 
         async def coroutine():
-            if len(self.preview_table.current_values) == 0:
+            selected_items = await self.get_all_selected_entries()
+
+            if len(selected_items) == 0:
                 await self.show_messagebox_async(
                     "Error", "You must select at least one entry before editing."
                 )
@@ -701,9 +774,7 @@ class MaintenanceGUI:
                     )
                     return
 
-            dialog = EditDialog(
-                self.edit_data, self.current_table_object, self.preview_table.current_values
-            )
+            dialog = EditDialog(self.edit_data, self.current_table_object, selected_items)
 
             edit_dict = await self.show_dialog_as_float(dialog)
             if edit_dict is None or len(edit_dict) == 0:
@@ -712,7 +783,7 @@ class MaintenanceGUI:
 
             dialog = ProgressDialog(
                 "Editing items",
-                partial(do_edit, self.preview_table.current_values, edit_dict),
+                partial(do_edit, selected_items, edit_dict),
                 show_cancel=False,
             )
             result = await self.show_dialog_as_float(dialog)
@@ -804,39 +875,6 @@ class MaintenanceGUI:
         then opens a dialog to select the master entry, then runs the merge with a
         progress dialog, and displays a messagebox when it is finished.
         """
-        if len(self.preview_table.current_values) <= 1:
-            self.show_messagebox(
-                "Error",
-                "You must select multiple entries to merge before running the merge action.",
-            )
-            return
-
-        if self.current_table_object.table_type == TableTypes.MEASUREMENT:
-            self.show_messagebox(
-                "Error",
-                "Merging can only be performed on metadata or reference tables.",
-            )
-            return
-
-        if self.current_table_object == self.data_store.db_classes.Sensor:
-            host_ids = set([s.host for s in self.preview_table.current_values])
-            if len(host_ids) > 1:
-                self.show_messagebox(
-                    "Error", "You can only merge sensors belonging to the same platform."
-                )
-                return
-
-        # Generate a mapping of nice display strings
-        # to the actual underlying entry objects
-        display_to_object = {}
-        for entry_obj in self.preview_table.current_values:
-            display_str = " - ".join(
-                [
-                    str(getattr(entry_obj, field_name))
-                    for field_name in entry_obj._default_preview_fields
-                ]
-            )
-            display_to_object[display_str] = entry_obj
 
         def do_merge(object_list, master_obj, set_percentage=None, is_cancelled=None):
             # Does the actual merge, while also setting the percentage complete
@@ -850,6 +888,42 @@ class MaintenanceGUI:
             set_percentage(100)
 
         async def coroutine():
+            selected_items = await self.get_all_selected_entries()
+
+            if len(selected_items) <= 1:
+                await self.show_messagebox_async(
+                    "Error",
+                    "You must select multiple entries to merge before running the merge action.",
+                )
+                return
+
+            if self.current_table_object.table_type == TableTypes.MEASUREMENT:
+                await self.show_messagebox_async(
+                    "Error",
+                    "Merging can only be performed on metadata or reference tables.",
+                )
+                return
+
+            if self.current_table_object == self.data_store.db_classes.Sensor:
+                host_ids = set([s.host for s in selected_items])
+                if len(host_ids) > 1:
+                    self.show_messagebox(
+                        "Error", "You can only merge sensors belonging to the same platform."
+                    )
+                    return
+
+            # Generate a mapping of nice display strings
+            # to the actual underlying entry objects
+            display_to_object = {}
+            for entry_obj in selected_items[:MAX_PREVIEW_TABLE_RESULTS]:
+                display_str = " - ".join(
+                    [
+                        str(getattr(entry_obj, field_name))
+                        for field_name in entry_obj._default_preview_fields
+                    ]
+                )
+                display_to_object[display_str] = entry_obj
+
             # Show the dialog with a list of platforms, to allow the user
             # to choose which platoform should be the master
             table_name = table_name_to_class_name(self.dropdown_table.text)
@@ -866,7 +940,7 @@ class MaintenanceGUI:
                 # allow the function to return percentage process
                 dialog = ProgressDialog(
                     f"Merging {table_name} entries",
-                    partial(do_merge, self.preview_table.current_values, master_obj),
+                    partial(do_merge, selected_items, master_obj),
                     show_cancel=False,
                 )
                 result = await self.show_dialog_as_float(dialog)
