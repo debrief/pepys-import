@@ -22,7 +22,9 @@ class EditDataTestCase(TestCase):
             self.store.session.expunge_all()
 
     def test_edit_platform_identifier_single(self):
-        self.store.edit_items([self.platforms[0]], {"identifier": "NEWIDENT"})
+        self.store.edit_items(
+            [self.platforms[0]], {"identifier": "NEWIDENT"}, self.store.db_classes.Platform
+        )
 
         all_platforms = self.store.session.query(self.store.db_classes.Platform).all()
         assert len((all_platforms)) == 4
@@ -39,7 +41,11 @@ class EditDataTestCase(TestCase):
         assert result[0].identifier == "NEWIDENT"
 
     def test_edit_platform_identifier_multiple(self):
-        self.store.edit_items([self.platforms[0], self.platforms[1]], {"identifier": "NEWIDENT"})
+        self.store.edit_items(
+            [self.platforms[0], self.platforms[1]],
+            {"identifier": "NEWIDENT"},
+            self.store.db_classes.Platform,
+        )
 
         all_platforms = self.store.session.query(self.store.db_classes.Platform).all()
         assert len((all_platforms)) == 4
@@ -60,7 +66,11 @@ class EditDataTestCase(TestCase):
         assert result[1].identifier == "NEWIDENT"
 
     def test_edit_platform_multiple_fields_single_object(self):
-        self.store.edit_items([self.platforms[0]], {"identifier": "NEWIDENT", "name": "TestName"})
+        self.store.edit_items(
+            [self.platforms[0]],
+            {"identifier": "NEWIDENT", "name": "TestName"},
+            self.store.db_classes.Platform,
+        )
 
         all_platforms = self.store.session.query(self.store.db_classes.Platform).all()
         assert len((all_platforms)) == 4
@@ -81,7 +91,9 @@ class EditDataTestCase(TestCase):
             self.store.session.query(self.store.db_classes.Nationality).options(undefer("*")).all()
         )
         new_nat_id = nationalities[-1].nationality_id
-        self.store.edit_items([self.platforms[0]], {"nationality": new_nat_id})
+        self.store.edit_items(
+            [self.platforms[0]], {"nationality": new_nat_id}, self.store.db_classes.Platform
+        )
 
         all_platforms = self.store.session.query(self.store.db_classes.Platform).all()
         assert len((all_platforms)) == 4
@@ -98,7 +110,9 @@ class EditDataTestCase(TestCase):
             self.store.session.query(self.store.db_classes.PlatformType).options(undefer("*")).all()
         )
         new_pt_id = plat_types[0].platform_type_id
-        self.store.edit_items([self.platforms[0]], {"platform_type": new_pt_id})
+        self.store.edit_items(
+            [self.platforms[0]], {"platform_type": new_pt_id}, self.store.db_classes.Platform
+        )
 
         all_platforms = self.store.session.query(self.store.db_classes.Platform).all()
         assert len((all_platforms)) == 4
@@ -117,6 +131,7 @@ class EditDataTestCase(TestCase):
             self.store.edit_items(
                 [self.platforms[0], self.platforms[1]],
                 {"identifier": "NEWIDENT", "name": "TestName"},
+                self.store.db_classes.Platform,
             )
 
     def test_edit_platform_type(self):
@@ -125,7 +140,7 @@ class EditDataTestCase(TestCase):
         )
         before_len = len(all_pts)
 
-        self.store.edit_items([all_pts[0]], {"name": "NewName"})
+        self.store.edit_items([all_pts[0]], {"name": "NewName"}, self.store.db_classes.PlatformType)
 
         all_pts = (
             self.store.session.query(self.store.db_classes.PlatformType).options(undefer("*")).all()
