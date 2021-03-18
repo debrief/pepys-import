@@ -437,6 +437,14 @@ class MaintenanceGUI:
         return self.table_objects
 
     def get_non_visible_entries_from_database(self, set_percentage=None, is_cancelled=None):
+        """Queries the database to return IDs (UUIDs) for items that aren't shown in the preview table.
+
+        This is only called when getting a full list of entries ready to perform an action, and if
+        the non-visible items have been selected, which saves loading all of the non-visible items
+        from the database if we don't need them. It also only loads IDs, as this is significantly quicker than
+        loading full objects (eg. for around 100,000 State items, a test showed it took around 25-30s to load
+        all of the entries into objects, but less than 1s to load the IDs)
+        """
         filters = self.filter_widget.filters
 
         id_column = getattr(
@@ -477,6 +485,16 @@ class MaintenanceGUI:
         return just_non_visible_ids
 
     async def get_all_selected_entries(self):
+        """Gets a list of all currently-selected items, which includes all selected items in the preview table,
+        plus all the non-visible items if those are selected too.
+
+        The result will be a mixture of item objects (eg. Platform objects) and item IDs (UUID objects) - and
+        any function that does processing based on the output of this function must be able to deal with a mixed
+        list.
+        (The list is mixed as we still need the full information on the first few items, for displaying previews/confirmation
+        dialogs, but we don't need to load the full items from the database for all the non-visible items as we're only
+        going to use the IDs in the actual processing - and there may be lots of items to load)
+        """
         if not self.preview_table.non_visible_selected:
             # No non-visible selected, so just return the selected ones from the preview table
             return self.preview_table.current_values
