@@ -41,12 +41,6 @@ class TreeView:
 
     def format_element(self, element, indentation, root_entry):
         n_children = len(element.children)
-        # try:
-        #     siblings = element.parent.children
-        #     is_final_child_of_parent = siblings.index(element) == len(siblings) - 1
-        # except AttributeError:
-        #     # Will fail for root element, as has no parent
-        #     is_final_child_of_parent = False
 
         if self.selected_element == element:
             row_style = "class:selected-element"
