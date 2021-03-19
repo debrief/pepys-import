@@ -1075,6 +1075,34 @@ class DataStore:
         self.add_to_logs(table=constants.PRIVACY, row_id=privacy.privacy_id, change_id=change_id)
         return privacy
 
+    def add_to_tasks(
+        self, name, start, end, privacy, change_id, parent=None, environment=None, location=None
+    ):
+        """
+        Adds the specified task entry to the :class:`Task` table if not already present.
+        """
+        # TODO: Search in case Task already exists
+        # TODO: Check what the uniqueness criteria is for Tasks
+        privacy = self.search_privacy(privacy)
+        if privacy is None:
+            raise ValueError("Specified Privacy does not exist")
+
+        # enough info to proceed and create entry
+        task = self.db_classes.Task(name=name, start=start, end=end)
+        task.privacy = privacy
+        if parent is not None:
+            if isinstance(parent, self.db_classes.Task):
+                task.parent_id = parent.task_id
+            else:
+                task.parent_id = parent
+        task.environment = environment
+        task.location = location
+        self.session.add(task)
+        self.session.flush()
+
+        self.add_to_logs(table=constants.TASK, row_id=task.task_id, change_id=change_id)
+        return task
+
     def add_to_datafile_types(self, name, change_id):
         """
         Adds the specified datafile type to the datafile types table if not already
