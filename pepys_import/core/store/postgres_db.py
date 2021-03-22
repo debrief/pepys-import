@@ -163,6 +163,11 @@ class Task(BasePostGIS, TaskMixin):
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    __table_args__ = (
+        UniqueConstraint("name", "parent_id", name="uq_Task_name_parent_id"),
+        {"schema": "pepys"},
+    )
+
 
 class Participant(BasePostGIS, ParticipantMixin):
     __tablename__ = constants.PARTICIPANT
