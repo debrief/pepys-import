@@ -4,6 +4,7 @@ from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import Window
 from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.margins import ScrollbarMargin
+from prompt_toolkit.mouse_events import MouseEventType
 
 logger.remove()
 logger.add("gui.log")
@@ -42,6 +43,28 @@ class TreeView:
                 ScrollbarMargin(display_arrows=True),
             ],
         )
+
+    def handle_click_on_item(self, mouse_event):
+        if mouse_event.event_type == MouseEventType.MOUSE_UP:
+            self.selected_element_index = mouse_event.position.y
+            self.selected_element = self.object_list[self.selected_element_index]
+            self.handle_expand_collapse_or_add()
+
+    def handle_expand_collapse_or_add(self):
+        if self.add_enabled:
+            if callable(self.on_add):
+                self.on_add(self.selected_element)
+                self.selected_element.expanded = True
+        else:
+            self.selected_element.expanded = not self.selected_element.expanded
+
+    def handle_click_on_add(self, mouse_event):
+        if mouse_event.event_type == MouseEventType.MOUSE_UP:
+            self.add_enabled = True
+            self.selected_element_index = mouse_event.position.y
+            self.selected_element = self.object_list[self.selected_element_index]
+            self.handle_expand_collapse_or_add()
+            self.add_enabled = False
 
     def format_element(self, element, indentation, root_entry):
         n_children = len(element.children)
@@ -109,9 +132,20 @@ class TreeView:
             element_output.append([("", "   ")])
             if self.add_enabled:
                 element_output.append([("[SetCursorPosition]", "")])
-            element_output.append([(add_style, "Add")])
+            element_output.append([(add_style, "Add", self.handle_click_on_add)])
 
-        return merge_formatted_text(element_output)()
+        merged_text = merge_formatted_text(element_output)()
+
+        # Add the main mouse handler (expand/collapse) to all text, except if the text
+        # already has a mouse handler defined, in which case keep that one
+        with_mouse_handlers = []
+        for entry in merged_text:
+            if len(entry) == 3:
+                with_mouse_handlers.append(entry)
+            else:
+                with_mouse_handlers.append((entry[0], entry[1], self.handle_click_on_item))
+
+        return with_mouse_handlers
 
     def walk_tree(self, root):
         text_output_list = []
@@ -164,12 +198,7 @@ class TreeView:
 
         @kb.add("enter")
         def _enter(event) -> None:
-            if self.add_enabled:
-                if callable(self.on_add):
-                    self.on_add(self.selected_element)
-                    self.selected_element.expanded = True
-            else:
-                self.selected_element.expanded = not self.selected_element.expanded
+            self.handle_expand_collapse_or_add()
 
         @kb.add("right")
         def _go_right(event) -> None:
