@@ -241,7 +241,7 @@ class TaskMixin:
 
     @declared_attr
     def parent(self):
-        return relationship("Task")
+        return relationship("Task", uselist=False, lazy="joined", remote_side=[self.task_id])
 
     @declared_attr
     def parent_name(self):
@@ -254,6 +254,20 @@ class TaskMixin:
     @declared_attr
     def privacy_name(self):
         return association_proxy("privacy", "name")
+
+    @property
+    def level(self):
+        level = 0
+        current_task = self
+        print(current_task.parent)
+        while current_task.parent is not None:
+            current_task = current_task.parent
+            level += 1
+
+        return level
+
+    def __repr__(self):
+        return f"Task(name={self.name}, parent_id={self.parent_id})"
 
 
 class ParticipantMixin:
