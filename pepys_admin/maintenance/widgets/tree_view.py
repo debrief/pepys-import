@@ -20,16 +20,13 @@ class TreeView:
         self.root_element = root_element
         self.text_list = []
         self.object_list = []
-        if hide_root:
-            self.selected_element = root_element.children[0]
-        else:
-            self.selected_element = root_element
-        self.selected_element_index = 0
         self.add_enabled = False
         self.on_add = on_add
         self.hide_root = hide_root
         self.width = width
         self.height = height
+
+        self.initialise_selected_element()
 
         self.container = Window(
             content=FormattedTextControl(
@@ -44,7 +41,26 @@ class TreeView:
             ],
         )
 
+    def set_root(self, new_root):
+        self.root_element = new_root
+        self.initialise_selected_element()
+
+    def initialise_selected_element(self):
+        if self.hide_root:
+            try:
+                self.selected_element = self.root_element.children[0]
+            except IndexError:
+                self.selected_element = None
+        else:
+            self.selected_element = self.root_element
+        self.selected_element_index = 0
+
     def handle_click_on_item(self, mouse_event):
+        if mouse_event.event_type == MouseEventType.MOUSE_UP:
+            self.selected_element_index = mouse_event.position.y
+            self.selected_element = self.object_list[self.selected_element_index]
+
+    def handle_click_on_plus_minus(self, mouse_event):
         if mouse_event.event_type == MouseEventType.MOUSE_UP:
             self.selected_element_index = mouse_event.position.y
             self.selected_element = self.object_list[self.selected_element_index]
@@ -105,7 +121,7 @@ class TreeView:
         if n_children == 0:
             element_output.append([("class:lines", HORIZONTAL_LINE)])
         else:
-            element_output.append([(row_style, "[")])
+            element_output.append([(row_style, "[", self.handle_click_on_plus_minus)])
 
         if self.selected_element == element and not self.add_enabled and n_children > 0:
             element_output.append([("[SetCursorPosition]", "")])
@@ -114,14 +130,14 @@ class TreeView:
             element_output.append([("class:lines", HORIZONTAL_LINE)])
         else:
             if element.expanded:
-                element_output.append([(row_style, "-")])
+                element_output.append([(row_style, "-", self.handle_click_on_plus_minus)])
             else:
-                element_output.append([(row_style, "+")])
+                element_output.append([(row_style, "+", self.handle_click_on_plus_minus)])
 
         if n_children == 0:
             element_output.append([("class:lines", HORIZONTAL_LINE)])
         else:
-            element_output.append([(row_style, "]")])
+            element_output.append([(row_style, "]", self.handle_click_on_plus_minus)])
 
         if self.selected_element == element and not self.add_enabled and n_children == 0:
             element_output.append([("[SetCursorPosition]", "")])
@@ -174,7 +190,6 @@ class TreeView:
         return text_output_list, object_output_list
 
     def _get_formatted_text(self):
-        logger.debug("Ran _get_formatted_text")
         self.text_list, self.object_list = self.walk_tree(self.root_element)
 
         merged_text = merge_formatted_text(self.text_list)()
@@ -237,10 +252,7 @@ class TreeElement:
     @property
     def is_final_child(self):
         try:
-            logger.debug(f"{self.parent.children=}")
-            logger.debug(f"{self=}")
             result = self.parent.children.index(self) == len(self.parent.children) - 1
-            logger.debug(f"{result=}")
             return result
         except AttributeError:
             return False
