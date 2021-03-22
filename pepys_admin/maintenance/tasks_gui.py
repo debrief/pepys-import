@@ -1,6 +1,7 @@
 import traceback
 from asyncio import ensure_future
 
+from loguru import logger
 from prompt_toolkit.application.application import Application
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
@@ -10,17 +11,15 @@ from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Border, Label
+from sqlalchemy.orm import undefer
 
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.widgets.blank_border import BlankBorder
 from pepys_admin.maintenance.widgets.tree_view import TreeElement, TreeView
 from pepys_import.core.store.data_store import DataStore
 
-root = TreeElement("root", 42)
-root.add_child(TreeElement("first level", 14))
-root.add_child(TreeElement("first level - 2", 29))
-second_level = root.children[0].add_child(TreeElement("second level", 20))
-second_level.add_child(TreeElement("third level", 999))
+logger.remove()
+logger.add("gui.log")
 
 
 class TasksGUI:
@@ -44,6 +43,8 @@ class TasksGUI:
 
         self.current_dialog = None
 
+        self.root_task = self.get_tasks_into_treeview()
+
         self.init_ui_components()
 
         self.app = Application(
@@ -54,9 +55,48 @@ class TasksGUI:
             style=self.get_style(),
         )
 
+    def get_tasks_into_treeview(self):
+        Task = self.data_store.db_classes.Task
+        id_to_element = {}
+
+        root = TreeElement("hidden root")
+        id_to_element[None] = root
+
+        with self.data_store.session_scope():
+            task_queue = (
+                self.data_store.session.query(Task)
+                .filter(Task.parent_id.is_(None))
+                .order_by(Task.created_date.desc())
+                .options(undefer("*"))
+                .all()
+            )
+            self.data_store.session.expunge_all()
+            while len(task_queue) > 0:
+                task = task_queue.pop()
+                tree_el = TreeElement(task.name, task)
+                id_to_element[task.task_id] = tree_el
+                parent_task = id_to_element[task.parent_id]
+                parent_task.add_child(tree_el)
+
+                # Add children to queue
+                children_of_current_task = (
+                    self.data_store.session.query(Task)
+                    .filter(Task.parent_id == task.task_id)
+                    .order_by(Task.created_date.desc())
+                    .options(undefer("*"))
+                    .all()
+                )
+                task_queue.extend(children_of_current_task)
+
+        return root
+
     def init_ui_components(self):
-        # Putting everything together in panes
-        self.tree_view = TreeView(root, height=Dimension(weight=0.8), hide_root=True)
+        self.tree_view = TreeView(
+            self.root_task,
+            height=Dimension(weight=0.8),
+            hide_root=True,
+            on_add=self.handle_tree_add,
+        )
         self.lh_pane = HSplit(
             [
                 Label(text="Tasks   F2", style="class:title-line"),
@@ -88,6 +128,10 @@ class TasksGUI:
         )
 
         self.layout = Layout(self.root_container)
+
+    def handle_tree_add(self, parent_element):
+        new_element = TreeElement("New entry", None)
+        parent_element.add_child(new_element)
 
     def get_keybindings(self):
         kb = KeyBindings()
