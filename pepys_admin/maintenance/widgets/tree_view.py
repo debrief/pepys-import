@@ -15,14 +15,18 @@ VERTICAL_LINE = "\u2502"
 
 
 class TreeView:
-    def __init__(self, root_element, on_add=None):
+    def __init__(self, root_element, on_add=None, hide_root=False):
         self.root_element = root_element
         self.text_list = []
         self.object_list = []
-        self.selected_element = root_element
+        if hide_root:
+            self.selected_element = root_element.children[0]
+        else:
+            self.selected_element = root_element
         self.selected_element_index = 0
         self.add_enabled = False
         self.on_add = on_add
+        self.hide_root = hide_root
         # self.width = 20
         # self.height = 5
 
@@ -115,12 +119,17 @@ class TreeView:
 
         def walk_tree_recursive(root, text_output_list, object_output_list, indentation):
             root_entry = len(text_output_list) == 0
-            merged_element_output = self.format_element(root, indentation, root_entry)
+            if self.hide_root and root.parent is None:
+                # No parent, so must be root node
+                # Don't display anything for this node, and reset indentation
+                indentation -= 1
+            else:
+                merged_element_output = self.format_element(root, indentation, root_entry)
 
-            text_output_list.append(merged_element_output)
-            object_output_list.append(root)
+                text_output_list.append(merged_element_output)
+                object_output_list.append(root)
 
-            if root.expanded:
+            if root.expanded or (self.hide_root and root.parent is None):
                 for child in root.children:
                     walk_tree_recursive(
                         child, text_output_list, object_output_list, indentation + 1

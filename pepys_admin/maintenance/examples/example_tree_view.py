@@ -18,7 +18,7 @@ root.add_child(TreeElement("first level - 2", 29))
 second_level = root.children[0].add_child(TreeElement("second level", 20))
 second_level.add_child(TreeElement("third level", 999))
 
-root.expanded = True
+# root.expanded = True
 
 i = 0
 
@@ -41,7 +41,7 @@ def create_prompt_toolkit_app():
         "Button handler that exits the app"
         get_app().exit()
 
-    tree_view = TreeView(root, on_add=on_add)
+    tree_view = TreeView(root, on_add=on_add, hide_root=True)
 
     root_container = FloatContainer(
         tree_view,
