@@ -684,6 +684,23 @@ class DataStore:
             .first()
         )
 
+    def search_task(self, name, parent):
+        """Search for any privacy with this name"""
+        if parent is not None:
+            if isinstance(parent, self.db_classes.Task):
+                parent_id = parent.task_id
+            else:
+                parent_id = parent
+        else:
+            parent_id = None
+
+        return (
+            self.session.query(self.db_classes.Task)
+            .filter(self.db_classes.Task.name == name)
+            .filter(self.db_classes.Task.parent_id == parent_id)
+            .first()
+        )
+
     def synonym_search(self, name, table, pk_field):
         """
         This method looks up the Synonyms Table and returns if there is any matched entity.
@@ -1081,8 +1098,10 @@ class DataStore:
         """
         Adds the specified task entry to the :class:`Task` table if not already present.
         """
-        # TODO: Search in case Task already exists
-        # TODO: Check what the uniqueness criteria is for Tasks
+        task = self.search_task(name, parent)
+        if task:
+            return task
+
         privacy = self.search_privacy(privacy)
         if privacy is None:
             raise ValueError("Specified Privacy does not exist")
