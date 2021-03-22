@@ -86,9 +86,11 @@ class TreeView:
         n_children = len(element.children)
 
         if self.selected_element == element:
-            row_style = "class:selected-element"
+            row_style = "class:tree-selected-element"
         else:
             row_style = ""
+
+        row_style += f" class:tree-level-{element.level}"
 
         if self.add_enabled:
             add_style = "class:add-button-focused"
@@ -256,3 +258,13 @@ class TreeElement:
             return result
         except AttributeError:
             return False
+
+    @property
+    def level(self):
+        level = 0
+        current_element = self
+        while current_element.parent is not None:
+            current_element = current_element.parent
+            level += 1
+
+        return level
