@@ -16,7 +16,7 @@ VERTICAL_LINE = "\u2502"
 
 
 class TreeView:
-    def __init__(self, root_element, on_add=None, hide_root=False):
+    def __init__(self, root_element, on_add=None, hide_root=False, height=None, width=None):
         self.root_element = root_element
         self.text_list = []
         self.object_list = []
@@ -28,8 +28,8 @@ class TreeView:
         self.add_enabled = False
         self.on_add = on_add
         self.hide_root = hide_root
-        # self.width = 20
-        # self.height = 5
+        self.width = width
+        self.height = height
 
         self.container = Window(
             content=FormattedTextControl(
@@ -37,8 +37,8 @@ class TreeView:
                 focusable=True,
                 key_bindings=self._get_key_bindings(),
             ),
-            # height=self.height,
-            # width=self.width,
+            height=self.height,
+            width=self.width,
             right_margins=[
                 ScrollbarMargin(display_arrows=True),
             ],
