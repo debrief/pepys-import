@@ -1,4 +1,5 @@
 from loguru import logger
+from prompt_toolkit.application.current import get_app
 from prompt_toolkit.formatted_text.base import merge_formatted_text
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout.containers import Window
@@ -16,12 +17,15 @@ VERTICAL_LINE = "\u2502"
 
 
 class TreeView:
-    def __init__(self, root_element, on_add=None, hide_root=False, height=None, width=None):
+    def __init__(
+        self, root_element, on_add=None, on_select=None, hide_root=False, height=None, width=None
+    ):
         self.root_element = root_element
         self.text_list = []
         self.object_list = []
         self.add_enabled = False
         self.on_add = on_add
+        self.on_select = on_select
         self.hide_root = hide_root
         self.width = width
         self.height = height
@@ -57,13 +61,19 @@ class TreeView:
 
     def handle_click_on_item(self, mouse_event):
         if mouse_event.event_type == MouseEventType.MOUSE_UP:
+            get_app().layout.focus(self)
             self.selected_element_index = mouse_event.position.y
             self.selected_element = self.object_list[self.selected_element_index]
+            if callable(self.on_select):
+                self.on_select(self.selected_element)
 
     def handle_click_on_plus_minus(self, mouse_event):
         if mouse_event.event_type == MouseEventType.MOUSE_UP:
+            get_app().layout.focus(self)
             self.selected_element_index = mouse_event.position.y
             self.selected_element = self.object_list[self.selected_element_index]
+            if callable(self.on_select):
+                self.on_select(self.selected_element)
             self.handle_expand_collapse_or_add()
 
     def handle_expand_collapse_or_add(self):
@@ -76,6 +86,7 @@ class TreeView:
 
     def handle_click_on_add(self, mouse_event):
         if mouse_event.event_type == MouseEventType.MOUSE_UP:
+            get_app().layout.focus(self)
             self.add_enabled = True
             self.selected_element_index = mouse_event.position.y
             self.selected_element = self.object_list[self.selected_element_index]
@@ -206,12 +217,16 @@ class TreeView:
             self.selected_element_index = (self.selected_element_index - 1) % len(self.object_list)
             self.selected_element = self.object_list[self.selected_element_index]
             self.add_enabled = False
+            if callable(self.on_select):
+                self.on_select(self.selected_element)
 
         @kb.add("down")
         def _go_down(event) -> None:
             self.selected_element_index = (self.selected_element_index + 1) % len(self.object_list)
             self.selected_element = self.object_list[self.selected_element_index]
             self.add_enabled = False
+            if callable(self.on_select):
+                self.on_select(self.selected_element)
 
         @kb.add("enter")
         def _enter(event) -> None:
