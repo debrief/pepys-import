@@ -15,6 +15,7 @@ from sqlalchemy.orm import undefer
 
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.widgets.blank_border import BlankBorder
+from pepys_admin.maintenance.widgets.task_edit_widget import TaskEditWidget
 from pepys_admin.maintenance.widgets.tree_view import TreeElement, TreeView
 from pepys_import.core.store.data_store import DataStore
 
@@ -24,6 +25,8 @@ logger.add("gui.log")
 
 class TasksGUI:
     def __init__(self, data_store=None):
+        print("Initialising GUI and loading tasks...")
+
         if data_store is not None:
             self.data_store = data_store
         else:
@@ -45,6 +48,8 @@ class TasksGUI:
 
         self.root_task = self.get_tasks_into_treeview()
 
+        self.privacies = self.get_privacies()
+
         self.init_ui_components()
 
         self.app = Application(
@@ -54,6 +59,17 @@ class TasksGUI:
             mouse_support=True,
             style=self.get_style(),
         )
+        self.app.dropdown_opened = False
+
+    def get_privacies(self):
+        all_privacies = (
+            self.data_store.session.query(self.data_store.db_classes.Privacy)
+            .order_by(self.data_store.db_classes.Privacy.level)
+            .all()
+        )
+        privacy_strs = [priv.name for priv in all_privacies]
+
+        return privacy_strs
 
     def get_tasks_into_treeview(self):
         Task = self.data_store.db_classes.Task
@@ -86,6 +102,7 @@ class TasksGUI:
                     .options(undefer("*"))
                     .all()
                 )
+                self.data_store.session.expunge_all()
                 task_queue.extend(children_of_current_task)
 
         return root
@@ -96,6 +113,7 @@ class TasksGUI:
             height=Dimension(weight=0.8),
             hide_root=True,
             on_add=self.handle_tree_add,
+            on_select=self.handle_tree_select,
         )
         self.lh_pane = HSplit(
             [
@@ -105,10 +123,13 @@ class TasksGUI:
             padding=1,
         )
 
+        self.task_edit_widget = TaskEditWidget(
+            self.tree_view.selected_element.object, level=1, privacies=self.privacies
+        )
         self.rh_pane = HSplit(
             [
                 Label(text="View task   F3", style="class:title-line"),
-                Label("Task details shown here"),
+                self.task_edit_widget,
             ],
             padding=1,
         )
@@ -128,6 +149,15 @@ class TasksGUI:
         )
 
         self.layout = Layout(self.root_container)
+
+    def handle_tree_select(self, selected_element):
+        if selected_element.object is None:
+            new_task = self.data_store.db_classes.Task()
+            if selected_element.parent.object is not None:
+                new_task.parent = selected_element.parent.object
+        else:
+            new_task = selected_element.object
+        self.task_edit_widget.set_task_object(new_task, level=selected_element.level)
 
     def handle_tree_add(self, parent_element):
         new_element = TreeElement("New entry", None)
@@ -150,6 +180,14 @@ class TasksGUI:
         kb.add("tab")(focus_next)
         kb.add("s-tab")(focus_previous)
 
+        @kb.add("f2")
+        def _(event):
+            get_app().layout.focus(self.lh_pane)
+
+        @kb.add("f3")
+        def _(event):
+            get_app().layout.focus(self.rh_pane)
+
         return kb
 
     def get_style(self):
@@ -161,6 +199,7 @@ class TasksGUI:
                 ("button.focused button.arrow", "fg:ansiwhite"),
                 ("button.focused", "bg:ansiblue"),
                 ("dropdown.focused", "bg:ansiblue fg:ansiwhite"),
+                ("text-area", "bg:ansigray"),
                 ("text-area focused", "bg:ansiblue"),
                 ("dropdown-highlight", "fg:ansibrightgreen"),
                 ("filter-text", "fg:ansibrightcyan"),
