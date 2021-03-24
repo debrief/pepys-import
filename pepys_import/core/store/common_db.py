@@ -276,7 +276,9 @@ class ParticipantMixin:
 
     @declared_attr
     def task(self):
-        return relationship("Task", lazy="joined", innerjoin=True, uselist=False)
+        return relationship(
+            "Task", lazy="joined", innerjoin=True, uselist=False, backref="participants"
+        )
 
     # @declared_attr
     # def task_name(self):
@@ -289,6 +291,17 @@ class ParticipantMixin:
     @declared_attr
     def platform_name(self):
         return association_proxy("platform", "name")
+
+    @declared_attr
+    def platform_identifier(self):
+        return association_proxy("platform", "identifier")
+
+    @declared_attr
+    def platform_nationality_name(self):
+        return association_proxy("platform", "nationality_name")
+
+    def __repr__(self):
+        return f"Participant(task={self.task}, platform={self.platform})"
 
 
 class DatafileMixin:
