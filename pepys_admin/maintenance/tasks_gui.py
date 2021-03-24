@@ -1,5 +1,6 @@
 import traceback
 from asyncio import ensure_future
+from datetime import datetime
 
 from loguru import logger
 from prompt_toolkit.application.application import Application
@@ -17,10 +18,18 @@ from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDial
 from pepys_admin.maintenance.widgets.blank_border import BlankBorder
 from pepys_admin.maintenance.widgets.task_edit_widget import TaskEditWidget
 from pepys_admin.maintenance.widgets.tree_view import TreeElement, TreeView
-from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store import constants
+from pepys_import.core.store.data_store import USER, DataStore
 
 logger.remove()
 logger.add("gui.log")
+
+# Uncomment the lines below to get logging of the SQL queries run by SQLAlchemy
+# to the file sql.log
+# import logging
+
+# logging.basicConfig(filename="sql.log", level=logging.DEBUG)
+# logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
 
 class TasksGUI:
@@ -68,8 +77,9 @@ class TasksGUI:
             .all()
         )
         privacy_strs = [priv.name for priv in all_privacies]
+        privacy_ids = [priv.privacy_id for priv in all_privacies]
 
-        return privacy_strs
+        return {"values": privacy_strs, "ids": privacy_ids}
 
     def get_tasks_into_treeview(self):
         Task = self.data_store.db_classes.Task
@@ -124,7 +134,11 @@ class TasksGUI:
         )
 
         self.task_edit_widget = TaskEditWidget(
-            self.tree_view.selected_element.object, level=1, privacies=self.privacies
+            self.tree_view.selected_element.object,
+            1,
+            self.privacies,
+            self.handle_save,
+            self.handle_delete,
         )
         self.rh_pane = HSplit(
             [
@@ -138,7 +152,7 @@ class TasksGUI:
             BlankBorder(
                 VSplit(
                     [
-                        HSplit([self.lh_pane], width=Dimension(weight=0.3)),
+                        HSplit([self.lh_pane], width=Dimension(weight=0.4)),
                         Window(width=1, char=Border.VERTICAL),
                         self.rh_pane,
                     ],
@@ -149,6 +163,52 @@ class TasksGUI:
         )
 
         self.layout = Layout(self.root_container)
+
+    def handle_save(self):
+        updated_fields = self.task_edit_widget.get_updated_fields()
+        if updated_fields == {}:
+            return
+
+        logger.debug(f"{updated_fields=}")
+
+        current_task = self.task_edit_widget.task_object
+
+        # Record Change and Logs for this change
+        # (we have to record Logs before doing the change, so we know
+        # what the previous value was)
+        with self.data_store.session_scope():
+            change_id = self.data_store.add_to_changes(
+                USER, datetime.utcnow(), "Manual edit in Tasks GUI"
+            ).change_id
+            for column, new_value in updated_fields.items():
+                self.data_store.add_to_logs(
+                    constants.TASK,
+                    current_task.task_id,
+                    field=column,
+                    previous_value=str(getattr(current_task, column)),
+                    change_id=change_id,
+                )
+
+        # Set the new values
+        for column, new_value in updated_fields.items():
+            setattr(current_task, column, new_value)
+
+        with self.data_store.session_scope():
+            self.data_store.session.add(current_task)
+            # We need to commit the change so that it gets an ID and matches everything up
+            # but this 'expires' the attributes, so we need to refresh these from the database
+            # before expunging. Overall, this means that the fully up-to-date Task object
+            # is detached from the session and available for use in the UI
+            self.data_store.session.commit()
+            self.data_store.session.refresh(current_task)
+            self.data_store.session.expunge_all()
+
+        self.tree_view.selected_element.object = current_task
+        self.tree_view.selected_element.text = current_task.name
+        get_app().invalidate()
+
+    def handle_delete(self):
+        pass
 
     def handle_tree_select(self, selected_element):
         if selected_element.object is None:
