@@ -1,3 +1,5 @@
+from copy import copy, deepcopy
+
 from loguru import logger
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.formatted_text.base import merge_formatted_text
@@ -21,6 +23,7 @@ class TreeView:
         self, root_element, on_add=None, on_select=None, hide_root=False, height=None, width=None
     ):
         self.root_element = root_element
+        self.filtered_root_element = self.root_element
         self.text_list = []
         self.object_list = []
         self.add_enabled = False
@@ -47,6 +50,7 @@ class TreeView:
 
     def set_root(self, new_root):
         self.root_element = new_root
+        self.filtered_root_element = self.root_entry
         self.initialise_selected_element()
 
     def initialise_selected_element(self):
@@ -176,6 +180,35 @@ class TreeView:
 
         return with_mouse_handlers
 
+    def filter(self, filter_text):
+        if filter_text == "":
+            self.filtered_root_element = self.root_element
+            return
+
+        self.filtered_root_element = deepcopy(self.root_element)
+
+        logger.debug("### Starting recursion:")
+        self.remove_nonmatching_elements(filter_text, self.filtered_root_element)
+
+        get_app().invalidate()
+
+    def remove_nonmatching_elements(self, filter_text, root_element):
+        logger.debug(f"# Called on {root_element.text}")
+        logger.debug(f"{root_element.children=}")
+        children = copy(root_element.children)
+        for child in children:
+            logger.debug(f"Inside loop, child = {child.text}")
+            self.remove_nonmatching_elements(filter_text, child)
+
+        logger.debug(f"Checking {root_element.text}")
+        if filter_text not in root_element.text and len(root_element.children) == 0:
+            logger.debug(f"Removing {root_element.text}")
+            if root_element.parent is not None:
+                root_element.parent.remove_child(root_element)
+        else:
+            if root_element.parent is not None:
+                root_element.parent.expanded = True
+
     def walk_tree(self, root):
         text_output_list = []
         object_output_list = []
@@ -203,9 +236,9 @@ class TreeView:
         return text_output_list, object_output_list
 
     def select_element(self, element):
-        self.text_list, self.object_list = self.walk_tree(self.root_element)
+        self.text_list, self.object_list = self.walk_tree(self.filtered_root_element)
 
-        if self.hide_root and element == self.root_element:
+        if self.hide_root and element == self.filtered_root_element:
             # If we've got a hidden root then we can't select the root element
             # so select the first child of the root element
             try:
@@ -222,7 +255,7 @@ class TreeView:
             self.on_select(self.selected_element)
 
     def _get_formatted_text(self):
-        self.text_list, self.object_list = self.walk_tree(self.root_element)
+        self.text_list, self.object_list = self.walk_tree(self.filtered_root_element)
 
         merged_text = merge_formatted_text(self.text_list)()
 

@@ -4,9 +4,10 @@ from prompt_toolkit.application.current import get_app
 from prompt_toolkit.key_binding.bindings.focus import focus_next, focus_previous
 from prompt_toolkit.key_binding.key_bindings import KeyBindings
 from prompt_toolkit.layout import Layout
-from prompt_toolkit.layout.containers import FloatContainer
+from prompt_toolkit.layout.containers import FloatContainer, HSplit
 from prompt_toolkit.styles import Style
 
+from pepys_admin.maintenance.widgets.custom_text_area import CustomTextArea
 from pepys_admin.maintenance.widgets.tree_view import TreeElement, TreeView
 
 logger.remove()
@@ -16,9 +17,10 @@ root = TreeElement("root", 42)
 root.add_child(TreeElement("first level", 14))
 root.add_child(TreeElement("first level - 2", 29))
 second_level = root.children[0].add_child(TreeElement("second level", 20))
+second_level2 = root.children[0].add_child(TreeElement("second level - 2", 20))
 second_level.add_child(TreeElement("third level", 999))
 
-# root.expanded = True
+root.expanded = True
 
 i = 0
 
@@ -28,6 +30,14 @@ def on_add(selected_element):
     new_element = TreeElement(f"New entry {i}", None)
     selected_element.add_child(new_element)
     i += 1
+
+
+def on_filter_change():
+    tree_view.filter(filter_textbox.text)
+
+
+tree_view = TreeView(root, on_add=on_add, hide_root=False)
+filter_textbox = CustomTextArea(on_change=on_filter_change, multiline=False)
 
 
 def create_prompt_toolkit_app():
@@ -41,10 +51,8 @@ def create_prompt_toolkit_app():
         "Button handler that exits the app"
         get_app().exit()
 
-    tree_view = TreeView(root, on_add=on_add, hide_root=True)
-
     root_container = FloatContainer(
-        tree_view,
+        HSplit([filter_textbox, tree_view]),
         floats=[],
     )
 
