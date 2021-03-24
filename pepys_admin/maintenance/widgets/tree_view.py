@@ -202,6 +202,25 @@ class TreeView:
 
         return text_output_list, object_output_list
 
+    def select_element(self, element):
+        self.text_list, self.object_list = self.walk_tree(self.root_element)
+
+        if self.hide_root and element == self.root_element:
+            # If we've got a hidden root then we can't select the root element
+            # so select the first child of the root element
+            try:
+                element = self.root_element.children[0]
+            except Exception:
+                self.selected_element = None
+                self.selected_element_index = 0
+                return
+        index = self.object_list.index(element)
+        self.selected_element = self.object_list[index]
+        self.selected_element_index = index
+
+        if callable(self.on_select):
+            self.on_select(self.selected_element)
+
     def _get_formatted_text(self):
         self.text_list, self.object_list = self.walk_tree(self.root_element)
 
