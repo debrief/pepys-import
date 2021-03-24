@@ -11,7 +11,7 @@ from prompt_toolkit.layout.containers import Float, FloatContainer, HSplit, VSpl
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
-from prompt_toolkit.widgets.base import Border, Label
+from prompt_toolkit.widgets.base import Border, Button, Label
 from sqlalchemy.orm import undefer
 
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
@@ -125,16 +125,22 @@ class TasksGUI:
             on_add=self.handle_tree_add,
             on_select=self.handle_tree_select,
         )
+        self.top_level_add_button = Button("Add task", self.handle_top_level_add)
         self.lh_pane = HSplit(
             [
                 Label(text="Tasks   F2", style="class:title-line"),
                 self.tree_view,
+                self.top_level_add_button,
             ],
             padding=1,
         )
 
+        current_task_object = (
+            self.tree_view.selected_element.object if self.tree_view.selected_element else None
+        )
+
         self.task_edit_widget = TaskEditWidget(
-            self.tree_view.selected_element.object,
+            current_task_object,
             1,
             self.privacies,
             self.handle_save,
@@ -173,21 +179,10 @@ class TasksGUI:
 
         current_task = self.task_edit_widget.task_object
 
-        # Record Change and Logs for this change
-        # (we have to record Logs before doing the change, so we know
-        # what the previous value was)
-        with self.data_store.session_scope():
-            change_id = self.data_store.add_to_changes(
-                USER, datetime.utcnow(), "Manual edit in Tasks GUI"
-            ).change_id
-            for column, new_value in updated_fields.items():
-                self.data_store.add_to_logs(
-                    constants.TASK,
-                    current_task.task_id,
-                    field=column,
-                    previous_value=str(getattr(current_task, column)),
-                    change_id=change_id,
-                )
+        # Keep track of the old values for adding to Logs later
+        old_values = {}
+        for column in updated_fields.keys():
+            old_values[column] = getattr(current_task, column)
 
         # Set the new values
         for column, new_value in updated_fields.items():
@@ -203,6 +198,22 @@ class TasksGUI:
             self.data_store.session.refresh(current_task)
             self.data_store.session.expunge_all()
 
+        # Record Change and Logs for this change
+        # (we have to do this after adding the Task and committing
+        # otherwise the Task won't have a task_id
+        with self.data_store.session_scope():
+            change_id = self.data_store.add_to_changes(
+                USER, datetime.utcnow(), "Manual edit in Tasks GUI"
+            ).change_id
+            for column, old_value in old_values.items():
+                self.data_store.add_to_logs(
+                    constants.TASK,
+                    current_task.task_id,
+                    field=column,
+                    previous_value=old_value,
+                    change_id=change_id,
+                )
+
         self.tree_view.selected_element.object = current_task
         self.tree_view.selected_element.text = current_task.name
         get_app().invalidate()
@@ -211,17 +222,24 @@ class TasksGUI:
         pass
 
     def handle_tree_select(self, selected_element):
-        if selected_element.object is None:
-            new_task = self.data_store.db_classes.Task()
-            if selected_element.parent.object is not None:
-                new_task.parent = selected_element.parent.object
-        else:
-            new_task = selected_element.object
-        self.task_edit_widget.set_task_object(new_task, level=selected_element.level)
+        self.task_edit_widget.set_task_object(selected_element.object, level=selected_element.level)
 
     def handle_tree_add(self, parent_element):
-        new_element = TreeElement("New entry", None)
+        new_task = self.data_store.db_classes.Task()
+        if parent_element.object is not None:
+            new_task.parent = parent_element.object
+        new_element = TreeElement("New entry", new_task)
         parent_element.add_child(new_element)
+
+    def handle_top_level_add(self):
+        new_task = self.data_store.db_classes.Task()
+        # As it's a top level task, set stupidly early/late start and end
+        # so that any tasks later on can come within these times (and so
+        # that it is obvious that they're fake dates)
+        new_task.start = datetime(1, 1, 1, 0, 0, 0)
+        new_task.end = datetime(9999, 1, 1, 0, 0, 0)
+        new_element = TreeElement("New entry", new_task)
+        self.tree_view.root_element.add_child(new_element)
 
     def get_keybindings(self):
         kb = KeyBindings()

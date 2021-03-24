@@ -40,6 +40,10 @@ class TaskEditWidget:
         return updated_fields
 
     def create_widgets(self):
+        if self.task_object is None:
+            self.all_rows = [Label("Please select a Task")]
+            return
+
         self.save_button = Button("Save task", self.save_button_handler, width=15)
         self.delete_button = Button("Delete task", self.delete_button_handler, width=15)
         self.buttons_row = VSplit(
