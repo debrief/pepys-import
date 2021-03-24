@@ -32,3 +32,7 @@ class DatetimeWidget(MaskedInputWidget):
             part_validator=int_validator,
             on_change=on_change,
         )
+
+    @property
+    def datetime_value(self):
+        return datetime.strptime(self.text, "%Y-%m-%d %H:%M:%S")
