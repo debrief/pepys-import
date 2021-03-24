@@ -175,8 +175,6 @@ class TasksGUI:
         if updated_fields == {}:
             return
 
-        logger.debug(f"{updated_fields=}")
-
         current_task = self.task_edit_widget.task_object
 
         # Keep track of the old values for adding to Logs later
@@ -219,7 +217,16 @@ class TasksGUI:
         get_app().invalidate()
 
     def handle_delete(self):
-        pass
+        if self.task_edit_widget.task_object.task_id is not None:
+            # We've got a task that has been saved in the database,
+            # as it has a task_id, so we need to delete from the database
+            with self.data_store.session_scope():
+                self.data_store.session.delete(self.task_edit_widget.task_object)
+
+        self.tree_view.selected_element.parent.remove_child(self.tree_view.selected_element)
+        self.tree_view.select_element(self.tree_view.selected_element.parent)
+        if self.tree_view.selected_element is None:
+            self.task_edit_widget.set_task_object(None, level=1)
 
     def handle_tree_select(self, selected_element):
         self.task_edit_widget.set_task_object(selected_element.object, level=selected_element.level)
@@ -240,6 +247,7 @@ class TasksGUI:
         new_task.end = datetime(9999, 1, 1, 0, 0, 0)
         new_element = TreeElement("New entry", new_task)
         self.tree_view.root_element.add_child(new_element)
+        self.tree_view.select_element(new_element)
 
     def get_keybindings(self):
         kb = KeyBindings()
