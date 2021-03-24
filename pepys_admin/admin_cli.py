@@ -12,6 +12,7 @@ from pepys_admin.base_cli import BaseShell
 from pepys_admin.export_cli import ExportShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.maintenance.gui import MaintenanceGUI
+from pepys_admin.maintenance.tasks_gui import TasksGUI
 from pepys_admin.snapshot_cli import SnapshotShell
 from pepys_admin.view_data_cli import ViewDataShell
 from pepys_import.core.store import constants
@@ -38,6 +39,7 @@ class AdminShell(BaseShell):
 (6) View Data
 (7) View Docs
 (8) Maintenance
+(9) Maintain tasks
 (.) Exit
 """
     prompt = "(pepys-admin) "
@@ -56,6 +58,7 @@ class AdminShell(BaseShell):
             "6": self.do_view_data,
             "7": self.do_view_docs,
             "8": self.do_maintenance_gui,
+            "9": self.do_tasks_gui,
         }
 
         self.cfg = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
@@ -84,6 +87,15 @@ class AdminShell(BaseShell):
     def do_maintenance_gui(self):
         try:
             gui = MaintenanceGUI(self.data_store)
+        except Exception as e:
+            print(str(e))
+            print("Database error: See full error above.")
+            return
+        gui.app.run()
+
+    def do_tasks_gui(self):
+        try:
+            gui = TasksGUI(self.data_store)
         except Exception as e:
             print(str(e))
             print("Database error: See full error above.")
