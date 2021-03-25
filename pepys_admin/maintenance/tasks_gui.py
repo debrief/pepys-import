@@ -254,6 +254,7 @@ class TasksGUI:
             new_task.parent_id = parent_element.object.task_id
         new_element = TreeElement("New entry", new_task)
         parent_element.add_child(new_element)
+        self.tree_view.select_element(new_element)
 
     def handle_top_level_add(self):
         new_task = self.data_store.db_classes.Task()
