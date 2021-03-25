@@ -20,7 +20,14 @@ VERTICAL_LINE = "\u2502"
 
 class TreeView:
     def __init__(
-        self, root_element, on_add=None, on_select=None, hide_root=False, height=None, width=None
+        self,
+        root_element,
+        on_add=None,
+        on_select=None,
+        hide_root=False,
+        height=None,
+        width=None,
+        max_levels=None,
     ):
         self.root_element = root_element
         self.filtered_root_element = self.root_element
@@ -32,6 +39,14 @@ class TreeView:
         self.hide_root = hide_root
         self.width = width
         self.height = height
+
+        if max_levels is None:
+            self.max_levels = 9999
+        else:
+            self.max_levels = max_levels
+
+        if self.hide_root:
+            self.max_levels -= 1
 
         self.initialise_selected_element()
 
@@ -161,7 +176,8 @@ class TreeView:
 
         element_output.append([(row_style, " " + element.text)])
 
-        if self.selected_element == element:
+        # Only show the Add button if we're on the selected element, and we're not at the maximum level
+        if self.selected_element == element and self.selected_element.level <= self.max_levels:
             element_output.append([("", "   ")])
             if self.add_enabled:
                 element_output.append([("[SetCursorPosition]", "")])

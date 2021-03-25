@@ -125,6 +125,7 @@ class TasksGUI:
             hide_root=True,
             on_add=self.handle_tree_add,
             on_select=self.handle_tree_select,
+            max_levels=3,
         )
         self.filter_text_area = CustomTextArea(
             "Type to filter",
