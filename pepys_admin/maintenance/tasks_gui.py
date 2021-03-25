@@ -16,6 +16,7 @@ from sqlalchemy.orm import undefer
 
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.widgets.blank_border import BlankBorder
+from pepys_admin.maintenance.widgets.custom_text_area import CustomTextArea
 from pepys_admin.maintenance.widgets.task_edit_widget import TaskEditWidget
 from pepys_admin.maintenance.widgets.tree_view import TreeElement, TreeView
 from pepys_import.core.store import constants
@@ -125,10 +126,17 @@ class TasksGUI:
             on_add=self.handle_tree_add,
             on_select=self.handle_tree_select,
         )
+        self.filter_text_area = CustomTextArea(
+            "Type to filter",
+            multiline=False,
+            focus_on_click=True,
+            on_change=self.on_filter_text_change,
+        )
         self.top_level_add_button = Button("Add task", self.handle_top_level_add)
         self.lh_pane = HSplit(
             [
                 Label(text="Tasks   F2", style="class:title-line"),
+                self.filter_text_area,
                 self.tree_view,
                 self.top_level_add_button,
             ],
@@ -169,6 +177,10 @@ class TasksGUI:
         )
 
         self.layout = Layout(self.root_container)
+
+    def on_filter_text_change(self):
+        if self.filter_text_area.text != "Type to filter":
+            self.tree_view.filter(self.filter_text_area.text)
 
     def handle_save(self):
         updated_fields = self.task_edit_widget.get_updated_fields()
