@@ -35,7 +35,7 @@ class TaskEditWidget:
 
         if self.privacy_field.text != self.task_object.privacy_name:
             index = self.privacies["values"].index(self.privacy_field.text)
-            updated_fields["privacy_id"] = self.privacies["ids"][index]
+            updated_fields["privacy_id"] = str(self.privacies["ids"][index])
 
         return updated_fields
 

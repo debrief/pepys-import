@@ -221,7 +221,7 @@ class TasksGUI:
                     constants.TASK,
                     current_task.task_id,
                     field=column,
-                    previous_value=old_value,
+                    previous_value=str(old_value),
                     change_id=change_id,
                 )
 
@@ -247,7 +247,11 @@ class TasksGUI:
     def handle_tree_add(self, parent_element):
         new_task = self.data_store.db_classes.Task()
         if parent_element.object is not None:
-            new_task.parent = parent_element.object
+            # For some reason, setting new_task.parent to parent_element.object
+            # sets the parent_element.object Task instance to be connected to the session
+            # and it is never expunged when expunge_all() is called
+            # So we set the parent_id instead
+            new_task.parent_id = parent_element.object.task_id
         new_element = TreeElement("New entry", new_task)
         parent_element.add_child(new_element)
 
@@ -298,7 +302,7 @@ class TasksGUI:
                 ("button.focused button.arrow", "fg:ansiwhite"),
                 ("button.focused", "bg:ansiblue"),
                 ("dropdown.focused", "bg:ansiblue fg:ansiwhite"),
-                ("text-area", "bg:ansigray"),
+                ("text-area", "bg:ansigray fg:ansiblack"),
                 ("text-area focused", "bg:ansiblue"),
                 ("dropdown-highlight", "fg:ansibrightgreen"),
                 ("filter-text", "fg:ansibrightcyan"),
