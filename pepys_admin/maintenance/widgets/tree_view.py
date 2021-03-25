@@ -203,27 +203,26 @@ class TreeView:
 
         self.filtered_root_element = deepcopy(self.root_element)
 
-        logger.debug("### Starting recursion:")
         self.remove_nonmatching_elements(filter_text, self.filtered_root_element)
 
         get_app().invalidate()
 
     def remove_nonmatching_elements(self, filter_text, root_element):
-        logger.debug(f"# Called on {root_element.text}")
-        logger.debug(f"{root_element.children=}")
-        children = copy(root_element.children)
-        for child in children:
-            logger.debug(f"Inside loop, child = {child.text}")
-            self.remove_nonmatching_elements(filter_text, child)
+        if filter_text.lower() not in root_element.text.lower():
+            children = copy(root_element.children)
+            for child in children:
+                self.remove_nonmatching_elements(filter_text, child)
 
-        logger.debug(f"Checking {root_element.text}")
-        if filter_text.lower() not in root_element.text.lower() and len(root_element.children) == 0:
-            logger.debug(f"Removing {root_element.text}")
-            if root_element.parent is not None:
-                root_element.parent.remove_child(root_element)
+            if len(root_element.children) == 0:
+                if root_element.parent is not None:
+                    root_element.parent.remove_child(root_element)
+            else:
+                if root_element.parent is not None:
+                    root_element.parent.expanded = True
         else:
             if root_element.parent is not None:
                 root_element.parent.expanded = True
+                root_element.expanded = True
 
     def walk_tree(self, root):
         text_output_list = []
