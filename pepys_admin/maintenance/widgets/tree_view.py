@@ -39,6 +39,7 @@ class TreeView:
         self.hide_root = hide_root
         self.width = width
         self.height = height
+        self.filter_text = ""
 
         if max_levels is None:
             self.max_levels = 9999
@@ -174,7 +175,20 @@ class TreeView:
         if self.selected_element == element and not self.add_enabled and n_children == 0:
             element_output.append([("[SetCursorPosition]", "")])
 
-        element_output.append([(row_style, " " + element.text)])
+        if self.filter_text != "" and self.filter_text.lower() in element.text.lower():
+            index = element.text.lower().index(self.filter_text.lower())
+            element_output.append([(row_style, " " + element.text[:index])])
+            element_output.append(
+                [
+                    (
+                        row_style + " class:tree-matched-filter",
+                        element.text[index : index + len(self.filter_text)],
+                    )
+                ]
+            )
+            element_output.append([(row_style, element.text[index + len(self.filter_text) :])])
+        else:
+            element_output.append([(row_style, " " + element.text)])
 
         # Only show the Add button if we're on the selected element, and we're not at the maximum level
         if self.selected_element == element and self.selected_element.level <= self.max_levels:
@@ -197,13 +211,14 @@ class TreeView:
         return with_mouse_handlers
 
     def filter(self, filter_text):
-        if filter_text == "":
+        self.filter_text = filter_text
+        if self.filter_text == "":
             self.filtered_root_element = self.root_element
             return
 
         self.filtered_root_element = deepcopy(self.root_element)
 
-        self.remove_nonmatching_elements(filter_text, self.filtered_root_element)
+        self.remove_nonmatching_elements(self.filter_text, self.filtered_root_element)
 
         get_app().invalidate()
 
