@@ -1,4 +1,3 @@
-from loguru import logger
 from prompt_toolkit.layout.containers import DynamicContainer, HorizontalAlign, HSplit, VSplit
 from prompt_toolkit.widgets.base import Button, Label, TextArea
 from prompt_toolkit.widgets.toolbars import ValidationToolbar
@@ -67,14 +66,13 @@ class TaskEditWidget:
         self.end_row = VSplit(
             [Label("End:", width=15), self.end_field], padding=2, align=HorizontalAlign.LEFT
         )
-        logger.debug(f"{self.task_object.privacy_name=}")
         try:
             if self.task_object.privacy_name is not None:
                 privacy_text = self.task_object.privacy_name
             else:
-                privacy_text = "Select privacy"
+                privacy_text = self.privacies["values"][0]
         except Exception:
-            privacy_text = "Select privacy"
+            privacy_text = self.privacies["values"][0]
         self.privacy_field = DropdownBox(privacy_text, self.privacies["values"])
         self.privacy_row = VSplit(
             [Label("Privacy:", width=15), self.privacy_field], padding=2, align=HorizontalAlign.LEFT
