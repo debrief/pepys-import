@@ -154,6 +154,7 @@ class Task(BasePostGIS, TaskMixin):
     )
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
+    exercise = Column(String(150))
     environment = deferred(Column(String(150)))
     location = deferred(Column(String(150)))
     privacy_id = Column(
