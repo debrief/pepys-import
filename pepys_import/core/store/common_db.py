@@ -4,7 +4,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import backref, relationship
 from tqdm import tqdm
 
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
@@ -276,8 +276,17 @@ class ParticipantMixin:
 
     @declared_attr
     def task(self):
+        # This uses extra parameters on the backref, which controls the 'other side' relationship
+        # - that is, the `Task.participants` relationship. The cascade options mean that deleting
+        # a Task will delete its participants.
+        # This is required even though we have a database cascade, as otherwise SQLAlchemy will try
+        # and set the Participant.task_id to NULL, when the field is not nullable
         return relationship(
-            "Task", lazy="joined", innerjoin=True, uselist=False, backref="participants"
+            "Task",
+            lazy="joined",
+            innerjoin=True,
+            uselist=False,
+            backref=backref("participants", cascade="all, delete, delete-orphan"),
         )
 
     # @declared_attr
