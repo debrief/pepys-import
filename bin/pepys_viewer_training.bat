@@ -1,4 +1,5 @@
 @echo off
+CALL set_title.bat Pepys Viewer (training)
 CALL set_paths.bat
 REM If error returned from set_paths.bat then don't continue with running python
 IF ERRORLEVEL 1 GOTO :ERROR
