@@ -289,7 +289,6 @@ class TreeView:
                 self.selected_element = None
                 self.selected_element_index = 0
                 return
-        logger.debug(f"{self.object_list=}")
         index = self.object_list.index(element)
         self.selected_element = self.object_list[index]
         self.selected_element_index = index

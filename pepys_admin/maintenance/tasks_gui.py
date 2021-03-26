@@ -231,9 +231,12 @@ class TasksGUI:
 
     def handle_delete(self):
         async def coroutine():
+            task_name = self.task_edit_widget.task_object.name
+            if task_name is None:
+                task_name = "New entry"
             dialog = ConfirmationDialog(
                 "Delete?",
-                f"Are you sure you want to delete the task\n{self.task_edit_widget.task_object.name}\nand all its sub-tasks?",
+                f"Are you sure you want to delete the task\n{task_name}\nand all its sub-tasks?",
             )
             result = await self.show_dialog_as_float(dialog)
 
