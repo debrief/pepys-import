@@ -230,16 +230,28 @@ class TasksGUI:
         get_app().invalidate()
 
     def handle_delete(self):
-        if self.task_edit_widget.task_object.task_id is not None:
-            # We've got a task that has been saved in the database,
-            # as it has a task_id, so we need to delete from the database
-            with self.data_store.session_scope():
-                self.data_store.session.delete(self.task_edit_widget.task_object)
+        async def coroutine():
+            dialog = ConfirmationDialog(
+                "Delete?",
+                f"Are you sure you want to delete the task\n{self.task_edit_widget.task_object.name}\nand all its sub-tasks?",
+            )
+            result = await self.show_dialog_as_float(dialog)
 
-        self.tree_view.selected_element.parent.remove_child(self.tree_view.selected_element)
-        self.tree_view.select_element(self.tree_view.selected_element.parent)
-        if self.tree_view.selected_element is None:
-            self.task_edit_widget.set_task_object(None, level=1)
+            if not result:
+                return
+
+            if self.task_edit_widget.task_object.task_id is not None:
+                # We've got a task that has been saved in the database,
+                # as it has a task_id, so we need to delete from the database
+                with self.data_store.session_scope():
+                    self.data_store.session.delete(self.task_edit_widget.task_object)
+
+            self.tree_view.selected_element.parent.remove_child(self.tree_view.selected_element)
+            self.tree_view.select_element(self.tree_view.selected_element.parent)
+            if self.tree_view.selected_element is None:
+                self.task_edit_widget.set_task_object(None, level=1)
+
+        ensure_future(coroutine())
 
     def handle_tree_select(self, selected_element):
         self.task_edit_widget.set_task_object(selected_element.object, level=selected_element.level)
