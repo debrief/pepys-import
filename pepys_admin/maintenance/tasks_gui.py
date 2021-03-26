@@ -320,7 +320,7 @@ class TasksGUI:
                 ("frame dialog.body button.focused button.text", "fg:ansiwhite"),
                 ("error-message", "fg:ansibrightred"),
                 ("disabled-entry", "fg:ansibrightblack"),
-                ("tree-selected-element", "bg:ansigray"),
+                ("tree-selected-element", "bg:ansiblue fg:ansiwhite"),
                 ("tree-matched-filter", "fg:ansired"),
             ]
         )
