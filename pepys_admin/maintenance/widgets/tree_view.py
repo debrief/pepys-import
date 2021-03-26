@@ -94,24 +94,28 @@ class TreeView:
             self.selected_element = self.object_list[self.selected_element_index]
             if callable(self.on_select):
                 self.on_select(self.selected_element)
-            self.handle_expand_collapse_or_add()
+            self.do_expand_collapse()
 
     def handle_expand_collapse_or_add(self):
         if self.add_enabled:
-            if callable(self.on_add):
-                self.on_add(self.selected_element)
-                self.selected_element.expanded = True
+            self.do_add()
         else:
-            self.selected_element.expanded = not self.selected_element.expanded
+            self.do_expand_collapse()
+
+    def do_expand_collapse(self):
+        self.selected_element.expanded = not self.selected_element.expanded
+
+    def do_add(self):
+        if callable(self.on_add):
+            self.on_add(self.selected_element)
+            self.selected_element.expanded = True
 
     def handle_click_on_add(self, mouse_event):
         if mouse_event.event_type == MouseEventType.MOUSE_UP:
             get_app().layout.focus(self)
-            self.add_enabled = True
             self.selected_element_index = mouse_event.position.y
             self.selected_element = self.object_list[self.selected_element_index]
-            self.handle_expand_collapse_or_add()
-            self.add_enabled = False
+            self.do_add()
 
     def format_element(self, element, indentation, root_entry):
         n_children = len(element.children)
@@ -266,6 +270,14 @@ class TreeView:
         return text_output_list, object_output_list
 
     def select_element(self, element):
+        self.filtered_root_element = self.root_element
+
+        # Expand all parents of the element to select, so we can see it
+        current_element = element
+        while current_element.parent is not None:
+            current_element.parent.expanded = True
+            current_element = current_element.parent
+
         self.text_list, self.object_list = self.walk_tree(self.filtered_root_element)
 
         if self.hide_root and element == self.filtered_root_element:
@@ -277,6 +289,7 @@ class TreeView:
                 self.selected_element = None
                 self.selected_element_index = 0
                 return
+        logger.debug(f"{self.object_list=}")
         index = self.object_list.index(element)
         self.selected_element = self.object_list[index]
         self.selected_element_index = index
