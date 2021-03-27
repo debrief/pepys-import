@@ -1,3 +1,5 @@
+import uuid
+
 from prompt_toolkit.layout.containers import HSplit, VSplit
 from prompt_toolkit.widgets import Label
 
@@ -28,11 +30,15 @@ class EntryDisplayWidget:
 
         for key, value in self.edit_data.items():
             values_list = [
-                get_str_for_field(getattr(entry, value["system_name"])) for entry in self.entries
+                get_str_for_field(getattr(entry, value["system_name"]))
+                for entry in self.entries
+                if not isinstance(entry, uuid.UUID)
             ]
             # Just list the unique values
             values_list = list(set(values_list))
             value = "; ".join(values_list)
+            if len(self.entries) > 10:
+                value += "..."
             # The widgets are just a series of Labels
             rows.append(VSplit([Label(key, width=max_width), Label(" = ", width=3), Label(value)]))
 
