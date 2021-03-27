@@ -1,3 +1,4 @@
+import uuid
 from asyncio import Future
 
 from prompt_toolkit.layout.containers import HSplit, VSplit
@@ -49,6 +50,11 @@ class EditDialog:
         if len(entries) < 10:
             display_strs = []
             for entry in entries:
+                if isinstance(entry, uuid.UUID):
+                    # Should never get here, as if we've got a small number of entries selected
+                    # then they will be from the objects in the preview table
+                    # But this is an extra check to stop a crash in a very strange situation
+                    continue
                 display_str = " - ".join(
                     [
                         get_str_for_field(getattr(entry, field_name))

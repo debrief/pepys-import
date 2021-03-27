@@ -1,6 +1,5 @@
 import os
 import sys
-import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from getpass import getuser
@@ -23,6 +22,7 @@ from pepys_import.utils.data_store_utils import (
     MissingDataException,
     cache_results_if_not_none,
     convert_edit_dict_columns,
+    convert_objects_to_ids,
     create_alembic_version_table,
     create_spatial_tables_for_postgres,
     create_spatial_tables_for_sqlite,
@@ -1888,11 +1888,10 @@ class DataStore:
         reference_table_names = [obj.__tablename__ for obj in reference_table_objects]
 
         table_obj = self._get_table_object(table_name)
-        if id_list and not isinstance(id_list[0], uuid.UUID):
-            id_list = [getattr(i, get_primary_key_for_table(table_obj)) for i in id_list]
 
-        if not isinstance(master_id, uuid.UUID):
-            master_id = getattr(master_id, get_primary_key_for_table(table_obj))
+        id_list = convert_objects_to_ids(id_list, table_obj)
+
+        master_id = convert_objects_to_ids(master_id, table_obj)
 
         reason_list = ",".join([str(p) for p in id_list])
         change_id = self.add_to_changes(
@@ -2005,7 +2004,7 @@ class DataStore:
             self.session.delete(s)
         self.session.flush()
 
-    def edit_items(self, items, edit_dict):
+    def edit_items(self, items, edit_dict, table_object):
         """
         Edits the given list of items, changing the fields to the new ones specified in edit_dict
 
@@ -2015,9 +2014,8 @@ class DataStore:
         For foreign keyed fields, the new value should be the ID of an existing entry in the foreign table
         :type edit_dict: Dict
         """
-        table_object = type(items[0])
-
-        ids = [str(getattr(item, get_primary_key_for_table(table_object))) for item in items]
+        ids = convert_objects_to_ids(items, table_object)
+        ids = [str(id_value) for id_value in ids]
         ids_list_str = ", ".join(ids)
 
         change_id = self.add_to_changes(
