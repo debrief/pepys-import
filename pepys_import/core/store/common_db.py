@@ -257,14 +257,16 @@ class TaskMixin:
 
     @property
     def level(self):
-        level = 0
+        output_level = 0
         current_task = self
-        print(current_task.parent)
         while current_task.parent is not None:
             current_task = current_task.parent
-            level += 1
+            output_level += 1
 
-        return level
+        return output_level
+
+    def add_participant(self, participant):
+        self.participants.append(participant)
 
     def __repr__(self):
         return f"Task(name={self.name}, parent_id={self.parent_id})"
@@ -288,10 +290,6 @@ class ParticipantMixin:
             uselist=False,
             backref=backref("participants", cascade="all, delete, delete-orphan"),
         )
-
-    # @declared_attr
-    # def task_name(self):
-    #     return association_proxy("task", "name")
 
     @declared_attr
     def platform(self):
