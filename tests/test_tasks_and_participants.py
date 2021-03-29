@@ -183,3 +183,20 @@ def test_delete_task_deletes_children_and_participants():
         # But the platforms the participants reference shouldn't be deleted
         all_platforms = ds.session.query(ds.db_classes.Platform).all()
         assert len(all_platforms) == 4
+
+
+def test_removing_participant_deletes_it():
+    ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    create_example_tasks(ds, create_participants=True)
+
+    task = (
+        ds.session.query(ds.db_classes.Task)
+        .filter(ds.db_classes.Task.name == "J05110 - CASEX E3")
+        .all()[0]
+    )
+
+    task.participants.remove(task.participants[0])
+
+    all_participants = ds.session.query(ds.db_classes.Participant).all()
+
+    assert len(all_participants) == 1
