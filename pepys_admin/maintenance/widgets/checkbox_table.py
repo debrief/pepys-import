@@ -5,7 +5,7 @@ from prompt_toolkit.widgets.base import CheckboxList
 
 
 class CheckboxTable(CheckboxList):
-    def __init__(self, table_data, table_objects, any_keybinding=None):
+    def __init__(self, table_data, table_objects, any_keybinding=None, on_select=None):
         """Creates a table view with checkboxes on the left-hand side.
 
         Parameters:
@@ -31,6 +31,11 @@ class CheckboxTable(CheckboxList):
         self.table_objects = table_objects
 
         self.old_table_objects = None
+
+        self.non_visible_selected = False
+        self.non_visible_items_count = 0
+
+        self.on_select = on_select
 
         self.create_values_from_parameters()
 
@@ -60,6 +65,7 @@ class CheckboxTable(CheckboxList):
             # We've got a change to the data
             # So clear the list of current values
             self.current_values = []
+            self.non_visible_selected = False
             self.old_table_objects = table_objects
 
         if len(table_data) == 0 or len(table_objects) == 0:
@@ -122,9 +128,11 @@ class CheckboxTable(CheckboxList):
                 result.append(("class:table-title", self.open_character))
                 if i == self._selected_index:
                     result.append(("[SetCursorPosition]", ""))
-                if all_selected:
+                if all_selected and self.non_visible_selected:
                     result.append(("class:table-title", "x"))
-                elif none_selected:
+                elif all_selected and self.non_visible_items_count == 0:
+                    result.append(("class:table-title", "x"))
+                elif none_selected and not self.non_visible_selected:
                     result.append(("class:table-title", " "))
                 else:
                     result.append(("class:table-title", "-"))
@@ -173,15 +181,36 @@ class CheckboxTable(CheckboxList):
             # If we've pressed enter (or clicked) on the header row
             # then turn them all on/off as required
             all_selected = len(self.current_values) >= len(self.values) - 1
-            if all_selected:
-                self.current_values = []
+
+            if self.non_visible_items_count > 0:
+                if self.non_visible_selected and all_selected:
+                    # We're in the state where all the non_visible are selected
+                    # if we've also got all the visible ones selected then switch to
+                    # none selected at all
+                    self.current_values = []
+                    self.non_visible_selected = False
+                elif self.non_visible_selected and not all_selected:
+                    # If not all the visible entries are selected then
+                    # select them all
+                    self.current_values = [val[0] for val in self.values[1:]]
+                elif not self.non_visible_selected and not all_selected:
+                    # Select all visible entries
+                    self.current_values = [val[0] for val in self.values[1:]]
+                elif not self.non_visible_selected and all_selected:
+                    self.non_visible_selected = True
             else:
-                # This sets current_values to all of the entries of the table objects
-                # excluding the None value for the header row
-                self.current_values = [val[0] for val in self.values[1:]]
-            return
-        val = self.values[self._selected_index][0]
-        if val in self.current_values:
-            self.current_values.remove(val)
+                if all_selected:
+                    self.current_values = []
+                else:
+                    # This sets current_values to all of the entries of the table objects
+                    # excluding the None value for the header row
+                    self.current_values = [val[0] for val in self.values[1:]]
         else:
-            self.current_values.append(val)
+            val = self.values[self._selected_index][0]
+            if val in self.current_values:
+                self.current_values.remove(val)
+            else:
+                self.current_values.append(val)
+
+        if callable(self.on_select):
+            self.on_select()
