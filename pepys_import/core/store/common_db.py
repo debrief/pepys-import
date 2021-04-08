@@ -235,6 +235,37 @@ class PlatformMixin:
         )
 
 
+class SeriesMixin:
+    _default_preview_fields = ["name"]
+    _default_dropdown_fields = ["name"]
+
+    def __repr__(self):
+        return f'Series(name="{self.name}")'
+
+
+class ExerciseMixin:
+    _default_preview_fields = ["name", "start", "end"]
+    _default_dropdown_fields = ["name"]
+
+    def __repr__(self):
+        return f'Exercise(name="{self.name}")'
+
+
+class SerialMixin:
+    _default_preview_fields = ["name", "start", "end"]
+    _default_dropdown_fields = ["name"]
+
+
+class ExerciseParticipantMixin:
+    _default_preview_fields = ["platform_name", "exercise_name"]
+    _default_dropdown_fields = ["platform_name", "exercise_name"]
+
+
+class SerialParticipantMixin:
+    _default_preview_fields = ["serial_name", "exercise_participant_platform_name"]
+    _default_dropdown_fields = ["serial_name", "exercise_participant_platform_name"]
+
+
 class TaskMixin:
     _default_preview_fields = ["name", "start", "end"]
     _default_dropdown_fields = ["name"]

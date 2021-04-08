@@ -19,6 +19,8 @@ from pepys_import.core.store.common_db import (
     ContactMixin,
     DatafileMixin,
     ElevationPropertyMixin,
+    ExerciseMixin,
+    ExerciseParticipantMixin,
     GeometryMixin,
     GeometrySubTypeMixin,
     HostedByMixin,
@@ -32,6 +34,9 @@ from pepys_import.core.store.common_db import (
     ReferenceDefaultFields,
     ReferenceRepr,
     SensorMixin,
+    SerialMixin,
+    SerialParticipantMixin,
+    SeriesMixin,
     StateMixin,
     SynonymMixin,
     TaggedItemMixin,
@@ -139,6 +144,116 @@ class Platform(BasePostGIS, PlatformMixin):
         nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class Series(BasePostGIS, SeriesMixin):
+    __tablename__ = constants.SERIES
+    table_type = TableTypes.METADATA
+    table_type_id = 36
+
+    series_id = Column(UUID, primary_key=True, default=uuid4)
+    name = Column(String(150), CheckConstraint("name <> ''", name="ck_Series_name"), nullable=False)
+    privacy_id = Column(
+        UUID,
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+
+
+class Exercise(BasePostGIS, ExerciseMixin):
+    __tablename__ = constants.EXERCISE
+    table_type = TableTypes.METADATA
+    table_type_id = 37
+
+    exercise_id = Column(UUID, primary_key=True, default=uuid4)
+    name = Column(
+        String(150), CheckConstraint("name <> ''", name="ck_Exercises_name"), nullable=False
+    )
+    series_id = Column(
+        UUID,
+        ForeignKey("pepys.Series.series_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    privacy_id = Column(
+        UUID,
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+
+
+class Serial(BasePostGIS, SerialMixin):
+    __tablename__ = constants.SERIAL
+    table_type = TableTypes.METADATA
+    table_type_id = 37
+
+    serial_id = Column(UUID, primary_key=True, default=uuid4)
+    exercise_id = Column(
+        UUID,
+        ForeignKey("pepys.Exercises.exercise_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    name = Column(
+        String(150), CheckConstraint("name <> ''", name="ck_Serials_name"), nullable=False
+    )
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    environment = deferred(Column(String(150)))
+    location = deferred(Column(String(150)))
+    privacy_id = Column(
+        UUID,
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+
+
+class ExerciseParticipant(BasePostGIS, ExerciseParticipantMixin):
+    __tablename__ = constants.EXERCISE_PARTICIPANT
+    table_type = TableTypes.METADATA
+    table_type_id = 38
+
+    exercise_participant_id = Column(UUID, primary_key=True, default=uuid4)
+    exercise_id = Column(
+        UUID,
+        ForeignKey("pepys.Exercises.exercise_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    platform_id = Column(
+        UUID,
+        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    privacy_id = Column(
+        UUID,
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+
+
+class SerialParticipant(BasePostGIS, SerialParticipantMixin):
+    __tablename__ = constants.SERIAL_PARTICIPANT
+    table_type = TableTypes.METADATA
+    table_type_id = 39
+
+    serial_participant_id = Column(UUID, primary_key=True, default=uuid4)
+    exercise_participant_id = Column(
+        UUID,
+        ForeignKey(
+            "pepys.ExerciseParticipants.exercise_participant_id",
+            onupdate="cascade",
+            ondelete="cascade",
+        ),
+        nullable=False,
+    )
+    serial_id = Column(
+        UUID,
+        ForeignKey("pepys.Serials.serial_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    force = Column(String(150))
 
 
 class Task(BasePostGIS, TaskMixin):
