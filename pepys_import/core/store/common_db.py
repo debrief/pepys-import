@@ -168,6 +168,9 @@ class PlatformMixin:
     def privacy_name(self):
         return association_proxy("privacy", "name")
 
+    def __repr__(self):
+        return f'Platform(name="{self.name}", identifier="{self.identifier}", nationality="{self.nationality_name}"'
+
     def get_sensor(
         self,
         data_store,
@@ -239,6 +242,28 @@ class SeriesMixin:
     _default_preview_fields = ["name"]
     _default_dropdown_fields = ["name"]
 
+    @declared_attr
+    def child_exercises(self):
+        return relationship("Exercise", lazy="joined", backref="series")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    # TODO: May or may not be needed, depending how we handle these objects
+    # in the GUI
+    # def create_exercise(self, data_store, name, start, end, privacy):
+    #     privacy = data_store.search_privacy(privacy)
+    #     if privacy is None:
+    #         raise ValueError("Specified Privacy does not exist")
+
+    #     exercise = data_store.db_classes.Exercise(name=name, start=start, end=end)
+    #     exercise.privacy = privacy
+    #     exercise.series = self
+
+    #     data_store.session.add(exercise)
+    #     data_store.session.flush()
+
     def __repr__(self):
         return f'Series(name="{self.name}")'
 
@@ -246,6 +271,32 @@ class SeriesMixin:
 class ExerciseMixin:
     _default_preview_fields = ["name", "start", "end"]
     _default_dropdown_fields = ["name"]
+
+    @declared_attr
+    def child_serials(self):
+        return relationship("Serial", lazy="joined", backref="exercise")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    def add_participant(self, data_store, platform, privacy):
+        privacy = data_store.search_privacy(privacy)
+        if privacy is None:
+            raise ValueError("Specified Privacy does not exist")
+
+        participant = data_store.db_classes.ExerciseParticipant()
+        participant.exercise = self
+        participant.privacy = privacy
+        participant.platform = platform
+
+        data_store.session.add(participant)
+
+    # This can be a useful shorthand, but adding a platform by appending to the list that
+    # this provides doesn't work, so this is actually a dangerous attribute to have around!
+    # @declared_attr
+    # def participant_platforms(self):
+    #     return association_proxy("participants", "platform")
 
     def __repr__(self):
         return f'Exercise(name="{self.name}")'
@@ -255,15 +306,97 @@ class SerialMixin:
     _default_preview_fields = ["name", "start", "end"]
     _default_dropdown_fields = ["name"]
 
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    def add_participant(self, data_store, exercise_participant, start, end, force, privacy):
+        privacy = data_store.search_privacy(privacy)
+        if privacy is None:
+            raise ValueError("Specified Privacy does not exist")
+
+        participant = data_store.db_classes.SerialParticipant()
+        participant.serial = self
+        participant.privacy = privacy
+        participant.exercise_participant = exercise_participant
+        participant.start = start
+        participant.end = end
+        participant.force = force
+
+        data_store.session.add(participant)
+
+    def __repr__(self):
+        return f'Serial(name="{self.name}")'
+
 
 class ExerciseParticipantMixin:
     _default_preview_fields = ["platform_name", "exercise_name"]
     _default_dropdown_fields = ["platform_name", "exercise_name"]
 
+    @declared_attr
+    def exercise(self):
+        return relationship("Exercise", lazy="joined", backref="participants")
+
+    @declared_attr
+    def platform(self):
+        return relationship("Platform", lazy="joined", backref="participations")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    @declared_attr
+    def platform_name(self):
+        return association_proxy("platform", "name")
+
+    @declared_attr
+    def platform_identifier(self):
+        return association_proxy("platform", "identifier")
+
+    @declared_attr
+    def platform_nationality_name(self):
+        return association_proxy("platform", "nationality_name")
+
+    @declared_attr
+    def exercise_name(self):
+        return association_proxy("exercise", "name")
+
+    def __repr__(self):
+        return (
+            f'ExerciseParticipant(exercise="{self.exercise_name}", platform="{self.platform_name}")'
+        )
+
 
 class SerialParticipantMixin:
     _default_preview_fields = ["serial_name", "exercise_participant_platform_name"]
     _default_dropdown_fields = ["serial_name", "exercise_participant_platform_name"]
+
+    @declared_attr
+    def serial(self):
+        return relationship("Serial", lazy="joined", backref="participants")
+
+    @declared_attr
+    def exercise_participant(self):
+        return relationship("ExerciseParticipant", lazy="joined")
+
+    @declared_attr
+    def serial_name(self):
+        return association_proxy("serial", "name")
+
+    @declared_attr
+    def platform_name(self):
+        return association_proxy("exercise_participant", "platform_name")
+
+    @declared_attr
+    def platform_identifier(self):
+        return association_proxy("exercise_participant", "platform_identifier")
+
+    @declared_attr
+    def platform_nationality_name(self):
+        return association_proxy("exercise_participant", "platform_nationality_name")
+
+    def __repr__(self):
+        return f'SerialParticipant(serial="{self.serial_name}, platform="{self.platform_name}"'
 
 
 class TaskMixin:
