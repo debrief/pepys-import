@@ -15,6 +15,7 @@ from prompt_toolkit.widgets.base import Border, Button, Label
 from sqlalchemy.orm import undefer
 
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
+from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
 from pepys_admin.maintenance.widgets.blank_border import BlankBorder
 from pepys_admin.maintenance.widgets.custom_text_area import CustomTextArea
 from pepys_admin.maintenance.widgets.task_edit_widget import TaskEditWidget
@@ -178,14 +179,39 @@ class TasksGUI:
         if self.filter_text_area.text != "Type to filter":
             self.tree_view.filter(self.filter_text_area.text)
 
+    def show_validation_error(self, missing_fields):
+        self.show_messagebox(
+            "Validation Error",
+            "You must provide values for the following fields\n\n" + "\n".join(missing_fields),
+        )
+
     def handle_save(self):
         updated_fields = self.task_edit_widget.get_updated_fields()
+
         logger.debug(f"{updated_fields=}")
         if updated_fields == {}:
             return
 
         current_task = self.task_edit_widget.task_object
         primary_key = get_primary_key_for_table(current_task)
+
+        if isinstance(current_task, self.data_store.db_classes.Series):
+            # If this is None then this is a new Series object that we're creating
+            # and thus we need to check all fields are filled
+            if current_task.name is None:
+                if "name" not in updated_fields:
+                    self.show_validation_error(missing_fields=["name"])
+                    return
+        elif isinstance(current_task, self.data_store.db_classes.Wargame) or isinstance(
+            current_task, self.data_store.db_classes.Serial
+        ):
+            if current_task.start is None:
+                required_fields = set(["name", "start", "end"])
+                provided_fields = set(updated_fields.keys())
+                if not required_fields.issubset(provided_fields):
+                    missing_fields = required_fields.difference(provided_fields)
+                    self.show_validation_error(missing_fields=missing_fields)
+                    return
 
         # Keep track of the old values for adding to Logs later
         old_values = {}
@@ -231,25 +257,35 @@ class TasksGUI:
 
     def handle_delete(self):
         async def coroutine():
+            if isinstance(self.task_edit_widget.task_object, self.data_store.db_classes.Serial):
+                name = self.task_edit_widget.task_object.serial_number
+            else:
+                name = self.task_edit_widget.task_object.name
+
+            if name is None:
+                name = "New entry"
+
             dialog = ConfirmationDialog(
                 "Delete?",
-                f"Are you sure you want to delete the task\n{self.task_edit_widget.task_object.name}\nand all its sub-tasks?",
+                f"Are you sure you want to delete the task\n{name}\nand all its sub-tasks?",
             )
             result = await self.show_dialog_as_float(dialog)
 
             if not result:
                 return
 
-            if self.task_edit_widget.task_object.task_id is not None:
+            primary_key = get_primary_key_for_table(self.task_edit_widget.task_object)
+
+            if getattr(self.task_edit_widget.task_object, primary_key) is not None:
                 # We've got a task that has been saved in the database,
-                # as it has a task_id, so we need to delete from the database
+                # as it has an id, so we need to delete from the database
                 with self.data_store.session_scope():
                     self.data_store.session.delete(self.task_edit_widget.task_object)
 
             self.tree_view.selected_element.parent.remove_child(self.tree_view.selected_element)
             self.tree_view.select_element(self.tree_view.selected_element.parent)
             if self.tree_view.selected_element is None:
-                self.task_edit_widget.set_task_object(None, level=1)
+                self.task_edit_widget.set_task_object(None)
 
         ensure_future(coroutine())
 
@@ -386,6 +422,17 @@ class TasksGUI:
         app.invalidate()
 
         return result
+
+    async def show_messagebox_async(self, title, text=None):
+        # This is the async function, for awaiting within another
+        # coroutine
+        dialog = MessageDialog(title, text)
+        await self.show_dialog_as_float(dialog)
+
+    def show_messagebox(self, title, text=None):
+        # This is the non-async version, that just runs a task to
+        # ensure the output of the async version
+        ensure_future(self.show_messagebox_async(title, text))
 
 
 if __name__ == "__main__":
