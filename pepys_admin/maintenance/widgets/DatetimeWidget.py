@@ -35,4 +35,7 @@ class DatetimeWidget(MaskedInputWidget):
 
     @property
     def datetime_value(self):
-        return datetime.strptime(self.text, "%Y-%m-%d %H:%M:%S")
+        if self.text == "yyyy-mm-dd HH:MM:SS":
+            return None
+        else:
+            return datetime.strptime(self.text, "%Y-%m-%d %H:%M:%S")
