@@ -147,6 +147,7 @@ class DataStore:
 
         self._search_privacy_cache = dict()
         self._search_platform_type_cache = dict()
+        self._search_force_type_cache = dict()
         self._search_sensor_type_cache = dict()
         self._search_sensor_cache = dict()
         self._search_nationality_cache = dict()
@@ -639,6 +640,16 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none("_search_force_type_cache")
+    def search_force_type(self, name):
+        """Search for any force type with this name"""
+        # print(f"Searching force type with name = {name}")
+        return (
+            self.session.query(self.db_classes.ForceType)
+            .filter(func.lower(self.db_classes.ForceType.name) == lowercase_or_none(name))
+            .first()
+        )
+
     @cache_results_if_not_none("_search_nationality_cache")
     def search_nationality(self, name):
         """Search for any nationality with this name"""
@@ -1006,6 +1017,36 @@ class DataStore:
     # End of Measurements
     #############################################################
     # Reference Type Maintenance
+
+    def add_to_force_types(self, name, color, change_id):
+        """
+        Adds the specified force type to the ForceTypes table if not already present
+
+        :param name: Name of :class:`ForceType`
+        :type name: String
+        :param color: Color of the ForceType
+        :type color: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
+        :return: Created :class:`ForceType` entity
+        :rtype: ForceType
+        """
+        force_type = self.search_force_type(name)
+        if force_type:
+            return force_type
+
+        # enough info to proceed and create entry
+        force_type = self.db_classes.ForceType(name=name, color=color)
+        self.session.add(force_type)
+        self.session.flush()
+
+        self.add_to_logs(
+            table=constants.FORCE_TYPE,
+            row_id=str(force_type.force_type_id),
+            change_id=change_id,
+        )
+
+        return force_type
 
     def add_to_platform_types(self, name, change_id):
         """

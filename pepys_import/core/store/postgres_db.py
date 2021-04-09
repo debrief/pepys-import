@@ -151,10 +151,10 @@ class Series(BasePostGIS, SeriesMixin):
     table_type = TableTypes.METADATA
     table_type_id = 36
 
-    series_id = Column(UUID, primary_key=True, default=uuid4)
+    series_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(150), CheckConstraint("name <> ''", name="ck_Series_name"), nullable=False)
     privacy_id = Column(
-        UUID,
+        UUID(as_uuid=True),
         ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
@@ -166,19 +166,19 @@ class Wargame(BasePostGIS, WargameMixin):
     table_type = TableTypes.METADATA
     table_type_id = 37
 
-    wargame_id = Column(UUID, primary_key=True, default=uuid4)
+    wargame_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
         String(150), CheckConstraint("name <> ''", name="ck_Wargames_name"), nullable=False
     )
     series_id = Column(
-        UUID,
+        UUID(as_uuid=True),
         ForeignKey("pepys.Series.series_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     privacy_id = Column(
-        UUID,
+        UUID(as_uuid=True),
         ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
@@ -190,14 +190,16 @@ class Serial(BasePostGIS, SerialMixin):
     table_type = TableTypes.METADATA
     table_type_id = 37
 
-    serial_id = Column(UUID, primary_key=True, default=uuid4)
+    serial_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     wargame_id = Column(
-        UUID,
+        UUID(as_uuid=True),
         ForeignKey("pepys.Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
-    name = Column(
-        String(150), CheckConstraint("name <> ''", name="ck_Serials_name"), nullable=False
+    serial_number = Column(
+        String(150),
+        CheckConstraint("serial_number <> ''", name="ck_Serials_serial_number"),
+        nullable=False,
     )
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
@@ -205,7 +207,7 @@ class Serial(BasePostGIS, SerialMixin):
     location = deferred(Column(String(150)))
     exercise = Column(String(150))
     privacy_id = Column(
-        UUID,
+        UUID(as_uuid=True),
         ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
@@ -217,19 +219,19 @@ class WargameParticipant(BasePostGIS, WargameParticipantMixin):
     table_type = TableTypes.METADATA
     table_type_id = 38
 
-    wargame_participant_id = Column(UUID, primary_key=True, default=uuid4)
+    wargame_participant_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     wargame_id = Column(
-        UUID,
+        UUID(as_uuid=True),
         ForeignKey("pepys.Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     platform_id = Column(
-        UUID,
+        UUID(as_uuid=True),
         ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     privacy_id = Column(
-        UUID,
+        UUID(as_uuid=True),
         ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
@@ -241,9 +243,9 @@ class SerialParticipant(BasePostGIS, SerialParticipantMixin):
     table_type = TableTypes.METADATA
     table_type_id = 39
 
-    serial_participant_id = Column(UUID, primary_key=True, default=uuid4)
+    serial_participant_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     wargame_participant_id = Column(
-        UUID,
+        UUID(as_uuid=True),
         ForeignKey(
             "pepys.WargameParticipants.wargame_participant_id",
             onupdate="cascade",
@@ -252,13 +254,17 @@ class SerialParticipant(BasePostGIS, SerialParticipantMixin):
         nullable=False,
     )
     serial_id = Column(
-        UUID,
+        UUID(as_uuid=True),
         ForeignKey("pepys.Serials.serial_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    force = Column(String(150))
+    force_type_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("pepys.ForceTypes.force_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -453,6 +459,22 @@ class TaggedItem(BasePostGIS, TaggedItemMixin):
 
 
 # Reference Tables
+class ForceType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
+    __tablename__ = constants.FORCE_TYPE
+    table_type = TableTypes.REFERENCE
+    table_type_id = 40
+
+    force_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_ForceTypes_name"),
+        nullable=False,
+        unique=True,
+    )
+    color = Column(String(10))
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
 class PlatformType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.PLATFORM_TYPE
     table_type = TableTypes.REFERENCE

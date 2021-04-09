@@ -254,7 +254,11 @@ class SerialParticipant(BaseSpatiaLite, SerialParticipantMixin):
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    force = Column(String(150))
+    force_type_id = Column(
+        UUIDType,
+        ForeignKey("ForceTypes.force_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -440,6 +444,22 @@ class TaggedItem(BaseSpatiaLite, TaggedItemMixin):
 
 
 # Reference Tables
+class ForceType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
+    __tablename__ = constants.FORCE_TYPE
+    table_type = TableTypes.REFERENCE
+    table_type_id = 40
+
+    force_type_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_ForceTypes_name"),
+        nullable=False,
+        unique=True,
+    )
+    color = Column(String(10))
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
 class PlatformType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.PLATFORM_TYPE
     table_type = TableTypes.REFERENCE

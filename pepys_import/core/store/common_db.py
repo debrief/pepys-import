@@ -302,6 +302,8 @@ class WargameMixin:
 
         data_store.session.add(participant)
 
+        return participant
+
     # This can be a useful shorthand, but adding a platform by appending to the list that
     # this provides doesn't work, so this is actually a dangerous attribute to have around!
     # @declared_attr
@@ -325,11 +327,15 @@ class SerialMixin:
         return association_proxy("wargame", "name")
 
     def add_participant(
-        self, data_store, wargame_participant, force, privacy, start=None, end=None
+        self, data_store, wargame_participant, force_type, privacy, start=None, end=None
     ):
         privacy = data_store.search_privacy(privacy)
         if privacy is None:
             raise ValueError("Specified Privacy does not exist")
+
+        force_type = data_store.search_force_type(force_type)
+        if force_type is None:
+            raise ValueError("Specified Force Type does not exist")
 
         participant = data_store.db_classes.SerialParticipant()
         participant.serial = self
@@ -337,9 +343,11 @@ class SerialMixin:
         participant.wargame_participant = wargame_participant
         participant.start = start
         participant.end = end
-        participant.force = force
+        participant.force_type = force_type
 
         data_store.session.add(participant)
+
+        return participant
 
     def __repr__(self):
         return f'Serial(serial_number="{self.serial_number}")'
@@ -388,8 +396,8 @@ class WargameParticipantMixin:
 
 
 class SerialParticipantMixin:
-    _default_preview_fields = ["serial_name", "wargame_participant_platform_name"]
-    _default_dropdown_fields = ["serial_name", "wargame_participant_platform_name"]
+    _default_preview_fields = ["serial_number", "wargame_participant_platform_name"]
+    _default_dropdown_fields = ["serial_number", "wargame_participant_platform_name"]
 
     @declared_attr
     def serial(self):
@@ -406,8 +414,24 @@ class SerialParticipantMixin:
         return relationship("WargameParticipant", lazy="joined")
 
     @declared_attr
-    def serial_name(self):
-        return association_proxy("serial", "name")
+    def force_type(self):
+        return relationship("ForceType", lazy="joined")
+
+    @declared_attr
+    def force_type_name(self):
+        return association_proxy("force_type", "name")
+
+    @declared_attr
+    def force_type_color(self):
+        return association_proxy("force_type", "color")
+
+    @declared_attr
+    def serial_number(self):
+        return association_proxy("serial", "serial_number")
+
+    @declared_attr
+    def serial_exercise(self):
+        return association_proxy("serial", "serial_exercise")
 
     @declared_attr
     def platform_name(self):
@@ -422,7 +446,7 @@ class SerialParticipantMixin:
         return association_proxy("wargame_participant", "platform_nationality_name")
 
     def __repr__(self):
-        return f'SerialParticipant(serial="{self.serial_name}, platform="{self.platform_name}"'
+        return f'SerialParticipant(serial="{self.serial_number}, platform="{self.platform_name}"'
 
 
 class TaskMixin:
