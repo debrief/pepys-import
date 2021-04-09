@@ -10,94 +10,102 @@ def create_example_tasks(ds, create_participants=False):
         ds.populate_metadata()
 
     with ds.session_scope():
-        change_id = ds.add_to_changes("Test", datetime.utcnow(), "Test data").change_id
-        jw = ds.add_to_tasks(
-            "Joint Warrier",
-            start=datetime(1900, 1, 1, 0, 0, 0),
-            end=datetime(2100, 1, 1, 0, 0, 0),
-            privacy="Private",
-            change_id=change_id,
-        )
+        priv_id = ds.session.query(ds.db_classes.Privacy).all()[0].privacy_id
 
-        ae = ds.add_to_tasks(
-            "Another Exercise",
-            start=datetime(1900, 1, 1, 0, 0, 0),
-            end=datetime(2100, 1, 1, 0, 0, 0),
-            privacy="Private",
-            change_id=change_id,
-        )
+        s1 = ds.db_classes.Series(name="Joint Warrior", privacy_id=priv_id)
+        s2 = ds.db_classes.Series(name="Another Top-Level Series", privacy_id=priv_id)
 
-        ds.add_to_tasks(
-            "Another Exercise Child 1",
-            start=datetime(2018, 1, 1, 0, 0, 0),
-            end=datetime(2019, 1, 1, 0, 0, 0),
-            privacy="Private",
-            parent=ae,
-            change_id=change_id,
-        )
-
-        ae = ds.add_to_tasks(
-            "A Third Exercise",
-            start=datetime(1900, 1, 1, 0, 0, 0),
-            end=datetime(2100, 1, 1, 0, 0, 0),
-            privacy="Private",
-            change_id=change_id,
-        )
-
-        jw_20_02 = ds.add_to_tasks(
-            "Joint Warrier 20/02",
+        wg1 = ds.db_classes.Wargame(
+            name="Joint Warrior 20/02",
             start=datetime(2020, 2, 1, 0, 0, 0),
-            end=datetime(2020, 1, 28, 0, 0, 0),
-            privacy="Very Private",
-            change_id=change_id,
-            parent=jw,
+            end=datetime(2020, 2, 28, 0, 0, 0),
+            privacy_id=priv_id,
         )
+        wg1.series = s1
 
-        ds.add_to_tasks(
-            "J05020 - NAVCOMEX",
+        wg2 = ds.db_classes.Wargame(
+            name="An Wargame",
+            start=datetime(2020, 2, 1, 0, 0, 0),
+            end=datetime(2020, 2, 28, 0, 0, 0),
+            privacy_id=priv_id,
+        )
+        wg2.series = s2
+
+        wg3 = ds.db_classes.Wargame(
+            name="Another Wargame",
+            start=datetime(2020, 2, 1, 0, 0, 0),
+            end=datetime(2020, 2, 28, 0, 0, 0),
+            privacy_id=priv_id,
+        )
+        wg3.series = s2
+
+        serial1 = ds.db_classes.Serial(
+            serial_number="J05020",
+            exercise="NAVCOMEX",
             start=datetime(2020, 2, 3, 7, 0, 0),
-            end=datetime(2020, 1, 4, 12, 0, 0),
-            privacy="Private",
-            change_id=change_id,
-            parent=jw_20_02,
+            end=datetime(2020, 2, 4, 12, 0, 0),
+            environment="Test Environment",
+            privacy_id=priv_id,
         )
+        serial1.wargame = wg1
 
-        ds.add_to_tasks(
-            "J05084 - ADEX 324",
+        serial2 = ds.db_classes.Serial(
+            serial_number="J05084",
+            exercise="ADEX 324",
             start=datetime(2020, 2, 6, 9, 0, 0),
-            end=datetime(2020, 1, 8, 14, 0, 0),
-            privacy="Private",
-            change_id=change_id,
-            parent=jw_20_02,
+            end=datetime(2020, 2, 8, 14, 0, 0),
+            environment="Test Environment",
+            privacy_id=priv_id,
         )
+        serial2.wargame = wg1
 
-        j_05110 = ds.add_to_tasks(
-            "J05110 - CASEX E3",
+        serial3 = ds.db_classes.Serial(
+            serial_number="J05110",
+            exercise="CASEX E3",
             start=datetime(2020, 2, 23, 9, 0, 0),
-            end=datetime(2020, 1, 25, 15, 0, 0),
-            privacy="Private",
-            change_id=change_id,
-            parent=jw_20_02,
+            end=datetime(2020, 2, 25, 15, 0, 0),
+            environment="Test Environment",
+            privacy_id=priv_id,
         )
+        serial3.wargame = wg1
+
+        ds.session.add_all([s1, s2, wg1, wg2, wg3, serial1, serial2, serial3])
+
+        plat1 = ds.session.query(ds.db_classes.Platform).all()[0]
+        plat2 = ds.session.query(ds.db_classes.Platform).all()[1]
+        plat3 = ds.session.query(ds.db_classes.Platform).all()[2]
 
         if create_participants:
-            plat1 = ds.session.query(ds.db_classes.Platform).all()[0]
-            plat2 = ds.session.query(ds.db_classes.Platform).all()[1]
+            wg1.add_participant(data_store=ds, platform=plat1, privacy="Private")
+            wg1.add_participant(data_store=ds, platform=plat2, privacy="Private")
+            wg1.add_participant(data_store=ds, platform=plat3, privacy="Private")
 
-            priv = ds.session.query(ds.db_classes.Privacy).all()[0]
-
-            p1 = ds.db_classes.Participant(
-                platform_id=plat1.platform_id, privacy_id=priv.privacy_id, force="Red"
-            )
-            p2 = ds.db_classes.Participant(
-                platform_id=plat2.platform_id,
-                privacy_id=priv.privacy_id,
-                start=datetime(2021, 3, 21, 9, 0, 0),
+            serial1.add_participant(
+                data_store=ds,
+                wargame_participant=wg1.participants[0],
+                start=datetime(2020, 2, 3, 8, 0, 0),
+                end=datetime(2020, 2, 3, 10, 0, 0),
                 force="Blue",
+                privacy="Private",
             )
 
-            j_05110.add_participant(p1)
-            j_05110.add_participant(p2)
+            serial1.add_participant(
+                data_store=ds,
+                wargame_participant=wg1.participants[1],
+                start=datetime(2020, 2, 3, 8, 0, 0),
+                end=datetime(2020, 2, 3, 9, 30, 0),
+                force="Red",
+                privacy="Private",
+            )
+
+            serial2.add_participant(
+                data_store=ds,
+                wargame_participant=wg1.participants[2],
+                start=datetime(2020, 2, 6, 11, 0, 0),
+                end=datetime(2020, 2, 7, 11, 0, 0),
+                force="Blue",
+                privacy="Private",
+            )
 
 
 def test_create_tasks():
@@ -105,48 +113,77 @@ def test_create_tasks():
     create_example_tasks(ds)
 
     with ds.session_scope():
-        all_tasks = ds.session.query(ds.db_classes.Task).all()
+        all_series = ds.session.query(ds.db_classes.Series).all()
+        all_wargames = ds.session.query(ds.db_classes.Wargame).all()
+        all_serials = ds.session.query(ds.db_classes.Serial).all()
 
-        assert len(all_tasks) == 8
+        assert len(all_series) == 2
+        assert len(all_wargames) == 3
+        assert len(all_serials) == 3
 
-        # Check the tree structure for a task, going from bottom to top
-        # including names and levels
-        results = (
-            ds.session.query(ds.db_classes.Task)
-            .filter(ds.db_classes.Task.name == "J05110 - CASEX E3")
-            .all()
+        jw_series = (
+            ds.session.query(ds.db_classes.Series)
+            .filter(ds.db_classes.Series.name == "Joint Warrior")
+            .one()
+        )
+        other_series = (
+            ds.session.query(ds.db_classes.Series)
+            .filter(ds.db_classes.Series.name == "Another Top-Level Series")
+            .one()
         )
 
-        assert len(results) == 1
-        bottom_task = results[0]
+        assert len(jw_series.child_wargames) == 1
+        assert len(other_series.child_wargames) == 2
 
-        assert bottom_task.level == 2
+        jw_wargame = jw_series.child_wargames[0]
 
-        middle_task = bottom_task.parent
-        assert middle_task.name == "Joint Warrier 20/02"
-        assert bottom_task.parent_name == middle_task.name
-        assert bottom_task.parent_id == middle_task.task_id
-        assert middle_task.level == 1
+        assert jw_wargame.name == "Joint Warrior 20/02"
+        assert len(jw_wargame.child_serials) == 3
+        assert jw_wargame.series == jw_series
+        assert jw_wargame.series_name == "Joint Warrior"
 
-        top_task = middle_task.parent
-        assert top_task.name == "Joint Warrier"
-        assert middle_task.parent_name == top_task.name
-        assert middle_task.parent_id == top_task.task_id
-        assert top_task.level == 0
+        serial_numbers = [serial.serial_number for serial in jw_wargame.child_serials]
+        assert "J05020" in serial_numbers
+        assert "J05084" in serial_numbers
+        assert "J05110" in serial_numbers
+
+        serial_exercises = [serial.exercise for serial in jw_wargame.child_serials]
+        assert "NAVCOMEX" in serial_exercises
+        assert "ADEX 324" in serial_exercises
+        assert "CASEX E3" in serial_exercises
 
 
 def test_create_participants():
     ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
     create_example_tasks(ds, create_participants=True)
 
-    all_participants = ds.session.query(ds.db_classes.Participant).all()
+    all_wgps = ds.session.query(ds.db_classes.WargameParticipant).all()
+    all_sps = ds.session.query(ds.db_classes.SerialParticipant).all()
 
-    assert len(all_participants) == 2
+    assert len(all_wgps) == 3
+    assert len(all_sps) == 3
 
-    p1 = all_participants[0]
+    jw_wargame = (
+        ds.session.query(ds.db_classes.Wargame)
+        .filter(ds.db_classes.Wargame.name == "Joint Warrior 20/02")
+        .one()
+    )
 
-    assert p1.task.name == "J05110 - CASEX E3"
-    assert p1.platform.name == "ADRI"
+    assert len(jw_wargame.participants) == 3
+    platform_names = [participant.platform_name for participant in jw_wargame.participants]
+    assert "ADRI" in platform_names
+    assert "JEAN" in platform_names
+    assert "NARV" in platform_names
+
+    serial1 = (
+        ds.session.query(ds.db_classes.Serial)
+        .filter(ds.db_classes.Serial.serial_number == "J05020")
+        .one()
+    )
+    assert len(serial1.participants) == 2
+    platform_names = [participant.platform_name for participant in serial1.participants]
+    assert "ADRI" in platform_names
+    assert "JEAN" in platform_names
 
 
 def test_delete_task_deletes_children_and_participants():
@@ -154,49 +191,98 @@ def test_delete_task_deletes_children_and_participants():
     create_example_tasks(ds, create_participants=True)
 
     with ds.session_scope():
-        task = (
-            ds.session.query(ds.db_classes.Task)
-            .filter(ds.db_classes.Task.name == "Joint Warrier 20/02")
-            .all()[0]
+        wargame = (
+            ds.session.query(ds.db_classes.Wargame)
+            .filter(ds.db_classes.Wargame.name == "Joint Warrior 20/02")
+            .one()
         )
 
-        ds.session.delete(task)
+        ds.session.delete(wargame)
 
     with ds.session_scope():
-        all_tasks = ds.session.query(ds.db_classes.Task).all()
+        all_wargames = ds.session.query(ds.db_classes.Wargame).all()
+        all_serials = ds.session.query(ds.db_classes.Serial).all()
 
-        # Check that the task and it's children have been deleted
-        assert len(all_tasks) == 4
+        assert len(all_wargames) == 2
+        assert len(all_serials) == 0
 
         # Should still have parent
-        parent_task = (
-            ds.session.query(ds.db_classes.Task)
-            .filter(ds.db_classes.Task.name == "Joint Warrier")
+        parent_series = (
+            ds.session.query(ds.db_classes.Series)
+            .filter(ds.db_classes.Series.name == "Joint Warrior")
             .all()
         )
-        assert len(parent_task) == 1
+        assert len(parent_series) == 1
 
         # The only participants were those under one of the deleted tasks, so they should be deleted too
-        all_participants = ds.session.query(ds.db_classes.Participant).all()
-        assert len(all_participants) == 0
+        all_wgps = ds.session.query(ds.db_classes.WargameParticipant).all()
+        assert len(all_wgps) == 0
+
+        all_sps = ds.session.query(ds.db_classes.SerialParticipant).all()
+        assert len(all_sps) == 0
 
         # But the platforms the participants reference shouldn't be deleted
         all_platforms = ds.session.query(ds.db_classes.Platform).all()
         assert len(all_platforms) == 4
 
 
-def test_removing_participant_deletes_it():
+def test_removing_serial_participant_deletes_it():
     ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
     create_example_tasks(ds, create_participants=True)
 
-    task = (
-        ds.session.query(ds.db_classes.Task)
-        .filter(ds.db_classes.Task.name == "J05110 - CASEX E3")
-        .all()[0]
-    )
+    with ds.session_scope():
+        serial = (
+            ds.session.query(ds.db_classes.Serial)
+            .filter(ds.db_classes.Serial.serial_number == "J05020")
+            .one()
+        )
 
-    task.participants.remove(task.participants[0])
+        serial.participants.remove(serial.participants[0])
 
-    all_participants = ds.session.query(ds.db_classes.Participant).all()
+    with ds.session_scope():
+        serial = (
+            ds.session.query(ds.db_classes.Serial)
+            .filter(ds.db_classes.Serial.serial_number == "J05020")
+            .one()
+        )
 
-    assert len(all_participants) == 1
+        assert len(serial.participants) == 1
+
+        # Check it deletes the SerialParticipant entry
+        all_sps = ds.session.query(ds.db_classes.SerialParticipant).all()
+        assert len(all_sps) == 2
+
+        # Check it doesn't delete the wargame participant associated with it
+        all_wgps = ds.session.query(ds.db_classes.WargameParticipant).all()
+        assert len(all_wgps) == 3
+
+
+def test_removing_wargame_participant_deletes_it_and_serial_participants():
+    ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    create_example_tasks(ds, create_participants=True)
+
+    with ds.session_scope():
+        wargame = (
+            ds.session.query(ds.db_classes.Wargame)
+            .filter(ds.db_classes.Wargame.name == "Joint Warrior 20/02")
+            .one()
+        )
+
+        wargame.participants.remove(wargame.participants[0])
+
+    with ds.session_scope():
+        serial = (
+            ds.session.query(ds.db_classes.Serial)
+            .filter(ds.db_classes.Serial.serial_number == "J05020")
+            .one()
+        )
+
+        assert len(serial.participants) == 1
+
+        # Check it deletes the WargameParticipant entry
+        all_wgps = ds.session.query(ds.db_classes.WargameParticipant).all()
+        assert len(all_wgps) == 2
+
+        # Check it also deletes the SerialParticipant entry
+        all_sps = ds.session.query(ds.db_classes.SerialParticipant).all()
+        assert len(all_sps) == 2
