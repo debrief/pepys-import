@@ -21,6 +21,7 @@ from pepys_admin.maintenance.widgets.task_edit_widget import TaskEditWidget
 from pepys_admin.maintenance.widgets.tree_view import TreeElement, TreeView
 from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import USER, DataStore
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
 logger.remove()
 logger.add("gui.log")
@@ -128,7 +129,7 @@ class TasksGUI:
             focus_on_click=True,
             on_change=self.on_filter_text_change,
         )
-        self.top_level_add_button = Button("Add task", self.handle_top_level_add)
+        self.top_level_add_button = Button("Add series", self.handle_top_level_add)
         self.lh_pane = HSplit(
             [
                 Label(text="Tasks   F2", style="class:title-line"),
@@ -179,10 +180,12 @@ class TasksGUI:
 
     def handle_save(self):
         updated_fields = self.task_edit_widget.get_updated_fields()
+        logger.debug(f"{updated_fields=}")
         if updated_fields == {}:
             return
 
         current_task = self.task_edit_widget.task_object
+        primary_key = get_primary_key_for_table(current_task)
 
         # Keep track of the old values for adding to Logs later
         old_values = {}
@@ -213,14 +216,17 @@ class TasksGUI:
             for column, old_value in old_values.items():
                 self.data_store.add_to_logs(
                     constants.TASK,
-                    current_task.task_id,
+                    getattr(current_task, primary_key),
                     field=column,
                     previous_value=str(old_value),
                     change_id=change_id,
                 )
 
         self.tree_view.selected_element.object = current_task
-        self.tree_view.selected_element.text = current_task.name
+        if isinstance(current_task, self.data_store.db_classes.Serial):
+            self.tree_view.selected_element.text = current_task.serial_number
+        else:
+            self.tree_view.selected_element.text = current_task.name
         get_app().invalidate()
 
     def handle_delete(self):
@@ -251,25 +257,24 @@ class TasksGUI:
         self.task_edit_widget.set_task_object(selected_element.object)
 
     def handle_tree_add(self, parent_element):
-        new_task = self.data_store.db_classes.Task()
-        if parent_element.object is not None:
-            # For some reason, setting new_task.parent to parent_element.object
-            # sets the parent_element.object Task instance to be connected to the session
-            # and it is never expunged when expunge_all() is called
-            # So we set the parent_id instead
-            new_task.parent_id = parent_element.object.task_id
-        new_element = TreeElement("New entry", new_task)
+        if isinstance(parent_element.object, self.data_store.db_classes.Series):
+            # We clicked Add on a Series, so add a Wargame
+            new_object = self.data_store.db_classes.Wargame()
+            new_object.series_id = parent_element.object.series_id
+        elif isinstance(parent_element.object, self.data_store.db_classes.Wargame):
+            # We clicked Add on a Wargame, so add a Serial
+            new_object = self.data_store.db_classes.Serial()
+            new_object.wargame_id = parent_element.object.wargame_id
+        else:
+            # Do nothing - we can't add anything below a Serial
+            return
+        new_element = TreeElement("New entry", new_object)
         parent_element.add_child(new_element)
         self.tree_view.select_element(new_element)
 
     def handle_top_level_add(self):
-        new_task = self.data_store.db_classes.Task()
-        # As it's a top level task, set stupidly early/late start and end
-        # so that any tasks later on can come within these times (and so
-        # that it is obvious that they're fake dates)
-        new_task.start = datetime(1, 1, 1, 0, 0, 0)
-        new_task.end = datetime(9999, 1, 1, 0, 0, 0)
-        new_element = TreeElement("New entry", new_task)
+        new_series = self.data_store.db_classes.Series()
+        new_element = TreeElement("New entry", new_series)
         self.tree_view.root_element.add_child(new_element)
         self.tree_view.select_element(new_element)
 

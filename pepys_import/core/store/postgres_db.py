@@ -27,7 +27,6 @@ from pepys_import.core.store.common_db import (
     LogsHoldingMixin,
     MediaMixin,
     NationalityMixin,
-    ParticipantMixin,
     PlatformMixin,
     ReferenceDefaultFields,
     ReferenceRepr,
@@ -38,7 +37,6 @@ from pepys_import.core.store.common_db import (
     StateMixin,
     SynonymMixin,
     TaggedItemMixin,
-    TaskMixin,
     WargameMixin,
     WargameParticipantMixin,
 )
@@ -263,62 +261,6 @@ class SerialParticipant(BasePostGIS, SerialParticipantMixin):
     force_type_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.ForceTypes.force_type_id", onupdate="cascade", ondelete="cascade"),
-        nullable=False,
-    )
-    created_date = Column(DateTime, default=datetime.utcnow)
-
-
-class Task(BasePostGIS, TaskMixin):
-    __tablename__ = constants.TASK
-    table_type = TableTypes.METADATA
-    table_type_id = 4
-
-    task_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), CheckConstraint("name <> ''", name="ck_Tasks_name"), nullable=False)
-    parent_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("pepys.Tasks.task_id", onupdate="cascade", ondelete="cascade"),
-    )
-    start = Column(TIMESTAMP, nullable=False)
-    end = Column(TIMESTAMP, nullable=False)
-    exercise = Column(String(150))
-    environment = deferred(Column(String(150)))
-    location = deferred(Column(String(150)))
-    privacy_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
-        nullable=False,
-    )
-    created_date = Column(DateTime, default=datetime.utcnow)
-
-    __table_args__ = (
-        UniqueConstraint("name", "parent_id", name="uq_Task_name_parent_id"),
-        {"schema": "pepys"},
-    )
-
-
-class Participant(BasePostGIS, ParticipantMixin):
-    __tablename__ = constants.PARTICIPANT
-    table_type = TableTypes.METADATA
-    table_type_id = 5
-
-    participant_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    platform_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
-        nullable=False,
-    )
-    task_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("pepys.Tasks.task_id", onupdate="cascade", ondelete="cascade"),
-        nullable=False,
-    )
-    start = Column(TIMESTAMP)
-    end = Column(TIMESTAMP)
-    force = Column(String(150))
-    privacy_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -951,9 +893,9 @@ class Geometry1(BasePostGIS, GeometryMixin):
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    task_id = Column(
+    serial_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Tasks.task_id", onupdate="cascade", ondelete="cascade"),
+        ForeignKey("pepys.Serials.serial_id", onupdate="cascade", ondelete="cascade"),
     )
     subject_platform_id = Column(
         UUID(as_uuid=True),

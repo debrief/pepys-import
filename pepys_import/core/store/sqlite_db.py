@@ -24,7 +24,6 @@ from pepys_import.core.store.common_db import (
     LogsHoldingMixin,
     MediaMixin,
     NationalityMixin,
-    ParticipantMixin,
     PlatformMixin,
     ReferenceDefaultFields,
     ReferenceRepr,
@@ -35,7 +34,6 @@ from pepys_import.core.store.common_db import (
     StateMixin,
     SynonymMixin,
     TaggedItemMixin,
-    TaskMixin,
     WargameMixin,
     WargameParticipantMixin,
 )
@@ -257,58 +255,6 @@ class SerialParticipant(BaseSpatiaLite, SerialParticipantMixin):
     force_type_id = Column(
         UUIDType,
         ForeignKey("ForceTypes.force_type_id", onupdate="cascade", ondelete="cascade"),
-        nullable=False,
-    )
-    created_date = Column(DateTime, default=datetime.utcnow)
-
-
-class Task(BaseSpatiaLite, TaskMixin):
-    __tablename__ = constants.TASK
-    table_type = TableTypes.METADATA
-    table_type_id = 4
-
-    task_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), CheckConstraint("name <> ''", name="ck_Tasks_name"), nullable=False)
-    parent_id = Column(
-        UUIDType, ForeignKey("Tasks.task_id", onupdate="cascade", ondelete="cascade")
-    )
-    start = Column(TIMESTAMP, nullable=False)
-    end = Column(TIMESTAMP, nullable=False)
-    exercise = Column(String(150))
-    environment = deferred(Column(String(150)))
-    location = deferred(Column(String(150)))
-    privacy_id = Column(
-        UUIDType,
-        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
-        nullable=False,
-    )
-    created_date = Column(DateTime, default=datetime.utcnow)
-
-    __table_args__ = (UniqueConstraint("name", "parent_id", name="uq_Task_name_parent_id"),)
-
-
-class Participant(BaseSpatiaLite, ParticipantMixin):
-    __tablename__ = constants.PARTICIPANT
-    table_type = TableTypes.METADATA
-    table_type_id = 5
-
-    participant_id = Column(UUIDType, primary_key=True, default=uuid4)
-    platform_id = Column(
-        UUIDType,
-        ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
-        nullable=False,
-    )
-    task_id = Column(
-        UUIDType,
-        ForeignKey("Tasks.task_id", onupdate="cascade", ondelete="cascade"),
-        nullable=False,
-    )
-    start = Column(TIMESTAMP)
-    end = Column(TIMESTAMP)
-    force = Column(String(150))
-    privacy_id = Column(
-        UUIDType,
-        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -900,7 +846,9 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    task_id = Column(UUIDType, ForeignKey("Tasks.task_id", onupdate="cascade", ondelete="cascade"))
+    serial_id = Column(
+        UUIDType, ForeignKey("Serials.serial_id", onupdate="cascade", ondelete="cascade")
+    )
     subject_platform_id = Column(
         UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade")
     )

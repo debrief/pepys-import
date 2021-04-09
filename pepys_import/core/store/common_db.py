@@ -250,6 +250,10 @@ class SeriesMixin:
     def privacy(self):
         return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
     # TODO: May or may not be needed, depending how we handle these objects
     # in the GUI
     # def create_exercise(self, data_store, name, start, end, privacy):
@@ -290,6 +294,10 @@ class WargameMixin:
     def series_name(self):
         return association_proxy("series", "name")
 
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
     def add_participant(self, data_store, platform, privacy):
         privacy = data_store.search_privacy(privacy)
         if privacy is None:
@@ -325,6 +333,10 @@ class SerialMixin:
     @declared_attr
     def wargame_name(self):
         return association_proxy("wargame", "name")
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
 
     def add_participant(
         self, data_store, wargame_participant, force_type, privacy, start=None, end=None
@@ -447,82 +459,6 @@ class SerialParticipantMixin:
 
     def __repr__(self):
         return f'SerialParticipant(serial="{self.serial_number}, platform="{self.platform_name}"'
-
-
-class TaskMixin:
-    _default_preview_fields = ["name", "start", "end"]
-    _default_dropdown_fields = ["name"]
-
-    @declared_attr
-    def parent(self):
-        return relationship("Task", uselist=False, lazy="joined", remote_side=[self.task_id])
-
-    @declared_attr
-    def parent_name(self):
-        return association_proxy("parent", "name")
-
-    @declared_attr
-    def privacy(self):
-        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
-
-    @declared_attr
-    def privacy_name(self):
-        return association_proxy("privacy", "name")
-
-    @property
-    def level(self):
-        output_level = 0
-        current_task = self
-        while current_task.parent is not None:
-            current_task = current_task.parent
-            output_level += 1
-
-        return output_level
-
-    def add_participant(self, participant):
-        self.participants.append(participant)
-
-    def __repr__(self):
-        return f"Task(name={self.name}, parent_id={self.parent_id})"
-
-
-class ParticipantMixin:
-    _default_preview_fields = ["platform_name", "start", "end"]
-    _default_dropdown_fields = ["platform_name"]
-
-    @declared_attr
-    def task(self):
-        # This uses extra parameters on the backref, which controls the 'other side' relationship
-        # - that is, the `Task.participants` relationship. The cascade options mean that deleting
-        # a Task will delete its participants.
-        # This is required even though we have a database cascade, as otherwise SQLAlchemy will try
-        # and set the Participant.task_id to NULL, when the field is not nullable
-        return relationship(
-            "Task",
-            lazy="joined",
-            innerjoin=True,
-            uselist=False,
-            backref=backref("participants", cascade="all, delete, delete-orphan"),
-        )
-
-    @declared_attr
-    def platform(self):
-        return relationship("Platform", lazy="joined", innerjoin=True, uselist=False)
-
-    @declared_attr
-    def platform_name(self):
-        return association_proxy("platform", "name")
-
-    @declared_attr
-    def platform_identifier(self):
-        return association_proxy("platform", "identifier")
-
-    @declared_attr
-    def platform_nationality_name(self):
-        return association_proxy("platform", "nationality_name")
-
-    def __repr__(self):
-        return f"Participant(task={self.task}, platform={self.platform})"
 
 
 class DatafileMixin:
@@ -1572,12 +1508,8 @@ class GeometryMixin:
         return self._geometry
 
     @declared_attr
-    def task(self):
-        return relationship("Task", lazy="joined", uselist=False)
-
-    # @declared_attr
-    # def task_name(self):
-    #     return association_proxy("task", "name")
+    def serial(self):
+        return relationship("Serial", lazy="joined", uselist=False)
 
     @declared_attr
     def subject_platform(self):

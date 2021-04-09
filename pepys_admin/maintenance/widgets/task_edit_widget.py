@@ -24,18 +24,34 @@ class TaskEditWidget:
     def get_updated_fields(self):
         updated_fields = {}
 
-        if self.name_field.text != empty_str_if_none(self.task_object.name):
-            updated_fields["name"] = self.name_field.text
-
-        if self.start_field.datetime_value != self.task_object.start:
-            updated_fields["start"] = self.start_field.datetime_value
-
-        if self.end_field.datetime_value != self.task_object.end:
-            updated_fields["end"] = self.end_field.datetime_value
-
         if self.privacy_field.text != self.task_object.privacy_name:
             index = self.privacies["values"].index(self.privacy_field.text)
             updated_fields["privacy_id"] = str(self.privacies["ids"][index])
+
+        if isinstance(self.task_object, SeriesMixin):
+            if self.name_field.text != empty_str_if_none(self.task_object.name):
+                updated_fields["name"] = self.name_field.text
+        elif isinstance(self.task_object, WargameMixin):
+            if self.name_field.text != empty_str_if_none(self.task_object.name):
+                updated_fields["name"] = self.name_field.text
+
+            if self.start_field.datetime_value != self.task_object.start:
+                updated_fields["start"] = self.start_field.datetime_value
+
+            if self.end_field.datetime_value != self.task_object.end:
+                updated_fields["end"] = self.end_field.datetime_value
+        elif isinstance(self.task_object, SerialMixin):
+            if self.number_field.text != empty_str_if_none(self.task_object.serial_number):
+                updated_fields["serial_number"] = self.number_field.text
+
+            if self.exercise_field.text != empty_str_if_none(self.task_object.exercise):
+                updated_fields["exercise"] = self.exercise_field.text
+
+            if self.start_field.datetime_value != self.task_object.start:
+                updated_fields["start"] = self.start_field.datetime_value
+
+            if self.end_field.datetime_value != self.task_object.end:
+                updated_fields["end"] = self.end_field.datetime_value
 
         return updated_fields
 
