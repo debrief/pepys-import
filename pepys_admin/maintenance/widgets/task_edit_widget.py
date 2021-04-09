@@ -5,15 +5,16 @@ from prompt_toolkit.widgets.toolbars import ValidationToolbar
 from pepys_admin.maintenance.utils import empty_str_if_none
 from pepys_admin.maintenance.widgets.DatetimeWidget import DatetimeWidget
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
+from pepys_import.core.store.common_db import SerialMixin, SeriesMixin, WargameMixin
 
 
 class TaskEditWidget:
-    def __init__(self, task_object, level, privacies, save_button_handler, delete_button_handler):
+    def __init__(self, task_object, privacies, save_button_handler, delete_button_handler):
         self.privacies = privacies
         self.save_button_handler = save_button_handler
         self.delete_button_handler = delete_button_handler
 
-        self.set_task_object(task_object, level)
+        self.set_task_object(task_object)
 
         self.container = DynamicContainer(self.get_widgets)
 
@@ -49,23 +50,6 @@ class TaskEditWidget:
             [self.save_button, self.delete_button], padding=3, align=HorizontalAlign.LEFT
         )
 
-        self.name_field = TextArea(
-            text=empty_str_if_none(self.task_object.name), multiline=False, focus_on_click=True
-        )
-        self.name_row = VSplit(
-            [Label("Name:", width=15), self.name_field], padding=2, align=HorizontalAlign.LEFT
-        )
-
-        self.start_field = DatetimeWidget(self.task_object.start)
-        self.start_row = VSplit(
-            [Label("Start:", width=15), self.start_field], padding=2, align=HorizontalAlign.LEFT
-        )
-
-        self.end_field = DatetimeWidget(self.task_object.end)
-
-        self.end_row = VSplit(
-            [Label("End:", width=15), self.end_field], padding=2, align=HorizontalAlign.LEFT
-        )
         try:
             if self.task_object.privacy_name is not None:
                 privacy_text = self.task_object.privacy_name
@@ -80,15 +64,47 @@ class TaskEditWidget:
 
         self.validation_toolbar = ValidationToolbar()
 
-        if self.level == 1:
-            # 1st level task, so no start/end or participants
+        # We check the instances against the Mixins here, as we don't know if we're running
+        # Postgres or SQLite, and we have different instances of the actual objects for different
+        # databases - but the mixins are always the same. (This stops us having to have a data_store
+        # instance accessible here too)
+        if isinstance(self.task_object, SeriesMixin):
+            self.name_field = TextArea(
+                text=empty_str_if_none(self.task_object.name), multiline=False, focus_on_click=True
+            )
+            self.name_row = VSplit(
+                [Label("Series Name:", width=15), self.name_field],
+                padding=2,
+                align=HorizontalAlign.LEFT,
+            )
+
             self.all_rows = [
                 self.name_row,
                 self.privacy_row,
                 self.validation_toolbar,
                 self.buttons_row,
             ]
-        else:
+        elif isinstance(self.task_object, WargameMixin):
+            self.name_field = TextArea(
+                text=empty_str_if_none(self.task_object.name), multiline=False, focus_on_click=True
+            )
+            self.name_row = VSplit(
+                [Label("Wargame Name:", width=15), self.name_field],
+                padding=2,
+                align=HorizontalAlign.LEFT,
+            )
+
+            self.start_field = DatetimeWidget(self.task_object.start)
+            self.start_row = VSplit(
+                [Label("Start:", width=15), self.start_field], padding=2, align=HorizontalAlign.LEFT
+            )
+
+            self.end_field = DatetimeWidget(self.task_object.end)
+
+            self.end_row = VSplit(
+                [Label("End:", width=15), self.end_field], padding=2, align=HorizontalAlign.LEFT
+            )
+
             self.all_rows = [
                 self.name_row,
                 self.start_row,
@@ -97,10 +113,52 @@ class TaskEditWidget:
                 self.validation_toolbar,
                 self.buttons_row,
             ]
+        elif isinstance(self.task_object, SerialMixin):
+            self.number_field = TextArea(
+                text=empty_str_if_none(self.task_object.serial_number),
+                multiline=False,
+                focus_on_click=True,
+            )
+            self.number_row = VSplit(
+                [Label("Serial Number:", width=15), self.number_field],
+                padding=2,
+                align=HorizontalAlign.LEFT,
+            )
 
-    def set_task_object(self, task_object, level):
+            self.exercise_field = TextArea(
+                text=empty_str_if_none(self.task_object.exercise),
+                multiline=False,
+                focus_on_click=True,
+            )
+            self.exercise_row = VSplit(
+                [Label("Serial Exercise:", width=15), self.exercise_field],
+                padding=2,
+                align=HorizontalAlign.LEFT,
+            )
+
+            self.start_field = DatetimeWidget(self.task_object.start)
+            self.start_row = VSplit(
+                [Label("Start:", width=15), self.start_field], padding=2, align=HorizontalAlign.LEFT
+            )
+
+            self.end_field = DatetimeWidget(self.task_object.end)
+
+            self.end_row = VSplit(
+                [Label("End:", width=15), self.end_field], padding=2, align=HorizontalAlign.LEFT
+            )
+
+            self.all_rows = [
+                self.number_row,
+                self.exercise_row,
+                self.start_row,
+                self.end_row,
+                self.privacy_row,
+                self.validation_toolbar,
+                self.buttons_row,
+            ]
+
+    def set_task_object(self, task_object):
         self.task_object = task_object
-        self.level = level
 
         self.create_widgets()
 

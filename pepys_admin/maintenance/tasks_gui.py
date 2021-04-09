@@ -83,38 +83,33 @@ class TasksGUI:
         return {"values": privacy_strs, "ids": privacy_ids}
 
     def get_tasks_into_treeview(self):
-        Task = self.data_store.db_classes.Task
+        Series = self.data_store.db_classes.Series
+
         id_to_element = {}
 
         root = TreeElement("hidden root")
         id_to_element[None] = root
 
         with self.data_store.session_scope():
-            task_queue = (
-                self.data_store.session.query(Task)
-                .filter(Task.parent_id.is_(None))
-                .order_by(Task.created_date.desc())
+            all_series = (
+                self.data_store.session.query(Series)
+                .order_by(Series.created_date.desc())
                 .options(undefer("*"))
                 .all()
             )
             self.data_store.session.expunge_all()
-            while len(task_queue) > 0:
-                task = task_queue.pop()
-                tree_el = TreeElement(task.name, task)
-                id_to_element[task.task_id] = tree_el
-                parent_task = id_to_element[task.parent_id]
-                parent_task.add_child(tree_el)
 
-                # Add children to queue
-                children_of_current_task = (
-                    self.data_store.session.query(Task)
-                    .filter(Task.parent_id == task.task_id)
-                    .order_by(Task.created_date.desc())
-                    .options(undefer("*"))
-                    .all()
-                )
-                self.data_store.session.expunge_all()
-                task_queue.extend(children_of_current_task)
+            for series in all_series:
+                series_el = TreeElement(series.name, series)
+                root.add_child(series_el)
+
+                for wargame in series.child_wargames:
+                    wargame_el = TreeElement(wargame.name, wargame)
+                    series_el.add_child(wargame_el)
+
+                    for serial in wargame.child_serials:
+                        serial_el = TreeElement(serial.serial_number, serial)
+                        wargame_el.add_child(serial_el)
 
         return root
 
@@ -150,7 +145,6 @@ class TasksGUI:
 
         self.task_edit_widget = TaskEditWidget(
             current_task_object,
-            1,
             self.privacies,
             self.handle_save,
             self.handle_delete,
@@ -231,12 +225,9 @@ class TasksGUI:
 
     def handle_delete(self):
         async def coroutine():
-            task_name = self.task_edit_widget.task_object.name
-            if task_name is None:
-                task_name = "New entry"
             dialog = ConfirmationDialog(
                 "Delete?",
-                f"Are you sure you want to delete the task\n{task_name}\nand all its sub-tasks?",
+                f"Are you sure you want to delete the task\n{self.task_edit_widget.task_object.name}\nand all its sub-tasks?",
             )
             result = await self.show_dialog_as_float(dialog)
 
@@ -257,7 +248,7 @@ class TasksGUI:
         ensure_future(coroutine())
 
     def handle_tree_select(self, selected_element):
-        self.task_edit_widget.set_task_object(selected_element.object, level=selected_element.level)
+        self.task_edit_widget.set_task_object(selected_element.object)
 
     def handle_tree_add(self, parent_element):
         new_task = self.data_store.db_classes.Task()
