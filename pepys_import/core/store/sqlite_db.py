@@ -154,6 +154,7 @@ class Series(BaseSpatiaLite, SeriesMixin):
         ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Wargame(BaseSpatiaLite, WargameMixin):
@@ -177,6 +178,7 @@ class Wargame(BaseSpatiaLite, WargameMixin):
         ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Serial(BaseSpatiaLite, SerialMixin):
@@ -205,6 +207,7 @@ class Serial(BaseSpatiaLite, SerialMixin):
         ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class WargameParticipant(BaseSpatiaLite, WargameParticipantMixin):
@@ -228,6 +231,7 @@ class WargameParticipant(BaseSpatiaLite, WargameParticipantMixin):
         ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class SerialParticipant(BaseSpatiaLite, SerialParticipantMixin):
@@ -251,6 +255,7 @@ class SerialParticipant(BaseSpatiaLite, SerialParticipantMixin):
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     force = Column(String(150))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Task(BaseSpatiaLite, TaskMixin):

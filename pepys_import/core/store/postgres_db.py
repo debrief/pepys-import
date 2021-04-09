@@ -158,6 +158,7 @@ class Series(BasePostGIS, SeriesMixin):
         ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Wargame(BasePostGIS, WargameMixin):
@@ -181,6 +182,7 @@ class Wargame(BasePostGIS, WargameMixin):
         ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Serial(BasePostGIS, SerialMixin):
@@ -207,6 +209,7 @@ class Serial(BasePostGIS, SerialMixin):
         ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class WargameParticipant(BasePostGIS, WargameParticipantMixin):
@@ -230,6 +233,7 @@ class WargameParticipant(BasePostGIS, WargameParticipantMixin):
         ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class SerialParticipant(BasePostGIS, SerialParticipantMixin):
@@ -255,6 +259,7 @@ class SerialParticipant(BasePostGIS, SerialParticipantMixin):
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
     force = Column(String(150))
+    created_date = Column(DateTime, default=datetime.utcnow)
 
 
 class Task(BasePostGIS, TaskMixin):
