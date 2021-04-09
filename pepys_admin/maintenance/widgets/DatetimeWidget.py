@@ -38,4 +38,7 @@ class DatetimeWidget(MaskedInputWidget):
         if self.text == "yyyy-mm-dd HH:MM:SS":
             return None
         else:
-            return datetime.strptime(self.text, "%Y-%m-%d %H:%M:%S")
+            try:
+                return datetime.strptime(self.text, "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                return None

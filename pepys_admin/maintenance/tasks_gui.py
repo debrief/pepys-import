@@ -182,7 +182,8 @@ class TasksGUI:
     def show_validation_error(self, missing_fields):
         self.show_messagebox(
             "Validation Error",
-            "You must provide values for the following fields\n\n" + "\n".join(missing_fields),
+            "You must provide valid values for the following fields\n\n"
+            + "\n".join(missing_fields),
         )
 
     def handle_save(self):
