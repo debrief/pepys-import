@@ -75,7 +75,9 @@ class TaskEditWidget:
             privacy_text = self.privacies["values"][0]
         self.privacy_field = DropdownBox(privacy_text, self.privacies["values"])
         self.privacy_row = VSplit(
-            [Label("Privacy:", width=15), self.privacy_field], padding=2, align=HorizontalAlign.LEFT
+            [Label("Privacy (*):", width=21), self.privacy_field],
+            padding=2,
+            align=HorizontalAlign.LEFT,
         )
 
         self.validation_toolbar = ValidationToolbar()
@@ -89,7 +91,7 @@ class TaskEditWidget:
                 text=empty_str_if_none(self.task_object.name), multiline=False, focus_on_click=True
             )
             self.name_row = VSplit(
-                [Label("Series Name:", width=15), self.name_field],
+                [Label("Series Name (*):", width=21), self.name_field],
                 padding=2,
                 align=HorizontalAlign.LEFT,
             )
@@ -105,20 +107,22 @@ class TaskEditWidget:
                 text=empty_str_if_none(self.task_object.name), multiline=False, focus_on_click=True
             )
             self.name_row = VSplit(
-                [Label("Wargame Name:", width=15), self.name_field],
+                [Label("Wargame Name (*):", width=21), self.name_field],
                 padding=2,
                 align=HorizontalAlign.LEFT,
             )
 
             self.start_field = DatetimeWidget(self.task_object.start)
             self.start_row = VSplit(
-                [Label("Start:", width=15), self.start_field], padding=2, align=HorizontalAlign.LEFT
+                [Label("Start (*):", width=21), self.start_field],
+                padding=2,
+                align=HorizontalAlign.LEFT,
             )
 
             self.end_field = DatetimeWidget(self.task_object.end)
 
             self.end_row = VSplit(
-                [Label("End:", width=15), self.end_field], padding=2, align=HorizontalAlign.LEFT
+                [Label("End (*):", width=21), self.end_field], padding=2, align=HorizontalAlign.LEFT
             )
 
             self.all_rows = [
@@ -136,7 +140,7 @@ class TaskEditWidget:
                 focus_on_click=True,
             )
             self.number_row = VSplit(
-                [Label("Serial Number:", width=15), self.number_field],
+                [Label("Serial Number (*):", width=21), self.number_field],
                 padding=2,
                 align=HorizontalAlign.LEFT,
             )
@@ -147,20 +151,22 @@ class TaskEditWidget:
                 focus_on_click=True,
             )
             self.exercise_row = VSplit(
-                [Label("Serial Exercise:", width=15), self.exercise_field],
+                [Label("Serial Exercise:", width=21), self.exercise_field],
                 padding=2,
                 align=HorizontalAlign.LEFT,
             )
 
             self.start_field = DatetimeWidget(self.task_object.start)
             self.start_row = VSplit(
-                [Label("Start:", width=15), self.start_field], padding=2, align=HorizontalAlign.LEFT
+                [Label("Start (*):", width=21), self.start_field],
+                padding=2,
+                align=HorizontalAlign.LEFT,
             )
 
             self.end_field = DatetimeWidget(self.task_object.end)
 
             self.end_row = VSplit(
-                [Label("End:", width=15), self.end_field], padding=2, align=HorizontalAlign.LEFT
+                [Label("End (*):", width=21), self.end_field], padding=2, align=HorizontalAlign.LEFT
             )
 
             self.all_rows = [
