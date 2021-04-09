@@ -274,7 +274,13 @@ class WargameMixin:
 
     @declared_attr
     def child_serials(self):
-        return relationship("Serial", lazy="joined", backref="wargame")
+        return relationship(
+            "Serial",
+            lazy="joined",
+            backref="wargame",
+            passive_deletes=True,
+            cascade="all, delete, delete-orphan",
+        )
 
     @declared_attr
     def privacy(self):
@@ -345,7 +351,13 @@ class WargameParticipantMixin:
 
     @declared_attr
     def wargame(self):
-        return relationship("Wargame", lazy="joined", backref="participants")
+        return relationship(
+            "Wargame",
+            lazy="joined",
+            backref=backref(
+                "participants", passive_deletes=True, cascade="all, delete, delete-orphan"
+            ),
+        )
 
     @declared_attr
     def platform(self):
@@ -381,7 +393,13 @@ class SerialParticipantMixin:
 
     @declared_attr
     def serial(self):
-        return relationship("Serial", lazy="joined", backref="participants")
+        return relationship(
+            "Serial",
+            lazy="joined",
+            backref=backref(
+                "participants", passive_deletes=True, cascade="all, delete, delete-orphan"
+            ),
+        )
 
     @declared_attr
     def wargame_participant(self):
