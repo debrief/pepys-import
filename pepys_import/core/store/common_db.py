@@ -243,8 +243,8 @@ class SeriesMixin:
     _default_dropdown_fields = ["name"]
 
     @declared_attr
-    def child_exercises(self):
-        return relationship("Exercise", lazy="joined", backref="series")
+    def child_wargames(self):
+        return relationship("Wargame", lazy="joined", backref="series")
 
     @declared_attr
     def privacy(self):
@@ -268,25 +268,29 @@ class SeriesMixin:
         return f'Series(name="{self.name}")'
 
 
-class ExerciseMixin:
+class WargameMixin:
     _default_preview_fields = ["name", "start", "end"]
     _default_dropdown_fields = ["name"]
 
     @declared_attr
     def child_serials(self):
-        return relationship("Serial", lazy="joined", backref="exercise")
+        return relationship("Serial", lazy="joined", backref="wargame")
 
     @declared_attr
     def privacy(self):
         return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    @declared_attr
+    def series_name(self):
+        return association_proxy("series", "name")
 
     def add_participant(self, data_store, platform, privacy):
         privacy = data_store.search_privacy(privacy)
         if privacy is None:
             raise ValueError("Specified Privacy does not exist")
 
-        participant = data_store.db_classes.ExerciseParticipant()
-        participant.exercise = self
+        participant = data_store.db_classes.WargameParticipant()
+        participant.wargame = self
         participant.privacy = privacy
         participant.platform = platform
 
@@ -299,18 +303,24 @@ class ExerciseMixin:
     #     return association_proxy("participants", "platform")
 
     def __repr__(self):
-        return f'Exercise(name="{self.name}")'
+        return f'Wargame(name="{self.name}")'
 
 
 class SerialMixin:
-    _default_preview_fields = ["name", "start", "end"]
-    _default_dropdown_fields = ["name"]
+    _default_preview_fields = ["serial_number", "start", "end"]
+    _default_dropdown_fields = ["serial_number"]
 
     @declared_attr
     def privacy(self):
         return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
-    def add_participant(self, data_store, exercise_participant, start, end, force, privacy):
+    @declared_attr
+    def wargame_name(self):
+        return association_proxy("wargame", "name")
+
+    def add_participant(
+        self, data_store, wargame_participant, force, privacy, start=None, end=None
+    ):
         privacy = data_store.search_privacy(privacy)
         if privacy is None:
             raise ValueError("Specified Privacy does not exist")
@@ -318,7 +328,7 @@ class SerialMixin:
         participant = data_store.db_classes.SerialParticipant()
         participant.serial = self
         participant.privacy = privacy
-        participant.exercise_participant = exercise_participant
+        participant.wargame_participant = wargame_participant
         participant.start = start
         participant.end = end
         participant.force = force
@@ -326,16 +336,16 @@ class SerialMixin:
         data_store.session.add(participant)
 
     def __repr__(self):
-        return f'Serial(name="{self.name}")'
+        return f'Serial(serial_number="{self.serial_number}")'
 
 
-class ExerciseParticipantMixin:
-    _default_preview_fields = ["platform_name", "exercise_name"]
-    _default_dropdown_fields = ["platform_name", "exercise_name"]
+class WargameParticipantMixin:
+    _default_preview_fields = ["platform_name", "wargame_name"]
+    _default_dropdown_fields = ["platform_name", "wargame_name"]
 
     @declared_attr
-    def exercise(self):
-        return relationship("Exercise", lazy="joined", backref="participants")
+    def wargame(self):
+        return relationship("Wargame", lazy="joined", backref="participants")
 
     @declared_attr
     def platform(self):
@@ -358,26 +368,24 @@ class ExerciseParticipantMixin:
         return association_proxy("platform", "nationality_name")
 
     @declared_attr
-    def exercise_name(self):
-        return association_proxy("exercise", "name")
+    def wargame_name(self):
+        return association_proxy("wargame", "name")
 
     def __repr__(self):
-        return (
-            f'ExerciseParticipant(exercise="{self.exercise_name}", platform="{self.platform_name}")'
-        )
+        return f'WargameParticipant(wargame="{self.wargame_name}", platform="{self.platform_name}")'
 
 
 class SerialParticipantMixin:
-    _default_preview_fields = ["serial_name", "exercise_participant_platform_name"]
-    _default_dropdown_fields = ["serial_name", "exercise_participant_platform_name"]
+    _default_preview_fields = ["serial_name", "wargame_participant_platform_name"]
+    _default_dropdown_fields = ["serial_name", "wargame_participant_platform_name"]
 
     @declared_attr
     def serial(self):
         return relationship("Serial", lazy="joined", backref="participants")
 
     @declared_attr
-    def exercise_participant(self):
-        return relationship("ExerciseParticipant", lazy="joined")
+    def wargame_participant(self):
+        return relationship("WargameParticipant", lazy="joined")
 
     @declared_attr
     def serial_name(self):
@@ -385,15 +393,15 @@ class SerialParticipantMixin:
 
     @declared_attr
     def platform_name(self):
-        return association_proxy("exercise_participant", "platform_name")
+        return association_proxy("wargame_participant", "platform_name")
 
     @declared_attr
     def platform_identifier(self):
-        return association_proxy("exercise_participant", "platform_identifier")
+        return association_proxy("wargame_participant", "platform_identifier")
 
     @declared_attr
     def platform_nationality_name(self):
-        return association_proxy("exercise_participant", "platform_nationality_name")
+        return association_proxy("wargame_participant", "platform_nationality_name")
 
     def __repr__(self):
         return f'SerialParticipant(serial="{self.serial_name}, platform="{self.platform_name}"'

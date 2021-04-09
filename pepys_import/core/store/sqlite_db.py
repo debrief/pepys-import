@@ -16,8 +16,6 @@ from pepys_import.core.store.common_db import (
     ContactMixin,
     DatafileMixin,
     ElevationPropertyMixin,
-    ExerciseMixin,
-    ExerciseParticipantMixin,
     GeometryMixin,
     GeometrySubTypeMixin,
     HostedByMixin,
@@ -38,6 +36,8 @@ from pepys_import.core.store.common_db import (
     SynonymMixin,
     TaggedItemMixin,
     TaskMixin,
+    WargameMixin,
+    WargameParticipantMixin,
 )
 from pepys_import.core.store.db_base import BaseSpatiaLite
 from pepys_import.core.store.db_status import TableTypes
@@ -156,14 +156,14 @@ class Series(BaseSpatiaLite, SeriesMixin):
     )
 
 
-class Exercise(BaseSpatiaLite, ExerciseMixin):
-    __tablename__ = constants.EXERCISE
+class Wargame(BaseSpatiaLite, WargameMixin):
+    __tablename__ = constants.WARGAME
     table_type = TableTypes.METADATA
     table_type_id = 37
 
-    exercise_id = Column(UUIDType, primary_key=True, default=uuid4)
+    wargame_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(
-        String(150), CheckConstraint("name <> ''", name="ck_Exercises_name"), nullable=False
+        String(150), CheckConstraint("name <> ''", name="ck_Wargames_name"), nullable=False
     )
     series_id = Column(
         UUIDType,
@@ -185,16 +185,19 @@ class Serial(BaseSpatiaLite, SerialMixin):
     table_type_id = 37
 
     serial_id = Column(UUIDType, primary_key=True, default=uuid4)
-    exercise_id = Column(
+    wargame_id = Column(
         UUIDType,
-        ForeignKey("Exercises.exercise_id", onupdate="cascade", ondelete="cascade"),
+        ForeignKey("Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
-    name = Column(
-        String(150), CheckConstraint("name <> ''", name="ck_Serials_name"), nullable=False
+    serial_number = Column(
+        String(150),
+        CheckConstraint("serial_number <> ''", name="ck_Serials_serial_number"),
+        nullable=False,
     )
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
+    exercise = Column(String(150))
     environment = deferred(Column(String(150)))
     location = deferred(Column(String(150)))
     privacy_id = Column(
@@ -204,15 +207,15 @@ class Serial(BaseSpatiaLite, SerialMixin):
     )
 
 
-class ExerciseParticipant(BaseSpatiaLite, ExerciseParticipantMixin):
-    __tablename__ = constants.EXERCISE_PARTICIPANT
+class WargameParticipant(BaseSpatiaLite, WargameParticipantMixin):
+    __tablename__ = constants.WARGAME_PARTICIPANT
     table_type = TableTypes.METADATA
     table_type_id = 38
 
-    exercise_participant_id = Column(UUIDType, primary_key=True, default=uuid4)
-    exercise_id = Column(
+    wargame_participant_id = Column(UUIDType, primary_key=True, default=uuid4)
+    wargame_id = Column(
         UUIDType,
-        ForeignKey("Exercises.exercise_id", onupdate="cascade", ondelete="cascade"),
+        ForeignKey("Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     platform_id = Column(
@@ -233,10 +236,10 @@ class SerialParticipant(BaseSpatiaLite, SerialParticipantMixin):
     table_type_id = 39
 
     serial_participant_id = Column(UUIDType, primary_key=True, default=uuid4)
-    exercise_participant_id = Column(
+    wargame_participant_id = Column(
         UUIDType,
         ForeignKey(
-            "ExerciseParticipants.exercise_participant_id", onupdate="cascade", ondelete="cascade"
+            "WargameParticipants.wargame_participant_id", onupdate="cascade", ondelete="cascade"
         ),
         nullable=False,
     )
@@ -245,8 +248,8 @@ class SerialParticipant(BaseSpatiaLite, SerialParticipantMixin):
         ForeignKey("Serials.serial_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
-    start = Column(TIMESTAMP, nullable=False)
-    end = Column(TIMESTAMP, nullable=False)
+    start = Column(TIMESTAMP)
+    end = Column(TIMESTAMP)
     force = Column(String(150))
 
 
