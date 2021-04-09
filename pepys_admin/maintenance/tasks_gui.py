@@ -186,6 +186,40 @@ class TasksGUI:
             + "\n".join(missing_fields),
         )
 
+    def validate_fields(self, current_task, updated_fields):
+        WARGAME_AND_SERIAL_REQUIRED_FIELDS = ["name", "start", "end"]
+        if isinstance(current_task, self.data_store.db_classes.Series):
+            # If this is None then this is a new Series object that we're creating
+            # and thus we need to check all fields are filled
+            if current_task.name is None:
+                if "name" not in updated_fields:
+                    self.show_validation_error(missing_fields=["name"])
+                    return False
+        elif isinstance(current_task, self.data_store.db_classes.Wargame) or isinstance(
+            current_task, self.data_store.db_classes.Serial
+        ):
+            if current_task.start is None:
+                required_fields = set(WARGAME_AND_SERIAL_REQUIRED_FIELDS)
+                provided_fields = set(updated_fields.keys())
+                if not required_fields.issubset(provided_fields):
+                    missing_fields = required_fields.difference(provided_fields)
+                    self.show_validation_error(missing_fields=missing_fields)
+                    return False
+
+        # Check that any fields that we're updating to None (ie. NULL) are not
+        # required fields
+        missing_fields = []
+        for field, new_value in updated_fields.items():
+            if new_value is None or new_value == "":
+                if field in WARGAME_AND_SERIAL_REQUIRED_FIELDS:
+                    missing_fields.append(field)
+
+        if len(missing_fields) > 0:
+            self.show_validation_error(missing_fields=missing_fields)
+            return False
+
+        return True
+
     def handle_save(self):
         updated_fields = self.task_edit_widget.get_updated_fields()
 
@@ -196,23 +230,8 @@ class TasksGUI:
         current_task = self.task_edit_widget.task_object
         primary_key = get_primary_key_for_table(current_task)
 
-        if isinstance(current_task, self.data_store.db_classes.Series):
-            # If this is None then this is a new Series object that we're creating
-            # and thus we need to check all fields are filled
-            if current_task.name is None:
-                if "name" not in updated_fields:
-                    self.show_validation_error(missing_fields=["name"])
-                    return
-        elif isinstance(current_task, self.data_store.db_classes.Wargame) or isinstance(
-            current_task, self.data_store.db_classes.Serial
-        ):
-            if current_task.start is None:
-                required_fields = set(["name", "start", "end"])
-                provided_fields = set(updated_fields.keys())
-                if not required_fields.issubset(provided_fields):
-                    missing_fields = required_fields.difference(provided_fields)
-                    self.show_validation_error(missing_fields=missing_fields)
-                    return
+        if not self.validate_fields(current_task, updated_fields):
+            return
 
         # Keep track of the old values for adding to Logs later
         old_values = {}
