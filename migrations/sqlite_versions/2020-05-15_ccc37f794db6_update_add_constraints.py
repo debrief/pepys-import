@@ -32,12 +32,10 @@ from pepys_import.core.store.common_db import (
     LogMixin,
     LogsHoldingMixin,
     MediaMixin,
-    ParticipantMixin,
     PlatformMixin,
     SensorMixin,
     StateMixin,
     TaggedItemMixin,
-    TaskMixin,
 )
 from pepys_import.core.store.db_base import sqlite_naming_convention
 from pepys_import.core.store.db_status import TableTypes
@@ -77,7 +75,7 @@ class ConfidenceLevel(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Task(BaseSpatiaLite, TaskMixin):
+class Task(BaseSpatiaLite):
     __tablename__ = constants.TASK
     table_type = TableTypes.METADATA
     table_type_id = 4
@@ -291,7 +289,7 @@ class PlatformType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Participant(BaseSpatiaLite, ParticipantMixin):
+class Participant(BaseSpatiaLite):
     __tablename__ = constants.PARTICIPANT
     table_type = TableTypes.METADATA
     table_type_id = 5
