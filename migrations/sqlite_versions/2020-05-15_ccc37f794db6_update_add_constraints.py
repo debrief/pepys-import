@@ -261,7 +261,7 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    task_id = Column(UUIDType, ForeignKey("Tasks.task_id"))
+    serial_id = Column(UUIDType, ForeignKey("Serials.serial_id"))
     subject_platform_id = Column(UUIDType, ForeignKey("Platforms.platform_id"))
     sensor_platform_id = Column(UUIDType, ForeignKey("Platforms.platform_id"))
     source_id = Column(UUIDType, ForeignKey("Datafiles.datafile_id"), nullable=False)
