@@ -10,7 +10,6 @@ from tqdm import tqdm
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
-from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
@@ -835,21 +834,6 @@ class StateMixin:
         return association_proxy("sensor", "host")
 
     @declared_attr
-    def platform(self):
-        return relationship(
-            "Platform",
-            secondary=constants.SENSOR,
-            primaryjoin="State.sensor_id == Sensor.sensor_id",
-            secondaryjoin="Platform.platform_id == Sensor.host",
-            lazy="joined",
-            uselist=False,
-            viewonly=True,
-            # This specifies that when trying to query on this relationship
-            # this is the local column (well, assoc proxy actually) to filter on
-            info={"local_column": "platform_id"},
-        )
-
-    @declared_attr
     def platform_name(self):
         return association_proxy("platform", "name")
 
@@ -998,19 +982,6 @@ class ContactMixin:
     @declared_attr
     def platform_id(self):
         return association_proxy("sensor", "host")
-
-    @declared_attr
-    def platform(self):
-        return relationship(
-            "Platform",
-            secondary=constants.SENSOR,
-            primaryjoin="Contact.sensor_id == Sensor.sensor_id",
-            secondaryjoin="Platform.platform_id == Sensor.host",
-            lazy="joined",
-            join_depth=1,
-            uselist=False,
-            viewonly=True,
-        )
 
     @declared_attr
     def platform_name(self):

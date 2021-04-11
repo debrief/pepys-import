@@ -2,6 +2,7 @@ import csv
 import json
 import os
 import sys
+import uuid
 from inspect import getfullargspec
 from math import ceil
 
@@ -10,6 +11,7 @@ from sqlalchemy import func, inspect, select
 
 from paths import MIGRATIONS_DIRECTORY
 from pepys_import.resolvers.command_line_input import create_menu
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 from pepys_import.utils.text_formatting_utils import (
     custom_print_formatted_text,
@@ -339,3 +341,20 @@ def convert_edit_dict_columns(edit_dict, table_object):
             update_dict[col_name] = new_value
 
     return update_dict
+
+
+def convert_objects_to_ids(items, table_obj):
+    if isinstance(items, list):
+        new_id_list = []
+        for value in items:
+            if not isinstance(value, uuid.UUID):
+                value = getattr(value, get_primary_key_for_table(table_obj))
+            new_id_list.append(value)
+
+        return new_id_list
+    else:
+        if not isinstance(items, uuid.UUID):
+            value = getattr(items, get_primary_key_for_table(table_obj))
+        else:
+            value = items
+        return value

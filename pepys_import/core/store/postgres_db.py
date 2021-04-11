@@ -4,7 +4,6 @@ from uuid import uuid4
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
-from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
     deferred,
@@ -681,6 +680,12 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    # This relationship has to be defined here rather than in
+    # common_db.py, as we're using the 'secondary' parameter,
+    # which has to take a table name. With Postgres it requires a
+    # full 'schema.table' name, and as SQLite doesn't have
+    # schemas, this will fail for SQLite. Thus it is defined
+    # in sqlite_db.py and postgres_db.py.
     @declared_attr
     def platform(self):
         return relationship(
@@ -689,14 +694,12 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
             primaryjoin="State.sensor_id == Sensor.sensor_id",
             secondaryjoin="Platform.platform_id == Sensor.host",
             lazy="joined",
-            join_depth=1,
             uselist=False,
             viewonly=True,
+            # This specifies that when trying to query on this relationship
+            # this is the local column (well, assoc proxy actually) to filter on
+            info={"local_column": "platform_id"},
         )
-
-    @declared_attr
-    def platform_name(self):
-        return association_proxy("platform", "name")
 
 
 class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
@@ -750,6 +753,12 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    # This relationship has to be defined here rather than in
+    # common_db.py, as we're using the 'secondary' parameter,
+    # which has to take a table name. With Postgres it requires a
+    # full 'schema.table' name, and as SQLite doesn't have
+    # schemas, this will fail for SQLite. Thus it is defined
+    # in sqlite_db.py and postgres_db.py.
     @declared_attr
     def platform(self):
         return relationship(
@@ -761,11 +770,10 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
             join_depth=1,
             uselist=False,
             viewonly=True,
+            # This specifies that when trying to query on this relationship
+            # this is the local column (well, assoc proxy actually) to filter on
+            info={"local_column": "platform_id"},
         )
-
-    @declared_attr
-    def platform_name(self):
-        return association_proxy("platform", "name")
 
 
 class Activation(BasePostGIS, ActivationMixin):
