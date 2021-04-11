@@ -1048,7 +1048,7 @@ class DataStore:
 
         return force_type
 
-    def add_to_platform_types(self, name, change_id):
+    def add_to_platform_types(self, name, default_data_interval_secs, change_id):
         """
         Adds the specified platform type to the platform types table if not already
         present.
@@ -1065,7 +1065,9 @@ class DataStore:
             return platform_types
 
         # enough info to proceed and create entry
-        platform_type = self.db_classes.PlatformType(name=name)
+        platform_type = self.db_classes.PlatformType(
+            name=name, default_data_interval_secs=default_data_interval_secs
+        )
         self.session.add(platform_type)
         self.session.flush()
 

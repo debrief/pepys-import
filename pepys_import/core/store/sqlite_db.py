@@ -418,6 +418,7 @@ class PlatformType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
         nullable=False,
         unique=True,
     )
+    default_data_interval_secs = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
