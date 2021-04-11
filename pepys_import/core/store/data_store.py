@@ -695,23 +695,6 @@ class DataStore:
             .first()
         )
 
-    def search_task(self, name, parent):
-        """Search for any privacy with this name"""
-        if parent is not None:
-            if isinstance(parent, self.db_classes.Task):
-                parent_id = parent.task_id
-            else:
-                parent_id = parent
-        else:
-            parent_id = None
-
-        return (
-            self.session.query(self.db_classes.Task)
-            .filter(self.db_classes.Task.name == name)
-            .filter(self.db_classes.Task.parent_id == parent_id)
-            .first()
-        )
-
     def synonym_search(self, name, table, pk_field):
         """
         This method looks up the Synonyms Table and returns if there is any matched entity.
@@ -1134,36 +1117,6 @@ class DataStore:
 
         self.add_to_logs(table=constants.PRIVACY, row_id=privacy.privacy_id, change_id=change_id)
         return privacy
-
-    def add_to_tasks(
-        self, name, start, end, privacy, change_id, parent=None, environment=None, location=None
-    ):
-        """
-        Adds the specified task entry to the :class:`Task` table if not already present.
-        """
-        task = self.search_task(name, parent)
-        if task:
-            return task
-
-        privacy = self.search_privacy(privacy)
-        if privacy is None:
-            raise ValueError("Specified Privacy does not exist")
-
-        # enough info to proceed and create entry
-        task = self.db_classes.Task(name=name, start=start, end=end)
-        task.privacy = privacy
-        if parent is not None:
-            if isinstance(parent, self.db_classes.Task):
-                task.parent_id = parent.task_id
-            else:
-                task.parent_id = parent
-        task.environment = environment
-        task.location = location
-        self.session.add(task)
-        self.session.flush()
-
-        self.add_to_logs(table=constants.TASK, row_id=task.task_id, change_id=change_id)
-        return task
 
     def add_to_datafile_types(self, name, change_id):
         """
@@ -1795,11 +1748,17 @@ class DataStore:
 
     def update_platform_ids(self, merge_platform_id, master_platform_id, change_id):
         Comment = self.db_classes.Comment
-        Participant = self.db_classes.Participant
+        WargameParticipant = self.db_classes.WargameParticipant
         LogsHolding = self.db_classes.LogsHolding
         Geometry1 = self.db_classes.Geometry1
         Media = self.db_classes.Media
-        tables_with_platform_id_fields = [Comment, Participant, LogsHolding, Geometry1, Media]
+        tables_with_platform_id_fields = [
+            Comment,
+            WargameParticipant,
+            LogsHolding,
+            Geometry1,
+            Media,
+        ]
         possible_field_names = [
             "platform_id",
             "subject_id",
@@ -1831,7 +1790,7 @@ class DataStore:
     def merge_platforms(self, platform_list, master_id, change_id, set_percentage=None) -> bool:
         """Merges given platforms. Moves sensors from other platforms to the Target platform.
         If sensor with same name is already present on Target platform, moves measurements
-        to that sensor. Also moves entities in Comments, Participants, LogsHoldings, Geometry, Media
+        to that sensor. Also moves entities in Comments, WargameParticipants, LogsHoldings, Geometry, Media
         tables from other platforms to the Target platform.
 
         :param platform_list: A list of platform IDs or platform objects
@@ -2000,7 +1959,7 @@ class DataStore:
             self.merge_platforms(id_list, master_id, change_id, set_percentage)
         elif table_name in [constants.SENSOR, constants.DATAFILE]:
             self.merge_measurements(table_name, id_list, master_id, change_id, set_percentage)
-        elif table_name in reference_table_names + [constants.TAG, constants.TASK]:
+        elif table_name in reference_table_names + [constants.TAG]:
             self.merge_objects(table_name, id_list, master_id, change_id, set_percentage)
         else:
             return False
