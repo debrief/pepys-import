@@ -57,43 +57,6 @@ class TestUniqueness:
             session.add(obj)
             session.flush()
 
-    def test_task_uniqueness(self):
-        db_session = sessionmaker(bind=self.store.engine)
-        session = db_session()
-
-        with self.store.session_scope():
-            change_id = self.store.add_to_changes("TEST", datetime.utcnow(), "TEST").change_id
-            priv_id = self.store.add_to_privacies("Private", 0, change_id=change_id).privacy_id
-
-        root_task = self.store.db_classes.Task(
-            name="Root task",
-            start=datetime(2021, 1, 2, 3, 4, 5),
-            end=datetime(2021, 1, 2, 3, 4, 10),
-            privacy_id=priv_id,
-        )
-        session.add(root_task)
-        session.flush()
-        child1 = self.store.db_classes.Task(
-            name="Child task 1",
-            parent_id=root_task.task_id,
-            start=datetime(2021, 1, 2, 3, 4, 5),
-            end=datetime(2021, 1, 2, 3, 4, 10),
-            privacy_id=priv_id,
-        )
-        session.add(child1)
-        session.flush()
-
-        # Try adding with same name but different level - should still fail
-        with pytest.raises(exc.IntegrityError):
-            obj = self.store.db_classes.Task(
-                name="Child task 1",
-                parent_id=root_task.task_id,
-                start=datetime(2021, 1, 2, 3, 4, 30),
-                end=datetime(2021, 1, 2, 3, 4, 50),
-            )
-            session.add(obj)
-            session.flush()
-
     def test_privacy_uniqueness(self):
         db_session = sessionmaker(bind=self.store.engine)
         session = db_session()

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest import TestCase
 from uuid import UUID
 
@@ -608,7 +608,6 @@ class UpdatePlatformIDsTestCase(TestCase):
 
     def test_update_platform_ids(self):
         Comment = self.store.db_classes.Comment
-        Participant = self.store.db_classes.Participant
         LogsHolding = self.store.db_classes.LogsHolding
         Geometry1 = self.store.db_classes.Geometry1
         Media = self.store.db_classes.Media
@@ -625,19 +624,12 @@ class UpdatePlatformIDsTestCase(TestCase):
             )
             if self.file.validate():
                 self.file.commit(self.store, self.change_id)
-            task = self.store.db_classes.Task(
-                name="TEST Task",
-                start=self.current_time,
-                end=self.current_time,
-                privacy_id=self.privacy_id,
-            )
             commodity = self.store.db_classes.CommodityType(name="Test Commodity")
             unit_type = self.store.db_classes.UnitType(name="Test Unit")
             geo_type = self.store.db_classes.GeometryType(name="Test GeoType")
             media_type = self.store.db_classes.MediaType(name="Test Media")
             self.store.session.add_all(
                 [
-                    task,
                     commodity,
                     unit_type,
                     geo_type,
@@ -646,11 +638,6 @@ class UpdatePlatformIDsTestCase(TestCase):
             )
             self.store.session.flush()
 
-            participant = Participant(
-                platform_id=self.platform_2.platform_id,
-                task_id=task.task_id,
-                privacy_id=self.privacy_id,
-            )
             logs_holding = LogsHolding(
                 time=self.current_time,
                 commodity_id=commodity.commodity_type_id,
@@ -699,7 +686,6 @@ class UpdatePlatformIDsTestCase(TestCase):
             )
             self.store.session.add_all(
                 [
-                    participant,
                     logs_holding,
                     geometry,
                     geometry_2,
@@ -712,11 +698,6 @@ class UpdatePlatformIDsTestCase(TestCase):
             comments_before_update = (
                 self.store.session.query(Comment)
                 .filter(Comment.platform_id == self.platform.platform_id)
-                .all()
-            )
-            participants_before_update = (
-                self.store.session.query(Participant)
-                .filter(Participant.platform_id == self.platform.platform_id)
                 .all()
             )
             logs_holdings_before_update = (
@@ -745,7 +726,6 @@ class UpdatePlatformIDsTestCase(TestCase):
                 .all()
             )
             assert len(comments_before_update) == 0
-            assert len(participants_before_update) == 0
             assert len(logs_holdings_before_update) == 0
             assert len(geometry_before_update) == 0
             assert len(media_before_update) == 0
@@ -759,11 +739,6 @@ class UpdatePlatformIDsTestCase(TestCase):
             comments_after_update = (
                 self.store.session.query(Comment)
                 .filter(Comment.platform_id == self.platform.platform_id)
-                .all()
-            )
-            participants_after_update = (
-                self.store.session.query(Participant)
-                .filter(Participant.platform_id == self.platform.platform_id)
                 .all()
             )
             logs_holdings_after_update = (
@@ -792,7 +767,6 @@ class UpdatePlatformIDsTestCase(TestCase):
                 .all()
             )
             assert len(comments_after_update) == 1
-            assert len(participants_after_update) == 1
             assert len(logs_holdings_after_update) == 1
             assert len(geometry_after_update) == 2
             assert len(media_after_update) == 2
@@ -1381,73 +1355,6 @@ class MergeGenericTestCase(TestCase):
                 not self.store.session.query(Privacy)
                 .filter(Privacy.privacy_id == self.privacy_id)
                 .scalar()
-            )
-
-    def test_merge_generic_tasks(self):
-        Task = self.store.db_classes.Task
-        Geometry1 = self.store.db_classes.Geometry1
-        GeometrySubType = self.store.db_classes.GeometrySubType
-        Participant = self.store.db_classes.Participant
-        with self.store.session_scope():
-            start = datetime.now()
-            end = start + timedelta(seconds=100)
-            old_task = Task(
-                name="TEST TASK",
-                start=start,
-                end=end,
-                privacy_id=self.privacy_id,
-            )
-            geo_type = self.store.db_classes.GeometryType(name="Test GeoType")
-            self.store.session.add(old_task)
-            self.store.session.add(geo_type)
-            self.store.session.flush()
-            geo_sub_type = GeometrySubType(name="Test GeoSubType", parent=geo_type.geo_type_id)
-            self.store.session.add(geo_sub_type)
-            self.store.session.flush()
-            geometry = Geometry1(
-                subject_platform_id=self.platform_2.platform_id,
-                _geometry=WKTElement("POINT(123456 123456)", srid=4326),
-                geo_type_id=geo_type.geo_type_id,
-                geo_sub_type_id=geo_sub_type.geo_sub_type_id,
-                source_id=self.file.datafile_id,
-                task_id=old_task.task_id,
-            )
-            participant = Participant(
-                platform_id=self.platform_2.platform_id,
-                task_id=old_task.task_id,
-                privacy_id=self.privacy_id,
-            )
-            self.store.session.add(geometry)
-            self.store.session.add(participant)
-            self.store.session.flush()
-
-            new_task = Task(
-                name="NEW TASK",
-                start=start,
-                end=end,
-                privacy_id=self.privacy_id,
-            )
-            self.store.session.add(new_task)
-            self.store.session.commit()
-
-            # Assert that target task doesn't have any dependent objects
-            dependent_objs = list(dependent_objects(new_task))
-            assert len(dependent_objs) == 0
-            source_dependent_objs = list(dependent_objects(old_task))
-            assert len(source_dependent_objs) == 2  # 1 Geometry, 1 Participant
-
-            # Merge old_task to new_task
-            assert self.store.merge_generic(constants.TASK, [old_task.task_id], new_task.task_id)
-
-            # Assert that target task has all dependent objects
-            dependent_objs = list(dependent_objects(new_task))
-            assert len(dependent_objs) == 2
-            source_dependent_objs = list(dependent_objects(old_task))
-            assert len(source_dependent_objs) == 0
-
-            # Assert that merged task deleted
-            assert (
-                not self.store.session.query(Task).filter(Task.task_id == old_task.task_id).scalar()
             )
 
     def test_merge_generic_wrong_table_name(self):
