@@ -18,6 +18,7 @@ from sqlalchemy.orm import (  # used to defer fetching attributes unless it's sp
     deferred,
     relationship,
 )
+from sqlalchemy.sql.schema import CheckConstraint
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
@@ -34,6 +35,7 @@ from pepys_import.core.store.common_db import (
     MediaMixin,
     PlatformMixin,
     SensorMixin,
+    SerialMixin,
     StateMixin,
     TaggedItemMixin,
 )
@@ -239,6 +241,35 @@ class GeometrySubType(BaseSpatiaLite):
     name = Column(String(150), nullable=False, unique=True)
     parent = Column(
         UUIDType, ForeignKey("GeometryTypes.geo_type_id", onupdate="cascade"), nullable=False
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class Serial(BaseSpatiaLite, SerialMixin):
+    __tablename__ = constants.SERIAL
+    table_type = TableTypes.METADATA
+    table_type_id = 37
+
+    serial_id = Column(UUIDType, primary_key=True, default=uuid4)
+    wargame_id = Column(
+        UUIDType,
+        ForeignKey("Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    serial_number = Column(
+        String(150),
+        CheckConstraint("serial_number <> ''", name="ck_Serials_serial_number"),
+        nullable=False,
+    )
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    exercise = Column(String(150))
+    environment = deferred(Column(String(150)))
+    location = deferred(Column(String(150)))
+    privacy_id = Column(
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
