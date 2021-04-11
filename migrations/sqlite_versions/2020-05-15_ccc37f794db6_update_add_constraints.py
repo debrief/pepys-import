@@ -36,8 +36,10 @@ from pepys_import.core.store.common_db import (
     PlatformMixin,
     SensorMixin,
     SerialMixin,
+    SeriesMixin,
     StateMixin,
     TaggedItemMixin,
+    WargameMixin,
 )
 from pepys_import.core.store.db_base import sqlite_naming_convention
 from pepys_import.core.store.db_status import TableTypes
@@ -253,7 +255,7 @@ class Serial(BaseSpatiaLite, SerialMixin):
     serial_id = Column(UUIDType, primary_key=True, default=uuid4)
     wargame_id = Column(
         UUIDType,
-        ForeignKey("Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        ForeignKey("WarGames.wargame_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     serial_number = Column(
@@ -266,6 +268,45 @@ class Serial(BaseSpatiaLite, SerialMixin):
     exercise = Column(String(150))
     environment = deferred(Column(String(150)))
     location = deferred(Column(String(150)))
+    privacy_id = Column(
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class Wargame(BaseSpatiaLite, WargameMixin):
+    __tablename__ = constants.WARGAME
+    table_type = TableTypes.METADATA
+    table_type_id = 37
+
+    wargame_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(
+        String(150), CheckConstraint("name <> ''", name="ck_Wargames_name"), nullable=False
+    )
+    series_id = Column(
+        UUIDType,
+        ForeignKey("Series.series_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    privacy_id = Column(
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class Series(BaseSpatiaLite, SeriesMixin):
+    __tablename__ = constants.SERIES
+    table_type = TableTypes.METADATA
+    table_type_id = 36
+
+    series_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(String(150), CheckConstraint("name <> ''", name="ck_Series_name"), nullable=False)
     privacy_id = Column(
         UUIDType,
         ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
