@@ -1048,7 +1048,7 @@ class DataStore:
 
         return force_type
 
-    def add_to_platform_types(self, name, default_data_interval_secs, change_id):
+    def add_to_platform_types(self, name, change_id, default_data_interval_secs=None):
         """
         Adds the specified platform type to the platform types table if not already
         present.
