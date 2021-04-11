@@ -2245,9 +2245,9 @@ class TestExportAlterAndMerge(unittest.TestCase):
         # Check statistics
         assert "| Nationality        |                 1 |       1 |          0 |" in output
         assert "| PlatformType       |                 1 |       2 |          0 |" in output
-        assert "| Datafiles   |                 0 |       1 |          0 |" in output
-        assert "| Platform    |                 4 |       2 |          1 |" in output
-        assert "| Sensor      |                 5 |       1 |          0 |" in output
+        assert "| Datafiles          |                 0 |       1 |          0 |" in output
+        assert "| Platform           |                 4 |       2 |          1 |" in output
+        assert "| Sensor             |                 5 |       1 |          0 |" in output
         assert "| State       |     402 |" in output
         assert "| Contact     |       0 |" in output
 
@@ -2673,8 +2673,8 @@ class TestExportDoNothingAndMerge(unittest.TestCase):
         assert "| PlatformType       |                 1 |       0 |          0 |" in output
         assert "| Privacy            |                 1 |       0 |          0 |" in output
         assert "| SensorType         |                 2 |       0 |          0 |" in output
-        assert "| Platform    |                 4 |       0 |          0 |" in output
-        assert "| Sensor      |                 5 |       0 |          0 |" in output
+        assert "| Platform           |                 4 |       0 |          0 |" in output
+        assert "| Sensor             |                 5 |       0 |          0 |" in output
         assert "| State       |       0 |" in output
 
         # Check entries added list
