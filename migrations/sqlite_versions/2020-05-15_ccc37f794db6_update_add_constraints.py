@@ -255,7 +255,7 @@ class Serial(BaseSpatiaLite, SerialMixin):
     serial_id = Column(UUIDType, primary_key=True, default=uuid4)
     wargame_id = Column(
         UUIDType,
-        ForeignKey("WarGames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        ForeignKey("Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     serial_number = Column(

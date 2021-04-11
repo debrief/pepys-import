@@ -190,7 +190,7 @@ class Serial(BasePostGIS, SerialMixin):
     serial_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     wargame_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.WarGames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        ForeignKey("pepys.Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     serial_number = Column(
@@ -219,7 +219,7 @@ class WargameParticipant(BasePostGIS, WargameParticipantMixin):
     wargame_participant_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     wargame_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.WarGames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        ForeignKey("pepys.Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     platform_id = Column(
@@ -244,7 +244,7 @@ class SerialParticipant(BasePostGIS, SerialParticipantMixin):
     wargame_participant_id = Column(
         UUID(as_uuid=True),
         ForeignKey(
-            "pepys.WarGameParticipants.wargame_participant_id",
+            "pepys.WargameParticipants.wargame_participant_id",
             onupdate="cascade",
             ondelete="cascade",
         ),

@@ -189,7 +189,7 @@ class Serial(BaseSpatiaLite, SerialMixin):
     serial_id = Column(UUIDType, primary_key=True, default=uuid4)
     wargame_id = Column(
         UUIDType,
-        ForeignKey("WarGames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        ForeignKey("Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     serial_number = Column(
@@ -218,7 +218,7 @@ class WargameParticipant(BaseSpatiaLite, WargameParticipantMixin):
     wargame_participant_id = Column(UUIDType, primary_key=True, default=uuid4)
     wargame_id = Column(
         UUIDType,
-        ForeignKey("WarGames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        ForeignKey("Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     platform_id = Column(
@@ -243,7 +243,7 @@ class SerialParticipant(BaseSpatiaLite, SerialParticipantMixin):
     wargame_participant_id = Column(
         UUIDType,
         ForeignKey(
-            "WarGameParticipants.wargame_participant_id", onupdate="cascade", ondelete="cascade"
+            "WargameParticipants.wargame_participant_id", onupdate="cascade", ondelete="cascade"
         ),
         nullable=False,
     )

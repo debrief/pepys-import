@@ -50,7 +50,7 @@ def upgrade():
         sa.PrimaryKeyConstraint("series_id", name=op.f("pk_Series")),
     )
     op.create_table(
-        "WarGames",
+        "Wargames",
         sa.Column(
             "wargame_id", pepys_import.utils.sqlalchemy_utils.UUIDType(length=16), nullable=False
         ),
@@ -67,18 +67,18 @@ def upgrade():
         sa.ForeignKeyConstraint(
             ["privacy_id"],
             ["Privacies.privacy_id"],
-            name=op.f("fk_WarGames_privacy_id_Privacies"),
+            name=op.f("fk_Wargames_privacy_id_Privacies"),
             onupdate="cascade",
             ondelete="cascade",
         ),
         sa.ForeignKeyConstraint(
             ["series_id"],
             ["Series.series_id"],
-            name=op.f("fk_WarGames_series_id_Series"),
+            name=op.f("fk_Wargames_series_id_Series"),
             onupdate="cascade",
             ondelete="cascade",
         ),
-        sa.PrimaryKeyConstraint("wargame_id", name=op.f("pk_WarGames")),
+        sa.PrimaryKeyConstraint("wargame_id", name=op.f("pk_Wargames")),
     )
     op.create_table(
         "Serials",
@@ -107,15 +107,15 @@ def upgrade():
         ),
         sa.ForeignKeyConstraint(
             ["wargame_id"],
-            ["WarGames.wargame_id"],
-            name=op.f("fk_Serials_wargame_id_WarGames"),
+            ["Wargames.wargame_id"],
+            name=op.f("fk_Serials_wargame_id_Wargames"),
             onupdate="cascade",
             ondelete="cascade",
         ),
         sa.PrimaryKeyConstraint("serial_id", name=op.f("pk_Serials")),
     )
     op.create_table(
-        "WarGameParticipants",
+        "WargameParticipants",
         sa.Column(
             "wargame_participant_id",
             pepys_import.utils.sqlalchemy_utils.UUIDType(length=16),
@@ -134,25 +134,25 @@ def upgrade():
         sa.ForeignKeyConstraint(
             ["platform_id"],
             ["Platforms.platform_id"],
-            name=op.f("fk_WarGameParticipants_platform_id_Platforms"),
+            name=op.f("fk_WargameParticipants_platform_id_Platforms"),
             onupdate="cascade",
             ondelete="cascade",
         ),
         sa.ForeignKeyConstraint(
             ["privacy_id"],
             ["Privacies.privacy_id"],
-            name=op.f("fk_WarGameParticipants_privacy_id_Privacies"),
+            name=op.f("fk_WargameParticipants_privacy_id_Privacies"),
             onupdate="cascade",
             ondelete="cascade",
         ),
         sa.ForeignKeyConstraint(
             ["wargame_id"],
-            ["WarGames.wargame_id"],
-            name=op.f("fk_WarGameParticipants_wargame_id_WarGames"),
+            ["Wargames.wargame_id"],
+            name=op.f("fk_WargameParticipants_wargame_id_Wargames"),
             onupdate="cascade",
             ondelete="cascade",
         ),
-        sa.PrimaryKeyConstraint("wargame_participant_id", name=op.f("pk_WarGameParticipants")),
+        sa.PrimaryKeyConstraint("wargame_participant_id", name=op.f("pk_WargameParticipants")),
     )
     op.create_table(
         "SerialParticipants",
@@ -191,8 +191,8 @@ def upgrade():
         ),
         sa.ForeignKeyConstraint(
             ["wargame_participant_id"],
-            ["WarGameParticipants.wargame_participant_id"],
-            name=op.f("fk_SerialParticipants_wargame_participant_id_WarGameParticipants"),
+            ["WargameParticipants.wargame_participant_id"],
+            name=op.f("fk_SerialParticipants_wargame_participant_id_WargameParticipants"),
             onupdate="cascade",
             ondelete="cascade",
         ),
@@ -278,9 +278,9 @@ def downgrade():
         sa.PrimaryKeyConstraint("participant_id"),
     )
     op.drop_table("SerialParticipants")
-    op.drop_table("WarGameParticipants")
+    op.drop_table("WargameParticipants")
     op.drop_table("Serials")
-    op.drop_table("WarGames")
+    op.drop_table("Wargames")
     op.drop_table("Series")
     op.drop_table("ForceTypes")
     # ### end Alembic commands ###
