@@ -191,7 +191,7 @@ class Serial(BasePostGIS, SerialMixin):
     serial_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     wargame_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        ForeignKey("pepys.WarGames.wargame_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     serial_number = Column(
@@ -220,7 +220,7 @@ class WargameParticipant(BasePostGIS, WargameParticipantMixin):
     wargame_participant_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     wargame_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        ForeignKey("pepys.WarGames.wargame_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     platform_id = Column(
@@ -245,7 +245,7 @@ class SerialParticipant(BasePostGIS, SerialParticipantMixin):
     wargame_participant_id = Column(
         UUID(as_uuid=True),
         ForeignKey(
-            "pepys.WargameParticipants.wargame_participant_id",
+            "pepys.WarGameParticipants.wargame_participant_id",
             onupdate="cascade",
             ondelete="cascade",
         ),
@@ -429,7 +429,7 @@ class PlatformType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
         nullable=False,
         unique=True,
     )
-    default_data_interval_secs = Column(Integer, nullable=False)
+    default_data_interval_secs = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
