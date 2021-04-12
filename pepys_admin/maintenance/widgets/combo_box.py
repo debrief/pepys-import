@@ -33,6 +33,7 @@ class ComboBox:
         popup=False,
         enter_handler=None,
         style=None,
+        highlight_without_focus=False,
     ) -> None:
         """
         Provides a selectable list containing the given entries.
@@ -56,6 +57,8 @@ class ComboBox:
 
         self.filter_text = ""
         self.filtered_entries = []
+
+        self.highlight_without_focus = highlight_without_focus
 
         self.enter_handler = enter_handler
 
@@ -138,7 +141,12 @@ class ComboBox:
         self.filtered_entries = []
         result = []
 
-        if len(self.entries) == 0:
+        if callable(self.entries):
+            entries = self.entries()
+        else:
+            entries = self.entries
+
+        if len(entries) == 0:
             result.append([("class:filter-text", "No entries!\n")])
         elif self.filter:
             # Filter entries
@@ -151,7 +159,7 @@ class ComboBox:
                 result.append([("class:filter-text", "Type to filter\n")])
         else:
             # Just include all entries
-            self.filtered_entries = self.entries
+            self.filtered_entries = entries
 
         app = get_app()
         for i, entry in enumerate(self.filtered_entries):
@@ -159,7 +167,7 @@ class ComboBox:
                 result.append([("[SetCursorPosition]", "")])
                 if self.popup:
                     result.append([("class:dropdown-highlight", entry)])
-                elif app.layout.has_focus(self):
+                elif self.highlight_without_focus or app.layout.has_focus(self):
                     result.append([("class:combobox-highlight", entry)])
                 else:
                     result.append([("", entry)])
@@ -170,7 +178,7 @@ class ComboBox:
         merged_text = merge_formatted_text(result)()
 
         # Go through the resulting tuples and add the mouse click handler to each of them
-        if len(self.entries) == 0:
+        if len(entries) == 0:
             start_index = 0
         elif self.filter:
             start_index = 1
@@ -187,6 +195,8 @@ class ComboBox:
             # If we have an extra row at the top of the combo box
             # for showing the filter text, then we need to take 1
             # off the index when we work out which entry to use
+            get_app().layout.focus(self)
+
             if len(self.filtered_entries) == 0:
                 self.future.set_result(None)
                 return
@@ -196,7 +206,8 @@ class ComboBox:
             if self.popup:
                 self.future.set_result(self.filtered_entries[mouse_event.position.y - offset])
             else:
-                self.value = self.filtered_entries[mouse_event.position.y - offset]
+                self.selected_entry = mouse_event.position.y - offset
+                self.value = self.filtered_entries[self.selected_entry]
                 if self.enter_handler:
                     self.enter_handler(self.value)
 
