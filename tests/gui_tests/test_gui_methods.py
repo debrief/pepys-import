@@ -40,6 +40,15 @@ def test_generating_column_data(pytestconfig, test_datastore):
             "system_name": "created_date",
             "type": "datetime",
         },
+        "participations": {
+            "foreign_table_type": TableTypes.METADATA,
+            "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
+            "system_name": "participations",
+            "type": "string",
+            "values": [],
+        },
         "identifier": {
             "required": True,
             "sqlalchemy_type": "column",
@@ -701,6 +710,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
     del output_col_data["nationality"]["ids"]
     del output_col_data["platform type"]["ids"]
     del output_col_data["privacy"]["ids"]
+    del output_col_data["participations"]["ids"]
 
     assert output_col_data == correct_col_data
 
