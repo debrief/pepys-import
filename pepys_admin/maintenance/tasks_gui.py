@@ -20,7 +20,6 @@ from pepys_admin.maintenance.widgets.blank_border import BlankBorder
 from pepys_admin.maintenance.widgets.custom_text_area import CustomTextArea
 from pepys_admin.maintenance.widgets.task_edit_widget import TaskEditWidget
 from pepys_admin.maintenance.widgets.tree_view import TreeElement, TreeView
-from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import USER, DataStore
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
@@ -95,7 +94,7 @@ class TasksGUI:
         with self.data_store.session_scope():
             all_series = (
                 self.data_store.session.query(Series)
-                .order_by(Series.created_date.desc())
+                .order_by(Series.created_date.asc())
                 .options(undefer("*"))
                 .all()
             )
@@ -261,7 +260,7 @@ class TasksGUI:
             ).change_id
             for column, old_value in old_values.items():
                 self.data_store.add_to_logs(
-                    constants.TASK,
+                    current_task.__tablename__,
                     getattr(current_task, primary_key),
                     field=column,
                     previous_value=str(old_value),
