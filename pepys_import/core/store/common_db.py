@@ -458,6 +458,8 @@ class SerialParticipantMixin:
             backref=backref(
                 "serial_participants",
                 lazy="joined",
+                passive_deletes=True,
+                cascade="all, delete, delete-orphan",
             ),
         )
 
