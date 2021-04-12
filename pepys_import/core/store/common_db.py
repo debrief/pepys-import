@@ -396,7 +396,11 @@ class WargameParticipantMixin:
             "Wargame",
             lazy="joined",
             backref=backref(
-                "participants", passive_deletes=True, cascade="all, delete, delete-orphan"
+                "participants",
+                passive_deletes=True,
+                cascade="all, delete, delete-orphan",
+                lazy="joined",
+                order_by="asc(WargameParticipant.created_date)",
             ),
         )
 
@@ -438,13 +442,24 @@ class SerialParticipantMixin:
             "Serial",
             lazy="joined",
             backref=backref(
-                "participants", passive_deletes=True, cascade="all, delete, delete-orphan"
+                "participants",
+                passive_deletes=True,
+                cascade="all, delete, delete-orphan",
+                lazy="joined",
+                order_by="asc(SerialParticipant.created_date)",
             ),
         )
 
     @declared_attr
     def wargame_participant(self):
-        return relationship("WargameParticipant", lazy="joined")
+        return relationship(
+            "WargameParticipant",
+            lazy="joined",
+            backref=backref(
+                "serial_participants",
+                lazy="joined",
+            ),
+        )
 
     @declared_attr
     def force_type(self):
@@ -479,7 +494,7 @@ class SerialParticipantMixin:
         return association_proxy("wargame_participant", "platform_nationality_name")
 
     def __repr__(self):
-        return f'SerialParticipant(serial="{self.serial_number}, platform="{self.platform_name}"'
+        return f'SerialParticipant(serial="{self.serial_number}, platform="{self.platform_name})"'
 
 
 class DatafileMixin:
