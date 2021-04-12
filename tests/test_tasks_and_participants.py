@@ -15,6 +15,9 @@ def create_example_tasks(ds, create_participants=False):
 
     with ds.session_scope():
         priv_id = ds.session.query(ds.db_classes.Privacy).all()[0].privacy_id
+        change_id = ds.add_to_changes(
+            "USER", datetime.utcnow(), "Creating test tasks/participants"
+        ).change_id
 
         s1 = ds.db_classes.Series(name="Joint Warrior", privacy_id=priv_id)
         s2 = ds.db_classes.Series(name="Another Top-Level Series", privacy_id=priv_id)
@@ -92,9 +95,15 @@ def create_example_tasks(ds, create_participants=False):
         )
 
         if create_participants:
-            p1 = wg1.add_participant(data_store=ds, platform=plat1, privacy="Private")
-            p2 = wg1.add_participant(data_store=ds, platform=plat2, privacy="Private")
-            p3 = wg1.add_participant(data_store=ds, platform=plat3, privacy="Private")
+            p1 = wg1.add_participant(
+                data_store=ds, platform=plat1, privacy="Private", change_id=change_id
+            )
+            p2 = wg1.add_participant(
+                data_store=ds, platform=plat2, privacy="Private", change_id=change_id
+            )
+            p3 = wg1.add_participant(
+                data_store=ds, platform=plat3, privacy="Private", change_id=change_id
+            )
 
             serial1.add_participant(
                 data_store=ds,
@@ -103,6 +112,7 @@ def create_example_tasks(ds, create_participants=False):
                 end=datetime(2020, 2, 3, 10, 0, 0),
                 force_type="Blue",
                 privacy="Private",
+                change_id=change_id,
             )
 
             serial1.add_participant(
@@ -112,6 +122,7 @@ def create_example_tasks(ds, create_participants=False):
                 end=datetime(2020, 2, 3, 9, 30, 0),
                 force_type="Red",
                 privacy="Private",
+                change_id=change_id,
             )
 
             serial2.add_participant(
@@ -121,6 +132,7 @@ def create_example_tasks(ds, create_participants=False):
                 end=datetime(2020, 2, 7, 11, 0, 0),
                 force_type="Blue",
                 privacy="Private",
+                change_id=change_id,
             )
 
 

@@ -10,6 +10,7 @@ from tqdm import tqdm
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
+from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
@@ -297,7 +298,7 @@ class WargameMixin:
     def privacy_name(self):
         return association_proxy("privacy", "name")
 
-    def add_participant(self, data_store, platform, privacy):
+    def add_participant(self, data_store, platform, privacy, change_id):
         privacy = data_store.search_privacy(privacy)
         if privacy is None:
             raise ValueError("Specified Privacy does not exist")
@@ -308,6 +309,13 @@ class WargameMixin:
         participant.platform = platform
 
         data_store.session.add(participant)
+        data_store.session.flush()
+
+        data_store.add_to_logs(
+            table=constants.WARGAME_PARTICIPANT,
+            row_id=participant.wargame_participant_id,
+            change_id=change_id,
+        )
 
         return participant
 
@@ -338,7 +346,14 @@ class SerialMixin:
         return association_proxy("privacy", "name")
 
     def add_participant(
-        self, data_store, wargame_participant, force_type, privacy, start=None, end=None
+        self,
+        data_store,
+        wargame_participant,
+        force_type,
+        privacy,
+        start=None,
+        end=None,
+        change_id=None,
     ):
         privacy = data_store.search_privacy(privacy)
         if privacy is None:
@@ -357,6 +372,13 @@ class SerialMixin:
         participant.force_type = force_type
 
         data_store.session.add(participant)
+        data_store.session.flush()
+
+        data_store.add_to_logs(
+            table=constants.SERIAL_PARTICIPANT,
+            row_id=participant.serial_participant_id,
+            change_id=change_id,
+        )
 
         return participant
 
