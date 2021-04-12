@@ -85,7 +85,7 @@ class EditDialog:
             title=f"Edit {table_object.__name__}(s)",
             body=self.body,
             buttons=[ok_button, cancel_button],
-            width=D(preferred=120),
+            width=D(preferred=160),
             modal=True,
         )
 
