@@ -109,12 +109,10 @@ class Platform(BaseSpatiaLite, PlatformMixin):
     name = Column(
         String(150), CheckConstraint("name <> ''", name="ck_Platforms_name"), nullable=False
     )
-    identifier = deferred(
-        Column(
-            String(30),
-            CheckConstraint("identifier <> ''", name="ck_Platforms_identifier"),
-            nullable=False,
-        )
+    identifier = Column(
+        String(30),
+        CheckConstraint("identifier <> ''", name="ck_Platforms_identifier"),
+        nullable=False,
     )
     trigraph = deferred(Column(String(3)))
     quadgraph = deferred(Column(String(4)))
