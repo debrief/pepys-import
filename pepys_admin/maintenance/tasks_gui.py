@@ -138,6 +138,7 @@ class TasksGUI:
                 self.top_level_add_button,
             ],
             padding=1,
+            width=Dimension(weight=0.2),
         )
 
         current_task_object = (
@@ -149,6 +150,7 @@ class TasksGUI:
             self.privacies,
             self.handle_save,
             self.handle_delete,
+            self.data_store,
         )
         self.rh_pane = HSplit(
             [
@@ -156,6 +158,7 @@ class TasksGUI:
                 self.task_edit_widget,
             ],
             padding=1,
+            width=Dimension(weight=0.8),
         )
 
         self.root_container = FloatContainer(

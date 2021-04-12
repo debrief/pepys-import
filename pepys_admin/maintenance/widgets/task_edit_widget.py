@@ -5,14 +5,18 @@ from prompt_toolkit.widgets.toolbars import ValidationToolbar
 from pepys_admin.maintenance.utils import empty_str_if_none
 from pepys_admin.maintenance.widgets.DatetimeWidget import DatetimeWidget
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
+from pepys_admin.maintenance.widgets.participants_widget import ParticipantsWidget
 from pepys_import.core.store.common_db import SerialMixin, SeriesMixin, WargameMixin
 
 
 class TaskEditWidget:
-    def __init__(self, task_object, privacies, save_button_handler, delete_button_handler):
+    def __init__(
+        self, task_object, privacies, save_button_handler, delete_button_handler, data_store
+    ):
         self.privacies = privacies
         self.save_button_handler = save_button_handler
         self.delete_button_handler = delete_button_handler
+        self.data_store = data_store
 
         self.set_task_object(task_object)
 
@@ -125,11 +129,18 @@ class TaskEditWidget:
                 [Label("End (*):", width=21), self.end_field], padding=2, align=HorizontalAlign.LEFT
             )
 
+            self.participants_widget = ParticipantsWidget(self)
+
+            self.participants_row = HSplit(
+                [Label("Participants:"), self.participants_widget], padding=1
+            )
+
             self.all_rows = [
                 self.name_row,
                 self.start_row,
                 self.end_row,
                 self.privacy_row,
+                self.participants_row,
                 self.validation_toolbar,
                 self.buttons_row,
             ]
@@ -169,12 +180,26 @@ class TaskEditWidget:
                 [Label("End (*):", width=21), self.end_field], padding=2, align=HorizontalAlign.LEFT
             )
 
+            self.blue_participants_widget = ParticipantsWidget(self, force="Blue")
+
+            self.blue_participants_row = HSplit(
+                [Label("Blue Force Participants:"), self.blue_participants_widget], padding=1
+            )
+
+            self.red_participants_widget = ParticipantsWidget(self, force="Red")
+
+            self.red_participants_row = HSplit(
+                [Label("Red Force Participants:"), self.red_participants_widget], padding=1
+            )
+
             self.all_rows = [
                 self.number_row,
                 self.exercise_row,
                 self.start_row,
                 self.end_row,
                 self.privacy_row,
+                self.blue_participants_row,
+                self.red_participants_row,
                 self.validation_toolbar,
                 self.buttons_row,
             ]
