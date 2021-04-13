@@ -189,7 +189,8 @@ class TasksGUI:
         )
 
     def validate_fields(self, current_task, updated_fields):
-        WARGAME_AND_SERIAL_REQUIRED_FIELDS = ["name", "start", "end"]
+        WARGAME_REQUIRED_FIELDS = set(["name", "start", "end"])
+        SERIAL_REQUIRED_FIELDS = set(["serial_number", "start", "end"])
         if isinstance(current_task, self.data_store.db_classes.Series):
             # If this is None then this is a new Series object that we're creating
             # and thus we need to check all fields are filled
@@ -197,11 +198,14 @@ class TasksGUI:
                 if "name" not in updated_fields:
                     self.show_validation_error(missing_fields=["name"])
                     return False
-        elif isinstance(current_task, self.data_store.db_classes.Wargame) or isinstance(
-            current_task, self.data_store.db_classes.Serial
-        ):
+        else:
+            if isinstance(current_task, self.data_store.db_classes.Wargame):
+                required_fields = WARGAME_REQUIRED_FIELDS
+            elif isinstance(current_task, self.data_store.db_classes.Serial):
+                required_fields = SERIAL_REQUIRED_FIELDS
+            else:
+                raise ValueError("Invalid object passed to validate_fields")
             if current_task.start is None:
-                required_fields = set(WARGAME_AND_SERIAL_REQUIRED_FIELDS)
                 provided_fields = set(updated_fields.keys())
                 if not required_fields.issubset(provided_fields):
                     missing_fields = required_fields.difference(provided_fields)
@@ -213,7 +217,7 @@ class TasksGUI:
         missing_fields = []
         for field, new_value in updated_fields.items():
             if new_value is None or new_value == "":
-                if field in WARGAME_AND_SERIAL_REQUIRED_FIELDS:
+                if field in WARGAME_REQUIRED_FIELDS or field in SERIAL_REQUIRED_FIELDS:
                     missing_fields.append(field)
 
         if len(missing_fields) > 0:
