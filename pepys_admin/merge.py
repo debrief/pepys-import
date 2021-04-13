@@ -59,6 +59,13 @@ class MergeDatabases:
         """Merges a reference table (table_object_name should be the singular name of the table object, such as
         PlatformType) from the slave_store into the master_store.
         """
+        # Until we added the HelpText table, all the reference tables had a name field
+        # but the HelpText table has an id field instead (but it is unique and has the same
+        # characteristics as a name field)
+        if table_object_name == "HelpText":
+            name_field = "id"
+        else:
+            name_field = "name"
         # Get references to the table from the master and slave DataStores
         master_table = getattr(self.master_store.db_classes, table_object_name)
         slave_table = getattr(self.slave_store.db_classes, table_object_name)
@@ -90,13 +97,16 @@ class MergeDatabases:
                     if n_results == 0:
                         search_by_name_results = (
                             self.master_store.session.query(master_table)
-                            .filter(master_table.name == slave_entry.name)
+                            .filter(
+                                getattr(master_table, name_field)
+                                == getattr(slave_entry, name_field)
+                            )
                             .all()
                         )
                         n_name_results = len(search_by_name_results)
 
                         if n_name_results == 0:
-                            ids_added.append({"id": guid, "name": slave_entry.name})
+                            ids_added.append({"id": guid, "name": getattr(slave_entry, name_field)})
                             self.slave_store.session.expunge(slave_entry)
                             make_transient(slave_entry)
                             self.master_store.session.merge(slave_entry)
@@ -105,7 +115,7 @@ class MergeDatabases:
                                 {
                                     "from": guid,
                                     "to": getattr(search_by_name_results[0], primary_key),
-                                    "name": slave_entry.name,
+                                    "name": getattr(slave_entry, name_field),
                                     # Data can never be changed here, because there's only one field (name) and that's what we search by
                                     "data_changed": False,
                                 }
@@ -122,7 +132,9 @@ class MergeDatabases:
                                 False
                             ), "Fatal assertion error: multiple entries in master reference table with same name"
                     elif n_results == 1:
-                        ids_already_there.append({"id": guid, "name": slave_entry.name})
+                        ids_already_there.append(
+                            {"id": guid, "name": getattr(slave_entry, name_field)}
+                        )
                     else:  # pragma: no cover
                         assert (
                             False

@@ -21,7 +21,7 @@ sqlite_naming_convention = {
     "pk": "pk_%(table_name)s",
 }
 meta_sqlite = MetaData(naming_convention=sqlite_naming_convention)
-meta_postgres = MetaData(naming_convention=postgres_naming_convention, schema="pepys")
+meta_postgres = MetaData(naming_convention=postgres_naming_convention)
 # define this as the base for all the DB tables here in a common module
 BasePostGIS = declarative_base(metadata=meta_postgres)
 BaseSpatiaLite = declarative_base(metadata=meta_sqlite)
