@@ -60,6 +60,7 @@ class TasksGUI:
         self.root_task = self.get_tasks_into_treeview()
 
         self.privacies = self.get_privacies()
+        self.platforms = self.get_platforms()
 
         self.init_ui_components()
 
@@ -82,6 +83,16 @@ class TasksGUI:
         privacy_ids = [priv.privacy_id for priv in all_privacies]
 
         return {"values": privacy_strs, "ids": privacy_ids}
+
+    def get_platforms(self):
+        all_platforms = self.data_store.session.query(self.data_store.db_classes.Platform).all()
+
+        platform_strs = [
+            f"{plat.name} / {plat.identifier} / {plat.nationality_name}" for plat in all_platforms
+        ]
+        platform_ids = [plat.platform_id for plat in all_platforms]
+
+        return {"values": platform_strs, "ids": platform_ids}
 
     def get_tasks_into_treeview(self):
         Series = self.data_store.db_classes.Series
@@ -148,6 +159,7 @@ class TasksGUI:
         self.task_edit_widget = TaskEditWidget(
             current_task_object,
             self.privacies,
+            self.platforms,
             self.handle_save,
             self.handle_delete,
             self.data_store,

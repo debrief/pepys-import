@@ -1,4 +1,5 @@
 from asyncio.tasks import ensure_future
+from datetime import datetime
 
 from loguru import logger
 from prompt_toolkit.application.current import get_app
@@ -7,13 +8,15 @@ from prompt_toolkit.widgets.base import Button
 
 from pepys_admin.maintenance.dialogs.participant_dialog import ParticipantDialog
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
+from pepys_import.core.store.data_store import USER
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
 
 class ParticipantsWidget:
-    def __init__(self, task_edit_widget, force=None):
+    def __init__(self, task_edit_widget, platforms, force=None):
         self.task_edit_widget = task_edit_widget
         self.force = force
+        self.platforms = platforms
 
         self.create_widgets()
 
@@ -43,10 +46,39 @@ class ParticipantsWidget:
 
     def handle_add_button(self):
         async def coroutine():
+            participant_platform_ids = [
+                p.platform.platform_id for p in self.task_edit_widget.task_object.participants
+            ]
+
+            all_platforms = self.platforms
+            filtered_platforms = {"ids": [], "values": []}
+            for i in range(len(all_platforms["ids"])):
+                if all_platforms["ids"][i] not in participant_platform_ids:
+                    filtered_platforms["ids"].append(all_platforms["ids"][i])
+                    filtered_platforms["values"].append(all_platforms["values"][i])
+
             dialog = ParticipantDialog(
-                self.task_edit_widget.task_object, self.force, {"values": ["Plat 1", "Plat 2"]}
+                self.task_edit_widget.task_object,
+                self.force,
+                filtered_platforms,
+                self.task_edit_widget.privacies,
             )
-            await self.task_edit_widget.show_dialog_as_float(dialog)
+            result = await self.task_edit_widget.show_dialog_as_float(dialog)
+            if result is None:
+                return
+
+            logger.debug(f"{result=}")
+
+            ds = self.task_edit_widget.data_store
+
+            with ds.session_scope():
+                change_id = ds.add_to_changes(
+                    USER, datetime.utcnow(), "Manual edit in Tasks GUI"
+                ).change_id
+
+                self.task_edit_widget.task_object.add_participant(
+                    ds, result["platform"], result["privacy"], change_id
+                )
 
         ensure_future(coroutine())
 

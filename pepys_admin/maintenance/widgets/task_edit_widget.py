@@ -14,12 +14,14 @@ class TaskEditWidget:
         self,
         task_object,
         privacies,
+        platforms,
         save_button_handler,
         delete_button_handler,
         data_store,
         show_dialog_as_float,
     ):
         self.privacies = privacies
+        self.platforms = platforms
         self.save_button_handler = save_button_handler
         self.delete_button_handler = delete_button_handler
         self.data_store = data_store
@@ -138,7 +140,7 @@ class TaskEditWidget:
                 [Label("End (*):", width=21), self.end_field], padding=2, align=HorizontalAlign.LEFT
             )
 
-            self.participants_widget = ParticipantsWidget(self)
+            self.participants_widget = ParticipantsWidget(self, self.platforms)
 
             self.participants_row = HSplit(
                 [Label("Participants:"), self.participants_widget], padding=1

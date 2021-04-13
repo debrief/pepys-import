@@ -10,12 +10,13 @@ from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 
 
 class ParticipantDialog:
-    def __init__(self, task_object, force, platforms):
+    def __init__(self, task_object, force, platforms, privacies):
         self.future = Future()
 
         self.task_object = task_object
         self.force = force
         self.platforms = platforms
+        self.privacies = privacies
 
         add_button = Button(text="Add", handler=self.handle_add)
         cancel_button = Button(text="Cancel", handler=self.handle_cancel)
@@ -34,10 +35,20 @@ class ParticipantDialog:
             padding=1,
         )
 
-        self.end_row = DatetimeWidget()
-        end_row = VSplit([Label("End:", width=15), self.end_row], padding=1)
+        self.end_field = DatetimeWidget()
+        end_row = VSplit([Label("End:", width=15), self.end_field], padding=1)
 
-        self.body = HSplit([platform_row, start_row, end_row], padding=2, width=78)
+        self.privacy_field = DropdownBox(self.privacies["values"][0], self.privacies["values"])
+        privacy_row = VSplit(
+            [Label("Privacy (*):", width=15), self.privacy_field],
+            padding=1,
+        )
+
+        self.error_label = Label("")
+
+        self.body = HSplit(
+            [platform_row, start_row, end_row, privacy_row, self.error_label], padding=2, width=78
+        )
 
         self.dialog = Dialog(
             title=title,
@@ -56,10 +67,26 @@ class ParticipantDialog:
             self.handle_cancel()
 
     def handle_add(self):
-        self.future.set_result(True)
+        values = {}
+
+        if self.platform_field.text == "Select a platform":
+            self.error_label.text = "You must select a platform"
+            return
+        else:
+            self.error_label.text = ""
+
+        platform_index = self.platforms["values"].index(self.platform_field.text)
+        values["platform"] = self.platforms["ids"][platform_index]
+
+        values["start"] = self.start_field.datetime_value
+        values["end"] = self.end_field.datetime_value
+
+        values["privacy"] = self.privacy_field.text
+
+        self.future.set_result(values)
 
     def handle_cancel(self):
-        self.future.set_result(False)
+        self.future.set_result(None)
 
     def __pt_container__(self):
         return self.dialog

@@ -303,19 +303,31 @@ class WargameMixin:
         if privacy is None:
             raise ValueError("Specified Privacy does not exist")
 
+        if not isinstance(platform, data_store.db_classes.Platform):
+            platform = (
+                data_store.session.query(data_store.db_classes.Platform)
+                .filter(data_store.db_classes.Platform.platform_id == platform)
+                .one()
+            )
+
+        data_store.session.expunge_all()
+
         participant = data_store.db_classes.WargameParticipant()
         participant.wargame = self
-        participant.privacy = privacy
-        participant.platform = platform
+        participant.privacy_id = privacy.privacy_id
+        participant.platform_id = platform.platform_id
 
         data_store.session.add(participant)
         data_store.session.flush()
+        data_store.session.refresh(self)
 
         data_store.add_to_logs(
             table=constants.WARGAME_PARTICIPANT,
             row_id=participant.wargame_participant_id,
             change_id=change_id,
         )
+
+        data_store.session.expunge_all()
 
         return participant
 
