@@ -151,6 +151,7 @@ class TasksGUI:
             self.handle_save,
             self.handle_delete,
             self.data_store,
+            self.show_dialog_as_float,
         )
         self.rh_pane = HSplit(
             [

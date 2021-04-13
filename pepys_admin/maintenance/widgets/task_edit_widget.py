@@ -11,12 +11,21 @@ from pepys_import.core.store.common_db import SerialMixin, SeriesMixin, WargameM
 
 class TaskEditWidget:
     def __init__(
-        self, task_object, privacies, save_button_handler, delete_button_handler, data_store
+        self,
+        task_object,
+        privacies,
+        save_button_handler,
+        delete_button_handler,
+        data_store,
+        show_dialog_as_float,
     ):
         self.privacies = privacies
         self.save_button_handler = save_button_handler
         self.delete_button_handler = delete_button_handler
         self.data_store = data_store
+        # Reference to the main show_dialog_as_float method, so we can show a dialog from
+        # the ParticipantsWidget
+        self.show_dialog_as_float = show_dialog_as_float
 
         self.set_task_object(task_object)
 

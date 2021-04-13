@@ -1,8 +1,11 @@
+from asyncio.tasks import ensure_future
+
 from loguru import logger
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.layout.containers import DynamicContainer, HSplit, VSplit
 from prompt_toolkit.widgets.base import Button
 
+from pepys_admin.maintenance.dialogs.participant_dialog import ParticipantDialog
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
@@ -39,7 +42,13 @@ class ParticipantsWidget:
         ]
 
     def handle_add_button(self):
-        pass
+        async def coroutine():
+            dialog = ParticipantDialog(
+                self.task_edit_widget.task_object, self.force, {"values": ["Plat 1", "Plat 2"]}
+            )
+            await self.task_edit_widget.show_dialog_as_float(dialog)
+
+        ensure_future(coroutine())
 
     def handle_delete_button(self):
         ds = self.task_edit_widget.data_store
