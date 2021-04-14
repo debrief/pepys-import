@@ -32,7 +32,7 @@ from pepys_import.utils.data_store_utils import (
 from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_keys_on
 from pepys_import.utils.value_transforming_utils import format_datetime
 
-from ...utils.error_handling import handle_first_connection_error
+from ...utils.error_handling import handle_database_errors, handle_first_connection_error
 from ...utils.sqlalchemy_utils import get_primary_key_for_table
 from ...utils.table_name_utils import table_name_to_class_name
 from ...utils.text_formatting_utils import custom_print_formatted_text, format_error_message
@@ -98,10 +98,11 @@ class DataStore:
                 # However, the CREATE EXTENSION bit makes less sense - but seems to be required to be in there.
                 # It will be a no-op if the extension already exists, so it doesn't have an efficiency implication
                 # but seems to be required.
-                with self.engine.connect() as connection:
-                    connection.execute(
-                        "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
-                    )
+                with handle_database_errors():
+                    with self.engine.connect() as connection:
+                        connection.execute(
+                            "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
+                        )
             elif db_type == "sqlite":
                 self.engine = create_engine(connection_string, echo=False)
                 listen(self.engine, "connect", load_spatialite)
