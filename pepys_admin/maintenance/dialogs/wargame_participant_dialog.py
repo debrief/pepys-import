@@ -5,11 +5,10 @@ from prompt_toolkit.layout.dimension import D
 from prompt_toolkit.widgets import Button, Label
 from prompt_toolkit.widgets.dialogs import Dialog
 
-from pepys_admin.maintenance.widgets.DatetimeWidget import DatetimeWidget
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 
 
-class ParticipantDialog:
+class WargameParticipantDialog:
     def __init__(self, task_object, force, platforms, privacies):
         self.future = Future()
 
@@ -29,14 +28,14 @@ class ParticipantDialog:
         self.platform_field = DropdownBox("Select a platform", self.platforms["values"])
         platform_row = VSplit([Label("Platform (*):", width=15), self.platform_field], padding=1)
 
-        self.start_field = DatetimeWidget()
-        start_row = VSplit(
-            [Label("Start:", width=15), self.start_field],
-            padding=1,
-        )
+        # self.start_field = DatetimeWidget()
+        # start_row = VSplit(
+        #     [Label("Start:", width=15), self.start_field],
+        #     padding=1,
+        # )
 
-        self.end_field = DatetimeWidget()
-        end_row = VSplit([Label("End:", width=15), self.end_field], padding=1)
+        # self.end_field = DatetimeWidget()
+        # end_row = VSplit([Label("End:", width=15), self.end_field], padding=1)
 
         self.privacy_field = DropdownBox(self.privacies["values"][0], self.privacies["values"])
         privacy_row = VSplit(
@@ -46,9 +45,7 @@ class ParticipantDialog:
 
         self.error_label = Label("")
 
-        self.body = HSplit(
-            [platform_row, start_row, end_row, privacy_row, self.error_label], padding=2, width=78
-        )
+        self.body = HSplit([platform_row, privacy_row, self.error_label], padding=2, width=78)
 
         self.dialog = Dialog(
             title=title,
@@ -77,9 +74,6 @@ class ParticipantDialog:
 
         platform_index = self.platforms["values"].index(self.platform_field.text)
         values["platform"] = self.platforms["ids"][platform_index]
-
-        values["start"] = self.start_field.datetime_value
-        values["end"] = self.end_field.datetime_value
 
         values["privacy"] = self.privacy_field.text
 

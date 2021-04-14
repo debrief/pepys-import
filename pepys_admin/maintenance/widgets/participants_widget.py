@@ -6,7 +6,7 @@ from prompt_toolkit.application.current import get_app
 from prompt_toolkit.layout.containers import DynamicContainer, HSplit, VSplit
 from prompt_toolkit.widgets.base import Button
 
-from pepys_admin.maintenance.dialogs.participant_dialog import ParticipantDialog
+from pepys_admin.maintenance.dialogs.wargame_participant_dialog import WargameParticipantDialog
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_import.core.store.data_store import USER
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
@@ -57,7 +57,7 @@ class ParticipantsWidget:
                     filtered_platforms["ids"].append(all_platforms["ids"][i])
                     filtered_platforms["values"].append(all_platforms["values"][i])
 
-            dialog = ParticipantDialog(
+            dialog = WargameParticipantDialog(
                 self.task_edit_widget.task_object,
                 self.force,
                 filtered_platforms,
