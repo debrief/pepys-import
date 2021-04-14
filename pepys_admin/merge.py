@@ -436,7 +436,7 @@ class MergeDatabases:
 
             # Deal with the location field, making sure it gets converted to WKT so it can be inserted
             # into the db
-            if "location" in d:
+            if "location" in d and d["location"] is not None:
                 d["_location"] = d["location"].to_wkt()
 
             # Deal with the geometry table where we have a generic geometry in the table

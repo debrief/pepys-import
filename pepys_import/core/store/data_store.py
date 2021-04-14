@@ -91,6 +91,17 @@ class DataStore:
             if db_type == "postgres":
                 self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
                 BasePostGIS.metadata.bind = self.engine
+                # The SQL below seems to be required to set the database up correctly so that merging works.
+                # The search_path makes perfect sense, as when merging the tables come across from SQLite which
+                # has no schema, so the objects have no associated schema, and Postgres needs to be able to find
+                # them without a schema
+                # However, the CREATE EXTENSION bit makes less sense - but seems to be required to be in there.
+                # It will be a no-op if the extension already exists, so it doesn't have an efficiency implication
+                # but seems to be required.
+                with self.engine.connect() as connection:
+                    connection.execute(
+                        "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
+                    )
             elif db_type == "sqlite":
                 self.engine = create_engine(connection_string, echo=False)
                 listen(self.engine, "connect", load_spatialite)
