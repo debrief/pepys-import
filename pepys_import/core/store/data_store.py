@@ -169,7 +169,7 @@ class DataStore:
         self._search_geometry_type_cache = dict()
         self._search_geometry_subtype_cache = dict()
 
-        db_session = sessionmaker(bind=self.engine)
+        db_session = sessionmaker(bind=self.engine, expire_on_commit=False)
         self.scoped_session_creator = scoped_session(db_session)
 
         # Branding Text
@@ -655,7 +655,6 @@ class DataStore:
     @cache_results_if_not_none("_search_force_type_cache")
     def search_force_type(self, name):
         """Search for any force type with this name"""
-        # print(f"Searching force type with name = {name}")
         return (
             self.session.query(self.db_classes.ForceType)
             .filter(func.lower(self.db_classes.ForceType.name) == lowercase_or_none(name))

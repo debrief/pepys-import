@@ -1,3 +1,4 @@
+from loguru import logger
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -299,6 +300,7 @@ class WargameMixin:
         return association_proxy("privacy", "name")
 
     def add_participant(self, data_store, platform, privacy, change_id):
+        logger.debug(f"Add Wargame Participant {privacy=}")
         privacy = data_store.search_privacy(privacy)
         if privacy is None:
             raise ValueError("Specified Privacy does not exist")
@@ -367,6 +369,7 @@ class SerialMixin:
         end=None,
         change_id=None,
     ):
+        logger.debug(f"Add Serial Participant {privacy=}")
         privacy = data_store.search_privacy(privacy)
         if privacy is None:
             raise ValueError("Specified Privacy does not exist")
@@ -375,22 +378,27 @@ class SerialMixin:
         if force_type is None:
             raise ValueError("Specified Force Type does not exist")
 
+        data_store.session.expunge_all()
+
         participant = data_store.db_classes.SerialParticipant()
         participant.serial = self
-        participant.privacy = privacy
-        participant.wargame_participant = wargame_participant
+        participant.privacy_id = privacy.privacy_id
+        participant.wargame_participant_id = wargame_participant
         participant.start = start
         participant.end = end
-        participant.force_type = force_type
+        participant.force_type_id = force_type.force_type_id
 
         data_store.session.add(participant)
         data_store.session.flush()
+        data_store.session.refresh(self)
 
         data_store.add_to_logs(
             table=constants.SERIAL_PARTICIPANT,
             row_id=participant.serial_participant_id,
             change_id=change_id,
         )
+
+        data_store.session.expunge_all()
 
         return participant
 
@@ -494,6 +502,10 @@ class SerialParticipantMixin:
     @declared_attr
     def serial_exercise(self):
         return association_proxy("serial", "serial_exercise")
+
+    @declared_attr
+    def platform(self):
+        return association_proxy("wargame_participant", "platform")
 
     @declared_attr
     def platform_name(self):
