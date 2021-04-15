@@ -385,7 +385,7 @@ class TasksGUI:
         style = Style(
             [
                 ("title-line", "bg:ansibrightblack fg:ansiwhite"),
-                ("button", "fg:ansibrightblack"),
+                ("button", "fg:ansiblack"),
                 ("button.focused button.text", "fg:ansiwhite"),
                 ("button.focused button.arrow", "fg:ansiwhite"),
                 ("button.focused", "bg:ansiblue"),
