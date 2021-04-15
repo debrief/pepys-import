@@ -197,7 +197,7 @@ class TasksGUI:
     def show_validation_error(self, missing_fields):
         self.show_messagebox(
             "Validation Error",
-            "You must provide valid values for the following fields\n\n"
+            "You must provide valid values for the following fields before saving or\nadding a participant:\n\n"
             + "\n".join(missing_fields),
         )
 
@@ -244,13 +244,13 @@ class TasksGUI:
 
         logger.debug(f"{updated_fields=}")
         if updated_fields == {}:
-            return
+            return True
 
         current_task = self.task_edit_widget.task_object
         primary_key = get_primary_key_for_table(current_task)
 
         if not self.validate_fields(current_task, updated_fields):
-            return
+            return False
 
         # Keep track of the old values for adding to Logs later
         old_values = {}
@@ -293,6 +293,7 @@ class TasksGUI:
         else:
             self.tree_view.selected_element.text = current_task.name
         get_app().invalidate()
+        return True
 
     def handle_delete(self):
         async def coroutine():

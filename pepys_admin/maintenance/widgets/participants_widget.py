@@ -137,6 +137,14 @@ class ParticipantsWidget:
                     change_id=change_id,
                 )
 
+        # We need to save the task before adding a participant, or we don't have the database
+        # ID to link the participant to the task. So we call the save method.
+        # However, if the save_button_handler method returns False then there has been a validation
+        # error, and we shouldn't try and add a participant - and then the user will see the validation
+        # dialog.
+        if not self.task_edit_widget.save_button_handler():
+            return
+
         if isinstance(
             self.task_edit_widget.task_object, self.task_edit_widget.data_store.db_classes.Wargame
         ):

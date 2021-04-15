@@ -1,4 +1,3 @@
-from loguru import logger
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -300,7 +299,6 @@ class WargameMixin:
         return association_proxy("privacy", "name")
 
     def add_participant(self, data_store, platform, privacy, change_id):
-        logger.debug(f"Add Wargame Participant {privacy=}")
         privacy = data_store.search_privacy(privacy)
         if privacy is None:
             raise ValueError("Specified Privacy does not exist")
@@ -369,7 +367,6 @@ class SerialMixin:
         end=None,
         change_id=None,
     ):
-        logger.debug(f"Add Serial Participant {privacy=}")
         privacy = data_store.search_privacy(privacy)
         if privacy is None:
             raise ValueError("Specified Privacy does not exist")
@@ -378,19 +375,33 @@ class SerialMixin:
         if force_type is None:
             raise ValueError("Specified Force Type does not exist")
 
+        if not isinstance(wargame_participant, data_store.db_classes.WargameParticipant):
+            wargame_participant = (
+                data_store.session.query(data_store.db_classes.WargameParticipant)
+                .filter(
+                    data_store.db_classes.WargameParticipant.wargame_participant_id
+                    == wargame_participant
+                )
+                .one()
+            )
+
         data_store.session.expunge_all()
 
         participant = data_store.db_classes.SerialParticipant()
         participant.serial = self
         participant.privacy_id = privacy.privacy_id
-        participant.wargame_participant_id = wargame_participant
+        participant.wargame_participant_id = wargame_participant.wargame_participant_id
         participant.start = start
         participant.end = end
         participant.force_type_id = force_type.force_type_id
 
         data_store.session.add(participant)
+        # data_store.session.flush()
+        # data_store.session.refresh(participant)
+        # self.participants.append(participant)
         data_store.session.flush()
-        data_store.session.refresh(self)
+        # data_store.session.refresh(participant)
+        data_store.session.refresh(participant.serial)
 
         data_store.add_to_logs(
             table=constants.SERIAL_PARTICIPANT,
