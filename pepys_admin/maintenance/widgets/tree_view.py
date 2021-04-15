@@ -202,9 +202,12 @@ class TreeView:
             if self.add_enabled:
                 element_output.append([("[SetCursorPosition]", "")])
             if self.level_to_name is not None:
-                add_text = f"Add {self.level_to_name[element.level]}"
+                try:
+                    add_text = f"<Add {self.level_to_name[element.level]}>"
+                except KeyError:
+                    add_text = "<Add>"
             else:
-                add_text = "Add"
+                add_text = "<Add>"
             element_output.append([(add_style, add_text, self.handle_click_on_add)])
 
         merged_text = merge_formatted_text(element_output)()
