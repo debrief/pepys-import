@@ -464,8 +464,8 @@ class WargameParticipantMixin:
 
 
 class SerialParticipantMixin:
-    _default_preview_fields = ["serial_number", "wargame_participant_platform_name"]
-    _default_dropdown_fields = ["serial_number", "wargame_participant_platform_name"]
+    _default_preview_fields = ["serial_number", "platform_name"]
+    _default_dropdown_fields = ["serial_number", "platform_name"]
 
     @declared_attr
     def serial(self):
