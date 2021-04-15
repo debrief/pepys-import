@@ -14,10 +14,14 @@ from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
 
 class ParticipantsWidget:
-    def __init__(self, task_edit_widget, platforms=None, force=None):
+    def __init__(
+        self, task_edit_widget, platforms=None, force=None, combo_height=8, combo_width=60
+    ):
         self.task_edit_widget = task_edit_widget
         self.force = force
         self.platforms = platforms
+        self.combo_height = combo_height
+        self.combo_width = combo_width
 
         self.create_widgets()
 
@@ -25,7 +29,10 @@ class ParticipantsWidget:
 
     def create_widgets(self):
         self.combo_box = ComboBox(
-            self.get_combo_box_entries, height=8, highlight_without_focus=True
+            self.get_combo_box_entries,
+            height=self.combo_height,
+            width=self.combo_width,
+            highlight_without_focus=True,
         )
         self.add_button = Button("Add", handler=self.handle_add_button)
         self.delete_button = Button("Delete", handler=self.handle_delete_button)

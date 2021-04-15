@@ -140,10 +140,10 @@ class TaskEditWidget:
                 [Label("End (*):", width=21), self.end_field], padding=2, align=HorizontalAlign.LEFT
             )
 
-            self.participants_widget = ParticipantsWidget(self, self.platforms)
+            self.participants_widget = ParticipantsWidget(self, self.platforms, combo_height=15)
 
-            self.participants_row = HSplit(
-                [Label("Participants:"), self.participants_widget], padding=1
+            self.participants_row = VSplit(
+                [Label("Participants:", width=21), self.participants_widget], padding=2
             )
 
             self.all_rows = [
@@ -162,7 +162,7 @@ class TaskEditWidget:
                 focus_on_click=True,
             )
             self.number_row = VSplit(
-                [Label("Serial Number (*):", width=21), self.number_field],
+                [Label("Serial Number (*):", width=25), self.number_field],
                 padding=2,
                 align=HorizontalAlign.LEFT,
             )
@@ -173,14 +173,14 @@ class TaskEditWidget:
                 focus_on_click=True,
             )
             self.exercise_row = VSplit(
-                [Label("Serial Exercise:", width=21), self.exercise_field],
+                [Label("Serial Exercise:", width=25), self.exercise_field],
                 padding=2,
                 align=HorizontalAlign.LEFT,
             )
 
             self.start_field = DatetimeWidget(self.task_object.start)
             self.start_row = VSplit(
-                [Label("Start (*):", width=21), self.start_field],
+                [Label("Start (*):", width=25), self.start_field],
                 padding=2,
                 align=HorizontalAlign.LEFT,
             )
@@ -188,19 +188,29 @@ class TaskEditWidget:
             self.end_field = DatetimeWidget(self.task_object.end)
 
             self.end_row = VSplit(
-                [Label("End (*):", width=21), self.end_field], padding=2, align=HorizontalAlign.LEFT
+                [Label("End (*):", width=25), self.end_field], padding=2, align=HorizontalAlign.LEFT
             )
 
-            self.blue_participants_widget = ParticipantsWidget(self, force="Blue")
+            self.blue_participants_widget = ParticipantsWidget(self, force="Blue", combo_height=15)
 
-            self.blue_participants_row = HSplit(
-                [Label("Blue Force Participants:"), self.blue_participants_widget], padding=1
+            self.blue_participants_row = VSplit(
+                [
+                    Label("Blue Force Participants:", width=25),
+                    self.blue_participants_widget,
+                ],
+                padding=2,
+                align=HorizontalAlign.LEFT,
             )
 
-            self.red_participants_widget = ParticipantsWidget(self, force="Red")
+            self.red_participants_widget = ParticipantsWidget(self, force="Red", combo_height=5)
 
-            self.red_participants_row = HSplit(
-                [Label("Red Force Participants:"), self.red_participants_widget], padding=1
+            self.red_participants_row = VSplit(
+                [
+                    Label("Red Force Participants:", width=25),
+                    self.red_participants_widget,
+                ],
+                padding=2,
+                align=HorizontalAlign.LEFT,
             )
 
             self.all_rows = [
