@@ -396,11 +396,7 @@ class SerialMixin:
         participant.force_type_id = force_type.force_type_id
 
         data_store.session.add(participant)
-        # data_store.session.flush()
-        # data_store.session.refresh(participant)
-        # self.participants.append(participant)
         data_store.session.flush()
-        # data_store.session.refresh(participant)
         data_store.session.refresh(participant.serial)
 
         data_store.add_to_logs(
