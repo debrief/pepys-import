@@ -55,6 +55,17 @@ class TasksGUI:
         if self.data_store.in_memory_database:
             raise ValueError("Cannot run the tasks GUI on an in-memory SQLite database")
 
+        try:
+            # This calls a simple function to check if the Privacies table has entries
+            # We don't actually care if it has entries, but it is a good simple query
+            # to run which checks if the database has been initialised
+            with self.data_store.session_scope():
+                _ = self.data_store.is_empty()
+        except Exception:
+            raise ValueError(
+                "Cannot run GUI on a non-initialised database. Please run initialise first."
+            )
+
         self.current_dialog = None
 
         self.root_task = self.get_tasks_into_treeview()
