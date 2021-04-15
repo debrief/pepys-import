@@ -142,7 +142,16 @@ class MaintenanceGUI:
     def init_ui_components(self):
         """Initialise all of the UI components, controls, containers and widgets"""
         # Dropdown box to select table, plus pane that it is in
-        metadata_tables = ["Platforms", "Sensors", "Datafiles"]
+        metadata_tables = [
+            "Platforms",
+            "Sensors",
+            "Datafiles",
+            "Series",
+            "Wargames",
+            "Serials",
+            "WargameParticipants",
+            "SerialParticipants",
+        ]
         measurement_tables = sorted(
             [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.MEASUREMENT]]
         )
