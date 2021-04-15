@@ -28,6 +28,7 @@ class TreeView:
         height=None,
         width=None,
         max_levels=None,
+        level_to_name=None,
     ):
         self.root_element = root_element
         self.filtered_root_element = self.root_element
@@ -40,6 +41,7 @@ class TreeView:
         self.width = width
         self.height = height
         self.filter_text = ""
+        self.level_to_name = level_to_name
 
         if max_levels is None:
             self.max_levels = 9999
@@ -199,7 +201,11 @@ class TreeView:
             element_output.append([("", "   ")])
             if self.add_enabled:
                 element_output.append([("[SetCursorPosition]", "")])
-            element_output.append([(add_style, "Add", self.handle_click_on_add)])
+            if self.level_to_name is not None:
+                add_text = f"Add {self.level_to_name[element.level]}"
+            else:
+                add_text = "Add"
+            element_output.append([(add_style, add_text, self.handle_click_on_add)])
 
         merged_text = merge_formatted_text(element_output)()
 

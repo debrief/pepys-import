@@ -144,6 +144,7 @@ class TasksGUI:
             on_add=self.handle_tree_add,
             on_select=self.handle_tree_select,
             max_levels=3,
+            level_to_name={0: "series", 1: "wargame", 2: "serial"},
         )
         self.filter_text_area = CustomTextArea(
             "Type to filter",
