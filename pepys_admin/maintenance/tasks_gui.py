@@ -352,6 +352,8 @@ class TasksGUI:
             # We clicked Add on a Wargame, so add a Serial
             new_object = self.data_store.db_classes.Serial()
             new_object.wargame_id = parent_element.object.wargame_id
+            new_object.start = parent_element.object.start
+            new_object.end = parent_element.object.end
         else:
             # Do nothing - we can't add anything below a Serial
             return
