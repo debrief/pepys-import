@@ -75,8 +75,15 @@ class TaskEditWidget:
             self.all_rows = [Label("Please select a Task")]
             return
 
-        self.save_button = Button("Save task", self.save_button_handler, width=15)
-        self.delete_button = Button("Delete task", self.delete_button_handler, width=15)
+        if isinstance(self.task_object, self.data_store.db_classes.Series):
+            object_name = "series"
+        elif isinstance(self.task_object, self.data_store.db_classes.Serial):
+            object_name = "serial"
+        elif isinstance(self.task_object, self.data_store.db_classes.Wargame):
+            object_name = "wargame"
+
+        self.save_button = Button(f"Save {object_name}", self.save_button_handler, width=15)
+        self.delete_button = Button(f"Delete {object_name}", self.delete_button_handler, width=15)
         self.buttons_row = VSplit(
             [self.save_button, self.delete_button], padding=3, align=HorizontalAlign.LEFT
         )
