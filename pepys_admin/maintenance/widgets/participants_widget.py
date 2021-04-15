@@ -8,6 +8,7 @@ from prompt_toolkit.widgets.base import Button
 
 from pepys_admin.maintenance.dialogs.serial_participant_dialog import SerialParticipantDialog
 from pepys_admin.maintenance.dialogs.wargame_participant_dialog import WargameParticipantDialog
+from pepys_admin.maintenance.utils import trim_string
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_import.core.store.data_store import USER
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
@@ -15,7 +16,7 @@ from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
 class ParticipantsWidget:
     def __init__(
-        self, task_edit_widget, platforms=None, force=None, combo_height=8, combo_width=60
+        self, task_edit_widget, platforms=None, force=None, combo_height=8, combo_width=80
     ):
         self.task_edit_widget = task_edit_widget
         self.force = force
@@ -47,10 +48,24 @@ class ParticipantsWidget:
                 if p.force_type_name == self.force
             ]
 
-        return [
-            f"{p.platform_name} - {p.platform_identifier} - {p.platform_nationality_name}"
-            for p in self.participants
-        ]
+        entries = []
+        for p in self.participants:
+            trimmed_identifier = trim_string(p.platform_identifier, 5)
+            trimmed_nationality = trim_string(p.platform_nationality_name, 4)
+
+            new_entry = f"{p.platform_name} - {trimmed_identifier} - {trimmed_nationality}"
+            if (
+                isinstance(
+                    self.task_edit_widget.task_object,
+                    self.task_edit_widget.data_store.db_classes.Serial,
+                )
+                and p.start is not None
+                and p.end is not None
+            ):
+                new_entry += f" - {p.start} - {p.end}"
+            entries.append(new_entry)
+
+        return entries
 
     def handle_add_button(self):
         async def coroutine_wargame():

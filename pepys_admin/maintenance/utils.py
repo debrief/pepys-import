@@ -158,3 +158,10 @@ def convert_relative_time_string_to_sqlalchemy_filter(
 
     # TODO: Add filtering for relative time for Series, Wargame and Serial
     return start <= start_field, end_field <= end
+
+
+def trim_string(s, chars):
+    if len(s) >= chars:
+        return s[:chars]
+    else:
+        return f"{s: <{chars}}"
