@@ -388,7 +388,8 @@ class TasksGUI:
 
         @kb.add("f3")
         def _(event):
-            get_app().layout.focus(self.rh_pane)
+            if self.task_edit_widget.task_object is not None:
+                get_app().layout.focus(self.rh_pane)
 
         return kb
 
