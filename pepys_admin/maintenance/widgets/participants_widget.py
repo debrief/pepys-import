@@ -103,18 +103,33 @@ class ParticipantsWidget:
 
         return filtered_platforms
 
+    def filter_wargame_participants(self, include_participant=None):
+        participant_platform_ids = [
+            p.platform.platform_id for p in self.task_edit_widget.task_object.participants
+        ]
+
+        all_platforms = self.platforms
+        filtered_platforms = {"ids": [], "values": []}
+        for i in range(len(all_platforms["ids"])):
+            if all_platforms["ids"][i] not in participant_platform_ids:
+                filtered_platforms["ids"].append(all_platforms["ids"][i])
+                filtered_platforms["values"].append(all_platforms["values"][i])
+
+        if include_participant is not None:
+            index = all_platforms["ids"].index(include_participant.platform.platform_id)
+            filtered_platforms["ids"].insert(0, include_participant.platform.platform_id)
+            filtered_platforms["values"].insert(0, all_platforms["values"][index])
+
+        return filtered_platforms
+
     def handle_add_button(self):
         async def coroutine_wargame():
-            participant_platform_ids = [
-                p.platform.platform_id for p in self.task_edit_widget.task_object.participants
-            ]
+            ds = self.task_edit_widget.data_store
 
-            all_platforms = self.platforms
-            filtered_platforms = {"ids": [], "values": []}
-            for i in range(len(all_platforms["ids"])):
-                if all_platforms["ids"][i] not in participant_platform_ids:
-                    filtered_platforms["ids"].append(all_platforms["ids"][i])
-                    filtered_platforms["values"].append(all_platforms["values"][i])
+            with ds.session_scope():
+                ds.session.add(self.task_edit_widget.task_object)
+                ds.session.refresh(self.task_edit_widget.task_object)
+                filtered_platforms = self.filter_wargame_participants()
 
             dialog = WargameParticipantDialog(
                 self.task_edit_widget.task_object,
@@ -291,7 +306,88 @@ class ParticipantsWidget:
                 logger.debug(f"{self.task_edit_widget.task_object.participants=}")
                 ds.session.expunge_all()
 
-        ensure_future(coroutine_serial())
+        async def coroutine_wargame():
+            ds = self.task_edit_widget.data_store
+            participant = self.participants[self.combo_box.selected_entry]
+
+            with ds.session_scope():
+                change_id = ds.add_to_changes(
+                    USER, datetime.utcnow(), "Manual edit from Tasks GUI"
+                ).change_id
+                ds.session.add(self.task_edit_widget.task_object)
+                ds.session.refresh(self.task_edit_widget.task_object)
+
+                filtered_platforms = self.filter_wargame_participants(
+                    include_participant=participant
+                )
+
+            dialog = WargameParticipantDialog(
+                self.task_edit_widget.task_object,
+                self.force,
+                filtered_platforms,
+                self.task_edit_widget.privacies,
+                object_to_edit=participant,
+            )
+
+            result = await self.task_edit_widget.show_dialog_as_float(dialog)
+            if result is None:
+                return
+
+            logger.debug(f"{result=}")
+
+            participant = ds.session.merge(participant)
+
+            ds = self.task_edit_widget.data_store
+
+            if participant.platform_id != result["platform"]:
+                ds.add_to_logs(
+                    table=constants.SERIAL_PARTICIPANT,
+                    row_id=participant.wargame_participant_id,
+                    field="platform_id",
+                    previous_value=str(participant.platform_id),
+                    change_id=change_id,
+                )
+                platform = (
+                    ds.session.query(ds.db_classes.Platform)
+                    .filter(ds.db_classes.Platform.platform_id == result["platform"])
+                    .one()
+                )
+                participant.platform = platform
+
+            if participant.privacy_name != result["privacy"]:
+                ds.add_to_logs(
+                    table=constants.SERIAL_PARTICIPANT,
+                    row_id=participant.wargame_participant_id,
+                    field="privacy_id",
+                    previous_value=str(participant.privacy_id),
+                    change_id=change_id,
+                )
+                privacy = ds.search_privacy(result["privacy"])
+                if privacy is None:
+                    raise ValueError("Specified Privacy does not exist")
+                participant.privacy_id = privacy.privacy_id
+
+            # Actually commit the changes to the participant to the database
+            with ds.session_scope():
+                logger.debug(f"{participant=}")
+                ds.session.flush()
+                self.task_edit_widget.task_object = ds.session.merge(
+                    self.task_edit_widget.task_object
+                )
+                # Merging an object into the session should refresh all of the fields,
+                # but we seem to need to do an explicit refresh here - not entirely sure why
+                ds.session.refresh(self.task_edit_widget.task_object)
+                logger.debug(f"{self.task_edit_widget.task_object.participants=}")
+                ds.session.expunge_all()
+
+        if isinstance(
+            self.task_edit_widget.task_object, self.task_edit_widget.data_store.db_classes.Wargame
+        ):
+            ensure_future(coroutine_wargame())
+        elif isinstance(
+            self.task_edit_widget.task_object, self.task_edit_widget.data_store.db_classes.Serial
+        ):
+            ensure_future(coroutine_serial())
         get_app().invalidate()
 
     def handle_delete_button(self):

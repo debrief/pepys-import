@@ -9,26 +9,41 @@ from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 
 
 class WargameParticipantDialog:
-    def __init__(self, task_object, force, platforms, privacies):
+    def __init__(self, task_object, force, platforms, privacies, object_to_edit=None):
         self.future = Future()
 
         self.task_object = task_object
         self.force = force
         self.platforms = platforms
         self.privacies = privacies
+        self.object_to_edit = object_to_edit
 
         add_button = Button(text="Add", handler=self.handle_add)
+        save_button = Button(text="Save", handler=self.handle_add)
         cancel_button = Button(text="Cancel", handler=self.handle_cancel)
+
+        if object_to_edit is not None:
+            buttons = [save_button, cancel_button]
+        else:
+            buttons = [add_button, cancel_button]
 
         if force is None:
             title = "Add participant"
         else:
             title = f"Add {force} participant"
 
-        self.platform_field = DropdownBox("Select a platform", self.platforms["values"])
+        if self.object_to_edit is None:
+            self.platform_field = DropdownBox("Select a platform", self.platforms["values"])
+        else:
+            self.platform_field = DropdownBox(self.platforms["values"][0], self.platforms["values"])
         platform_row = VSplit([Label("Platform (*):", width=15), self.platform_field], padding=1)
 
-        self.privacy_field = DropdownBox(self.privacies["values"][0], self.privacies["values"])
+        if self.object_to_edit is None:
+            self.privacy_field = DropdownBox(self.privacies["values"][0], self.privacies["values"])
+        else:
+            self.privacy_field = DropdownBox(
+                self.object_to_edit.privacy_name, self.privacies["values"]
+            )
         privacy_row = VSplit(
             [Label("Privacy (*):", width=15), self.privacy_field],
             padding=1,
@@ -41,7 +56,7 @@ class WargameParticipantDialog:
         self.dialog = Dialog(
             title=title,
             body=self.body,
-            buttons=[add_button, cancel_button],
+            buttons=buttons,
             width=D(preferred=80),
             modal=True,
         )
