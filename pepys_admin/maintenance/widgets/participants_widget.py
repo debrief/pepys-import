@@ -226,7 +226,6 @@ class ParticipantsWidget:
                     )
                     .one()
                 )
-                # participant.wargame_participant_id = result["platform"]
                 participant.wargame_participant = wgp
                 logger.debug("Edited platform")
                 # TODO Add log here
@@ -238,7 +237,12 @@ class ParticipantsWidget:
                 participant.end = result["end"]
                 logger.debug("Edited end")
                 # TODO add log here
-            # TODO Add privacy here
+            if participant.privacy_name != result["privacy"]:
+                privacy = ds.search_privacy(result["privacy"])
+                if privacy is None:
+                    raise ValueError("Specified Privacy does not exist")
+                participant.privacy_id = privacy.privacy_id
+                # Add log here
 
             with ds.session_scope():
                 logger.debug(f"{participant=}")

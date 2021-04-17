@@ -244,7 +244,9 @@ class SeriesMixin:
 
     @declared_attr
     def child_wargames(self):
-        return relationship("Wargame", lazy="joined", backref="series")
+        return relationship(
+            "Wargame", lazy="joined", backref="series", order_by="asc(Wargame.created_date)"
+        )
 
     @declared_attr
     def privacy(self):
@@ -284,6 +286,7 @@ class WargameMixin:
             backref="wargame",
             passive_deletes=True,
             cascade="all, delete, delete-orphan",
+            order_by="asc(Serial.created_date)",
         )
 
     @declared_attr
@@ -440,6 +443,10 @@ class WargameParticipantMixin:
         return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+    @declared_attr
     def platform_name(self):
         return association_proxy("platform", "name")
 
@@ -489,6 +496,14 @@ class SerialParticipantMixin:
                 cascade="all, delete, delete-orphan",
             ),
         )
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
 
     @declared_attr
     def force_type(self):

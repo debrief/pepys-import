@@ -57,7 +57,9 @@ class SerialParticipantDialog:
         if self.object_to_edit is None:
             self.privacy_field = DropdownBox(self.privacies["values"][0], self.privacies["values"])
         else:
-            self.privacy_field = DropdownBox(self.privacies["values"][0], self.privacies["values"])
+            self.privacy_field = DropdownBox(
+                self.object_to_edit.privacy_name, self.privacies["values"]
+            )
         privacy_row = VSplit(
             [Label("Privacy (*):", width=15), self.privacy_field],
             padding=1,
