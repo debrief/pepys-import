@@ -254,7 +254,6 @@ class TasksGUI:
     def handle_save(self):
         updated_fields = self.task_edit_widget.get_updated_fields()
 
-        logger.debug(f"{updated_fields=}")
         if updated_fields == {}:
             return True
 

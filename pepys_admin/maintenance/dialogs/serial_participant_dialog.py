@@ -40,18 +40,20 @@ class SerialParticipantDialog:
         platform_row = VSplit([Label("Platform (*):", width=15), self.platform_field], padding=1)
 
         if self.object_to_edit is None:
-            self.start_field = DatetimeWidget()
+            self.start_field = DatetimeWidget(no_seconds=True)
         else:
-            self.start_field = DatetimeWidget(datetime_value=self.object_to_edit.start)
+            self.start_field = DatetimeWidget(
+                datetime_value=self.object_to_edit.start, no_seconds=True
+            )
         start_row = VSplit(
             [Label("Start:", width=15), self.start_field],
             padding=1,
         )
 
         if self.object_to_edit is None:
-            self.end_field = DatetimeWidget()
+            self.end_field = DatetimeWidget(no_seconds=True)
         else:
-            self.end_field = DatetimeWidget(datetime_value=self.object_to_edit.end)
+            self.end_field = DatetimeWidget(datetime_value=self.object_to_edit.end, no_seconds=True)
         end_row = VSplit([Label("End:", width=15), self.end_field], padding=1)
 
         if self.object_to_edit is None:

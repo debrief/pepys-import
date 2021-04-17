@@ -24,7 +24,10 @@ def validate_datetime(s):
     try:
         datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
     except ValueError:
-        return False
+        try:
+            datetime.strptime(s, "%Y-%m-%d %H:%M")
+        except ValueError:
+            return False
     return True
 
 

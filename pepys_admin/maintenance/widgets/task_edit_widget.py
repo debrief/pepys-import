@@ -134,14 +134,14 @@ class TaskEditWidget:
                 align=HorizontalAlign.LEFT,
             )
 
-            self.start_field = DatetimeWidget(self.task_object.start)
+            self.start_field = DatetimeWidget(self.task_object.start, no_seconds=True)
             self.start_row = VSplit(
                 [Label("Start (*):", width=21), self.start_field],
                 padding=2,
                 align=HorizontalAlign.LEFT,
             )
 
-            self.end_field = DatetimeWidget(self.task_object.end)
+            self.end_field = DatetimeWidget(self.task_object.end, no_seconds=True)
 
             self.end_row = VSplit(
                 [Label("End (*):", width=21), self.end_field], padding=2, align=HorizontalAlign.LEFT
@@ -185,14 +185,14 @@ class TaskEditWidget:
                 align=HorizontalAlign.LEFT,
             )
 
-            self.start_field = DatetimeWidget(self.task_object.start)
+            self.start_field = DatetimeWidget(self.task_object.start, no_seconds=True)
             self.start_row = VSplit(
                 [Label("Start (*):", width=25), self.start_field],
                 padding=2,
                 align=HorizontalAlign.LEFT,
             )
 
-            self.end_field = DatetimeWidget(self.task_object.end)
+            self.end_field = DatetimeWidget(self.task_object.end, no_seconds=True)
 
             self.end_row = VSplit(
                 [Label("End (*):", width=25), self.end_field], padding=2, align=HorizontalAlign.LEFT

@@ -63,7 +63,9 @@ class ParticipantsWidget:
                 and p.start is not None
                 and p.end is not None
             ):
-                new_entry += f" - {p.start} - {p.end}"
+                start = datetime.strftime(p.start, "%Y-%m-%d %H:%M")
+                end = datetime.strftime(p.end, "%Y-%m-%d %H:%M")
+                new_entry += f" - {start} - {end}"
             entries.append(new_entry)
 
         return entries
