@@ -256,6 +256,11 @@ class SerialParticipant(BasePostGIS, SerialParticipantMixin):
         ForeignKey("pepys.ForceTypes.force_type_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
+    privacy_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 

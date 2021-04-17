@@ -257,6 +257,11 @@ class SerialParticipant(BaseSpatiaLite, SerialParticipantMixin):
         ForeignKey("ForceTypes.force_type_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
+    privacy_id = Column(
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
