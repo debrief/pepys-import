@@ -194,8 +194,8 @@ class Serial(BasePostGIS, SerialMixin):
     )
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
-    environment = deferred(Column(String(150)))
-    location = deferred(Column(String(150)))
+    environment = Column(String(150))
+    location = Column(String(150))
     exercise = Column(String(150))
     privacy_id = Column(
         UUID(as_uuid=True),

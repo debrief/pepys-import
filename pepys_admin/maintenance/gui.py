@@ -3,6 +3,7 @@ import textwrap
 import traceback
 import uuid
 from asyncio.tasks import ensure_future
+from datetime import datetime
 from functools import partial
 
 import sqlalchemy
@@ -54,7 +55,7 @@ from pepys_admin.maintenance.widgets.checkbox_table import CheckboxTable
 from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 from pepys_admin.maintenance.widgets.filter_widget import FilterWidget
 from pepys_admin.maintenance.widgets.filter_widget_utils import filter_widget_output_to_query
-from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store.data_store import USER, DataStore
 from pepys_import.core.store.db_status import TableTypes
 from pepys_import.utils.data_store_utils import convert_objects_to_ids
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
@@ -669,7 +670,10 @@ class MaintenanceGUI:
     def run_delete(self):
         def do_delete(table_object, ids, set_percentage=None, is_cancelled=None):
             with self.data_store.session_scope():
-                self.data_store.delete_objects(table_object, ids)
+                change_id = self.data_store.add_to_changes(
+                    USER, datetime.utcnow(), "Manual delete from Maintenance GUI"
+                ).change_id
+                self.data_store.delete_objects(table_object, ids, change_id=change_id)
             set_percentage(100)
 
         def do_find_dependent_objects(

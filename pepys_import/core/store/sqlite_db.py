@@ -198,8 +198,8 @@ class Serial(BaseSpatiaLite, SerialMixin):
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
     exercise = Column(String(150))
-    environment = deferred(Column(String(150)))
-    location = deferred(Column(String(150)))
+    environment = Column(String(150))
+    location = Column(String(150))
     privacy_id = Column(
         UUIDType,
         ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),

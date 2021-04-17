@@ -325,13 +325,22 @@ class TasksGUI:
             if not result:
                 return
 
-            primary_key = get_primary_key_for_table(self.task_edit_widget.task_object)
-
-            if getattr(self.task_edit_widget.task_object, primary_key) is not None:
+            primary_key_name = get_primary_key_for_table(self.task_edit_widget.task_object)
+            pri_key_value = getattr(self.task_edit_widget.task_object, primary_key_name)
+            if pri_key_value is not None:
                 # We've got a task that has been saved in the database,
                 # as it has an id, so we need to delete from the database
                 with self.data_store.session_scope():
-                    self.data_store.session.delete(self.task_edit_widget.task_object)
+                    change_id = self.data_store.add_to_changes(
+                        USER, datetime.utcnow(), "Manual delete from Tasks GUI"
+                    ).change_id
+                    self.data_store.delete_objects(
+                        type(self.task_edit_widget.task_object),
+                        [pri_key_value],
+                        change_id=change_id,
+                    )
+                # with self.data_store.session_scope():
+                #     self.data_store.session.delete(self.task_edit_widget.task_object)
 
             self.tree_view.selected_element.parent.remove_child(self.tree_view.selected_element)
             self.tree_view.select_element(self.tree_view.selected_element.parent)

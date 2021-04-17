@@ -5,6 +5,7 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
+from loguru import logger
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
@@ -33,7 +34,7 @@ from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_
 from pepys_import.utils.value_transforming_utils import format_datetime
 
 from ...utils.error_handling import handle_database_errors, handle_first_connection_error
-from ...utils.sqlalchemy_utils import get_primary_key_for_table
+from ...utils.sqlalchemy_utils import get_primary_key_for_table, sqlalchemy_object_to_json
 from ...utils.table_name_utils import table_name_to_class_name
 from ...utils.text_formatting_utils import custom_print_formatted_text, format_error_message
 from .db_base import BasePostGIS, BaseSpatiaLite
@@ -2209,7 +2210,7 @@ class DataStore:
 
         return output
 
-    def delete_objects(self, table_obj, id_list):
+    def delete_objects(self, table_obj, id_list, change_id):
         """
         Deletes the given objects.
 
@@ -2220,6 +2221,23 @@ class DataStore:
         """
         if isinstance(table_obj, str):
             table_obj = self._get_table_object(table_obj)
+
+        objects_to_delete = self.session.query(table_obj).filter(
+            getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
+        )
+
+        for obj in objects_to_delete:
+            json_string = sqlalchemy_object_to_json(obj)
+            logger.debug("Deleting object {obj}")
+            id_value = getattr(obj, get_primary_key_for_table(obj))
+            self.add_to_logs(
+                table=table_obj.__tablename__,
+                row_id=str(id_value),
+                field="Deleted",
+                previous_value=json_string,
+                change_id=change_id,
+            )
+
         # Delete merged objects
         self.session.query(table_obj).filter(
             getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
