@@ -675,9 +675,13 @@ class MaintenanceGUI:
         def do_find_dependent_objects(
             table_object, selected_ids, set_percentage=None, is_cancelled=None
         ):
-            dependent_objects = self.data_store.find_dependent_objects(
-                table_object, selected_ids, set_percentage=set_percentage, is_cancelled=is_cancelled
-            )
+            with self.data_store.session_scope():
+                dependent_objects = self.data_store.find_dependent_objects(
+                    table_object,
+                    selected_ids,
+                    set_percentage=set_percentage,
+                    is_cancelled=is_cancelled,
+                )
             set_percentage(100)
             return dependent_objects
 
