@@ -28,15 +28,6 @@ class WargameParticipantDialog:
         self.platform_field = DropdownBox("Select a platform", self.platforms["values"])
         platform_row = VSplit([Label("Platform (*):", width=15), self.platform_field], padding=1)
 
-        # self.start_field = DatetimeWidget()
-        # start_row = VSplit(
-        #     [Label("Start:", width=15), self.start_field],
-        #     padding=1,
-        # )
-
-        # self.end_field = DatetimeWidget()
-        # end_row = VSplit([Label("End:", width=15), self.end_field], padding=1)
-
         self.privacy_field = DropdownBox(self.privacies["values"][0], self.privacies["values"])
         privacy_row = VSplit(
             [Label("Privacy (*):", width=15), self.privacy_field],

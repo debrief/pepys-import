@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from loguru import logger
+
 from pepys_admin.maintenance.widgets.masked_input_widget import MaskedInputWidget
 from pepys_admin.maintenance.widgets.utils import datetime_validator, int_validator
 
@@ -35,10 +37,13 @@ class DatetimeWidget(MaskedInputWidget):
 
     @property
     def datetime_value(self):
-        if self.text == "yyyy-mm-dd HH:MM:SS":
+        logger.debug(f"{self.text=}")
+        if (
+            self.text == "yyyy-mm-dd HH:MM:SS"
+            or self.text == "    -  -     :  :  "
+            or self.text == "-- ::"
+        ):
             return None
         else:
-            try:
-                return datetime.strptime(self.text, "%Y-%m-%d %H:%M:%S")
-            except ValueError:
-                return None
+            result = datetime.strptime(self.text, "%Y-%m-%d %H:%M:%S")
+            return result

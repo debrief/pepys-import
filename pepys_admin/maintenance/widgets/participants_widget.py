@@ -36,6 +36,7 @@ class ParticipantsWidget:
             highlight_without_focus=True,
         )
         self.add_button = Button("Add", handler=self.handle_add_button)
+        self.edit_button = Button("Edit", handler=self.handle_edit_button)
         self.delete_button = Button("Delete", handler=self.handle_delete_button)
 
     def get_combo_box_entries(self):
@@ -66,6 +67,38 @@ class ParticipantsWidget:
             entries.append(new_entry)
 
         return entries
+
+    def filter_serial_participants(self, include_participant=None):
+        participant_platform_ids = [
+            p.platform.platform_id for p in self.task_edit_widget.task_object.participants
+        ]
+
+        wargame_participants = self.task_edit_widget.task_object.wargame.participants
+        wargame_platforms = {}
+        wargame_platforms["ids"] = [wgp.wargame_participant_id for wgp in wargame_participants]
+        wargame_platforms["platform_ids"] = [
+            wgp.platform.platform_id for wgp in wargame_participants
+        ]
+        wargame_platforms["values"] = [
+            f"{wgp.platform.name} / {wgp.platform.identifier} / {wgp.platform.nationality_name}"
+            for wgp in wargame_participants
+        ]
+        filtered_platforms = {"ids": [], "values": []}
+        for i in range(len(wargame_platforms["ids"])):
+            if wargame_platforms["platform_ids"][i] not in participant_platform_ids:
+                filtered_platforms["ids"].append(wargame_platforms["ids"][i])
+                filtered_platforms["values"].append(wargame_platforms["values"][i])
+
+        if include_participant is not None:
+            wgp = include_participant.wargame_participant
+            # Add it to the beginning of the list, so we can easily select it
+            filtered_platforms["ids"].insert(0, wgp.wargame_participant_id)
+            filtered_platforms["values"].insert(
+                0,
+                f"{wgp.platform.name} / {wgp.platform.identifier} / {wgp.platform.nationality_name}",
+            )
+
+        return filtered_platforms
 
     def handle_add_button(self):
         async def coroutine_wargame():
@@ -110,27 +143,7 @@ class ParticipantsWidget:
                 ds.session.add(self.task_edit_widget.task_object)
                 ds.session.refresh(self.task_edit_widget.task_object)
 
-                participant_platform_ids = [
-                    p.platform.platform_id for p in self.task_edit_widget.task_object.participants
-                ]
-
-                wargame_participants = self.task_edit_widget.task_object.wargame.participants
-                wargame_platforms = {}
-                wargame_platforms["ids"] = [
-                    wgp.wargame_participant_id for wgp in wargame_participants
-                ]
-                wargame_platforms["platform_ids"] = [
-                    wgp.platform.platform_id for wgp in wargame_participants
-                ]
-                wargame_platforms["values"] = [
-                    f"{wgp.platform.name} / {wgp.platform.identifier} / {wgp.platform.nationality_name}"
-                    for wgp in wargame_participants
-                ]
-                filtered_platforms = {"ids": [], "values": []}
-                for i in range(len(wargame_platforms["ids"])):
-                    if wargame_platforms["platform_ids"][i] not in participant_platform_ids:
-                        filtered_platforms["ids"].append(wargame_platforms["ids"][i])
-                        filtered_platforms["values"].append(wargame_platforms["values"][i])
+                filtered_platforms = self.filter_serial_participants()
 
             dialog = SerialParticipantDialog(
                 self.task_edit_widget.task_object,
@@ -176,6 +189,72 @@ class ParticipantsWidget:
         ):
             ensure_future(coroutine_serial())
 
+    def handle_edit_button(self):
+        async def coroutine_serial():
+            ds = self.task_edit_widget.data_store
+            participant = self.participants[self.combo_box.selected_entry]
+
+            with ds.session_scope():
+                ds.session.add(self.task_edit_widget.task_object)
+                ds.session.refresh(self.task_edit_widget.task_object)
+
+                filtered_platforms = self.filter_serial_participants(
+                    include_participant=participant
+                )
+
+            dialog = SerialParticipantDialog(
+                self.task_edit_widget.task_object,
+                self.force,
+                filtered_platforms,
+                self.task_edit_widget.privacies,
+                object_to_edit=participant,
+            )
+            result = await self.task_edit_widget.show_dialog_as_float(dialog)
+            if result is None:
+                return
+
+            logger.debug(f"Serial Dialog result {result=}")
+
+            participant = ds.session.merge(participant)
+
+            if participant.wargame_participant_id != result["platform"]:
+                wgp = (
+                    ds.session.query(ds.db_classes.WargameParticipant)
+                    .filter(
+                        ds.db_classes.WargameParticipant.wargame_participant_id
+                        == result["platform"]
+                    )
+                    .one()
+                )
+                # participant.wargame_participant_id = result["platform"]
+                participant.wargame_participant = wgp
+                logger.debug("Edited platform")
+                # TODO Add log here
+            if participant.start != result["start"]:
+                participant.start = result["start"]
+                logger.debug("Edited start")
+                # TODO Add log here
+            if participant.end != result["end"]:
+                participant.end = result["end"]
+                logger.debug("Edited end")
+                # TODO add log here
+            # TODO Add privacy here
+
+            with ds.session_scope():
+                logger.debug(f"{participant=}")
+                ds.session.flush()
+                self.task_edit_widget.task_object = ds.session.merge(
+                    self.task_edit_widget.task_object
+                )
+                # TODO: Try commenting out this line?
+                ds.session.refresh(self.task_edit_widget.task_object)
+                logger.debug(f"{self.task_edit_widget.task_object.participants=}")
+                ds.session.expunge_all()
+
+        ensure_future(coroutine_serial())
+        logger.debug(f"{self.get_combo_box_entries()=}")
+        get_app().invalidate()
+
     def handle_delete_button(self):
         ds = self.task_edit_widget.data_store
         participant = self.participants[self.combo_box.selected_entry]
@@ -194,7 +273,9 @@ class ParticipantsWidget:
         get_app().invalidate()
 
     def get_widgets(self):
-        return HSplit([self.combo_box, VSplit([self.add_button, self.delete_button])])
+        return HSplit(
+            [self.combo_box, VSplit([self.add_button, self.edit_button, self.delete_button])]
+        )
 
     def __pt_container__(self):
         return self.container

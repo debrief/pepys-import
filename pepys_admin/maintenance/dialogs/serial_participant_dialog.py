@@ -10,35 +10,54 @@ from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 
 
 class SerialParticipantDialog:
-    def __init__(self, task_object, force, platforms, privacies):
+    def __init__(self, task_object, force, platforms, privacies, object_to_edit=None):
         self.future = Future()
 
         self.task_object = task_object
         self.force = force
         self.platforms = platforms
         self.privacies = privacies
+        self.object_to_edit = object_to_edit
 
         add_button = Button(text="Add", handler=self.handle_add)
+        save_button = Button(text="Save", handler=self.handle_add)
         cancel_button = Button(text="Cancel", handler=self.handle_cancel)
+
+        if object_to_edit is not None:
+            buttons = [save_button, cancel_button]
+        else:
+            buttons = [add_button, cancel_button]
 
         if force is None:
             title = "Add participant"
         else:
             title = f"Add {force} participant"
 
-        self.platform_field = DropdownBox("Select a platform", self.platforms["values"])
+        if self.object_to_edit is None:
+            self.platform_field = DropdownBox("Select a platform", self.platforms["values"])
+        else:
+            self.platform_field = DropdownBox(self.platforms["values"][0], self.platforms["values"])
         platform_row = VSplit([Label("Platform (*):", width=15), self.platform_field], padding=1)
 
-        self.start_field = DatetimeWidget()
+        if self.object_to_edit is None:
+            self.start_field = DatetimeWidget()
+        else:
+            self.start_field = DatetimeWidget(datetime_value=self.object_to_edit.start)
         start_row = VSplit(
             [Label("Start:", width=15), self.start_field],
             padding=1,
         )
 
-        self.end_field = DatetimeWidget()
+        if self.object_to_edit is None:
+            self.end_field = DatetimeWidget()
+        else:
+            self.end_field = DatetimeWidget(datetime_value=self.object_to_edit.end)
         end_row = VSplit([Label("End:", width=15), self.end_field], padding=1)
 
-        self.privacy_field = DropdownBox(self.privacies["values"][0], self.privacies["values"])
+        if self.object_to_edit is None:
+            self.privacy_field = DropdownBox(self.privacies["values"][0], self.privacies["values"])
+        else:
+            self.privacy_field = DropdownBox(self.privacies["values"][0], self.privacies["values"])
         privacy_row = VSplit(
             [Label("Privacy (*):", width=15), self.privacy_field],
             padding=1,
@@ -53,7 +72,7 @@ class SerialParticipantDialog:
         self.dialog = Dialog(
             title=title,
             body=self.body,
-            buttons=[add_button, cancel_button],
+            buttons=buttons,
             width=D(preferred=80),
             modal=True,
         )
@@ -78,8 +97,16 @@ class SerialParticipantDialog:
         platform_index = self.platforms["values"].index(self.platform_field.text)
         values["platform"] = self.platforms["ids"][platform_index]
 
-        values["start"] = self.start_field.datetime_value
-        values["end"] = self.end_field.datetime_value
+        try:
+            values["start"] = self.start_field.datetime_value
+        except ValueError:
+            self.error_label.text = "You must enter a valid start time, or leave it empty"
+            return
+        try:
+            values["end"] = self.end_field.datetime_value
+        except ValueError:
+            self.error_label.text = "You must enter a valid end time, or leave it empty"
+            return
 
         values["privacy"] = self.privacy_field.text
 
