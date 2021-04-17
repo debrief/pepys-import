@@ -10,6 +10,7 @@ from pepys_admin.maintenance.dialogs.serial_participant_dialog import SerialPart
 from pepys_admin.maintenance.dialogs.wargame_participant_dialog import WargameParticipantDialog
 from pepys_admin.maintenance.utils import trim_string
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
+from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import USER
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
@@ -197,6 +198,9 @@ class ParticipantsWidget:
             participant = self.participants[self.combo_box.selected_entry]
 
             with ds.session_scope():
+                change_id = ds.add_to_changes(
+                    USER, datetime.utcnow(), "Manual edit from Tasks GUI"
+                ).change_id
                 ds.session.add(self.task_edit_widget.task_object)
                 ds.session.refresh(self.task_edit_widget.task_object)
 
@@ -219,7 +223,17 @@ class ParticipantsWidget:
 
             participant = ds.session.merge(participant)
 
+            # This set of if statements checks each field to see if it has been changed
+            # and if it has been changed then it updates the fields and adds a log entry
+            # for the change
             if participant.wargame_participant_id != result["platform"]:
+                ds.add_to_logs(
+                    table=constants.SERIAL_PARTICIPANT,
+                    row_id=participant.serial_participant_id,
+                    field="wargame_participant_id",
+                    previous_value=str(participant.wargame_participant_id),
+                    change_id=change_id,
+                )
                 wgp = (
                     ds.session.query(ds.db_classes.WargameParticipant)
                     .filter(
@@ -229,36 +243,55 @@ class ParticipantsWidget:
                     .one()
                 )
                 participant.wargame_participant = wgp
-                logger.debug("Edited platform")
-                # TODO Add log here
+
             if participant.start != result["start"]:
+                ds.add_to_logs(
+                    table=constants.SERIAL_PARTICIPANT,
+                    row_id=participant.serial_participant_id,
+                    field="start",
+                    previous_value=str(participant.start),
+                    change_id=change_id,
+                )
                 participant.start = result["start"]
-                logger.debug("Edited start")
-                # TODO Add log here
+
             if participant.end != result["end"]:
+                ds.add_to_logs(
+                    table=constants.SERIAL_PARTICIPANT,
+                    row_id=participant.serial_participant_id,
+                    field="end",
+                    previous_value=str(participant.end),
+                    change_id=change_id,
+                )
+
                 participant.end = result["end"]
-                logger.debug("Edited end")
-                # TODO add log here
+
             if participant.privacy_name != result["privacy"]:
+                ds.add_to_logs(
+                    table=constants.SERIAL_PARTICIPANT,
+                    row_id=participant.serial_participant_id,
+                    field="privacy_id",
+                    previous_value=str(participant.privacy_id),
+                    change_id=change_id,
+                )
                 privacy = ds.search_privacy(result["privacy"])
                 if privacy is None:
                     raise ValueError("Specified Privacy does not exist")
                 participant.privacy_id = privacy.privacy_id
-                # Add log here
 
+            # Actually commit the changes to the participant to the database
             with ds.session_scope():
                 logger.debug(f"{participant=}")
                 ds.session.flush()
                 self.task_edit_widget.task_object = ds.session.merge(
                     self.task_edit_widget.task_object
                 )
-                # TODO: Try commenting out this line?
+                # Merging an object into the session should refresh all of the fields,
+                # but we seem to need to do an explicit refresh here - not entirely sure why
                 ds.session.refresh(self.task_edit_widget.task_object)
                 logger.debug(f"{self.task_edit_widget.task_object.participants=}")
                 ds.session.expunge_all()
 
         ensure_future(coroutine_serial())
-        logger.debug(f"{self.get_combo_box_entries()=}")
         get_app().invalidate()
 
     def handle_delete_button(self):
