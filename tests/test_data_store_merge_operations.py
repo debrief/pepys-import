@@ -547,9 +547,9 @@ class MergePlatformsTestCase(TestCase):
             logs = (
                 self.store.session.query(Log).filter(Log.change_id == last_change.change_id).all()
             )
-            assert (
-                len(logs) == 2
-            )  # One for Sensor-2 and its objects, and the other for Comment from Platform-3
+            # One for Sensor-2 and its objects, one for Comment from Platform-3,
+            # Plus two for deletions
+            assert len(logs) == 4
             for log in logs:
                 if log.table == constants.SENSOR:
                     assert log.id == sensor_2.sensor_id

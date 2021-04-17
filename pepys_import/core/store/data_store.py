@@ -1861,7 +1861,7 @@ class DataStore:
                 set_percentage(50 + (i * percentage_per_iteration))
 
         # Delete merged platforms
-        self.delete_objects(constants.PLATFORM, platform_list)
+        self.delete_objects(constants.PLATFORM, platform_list, change_id)
         self.session.flush()
         return True
 
@@ -1912,7 +1912,7 @@ class DataStore:
                 set_percentage(10 + (i * percentage_per_iteration))
 
         # Delete merged objects
-        self.delete_objects(table_name, id_list)
+        self.delete_objects(table_name, id_list, change_id)
 
     def merge_objects(self, table_name, id_list, master_id, change_id, set_percentage=None):
         table_obj = self._get_table_object(table_name)
@@ -1942,7 +1942,7 @@ class DataStore:
             if callable(set_percentage):
                 set_percentage(10 + (i * percentage_per_iteration))
         # Delete merged objects
-        self.delete_objects(table_name, id_list)
+        self.delete_objects(table_name, id_list, change_id)
 
     def merge_generic(self, table_name, id_list, master_id, set_percentage=None) -> bool:
         reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
