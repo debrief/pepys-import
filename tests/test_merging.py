@@ -2224,8 +2224,6 @@ class TestExportAlterAndMerge(unittest.TestCase):
                 change_id=change_id,
             )
 
-        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
-
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -2234,6 +2232,17 @@ class TestExportAlterAndMerge(unittest.TestCase):
             os.remove("slave_exported.sqlite")
 
     def test_export_alter_merge(self):
+        self.master_store = None
+        self.slave_store = None
+
+        self.slave_store = DataStore(
+            "", "", "", 0, db_name="slave_exported.sqlite", db_type="sqlite"
+        )
+
+        self.master_store = DataStore("", "", "", 0, db_name="master.sqlite", db_type="sqlite")
+
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
         temp_output = StringIO()
         with redirect_stdout(temp_output):
             # Do the merge
@@ -2245,9 +2254,9 @@ class TestExportAlterAndMerge(unittest.TestCase):
         # Check statistics
         assert "| Nationality        |                 1 |       1 |          0 |" in output
         assert "| PlatformType       |                 1 |       2 |          0 |" in output
-        assert "| Datafiles   |                 0 |       1 |          0 |" in output
-        assert "| Platform    |                 4 |       2 |          1 |" in output
-        assert "| Sensor      |                 5 |       1 |          0 |" in output
+        assert "| Datafiles          |                 0 |       1 |          0 |" in output
+        assert "| Platform           |                 4 |       2 |          1 |" in output
+        assert "| Sensor             |                 5 |       1 |          0 |" in output
         assert "| State       |     402 |" in output
         assert "| Contact     |       0 |" in output
 
@@ -2512,8 +2521,6 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
                 change_id=change_id,
             )
 
-        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
-
     def tearDown(self):
         if os.path.exists("master.sqlite"):
             os.remove("master.sqlite")
@@ -2522,6 +2529,34 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
             os.remove("slave_exported.sqlite")
 
     def test_export_alter_merge(self):
+        # A bug that was hard to replicate seemed to be affected by whether you had closed
+        # the data_store (or maybe just the session on the data_store?) between operations
+        # So, for example, opening Pepys Admin, creating the schema, then doing a merge worked fine
+        # (as the data_store/session was already open), but closing Pepys Admin after creating the schema
+        # re-opening it, and doing the merge failed - as the data_store wasn't properly initialised somehow?
+        # This wasn't caught in this test originally, as we re-used the master_store and slave_store from the
+        # setUp method.
+        # Now, we explicitly 'unset' the master and slave stores, and then recreate them (with the same parameters
+        # as in setUp), and now the test represents real life more accurately (and fails correctly, before we fixed
+        # the bug)
+        self.master_store = None
+        self.slave_store = None
+
+        self.slave_store = DataStore(
+            "", "", "", 0, db_name="slave_exported.sqlite", db_type="sqlite"
+        )
+
+        self.master_store = DataStore(
+            db_name="test",
+            db_host="localhost",
+            db_username="postgres",
+            db_password="postgres",
+            db_port=55527,
+            db_type="postgres",
+        )
+
+        self.merge_class = MergeDatabases(self.master_store, self.slave_store)
+
         # Do the merge
         self.merge_class.merge_all_tables()
 
@@ -2673,8 +2708,8 @@ class TestExportDoNothingAndMerge(unittest.TestCase):
         assert "| PlatformType       |                 1 |       0 |          0 |" in output
         assert "| Privacy            |                 1 |       0 |          0 |" in output
         assert "| SensorType         |                 2 |       0 |          0 |" in output
-        assert "| Platform    |                 4 |       0 |          0 |" in output
-        assert "| Sensor      |                 5 |       0 |          0 |" in output
+        assert "| Platform           |                 4 |       0 |          0 |" in output
+        assert "| Sensor             |                 5 |       0 |          0 |" in output
         assert "| State       |       0 |" in output
 
         # Check entries added list

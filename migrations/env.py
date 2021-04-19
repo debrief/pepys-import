@@ -1,3 +1,8 @@
+# If alembic commands aren't working, then uncomment the following lines and replace the path
+# with the path to your clone of the pepys-import repo
+# This will fix errors with loading the config file
+# import sys
+# sys.path.append("/Users/robin/Documents/IanMayo/pepys-import")
 import json
 import os
 from logging.config import fileConfig

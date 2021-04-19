@@ -32,8 +32,8 @@ from pepys_import.utils.data_store_utils import (
 from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_keys_on
 from pepys_import.utils.value_transforming_utils import format_datetime
 
-from ...utils.error_handling import handle_first_connection_error
-from ...utils.sqlalchemy_utils import get_primary_key_for_table
+from ...utils.error_handling import handle_database_errors, handle_first_connection_error
+from ...utils.sqlalchemy_utils import get_primary_key_for_table, sqlalchemy_object_to_json
 from ...utils.table_name_utils import table_name_to_class_name
 from ...utils.text_formatting_utils import custom_print_formatted_text, format_error_message
 from .db_base import BasePostGIS, BaseSpatiaLite
@@ -91,6 +91,18 @@ class DataStore:
             if db_type == "postgres":
                 self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
                 BasePostGIS.metadata.bind = self.engine
+                # The SQL below seems to be required to set the database up correctly so that merging works.
+                # The search_path makes perfect sense, as when merging the tables come across from SQLite which
+                # has no schema, so the objects have no associated schema, and Postgres needs to be able to find
+                # them without a schema
+                # However, the CREATE EXTENSION bit makes less sense - but seems to be required to be in there.
+                # It will be a no-op if the extension already exists, so it doesn't have an efficiency implication
+                # but seems to be required.
+                with handle_database_errors():
+                    with self.engine.connect() as connection:
+                        connection.execute(
+                            "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
+                        )
             elif db_type == "sqlite":
                 self.engine = create_engine(connection_string, echo=False)
                 listen(self.engine, "connect", load_spatialite)
@@ -147,6 +159,7 @@ class DataStore:
 
         self._search_privacy_cache = dict()
         self._search_platform_type_cache = dict()
+        self._search_force_type_cache = dict()
         self._search_sensor_type_cache = dict()
         self._search_sensor_cache = dict()
         self._search_nationality_cache = dict()
@@ -156,7 +169,7 @@ class DataStore:
         self._search_geometry_type_cache = dict()
         self._search_geometry_subtype_cache = dict()
 
-        db_session = sessionmaker(bind=self.engine)
+        db_session = sessionmaker(bind=self.engine, expire_on_commit=False)
         self.scoped_session_creator = scoped_session(db_session)
 
         # Branding Text
@@ -639,6 +652,15 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none("_search_force_type_cache")
+    def search_force_type(self, name):
+        """Search for any force type with this name"""
+        return (
+            self.session.query(self.db_classes.ForceType)
+            .filter(func.lower(self.db_classes.ForceType.name) == lowercase_or_none(name))
+            .first()
+        )
+
     @cache_results_if_not_none("_search_nationality_cache")
     def search_nationality(self, name):
         """Search for any nationality with this name"""
@@ -990,7 +1012,37 @@ class DataStore:
     #############################################################
     # Reference Type Maintenance
 
-    def add_to_platform_types(self, name, change_id):
+    def add_to_force_types(self, name, color, change_id):
+        """
+        Adds the specified force type to the ForceTypes table if not already present
+
+        :param name: Name of :class:`ForceType`
+        :type name: String
+        :param color: Color of the ForceType
+        :type color: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
+        :return: Created :class:`ForceType` entity
+        :rtype: ForceType
+        """
+        force_type = self.search_force_type(name)
+        if force_type:
+            return force_type
+
+        # enough info to proceed and create entry
+        force_type = self.db_classes.ForceType(name=name, color=color)
+        self.session.add(force_type)
+        self.session.flush()
+
+        self.add_to_logs(
+            table=constants.FORCE_TYPE,
+            row_id=str(force_type.force_type_id),
+            change_id=change_id,
+        )
+
+        return force_type
+
+    def add_to_platform_types(self, name, change_id, default_data_interval_secs=None):
         """
         Adds the specified platform type to the platform types table if not already
         present.
@@ -1007,7 +1059,9 @@ class DataStore:
             return platform_types
 
         # enough info to proceed and create entry
-        platform_type = self.db_classes.PlatformType(name=name)
+        platform_type = self.db_classes.PlatformType(
+            name=name, default_data_interval_secs=default_data_interval_secs
+        )
         self.session.add(platform_type)
         self.session.flush()
 
@@ -1705,11 +1759,17 @@ class DataStore:
 
     def update_platform_ids(self, merge_platform_id, master_platform_id, change_id):
         Comment = self.db_classes.Comment
-        Participant = self.db_classes.Participant
+        WargameParticipant = self.db_classes.WargameParticipant
         LogsHolding = self.db_classes.LogsHolding
         Geometry1 = self.db_classes.Geometry1
         Media = self.db_classes.Media
-        tables_with_platform_id_fields = [Comment, Participant, LogsHolding, Geometry1, Media]
+        tables_with_platform_id_fields = [
+            Comment,
+            WargameParticipant,
+            LogsHolding,
+            Geometry1,
+            Media,
+        ]
         possible_field_names = [
             "platform_id",
             "subject_id",
@@ -1741,7 +1801,7 @@ class DataStore:
     def merge_platforms(self, platform_list, master_id, change_id, set_percentage=None) -> bool:
         """Merges given platforms. Moves sensors from other platforms to the Target platform.
         If sensor with same name is already present on Target platform, moves measurements
-        to that sensor. Also moves entities in Comments, Participants, LogsHoldings, Geometry, Media
+        to that sensor. Also moves entities in Comments, WargameParticipants, LogsHoldings, Geometry, Media
         tables from other platforms to the Target platform.
 
         :param platform_list: A list of platform IDs or platform objects
@@ -1800,7 +1860,7 @@ class DataStore:
                 set_percentage(50 + (i * percentage_per_iteration))
 
         # Delete merged platforms
-        self.delete_objects(constants.PLATFORM, platform_list)
+        self.delete_objects(constants.PLATFORM, platform_list, change_id)
         self.session.flush()
         return True
 
@@ -1851,7 +1911,7 @@ class DataStore:
                 set_percentage(10 + (i * percentage_per_iteration))
 
         # Delete merged objects
-        self.delete_objects(table_name, id_list)
+        self.delete_objects(table_name, id_list, change_id)
 
     def merge_objects(self, table_name, id_list, master_id, change_id, set_percentage=None):
         table_obj = self._get_table_object(table_name)
@@ -1881,7 +1941,7 @@ class DataStore:
             if callable(set_percentage):
                 set_percentage(10 + (i * percentage_per_iteration))
         # Delete merged objects
-        self.delete_objects(table_name, id_list)
+        self.delete_objects(table_name, id_list, change_id)
 
     def merge_generic(self, table_name, id_list, master_id, set_percentage=None) -> bool:
         reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
@@ -1910,7 +1970,7 @@ class DataStore:
             self.merge_platforms(id_list, master_id, change_id, set_percentage)
         elif table_name in [constants.SENSOR, constants.DATAFILE]:
             self.merge_measurements(table_name, id_list, master_id, change_id, set_percentage)
-        elif table_name in reference_table_names + [constants.TAG, constants.TASK]:
+        elif table_name in reference_table_names + [constants.TAG]:
             self.merge_objects(table_name, id_list, master_id, change_id, set_percentage)
         else:
             return False
@@ -2149,7 +2209,7 @@ class DataStore:
 
         return output
 
-    def delete_objects(self, table_obj, id_list):
+    def delete_objects(self, table_obj, id_list, change_id):
         """
         Deletes the given objects.
 
@@ -2160,6 +2220,22 @@ class DataStore:
         """
         if isinstance(table_obj, str):
             table_obj = self._get_table_object(table_obj)
+
+        objects_to_delete = self.session.query(table_obj).filter(
+            getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
+        )
+
+        for obj in objects_to_delete:
+            json_string = sqlalchemy_object_to_json(obj)
+            id_value = getattr(obj, get_primary_key_for_table(obj))
+            self.add_to_logs(
+                table=table_obj.__tablename__,
+                row_id=str(id_value),
+                field="Deleted",
+                previous_value=json_string,
+                change_id=change_id,
+            )
+
         # Delete merged objects
         self.session.query(table_obj).filter(
             getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)

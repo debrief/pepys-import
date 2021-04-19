@@ -1163,7 +1163,7 @@ class SnapshotShellMergingTestCase(unittest.TestCase):
             self.shell.do_merge_databases()
         output = temp_output.getvalue()
 
-        assert "| Platform    |                 0 |       1 |          0 |" in output
+        assert "| Platform           |                 0 |       1 |          0 |" in output
         assert "| State       |     402 |" in output
 
         # Check entries added
@@ -1182,8 +1182,9 @@ class SnapshotShellMergingTestCase(unittest.TestCase):
             # Do the merge
             self.shell.do_merge_databases()
         output = temp_output.getvalue()
+        print(output)
 
-        assert "| Platform    |                 0 |       1 |          0 |" in output
+        assert "| Platform           |                 0 |       1 |          0 |" in output
         assert "| State       |     402 |" in output
 
         # Check entries added

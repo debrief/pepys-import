@@ -1,3 +1,4 @@
+import json
 import uuid
 
 from sqlalchemy import func, types
@@ -111,3 +112,21 @@ def get_lowest_privacy(data_store):
         return results[0].name
     else:
         return None
+
+
+def sqlalchemy_object_to_json(obj):
+    """Convert a SQLAlchemy object (such as a Platform instance) to a JSON string
+
+    :param obj: SQLAlchemy object
+    :type obj: obj
+    :return: JSON string containing values of all columns
+    :rtype: str
+    """
+    columns = obj.__table__.columns
+
+    output_dict = {}
+
+    for col in columns:
+        output_dict[col.name] = str(getattr(obj, col.name))
+
+    return json.dumps(output_dict)

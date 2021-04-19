@@ -21,6 +21,17 @@ def test_column_data_platform():
             "system_name": "created_date",
             "type": "datetime",
         },
+        # TODO: Not needed as we have taken out the participations
+        # backref at the moment - but will be needed once we put it back in
+        # "participations": {
+        #     "foreign_table_type": TableTypes.METADATA,
+        #     "required": True,
+        #     "second_level": False,
+        #     "sqlalchemy_type": "relationship",
+        #     "system_name": "participations",
+        #     "type": "string",
+        #     "values": [],
+        # },
         "identifier": {
             "required": True,
             "sqlalchemy_type": "column",
@@ -680,6 +691,7 @@ def test_column_data_platform():
     del col_data["nationality"]["ids"]
     del col_data["platform type"]["ids"]
     del col_data["privacy"]["ids"]
+    # del col_data["participations"]["ids"]
 
     pprint(col_data)
 
@@ -701,6 +713,12 @@ def test_column_data_platform_type():
             "sqlalchemy_type": "column",
             "system_name": "created_date",
             "type": "datetime",
+        },
+        "default data interval secs": {
+            "required": False,
+            "sqlalchemy_type": "column",
+            "system_name": "default_data_interval_secs",
+            "type": "int",
         },
         "name": {
             "required": True,
@@ -978,7 +996,13 @@ def test_edit_data_platform_type():
             "sqlalchemy_type": "column",
             "system_name": "name",
             "type": "string",
-        }
+        },
+        "default data interval secs": {
+            "required": False,
+            "sqlalchemy_type": "column",
+            "system_name": "default_data_interval_secs",
+            "type": "int",
+        },
     }
 
 
@@ -1025,6 +1049,7 @@ def test_edit_data_platform():
     del edit_data["privacy"]["ids"]
     del edit_data["nationality"]["ids"]
     del edit_data["platform type"]["ids"]
+    # del edit_data["participations"]["ids"]
 
     pprint(edit_data)
 
@@ -1035,6 +1060,17 @@ def test_edit_data_platform():
             "system_name": "identifier",
             "type": "string",
         },
+        # TODO: Not needed as we have taken out the participations
+        # backref at the moment - but will be needed once we put it back in
+        # "participations": {
+        #     "foreign_table_type": TableTypes.METADATA,
+        #     "required": True,
+        #     "second_level": False,
+        #     "sqlalchemy_type": "relationship",
+        #     "system_name": "participations",
+        #     "type": "string",
+        #     "values": [],
+        # },
         "name": {
             "required": True,
             "sqlalchemy_type": "column",

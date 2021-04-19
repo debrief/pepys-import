@@ -214,7 +214,7 @@ class CustomTextArea:
         )
 
     def on_text_changed(self, event):
-        if self.text[1:] == self.initial_text:
+        if self.text[1:] == self.initial_text and self.initial_text != "":
             # We've typed a character into the box that contained the placeholder
             # so remove the placeholder and just put in the new character
             self.text = self.text[0]
