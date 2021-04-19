@@ -70,6 +70,7 @@ class DatetimeWidget(MaskedInputWidget):
         logger.debug(f"{self.text=}")
         if (
             self.text == "yyyy-mm-dd HH:MM:SS"
+            or self.text == "yyyy-mm-dd HH:MM"
             or self.text == "    -  -     :  :  "
             or self.text == "-- ::"
             or self.text == "    -  -     :  "
