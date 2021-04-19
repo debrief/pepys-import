@@ -374,9 +374,14 @@ class SerialMixin:
         if privacy is None:
             raise ValueError("Specified Privacy does not exist")
 
-        force_type = data_store.search_force_type(force_type)
-        if force_type is None:
-            raise ValueError("Specified Force Type does not exist")
+        if force_type == "Red":
+            color = "#ff0000"
+        elif force_type == "Blue":
+            color = "#0000ff"
+
+        # This searches for the force type first, and if it exists then it returns
+        # it. Otherwise it creates it.
+        force_type = data_store.add_to_force_types(force_type, color, change_id)
 
         if not isinstance(wargame_participant, data_store.db_classes.WargameParticipant):
             wargame_participant = (
