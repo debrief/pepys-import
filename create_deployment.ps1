@@ -231,7 +231,7 @@ try {
     if (Test-Path env:GITHUB_HEAD_REF) {
         $gitbranch = $env:GITHUB_HEAD_REF
     } elseif (Test-Path env:GITHUB_REF) {
-        $gitbranch = $env:GITHUB_REF.Replace("refs/heads/", "")
+        $gitbranch = $env:GITHUB_REF.Replace("refs/heads/", "").Replace("refs/tags/", "")
     } else {
         $gitbranch = git branch --show-current
     }
