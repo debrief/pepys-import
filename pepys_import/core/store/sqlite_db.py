@@ -343,7 +343,7 @@ class Log(BaseSpatiaLite, LogMixin):
     )
     id = Column(UUIDType, nullable=False)
     field = Column(String(150))
-    previous_value = Column(String(150))
+    previous_value = Column(Text())
     change_id = Column(
         UUIDType,
         ForeignKey("Changes.change_id", onupdate="cascade", ondelete="cascade"),
