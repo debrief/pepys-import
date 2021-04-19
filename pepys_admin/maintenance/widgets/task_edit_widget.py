@@ -83,7 +83,7 @@ class TaskEditWidget:
             object_name = "wargame"
 
         self.save_button = Button(f"Save {object_name}", self.save_button_handler, width=15)
-        self.delete_button = Button(f"Delete {object_name}", self.delete_button_handler, width=15)
+        self.delete_button = Button(f"Delete {object_name}", self.delete_button_handler, width=20)
         self.buttons_row = VSplit(
             [self.save_button, self.delete_button], padding=3, align=HorizontalAlign.LEFT
         )
