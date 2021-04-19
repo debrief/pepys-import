@@ -302,6 +302,19 @@ class WargameMixin:
         return association_proxy("privacy", "name")
 
     def add_participant(self, data_store, platform, privacy, change_id):
+        """Add a new participant to this Wargame. This creates a WargameParticipant entry.
+
+        :param data_store: DataStore
+        :type data_store: DataStore
+        :param platform: Platform to add as a participant
+        :type platform: Platform object or Platform ID value
+        :param privacy: Privacy to assign to this participant
+        :type privacy: str
+        :param change_id: Change ID for this change
+        :type change_id: Change ID
+        :return: Newly created WargameParticipant object
+        :rtype: WargameParticipant
+        """
         privacy = data_store.search_privacy(privacy)
         if privacy is None:
             raise ValueError("Specified Privacy does not exist")
@@ -370,6 +383,25 @@ class SerialMixin:
         end=None,
         change_id=None,
     ):
+        """Add a participant to this Serial. This creates a SerialParticipant object.
+
+        :param data_store: DataStore
+        :type data_store: DataStore
+        :param wargame_participant: Wargame participant which defines the Platform that this SerialParticipant is representing
+        :type wargame_participant: WargameParticipant or WargameParticipant ID value
+        :param force_type: Force to assign this participant
+        :type force_type: str ("Blue" or "Red" normally)
+        :param privacy: Privacy to assign this participant
+        :type privacy: str
+        :param start: Start timestamp for this participant, defaults to None
+        :type start: datetime, optional
+        :param end: End timestamp for this participant, defaults to None
+        :type end: datetime, optional
+        :param change_id: Change ID for this change, defaults to None
+        :type change_id: ID, optional
+        :return: New SerialParticipant instance
+        :rtype: SerialParticipant
+        """
         privacy = data_store.search_privacy(privacy)
         if privacy is None:
             raise ValueError("Specified Privacy does not exist")

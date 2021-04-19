@@ -30,6 +30,27 @@ class TreeView:
         max_levels=None,
         level_to_name=None,
     ):
+        """TreeView widget, shows a view of TreeElement objects with expanding/collapsing entries.
+
+        :param root_element: Root TreeElement
+        :type root_element: TreeElement
+        :param on_add: Function to call when add button is pressed, defaults to None
+        :type on_add: function, optional
+        :param on_select: Function to call when an entry is selected, defaults to None
+        :type on_select: function, optional
+        :param hide_root: If True, hide the root element and show the root element's children as top-level elements, defaults to False
+        :type hide_root: bool, optional
+        :param height: Height of TreeView, defaults to None
+        :type height: int, optional
+        :param width: Width of TreeView, defaults to None
+        :type width: int, optional
+        :param max_levels: Maximum number of levels the TreeView can have, defaults to None. Setting this will stop the 'Add' button
+        appearing on the leaf nodes.
+        :type max_levels: int, optional
+        :param level_to_name: Dictionary mapping each level of the TreeView (0, 1, 2 etc) to a name, so appropriate names can
+        be used in the 'Add XXX' button, defaults to None
+        :type level_to_name: dict, optional
+        """
         self.root_element = root_element
         self.filtered_root_element = self.root_element
         self.text_list = []
@@ -67,6 +88,11 @@ class TreeView:
         )
 
     def set_root(self, new_root):
+        """Set a new root TreeElement
+
+        :param new_root: New root element
+        :type new_root: TreeElement
+        """
         self.root_element = new_root
         self.filtered_root_element = self.root_entry
         self.initialise_selected_element()
@@ -120,6 +146,17 @@ class TreeView:
             self.do_add()
 
     def format_element(self, element, indentation, root_entry):
+        """Format an element for display in the TreeView
+
+        :param element: Element to format
+        :type element: TreeElement
+        :param indentation: Indentation required for this level
+        :type indentation: str
+        :param root_entry: True if this is the root entry, False otherwise
+        :type root_entry: bool
+        :return: Formatted text ready for display
+        :rtype: list
+        """
         n_children = len(element.children)
 
         if self.selected_element == element:
@@ -144,7 +181,7 @@ class TreeView:
         else:
             indent_str = ""
             parent = element.parent
-            for i in range(indentation - 1, 0, -1):
+            for _ in range(indentation - 1, 0, -1):
                 if not parent.is_final_child:
                     indent_str += VERTICAL_LINE + " "
                 else:
@@ -224,6 +261,12 @@ class TreeView:
         return with_mouse_handlers
 
     def filter(self, filter_text):
+        """Filter the TreeView entries, showing thise that match the filter_text
+        (and their parents and children)
+
+        :param filter_text: Filter text
+        :type filter_text: str
+        """
         self.filter_text = filter_text
         if self.filter_text == "":
             self.filtered_root_element = self.root_element
@@ -236,6 +279,14 @@ class TreeView:
         get_app().invalidate()
 
     def remove_nonmatching_elements(self, filter_text, root_element):
+        """Remove elements that don't match the filter_text, and expand other elements
+        as required to ensure that the matched entries are visible.
+
+        :param filter_text: Filter text
+        :type filter_text: str
+        :param root_element: Root TreeElement
+        :type root_element: TreeElement
+        """
         if filter_text.lower() not in root_element.text.lower():
             children = copy(root_element.children)
             for child in children:
@@ -253,6 +304,13 @@ class TreeView:
                 root_element.expanded = True
 
     def walk_tree(self, root):
+        """Walk the tree, formatting each element as we go
+
+        :param root: Root TreeElement
+        :type root: TreeElement
+        :return: Tuple containing the list of FormattedText entries, plus the list of objects from the TreeElements
+        :rtype: tuple
+        """
         text_output_list = []
         object_output_list = []
 
@@ -279,6 +337,11 @@ class TreeView:
         return text_output_list, object_output_list
 
     def select_element(self, element):
+        """Select the given element
+
+        :param element: Element to select
+        :type element: TreeElement
+        """
         self.filtered_root_element = self.root_element
 
         # Expand all parents of the element to select, so we can see it
@@ -351,6 +414,13 @@ class TreeView:
 
 class TreeElement:
     def __init__(self, text, object=None):
+        """Represents an element in a Tree
+
+        :param text: Text to display in the TreeView
+        :type text: str
+        :param object: Object associated with this element, defaults to None
+        :type object: obj, optional
+        """
         self.text = text
         self.object = object
         self.expanded = False
@@ -371,6 +441,7 @@ class TreeElement:
 
     @property
     def is_final_child(self):
+        """Returns True if this is the final child entry of its parent."""
         try:
             result = self.parent.children.index(self) == len(self.parent.children) - 1
             return result
@@ -379,6 +450,10 @@ class TreeElement:
 
     @property
     def level(self):
+        """Returns the level of this entry in the tree.
+
+        0 is the root element, 1 is a child of the root element, etc.
+        """
         level = 0
         current_element = self
         while current_element.parent is not None:

@@ -5,7 +5,6 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from loguru import logger
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
@@ -2228,7 +2227,6 @@ class DataStore:
 
         for obj in objects_to_delete:
             json_string = sqlalchemy_object_to_json(obj)
-            logger.debug("Deleting object {obj}")
             id_value = getattr(obj, get_primary_key_for_table(obj))
             self.add_to_logs(
                 table=table_obj.__tablename__,

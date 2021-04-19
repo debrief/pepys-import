@@ -36,7 +36,7 @@ logger.add("gui.log")
 
 class TasksGUI:
     def __init__(self, data_store=None):
-        print("Initialising GUI and loading tasks...")
+        print("Initialising GUI and loading tasks and platforms...")
 
         if data_store is not None:
             self.data_store = data_store
@@ -85,6 +85,7 @@ class TasksGUI:
         self.app.dropdown_opened = False
 
     def get_privacies(self):
+        """Get all privacies, storing them ready to be used in the add dialogs"""
         all_privacies = (
             self.data_store.session.query(self.data_store.db_classes.Privacy)
             .order_by(self.data_store.db_classes.Privacy.level)
@@ -96,6 +97,7 @@ class TasksGUI:
         return {"values": privacy_strs, "ids": privacy_ids}
 
     def get_platforms(self):
+        """Get all platforms, storing them ready to be used in the add dialogs"""
         all_platforms = self.data_store.session.query(self.data_store.db_classes.Platform).all()
 
         platform_strs = [
@@ -106,6 +108,9 @@ class TasksGUI:
         return {"values": platform_strs, "ids": platform_ids}
 
     def get_tasks_into_treeview(self):
+        """Iterates through all tasks in the database, and creates the relevant TreeElement
+        objects to enable them to be displayed in the TreeView.
+        """
         Series = self.data_store.db_classes.Series
 
         id_to_element = {}

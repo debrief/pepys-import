@@ -9,11 +9,24 @@ from pepys_admin.maintenance.widgets.dropdown_box import DropdownBox
 
 
 class WargameParticipantDialog:
-    def __init__(self, task_object, force, platforms, privacies, object_to_edit=None):
+    def __init__(self, task_object, platforms, privacies, object_to_edit=None):
+        """Dialog for editing a SerialParticipant
+
+        :param task_object: Task object that is being edited
+        :type task_object: Wargame
+        :param platforms: List of platforms for the user to select from in the Dropdown - this is passed rather than
+        generated here to save generating the same lists of platforms over and over again. This should include just
+        the platforms that are able to be selected - ie. ones that aren't already participating in the serial
+        :type platforms: dict with 'values' and 'ids' keys
+        :param privacies: List of privacies for the user to select from - again, passed rather than generated each time
+        :type privacies: list
+        :param object_to_edit: SerialParticipant object to edit in this dialog, defaults to None. If passed, it will pre-populate
+        the edit widgets with the values from this object.
+        :type object_to_edit: SerialParticipant, optional
+        """
         self.future = Future()
 
         self.task_object = task_object
-        self.force = force
         self.platforms = platforms
         self.privacies = privacies
         self.object_to_edit = object_to_edit
@@ -27,10 +40,7 @@ class WargameParticipantDialog:
         else:
             buttons = [add_button, cancel_button]
 
-        if force is None:
-            title = "Add participant"
-        else:
-            title = f"Add {force} participant"
+        title = "Add participant"
 
         if self.object_to_edit is None:
             self.platform_field = DropdownBox("Select a platform", self.platforms["values"])

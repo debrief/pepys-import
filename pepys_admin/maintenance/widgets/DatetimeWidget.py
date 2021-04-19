@@ -1,13 +1,20 @@
 from datetime import datetime
 
-from loguru import logger
-
 from pepys_admin.maintenance.widgets.masked_input_widget import MaskedInputWidget
 from pepys_admin.maintenance.widgets.utils import datetime_validator, int_validator
 
 
 class DatetimeWidget(MaskedInputWidget):
     def __init__(self, datetime_value=None, on_change=None, no_seconds=False):
+        """Widget for entering datetime values in ISO-standard format. Based on the MaskedInputWidget.
+
+        :param datetime_value: Value to set the widget entries to, defaults to None
+        :type datetime_value: datetime, optional
+        :param on_change: Function to call when value changes, defaults to None
+        :type on_change: function, optional
+        :param no_seconds: If True, don't show the box for entering seconds, and just show YYYY-MM-DD HH:MM, defaults to False
+        :type no_seconds: bool, optional
+        """
         self.no_seconds = no_seconds
 
         if self.no_seconds:
@@ -67,7 +74,6 @@ class DatetimeWidget(MaskedInputWidget):
 
     @property
     def datetime_value(self):
-        logger.debug(f"{self.text=}")
         if (
             self.text == "yyyy-mm-dd HH:MM:SS"
             or self.text == "yyyy-mm-dd HH:MM"

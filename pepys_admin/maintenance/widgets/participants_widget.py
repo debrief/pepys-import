@@ -1,7 +1,6 @@
 from asyncio.tasks import ensure_future
 from datetime import datetime
 
-from loguru import logger
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.layout.containers import DynamicContainer, HSplit, VSplit
 from prompt_toolkit.widgets.base import Button
@@ -19,6 +18,20 @@ class ParticipantsWidget:
     def __init__(
         self, task_edit_widget, platforms=None, force=None, combo_height=8, combo_width=80
     ):
+        """Widget for showing a list of participants, with Add/Edit/Delete buttons
+
+        :param task_edit_widget: Reference to the TaskEditWidget instance that this widget is contained within
+        :type task_edit_widget: TaskEditWidget
+        :param platforms: List of platforms that the user can select from when adding/editing a participant, defaults to None
+        :type platforms: dict with 'ids' and 'values' keys, optional
+        :param force: Force to show/add/edit participants for, defaults to None. If None then show all participants (used for
+        WargameParticipants that do not have a force), otherwise if a string then show all participants where force_name == the string.
+        :type force: str, optional
+        :param combo_height: Height of the ComboBox used to display participants list, defaults to 8
+        :type combo_height: int, optional
+        :param combo_width: Width of the ComboBox used to display participants list, defaults to 80
+        :type combo_width: int, optional
+        """
         self.task_edit_widget = task_edit_widget
         self.force = force
         self.platforms = platforms
@@ -133,15 +146,12 @@ class ParticipantsWidget:
 
             dialog = WargameParticipantDialog(
                 self.task_edit_widget.task_object,
-                self.force,
                 filtered_platforms,
                 self.task_edit_widget.privacies,
             )
             result = await self.task_edit_widget.show_dialog_as_float(dialog)
             if result is None:
                 return
-
-            logger.debug(f"{result=}")
 
             ds = self.task_edit_widget.data_store
 
@@ -172,8 +182,6 @@ class ParticipantsWidget:
             result = await self.task_edit_widget.show_dialog_as_float(dialog)
             if result is None:
                 return
-
-            logger.debug(f"Serial Dialog result {result=}")
 
             with ds.session_scope():
                 change_id = ds.add_to_changes(
@@ -234,8 +242,6 @@ class ParticipantsWidget:
             if result is None:
                 return
 
-            logger.debug(f"Serial Dialog result {result=}")
-
             participant = ds.session.merge(participant)
 
             # This set of if statements checks each field to see if it has been changed
@@ -295,7 +301,6 @@ class ParticipantsWidget:
 
             # Actually commit the changes to the participant to the database
             with ds.session_scope():
-                logger.debug(f"{participant=}")
                 ds.session.flush()
                 self.task_edit_widget.task_object = ds.session.merge(
                     self.task_edit_widget.task_object
@@ -303,7 +308,6 @@ class ParticipantsWidget:
                 # Merging an object into the session should refresh all of the fields,
                 # but we seem to need to do an explicit refresh here - not entirely sure why
                 ds.session.refresh(self.task_edit_widget.task_object)
-                logger.debug(f"{self.task_edit_widget.task_object.participants=}")
                 ds.session.expunge_all()
 
         async def coroutine_wargame():
@@ -323,7 +327,6 @@ class ParticipantsWidget:
 
             dialog = WargameParticipantDialog(
                 self.task_edit_widget.task_object,
-                self.force,
                 filtered_platforms,
                 self.task_edit_widget.privacies,
                 object_to_edit=participant,
@@ -332,8 +335,6 @@ class ParticipantsWidget:
             result = await self.task_edit_widget.show_dialog_as_float(dialog)
             if result is None:
                 return
-
-            logger.debug(f"{result=}")
 
             participant = ds.session.merge(participant)
 
@@ -369,7 +370,6 @@ class ParticipantsWidget:
 
             # Actually commit the changes to the participant to the database
             with ds.session_scope():
-                logger.debug(f"{participant=}")
                 ds.session.flush()
                 self.task_edit_widget.task_object = ds.session.merge(
                     self.task_edit_widget.task_object
@@ -377,7 +377,6 @@ class ParticipantsWidget:
                 # Merging an object into the session should refresh all of the fields,
                 # but we seem to need to do an explicit refresh here - not entirely sure why
                 ds.session.refresh(self.task_edit_widget.task_object)
-                logger.debug(f"{self.task_edit_widget.task_object.participants=}")
                 ds.session.expunge_all()
 
         if isinstance(
@@ -393,8 +392,6 @@ class ParticipantsWidget:
     def handle_delete_button(self):
         ds = self.task_edit_widget.data_store
         participant = self.participants[self.combo_box.selected_entry]
-
-        logger.debug(f"{self.task_edit_widget.task_object=}")
 
         with ds.session_scope():
             ds.delete_objects(
