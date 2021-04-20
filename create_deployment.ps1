@@ -207,10 +207,36 @@ catch {
 }
 
 try {
+    # Add the build date into the source code, so it can be displayed in the
+    # welcome text
+    $timestamp_str = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    (Get-Content .\pepys_import\__init__.py).replace('__build_timestamp__ = None', '__build_timestamp__ = "' + $timestamp_str + '"') | Set-Content .\pepys_import\__init__.py
+    (Get-Content .\bin\set_title.bat).replace('BUILDTIMESTAMP', $timestamp_str) | Set-Content .\bin\set_title.bat
+
+}
+catch {
+    Write-Output $_
+    Write-Output "ERROR: Could not set build timestamp in __init__.py"
+    Exit 1
+}
+
+try {
     # Zip up whole folder into a zip-file with the current date in the filename
     # excluding the 7zip folder
     $date_str = Get-Date -Format "yyyyMMdd"
-    $output_filename = $date_str + "_pepys-import.zip"
+    $gitcommit = git rev-parse --short HEAD
+    # Get the branch name from the GITHUB_HEAD_REF/GITHUB_REF env var if it exists (which it will if
+    # we're running on GH Actions), otherwise use a git command (the git command doesn't
+    # work on Github actions)
+    if (Test-Path env:GITHUB_HEAD_REF) {
+        $gitbranch = $env:GITHUB_HEAD_REF
+    } elseif (Test-Path env:GITHUB_REF) {
+        $gitbranch = $env:GITHUB_REF.Replace("refs/heads/", "").Replace("refs/tags/", "")
+    } else {
+        $gitbranch = git branch --show-current
+    }
+    
+    $output_filename = "pepys_import-$date_str-$gitbranch-$gitcommit.zip"
     .\7zip\7za.exe a .\$output_filename .\* -xr!7zip/ -xr!"bin\distlib-0.3.0-py2.py3-none-any.whl"
 
     if ($LastExitCode -ne 0)

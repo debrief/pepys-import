@@ -5,14 +5,15 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
-from sqlalchemy import create_engine, inspect, or_
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
-from sqlalchemy.orm import sessionmaker, undefer
+from sqlalchemy.orm import scoped_session, sessionmaker, undefer
 from sqlalchemy.sql import func
+from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, merge_references
 
 from paths import PEPYS_IMPORT_DIRECTORY
-from pepys_import import __version__
+from pepys_import import __build_timestamp__, __version__
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
@@ -20,6 +21,8 @@ from pepys_import.utils.branding_util import show_software_meta_info, show_welco
 from pepys_import.utils.data_store_utils import (
     MissingDataException,
     cache_results_if_not_none,
+    convert_edit_dict_columns,
+    convert_objects_to_ids,
     create_alembic_version_table,
     create_spatial_tables_for_postgres,
     create_spatial_tables_for_sqlite,
@@ -29,8 +32,9 @@ from pepys_import.utils.data_store_utils import (
 from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_keys_on
 from pepys_import.utils.value_transforming_utils import format_datetime
 
-from ...utils.error_handling import handle_first_connection_error
-from ...utils.sqlalchemy_utils import get_primary_key_for_table
+from ...utils.error_handling import handle_database_errors, handle_first_connection_error
+from ...utils.sqlalchemy_utils import get_primary_key_for_table, sqlalchemy_object_to_json
+from ...utils.table_name_utils import table_name_to_class_name
 from ...utils.text_formatting_utils import custom_print_formatted_text, format_error_message
 from .db_base import BasePostGIS, BaseSpatiaLite
 from .db_status import TableTypes
@@ -75,6 +79,11 @@ class DataStore:
         self.meta_classes = {}
         self.setup_table_type_mapping()
 
+        if db_name == ":memory:":
+            self.in_memory_database = True
+        else:
+            self.in_memory_database = False
+
         connection_string = "{}://{}:{}@{}:{}/{}".format(
             driver, db_username, db_password, db_host, db_port, db_name
         )
@@ -82,6 +91,18 @@ class DataStore:
             if db_type == "postgres":
                 self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
                 BasePostGIS.metadata.bind = self.engine
+                # The SQL below seems to be required to set the database up correctly so that merging works.
+                # The search_path makes perfect sense, as when merging the tables come across from SQLite which
+                # has no schema, so the objects have no associated schema, and Postgres needs to be able to find
+                # them without a schema
+                # However, the CREATE EXTENSION bit makes less sense - but seems to be required to be in there.
+                # It will be a no-op if the extension already exists, so it doesn't have an efficiency implication
+                # but seems to be required.
+                with handle_database_errors():
+                    with self.engine.connect() as connection:
+                        connection.execute(
+                            "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
+                        )
             elif db_type == "sqlite":
                 self.engine = create_engine(connection_string, echo=False)
                 listen(self.engine, "connect", load_spatialite)
@@ -138,6 +159,7 @@ class DataStore:
 
         self._search_privacy_cache = dict()
         self._search_platform_type_cache = dict()
+        self._search_force_type_cache = dict()
         self._search_sensor_type_cache = dict()
         self._search_sensor_cache = dict()
         self._search_nationality_cache = dict()
@@ -147,11 +169,16 @@ class DataStore:
         self._search_geometry_type_cache = dict()
         self._search_geometry_subtype_cache = dict()
 
+        db_session = sessionmaker(bind=self.engine, expire_on_commit=False)
+        self.scoped_session_creator = scoped_session(db_session)
+
         # Branding Text
         if self.welcome_text:
             show_welcome_banner(welcome_text)
         if self.show_status:
-            show_software_meta_info(__version__, self.db_type, self.db_name, db_host)
+            show_software_meta_info(
+                __version__, __build_timestamp__, self.db_type, self.db_name, db_host
+            )
             # The 'pepys-import' banner is 61 characters wide, so making a line
             # of the same length makes things prettier
             print("-" * 61)
@@ -184,13 +211,13 @@ class DataStore:
                 )
                 sys.exit(1)
         create_alembic_version_table(self.engine, self.db_type)
-        print("Database tables were created by DataStore's initialisation.")
+        if self.show_status:
+            print("Database tables were created by DataStore's initialisation.")
 
     @contextmanager
     def session_scope(self):
         """Provide a transactional scope around a series of operations."""
-        db_session = sessionmaker(bind=self.engine)
-        self.session = db_session()
+        self.session = self.scoped_session_creator()
         try:
             yield self
             self.session.commit()
@@ -625,6 +652,15 @@ class DataStore:
             .first()
         )
 
+    @cache_results_if_not_none("_search_force_type_cache")
+    def search_force_type(self, name):
+        """Search for any force type with this name"""
+        return (
+            self.session.query(self.db_classes.ForceType)
+            .filter(func.lower(self.db_classes.ForceType.name) == lowercase_or_none(name))
+            .first()
+        )
+
     @cache_results_if_not_none("_search_nationality_cache")
     def search_nationality(self, name):
         """Search for any nationality with this name"""
@@ -874,7 +910,7 @@ class DataStore:
             or privacy_obj is None
         ):
             resolved_data = self.missing_data_resolver.resolve_platform(
-                self, platform_name, platform_type, nationality, privacy, change_id
+                self, platform_name, identifier, platform_type, nationality, privacy, change_id
             )
             # It means that new platform added as a synonym and existing platform returned
             if isinstance(resolved_data, self.db_classes.Platform):
@@ -976,7 +1012,37 @@ class DataStore:
     #############################################################
     # Reference Type Maintenance
 
-    def add_to_platform_types(self, name, change_id):
+    def add_to_force_types(self, name, color, change_id):
+        """
+        Adds the specified force type to the ForceTypes table if not already present
+
+        :param name: Name of :class:`ForceType`
+        :type name: String
+        :param color: Color of the ForceType
+        :type color: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
+        :return: Created :class:`ForceType` entity
+        :rtype: ForceType
+        """
+        force_type = self.search_force_type(name)
+        if force_type:
+            return force_type
+
+        # enough info to proceed and create entry
+        force_type = self.db_classes.ForceType(name=name, color=color)
+        self.session.add(force_type)
+        self.session.flush()
+
+        self.add_to_logs(
+            table=constants.FORCE_TYPE,
+            row_id=str(force_type.force_type_id),
+            change_id=change_id,
+        )
+
+        return force_type
+
+    def add_to_platform_types(self, name, change_id, default_data_interval_secs=None):
         """
         Adds the specified platform type to the platform types table if not already
         present.
@@ -993,7 +1059,9 @@ class DataStore:
             return platform_types
 
         # enough info to proceed and create entry
-        platform_type = self.db_classes.PlatformType(name=name)
+        platform_type = self.db_classes.PlatformType(
+            name=name, default_data_interval_secs=default_data_interval_secs
+        )
         self.session.add(platform_type)
         self.session.flush()
 
@@ -1207,14 +1275,14 @@ class DataStore:
     #############################################################
     # Metadata Maintenance
 
-    def add_to_logs(self, table, row_id, field=None, new_value=None, change_id=None):
+    def add_to_logs(self, table, row_id, field=None, previous_value=None, change_id=None):
         """
         Adds the specified event to the :class:`Logs` table if not already present.
 
         :param table: Name of the table
         :param row_id: Entity ID of the tale
         :param field:  Name of the field
-        :param new_value:  New value of the field
+        :param previous_value:  Previous value of the field
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
         :param change_id:  Row ID of entity of :class:`Changes` about the change
@@ -1224,7 +1292,7 @@ class DataStore:
             table=table,
             id=row_id,
             field=field,
-            new_value=new_value,
+            previous_value=previous_value,
             change_id=change_id,
         )
         self.session.add(log)
@@ -1649,114 +1717,59 @@ class DataStore:
             .all()
         )
 
-    def merge_platforms(self, platform_list, master_id) -> bool:
-        """Merges given platforms. Moves sensors from other platforms to the Target platform.
-        If sensor with same name is already present on Target platform, moves measurements
-        to that sensor. Also moves entities in Comments, Participants, LogsHoldings, Geometry, Media
-        tables from other platforms to the Target platform.
-
-        :param platform_list: A list of platform IDs or platform objects
-        :type platform_list: List
-        :param master_id: Target platform's ID or objects itself
-        :type master_id: UUID or Platform
-        :return: True if merging completed successfully, False otherwise.
-        :rtype: bool
-        """
-        Platform = self.db_classes.Platform
-        Sensor = self.db_classes.Sensor
-        State = self.db_classes.State
-        Contact = self.db_classes.Contact
-
-        if isinstance(master_id, Platform):
-            master_id = master_id.platform_id
-
-        master_platform = (
-            self.session.query(Platform).filter(Platform.platform_id == master_id).scalar()
+    def _check_master_id(self, table_obj, master_id):
+        master_obj = (
+            self.session.query(table_obj)
+            .filter(getattr(table_obj, get_primary_key_for_table(table_obj)) == master_id)
+            .scalar()
         )
-        if not master_platform:
-            raise ValueError(f"No platform found with the given master_id: '{master_id}'!")
-        master_sensor_names = self.session.query(Sensor.name).filter(Sensor.host == master_id).all()
-        master_sensor_names = set([n for (n,) in master_sensor_names])
+        if not master_obj:
+            raise ValueError(f"No object found with the given master_id: '{master_id}'!")
+        return master_obj
 
-        sensor_list = list()
-        if isinstance(platform_list[0], Platform):  # Extract platform_ids from platform objects
-            platform_list = [p.platform_id for p in platform_list]
+    def _get_table_object(self, table_name):
+        # Table names are plural in the database, therefore make it singular
+        table = table_name_to_class_name(table_name)
+        return getattr(self.db_classes, table)
 
-        if master_id in platform_list:
-            platform_list.remove(master_id)  # We don't need to change these values
+    def _get_comments_and_sensors_of_platform(self, platform) -> list:
+        Sensor = self.db_classes.Sensor
+        Comment = self.db_classes.Comment
+        objects = list(dependent_objects(platform))
+        objects = [obj for obj in objects if isinstance(obj, Sensor) or isinstance(obj, Comment)]
+        return objects
 
-        reason_platform_list = ",".join([str(p) for p in platform_list])
-        change_id = self.add_to_changes(
-            user=USER,
-            modified=datetime.utcnow(),
-            reason=f"Merging Platforms '{reason_platform_list}' to '{master_id}'.",
-        ).change_id
-        for p_id in platform_list:
-            self.update_platform_ids(p_id, master_id, change_id)
+    def _find_datafiles_and_measurements_for_platform(self, platform) -> dict:
+        objects = self._get_comments_and_sensors_of_platform(platform)
+        datafile_ids = dict()
 
-            sensors = self.session.query(Sensor).filter(Sensor.host == p_id).all()
-            sensor_list.extend(sensors)
-        for sensor in sensor_list:
-            if sensor.name not in master_sensor_names:
-                query = self.session.query(Sensor).filter(Sensor.sensor_id == sensor.sensor_id)
-                [
-                    self.add_to_logs(
-                        table=constants.SENSOR,
-                        row_id=s.sensor_id,
-                        field="host",
-                        new_value=str(s.host),
-                        change_id=change_id,
-                    )
-                    for s in query.all()
-                ]
-                query.update({"host": master_id})
-                master_sensor_names.add(sensor.name)
-            else:  # Move measurements only
-                master_sensor_id = (
-                    self.session.query(Sensor.sensor_id)
-                    .filter(Sensor.host == master_id, Sensor.name == sensor.name)
-                    .scalar()
-                )
-                query = self.session.query(State).filter(State.sensor_id == sensor.sensor_id)
-                [
-                    self.add_to_logs(
-                        table=constants.STATE,
-                        row_id=s.sensor_id,
-                        field="sensor_id",
-                        new_value=str(sensor.sensor_id),
-                        change_id=change_id,
-                    )
-                    for s in query.all()
-                ]
-                query.update({"sensor_id": master_sensor_id})  # Update States
+        while objects:
+            obj = objects.pop(0)
+            if isinstance(obj, self.db_classes.Sensor):
+                objects.extend(list(dependent_objects(obj)))
+            else:
+                if obj.source_id not in datafile_ids:
+                    datafile_ids[obj.source_id] = {"time": obj.time, "objects": []}
+                if obj.time < datafile_ids[obj.source_id]["time"]:
+                    datafile_ids[obj.source_id]["time"] = obj.time
+                if not isinstance(obj, self.db_classes.Comment):  # They are handled differently
+                    datafile_ids[obj.source_id]["objects"].append(obj)
 
-                query = self.session.query(Contact).filter(
-                    or_(Contact.sensor_id == sensor.sensor_id, Contact.subject_id == master_id)
-                )
-                [
-                    self.add_to_logs(
-                        table=constants.CONTACT,
-                        row_id=s.sensor_id,
-                        field="sensor_id",
-                        new_value=str(sensor.sensor_id),
-                        change_id=change_id,
-                    )
-                    for s in query.all()
-                ]
-                query.update({"sensor_id": master_sensor_id})  # Update Contacts
-
-        for p_id in platform_list:  # Delete merged platforms
-            self.session.query(Platform).filter(Platform.platform_id == p_id).delete()
-        self.session.flush()
-        return True
+        return datafile_ids
 
     def update_platform_ids(self, merge_platform_id, master_platform_id, change_id):
         Comment = self.db_classes.Comment
-        Participant = self.db_classes.Participant
+        WargameParticipant = self.db_classes.WargameParticipant
         LogsHolding = self.db_classes.LogsHolding
         Geometry1 = self.db_classes.Geometry1
         Media = self.db_classes.Media
-        tables_with_platform_id_fields = [Comment, Participant, LogsHolding, Geometry1, Media]
+        tables_with_platform_id_fields = [
+            Comment,
+            WargameParticipant,
+            LogsHolding,
+            Geometry1,
+            Media,
+        ]
         possible_field_names = [
             "platform_id",
             "subject_id",
@@ -1775,7 +1788,7 @@ class DataStore:
                             table=table.__tablename__,
                             row_id=getattr(s, primary_key_field),
                             field=field,
-                            new_value=str(merge_platform_id),
+                            previous_value=str(merge_platform_id),
                             change_id=change_id,
                         )
                         for s in query.all()
@@ -1783,4 +1796,448 @@ class DataStore:
                     query.update({field: master_platform_id})
                 except Exception:
                     pass
+        self.session.flush()
+
+    def merge_platforms(self, platform_list, master_id, change_id, set_percentage=None) -> bool:
+        """Merges given platforms. Moves sensors from other platforms to the Target platform.
+        If sensor with same name is already present on Target platform, moves measurements
+        to that sensor. Also moves entities in Comments, WargameParticipants, LogsHoldings, Geometry, Media
+        tables from other platforms to the Target platform.
+
+        :param platform_list: A list of platform IDs or platform objects
+        :type platform_list: List
+        :param master_id: Target platform's ID or objects itself
+        :type master_id: UUID or Platform
+        :return: True if merging completed successfully, False otherwise.
+        :rtype: bool
+        """
+        Platform = self.db_classes.Platform
+        Sensor = self.db_classes.Sensor
+        self._check_master_id(Platform, master_id)
+        master_sensor_names = self.session.query(Sensor.name).filter(Sensor.host == master_id).all()
+        master_sensor_names = set([n for (n,) in master_sensor_names])
+        sensor_list = list()
+
+        # Make this bit of the processing take up 40% of the progress bar
+        percentage_per_iteration = 40.0 / len(platform_list)
+
+        for i, p_id in enumerate(platform_list):
+            self.update_platform_ids(p_id, master_id, change_id)
+
+            sensors = self.session.query(Sensor).filter(Sensor.host == p_id).all()
+            sensor_list.extend(sensors)
+            if callable(set_percentage):
+                set_percentage(10 + (i * percentage_per_iteration))
+
+        # Make this bit of the processing take up 50% of the progress bar
+        percentage_per_iteration = 50.0 / len(platform_list)
+
+        for sensor in sensor_list:
+            if sensor.name not in master_sensor_names:
+                query = self.session.query(Sensor).filter(Sensor.sensor_id == sensor.sensor_id)
+                [
+                    self.add_to_logs(
+                        table=constants.SENSOR,
+                        row_id=s.sensor_id,
+                        field="host",
+                        previous_value=str(s.host),
+                        change_id=change_id,
+                    )
+                    for s in query.all()
+                ]
+                query.update({"host": master_id})
+                master_sensor_names.add(sensor.name)
+            else:  # Move measurements only
+                master_sensor_id = (
+                    self.session.query(Sensor.sensor_id)
+                    .filter(Sensor.host == master_id, Sensor.name == sensor.name)
+                    .scalar()
+                )
+                self.merge_measurements(
+                    constants.SENSOR, [sensor.sensor_id], master_sensor_id, change_id
+                )
+            if callable(set_percentage):
+                set_percentage(50 + (i * percentage_per_iteration))
+
+        # Delete merged platforms
+        self.delete_objects(constants.PLATFORM, platform_list, change_id)
+        self.session.flush()
+        return True
+
+    def merge_measurements(self, table_name, id_list, master_id, change_id, set_percentage=None):
+        if table_name == constants.SENSOR:
+            table_obj = self.db_classes.Sensor
+            field = "sensor_id"
+            self._check_master_id(table_obj, master_id)
+            table_objects = [self.db_classes.State, self.db_classes.Contact]
+        elif table_name == constants.DATAFILE:
+            table_obj = self.db_classes.Datafile
+            field = "source_id"
+            self._check_master_id(table_obj, master_id)
+            table_objects = [
+                self.db_classes.State,
+                self.db_classes.Contact,
+                self.db_classes.Activation,
+                self.db_classes.LogsHolding,
+                self.db_classes.Comment,
+                self.db_classes.Geometry1,
+                self.db_classes.Media,
+            ]
+        else:
+            raise ValueError(
+                f"You should give one of the following tables to merge measurements: "
+                f"{constants.SENSOR}, {constants.DATAFILE}"
+            )
+        values = ",".join(map(str, id_list))
+
+        # We've already used 10% of the progress bar in merge_generic
+        percentage_per_iteration = 90.0 / len(table_objects)
+
+        for i, t_obj in enumerate(table_objects):
+            query = self.session.query(t_obj).filter(getattr(t_obj, field).in_(id_list))
+            [
+                self.add_to_logs(
+                    table=t_obj.__tablename__,
+                    row_id=getattr(s, field),
+                    field=field,
+                    previous_value=values,
+                    change_id=change_id,
+                )
+                for s in query.all()
+            ]
+            query.update({field: master_id}, synchronize_session="fetch")
+
+            if callable(set_percentage):
+                set_percentage(10 + (i * percentage_per_iteration))
+
+        # Delete merged objects
+        self.delete_objects(table_name, id_list, change_id)
+
+    def merge_objects(self, table_name, id_list, master_id, change_id, set_percentage=None):
+        table_obj = self._get_table_object(table_name)
+        to_obj = self._check_master_id(table_obj, master_id)
+
+        # We've already used 10% of the progress bar in merge_generic,
+        # and want to keep 10% for deleting objects
+        percentage_per_iteration = 80.0 / len(id_list)
+
+        for i, obj_id in enumerate(id_list):
+            primary_key_field = get_primary_key_for_table(table_obj)
+            from_obj = (
+                self.session.query(table_obj)
+                .filter(getattr(table_obj, primary_key_field) == obj_id)
+                .scalar()
+            )
+            merge_references(from_obj, to_obj)
+            self.add_to_logs(
+                table=table_obj.__tablename__,
+                row_id=getattr(from_obj, primary_key_field),
+                field=primary_key_field,
+                previous_value=str(obj_id),
+                change_id=change_id,
+            )
+            self.session.flush()
+
+            if callable(set_percentage):
+                set_percentage(10 + (i * percentage_per_iteration))
+        # Delete merged objects
+        self.delete_objects(table_name, id_list, change_id)
+
+    def merge_generic(self, table_name, id_list, master_id, set_percentage=None) -> bool:
+        reference_table_objects = self.meta_classes[TableTypes.REFERENCE]
+        reference_table_names = [obj.__tablename__ for obj in reference_table_objects]
+
+        table_obj = self._get_table_object(table_name)
+
+        id_list = convert_objects_to_ids(id_list, table_obj)
+
+        master_id = convert_objects_to_ids(master_id, table_obj)
+
+        reason_list = ",".join([str(p) for p in id_list])
+        change_id = self.add_to_changes(
+            user=USER,
+            modified=datetime.utcnow(),
+            reason=f"Merging {table_name} '{reason_list}' to '{master_id}'.",
+        ).change_id
+
+        if callable(set_percentage):
+            set_percentage(10)
+
+        if master_id in id_list:
+            id_list.remove(master_id)  # We don't need to change these values
+
+        if table_name == constants.PLATFORM:
+            self.merge_platforms(id_list, master_id, change_id, set_percentage)
+        elif table_name in [constants.SENSOR, constants.DATAFILE]:
+            self.merge_measurements(table_name, id_list, master_id, change_id, set_percentage)
+        elif table_name in reference_table_names + [constants.TAG]:
+            self.merge_objects(table_name, id_list, master_id, change_id, set_percentage)
+        else:
+            return False
+
+        if callable(set_percentage):
+            set_percentage(100)
+        return True
+
+    def split_platform(self, platform_id, set_percentage=None) -> bool:
+        to_delete = list()
+        Platform = self.db_classes.Platform
+        Sensor = self.db_classes.Sensor
+        if isinstance(platform_id, Platform):
+            platform_id = platform_id.platform_id
+
+        platform = self._check_master_id(Platform, platform_id)
+        change_id = self.add_to_changes(
+            user=USER,
+            modified=datetime.utcnow(),
+            reason=f"Splitting platform: '{platform_id}'.",
+        ).change_id
+        datafile_ids = self._find_datafiles_and_measurements_for_platform(platform)
+        objects = self._get_comments_and_sensors_of_platform(platform)
+
+        i = 0
+        percent_per_iteration = 100.0 / len(datafile_ids)
+
+        for key, values in datafile_ids.items():
+            time, measurement_objects = values["time"], values["objects"]
+            new_platform = self.add_to_platforms(
+                name=platform.name,
+                nationality=platform.nationality_name,
+                platform_type=platform.platform_type_name,
+                privacy=platform.privacy_name,
+                trigraph=platform.trigraph,
+                quadgraph=platform.quadgraph,
+                identifier=f"{time:%Y%m%d-%H%M%S}-{str(key)[-4:]}",
+                change_id=change_id,
+            )
+            for obj in objects:
+                primary_key_field = get_primary_key_for_table(obj)
+                if isinstance(obj, Sensor):
+                    for m_obj in measurement_objects:
+                        if m_obj.sensor_id == obj.sensor_id:
+                            new_sensor = new_platform.get_sensor(
+                                data_store=self,
+                                sensor_name=obj.name,
+                                sensor_type=obj.sensor_type_name,
+                                privacy=obj.privacy_name,
+                                change_id=change_id,
+                            )
+                            old_id = m_obj.sensor_id
+                            m_obj.sensor_id = new_sensor.sensor_id
+                            self.add_to_logs(
+                                table=obj.__tablename__,
+                                row_id=getattr(obj, primary_key_field),
+                                field="sensor_id",
+                                previous_value=str(old_id),
+                                change_id=change_id,
+                            )
+                    if obj not in to_delete:
+                        to_delete.append(obj)
+                    self.session.flush()
+                else:
+                    if key == obj.source_id:
+                        table = type(obj)
+                        field = "platform_id"
+                        table_platform_id = getattr(table, field)
+                        source_field = getattr(table, "source_id")
+                        query = self.session.query(table).filter(
+                            table_platform_id == platform.platform_id, source_field == key
+                        )
+                        [
+                            self.add_to_logs(
+                                table=obj.__tablename__,
+                                row_id=getattr(s, primary_key_field),
+                                field=field,
+                                previous_value=str(platform.platform_id),
+                                change_id=change_id,
+                            )
+                            for s in query.all()
+                        ]
+                        query.update({field: new_platform.platform_id}, synchronize_session="fetch")
+
+            if callable(set_percentage):
+                set_percentage(i * percent_per_iteration)
+
+        # delete the split platform
+        self.session.delete(platform)
+        for s in to_delete:
+            self.session.delete(s)
+        self.session.flush()
+
+    def edit_items(self, items, edit_dict, table_object):
+        """
+        Edits the given list of items, changing the fields to the new ones specified in edit_dict
+
+        :param items: List of objects to edit
+        :type items: Database objects (eg. Platform, Sensor, Nationality)
+        :param edit_dict: Dictionary with keys specifying the fields to be edited, and values specifying the new value.
+        For foreign keyed fields, the new value should be the ID of an existing entry in the foreign table
+        :type edit_dict: Dict
+        """
+        ids = convert_objects_to_ids(items, table_object)
+        ids = [str(id_value) for id_value in ids]
+        ids_list_str = ", ".join(ids)
+
+        change_id = self.add_to_changes(
+            user=USER,
+            modified=datetime.utcnow(),
+            reason=f"Editing {table_object.__tablename__} items: {ids_list_str}",
+        ).change_id
+
+        # Get a query for all objects that match the IDs
+        query = self.session.query(table_object).filter(
+            getattr(table_object, get_primary_key_for_table(table_object)).in_(ids)
+        )
+
+        update_dict = convert_edit_dict_columns(edit_dict, table_object)
+        query.update(update_dict, synchronize_session="fetch")
+        self.session.commit()
+
+        # Add a log entry for each field we've updated
+        # (We do all the updates in one SQL query above, for efficiency, but have to loop through the items
+        # and fields here to create the logs entries)
+        for item in items:
+            for col_name, new_value in update_dict.items():
+                self.add_to_logs(
+                    table_object.__tablename__,
+                    row_id=getattr(item, get_primary_key_for_table(table_object)),
+                    field=col_name,
+                    previous_value=str(getattr(item, col_name)),
+                    change_id=change_id,
+                )
+
+    def add_item(self, table_object, edit_dict):
+        change_id = self.add_to_changes(
+            user=USER,
+            modified=datetime.utcnow(),
+            reason=f"Manual add item to {table_object.__tablename__}",
+        ).change_id
+
+        new_item = table_object()
+
+        add_dict = convert_edit_dict_columns(edit_dict, table_object)
+
+        for col_name, value in add_dict.items():
+            setattr(new_item, col_name, value)
+
+        self.session.add(new_item)
+        # Must commit first, so that the primary key field is filled with the
+        # new ID, before we reference it below in the add_to_logs function
+        try:
+            self.session.commit()
+        except Exception:
+            raise
+
+        self.add_to_logs(
+            table_object.__tablename__,
+            row_id=getattr(new_item, get_primary_key_for_table(table_object)),
+            change_id=change_id,
+        )
+        self.session.commit()
+
+    def find_dependent_objects(
+        self, table_obj, id_list: list, set_percentage=None, is_cancelled=None
+    ) -> dict:
+        """
+        Finds the dependent objects of the given list of items. Counts them by their type,
+        i.e. X Sensors, Y Platforms. Returns a dictionary that has table names as keys,
+        and number of dependent objects as values.
+
+        :param table_obj: A table object, or name of the table that IDs belong to
+        :type table_obj: SQLAlchemy Model or str
+        :param id_list: List of objects IDs
+        :type id_list: list
+        """
+        output = dict()
+        object_list = list()
+        if isinstance(table_obj, str):
+            table_obj = self._get_table_object(table_obj)
+        objects = (
+            self.session.query(table_obj)
+            .filter(getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list))
+            .all()
+        )
+
+        foreign_keys_for_table = {}
+        if objects:
+            output[table_obj.__tablename__] = len(objects)
+
+        i = 0
+        last_perc_complete = 0
+        while objects:  # find all dependent objects and add them to object_list
+            curr_obj = objects.pop(0)
+
+            # Get the list of foreign keys for the table from the cache, if it exists
+            # otherwise calculate it and put it into the cache
+            if type(curr_obj) in foreign_keys_for_table:
+                foreign_keys = foreign_keys_for_table[type(curr_obj)]
+            else:
+                foreign_keys = get_referencing_foreign_keys(curr_obj)
+                foreign_keys_for_table[type(curr_obj)] = foreign_keys
+
+            # If the current object has any foreign key relationships pointing to it
+            # then do the calculation - otherwise just skip (eg. for State which isn't
+            # referenced by anything)
+            if len(foreign_keys) > 0:
+                dependent_objs = list(dependent_objects(curr_obj, foreign_keys=foreign_keys))
+                objects.extend(dependent_objs)
+                object_list.extend(dependent_objs)
+            if i % 10 == 0:
+                if callable(is_cancelled) and is_cancelled():
+                    return None
+                # Only do calculate and update percentage complete
+                # every 10 iterations, otherwise the showing of the percentage
+                # slows down the actual processing
+                if len(object_list) > 0:
+                    perc_complete = ((len(object_list) - len(objects)) / len(object_list)) * 100
+                else:
+                    perc_complete = 0
+                if callable(set_percentage):
+                    perc_complete = 0 if perc_complete < 0 else perc_complete
+                    if perc_complete > last_perc_complete:
+                        set_percentage(perc_complete)
+                        last_perc_complete = perc_complete
+            i += 1
+        # remove duplicated entities
+        object_list = list(set(object_list))
+        for o in object_list:
+            table_name = type(o).__tablename__
+            if table_name not in output:
+                output[table_name] = 1
+            else:
+                output[table_name] += 1
+
+        return output
+
+    def delete_objects(self, table_obj, id_list, change_id):
+        """
+        Deletes the given objects.
+
+        :param table_obj: A table object, or name of the table that IDs belong to
+        :type table_obj: SQLAlchemy Model or str
+        :param id_list: List of objects IDs
+        :type id_list: list
+        """
+        if isinstance(table_obj, str):
+            table_obj = self._get_table_object(table_obj)
+
+        objects_to_delete = self.session.query(table_obj).filter(
+            getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
+        )
+
+        for obj in objects_to_delete:
+            json_string = sqlalchemy_object_to_json(obj)
+            id_value = getattr(obj, get_primary_key_for_table(obj))
+            self.add_to_logs(
+                table=table_obj.__tablename__,
+                row_id=str(id_value),
+                field="Deleted",
+                previous_value=json_string,
+                change_id=change_id,
+            )
+
+        # Delete merged objects
+        self.session.query(table_obj).filter(
+            getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
+        ).delete(synchronize_session="fetch")
         self.session.flush()

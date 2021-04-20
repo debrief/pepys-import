@@ -15,3 +15,5 @@ sphinx_rtd_theme
 git+https://github.com/tk0miya/testing.postgresql.git#egg=testing.postgresql
 isort
 pytest-benchmark
+pyte
+freezegun==1.*

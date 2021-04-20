@@ -135,8 +135,10 @@ class DataStoreClearSchemaPostGISTestCase(TestCase):
         table_names = inspector.get_table_names()
         schema_names = inspector.get_schema_names()
 
-        # there must be no table and no schema for datastore at the beginning
-        self.assertEqual(len(table_names), 0)
+        # there must be no normal Pepys tables at the beginning
+        # but because we've already initialised PostGIS, there will be one table
+        # which is the PostGIS spatial reference systems table
+        self.assertEqual(len(table_names), 1)
         self.assertNotIn("pepys", schema_names)
 
         # creating database from schema

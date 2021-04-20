@@ -50,8 +50,10 @@ class DataStoreInitialisePostGISTestCase(TestCase):
         table_names = inspector.get_table_names()
         schema_names = inspector.get_schema_names()
 
-        # there must be no table and no schema for datastore at the beginning
-        self.assertEqual(len(table_names), 0)
+        # there must be no normal Pepys tables at the beginning
+        # but because we've already initialised PostGIS, there will be one table
+        # which is the PostGIS spatial reference systems table
+        self.assertEqual(len(table_names), 1)
         self.assertNotIn("pepys", schema_names)
 
         # creating database from schema
@@ -62,7 +64,7 @@ class DataStoreInitialisePostGISTestCase(TestCase):
         schema_names = inspector.get_schema_names()
 
         # 35 tables + alembic_version table must be created to default schema
-        self.assertEqual(len(table_names), 36)
+        self.assertEqual(len(table_names), 40)
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)
         self.assertIn("Datafiles", table_names)
@@ -131,12 +133,10 @@ class DataStoreInitialiseSpatiaLiteTestCase(TestCase):
         inspector = inspect(data_store_sqlite.engine)
         table_names = inspector.get_table_names()
 
-        # The number of spatial tables varies depending on the version of
-        # of spatialite: either 38 for the later version or 36 for the previous version. In total,
-        # including our normal tables, this leads to either 74 or 72 tables.
-        # On Windows we only support the pre-release version of spatialite, so we get 74, but this can also happen on
-        # other systems depending on configuration
-        assert len(table_names) == 74 or len(table_names) == 72
+        # SQLite can have either 78 tables (if using the new version of mod_spatialite)
+        # or 76 (with the old stable release of mod_spatialite). The version of mod_spatialiate
+        # that is installed can vary by platform - so both numbers should be acceptable.
+        assert len(table_names) == 78 or len(table_names) == 76
 
         self.assertIn("Platforms", table_names)
         self.assertIn("States", table_names)

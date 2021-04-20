@@ -4,12 +4,13 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import backref, relationship
 from tqdm import tqdm
 
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
+from pepys_import.core.store import constants
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
@@ -23,6 +24,9 @@ LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
 
 
 class HostedByMixin:
+    _default_preview_fields = ["subject_name", "host_name", "hosted_from", "hosted_to"]
+    _default_dropdown_fields = ["subject_name", "host_name"]
+
     @declared_attr
     def subject(self):
         return relationship(
@@ -40,7 +44,7 @@ class HostedByMixin:
     @declared_attr
     def host(self):
         return relationship(
-            "Platform", lazy="joined", join_depth=1, uselist=False, foreign_keys="HostedBy.host_id"
+            "Platform", lazy="joined", uselist=False, foreign_keys="HostedBy.host_id"
         )
 
     @declared_attr
@@ -49,7 +53,7 @@ class HostedByMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -57,11 +61,12 @@ class HostedByMixin:
 
 
 class SensorMixin:
+    _default_preview_fields = ["name", "host__name", "sensor_type_name"]
+    _default_dropdown_fields = ["name", "host__name", "host__identifier", "host__nationality_name"]
+
     @declared_attr
     def sensor_type(self):
-        return relationship(
-            "SensorType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("SensorType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def sensor_type_name(self):
@@ -69,15 +74,23 @@ class SensorMixin:
 
     @declared_attr
     def host_(self):
-        return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Platform", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def host__name(self):
         return association_proxy("host_", "name")
 
     @declared_attr
+    def host__identifier(self):
+        return association_proxy("host_", "identifier")
+
+    @declared_attr
+    def host__nationality_name(self):
+        return association_proxy("host_", "nationality_name")
+
+    @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -128,11 +141,12 @@ class SensorMixin:
 
 
 class PlatformMixin:
+    _default_preview_fields = ["name", "identifier", "nationality_name", "platform_type_name"]
+    _default_dropdown_fields = ["name", "identifier", "nationality_name"]
+
     @declared_attr
     def platform_type(self):
-        return relationship(
-            "PlatformType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("PlatformType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def platform_type_name(self):
@@ -140,9 +154,7 @@ class PlatformMixin:
 
     @declared_attr
     def nationality(self):
-        return relationship(
-            "Nationality", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("Nationality", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def nationality_name(self):
@@ -150,11 +162,14 @@ class PlatformMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def privacy_name(self):
         return association_proxy("privacy", "name")
+
+    def __repr__(self):
+        return f'Platform(name="{self.name}", identifier="{self.identifier}", nationality="{self.nationality_name}"'
 
     def get_sensor(
         self,
@@ -223,46 +238,362 @@ class PlatformMixin:
         )
 
 
-class TaskMixin:
-    @declared_attr
-    def parent(self):
-        return relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+class SeriesMixin:
+    _default_preview_fields = ["name"]
+    _default_dropdown_fields = ["name"]
 
     @declared_attr
-    def parent_name(self):
-        return association_proxy("parent", "name")
+    def child_wargames(self):
+        return relationship(
+            "Wargame", lazy="joined", backref="series", order_by="asc(Wargame.created_date)"
+        )
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def privacy_name(self):
         return association_proxy("privacy", "name")
 
+    # TODO: May or may not be needed, depending how we handle these objects
+    # in the GUI
+    # def create_exercise(self, data_store, name, start, end, privacy):
+    #     privacy = data_store.search_privacy(privacy)
+    #     if privacy is None:
+    #         raise ValueError("Specified Privacy does not exist")
 
-class ParticipantMixin:
+    #     exercise = data_store.db_classes.Exercise(name=name, start=start, end=end)
+    #     exercise.privacy = privacy
+    #     exercise.series = self
+
+    #     data_store.session.add(exercise)
+    #     data_store.session.flush()
+
+    def __repr__(self):
+        return f'Series(name="{self.name}")'
+
+
+class WargameMixin:
+    _default_preview_fields = ["name", "start", "end"]
+    _default_dropdown_fields = ["name"]
+
     @declared_attr
-    def task(self):
-        return relationship("Task", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+    def child_serials(self):
+        return relationship(
+            "Serial",
+            lazy="joined",
+            backref="wargame",
+            passive_deletes=True,
+            cascade="all, delete, delete-orphan",
+            order_by="asc(Serial.created_date)",
+        )
 
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    @declared_attr
+    def series_name(self):
+        return association_proxy("series", "name")
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+    def add_participant(self, data_store, platform, privacy, change_id):
+        """Add a new participant to this Wargame. This creates a WargameParticipant entry.
+
+        :param data_store: DataStore
+        :type data_store: DataStore
+        :param platform: Platform to add as a participant
+        :type platform: Platform object or Platform ID value
+        :param privacy: Privacy to assign to this participant
+        :type privacy: str
+        :param change_id: Change ID for this change
+        :type change_id: Change ID
+        :return: Newly created WargameParticipant object
+        :rtype: WargameParticipant
+        """
+        privacy = data_store.search_privacy(privacy)
+        if privacy is None:
+            raise ValueError("Specified Privacy does not exist")
+
+        if not isinstance(platform, data_store.db_classes.Platform):
+            platform = (
+                data_store.session.query(data_store.db_classes.Platform)
+                .filter(data_store.db_classes.Platform.platform_id == platform)
+                .one()
+            )
+
+        data_store.session.expunge_all()
+
+        participant = data_store.db_classes.WargameParticipant()
+        participant.wargame = self
+        participant.privacy_id = privacy.privacy_id
+        participant.platform_id = platform.platform_id
+
+        data_store.session.add(participant)
+        data_store.session.flush()
+        data_store.session.refresh(self)
+
+        data_store.add_to_logs(
+            table=constants.WARGAME_PARTICIPANT,
+            row_id=participant.wargame_participant_id,
+            change_id=change_id,
+        )
+
+        data_store.session.expunge_all()
+
+        return participant
+
+    # This can be a useful shorthand, but adding a platform by appending to the list that
+    # this provides doesn't work, so this is actually a dangerous attribute to have around!
     # @declared_attr
-    # def task_name(self):
-    #     return association_proxy("task", "name")
+    # def participant_platforms(self):
+    #     return association_proxy("participants", "platform")
+
+    def __repr__(self):
+        return f'Wargame(name="{self.name}")'
+
+
+class SerialMixin:
+    _default_preview_fields = ["serial_number", "start", "end"]
+    _default_dropdown_fields = ["serial_number"]
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    @declared_attr
+    def wargame_name(self):
+        return association_proxy("wargame", "name")
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+    def add_participant(
+        self,
+        data_store,
+        wargame_participant,
+        force_type,
+        privacy,
+        start=None,
+        end=None,
+        change_id=None,
+    ):
+        """Add a participant to this Serial. This creates a SerialParticipant object.
+
+        :param data_store: DataStore
+        :type data_store: DataStore
+        :param wargame_participant: Wargame participant which defines the Platform that this SerialParticipant is representing
+        :type wargame_participant: WargameParticipant or WargameParticipant ID value
+        :param force_type: Force to assign this participant
+        :type force_type: str ("Blue" or "Red" normally)
+        :param privacy: Privacy to assign this participant
+        :type privacy: str
+        :param start: Start timestamp for this participant, defaults to None
+        :type start: datetime, optional
+        :param end: End timestamp for this participant, defaults to None
+        :type end: datetime, optional
+        :param change_id: Change ID for this change, defaults to None
+        :type change_id: ID, optional
+        :return: New SerialParticipant instance
+        :rtype: SerialParticipant
+        """
+        privacy = data_store.search_privacy(privacy)
+        if privacy is None:
+            raise ValueError("Specified Privacy does not exist")
+
+        if force_type == "Red":
+            color = "#ff0000"
+        elif force_type == "Blue":
+            color = "#0000ff"
+
+        # This searches for the force type first, and if it exists then it returns
+        # it. Otherwise it creates it.
+        force_type = data_store.add_to_force_types(force_type, color, change_id)
+
+        if not isinstance(wargame_participant, data_store.db_classes.WargameParticipant):
+            wargame_participant = (
+                data_store.session.query(data_store.db_classes.WargameParticipant)
+                .filter(
+                    data_store.db_classes.WargameParticipant.wargame_participant_id
+                    == wargame_participant
+                )
+                .one()
+            )
+
+        data_store.session.expunge_all()
+
+        participant = data_store.db_classes.SerialParticipant()
+        participant.serial = self
+        participant.privacy_id = privacy.privacy_id
+        participant.wargame_participant_id = wargame_participant.wargame_participant_id
+        participant.start = start
+        participant.end = end
+        participant.force_type_id = force_type.force_type_id
+
+        data_store.session.add(participant)
+        data_store.session.flush()
+        data_store.session.refresh(participant.serial)
+
+        data_store.add_to_logs(
+            table=constants.SERIAL_PARTICIPANT,
+            row_id=participant.serial_participant_id,
+            change_id=change_id,
+        )
+
+        data_store.session.expunge_all()
+
+        return participant
+
+    def __repr__(self):
+        return f'Serial(serial_number="{self.serial_number}")'
+
+
+class WargameParticipantMixin:
+    _default_preview_fields = ["platform_name", "wargame_name"]
+    _default_dropdown_fields = ["platform_name", "wargame_name"]
+
+    @declared_attr
+    def wargame(self):
+        return relationship(
+            "Wargame",
+            lazy="joined",
+            backref=backref(
+                "participants",
+                passive_deletes=True,
+                cascade="all, delete, delete-orphan",
+                lazy="joined",
+                order_by="asc(WargameParticipant.created_date)",
+            ),
+        )
 
     @declared_attr
     def platform(self):
-        return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        # TODO: We should be able to use the backref here, which creates a `Platform.participations` list
+        # which lists the Wargames that this platform participates in. However, this currently causes errors
+        # in the Maintenance GUI, as it doesn't know how to handle this - so we are removing it at the moment
+        # so we can get a release with the new Tasks functionality, without breaking the Maintenance GUI.
+        # return relationship("Platform", lazy="joined", backref="participations")
+        return relationship("Platform", lazy="joined")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
 
     @declared_attr
     def platform_name(self):
         return association_proxy("platform", "name")
 
+    @declared_attr
+    def platform_identifier(self):
+        return association_proxy("platform", "identifier")
 
-class DatafileMixin:
+    @declared_attr
+    def platform_nationality_name(self):
+        return association_proxy("platform", "nationality_name")
+
+    @declared_attr
+    def wargame_name(self):
+        return association_proxy("wargame", "name")
+
+    def __repr__(self):
+        return f'WargameParticipant(wargame="{self.wargame_name}", platform="{self.platform_name}")'
+
+
+class SerialParticipantMixin:
+    _default_preview_fields = ["serial_number", "platform_name"]
+    _default_dropdown_fields = ["serial_number", "platform_name"]
+
+    @declared_attr
+    def serial(self):
+        return relationship(
+            "Serial",
+            lazy="joined",
+            backref=backref(
+                "participants",
+                passive_deletes=True,
+                cascade="all, delete, delete-orphan",
+                lazy="joined",
+                order_by="asc(SerialParticipant.created_date)",
+            ),
+        )
+
+    @declared_attr
+    def wargame_participant(self):
+        return relationship(
+            "WargameParticipant",
+            lazy="joined",
+            backref=backref(
+                "serial_participants",
+                lazy="joined",
+                passive_deletes=True,
+                cascade="all, delete, delete-orphan",
+            ),
+        )
+
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+    @declared_attr
+    def force_type(self):
+        return relationship("ForceType", lazy="joined")
+
+    @declared_attr
+    def force_type_name(self):
+        return association_proxy("force_type", "name")
+
+    @declared_attr
+    def force_type_color(self):
+        return association_proxy("force_type", "color")
+
+    @declared_attr
+    def serial_number(self):
+        return association_proxy("serial", "serial_number")
+
+    @declared_attr
+    def serial_exercise(self):
+        return association_proxy("serial", "serial_exercise")
+
+    @declared_attr
+    def platform(self):
+        return association_proxy("wargame_participant", "platform")
+
+    @declared_attr
+    def platform_name(self):
+        return association_proxy("wargame_participant", "platform_name")
+
+    @declared_attr
+    def platform_identifier(self):
+        return association_proxy("wargame_participant", "platform_identifier")
+
+    @declared_attr
+    def platform_nationality_name(self):
+        return association_proxy("wargame_participant", "platform_nationality_name")
+
+    def __repr__(self):
+        return f'SerialParticipant(serial="{self.serial_number}, platform="{self.platform_name})"'
+
+
+class DatafileMixin:
+    _default_preview_fields = ["reference", "datafile_type_name"]
+    _default_dropdown_fields = ["reference"]
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -270,9 +601,7 @@ class DatafileMixin:
 
     @declared_attr
     def datafile_type(self):
-        return relationship(
-            "DatafileType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("DatafileType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def datafile_type_name(self):
@@ -582,7 +911,7 @@ class DatafileMixin:
 class LogMixin:
     @declared_attr
     def change(self):
-        return relationship("Change", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Change", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def change_reason(self):
@@ -593,9 +922,11 @@ class LogMixin:
 
 
 class TaggedItemMixin:
+    _default_preview_fields = ["tag_name"]
+
     @declared_attr
     def tag(self):
-        return relationship("Tag", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Tag", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def tag_name(self):
@@ -603,7 +934,7 @@ class TaggedItemMixin:
 
     @declared_attr
     def tagged_by(self):
-        return relationship("User", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("User", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def tagged_by_name(self):
@@ -611,9 +942,11 @@ class TaggedItemMixin:
 
 
 class StateMixin:
+    _default_preview_fields = ["time", "sensor_name", "speed"]
+
     @declared_attr
     def sensor(self):
-        return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Sensor", lazy="joined", uselist=False)
 
     @declared_attr
     def sensor_name(self):
@@ -628,8 +961,12 @@ class StateMixin:
         return association_proxy("sensor", "host")
 
     @declared_attr
+    def platform_name(self):
+        return association_proxy("platform", "name")
+
+    @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     @declared_attr
     def source_reference(self):
@@ -637,7 +974,7 @@ class StateMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -755,9 +1092,11 @@ class StateMixin:
 
 
 class ContactMixin:
+    _default_preview_fields = ["time", "name", "bearing"]
+
     @declared_attr
     def sensor(self):
-        return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Sensor", lazy="joined", uselist=False)
 
     @declared_attr
     def sensor_name(self):
@@ -772,8 +1111,12 @@ class ContactMixin:
         return association_proxy("sensor", "host")
 
     @declared_attr
+    def platform_name(self):
+        return association_proxy("platform", "name")
+
+    @declared_attr
     def subject(self):
-        return relationship("Platform", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Platform", lazy="joined", uselist=False)
 
     @declared_attr
     def subject_name(self):
@@ -781,7 +1124,7 @@ class ContactMixin:
 
     @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     @declared_attr
     def source_reference(self):
@@ -789,7 +1132,7 @@ class ContactMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -1155,9 +1498,11 @@ class ContactMixin:
 
 
 class LogsHoldingMixin:
+    _default_preview_fields = ["time", "platform_name", "quantity"]
+
     @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     @declared_attr
     def source_reference(self):
@@ -1165,7 +1510,7 @@ class LogsHoldingMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -1173,7 +1518,7 @@ class LogsHoldingMixin:
 
     @declared_attr
     def platform(self):
-        return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Platform", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def platform_name(self):
@@ -1181,7 +1526,7 @@ class LogsHoldingMixin:
 
     @declared_attr
     def unit_type(self):
-        return relationship("UnitType", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("UnitType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def unit_type_name(self):
@@ -1189,9 +1534,7 @@ class LogsHoldingMixin:
 
     @declared_attr
     def commodity_type(self):
-        return relationship(
-            "CommodityType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("CommodityType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def commodity_type_name(self):
@@ -1199,9 +1542,11 @@ class LogsHoldingMixin:
 
 
 class CommentMixin:
+    _default_preview_fields = ["time", "platform_name", "content"]
+
     @declared_attr
     def platform(self):
-        return relationship("Platform", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("Platform", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def platform_name(self):
@@ -1213,9 +1558,7 @@ class CommentMixin:
 
     @declared_attr
     def comment_type(self):
-        return relationship(
-            "CommentType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("CommentType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def comment_type_name(self):
@@ -1223,7 +1566,7 @@ class CommentMixin:
 
     @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     @declared_attr
     def source_reference(self):
@@ -1231,7 +1574,7 @@ class CommentMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -1239,6 +1582,8 @@ class CommentMixin:
 
 
 class GeometryMixin:
+    _default_preview_fields = ["name", "geo_type_name"]
+
     @hybrid_property
     def geometry(self):
         return self._geometry
@@ -1261,12 +1606,8 @@ class GeometryMixin:
         return self._geometry
 
     @declared_attr
-    def task(self):
-        return relationship("Task", lazy="joined", join_depth=1, uselist=False)
-
-    # @declared_attr
-    # def task_name(self):
-    #     return association_proxy("task", "name")
+    def serial(self):
+        return relationship("Serial", lazy="joined", uselist=False)
 
     @declared_attr
     def subject_platform(self):
@@ -1298,9 +1639,7 @@ class GeometryMixin:
 
     @declared_attr
     def geo_type(self):
-        return relationship(
-            "GeometryType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("GeometryType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def geo_type_name(self):
@@ -1308,9 +1647,7 @@ class GeometryMixin:
 
     @declared_attr
     def geo_sub_type(self):
-        return relationship(
-            "GeometrySubType", lazy="joined", join_depth=1, innerjoin=True, uselist=False
-        )
+        return relationship("GeometrySubType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def geo_sub_type_name(self):
@@ -1318,7 +1655,7 @@ class GeometryMixin:
 
     @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     # @declared_attr
     # def source_reference(self):
@@ -1326,7 +1663,7 @@ class GeometryMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -1334,9 +1671,11 @@ class GeometryMixin:
 
 
 class MediaMixin:
+    _default_preview_fields = ["time", "platform_name", "sensor_name"]
+
     @declared_attr
     def media_type(self):
-        return relationship("MediaType", lazy="joined", join_depth=1, innerjoin=True, uselist=False)
+        return relationship("MediaType", lazy="joined", innerjoin=True, uselist=False)
 
     @declared_attr
     def media_type_name(self):
@@ -1344,7 +1683,7 @@ class MediaMixin:
 
     @declared_attr
     def sensor(self):
-        return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Sensor", lazy="joined", uselist=False)
 
     @declared_attr
     def sensor_name(self):
@@ -1374,7 +1713,7 @@ class MediaMixin:
 
     @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     # @declared_attr
     # def source_reference(self):
@@ -1382,7 +1721,7 @@ class MediaMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -1453,9 +1792,11 @@ class LocationPropertyMixin:
 
 
 class ActivationMixin:
+    _default_preview_fields = ["name", "sensor_name", "start", "end"]
+
     @declared_attr
     def sensor(self):
-        return relationship("Sensor", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Sensor", lazy="joined", uselist=False)
 
     @declared_attr
     def sensor_name(self):
@@ -1463,7 +1804,7 @@ class ActivationMixin:
 
     @declared_attr
     def source(self):
-        return relationship("Datafile", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Datafile", lazy="joined", uselist=False)
 
     # @declared_attr
     # def source_reference(self):
@@ -1471,7 +1812,7 @@ class ActivationMixin:
 
     @declared_attr
     def privacy(self):
-        return relationship("Privacy", lazy="joined", join_depth=1, uselist=False)
+        return relationship("Privacy", lazy="joined", uselist=False)
 
     @declared_attr
     def privacy_name(self):
@@ -1634,3 +1975,26 @@ class ReferenceRepr:
 class SynonymMixin:
     def __repr__(self):
         return f"Synonym(id={shorten_uuid(self.synonym_id)}, table={self.table}, entity={shorten_uuid(self.entity)}, synonym={self.synonym})"
+
+
+class ReferenceDefaultFields:
+    _default_preview_fields = ["name"]
+    _default_dropdown_fields = ["name"]
+
+
+class GeometrySubTypeMixin:
+    _default_preview_fields = ["name", "parent__name"]
+    _default_dropdown_fields = ["name", "parent__name"]
+
+    @declared_attr
+    def parent_(self):
+        return relationship("GeometryType", lazy="joined", innerjoin=True, uselist=False)
+
+    @declared_attr
+    def parent__name(self):
+        return association_proxy("parent_", "name")
+
+
+class NationalityMixin:
+    _default_preview_fields = ["name", "priority"]
+    _default_dropdown_fields = ["name"]
