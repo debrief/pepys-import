@@ -458,9 +458,6 @@ class DataStorePopulateSynonyms(TestCase):
         assert "Error on row ['Blah', 'InvalidTables', 'BlahName']" in output
         assert "  Invalid table name InvalidTables" in output
 
-        assert "Error on row ['Blah', 'Participants', 'BlahName']" in output
-        assert "  Cannot find name column for table Participants" in output
-
         assert "Error on row ['PLATFORM-1-Synonym2', 'Platforms', 'NonExistentPlatform']" in output
         assert "  Name 'NonExistentPlatform' is not found in table Platforms" in output
 

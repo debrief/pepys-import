@@ -77,7 +77,6 @@ def test_create_time_filter_dict():
 def test_table_has_any_timestamp_fields():
     data_store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
     data_store.initialise()
-    assert table_has_any_timestamp_fields(data_store.db_classes.Task) is True
     assert table_has_any_timestamp_fields(data_store.db_classes.State) is True
 
     assert table_has_any_timestamp_fields(data_store.db_classes.Platform) is False

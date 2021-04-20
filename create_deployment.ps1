@@ -211,6 +211,8 @@ try {
     # welcome text
     $timestamp_str = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     (Get-Content .\pepys_import\__init__.py).replace('__build_timestamp__ = None', '__build_timestamp__ = "' + $timestamp_str + '"') | Set-Content .\pepys_import\__init__.py
+    (Get-Content .\bin\set_title.bat).replace('BUILDTIMESTAMP', $timestamp_str) | Set-Content .\bin\set_title.bat
+
 }
 catch {
     Write-Output $_
@@ -229,7 +231,7 @@ try {
     if (Test-Path env:GITHUB_HEAD_REF) {
         $gitbranch = $env:GITHUB_HEAD_REF
     } elseif (Test-Path env:GITHUB_REF) {
-        $gitbranch = $env:GITHUB_REF.Replace("refs/heads/", "")
+        $gitbranch = $env:GITHUB_REF.Replace("refs/heads/", "").Replace("refs/tags/", "")
     } else {
         $gitbranch = git branch --show-current
     }

@@ -18,6 +18,7 @@ from sqlalchemy.orm import (  # used to defer fetching attributes unless it's sp
     deferred,
     relationship,
 )
+from sqlalchemy.sql.schema import CheckConstraint
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import (
@@ -32,12 +33,13 @@ from pepys_import.core.store.common_db import (
     LogMixin,
     LogsHoldingMixin,
     MediaMixin,
-    ParticipantMixin,
     PlatformMixin,
     SensorMixin,
+    SerialMixin,
+    SeriesMixin,
     StateMixin,
     TaggedItemMixin,
-    TaskMixin,
+    WargameMixin,
 )
 from pepys_import.core.store.db_base import sqlite_naming_convention
 from pepys_import.core.store.db_status import TableTypes
@@ -77,7 +79,7 @@ class ConfidenceLevel(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Task(BaseSpatiaLite, TaskMixin):
+class Task(BaseSpatiaLite):
     __tablename__ = constants.TASK
     table_type = TableTypes.METADATA
     table_type_id = 4
@@ -245,6 +247,74 @@ class GeometrySubType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
+class Serial(BaseSpatiaLite, SerialMixin):
+    __tablename__ = constants.SERIAL
+    table_type = TableTypes.METADATA
+    table_type_id = 37
+
+    serial_id = Column(UUIDType, primary_key=True, default=uuid4)
+    wargame_id = Column(
+        UUIDType,
+        ForeignKey("Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    serial_number = Column(
+        String(150),
+        CheckConstraint("serial_number <> ''", name="ck_Serials_serial_number"),
+        nullable=False,
+    )
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    exercise = Column(String(150))
+    environment = deferred(Column(String(150)))
+    location = deferred(Column(String(150)))
+    privacy_id = Column(
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class Wargame(BaseSpatiaLite, WargameMixin):
+    __tablename__ = constants.WARGAME
+    table_type = TableTypes.METADATA
+    table_type_id = 37
+
+    wargame_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(
+        String(150), CheckConstraint("name <> ''", name="ck_Wargames_name"), nullable=False
+    )
+    series_id = Column(
+        UUIDType,
+        ForeignKey("Series.series_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    privacy_id = Column(
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class Series(BaseSpatiaLite, SeriesMixin):
+    __tablename__ = constants.SERIES
+    table_type = TableTypes.METADATA
+    table_type_id = 36
+
+    series_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(String(150), CheckConstraint("name <> ''", name="ck_Series_name"), nullable=False)
+    privacy_id = Column(
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
 class Geometry1(BaseSpatiaLite, GeometryMixin):
     __tablename__ = constants.GEOMETRY
     table_type = TableTypes.MEASUREMENT
@@ -263,7 +333,7 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    task_id = Column(UUIDType, ForeignKey("Tasks.task_id"))
+    serial_id = Column(UUIDType, ForeignKey("Serials.serial_id"))
     subject_platform_id = Column(UUIDType, ForeignKey("Platforms.platform_id"))
     sensor_platform_id = Column(UUIDType, ForeignKey("Platforms.platform_id"))
     source_id = Column(UUIDType, ForeignKey("Datafiles.datafile_id"), nullable=False)
@@ -291,7 +361,7 @@ class PlatformType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Participant(BaseSpatiaLite, ParticipantMixin):
+class Participant(BaseSpatiaLite):
     __tablename__ = constants.PARTICIPANT
     table_type = TableTypes.METADATA
     table_type_id = 5

@@ -169,7 +169,10 @@ class DeleteObjectsTestCase(TestCase):
             assert "Sensors" in result and result["Sensors"] == 1  # self.sensor
             assert "States" in result and result["States"] == 2  # self.state and self.state_2
 
-            self.store.delete_objects(constants.PRIVACY, [self.privacy_id])
+            change_id = self.store.add_to_changes(
+                "user", datetime.utcnow(), "Test reason"
+            ).change_id
+            self.store.delete_objects(constants.PRIVACY, [self.privacy_id], change_id)
             result = self.store.find_dependent_objects(constants.PRIVACY, [self.privacy_id])
             assert result == {}
             assert (
@@ -186,7 +189,10 @@ class DeleteObjectsTestCase(TestCase):
             assert "Sensors" in result and result["Sensors"] == 1  # self.sensor
             assert "States" in result and result["States"] == 2  # self.state and self.state_2
 
-            self.store.delete_objects(constants.PLATFORM, [self.platform_id])
+            change_id = self.store.add_to_changes(
+                "user", datetime.utcnow(), "Test reason"
+            ).change_id
+            self.store.delete_objects(constants.PLATFORM, [self.platform_id], change_id)
             result = self.store.find_dependent_objects(constants.PLATFORM, [self.platform_id])
             assert result == {}
             assert (
@@ -202,7 +208,10 @@ class DeleteObjectsTestCase(TestCase):
             assert "Sensors" in result and result["Sensors"] == 1  # self.sensor
             assert "States" in result and result["States"] == 2  # self.state and self.state_2
 
-            self.store.delete_objects(constants.SENSOR, [self.sensor_id])
+            change_id = self.store.add_to_changes(
+                "user", datetime.utcnow(), "Test reason"
+            ).change_id
+            self.store.delete_objects(constants.SENSOR, [self.sensor_id], change_id)
             result = self.store.find_dependent_objects(constants.SENSOR, [self.sensor_id])
             assert result == {}
             assert (
@@ -218,7 +227,10 @@ class DeleteObjectsTestCase(TestCase):
             assert "Datafiles" in result and result["Datafiles"] == 1  # self.file
             assert "States" in result and result["States"] == 2  # self.state and self.state_2
 
-            self.store.delete_objects(constants.DATAFILE, [self.file_id])
+            change_id = self.store.add_to_changes(
+                "user", datetime.utcnow(), "Test reason"
+            ).change_id
+            self.store.delete_objects(constants.DATAFILE, [self.file_id], change_id)
             result = self.store.find_dependent_objects(constants.DATAFILE, [self.file_id])
             assert result == {}
             assert (
@@ -232,7 +244,10 @@ class DeleteObjectsTestCase(TestCase):
             assert "Datafiles" in result and result["Datafiles"] == 1  # self.file_2
             assert "States" not in result
 
-            self.store.delete_objects(constants.DATAFILE, [self.file_2_id])
+            change_id = self.store.add_to_changes(
+                "user", datetime.utcnow(), "Test reason"
+            ).change_id
+            self.store.delete_objects(constants.DATAFILE, [self.file_2_id], change_id)
             result = self.store.find_dependent_objects(constants.DATAFILE, [self.file_2_id])
             assert result == {}
             assert (

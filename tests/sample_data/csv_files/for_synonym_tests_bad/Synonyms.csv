@@ -2,7 +2,6 @@ synonym,table,target_name
 PLATFORM-1-Synonym,Platforms,PLATFORM-1
 Blah,InvalidTables,BlahName
 PLATFORM-1-Synonym2,Platforms,PLATFORM-1
-Blah,Participants,BlahName
 PLATFORM-2-Synonym,Platforms,PLATFORM-2
 PLATFORM-1-Synonym2,Platforms,NonExistentPlatform
 Datafile1-Synonym,Datafiles,Datafile-Duplicated

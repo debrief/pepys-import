@@ -4,8 +4,10 @@ from uuid import uuid4
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
+from sqlalchemy.ext.declarative.api import declared_attr
 from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
     deferred,
+    relationship,
 )
 from sqlalchemy.sql.schema import CheckConstraint, UniqueConstraint
 
@@ -24,15 +26,18 @@ from pepys_import.core.store.common_db import (
     LogsHoldingMixin,
     MediaMixin,
     NationalityMixin,
-    ParticipantMixin,
     PlatformMixin,
     ReferenceDefaultFields,
     ReferenceRepr,
     SensorMixin,
+    SerialMixin,
+    SerialParticipantMixin,
+    SeriesMixin,
     StateMixin,
     SynonymMixin,
     TaggedItemMixin,
-    TaskMixin,
+    WargameMixin,
+    WargameParticipantMixin,
 )
 from pepys_import.core.store.db_base import BaseSpatiaLite
 from pepys_import.core.store.db_status import TableTypes
@@ -104,12 +109,10 @@ class Platform(BaseSpatiaLite, PlatformMixin):
     name = Column(
         String(150), CheckConstraint("name <> ''", name="ck_Platforms_name"), nullable=False
     )
-    identifier = deferred(
-        Column(
-            String(30),
-            CheckConstraint("identifier <> ''", name="ck_Platforms_identifier"),
-            nullable=False,
-        )
+    identifier = Column(
+        String(30),
+        CheckConstraint("identifier <> ''", name="ck_Platforms_identifier"),
+        nullable=False,
     )
     trigraph = deferred(Column(String(3)))
     quadgraph = deferred(Column(String(4)))
@@ -137,20 +140,13 @@ class Platform(BaseSpatiaLite, PlatformMixin):
     )
 
 
-class Task(BaseSpatiaLite, TaskMixin):
-    __tablename__ = constants.TASK
+class Series(BaseSpatiaLite, SeriesMixin):
+    __tablename__ = constants.SERIES
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 36
 
-    task_id = Column(UUIDType, primary_key=True, default=uuid4)
-    name = Column(String(150), CheckConstraint("name <> ''", name="ck_Tasks_name"), nullable=False)
-    parent_id = Column(
-        UUIDType, ForeignKey("Tasks.task_id", onupdate="cascade", ondelete="cascade")
-    )
-    start = Column(TIMESTAMP, nullable=False)
-    end = Column(TIMESTAMP, nullable=False)
-    environment = deferred(Column(String(150)))
-    location = deferred(Column(String(150)))
+    series_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(String(150), CheckConstraint("name <> ''", name="ck_Series_name"), nullable=False)
     privacy_id = Column(
         UUIDType,
         ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
@@ -159,25 +155,108 @@ class Task(BaseSpatiaLite, TaskMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Participant(BaseSpatiaLite, ParticipantMixin):
-    __tablename__ = constants.PARTICIPANT
+class Wargame(BaseSpatiaLite, WargameMixin):
+    __tablename__ = constants.WARGAME
     table_type = TableTypes.METADATA
-    table_type_id = 5
+    table_type_id = 37
 
-    participant_id = Column(UUIDType, primary_key=True, default=uuid4)
+    wargame_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(
+        String(150), CheckConstraint("name <> ''", name="ck_Wargames_name"), nullable=False
+    )
+    series_id = Column(
+        UUIDType,
+        ForeignKey("Series.series_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    privacy_id = Column(
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class Serial(BaseSpatiaLite, SerialMixin):
+    __tablename__ = constants.SERIAL
+    table_type = TableTypes.METADATA
+    table_type_id = 37
+
+    serial_id = Column(UUIDType, primary_key=True, default=uuid4)
+    wargame_id = Column(
+        UUIDType,
+        ForeignKey("Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    serial_number = Column(
+        String(150),
+        CheckConstraint("serial_number <> ''", name="ck_Serials_serial_number"),
+        nullable=False,
+    )
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    exercise = Column(String(150))
+    environment = Column(String(150))
+    location = Column(String(150))
+    privacy_id = Column(
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class WargameParticipant(BaseSpatiaLite, WargameParticipantMixin):
+    __tablename__ = constants.WARGAME_PARTICIPANT
+    table_type = TableTypes.METADATA
+    table_type_id = 38
+
+    wargame_participant_id = Column(UUIDType, primary_key=True, default=uuid4)
+    wargame_id = Column(
+        UUIDType,
+        ForeignKey("Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
     platform_id = Column(
         UUIDType,
         ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
-    task_id = Column(
+    privacy_id = Column(
         UUIDType,
-        ForeignKey("Tasks.task_id", onupdate="cascade", ondelete="cascade"),
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class SerialParticipant(BaseSpatiaLite, SerialParticipantMixin):
+    __tablename__ = constants.SERIAL_PARTICIPANT
+    table_type = TableTypes.METADATA
+    table_type_id = 39
+
+    serial_participant_id = Column(UUIDType, primary_key=True, default=uuid4)
+    wargame_participant_id = Column(
+        UUIDType,
+        ForeignKey(
+            "WargameParticipants.wargame_participant_id", onupdate="cascade", ondelete="cascade"
+        ),
+        nullable=False,
+    )
+    serial_id = Column(
+        UUIDType,
+        ForeignKey("Serials.serial_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    force = Column(String(150))
+    force_type_id = Column(
+        UUIDType,
+        ForeignKey("ForceTypes.force_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
     privacy_id = Column(
         UUIDType,
         ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
@@ -264,7 +343,7 @@ class Log(BaseSpatiaLite, LogMixin):
     )
     id = Column(UUIDType, nullable=False)
     field = Column(String(150))
-    previous_value = Column(String(150))
+    previous_value = Column(Text())
     change_id = Column(
         UUIDType,
         ForeignKey("Changes.change_id", onupdate="cascade", ondelete="cascade"),
@@ -316,6 +395,22 @@ class TaggedItem(BaseSpatiaLite, TaggedItemMixin):
 
 
 # Reference Tables
+class ForceType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
+    __tablename__ = constants.FORCE_TYPE
+    table_type = TableTypes.REFERENCE
+    table_type_id = 40
+
+    force_type_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_ForceTypes_name"),
+        nullable=False,
+        unique=True,
+    )
+    color = Column(String(10))
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
 class PlatformType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.PLATFORM_TYPE
     table_type = TableTypes.REFERENCE
@@ -328,6 +423,7 @@ class PlatformType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
         nullable=False,
         unique=True,
     )
+    default_data_interval_secs = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
@@ -587,6 +683,27 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    # This relationship has to be defined here rather than in
+    # common_db.py, as we're using the 'secondary' parameter,
+    # which has to take a table name. With Postgres it requires a
+    # full 'schema.table' name, and as SQLite doesn't have
+    # schemas, this will fail for SQLite. Thus it is defined
+    # in sqlite_db.py and postgres_db.py.
+    @declared_attr
+    def platform(self):
+        return relationship(
+            "Platform",
+            secondary="Sensors",
+            primaryjoin="State.sensor_id == Sensor.sensor_id",
+            secondaryjoin="Platform.platform_id == Sensor.host",
+            lazy="joined",
+            uselist=False,
+            viewonly=True,
+            # This specifies that when trying to query on this relationship
+            # this is the local column (well, assoc proxy actually) to filter on
+            info={"local_column": "platform_id"},
+        )
+
 
 class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
     __tablename__ = constants.CONTACT
@@ -632,6 +749,28 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
     )
     remarks = Column(Text)
     created_date = deferred(Column(DateTime, default=datetime.utcnow))
+
+    # This relationship has to be defined here rather than in
+    # common_db.py, as we're using the 'secondary' parameter,
+    # which has to take a table name. With Postgres it requires a
+    # full 'schema.table' name, and as SQLite doesn't have
+    # schemas, this will fail for SQLite. Thus it is defined
+    # in sqlite_db.py and postgres_db.py.
+    @declared_attr
+    def platform(self):
+        return relationship(
+            "Platform",
+            secondary=constants.SENSOR,
+            primaryjoin="Contact.sensor_id == Sensor.sensor_id",
+            secondaryjoin="Platform.platform_id == Sensor.host",
+            lazy="joined",
+            join_depth=1,
+            uselist=False,
+            viewonly=True,
+            # This specifies that when trying to query on this relationship
+            # this is the local column (well, assoc proxy actually) to filter on
+            info={"local_column": "platform_id"},
+        )
 
 
 class Activation(BaseSpatiaLite, ActivationMixin):
@@ -756,7 +895,9 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    task_id = Column(UUIDType, ForeignKey("Tasks.task_id", onupdate="cascade", ondelete="cascade"))
+    serial_id = Column(
+        UUIDType, ForeignKey("Serials.serial_id", onupdate="cascade", ondelete="cascade")
+    )
     subject_platform_id = Column(
         UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade")
     )

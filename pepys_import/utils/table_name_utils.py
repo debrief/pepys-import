@@ -9,7 +9,12 @@ def table_name_to_class_name(table_name):
     :return: Returns the singular class name
     :rtype: String
     """
-    if table_name in [constants.ALEMBIC_VERSION, constants.HOSTED_BY, constants.MEDIA]:
+    if table_name in [
+        constants.ALEMBIC_VERSION,
+        constants.HOSTED_BY,
+        constants.MEDIA,
+        constants.SERIES,
+    ]:
         table = table_name
     elif table_name == constants.GEOMETRY:
         table = "Geometry1"

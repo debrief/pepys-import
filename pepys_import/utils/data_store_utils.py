@@ -2,6 +2,7 @@ import csv
 import json
 import os
 import sys
+import uuid
 from inspect import getfullargspec
 from math import ceil
 
@@ -10,6 +11,7 @@ from sqlalchemy import func, inspect, select
 
 from paths import MIGRATIONS_DIRECTORY
 from pepys_import.resolvers.command_line_input import create_menu
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 from pepys_import.utils.text_formatting_utils import (
     custom_print_formatted_text,
@@ -182,14 +184,17 @@ def is_schema_created(engine, db_type):
     inspector = inspect(engine)
     if db_type == "sqlite":
         table_names = inspector.get_table_names()
-        # SQLite can have either 74 tables (if on Windows, with the new version of mod_spatialite)
-        # or 72 if on another platform (with the stable release of mod_spatialite)
-        if len(table_names) == 74 or len(table_names) == 72:
+        print(f"{len(table_names)=}")
+        # SQLite can have either 78 tables (if using the new version of mod_spatialite)
+        # or 76 (with the old stable release of mod_spatialite). The version of mod_spatialiate
+        # that is installed can vary by platform - so both numbers should be acceptable.
+        if len(table_names) == 78 or len(table_names) == 76:
             return True
     else:
         table_names = inspector.get_table_names(schema="pepys")
-        # We expect 36 tables on Postgres
-        if len(table_names) == 36:
+        print(f"{len(table_names)=}")
+        # # We expect 42 tables on Postgres
+        if len(table_names) == 40:
             return True
 
     if len(table_names) == 0:
@@ -339,3 +344,20 @@ def convert_edit_dict_columns(edit_dict, table_object):
             update_dict[col_name] = new_value
 
     return update_dict
+
+
+def convert_objects_to_ids(items, table_obj):
+    if isinstance(items, list):
+        new_id_list = []
+        for value in items:
+            if not isinstance(value, uuid.UUID):
+                value = getattr(value, get_primary_key_for_table(table_obj))
+            new_id_list.append(value)
+
+        return new_id_list
+    else:
+        if not isinstance(items, uuid.UUID):
+            value = getattr(items, get_primary_key_for_table(table_obj))
+        else:
+            value = items
+        return value

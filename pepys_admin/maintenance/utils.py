@@ -12,6 +12,13 @@ from pepys_import.core.store.db_base import BasePostGIS, BaseSpatiaLite
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 
+def empty_str_if_none(value):
+    if value is None:
+        return ""
+    else:
+        return value
+
+
 def get_display_names(fields, capitalized=False):
     """
     Takes a list of field names, and returns a list of
@@ -136,11 +143,25 @@ def convert_relative_time_string_to_sqlalchemy_filter(
     if start is None or end is None:
         raise ValueError(f"Given relative time couldn't be converted: {relative_time}")
 
-    if isinstance(class_obj, data_store.db_classes.Participant) or isinstance(
-        class_obj, data_store.db_classes.Task
+    if isinstance(
+        class_obj,
+        (
+            data_store.db_classes.Series,
+            data_store.db_classes.Wargame,
+            data_store.db_classes.Serial,
+            data_store.db_classes.SerialParticipant,
+        ),
     ):
         start_field, end_field = getattr(class_obj, "start"), getattr(class_obj, "end")
     else:
         start_field, end_field = getattr(class_obj, "time"), getattr(class_obj, "time")
 
+    # TODO: Add filtering for relative time for Series, Wargame and Serial
     return start <= start_field, end_field <= end
+
+
+def trim_string(s, chars):
+    if len(s) >= chars:
+        return s[:chars]
+    else:
+        return f"{s: <{chars}}"

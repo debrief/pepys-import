@@ -4,7 +4,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import backref, relationship
 from tqdm import tqdm
 
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
@@ -168,6 +168,9 @@ class PlatformMixin:
     def privacy_name(self):
         return association_proxy("privacy", "name")
 
+    def __repr__(self):
+        return f'Platform(name="{self.name}", identifier="{self.identifier}", nationality="{self.nationality_name}"'
+
     def get_sensor(
         self,
         data_store,
@@ -235,17 +238,15 @@ class PlatformMixin:
         )
 
 
-class TaskMixin:
-    _default_preview_fields = ["name", "start", "end"]
+class SeriesMixin:
+    _default_preview_fields = ["name"]
     _default_dropdown_fields = ["name"]
 
     @declared_attr
-    def parent(self):
-        return relationship("Task")
-
-    @declared_attr
-    def parent_name(self):
-        return association_proxy("parent", "name")
+    def child_wargames(self):
+        return relationship(
+            "Wargame", lazy="joined", backref="series", order_by="asc(Wargame.created_date)"
+        )
 
     @declared_attr
     def privacy(self):
@@ -255,26 +256,335 @@ class TaskMixin:
     def privacy_name(self):
         return association_proxy("privacy", "name")
 
+    # TODO: May or may not be needed, depending how we handle these objects
+    # in the GUI
+    # def create_exercise(self, data_store, name, start, end, privacy):
+    #     privacy = data_store.search_privacy(privacy)
+    #     if privacy is None:
+    #         raise ValueError("Specified Privacy does not exist")
 
-class ParticipantMixin:
-    _default_preview_fields = ["platform_name", "start", "end"]
-    _default_dropdown_fields = ["platform_name"]
+    #     exercise = data_store.db_classes.Exercise(name=name, start=start, end=end)
+    #     exercise.privacy = privacy
+    #     exercise.series = self
+
+    #     data_store.session.add(exercise)
+    #     data_store.session.flush()
+
+    def __repr__(self):
+        return f'Series(name="{self.name}")'
+
+
+class WargameMixin:
+    _default_preview_fields = ["name", "start", "end"]
+    _default_dropdown_fields = ["name"]
 
     @declared_attr
-    def task(self):
-        return relationship("Task", lazy="joined", innerjoin=True, uselist=False)
+    def child_serials(self):
+        return relationship(
+            "Serial",
+            lazy="joined",
+            backref="wargame",
+            passive_deletes=True,
+            cascade="all, delete, delete-orphan",
+            order_by="asc(Serial.created_date)",
+        )
 
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    @declared_attr
+    def series_name(self):
+        return association_proxy("series", "name")
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+    def add_participant(self, data_store, platform, privacy, change_id):
+        """Add a new participant to this Wargame. This creates a WargameParticipant entry.
+
+        :param data_store: DataStore
+        :type data_store: DataStore
+        :param platform: Platform to add as a participant
+        :type platform: Platform object or Platform ID value
+        :param privacy: Privacy to assign to this participant
+        :type privacy: str
+        :param change_id: Change ID for this change
+        :type change_id: Change ID
+        :return: Newly created WargameParticipant object
+        :rtype: WargameParticipant
+        """
+        privacy = data_store.search_privacy(privacy)
+        if privacy is None:
+            raise ValueError("Specified Privacy does not exist")
+
+        if not isinstance(platform, data_store.db_classes.Platform):
+            platform = (
+                data_store.session.query(data_store.db_classes.Platform)
+                .filter(data_store.db_classes.Platform.platform_id == platform)
+                .one()
+            )
+
+        data_store.session.expunge_all()
+
+        participant = data_store.db_classes.WargameParticipant()
+        participant.wargame = self
+        participant.privacy_id = privacy.privacy_id
+        participant.platform_id = platform.platform_id
+
+        data_store.session.add(participant)
+        data_store.session.flush()
+        data_store.session.refresh(self)
+
+        data_store.add_to_logs(
+            table=constants.WARGAME_PARTICIPANT,
+            row_id=participant.wargame_participant_id,
+            change_id=change_id,
+        )
+
+        data_store.session.expunge_all()
+
+        return participant
+
+    # This can be a useful shorthand, but adding a platform by appending to the list that
+    # this provides doesn't work, so this is actually a dangerous attribute to have around!
     # @declared_attr
-    # def task_name(self):
-    #     return association_proxy("task", "name")
+    # def participant_platforms(self):
+    #     return association_proxy("participants", "platform")
+
+    def __repr__(self):
+        return f'Wargame(name="{self.name}")'
+
+
+class SerialMixin:
+    _default_preview_fields = ["serial_number", "start", "end"]
+    _default_dropdown_fields = ["serial_number"]
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    @declared_attr
+    def wargame_name(self):
+        return association_proxy("wargame", "name")
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+    def add_participant(
+        self,
+        data_store,
+        wargame_participant,
+        force_type,
+        privacy,
+        start=None,
+        end=None,
+        change_id=None,
+    ):
+        """Add a participant to this Serial. This creates a SerialParticipant object.
+
+        :param data_store: DataStore
+        :type data_store: DataStore
+        :param wargame_participant: Wargame participant which defines the Platform that this SerialParticipant is representing
+        :type wargame_participant: WargameParticipant or WargameParticipant ID value
+        :param force_type: Force to assign this participant
+        :type force_type: str ("Blue" or "Red" normally)
+        :param privacy: Privacy to assign this participant
+        :type privacy: str
+        :param start: Start timestamp for this participant, defaults to None
+        :type start: datetime, optional
+        :param end: End timestamp for this participant, defaults to None
+        :type end: datetime, optional
+        :param change_id: Change ID for this change, defaults to None
+        :type change_id: ID, optional
+        :return: New SerialParticipant instance
+        :rtype: SerialParticipant
+        """
+        privacy = data_store.search_privacy(privacy)
+        if privacy is None:
+            raise ValueError("Specified Privacy does not exist")
+
+        if force_type == "Red":
+            color = "#ff0000"
+        elif force_type == "Blue":
+            color = "#0000ff"
+
+        # This searches for the force type first, and if it exists then it returns
+        # it. Otherwise it creates it.
+        force_type = data_store.add_to_force_types(force_type, color, change_id)
+
+        if not isinstance(wargame_participant, data_store.db_classes.WargameParticipant):
+            wargame_participant = (
+                data_store.session.query(data_store.db_classes.WargameParticipant)
+                .filter(
+                    data_store.db_classes.WargameParticipant.wargame_participant_id
+                    == wargame_participant
+                )
+                .one()
+            )
+
+        data_store.session.expunge_all()
+
+        participant = data_store.db_classes.SerialParticipant()
+        participant.serial = self
+        participant.privacy_id = privacy.privacy_id
+        participant.wargame_participant_id = wargame_participant.wargame_participant_id
+        participant.start = start
+        participant.end = end
+        participant.force_type_id = force_type.force_type_id
+
+        data_store.session.add(participant)
+        data_store.session.flush()
+        data_store.session.refresh(participant.serial)
+
+        data_store.add_to_logs(
+            table=constants.SERIAL_PARTICIPANT,
+            row_id=participant.serial_participant_id,
+            change_id=change_id,
+        )
+
+        data_store.session.expunge_all()
+
+        return participant
+
+    def __repr__(self):
+        return f'Serial(serial_number="{self.serial_number}")'
+
+
+class WargameParticipantMixin:
+    _default_preview_fields = ["platform_name", "wargame_name"]
+    _default_dropdown_fields = ["platform_name", "wargame_name"]
+
+    @declared_attr
+    def wargame(self):
+        return relationship(
+            "Wargame",
+            lazy="joined",
+            backref=backref(
+                "participants",
+                passive_deletes=True,
+                cascade="all, delete, delete-orphan",
+                lazy="joined",
+                order_by="asc(WargameParticipant.created_date)",
+            ),
+        )
 
     @declared_attr
     def platform(self):
-        return relationship("Platform", lazy="joined", innerjoin=True, uselist=False)
+        # TODO: We should be able to use the backref here, which creates a `Platform.participations` list
+        # which lists the Wargames that this platform participates in. However, this currently causes errors
+        # in the Maintenance GUI, as it doesn't know how to handle this - so we are removing it at the moment
+        # so we can get a release with the new Tasks functionality, without breaking the Maintenance GUI.
+        # return relationship("Platform", lazy="joined", backref="participations")
+        return relationship("Platform", lazy="joined")
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
 
     @declared_attr
     def platform_name(self):
         return association_proxy("platform", "name")
+
+    @declared_attr
+    def platform_identifier(self):
+        return association_proxy("platform", "identifier")
+
+    @declared_attr
+    def platform_nationality_name(self):
+        return association_proxy("platform", "nationality_name")
+
+    @declared_attr
+    def wargame_name(self):
+        return association_proxy("wargame", "name")
+
+    def __repr__(self):
+        return f'WargameParticipant(wargame="{self.wargame_name}", platform="{self.platform_name}")'
+
+
+class SerialParticipantMixin:
+    _default_preview_fields = ["serial_number", "platform_name"]
+    _default_dropdown_fields = ["serial_number", "platform_name"]
+
+    @declared_attr
+    def serial(self):
+        return relationship(
+            "Serial",
+            lazy="joined",
+            backref=backref(
+                "participants",
+                passive_deletes=True,
+                cascade="all, delete, delete-orphan",
+                lazy="joined",
+                order_by="asc(SerialParticipant.created_date)",
+            ),
+        )
+
+    @declared_attr
+    def wargame_participant(self):
+        return relationship(
+            "WargameParticipant",
+            lazy="joined",
+            backref=backref(
+                "serial_participants",
+                lazy="joined",
+                passive_deletes=True,
+                cascade="all, delete, delete-orphan",
+            ),
+        )
+
+    @declared_attr
+    def privacy(self):
+        return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
+
+    @declared_attr
+    def privacy_name(self):
+        return association_proxy("privacy", "name")
+
+    @declared_attr
+    def force_type(self):
+        return relationship("ForceType", lazy="joined")
+
+    @declared_attr
+    def force_type_name(self):
+        return association_proxy("force_type", "name")
+
+    @declared_attr
+    def force_type_color(self):
+        return association_proxy("force_type", "color")
+
+    @declared_attr
+    def serial_number(self):
+        return association_proxy("serial", "serial_number")
+
+    @declared_attr
+    def serial_exercise(self):
+        return association_proxy("serial", "serial_exercise")
+
+    @declared_attr
+    def platform(self):
+        return association_proxy("wargame_participant", "platform")
+
+    @declared_attr
+    def platform_name(self):
+        return association_proxy("wargame_participant", "platform_name")
+
+    @declared_attr
+    def platform_identifier(self):
+        return association_proxy("wargame_participant", "platform_identifier")
+
+    @declared_attr
+    def platform_nationality_name(self):
+        return association_proxy("wargame_participant", "platform_nationality_name")
+
+    def __repr__(self):
+        return f'SerialParticipant(serial="{self.serial_number}, platform="{self.platform_name})"'
 
 
 class DatafileMixin:
@@ -651,21 +961,6 @@ class StateMixin:
         return association_proxy("sensor", "host")
 
     @declared_attr
-    def platform(self):
-        return relationship(
-            "Platform",
-            secondary=constants.SENSOR,
-            primaryjoin="State.sensor_id == Sensor.sensor_id",
-            secondaryjoin="Platform.platform_id == Sensor.host",
-            lazy="joined",
-            uselist=False,
-            viewonly=True,
-            # This specifies that when trying to query on this relationship
-            # this is the local column (well, assoc proxy actually) to filter on
-            info={"local_column": "platform_id"},
-        )
-
-    @declared_attr
     def platform_name(self):
         return association_proxy("platform", "name")
 
@@ -814,19 +1109,6 @@ class ContactMixin:
     @declared_attr
     def platform_id(self):
         return association_proxy("sensor", "host")
-
-    @declared_attr
-    def platform(self):
-        return relationship(
-            "Platform",
-            secondary=constants.SENSOR,
-            primaryjoin="Contact.sensor_id == Sensor.sensor_id",
-            secondaryjoin="Platform.platform_id == Sensor.host",
-            lazy="joined",
-            join_depth=1,
-            uselist=False,
-            viewonly=True,
-        )
 
     @declared_attr
     def platform_name(self):
@@ -1324,12 +1606,8 @@ class GeometryMixin:
         return self._geometry
 
     @declared_attr
-    def task(self):
-        return relationship("Task", lazy="joined", uselist=False)
-
-    # @declared_attr
-    # def task_name(self):
-    #     return association_proxy("task", "name")
+    def serial(self):
+        return relationship("Serial", lazy="joined", uselist=False)
 
     @declared_attr
     def subject_platform(self):
