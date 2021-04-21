@@ -61,7 +61,13 @@ def get_assoc_proxy_names_and_objects(table_object):
         if attr_name.startswith("_"):
             continue
         attr = getattr(table_object, attr_name)
-        if isinstance(attr, sqlalchemy.ext.associationproxy.ColumnAssociationProxyInstance):
+        if isinstance(
+            attr,
+            (
+                sqlalchemy.ext.associationproxy.ColumnAssociationProxyInstance,
+                sqlalchemy.ext.associationproxy.ObjectAssociationProxyInstance,
+            ),
+        ):
             assoc_proxy_objs.append(attr)
             assoc_proxy_names.append(attr_name)
 
@@ -105,7 +111,27 @@ def create_assoc_proxy_data(ap_name, ap_obj, data_store, table_object):
     :return: Tuple of display name for this column, and a dictionary of column details
     :rtype: tuple (str, dict)
     """
-    ap_type = getattr(ap_obj.target_class, ap_obj.value_attr).type
+    target_value = getattr(ap_obj.target_class, ap_obj.value_attr)
+    # If the target value is _another_ association proxy, then get it's target, and continue doing this
+    # until we get something that is no longer an association proxy (ie. it is a normal column or a relationship)
+    while isinstance(
+        target_value,
+        (
+            sqlalchemy.ext.associationproxy.ColumnAssociationProxyInstance,
+            sqlalchemy.ext.associationproxy.ObjectAssociationProxyInstance,
+        ),
+    ):
+        target_value = getattr(target_value.target_class, target_value.value_attr)
+
+    # If we've got an association proxy that is pointing to a raw relationship, then return None, meaning that
+    # this association proxy won't be included in the final column data list
+    try:
+        if isinstance(target_value.prop, sqlalchemy.orm.relationships.RelationshipProperty):
+            return None, None
+    except Exception:
+        pass
+
+    ap_type = target_value.type
 
     details = {
         "type": get_type_name(ap_type),
@@ -217,6 +243,10 @@ def create_relationship_data(rel_name, data_store, table_object):
     column_config = {"system_name": rel_name, "type": "string", "sqlalchemy_type": "relationship"}
 
     rel = getattr(table_object, rel_name)
+
+    if rel.info.get("skip_in_gui"):
+        return None, None
+
     if rel.prop.secondary is not None:
         # Mark all second-level relationships so we can skip them when editing
         # Eg. this will mark State.platform, which is a relationship that passes

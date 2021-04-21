@@ -145,6 +145,10 @@ class PlatformMixin:
     _default_dropdown_fields = ["name", "identifier", "nationality_name"]
 
     @declared_attr
+    def wargame_participations(self):
+        return association_proxy("participations", "wargame_name")
+
+    @declared_attr
     def platform_type(self):
         return relationship("PlatformType", lazy="joined", innerjoin=True, uselist=False)
 
@@ -245,7 +249,10 @@ class SeriesMixin:
     @declared_attr
     def child_wargames(self):
         return relationship(
-            "Wargame", lazy="joined", backref="series", order_by="asc(Wargame.created_date)"
+            "Wargame",
+            lazy="joined",
+            backref=backref("series", lazy="joined"),
+            order_by="asc(Wargame.created_date)",
         )
 
     @declared_attr
@@ -283,10 +290,22 @@ class WargameMixin:
         return relationship(
             "Serial",
             lazy="joined",
-            backref="wargame",
+            backref=backref("wargame", lazy="joined"),
             passive_deletes=True,
             cascade="all, delete, delete-orphan",
             order_by="asc(Serial.created_date)",
+        )
+
+    @declared_attr
+    def participants(self):
+        return relationship(
+            "WargameParticipant",
+            passive_deletes=True,
+            cascade="all, delete, delete-orphan",
+            lazy="joined",
+            order_by="asc(WargameParticipant.created_date)",
+            back_populates="wargame",
+            uselist=True,
         )
 
     @declared_attr
@@ -459,17 +478,7 @@ class WargameParticipantMixin:
 
     @declared_attr
     def wargame(self):
-        return relationship(
-            "Wargame",
-            lazy="joined",
-            backref=backref(
-                "participants",
-                passive_deletes=True,
-                cascade="all, delete, delete-orphan",
-                lazy="joined",
-                order_by="asc(WargameParticipant.created_date)",
-            ),
-        )
+        return relationship("Wargame", lazy="joined", back_populates="participants")
 
     @declared_attr
     def platform(self):
@@ -477,8 +486,12 @@ class WargameParticipantMixin:
         # which lists the Wargames that this platform participates in. However, this currently causes errors
         # in the Maintenance GUI, as it doesn't know how to handle this - so we are removing it at the moment
         # so we can get a release with the new Tasks functionality, without breaking the Maintenance GUI.
-        # return relationship("Platform", lazy="joined", backref="participations")
-        return relationship("Platform", lazy="joined")
+        return relationship(
+            "Platform",
+            lazy="joined",
+            backref=backref("participations", lazy="joined", info={"skip_in_gui": True}),
+        )
+        # return relationship("Platform", lazy="joined")
 
     @declared_attr
     def privacy(self):
@@ -509,8 +522,10 @@ class WargameParticipantMixin:
 
 
 class SerialParticipantMixin:
-    _default_preview_fields = ["serial_number", "platform_name"]
-    _default_dropdown_fields = ["serial_number", "platform_name"]
+    # _default_preview_fields = ["serial_number", "platform_name"]
+    # _default_dropdown_fields = ["serial_number", "platform_name"]
+    _default_preview_fields = ["serial_number"]
+    _default_dropdown_fields = ["serial_number"]
 
     @declared_attr
     def serial(self):
@@ -536,6 +551,7 @@ class SerialParticipantMixin:
                 lazy="joined",
                 passive_deletes=True,
                 cascade="all, delete, delete-orphan",
+                info={"skip_in_gui": True},
             ),
         )
 
