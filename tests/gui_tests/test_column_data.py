@@ -21,17 +21,6 @@ def test_column_data_platform():
             "system_name": "created_date",
             "type": "datetime",
         },
-        # TODO: Not needed as we have taken out the participations
-        # backref at the moment - but will be needed once we put it back in
-        # "participations": {
-        #     "foreign_table_type": TableTypes.METADATA,
-        #     "required": True,
-        #     "second_level": False,
-        #     "sqlalchemy_type": "relationship",
-        #     "system_name": "participations",
-        #     "type": "string",
-        #     "values": [],
-        # },
         "identifier": {
             "required": True,
             "sqlalchemy_type": "column",
@@ -48,6 +37,7 @@ def test_column_data_platform():
         },
         "nationality": {
             "foreign_table_type": TableTypes.REFERENCE,
+            "multiple_values_allowed": False,
             "required": True,
             "second_level": False,
             "sqlalchemy_type": "relationship",
@@ -584,6 +574,7 @@ def test_column_data_platform():
         },
         "platform type": {
             "foreign_table_type": TableTypes.REFERENCE,
+            "multiple_values_allowed": False,
             "required": True,
             "second_level": False,
             "sqlalchemy_type": "relationship",
@@ -640,6 +631,7 @@ def test_column_data_platform():
         },
         "privacy": {
             "foreign_table_type": TableTypes.REFERENCE,
+            "multiple_values_allowed": False,
             "required": True,
             "second_level": False,
             "sqlalchemy_type": "relationship",
@@ -686,6 +678,13 @@ def test_column_data_platform():
             "type": "string",
             "values": [],
         },
+        "wargame participations": {
+            "required": True,
+            "sqlalchemy_type": "assoc_proxy",
+            "system_name": "wargame_participations",
+            "type": "string",
+            "values": [],
+        },
     }
 
     del col_data["nationality"]["ids"]
@@ -694,6 +693,127 @@ def test_column_data_platform():
     # del col_data["participations"]["ids"]
 
     pprint(col_data)
+
+    assert col_data == correct_col_data
+
+
+def test_column_data_wargame():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
+
+    col_data = create_column_data(store, store.db_classes.Wargame)
+
+    correct_col_data = {
+        "child serials": {
+            "foreign_table_type": TableTypes.METADATA,
+            "ids": [],
+            "multiple_values_allowed": True,
+            "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
+            "system_name": "child_serials",
+            "type": "string",
+            "values": [],
+        },
+        "created date": {
+            "required": False,
+            "sqlalchemy_type": "column",
+            "system_name": "created_date",
+            "type": "datetime",
+        },
+        "end": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "end",
+            "type": "datetime",
+        },
+        "name": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "name",
+            "type": "string",
+            "values": [],
+        },
+        "participant platform name": {
+            "required": True,
+            "sqlalchemy_type": "assoc_proxy",
+            "system_name": "participant_platform_name",
+            "type": "string",
+            "values": [],
+        },
+        "privacy": {
+            "foreign_table_type": TableTypes.REFERENCE,
+            "multiple_values_allowed": False,
+            "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
+            "system_name": "privacy",
+            "type": "string",
+            "values": [
+                "Public",
+                "Public Sensitive",
+                "Private",
+                "Private UK/IE",
+                "Very Private UK/IE",
+                "Private UK/IE/FR",
+                "Very Private UK/IE/FR",
+                "Very Private",
+            ],
+        },
+        "privacy name": {
+            "required": True,
+            "sqlalchemy_type": "assoc_proxy",
+            "system_name": "privacy_name",
+            "type": "string",
+            "values": [
+                "Public",
+                "Public Sensitive",
+                "Private",
+                "Private UK/IE",
+                "Very Private UK/IE",
+                "Private UK/IE/FR",
+                "Very Private UK/IE/FR",
+                "Very Private",
+            ],
+        },
+        "series": {
+            "foreign_table_type": TableTypes.METADATA,
+            "ids": [],
+            "multiple_values_allowed": False,
+            "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
+            "system_name": "series",
+            "type": "string",
+            "values": [],
+        },
+        "series name": {
+            "required": True,
+            "sqlalchemy_type": "assoc_proxy",
+            "system_name": "series_name",
+            "type": "string",
+            "values": [],
+        },
+        "start": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "start",
+            "type": "datetime",
+        },
+        "wargame id": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "wargame_id",
+            "type": "id",
+        },
+    }
+
+    del col_data["privacy"]["ids"]
+
+    print(pprint(col_data))
 
     assert col_data == correct_col_data
 
@@ -857,6 +977,7 @@ def test_column_data_state():
         },
         "platform": {
             "foreign_table_type": TableTypes.METADATA,
+            "multiple_values_allowed": False,
             "required": True,
             "second_level": True,
             "sqlalchemy_type": "relationship",
@@ -878,6 +999,7 @@ def test_column_data_state():
         },
         "privacy": {
             "foreign_table_type": TableTypes.REFERENCE,
+            "multiple_values_allowed": False,
             "required": False,
             "second_level": False,
             "sqlalchemy_type": "relationship",
@@ -918,6 +1040,7 @@ def test_column_data_state():
         },
         "sensor": {
             "foreign_table_type": TableTypes.METADATA,
+            "multiple_values_allowed": False,
             "required": True,
             "second_level": False,
             "sqlalchemy_type": "relationship",
@@ -941,6 +1064,7 @@ def test_column_data_state():
         },
         "source": {
             "foreign_table_type": TableTypes.METADATA,
+            "multiple_values_allowed": False,
             "ids": [],
             "required": True,
             "second_level": False,
@@ -1006,6 +1130,75 @@ def test_edit_data_platform_type():
     }
 
 
+def test_edit_data_wargame():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
+
+    col_data = create_column_data(store, store.db_classes.Wargame)
+
+    edit_data = convert_column_data_to_edit_data(col_data)
+
+    pprint(edit_data)
+
+    correct_edit_data = {
+        "end": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "end",
+            "type": "datetime",
+        },
+        "name": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "name",
+            "type": "string",
+        },
+        "privacy": {
+            "foreign_table_type": TableTypes.REFERENCE,
+            "multiple_values_allowed": False,
+            "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
+            "system_name": "privacy",
+            "type": "string",
+            "values": [
+                "Public",
+                "Public Sensitive",
+                "Private",
+                "Private UK/IE",
+                "Very Private UK/IE",
+                "Private UK/IE/FR",
+                "Very Private UK/IE/FR",
+                "Very Private",
+            ],
+        },
+        "series": {
+            "foreign_table_type": TableTypes.METADATA,
+            "ids": [],
+            "multiple_values_allowed": False,
+            "required": True,
+            "second_level": False,
+            "sqlalchemy_type": "relationship",
+            "system_name": "series",
+            "type": "string",
+            "values": [],
+        },
+        "start": {
+            "required": True,
+            "sqlalchemy_type": "column",
+            "system_name": "start",
+            "type": "datetime",
+        },
+    }
+
+    del edit_data["privacy"]["ids"]
+
+    assert edit_data == correct_edit_data
+
+
 def test_edit_data_privacy():
     store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
     store.initialise()
@@ -1060,17 +1253,6 @@ def test_edit_data_platform():
             "system_name": "identifier",
             "type": "string",
         },
-        # TODO: Not needed as we have taken out the participations
-        # backref at the moment - but will be needed once we put it back in
-        # "participations": {
-        #     "foreign_table_type": TableTypes.METADATA,
-        #     "required": True,
-        #     "second_level": False,
-        #     "sqlalchemy_type": "relationship",
-        #     "system_name": "participations",
-        #     "type": "string",
-        #     "values": [],
-        # },
         "name": {
             "required": True,
             "sqlalchemy_type": "column",
@@ -1079,6 +1261,7 @@ def test_edit_data_platform():
         },
         "nationality": {
             "foreign_table_type": TableTypes.REFERENCE,
+            "multiple_values_allowed": False,
             "required": True,
             "second_level": False,
             "sqlalchemy_type": "relationship",
@@ -1345,6 +1528,7 @@ def test_edit_data_platform():
         },
         "platform type": {
             "foreign_table_type": TableTypes.REFERENCE,
+            "multiple_values_allowed": False,
             "required": True,
             "second_level": False,
             "sqlalchemy_type": "relationship",
@@ -1374,6 +1558,8 @@ def test_edit_data_platform():
         },
         "privacy": {
             "foreign_table_type": TableTypes.REFERENCE,
+            "multiple_values_allowed": False,
+            "multiple_values_allowed": False,
             "required": True,
             "second_level": False,
             "sqlalchemy_type": "relationship",
@@ -1442,6 +1628,7 @@ def test_edit_data_state():
         },
         "privacy": {
             "foreign_table_type": TableTypes.REFERENCE,
+            "multiple_values_allowed": False,
             "required": False,
             "second_level": False,
             "sqlalchemy_type": "relationship",
@@ -1466,6 +1653,7 @@ def test_edit_data_state():
         },
         "sensor": {
             "foreign_table_type": TableTypes.METADATA,
+            "multiple_values_allowed": False,
             "required": True,
             "second_level": False,
             "sqlalchemy_type": "relationship",
@@ -1482,6 +1670,7 @@ def test_edit_data_state():
         },
         "source": {
             "foreign_table_type": TableTypes.METADATA,
+            "multiple_values_allowed": False,
             "ids": [],
             "required": True,
             "second_level": False,
