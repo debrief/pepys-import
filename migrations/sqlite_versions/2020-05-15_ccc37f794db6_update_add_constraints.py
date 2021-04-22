@@ -36,10 +36,12 @@ from pepys_import.core.store.common_db import (
     PlatformMixin,
     SensorMixin,
     SerialMixin,
+    SerialParticipantMixin,
     SeriesMixin,
     StateMixin,
     TaggedItemMixin,
     WargameMixin,
+    WargameParticipantMixin,
 )
 from pepys_import.core.store.db_base import sqlite_naming_convention
 from pepys_import.core.store.db_status import TableTypes
@@ -307,6 +309,63 @@ class Series(BaseSpatiaLite, SeriesMixin):
 
     series_id = Column(UUIDType, primary_key=True, default=uuid4)
     name = Column(String(150), CheckConstraint("name <> ''", name="ck_Series_name"), nullable=False)
+    privacy_id = Column(
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class WargameParticipant(BaseSpatiaLite, WargameParticipantMixin):
+    __tablename__ = constants.WARGAME_PARTICIPANT
+    table_type = TableTypes.METADATA
+    table_type_id = 38
+
+    wargame_participant_id = Column(UUIDType, primary_key=True, default=uuid4)
+    wargame_id = Column(
+        UUIDType,
+        ForeignKey("Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    platform_id = Column(
+        UUIDType,
+        ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    privacy_id = Column(
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class SerialParticipant(BaseSpatiaLite, SerialParticipantMixin):
+    __tablename__ = constants.SERIAL_PARTICIPANT
+    table_type = TableTypes.METADATA
+    table_type_id = 39
+
+    serial_participant_id = Column(UUIDType, primary_key=True, default=uuid4)
+    wargame_participant_id = Column(
+        UUIDType,
+        ForeignKey(
+            "WargameParticipants.wargame_participant_id", onupdate="cascade", ondelete="cascade"
+        ),
+        nullable=False,
+    )
+    serial_id = Column(
+        UUIDType,
+        ForeignKey("Serials.serial_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    start = Column(TIMESTAMP)
+    end = Column(TIMESTAMP)
+    force_type_id = Column(
+        UUIDType,
+        ForeignKey("ForceTypes.force_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
     privacy_id = Column(
         UUIDType,
         ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
