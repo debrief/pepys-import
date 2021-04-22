@@ -37,13 +37,8 @@ from pepys_import.core.store.common_db import (
     ReferenceDefaultFields,
     ReferenceRepr,
     SensorMixin,
-    SerialMixin,
-    SerialParticipantMixin,
-    SeriesMixin,
     StateMixin,
     TaggedItemMixin,
-    WargameMixin,
-    WargameParticipantMixin,
 )
 from pepys_import.core.store.db_base import sqlite_naming_convention
 from pepys_import.core.store.db_status import TableTypes
@@ -251,7 +246,7 @@ class GeometrySubType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Serial(BaseSpatiaLite, SerialMixin):
+class Serial(BaseSpatiaLite):
     __tablename__ = constants.SERIAL
     table_type = TableTypes.METADATA
     table_type_id = 37
@@ -280,7 +275,7 @@ class Serial(BaseSpatiaLite, SerialMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Wargame(BaseSpatiaLite, WargameMixin):
+class Wargame(BaseSpatiaLite):
     __tablename__ = constants.WARGAME
     table_type = TableTypes.METADATA
     table_type_id = 37
@@ -304,7 +299,7 @@ class Wargame(BaseSpatiaLite, WargameMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Series(BaseSpatiaLite, SeriesMixin):
+class Series(BaseSpatiaLite):
     __tablename__ = constants.SERIES
     table_type = TableTypes.METADATA
     table_type_id = 36
@@ -319,7 +314,7 @@ class Series(BaseSpatiaLite, SeriesMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class WargameParticipant(BaseSpatiaLite, WargameParticipantMixin):
+class WargameParticipant(BaseSpatiaLite):
     __tablename__ = constants.WARGAME_PARTICIPANT
     table_type = TableTypes.METADATA
     table_type_id = 38
@@ -343,7 +338,7 @@ class WargameParticipant(BaseSpatiaLite, WargameParticipantMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class SerialParticipant(BaseSpatiaLite, SerialParticipantMixin):
+class SerialParticipant(BaseSpatiaLite):
     __tablename__ = constants.SERIAL_PARTICIPANT
     table_type = TableTypes.METADATA
     table_type_id = 39
