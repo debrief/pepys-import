@@ -306,7 +306,12 @@ class WargameMixin:
             order_by="asc(WargameParticipant.created_date)",
             back_populates="wargame",
             uselist=True,
+            info={"skip_in_gui": True},
         )
+
+    @declared_attr
+    def participant_platform_name(self):
+        return association_proxy("participants", "platform_name")
 
     @declared_attr
     def privacy(self):
@@ -387,6 +392,10 @@ class SerialMixin:
     @declared_attr
     def wargame_name(self):
         return association_proxy("wargame", "name")
+
+    @declared_attr
+    def participant_platform_name(self):
+        return association_proxy("participants", "platform_name")
 
     @declared_attr
     def privacy_name(self):
@@ -522,10 +531,8 @@ class WargameParticipantMixin:
 
 
 class SerialParticipantMixin:
-    # _default_preview_fields = ["serial_number", "platform_name"]
-    # _default_dropdown_fields = ["serial_number", "platform_name"]
-    _default_preview_fields = ["serial_number"]
-    _default_dropdown_fields = ["serial_number"]
+    _default_preview_fields = ["serial_number", "platform_name"]
+    _default_dropdown_fields = ["serial_number", "platform_name"]
 
     @declared_attr
     def serial(self):
@@ -538,6 +545,7 @@ class SerialParticipantMixin:
                 cascade="all, delete, delete-orphan",
                 lazy="joined",
                 order_by="asc(SerialParticipant.created_date)",
+                info={"skip_in_gui": True},
             ),
         )
 

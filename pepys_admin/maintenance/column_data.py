@@ -259,6 +259,8 @@ def create_relationship_data(rel_name, data_store, table_object):
     column = list(rel.prop.local_columns)[0]
     foreign_table_object = rel.prop.entity.class_
 
+    column_config["multiple_values_allowed"] = rel.prop.uselist
+
     column_config["foreign_table_type"] = foreign_table_object.table_type
 
     with data_store.session_scope():
@@ -410,6 +412,8 @@ def convert_column_data_to_edit_data(column_data, set_percentage=None):
                 # as we only want dropdown lists for foreign keyed columns
                 del value["values"]
         elif value["sqlalchemy_type"] == "assoc_proxy":
+            continue
+        elif value.get("multiple_values_allowed"):
             continue
 
         edit_data[key] = value
