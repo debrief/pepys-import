@@ -34,6 +34,8 @@ from pepys_import.core.store.common_db import (
     LogsHoldingMixin,
     MediaMixin,
     PlatformMixin,
+    ReferenceDefaultFields,
+    ReferenceRepr,
     SensorMixin,
     SerialMixin,
     SerialParticipantMixin,
@@ -371,6 +373,23 @@ class SerialParticipant(BaseSpatiaLite, SerialParticipantMixin):
         ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+# Reference Tables
+class ForceType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
+    __tablename__ = constants.FORCE_TYPE
+    table_type = TableTypes.REFERENCE
+    table_type_id = 40
+
+    force_type_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_ForceTypes_name"),
+        nullable=False,
+        unique=True,
+    )
+    color = Column(String(10))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
