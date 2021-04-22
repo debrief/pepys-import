@@ -491,16 +491,11 @@ class WargameParticipantMixin:
 
     @declared_attr
     def platform(self):
-        # TODO: We should be able to use the backref here, which creates a `Platform.participations` list
-        # which lists the Wargames that this platform participates in. However, this currently causes errors
-        # in the Maintenance GUI, as it doesn't know how to handle this - so we are removing it at the moment
-        # so we can get a release with the new Tasks functionality, without breaking the Maintenance GUI.
         return relationship(
             "Platform",
             lazy="joined",
             backref=backref("participations", lazy="joined", info={"skip_in_gui": True}),
         )
-        # return relationship("Platform", lazy="joined")
 
     @declared_attr
     def privacy(self):
