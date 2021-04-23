@@ -40,17 +40,6 @@ def test_generating_column_data(pytestconfig, test_datastore):
             "system_name": "created_date",
             "type": "datetime",
         },
-        # TODO: Not needed as we have taken out the participations
-        # backref at the moment - but will be needed once we put it back in
-        # "participations": {
-        #     "foreign_table_type": TableTypes.METADATA,
-        #     "required": True,
-        #     "second_level": False,
-        #     "sqlalchemy_type": "relationship",
-        #     "system_name": "participations",
-        #     "type": "string",
-        #     "values": [],
-        # },
         "identifier": {
             "required": True,
             "sqlalchemy_type": "column",
@@ -67,6 +56,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
         },
         "nationality": {
             "foreign_table_type": TableTypes.REFERENCE,
+            "multiple_values_allowed": False,
             "required": True,
             "second_level": False,
             "sqlalchemy_type": "relationship",
@@ -603,6 +593,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
         },
         "platform type": {
             "foreign_table_type": TableTypes.REFERENCE,
+            "multiple_values_allowed": False,
             "required": True,
             "second_level": False,
             "sqlalchemy_type": "relationship",
@@ -659,6 +650,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
         },
         "privacy": {
             "foreign_table_type": TableTypes.REFERENCE,
+            "multiple_values_allowed": False,
             "required": True,
             "second_level": False,
             "sqlalchemy_type": "relationship",
@@ -705,14 +697,19 @@ def test_generating_column_data(pytestconfig, test_datastore):
             "type": "string",
             "values": [],
         },
+        "wargame participations": {
+            "required": True,
+            "sqlalchemy_type": "assoc_proxy",
+            "system_name": "wargame_participations",
+            "type": "string",
+            "values": [],
+        },
     }
-
     output_col_data = gui.column_data
 
     del output_col_data["nationality"]["ids"]
     del output_col_data["platform type"]["ids"]
     del output_col_data["privacy"]["ids"]
-    # del output_col_data["participations"]["ids"]
 
     assert output_col_data == correct_col_data
 

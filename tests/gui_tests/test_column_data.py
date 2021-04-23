@@ -690,7 +690,6 @@ def test_column_data_platform():
     del col_data["nationality"]["ids"]
     del col_data["platform type"]["ids"]
     del col_data["privacy"]["ids"]
-    # del col_data["participations"]["ids"]
 
     pprint(col_data)
 
