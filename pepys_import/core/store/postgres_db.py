@@ -197,6 +197,7 @@ class Serial(BasePostGIS, SerialMixin):
     environment = Column(String(150))
     location = Column(String(150))
     exercise = Column(String(150))
+    include_in_timeline = Column(Boolean, nullable=False, default=True)
     privacy_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
