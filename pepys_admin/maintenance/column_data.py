@@ -27,6 +27,8 @@ def get_type_name(type_object):
         return "int"
     elif isinstance(type_object, geoalchemy2.types.Geometry):
         return "geometry"
+    elif isinstance(type_object, sqlalchemy.sql.sqltypes.Boolean):
+        return "bool"
 
 
 def get_normal_column_objects(table_object):
