@@ -223,8 +223,13 @@ class TaskEditWidget:
                 align=HorizontalAlign.LEFT,
             )
 
-            self.include_in_timeline = Checkbox(
-                "Include in timeline", checked=self.task_object.include_in_timeline
+            # An empty string is given here as the text for the checkbox, as we're using
+            # a separate label, so that we can get the text on the LH side
+            self.include_in_timeline = Checkbox("", checked=self.task_object.include_in_timeline)
+            self.include_in_timeline_row = VSplit(
+                [Label("Include in timeline (*):", width=25), self.include_in_timeline],
+                padding=2,
+                align=HorizontalAlign.LEFT,
             )
 
             self.all_rows = [
@@ -233,7 +238,7 @@ class TaskEditWidget:
                 self.start_row,
                 self.end_row,
                 self.privacy_row,
-                self.include_in_timeline,
+                self.include_in_timeline_row,
                 self.blue_participants_row,
                 self.red_participants_row,
                 self.validation_toolbar,
