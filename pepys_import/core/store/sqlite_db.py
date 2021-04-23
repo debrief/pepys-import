@@ -200,7 +200,7 @@ class Serial(BaseSpatiaLite, SerialMixin):
     exercise = Column(String(150))
     environment = Column(String(150))
     location = Column(String(150))
-    include_in_timeline = Column(Boolean, nullable=False, default=True)
+    include_in_timeline = Column(Boolean, default=True)
     privacy_id = Column(
         UUIDType,
         ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
