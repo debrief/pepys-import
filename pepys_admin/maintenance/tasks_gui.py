@@ -368,6 +368,7 @@ class TasksGUI:
             new_object.wargame_id = parent_element.object.wargame_id
             new_object.start = parent_element.object.start
             new_object.end = parent_element.object.end
+            new_object.include_in_timeline = True
         else:
             # Do nothing - we can't add anything below a Serial
             return
