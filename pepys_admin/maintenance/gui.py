@@ -412,12 +412,6 @@ class MaintenanceGUI:
                     app.invalidate()
                     return
 
-                # Disconnect all the objects we've returned in our query from the database
-                # so we can store them outside of the session without any problems
-                self.data_store.session.expunge_all()
-                # for result in results:
-                #     recursive_expunge(result, self.data_store.session)
-
                 for result in results[:MAX_PREVIEW_TABLE_RESULTS]:
                     # Get the right fields and append them
                     self.table_data.append(
@@ -427,6 +421,10 @@ class MaintenanceGUI:
                         ]
                     )
                     self.table_objects.append(result)
+
+                # Disconnect all the objects we've returned in our query from the database
+                # so we can store them outside of the session without any problems
+                self.data_store.session.expunge_all()
 
                 if count > MAX_PREVIEW_TABLE_RESULTS:
                     self.preview_table.non_visible_items_count = count - MAX_PREVIEW_TABLE_RESULTS
@@ -547,7 +545,7 @@ class MaintenanceGUI:
             if isinstance(result, Exception):
                 await self.show_messagebox_async(
                     "Error",
-                    f"Error accessing database - is it initialised?\n\nOriginal error:{str(result)}",
+                    f"Error accessing database - is it initialised?\n\nOriginal error:{textwrap.fill(str(result), 30)}",
                 )
 
             self.filter_widget.set_column_data(self.column_data)

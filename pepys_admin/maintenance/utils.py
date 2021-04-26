@@ -1,4 +1,5 @@
 import re
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 
 import pint
@@ -77,6 +78,8 @@ def get_str_for_field(value):
         return f"{value:.2f}"
     elif isinstance(value, pint.Quantity):
         return f"{value:~.2fP}"
+    elif isinstance(value, Iterable) and not isinstance(value, str):
+        return ", ".join(value)
     elif isinstance(value, BasePostGIS) or isinstance(value, BaseSpatiaLite):
         strings = [str(getattr(value, field_name)) for field_name in value._default_dropdown_fields]
         return " / ".join(strings)
