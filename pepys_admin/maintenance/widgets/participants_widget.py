@@ -393,10 +393,15 @@ class ParticipantsWidget:
         ds = self.task_edit_widget.data_store
         participant = self.participants[self.combo_box.selected_entry]
 
+        change_id = ds.add_to_changes(
+            USER, datetime.utcnow(), "Manual delete from Tasks GUI"
+        ).change_id
+
         with ds.session_scope():
             ds.delete_objects(
                 participant.__tablename__,
                 [getattr(participant, get_primary_key_for_table(participant))],
+                change_id=change_id,
             )
 
             ds.session.add(self.task_edit_widget.task_object)
