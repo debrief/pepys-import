@@ -306,6 +306,7 @@ class TasksGUI:
         self.tree_view.selected_element.object = current_task
         if isinstance(current_task, self.data_store.db_classes.Serial):
             self.tree_view.selected_element.text = current_task.serial_number
+            self.tree_view.selected_element.parent.sort_children_by_start_time()
         else:
             self.tree_view.selected_element.text = current_task.name
         get_app().invalidate()

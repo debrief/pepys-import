@@ -439,6 +439,9 @@ class TreeElement:
         if child in self.children:
             self.children.remove(child)
 
+    def sort_children_by_start_time(self):
+        self.children = sorted(self.children, key=lambda x: x.object.start)
+
     @property
     def is_final_child(self):
         """Returns True if this is the final child entry of its parent."""
