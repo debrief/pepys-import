@@ -181,6 +181,10 @@ class Serial(BasePostGIS, SerialMixin):
     table_type = TableTypes.METADATA
     table_type_id = 37
 
+    __table_args__ = (
+        UniqueConstraint("serial_number", "wargame_id", name="uq_Serial_serial_number_wargame_id"),
+    )
+
     serial_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     wargame_id = Column(
         UUID(as_uuid=True),

@@ -1,3 +1,4 @@
+import textwrap
 import traceback
 from asyncio import ensure_future
 from datetime import datetime
@@ -277,15 +278,22 @@ class TasksGUI:
         for column, new_value in updated_fields.items():
             setattr(current_task, column, new_value)
 
-        with self.data_store.session_scope():
-            self.data_store.session.add(current_task)
-            # We need to commit the change so that it gets an ID and matches everything up
-            # but this 'expires' the attributes, so we need to refresh these from the database
-            # before expunging. Overall, this means that the fully up-to-date Task object
-            # is detached from the session and available for use in the UI
-            self.data_store.session.commit()
-            self.data_store.session.refresh(current_task)
-            self.data_store.session.expunge_all()
+        try:
+            with self.data_store.session_scope():
+                self.data_store.session.add(current_task)
+                # We need to commit the change so that it gets an ID and matches everything up
+                # but this 'expires' the attributes, so we need to refresh these from the database
+                # before expunging. Overall, this means that the fully up-to-date Task object
+                # is detached from the session and available for use in the UI
+                self.data_store.session.commit()
+                self.data_store.session.refresh(current_task)
+                self.data_store.session.expunge_all()
+        except Exception as e:
+            self.show_messagebox(
+                "Error",
+                f"Error saving entry - could be a duplicate Serial number?\nOriginal error:\n{textwrap.fill(str(e), 60)}",
+            )
+            return
 
         # Record Change and Logs for this change
         # (we have to do this after adding the Task and committing
