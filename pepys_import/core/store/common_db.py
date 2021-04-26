@@ -470,7 +470,6 @@ class WargameParticipantMixin:
                 passive_deletes=True,
                 cascade="all, delete, delete-orphan",
                 lazy="joined",
-                order_by="asc(WargameParticipant.created_date)",
             ),
         )
 
@@ -520,7 +519,6 @@ class SerialParticipantMixin:
                 passive_deletes=True,
                 cascade="all, delete, delete-orphan",
                 lazy="joined",
-                order_by="asc(SerialParticipant.created_date)",
             ),
         )
 
