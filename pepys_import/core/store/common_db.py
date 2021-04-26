@@ -245,7 +245,10 @@ class SeriesMixin:
     @declared_attr
     def child_wargames(self):
         return relationship(
-            "Wargame", lazy="joined", backref="series", order_by="asc(Wargame.created_date)"
+            "Wargame",
+            lazy="joined",
+            backref=backref("series", lazy="joined"),
+            order_by="asc(Wargame.created_date)",
         )
 
     @declared_attr
@@ -283,7 +286,7 @@ class WargameMixin:
         return relationship(
             "Serial",
             lazy="joined",
-            backref="wargame",
+            backref=backref("wargame", lazy="joined"),
             passive_deletes=True,
             cascade="all, delete, delete-orphan",
             order_by="asc(Serial.created_date)",
@@ -473,11 +476,6 @@ class WargameParticipantMixin:
 
     @declared_attr
     def platform(self):
-        # TODO: We should be able to use the backref here, which creates a `Platform.participations` list
-        # which lists the Wargames that this platform participates in. However, this currently causes errors
-        # in the Maintenance GUI, as it doesn't know how to handle this - so we are removing it at the moment
-        # so we can get a release with the new Tasks functionality, without breaking the Maintenance GUI.
-        # return relationship("Platform", lazy="joined", backref="participations")
         return relationship("Platform", lazy="joined")
 
     @declared_attr
