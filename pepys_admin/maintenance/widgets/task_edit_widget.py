@@ -1,5 +1,5 @@
 from prompt_toolkit.layout.containers import DynamicContainer, HorizontalAlign, HSplit, VSplit
-from prompt_toolkit.widgets.base import Button, Label, TextArea
+from prompt_toolkit.widgets.base import Button, Checkbox, Label, TextArea
 from prompt_toolkit.widgets.toolbars import ValidationToolbar
 
 from pepys_admin.maintenance.utils import empty_str_if_none
@@ -67,6 +67,9 @@ class TaskEditWidget:
 
             if self.end_field.datetime_value != self.task_object.end:
                 updated_fields["end"] = self.end_field.datetime_value
+
+            if self.include_in_timeline.checked != self.task_object.include_in_timeline:
+                updated_fields["include_in_timeline"] = self.include_in_timeline.checked
 
         return updated_fields
 
@@ -220,12 +223,22 @@ class TaskEditWidget:
                 align=HorizontalAlign.LEFT,
             )
 
+            # An empty string is given here as the text for the checkbox, as we're using
+            # a separate label, so that we can get the text on the LH side
+            self.include_in_timeline = Checkbox("", checked=self.task_object.include_in_timeline)
+            self.include_in_timeline_row = VSplit(
+                [Label("Include in timeline (*):", width=25), self.include_in_timeline],
+                padding=2,
+                align=HorizontalAlign.LEFT,
+            )
+
             self.all_rows = [
                 self.number_row,
                 self.exercise_row,
                 self.start_row,
                 self.end_row,
                 self.privacy_row,
+                self.include_in_timeline_row,
                 self.blue_participants_row,
                 self.red_participants_row,
                 self.validation_toolbar,

@@ -34,12 +34,11 @@ from pepys_import.core.store.common_db import (
     LogsHoldingMixin,
     MediaMixin,
     PlatformMixin,
+    ReferenceDefaultFields,
+    ReferenceRepr,
     SensorMixin,
-    SerialMixin,
-    SeriesMixin,
     StateMixin,
     TaggedItemMixin,
-    WargameMixin,
 )
 from pepys_import.core.store.db_base import sqlite_naming_convention
 from pepys_import.core.store.db_status import TableTypes
@@ -247,7 +246,7 @@ class GeometrySubType(BaseSpatiaLite):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Serial(BaseSpatiaLite, SerialMixin):
+class Serial(BaseSpatiaLite):
     __tablename__ = constants.SERIAL
     table_type = TableTypes.METADATA
     table_type_id = 37
@@ -276,7 +275,7 @@ class Serial(BaseSpatiaLite, SerialMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Wargame(BaseSpatiaLite, WargameMixin):
+class Wargame(BaseSpatiaLite):
     __tablename__ = constants.WARGAME
     table_type = TableTypes.METADATA
     table_type_id = 37
@@ -300,7 +299,7 @@ class Wargame(BaseSpatiaLite, WargameMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Series(BaseSpatiaLite, SeriesMixin):
+class Series(BaseSpatiaLite):
     __tablename__ = constants.SERIES
     table_type = TableTypes.METADATA
     table_type_id = 36
@@ -312,6 +311,80 @@ class Series(BaseSpatiaLite, SeriesMixin):
         ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class WargameParticipant(BaseSpatiaLite):
+    __tablename__ = constants.WARGAME_PARTICIPANT
+    table_type = TableTypes.METADATA
+    table_type_id = 38
+
+    wargame_participant_id = Column(UUIDType, primary_key=True, default=uuid4)
+    wargame_id = Column(
+        UUIDType,
+        ForeignKey("Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    platform_id = Column(
+        UUIDType,
+        ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    privacy_id = Column(
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class SerialParticipant(BaseSpatiaLite):
+    __tablename__ = constants.SERIAL_PARTICIPANT
+    table_type = TableTypes.METADATA
+    table_type_id = 39
+
+    serial_participant_id = Column(UUIDType, primary_key=True, default=uuid4)
+    wargame_participant_id = Column(
+        UUIDType,
+        ForeignKey(
+            "WargameParticipants.wargame_participant_id", onupdate="cascade", ondelete="cascade"
+        ),
+        nullable=False,
+    )
+    serial_id = Column(
+        UUIDType,
+        ForeignKey("Serials.serial_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    start = Column(TIMESTAMP)
+    end = Column(TIMESTAMP)
+    force_type_id = Column(
+        UUIDType,
+        ForeignKey("ForceTypes.force_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    privacy_id = Column(
+        UUIDType,
+        ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+# Reference Tables
+class ForceType(BaseSpatiaLite, ReferenceRepr, ReferenceDefaultFields):
+    __tablename__ = constants.FORCE_TYPE
+    table_type = TableTypes.REFERENCE
+    table_type_id = 40
+
+    force_type_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_ForceTypes_name"),
+        nullable=False,
+        unique=True,
+    )
+    color = Column(String(10))
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
