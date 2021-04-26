@@ -196,14 +196,14 @@ class StepByStepMigrationTestCase(unittest.TestCase):
         # The following dictionaries are going to be used to import datafiles. When the version of
         # the database is sufficient (if the version is the same with a key in dictionary)
         self.sqlite_version_datafile_dict = {
-            "2fbdbf54abaf": [
+            "51e93ee3ed38": [
                 "nisida_example.txt",
                 "nisida_invalid_header_line.txt",
                 "nisida_split_narrative.txt",
             ]
         }
         self.postgres_version_datafile_dict = {
-            "fb5b94be6485": [
+            "f17f01e2f2c5": [
                 "nisida_example.txt",
                 "nisida_invalid_header_line.txt",
                 "nisida_split_narrative.txt",

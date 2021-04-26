@@ -328,6 +328,12 @@ class FilterWidgetEntry:
             on_select_handler=self.filter_widget.trigger_on_change,
         )
         self.filter_widget.set_contextual_help(self.vw_dropdown, CONTEXTUAL_HELP_STRING)
+        self.vw_bool = DropdownBox(
+            self.filter_widget.value_prompt,
+            entries=["True", "False"],
+            on_select_handler=self.filter_widget.trigger_on_change,
+        )
+        self.filter_widget.set_contextual_help(self.vw_bool, CONTEXTUAL_HELP_STRING)
 
     def on_dropdown_column_select(self, value):
         """Called when an entry is selected from the column dropdown.
@@ -385,15 +391,20 @@ class FilterWidgetEntry:
             # Get the column info and if it has a list of IDs then
             # return the ID of the entry the user selected rather than the text of the entry
             col_config = self.filter_widget.column_data[self.dropdown_column.text]
-            if "ids" in col_config:
+            if col_config["type"] == "bool":
+                if vw.text == "True":
+                    value_obj = True
+                else:
+                    value_obj = False
+            elif "ids" in col_config:
                 index = col_config["values"].index(vw.text)
-                value_str = col_config["ids"][index]
+                value_obj = col_config["ids"][index]
             else:
-                value_str = vw.text
+                value_obj = vw.text
         else:
-            value_str = vw.text
+            value_obj = vw.text
 
-        return [self.dropdown_column.text.strip(), self.dropdown_operator.text.strip(), value_str]
+        return [self.dropdown_column.text.strip(), self.dropdown_operator.text.strip(), value_obj]
 
     def get_value_dropdown_entries(self):
         """Gives the entries for the value widget dropdown
@@ -421,6 +432,8 @@ class FilterWidgetEntry:
 
         if col_type == "float":
             return self.vw_float
+        elif col_type == "bool":
+            return self.vw_bool
         elif col_type == "int":
             return self.vw_int
         elif col_type == "id":
@@ -474,5 +487,7 @@ class FilterWidgetEntry:
             return ["=", "!=", ">", "<", ">=", "<="]
         elif col_type == "datetime":
             return ["=", "!=", ">", "<", ">=", "<="]
+        elif col_type == "bool":
+            return ["="]
         else:
             return []
