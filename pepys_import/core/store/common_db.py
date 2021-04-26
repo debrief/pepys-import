@@ -145,6 +145,10 @@ class PlatformMixin:
     _default_dropdown_fields = ["name", "identifier", "nationality_name"]
 
     @declared_attr
+    def wargame_participations(self):
+        return association_proxy("participations", "wargame_name")
+
+    @declared_attr
     def platform_type(self):
         return relationship("PlatformType", lazy="joined", innerjoin=True, uselist=False)
 
@@ -293,6 +297,23 @@ class WargameMixin:
         )
 
     @declared_attr
+    def participants(self):
+        return relationship(
+            "WargameParticipant",
+            passive_deletes=True,
+            cascade="all, delete, delete-orphan",
+            lazy="joined",
+            order_by="asc(WargameParticipant.created_date)",
+            back_populates="wargame",
+            uselist=True,
+            info={"skip_in_gui": True},
+        )
+
+    @declared_attr
+    def participant_platform_name(self):
+        return association_proxy("participants", "platform_name")
+
+    @declared_attr
     def privacy(self):
         return relationship("Privacy", lazy="joined", innerjoin=True, uselist=False)
 
@@ -371,6 +392,10 @@ class SerialMixin:
     @declared_attr
     def wargame_name(self):
         return association_proxy("wargame", "name")
+
+    @declared_attr
+    def participant_platform_name(self):
+        return association_proxy("participants", "platform_name")
 
     @declared_attr
     def privacy_name(self):
@@ -462,20 +487,15 @@ class WargameParticipantMixin:
 
     @declared_attr
     def wargame(self):
-        return relationship(
-            "Wargame",
-            lazy="joined",
-            backref=backref(
-                "participants",
-                passive_deletes=True,
-                cascade="all, delete, delete-orphan",
-                lazy="joined",
-            ),
-        )
+        return relationship("Wargame", lazy="joined", back_populates="participants")
 
     @declared_attr
     def platform(self):
-        return relationship("Platform", lazy="joined")
+        return relationship(
+            "Platform",
+            lazy="joined",
+            backref=backref("participations", info={"skip_in_gui": True}),
+        )
 
     @declared_attr
     def privacy(self):
@@ -519,6 +539,7 @@ class SerialParticipantMixin:
                 passive_deletes=True,
                 cascade="all, delete, delete-orphan",
                 lazy="joined",
+                info={"skip_in_gui": True},
             ),
         )
 
@@ -532,6 +553,7 @@ class SerialParticipantMixin:
                 lazy="joined",
                 passive_deletes=True,
                 cascade="all, delete, delete-orphan",
+                info={"skip_in_gui": True},
             ),
         )
 

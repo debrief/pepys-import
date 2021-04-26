@@ -5,7 +5,7 @@ import sqlalchemy
 from sqlalchemy.sql.expression import cast
 
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.utils.sqlalchemy_utils import UUIDType
+from pepys_import.utils.sqlalchemy_utils import UUIDType, get_primary_key_for_table
 from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 operator_dict = {
@@ -37,7 +37,7 @@ def filter_widget_output_to_query(outputs: List[List], table_name: str, data_sto
                 idx += 1
                 output = outputs[idx]
                 if len(output) == 3:
-                    handle_three_variables(class_obj, output, idx, queries)
+                    handle_three_variables(class_obj, output, idx, queries, data_store)
                 elif len(output) == 1:
                     if output[0] in and_or_dict:
                         and_or_list.append(and_or_dict[output[0]])
@@ -53,7 +53,7 @@ def filter_widget_output_to_query(outputs: List[List], table_name: str, data_sto
         elif len(output) == 1 and output[0] in and_or_dict:
             final_and_or_list.append(and_or_dict[output[0]])
         elif len(output) == 3:
-            handle_three_variables(class_obj, output, idx, final_query_list)
+            handle_three_variables(class_obj, output, idx, final_query_list, data_store)
         else:
             raise ValueError(
                 f"There should be one or three variables in each filter. Error in {idx}: '{output}'!"
@@ -74,12 +74,18 @@ def get_query(query_list: list, and_or_list: list):
     return query
 
 
-def handle_three_variables(class_obj, output, idx, query_list):
+def handle_three_variables(class_obj, output, idx, query_list, data_store):
     column, ops, value = output
+
     try:  # Try to get table field
         col = getattr(class_obj, column)
     except AttributeError:
         raise AttributeError(f"Column not found! Error in {idx}: '{column}'")
+
+    try:
+        prop_type = type(col.prop)
+    except Exception:
+        prop_type = None
 
     # If we're trying to filter on a relationship column, then look for the
     # relevant ID column to filter on instead
@@ -87,8 +93,26 @@ def handle_three_variables(class_obj, output, idx, query_list):
     # or the manually-defined local column in the relationship's info
     # dict, if it is a secondary relationship
     try:
-        if isinstance(col.prop, sqlalchemy.orm.relationships.RelationshipProperty):
-            if "local_column" in col.prop.info:
+        if (
+            isinstance(col, sqlalchemy.ext.associationproxy.ObjectAssociationProxyInstance)
+            and not col.scalar
+        ):
+            ops = "contains"
+        elif prop_type == sqlalchemy.orm.relationships.RelationshipProperty:
+            if col.prop.uselist:
+                ops = "contains"
+                id_col_name = col.prop.key
+                table_class = col.prop.entity.class_
+
+                with data_store.session_scope():
+                    value = (
+                        data_store.session.query(table_class)
+                        .filter(
+                            getattr(table_class, get_primary_key_for_table(table_class)) == value
+                        )
+                        .one()
+                    )
+            elif "local_column" in col.prop.info:
                 id_col_name = col.prop.info["local_column"]
             else:
                 id_col_name = list(col.prop.local_columns)[0].key
@@ -104,7 +128,8 @@ def handle_three_variables(class_obj, output, idx, query_list):
                 query_list.append(col.ilike(f"%{value}%"))
         except Exception:
             query_list.append(col.like(f"%{value}%"))
-
+    elif ops == "contains":
+        query_list.append(col.contains(value))
     elif ops in operator_dict:
         query_list.append(operator_dict[ops](col, value))
     else:
