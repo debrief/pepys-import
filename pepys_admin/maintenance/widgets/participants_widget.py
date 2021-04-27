@@ -178,7 +178,9 @@ class ParticipantsWidget:
             ds = self.task_edit_widget.data_store
 
             with ds.session_scope():
-                ds.session.add(self.task_edit_widget.task_object)
+                self.task_edit_widget.task_object = ds.session.merge(
+                    self.task_edit_widget.task_object
+                )
                 ds.session.refresh(self.task_edit_widget.task_object)
 
                 filtered_platforms = self.filter_serial_participants()
@@ -234,7 +236,9 @@ class ParticipantsWidget:
                 change_id = ds.add_to_changes(
                     USER, datetime.utcnow(), "Manual edit from Tasks GUI"
                 ).change_id
-                ds.session.add(self.task_edit_widget.task_object)
+                self.task_edit_widget.task_object = ds.session.merge(
+                    self.task_edit_widget.task_object
+                )
                 ds.session.refresh(self.task_edit_widget.task_object)
 
                 filtered_platforms = self.filter_serial_participants(
@@ -328,7 +332,9 @@ class ParticipantsWidget:
                 change_id = ds.add_to_changes(
                     USER, datetime.utcnow(), "Manual edit from Tasks GUI"
                 ).change_id
-                ds.session.add(self.task_edit_widget.task_object)
+                self.task_edit_widget.task_object = ds.session.merge(
+                    self.task_edit_widget.task_object
+                )
                 ds.session.refresh(self.task_edit_widget.task_object)
 
                 filtered_platforms = self.filter_wargame_participants(
