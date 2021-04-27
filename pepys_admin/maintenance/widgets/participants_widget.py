@@ -404,7 +404,7 @@ class ParticipantsWidget:
                 change_id=change_id,
             )
 
-            ds.session.add(self.task_edit_widget.task_object)
+            self.task_edit_widget.task_object = ds.session.merge(self.task_edit_widget.task_object)
             ds.session.refresh(self.task_edit_widget.task_object)
             ds.session.expunge_all()
         get_app().invalidate()
