@@ -295,6 +295,7 @@ class TasksGUI:
 
         new_tree_element = TreeElement(new_serial.serial_number, new_serial)
         self.tree_view.selected_element.parent.add_child(new_tree_element)
+        self.tree_view.selected_element.parent.sort_children_by_start_time()
 
     def handle_save(self):
         updated_fields = self.task_edit_widget.get_updated_fields()
