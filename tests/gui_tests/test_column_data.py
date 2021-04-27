@@ -1558,7 +1558,6 @@ def test_edit_data_platform():
         "privacy": {
             "foreign_table_type": TableTypes.REFERENCE,
             "multiple_values_allowed": False,
-            "multiple_values_allowed": False,
             "required": True,
             "second_level": False,
             "sqlalchemy_type": "relationship",
