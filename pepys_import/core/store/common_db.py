@@ -293,7 +293,7 @@ class WargameMixin:
             backref=backref("wargame", lazy="joined"),
             passive_deletes=True,
             cascade="all, delete, delete-orphan",
-            order_by="asc(Serial.created_date)",
+            order_by="asc(Serial.start)",
         )
 
     @declared_attr
@@ -539,7 +539,6 @@ class SerialParticipantMixin:
                 passive_deletes=True,
                 cascade="all, delete, delete-orphan",
                 lazy="joined",
-                order_by="asc(SerialParticipant.created_date)",
                 info={"skip_in_gui": True},
             ),
         )
