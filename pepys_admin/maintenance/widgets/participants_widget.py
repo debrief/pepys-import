@@ -175,6 +175,8 @@ class ParticipantsWidget:
                     ds, result["platform"], result["privacy"], change_id
                 )
 
+            self.task_edit_widget.update_tree_object_handler()
+
         async def coroutine_serial():
             ds = self.task_edit_widget.data_store
 
@@ -210,6 +212,8 @@ class ParticipantsWidget:
                     end=result["end"],
                     change_id=change_id,
                 )
+
+            self.task_edit_widget.update_tree_object_handler()
 
         # We need to save the task before adding a participant, or we don't have the database
         # ID to link the participant to the task. So we call the save method.
@@ -325,6 +329,8 @@ class ParticipantsWidget:
                 ds.session.refresh(self.task_edit_widget.task_object)
                 ds.session.expunge_all()
 
+            self.task_edit_widget.update_tree_object_handler()
+
         async def coroutine_wargame():
             ds = self.task_edit_widget.data_store
             participant = self.participants[self.combo_box.selected_entry]
@@ -396,6 +402,8 @@ class ParticipantsWidget:
                 ds.session.refresh(self.task_edit_widget.task_object)
                 ds.session.expunge_all()
 
+            self.task_edit_widget.update_tree_object_handler()
+
         if not self.item_selected_in_combo_box():
             return
 
@@ -435,6 +443,8 @@ class ParticipantsWidget:
         if new_selected_entry < 0:
             new_selected_entry = 0
         self.combo_box.selected_entry = new_selected_entry
+
+        self.task_edit_widget.update_tree_object_handler()
         get_app().invalidate()
 
     def handle_switch_button(self):
