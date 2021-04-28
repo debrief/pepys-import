@@ -63,7 +63,15 @@ class ParticipantsWidget:
                 if p.force_type_name == self.force
             ]
 
+        # We have to sort here rather than in an ORDER BY clause when querying the database
+        # as we want to sort by a SQLAlchemy association proxy (platform_name), which is a field
+        # which isn't actually in the WargameParticipants/SerialParticipants table
+        # (the alternative is a more complex join that does the sort, but this is simpler to
+        # implement and works well)
+        self.participants = sorted(self.participants, key=lambda x: x.platform_name)
+
         entries = []
+
         for p in self.participants:
             trimmed_identifier = trim_string(p.platform_identifier, 5)
             trimmed_nationality = trim_string(p.platform_nationality_name, 4)
@@ -140,7 +148,9 @@ class ParticipantsWidget:
             ds = self.task_edit_widget.data_store
 
             with ds.session_scope():
-                ds.session.add(self.task_edit_widget.task_object)
+                self.task_edit_widget.task_object = ds.session.merge(
+                    self.task_edit_widget.task_object
+                )
                 ds.session.refresh(self.task_edit_widget.task_object)
                 filtered_platforms = self.filter_wargame_participants()
 
@@ -404,7 +414,7 @@ class ParticipantsWidget:
                 change_id=change_id,
             )
 
-            ds.session.add(self.task_edit_widget.task_object)
+            self.task_edit_widget.task_object = ds.session.merge(self.task_edit_widget.task_object)
             ds.session.refresh(self.task_edit_widget.task_object)
             ds.session.expunge_all()
         get_app().invalidate()
