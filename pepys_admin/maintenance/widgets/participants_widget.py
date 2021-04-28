@@ -1,6 +1,7 @@
 from asyncio.tasks import ensure_future
 from datetime import datetime
 
+from loguru import logger
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.layout.containers import DynamicContainer, HSplit, VSplit
 from prompt_toolkit.widgets.base import Button
@@ -396,6 +397,9 @@ class ParticipantsWidget:
                 ds.session.refresh(self.task_edit_widget.task_object)
                 ds.session.expunge_all()
 
+        if not self.item_selected_in_combo_box():
+            return
+
         if isinstance(
             self.task_edit_widget.task_object, self.task_edit_widget.data_store.db_classes.Wargame
         ):
@@ -407,6 +411,9 @@ class ParticipantsWidget:
         get_app().invalidate()
 
     def handle_delete_button(self):
+        if not self.item_selected_in_combo_box():
+            return
+
         ds = self.task_edit_widget.data_store
         participant = self.participants[self.combo_box.selected_entry]
 
@@ -424,6 +431,11 @@ class ParticipantsWidget:
             self.task_edit_widget.task_object = ds.session.merge(self.task_edit_widget.task_object)
             ds.session.refresh(self.task_edit_widget.task_object)
             ds.session.expunge_all()
+
+        new_selected_entry = self.combo_box.selected_entry - 1
+        if new_selected_entry < 0:
+            new_selected_entry = 0
+        self.combo_box.selected_entry = new_selected_entry
         get_app().invalidate()
 
     def handle_switch_button(self):
@@ -453,6 +465,13 @@ class ParticipantsWidget:
                 previous_value=str(prev_force_type_id),
                 change_id=change_id,
             )
+
+    def item_selected_in_combo_box(self):
+        if len(self.combo_box.filtered_entries) == 0:
+            return False
+        else:
+            logger.debug(self.combo_box.selected_entry)
+            return True
 
     def get_widgets(self):
         if self.force is not None:
