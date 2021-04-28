@@ -52,7 +52,7 @@ class ParticipantsWidget:
         self.add_button = Button("Add", handler=self.handle_add_button)
         self.edit_button = Button("Edit", handler=self.handle_edit_button)
         self.delete_button = Button("Delete", handler=self.handle_delete_button)
-        self.switch_button = Button("Switch force", width=15, handler=self.handle_switch_button)
+        self.switch_button = Button("Switch force", width=20, handler=self.handle_switch_button)
 
     def get_combo_box_entries(self):
         if self.force is None:
