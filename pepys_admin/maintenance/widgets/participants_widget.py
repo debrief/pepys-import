@@ -52,6 +52,7 @@ class ParticipantsWidget:
         self.add_button = Button("Add", handler=self.handle_add_button)
         self.edit_button = Button("Edit", handler=self.handle_edit_button)
         self.delete_button = Button("Delete", handler=self.handle_delete_button)
+        self.switch_button = Button("Switch force", width=15, handler=self.handle_switch_button)
 
     def get_combo_box_entries(self):
         if self.force is None:
@@ -409,10 +410,41 @@ class ParticipantsWidget:
             ds.session.expunge_all()
         get_app().invalidate()
 
+    def handle_switch_button(self):
+        ds = self.task_edit_widget.data_store
+        participant = self.participants[self.combo_box.selected_entry]
+
+        prev_force_type_id = participant.force_type_id
+
+        if participant.force_type_name == "Blue":
+            new_force_type = ds.search_force_type("Red")
+        else:
+            new_force_type = ds.search_force_type("Blue")
+
+        participant.force_type = new_force_type
+
+        with ds.session_scope():
+            participant = ds.session.merge(participant)
+
+            change_id = ds.add_to_changes(
+                USER, datetime.utcnow(), "Manual delete from Tasks GUI"
+            ).change_id
+
+            ds.add_to_logs(
+                table=constants.SERIAL_PARTICIPANT,
+                row_id=participant.serial_participant_id,
+                field="force_type_id",
+                previous_value=str(prev_force_type_id),
+                change_id=change_id,
+            )
+
     def get_widgets(self):
-        return HSplit(
-            [self.combo_box, VSplit([self.add_button, self.edit_button, self.delete_button])]
-        )
+        if self.force is not None:
+            buttons = [self.add_button, self.edit_button, self.delete_button, self.switch_button]
+        else:
+            buttons = [self.add_button, self.edit_button, self.delete_button]
+
+        return HSplit([self.combo_box, VSplit(buttons)])
 
     def __pt_container__(self):
         return self.container
