@@ -1,7 +1,6 @@
 from asyncio.tasks import ensure_future
 from datetime import datetime
 
-from loguru import logger
 from prompt_toolkit.application.current import get_app
 from prompt_toolkit.layout.containers import DynamicContainer, HSplit, VSplit
 from prompt_toolkit.widgets.base import Button
@@ -439,6 +438,9 @@ class ParticipantsWidget:
         get_app().invalidate()
 
     def handle_switch_button(self):
+        if not self.item_selected_in_combo_box():
+            return
+
         ds = self.task_edit_widget.data_store
         participant = self.participants[self.combo_box.selected_entry]
 
@@ -470,7 +472,6 @@ class ParticipantsWidget:
         if len(self.combo_box.filtered_entries) == 0:
             return False
         else:
-            logger.debug(self.combo_box.selected_entry)
             return True
 
     def get_widgets(self):
