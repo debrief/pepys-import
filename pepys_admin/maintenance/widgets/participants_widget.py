@@ -478,6 +478,8 @@ class ParticipantsWidget:
                 change_id=change_id,
             )
 
+        self.task_edit_widget.update_tree_object_handler()
+
     def item_selected_in_combo_box(self):
         if len(self.combo_box.filtered_entries) == 0:
             return False
