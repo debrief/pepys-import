@@ -17,6 +17,7 @@ class TaskEditWidget:
         platforms,
         save_button_handler,
         delete_button_handler,
+        duplicate_button_handler,
         data_store,
         show_dialog_as_float,
     ):
@@ -24,6 +25,7 @@ class TaskEditWidget:
         self.platforms = platforms
         self.save_button_handler = save_button_handler
         self.delete_button_handler = delete_button_handler
+        self.duplicate_button_handler = duplicate_button_handler
         self.data_store = data_store
         # Reference to the main show_dialog_as_float method, so we can show a dialog from
         # the ParticipantsWidget
@@ -87,9 +89,16 @@ class TaskEditWidget:
 
         self.save_button = Button(f"Save {object_name}", self.save_button_handler, width=15)
         self.delete_button = Button(f"Delete {object_name}", self.delete_button_handler, width=20)
-        self.buttons_row = VSplit(
-            [self.save_button, self.delete_button], padding=3, align=HorizontalAlign.LEFT
+        self.duplicate_button = Button(
+            f"Duplicate {object_name}", self.duplicate_button_handler, width=20
         )
+
+        if isinstance(self.task_object, self.data_store.db_classes.Serial):
+            buttons = [self.save_button, self.delete_button, self.duplicate_button]
+        else:
+            buttons = [self.save_button, self.delete_button]
+
+        self.buttons_row = VSplit(buttons, padding=3, align=HorizontalAlign.LEFT)
 
         try:
             if self.task_object.privacy_name is not None:
