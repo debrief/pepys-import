@@ -467,7 +467,7 @@ class ParticipantsWidget:
             participant = ds.session.merge(participant)
 
             change_id = ds.add_to_changes(
-                USER, datetime.utcnow(), "Manual delete from Tasks GUI"
+                USER, datetime.utcnow(), "Manual switch of participant force from Tasks GUI"
             ).change_id
 
             ds.add_to_logs(

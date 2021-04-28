@@ -287,7 +287,6 @@ class TasksGUI:
             self.data_store.session.refresh(new_serial)
 
             new_serial_id = new_serial.serial_id
-            logger.debug(f"{new_serial_id=}")
 
             # Copy the participants too
             orig_participants = current_task.participants
