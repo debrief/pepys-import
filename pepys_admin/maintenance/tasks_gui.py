@@ -181,6 +181,7 @@ class TasksGUI:
             self.handle_save,
             self.handle_delete,
             self.handle_duplicate,
+            self.update_tree_object,
             self.data_store,
             self.show_dialog_as_float,
         )
@@ -219,6 +220,10 @@ class TasksGUI:
             "You must provide valid values for the following fields before saving or\nadding a participant:\n\n"
             + "\n".join(missing_fields),
         )
+
+    def update_tree_object(self):
+        """Handles updating the Task object stored in the TreeView when it has changed"""
+        self.tree_view.selected_element.object = self.task_edit_widget.task_object
 
     def validate_fields(self, current_task, updated_fields):
         WARGAME_REQUIRED_FIELDS = set(["name", "start", "end"])
@@ -282,7 +287,6 @@ class TasksGUI:
             self.data_store.session.refresh(new_serial)
 
             new_serial_id = new_serial.serial_id
-            logger.debug(f"{new_serial_id=}")
 
             # Copy the participants too
             orig_participants = current_task.participants

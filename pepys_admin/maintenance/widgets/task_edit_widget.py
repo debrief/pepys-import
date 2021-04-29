@@ -18,6 +18,7 @@ class TaskEditWidget:
         save_button_handler,
         delete_button_handler,
         duplicate_button_handler,
+        update_tree_object_handler,
         data_store,
         show_dialog_as_float,
     ):
@@ -26,6 +27,7 @@ class TaskEditWidget:
         self.save_button_handler = save_button_handler
         self.delete_button_handler = delete_button_handler
         self.duplicate_button_handler = duplicate_button_handler
+        self.update_tree_object_handler = update_tree_object_handler
         self.data_store = data_store
         # Reference to the main show_dialog_as_float method, so we can show a dialog from
         # the ParticipantsWidget
