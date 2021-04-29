@@ -131,8 +131,12 @@ class AdminShell(BaseShell):
                 formatted_text = format_table("## Reference", table_string=report)
                 custom_print_formatted_text(formatted_text)
 
-            print("## Database Version")
+        print("## Database Version")
+        try:
             command.current(self.cfg, verbose=True)
+        except Exception as e:
+            print("Error getting latest database version")
+            print(str(e))
 
         print("## Config file")
         print(f"Location: {config.CONFIG_FILE_PATH}")
