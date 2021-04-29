@@ -101,7 +101,9 @@ class EditDialog:
         try:
             output = self.entry_edit_widget.output
         except Exception as e:
-            self.error_message.text = f"Error converting values, please edit and try again.\nError was {str(e)}"
+            self.error_message.text = (
+                f"Error converting values, please edit and try again.\nError was {str(e)}"
+            )
             return
         self.future.set_result(output)
 
