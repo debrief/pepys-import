@@ -163,6 +163,8 @@ class EntryEditWidgetRow:
                     return True
                 elif self.value_widget.text.lower() in ("false", "f"):
                     return False
+                else:
+                    raise ValueError("Invalid boolean value entered")
             return self.value_widget.text
 
     def get_widgets(self):
