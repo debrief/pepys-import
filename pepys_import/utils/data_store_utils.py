@@ -257,6 +257,11 @@ def create_alembic_version_table(engine, db_type):
                             f"Database revision in alembic_version table ({table_contents[0][0]}) does not match latest revision ({versions['LATEST_SQLITE_VERSION']}).\n"
                             "Please run database migration."
                         )
+                if len(table_contents) > 1:
+                    raise ValueError(
+                        "Multiple rows detected in alembic_version table. Database potentially in inconsistent state.\n"
+                        "Migration functionality will not work. Please contact support."
+                    )
         except sqlalchemy.exc.OperationalError:
             with engine.connect() as connection:
                 # Error running select, so table doesn't exist - create it and stamp the current version
@@ -305,6 +310,11 @@ def create_alembic_version_table(engine, db_type):
                         f"Database revision in alembic_version table ({table_contents[0][0]}) does not match latest revision ({versions['LATEST_POSTGRES_VERSION']}).\n"
                         "Please run database migration."
                     )
+            if len(table_contents) > 1:
+                raise ValueError(
+                    "Multiple rows detected in alembic_version table. Database potentially in inconsistent state.\n"
+                    "Migration functionality will not work. Please contact support."
+                )
         except sqlalchemy.exc.OperationalError:
             # Error running select, so table doesn't exist - create it and stamp the current version
             connection.execute(
