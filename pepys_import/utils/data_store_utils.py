@@ -231,40 +231,98 @@ def create_alembic_version_table(engine, db_type):
         return
 
     if db_type == "sqlite":
-        create_table = """
-            CREATE TABLE IF NOT EXISTS alembic_version
-            (
-                version_num VARCHAR(32) NOT NULL,
-                CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
-            );
-        """
-        insert_value = """
-            INSERT INTO alembic_version (version_num)
-            SELECT '{id}'
-            WHERE NOT EXISTS(SELECT 1 FROM alembic_version WHERE version_num = '{id}');
-        """.format(
-            id=versions["LATEST_SQLITE_VERSION"]
-        )
+        # Try and get all entries from alembic_version table
+        try:
+            with engine.connect() as connection:
+                table_contents = connection.execute("SELECT * from alembic_version;").fetchall()
+
+                if len(table_contents) == 0:
+                    # Table exists but no version number row, so stamp it:
+                    connection.execute(
+                        """
+                    INSERT INTO alembic_version (version_num)
+                    VALUES ({id})""".format(
+                            id=versions["LATEST_SQLITE_VERSION"]
+                        )
+                    )
+                if len(table_contents) == 1:
+                    if table_contents[0][0] == versions["LATEST_SQLITE_VERSION"]:
+                        # Current version already stamped in table - so just continue
+                        print(
+                            "Initialising database - alembic version in database matches latest version."
+                        )
+                    else:
+                        # The version in the database doesn't match the current version - so raise an error
+                        raise ValueError(
+                            f"Database revision in alembic_version table ({table_contents[0][0]}) does not match latest revision ({versions['LATEST_SQLITE_VERSION']}).\n"
+                            "Please run database migration."
+                        )
+        except sqlalchemy.exc.OperationalError:
+            with engine.connect() as connection:
+                # Error running select, so table doesn't exist - create it and stamp the current version
+                connection.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS alembic_version
+                    (
+                        version_num VARCHAR(32) NOT NULL,
+                        CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+                    );
+                """
+                )
+                connection.execute(
+                    """
+                    INSERT INTO alembic_version (version_num)
+                    VALUES ({id})""".format(
+                        id=versions["LATEST_SQLITE_VERSION"]
+                    )
+                )
     else:
-        create_table = """
-            CREATE TABLE IF NOT EXISTS pepys.alembic_version
-            (
+        # Try and get all entries from alembic_version table
+        try:
+            with engine.connect() as connection:
+                table_contents = connection.execute(
+                    "SELECT * from pepys.alembic_version;"
+                ).fetchall()
+
+            if len(table_contents) == 0:
+                # Table exists but no version number row, so stamp it:
+                connection.execute(
+                    """
+                INSERT INTO pepys.alembic_version (version_num)
+                VALUES ({id})""".format(
+                        id=versions["LATEST_POSTGRES_VERSION"]
+                    )
+                )
+            if len(table_contents) == 1:
+                if table_contents[0][0] == versions["LATEST_POSTGRES_VERSION"]:
+                    # Current version already stamped in table - so just continue
+                    print(
+                        "Initialising database - alembic version in database matches latest version."
+                    )
+                else:
+                    # The version in the database doesn't match the current version - so raise an error
+                    raise ValueError(
+                        f"Database revision in alembic_version table ({table_contents[0][0]}) does not match latest revision ({versions['LATEST_POSTGRES_VERSION']}).\n"
+                        "Please run database migration."
+                    )
+        except sqlalchemy.exc.OperationalError:
+            # Error running select, so table doesn't exist - create it and stamp the current version
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS pepys.alembic_version
+                (
                 version_num VARCHAR(32) NOT NULL,
                 CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
-            );
-        """
-        insert_value = """
-            INSERT INTO pepys.alembic_version (version_num)
-            SELECT '{id}'
-            WHERE NOT EXISTS(
-                SELECT '{id}' FROM pepys.alembic_version WHERE version_num = '{id}'
-            );
-        """.format(
-            id=versions["LATEST_POSTGRES_VERSION"]
-        )
-    with engine.connect() as connection:
-        connection.execute(create_table)
-        connection.execute(insert_value)
+                );
+            """
+            )
+            connection.execute(
+                """
+                INSERT INTO alembic_version (version_num)
+                VALUES ({id})""".format(
+                    id=versions["LATEST_POSTGRES_VERSION"]
+                )
+            )
 
 
 def cache_results_if_not_none(cache_attribute):
