@@ -241,7 +241,7 @@ def create_alembic_version_table(engine, db_type):
                     connection.execute(
                         """
                     INSERT INTO alembic_version (version_num)
-                    VALUES ({id})""".format(
+                    VALUES ('{id}')""".format(
                             id=versions["LATEST_SQLITE_VERSION"]
                         )
                     )
@@ -254,12 +254,12 @@ def create_alembic_version_table(engine, db_type):
                     else:
                         # The version in the database doesn't match the current version - so raise an error
                         raise ValueError(
-                            f"Database revision in alembic_version table ({table_contents[0][0]}) does not match latest revision ({versions['LATEST_SQLITE_VERSION']}).\n"
+                            f"Database revision in alembic_version table ({table_contents[0][0]}) does not match latest revision ({versions['LATEST_SQLITE_VERSION']})."
                             "Please run database migration."
                         )
                 if len(table_contents) > 1:
                     raise ValueError(
-                        "Multiple rows detected in alembic_version table. Database potentially in inconsistent state.\n"
+                        "Multiple rows detected in alembic_version table. Database potentially in inconsistent state."
                         "Migration functionality will not work. Please contact support."
                     )
         except sqlalchemy.exc.OperationalError:
@@ -277,7 +277,7 @@ def create_alembic_version_table(engine, db_type):
                 connection.execute(
                     """
                     INSERT INTO alembic_version (version_num)
-                    VALUES ({id})""".format(
+                    VALUES ('{id}')""".format(
                         id=versions["LATEST_SQLITE_VERSION"]
                     )
                 )
@@ -289,50 +289,51 @@ def create_alembic_version_table(engine, db_type):
                     "SELECT * from pepys.alembic_version;"
                 ).fetchall()
 
-            if len(table_contents) == 0:
-                # Table exists but no version number row, so stamp it:
+                if len(table_contents) == 0:
+                    # Table exists but no version number row, so stamp it:
+                    connection.execute(
+                        """
+                    INSERT INTO pepys.alembic_version (version_num)
+                    VALUES ('{id}')""".format(
+                            id=versions["LATEST_POSTGRES_VERSION"]
+                        )
+                    )
+                if len(table_contents) == 1:
+                    if table_contents[0][0] == versions["LATEST_POSTGRES_VERSION"]:
+                        # Current version already stamped in table - so just continue
+                        print(
+                            "Initialising database - alembic version in database matches latest version."
+                        )
+                    else:
+                        # The version in the database doesn't match the current version - so raise an error
+                        raise ValueError(
+                            f"Database revision in alembic_version table ({table_contents[0][0]}) does not match latest revision ({versions['LATEST_POSTGRES_VERSION']})."
+                            "Please run database migration."
+                        )
+                if len(table_contents) > 1:
+                    raise ValueError(
+                        "Multiple rows detected in alembic_version table. Database potentially in inconsistent state."
+                        "Migration functionality will not work. Please contact support."
+                    )
+        except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.ProgrammingError):
+            # Error running select, so table doesn't exist - create it and stamp the current version
+            with engine.connect() as connection:
                 connection.execute(
                     """
-                INSERT INTO pepys.alembic_version (version_num)
-                VALUES ({id})""".format(
+                    CREATE TABLE IF NOT EXISTS pepys.alembic_version
+                    (
+                    version_num VARCHAR(32) NOT NULL,
+                    CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+                    );
+                """
+                )
+                connection.execute(
+                    """
+                    INSERT INTO alembic_version (version_num)
+                    VALUES ('{id}')""".format(
                         id=versions["LATEST_POSTGRES_VERSION"]
                     )
                 )
-            if len(table_contents) == 1:
-                if table_contents[0][0] == versions["LATEST_POSTGRES_VERSION"]:
-                    # Current version already stamped in table - so just continue
-                    print(
-                        "Initialising database - alembic version in database matches latest version."
-                    )
-                else:
-                    # The version in the database doesn't match the current version - so raise an error
-                    raise ValueError(
-                        f"Database revision in alembic_version table ({table_contents[0][0]}) does not match latest revision ({versions['LATEST_POSTGRES_VERSION']}).\n"
-                        "Please run database migration."
-                    )
-            if len(table_contents) > 1:
-                raise ValueError(
-                    "Multiple rows detected in alembic_version table. Database potentially in inconsistent state.\n"
-                    "Migration functionality will not work. Please contact support."
-                )
-        except sqlalchemy.exc.OperationalError:
-            # Error running select, so table doesn't exist - create it and stamp the current version
-            connection.execute(
-                """
-                CREATE TABLE IF NOT EXISTS pepys.alembic_version
-                (
-                version_num VARCHAR(32) NOT NULL,
-                CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
-                );
-            """
-            )
-            connection.execute(
-                """
-                INSERT INTO alembic_version (version_num)
-                VALUES ({id})""".format(
-                    id=versions["LATEST_POSTGRES_VERSION"]
-                )
-            )
 
 
 def cache_results_if_not_none(cache_attribute):
