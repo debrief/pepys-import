@@ -188,13 +188,12 @@ def is_schema_created(engine, db_type):
         # SQLite can have either 78 tables (if using the new version of mod_spatialite)
         # or 76 (with the old stable release of mod_spatialite). The version of mod_spatialiate
         # that is installed can vary by platform - so both numbers should be acceptable.
-        if len(table_names) == 78 or len(table_names) == 76:
+        if len(table_names) == 79 or len(table_names) == 78:
             return True
     else:
         table_names = inspector.get_table_names(schema="pepys")
         print(f"{len(table_names)=}")
-        # # We expect 42 tables on Postgres
-        if len(table_names) == 40:
+        if len(table_names) == 41:
             return True
 
     if len(table_names) == 0:
