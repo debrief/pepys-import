@@ -185,10 +185,10 @@ def is_schema_created(engine, db_type):
     if db_type == "sqlite":
         table_names = inspector.get_table_names()
         print(f"{len(table_names)=}")
-        # SQLite can have either 78 tables (if using the new version of mod_spatialite)
-        # or 76 (with the old stable release of mod_spatialite). The version of mod_spatialiate
+        print(f"{sorted(table_names)=}")
+        # SQLite table numbers vary by mod_spatialite. The version of mod_spatialiate
         # that is installed can vary by platform - so both numbers should be acceptable.
-        if len(table_names) == 79 or len(table_names) == 78:
+        if len(table_names) >= 77 and len(table_names) <= 79:
             return True
     else:
         table_names = inspector.get_table_names(schema="pepys")
