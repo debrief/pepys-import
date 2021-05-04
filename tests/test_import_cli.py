@@ -433,7 +433,6 @@ class TestImportWithMissingDBTableSQLite(unittest.TestCase):
         output = temp_output.getvalue()
 
         print(output)
-        assert "Please run database migration to bring tables up to date." in output
         assert "does not match the expected number of tables." in output
 
 
@@ -497,7 +496,6 @@ class TestImportWithMissingDBTablePostgres(unittest.TestCase):
         output = temp_output.getvalue()
         print(output)
 
-        assert "Please run database migration to bring tables up to date." in output
         assert "does not match the expected number of tables." in output
 
 
