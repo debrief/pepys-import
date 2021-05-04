@@ -407,3 +407,105 @@ def test_skip_validation(patched_prompt):
     # Remove created db
     if os.path.exists(db_path):
         os.remove(db_path)
+
+
+class TestImportWithMissingDBTableSQLite(unittest.TestCase):
+    def setUp(self):
+        ds = DataStore("", "", "", 0, "cli_import_test.db", db_type="sqlite")
+        ds.initialise()
+
+    def tearDown(self):
+        os.remove("cli_import_test.db")
+
+    @patch("pepys_import.utils.error_handling.custom_print_formatted_text", side_effect=side_effect)
+    def test_import_with_missing_db_field(self, patched_print):
+        conn = sqlite3.connect("cli_import_test.db")
+        load_spatialite(conn, None)
+
+        # We want to DROP a column from the States table, but SQLite doesn't support this
+        # so we drop the table and create a new table instead
+        conn.execute("DROP TABLE Geometries;")
+        conn.close()
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            process(path=DATA_PATH, archive=False, db="cli_import_test.db", resolver="default")
+        output = temp_output.getvalue()
+
+        assert "Please run database migration to bring tables up to date." in output
+        assert "does not match the expected number of tables." in output
+
+
+@pytest.mark.postgres
+class TestImportWithMissingDBTablePostgres(unittest.TestCase):
+    def setUp(self):
+        self.postgres = None
+        self.store = None
+        try:
+            self.postgres = Postgresql(
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
+            )
+        except RuntimeError:
+            print("PostgreSQL database couldn't be created! Test is skipping.")
+            return
+        try:
+            self.store = DataStore(
+                db_name="test",
+                db_host="localhost",
+                db_username="postgres",
+                db_password="postgres",
+                db_port=55527,
+                db_type="postgres",
+            )
+            self.store.initialise()
+        except OperationalError:
+            print("Database schema and data population failed! Test is skipping.")
+
+    def tearDown(self):
+        try:
+            self.postgres.stop()
+        except AttributeError:
+            return
+
+    @patch("pepys_import.utils.error_handling.custom_print_formatted_text", side_effect=side_effect)
+    def test_import_with_missing_db_field(self, patched_print):
+        conn = pg8000.connect(user="postgres", password="postgres", database="test", port=55527)
+        cursor = conn.cursor()
+        # Alter table to drop heading column
+        cursor.execute('DROP TABLE "pepys"."Geometries";')
+
+        conn.commit()
+        conn.close()
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            db_config = {
+                "name": "test",
+                "host": "localhost",
+                "username": "postgres",
+                "password": "postgres",
+                "port": 55527,
+                "type": "postgres",
+            }
+
+            process(path=DATA_PATH, archive=False, db=db_config, resolver="default")
+        output = temp_output.getvalue()
+
+        assert "Please run database migration to bring tables up to date." in output
+        assert "does not match the expected number of tables." in output
+
+
+class TestImportWithEmptyDBSQLite(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        os.remove("cli_import_test_empty_db.db")
+
+    @patch("pepys_import.utils.error_handling.custom_print_formatted_text", side_effect=side_effect)
+    def test_import_with_missing_db_field(self, patched_print):
+        process(path=DATA_PATH, archive=False, db="cli_import_test_empty_db.db", resolver="default")
