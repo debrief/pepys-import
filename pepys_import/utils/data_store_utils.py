@@ -8,6 +8,7 @@ from math import ceil
 
 import sqlalchemy
 from sqlalchemy import func, inspect, select
+from sqlalchemy.sql.expression import text
 
 from paths import MIGRATIONS_DIRECTORY
 from pepys_import.resolvers.command_line_input import create_menu
@@ -238,13 +239,8 @@ def create_alembic_version_table(engine, db_type):
 
                 if len(table_contents) == 0:
                     # Table exists but no version number row, so stamp it:
-                    connection.execute(
-                        """
-                    INSERT INTO alembic_version (version_num)
-                    VALUES ('{id}')""".format(
-                            id=versions["LATEST_SQLITE_VERSION"]
-                        )
-                    )
+                    sql = text("INSERT INTO alembic_version (version_num) VALUES (:id)")
+                    connection.execute(sql, id=versions["LATEST_SQLITE_VERSION"])
                 if len(table_contents) == 1:
                     if table_contents[0][0] == versions["LATEST_SQLITE_VERSION"]:
                         # Current version already stamped in table - so just continue
@@ -274,13 +270,8 @@ def create_alembic_version_table(engine, db_type):
                     );
                 """
                 )
-                connection.execute(
-                    """
-                    INSERT INTO alembic_version (version_num)
-                    VALUES ('{id}')""".format(
-                        id=versions["LATEST_SQLITE_VERSION"]
-                    )
-                )
+                sql = text("INSERT INTO alembic_version (version_num) VALUES (:id)")
+                connection.execute(sql, id=versions["LATEST_SQLITE_VERSION"])
     else:
         # Try and get all entries from alembic_version table
         try:
@@ -291,13 +282,8 @@ def create_alembic_version_table(engine, db_type):
 
                 if len(table_contents) == 0:
                     # Table exists but no version number row, so stamp it:
-                    connection.execute(
-                        """
-                    INSERT INTO pepys.alembic_version (version_num)
-                    VALUES ('{id}')""".format(
-                            id=versions["LATEST_POSTGRES_VERSION"]
-                        )
-                    )
+                    sql = text("INSERT INTO pepys.alembic_version (version_num) VALUES (:id)")
+                    connection.execute(sql, id=versions["LATEST_POSTGRES_VERSION"])
                 if len(table_contents) == 1:
                     if table_contents[0][0] == versions["LATEST_POSTGRES_VERSION"]:
                         # Current version already stamped in table - so just continue
@@ -327,13 +313,8 @@ def create_alembic_version_table(engine, db_type):
                     );
                 """
                 )
-                connection.execute(
-                    """
-                    INSERT INTO alembic_version (version_num)
-                    VALUES ('{id}')""".format(
-                        id=versions["LATEST_POSTGRES_VERSION"]
-                    )
-                )
+                sql = text("INSERT INTO pepys.alembic_version (version_num) VALUES (:id)")
+                connection.execute(sql, id=versions["LATEST_POSTGRES_VERSION"])
 
 
 def cache_results_if_not_none(cache_attribute):
