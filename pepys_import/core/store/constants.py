@@ -1,4 +1,5 @@
 HOSTED_BY = "HostedBy"
+CONFIG_OPTIONS = "ConfigOptions"
 SENSOR = "Sensors"
 SERIES = "Series"
 WARGAME = "Wargames"
