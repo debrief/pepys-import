@@ -418,7 +418,7 @@ class TestImportWithMissingDBTableSQLite(unittest.TestCase):
         os.remove("cli_import_test.db")
 
     @patch("pepys_import.utils.error_handling.custom_print_formatted_text", side_effect=side_effect)
-    def test_import_with_missing_db_field(self, patched_print):
+    def test_import_with_missing_db_table(self, patched_print):
         conn = sqlite3.connect("cli_import_test.db")
         load_spatialite(conn, None)
 
@@ -432,6 +432,7 @@ class TestImportWithMissingDBTableSQLite(unittest.TestCase):
             process(path=DATA_PATH, archive=False, db="cli_import_test.db", resolver="default")
         output = temp_output.getvalue()
 
+        print(output)
         assert "Please run database migration to bring tables up to date." in output
         assert "does not match the expected number of tables." in output
 
@@ -472,7 +473,7 @@ class TestImportWithMissingDBTablePostgres(unittest.TestCase):
             return
 
     @patch("pepys_import.utils.error_handling.custom_print_formatted_text", side_effect=side_effect)
-    def test_import_with_missing_db_field(self, patched_print):
+    def test_import_with_missing_db_table(self, patched_print):
         conn = pg8000.connect(user="postgres", password="postgres", database="test", port=55527)
         cursor = conn.cursor()
         # Alter table to drop heading column
@@ -494,6 +495,7 @@ class TestImportWithMissingDBTablePostgres(unittest.TestCase):
 
             process(path=DATA_PATH, archive=False, db=db_config, resolver="default")
         output = temp_output.getvalue()
+        print(output)
 
         assert "Please run database migration to bring tables up to date." in output
         assert "does not match the expected number of tables." in output
