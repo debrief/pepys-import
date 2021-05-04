@@ -20,3 +20,4 @@ sqlalchemy-utils==0.36.8
 Flask
 Flask-CacheBuster
 flask-cors
+Twisted
