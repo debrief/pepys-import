@@ -50,7 +50,7 @@ class ConfigOption(BasePostGIS):
     table_type_id = 37
     _default_preview_fields = ["name", "value"]
 
-    config_option_id = Column(UUID, primary_key=True, default=uuid4)
+    config_option_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
         String(150),
         CheckConstraint("name <> ''", name="ck_ConfigOption_name"),
