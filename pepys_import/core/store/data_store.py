@@ -26,6 +26,7 @@ from pepys_import.utils.data_store_utils import (
     create_alembic_version_table,
     create_spatial_tables_for_postgres,
     create_spatial_tables_for_sqlite,
+    create_stored_procedures_for_postgres,
     import_from_csv,
     lowercase_or_none,
 )
@@ -202,6 +203,7 @@ class DataStore:
             try:
                 create_spatial_tables_for_postgres(self.engine)
                 BasePostGIS.metadata.create_all(self.engine)
+                create_stored_procedures_for_postgres(self.engine)
             except OperationalError as e:
                 print(
                     f"SQL Exception details: {e}\n\n"
