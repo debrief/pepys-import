@@ -432,7 +432,6 @@ class TestImportWithMissingDBTableSQLite(unittest.TestCase):
             process(path=DATA_PATH, archive=False, db="cli_import_test.db", resolver="default")
         output = temp_output.getvalue()
 
-        print(output)
         assert "does not match the expected number of tables." in output
 
 
@@ -494,7 +493,6 @@ class TestImportWithMissingDBTablePostgres(unittest.TestCase):
 
             process(path=DATA_PATH, archive=False, db=db_config, resolver="default")
         output = temp_output.getvalue()
-        print(output)
 
         assert "does not match the expected number of tables." in output
 
