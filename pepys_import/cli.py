@@ -3,6 +3,7 @@ import os
 from importlib import reload
 
 from prompt_toolkit import prompt
+from sqlalchemy.inspection import inspect
 
 import config
 from pepys_import.core.store.data_store import DataStore
@@ -132,7 +133,18 @@ def process(
             missing_data_resolver=resolver_obj,
         )
     if not is_schema_created(data_store.engine, data_store.db_type):
-        data_store.initialise()
+        # The number of tables don't match the expected number of tables, so check
+        # whether the number of tables is actually zero. If so, initialise, if not
+        # then stop and give error.
+        inspector = inspect(data_store.engine)
+        table_names = inspector.get_table_names()
+        if len(table_names) == 0:
+            data_store.initialise()
+        else:
+            print(
+                f"The number of tables in the database ({len(table_names)}) does not match the expected number of tables.\n"
+                "Please run database migration."
+            )
     with data_store.session_scope():
         if data_store.is_empty():
             data_store.populate_reference()
