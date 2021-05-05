@@ -1,6 +1,9 @@
 moment.locale("en");
 
-const DATETIME_FORMAT = "YYYY-MM-DD HH:mm:ss";
+const DATE_FORMATS = {
+    visavail: "YYYY-MM-DD HH:mm:ss",
+    metadata: "YYYY-MM-DD"
+}
 
 let generatedCharts = false;
 let charts;
@@ -85,8 +88,14 @@ function fetchSerialsMeta() {
 
     const url = new URL(window.location + 'dashboard_metadata');
     const queryParams = new URLSearchParams();
-    queryParams.set('from_date', '2021-01-05');
-    queryParams.set('to_date', '2021-01-05');
+
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    queryParams.set('from_date', moment(yesterday).format(DATE_FORMATS.metadata));
+    queryParams.set('to_date', moment(yesterday).format(DATE_FORMATS.metadata));
+
     url.search = queryParams.toString();
 
     fetch(url)
@@ -178,9 +187,9 @@ function transformParticipant(participant, serial) {
         && s.resp_serial_id === participant.serial_name
     )
     let periods = participantStats.map(s => ([
-            moment(s.resp_start_time).format(DATETIME_FORMAT),
+            moment(s.resp_start_time).format(DATE_FORMATS.visavail),
             Number(s.resp_range_type === "C"),
-            moment(s.resp_end_time).format(DATETIME_FORMAT),
+            moment(s.resp_end_time).format(DATE_FORMATS.visavail),
         ]));
     participant.coverage = periods;
 
