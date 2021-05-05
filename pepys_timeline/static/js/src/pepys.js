@@ -1,8 +1,9 @@
 moment.locale("en");
 
 const DATE_FORMATS = {
-    visavail: "YYYY-MM-DD HH:mm:ss",
-    metadata: "YYYY-MM-DD"
+  visavail: "YYYY-MM-DD HH:mm:ss",
+  metadata: "YYYY-MM-DD",
+  picker: "DD/MM/YYYY",
 }
 
 let generatedCharts = false;
@@ -10,6 +11,40 @@ let charts;
 let chartOptions;
 let serialsMeta;
 let serialsStats;
+
+const today = new Date();
+const yesterday = new Date();
+yesterday.setDate(today.getDate() - 1);
+
+let fromDate = moment(yesterday);
+let toDate = moment(yesterday);
+
+$(function() {
+  $('input[name="date-range"]').daterangepicker({
+    opens: 'left',
+    locale: {
+      format: DATE_FORMATS.picker,
+    },
+    startDate: fromDate.format(DATE_FORMATS.picker),
+    endDate: toDate.format(DATE_FORMATS.picker),
+    buttonClasses: "btn",
+    applyButtonClasses: "btn-success",
+    cancelButtonClasses: "btn-danger",
+
+  }, function(newFromDate, newToDate, label) {
+    fromDate = newFromDate;
+    toDate = newToDate;
+  });
+
+  $('input[name="date-range"]').on('apply.daterangepicker', function(ev, picker) {
+      $(this).val(
+        picker.startDate.format(DATE_FORMATS.picker)
+        + ' - '
+        + picker.endDate.format(DATE_FORMATS.picker)
+      );
+      fetchSerialsMeta();
+  });
+});
 
 function resetState() {
     charts = [];
@@ -66,11 +101,6 @@ const defaultOptions = {
     }
 };
 
-
-function onDataReceived() {
-    console.log('on data received');
-}
-
 function fetchConfig() {
     fetch('/config')
         .then(response => response.json())
@@ -84,19 +114,15 @@ function fetchConfig() {
 }
 
 function fetchSerialsMeta() {
-    console.log('fetching serials metadata');
-
     const url = new URL(window.location + 'dashboard_metadata');
     const queryParams = new URLSearchParams();
-
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
-
-    queryParams.set('from_date', moment(yesterday).format(DATE_FORMATS.metadata));
-    queryParams.set('to_date', moment(yesterday).format(DATE_FORMATS.metadata));
-
+    const fromDateStr = fromDate.format(DATE_FORMATS.metadata);
+    const toDateStr = toDate.format(DATE_FORMATS.metadata);
+    queryParams.set('from_date', fromDateStr);
+    queryParams.set('to_date', toDateStr);
     url.search = queryParams.toString();
+
+    console.log(`Fetching serials metadata from ${fromDateStr} to ${toDateStr}.`);
 
     fetch(url)
       .then(response => response.json())
