@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+		<title>Pepys Coverage</title>
+		<link
+            href="{{ url_for('static', filename='css/bootstrap-material-design.min.css') }}"
+            rel="stylesheet"
+            type='text/css'
+        >
+
+		<!-- Visavail.js 1.5.0 style -->
+		<link
+			href="{{ url_for('static', filename='css/visavail.min.css') }}"
+			rel='stylesheet'
+			type='text/css'
+		>
+		<link
+			href="{{ url_for('static', filename='css/style.css') }}"
+			rel='stylesheet'
+			type='text/css'
+		>
+
+		<!-- font-awesome -->
+		<link
+            href="{{ url_for('static', filename='css/fonts/fontawesome_5_15_3/css/all.css') }}"
+            rel='stylesheet'
+            type='text/css'
+        >
+
+		<link
+			rel="shortcut icon"
+			href="{{ url_for('static', filename='image/favicon.ico') }}"
+		>
+
+	</head>
+
+	<body>
+		<nav class="navbar navbar-light bg-dark">
+			<span class="navbar-brand text-light">
+				<h2>Pepys Coverage</h2>
+			</span>
+			<button type="button" class="btn btn-raised btn-success" id="data-received-button"
+				onclick="onDataReceived()">
+				Data Received
+			</button>
+		</nav>
+		<div class="m-4"></div>
+		<div class="container-fluid">
+			<div id="chart_row" class="row justify-content-center p-2"></div>
+		</div>
+		<!-- Moment 2.22.1 -->
+		<script
+            src="{{ url_for('static', filename='js/vendor/moment-with-locales.min.js') }}"
+            type="text/javascript"
+        >
+        </script>
+		<!-- D3 5.9.2 -->
+		<script src="{{ url_for('static', filename='js/vendor/d3.min.js') }}"></script>
+		<!-- Visavail 1.5.0 -->
+		<script src="{{ url_for('static', filename='js/vendor/visavail.min.js') }}"></script>
+
+		<!-- This has to stay here for templating -->
+		<script type="text/javascript">
+			function getParticipantIconUrl(participant) {
+				return "{{ url_for('static', filename='image/PLATFORM_TYPE.svg') }}".replace(
+					"PLATFORM_TYPE", participant["platform-type"]
+				);
+			}
+		</script>
+
+		<script
+			src="{{ url_for('static', filename='js/src/pepys.js') }}"
+			type="text/javascript"
+		>
+		</script>
+		
+	</body>
+
+</html>

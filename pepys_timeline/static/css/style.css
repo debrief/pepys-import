@@ -1,0 +1,119 @@
+/* vietnamese */
+@font-face {
+    font-family: 'Mulish';
+    src:  url('./fonts/Mulish/Mulish-VariableFont_wght.ttf') format('truetype')
+  }
+
+body {
+    background-color: lightgray  !important;
+    font-family: "Mulish", "Helvetica", Arial, sans-serif !important;
+}
+
+h1,h2,h3,h4,h5 {
+    font-weight: 900 !important;
+}
+
+.visavail {
+    box-shadow: 0 -5px 6px 0px rgb(0 0 0 / 30%);
+}
+.visavail .rect_has_no_data {
+    fill: lightgray;
+}
+.visavail .rect_has_no_data:hover {
+    fill: lightgray;
+}
+.visavail .rect_has_data {
+    fill: #636161;
+}
+.visavail .rect_has_data:hover {
+    fill: #636161;
+}
+.horz_grid {
+    opacity: 0;
+}
+.visavail-tooltip {
+    opacity: 0;
+}
+.visavail .ytitle {
+    paint-order: stroke;
+    stroke: #000000;
+    fill: #ffffff;
+    stroke-width: 4px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    text-shadow: #000000 0px 0px 4px;
+    font-size: 18px;
+}
+.visavail .ytitle_icon_image {
+    display: block;
+}
+.visavail .ytitle_icon_background {
+    display: block;
+}
+.merchant {
+    fill: #4287f566 !important;
+}
+.jammer {
+    fill: #f5424866 !important;
+}
+.missile {
+    fill: #f5c84266 !important;
+}
+.visavail .ypercentage {
+  font-size: 16px;
+}
+
+.visavail .ypercentage_red {
+    paint-order: stroke;
+    fill: #dc3545;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.visavail .ypercentage_amber {
+    paint-order: stroke;
+    fill: #ffc107;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.visavail .ypercentage_green {
+    paint-order: stroke;
+    fill: #28a745;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.visavail .ypercentage, .visavail .ytitle {
+    font-family: "Mulish", "Helvetica", Arial, sans-serif !important;
+    font-weight: 900;
+}
+
+.visavail p {
+    margin: 0px !important;
+}
+
+.platform-heading {
+    margin-bottom: 0;
+    text-align: center;
+    line-height: 2;
+    font-weight: bold;
+    border-radius: 0.5em;
+    background-color: #28a745;
+    color: white;
+}
+
+.heading {
+    border: 1px solid gray;
+}
+
+.red {
+    background-color: #dc3545!important;
+    color: #ffffff !important;
+}
+.amber {
+    background-color: #ffc107!important;
+    color: #ffffff !important;
+}
+.green {
+    background-color: #28a745!important;
+    color: #ffffff !important;
+}
