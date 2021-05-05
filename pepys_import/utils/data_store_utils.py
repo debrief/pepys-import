@@ -10,7 +10,7 @@ import sqlalchemy
 from sqlalchemy import func, inspect, select
 from sqlalchemy.sql.expression import text
 
-from paths import MIGRATIONS_DIRECTORY
+from paths import MIGRATIONS_DIRECTORY, PEPYS_IMPORT_DIRECTORY
 from pepys_import.resolvers.command_line_input import create_menu
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.table_name_utils import table_name_to_class_name
@@ -18,6 +18,8 @@ from pepys_import.utils.text_formatting_utils import (
     custom_print_formatted_text,
     format_error_message,
 )
+
+STORED_PROC_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "postgres_stored_procedures")
 
 
 def import_from_csv(data_store, path, files, change_id):
@@ -218,6 +220,20 @@ def create_spatial_tables_for_postgres(engine):
     """
     with engine.connect() as connection:
         connection.execute(query)
+
+
+def create_stored_procedures_for_postgres(engine):
+    stored_procedure_files = [
+        os.path.join(STORED_PROC_PATH, "dashboard_metadata.sql"),
+        os.path.join(STORED_PROC_PATH, "dashboard_stats.sql"),
+    ]
+
+    with engine.begin() as connection:
+        for filename in stored_procedure_files:
+            with open(filename) as f:
+                procedure_definition = f.read()
+
+            connection.execute(procedure_definition)
 
 
 def create_alembic_version_table(engine, db_type):
