@@ -5,9 +5,7 @@ import webbrowser
 from alembic import command
 from alembic.config import Config
 from prompt_toolkit import prompt
-from twisted.internet import reactor
-from twisted.web.server import Site
-from twisted.web.wsgi import WSGIResource
+from waitress import serve
 
 import config
 from paths import ROOT_DIRECTORY
@@ -76,17 +74,17 @@ class AdminShell(BaseShell):
     def do_view_dashboard(self):
         app = create_app()
 
-        print("Running dashboard. Close this window to stop the dashboard server.")
-
-        # Configure the Twisted WSGI server
-        resource = WSGIResource(reactor, reactor.getThreadPool(), app)
-        site = Site(resource)
-        reactor.listenTCP(5000, site)
+        print(
+            "The Pepys timeline dashboard process is now running on: http://localhost:5000.\nA browser window should have "
+            "opened displaying the timeline.\n"
+            "Keep this window open for the server to continue running. The server process can be terminated by "
+            "closing this window."
+        )
 
         # Open the URL in the web browser just before we call run()
         # as the run call is blocking, so nothing else can run after it
         webbrowser.open("http://localhost:5000")
-        reactor.run()
+        serve(app, host="0.0.0.0", port=5000)
 
         # This is the code to run it through the Flask server, which works
         # fine, but prints a big warning message about how it shouldn't be used
