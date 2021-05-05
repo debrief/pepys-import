@@ -1,0 +1,3 @@
+name,description,value
+MessageOfTheDay,Custom message to display in Timeline header,Today's analysis manager is Greta
+TimelineRefreshSecs,Interval between Timeline/Dashboard refresh (Secs),60
