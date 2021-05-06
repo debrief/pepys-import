@@ -22,11 +22,6 @@ h1,h2,h3,h4,h5 {
   margin-bottom: 0;
 }
 
-#data-received-button {
-  font-size: 0.8em;
-  font-weight: bold;
-}
-
 .visavail {
     box-shadow: 0 -5px 6px 0px rgb(0 0 0 / 30%);
 }
