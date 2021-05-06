@@ -72,6 +72,10 @@ class AdminShell(BaseShell):
         self.cfg.attributes["connection"] = data_store.engine
 
     def do_view_dashboard(self):
+        if self.data_store.db_type == "sqlite":
+            print("The Pepys dashboard cannot be used with a SQLite database")
+            return
+
         app = create_app()
 
         print(
