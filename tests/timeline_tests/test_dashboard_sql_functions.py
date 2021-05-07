@@ -197,6 +197,7 @@
 import json
 import os
 import unittest
+from itertools import zip_longest
 
 import psycopg2
 import testing.postgresql
@@ -219,9 +220,6 @@ class TestDashboardStatsQuery(unittest.TestCase):
 
     def setUp(self):
         self.postgresql = testing.postgresql.Postgresql()
-        with psycopg2.connect(**self.postgresql.dsn()) as conn:
-            conn.cursor()
-            conn.commit()
 
     def tearDown(self):
         self.postgresql.stop()
@@ -230,10 +228,42 @@ class TestDashboardStatsQuery(unittest.TestCase):
         with psycopg2.connect(**self.postgresql.dsn()) as conn:
             cursor = conn.cursor()
             populate_data(cursor, TIMELIST)
+
+            # Sample Tests
             rows = fetchrows(cursor, "12:12:12", "15:12:12")
-            self.assertTrue(validate(rows, ["G"], ["12:12:12"]))
+            assert validate(rows, ["G"], ["12:12:12"])
             rows = fetchrows(cursor, "08:00:00", "15:12:12")
-            self.assertTrue(validate(rows, ["G", "C", "G"], ["08:00:00", "09:00:00", "09:00:00"]))
+            assert validate(rows, ["G", "C", "G"], ["08:00:00", "09:00:00", "09:00:00"])
+
+            # Tests for scenario 1[SC1]: No records between SERIAL_START_TIME and SERIAL_END_TIME
+            rows = fetchrows(cursor, "06:00:00", "08:00:00")
+            assert validate(rows, ["G"], ["06:00:00"])
+
+            # Tests for scenario 2[SC2]: One record between SERIAL_START_TIME and SERIAL_END_TIME
+            # a) In the same point as SERIAL_START_TIME
+            rows = fetchrows(cursor, "09:00:00", "10:00:00")
+            assert validate(rows, ["C", "G"], ["09:00:00", "09:00:00"])
+            rows = fetchrows(cursor, "09:00:00", "09:02:00")
+            assert validate(rows, ["C"], ["09:00:00"])
+            # b) In the same point as SERIAL_END_TIME
+            rows = fetchrows(cursor, "08:00:00", "09:00:00")
+            assert validate(rows, ["G", "C"], ["08:00:00", "09:00:00"])
+            rows = fetchrows(cursor, "08:58:00", "09:00:00")
+            assert validate(rows, ["C"], ["08:58:00"])
+            # c) At a point greater than SERIAL_START_TIME and lesser
+            # than SERIAL_END_TIME such that the durations between
+            # SERIAL_START_TIME and pepys."States".time, and
+            # pepys."States".time and SERIAL_END_TIME are
+            # i)   both lesser than GAP_SECONDS
+            rows = fetchrows(cursor, "08:58:00", "09:01:00")
+            assert validate(rows, ["C"], ["08:58:00"])
+            # ii)  lesser, and greater, respectively, than GAP_SECONDS
+            rows = fetchrows(cursor, "08:58:00", "09:09:00")
+            assert validate(rows, ["C", "G"], ["08:58:00", "09:00:00"])
+            # iii) greater, and lesser, respectively, than GAP_SECONDS
+            rows = fetchrows(cursor, "08:55:00", "09:01:00")
+            assert validate(rows, ["G", "C"], ["08:55:00", "09:00:00"])
+            # iv)  both greater than GAP_SECONDS
 
 
 class FilterInputJSON:
@@ -290,7 +320,7 @@ def get_test_case_data(start, end):
 
 
 def validate(rows, rangeTypes, startTimes):
-    for (row, ranget, startt) in zip(rows, rangeTypes, startTimes):
+    for (row, ranget, startt) in zip_longest(rows, rangeTypes, startTimes):
         (rangetype, starttime, endtime, platid, serialid) = row
         if rangetype != ranget or startt != starttime.strftime("%H:%M:%S"):
             print(row, ranget, startt)
