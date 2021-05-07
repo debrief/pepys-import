@@ -209,7 +209,7 @@ SQL_FILE_LOCATION = os.path.join(
 )
 
 SOME_UUID = "54f6d015-8adf-47f4-bf02-33e06fbe0725"
-TIMELIST = ["09:00:00"]
+TIMELIST = ["09:00:00", "17:00:00", "17:01:00", "17:02:00"]
 DATEVAL = "2020-12-12 "
 
 
@@ -264,6 +264,13 @@ class TestDashboardStatsQuery(unittest.TestCase):
             rows = fetchrows(cursor, "08:55:00", "09:01:00")
             assert validate(rows, ["G", "C"], ["08:55:00", "09:00:00"])
             # iv)  both greater than GAP_SECONDS
+            rows = fetchrows(cursor, "08:55:00", "09:05:00")
+            assert validate(rows, ["G", "C", "G"], ["08:55:00", "09:00:00", "09:00:00"])
+            # Tests for Scenario 3 [SC3] with 2 or more record
+            rows = fetchrows(cursor, "16:55:00", "17:05:00")
+            assert validate(rows, ["G", "C", "G"], ["16:55:00", "17:00:00", "17:02:00"])
+            rows = fetchrows(cursor, "17:00:00", "17:05:00")
+            assert validate(rows, ["C", "G"], ["17:00:00", "17:02:00"])
 
 
 class FilterInputJSON:
