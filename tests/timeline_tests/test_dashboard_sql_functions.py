@@ -26,7 +26,7 @@
         and then invert them to find *coverage*
 
         The query is formed by the following CTEs (Common Table Expression)/Subqueries grouped under these 5 heads,
-        the names of which are descriptive.
+        the names of which are self-descriptive.
 
         <<INPUT PARSING CTEs>>
         serial_participants_input_json
@@ -119,6 +119,80 @@
 
         consolidated_coverage:
             This consolidates all the *gaps* identified in the above gap CTEs
+
+
+
+
+        How was it ensured that the list of scenarios described above was exhaustive?
+
+        For *gap*/*coverage* calculation, the following items are considered.(as described previously)
+        a) SERIAL_START_TIME and SERIAL_END_TIME
+        b) GAP_SECONDS
+
+        Let's look at all possible scenarios for any platform one by one.
+
+        #Scenarios with no records
+        Scenario [SC1]: No pepys."States" record between SERIAL_START_TIME and SERIAL_END_TIME
+            In this scenario, the entire duration between SERIAL_START_TIME and SERIAL_END_TIME
+            is to be marked as *gap*. This is handled by participation_sans_activity CTE.
+        CTE: participation_sans_activity
+
+        #Scenarios with exactly one record
+        Scenario [SC2]: One pepys."States" record exists anywhere between SERIAL_START_TIME and
+        SERIAL_START_TIME (both inclusive)
+            In this scenario, the pepys."States" record could be
+                a) In the same point as SERIAL_START_TIME
+                b) In the same point as SERIAL_END_TIME
+                c) At a point greater than SERIAL_START_TIME and lesser
+                     than SERIAL_END_TIME such that the durations between
+                     SERIAL_START_TIME and pepys."States".time, and
+                     pepys."States".time and SERIAL_END_TIME are
+                     i)   both lesser than GAP_SECONDS
+                     ii)  lesser, and greater, respectively, than GAP_SECONDS
+                     iii) greater, and lesser, respectively, than GAP_SECONDS
+                     iv)  both greater than GAP_SECONDS
+            Since there's only one pepys."States" record, there'll not be any *gap* between
+            pepys."States" records.
+            For a) and b), the entire duration will be marked as a *gap* by participation_sans_activity
+            CTE, and the 0 duration coverage will be provided by act_with_same_part_and_gap_start and
+            act_with_same_part_and_gap_end CTEs, respectively.
+            For c), the *gap* or *coverage* sections are determined, respectively, by
+                i)   participation_sans_gap
+                ii)  coverage_at_serial_start, gaps_at_serial_end
+                iii) gaps_at_serial_start, coverage_at_serial_end
+                iv)  gaps_at_serial_start, gaps_at_serial_end
+        CTE: participation_sans_activity, act_with_same_part_and_gap_start, act_with_same_part_and_gap_end,
+            gaps_at_serial_start, gaps_at_serial_end, coverage_at_serial_start, coverage_at_serial_end, and
+            participation_sans_gap
+
+        #Scenarios with 2 or more record
+        Scenario [SC3]: Two or more pepys."States" record exists anywhere between SERIAL_START_TIME and
+        SERIAL_START_TIME (both inclusive and there are no overlaps)
+
+            Since there're 2 or more pepys."States" records, adjacent records can be measured for *gap*.
+
+            If there are *gap*,these will be detected by inner_gaps CTE, and subsequently inverted by inner_coverage CTE
+            to identify *coverage* between the SERIAL_START_TIME and SERIAL_END_TIME for this platform.
+
+            The records nearest to the SERIAL_START_TIME and SERIAL_END_TIME are also checked by
+            gaps_at_serial_start, gaps_at_serial_end
+
+            After all *gap* are identified, the records nearest to the SERIAL_START_TIME and
+            SERIAL_END_TIME are also checked by
+            act_with_same_part_and_gap_start, act_with_same_part_and_gap_end, inner_coverage,
+            coverage_at_serial_start, coverage_at_serial_end
+
+            If there are no *gap*, participation_sans_gap CTE will mark the entire period as *coverage*
+
+        CTE: inner_gaps, inner_coverage, gaps_at_serial_start, gaps_at_serial_end, act_with_same_part_and_gap_start,
+        act_with_same_part_and_gap_end, inner_coverage, coverage_at_serial_start, coverage_at_serial_end
+
+
+
+    B. HOW THIS TEST CASE VALIDATES THE ABOVE LOGIC
+
+        This test case validates the mentioned logic by simulating the three scenarios mentioned above.
+
 """
 import json
 import os
