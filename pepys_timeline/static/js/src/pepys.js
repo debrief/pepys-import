@@ -5,6 +5,9 @@ const DATE_FORMATS = {
   metadata: "YYYY-MM-DD",
   picker: "DD/MM/YYYY",
 }
+const DEFAULT_MESSAGE_OF_THE_DAY = 'Manager of the day: Daisy Duke';
+
+const messageOfTheDayEl = document.getElementById('message-of-the-day');
 
 let generatedCharts = false;
 let charts;
@@ -101,12 +104,20 @@ const defaultOptions = {
     }
 };
 
+function setMessageOfTheDay() {
+  messageOfTheDayEl.textContent = config.MessageOfTheDay || DEFAULT_MESSAGE_OF_THE_DAY;
+}
+
 function fetchConfig() {
     fetch('/config')
         .then(response => response.json())
         .then(response => {
             const { frequency_secs } = response;
+            config = response;
+
             fetchSerialsMeta();
+            setMessageOfTheDay();
+
             setInterval(fetchSerialsMeta, frequency_secs * 1000);
 
         })
