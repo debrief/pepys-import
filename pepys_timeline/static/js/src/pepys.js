@@ -38,8 +38,8 @@ const onTimerSecondsUpdated = (event) => {
   updateCountdownProgress(seconds);
 }
 const onTimerTargetAchieved = () => {
-  fetchSerialsMeta();
   timer.reset();
+  fetchSerialsMeta();
 }
 
 const onTimerReset = (event) => {
