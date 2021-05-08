@@ -1,3 +1,5 @@
+/* eslint-env browser */
+
 moment.locale("en");
 
 const DATE_FORMATS = {
@@ -106,6 +108,19 @@ const defaultOptions = {
 
 function setMessageOfTheDay() {
   messageOfTheDayEl.textContent = config.MessageOfTheDay || DEFAULT_MESSAGE_OF_THE_DAY;
+}
+
+function updateDatetime() {
+  const date = new Date();
+  const dateDiv = document.getElementById('date');
+  const timeDiv = document.getElementById('time');
+  dateDiv.innerHTML = moment(date).format('YYYY / MM / DD');
+  timeDiv.innerHTML = moment(date).format('HH:mm:ss');
+}
+
+function startDatetimeClock() {
+  updateDatetime();
+  setInterval(updateDatetime, 1000);
 }
 
 function fetchConfig() {
@@ -324,5 +339,6 @@ function clearCharts() {
 
 window.onload = (event) => {
   resetState();
+  startDatetimeClock();
   fetchConfig();
 };
