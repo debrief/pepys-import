@@ -211,6 +211,7 @@ SQL_FILE_LOCATION = os.path.join(
 SOME_UUID = "54f6d015-8adf-47f4-bf02-33e06fbe0725"
 TIMELIST = ["09:00:00", "17:00:00", "17:01:00", "17:02:00"]
 DATEVAL = "2020-12-12 "
+GAP_SECONDS = 150
 
 
 class TestDashboardStatsQuery(unittest.TestCase):
@@ -231,46 +232,59 @@ class TestDashboardStatsQuery(unittest.TestCase):
 
             # Sample Tests
             rows = fetchrows(cursor, "12:12:12", "15:12:12")
-            assert validate(rows, ["G"], ["12:12:12"])
+            assert validateStartTimes(rows, ["G"], ["12:12:12"])
+            assert validateEndTimes(rows, ["G"], ["15:12:12"])
             rows = fetchrows(cursor, "08:00:00", "15:12:12")
-            assert validate(rows, ["G", "C", "G"], ["08:00:00", "09:00:00", "09:00:00"])
+            assert validateStartTimes(rows, ["G", "C", "G"], ["08:00:00", "09:00:00", "09:00:00"])
+            assert validateEndTimes(rows, ["G", "C", "G"], ["09:00:00", "09:00:00", "15:12:12"])
 
             # Tests for scenario 1[SC1]: No records between SERIAL_START_TIME and SERIAL_END_TIME
             rows = fetchrows(cursor, "06:00:00", "08:00:00")
-            assert validate(rows, ["G"], ["06:00:00"])
+            assert validateStartTimes(rows, ["G"], ["06:00:00"])
+            assert validateEndTimes(rows, ["G"], ["08:00:00"])
 
             # Tests for scenario 2[SC2]: One record between SERIAL_START_TIME and SERIAL_END_TIME
             # a) In the same point as SERIAL_START_TIME
             rows = fetchrows(cursor, "09:00:00", "10:00:00")
-            assert validate(rows, ["C", "G"], ["09:00:00", "09:00:00"])
+            assert validateStartTimes(rows, ["C", "G"], ["09:00:00", "09:00:00"])
+            assert validateEndTimes(rows, ["C", "G"], ["09:00:00", "10:00:00"])
             rows = fetchrows(cursor, "09:00:00", "09:02:00")
-            assert validate(rows, ["C"], ["09:00:00"])
+            assert validateStartTimes(rows, ["C"], ["09:00:00"])
+            assert validateEndTimes(rows, ["C"], ["09:02:00"])
             # b) In the same point as SERIAL_END_TIME
             rows = fetchrows(cursor, "08:00:00", "09:00:00")
-            assert validate(rows, ["G", "C"], ["08:00:00", "09:00:00"])
+            assert validateStartTimes(rows, ["G", "C"], ["08:00:00", "09:00:00"])
+            assert validateEndTimes(rows, ["G", "C"], ["09:00:00", "09:00:00"])
             rows = fetchrows(cursor, "08:58:00", "09:00:00")
-            assert validate(rows, ["C"], ["08:58:00"])
+            assert validateStartTimes(rows, ["C"], ["08:58:00"])
+            assert validateEndTimes(rows, ["C"], ["09:00:00"])
             # c) At a point greater than SERIAL_START_TIME and lesser
             # than SERIAL_END_TIME such that the durations between
             # SERIAL_START_TIME and pepys."States".time, and
             # pepys."States".time and SERIAL_END_TIME are
             # i)   both lesser than GAP_SECONDS
             rows = fetchrows(cursor, "08:58:00", "09:01:00")
-            assert validate(rows, ["C"], ["08:58:00"])
+            assert validateStartTimes(rows, ["C"], ["08:58:00"])
+            assert validateEndTimes(rows, ["C"], ["09:01:00"])
             # ii)  lesser, and greater, respectively, than GAP_SECONDS
             rows = fetchrows(cursor, "08:58:00", "09:09:00")
-            assert validate(rows, ["C", "G"], ["08:58:00", "09:00:00"])
+            assert validateStartTimes(rows, ["C", "G"], ["08:58:00", "09:00:00"])
+            assert validateEndTimes(rows, ["C", "G"], ["09:00:00", "09:09:00"])
             # iii) greater, and lesser, respectively, than GAP_SECONDS
             rows = fetchrows(cursor, "08:55:00", "09:01:00")
-            assert validate(rows, ["G", "C"], ["08:55:00", "09:00:00"])
+            assert validateStartTimes(rows, ["G", "C"], ["08:55:00", "09:00:00"])
+            assert validateEndTimes(rows, ["G", "C"], ["09:00:00", "09:01:00"])
             # iv)  both greater than GAP_SECONDS
             rows = fetchrows(cursor, "08:55:00", "09:05:00")
-            assert validate(rows, ["G", "C", "G"], ["08:55:00", "09:00:00", "09:00:00"])
+            assert validateStartTimes(rows, ["G", "C", "G"], ["08:55:00", "09:00:00", "09:00:00"])
+            assert validateEndTimes(rows, ["G", "C", "G"], ["09:00:00", "09:00:00", "09:05:00"])
             # Tests for Scenario 3 [SC3] with 2 or more record
             rows = fetchrows(cursor, "16:55:00", "17:05:00")
-            assert validate(rows, ["G", "C", "G"], ["16:55:00", "17:00:00", "17:02:00"])
+            assert validateStartTimes(rows, ["G", "C", "G"], ["16:55:00", "17:00:00", "17:02:00"])
+            assert validateEndTimes(rows, ["G", "C", "G"], ["17:00:00", "17:02:00", "17:05:00"])
             rows = fetchrows(cursor, "17:00:00", "17:05:00")
-            assert validate(rows, ["C", "G"], ["17:00:00", "17:02:00"])
+            assert validateStartTimes(rows, ["C", "G"], ["17:00:00", "17:02:00"])
+            assert validateEndTimes(rows, ["C", "G"], ["17:02:00", "17:05:00"])
 
 
 class FilterInputJSON:
@@ -319,18 +333,27 @@ def get_test_case_data(start, end):
     fij.serial_id = fij.platform_id = SOME_UUID
     fij.start = DATEVAL + start
     fij.end = DATEVAL + end
-    fij.gap_seconds = 150
+    fij.gap_seconds = GAP_SECONDS
     return (
         get_data([fij]),
         '["C","G"]',
     )
 
 
-def validate(rows, rangeTypes, startTimes):
+def validateStartTimes(rows, rangeTypes, startTimes):
     for (row, ranget, startt) in zip_longest(rows, rangeTypes, startTimes):
         (rangetype, starttime, endtime, platid, serialid) = row
         if rangetype != ranget or startt != starttime.strftime("%H:%M:%S"):
             print(row, ranget, startt)
+            return False
+    return True
+
+
+def validateEndTimes(rows, rangeTypes, endTimes):
+    for (row, ranget, endt) in zip_longest(rows, rangeTypes, endTimes):
+        (rangetype, starttime, endtime, platid, serialid) = row
+        if rangetype != ranget or endt != endtime.strftime("%H:%M:%S"):
+            print(row, ranget, endt)
             return False
     return True
 
