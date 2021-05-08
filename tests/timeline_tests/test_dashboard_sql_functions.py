@@ -285,6 +285,9 @@ class TestDashboardStatsQuery(unittest.TestCase):
             rows = fetchrows(cursor, "17:00:00", "17:05:00")
             assert validateStartTimes(rows, ["C", "G"], ["17:00:00", "17:02:00"])
             assert validateEndTimes(rows, ["C", "G"], ["17:02:00", "17:05:00"])
+            rows = fetchrows(cursor, "17:01:00", "17:05:00")
+            assert validateStartTimes(rows, ["C", "G"], ["17:01:00", "17:02:00"])
+            assert validateEndTimes(rows, ["C", "G"], ["17:02:00", "17:05:00"])
 
 
 class FilterInputJSON:
