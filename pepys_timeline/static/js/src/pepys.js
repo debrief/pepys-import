@@ -7,7 +7,7 @@ const DATE_FORMATS = {
   metadata: "YYYY-MM-DD",
   picker: "DD/MM/YYYY",
 }
-const DEFAULT_MESSAGE_OF_THE_DAY = 'Manager of the day: Daisy Duke';
+const DEFAULT_MESSAGE_OF_THE_DAY = 'Message of the day: [PENDING]';
 
 const messageOfTheDayEl = document.getElementById('message-of-the-day');
 
