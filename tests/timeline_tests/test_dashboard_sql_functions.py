@@ -26,7 +26,7 @@
         and then invert them to find *coverage*
 
         The query is formed by the following CTEs (Common Table Expression)/Subqueries grouped under these 5 heads,
-        the names of which are descriptive.
+        the names of which are self-descriptive.
 
         <<INPUT PARSING CTEs>>
         serial_participants_input_json
@@ -119,10 +119,85 @@
 
         consolidated_coverage:
             This consolidates all the *gaps* identified in the above gap CTEs
+
+
+
+
+        How was it ensured that the list of scenarios described above was exhaustive?
+
+        For *gap*/*coverage* calculation, the following items are considered.(as described previously)
+        a) SERIAL_START_TIME and SERIAL_END_TIME
+        b) GAP_SECONDS
+
+        Let's look at all possible scenarios for any platform one by one.
+
+        #Scenarios with no records
+        Scenario [SC1]: No pepys."States" record between SERIAL_START_TIME and SERIAL_END_TIME
+            In this scenario, the entire duration between SERIAL_START_TIME and SERIAL_END_TIME
+            is to be marked as *gap*. This is handled by participation_sans_activity CTE.
+        CTE: participation_sans_activity
+
+        #Scenarios with exactly one record
+        Scenario [SC2]: One pepys."States" record exists anywhere between SERIAL_START_TIME and
+        SERIAL_START_TIME (both inclusive)
+            In this scenario, the pepys."States" record could be
+                a) In the same point as SERIAL_START_TIME
+                b) In the same point as SERIAL_END_TIME
+                c) At a point greater than SERIAL_START_TIME and lesser
+                     than SERIAL_END_TIME such that the durations between
+                     SERIAL_START_TIME and pepys."States".time, and
+                     pepys."States".time and SERIAL_END_TIME are
+                     i)   both lesser than GAP_SECONDS
+                     ii)  lesser, and greater, respectively, than GAP_SECONDS
+                     iii) greater, and lesser, respectively, than GAP_SECONDS
+                     iv)  both greater than GAP_SECONDS
+            Since there's only one pepys."States" record, there'll not be any *gap* between
+            pepys."States" records.
+            For a) and b), the entire duration will be marked as a *gap* by participation_sans_activity
+            CTE, and the 0 duration coverage will be provided by act_with_same_part_and_gap_start and
+            act_with_same_part_and_gap_end CTEs, respectively.
+            For c), the *gap* or *coverage* sections are determined, respectively, by
+                i)   participation_sans_gap
+                ii)  coverage_at_serial_start, gaps_at_serial_end
+                iii) gaps_at_serial_start, coverage_at_serial_end
+                iv)  gaps_at_serial_start, gaps_at_serial_end
+        CTE: participation_sans_activity, act_with_same_part_and_gap_start, act_with_same_part_and_gap_end,
+            gaps_at_serial_start, gaps_at_serial_end, coverage_at_serial_start, coverage_at_serial_end, and
+            participation_sans_gap
+
+        #Scenarios with 2 or more record
+        Scenario [SC3]: Two or more pepys."States" record exists anywhere between SERIAL_START_TIME and
+        SERIAL_START_TIME (both inclusive and there are no overlaps)
+
+            Since there're 2 or more pepys."States" records, adjacent records can be measured for *gap*.
+
+            If there are *gap*,these will be detected by inner_gaps CTE, and subsequently inverted by inner_coverage CTE
+            to identify *coverage* between the SERIAL_START_TIME and SERIAL_END_TIME for this platform.
+
+            The records nearest to the SERIAL_START_TIME and SERIAL_END_TIME are also checked by
+            gaps_at_serial_start, gaps_at_serial_end
+
+            After all *gap* are identified, the records nearest to the SERIAL_START_TIME and
+            SERIAL_END_TIME are also checked by
+            act_with_same_part_and_gap_start, act_with_same_part_and_gap_end, inner_coverage,
+            coverage_at_serial_start, coverage_at_serial_end
+
+            If there are no *gap*, participation_sans_gap CTE will mark the entire period as *coverage*
+
+        CTE: inner_gaps, inner_coverage, gaps_at_serial_start, gaps_at_serial_end, act_with_same_part_and_gap_start,
+        act_with_same_part_and_gap_end, inner_coverage, coverage_at_serial_start, coverage_at_serial_end
+
+
+
+    B. HOW THIS TEST CASE VALIDATES THE ABOVE LOGIC
+
+        This test case validates the mentioned logic by simulating the three scenarios mentioned above.
+
 """
 import json
 import os
 import unittest
+from itertools import zip_longest
 
 import psycopg2
 import pytest
@@ -135,8 +210,9 @@ SQL_FILE_LOCATION = os.path.join(
 )
 
 SOME_UUID = "54f6d015-8adf-47f4-bf02-33e06fbe0725"
-TIMELIST = ["09:00:00"]
+TIMELIST = ["09:00:00", "17:00:00", "17:01:00", "17:02:00"]
 DATEVAL = "2020-12-12 "
+GAP_SECONDS = 150
 
 
 @pytest.mark.postgres
@@ -147,9 +223,6 @@ class TestDashboardStatsQuery(unittest.TestCase):
 
     def setUp(self):
         self.postgresql = testing.postgresql.Postgresql()
-        with psycopg2.connect(**self.postgresql.dsn()) as conn:
-            conn.cursor()
-            conn.commit()
 
     def tearDown(self):
         self.postgresql.stop()
@@ -158,10 +231,65 @@ class TestDashboardStatsQuery(unittest.TestCase):
         with psycopg2.connect(**self.postgresql.dsn()) as conn:
             cursor = conn.cursor()
             populate_data(cursor, TIMELIST)
+
+            # Sample Tests
             rows = fetchrows(cursor, "12:12:12", "15:12:12")
-            self.assertTrue(validate(rows, ["G"], ["12:12:12"]))
+            assert validateStartTimes(rows, ["G"], ["12:12:12"])
+            assert validateEndTimes(rows, ["G"], ["15:12:12"])
             rows = fetchrows(cursor, "08:00:00", "15:12:12")
-            self.assertTrue(validate(rows, ["G", "C", "G"], ["08:00:00", "09:00:00", "09:00:00"]))
+            assert validateStartTimes(rows, ["G", "C", "G"], ["08:00:00", "09:00:00", "09:00:00"])
+            assert validateEndTimes(rows, ["G", "C", "G"], ["09:00:00", "09:00:00", "15:12:12"])
+
+            # Tests for scenario 1[SC1]: No records between SERIAL_START_TIME and SERIAL_END_TIME
+            rows = fetchrows(cursor, "06:00:00", "08:00:00")
+            assert validateStartTimes(rows, ["G"], ["06:00:00"])
+            assert validateEndTimes(rows, ["G"], ["08:00:00"])
+
+            # Tests for scenario 2[SC2]: One record between SERIAL_START_TIME and SERIAL_END_TIME
+            # a) In the same point as SERIAL_START_TIME
+            rows = fetchrows(cursor, "09:00:00", "10:00:00")
+            assert validateStartTimes(rows, ["C", "G"], ["09:00:00", "09:00:00"])
+            assert validateEndTimes(rows, ["C", "G"], ["09:00:00", "10:00:00"])
+            rows = fetchrows(cursor, "09:00:00", "09:02:00")
+            assert validateStartTimes(rows, ["C"], ["09:00:00"])
+            assert validateEndTimes(rows, ["C"], ["09:02:00"])
+            # b) In the same point as SERIAL_END_TIME
+            rows = fetchrows(cursor, "08:00:00", "09:00:00")
+            assert validateStartTimes(rows, ["G", "C"], ["08:00:00", "09:00:00"])
+            assert validateEndTimes(rows, ["G", "C"], ["09:00:00", "09:00:00"])
+            rows = fetchrows(cursor, "08:58:00", "09:00:00")
+            assert validateStartTimes(rows, ["C"], ["08:58:00"])
+            assert validateEndTimes(rows, ["C"], ["09:00:00"])
+            # c) At a point greater than SERIAL_START_TIME and lesser
+            # than SERIAL_END_TIME such that the durations between
+            # SERIAL_START_TIME and pepys."States".time, and
+            # pepys."States".time and SERIAL_END_TIME are
+            # i)   both lesser than GAP_SECONDS
+            rows = fetchrows(cursor, "08:58:00", "09:01:00")
+            assert validateStartTimes(rows, ["C"], ["08:58:00"])
+            assert validateEndTimes(rows, ["C"], ["09:01:00"])
+            # ii)  lesser, and greater, respectively, than GAP_SECONDS
+            rows = fetchrows(cursor, "08:58:00", "09:09:00")
+            assert validateStartTimes(rows, ["C", "G"], ["08:58:00", "09:00:00"])
+            assert validateEndTimes(rows, ["C", "G"], ["09:00:00", "09:09:00"])
+            # iii) greater, and lesser, respectively, than GAP_SECONDS
+            rows = fetchrows(cursor, "08:55:00", "09:01:00")
+            assert validateStartTimes(rows, ["G", "C"], ["08:55:00", "09:00:00"])
+            assert validateEndTimes(rows, ["G", "C"], ["09:00:00", "09:01:00"])
+            # iv)  both greater than GAP_SECONDS
+            rows = fetchrows(cursor, "08:55:00", "09:05:00")
+            assert validateStartTimes(rows, ["G", "C", "G"], ["08:55:00", "09:00:00", "09:00:00"])
+            assert validateEndTimes(rows, ["G", "C", "G"], ["09:00:00", "09:00:00", "09:05:00"])
+            # Tests for Scenario 3 [SC3] with 2 or more record
+            rows = fetchrows(cursor, "16:55:00", "17:05:00")
+            assert validateStartTimes(rows, ["G", "C", "G"], ["16:55:00", "17:00:00", "17:02:00"])
+            assert validateEndTimes(rows, ["G", "C", "G"], ["17:00:00", "17:02:00", "17:05:00"])
+            rows = fetchrows(cursor, "17:00:00", "17:05:00")
+            assert validateStartTimes(rows, ["C", "G"], ["17:00:00", "17:02:00"])
+            assert validateEndTimes(rows, ["C", "G"], ["17:02:00", "17:05:00"])
+            rows = fetchrows(cursor, "17:01:00", "17:05:00")
+            assert validateStartTimes(rows, ["C", "G"], ["17:01:00", "17:02:00"])
+            assert validateEndTimes(rows, ["C", "G"], ["17:02:00", "17:05:00"])
 
 
 class FilterInputJSON:
@@ -210,18 +338,27 @@ def get_test_case_data(start, end):
     fij.serial_id = fij.platform_id = SOME_UUID
     fij.start = DATEVAL + start
     fij.end = DATEVAL + end
-    fij.gap_seconds = 150
+    fij.gap_seconds = GAP_SECONDS
     return (
         get_data([fij]),
         '["C","G"]',
     )
 
 
-def validate(rows, rangeTypes, startTimes):
-    for (row, ranget, startt) in zip(rows, rangeTypes, startTimes):
+def validateStartTimes(rows, rangeTypes, startTimes):
+    for (row, ranget, startt) in zip_longest(rows, rangeTypes, startTimes):
         (rangetype, starttime, endtime, platid, serialid) = row
         if rangetype != ranget or startt != starttime.strftime("%H:%M:%S"):
             print(row, ranget, startt)
+            return False
+    return True
+
+
+def validateEndTimes(rows, rangeTypes, endTimes):
+    for (row, ranget, endt) in zip_longest(rows, rangeTypes, endTimes):
+        (rangetype, starttime, endtime, platid, serialid) = row
+        if rangetype != ranget or endt != endtime.strftime("%H:%M:%S"):
+            print(row, ranget, endt)
             return False
     return True
 
