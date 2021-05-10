@@ -1,5 +1,3 @@
-/*eslint-env browser*/
-
 moment.locale("en");
 
 const DATE_FORMATS = {
@@ -25,6 +23,7 @@ yesterday.setDate(today.getDate() - 1);
 let fromDate = moment(yesterday);
 let toDate = moment(yesterday);
 
+/* eslint-disable-next-line no-undef */
 const timer = new easytimer.Timer();
 
 const defaultOptions = {
@@ -179,7 +178,6 @@ function fetchSerialsMeta() {
       .then(response => response.json())
       .then(response => {
         const { dashboard_metadata } = response;
-        console.log("testing dashboard_metadata", response);
         serialsMeta = dashboard_metadata;
         fetchSerialsStats();
       }
@@ -213,7 +211,6 @@ function fetchSerialsStats() {
   })
     .then(response => response.json())
     .then(response => {
-        console.log("testing dashboard_stats", response);
         const { dashboard_stats } = response;
         serialsStats = dashboard_stats;
         renderCharts();
@@ -240,7 +237,13 @@ function calculatePercentageClass(number) {
 
 function addChartDiv(index, header, headerClass) {
     var newDiv = document.createElement("div");
-    const htmlString = '<div class="card"><div class="card-header text-center '+headerClass+'"><h5>'+header+'</h5></div><div style="overflow: hidden;" class="visavail" id="visavail_container_new_'+index+'"><p id="visavail_graph_new_'+index+'"></p></div></div>';
+    const htmlString = "<div class=\"card\"><div class=\"card-header text-center " +
+        headerClass+ "\"><h5>" +
+        header + "</h5></div><div style=\"overflow: hidden;\" class=\"visavail\" id=\"visavail_container_new_" +
+        index +
+        "\"><p id=\"visavail_graph_new_" +
+        index +
+        "\"></p></div></div>";
     newDiv.innerHTML = htmlString.trim();
     newDiv.classList.add("col-md-3");
     newDiv.classList.add("col-xl-2");
