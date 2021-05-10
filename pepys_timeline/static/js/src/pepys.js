@@ -1,12 +1,55 @@
+/* eslint-env browser */
+
 moment.locale("en");
 
-const DATETIME_FORMAT = "YYYY-MM-DD HH:mm:ss";
+const DATE_FORMATS = {
+  visavail: "YYYY-MM-DD HH:mm:ss",
+  metadata: "YYYY-MM-DD",
+  picker: "DD/MM/YYYY",
+}
+const DEFAULT_MESSAGE_OF_THE_DAY = 'Message of the day: [PENDING]';
+
+const messageOfTheDayEl = document.getElementById('message-of-the-day');
 
 let generatedCharts = false;
 let charts;
 let chartOptions;
 let serialsMeta;
 let serialsStats;
+
+const today = new Date();
+const yesterday = new Date();
+yesterday.setDate(today.getDate() - 1);
+
+let fromDate = moment(yesterday);
+let toDate = moment(yesterday);
+
+$(function() {
+  $('input[name="date-range"]').daterangepicker({
+    opens: 'left',
+    locale: {
+      format: DATE_FORMATS.picker,
+    },
+    startDate: fromDate.format(DATE_FORMATS.picker),
+    endDate: toDate.format(DATE_FORMATS.picker),
+    buttonClasses: "btn",
+    applyButtonClasses: "btn-success",
+    cancelButtonClasses: "btn-danger",
+
+  }, function(newFromDate, newToDate, label) {
+    fromDate = newFromDate;
+    toDate = newToDate;
+  });
+
+  $('input[name="date-range"]').on('apply.daterangepicker', function(ev, picker) {
+      $(this).val(
+        picker.startDate.format(DATE_FORMATS.picker)
+        + ' - '
+        + picker.endDate.format(DATE_FORMATS.picker)
+      );
+      fetchSerialsMeta();
+  });
+});
 
 function resetState() {
     charts = [];
@@ -63,9 +106,21 @@ const defaultOptions = {
     }
 };
 
+function setMessageOfTheDay() {
+  messageOfTheDayEl.textContent = config.MessageOfTheDay || DEFAULT_MESSAGE_OF_THE_DAY;
+}
 
-function onDataReceived() {
-    console.log('on data received');
+function updateDatetime() {
+  const date = new Date();
+  const dateDiv = document.getElementById('date');
+  const timeDiv = document.getElementById('time');
+  dateDiv.innerHTML = moment(date).format('YYYY / MM / DD');
+  timeDiv.innerHTML = moment(date).format('HH:mm:ss');
+}
+
+function startDatetimeClock() {
+  updateDatetime();
+  setInterval(updateDatetime, 1000);
 }
 
 function fetchConfig() {
@@ -73,7 +128,11 @@ function fetchConfig() {
         .then(response => response.json())
         .then(response => {
             const { frequency_secs } = response;
+            config = response;
+
             fetchSerialsMeta();
+            setMessageOfTheDay();
+
             setInterval(fetchSerialsMeta, frequency_secs * 1000);
 
         })
@@ -81,13 +140,15 @@ function fetchConfig() {
 }
 
 function fetchSerialsMeta() {
-    console.log('fetching serials metadata');
-
     const url = new URL(window.location + 'dashboard_metadata');
     const queryParams = new URLSearchParams();
-    queryParams.set('from_date', '2021-01-05');
-    queryParams.set('to_date', '2021-01-05');
+    const fromDateStr = fromDate.format(DATE_FORMATS.metadata);
+    const toDateStr = toDate.format(DATE_FORMATS.metadata);
+    queryParams.set('from_date', fromDateStr);
+    queryParams.set('to_date', toDateStr);
     url.search = queryParams.toString();
+
+    console.log(`Fetching serials metadata from ${fromDateStr} to ${toDateStr}.`);
 
     fetch(url)
       .then(response => response.json())
@@ -178,9 +239,9 @@ function transformParticipant(participant, serial) {
         && s.resp_serial_id === participant.serial_name
     )
     let periods = participantStats.map(s => ([
-            moment(s.resp_start_time).format(DATETIME_FORMAT),
+            moment(s.resp_start_time).format(DATE_FORMATS.visavail),
             Number(s.resp_range_type === "C"),
-            moment(s.resp_end_time).format(DATETIME_FORMAT),
+            moment(s.resp_end_time).format(DATE_FORMATS.visavail),
         ]));
     participant.coverage = periods;
 
@@ -278,5 +339,6 @@ function clearCharts() {
 
 window.onload = (event) => {
   resetState();
+  startDatetimeClock();
   fetchConfig();
 };

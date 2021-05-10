@@ -4,8 +4,21 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Pepys Coverage</title>
+
 		<link
-            href="{{ url_for('static', filename='css/bootstrap-material-design.min.css') }}"
+            href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
+            rel="stylesheet"
+            type='text/css'
+        >
+
+		<link
+            href="{{ url_for('static', filename='css/mdb.min.css') }}"
+            rel="stylesheet"
+            type='text/css'
+        >
+
+		<link
+            href="{{ url_for('static', filename='css/daterangepicker.css') }}"
             rel="stylesheet"
             type='text/css'
         >
@@ -22,13 +35,6 @@
 			type='text/css'
 		>
 
-		<!-- font-awesome -->
-		<link
-            href="{{ url_for('static', filename='css/fonts/fontawesome_5_15_3/css/all.css') }}"
-            rel='stylesheet'
-            type='text/css'
-        >
-
 		<link
 			rel="shortcut icon"
 			href="{{ url_for('static', filename='image/favicon.ico') }}"
@@ -37,29 +43,75 @@
 	</head>
 
 	<body>
-		<nav class="navbar navbar-light bg-dark">
+		<nav class="navbar navbar-light bg-dark pl-4 pr-4">
 			<span class="navbar-brand text-light">
 				<h2>Pepys Coverage</h2>
 			</span>
-			<button type="button" class="btn btn-raised btn-success" id="data-received-button"
-				onclick="onDataReceived()">
-				Data Received
-			</button>
+			<div id="controls">
+				<div class="form-group" id="date-range-form-group">
+				<input type="text" class="form-control" name="date-range" value="" />
+			</div>
+			</div>
 		</nav>
-		<div class="m-4"></div>
+		<div class="m-3"></div>
 		<div class="container-fluid">
+			<div id="summary-row" class="row justify-content-center p-2">
+				<div id="datetime-container" class="col-md-6 summary-outer-container">
+					<div class="summary-inner-container">
+						<h2 id="date"></h2>
+						<h2 id="time"></h2>
+					</div>
+				</div>
+				<div id="message-of-the-day-container" class="col-md-6 summary-outer-container">
+					<div class="summary-inner-container">
+						<h2 id="message-of-the-day"></h2>
+					</div>
+				</div>
+			</div>
 			<div id="chart_row" class="row justify-content-center p-2"></div>
 		</div>
-		<!-- Moment 2.22.1 -->
+
 		<script
-            src="{{ url_for('static', filename='js/vendor/moment-with-locales.min.js') }}"
+            src="{{ url_for('static', filename='js/vendor/jquery.min.js') }}"
             type="text/javascript"
         >
         </script>
-		<!-- D3 5.9.2 -->
-		<script src="{{ url_for('static', filename='js/vendor/d3.min.js') }}"></script>
-		<!-- Visavail 1.5.0 -->
-		<script src="{{ url_for('static', filename='js/vendor/visavail.min.js') }}"></script>
+
+		<script
+            src="{{ url_for('static', filename='js/vendor/popper.min.js') }}"
+            type="text/javascript"
+        >
+        </script>
+
+		<script
+            src="{{ url_for('static', filename='js/vendor/bootstrap.min.js') }}"
+            type="text/javascript"
+        >
+        </script>
+
+		<script
+            src="{{ url_for('static', filename='js/vendor/mdb.min.js') }}"
+            type="text/javascript"
+        >
+        </script>
+
+		<script
+            src="{{ url_for('static', filename='js/vendor/moment.min.js') }}"
+            type="text/javascript"
+        >
+        </script>
+
+		<script
+            src="{{ url_for('static', filename='js/vendor/daterangepicker.min.js') }}"
+            type="text/javascript"
+        >
+        </script>
+
+		<script src="{{ url_for('static', filename='js/vendor/d3.min.js') }}">
+		</script>
+
+		<script src="{{ url_for('static', filename='js/vendor/visavail.min.js') }}">
+		</script>
 
 		<!-- This has to stay here for templating -->
 		<script type="text/javascript">

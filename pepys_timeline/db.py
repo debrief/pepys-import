@@ -9,13 +9,14 @@ from pepys_timeline.queries import DASHBOARD_METADATA_QUERY, DASHBOARD_STATS_QUE
 
 
 def get_db_conn_kwargs():
-    return {
+    db_params = {
         "host": config.DB_HOST,
         "port": config.DB_PORT,
         "database": config.DB_NAME,
         "user": config.DB_USERNAME,
         "password": config.DB_PASSWORD,
     }
+    return db_params
 
 
 def get_dashboard_metadata(from_date: str, to_date: str):
