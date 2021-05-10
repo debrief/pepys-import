@@ -26,6 +26,48 @@ let toDate = moment(yesterday);
 /* eslint-disable-next-line no-undef */
 const timer = new easytimer.Timer();
 
+$(function() {
+  $('input[name="date-range"]').daterangepicker({
+    opens: 'left',
+    locale: {
+      format: DATE_FORMATS.picker,
+    },
+    ranges: {
+        'Today': [moment(), moment()],
+        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+        'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+        'This Week': [moment().startOf('week'), moment().endOf('week')],
+        'Last Week': [
+          moment().subtract(1, 'week').startOf('week'),
+          moment().subtract(1, 'week').endOf('week')
+        ],
+        'This Month': [moment().startOf('month'), moment().endOf('month')],
+        'Last Month': [
+          moment().subtract(1, 'month').startOf('month'),
+          moment().subtract(1, 'month').endOf('month')
+        ]
+    },
+    startDate: fromDate.format(DATE_FORMATS.picker),
+    endDate: toDate.format(DATE_FORMATS.picker),
+    buttonClasses: "btn",
+    applyButtonClasses: "btn-success",
+    cancelButtonClasses: "btn-danger",
+  }, function(newFromDate, newToDate, label) {
+    fromDate = newFromDate;
+    toDate = newToDate;
+  });
+
+  $('input[name="date-range"]').on('apply.daterangepicker', function(ev, picker) {
+      $(this).val(
+        picker.startDate.format(DATE_FORMATS.picker)
+        + ' - '
+        + picker.endDate.format(DATE_FORMATS.picker)
+      );
+      fetchSerialsMeta();
+  });
+});
+
 const defaultOptions = {
     margin: {
         right: 60,
