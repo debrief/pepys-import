@@ -200,6 +200,7 @@ import unittest
 from itertools import zip_longest
 
 import psycopg2
+import pytest
 import testing.postgresql
 
 import paths
@@ -214,6 +215,7 @@ DATEVAL = "2020-12-12 "
 GAP_SECONDS = 150
 
 
+@pytest.mark.postgres
 class TestDashboardStatsQuery(unittest.TestCase):
     """
     This class is to unit test the business logic implemented in dashboard_stats query.
