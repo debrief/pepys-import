@@ -43,18 +43,31 @@
 	</head>
 
 	<body>
-		<nav class="navbar navbar-light bg-dark">
+		<nav class="navbar navbar-light bg-dark pl-4 pr-4">
 			<span class="navbar-brand text-light">
 				<h2>Pepys Coverage</h2>
 			</span>
-		</nav>
-		<nav class="navbar toolbar">
-			<div class="form-group" id="date-range-form-group">
+			<div id="controls">
+				<div class="form-group" id="date-range-form-group">
 				<input type="text" class="form-control" name="date-range" value="" />
 			</div>
+			</div>
 		</nav>
-		<div class="m-4"></div>
+		<div class="m-3"></div>
 		<div class="container-fluid">
+			<div id="summary-row" class="row justify-content-center p-2">
+				<div id="datetime-container" class="col-md-6 summary-outer-container">
+					<div class="summary-inner-container">
+						<h2 id="date"></h2>
+						<h2 id="time"></h2>
+					</div>
+				</div>
+				<div id="message-of-the-day-container" class="col-md-6 summary-outer-container">
+					<div class="summary-inner-container">
+						<h2 id="message-of-the-day"></h2>
+					</div>
+				</div>
+			</div>
 			<div id="chart_row" class="row justify-content-center p-2"></div>
 		</div>
 

@@ -1,3 +1,5 @@
+/* eslint-env browser */
+
 moment.locale("en");
 
 const DATE_FORMATS = {
@@ -5,6 +7,9 @@ const DATE_FORMATS = {
   metadata: "YYYY-MM-DD",
   picker: "DD/MM/YYYY",
 }
+const DEFAULT_MESSAGE_OF_THE_DAY = 'Message of the day: [PENDING]';
+
+const messageOfTheDayEl = document.getElementById('message-of-the-day');
 
 let generatedCharts = false;
 let charts;
@@ -101,12 +106,33 @@ const defaultOptions = {
     }
 };
 
+function setMessageOfTheDay() {
+  messageOfTheDayEl.textContent = config.MessageOfTheDay || DEFAULT_MESSAGE_OF_THE_DAY;
+}
+
+function updateDatetime() {
+  const date = new Date();
+  const dateDiv = document.getElementById('date');
+  const timeDiv = document.getElementById('time');
+  dateDiv.innerHTML = moment(date).format('YYYY / MM / DD');
+  timeDiv.innerHTML = moment(date).format('HH:mm:ss');
+}
+
+function startDatetimeClock() {
+  updateDatetime();
+  setInterval(updateDatetime, 1000);
+}
+
 function fetchConfig() {
     fetch('/config')
         .then(response => response.json())
         .then(response => {
             const { frequency_secs } = response;
+            config = response;
+
             fetchSerialsMeta();
+            setMessageOfTheDay();
+
             setInterval(fetchSerialsMeta, frequency_secs * 1000);
 
         })
@@ -313,5 +339,6 @@ function clearCharts() {
 
 window.onload = (event) => {
   resetState();
+  startDatetimeClock();
   fetchConfig();
 };
