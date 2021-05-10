@@ -125,6 +125,7 @@ import os
 import unittest
 
 import psycopg2
+import pytest
 import testing.postgresql
 
 import paths
@@ -138,6 +139,7 @@ TIMELIST = ["09:00:00"]
 DATEVAL = "2020-12-12 "
 
 
+@pytest.mark.postgres
 class TestDashboardStatsQuery(unittest.TestCase):
     """
     This class is to unit test the business logic implemented in dashboard_stats query.
