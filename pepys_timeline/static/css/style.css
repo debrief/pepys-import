@@ -16,12 +16,23 @@ h1,h2,h3,h4,h5 {
 .navbar {
   display: flex;
   justify-content: space-between;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  height: 60px;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 
 #date-range-form-group {
   margin-bottom: 0;
 }
 
+<<<<<<< HEAD
 #summary-row {
   margin-left: 0;
   margin-right: 0;
@@ -49,6 +60,10 @@ h1,h2,h3,h4,h5 {
 #chart_row {
   margin-left: 0;
   margin-right: 0;
+=======
+#date-range-form-group input {
+  height: 40px;
+>>>>>>> dd9bc3d2... add countdown timer
 }
 
 .visavail {

@@ -11,7 +11,56 @@ const DEFAULT_MESSAGE_OF_THE_DAY = 'Message of the day: [PENDING]';
 
 const messageOfTheDayEl = document.getElementById('message-of-the-day');
 
-let generatedCharts = false;
+const countdownNumberEl = document.getElementById('countdown-number');
+const progress = document.querySelector('#countdown-progress');
+
+const resetCountdown = () => {
+  countdownNumberEl.textContent = config.frequency_secs;
+  updateCountdownProgress(config.frequency_secs);
+}
+
+const updateCountdownProgress = (seconds) => {
+  period = config.frequency_secs;
+  const timePct = period !== 0 ? seconds/period : 0;
+  total = Math.PI * (2 * progress.r.baseVal.value);
+  progressPct = (1 - timePct) * total;
+  progress.style.strokeDashoffset = progressPct;
+}
+
+const onTimerStarted = (event) => {
+  resetCountdown();
+}
+const onTimerSecondsUpdated = (event) => {
+  const { detail } = event;
+  const { timer: t } = detail;
+  const { seconds } = t.getTimeValues();
+  countdownNumberEl.textContent = seconds;
+  updateCountdownProgress(seconds);
+}
+const onTimerTargetAchieved = () => {
+  fetchSerialsMeta();
+  timer.reset();
+}
+
+const onTimerReset = (event) => {
+  resetCountdown();
+}
+
+let timer = new easytimer.Timer();
+timer.addEventListener('secondsUpdated', onTimerSecondsUpdated);
+timer.addEventListener('started', onTimerStarted);
+timer.addEventListener('targetAchieved', onTimerTargetAchieved);
+timer.addEventListener('reset', onTimerReset);
+
+const getTimerConfig = (seconds) => ({
+  startValues: { seconds: seconds },
+  target: { seconds: 0 },
+  precision: 'seconds',
+  countdown: true,
+});
+
+let config;
+let generatedCharts;
 let charts;
 let chartOptions;
 let serialsMeta;
@@ -23,40 +72,6 @@ yesterday.setDate(today.getDate() - 1);
 
 let fromDate = moment(yesterday);
 let toDate = moment(yesterday);
-
-$(function() {
-  $('input[name="date-range"]').daterangepicker({
-    opens: 'left',
-    locale: {
-      format: DATE_FORMATS.picker,
-    },
-    startDate: fromDate.format(DATE_FORMATS.picker),
-    endDate: toDate.format(DATE_FORMATS.picker),
-    buttonClasses: "btn",
-    applyButtonClasses: "btn-success",
-    cancelButtonClasses: "btn-danger",
-
-  }, function(newFromDate, newToDate, label) {
-    fromDate = newFromDate;
-    toDate = newToDate;
-  });
-
-  $('input[name="date-range"]').on('apply.daterangepicker', function(ev, picker) {
-      $(this).val(
-        picker.startDate.format(DATE_FORMATS.picker)
-        + ' - '
-        + picker.endDate.format(DATE_FORMATS.picker)
-      );
-      fetchSerialsMeta();
-  });
-});
-
-function resetState() {
-    charts = [];
-    chartOptions = [];
-    serialsMeta = [];
-    serialsStats = [];
-}
 
 const defaultOptions = {
     margin: {
@@ -123,6 +138,15 @@ function startDatetimeClock() {
   setInterval(updateDatetime, 1000);
 }
 
+function resetState() {
+    config = null;
+    generatedCharts = false;
+    charts = [];
+    chartOptions = [];
+    serialsMeta = [];
+    serialsStats = [];
+}
+
 function fetchConfig() {
     fetch('/config')
         .then(response => response.json())
@@ -133,8 +157,8 @@ function fetchConfig() {
             fetchSerialsMeta();
             setMessageOfTheDay();
 
-            setInterval(fetchSerialsMeta, frequency_secs * 1000);
-
+            const timerConfig = getTimerConfig(frequency_secs);
+            timer.start(timerConfig);
         })
         .catch(err => console.error(err));
 }
@@ -336,6 +360,32 @@ function clearCharts() {
   chartDiv.innerHTML = "";
 }
 
+$(function() {
+  $('input[name="date-range"]').daterangepicker({
+    opens: 'left',
+    locale: {
+      format: DATE_FORMATS.picker,
+    },
+    startDate: fromDate.format(DATE_FORMATS.picker),
+    endDate: toDate.format(DATE_FORMATS.picker),
+    buttonClasses: "btn",
+    applyButtonClasses: "btn-success",
+    cancelButtonClasses: "btn-danger",
+
+  }, function(newFromDate, newToDate, label) {
+    fromDate = newFromDate;
+    toDate = newToDate;
+  });
+
+  $('input[name="date-range"]').on('apply.daterangepicker', function(ev, picker) {
+      $(this).val(
+        picker.startDate.format(DATE_FORMATS.picker)
+        + ' - '
+        + picker.endDate.format(DATE_FORMATS.picker)
+      );
+      onTimerTargetAchieved();
+  });
+});
 
 window.onload = (event) => {
   resetState();
