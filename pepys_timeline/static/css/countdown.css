@@ -10,7 +10,7 @@
 #countdown-number {
   display: inline-block;
   line-height: 40px;
-  color: #2D3436;
+  color: #2d3436;
   font-weight: bold;
   font-size: 12px;
 }
@@ -25,7 +25,7 @@
 
 #countdown-progress {
   fill: transparent;
-  stroke: #2D3436;
+  stroke: #2d3436;
   stroke-dasharray: 100.53;
   stroke-dashoffset: 0;
   stroke-width: 4;
