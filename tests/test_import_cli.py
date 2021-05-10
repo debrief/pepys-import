@@ -422,9 +422,12 @@ class TestImportWithMissingDBTableSQLite(unittest.TestCase):
         conn = sqlite3.connect("cli_import_test.db")
         load_spatialite(conn, None)
 
-        # We want to DROP a column from the States table, but SQLite doesn't support this
-        # so we drop the table and create a new table instead
+        # We need to drop multiple tables, as on Windows we have a different number of tables
+        # to start with, and therefore deleting just one table still comes within the range
+        # of table counts that we count as valid in is_schema_created
+        conn.execute("DROP TABLE Serials;")
         conn.execute("DROP TABLE Geometries;")
+        conn.execute("DROP TABLE PlatformTypes;")
         conn.close()
 
         temp_output = StringIO()
