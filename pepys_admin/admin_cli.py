@@ -51,6 +51,7 @@ class AdminShell(BaseShell):
         super(AdminShell, self).__init__()
         self.data_store = data_store
         self.csv_path = csv_path
+        self.viewer = False
         self.aliases = {
             ".": self.do_exit,
             "1": self.do_initialise,
@@ -196,7 +197,7 @@ class AdminShell(BaseShell):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
         print("-" * 60)
-        shell = ViewDataShell(self.data_store)
+        shell = ViewDataShell(self.data_store, viewer=self.viewer)
         shell.cmdloop()
 
     @staticmethod

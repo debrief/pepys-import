@@ -1746,8 +1746,8 @@ def test_viewer_mode_blank_db(patched_print):
     assert "Database schema does not exist: tables cannot be viewed" in output
 
 
-@patch("pepys_admin.cli.ViewDataShell")
-def test_viewer_mode_valid_db(patched_vds):
+@patch("pepys_admin.cli.ViewerShell")
+def test_viewer_mode_valid_db(patched_vs):
     if os.path.exists("created_db.db"):
         os.remove("created_db.db")
 
@@ -1756,7 +1756,7 @@ def test_viewer_mode_valid_db(patched_vds):
 
     run_shell(path=".", db="created_db.db", training=False, viewer=True)
 
-    patched_vds.assert_called_with(ANY, viewer=True)
+    patched_vs.assert_called()
 
 
 if __name__ == "__main__":
