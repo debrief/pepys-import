@@ -242,8 +242,10 @@ function fetchSerialsMeta() {
         serialsMeta = dashboard_metadata;
         fetchSerialsStats();
       })
-      .catch(error => console.log(error))
-      .finally(() => hideLoadingSpinner());
+      .catch(error => {
+        hideLoadingSpinner();
+        console.log(error);
+      })
 }
 
 function fetchSerialsStats() {
@@ -276,6 +278,10 @@ function fetchSerialsStats() {
         const { dashboard_stats } = response;
         serialsStats = dashboard_stats;
         renderCharts();
+    })
+    .catch(error => {
+      hideLoadingSpinner();
+      console.log(error);
     })
 }
 
@@ -394,7 +400,10 @@ function renderCharts() {
     const transformedSerials = transformSerials();
     console.log("transformedSerials: ", transformedSerials);
 
-    console.log("Generating charts.");
+    hideLoadingSpinner();
+
+    console.log('Generating charts.');
+
     for (i = 0; i < transformedSerials.length; i++) {
         console.log(transformedSerials[i].name, transformedSerials[i].overall_average);
 
