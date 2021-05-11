@@ -1,6 +1,10 @@
-from flask import Blueprint, current_app, render_template, request
+from flask import Blueprint, render_template, request
 
-from pepys_timeline.db import get_dashboard_metadata, get_dashboard_stats
+from pepys_timeline.db import (
+    get_config_options,
+    get_dashboard_metadata,
+    get_dashboard_stats,
+)
 
 api = Blueprint("api", __name__, url_prefix="")
 
@@ -14,7 +18,7 @@ def index():
 
 @api.route("/config")
 def config():
-    return {"frequency_secs": current_app.config["UPDATE_FREQUENCY"]}
+    return {"config_options": get_config_options()}
 
 
 @api.route("/dashboard_metadata")

@@ -5,7 +5,11 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 import config
-from pepys_timeline.queries import DASHBOARD_METADATA_QUERY, DASHBOARD_STATS_QUERY
+from pepys_timeline.queries import (
+    CONFIG_OPTIONS_QUERY,
+    DASHBOARD_METADATA_QUERY,
+    DASHBOARD_STATS_QUERY
+)
 
 
 def get_db_conn_kwargs():
@@ -17,6 +21,15 @@ def get_db_conn_kwargs():
         "password": config.DB_PASSWORD,
     }
     return db_params
+
+
+def get_config_options():
+    db_conn_kwargs = get_db_conn_kwargs()
+    with psycopg2.connect(**db_conn_kwargs) as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as curs:
+            curs.execute(CONFIG_OPTIONS_QUERY)
+            config_options = curs.fetchall()
+    return config_options
 
 
 def get_dashboard_metadata(from_date: str, to_date: str):
