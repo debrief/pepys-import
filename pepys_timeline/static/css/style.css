@@ -66,48 +66,6 @@ h1,h2,h3,h4,h5 {
   width: 100%;
 }
 
-#loading-spinner-container {
-  display: none;
-  justify-content: center;
-  align-items: center;
-}
-
-#loading-spinner {
-  display: inline-block;
-  position: relative;
-  width: 80px;
-  height: 80px;
-}
-#loading-spinner div {
-  box-sizing: border-box;
-  display: block;
-  position: absolute;
-  width: 64px;
-  height: 64px;
-  margin: 8px;
-  border: 8px solid #2d3436;
-  border-radius: 50%;
-  animation: loading-spinner 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-  border-color: #2d3436 transparent transparent transparent;
-}
-#loading-spinner div:nth-child(1) {
-  animation-delay: -0.45s;
-}
-#loading-spinner div:nth-child(2) {
-  animation-delay: -0.3s;
-}
-#loading-spinner div:nth-child(3) {
-  animation-delay: -0.15s;
-}
-@keyframes loading-spinner {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
 .visavail {
     box-shadow: 0 -5px 6px 0px rgb(0 0 0 / 30%);
 }
