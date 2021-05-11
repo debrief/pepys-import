@@ -24,7 +24,6 @@ h1,h2,h3,h4,h5 {
   display: flex;
 }
 
-
 #date-range-form-group {
   margin-bottom: 0;
 }
@@ -61,6 +60,10 @@ h1,h2,h3,h4,h5 {
 #date-range-form-group input {
   height: 40px;
 
+}
+
+#chart-row > * {
+  width: 100%;
 }
 
 .visavail {
