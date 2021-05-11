@@ -16,7 +16,14 @@ h1,h2,h3,h4,h5 {
 .navbar {
   display: flex;
   justify-content: space-between;
+  padding-left: 20px;
+  padding-right: 20px;
 }
+
+#controls {
+  display: flex;
+}
+
 
 #date-range-form-group {
   margin-bottom: 0;
@@ -49,6 +56,11 @@ h1,h2,h3,h4,h5 {
 #chart_row {
   margin-left: 0;
   margin-right: 0;
+}
+
+#date-range-form-group input {
+  height: 40px;
+
 }
 
 .visavail {

@@ -1,5 +1,3 @@
-/* eslint-env browser */
-
 moment.locale("en");
 
 const DATE_FORMATS = {
@@ -11,7 +9,8 @@ const DEFAULT_MESSAGE_OF_THE_DAY = 'Message of the day: [PENDING]';
 
 const messageOfTheDayEl = document.getElementById('message-of-the-day');
 
-let generatedCharts = false;
+let config;
+let generatedCharts;
 let charts;
 let chartOptions;
 let serialsMeta;
@@ -24,39 +23,8 @@ yesterday.setDate(today.getDate() - 1);
 let fromDate = moment(yesterday);
 let toDate = moment(yesterday);
 
-$(function() {
-  $('input[name="date-range"]').daterangepicker({
-    opens: 'left',
-    locale: {
-      format: DATE_FORMATS.picker,
-    },
-    startDate: fromDate.format(DATE_FORMATS.picker),
-    endDate: toDate.format(DATE_FORMATS.picker),
-    buttonClasses: "btn",
-    applyButtonClasses: "btn-success",
-    cancelButtonClasses: "btn-danger",
-
-  }, function(newFromDate, newToDate, label) {
-    fromDate = newFromDate;
-    toDate = newToDate;
-  });
-
-  $('input[name="date-range"]').on('apply.daterangepicker', function(ev, picker) {
-      $(this).val(
-        picker.startDate.format(DATE_FORMATS.picker)
-        + ' - '
-        + picker.endDate.format(DATE_FORMATS.picker)
-      );
-      fetchSerialsMeta();
-  });
-});
-
-function resetState() {
-    charts = [];
-    chartOptions = [];
-    serialsMeta = [];
-    serialsStats = [];
-}
+/* eslint-disable-next-line no-undef */
+const timer = new easytimer.Timer();
 
 const defaultOptions = {
     margin: {
@@ -84,10 +52,9 @@ const defaultOptions = {
     y_title_tooltip: {
         enabled: false
     },
-
     icon: {
-        class_has_data: 'fas fa-fw fa-check',
-        class_has_no_data: 'fas fa-fw fa-exclamation-circle'
+        classHasData: "fas fa-fw fa-check",
+        classHasNoData: "fas fa-fw fa-exclamation-circle"
     },
     responsive: {
         enabled: false,
@@ -123,8 +90,65 @@ function startDatetimeClock() {
   setInterval(updateDatetime, 1000);
 }
 
+const countdownNumberEl = document.getElementById("countdown-number");
+const progress = document.querySelector("#countdown-progress");
+
+const updateCountdownProgress = (seconds) => {
+  const period = config.frequency_secs;
+  const timePct = period !== 0 ? seconds/period : 0;
+  const total = Math.PI * (2 * progress.r.baseVal.value);
+  const progressPct = (1 - timePct) * total;
+  progress.style.strokeDashoffset = progressPct;
+}
+
+const resetCountdown = () => {
+  countdownNumberEl.textContent = config.frequency_secs;
+  updateCountdownProgress(config.frequency_secs);
+}
+
+const onTimerStarted = (event) => {
+  resetCountdown();
+}
+const onTimerSecondsUpdated = (event) => {
+  const { detail } = event;
+  const { timer: t } = detail;
+  const { seconds } = t.getTimeValues();
+  countdownNumberEl.textContent = seconds;
+  updateCountdownProgress(seconds);
+}
+
+const onTimerTargetAchieved = () => {
+  timer.reset();
+  fetchSerialsMeta();
+}
+
+const onTimerReset = (event) => {
+  resetCountdown();
+}
+
+const getTimerConfig = (seconds) => ({
+  startValues: { seconds },
+  target: { seconds: 0 },
+  precision: "seconds",
+  countdown: true,
+});
+
+timer.addEventListener("secondsUpdated", onTimerSecondsUpdated);
+timer.addEventListener("started", onTimerStarted);
+timer.addEventListener("targetAchieved", onTimerTargetAchieved);
+timer.addEventListener("reset", onTimerReset);
+
+function resetState() {
+    config = null;
+    generatedCharts = false;
+    charts = [];
+    chartOptions = [];
+    serialsMeta = [];
+    serialsStats = [];
+}
+
 function fetchConfig() {
-    fetch('/config')
+    fetch("/config")
         .then(response => response.json())
         .then(response => {
             const { frequency_secs } = response;
@@ -133,19 +157,19 @@ function fetchConfig() {
             fetchSerialsMeta();
             setMessageOfTheDay();
 
-            setInterval(fetchSerialsMeta, frequency_secs * 1000);
-
+            const timerConfig = getTimerConfig(frequency_secs);
+            timer.start(timerConfig);
         })
         .catch(err => console.error(err));
 }
 
 function fetchSerialsMeta() {
-    const url = new URL(window.location + 'dashboard_metadata');
+    const url = new URL(window.location + "dashboard_metadata");
     const queryParams = new URLSearchParams();
     const fromDateStr = fromDate.format(DATE_FORMATS.metadata);
     const toDateStr = toDate.format(DATE_FORMATS.metadata);
-    queryParams.set('from_date', fromDateStr);
-    queryParams.set('to_date', toDateStr);
+    queryParams.set("from_date", fromDateStr);
+    queryParams.set("to_date", toDateStr);
     url.search = queryParams.toString();
 
     console.log(`Fetching serials metadata from ${fromDateStr} to ${toDateStr}.`);
@@ -154,7 +178,6 @@ function fetchSerialsMeta() {
       .then(response => response.json())
       .then(response => {
         const { dashboard_metadata } = response;
-        console.log('testing dashboard_metadata', response);
         serialsMeta = dashboard_metadata;
         fetchSerialsStats();
       }
@@ -174,12 +197,12 @@ function fetchSerialsStats() {
     .map(stripParticipant);
   const rangeTypes = ["G", "C"];
 
-  const url = new URL(window.location + 'dashboard_stats');
+  const url = new URL(window.location + "dashboard_stats");
 
   fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json'
+      "Content-Type": "application/json"
     },
     body: JSON.stringify({
       serial_participants: serialParticipants,
@@ -188,7 +211,6 @@ function fetchSerialsStats() {
   })
     .then(response => response.json())
     .then(response => {
-        console.log('testing dashboard_stats', response);
         const { dashboard_stats } = response;
         serialsStats = dashboard_stats;
         renderCharts();
@@ -210,16 +232,22 @@ function calculatePercentageClass(number) {
         default:
             return "ypercentage";
 
-    };
+    }
 }
 
-function addChartDiv(index, header, header_class) {
-    var newDiv = document.createElement('div');
-    htmlString = '<div class="card"><div class="card-header text-center '+header_class+'"><h5>'+header+'</h5></div><div style="overflow: hidden;" class="visavail" id="visavail_container_new_'+index+'"><p id="visavail_graph_new_'+index+'"></p></div></div>'
+function addChartDiv(index, header, headerClass) {
+    var newDiv = document.createElement("div");
+    const htmlString = "<div class=\"card\"><div class=\"card-header text-center " +
+        headerClass+ "\"><h5>" +
+        header + "</h5></div><div style=\"overflow: hidden;\" class=\"visavail\" id=\"visavail_container_new_" +
+        index +
+        "\"><p id=\"visavail_graph_new_" +
+        index +
+        "\"></p></div></div>";
     newDiv.innerHTML = htmlString.trim();
-    newDiv.classList.add("col-md-3")
-    newDiv.classList.add("col-xl-2")
-    newDiv.classList.add("p-1")
+    newDiv.classList.add("col-md-3");
+    newDiv.classList.add("col-xl-2");
+    newDiv.classList.add("p-1");
 
     var chartDiv = document.getElementById("chart_row");
     chartDiv.appendChild(newDiv);
@@ -304,9 +332,9 @@ function transformSerials() {
 function renderCharts() {
     clearCharts();
     const transformedSerials = transformSerials();
-    console.log('transformedSerials: ', transformedSerials);
+    console.log("transformedSerials: ", transformedSerials);
 
-    console.log('Generating charts.');
+    console.log("Generating charts.");
     for (i = 0; i < transformedSerials.length; i++) {
         console.log(transformedSerials[i].name, transformedSerials[i].overall_average);
 
@@ -331,11 +359,37 @@ function renderCharts() {
 }
 
 function clearCharts() {
-  console.log('Clearing charts.');
+  console.log("Clearing charts.");
   var chartDiv = document.getElementById("chart_row");
   chartDiv.innerHTML = "";
 }
 
+$(function() {
+  $('input[name="date-range"]').daterangepicker({
+    opens: "left",
+    locale: {
+      format: DATE_FORMATS.picker,
+    },
+    startDate: fromDate.format(DATE_FORMATS.picker),
+    endDate: toDate.format(DATE_FORMATS.picker),
+    buttonClasses: "btn",
+    applyButtonClasses: "btn-success",
+    cancelButtonClasses: "btn-danger",
+
+  }, function(newFromDate, newToDate, label) {
+    fromDate = newFromDate;
+    toDate = newToDate;
+  });
+
+  $('input[name="date-range"]').on("apply.daterangepicker", function(ev, picker) {
+      $(this).val(
+        picker.startDate.format(DATE_FORMATS.picker)
+        + " - "
+        + picker.endDate.format(DATE_FORMATS.picker)
+      );
+      onTimerTargetAchieved();
+  });
+});
 
 window.onload = (event) => {
   resetState();
