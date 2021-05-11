@@ -226,14 +226,17 @@ def create_stored_procedures_for_postgres(engine):
     stored_procedure_files = [
         os.path.join(STORED_PROC_PATH, "dashboard_metadata.sql"),
         os.path.join(STORED_PROC_PATH, "dashboard_stats.sql"),
+        os.path.join(STORED_PROC_PATH, "Comments_for.sql"),
+        os.path.join(STORED_PROC_PATH, "Contacts_for.sql"),
+        os.path.join(STORED_PROC_PATH, "Datafiles_for.sql"),
+        os.path.join(STORED_PROC_PATH, "States_for.sql"),
     ]
 
     with engine.begin() as connection:
         for filename in stored_procedure_files:
             with open(filename) as f:
                 procedure_definition = f.read()
-
-            connection.execute(procedure_definition)
+            connection.execute(sqlalchemy.text(procedure_definition))
 
 
 def create_alembic_version_table(engine, db_type):
