@@ -152,6 +152,7 @@ class MaintenanceGUI:
             "Serials",
             "WargameParticipants",
             "SerialParticipants",
+            "ConfigOptions",
         ]
         measurement_tables = sorted(
             [mc.__tablename__ for mc in self.data_store.meta_classes[TableTypes.MEASUREMENT]]

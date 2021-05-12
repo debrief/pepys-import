@@ -197,6 +197,14 @@ function initTimer() {
   timer.addEventListener("reset", onTimerReset);
 }
 
+function showLoadingSpinner() {
+  document.getElementById('loading-spinner-container').style.display = 'flex';
+}
+
+function hideLoadingSpinner() {
+  document.getElementById('loading-spinner-container').style.display = 'none';
+}
+
 function fetchConfig() {
     fetch("/config")
         .then(response => response.json())
@@ -224,14 +232,20 @@ function fetchSerialsMeta() {
 
     console.log(`Fetching serials metadata from ${fromDateStr} to ${toDateStr}.`);
 
+    clearCharts();
+    showLoadingSpinner();
+
     fetch(url)
       .then(response => response.json())
       .then(response => {
         const { dashboard_metadata } = response;
         serialsMeta = dashboard_metadata;
         fetchSerialsStats();
-      }
-    )
+      })
+      .catch(error => {
+        hideLoadingSpinner();
+        console.log(error);
+      })
 }
 
 function fetchSerialsStats() {
@@ -264,6 +278,10 @@ function fetchSerialsStats() {
         const { dashboard_stats } = response;
         serialsStats = dashboard_stats;
         renderCharts();
+    })
+    .catch(error => {
+      hideLoadingSpinner();
+      console.log(error);
     })
 }
 
@@ -299,8 +317,8 @@ function addChartDiv(index, header, headerClass) {
     newDiv.classList.add("col-xl-2");
     newDiv.classList.add("p-1");
 
-    var chartDiv = document.getElementById("chart_row");
-    chartDiv.appendChild(newDiv);
+    var chartContainer = document.getElementById("chart-container");
+    chartContainer.appendChild(newDiv);
 }
 
 function sortParticipants(p1, p2) {
@@ -379,11 +397,13 @@ function transformSerials() {
 }
 
 function renderCharts() {
-    clearCharts();
     const transformedSerials = transformSerials();
     console.log("transformedSerials: ", transformedSerials);
 
-    console.log("Generating charts.");
+    hideLoadingSpinner();
+
+    console.log('Generating charts.');
+
     for (i = 0; i < transformedSerials.length; i++) {
         console.log(transformedSerials[i].name, transformedSerials[i].overall_average);
 
@@ -408,9 +428,9 @@ function renderCharts() {
 }
 
 function clearCharts() {
-  console.log("Clearing charts.");
-  var chartDiv = document.getElementById("chart_row");
-  chartDiv.textContent = "";
+  console.log('Clearing charts.');
+  var chartContainer = document.getElementById("chart-container");
+  chartContainer.innerHTML = "";
 }
 
 $(function() {
