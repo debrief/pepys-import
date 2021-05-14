@@ -1,5 +1,7 @@
 /* eslint-env browser */
 /* eslint no-undef: "error" */
+/* eslint no-console: "error" */
+/* eslint arrow-parens: ["error", "as-needed"] */
 /* global moment */
 /* global easytimer */
 
@@ -16,6 +18,7 @@ const DEFAULT_CONFIG = {
   MessageOfTheDay: "Message of the day: [PENDING]",
 };
 
+let timer;
 let config;
 let generatedCharts;
 let charts;
@@ -110,28 +113,6 @@ function resetCountdown() {
   updateCountdownProgress(config.TimelineRefreshSecs);
 }
 
-function onTimerStarted(event) {
-  resetCountdown();
-}
-
-function onTimerSecondsUpdated(event) {
-  const countdownNumberEl = document.getElementById("countdown-number");
-  const { detail } = event;
-  const { timer: t } = detail;
-  const { seconds } = t.getTimeValues();
-  countdownNumberEl.textContent = seconds;
-  updateCountdownProgress(seconds);
-}
-
-function onTimerTargetAchieved() {
-  timer.reset();
-  fetchConfig();
-}
-
-function onTimerReset(event) {
-  resetCountdown();
-}
-
 function getTimerConfig(seconds) {
   return {
     startValues: { seconds },
@@ -142,6 +123,7 @@ function getTimerConfig(seconds) {
 }
 
 function resetState() {
+    timer = null;
     config = DEFAULT_CONFIG;
     generatedCharts = false;
     charts = [];
@@ -192,38 +174,36 @@ function initDateRange() {
   });
 }
 
-function initTimer() {
-  timer = new easytimer.Timer();
-  timer.addEventListener("secondsUpdated", onTimerSecondsUpdated);
-  timer.addEventListener("started", onTimerStarted);
-  timer.addEventListener("targetAchieved", onTimerTargetAchieved);
-  timer.addEventListener("reset", onTimerReset);
-}
-
 function initMessageOfTheDay() {
   setMessageOfTheDay();
 }
 
 function showLoadingSpinner() {
-  document.getElementById('loading-spinner-container').style.display = 'flex';
+  document.getElementById("loading-spinner-container").style.display = "flex";
 }
 
 function hideLoadingSpinner() {
-  document.getElementById('loading-spinner-container').style.display = 'none';
+  document.getElementById("loading-spinner-container").style.display = "none";
 }
 
 function setError(error) {
   const { message, code } = error;
   document.getElementById("error").textContent = message;
-  document.getElementById("error-container").style.display = 'flex';
-  document.getElementById("chart-row").style.display = 'none';
+  document.getElementById("error-container").style.display = "flex";
+  document.getElementById("chart-row").style.display = "none";
 
 }
 
 function resetBackendError() {
-  document.getElementById("error").textContent = '';
-  document.getElementById("error-container").style.display = 'none';
-  document.getElementById("chart-row").style.display = 'flex';
+  document.getElementById("error").textContent = "";
+  document.getElementById("error-container").style.display = "none";
+  document.getElementById("chart-row").style.display = "flex";
+}
+
+function clearCharts() {
+  console.log("Clearing charts.");
+  var chartContainer = document.getElementById("chart-container");
+  chartContainer.innerHTML = "";
 }
 
 function beforeRequest() {
@@ -238,14 +218,14 @@ function fetchConfig() {
     fetch("/config")
         .then(response => response.json())
         .then(response => {
-            const { config_options, error } = response;
+            const { config_options: configOptions, error } = response;
             if (error) {
-              console.log('Error fetching config: ', error);
+              console.log("Error fetching config: ", error);
               setError(error);
               hideLoadingSpinner();
             }
             else {
-              const newConfig = Object.fromEntries(config_options.map(o => ([o.name, o.value])));
+              const newConfig = Object.fromEntries(configOptions.map((o) => ([o.name, o.value])));
 
               if (newConfig.TimelineRefreshSecs !== config.TimelineRefreshSecs) {
                 timer.stop();
@@ -260,7 +240,7 @@ function fetchConfig() {
         })
         .catch(error => {
         hideLoadingSpinner();
-        console.log(error);
+        console.error(error);
       })
 }
 
@@ -280,7 +260,7 @@ function fetchSerialsMeta() {
       .then(response => {
         const { dashboard_metadata, error } = response;
         if (error) {
-          console.log('Error fetching serials: ', error);
+          console.log("Error fetching serials: ", error);
           setError(error);
           hideLoadingSpinner();
         }
@@ -289,7 +269,7 @@ function fetchSerialsMeta() {
           if (!serialsMeta.filter(m => m.record_type === "SERIALS").length) {
             hideLoadingSpinner();
             setError({
-              message: 'No serials found for specified date range.'
+              message: "No serials found for specified date range."
             })
           }
           else {
@@ -299,7 +279,7 @@ function fetchSerialsMeta() {
       })
       .catch(error => {
         hideLoadingSpinner();
-        console.log(error);
+        console.error(error);
       })
 }
 
@@ -332,7 +312,7 @@ function fetchSerialsStats() {
     .then(response => {
         const { dashboard_stats, error } = response;
         if (error) {
-          console.log('Error fetching serials: ', error);
+          console.log("Error fetching serials: ", error);
           setError(error);
           hideLoadingSpinner();
         }
@@ -343,7 +323,7 @@ function fetchSerialsStats() {
     })
     .catch(error => {
       hideLoadingSpinner();
-      console.log(error);
+      console.error(error);
     })
 }
 
@@ -464,7 +444,7 @@ function renderCharts() {
 
     hideLoadingSpinner();
 
-    console.log('Generating charts.');
+    console.log("Generating charts.");
 
     for (i = 0; i < transformedSerials.length; i++) {
         console.log(transformedSerials[i].name, transformedSerials[i].overall_average);
@@ -489,10 +469,34 @@ function renderCharts() {
     }
 }
 
-function clearCharts() {
-  console.log('Clearing charts.');
-  var chartContainer = document.getElementById("chart-container");
-  chartContainer.innerHTML = "";
+function onTimerStarted(event) {
+  resetCountdown();
+}
+
+function onTimerSecondsUpdated(event) {
+  const countdownNumberEl = document.getElementById("countdown-number");
+  const { detail } = event;
+  const { timer: t } = detail;
+  const { seconds } = t.getTimeValues();
+  countdownNumberEl.textContent = seconds;
+  updateCountdownProgress(seconds);
+}
+
+function onTimerTargetAchieved() {
+  timer.reset();
+  fetchConfig();
+}
+
+function onTimerReset(event) {
+  resetCountdown();
+}
+
+function initTimer() {
+  timer = new easytimer.Timer();
+  timer.addEventListener("secondsUpdated", onTimerSecondsUpdated);
+  timer.addEventListener("started", onTimerStarted);
+  timer.addEventListener("targetAchieved", onTimerTargetAchieved);
+  timer.addEventListener("reset", onTimerReset);
 }
 
 $(function() {
