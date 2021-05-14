@@ -10,11 +10,11 @@ const DATE_FORMATS = {
   metadata: "YYYY-MM-DD",
   picker: "DD/MM/YYYY",
 }
-const DEFAULT_MESSAGE_OF_THE_DAY = "Message of the day: [PENDING]";
 
-const countdownNumberEl = document.getElementById("countdown-number");
-const progress = document.querySelector("#countdown-progress");
-const messageOfTheDayEl = document.getElementById("message-of-the-day");
+const DEFAULT_CONFIG = {
+  TimelineRefreshSecs: 60,
+  MessageOfTheDay: "Message of the day: [PENDING]",
+};
 
 let config;
 let generatedCharts;
@@ -30,9 +30,7 @@ yesterday.setDate(today.getDate() - 1);
 let fromDate = moment(yesterday);
 let toDate = moment(yesterday);
 
-const timer = new easytimer.Timer();
-
-const defaultOptions = {
+const DEFAULT_OPTIONS = {
     margin: {
         right: 60,
         left: 50,
@@ -80,7 +78,8 @@ const defaultOptions = {
 };
 
 function setMessageOfTheDay() {
-  messageOfTheDayEl.textContent = config.MessageOfTheDay || DEFAULT_MESSAGE_OF_THE_DAY;
+  const messageOfTheDayEl = document.getElementById("message-of-the-day");
+  messageOfTheDayEl.textContent = config.MessageOfTheDay;
 }
 
 function updateDatetime() {
@@ -97,6 +96,7 @@ function startDatetimeClock() {
 }
 
 function updateCountdownProgress(seconds) {
+  const progress = document.querySelector("#countdown-progress");
   const period = config.TimelineRefreshSecs;
   const timePct = period !== 0 ? seconds/period : 0;
   const total = Math.PI * (2 * progress.r.baseVal.value);
@@ -105,6 +105,7 @@ function updateCountdownProgress(seconds) {
 }
 
 function resetCountdown() {
+  const countdownNumberEl = document.getElementById("countdown-number");
   countdownNumberEl.textContent = config.TimelineRefreshSecs;
   updateCountdownProgress(config.TimelineRefreshSecs);
 }
@@ -114,6 +115,7 @@ function onTimerStarted(event) {
 }
 
 function onTimerSecondsUpdated(event) {
+  const countdownNumberEl = document.getElementById("countdown-number");
   const { detail } = event;
   const { timer: t } = detail;
   const { seconds } = t.getTimeValues();
@@ -123,7 +125,7 @@ function onTimerSecondsUpdated(event) {
 
 function onTimerTargetAchieved() {
   timer.reset();
-  fetchSerialsMeta();
+  fetchConfig();
 }
 
 function onTimerReset(event) {
@@ -140,7 +142,7 @@ function getTimerConfig(seconds) {
 }
 
 function resetState() {
-    config = null;
+    config = DEFAULT_CONFIG;
     generatedCharts = false;
     charts = [];
     chartOptions = [];
@@ -191,10 +193,15 @@ function initDateRange() {
 }
 
 function initTimer() {
+  timer = new easytimer.Timer();
   timer.addEventListener("secondsUpdated", onTimerSecondsUpdated);
   timer.addEventListener("started", onTimerStarted);
   timer.addEventListener("targetAchieved", onTimerTargetAchieved);
   timer.addEventListener("reset", onTimerReset);
+}
+
+function initMessageOfTheDay() {
+  setMessageOfTheDay();
 }
 
 function showLoadingSpinner() {
@@ -205,20 +212,56 @@ function hideLoadingSpinner() {
   document.getElementById('loading-spinner-container').style.display = 'none';
 }
 
+function setError(error) {
+  const { message, code } = error;
+  document.getElementById("error").textContent = message;
+  document.getElementById("error-container").style.display = 'flex';
+  document.getElementById("chart-row").style.display = 'none';
+
+}
+
+function resetBackendError() {
+  document.getElementById("error").textContent = '';
+  document.getElementById("error-container").style.display = 'none';
+  document.getElementById("chart-row").style.display = 'flex';
+}
+
+function beforeRequest() {
+  clearCharts();
+  resetBackendError();
+  showLoadingSpinner();
+}
+
 function fetchConfig() {
+    beforeRequest();
+
     fetch("/config")
         .then(response => response.json())
         .then(response => {
-            const { config_options } = response;
-            config = Object.fromEntries(config_options.map(o => ([o.name, o.value])));
+            const { config_options, error } = response;
+            if (error) {
+              console.log('Error fetching config: ', error);
+              setError(error);
+              hideLoadingSpinner();
+            }
+            else {
+              const newConfig = Object.fromEntries(config_options.map(o => ([o.name, o.value])));
 
-            fetchSerialsMeta();
-            setMessageOfTheDay();
+              if (newConfig.TimelineRefreshSecs !== config.TimelineRefreshSecs) {
+                timer.stop();
+                timer.start(getTimerConfig(newConfig.TimelineRefreshSecs));
+              }
 
-            const timerConfig = getTimerConfig(config.TimelineRefreshSecs);
-            timer.start(timerConfig);
+              config = newConfig;
+
+              fetchSerialsMeta();
+              setMessageOfTheDay();
+            }
         })
-        .catch(err => console.error(err));
+        .catch(error => {
+        hideLoadingSpinner();
+        console.log(error);
+      })
 }
 
 function fetchSerialsMeta() {
@@ -232,15 +275,27 @@ function fetchSerialsMeta() {
 
     console.log(`Fetching serials metadata from ${fromDateStr} to ${toDateStr}.`);
 
-    clearCharts();
-    showLoadingSpinner();
-
     fetch(url)
       .then(response => response.json())
       .then(response => {
-        const { dashboard_metadata } = response;
-        serialsMeta = dashboard_metadata;
-        fetchSerialsStats();
+        const { dashboard_metadata, error } = response;
+        if (error) {
+          console.log('Error fetching serials: ', error);
+          setError(error);
+          hideLoadingSpinner();
+        }
+        else {
+          serialsMeta = dashboard_metadata;
+          if (!serialsMeta.filter(m => m.record_type === "SERIALS").length) {
+            hideLoadingSpinner();
+            setError({
+              message: 'No serials found for specified date range.'
+            })
+          }
+          else {
+            fetchSerialsStats();
+          }
+        }
       })
       .catch(error => {
         hideLoadingSpinner();
@@ -275,9 +330,16 @@ function fetchSerialsStats() {
   })
     .then(response => response.json())
     .then(response => {
-        const { dashboard_stats } = response;
-        serialsStats = dashboard_stats;
-        renderCharts();
+        const { dashboard_stats, error } = response;
+        if (error) {
+          console.log('Error fetching serials: ', error);
+          setError(error);
+          hideLoadingSpinner();
+        }
+        else {
+          serialsStats = dashboard_stats;
+          renderCharts();
+        }
     })
     .catch(error => {
       hideLoadingSpinner();
@@ -412,7 +474,7 @@ function renderCharts() {
             continue;
         }
 
-        chartOptions.push({...defaultOptions});
+        chartOptions.push({...DEFAULT_OPTIONS});
         addChartDiv(
             i + 1,
             transformedSerials[i].name,
@@ -437,6 +499,8 @@ $(function() {
   resetState();
   initDateRange();
   initTimer();
+  initMessageOfTheDay();
   startDatetimeClock();
+  timer.start(getTimerConfig(config.TimelineRefreshSecs));
   fetchConfig();
 });

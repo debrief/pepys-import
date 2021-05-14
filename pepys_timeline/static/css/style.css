@@ -28,14 +28,22 @@ h1,h2,h3,h4,h5 {
   margin-bottom: 0;
 }
 
+.row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
 #summary-row {
   margin-left: 0;
   margin-right: 0;
 }
 
+#summary-row > div {
+  height: 150px;
+}
+
 .summary-outer-container {
   padding: 5px;
-  height: 150px;
   display: flex;
 }
 
@@ -52,11 +60,6 @@ h1,h2,h3,h4,h5 {
 }
 
 
-#chart_row {
-  margin-left: 0;
-  margin-right: 0;
-}
-
 #date-range-form-group input {
   height: 40px;
 
@@ -64,6 +67,11 @@ h1,h2,h3,h4,h5 {
 
 #chart-row > * {
   width: 100%;
+}
+
+#error-container {
+  display: none;
+  min-height: calc(100vh - 300px);
 }
 
 .visavail {

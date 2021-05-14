@@ -5,10 +5,25 @@ from pepys_timeline.db import (
     get_dashboard_metadata,
     get_dashboard_stats,
 )
+from pepys_timeline.exceptions import (
+    DatabaseConnectionError, DatabaseQueryError
+)
+from pepys_timeline.utils import make_error_response
+
 
 api = Blueprint("api", __name__, url_prefix="")
 
 MISSING_PARAMS_MSG = "missing parameter(s)"
+
+
+@api.app_errorhandler(DatabaseConnectionError)
+def handle_db_conn_error(err):
+    return make_error_response(message=str(err))
+
+
+@api.app_errorhandler(DatabaseQueryError)
+def handle_db_query_error(err):
+    return make_error_response(message=str(err))
 
 
 @api.route("/")
