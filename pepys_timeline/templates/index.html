@@ -42,6 +42,12 @@
         >
 
 		<link
+            href="{{ url_for('static', filename='css/loading-spinner.css') }}"
+            rel="stylesheet"
+            type='text/css'
+        >
+
+		<link
 			rel="shortcut icon"
 			href="{{ url_for('static', filename='image/favicon.ico') }}"
 		>
@@ -80,6 +86,17 @@
 				</div>
 			</div>
 			<div id="chart_row" class="row justify-content-center p-2"></div>
+				<div id="loading-spinner-container">
+					<div id="loading-spinner">
+						<div></div>
+						<div></div>
+						<div></div>
+						<div></div>
+					</div>
+				</div>
+				<div id="chart-container" class="row justify-content-center p-2">
+				</div>
+			</div>
 		</div>
 
 		<script
