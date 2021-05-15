@@ -97,7 +97,7 @@ function startDatetimeClock() {
 }
 
 function updateCountdownProgress(seconds) {
-  const period = config.frequency_secs;
+  const period = config.TimelineRefreshSecs;
   const timePct = period !== 0 ? seconds/period : 0;
   const total = Math.PI * (2 * progress.r.baseVal.value);
   const progressPct = (1 - timePct) * total;
@@ -105,8 +105,8 @@ function updateCountdownProgress(seconds) {
 }
 
 function resetCountdown() {
-  countdownNumberEl.textContent = config.frequency_secs;
-  updateCountdownProgress(config.frequency_secs);
+  countdownNumberEl.textContent = config.TimelineRefreshSecs;
+  updateCountdownProgress(config.TimelineRefreshSecs);
 }
 
 function onTimerStarted(event) {
@@ -209,13 +209,13 @@ function fetchConfig() {
     fetch("/config")
         .then(response => response.json())
         .then(response => {
-            const { frequency_secs } = response;
-            config = response;
+            const { config_options } = response;
+            config = Object.fromEntries(config_options.map(o => ([o.name, o.value])));
 
             fetchSerialsMeta();
             setMessageOfTheDay();
 
-            const timerConfig = getTimerConfig(frequency_secs);
+            const timerConfig = getTimerConfig(config.TimelineRefreshSecs);
             timer.start(timerConfig);
         })
         .catch(err => console.error(err));
