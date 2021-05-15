@@ -132,47 +132,6 @@ function resetState() {
     serialsStats = [];
 }
 
-function initDateRange() {
-  $("input[name=\"date-range\"]").daterangepicker({
-    opens: "left",
-    locale: {
-      format: DATE_FORMATS.picker,
-    },
-    ranges: {
-        "Today": [moment(), moment()],
-        "Yesterday": [moment().subtract(1, "days"), moment().subtract(1, "days")],
-        "Last 7 Days": [moment().subtract(6, "days"), moment()],
-        "Last 30 Days": [moment().subtract(29, "days"), moment()],
-        "This Week": [moment().startOf("week"), moment().endOf("week")],
-        "Last Week": [
-          moment().subtract(1, "week").startOf("week"),
-          moment().subtract(1, "week").endOf("week")
-        ],
-        "This Month": [moment().startOf("month"), moment().endOf("month")],
-        "Last Month": [
-          moment().subtract(1, "month").startOf("month"),
-          moment().subtract(1, "month").endOf("month")
-        ]
-    },
-    startDate: fromDate.format(DATE_FORMATS.picker),
-    endDate: toDate.format(DATE_FORMATS.picker),
-    buttonClasses: "btn",
-    applyButtonClasses: "btn-success",
-    cancelButtonClasses: "btn-danger",
-  }, function(newFromDate, newToDate, label) {
-    fromDate = newFromDate;
-    toDate = newToDate;
-  });
-
-  $("input[name=\"date-range\"]").on("apply.daterangepicker", function(ev, picker) {
-      $(this).val(
-        picker.startDate.format(DATE_FORMATS.picker)
-        + " - "
-        + picker.endDate.format(DATE_FORMATS.picker)
-      );
-      onTimerTargetAchieved();
-  });
-}
 
 function initMessageOfTheDay() {
   setMessageOfTheDay();
@@ -225,7 +184,7 @@ function fetchConfig() {
               hideLoadingSpinner();
             }
             else {
-              const newConfig = Object.fromEntries(configOptions.map((o) => ([o.name, o.value])));
+              const newConfig = Object.fromEntries(configOptions.map(o => ([o.name, o.value])));
 
               if (newConfig.TimelineRefreshSecs !== config.TimelineRefreshSecs) {
                 timer.stop();
@@ -258,14 +217,14 @@ function fetchSerialsMeta() {
     fetch(url)
       .then(response => response.json())
       .then(response => {
-        const { dashboard_metadata, error } = response;
+        const { dashboard_metadata: dashboardMeta, error } = response;
         if (error) {
           console.log("Error fetching serials: ", error);
           setError(error);
           hideLoadingSpinner();
         }
         else {
-          serialsMeta = dashboard_metadata;
+          serialsMeta = dashboardMeta;
           if (!serialsMeta.filter(m => m.record_type === "SERIALS").length) {
             hideLoadingSpinner();
             setError({
@@ -310,14 +269,14 @@ function fetchSerialsStats() {
   })
     .then(response => response.json())
     .then(response => {
-        const { dashboard_stats, error } = response;
+        const { dashboard_stats: dashboardStats, error } = response;
         if (error) {
           console.log("Error fetching serials: ", error);
           setError(error);
           hideLoadingSpinner();
         }
         else {
-          serialsStats = dashboard_stats;
+          serialsStats = dashboardStats;
           renderCharts();
         }
     })
@@ -421,7 +380,7 @@ function transformSerials() {
     const transformedData = serials.map(serial => {
         let currSerialParticipants = participants
           .filter(p => p.serial_id === serial.serial_id)
-          .sort(sortParticipants)
+          .sort(sortParticipants);
         currSerialParticipants = currSerialParticipants.map(p => transformParticipant(p, serial));
         serial.participants = currSerialParticipants;
         serial["overall_average"] = currSerialParticipants.length
@@ -446,7 +405,7 @@ function renderCharts() {
 
     console.log("Generating charts.");
 
-    for (i = 0; i < transformedSerials.length; i++) {
+    for (let i = 0; i < transformedSerials.length; i++) {
         console.log(transformedSerials[i].name, transformedSerials[i].overall_average);
 
         if (!transformedSerials[i].includeInTimeline) {
@@ -497,6 +456,48 @@ function initTimer() {
   timer.addEventListener("started", onTimerStarted);
   timer.addEventListener("targetAchieved", onTimerTargetAchieved);
   timer.addEventListener("reset", onTimerReset);
+}
+
+function initDateRange() {
+  $("input[name=\"date-range\"]").daterangepicker({
+    opens: "left",
+    locale: {
+      format: DATE_FORMATS.picker,
+    },
+    ranges: {
+        "Today": [moment(), moment()],
+        "Yesterday": [moment().subtract(1, "days"), moment().subtract(1, "days")],
+        "Last 7 Days": [moment().subtract(6, "days"), moment()],
+        "Last 30 Days": [moment().subtract(29, "days"), moment()],
+        "This Week": [moment().startOf("week"), moment().endOf("week")],
+        "Last Week": [
+          moment().subtract(1, "week").startOf("week"),
+          moment().subtract(1, "week").endOf("week")
+        ],
+        "This Month": [moment().startOf("month"), moment().endOf("month")],
+        "Last Month": [
+          moment().subtract(1, "month").startOf("month"),
+          moment().subtract(1, "month").endOf("month")
+        ]
+    },
+    startDate: fromDate.format(DATE_FORMATS.picker),
+    endDate: toDate.format(DATE_FORMATS.picker),
+    buttonClasses: "btn",
+    applyButtonClasses: "btn-success",
+    cancelButtonClasses: "btn-danger",
+  }, function(newFromDate, newToDate, label) {
+    fromDate = newFromDate;
+    toDate = newToDate;
+  });
+
+  $("input[name=\"date-range\"]").on("apply.daterangepicker", function(ev, picker) {
+      $(this).val(
+        picker.startDate.format(DATE_FORMATS.picker)
+        + " - "
+        + picker.endDate.format(DATE_FORMATS.picker)
+      );
+      onTimerTargetAchieved();
+  });
 }
 
 $(function() {
