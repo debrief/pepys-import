@@ -1,9 +1,3 @@
-/* eslint-env browser */
-/* eslint no-undef: "error" */
-/* eslint no-console: "error" */
-/* eslint arrow-parens: ["error", "as-needed"] */
-/* global moment */
-/* global easytimer */
 
 moment.locale("en");
 
@@ -20,7 +14,6 @@ const DEFAULT_CONFIG = {
 
 let timer;
 let config;
-let generatedCharts;
 let charts;
 let chartOptions;
 let serialsMeta;
@@ -75,9 +68,6 @@ const DEFAULT_OPTIONS = {
         enabled: true,
         custom_percentage: true
     },
-    responsive: {
-        enabled: true
-    }
 };
 
 function setMessageOfTheDay() {
@@ -125,7 +115,6 @@ function getTimerConfig(seconds) {
 function resetState() {
     timer = null;
     config = DEFAULT_CONFIG;
-    generatedCharts = false;
     charts = [];
     chartOptions = [];
     serialsMeta = [];
@@ -146,7 +135,7 @@ function hideLoadingSpinner() {
 }
 
 function setError(error) {
-  const { message, code } = error;
+  const { message } = error;
   document.getElementById("error").textContent = message;
   document.getElementById("error-container").style.display = "flex";
   document.getElementById("chart-row").style.display = "none";
@@ -291,13 +280,10 @@ function calculatePercentageClass(number) {
 
         case number <= 25:
             return "red";
-            break;
         case number <= 60:
             return "amber";
-            break;
         case number <= 100:
             return "green";
-            break;
         default:
             return "ypercentage";
 
@@ -331,7 +317,7 @@ function sortParticipants(p1, p2) {
 
 function transformParticipant(participant, serial) {
     participant.serial_name = serial.name;
-    participantStats = serialsStats.filter(
+    const participantStats = serialsStats.filter(
         s => s.resp_platform_id === participant.platform_id
         && s.resp_serial_id === participant.serial_name
     )
@@ -413,7 +399,9 @@ function renderCharts() {
             continue;
         }
 
-        chartOptions.push({...DEFAULT_OPTIONS});
+        chartOptions.push({
+          ...DEFAULT_OPTIONS
+        });
         addChartDiv(
             i + 1,
             transformedSerials[i].name,
@@ -428,7 +416,7 @@ function renderCharts() {
     }
 }
 
-function onTimerStarted(event) {
+function onTimerStarted() {
   resetCountdown();
 }
 
@@ -446,7 +434,7 @@ function onTimerTargetAchieved() {
   fetchConfig();
 }
 
-function onTimerReset(event) {
+function onTimerReset() {
   resetCountdown();
 }
 
@@ -485,7 +473,7 @@ function initDateRange() {
     buttonClasses: "btn",
     applyButtonClasses: "btn-success",
     cancelButtonClasses: "btn-danger",
-  }, function(newFromDate, newToDate, label) {
+  }, function(newFromDate, newToDate) {
     fromDate = newFromDate;
     toDate = newToDate;
   });
