@@ -6,7 +6,6 @@ const DATE_FORMATS = {
   metadata: "YYYY-MM-DD",
   picker: "DD/MM/YYYY",
 }
-
 const DEFAULT_CONFIG = {
   TimelineRefreshSecs: 60,
   MessageOfTheDay: "Message of the day: [PENDING]",
@@ -134,7 +133,7 @@ function hideLoadingSpinner() {
   document.getElementById("loading-spinner-container").style.display = "none";
 }
 
-function setError(error) {
+function setBackendError(error) {
   const { message } = error;
   document.getElementById("error").textContent = message;
   document.getElementById("error-container").style.display = "flex";
@@ -160,6 +159,12 @@ function beforeRequest() {
   showLoadingSpinner();
 }
 
+function onFetchError(error) {
+  hideLoadingSpinner();
+  console.error(error);
+  setBackendError({message: error.message});
+}
+
 function fetchConfig() {
     beforeRequest();
 
@@ -169,13 +174,16 @@ function fetchConfig() {
             const { config_options: configOptions, error } = response;
             if (error) {
               console.log("Error fetching config: ", error);
-              setError(error);
+              setBackendError(error);
               hideLoadingSpinner();
             }
             else {
               const newConfig = Object.fromEntries(configOptions.map(o => ([o.name, o.value])));
 
-              if (newConfig.TimelineRefreshSecs !== config.TimelineRefreshSecs) {
+              if (
+                  newConfig.TimelineRefreshSecs
+                  && newConfig.TimelineRefreshSecs !== config.TimelineRefreshSecs
+              ) {
                 timer.stop();
                 timer.start(getTimerConfig(newConfig.TimelineRefreshSecs));
               }
@@ -186,10 +194,7 @@ function fetchConfig() {
               setMessageOfTheDay();
             }
         })
-        .catch(error => {
-        hideLoadingSpinner();
-        console.error(error);
-      })
+        .catch(onFetchError)
 }
 
 function fetchSerialsMeta() {
@@ -209,14 +214,14 @@ function fetchSerialsMeta() {
         const { dashboard_metadata: dashboardMeta, error } = response;
         if (error) {
           console.log("Error fetching serials: ", error);
-          setError(error);
+          setBackendError(error);
           hideLoadingSpinner();
         }
         else {
           serialsMeta = dashboardMeta;
           if (!serialsMeta.filter(m => m.record_type === "SERIALS").length) {
             hideLoadingSpinner();
-            setError({
+            setBackendError({
               message: "No serials found for specified date range."
             })
           }
@@ -225,10 +230,7 @@ function fetchSerialsMeta() {
           }
         }
       })
-      .catch(error => {
-        hideLoadingSpinner();
-        console.error(error);
-      })
+      .catch(onFetchError)
 }
 
 function fetchSerialsStats() {
@@ -261,7 +263,7 @@ function fetchSerialsStats() {
         const { dashboard_stats: dashboardStats, error } = response;
         if (error) {
           console.log("Error fetching serials: ", error);
-          setError(error);
+          setBackendError(error);
           hideLoadingSpinner();
         }
         else {
@@ -269,10 +271,7 @@ function fetchSerialsStats() {
           renderCharts();
         }
     })
-    .catch(error => {
-      hideLoadingSpinner();
-      console.error(error);
-    })
+    .catch(onFetchError)
 }
 
 function calculatePercentageClass(number) {

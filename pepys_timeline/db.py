@@ -42,7 +42,11 @@ def get_query_result(query, vars_=None):
 
 
 def get_config_options():
-    return get_query_result(CONFIG_OPTIONS_QUERY)
+    res = get_query_result(CONFIG_OPTIONS_QUERY)
+    refresh_row = [
+        row for row in res if row['name'] == 'TimelineRefreshSecs'][0]
+    refresh_row['value'] = int(refresh_row['value'])
+    return res
 
 
 def get_dashboard_metadata(from_date: str, to_date: str):
