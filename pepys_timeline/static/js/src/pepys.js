@@ -10,6 +10,7 @@ const DEFAULT_CONFIG = {
   TimelineRefreshSecs: 60,
   MessageOfTheDay: "Message of the day: [PENDING]",
 };
+const SERVER_ERROR_MESSAGE = "Error connecting to server";
 
 let timer;
 let config;
@@ -162,7 +163,7 @@ function beforeRequest() {
 function onFetchError(error) {
   hideLoadingSpinner();
   console.error(error);
-  setBackendError({message: error.message});
+  setBackendError({message: SERVER_ERROR_MESSAGE});
 }
 
 function fetchConfig() {
