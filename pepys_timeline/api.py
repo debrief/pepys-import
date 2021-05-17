@@ -18,7 +18,9 @@ MISSING_PARAMS_MSG = "missing parameter(s)"
 @api.app_errorhandler(Exception)
 def handle_db_conn_error(err):
     current_app.logger.exception(err)
-    return make_error_response(message=traceback.format_exc())
+    return make_error_response(
+        message=str(err), description=traceback.format_exc()
+    )
 
 
 @api.route("/")

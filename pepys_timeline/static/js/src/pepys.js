@@ -135,15 +135,17 @@ function hideLoadingSpinner() {
 }
 
 function setBackendError(error) {
-  const { message } = error;
-  document.getElementById("error").textContent = message;
+  const { message, description } = error;
+  document.getElementById("error-message").textContent = message;
+  document.getElementById("error-description").textContent = description;
   document.getElementById("error-container").style.display = "flex";
   document.getElementById("chart-row").style.display = "none";
 
 }
 
 function resetBackendError() {
-  document.getElementById("error").textContent = "";
+  document.getElementById("error-message").textContent = "";
+  document.getElementById("error-description").textContent = "";
   document.getElementById("error-container").style.display = "none";
   document.getElementById("chart-row").style.display = "flex";
 }
