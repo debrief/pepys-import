@@ -165,7 +165,7 @@ function beforeRequest() {
 function onFetchError(error) {
   hideLoadingSpinner();
   console.error(error);
-  setBackendError({message: SERVER_ERROR_MESSAGE});
+  setBackendError({message: SERVER_ERROR_MESSAGE, description: error});
 }
 
 function fetchConfig() {
