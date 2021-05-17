@@ -76,6 +76,10 @@ h1,h2,h3,h4,h5 {
   min-height: calc(100vh - 300px);
 }
 
+#error-description {
+  white-space: pre-wrap;
+}
+
 .visavail {
     box-shadow: 0 -5px 6px 0px rgb(0 0 0 / 30%);
 }

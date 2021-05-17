@@ -1,3 +1,4 @@
+import os
 import traceback
 
 from flask import Blueprint, render_template, request, current_app
@@ -19,7 +20,8 @@ MISSING_PARAMS_MSG = "missing parameter(s)"
 def handle_db_conn_error(err):
     current_app.logger.exception(err)
     return make_error_response(
-        message=str(err), description=traceback.format_exc()
+        message=str(err),
+        description=traceback.format_exc()
     )
 
 
