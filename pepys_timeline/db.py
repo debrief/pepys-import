@@ -34,10 +34,10 @@ def get_query_result(query, vars_=None):
                 with conn.cursor(cursor_factory=RealDictCursor) as curs:
                     curs.execute(query, vars_)
                     result = curs.fetchall()
-            except psycopg2.Error:
-                raise DatabaseQueryError('Error querying database.')
-    except psycopg2.Error:
-        raise DatabaseConnectionError('Error connecting to database.')
+            except psycopg2.Error as e:
+                raise DatabaseQueryError('Error querying database.') from e
+    except psycopg2.Error as e:
+        raise DatabaseConnectionError('Error connecting to database.') from e
     return result
 
 
