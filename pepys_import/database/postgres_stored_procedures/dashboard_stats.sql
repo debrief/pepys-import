@@ -312,7 +312,7 @@ act_with_same_part_and_gap_end as (
 				and cg.end_time =  s.time
 			inner join
 		sensors_involved si
-				on si.serial_participant_start = cg.start_time
+				on si.serial_participant_end = cg.end_time
 				and si.platform_id = cg.platform_id
 				and si.serial_id = cg.serial_id
 				and si.ser_idx = cg.ser_idx
