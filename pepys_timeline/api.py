@@ -1,3 +1,5 @@
+import traceback
+
 from flask import Blueprint, render_template, request, current_app
 
 from pepys_timeline.db import (
@@ -5,7 +7,6 @@ from pepys_timeline.db import (
     get_dashboard_metadata,
     get_dashboard_stats,
 )
-
 from pepys_timeline.utils import make_error_response
 
 
@@ -17,7 +18,7 @@ MISSING_PARAMS_MSG = "missing parameter(s)"
 @api.app_errorhandler(Exception)
 def handle_db_conn_error(err):
     current_app.logger.exception(err)
-    return make_error_response(message=str(err))
+    return make_error_response(message=traceback.format_exc())
 
 
 @api.route("/")
