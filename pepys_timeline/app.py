@@ -1,3 +1,5 @@
+from logging.config import dictConfig
+
 from flask import Flask
 
 
@@ -8,6 +10,7 @@ def create_app(config_path: str = None):
     app = Flask(__name__)
     app.config.from_object(config_path)
 
+    register_loggers(app)
     register_blueprints(app)
     register_extensions(app)
 
@@ -25,3 +28,7 @@ def register_blueprints(app):
     from pepys_timeline.api import api
 
     app.register_blueprint(api)
+
+
+def register_loggers(app):
+    dictConfig(app.config['LOG_CONFIG'])
