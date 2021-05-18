@@ -1,7 +1,3 @@
-/* eslint-env browser */
-/* eslint no-undef: "error" */
-/* global moment */
-/* global easytimer */
 
 moment.locale("en");
 
@@ -10,14 +6,14 @@ const DATE_FORMATS = {
   metadata: "YYYY-MM-DD",
   picker: "DD/MM/YYYY",
 }
-const DEFAULT_MESSAGE_OF_THE_DAY = "Message of the day: [PENDING]";
+const DEFAULT_CONFIG = {
+  TimelineRefreshSecs: 60,
+  MessageOfTheDay: "Message of the day: [PENDING]",
+};
+const SERVER_ERROR_MESSAGE = "Error connecting to server";
 
-const countdownNumberEl = document.getElementById("countdown-number");
-const progress = document.querySelector("#countdown-progress");
-const messageOfTheDayEl = document.getElementById("message-of-the-day");
-
+let timer;
 let config;
-let generatedCharts;
 let charts;
 let chartOptions;
 let serialsMeta;
@@ -30,9 +26,7 @@ yesterday.setDate(today.getDate() - 1);
 let fromDate = moment(yesterday);
 let toDate = moment(yesterday);
 
-const timer = new easytimer.Timer();
-
-const defaultOptions = {
+const DEFAULT_OPTIONS = {
     margin: {
         right: 60,
         left: 50,
@@ -74,13 +68,11 @@ const defaultOptions = {
         enabled: true,
         custom_percentage: true
     },
-    responsive: {
-        enabled: true
-    }
 };
 
 function setMessageOfTheDay() {
-  messageOfTheDayEl.textContent = config.MessageOfTheDay || DEFAULT_MESSAGE_OF_THE_DAY;
+  const messageOfTheDayEl = document.getElementById("message-of-the-day");
+  messageOfTheDayEl.textContent = config.MessageOfTheDay;
 }
 
 function updateDatetime() {
@@ -97,6 +89,7 @@ function startDatetimeClock() {
 }
 
 function updateCountdownProgress(seconds) {
+  const progress = document.querySelector("#countdown-progress");
   const period = config.TimelineRefreshSecs;
   const timePct = period !== 0 ? seconds/period : 0;
   const total = Math.PI * (2 * progress.r.baseVal.value);
@@ -105,29 +98,9 @@ function updateCountdownProgress(seconds) {
 }
 
 function resetCountdown() {
+  const countdownNumberEl = document.getElementById("countdown-number");
   countdownNumberEl.textContent = config.TimelineRefreshSecs;
   updateCountdownProgress(config.TimelineRefreshSecs);
-}
-
-function onTimerStarted(event) {
-  resetCountdown();
-}
-
-function onTimerSecondsUpdated(event) {
-  const { detail } = event;
-  const { timer: t } = detail;
-  const { seconds } = t.getTimeValues();
-  countdownNumberEl.textContent = seconds;
-  updateCountdownProgress(seconds);
-}
-
-function onTimerTargetAchieved() {
-  timer.reset();
-  fetchSerialsMeta();
-}
-
-function onTimerReset(event) {
-  resetCountdown();
 }
 
 function getTimerConfig(seconds) {
@@ -140,85 +113,91 @@ function getTimerConfig(seconds) {
 }
 
 function resetState() {
-    config = null;
-    generatedCharts = false;
+    timer = null;
+    config = DEFAULT_CONFIG;
     charts = [];
     chartOptions = [];
     serialsMeta = [];
     serialsStats = [];
 }
 
-function initDateRange() {
-  $("input[name=\"date-range\"]").daterangepicker({
-    opens: "left",
-    locale: {
-      format: DATE_FORMATS.picker,
-    },
-    ranges: {
-        "Today": [moment(), moment()],
-        "Yesterday": [moment().subtract(1, "days"), moment().subtract(1, "days")],
-        "Last 7 Days": [moment().subtract(6, "days"), moment()],
-        "Last 30 Days": [moment().subtract(29, "days"), moment()],
-        "This Week": [moment().startOf("week"), moment().endOf("week")],
-        "Last Week": [
-          moment().subtract(1, "week").startOf("week"),
-          moment().subtract(1, "week").endOf("week")
-        ],
-        "This Month": [moment().startOf("month"), moment().endOf("month")],
-        "Last Month": [
-          moment().subtract(1, "month").startOf("month"),
-          moment().subtract(1, "month").endOf("month")
-        ]
-    },
-    startDate: fromDate.format(DATE_FORMATS.picker),
-    endDate: toDate.format(DATE_FORMATS.picker),
-    buttonClasses: "btn",
-    applyButtonClasses: "btn-success",
-    cancelButtonClasses: "btn-danger",
-  }, function(newFromDate, newToDate, label) {
-    fromDate = newFromDate;
-    toDate = newToDate;
-  });
 
-  $("input[name=\"date-range\"]").on("apply.daterangepicker", function(ev, picker) {
-      $(this).val(
-        picker.startDate.format(DATE_FORMATS.picker)
-        + " - "
-        + picker.endDate.format(DATE_FORMATS.picker)
-      );
-      onTimerTargetAchieved();
-  });
-}
-
-function initTimer() {
-  timer.addEventListener("secondsUpdated", onTimerSecondsUpdated);
-  timer.addEventListener("started", onTimerStarted);
-  timer.addEventListener("targetAchieved", onTimerTargetAchieved);
-  timer.addEventListener("reset", onTimerReset);
+function initMessageOfTheDay() {
+  setMessageOfTheDay();
 }
 
 function showLoadingSpinner() {
-  document.getElementById('loading-spinner-container').style.display = 'flex';
+  document.getElementById("loading-spinner-container").style.display = "flex";
 }
 
 function hideLoadingSpinner() {
-  document.getElementById('loading-spinner-container').style.display = 'none';
+  document.getElementById("loading-spinner-container").style.display = "none";
+}
+
+function setBackendError(error) {
+  const { message, description } = error;
+  document.getElementById("error-message").textContent = message;
+  document.getElementById("error-description").textContent = description;
+  document.getElementById("error-container").style.display = "flex";
+  document.getElementById("chart-row").style.display = "none";
+
+}
+
+function resetBackendError() {
+  document.getElementById("error-message").textContent = "";
+  document.getElementById("error-description").textContent = "";
+  document.getElementById("error-container").style.display = "none";
+  document.getElementById("chart-row").style.display = "flex";
+}
+
+function clearCharts() {
+  console.log("Clearing charts.");
+  var chartContainer = document.getElementById("chart-container");
+  chartContainer.innerHTML = "";
+}
+
+function beforeRequest() {
+  clearCharts();
+  resetBackendError();
+  showLoadingSpinner();
+}
+
+function onFetchError(error) {
+  hideLoadingSpinner();
+  console.error(error);
+  setBackendError({message: SERVER_ERROR_MESSAGE, description: error});
 }
 
 function fetchConfig() {
+    beforeRequest();
+
     fetch("/config")
         .then(response => response.json())
         .then(response => {
-            const { config_options } = response;
-            config = Object.fromEntries(config_options.map(o => ([o.name, o.value])));
+            const { config_options: configOptions, error } = response;
+            if (error) {
+              console.log("Error fetching config: ", error);
+              setBackendError(error);
+              hideLoadingSpinner();
+            }
+            else {
+              const newConfig = Object.fromEntries(configOptions.map(o => ([o.name, o.value])));
 
-            fetchSerialsMeta();
-            setMessageOfTheDay();
+              if (
+                  newConfig.TimelineRefreshSecs
+                  && newConfig.TimelineRefreshSecs !== config.TimelineRefreshSecs
+              ) {
+                timer.stop();
+                timer.start(getTimerConfig(newConfig.TimelineRefreshSecs));
+              }
 
-            const timerConfig = getTimerConfig(config.TimelineRefreshSecs);
-            timer.start(timerConfig);
+              config = newConfig;
+
+              fetchSerialsMeta();
+              setMessageOfTheDay();
+            }
         })
-        .catch(err => console.error(err));
+        .catch(onFetchError)
 }
 
 function fetchSerialsMeta() {
@@ -232,20 +211,29 @@ function fetchSerialsMeta() {
 
     console.log(`Fetching serials metadata from ${fromDateStr} to ${toDateStr}.`);
 
-    clearCharts();
-    showLoadingSpinner();
-
     fetch(url)
       .then(response => response.json())
       .then(response => {
-        const { dashboard_metadata } = response;
-        serialsMeta = dashboard_metadata;
-        fetchSerialsStats();
+        const { dashboard_metadata: dashboardMeta, error } = response;
+        if (error) {
+          console.log("Error fetching serials: ", error);
+          setBackendError(error);
+          hideLoadingSpinner();
+        }
+        else {
+          serialsMeta = dashboardMeta;
+          if (!serialsMeta.filter(m => m.record_type === "SERIALS").length) {
+            hideLoadingSpinner();
+            setBackendError({
+              message: "No serials found for specified date range."
+            })
+          }
+          else {
+            fetchSerialsStats();
+          }
+        }
       })
-      .catch(error => {
-        hideLoadingSpinner();
-        console.log(error);
-      })
+      .catch(onFetchError)
 }
 
 function fetchSerialsStats() {
@@ -275,14 +263,18 @@ function fetchSerialsStats() {
   })
     .then(response => response.json())
     .then(response => {
-        const { dashboard_stats } = response;
-        serialsStats = dashboard_stats;
-        renderCharts();
+        const { dashboard_stats: dashboardStats, error } = response;
+        if (error) {
+          console.log("Error fetching serials: ", error);
+          setBackendError(error);
+          hideLoadingSpinner();
+        }
+        else {
+          serialsStats = dashboardStats;
+          renderCharts();
+        }
     })
-    .catch(error => {
-      hideLoadingSpinner();
-      console.log(error);
-    })
+    .catch(onFetchError)
 }
 
 function calculatePercentageClass(number) {
@@ -290,13 +282,10 @@ function calculatePercentageClass(number) {
 
         case number <= 25:
             return "red";
-            break;
         case number <= 60:
             return "amber";
-            break;
         case number <= 100:
             return "green";
-            break;
         default:
             return "ypercentage";
 
@@ -330,7 +319,7 @@ function sortParticipants(p1, p2) {
 
 function transformParticipant(participant, serial) {
     participant.serial_name = serial.name;
-    participantStats = serialsStats.filter(
+    const participantStats = serialsStats.filter(
         s => s.resp_platform_id === participant.platform_id
         && s.resp_serial_id === participant.serial_name
     )
@@ -379,7 +368,7 @@ function transformSerials() {
     const transformedData = serials.map(serial => {
         let currSerialParticipants = participants
           .filter(p => p.serial_id === serial.serial_id)
-          .sort(sortParticipants)
+          .sort(sortParticipants);
         currSerialParticipants = currSerialParticipants.map(p => transformParticipant(p, serial));
         serial.participants = currSerialParticipants;
         serial["overall_average"] = currSerialParticipants.length
@@ -402,9 +391,9 @@ function renderCharts() {
 
     hideLoadingSpinner();
 
-    console.log('Generating charts.');
+    console.log("Generating charts.");
 
-    for (i = 0; i < transformedSerials.length; i++) {
+    for (let i = 0; i < transformedSerials.length; i++) {
         console.log(transformedSerials[i].name, transformedSerials[i].overall_average);
 
         if (!transformedSerials[i].includeInTimeline) {
@@ -412,7 +401,9 @@ function renderCharts() {
             continue;
         }
 
-        chartOptions.push({...defaultOptions});
+        chartOptions.push({
+          ...DEFAULT_OPTIONS
+        });
         addChartDiv(
             i + 1,
             transformedSerials[i].name,
@@ -427,16 +418,84 @@ function renderCharts() {
     }
 }
 
-function clearCharts() {
-  console.log('Clearing charts.');
-  var chartContainer = document.getElementById("chart-container");
-  chartContainer.innerHTML = "";
+function onTimerStarted() {
+  resetCountdown();
+}
+
+function onTimerSecondsUpdated(event) {
+  const countdownNumberEl = document.getElementById("countdown-number");
+  const { detail } = event;
+  const { timer: t } = detail;
+  const { seconds } = t.getTimeValues();
+  countdownNumberEl.textContent = seconds;
+  updateCountdownProgress(seconds);
+}
+
+function onTimerTargetAchieved() {
+  timer.reset();
+  fetchConfig();
+}
+
+function onTimerReset() {
+  resetCountdown();
+}
+
+function initTimer() {
+  timer = new easytimer.Timer();
+  timer.addEventListener("secondsUpdated", onTimerSecondsUpdated);
+  timer.addEventListener("started", onTimerStarted);
+  timer.addEventListener("targetAchieved", onTimerTargetAchieved);
+  timer.addEventListener("reset", onTimerReset);
+}
+
+function initDateRange() {
+  $("input[name=\"date-range\"]").daterangepicker({
+    opens: "left",
+    locale: {
+      format: DATE_FORMATS.picker,
+    },
+    ranges: {
+        "Today": [moment(), moment()],
+        "Yesterday": [moment().subtract(1, "days"), moment().subtract(1, "days")],
+        "Last 7 Days": [moment().subtract(6, "days"), moment()],
+        "Last 30 Days": [moment().subtract(29, "days"), moment()],
+        "This Week": [moment().startOf("week"), moment().endOf("week")],
+        "Last Week": [
+          moment().subtract(1, "week").startOf("week"),
+          moment().subtract(1, "week").endOf("week")
+        ],
+        "This Month": [moment().startOf("month"), moment().endOf("month")],
+        "Last Month": [
+          moment().subtract(1, "month").startOf("month"),
+          moment().subtract(1, "month").endOf("month")
+        ]
+    },
+    startDate: fromDate.format(DATE_FORMATS.picker),
+    endDate: toDate.format(DATE_FORMATS.picker),
+    buttonClasses: "btn",
+    applyButtonClasses: "btn-success",
+    cancelButtonClasses: "btn-danger",
+  }, function(newFromDate, newToDate) {
+    fromDate = newFromDate;
+    toDate = newToDate;
+  });
+
+  $("input[name=\"date-range\"]").on("apply.daterangepicker", function(ev, picker) {
+      $(this).val(
+        picker.startDate.format(DATE_FORMATS.picker)
+        + " - "
+        + picker.endDate.format(DATE_FORMATS.picker)
+      );
+      onTimerTargetAchieved();
+  });
 }
 
 $(function() {
   resetState();
   initDateRange();
   initTimer();
+  initMessageOfTheDay();
   startDatetimeClock();
+  timer.start(getTimerConfig(config.TimelineRefreshSecs));
   fetchConfig();
 });
