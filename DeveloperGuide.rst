@@ -188,7 +188,7 @@ Development is conducted using `Feature Branches <https://www.atlassian.com/git/
 Essentially each new piece of work (whether it be a fix or a new feature) is developed in its own branch.
 
 Here is the flow:
-* unless you have a very good reason (minor cosmetic documentation update), the process starts with an issue.  Create the issue, if necessary, documenting the problem that is being solve, and the strategy for solving it
+* unless you have a very good reason (minor cosmetic documentation update), the process starts with an issue.  Create the issue, if necessary, documenting the problem that is being solved, and the strategy for solving it
 * open your git client (command-line or graphical, the GitHub client integrates very well)
 * switch to the **develop** branch
 * **Pull** to update the **develop** branch
