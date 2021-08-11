@@ -26,6 +26,7 @@ from pepys_import.utils.data_store_utils import (
     create_alembic_version_table,
     create_spatial_tables_for_postgres,
     create_spatial_tables_for_sqlite,
+    create_stored_procedures_for_postgres,
     import_from_csv,
     lowercase_or_none,
 )
@@ -202,6 +203,7 @@ class DataStore:
             try:
                 create_spatial_tables_for_postgres(self.engine)
                 BasePostGIS.metadata.create_all(self.engine)
+                create_stored_procedures_for_postgres(self.engine)
             except OperationalError as e:
                 print(
                     f"SQL Exception details: {e}\n\n"
@@ -286,7 +288,9 @@ class DataStore:
         for table_object in list(metadata_table_objects):
             metadata_tables.append(table_object.__tablename__)
 
-        metadata_files = [file for file in files if os.path.splitext(file)[0] in metadata_tables]
+        metadata_files = [
+            file for file in files if os.path.splitext(file)[0].replace(" ", "") in metadata_tables
+        ]
         import_from_csv(self, sample_data_folder, metadata_files, change.change_id)
 
     # End of Data Store methods
@@ -649,6 +653,14 @@ class DataStore:
         return (
             self.session.query(self.db_classes.PlatformType)
             .filter(func.lower(self.db_classes.PlatformType.name) == lowercase_or_none(name))
+            .first()
+        )
+
+    def search_config_option(self, name):
+        """Search for any config option with this name"""
+        return (
+            self.session.query(self.db_classes.ConfigOption)
+            .filter(func.lower(self.db_classes.ConfigOption.name) == lowercase_or_none(name))
             .first()
         )
 
@@ -1041,6 +1053,38 @@ class DataStore:
         )
 
         return force_type
+
+    def add_to_config_options(self, name, description, value, change_id):
+        """
+        Adds the specified confg option to the ConfigOptions table.
+
+        :param name: Name of configuration option
+        :type name: String
+        :param description: Description of config option
+        :type description: String
+        :param value: Value of config option
+        :type value: String
+        :param change_id: ID of the :class:`Change` object
+        :type change_id: Integer or UUID
+        :return: Created :class:`PlatformType` entity
+        :rtype: PlatformType
+        """
+        config_option = self.search_config_option(name)
+        if config_option:
+            return config_option
+
+        # enough info to proceed and create entry
+        config_opt = self.db_classes.ConfigOption(name=name, description=description, value=value)
+        self.session.add(config_opt)
+        self.session.flush()
+
+        self.add_to_logs(
+            table=constants.CONFIG_OPTIONS,
+            row_id=config_opt.config_option_id,
+            change_id=change_id,
+        )
+
+        return config_opt
 
     def add_to_platform_types(self, name, change_id, default_data_interval_secs=None):
         """
@@ -1703,7 +1747,7 @@ class DataStore:
         return False
 
     def is_empty(self):
-        """ Returns True if sample table (Privacy) is empty, False otherwise"""
+        """Returns True if sample table (Privacy) is empty, False otherwise"""
         reference = self.session.query(self.db_classes.Privacy).first()
         if reference:
             return False

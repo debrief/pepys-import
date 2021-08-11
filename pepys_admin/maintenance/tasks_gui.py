@@ -1,3 +1,4 @@
+import textwrap
 import traceback
 from asyncio import ensure_future
 from datetime import datetime
@@ -21,7 +22,7 @@ from pepys_admin.maintenance.widgets.custom_text_area import CustomTextArea
 from pepys_admin.maintenance.widgets.task_edit_widget import TaskEditWidget
 from pepys_admin.maintenance.widgets.tree_view import TreeElement, TreeView
 from pepys_import.core.store.data_store import USER, DataStore
-from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
+from pepys_import.utils.sqlalchemy_utils import clone_model, get_primary_key_for_table
 
 logger.remove()
 logger.add("gui.log")
@@ -179,6 +180,8 @@ class TasksGUI:
             self.platforms,
             self.handle_save,
             self.handle_delete,
+            self.handle_duplicate,
+            self.update_tree_object,
             self.data_store,
             self.show_dialog_as_float,
         )
@@ -218,6 +221,10 @@ class TasksGUI:
             + "\n".join(missing_fields),
         )
 
+    def update_tree_object(self):
+        """Handles updating the Task object stored in the TreeView when it has changed"""
+        self.tree_view.selected_element.object = self.task_edit_widget.task_object
+
     def validate_fields(self, current_task, updated_fields):
         WARGAME_REQUIRED_FIELDS = set(["name", "start", "end"])
         SERIAL_REQUIRED_FIELDS = set(["serial_number", "start", "end"])
@@ -256,6 +263,44 @@ class TasksGUI:
 
         return True
 
+    def handle_duplicate(self):
+        current_task = self.task_edit_widget.task_object
+
+        # Work out a new name, so that if we copy multiple times we will get XXX Copy, XXX Copy 2 etc
+        all_serial_numbers_of_this_wargame = [
+            el.text for el in self.tree_view.selected_element.parent.children
+        ]
+
+        new_name_orig = current_task.serial_number + " Copy"
+        new_name = new_name_orig
+        i = 2
+        while new_name in all_serial_numbers_of_this_wargame:
+            new_name = new_name_orig + f" {i}"
+            i += 1
+
+        new_serial = clone_model(current_task, serial_number=new_name)
+
+        with self.data_store.session_scope():
+            self.data_store.session.add(new_serial)
+            # Commit here, so that the new serial gets an ID, which we can reference below
+            self.data_store.session.commit()
+            self.data_store.session.refresh(new_serial)
+
+            new_serial_id = new_serial.serial_id
+
+            # Copy the participants too
+            orig_participants = current_task.participants
+            new_participants = [clone_model(p, serial_id=new_serial_id) for p in orig_participants]
+
+            self.data_store.session.add_all(new_participants)
+            self.data_store.session.commit()
+            self.data_store.session.refresh(new_serial)
+            self.data_store.session.expunge_all()
+
+        new_tree_element = TreeElement(new_serial.serial_number, new_serial)
+        self.tree_view.selected_element.parent.add_child(new_tree_element)
+        self.tree_view.selected_element.parent.sort_children_by_start_time()
+
     def handle_save(self):
         updated_fields = self.task_edit_widget.get_updated_fields()
 
@@ -277,15 +322,22 @@ class TasksGUI:
         for column, new_value in updated_fields.items():
             setattr(current_task, column, new_value)
 
-        with self.data_store.session_scope():
-            self.data_store.session.add(current_task)
-            # We need to commit the change so that it gets an ID and matches everything up
-            # but this 'expires' the attributes, so we need to refresh these from the database
-            # before expunging. Overall, this means that the fully up-to-date Task object
-            # is detached from the session and available for use in the UI
-            self.data_store.session.commit()
-            self.data_store.session.refresh(current_task)
-            self.data_store.session.expunge_all()
+        try:
+            with self.data_store.session_scope():
+                self.data_store.session.add(current_task)
+                # We need to commit the change so that it gets an ID and matches everything up
+                # but this 'expires' the attributes, so we need to refresh these from the database
+                # before expunging. Overall, this means that the fully up-to-date Task object
+                # is detached from the session and available for use in the UI
+                self.data_store.session.commit()
+                self.data_store.session.refresh(current_task)
+                self.data_store.session.expunge_all()
+        except Exception as e:
+            self.show_messagebox(
+                "Error",
+                f"Error saving entry - could be a duplicate Serial number?\nOriginal error:\n{textwrap.fill(str(e), 60)}",
+            )
+            return
 
         # Record Change and Logs for this change
         # (we have to do this after adding the Task and committing
@@ -306,6 +358,7 @@ class TasksGUI:
         self.tree_view.selected_element.object = current_task
         if isinstance(current_task, self.data_store.db_classes.Serial):
             self.tree_view.selected_element.text = current_task.serial_number
+            self.tree_view.selected_element.parent.sort_children_by_start_time()
         else:
             self.tree_view.selected_element.text = current_task.name
         get_app().invalidate()
@@ -368,6 +421,7 @@ class TasksGUI:
             new_object.wargame_id = parent_element.object.wargame_id
             new_object.start = parent_element.object.start
             new_object.end = parent_element.object.end
+            new_object.include_in_timeline = True
         else:
             # Do nothing - we can't add anything below a Serial
             return

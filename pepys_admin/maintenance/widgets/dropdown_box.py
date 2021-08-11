@@ -253,7 +253,7 @@ class DropdownBox:
             app.layout.container.floats.remove(self.float_)
 
     def _get_key_bindings(self) -> KeyBindings:
-        " Key bindings for the Dropdown Box. "
+        "Key bindings for the Dropdown Box."
         kb = KeyBindings()
 
         # Make space, enter or down-arrow open the dropdown

@@ -8,8 +8,9 @@ from math import ceil
 
 import sqlalchemy
 from sqlalchemy import func, inspect, select
+from sqlalchemy.sql.expression import text
 
-from paths import MIGRATIONS_DIRECTORY
+from paths import MIGRATIONS_DIRECTORY, PEPYS_IMPORT_DIRECTORY
 from pepys_import.resolvers.command_line_input import create_menu
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.table_name_utils import table_name_to_class_name
@@ -17,6 +18,8 @@ from pepys_import.utils.text_formatting_utils import (
     custom_print_formatted_text,
     format_error_message,
 )
+
+STORED_PROC_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "postgres_stored_procedures")
 
 
 def import_from_csv(data_store, path, files, change_id):
@@ -184,17 +187,13 @@ def is_schema_created(engine, db_type):
     inspector = inspect(engine)
     if db_type == "sqlite":
         table_names = inspector.get_table_names()
-        print(f"{len(table_names)=}")
-        # SQLite can have either 78 tables (if using the new version of mod_spatialite)
-        # or 76 (with the old stable release of mod_spatialite). The version of mod_spatialiate
+        # SQLite table numbers vary by mod_spatialite. The version of mod_spatialiate
         # that is installed can vary by platform - so both numbers should be acceptable.
-        if len(table_names) == 78 or len(table_names) == 76:
+        if len(table_names) >= 77 and len(table_names) <= 79:
             return True
     else:
         table_names = inspector.get_table_names(schema="pepys")
-        print(f"{len(table_names)=}")
-        # # We expect 42 tables on Postgres
-        if len(table_names) == 40:
+        if len(table_names) == 41:
             return True
 
     if len(table_names) == 0:
@@ -223,6 +222,23 @@ def create_spatial_tables_for_postgres(engine):
         connection.execute(query)
 
 
+def create_stored_procedures_for_postgres(engine):
+    stored_procedure_files = [
+        os.path.join(STORED_PROC_PATH, "dashboard_metadata.sql"),
+        os.path.join(STORED_PROC_PATH, "dashboard_stats.sql"),
+        os.path.join(STORED_PROC_PATH, "Comments_for.sql"),
+        os.path.join(STORED_PROC_PATH, "Contacts_for.sql"),
+        os.path.join(STORED_PROC_PATH, "Datafiles_for.sql"),
+        os.path.join(STORED_PROC_PATH, "States_for.sql"),
+    ]
+
+    with engine.begin() as connection:
+        for filename in stored_procedure_files:
+            with open(filename) as f:
+                procedure_definition = f.read()
+            connection.execute(sqlalchemy.text(procedure_definition))
+
+
 def create_alembic_version_table(engine, db_type):
     with open(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"), "r") as file:
         versions = json.load(file)
@@ -231,40 +247,89 @@ def create_alembic_version_table(engine, db_type):
         return
 
     if db_type == "sqlite":
-        create_table = """
-            CREATE TABLE IF NOT EXISTS alembic_version
-            (
-                version_num VARCHAR(32) NOT NULL,
-                CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
-            );
-        """
-        insert_value = """
-            INSERT INTO alembic_version (version_num)
-            SELECT '{id}'
-            WHERE NOT EXISTS(SELECT 1 FROM alembic_version WHERE version_num = '{id}');
-        """.format(
-            id=versions["LATEST_SQLITE_VERSION"]
-        )
+        # Try and get all entries from alembic_version table
+        try:
+            with engine.connect() as connection:
+                table_contents = connection.execute("SELECT * from alembic_version;").fetchall()
+
+                if len(table_contents) == 0:
+                    # Table exists but no version number row, so stamp it:
+                    sql = text("INSERT INTO alembic_version (version_num) VALUES (:id)")
+                    connection.execute(sql, id=versions["LATEST_SQLITE_VERSION"])
+                if len(table_contents) == 1:
+                    if table_contents[0][0] == versions["LATEST_SQLITE_VERSION"]:
+                        # Current version already stamped in table - so just continue
+                        print(
+                            "Initialising database - alembic version in database matches latest version."
+                        )
+                    else:
+                        # The version in the database doesn't match the current version - so raise an error
+                        raise ValueError(
+                            f"Database revision in alembic_version table ({table_contents[0][0]}) does not match latest revision ({versions['LATEST_SQLITE_VERSION']})."
+                            "Please run database migration."
+                        )
+                if len(table_contents) > 1:
+                    raise ValueError(
+                        "Multiple rows detected in alembic_version table. Database potentially in inconsistent state."
+                        "Migration functionality will not work. Please contact support."
+                    )
+        except sqlalchemy.exc.OperationalError:
+            with engine.connect() as connection:
+                # Error running select, so table doesn't exist - create it and stamp the current version
+                connection.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS alembic_version
+                    (
+                        version_num VARCHAR(32) NOT NULL,
+                        CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+                    );
+                """
+                )
+                sql = text("INSERT INTO alembic_version (version_num) VALUES (:id)")
+                connection.execute(sql, id=versions["LATEST_SQLITE_VERSION"])
     else:
-        create_table = """
-            CREATE TABLE IF NOT EXISTS pepys.alembic_version
-            (
-                version_num VARCHAR(32) NOT NULL,
-                CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
-            );
-        """
-        insert_value = """
-            INSERT INTO pepys.alembic_version (version_num)
-            SELECT '{id}'
-            WHERE NOT EXISTS(
-                SELECT '{id}' FROM pepys.alembic_version WHERE version_num = '{id}'
-            );
-        """.format(
-            id=versions["LATEST_POSTGRES_VERSION"]
-        )
-    with engine.connect() as connection:
-        connection.execute(create_table)
-        connection.execute(insert_value)
+        # Try and get all entries from alembic_version table
+        try:
+            with engine.connect() as connection:
+                table_contents = connection.execute(
+                    "SELECT * from pepys.alembic_version;"
+                ).fetchall()
+
+                if len(table_contents) == 0:
+                    # Table exists but no version number row, so stamp it:
+                    sql = text("INSERT INTO pepys.alembic_version (version_num) VALUES (:id)")
+                    connection.execute(sql, id=versions["LATEST_POSTGRES_VERSION"])
+                if len(table_contents) == 1:
+                    if table_contents[0][0] == versions["LATEST_POSTGRES_VERSION"]:
+                        # Current version already stamped in table - so just continue
+                        print(
+                            "Initialising database - alembic version in database matches latest version."
+                        )
+                    else:
+                        # The version in the database doesn't match the current version - so raise an error
+                        raise ValueError(
+                            f"Database revision in alembic_version table ({table_contents[0][0]}) does not match latest revision ({versions['LATEST_POSTGRES_VERSION']})."
+                            "Please run database migration."
+                        )
+                if len(table_contents) > 1:
+                    raise ValueError(
+                        "Multiple rows detected in alembic_version table. Database potentially in inconsistent state."
+                        "Migration functionality will not work. Please contact support."
+                    )
+        except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.ProgrammingError):
+            # Error running select, so table doesn't exist - create it and stamp the current version
+            with engine.connect() as connection:
+                connection.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS pepys.alembic_version
+                    (
+                    version_num VARCHAR(32) NOT NULL,
+                    CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
+                    );
+                """
+                )
+                sql = text("INSERT INTO pepys.alembic_version (version_num) VALUES (:id)")
+                connection.execute(sql, id=versions["LATEST_POSTGRES_VERSION"])
 
 
 def cache_results_if_not_none(cache_attribute):

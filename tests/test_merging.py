@@ -1140,6 +1140,7 @@ class TestMergeStateFromImport_Postgres(unittest.TestCase):
             results = (
                 self.master_store.session.query(self.master_store.db_classes.State)
                 .filter(self.master_store.db_classes.State.source_reference == "gpx_1_0.gpx")
+                .order_by(self.master_store.db_classes.State.time)
                 .all()
             )
             self.master_gpx_states = [
@@ -1194,11 +1195,13 @@ class TestMergeStateFromImport_Postgres(unittest.TestCase):
                 master_results = (
                     self.master_store.session.query(self.master_store.db_classes.State)
                     .filter(self.master_store.db_classes.State.source_reference == "uk_track.rep")
+                    .order_by(self.master_store.db_classes.State.time)
                     .all()
                 )
                 slave_results = (
                     self.slave_store.session.query(self.slave_store.db_classes.State)
                     .filter(self.slave_store.db_classes.State.source_reference == "uk_track.rep")
+                    .order_by(self.slave_store.db_classes.State.time)
                     .all()
                 )
 
@@ -1210,6 +1213,7 @@ class TestMergeStateFromImport_Postgres(unittest.TestCase):
                 results = (
                     self.master_store.session.query(self.master_store.db_classes.State)
                     .filter(self.master_store.db_classes.State.source_reference == "gpx_1_0.gpx")
+                    .order_by(self.master_store.db_classes.State.time)
                     .all()
                 )
                 new_master_gpx_states = [
@@ -1222,6 +1226,7 @@ class TestMergeStateFromImport_Postgres(unittest.TestCase):
                 slave_gpx_results = (
                     self.slave_store.session.query(self.slave_store.db_classes.State)
                     .filter(self.slave_store.db_classes.State.source_reference == "gpx_1_0.gpx")
+                    .order_by(self.slave_store.db_classes.State.time)
                     .all()
                 )
                 slave_gpx_results = [

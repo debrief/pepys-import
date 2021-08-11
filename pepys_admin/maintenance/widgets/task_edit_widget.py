@@ -1,5 +1,5 @@
 from prompt_toolkit.layout.containers import DynamicContainer, HorizontalAlign, HSplit, VSplit
-from prompt_toolkit.widgets.base import Button, Label, TextArea
+from prompt_toolkit.widgets.base import Button, Checkbox, Label, TextArea
 from prompt_toolkit.widgets.toolbars import ValidationToolbar
 
 from pepys_admin.maintenance.utils import empty_str_if_none
@@ -17,6 +17,8 @@ class TaskEditWidget:
         platforms,
         save_button_handler,
         delete_button_handler,
+        duplicate_button_handler,
+        update_tree_object_handler,
         data_store,
         show_dialog_as_float,
     ):
@@ -24,6 +26,8 @@ class TaskEditWidget:
         self.platforms = platforms
         self.save_button_handler = save_button_handler
         self.delete_button_handler = delete_button_handler
+        self.duplicate_button_handler = duplicate_button_handler
+        self.update_tree_object_handler = update_tree_object_handler
         self.data_store = data_store
         # Reference to the main show_dialog_as_float method, so we can show a dialog from
         # the ParticipantsWidget
@@ -68,6 +72,9 @@ class TaskEditWidget:
             if self.end_field.datetime_value != self.task_object.end:
                 updated_fields["end"] = self.end_field.datetime_value
 
+            if self.include_in_timeline.checked != self.task_object.include_in_timeline:
+                updated_fields["include_in_timeline"] = self.include_in_timeline.checked
+
         return updated_fields
 
     def create_widgets(self):
@@ -84,9 +91,16 @@ class TaskEditWidget:
 
         self.save_button = Button(f"Save {object_name}", self.save_button_handler, width=15)
         self.delete_button = Button(f"Delete {object_name}", self.delete_button_handler, width=20)
-        self.buttons_row = VSplit(
-            [self.save_button, self.delete_button], padding=3, align=HorizontalAlign.LEFT
+        self.duplicate_button = Button(
+            f"Duplicate {object_name}", self.duplicate_button_handler, width=20
         )
+
+        if isinstance(self.task_object, self.data_store.db_classes.Serial):
+            buttons = [self.save_button, self.delete_button, self.duplicate_button]
+        else:
+            buttons = [self.save_button, self.delete_button]
+
+        self.buttons_row = VSplit(buttons, padding=3, align=HorizontalAlign.LEFT)
 
         try:
             if self.task_object.privacy_name is not None:
@@ -220,12 +234,22 @@ class TaskEditWidget:
                 align=HorizontalAlign.LEFT,
             )
 
+            # An empty string is given here as the text for the checkbox, as we're using
+            # a separate label, so that we can get the text on the LH side
+            self.include_in_timeline = Checkbox("", checked=self.task_object.include_in_timeline)
+            self.include_in_timeline_row = VSplit(
+                [Label("Include in timeline (*):", width=25), self.include_in_timeline],
+                padding=2,
+                align=HorizontalAlign.LEFT,
+            )
+
             self.all_rows = [
                 self.number_row,
                 self.exercise_row,
                 self.start_row,
                 self.end_row,
                 self.privacy_row,
+                self.include_in_timeline_row,
                 self.blue_participants_row,
                 self.red_participants_row,
                 self.validation_toolbar,

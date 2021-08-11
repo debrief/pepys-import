@@ -52,6 +52,7 @@ class ParticipantsWidget:
         self.add_button = Button("Add", handler=self.handle_add_button)
         self.edit_button = Button("Edit", handler=self.handle_edit_button)
         self.delete_button = Button("Delete", handler=self.handle_delete_button)
+        self.switch_button = Button("Switch force", width=20, handler=self.handle_switch_button)
 
     def get_combo_box_entries(self):
         if self.force is None:
@@ -63,7 +64,15 @@ class ParticipantsWidget:
                 if p.force_type_name == self.force
             ]
 
+        # We have to sort here rather than in an ORDER BY clause when querying the database
+        # as we want to sort by a SQLAlchemy association proxy (platform_name), which is a field
+        # which isn't actually in the WargameParticipants/SerialParticipants table
+        # (the alternative is a more complex join that does the sort, but this is simpler to
+        # implement and works well)
+        self.participants = sorted(self.participants, key=lambda x: x.platform_name)
+
         entries = []
+
         for p in self.participants:
             trimmed_identifier = trim_string(p.platform_identifier, 5)
             trimmed_nationality = trim_string(p.platform_nationality_name, 4)
@@ -140,7 +149,9 @@ class ParticipantsWidget:
             ds = self.task_edit_widget.data_store
 
             with ds.session_scope():
-                ds.session.add(self.task_edit_widget.task_object)
+                self.task_edit_widget.task_object = ds.session.merge(
+                    self.task_edit_widget.task_object
+                )
                 ds.session.refresh(self.task_edit_widget.task_object)
                 filtered_platforms = self.filter_wargame_participants()
 
@@ -164,11 +175,15 @@ class ParticipantsWidget:
                     ds, result["platform"], result["privacy"], change_id
                 )
 
+            self.task_edit_widget.update_tree_object_handler()
+
         async def coroutine_serial():
             ds = self.task_edit_widget.data_store
 
             with ds.session_scope():
-                ds.session.add(self.task_edit_widget.task_object)
+                self.task_edit_widget.task_object = ds.session.merge(
+                    self.task_edit_widget.task_object
+                )
                 ds.session.refresh(self.task_edit_widget.task_object)
 
                 filtered_platforms = self.filter_serial_participants()
@@ -198,6 +213,8 @@ class ParticipantsWidget:
                     change_id=change_id,
                 )
 
+            self.task_edit_widget.update_tree_object_handler()
+
         # We need to save the task before adding a participant, or we don't have the database
         # ID to link the participant to the task. So we call the save method.
         # However, if the save_button_handler method returns False then there has been a validation
@@ -224,7 +241,9 @@ class ParticipantsWidget:
                 change_id = ds.add_to_changes(
                     USER, datetime.utcnow(), "Manual edit from Tasks GUI"
                 ).change_id
-                ds.session.add(self.task_edit_widget.task_object)
+                self.task_edit_widget.task_object = ds.session.merge(
+                    self.task_edit_widget.task_object
+                )
                 ds.session.refresh(self.task_edit_widget.task_object)
 
                 filtered_platforms = self.filter_serial_participants(
@@ -310,6 +329,8 @@ class ParticipantsWidget:
                 ds.session.refresh(self.task_edit_widget.task_object)
                 ds.session.expunge_all()
 
+            self.task_edit_widget.update_tree_object_handler()
+
         async def coroutine_wargame():
             ds = self.task_edit_widget.data_store
             participant = self.participants[self.combo_box.selected_entry]
@@ -318,7 +339,9 @@ class ParticipantsWidget:
                 change_id = ds.add_to_changes(
                     USER, datetime.utcnow(), "Manual edit from Tasks GUI"
                 ).change_id
-                ds.session.add(self.task_edit_widget.task_object)
+                self.task_edit_widget.task_object = ds.session.merge(
+                    self.task_edit_widget.task_object
+                )
                 ds.session.refresh(self.task_edit_widget.task_object)
 
                 filtered_platforms = self.filter_wargame_participants(
@@ -379,6 +402,11 @@ class ParticipantsWidget:
                 ds.session.refresh(self.task_edit_widget.task_object)
                 ds.session.expunge_all()
 
+            self.task_edit_widget.update_tree_object_handler()
+
+        if not self.item_selected_in_combo_box():
+            return
+
         if isinstance(
             self.task_edit_widget.task_object, self.task_edit_widget.data_store.db_classes.Wargame
         ):
@@ -390,24 +418,81 @@ class ParticipantsWidget:
         get_app().invalidate()
 
     def handle_delete_button(self):
+        if not self.item_selected_in_combo_box():
+            return
+
         ds = self.task_edit_widget.data_store
         participant = self.participants[self.combo_box.selected_entry]
+
+        change_id = ds.add_to_changes(
+            USER, datetime.utcnow(), "Manual delete from Tasks GUI"
+        ).change_id
 
         with ds.session_scope():
             ds.delete_objects(
                 participant.__tablename__,
                 [getattr(participant, get_primary_key_for_table(participant))],
+                change_id=change_id,
             )
 
-            ds.session.add(self.task_edit_widget.task_object)
+            self.task_edit_widget.task_object = ds.session.merge(self.task_edit_widget.task_object)
             ds.session.refresh(self.task_edit_widget.task_object)
             ds.session.expunge_all()
+
+        new_selected_entry = self.combo_box.selected_entry - 1
+        if new_selected_entry < 0:
+            new_selected_entry = 0
+        self.combo_box.selected_entry = new_selected_entry
+
+        self.task_edit_widget.update_tree_object_handler()
         get_app().invalidate()
 
+    def handle_switch_button(self):
+        if not self.item_selected_in_combo_box():
+            return
+
+        ds = self.task_edit_widget.data_store
+        participant = self.participants[self.combo_box.selected_entry]
+
+        prev_force_type_id = participant.force_type_id
+
+        if participant.force_type_name == "Blue":
+            new_force_type = ds.search_force_type("Red")
+        else:
+            new_force_type = ds.search_force_type("Blue")
+
+        participant.force_type = new_force_type
+
+        with ds.session_scope():
+            participant = ds.session.merge(participant)
+
+            change_id = ds.add_to_changes(
+                USER, datetime.utcnow(), "Manual switch of participant force from Tasks GUI"
+            ).change_id
+
+            ds.add_to_logs(
+                table=constants.SERIAL_PARTICIPANT,
+                row_id=participant.serial_participant_id,
+                field="force_type_id",
+                previous_value=str(prev_force_type_id),
+                change_id=change_id,
+            )
+
+        self.task_edit_widget.update_tree_object_handler()
+
+    def item_selected_in_combo_box(self):
+        if len(self.combo_box.filtered_entries) == 0:
+            return False
+        else:
+            return True
+
     def get_widgets(self):
-        return HSplit(
-            [self.combo_box, VSplit([self.add_button, self.edit_button, self.delete_button])]
-        )
+        if self.force is not None:
+            buttons = [self.add_button, self.edit_button, self.delete_button, self.switch_button]
+        else:
+            buttons = [self.add_button, self.edit_button, self.delete_button]
+
+        return HSplit([self.combo_box, VSplit(buttons)])
 
     def __pt_container__(self):
         return self.container

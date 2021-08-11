@@ -5,6 +5,7 @@ import webbrowser
 from alembic import command
 from alembic.config import Config
 from prompt_toolkit import prompt
+from waitress import serve
 
 import config
 from paths import ROOT_DIRECTORY
@@ -24,6 +25,7 @@ from pepys_import.utils.text_formatting_utils import (
     format_command,
     format_table,
 )
+from pepys_timeline.app import create_app
 
 DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -40,6 +42,7 @@ class AdminShell(BaseShell):
 (7) View Docs
 (8) Maintenance
 (9) Maintain tasks
+(10) View dashboard
 (.) Exit
 """
     prompt = "(pepys-admin) "
@@ -48,6 +51,7 @@ class AdminShell(BaseShell):
         super(AdminShell, self).__init__()
         self.data_store = data_store
         self.csv_path = csv_path
+        self.viewer = False
         self.aliases = {
             ".": self.do_exit,
             "1": self.do_initialise,
@@ -59,6 +63,7 @@ class AdminShell(BaseShell):
             "7": self.do_view_docs,
             "8": self.do_maintenance_gui,
             "9": self.do_tasks_gui,
+            "10": self.do_view_dashboard,
         }
 
         self.cfg = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
@@ -66,6 +71,30 @@ class AdminShell(BaseShell):
         self.cfg.set_main_option("script_location", script_location)
         self.cfg.attributes["db_type"] = data_store.db_type
         self.cfg.attributes["connection"] = data_store.engine
+
+    def do_view_dashboard(self):
+        if self.data_store.db_type == "sqlite":
+            print("The Pepys dashboard cannot be used with a SQLite database")
+            return
+
+        app = create_app()
+
+        print(
+            "The Pepys timeline dashboard process is now running on: http://localhost:5000.\nA browser window should have "
+            "opened displaying the timeline.\n"
+            "Keep this window open for the server to continue running. The server process can be terminated by "
+            "closing this window."
+        )
+
+        # Open the URL in the web browser just before we call run()
+        # as the run call is blocking, so nothing else can run after it
+        webbrowser.open("http://localhost:5000")
+        serve(app, host="0.0.0.0", port=5000)
+
+        # This is the code to run it through the Flask server, which works
+        # fine, but prints a big warning message about how it shouldn't be used
+        # in production, which may scare the clients
+        # app.run(host='0.0.0.0', port=5000)
 
     def do_export(self):
         """Runs the :code:`ExportShell` which offers to export datafiles."""
@@ -131,8 +160,12 @@ class AdminShell(BaseShell):
                 formatted_text = format_table("## Reference", table_string=report)
                 custom_print_formatted_text(formatted_text)
 
-            print("## Database Version")
+        print("## Database Version")
+        try:
             command.current(self.cfg, verbose=True)
+        except Exception as e:
+            print("Error getting latest database version")
+            print(str(e))
 
         print("## Config file")
         print(f"Location: {config.CONFIG_FILE_PATH}")
@@ -164,7 +197,7 @@ class AdminShell(BaseShell):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
             return
         print("-" * 60)
-        shell = ViewDataShell(self.data_store)
+        shell = ViewDataShell(self.data_store, viewer=self.viewer)
         shell.cmdloop()
 
     @staticmethod

@@ -45,6 +45,24 @@ from pepys_import.utils.sqlalchemy_utils import UUIDType
 
 
 # Metadata Tables
+class ConfigOption(BaseSpatiaLite):
+    __tablename__ = constants.CONFIG_OPTIONS
+    table_type = TableTypes.METADATA
+    table_type_id = 37
+    _default_preview_fields = ["name", "value"]
+
+    config_option_id = Column(UUIDType, primary_key=True, default=uuid4)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_ConfigOption_name"),
+        nullable=False,
+        unique=True,
+    )
+    description = Column(Text())
+    value = Column(Text(), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
 class HostedBy(BaseSpatiaLite, HostedByMixin):
     __tablename__ = constants.HOSTED_BY
     table_type = TableTypes.METADATA
@@ -184,6 +202,10 @@ class Serial(BaseSpatiaLite, SerialMixin):
     table_type = TableTypes.METADATA
     table_type_id = 37
 
+    __table_args__ = (
+        UniqueConstraint("serial_number", "wargame_id", name="uq_Serial_serial_number_wargame_id"),
+    )
+
     serial_id = Column(UUIDType, primary_key=True, default=uuid4)
     wargame_id = Column(
         UUIDType,
@@ -200,6 +222,7 @@ class Serial(BaseSpatiaLite, SerialMixin):
     exercise = Column(String(150))
     environment = Column(String(150))
     location = Column(String(150))
+    include_in_timeline = Column(Boolean, default=True)
     privacy_id = Column(
         UUIDType,
         ForeignKey("Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),

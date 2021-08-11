@@ -6,7 +6,7 @@ from prompt_toolkit import prompt
 
 import config
 from pepys_admin.admin_cli import AdminShell
-from pepys_admin.view_data_cli import ViewDataShell
+from pepys_admin.viewer_cli import ViewerShell
 from pepys_import.cli import set_up_training_mode
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.utils.data_store_utils import is_schema_created
@@ -100,7 +100,7 @@ def run_shell(path, training=False, data_store=None, db=None, viewer=False):
                         )
                     )
                     return
-                ViewDataShell(data_store, viewer=True).cmdloop()
+                ViewerShell(data_store, path).cmdloop()
         else:
             with handle_database_errors():
                 AdminShell(data_store, path).cmdloop()

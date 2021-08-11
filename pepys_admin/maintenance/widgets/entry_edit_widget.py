@@ -158,6 +158,13 @@ class EntryEditWidgetRow:
             if self.col_config["type"] == "datetime":
                 parsed_value = datetime.strptime(self.value_widget.text, "%Y-%m-%d %H:%M:%S")
                 return parsed_value
+            elif self.col_config["type"] == "bool":
+                if self.value_widget.text.lower() in ("true", "t"):
+                    return True
+                elif self.value_widget.text.lower() in ("false", "f"):
+                    return False
+                else:
+                    raise ValueError("Invalid boolean value entered")
             return self.value_widget.text
 
     def get_widgets(self):

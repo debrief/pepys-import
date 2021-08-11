@@ -130,3 +130,16 @@ def sqlalchemy_object_to_json(obj):
         output_dict[col.name] = str(getattr(obj, col.name))
 
     return json.dumps(output_dict)
+
+
+def clone_model(model, **kwargs):
+    """Clone an arbitrary sqlalchemy model object without its primary key values."""
+    table = model.__table__
+    non_pk_columns = [k for k in table.columns.keys() if k not in table.primary_key]
+
+    data = {c: getattr(model, c) for c in non_pk_columns}
+    data.update(kwargs)
+
+    clone = model.__class__(**data)
+
+    return clone

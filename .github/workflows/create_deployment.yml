@@ -32,6 +32,7 @@ jobs:
         with:
           name: Pepys Deployment
           path: ./pepys_import*.zip
+          if-no-files-found: error
 
       - name: Calculate release name
         id: get_name
@@ -44,5 +45,6 @@ jobs:
           draft: true
           files: ./pepys_import*.zip
           name: ${{ steps.get_name.outputs.release_name }}
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
