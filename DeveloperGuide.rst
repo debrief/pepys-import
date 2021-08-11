@@ -188,27 +188,47 @@ Development is conducted using `Feature Branches <https://www.atlassian.com/git/
 Essentially each new piece of work (whether it be a fix or a new feature) is developed in its own branch.
 
 Here is the flow:
-* unless you have a very good reason (minor cosmetic documentation update), the process starts with an issue.  Create the issue, if necessary, documenting the problem that is being solved, and the strategy for solving it
-* open your git client (command-line or graphical, the GitHub client integrates very well)
-* switch to the **develop** branch
-* **Pull** to update the **develop** branch
-* create a new branch, including the issue number and brief description in the title, eg: *433_solitaire_feature*
-* checkout the new branch
-* use commits as necessary to break down the workflow
-* once you're confident in your progress **Push** the branch to the repo (so we can create a draft/tracking PR)
-* in GitHub, switch to **Pull Requests**. You should see a yellow banner with the title of your branch
-* Click on the link in the yellow banner, to create a Pull Request (PR)
-* Give the PR a nice neat title
-* Mark the PR as **Draft**
-* In the PR description, if this PR will resolve the issue, start with **#Fixes 433**.  If it won't resolve it, but will help it, write **#Supports 433**
-* Continue with branch, pushing commits as necessary.  If you want early feedback, just ask for support via a PR URL in the team Slack channel
-* Once you're happy the PR is complete, and have completed the PR checklist, mark it as **Ready for review**, and add one or more reviewers
-* Reviewers provide feedback as comments on the PR **Conversation** tab, or alongside code in the **Files changed** tab.
-* Ultimately a project admin will **Merge** the code
+
+1. unless you have a very good reason (minor cosmetic documentation update), the process starts with an issue.  Create the issue, if necessary, documenting the problem that is being solved, and the strategy for solving it
+
+2. open your git client (command-line or graphical, the GitHub client integrates very well)
+
+3. switch to the **develop** branch
+
+4. **Pull** to update the **develop** branch
+
+5. create a new branch, including the issue number and brief description in the title, eg: *433_solitaire_feature*
+
+6. checkout the new branch
+
+7. use commits as necessary to break down the workflow
+
+8. once you're confident in your progress **Push** the branch to the repo (so we can create a draft/tracking PR)
+
+9. in GitHub, switch to **Pull Requests**. You should see a yellow banner with the title of your branch
+
+10. Click on the link in the yellow banner, to create a Pull Request (PR)
+
+11. Give the PR a nice neat title
+
+12. Mark the PR as **Draft**
+
+13. In the PR description, if this PR will resolve the issue, start with **#Fixes 433**.  If it won't resolve it, but will help it, write **#Supports 433**
+
+14. Continue with branch, pushing commits as necessary.  If you want early feedback, just ask for support via a PR URL in the team Slack channel
+
+15. Once you're happy the PR is complete, and have completed the PR checklist, mark it as **Ready for review**, and add one or more reviewers
+
+16. Reviewers provide feedback as comments on the PR **Conversation** tab, or alongside code in the **Files changed** tab.
+
+17. Ultimately a project admin will **Merge** the code
 
 Other tips:
-* try to avoid large-scale reformatting within a PR, since it obfuscates the logic changes. So, please do large scale reformatting in its own PR, for separate review.
-* don't forget to regularly click on **Update branch** to ensure your code is up to date with **develop**
-* these other things help with PR reviews:
-   * if the change is graphical a screenshot is useful
-   * if something dynamic is happening, a video recording helps (maybe via an app like Gyazo Pro)
+
+1. try to avoid large-scale reformatting within a PR, since it obfuscates the logic changes. So, please do large scale reformatting in its own PR, for separate review.
+
+2. don't forget to regularly click on **Update branch** to ensure your code is up to date with **develop**
+
+3. these other things help with PR reviews:
+   1. if the change is graphical a screenshot is useful
+   2. if something dynamic is happening, a video recording helps (maybe via an app like Gyazo Pro)
