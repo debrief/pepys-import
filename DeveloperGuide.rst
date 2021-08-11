@@ -209,3 +209,6 @@ Here is the flow:
 Other tips:
 * try to avoid large-scale reformatting within a PR, since it obfuscates the logic changes. So, please do large scale reformatting in its own PR, for separate review.
 * don't forget to regularly click on **Update branch** to ensure your code is up to date with **develop**
+* these other things help with PR reviews:
+   * if the change is graphical a screenshot is useful
+   * if something dynamic is happening, a video recording helps (maybe via an app like Gyazo Pro)
