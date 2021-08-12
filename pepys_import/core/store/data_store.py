@@ -1,4 +1,5 @@
 import os
+from posixpath import split
 import sys
 from contextlib import contextmanager
 from datetime import datetime
@@ -10,9 +11,10 @@ from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker, undefer
 from sqlalchemy.sql import func
+from sqlalchemy.sql.expression import table
 from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, merge_references
 
-from paths import PEPYS_IMPORT_DIRECTORY
+from paths import PEPYS_IMPORT_DIRECTORY, MIGRATIONS_DIRECTORY
 from pepys_import import __build_timestamp__, __version__
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.store import constants
@@ -44,6 +46,22 @@ from .table_summary import TableSummary, TableSummarySet
 DEFAULT_DATA_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "default_data")
 USER = getuser()  # Login name of the current user
 
+# Python Set Object - is this item in this set
+
+# Constant Lists of revisions - list all files in the directory
+SQLITE_REVISIONS_FOLDER = os.path.join(MIGRATIONS_DIRECTORY, "postgres_versions")
+SQLITE_REVISION_LIST =  os.listdir(SQLITE_REVISIONS_FOLDER)
+SQLITE_REVISION_IDS = []
+for sqlite_revision in SQLITE_REVISION_LIST:
+    unique_revision_id = sqlite_revision.split("_")[1]
+    SQLITE_REVISION_IDS.append(unique_revision_id)
+
+POSTGRES_REVISIONS_FOLDER = os.path.join(MIGRATIONS_DIRECTORY, "sqlite_versions")
+POSTGRES_REVISIONS_LIST = os.listdir(POSTGRES_REVISIONS_FOLDER)
+POSTGRES_REVISIONS_IDS = []
+for postgres_revision in POSTGRES_REVISIONS_LIST:
+    unique_revision_id = postgres_revision.split("_")[1]
+    POSTGRES_REVISIONS_IDS.append(unique_revision_id)
 
 class DataStore:
     """Representation of database
@@ -90,6 +108,8 @@ class DataStore:
         )
         try:
             if db_type == "postgres":
+                self.check_migration_version(POSTGRES_REVISIONS_IDS)
+
                 self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
                 BasePostGIS.metadata.bind = self.engine
                 # The SQL below seems to be required to set the database up correctly so that merging works.
@@ -105,6 +125,8 @@ class DataStore:
                             "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
                         )
             elif db_type == "sqlite":
+                self.check_migration_version(SQLITE_REVISION_IDS)
+
                 self.engine = create_engine(connection_string, echo=False)
                 listen(self.engine, "connect", load_spatialite)
                 listen(self.engine, "connect", set_sqlite_foreign_keys_on)
@@ -292,6 +314,36 @@ class DataStore:
             file for file in files if os.path.splitext(file)[0].replace(" ", "") in metadata_tables
         ]
         import_from_csv(self, sample_data_folder, metadata_files, change.change_id)
+
+    def check_migration_version(revision_list):
+        with handle_database_errors():
+            with engine.connect() as connection:
+                # Connect to the database and get the current table contents
+                try:
+                    table_contents = connection.execute("SELECT * from alembic_version;").fetchall()
+                    if len(table_contents) != 1:
+                        print(
+                            "ERROR: Retrieved version contents from database is incorrect length. \n"
+                            "Cannot correctly compare with currently known migrations. Please check with your administrator."
+                        )
+                        sys.exit(1)
+
+                except:
+                    print(
+                        "ERROR: Null version contents from database. Ensure that database is correctly configured."
+                    )
+                    sys.exit(1)
+
+                if table_contents[0][0] in revision_list:
+                    # The returned contents is found in our list of ID's so we can return out of the function and carry on
+                    return
+                else:
+                    # The returned contents is not found in our list of ID's so we need to have an error 
+                    print(
+                        f"ERROR: The current database version {table_contents[0][0]} is not recognised by this version of Pepys. \n"
+                        "You may be using an out-dated Pepys version - please check with your administrator."
+                    )
+                    sys.exit(1)
 
     # End of Data Store methods
     #############################################################
