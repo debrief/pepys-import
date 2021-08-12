@@ -213,7 +213,7 @@ Here is the flow:
 
 12. Mark the PR as **Draft**
 
-13. In the PR description, if this PR will resolve the issue, start with **#Fixes 433**.  If it won't resolve it, but will help it, write **#Supports 433**
+13. In the PR description, if this PR will resolve the issue, start with **Fixes #433**.  If it won't resolve it, but will help it, write **Supports #433**
 
 14. Continue with branch, pushing commits as necessary.  If you want early feedback, just ask for support via a PR URL in the team Slack channel
 
