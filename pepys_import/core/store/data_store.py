@@ -108,7 +108,7 @@ class DataStore:
         )
         try:
             if db_type == "postgres":
-                self.check_migration_version(POSTGRES_REVISIONS_IDS)
+                self.check_migration_version(self.engine, POSTGRES_REVISIONS_IDS)
 
                 self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
                 BasePostGIS.metadata.bind = self.engine
@@ -125,7 +125,7 @@ class DataStore:
                             "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
                         )
             elif db_type == "sqlite":
-                self.check_migration_version(SQLITE_REVISION_IDS)
+                self.check_migration_version(self.engine, SQLITE_REVISION_IDS)
 
                 self.engine = create_engine(connection_string, echo=False)
                 listen(self.engine, "connect", load_spatialite)
@@ -315,7 +315,7 @@ class DataStore:
         ]
         import_from_csv(self, sample_data_folder, metadata_files, change.change_id)
 
-    def check_migration_version(revision_list):
+    def check_migration_version(engine, revision_list):
         with handle_database_errors():
             with engine.connect() as connection:
                 # Connect to the database and get the current table contents
