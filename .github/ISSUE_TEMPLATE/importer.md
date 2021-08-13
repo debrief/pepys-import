@@ -7,17 +7,18 @@ assignees: ''
 
 ---
 
-## :floppy_disk: Title
-<!-- name of file format, to be used in naming importer -->
+##  :trophy: Business value
+<!-- how will this bring value to users -->
 
-## :medal_military: Supports
-[#725 File Importers](https://github.com/debrief/pepys-import/issues/725)
+## :alarm_clock: Business priority
+<!-- are there any deadlines on this support? -->
 
-## :tada: Sample
-<!-- Location of sample of data, potentially attached to issue -->
+We will typically require these items:
+(Use `convert to issue` if it is to be delegated/assigned)
 
-## :mag: Schema
-<!-- explanation of file contents -->
+* [ ] :name_badge: Unique name for file format (include in issue title)
+* [ ] :floppy_disk: Obtain sample data (attach if allowable)
+* [ ] :notebook_with_decorative_cover: Exploitation plan (custom template)
+* [ ] :construction_worker: Implementation
+* [ ] :star: Testing & Acceptance
 
-## :confused: Idiosyncracies
-<!-- Any known oddities/surprises in the data -->
