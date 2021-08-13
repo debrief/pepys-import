@@ -1,5 +1,5 @@
 ---
-name: Importer
+name: Importer - overview
 about: Develop importer for new file format
 title: Importer for ...
 labels: Importer
