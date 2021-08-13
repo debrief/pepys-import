@@ -1,13 +1,13 @@
 import os
-from posixpath import split
 import sys
 from contextlib import contextmanager
 from datetime import datetime
 from getpass import getuser
 from importlib import import_module
+from posixpath import split
 
-from sqlalchemy import create_engine, inspect
 import sqlalchemy
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker, undefer
@@ -15,7 +15,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import table
 from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, merge_references
 
-from paths import PEPYS_IMPORT_DIRECTORY, MIGRATIONS_DIRECTORY
+from paths import MIGRATIONS_DIRECTORY, PEPYS_IMPORT_DIRECTORY
 from pepys_import import __build_timestamp__, __version__
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.store import constants
@@ -50,8 +50,8 @@ USER = getuser()  # Login name of the current user
 # Python Set Object - is this item in this set
 
 # Constant Lists of revisions - list all files in the directory
-SQLITE_REVISIONS_FOLDER = os.path.join(MIGRATIONS_DIRECTORY, "sqlite_versions") 
-SQLITE_REVISION_LIST =  os.listdir(SQLITE_REVISIONS_FOLDER)
+SQLITE_REVISIONS_FOLDER = os.path.join(MIGRATIONS_DIRECTORY, "sqlite_versions")
+SQLITE_REVISION_LIST = os.listdir(SQLITE_REVISIONS_FOLDER)
 SQLITE_REVISION_IDS = []
 if len(SQLITE_REVISION_LIST) > 0:
     for sqlite_revision in SQLITE_REVISION_LIST:
@@ -65,6 +65,7 @@ if len(POSTGRES_REVISIONS_LIST) > 0:
     for postgres_revision in POSTGRES_REVISIONS_LIST:
         unique_revision_id = postgres_revision.split("_")[1]
         POSTGRES_REVISIONS_IDS.append(unique_revision_id)
+
 
 class DataStore:
     """Representation of database
@@ -111,7 +112,7 @@ class DataStore:
         )
         try:
             # Create engine to be used by both branches of if statement
-            
+
             if db_type == "postgres":
                 self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
                 self.check_migration_version(POSTGRES_REVISIONS_IDS)
@@ -131,10 +132,13 @@ class DataStore:
                         )
             elif db_type == "sqlite":
                 self.engine = create_engine(connection_string, echo=False)
-                self.check_migration_version(SQLITE_REVISION_IDS)
-
+                # These 'listen' calls must be the first things run after the engine is created
+                # as they set up things to happen on the first connect (which will happen when
+                # check_migration_version is called below)
                 listen(self.engine, "connect", load_spatialite)
                 listen(self.engine, "connect", set_sqlite_foreign_keys_on)
+
+                self.check_migration_version(SQLITE_REVISION_IDS)
                 BaseSpatiaLite.metadata.bind = self.engine
 
         except ArgumentError as e:
@@ -334,18 +338,16 @@ class DataStore:
                 table_contents = connection.execute("SELECT * from alembic_version;").fetchall()
                 if len(table_contents) <= 0:
                     # Nothing has been returned, this could be because we a new database is going to be created.
-                    print(
-                        "No previous database contents - continuing to create schema. \n"
-                    )
+                    print("No previous database contents - continuing to create schema. \n")
                     return
 
                 # Check that if the contents returned is the correct length
                 if len(table_contents) == 1:
                     if len(table_contents[0]) != 1:
-                        #Content has been found but it is not the correct length
+                        # Content has been found but it is not the correct length
                         print(
-                        "ERROR: Retrieved version contents from database is incorrect length. \n"
-                        "Cannot correctly compare with currently known migrations. Please check with your administrator."
+                            "ERROR: Retrieved version contents from database is incorrect length. \n"
+                            "Cannot correctly compare with currently known migrations. Please check with your administrator."
                         )
                         sys.exit(1)
                 else:
@@ -360,7 +362,7 @@ class DataStore:
                     # The returned contents is found in our list of ID's so we can return out of the function and carry on
                     return
                 else:
-                    # The returned contents is not found in our list of ID's so we need to have an error 
+                    # The returned contents is not found in our list of ID's so we need to have an error
                     print(
                         f"ERROR: The current database version {table_contents[0][0]} is not recognised by this version of Pepys. \n"
                         "You may be using an out-dated Pepys version - please check with your administrator."
