@@ -1,5 +1,5 @@
 ---
-name: :floppy_disk: Importer
+name: Importer
 about: Develop importer for new file format
 title: Importer for ...
 labels: Importer

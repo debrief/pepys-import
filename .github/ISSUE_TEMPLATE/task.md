@@ -1,5 +1,5 @@
 ---
-name: :construction_worker: Task
+name: Task
 about: Package of work in support of Feature
 title: Title
 labels: Task

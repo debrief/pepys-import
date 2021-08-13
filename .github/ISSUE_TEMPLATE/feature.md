@@ -1,5 +1,5 @@
 ---
-name: :trophy: Feature
+name: Feature
 about: New capability that delivers business outcome
 title: Title
 labels: Feature
