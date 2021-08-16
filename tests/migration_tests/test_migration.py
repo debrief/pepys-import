@@ -3,6 +3,7 @@ import os
 import shutil
 import sqlite3
 import unittest
+import warnings
 from unittest.mock import patch
 
 import pytest
@@ -221,7 +222,17 @@ class StepByStepMigrationTestCase(unittest.TestCase):
         connection = sqlite3.connect(COPY_DB_PATH)
         # Migrate the database one by one, import datafiles if specified in version/datafile table
         while True:
-            command.upgrade(config, "+1")
+            # This can raise SQLAlchemy warnings because of minor problems with past migrations
+            # I'm not sure whether the warnings are showing a real problem with an old migration
+            # or whether it is just an artefact of running a load of old migrations on top of each other
+            # However, it's a bad idea to alter the old migrations (it's like rewriting history)
+            # and the warning doesn't appear in any of the recent migration versions, so
+            # the best way forward is to ignore the warning
+            # These two lines of code are the recommended way to ignore warnings for a defined
+            # block of code
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                command.upgrade(config, "+1")
             new_version = get_alembic_version(connection)
             if new_version in self.sqlite_version_datafile_dict:
                 import_files(self.sqlite_version_datafile_dict[new_version], data_store)
