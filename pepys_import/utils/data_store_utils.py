@@ -206,7 +206,8 @@ def is_schema_created(engine, db_type):
 
 def create_spatial_tables_for_sqlite(engine):
     """Create geometry_columns and spatial_ref_sys metadata table"""
-    if not engine.dialect.has_table(engine, "spatial_ref_sys"):
+
+    if not inspect(engine).has_table("spatial_ref_sys"):
         with engine.connect() as connection:
             connection.execute(select([func.InitSpatialMetaData(1)]))
 
