@@ -13,8 +13,7 @@ from alembic import op
 from geoalchemy2 import Geometry
 from sqlalchemy import REAL, TIMESTAMP, Column, DateTime, ForeignKey, MetaData, String
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.ext.declarative.base import declared_attr
-from sqlalchemy.orm import declarative_base, deferred, relationship
+from sqlalchemy.orm import declarative_base, declared_attr, deferred, relationship
 
 import pepys_import
 from pepys_import.core.store import constants
