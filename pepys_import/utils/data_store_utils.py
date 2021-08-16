@@ -258,7 +258,7 @@ def create_alembic_version_table(engine, db_type):
                 if len(table_contents) == 0:
                     # Table exists but no version number row, so stamp it:
                     sql = "INSERT INTO alembic_version (version_num) VALUES (:id)"
-                    connection.execute(text(sql), id=versions["LATEST_SQLITE_VERSION"])
+                    connection.execute(text(sql), {"id": versions["LATEST_SQLITE_VERSION"]})
                 if len(table_contents) == 1:
                     if table_contents[0][0] == versions["LATEST_SQLITE_VERSION"]:
                         # Current version already stamped in table - so just continue
@@ -303,7 +303,7 @@ def create_alembic_version_table(engine, db_type):
                 if len(table_contents) == 0:
                     # Table exists but no version number row, so stamp it:
                     sql = "INSERT INTO pepys.alembic_version (version_num) VALUES (:id)"
-                    connection.execute(text(sql), id=versions["LATEST_POSTGRES_VERSION"])
+                    connection.execute(text(sql), {"id": versions["LATEST_POSTGRES_VERSION"]})
                 if len(table_contents) == 1:
                     if table_contents[0][0] == versions["LATEST_POSTGRES_VERSION"]:
                         # Current version already stamped in table - so just continue
@@ -336,7 +336,7 @@ def create_alembic_version_table(engine, db_type):
                     )
                 )
                 sql = "INSERT INTO pepys.alembic_version (version_num) VALUES (:id)"
-                connection.execute(text(sql), id=versions["LATEST_POSTGRES_VERSION"])
+                connection.execute(text(sql), {"id": versions["LATEST_POSTGRES_VERSION"]})
 
 
 def cache_results_if_not_none(cache_attribute):
