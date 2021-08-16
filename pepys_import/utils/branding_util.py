@@ -44,8 +44,11 @@ def show_welcome_banner(banner_text):
     render_text(font, text)
 
 
-def show_software_meta_info(version, db_type, db_name, db_host):
-    print("Software Version : ", version, "\n\n")
+def show_software_meta_info(version, build_timestamp, db_type, db_name, db_host):
+    print("Software Version : ", version)
+    if build_timestamp is not None:
+        print("Build date : ", build_timestamp, end="")
+    print("\n\n")
     print("Database Type : ", db_type)
     print("Database Name : ", db_name)
     print("Database Host : ", db_host)

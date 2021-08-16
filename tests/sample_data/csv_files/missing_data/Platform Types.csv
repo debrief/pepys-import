@@ -1,20 +1,20 @@
-name
-Naval - aircraft
-Naval - frigate
-Naval - auxiliary
-Naval - destroyer
-Naval - survey
-Naval - minesweeper
-Naval - patrol
-Naval - aircraft carrier
-Naval - submarine
-Naval - miscellaneous
-Merchant
-Tug
-Tanker
-Law Enforcement
-Pleasure Craft
-Search and Rescue
-Fishing Vessel
-Passenger/Ferry
-High Speed Craft
+name,default_data_interval_secs
+Naval - aircraft,2
+Naval - frigate,30
+Naval - auxiliary,60
+Naval - destroyer,30
+Naval - survey,60
+Naval - minesweeper,60
+Naval - patrol,30
+Naval - aircraft carrier,30
+Naval - submarine,30
+Naval - miscellaneous,30
+Merchant,60
+Tug,60
+Tanker,60
+Law Enforcement,30
+Pleasure Craft,30
+Search and Rescue,30
+Fishing Vessel,60
+Passenger/Ferry,60
+High Speed Craft,30

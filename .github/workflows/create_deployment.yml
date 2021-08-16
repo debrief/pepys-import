@@ -31,7 +31,8 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Pepys Deployment
-          path: ./*_pepys-import.zip
+          path: ./pepys_import*.zip
+          if-no-files-found: error
 
       - name: Calculate release name
         id: get_name
@@ -39,10 +40,11 @@ jobs:
 
       - name: Create release (only for tags)
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/') && github.event.base_ref == 'refs/heads/master'
+        if: startsWith(github.ref, 'refs/tags/') && ( github.event.base_ref == 'refs/heads/master' || github.event.base_ref == 'refs/heads/develop' )
         with:
           draft: true
-          files: ./*_pepys-import.zip
+          files: ./pepys_import*.zip
           name: ${{ steps.get_name.outputs.release_name }}
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -4,7 +4,6 @@ from uuid import uuid4
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
-from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
     deferred,
@@ -20,25 +19,49 @@ from pepys_import.core.store.common_db import (
     DatafileMixin,
     ElevationPropertyMixin,
     GeometryMixin,
+    GeometrySubTypeMixin,
     HostedByMixin,
     LocationPropertyMixin,
     LogMixin,
     LogsHoldingMixin,
     MediaMixin,
-    ParticipantMixin,
+    NationalityMixin,
     PlatformMixin,
+    ReferenceDefaultFields,
     ReferenceRepr,
     SensorMixin,
+    SerialMixin,
+    SerialParticipantMixin,
+    SeriesMixin,
     StateMixin,
     SynonymMixin,
     TaggedItemMixin,
-    TaskMixin,
+    WargameMixin,
+    WargameParticipantMixin,
 )
 from pepys_import.core.store.db_base import BasePostGIS
 from pepys_import.core.store.db_status import TableTypes
 
 
 # Metadata Tables
+class ConfigOption(BasePostGIS):
+    __tablename__ = constants.CONFIG_OPTIONS
+    table_type = TableTypes.METADATA
+    table_type_id = 37
+    _default_preview_fields = ["name", "value"]
+
+    config_option_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_ConfigOption_name"),
+        nullable=False,
+        unique=True,
+    )
+    description = Column(Text())
+    value = Column(Text(), nullable=False)
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
 class HostedBy(BasePostGIS, HostedByMixin):
     __tablename__ = constants.HOSTED_BY
     table_type = TableTypes.METADATA
@@ -47,19 +70,19 @@ class HostedBy(BasePostGIS, HostedByMixin):
     hosted_by_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     subject_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade"),
+        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     host_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade"),
+        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     hosted_from = Column(DATE, nullable=False)
     host_to = Column(DATE, nullable=False)
     privacy_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade"),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -69,10 +92,7 @@ class Sensor(BasePostGIS, SensorMixin):
     __tablename__ = constants.SENSOR
     table_type = TableTypes.METADATA
     table_type_id = 2
-    __table_args__ = (
-        UniqueConstraint("name", "host", name="uq_sensors_name_host"),
-        {"schema": "pepys"},
-    )
+    __table_args__ = (UniqueConstraint("name", "host", name="uq_sensors_name_host"),)
 
     sensor_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -80,7 +100,7 @@ class Sensor(BasePostGIS, SensorMixin):
     )
     sensor_type_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.SensorTypes.sensor_type_id", onupdate="cascade"),
+        ForeignKey("pepys.SensorTypes.sensor_type_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     host = Column(
@@ -90,7 +110,7 @@ class Sensor(BasePostGIS, SensorMixin):
     )
     privacy_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade"),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -104,82 +124,164 @@ class Platform(BasePostGIS, PlatformMixin):
         UniqueConstraint(
             "name", "nationality_id", "identifier", name="uq_Platform_name_nat_identifier"
         ),
-        {"schema": "pepys"},
     )
 
     platform_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
         String(150), CheckConstraint("name <> ''", name="ck_Platforms_name"), nullable=False
     )
-    identifier = deferred(
-        Column(
-            String(10),
-            CheckConstraint("identifier <> ''", name="ck_Platforms_identifier"),
-            nullable=False,
-        )
+    identifier = Column(
+        String(30),
+        CheckConstraint("identifier <> ''", name="ck_Platforms_identifier"),
+        nullable=False,
     )
     trigraph = deferred(Column(String(3)))
     quadgraph = deferred(Column(String(4)))
     nationality_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Nationalities.nationality_id", onupdate="cascade"),
+        ForeignKey("pepys.Nationalities.nationality_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     platform_type_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.PlatformTypes.platform_type_id", onupdate="cascade"),
+        ForeignKey("pepys.PlatformTypes.platform_type_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     privacy_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade"),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Task(BasePostGIS, TaskMixin):
-    __tablename__ = constants.TASK
+class Series(BasePostGIS, SeriesMixin):
+    __tablename__ = constants.SERIES
     table_type = TableTypes.METADATA
-    table_type_id = 4
+    table_type_id = 36
 
-    task_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(150), CheckConstraint("name <> ''", name="ck_Tasks_name"), nullable=False)
-    parent_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Tasks.task_id", onupdate="cascade"), nullable=False
+    series_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(String(150), CheckConstraint("name <> ''", name="ck_Series_name"), nullable=False)
+    privacy_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class Wargame(BasePostGIS, WargameMixin):
+    __tablename__ = constants.WARGAME
+    table_type = TableTypes.METADATA
+    table_type_id = 37
+
+    wargame_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(
+        String(150), CheckConstraint("name <> ''", name="ck_Wargames_name"), nullable=False
+    )
+    series_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Series.series_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     start = Column(TIMESTAMP, nullable=False)
     end = Column(TIMESTAMP, nullable=False)
-    environment = deferred(Column(String(150)))
-    location = deferred(Column(String(150)))
     privacy_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade"),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Participant(BasePostGIS, ParticipantMixin):
-    __tablename__ = constants.PARTICIPANT
+class Serial(BasePostGIS, SerialMixin):
+    __tablename__ = constants.SERIAL
     table_type = TableTypes.METADATA
-    table_type_id = 5
+    table_type_id = 37
 
-    participant_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    platform_id = Column(
+    __table_args__ = (
+        UniqueConstraint("serial_number", "wargame_id", name="uq_Serial_serial_number_wargame_id"),
+    )
+
+    serial_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    wargame_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade"),
+        ForeignKey("pepys.Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
-    task_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Tasks.task_id", onupdate="cascade"), nullable=False
+    serial_number = Column(
+        String(150),
+        CheckConstraint("serial_number <> ''", name="ck_Serials_serial_number"),
+        nullable=False,
+    )
+    start = Column(TIMESTAMP, nullable=False)
+    end = Column(TIMESTAMP, nullable=False)
+    environment = Column(String(150))
+    location = Column(String(150))
+    exercise = Column(String(150))
+    include_in_timeline = Column(Boolean, default=True)
+    privacy_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class WargameParticipant(BasePostGIS, WargameParticipantMixin):
+    __tablename__ = constants.WARGAME_PARTICIPANT
+    table_type = TableTypes.METADATA
+    table_type_id = 38
+
+    wargame_participant_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    wargame_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Wargames.wargame_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    platform_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    privacy_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class SerialParticipant(BasePostGIS, SerialParticipantMixin):
+    __tablename__ = constants.SERIAL_PARTICIPANT
+    table_type = TableTypes.METADATA
+    table_type_id = 39
+
+    serial_participant_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    wargame_participant_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(
+            "pepys.WargameParticipants.wargame_participant_id",
+            onupdate="cascade",
+            ondelete="cascade",
+        ),
+        nullable=False,
+    )
+    serial_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Serials.serial_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    force = Column(String(150))
+    force_type_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("pepys.ForceTypes.force_type_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
     privacy_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade"),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -193,21 +295,18 @@ class Datafile(BasePostGIS, DatafileMixin):
     __tablename__ = constants.DATAFILE
     table_type = TableTypes.METADATA
     table_type_id = 6  # Only needed for tables referenced by Entry table
-    __table_args__ = (
-        UniqueConstraint("size", "hash", name="uq_Datafile_size_hash"),
-        {"schema": "pepys"},
-    )
+    __table_args__ = (UniqueConstraint("size", "hash", name="uq_Datafile_size_hash"),)
 
     datafile_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     simulated = deferred(Column(Boolean, nullable=False))
     privacy_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade"),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     datafile_type_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.DatafileTypes.datafile_type_id", onupdate="cascade"),
+        ForeignKey("pepys.DatafileTypes.datafile_type_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     reference = Column(String(150))
@@ -266,10 +365,10 @@ class Log(BasePostGIS, LogMixin):
     )
     id = Column(UUID(as_uuid=True), nullable=False)
     field = Column(String(150))
-    new_value = Column(String(150))
+    previous_value = Column(Text())
     change_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Changes.change_id", onupdate="cascade"),
+        ForeignKey("pepys.Changes.change_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -287,7 +386,7 @@ class Extraction(BasePostGIS):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Tag(BasePostGIS):
+class Tag(BasePostGIS, ReferenceDefaultFields):
     __tablename__ = constants.TAG
     table_type = TableTypes.METADATA
     table_type_id = 11
@@ -304,11 +403,15 @@ class TaggedItem(BasePostGIS, TaggedItemMixin):
 
     tagged_item_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     tag_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Tags.tag_id", onupdate="cascade"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Tags.tag_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     item_id = Column(UUID(as_uuid=True), nullable=False)
     tagged_by_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Users.user_id", onupdate="cascade"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Users.user_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
     )
     private = Column(Boolean, nullable=False)
     tagged_on = Column(DATE, nullable=False)
@@ -316,7 +419,23 @@ class TaggedItem(BasePostGIS, TaggedItemMixin):
 
 
 # Reference Tables
-class PlatformType(BasePostGIS, ReferenceRepr):
+class ForceType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
+    __tablename__ = constants.FORCE_TYPE
+    table_type = TableTypes.REFERENCE
+    table_type_id = 40
+
+    force_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(
+        String(150),
+        CheckConstraint("name <> ''", name="ck_ForceTypes_name"),
+        nullable=False,
+        unique=True,
+    )
+    color = Column(String(10))
+    created_date = Column(DateTime, default=datetime.utcnow)
+
+
+class PlatformType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.PLATFORM_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 13
@@ -328,10 +447,11 @@ class PlatformType(BasePostGIS, ReferenceRepr):
         nullable=False,
         unique=True,
     )
+    default_data_interval_secs = Column(Integer)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Nationality(BasePostGIS, ReferenceRepr):
+class Nationality(BasePostGIS, ReferenceRepr, NationalityMixin):
     __tablename__ = constants.NATIONALITY
     table_type = TableTypes.REFERENCE
     table_type_id = 14
@@ -347,7 +467,7 @@ class Nationality(BasePostGIS, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class GeometryType(BasePostGIS, ReferenceRepr):
+class GeometryType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.GEOMETRY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 15
@@ -362,14 +482,11 @@ class GeometryType(BasePostGIS, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class GeometrySubType(BasePostGIS):
+class GeometrySubType(BasePostGIS, GeometrySubTypeMixin):
     __tablename__ = constants.GEOMETRY_SUBTYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 16
-    __table_args__ = (
-        UniqueConstraint("name", "parent", name="uq_GeometrySubType_name_parent"),
-        {"schema": "pepys"},
-    )
+    __table_args__ = (UniqueConstraint("name", "parent", name="uq_GeometrySubType_name_parent"),)
 
     geo_sub_type_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(
@@ -377,13 +494,13 @@ class GeometrySubType(BasePostGIS):
     )
     parent = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.GeometryTypes.geo_type_id", onupdate="cascade"),
+        ForeignKey("pepys.GeometryTypes.geo_type_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class User(BasePostGIS, ReferenceRepr):
+class User(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.USER
     table_type = TableTypes.REFERENCE
     table_type_id = 17
@@ -398,7 +515,7 @@ class User(BasePostGIS, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class UnitType(BasePostGIS, ReferenceRepr):
+class UnitType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.UNIT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 18
@@ -413,7 +530,7 @@ class UnitType(BasePostGIS, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ClassificationType(BasePostGIS, ReferenceRepr):
+class ClassificationType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.CLASSIFICATION_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 19
@@ -428,7 +545,7 @@ class ClassificationType(BasePostGIS, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ContactType(BasePostGIS, ReferenceRepr):
+class ContactType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.CONTACT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 20
@@ -443,7 +560,7 @@ class ContactType(BasePostGIS, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class SensorType(BasePostGIS, ReferenceRepr):
+class SensorType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.SENSOR_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 21
@@ -458,7 +575,7 @@ class SensorType(BasePostGIS, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Privacy(BasePostGIS, ReferenceRepr):
+class Privacy(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.PRIVACY
     table_type = TableTypes.REFERENCE
     table_type_id = 22
@@ -474,7 +591,7 @@ class Privacy(BasePostGIS, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class DatafileType(BasePostGIS, ReferenceRepr):
+class DatafileType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.DATAFILE_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 23
@@ -489,7 +606,7 @@ class DatafileType(BasePostGIS, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class MediaType(BasePostGIS, ReferenceRepr):
+class MediaType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.MEDIA_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 24
@@ -504,7 +621,7 @@ class MediaType(BasePostGIS, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class CommentType(BasePostGIS, ReferenceRepr):
+class CommentType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.COMMENT_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 25
@@ -519,7 +636,7 @@ class CommentType(BasePostGIS, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class CommodityType(BasePostGIS, ReferenceRepr):
+class CommodityType(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.COMMODITY_TYPE
     table_type = TableTypes.REFERENCE
     table_type_id = 26
@@ -534,7 +651,7 @@ class CommodityType(BasePostGIS, ReferenceRepr):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class ConfidenceLevel(BasePostGIS, ReferenceRepr):
+class ConfidenceLevel(BasePostGIS, ReferenceRepr, ReferenceDefaultFields):
     __tablename__ = constants.CONFIDENCE_LEVEL
     table_type = TableTypes.REFERENCE
     table_type_id = 27  # Only needed for tables referenced by Entry table
@@ -559,7 +676,7 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     time = Column(TIMESTAMP, nullable=False)
     sensor_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade"),
+        ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     _location = deferred(Column("location", Geometry(geometry_type="POINT", srid=4326)))
@@ -573,11 +690,18 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
         nullable=False,
     )
     privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
     )
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    # This relationship has to be defined here rather than in
+    # common_db.py, as we're using the 'secondary' parameter,
+    # which has to take a table name. With Postgres it requires a
+    # full 'schema.table' name, and as SQLite doesn't have
+    # schemas, this will fail for SQLite. Thus it is defined
+    # in sqlite_db.py and postgres_db.py.
     @declared_attr
     def platform(self):
         return relationship(
@@ -586,14 +710,12 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
             primaryjoin="State.sensor_id == Sensor.sensor_id",
             secondaryjoin="Platform.platform_id == Sensor.host",
             lazy="joined",
-            join_depth=1,
             uselist=False,
             viewonly=True,
+            # This specifies that when trying to query on this relationship
+            # this is the local column (well, assoc proxy actually) to filter on
+            info={"local_column": "platform_id"},
         )
-
-    @declared_attr
-    def platform_name(self):
-        return association_proxy("platform", "name")
 
 
 class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropertyMixin):
@@ -605,7 +727,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     name = Column(String(150))
     sensor_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade"),
+        ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     time = Column(TIMESTAMP, nullable=False)
@@ -632,7 +754,8 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
     _soa = deferred(Column("soa", DOUBLE_PRECISION))
     track_number = Column(String(20))
     subject_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
     )
     source_id = Column(
         UUID(as_uuid=True),
@@ -640,11 +763,18 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
         nullable=False,
     )
     privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
     )
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
 
+    # This relationship has to be defined here rather than in
+    # common_db.py, as we're using the 'secondary' parameter,
+    # which has to take a table name. With Postgres it requires a
+    # full 'schema.table' name, and as SQLite doesn't have
+    # schemas, this will fail for SQLite. Thus it is defined
+    # in sqlite_db.py and postgres_db.py.
     @declared_attr
     def platform(self):
         return relationship(
@@ -656,11 +786,10 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
             join_depth=1,
             uselist=False,
             viewonly=True,
+            # This specifies that when trying to query on this relationship
+            # this is the local column (well, assoc proxy actually) to filter on
+            info={"local_column": "platform_id"},
         )
-
-    @declared_attr
-    def platform_name(self):
-        return association_proxy("platform", "name")
 
 
 class Activation(BasePostGIS, ActivationMixin):
@@ -672,7 +801,7 @@ class Activation(BasePostGIS, ActivationMixin):
     name = Column(String(150))
     sensor_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade"),
+        ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     start = deferred(Column(TIMESTAMP))
@@ -687,7 +816,8 @@ class Activation(BasePostGIS, ActivationMixin):
         nullable=False,
     )
     privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
     )
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -702,18 +832,20 @@ class LogsHolding(BasePostGIS, LogsHoldingMixin):
     time = Column(TIMESTAMP, nullable=False)
     commodity_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.CommodityTypes.commodity_type_id", onupdate="cascade"),
+        ForeignKey(
+            "pepys.CommodityTypes.commodity_type_id", onupdate="cascade", ondelete="cascade"
+        ),
         nullable=False,
     )
     quantity = Column(DOUBLE_PRECISION, nullable=False)
     unit_type_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.UnitTypes.unit_type_id", onupdate="cascade"),
+        ForeignKey("pepys.UnitTypes.unit_type_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     platform_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade"),
+        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     comment = Column(Text, nullable=False)
@@ -723,7 +855,8 @@ class LogsHolding(BasePostGIS, LogsHoldingMixin):
         nullable=False,
     )
     privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -739,12 +872,13 @@ class Comment(BasePostGIS, CommentMixin):
 
     comment_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
     )
     time = Column(TIMESTAMP, nullable=False)
     comment_type_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.CommentTypes.comment_type_id", onupdate="cascade"),
+        ForeignKey("pepys.CommentTypes.comment_type_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     content = Column(
@@ -756,7 +890,8 @@ class Comment(BasePostGIS, CommentMixin):
         nullable=False,
     )
     privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
     )
     created_date = Column(DateTime, default=datetime.utcnow)
 
@@ -771,22 +906,29 @@ class Geometry1(BasePostGIS, GeometryMixin):
     name = Column(String(150))
     geo_type_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.GeometryTypes.geo_type_id", onupdate="cascade"),
+        ForeignKey("pepys.GeometryTypes.geo_type_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     geo_sub_type_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.GeometrySubTypes.geo_sub_type_id", onupdate="cascade"),
+        ForeignKey(
+            "pepys.GeometrySubTypes.geo_sub_type_id", onupdate="cascade", ondelete="cascade"
+        ),
         nullable=False,
     )
     start = Column(TIMESTAMP)
     end = Column(TIMESTAMP)
-    task_id = Column(UUID(as_uuid=True), ForeignKey("pepys.Tasks.task_id", onupdate="cascade"))
+    serial_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Serials.serial_id", onupdate="cascade", ondelete="cascade"),
+    )
     subject_platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
     )
     sensor_platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
     )
     source_id = Column(
         UUID(as_uuid=True),
@@ -794,7 +936,8 @@ class Geometry1(BasePostGIS, GeometryMixin):
         nullable=False,
     )
     privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
     )
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)
@@ -807,20 +950,23 @@ class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin, LocationPropertyMix
 
     media_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     platform_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
     )
     subject_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Platforms.platform_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
     )
     sensor_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade", ondelete="cascade"),
     )
     _location = deferred(Column("location", Geometry(geometry_type="POINT", srid=4326)))
     _elevation = deferred(Column("elevation", DOUBLE_PRECISION))
     time = Column(TIMESTAMP)
     media_type_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("pepys.MediaTypes.media_type_id", onupdate="cascade"),
+        ForeignKey("pepys.MediaTypes.media_type_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
     url = deferred(
@@ -832,7 +978,8 @@ class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin, LocationPropertyMix
         nullable=False,
     )
     privacy_id = Column(
-        UUID(as_uuid=True), ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade")
+        UUID(as_uuid=True),
+        ForeignKey("pepys.Privacies.privacy_id", onupdate="cascade", ondelete="cascade"),
     )
     remarks = Column(Text)
     created_date = Column(DateTime, default=datetime.utcnow)

@@ -45,7 +45,7 @@ def format_help_text(text):
 
 def format_error_message(text):
     """Create a FormattedText object which makes the given text red."""
-    return FormattedText([("#dc3545", text)])
+    return FormattedText([("#ansibrightred", text)])
 
 
 def formatted_text_to_str(formatted_text: FormattedText) -> str:

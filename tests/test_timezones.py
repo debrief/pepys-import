@@ -72,9 +72,11 @@ class TestGPXTimezonePostgres(unittest.TestCase):
         processor.process(DATA_PATH, self.postgres_store, False)
 
         with self.postgres_store.session_scope():
-            postgres_results = self.postgres_store.session.query(
-                self.postgres_store.db_classes.State
-            ).all()
+            postgres_results = (
+                self.postgres_store.session.query(self.postgres_store.db_classes.State)
+                .order_by(self.postgres_store.db_classes.State.time)
+                .all()
+            )
 
             assert postgres_results[0].time == datetime.datetime(2012, 4, 27, 15, 29, 38)
 
@@ -124,12 +126,16 @@ class TestTimesEqualDifferentDBs(unittest.TestCase):
 
         with self.postgres_store.session_scope():
             with self.sqlite_store.session_scope():
-                sqlite_results = self.sqlite_store.session.query(
-                    self.sqlite_store.db_classes.State
-                ).all()
-                postgres_results = self.postgres_store.session.query(
-                    self.postgres_store.db_classes.State
-                ).all()
+                sqlite_results = (
+                    self.sqlite_store.session.query(self.sqlite_store.db_classes.State)
+                    .order_by(self.sqlite_store.db_classes.State.time)
+                    .all()
+                )
+                postgres_results = (
+                    self.postgres_store.session.query(self.postgres_store.db_classes.State)
+                    .order_by(self.postgres_store.db_classes.State.time)
+                    .all()
+                )
 
                 sqlite_times = [result.time for result in sqlite_results]
                 postgres_times = [result.time for result in postgres_results]

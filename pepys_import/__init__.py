@@ -4,4 +4,5 @@
 
 __author__ = "Ian Mayo"
 __email__ = "ian@planetmayo.com"
-__version__ = "0.0.25"
+__version__ = "0.0.26"
+__build_timestamp__ = None

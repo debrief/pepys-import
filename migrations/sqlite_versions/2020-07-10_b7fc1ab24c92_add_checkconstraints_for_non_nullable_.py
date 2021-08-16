@@ -25,7 +25,6 @@ from pepys_import.core.store.common_db import (
     MediaMixin,
     ReferenceRepr,
     SynonymMixin,
-    TaskMixin,
 )
 from pepys_import.core.store.db_base import sqlite_naming_convention
 from pepys_import.core.store.db_status import TableTypes
@@ -109,7 +108,7 @@ def downgrade():
     Metadata = MetaData(naming_convention=sqlite_naming_convention)
     BaseSpatiaLite = declarative_base(metadata=Metadata)
 
-    class Task(BaseSpatiaLite, TaskMixin):
+    class Task(BaseSpatiaLite):
         __tablename__ = constants.TASK
         table_type = TableTypes.METADATA
         table_type_id = 4

@@ -1,5 +1,5 @@
-name
-PLATFORM-TYPE-1
-PLATFORM-TYPE-2
-Fisher
-Ferry
+name,default_data_interval_secs
+PLATFORM-TYPE-1,30
+PLATFORM-TYPE-2,2
+Fisher,60
+Ferry,60

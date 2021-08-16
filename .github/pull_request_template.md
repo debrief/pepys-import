@@ -38,6 +38,8 @@ Please ensure that you complete the following mandatory sections:
 - [ ] I have chosen reviewers for my PR.
 - [ ] I have chosen an appropriate label for the PR, adding `interactive_review` if reviewers will need to see UI
 - [ ] I have extended/updated the documentation in `\docs` folder
+- [ ] Any database content changes (Create, Edit, Delete) are recorded in the Log/Changes tables
+- [ ] Any database schema changes are implemented via `alembic revision` [transitions](https://pepys-import.readthedocs.io/en/latest/database_migration.html#how-to-use-it-for-developers)
 - [ ] I have completed the mandatory sections of this document.
 - [ ] I have deleted any unused sections.
 

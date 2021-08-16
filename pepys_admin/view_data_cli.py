@@ -51,17 +51,13 @@ class ViewDataShell(BaseShell):
         self.viewer = viewer
 
         if viewer:
-            self.prompt = "(pepys-viewer) "
-            self.choices = self.choices.replace("(.) Back", "(.) Exit")
+            self.prompt = "(pepys-viewer) (view) "
         else:
             self.prompt = "(pepys-admin) (view) "
 
     def do_cancel(self):
         """Returns to the previous menu"""
-        if self.viewer:
-            print("Thank you for using Pepys Viewer")
-        else:
-            print("Returning to the previous menu...")
+        print("Returning to the previous menu...")
 
     def _get_table_names(self):
         """Gets the table names using SQL Alchemy's inspect db functionality."""
