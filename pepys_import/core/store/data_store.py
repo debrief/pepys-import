@@ -101,7 +101,7 @@ class DataStore:
                 # It will be a no-op if the extension already exists, so it doesn't have an efficiency implication
                 # but seems to be required.
                 with handle_database_errors():
-                    with self.engine.connect() as connection:
+                    with self.engine.begin() as connection:
                         connection.execute(
                             text(
                                 "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"

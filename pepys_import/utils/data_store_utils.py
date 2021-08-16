@@ -208,7 +208,7 @@ def create_spatial_tables_for_sqlite(engine):
     """Create geometry_columns and spatial_ref_sys metadata table"""
 
     if not inspect(engine).has_table("spatial_ref_sys"):
-        with engine.connect() as connection:
+        with engine.begin() as connection:
             connection.execute(select(func.InitSpatialMetaData(1)))
 
 
@@ -219,7 +219,7 @@ def create_spatial_tables_for_postgres(engine):
         CREATE EXTENSION IF NOT EXISTS postgis;
         SET search_path = pepys,public;
     """
-    with engine.connect() as connection:
+    with engine.begin() as connection:
         connection.execute(text(query))
 
 
@@ -250,7 +250,7 @@ def create_alembic_version_table(engine, db_type):
     if db_type == "sqlite":
         # Try and get all entries from alembic_version table
         try:
-            with engine.connect() as connection:
+            with engine.begin() as connection:
                 table_contents = connection.execute(
                     text("SELECT * from alembic_version;")
                 ).fetchall()
@@ -277,7 +277,7 @@ def create_alembic_version_table(engine, db_type):
                         "Migration functionality will not work. Please contact support."
                     )
         except sqlalchemy.exc.OperationalError:
-            with engine.connect() as connection:
+            with engine.begin() as connection:
                 # Error running select, so table doesn't exist - create it and stamp the current version
                 connection.execute(
                     text(
@@ -295,7 +295,7 @@ def create_alembic_version_table(engine, db_type):
     else:
         # Try and get all entries from alembic_version table
         try:
-            with engine.connect() as connection:
+            with engine.begin() as connection:
                 table_contents = connection.execute(
                     text("SELECT * from pepys.alembic_version;")
                 ).fetchall()
@@ -323,7 +323,7 @@ def create_alembic_version_table(engine, db_type):
                     )
         except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.ProgrammingError):
             # Error running select, so table doesn't exist - create it and stamp the current version
-            with engine.connect() as connection:
+            with engine.begin() as connection:
                 connection.execute(
                     text(
                         """
