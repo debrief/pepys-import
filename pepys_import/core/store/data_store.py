@@ -4,7 +4,6 @@ from contextlib import contextmanager
 from datetime import datetime
 from getpass import getuser
 from importlib import import_module
-from posixpath import split
 
 import sqlalchemy
 from sqlalchemy import create_engine, inspect
@@ -12,7 +11,6 @@ from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker, undefer
 from sqlalchemy.sql import func
-from sqlalchemy.sql.expression import table
 from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, merge_references
 
 from paths import MIGRATIONS_DIRECTORY, PEPYS_IMPORT_DIRECTORY
@@ -46,8 +44,6 @@ from .table_summary import TableSummary, TableSummarySet
 
 DEFAULT_DATA_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "default_data")
 USER = getuser()  # Login name of the current user
-
-# Python Set Object - is this item in this set
 
 # Constant Lists of revisions - list all files in the directory
 SQLITE_REVISIONS_FOLDER = os.path.join(MIGRATIONS_DIRECTORY, "sqlite_versions")
@@ -369,7 +365,11 @@ class DataStore:
                     )
                     sys.exit(1)
 
-        except (sqlalchemy.exc.OperationalError, sqlalchemy.exc.ProgrammingError):
+        except (
+            sqlalchemy.exc.OperationalError,
+            sqlalchemy.exc.ProgrammingError,
+            sqlalchemy.exc.DatabaseError,
+        ):
             # If Alembic version table doesn't exist then error arises. This is ok as table will be created later.
             pass
 
