@@ -4,6 +4,7 @@ import re
 import unittest
 
 import pytest
+from sqlalchemy.sql.expression import text
 from testing.postgresql import Postgresql
 
 from paths import MIGRATIONS_DIRECTORY
@@ -20,7 +21,7 @@ def test_create_alembic_version_empty_db():
     create_alembic_version_table(ds.engine, ds.db_type)
 
     with ds.engine.connect() as connection:
-        results = connection.execute("SELECT * FROM alembic_version;").fetchall()
+        results = connection.execute(text("SELECT * FROM alembic_version;")).fetchall()
 
         assert len(results) == 1
         assert results[0][0] == versions["LATEST_SQLITE_VERSION"]
@@ -34,14 +35,14 @@ def test_create_alembic_version_table_empty():
 
     # Delete all entries, so table is empty
     with ds.engine.connect() as connection:
-        connection.execute("DELETE FROM alembic_version;")
+        connection.execute(text("DELETE FROM alembic_version;"))
 
     # Now run function
     create_alembic_version_table(ds.engine, ds.db_type)
 
     # Check it has one entry and it's the right one
     with ds.engine.connect() as connection:
-        results = connection.execute("SELECT * FROM alembic_version;").fetchall()
+        results = connection.execute(text("SELECT * FROM alembic_version;")).fetchall()
 
         assert len(results) == 1
         assert results[0][0] == versions["LATEST_SQLITE_VERSION"]
@@ -56,7 +57,7 @@ def test_create_alembic_version_already_at_latest_version():
     create_alembic_version_table(ds.engine, ds.db_type)
 
     with ds.engine.connect() as connection:
-        results = connection.execute("SELECT * FROM alembic_version;").fetchall()
+        results = connection.execute(text("SELECT * FROM alembic_version;")).fetchall()
 
         assert len(results) == 1
         assert results[0][0] == versions["LATEST_SQLITE_VERSION"]
@@ -69,7 +70,7 @@ def test_create_alembic_version_at_old_version():
     create_alembic_version_table(ds.engine, ds.db_type)
 
     with ds.engine.connect() as connection:
-        connection.execute("UPDATE alembic_version SET version_num = 'old_version_id';")
+        connection.execute(text("UPDATE alembic_version SET version_num = 'old_version_id';"))
 
     with pytest.raises(
         ValueError,
@@ -87,7 +88,7 @@ def test_create_alembic_version_multiple_rows():
     create_alembic_version_table(ds.engine, ds.db_type)
 
     with ds.engine.connect() as connection:
-        connection.execute("INSERT INTO alembic_version VALUES ('new_entry');")
+        connection.execute(text("INSERT INTO alembic_version VALUES ('new_entry');"))
 
     with pytest.raises(
         ValueError,
@@ -137,7 +138,7 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
         with self.store.engine.connect() as connection:
-            results = connection.execute("SELECT * FROM pepys.alembic_version;").fetchall()
+            results = connection.execute(text("SELECT * FROM pepys.alembic_version;")).fetchall()
 
             assert len(results) == 1
             assert results[0][0] == versions["LATEST_POSTGRES_VERSION"]
@@ -148,14 +149,14 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
 
         # Delete all entries, so table is empty
         with self.store.engine.connect() as connection:
-            connection.execute("DELETE FROM pepys.alembic_version;")
+            connection.execute(text("DELETE FROM pepys.alembic_version;"))
 
         # Now run function
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
         # Check it has one entry and it's the right one
         with self.store.engine.connect() as connection:
-            results = connection.execute("SELECT * FROM pepys.alembic_version;").fetchall()
+            results = connection.execute(text("SELECT * FROM pepys.alembic_version;")).fetchall()
 
             assert len(results) == 1
             assert results[0][0] == versions["LATEST_POSTGRES_VERSION"]
@@ -167,7 +168,7 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
         with self.store.engine.connect() as connection:
-            results = connection.execute("SELECT * FROM pepys.alembic_version;").fetchall()
+            results = connection.execute(text("SELECT * FROM pepys.alembic_version;")).fetchall()
 
             assert len(results) == 1
             assert results[0][0] == versions["LATEST_POSTGRES_VERSION"]
@@ -177,7 +178,7 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
         with self.store.engine.connect() as connection:
-            connection.execute("UPDATE alembic_version SET version_num = 'old_version_id';")
+            connection.execute(text("UPDATE alembic_version SET version_num = 'old_version_id';"))
 
         with pytest.raises(
             ValueError,
@@ -192,7 +193,7 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
         with self.store.engine.connect() as connection:
-            connection.execute("INSERT INTO alembic_version VALUES ('new_entry');")
+            connection.execute(text("INSERT INTO alembic_version VALUES ('new_entry');"))
 
         with pytest.raises(
             ValueError,

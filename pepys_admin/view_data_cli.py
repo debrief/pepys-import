@@ -9,6 +9,7 @@ from sqlalchemy import inspect
 from sqlalchemy.exc import InvalidRequestError, OperationalError, ProgrammingError
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import RelationshipProperty, class_mapper, load_only
+from sqlalchemy.sql.expression import text
 from tabulate import tabulate
 
 from pepys_admin.base_cli import BaseShell
@@ -99,9 +100,9 @@ class ViewDataShell(BaseShell):
         if table == constants.ALEMBIC_VERSION:
             with self.data_store.engine.connect() as connection:
                 if self.data_store.db_type == "postgres":
-                    result = connection.execute("SELECT * FROM pepys.alembic_version;")
+                    result = connection.execute(text("SELECT * FROM pepys.alembic_version;"))
                 else:
-                    result = connection.execute("SELECT * FROM alembic_version;")
+                    result = connection.execute(text("SELECT * FROM alembic_version;"))
                     result = result.fetchall()
                 res = "Alembic Version\n"
                 res += tabulate(
@@ -164,9 +165,9 @@ class ViewDataShell(BaseShell):
         table = table_name_to_class_name(selected_table)
         with self.data_store.engine.connect() as connection:
             if self.data_store.db_type == "postgres":
-                results = connection.execute(f'SELECT * FROM pepys."{selected_table}";')
+                results = connection.execute(text(f'SELECT * FROM pepys."{selected_table}";'))
             else:
-                results = connection.execute(f"SELECT * FROM {selected_table};")
+                results = connection.execute(text(f"SELECT * FROM {selected_table};"))
             results = results.fetchall()
 
             if table != constants.ALEMBIC_VERSION:
@@ -233,7 +234,7 @@ class ViewDataShell(BaseShell):
         if query:
             with self.data_store.engine.connect() as connection:
                 try:
-                    results = connection.execute(query)
+                    results = connection.execute(text(query))
                     results = results.fetchall()
                     return query, results
                 except (

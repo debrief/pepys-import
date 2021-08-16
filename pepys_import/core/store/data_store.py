@@ -10,6 +10,7 @@ from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker, undefer
 from sqlalchemy.sql import func
+from sqlalchemy.sql.expression import text
 from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, merge_references
 
 from paths import PEPYS_IMPORT_DIRECTORY
@@ -102,7 +103,9 @@ class DataStore:
                 with handle_database_errors():
                     with self.engine.connect() as connection:
                         connection.execute(
-                            "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
+                            text(
+                                "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
+                            )
                         )
             elif db_type == "sqlite":
                 self.engine = create_engine(connection_string, echo=False)
@@ -1383,10 +1386,10 @@ class DataStore:
             meta = BaseSpatiaLite.metadata
             with self.session_scope():
                 meta.drop_all()
-                self.session.execute("DROP TABLE IF EXISTS alembic_version;")
+                self.session.execute(text("DROP TABLE IF EXISTS alembic_version;"))
         else:
             with self.engine.connect() as connection:
-                connection.execute('DROP SCHEMA IF EXISTS "pepys" CASCADE;')
+                connection.execute(text('DROP SCHEMA IF EXISTS "pepys" CASCADE;'))
 
     def get_all_datafiles(self):
         """Returns all datafiles.

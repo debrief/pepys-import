@@ -209,7 +209,7 @@ def create_spatial_tables_for_sqlite(engine):
 
     if not inspect(engine).has_table("spatial_ref_sys"):
         with engine.connect() as connection:
-            connection.execute(select([func.InitSpatialMetaData(1)]))
+            connection.execute(select(func.InitSpatialMetaData(1)))
 
 
 def create_spatial_tables_for_postgres(engine):
@@ -220,7 +220,7 @@ def create_spatial_tables_for_postgres(engine):
         SET search_path = pepys,public;
     """
     with engine.connect() as connection:
-        connection.execute(query)
+        connection.execute(text(query))
 
 
 def create_stored_procedures_for_postgres(engine):
@@ -237,7 +237,7 @@ def create_stored_procedures_for_postgres(engine):
         for filename in stored_procedure_files:
             with open(filename) as f:
                 procedure_definition = f.read()
-            connection.execute(sqlalchemy.text(procedure_definition))
+            connection.execute(text(procedure_definition))
 
 
 def create_alembic_version_table(engine, db_type):
@@ -251,12 +251,14 @@ def create_alembic_version_table(engine, db_type):
         # Try and get all entries from alembic_version table
         try:
             with engine.connect() as connection:
-                table_contents = connection.execute("SELECT * from alembic_version;").fetchall()
+                table_contents = connection.execute(
+                    text("SELECT * from alembic_version;")
+                ).fetchall()
 
                 if len(table_contents) == 0:
                     # Table exists but no version number row, so stamp it:
-                    sql = text("INSERT INTO alembic_version (version_num) VALUES (:id)")
-                    connection.execute(sql, id=versions["LATEST_SQLITE_VERSION"])
+                    sql = "INSERT INTO alembic_version (version_num) VALUES (:id)"
+                    connection.execute(text(sql), id=versions["LATEST_SQLITE_VERSION"])
                 if len(table_contents) == 1:
                     if table_contents[0][0] == versions["LATEST_SQLITE_VERSION"]:
                         # Current version already stamped in table - so just continue
@@ -278,28 +280,30 @@ def create_alembic_version_table(engine, db_type):
             with engine.connect() as connection:
                 # Error running select, so table doesn't exist - create it and stamp the current version
                 connection.execute(
-                    """
+                    text(
+                        """
                     CREATE TABLE IF NOT EXISTS alembic_version
                     (
                         version_num VARCHAR(32) NOT NULL,
                         CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
                     );
                 """
+                    )
                 )
-                sql = text("INSERT INTO alembic_version (version_num) VALUES (:id)")
-                connection.execute(sql, id=versions["LATEST_SQLITE_VERSION"])
+                sql = "INSERT INTO alembic_version (version_num) VALUES (:id)"
+                connection.execute(text(sql), {"id": versions["LATEST_SQLITE_VERSION"]})
     else:
         # Try and get all entries from alembic_version table
         try:
             with engine.connect() as connection:
                 table_contents = connection.execute(
-                    "SELECT * from pepys.alembic_version;"
+                    text("SELECT * from pepys.alembic_version;")
                 ).fetchall()
 
                 if len(table_contents) == 0:
                     # Table exists but no version number row, so stamp it:
-                    sql = text("INSERT INTO pepys.alembic_version (version_num) VALUES (:id)")
-                    connection.execute(sql, id=versions["LATEST_POSTGRES_VERSION"])
+                    sql = "INSERT INTO pepys.alembic_version (version_num) VALUES (:id)"
+                    connection.execute(text(sql), id=versions["LATEST_POSTGRES_VERSION"])
                 if len(table_contents) == 1:
                     if table_contents[0][0] == versions["LATEST_POSTGRES_VERSION"]:
                         # Current version already stamped in table - so just continue
@@ -321,16 +325,18 @@ def create_alembic_version_table(engine, db_type):
             # Error running select, so table doesn't exist - create it and stamp the current version
             with engine.connect() as connection:
                 connection.execute(
-                    """
+                    text(
+                        """
                     CREATE TABLE IF NOT EXISTS pepys.alembic_version
                     (
                     version_num VARCHAR(32) NOT NULL,
                     CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num)
                     );
                 """
+                    )
                 )
-                sql = text("INSERT INTO pepys.alembic_version (version_num) VALUES (:id)")
-                connection.execute(sql, id=versions["LATEST_POSTGRES_VERSION"])
+                sql = "INSERT INTO pepys.alembic_version (version_num) VALUES (:id)"
+                connection.execute(text(sql), id=versions["LATEST_POSTGRES_VERSION"])
 
 
 def cache_results_if_not_none(cache_attribute):

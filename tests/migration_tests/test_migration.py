@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import pytest
 from alembic import command
+from sqlalchemy.sql.expression import text
 from testing.postgresql import Postgresql
 
 from paths import MIGRATIONS_DIRECTORY, TESTS_DIRECTORY
@@ -127,7 +128,7 @@ class MigratePostgresTestCase(unittest.TestCase):
 
         # Import all tables and sample data
         with self.store.engine.connect().execution_options(autocommit=True) as connection:
-            connection.execute(sql_code)
+            connection.execute(text(sql_code))
 
         # Migrate
         self.shell.do_migrate()
@@ -137,9 +138,9 @@ class MigratePostgresTestCase(unittest.TestCase):
 
 def get_alembic_version(connection, db_type="sqlite"):
     if db_type == "sqlite":
-        version = connection.execute("SELECT version_num FROM alembic_version;")
+        version = connection.execute(text("SELECT version_num FROM alembic_version;"))
     elif db_type == "postgres":
-        version = connection.execute('SELECT version_num FROM pepys."alembic_version";')
+        version = connection.execute(text('SELECT version_num FROM pepys."alembic_version";'))
     else:
         print("Given DB type is wrong!")
         return
@@ -260,7 +261,7 @@ class StepByStepMigrationTestCase(unittest.TestCase):
 
         # Import all tables and sample data
         with data_store.engine.connect().execution_options(autocommit=True) as connection:
-            connection.execute(sql_code)
+            connection.execute(text(sql_code))
 
             # Migrate the database one by one, import datafiles if specified in version/datafile table
             while True:
