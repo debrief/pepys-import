@@ -12,7 +12,7 @@ tqdm>=4.44.1
 alembic>=1.4.2
 pg8000>=1.14.1
 setuptools>=40.8.0
-Pygments>=2.6.1
+pygments>=2.7.4
 geopy>=1.22
 halo>=0.0.31
 loguru

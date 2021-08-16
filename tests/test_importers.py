@@ -13,11 +13,13 @@ import pytest
 
 from importers.nmea_importer import NMEAImporter
 from importers.replay_importer import ReplayImporter
+from pepys_import import __version__
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.file.importer import Importer
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
+from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.import_utils import sort_files
 
 FILE_PATH = os.path.dirname(__file__)
@@ -1031,6 +1033,39 @@ class TestImportSkipFile(unittest.TestCase):
             assert len(self.store.session.query(self.store.db_classes.State).all()) == states
             assert len(self.store.session.query(self.store.db_classes.Contact).all()) == contacts
             assert len(self.store.session.query(self.store.db_classes.Comment).all()) == comments
+
+
+def test_changes_table_entry_contains_version():
+    store = DataStore(
+        "",
+        "",
+        "",
+        0,
+        ":memory:",
+        db_type="sqlite",
+        missing_data_resolver=DefaultResolver(),
+    )
+
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
+    processor = FileProcessor(archive=False)
+    processor.register_importer(ReplayImporter())
+
+    processor.process(SINGLE_REP_FILE, store)
+
+    with store.session_scope():
+        change_entries = store.session.query(store.db_classes.Change).all()
+
+        # Check at least one of the entries contains the right text
+        # (we use contains not equals, as release versions of Pepys will have an extra
+        # bit of text giving the build date - but this won't be present for dev versions)
+        for entry in change_entries:
+            if f"Importing 'rep_test1.rep' using Pepys {__version__}" in entry.reason:
+                return
+
+        assert False
 
 
 if __name__ == "__main__":
