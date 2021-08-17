@@ -2,6 +2,8 @@ import json
 import os
 import re
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 
 import pytest
 from testing.postgresql import Postgresql
@@ -96,6 +98,84 @@ def test_create_alembic_version_multiple_rows():
         ),
     ):
         create_alembic_version_table(ds.engine, ds.db_type)
+
+
+def test_check_migration_version_new():
+    # Create a new alembic version database - function should pass
+    DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+
+
+def test_check_migration_version_is_found():
+    # Create a new alembic version database - function should pass
+    ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    revision = ["version_id", "test_version_id"]
+
+    # Run once to create the table and stamp latest version
+    create_alembic_version_table(ds.engine, ds.db_type)
+
+    with ds.engine.connect() as connection:
+        connection.execute("UPDATE alembic_version SET version_num = 'version_id';")
+        ds.check_migration_version(revision)
+
+
+def test_check_migration_version_no_revisions():
+    # Call the function with no revisions in the list - function should call sys.exit(1)
+    ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    revisions = []
+
+    with ds.engine.connect():
+        with pytest.raises(SystemExit) as exit_exception_e:
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                ds.check_migration_version(revisions)
+        output = temp_output.getvalue()
+        assert "ERROR: Expected list of known revisions is 0." in output
+        assert exit_exception_e.value.code == 1
+
+
+def test_check_migration_version_not_in_revisions():
+    # Call the function with no revisions in the list - function should call sys.exit(1)
+    ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    # These revisions will count as known revisions but will not be found by the database
+    revisions = ["abc", "def", "ghi"]
+
+    # Run once to create the table and stamp latest version
+    create_alembic_version_table(ds.engine, ds.db_type)
+
+    with ds.engine.connect() as connection:
+        connection.execute("UPDATE alembic_version SET version_num = 'version_id';")
+
+    # Revision list won't have the migration version within it -
+    with pytest.raises(SystemExit) as exit_exception_e:
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            ds.check_migration_version(revisions)
+    output = temp_output.getvalue()
+    assert (
+        "ERROR: The current database version version_id is not recognised by this version of Pepys."
+        in output
+    )
+    assert exit_exception_e.value.code == 1
+
+
+def test_check_migration_version_incorrect_length():
+    # Create a new alembic version database - function should pass
+    ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    revisions = ["version_id", "test_version_id"]
+
+    # Run once to create the table and stamp latest version
+    create_alembic_version_table(ds.engine, ds.db_type)
+
+    with ds.engine.connect() as connection:
+        connection.execute("INSERT INTO alembic_version VALUES ('TEST, TEST1');")
+
+        with pytest.raises(SystemExit) as exit_exception_e:
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                ds.check_migration_version(revisions)
+        output = temp_output.getvalue()
+        assert "ERROR: Retrieved version contents from database is incorrect length." in output
+        assert exit_exception_e.value.code == 1
 
 
 @pytest.mark.postgres
