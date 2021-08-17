@@ -332,6 +332,10 @@ class DataStore:
             with self.engine.connect() as connection:
                 # Connect to the database and get the current table contents
                 table_contents = connection.execute("SELECT * from alembic_version;").fetchall()
+
+                print("TABLE CONTENTS: \n")
+                print(*table_contents, sep="\n")
+
                 if len(table_contents) <= 0:
                     # Nothing has been returned, this could be because we a new database is going to be created.
                     print("No previous database contents - continuing to create schema. \n")
