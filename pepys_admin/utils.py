@@ -3,7 +3,6 @@ import os
 import sqlite3
 
 import pint
-from sqlalchemy.sql.expression import text
 from sqlalchemy.sql.schema import UniqueConstraint
 
 from paths import MIGRATIONS_DIRECTORY
@@ -175,7 +174,7 @@ def create_statistics_from_ids(ids):
 def database_at_latest_revision(db_path):
     try:
         conn = sqlite3.connect(db_path)
-        result = conn.execute(text("SELECT version_num from alembic_version;"))
+        result = conn.execute("SELECT version_num from alembic_version;")
         slave_version = next(result)[0]
         conn.close()
     except Exception:
