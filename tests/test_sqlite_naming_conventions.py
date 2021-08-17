@@ -10,8 +10,8 @@ from pepys_import.core.store.sqlite_db import Datafile, DatafileType
 
 def test_constraint_names_sqlite():
     sql_script = str(CreateTable(Datafile.__table__).compile(dialect=sqlite.dialect()))
+    print(sql_script)
     assert "pk_Datafiles" in sql_script
-    assert "ck_Datafiles_simulated" in sql_script
     assert "fk_Datafiles_privacy_id_Privacies" in sql_script
 
     sql_script = str(CreateTable(DatafileType.__table__).compile(dialect=sqlite.dialect()))
