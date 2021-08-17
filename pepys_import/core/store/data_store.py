@@ -82,76 +82,6 @@ class DataStore:
         welcome_text="Pepys_import",
         show_status=True,
     ):
-        if db_type == "postgres":
-            self.db_classes = import_module("pepys_import.core.store.postgres_db")
-            driver = "postgresql+psycopg2"
-        elif db_type == "sqlite":
-            self.db_classes = import_module("pepys_import.core.store.sqlite_db")
-            driver = "sqlite+pysqlite"
-        else:
-            raise Exception(
-                f"Unknown db_type {db_type} supplied, if specified should be "
-                "one of 'postgres' or 'sqlite'"
-            )
-
-        # setup meta_class data
-        self.meta_classes = {}
-        self.setup_table_type_mapping()
-
-        if db_name == ":memory:":
-            self.in_memory_database = True
-        else:
-            self.in_memory_database = False
-
-        connection_string = "{}://{}:{}@{}:{}/{}".format(
-            driver, db_username, db_password, db_host, db_port, db_name
-        )
-        try:
-            # Create engine to be used by both branches of if statement
-
-            if db_type == "postgres":
-                self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
-                self.check_migration_version(POSTGRES_REVISIONS_IDS)
-
-                BasePostGIS.metadata.bind = self.engine
-                # The SQL below seems to be required to set the database up correctly so that merging works.
-                # The search_path makes perfect sense, as when merging the tables come across from SQLite which
-                # has no schema, so the objects have no associated schema, and Postgres needs to be able to find
-                # them without a schema
-                # However, the CREATE EXTENSION bit makes less sense - but seems to be required to be in there.
-                # It will be a no-op if the extension already exists, so it doesn't have an efficiency implication
-                # but seems to be required.
-                with handle_database_errors():
-                    with self.engine.connect() as connection:
-                        connection.execute(
-                            "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
-                        )
-            elif db_type == "sqlite":
-                self.engine = create_engine(connection_string, echo=False)
-                # These 'listen' calls must be the first things run after the engine is created
-                # as they set up things to happen on the first connect (which will happen when
-                # check_migration_version is called below)
-                listen(self.engine, "connect", load_spatialite)
-                listen(self.engine, "connect", set_sqlite_foreign_keys_on)
-
-                self.check_migration_version(SQLITE_REVISION_IDS)
-                BaseSpatiaLite.metadata.bind = self.engine
-
-        except ArgumentError as e:
-            custom_print_formatted_text(
-                format_error_message(
-                    f"SQL Exception details: {e}\n\n"
-                    "ERROR: Invalid Connection URL Error!\n"
-                    "Please check your config file. There might be missing/wrong values!\n"
-                    "See above for the full error from SQLAlchemy."
-                )
-            )
-            sys.exit(1)
-
-        # Try to connect to the engine to check if there is any problem
-        with handle_first_connection_error(connection_string):
-            inspector = inspect(self.engine)
-            _ = inspector.get_table_names()
 
         self.missing_data_resolver = missing_data_resolver
         self.welcome_text = welcome_text
@@ -197,6 +127,75 @@ class DataStore:
         self._search_datafile_type_cache = dict()
         self._search_geometry_type_cache = dict()
         self._search_geometry_subtype_cache = dict()
+
+        if db_type == "postgres":
+            self.db_classes = import_module("pepys_import.core.store.postgres_db")
+            driver = "postgresql+psycopg2"
+        elif db_type == "sqlite":
+            self.db_classes = import_module("pepys_import.core.store.sqlite_db")
+            driver = "sqlite+pysqlite"
+        else:
+            raise Exception(
+                f"Unknown db_type {db_type} supplied, if specified should be "
+                "one of 'postgres' or 'sqlite'"
+            )
+
+        # setup meta_class data
+        self.meta_classes = {}
+        self.setup_table_type_mapping()
+
+        if db_name == ":memory:":
+            self.in_memory_database = True
+        else:
+            self.in_memory_database = False
+
+        connection_string = "{}://{}:{}@{}:{}/{}".format(
+            driver, db_username, db_password, db_host, db_port, db_name
+        )
+        try:
+            if db_type == "postgres":
+                self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
+
+                BasePostGIS.metadata.bind = self.engine
+                # The SQL below seems to be required to set the database up correctly so that merging works.
+                # The search_path makes perfect sense, as when merging the tables come across from SQLite which
+                # has no schema, so the objects have no associated schema, and Postgres needs to be able to find
+                # them without a schema
+                # However, the CREATE EXTENSION bit makes less sense - but seems to be required to be in there.
+                # It will be a no-op if the extension already exists, so it doesn't have an efficiency implication
+                # but seems to be required.
+                with handle_database_errors():
+                    with self.engine.connect() as connection:
+                        connection.execute(
+                            "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
+                        )
+                self.check_migration_version(POSTGRES_REVISIONS_IDS)
+            elif db_type == "sqlite":
+                self.engine = create_engine(connection_string, echo=False)
+                # These 'listen' calls must be the first things run after the engine is created
+                # as they set up things to happen on the first connect (which will happen when
+                # check_migration_version is called below)
+                listen(self.engine, "connect", load_spatialite)
+                listen(self.engine, "connect", set_sqlite_foreign_keys_on)
+
+                self.check_migration_version(SQLITE_REVISION_IDS)
+                BaseSpatiaLite.metadata.bind = self.engine
+
+        except ArgumentError as e:
+            custom_print_formatted_text(
+                format_error_message(
+                    f"SQL Exception details: {e}\n\n"
+                    "ERROR: Invalid Connection URL Error!\n"
+                    "Please check your config file. There might be missing/wrong values!\n"
+                    "See above for the full error from SQLAlchemy."
+                )
+            )
+            sys.exit(1)
+
+        # Try to connect to the engine to check if there is any problem
+        with handle_first_connection_error(connection_string):
+            inspector = inspect(self.engine)
+            _ = inspector.get_table_names()
 
         db_session = sessionmaker(bind=self.engine, expire_on_commit=False)
         self.scoped_session_creator = scoped_session(db_session)
@@ -329,12 +328,14 @@ class DataStore:
             sys.exit(1)
 
         try:
+            if self.db_type == "postgres":
+                table_name = "pepys.alembic_version"
+            else:
+                table_name = "alembic_version"
+
             with self.engine.connect() as connection:
                 # Connect to the database and get the current table contents
-                table_contents = connection.execute("SELECT * from alembic_version;").fetchall()
-
-                print("TABLE CONTENTS: \n")
-                print(*table_contents, sep="\n")
+                table_contents = connection.execute(f"SELECT * from {table_name};").fetchall()
 
                 if len(table_contents) <= 0:
                     # Nothing has been returned, this could be because we a new database is going to be created.

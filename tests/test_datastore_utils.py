@@ -283,9 +283,6 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         ):
             create_alembic_version_table(self.store.engine, self.store.db_type)
 
-    # def test_check_migration_version_new(self):
-    # Not sure how to get this to work with PostGres as it has to make a new one to begin with.
-
     def test_check_migration_version_is_found(self):
         # Create a new alembic version database - function should pass
         revision = ["version_id", "test_version_id"]
@@ -294,7 +291,7 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
         with self.store.engine.connect() as connection:
-            connection.execute("UPDATE alembic_version SET version_num = 'version_id';")
+            connection.execute("UPDATE pepys.alembic_version SET version_num = 'version_id';")
             self.store.check_migration_version(revision)
 
     def test_check_migration_version_no_revisions(self):
@@ -318,7 +315,7 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
         with self.store.engine.connect() as connection:
-            connection.execute("UPDATE alembic_version SET version_num = 'version_id';")
+            connection.execute("UPDATE pepys.alembic_version SET version_num = 'version_id';")
 
         # Revision list won't have the migration version within it -
         with pytest.raises(SystemExit) as exit_exception_e:
@@ -339,8 +336,8 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
         with self.store.engine.connect() as connection:
-            connection.execute("INSERT INTO alembic_version VALUES ('TEST');")
-            connection.execute("INSERT INTO alembic_version VALUES ('TEST1');")
+            connection.execute("INSERT INTO pepys.alembic_version VALUES ('TEST');")
+            connection.execute("INSERT INTO pepys.alembic_version VALUES ('TEST1');")
 
             with pytest.raises(SystemExit) as exit_exception_e:
                 temp_output = StringIO()
