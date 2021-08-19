@@ -45,22 +45,17 @@ from .table_summary import TableSummary, TableSummarySet
 DEFAULT_DATA_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "default_data")
 USER = getuser()  # Login name of the current user
 
-# Constant Lists of revisions - list all files in the directory
+# Constant Lists of revisions
+# This is a list of revisions known to this version of pepys
 SQLITE_REVISIONS_FOLDER = os.path.join(MIGRATIONS_DIRECTORY, "sqlite_versions")
 SQLITE_REVISION_LIST = os.listdir(SQLITE_REVISIONS_FOLDER)
-SQLITE_REVISION_IDS = []
-if len(SQLITE_REVISION_LIST) > 0:
-    for sqlite_revision in SQLITE_REVISION_LIST:
-        unique_revision_id = sqlite_revision.split("_")[1]
-        SQLITE_REVISION_IDS.append(unique_revision_id)
+SQLITE_REVISION_IDS = [sqlite_revision.split("_")[1] for sqlite_revision in SQLITE_REVISION_LIST]
 
 POSTGRES_REVISIONS_FOLDER = os.path.join(MIGRATIONS_DIRECTORY, "postgres_versions")
 POSTGRES_REVISIONS_LIST = os.listdir(POSTGRES_REVISIONS_FOLDER)
-POSTGRES_REVISIONS_IDS = []
-if len(POSTGRES_REVISIONS_LIST) > 0:
-    for postgres_revision in POSTGRES_REVISIONS_LIST:
-        unique_revision_id = postgres_revision.split("_")[1]
-        POSTGRES_REVISIONS_IDS.append(unique_revision_id)
+POSTGRES_REVISIONS_IDS = [
+    postgres_revision.split("_")[1] for postgres_revision in POSTGRES_REVISIONS_LIST
+]
 
 
 class DataStore:
@@ -323,7 +318,7 @@ class DataStore:
     def check_migration_version(self, revision_list):
         if len(revision_list) <= 0:
             print(
-                "ERROR: Expected list of known revisions is 0. Cannot continue with version check.\n"
+                "ERROR: Expected list of known revisions is empty. Cannot continue with version check.\n"
             )
             sys.exit(1)
 

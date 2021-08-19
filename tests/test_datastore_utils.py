@@ -129,12 +129,12 @@ def test_check_migration_version_no_revisions():
             with redirect_stdout(temp_output):
                 ds.check_migration_version(revisions)
         output = temp_output.getvalue()
-        assert "ERROR: Expected list of known revisions is 0." in output
+        assert "ERROR: Expected list of known revisions is empty." in output
         assert exit_exception_e.value.code == 1
 
 
 def test_check_migration_version_not_in_revisions():
-    # Call the function with no revisions in the list - function should call sys.exit(1)
+    # Call the function with revisions that won't exist - function should call sys.exit(1)
     ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
     # These revisions will count as known revisions but will not be found by the database
     revisions = ["abc", "def", "ghi"]
@@ -177,6 +177,24 @@ def test_check_migration_version_incorrect_length():
         output = temp_output.getvalue()
         assert "ERROR: Retrieved version contents from database is incorrect length." in output
         assert exit_exception_e.value.code == 1
+
+
+def test_check_migration_version_no_table_contents():
+    # Create a new alembic version database - function should pass
+    ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    revisions = ["version_id", "test_version_id"]
+
+    # Run once to create the table and stamp latest version
+    create_alembic_version_table(ds.engine, ds.db_type)
+
+    with ds.engine.connect() as connection:
+        connection.execute("DELETE FROM alembic_version;")
+
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            ds.check_migration_version(revisions)
+        output = temp_output.getvalue()
+        assert "No previous database contents - continuing to create schema." in output
 
 
 @pytest.mark.postgres
@@ -283,6 +301,42 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         ):
             create_alembic_version_table(self.store.engine, self.store.db_type)
 
+
+@pytest.mark.postgres
+class TestCheckMigrationVersion_Postgres(unittest.TestCase):
+    def setUp(self):
+        self.postgres = None
+        self.store = None
+        try:
+            self.postgres = Postgresql(
+                database="test",
+                host="localhost",
+                user="postgres",
+                password="postgres",
+                port=55527,
+            )
+        except RuntimeError:
+            print("PostgreSQL database couldn't be created! Test is skipping.")
+            return
+        try:
+            self.store = DataStore(
+                db_name="test",
+                db_host="localhost",
+                db_username="postgres",
+                db_password="postgres",
+                db_port=55527,
+                db_type="postgres",
+            )
+            self.store.initialise()
+        except Exception:
+            print("Database schema and data population failed! Test is skipping.")
+
+    def tearDown(self):
+        try:
+            self.postgres.stop()
+        except AttributeError:
+            return
+
     def test_check_migration_version_is_found(self):
         # Create a new alembic version database - function should pass
         revision = ["version_id", "test_version_id"]
@@ -304,7 +358,7 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
                 with redirect_stdout(temp_output):
                     self.store.check_migration_version(revisions)
             output = temp_output.getvalue()
-            assert "ERROR: Expected list of known revisions is 0." in output
+            assert "ERROR: Expected list of known revisions is empty." in output
             assert exit_exception_e.value.code == 1
 
     def test_check_migration_version_not_in_revisions(self):
@@ -346,3 +400,18 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
             output = temp_output.getvalue()
             assert "ERROR: Retrieved version contents from database is incorrect length." in output
             assert exit_exception_e.value.code == 1
+
+    def test_check_migration_version_no_table_contents(self):
+        revisions = ["version_id", "test_version_id"]
+
+        # Run once to create the table and stamp latest version
+        create_alembic_version_table(self.store.engine, self.store.db_type)
+
+        with self.store.engine.connect() as connection:
+            connection.execute("DELETE FROM pepys.alembic_version;")
+
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.store.check_migration_version(revisions)
+            output = temp_output.getvalue()
+            assert "No previous database contents - continuing to create schema." in output
