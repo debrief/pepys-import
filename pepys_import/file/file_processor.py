@@ -11,6 +11,7 @@ from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
 
 from paths import IMPORTERS_DIRECTORY
+from pepys_import import __build_timestamp__, __version__
 from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
@@ -250,8 +251,11 @@ class FileProcessor:
             if data_store.is_datafile_loaded_before(file_size, file_hash):
                 return processed_ctr
 
+            reason = f"Importing '{basename}' using Pepys {__version__}"
             # ok, let these importers handle the file
-            reason = f"Importing '{basename}'."
+            if __build_timestamp__ is not None:
+                reason += f", built on {__build_timestamp__}"
+
             change = data_store.add_to_changes(user=USER, modified=datetime.utcnow(), reason=reason)
             privacy = None
             for importer in good_importers:
