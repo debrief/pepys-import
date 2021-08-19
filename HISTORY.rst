@@ -2,6 +2,14 @@
 History
 =======
 
+0.0.26 (2021-08-16)
+-------------------
+
+* Formally release Pepys maintenance tools (verified in SW/21)
+* Formally release support for tasks & participations (verified in SW/21)
+* Incorporate current beta of Pepys-Timeline
+* Include version & buid-date when logging imports
+
 0.0.25 (2021-01-15)
 -------------------
 

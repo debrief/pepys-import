@@ -42,14 +42,14 @@ jobs:
         env:
           PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
         run: |
-          coverage3 run -m pytest -v --color=yes --ignore=tests/gui_tests tests/
+          coverage3 run -m pytest -v --color=yes --ignore=tests/gui_tests tests/ -Werror
 
       - name: Run tests (GUI)
         shell: bash -l {0}
         env:
           PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
         run: |
-          coverage3 run -a -m pytest -v --color=yes -s tests/gui_tests
+          coverage3 run -a -m pytest -v --color=yes -s tests/gui_tests -Werror
 
       - name: Run black
         shell: bash -l {0}
@@ -129,4 +129,4 @@ jobs:
 
       - name: Run tests (no Postgres)
         shell: cmd
-        run: python.exe -m pytest -v --color=yes tests -m "not postgres"
+        run: python.exe -m pytest -v --color=yes tests -m "not postgres" -Werror
