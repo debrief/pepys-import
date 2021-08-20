@@ -338,7 +338,7 @@ class DataStore:
                     return
 
                 # Check that if the contents returned is the correct length
-                if len(table_contents) == 1 and type(table_contents) == list:
+                if len(table_contents) == 1 and isinstance(table_contents, list):
                     if len(table_contents[0]) != 1:
                         # Content has been found but it is not the correct length
                         print(
