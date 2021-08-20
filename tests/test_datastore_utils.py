@@ -179,6 +179,26 @@ def test_check_migration_version_incorrect_length():
         assert exit_exception_e.value.code == 1
 
 
+def test_check_migration_version_incorrect_length_null_value():
+    # Create a new alembic version database - function should pass
+    ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    revisions = ["version_id", "test_version_id"]
+
+    # Run once to create the table and stamp latest version
+    create_alembic_version_table(ds.engine, ds.db_type)
+
+    with ds.engine.connect() as connection:
+        connection.execute("INSERT INTO alembic_version VALUES ('');")
+
+        with pytest.raises(SystemExit) as exit_exception_e:
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                ds.check_migration_version(revisions)
+        output = temp_output.getvalue()
+        assert "ERROR: Retrieved version contents from database is incorrect length." in output
+        assert exit_exception_e.value.code == 1
+
+
 def test_check_migration_version_no_table_contents():
     # Create a new alembic version database - function should pass
     ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -392,6 +412,23 @@ class TestCheckMigrationVersion_Postgres(unittest.TestCase):
         with self.store.engine.connect() as connection:
             connection.execute("INSERT INTO pepys.alembic_version VALUES ('TEST');")
             connection.execute("INSERT INTO pepys.alembic_version VALUES ('TEST1');")
+
+            with pytest.raises(SystemExit) as exit_exception_e:
+                temp_output = StringIO()
+                with redirect_stdout(temp_output):
+                    self.store.check_migration_version(revisions)
+            output = temp_output.getvalue()
+            assert "ERROR: Retrieved version contents from database is incorrect length." in output
+            assert exit_exception_e.value.code == 1
+
+    def test_check_migration_version_incorrect_length_null_value(self):
+        revisions = ["version_id", "test_version_id"]
+
+        # Run once to create the table and stamp latest version
+        create_alembic_version_table(self.store.engine, self.store.db_type)
+
+        with self.store.engine.connect() as connection:
+            connection.execute("INSERT INTO pepys.alembic_version VALUES ('');")
 
             with pytest.raises(SystemExit) as exit_exception_e:
                 temp_output = StringIO()

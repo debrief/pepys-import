@@ -323,14 +323,14 @@ class DataStore:
             sys.exit(1)
 
         try:
-            if self.db_type == "postgres":
-                table_name = "pepys.alembic_version"
-            else:
-                table_name = "alembic_version"
-
             with self.engine.connect() as connection:
                 # Connect to the database and get the current table contents
-                table_contents = connection.execute(f"SELECT * from {table_name};").fetchall()
+                if self.db_type == "postgres":
+                    table_contents = connection.execute(
+                        "SELECT * from pepys.alembic_version;"
+                    ).fetchall()
+                else:
+                    table_contents = connection.execute("SELECT * from alembic_version;").fetchall()
 
                 if len(table_contents) <= 0:
                     # Nothing has been returned, this could be because we a new database is going to be created.
@@ -338,11 +338,11 @@ class DataStore:
                     return
 
                 # Check that if the contents returned is the correct length
-                if len(table_contents) == 1:
+                if len(table_contents) == 1 and type(table_contents) == list:
                     if len(table_contents[0]) != 1:
                         # Content has been found but it is not the correct length
                         print(
-                            "ERROR: Retrieved version contents from database is incorrect length. \n"
+                            "ERROR: Retrieved version contents from database is incorrect length TEST. \n"
                             "Cannot correctly compare with currently known migrations. Please check with your administrator."
                         )
                         sys.exit(1)
