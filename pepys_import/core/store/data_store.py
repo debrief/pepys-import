@@ -342,7 +342,7 @@ class DataStore:
                     if len(table_contents[0]) != 1:
                         # Content has been found but it is not the correct length
                         print(
-                            "ERROR: Retrieved version contents from database is incorrect length TEST. \n"
+                            "ERROR: Retrieved version contents from database is incorrect length. \n"
                             "Cannot correctly compare with currently known migrations. Please check with your administrator."
                         )
                         sys.exit(1)
