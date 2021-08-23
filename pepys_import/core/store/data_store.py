@@ -5,6 +5,7 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
+import sqlalchemy
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
@@ -12,7 +13,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker, undefer
 from sqlalchemy.sql import func
 from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, merge_references
 
-from paths import PEPYS_IMPORT_DIRECTORY
+from paths import MIGRATIONS_DIRECTORY, PEPYS_IMPORT_DIRECTORY
 from pepys_import import __build_timestamp__, __version__
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.store import constants
@@ -44,6 +45,18 @@ from .table_summary import TableSummary, TableSummarySet
 DEFAULT_DATA_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "default_data")
 USER = getuser()  # Login name of the current user
 
+# Constant Lists of revisions
+# This is a list of revisions known to this version of pepys
+SQLITE_REVISIONS_FOLDER = os.path.join(MIGRATIONS_DIRECTORY, "sqlite_versions")
+SQLITE_REVISION_LIST = os.listdir(SQLITE_REVISIONS_FOLDER)
+SQLITE_REVISION_IDS = [sqlite_revision.split("_")[1] for sqlite_revision in SQLITE_REVISION_LIST]
+
+POSTGRES_REVISIONS_FOLDER = os.path.join(MIGRATIONS_DIRECTORY, "postgres_versions")
+POSTGRES_REVISIONS_LIST = os.listdir(POSTGRES_REVISIONS_FOLDER)
+POSTGRES_REVISIONS_IDS = [
+    postgres_revision.split("_")[1] for postgres_revision in POSTGRES_REVISIONS_LIST
+]
+
 
 class DataStore:
     """Representation of database
@@ -64,66 +77,6 @@ class DataStore:
         welcome_text="Pepys_import",
         show_status=True,
     ):
-        if db_type == "postgres":
-            self.db_classes = import_module("pepys_import.core.store.postgres_db")
-            driver = "postgresql+psycopg2"
-        elif db_type == "sqlite":
-            self.db_classes = import_module("pepys_import.core.store.sqlite_db")
-            driver = "sqlite+pysqlite"
-        else:
-            raise Exception(
-                f"Unknown db_type {db_type} supplied, if specified should be "
-                "one of 'postgres' or 'sqlite'"
-            )
-
-        # setup meta_class data
-        self.meta_classes = {}
-        self.setup_table_type_mapping()
-
-        if db_name == ":memory:":
-            self.in_memory_database = True
-        else:
-            self.in_memory_database = False
-
-        connection_string = "{}://{}:{}@{}:{}/{}".format(
-            driver, db_username, db_password, db_host, db_port, db_name
-        )
-        try:
-            if db_type == "postgres":
-                self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
-                BasePostGIS.metadata.bind = self.engine
-                # The SQL below seems to be required to set the database up correctly so that merging works.
-                # The search_path makes perfect sense, as when merging the tables come across from SQLite which
-                # has no schema, so the objects have no associated schema, and Postgres needs to be able to find
-                # them without a schema
-                # However, the CREATE EXTENSION bit makes less sense - but seems to be required to be in there.
-                # It will be a no-op if the extension already exists, so it doesn't have an efficiency implication
-                # but seems to be required.
-                with handle_database_errors():
-                    with self.engine.connect() as connection:
-                        connection.execute(
-                            "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
-                        )
-            elif db_type == "sqlite":
-                self.engine = create_engine(connection_string, echo=False)
-                listen(self.engine, "connect", load_spatialite)
-                listen(self.engine, "connect", set_sqlite_foreign_keys_on)
-                BaseSpatiaLite.metadata.bind = self.engine
-        except ArgumentError as e:
-            custom_print_formatted_text(
-                format_error_message(
-                    f"SQL Exception details: {e}\n\n"
-                    "ERROR: Invalid Connection URL Error!\n"
-                    "Please check your config file. There might be missing/wrong values!\n"
-                    "See above for the full error from SQLAlchemy."
-                )
-            )
-            sys.exit(1)
-
-        # Try to connect to the engine to check if there is any problem
-        with handle_first_connection_error(connection_string):
-            inspector = inspect(self.engine)
-            _ = inspector.get_table_names()
 
         self.missing_data_resolver = missing_data_resolver
         self.welcome_text = welcome_text
@@ -169,6 +122,75 @@ class DataStore:
         self._search_datafile_type_cache = dict()
         self._search_geometry_type_cache = dict()
         self._search_geometry_subtype_cache = dict()
+
+        if db_type == "postgres":
+            self.db_classes = import_module("pepys_import.core.store.postgres_db")
+            driver = "postgresql+psycopg2"
+        elif db_type == "sqlite":
+            self.db_classes = import_module("pepys_import.core.store.sqlite_db")
+            driver = "sqlite+pysqlite"
+        else:
+            raise Exception(
+                f"Unknown db_type {db_type} supplied, if specified should be "
+                "one of 'postgres' or 'sqlite'"
+            )
+
+        # setup meta_class data
+        self.meta_classes = {}
+        self.setup_table_type_mapping()
+
+        if db_name == ":memory:":
+            self.in_memory_database = True
+        else:
+            self.in_memory_database = False
+
+        connection_string = "{}://{}:{}@{}:{}/{}".format(
+            driver, db_username, db_password, db_host, db_port, db_name
+        )
+        try:
+            if db_type == "postgres":
+                self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
+
+                BasePostGIS.metadata.bind = self.engine
+                # The SQL below seems to be required to set the database up correctly so that merging works.
+                # The search_path makes perfect sense, as when merging the tables come across from SQLite which
+                # has no schema, so the objects have no associated schema, and Postgres needs to be able to find
+                # them without a schema
+                # However, the CREATE EXTENSION bit makes less sense - but seems to be required to be in there.
+                # It will be a no-op if the extension already exists, so it doesn't have an efficiency implication
+                # but seems to be required.
+                with handle_database_errors():
+                    with self.engine.connect() as connection:
+                        connection.execute(
+                            "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
+                        )
+                self.check_migration_version(POSTGRES_REVISIONS_IDS)
+            elif db_type == "sqlite":
+                self.engine = create_engine(connection_string, echo=False)
+                # These 'listen' calls must be the first things run after the engine is created
+                # as they set up things to happen on the first connect (which will happen when
+                # check_migration_version is called below)
+                listen(self.engine, "connect", load_spatialite)
+                listen(self.engine, "connect", set_sqlite_foreign_keys_on)
+
+                self.check_migration_version(SQLITE_REVISION_IDS)
+                BaseSpatiaLite.metadata.bind = self.engine
+
+        except ArgumentError as e:
+            custom_print_formatted_text(
+                format_error_message(
+                    f"SQL Exception details: {e}\n\n"
+                    "ERROR: Invalid Connection URL Error!\n"
+                    "Please check your config file. There might be missing/wrong values!\n"
+                    "See above for the full error from SQLAlchemy."
+                )
+            )
+            sys.exit(1)
+
+        # Try to connect to the engine to check if there is any problem
+        with handle_first_connection_error(connection_string):
+            inspector = inspect(self.engine)
+            _ = inspector.get_table_names()
 
         db_session = sessionmaker(bind=self.engine, expire_on_commit=False)
         self.scoped_session_creator = scoped_session(db_session)
@@ -292,6 +314,64 @@ class DataStore:
             file for file in files if os.path.splitext(file)[0].replace(" ", "") in metadata_tables
         ]
         import_from_csv(self, sample_data_folder, metadata_files, change.change_id)
+
+    def check_migration_version(self, revision_list):
+        if len(revision_list) <= 0:
+            print(
+                "ERROR: Expected list of known revisions is empty. Cannot continue with version check.\n"
+            )
+            sys.exit(1)
+
+        try:
+            with self.engine.connect() as connection:
+                # Connect to the database and get the current table contents
+                if self.db_type == "postgres":
+                    table_contents = connection.execute(
+                        "SELECT * from pepys.alembic_version;"
+                    ).fetchall()
+                else:
+                    table_contents = connection.execute("SELECT * from alembic_version;").fetchall()
+
+                if len(table_contents) <= 0:
+                    # Nothing has been returned, this could be because we a new database is going to be created.
+                    print("No previous database contents - continuing to create schema. \n")
+                    return
+
+                # Check that if the contents returned is the correct length
+                if len(table_contents) == 1 and isinstance(table_contents, list):
+                    if len(table_contents[0]) != 1:
+                        # Content has been found but it is not the correct length
+                        print(
+                            "ERROR: Retrieved version contents from database is incorrect length. \n"
+                            "Cannot correctly compare with currently known migrations. Please check with your administrator."
+                        )
+                        sys.exit(1)
+                else:
+                    print(
+                        "ERROR: Retrieved version contents from database is incorrect length. \n"
+                        "Cannot correctly compare with currently known migrations. Please check with your administrator."
+                    )
+                    sys.exit(1)
+
+                # Database has been found and is the correct length
+                if table_contents[0][0] in revision_list:
+                    # The returned contents is found in our list of ID's so we can return out of the function and carry on
+                    return
+                else:
+                    # The returned contents is not found in our list of ID's so we need to have an error
+                    print(
+                        f"ERROR: The current database version {table_contents[0][0]} is not recognised by this version of Pepys. \n"
+                        "You may be using an out-dated Pepys version - please check with your administrator."
+                    )
+                    sys.exit(1)
+
+        except (
+            sqlalchemy.exc.OperationalError,
+            sqlalchemy.exc.ProgrammingError,
+            sqlalchemy.exc.DatabaseError,
+        ):
+            # If Alembic version table doesn't exist then error arises. This is ok as table will be created later.
+            pass
 
     # End of Data Store methods
     #############################################################
