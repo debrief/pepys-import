@@ -42,7 +42,6 @@ class MigrateSQLiteTestCase(unittest.TestCase):
     @patch("pepys_admin.admin_cli.prompt", return_value="Y")
     def test_do_migrate_empty_database(self, patched_input):
         assert is_schema_created(self.store.engine, self.store.db_type) is False
-        # Migrate
         # This can raise SQLAlchemy warnings because of minor problems with past migrations
         # I'm not sure whether the warnings are showing a real problem with an old migration
         # or whether it is just an artefact of running a load of old migrations on top of each other
