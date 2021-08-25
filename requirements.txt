@@ -1,5 +1,5 @@
 SQLAlchemy==1.4.*
-git+https://github.com/robintw/geoalchemy2.git@fix-sqlite-20-warnings#egg=geoalchemy2
+geoalchemy2>=0.9.4
 psycopg2==2.8.*
 pint==0.14
 tabulate>=0.8.7
