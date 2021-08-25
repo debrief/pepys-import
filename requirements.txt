@@ -1,5 +1,5 @@
 SQLAlchemy==1.4.*
-geoalchemy2>=0.7.0
+git+https://github.com/robintw/geoalchemy2.git#egg=geoalchemy2
 psycopg2==2.8.*
 pint==0.14
 tabulate>=0.8.7
