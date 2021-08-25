@@ -1385,10 +1385,10 @@ class DataStore:
         if self.db_type == "sqlite":
             meta = BaseSpatiaLite.metadata
             with self.session_scope():
-                meta.drop_all()
+                meta.drop_all(bind=self.engine)
                 self.session.execute(text("DROP TABLE IF EXISTS alembic_version;"))
         else:
-            with self.engine.connect() as connection:
+            with self.engine.begin() as connection:
                 connection.execute(text('DROP SCHEMA IF EXISTS "pepys" CASCADE;'))
 
     def get_all_datafiles(self):

@@ -133,11 +133,12 @@ class ViewDataShell(BaseShell):
                 name = f"{descriptor.target_collection}_{descriptor.value_attr}"
                 if name != "privacy_name":
                     associated_attributes.append(name)
+        header_attributes = [getattr(table_cls, header_name) for header_name in headers]
         # Fetch first rows up to MAX_ROWS_DISPLAYED, create a table from these rows
         with self.data_store.session_scope():
             values = (
                 self.data_store.session.query(table_cls)
-                .options(load_only(*headers))
+                .options(load_only(*header_attributes))
                 .limit(MAX_ROWS_DISPLAYED)
                 .all()
             )
