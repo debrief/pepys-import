@@ -330,10 +330,12 @@ class DataStore:
                 # Connect to the database and get the current table contents
                 if self.db_type == "postgres":
                     table_contents = connection.execute(
-                        "SELECT * from pepys.alembic_version;"
+                        text("SELECT * from pepys.alembic_version;")
                     ).fetchall()
                 else:
-                    table_contents = connection.execute("SELECT * from alembic_version;").fetchall()
+                    table_contents = connection.execute(
+                        text("SELECT * from alembic_version;")
+                    ).fetchall()
 
                 if len(table_contents) <= 0:
                     # Nothing has been returned, this could be because we a new database is going to be created.
