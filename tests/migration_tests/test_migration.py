@@ -240,6 +240,8 @@ class StepByStepMigrationTestCase(unittest.TestCase):
         }
 
     def test_migrate_sqlite(self):
+        if os.path.exists(COPY_DB_PATH):
+            os.remove(COPY_DB_PATH)
         shutil.copyfile(src=SQLITE_PATH, dst=COPY_DB_PATH)
 
         data_store = DataStore("", "", "", 0, COPY_DB_PATH, "sqlite")
@@ -301,6 +303,7 @@ class StepByStepMigrationTestCase(unittest.TestCase):
         with data_store.engine.begin() as connection:
             connection.execute(text(sql_code))
 
+        with data_store.engine.connect() as connection:
             # Migrate the database one by one, import datafiles if specified in version/datafile table
             while True:
                 command.upgrade(config, "+1")

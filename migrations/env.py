@@ -195,6 +195,7 @@ def run_migrations_online():
         else:
             # Turn off the enforcement of foreign key constraints before running the migration
             connection.execute(text("PRAGMA foreign_keys=OFF;"))
+            connection.commit()
             context.configure(
                 connection=connection,
                 target_metadata=target_metadata,
@@ -207,6 +208,7 @@ def run_migrations_online():
                 context.run_migrations()
             # Turn on the enforcement of foreign key constraints after the migration is done
             connection.execute(text("PRAGMA foreign_keys=ON;"))
+            connection.commit()
 
 
 if context.is_offline_mode():
