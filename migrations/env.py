@@ -207,9 +207,9 @@ def run_migrations_online():
             with context.begin_transaction():
                 context.run_migrations()
 
-            with context.begin_transaction():
-                # Turn on the enforcement of foreign key constraints after the migration is done
-                connection.execute(text("PRAGMA foreign_keys=ON;"))
+            # Turn on the enforcement of foreign key constraints after the migration is done
+            connection.execute(text("PRAGMA foreign_keys=ON;"))
+            connection.commit()
 
 
 if context.is_offline_mode():
