@@ -34,7 +34,7 @@ def test_create_alembic_version_table_empty():
     create_alembic_version_table(ds.engine, ds.db_type)
 
     # Delete all entries, so table is empty
-    with ds.engine.connect() as connection:
+    with ds.engine.begin() as connection:
         connection.execute(text("DELETE FROM alembic_version;"))
 
     # Now run function
@@ -69,7 +69,7 @@ def test_create_alembic_version_at_old_version():
     # Run once to create the table and stamp latest version
     create_alembic_version_table(ds.engine, ds.db_type)
 
-    with ds.engine.connect() as connection:
+    with ds.engine.begin() as connection:
         connection.execute(text("UPDATE alembic_version SET version_num = 'old_version_id';"))
 
     with pytest.raises(
@@ -87,7 +87,7 @@ def test_create_alembic_version_multiple_rows():
     # Run once to create the table and stamp latest version
     create_alembic_version_table(ds.engine, ds.db_type)
 
-    with ds.engine.connect() as connection:
+    with ds.engine.begin() as connection:
         connection.execute(text("INSERT INTO alembic_version VALUES ('new_entry');"))
 
     with pytest.raises(
@@ -148,7 +148,7 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
         # Delete all entries, so table is empty
-        with self.store.engine.connect() as connection:
+        with self.store.engine.begin() as connection:
             connection.execute(text("DELETE FROM pepys.alembic_version;"))
 
         # Now run function
@@ -177,7 +177,7 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         # Run once to create the table and stamp latest version
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
-        with self.store.engine.connect() as connection:
+        with self.store.engine.begin() as connection:
             connection.execute(text("UPDATE alembic_version SET version_num = 'old_version_id';"))
 
         with pytest.raises(
@@ -192,7 +192,7 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         # Run once to create the table and stamp latest version
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
-        with self.store.engine.connect() as connection:
+        with self.store.engine.begin() as connection:
             connection.execute(text("INSERT INTO alembic_version VALUES ('new_entry');"))
 
         with pytest.raises(

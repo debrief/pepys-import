@@ -593,7 +593,7 @@ class DataStore:
         """Search for any datafile with this name"""
         return (
             self.session.query(self.db_classes.Datafile)
-            .options(undefer("simulated"))
+            .options(undefer(self.db_classes.Datafile.simulated))
             .filter(func.lower(self.db_classes.Datafile.reference) == lowercase_or_none(name))
             .first()
         )
