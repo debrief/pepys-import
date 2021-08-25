@@ -167,7 +167,7 @@ class MigratePostgresTestCase(unittest.TestCase):
 
 def get_alembic_version(connection, db_type="sqlite"):
     if db_type == "sqlite":
-        version = connection.execute(text("SELECT version_num FROM alembic_version;"))
+        version = connection.execute("SELECT version_num FROM alembic_version;")
     elif db_type == "postgres":
         version = connection.execute(text('SELECT version_num FROM pepys."alembic_version";'))
     else:
