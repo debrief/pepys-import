@@ -150,7 +150,9 @@ class DataStore:
         )
         try:
             if db_type == "postgres":
-                self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
+                self.engine = create_engine(
+                    connection_string, echo=False, executemany_mode="batch", future=True
+                )
 
                 BasePostGIS.metadata.bind = self.engine
                 # The SQL below seems to be required to set the database up correctly so that merging works.
@@ -169,7 +171,7 @@ class DataStore:
                         )
                 self.check_migration_version(POSTGRES_REVISIONS_IDS)
             elif db_type == "sqlite":
-                self.engine = create_engine(connection_string, echo=False)
+                self.engine = create_engine(connection_string, echo=False, future=True)
                 # These 'listen' calls must be the first things run after the engine is created
                 # as they set up things to happen on the first connect (which will happen when
                 # check_migration_version is called below)
@@ -195,7 +197,7 @@ class DataStore:
             inspector = inspect(self.engine)
             _ = inspector.get_table_names()
 
-        db_session = sessionmaker(bind=self.engine, expire_on_commit=False)
+        db_session = sessionmaker(bind=self.engine, expire_on_commit=False, future=True)
         self.scoped_session_creator = scoped_session(db_session)
 
         # Branding Text
