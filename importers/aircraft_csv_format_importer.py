@@ -1,5 +1,6 @@
-import math
 from datetime import datetime
+
+from sqlalchemy.sql.expression import text
 
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
@@ -7,10 +8,10 @@ from pepys_import.core.validators import constants
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
 from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy
-from pepys_import.utils.unit_utils import convert_distance, convert_speed
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
 
 
-class CsvImporter(Importer):
+class AircraftCsvFormatImporter(Importer):
     def __init__(self):
         super().__init__(
             name="CSV Format Importer",
@@ -136,7 +137,12 @@ class CsvImporter(Importer):
             speed_token.record(self.name, "speed", speed)
 
         # Convert the course into Rads and check valid
-        course_token = course_token * 180 * math.pi
+        course_valid, course = convert_absolute_angle(
+            course_token, text, line_number, self.errors, self.error_type
+        )
+        if course_valid:
+            state.course = course
+            course_token.record(self.name, "course", course)
 
     @staticmethod
     def parse_timestamp(date, time):
