@@ -23,8 +23,8 @@ const today = new Date();
 const yesterday = new Date();
 yesterday.setDate(today.getDate() - 1);
 
-let fromDate = moment(yesterday);
-let toDate = moment(yesterday);
+let fromDate = moment(window.localStorage.getItem('fromDate') || yesterday);
+let toDate = moment(window.localStorage.getItem('toDate') || yesterday);
 
 const DEFAULT_OPTIONS = {
     margin: {
@@ -446,6 +446,8 @@ function initTimer() {
   timer.addEventListener("started", onTimerStarted);
   timer.addEventListener("targetAchieved", onTimerTargetAchieved);
   timer.addEventListener("reset", onTimerReset);
+
+  document.querySelector("#countdown-container").onclick = onTimerTargetAchieved;
 }
 
 function initDateRange() {
@@ -478,6 +480,9 @@ function initDateRange() {
   }, function(newFromDate, newToDate) {
     fromDate = newFromDate;
     toDate = newToDate;
+
+    window.localStorage.setItem('fromDate', newFromDate);
+    window.localStorage.setItem('toDate', newToDate);
   });
 
   $("input[name=\"date-range\"]").on("apply.daterangepicker", function(ev, picker) {
