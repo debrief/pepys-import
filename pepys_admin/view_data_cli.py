@@ -169,9 +169,7 @@ class ViewDataShell(BaseShell):
                 # The nosec comment below tells the Bandit security analysis tool (used by Codacy)
                 # to ignore this line. It can't cause a SQL injection attack as the inserted text
                 # is selected by the user from a fixed list provided by our code
-                results = connection.execute(
-                    text(f'SELECT * FROM pepys."{selected_table}";')
-                )  # nosec
+                results = connection.execute(text(f'SELECT * FROM pepys."{selected_table}";'))  # nosec
             else:
                 results = connection.execute(text(f"SELECT * FROM {selected_table};"))  # nosec
             results = results.fetchall()
