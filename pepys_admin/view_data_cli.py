@@ -166,10 +166,11 @@ class ViewDataShell(BaseShell):
         table = table_name_to_class_name(selected_table)
         with self.data_store.engine.connect() as connection:
             if self.data_store.db_type == "postgres":
+                sqlQuery = f'SELECT * FROM pepys."{selected_table}";'
                 # The nosec comment below tells the Bandit security analysis tool (used by Codacy)
                 # to ignore this line. It can't cause a SQL injection attack as the inserted text
                 # is selected by the user from a fixed list provided by our code
-                results = connection.execute(text(f'SELECT * FROM pepys."{selected_table}";'))  # nosec
+                results = connection.execute(text(sqlQuery))  # nosec
             else:
                 results = connection.execute(text(f"SELECT * FROM {selected_table};"))  # nosec
             results = results.fetchall()
