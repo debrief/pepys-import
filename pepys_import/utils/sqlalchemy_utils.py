@@ -33,6 +33,8 @@ class UUIDType(types.TypeDecorator):
 
     python_type = uuid.UUID
 
+    cache_ok = True
+
     def __init__(self, binary=False, native=True, length=None):
         """
         :param binary: Whether to use a BINARY(16) or CHAR(32) fallback.
@@ -104,7 +106,7 @@ def get_lowest_privacy(data_store):
 
     results = (
         data_store.session.query(data_store.db_classes.Privacy)
-        .filter(data_store.db_classes.Privacy.level == min_privacy_query)
+        .filter(data_store.db_classes.Privacy.level == min_privacy_query.scalar_subquery())
         .all()
     )
 

@@ -11,6 +11,7 @@ from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker, undefer
 from sqlalchemy.sql import func
+from sqlalchemy.sql.expression import text
 from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, merge_references
 
 from paths import MIGRATIONS_DIRECTORY, PEPYS_IMPORT_DIRECTORY
@@ -149,7 +150,9 @@ class DataStore:
         )
         try:
             if db_type == "postgres":
-                self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
+                self.engine = create_engine(
+                    connection_string, echo=False, executemany_mode="batch", future=True
+                )
 
                 BasePostGIS.metadata.bind = self.engine
                 # The SQL below seems to be required to set the database up correctly so that merging works.
@@ -160,13 +163,15 @@ class DataStore:
                 # It will be a no-op if the extension already exists, so it doesn't have an efficiency implication
                 # but seems to be required.
                 with handle_database_errors():
-                    with self.engine.connect() as connection:
+                    with self.engine.begin() as connection:
                         connection.execute(
-                            "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
+                            text(
+                                "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
+                            )
                         )
                 self.check_migration_version(POSTGRES_REVISIONS_IDS)
             elif db_type == "sqlite":
-                self.engine = create_engine(connection_string, echo=False)
+                self.engine = create_engine(connection_string, echo=False, future=True)
                 # These 'listen' calls must be the first things run after the engine is created
                 # as they set up things to happen on the first connect (which will happen when
                 # check_migration_version is called below)
@@ -192,7 +197,7 @@ class DataStore:
             inspector = inspect(self.engine)
             _ = inspector.get_table_names()
 
-        db_session = sessionmaker(bind=self.engine, expire_on_commit=False)
+        db_session = sessionmaker(bind=self.engine, expire_on_commit=False, future=True)
         self.scoped_session_creator = scoped_session(db_session)
 
         # Branding Text
@@ -327,10 +332,12 @@ class DataStore:
                 # Connect to the database and get the current table contents
                 if self.db_type == "postgres":
                     table_contents = connection.execute(
-                        "SELECT * from pepys.alembic_version;"
+                        text("SELECT * from pepys.alembic_version;")
                     ).fetchall()
                 else:
-                    table_contents = connection.execute("SELECT * from alembic_version;").fetchall()
+                    table_contents = connection.execute(
+                        text("SELECT * from alembic_version;")
+                    ).fetchall()
 
                 if len(table_contents) <= 0:
                     # Nothing has been returned, this could be because we a new database is going to be created.
@@ -670,7 +677,7 @@ class DataStore:
         """Search for any datafile with this name"""
         return (
             self.session.query(self.db_classes.Datafile)
-            .options(undefer("simulated"))
+            .options(undefer(self.db_classes.Datafile.simulated))
             .filter(func.lower(self.db_classes.Datafile.reference) == lowercase_or_none(name))
             .first()
         )
@@ -1462,11 +1469,11 @@ class DataStore:
         if self.db_type == "sqlite":
             meta = BaseSpatiaLite.metadata
             with self.session_scope():
-                meta.drop_all()
-                self.session.execute("DROP TABLE IF EXISTS alembic_version;")
+                meta.drop_all(bind=self.engine)
+                self.session.execute(text("DROP TABLE IF EXISTS alembic_version;"))
         else:
-            with self.engine.connect() as connection:
-                connection.execute('DROP SCHEMA IF EXISTS "pepys" CASCADE;')
+            with self.engine.begin() as connection:
+                connection.execute(text('DROP SCHEMA IF EXISTS "pepys" CASCADE;'))
 
     def get_all_datafiles(self):
         """Returns all datafiles.

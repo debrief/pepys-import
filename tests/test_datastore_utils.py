@@ -6,6 +6,7 @@ from contextlib import redirect_stdout
 from io import StringIO
 
 import pytest
+from sqlalchemy.sql.expression import text
 from testing.postgresql import Postgresql
 
 from paths import MIGRATIONS_DIRECTORY
@@ -22,7 +23,7 @@ def test_create_alembic_version_empty_db():
     create_alembic_version_table(ds.engine, ds.db_type)
 
     with ds.engine.connect() as connection:
-        results = connection.execute("SELECT * FROM alembic_version;").fetchall()
+        results = connection.execute(text("SELECT * FROM alembic_version;")).fetchall()
 
         assert len(results) == 1
         assert results[0][0] == versions["LATEST_SQLITE_VERSION"]
@@ -35,15 +36,15 @@ def test_create_alembic_version_table_empty():
     create_alembic_version_table(ds.engine, ds.db_type)
 
     # Delete all entries, so table is empty
-    with ds.engine.connect() as connection:
-        connection.execute("DELETE FROM alembic_version;")
+    with ds.engine.begin() as connection:
+        connection.execute(text("DELETE FROM alembic_version;"))
 
     # Now run function
     create_alembic_version_table(ds.engine, ds.db_type)
 
     # Check it has one entry and it's the right one
     with ds.engine.connect() as connection:
-        results = connection.execute("SELECT * FROM alembic_version;").fetchall()
+        results = connection.execute(text("SELECT * FROM alembic_version;")).fetchall()
 
         assert len(results) == 1
         assert results[0][0] == versions["LATEST_SQLITE_VERSION"]
@@ -58,7 +59,7 @@ def test_create_alembic_version_already_at_latest_version():
     create_alembic_version_table(ds.engine, ds.db_type)
 
     with ds.engine.connect() as connection:
-        results = connection.execute("SELECT * FROM alembic_version;").fetchall()
+        results = connection.execute(text("SELECT * FROM alembic_version;")).fetchall()
 
         assert len(results) == 1
         assert results[0][0] == versions["LATEST_SQLITE_VERSION"]
@@ -70,8 +71,8 @@ def test_create_alembic_version_at_old_version():
     # Run once to create the table and stamp latest version
     create_alembic_version_table(ds.engine, ds.db_type)
 
-    with ds.engine.connect() as connection:
-        connection.execute("UPDATE alembic_version SET version_num = 'old_version_id';")
+    with ds.engine.begin() as connection:
+        connection.execute(text("UPDATE alembic_version SET version_num = 'old_version_id';"))
 
     with pytest.raises(
         ValueError,
@@ -88,8 +89,8 @@ def test_create_alembic_version_multiple_rows():
     # Run once to create the table and stamp latest version
     create_alembic_version_table(ds.engine, ds.db_type)
 
-    with ds.engine.connect() as connection:
-        connection.execute("INSERT INTO alembic_version VALUES ('new_entry');")
+    with ds.engine.begin() as connection:
+        connection.execute(text("INSERT INTO alembic_version VALUES ('new_entry');"))
 
     with pytest.raises(
         ValueError,
@@ -113,9 +114,10 @@ def test_check_migration_version_is_found():
     # Run once to create the table and stamp latest version
     create_alembic_version_table(ds.engine, ds.db_type)
 
-    with ds.engine.connect() as connection:
-        connection.execute("UPDATE alembic_version SET version_num = 'version_id';")
-        ds.check_migration_version(revision)
+    with ds.engine.begin() as connection:
+        connection.execute(text("UPDATE alembic_version SET version_num = 'version_id';"))
+
+    ds.check_migration_version(revision)
 
 
 def test_check_migration_version_no_revisions():
@@ -123,14 +125,13 @@ def test_check_migration_version_no_revisions():
     ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
     revisions = []
 
-    with ds.engine.connect():
-        with pytest.raises(SystemExit) as exit_exception_e:
-            temp_output = StringIO()
-            with redirect_stdout(temp_output):
-                ds.check_migration_version(revisions)
-        output = temp_output.getvalue()
-        assert "ERROR: Expected list of known revisions is empty." in output
-        assert exit_exception_e.value.code == 1
+    with pytest.raises(SystemExit) as exit_exception_e:
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            ds.check_migration_version(revisions)
+    output = temp_output.getvalue()
+    assert "ERROR: Expected list of known revisions is empty." in output
+    assert exit_exception_e.value.code == 1
 
 
 def test_check_migration_version_not_in_revisions():
@@ -142,8 +143,8 @@ def test_check_migration_version_not_in_revisions():
     # Run once to create the table and stamp latest version
     create_alembic_version_table(ds.engine, ds.db_type)
 
-    with ds.engine.connect() as connection:
-        connection.execute("UPDATE alembic_version SET version_num = 'version_id';")
+    with ds.engine.begin() as connection:
+        connection.execute(text("UPDATE alembic_version SET version_num = 'version_id';"))
 
     # Revision list won't have the migration version within it -
     with pytest.raises(SystemExit) as exit_exception_e:
@@ -166,17 +167,17 @@ def test_check_migration_version_incorrect_length():
     # Run once to create the table and stamp latest version
     create_alembic_version_table(ds.engine, ds.db_type)
 
-    with ds.engine.connect() as connection:
-        connection.execute("INSERT INTO alembic_version VALUES ('TEST');")
-        connection.execute("INSERT INTO alembic_version VALUES ('TEST1');")
+    with ds.engine.begin() as connection:
+        connection.execute(text("INSERT INTO alembic_version VALUES ('TEST');"))
+        connection.execute(text("INSERT INTO alembic_version VALUES ('TEST1');"))
 
-        with pytest.raises(SystemExit) as exit_exception_e:
-            temp_output = StringIO()
-            with redirect_stdout(temp_output):
-                ds.check_migration_version(revisions)
-        output = temp_output.getvalue()
-        assert "ERROR: Retrieved version contents from database is incorrect length." in output
-        assert exit_exception_e.value.code == 1
+    with pytest.raises(SystemExit) as exit_exception_e:
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            ds.check_migration_version(revisions)
+    output = temp_output.getvalue()
+    assert "ERROR: Retrieved version contents from database is incorrect length." in output
+    assert exit_exception_e.value.code == 1
 
 
 def test_check_migration_version_incorrect_length_null_value():
@@ -187,16 +188,16 @@ def test_check_migration_version_incorrect_length_null_value():
     # Run once to create the table and stamp latest version
     create_alembic_version_table(ds.engine, ds.db_type)
 
-    with ds.engine.connect() as connection:
-        connection.execute("INSERT INTO alembic_version VALUES ('');")
+    with ds.engine.begin() as connection:
+        connection.execute(text("INSERT INTO alembic_version VALUES ('');"))
 
-        with pytest.raises(SystemExit) as exit_exception_e:
-            temp_output = StringIO()
-            with redirect_stdout(temp_output):
-                ds.check_migration_version(revisions)
-        output = temp_output.getvalue()
-        assert "ERROR: Retrieved version contents from database is incorrect length." in output
-        assert exit_exception_e.value.code == 1
+    with pytest.raises(SystemExit) as exit_exception_e:
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            ds.check_migration_version(revisions)
+    output = temp_output.getvalue()
+    assert "ERROR: Retrieved version contents from database is incorrect length." in output
+    assert exit_exception_e.value.code == 1
 
 
 def test_check_migration_version_no_table_contents():
@@ -207,14 +208,14 @@ def test_check_migration_version_no_table_contents():
     # Run once to create the table and stamp latest version
     create_alembic_version_table(ds.engine, ds.db_type)
 
-    with ds.engine.connect() as connection:
-        connection.execute("DELETE FROM alembic_version;")
+    with ds.engine.begin() as connection:
+        connection.execute(text("DELETE FROM alembic_version;"))
 
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            ds.check_migration_version(revisions)
-        output = temp_output.getvalue()
-        assert "No previous database contents - continuing to create schema." in output
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        ds.check_migration_version(revisions)
+    output = temp_output.getvalue()
+    assert "No previous database contents - continuing to create schema." in output
 
 
 @pytest.mark.postgres
@@ -256,7 +257,7 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
         with self.store.engine.connect() as connection:
-            results = connection.execute("SELECT * FROM pepys.alembic_version;").fetchall()
+            results = connection.execute(text("SELECT * FROM pepys.alembic_version;")).fetchall()
 
             assert len(results) == 1
             assert results[0][0] == versions["LATEST_POSTGRES_VERSION"]
@@ -266,15 +267,15 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
         # Delete all entries, so table is empty
-        with self.store.engine.connect() as connection:
-            connection.execute("DELETE FROM pepys.alembic_version;")
+        with self.store.engine.begin() as connection:
+            connection.execute(text("DELETE FROM pepys.alembic_version;"))
 
         # Now run function
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
         # Check it has one entry and it's the right one
         with self.store.engine.connect() as connection:
-            results = connection.execute("SELECT * FROM pepys.alembic_version;").fetchall()
+            results = connection.execute(text("SELECT * FROM pepys.alembic_version;")).fetchall()
 
             assert len(results) == 1
             assert results[0][0] == versions["LATEST_POSTGRES_VERSION"]
@@ -286,7 +287,7 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
         with self.store.engine.connect() as connection:
-            results = connection.execute("SELECT * FROM pepys.alembic_version;").fetchall()
+            results = connection.execute(text("SELECT * FROM pepys.alembic_version;")).fetchall()
 
             assert len(results) == 1
             assert results[0][0] == versions["LATEST_POSTGRES_VERSION"]
@@ -295,8 +296,8 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         # Run once to create the table and stamp latest version
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
-        with self.store.engine.connect() as connection:
-            connection.execute("UPDATE alembic_version SET version_num = 'old_version_id';")
+        with self.store.engine.begin() as connection:
+            connection.execute(text("UPDATE alembic_version SET version_num = 'old_version_id';"))
 
         with pytest.raises(
             ValueError,
@@ -310,8 +311,8 @@ class TestCreateAlembicVersionTable_Postgres(unittest.TestCase):
         # Run once to create the table and stamp latest version
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
-        with self.store.engine.connect() as connection:
-            connection.execute("INSERT INTO alembic_version VALUES ('new_entry');")
+        with self.store.engine.begin() as connection:
+            connection.execute(text("INSERT INTO alembic_version VALUES ('new_entry');"))
 
         with pytest.raises(
             ValueError,
@@ -364,22 +365,22 @@ class TestCheckMigrationVersion_Postgres(unittest.TestCase):
         # Run once to create the table and stamp latest version
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
-        with self.store.engine.connect() as connection:
-            connection.execute("UPDATE pepys.alembic_version SET version_num = 'version_id';")
-            self.store.check_migration_version(revision)
+        with self.store.engine.begin() as connection:
+            connection.execute(text("UPDATE pepys.alembic_version SET version_num = 'version_id';"))
+
+        self.store.check_migration_version(revision)
 
     def test_check_migration_version_no_revisions(self):
         # Call the function with no revisions in the list - function should call sys.exit(1)
         revisions = []
 
-        with self.store.engine.connect():
-            with pytest.raises(SystemExit) as exit_exception_e:
-                temp_output = StringIO()
-                with redirect_stdout(temp_output):
-                    self.store.check_migration_version(revisions)
-            output = temp_output.getvalue()
-            assert "ERROR: Expected list of known revisions is empty." in output
-            assert exit_exception_e.value.code == 1
+        with pytest.raises(SystemExit) as exit_exception_e:
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.store.check_migration_version(revisions)
+        output = temp_output.getvalue()
+        assert "ERROR: Expected list of known revisions is empty." in output
+        assert exit_exception_e.value.code == 1
 
     def test_check_migration_version_not_in_revisions(self):
         # These revisions will count as known revisions but will not be found by the database
@@ -388,8 +389,8 @@ class TestCheckMigrationVersion_Postgres(unittest.TestCase):
         # Run once to create the table and stamp latest version
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
-        with self.store.engine.connect() as connection:
-            connection.execute("UPDATE pepys.alembic_version SET version_num = 'version_id';")
+        with self.store.engine.begin() as connection:
+            connection.execute(text("UPDATE pepys.alembic_version SET version_num = 'version_id';"))
 
         # Revision list won't have the migration version within it -
         with pytest.raises(SystemExit) as exit_exception_e:
@@ -409,17 +410,17 @@ class TestCheckMigrationVersion_Postgres(unittest.TestCase):
         # Run once to create the table and stamp latest version
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
-        with self.store.engine.connect() as connection:
-            connection.execute("INSERT INTO pepys.alembic_version VALUES ('TEST');")
-            connection.execute("INSERT INTO pepys.alembic_version VALUES ('TEST1');")
+        with self.store.engine.begin() as connection:
+            connection.execute(text("INSERT INTO pepys.alembic_version VALUES ('TEST');"))
+            connection.execute(text("INSERT INTO pepys.alembic_version VALUES ('TEST1');"))
 
-            with pytest.raises(SystemExit) as exit_exception_e:
-                temp_output = StringIO()
-                with redirect_stdout(temp_output):
-                    self.store.check_migration_version(revisions)
-            output = temp_output.getvalue()
-            assert "ERROR: Retrieved version contents from database is incorrect length." in output
-            assert exit_exception_e.value.code == 1
+        with pytest.raises(SystemExit) as exit_exception_e:
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.store.check_migration_version(revisions)
+        output = temp_output.getvalue()
+        assert "ERROR: Retrieved version contents from database is incorrect length." in output
+        assert exit_exception_e.value.code == 1
 
     def test_check_migration_version_incorrect_length_null_value(self):
         revisions = ["version_id", "test_version_id"]
@@ -427,16 +428,16 @@ class TestCheckMigrationVersion_Postgres(unittest.TestCase):
         # Run once to create the table and stamp latest version
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
-        with self.store.engine.connect() as connection:
-            connection.execute("INSERT INTO pepys.alembic_version VALUES ('');")
+        with self.store.engine.begin() as connection:
+            connection.execute(text("INSERT INTO pepys.alembic_version VALUES ('');"))
 
-            with pytest.raises(SystemExit) as exit_exception_e:
-                temp_output = StringIO()
-                with redirect_stdout(temp_output):
-                    self.store.check_migration_version(revisions)
-            output = temp_output.getvalue()
-            assert "ERROR: Retrieved version contents from database is incorrect length." in output
-            assert exit_exception_e.value.code == 1
+        with pytest.raises(SystemExit) as exit_exception_e:
+            temp_output = StringIO()
+            with redirect_stdout(temp_output):
+                self.store.check_migration_version(revisions)
+        output = temp_output.getvalue()
+        assert "ERROR: Retrieved version contents from database is incorrect length." in output
+        assert exit_exception_e.value.code == 1
 
     def test_check_migration_version_no_table_contents(self):
         revisions = ["version_id", "test_version_id"]
@@ -444,11 +445,11 @@ class TestCheckMigrationVersion_Postgres(unittest.TestCase):
         # Run once to create the table and stamp latest version
         create_alembic_version_table(self.store.engine, self.store.db_type)
 
-        with self.store.engine.connect() as connection:
-            connection.execute("DELETE FROM pepys.alembic_version;")
+        with self.store.engine.begin() as connection:
+            connection.execute(text("DELETE FROM pepys.alembic_version;"))
 
-            temp_output = StringIO()
-            with redirect_stdout(temp_output):
-                self.store.check_migration_version(revisions)
-            output = temp_output.getvalue()
-            assert "No previous database contents - continuing to create schema." in output
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.store.check_migration_version(revisions)
+        output = temp_output.getvalue()
+        assert "No previous database contents - continuing to create schema." in output

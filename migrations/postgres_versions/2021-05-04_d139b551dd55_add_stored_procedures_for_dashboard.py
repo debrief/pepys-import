@@ -9,6 +9,7 @@ import os
 
 from alembic import op
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql.expression import text
 
 from paths import PEPYS_IMPORT_DIRECTORY
 
@@ -38,7 +39,7 @@ def upgrade():
         with open(filename) as f:
             procedure_definition = f.read()
 
-        session.execute(procedure_definition)
+        session.execute(text(procedure_definition))
     # ### end Alembic commands ###
 
 
