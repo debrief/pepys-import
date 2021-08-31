@@ -1,7 +1,5 @@
 from datetime import datetime
 
-from sqlalchemy.sql.expression import text
-
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
@@ -14,9 +12,9 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distan
 class AircraftCsvFormatImporter(Importer):
     def __init__(self):
         super().__init__(
-            name="CSV Format Importer",
+            name="Aircraft CSV Format Importer",
             validation_level=constants.BASIC_LEVEL,
-            short_name="CSV Importer",
+            short_name=" Aircraft CSV Importer",
             default_privacy="Public",
             datafile_type="CSV",
         )
@@ -71,7 +69,7 @@ class AircraftCsvFormatImporter(Importer):
             )
             return
 
-        # Timmes always in Zulu/GMT
+        # Times always in Zulu/GMT
         if len(time_token.text) != 8:
             self.errors.append(
                 {
@@ -92,14 +90,12 @@ class AircraftCsvFormatImporter(Importer):
             return
 
         # And finally store it - Check how to do this as currently don't have a platform name
-        platform = self.get_cached_platform(
-            data_store, platform_name="NEED TO PUT VESSEL NAME HERE", change_id=change_id
-        )
+        platform = self.get_cached_platform(data_store, platform_name=None, change_id=change_id)
         sensor_type = data_store.add_to_sensor_types("Location-Satellite", change_id=change_id).name
         privacy = get_lowest_privacy(data_store)
         sensor = platform.get_sensor(
             data_store=data_store,
-            sensor_name="CSV",
+            sensor_name="GPS",
             sensor_type=sensor_type,
             privacy=privacy,
             change_id=change_id,
@@ -108,6 +104,8 @@ class AircraftCsvFormatImporter(Importer):
 
         # Set the location conversion
         location = Location(errors=self.errors, error_type=self.error_type)
+        print(lat_degrees_token.text)
+        print(long_degrees_token.text)
         lat_success = location.set_latitude_decimal_degrees(lat_degrees_token.text)
         lon_success = location.set_longitude_decimal_degrees(long_degrees_token.text)
         if lat_success and lon_success:
@@ -115,6 +113,8 @@ class AircraftCsvFormatImporter(Importer):
             combine_tokens(long_degrees_token, lat_degrees_token).record(
                 self.name, "location", state.location, "decimal degrees"
             )
+        else:
+            self.errors.append({self.error_type: f"Line {line_number}. Error in Location Parsing."})
 
         # Convert the altitude and check valid
         elevation_valid, elevation = convert_distance(
@@ -138,7 +138,7 @@ class AircraftCsvFormatImporter(Importer):
 
         # Convert the course into Rads and check valid
         course_valid, course = convert_absolute_angle(
-            course_token, text, line_number, self.errors, self.error_type
+            course_token.text, line_number, self.errors, self.error_type
         )
         if course_valid:
             state.course = course
@@ -146,7 +146,7 @@ class AircraftCsvFormatImporter(Importer):
 
     @staticmethod
     def parse_timestamp(date, time):
-        format_str = "%Y/%m/%d "
+        format_str = "%d/%m/%Y "
         format_str += "%H:%M:%S"
 
         try:
