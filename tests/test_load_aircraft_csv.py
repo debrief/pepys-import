@@ -121,8 +121,56 @@ class TestLoadAircraftCSV(unittest.TestCase):
 
         # Invalid number of tokens - too few on line
         check_errors_for_file_contents(
-            "Blah, Blah",
+            "Date(Uk), \n, Blah, Blah",
             "Not enough tokens:",
+            aircraft_importer,
+            filename="OwnPos_UC.csv",
+        )
+
+        # Test Invalid Date format
+        check_errors_for_file_contents(
+            "Date(Uk), \n, 20/03/15, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, 81.3, 311",
+            "should be 10 figure data",
+            aircraft_importer,
+            filename="OwnPos_UC.csv",
+        )
+
+        # Test Invalid Time format
+        check_errors_for_file_contents(
+            "Date(Uk), \n, 15/03/2020, 10:09, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, 81.3, 311",
+            "Should be HH:mm:ss",
+            aircraft_importer,
+            filename="OwnPos_UC.csv",
+        )
+
+        # Test error in location parsing
+        check_errors_for_file_contents(
+            "Date(Uk), \n, 15/03/2020, 10:09:00, 50:37.12N, 005:06.24W, #VALUE, #VALUE, 1215, 81.3, 311",
+            "Couldn't convert to a number",
+            aircraft_importer,
+            filename="OwnPos_UC.csv",
+        )
+
+        # Test error in altitude value
+        check_errors_for_file_contents(
+            "Date(Uk), \n, 15/03/2020, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, #VALUE, 81.3, 311",
+            "Couldn't convert to a number",
+            aircraft_importer,
+            filename="OwnPos_UC.csv",
+        )
+
+        # Test error in speed value
+        check_errors_for_file_contents(
+            "Date(Uk), \n, 15/03/2020, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, #VALUE, 311",
+            "Couldn't convert to a number",
+            aircraft_importer,
+            filename="OwnPos_UC.csv",
+        )
+
+        # Test error in course value
+        check_errors_for_file_contents(
+            "Date(Uk), \n, 15/03/2020, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, 81.3, #VALUE",
+            "Couldn't convert to a number",
             aircraft_importer,
             filename="OwnPos_UC.csv",
         )

@@ -73,7 +73,7 @@ class AircraftCsvFormatImporter(Importer):
         if len(time_token.text) != 8:
             self.errors.append(
                 {
-                    self.error_type: f"Line {line_number}. Error in Date format '{time_token.text}'."
+                    self.error_type: f"Line {line_number}. Error in Time format '{time_token.text}'."
                     "Should be HH:mm:ss"
                 }
             )
