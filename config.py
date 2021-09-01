@@ -28,12 +28,12 @@ if not config.has_section("database"):
     sys.exit(1)
 
 # Fetch database section
-DB_USERNAME = config.get("database", "db_username", fallback="")
-DB_PASSWORD = config.get("database", "db_password", fallback="")
-DB_HOST = config.get("database", "db_host", fallback="")
-DB_PORT = config.getint("database", "db_port", fallback=0)
-DB_NAME = config.get("database", "db_name")
-DB_TYPE = config.get("database", "db_type")
+DB_USERNAME = config.get("database", "database_username", fallback="")
+DB_PASSWORD = config.get("database", "database_password", fallback="")
+DB_HOST = config.get("database", "database_host", fallback="")
+DB_PORT = config.getint("database", "database_port", fallback=0)
+DB_NAME = config.get("database", "database_name")
+DB_TYPE = config.get("database", "database_type")
 
 # Process username and password if necessary
 if DB_USERNAME.startswith("_") and DB_USERNAME.endswith("_"):
