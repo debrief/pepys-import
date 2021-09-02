@@ -27,6 +27,14 @@ if not config.has_section("database"):
     print(f"Couldn't find 'database' section in '{CONFIG_FILE_PATH}'!")
     sys.exit(1)
 
+# Error if database type is not found
+if not config.has_option("database", "database_type"):
+    # Config file is likely an older version
+    print(
+        "Config file contains incorrect variable names. Please update your configuration to the correct format."
+    )
+    sys.exit(1)
+
 # Fetch database section
 DB_USERNAME = config.get("database", "database_username", fallback="")
 DB_PASSWORD = config.get("database", "database_password", fallback="")
