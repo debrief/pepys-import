@@ -56,20 +56,23 @@ class TestLoadAircraftCSV(unittest.TestCase):
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             self.assertEqual(len(platforms), 1)
 
-            # there must be two datafiles afterwards - two files being processed
+            # there should only be one data file at the end of the test
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
 
-            # Check that there is an elevation of 147 reported (test file was manually edited
-            # to contain an elevation of 147m)
+            # Check that there is an elevation of 1215 reported (test file was manually edited
+            # to contain an elevation of 1215 ft)
             results = (
                 self.store.session.query(self.store.db_classes.State)
-                .filter(self.store.db_classes.State.elevation == 1215)
+                # .filter(self.store.db_classes.State.elevation == 1215)
                 .all()
             )
             assert len(results) == 1
-            print(results[0].time)
             assert results[0].time == datetime.datetime(2020, 3, 15, 10, 9, 0)
+            assert str(results[0].elevation) == "370.33199999999994 meter"
+            assert str(results[0].course) == "311.0 degree"
+            assert str(results[0].speed) == "41.824333333333335 meter / second"
+            assert str(results[0].location) == "-5.104, 50.619"
 
     def test_process_aircraft_csv_long(self):
         processor = FileProcessor(archive=False)
@@ -116,12 +119,12 @@ class TestLoadAircraftCSV(unittest.TestCase):
             assert len(results) == 1
             assert results[0].time == datetime.datetime(2021, 7, 16, 8, 12, 0)
 
-    def test_process_aircraft_csv_data_invalid(self):
+    def test_process_aircraft_csv_invalid(self):
         aircraft_importer = AircraftCsvFormatImporter()
 
         # Invalid number of tokens - too few on line
         check_errors_for_file_contents(
-            "Date(Uk), \n, Blah, Blah",
+            "Date(Uk), \n Blah, Blah",
             "Not enough tokens:",
             aircraft_importer,
             filename="OwnPos_UC.csv",
@@ -129,7 +132,7 @@ class TestLoadAircraftCSV(unittest.TestCase):
 
         # Test Invalid Date format
         check_errors_for_file_contents(
-            "Date(Uk), \n, 20/03/15, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, 81.3, 311",
+            "Date(Uk), \n 20/03/15, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, 81.3, 311",
             "should be 10 figure data",
             aircraft_importer,
             filename="OwnPos_UC.csv",
@@ -137,7 +140,7 @@ class TestLoadAircraftCSV(unittest.TestCase):
 
         # Test Invalid Time format
         check_errors_for_file_contents(
-            "Date(Uk), \n, 15/03/2020, 10:09, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, 81.3, 311",
+            "Date(Uk), \n 15/03/2020, 10:09, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, 81.3, 311",
             "Should be HH:mm:ss",
             aircraft_importer,
             filename="OwnPos_UC.csv",
@@ -145,7 +148,7 @@ class TestLoadAircraftCSV(unittest.TestCase):
 
         # Test error in location parsing
         check_errors_for_file_contents(
-            "Date(Uk), \n, 15/03/2020, 10:09:00, 50:37.12N, 005:06.24W, #VALUE, #VALUE, 1215, 81.3, 311",
+            "Date(Uk), \n 15/03/2020, 10:09:00, 50:37.12N, 005:06.24W, #VALUE, #VALUE, 1215, 81.3, 311",
             "Couldn't convert to a number",
             aircraft_importer,
             filename="OwnPos_UC.csv",
@@ -153,7 +156,7 @@ class TestLoadAircraftCSV(unittest.TestCase):
 
         # Test error in altitude value
         check_errors_for_file_contents(
-            "Date(Uk), \n, 15/03/2020, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, #VALUE, 81.3, 311",
+            "Date(Uk), \n 15/03/2020, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, #VALUE, 81.3, 311",
             "Couldn't convert to a number",
             aircraft_importer,
             filename="OwnPos_UC.csv",
@@ -161,7 +164,7 @@ class TestLoadAircraftCSV(unittest.TestCase):
 
         # Test error in speed value
         check_errors_for_file_contents(
-            "Date(Uk), \n, 15/03/2020, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, #VALUE, 311",
+            "Date(Uk), \n 15/03/2020, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, #VALUE, 311",
             "Couldn't convert to a number",
             aircraft_importer,
             filename="OwnPos_UC.csv",
@@ -169,7 +172,7 @@ class TestLoadAircraftCSV(unittest.TestCase):
 
         # Test error in course value
         check_errors_for_file_contents(
-            "Date(Uk), \n, 15/03/2020, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, 81.3, #VALUE",
+            "Date(Uk), \n 15/03/2020, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, 81.3, #VALUE",
             "Couldn't convert to a number",
             aircraft_importer,
             filename="OwnPos_UC.csv",

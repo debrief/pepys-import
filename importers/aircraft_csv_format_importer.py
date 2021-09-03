@@ -51,8 +51,6 @@ class AircraftCsvFormatImporter(Importer):
         # Separate token strings
         date_token = tokens[0]
         time_token = tokens[1]
-        # lat_token = tokens[2]  # Currently not used
-        # long_token = tokens[3]  # Currently not used
         lat_degrees_token = tokens[4]
         long_degrees_token = tokens[5]
         altitude_token = tokens[6]
@@ -118,7 +116,7 @@ class AircraftCsvFormatImporter(Importer):
 
         # Convert the altitude and check valid
         elevation_valid, elevation = convert_distance(
-            altitude_token.text, unit_registry.metre, line_number, self.errors, self.error_type
+            altitude_token.text, unit_registry.feet, line_number, self.errors, self.error_type
         )
         if elevation_valid:
             state.elevation = elevation
