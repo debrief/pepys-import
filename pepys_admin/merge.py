@@ -428,9 +428,14 @@ class MergeDatabases:
         for row in results:
             if attributes_to_use is None:
                 attributes_to_use = [attrib for attrib in dir(row) if not attrib.startswith("__")]
-                attributes_to_use.remove("_decl_class_registry")
-                attributes_to_use.remove("_sa_class_manager")
-                attributes_to_use.remove("_sa_instance_state")
+                attributes_to_remove = [
+                    "_decl_class_registry",
+                    "_sa_class_manager",
+                    "_sa_instance_state",
+                ]
+                for attribute_name in attributes_to_remove:
+                    if attribute_name in attributes_to_use:
+                        attributes_to_use.remove(attribute_name)
 
             d = {key: getattr(row, key) for key in attributes_to_use}
 

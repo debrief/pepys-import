@@ -3,10 +3,12 @@ import os
 import shutil
 import sqlite3
 import unittest
+import warnings
 from unittest.mock import patch
 
 import pytest
 from alembic import command
+from sqlalchemy.sql.expression import text
 from testing.postgresql import Postgresql
 
 from paths import MIGRATIONS_DIRECTORY, TESTS_DIRECTORY
@@ -40,8 +42,17 @@ class MigrateSQLiteTestCase(unittest.TestCase):
     @patch("pepys_admin.admin_cli.prompt", return_value="Y")
     def test_do_migrate_empty_database(self, patched_input):
         assert is_schema_created(self.store.engine, self.store.db_type) is False
-        # Migrate
-        self.shell.do_migrate()
+        # This can raise SQLAlchemy warnings because of minor problems with past migrations
+        # I'm not sure whether the warnings are showing a real problem with an old migration
+        # or whether it is just an artefact of running a load of old migrations on top of each other
+        # However, it's a bad idea to alter the old migrations (it's like rewriting history)
+        # and the warning doesn't appear in any of the recent migration versions, so
+        # the best way forward is to ignore the warning
+        # These two lines of code are the recommended way to ignore warnings for a defined
+        # block of code
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.shell.do_migrate()
         assert is_schema_created(self.store.engine, self.store.db_type) is True
 
     @patch("pepys_admin.admin_cli.prompt", return_value="Y")
@@ -53,8 +64,17 @@ class MigrateSQLiteTestCase(unittest.TestCase):
         processor.load_importers_dynamically()
         processor.process(REP_DATA_PATH, self.store, True)
 
-        # Migrate
-        self.shell.do_migrate()
+        # This can raise SQLAlchemy warnings because of minor problems with past migrations
+        # I'm not sure whether the warnings are showing a real problem with an old migration
+        # or whether it is just an artefact of running a load of old migrations on top of each other
+        # However, it's a bad idea to alter the old migrations (it's like rewriting history)
+        # and the warning doesn't appear in any of the recent migration versions, so
+        # the best way forward is to ignore the warning
+        # These two lines of code are the recommended way to ignore warnings for a defined
+        # block of code
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            self.shell.do_migrate()
         # Assert that it didn't break the schema
         assert is_schema_created(self.store.engine, self.store.db_type) is True
 
@@ -65,8 +85,17 @@ class MigrateSQLiteTestCase(unittest.TestCase):
         data_store = DataStore("", "", "", 0, COPY_DB_PATH, "sqlite")
         admin_shell = AdminShell(data_store)
 
-        # Migrate
-        admin_shell.do_migrate()
+        # This can raise SQLAlchemy warnings because of minor problems with past migrations
+        # I'm not sure whether the warnings are showing a real problem with an old migration
+        # or whether it is just an artefact of running a load of old migrations on top of each other
+        # However, it's a bad idea to alter the old migrations (it's like rewriting history)
+        # and the warning doesn't appear in any of the recent migration versions, so
+        # the best way forward is to ignore the warning
+        # These two lines of code are the recommended way to ignore warnings for a defined
+        # block of code
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            admin_shell.do_migrate()
         # Assert that it didn't break the schema
         assert is_schema_created(data_store.engine, data_store.db_type) is True
 
@@ -126,8 +155,8 @@ class MigratePostgresTestCase(unittest.TestCase):
             sql_code = f.read()
 
         # Import all tables and sample data
-        with self.store.engine.connect().execution_options(autocommit=True) as connection:
-            connection.execute(sql_code)
+        with self.store.engine.begin() as connection:
+            connection.execute(text(sql_code))
 
         # Migrate
         self.shell.do_migrate()
@@ -139,7 +168,7 @@ def get_alembic_version(connection, db_type="sqlite"):
     if db_type == "sqlite":
         version = connection.execute("SELECT version_num FROM alembic_version;")
     elif db_type == "postgres":
-        version = connection.execute('SELECT version_num FROM pepys."alembic_version";')
+        version = connection.execute(text('SELECT version_num FROM pepys."alembic_version";'))
     else:
         print("Given DB type is wrong!")
         return
@@ -211,6 +240,8 @@ class StepByStepMigrationTestCase(unittest.TestCase):
         }
 
     def test_migrate_sqlite(self):
+        if os.path.exists(COPY_DB_PATH):
+            os.remove(COPY_DB_PATH)
         shutil.copyfile(src=SQLITE_PATH, dst=COPY_DB_PATH)
 
         data_store = DataStore("", "", "", 0, COPY_DB_PATH, "sqlite")
@@ -221,7 +252,17 @@ class StepByStepMigrationTestCase(unittest.TestCase):
         connection = sqlite3.connect(COPY_DB_PATH)
         # Migrate the database one by one, import datafiles if specified in version/datafile table
         while True:
-            command.upgrade(config, "+1")
+            # This can raise SQLAlchemy warnings because of minor problems with past migrations
+            # I'm not sure whether the warnings are showing a real problem with an old migration
+            # or whether it is just an artefact of running a load of old migrations on top of each other
+            # However, it's a bad idea to alter the old migrations (it's like rewriting history)
+            # and the warning doesn't appear in any of the recent migration versions, so
+            # the best way forward is to ignore the warning
+            # These two lines of code are the recommended way to ignore warnings for a defined
+            # block of code
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                command.upgrade(config, "+1")
             new_version = get_alembic_version(connection)
             if new_version in self.sqlite_version_datafile_dict:
                 import_files(self.sqlite_version_datafile_dict[new_version], data_store)
@@ -259,9 +300,10 @@ class StepByStepMigrationTestCase(unittest.TestCase):
             sql_code = f.read()
 
         # Import all tables and sample data
-        with data_store.engine.connect().execution_options(autocommit=True) as connection:
-            connection.execute(sql_code)
+        with data_store.engine.begin() as connection:
+            connection.execute(text(sql_code))
 
+        with data_store.engine.connect() as connection:
             # Migrate the database one by one, import datafiles if specified in version/datafile table
             while True:
                 command.upgrade(config, "+1")

@@ -254,7 +254,7 @@ class FileProcessor:
             reason = f"Importing '{basename}' using Pepys {__version__}"
             # ok, let these importers handle the file
             if __build_timestamp__ is not None:
-                reason += ", built on {__build_timestamp__}"
+                reason += f", built on {__build_timestamp__}"
 
             change = data_store.add_to_changes(user=USER, modified=datetime.utcnow(), reason=reason)
             privacy = None
