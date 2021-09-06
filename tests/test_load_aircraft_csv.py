@@ -3,6 +3,7 @@ import os
 import unittest
 
 from importers.aircraft_csv_format_importer import AircraftCsvFormatImporter
+from pepys_import.core.formats import unit_registry
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from tests.utils import check_errors_for_file_contents
@@ -11,9 +12,6 @@ FILE_PATH = os.path.dirname(__file__)
 DATA_PATH_SHORT = os.path.join(FILE_PATH, "sample_data/track_files/csv_data/aircraft/OwnPos_UC.csv")
 DATA_PATH_LONG = os.path.join(
     FILE_PATH, "sample_data/track_files/csv_data/aircraft/OwnPos_UC_Long.csv"
-)
-DATA_PATH_MISSING = os.path.join(
-    FILE_PATH, "sample_data/track_files/csv_data/aircraft/OwnPos_UC_MissingData.csv"
 )
 
 
@@ -60,19 +58,15 @@ class TestLoadAircraftCSV(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
 
-            # Check that there is an elevation of 1215 reported (test file was manually edited
-            # to contain an elevation of 1215 ft)
-            results = (
-                self.store.session.query(self.store.db_classes.State)
-                # .filter(self.store.db_classes.State.elevation == 1215)
-                .all()
-            )
+            # Check that there is an elevation of 1215 reported
+            results = self.store.session.query(self.store.db_classes.State).all()
             assert len(results) == 1
             assert results[0].time == datetime.datetime(2020, 3, 15, 10, 9, 0)
-            assert str(results[0].elevation) == "370.33199999999994 meter"
-            assert str(results[0].course) == "311.0 degree"
-            assert str(results[0].speed) == "41.824333333333335 meter / second"
-            assert str(results[0].location) == "-5.104, 50.619"
+            assert round(results[0].elevation, 2) == 370.33 * unit_registry.metre
+            assert results[0].course == 311 * unit_registry.degree
+            assert round(results[0].speed.magnitude, 2) == 41.82
+            assert round(results[0].location.longitude, 2) == -5.10
+            assert round(results[0].location.latitude, 2) == 50.62
 
     def test_process_aircraft_csv_long(self):
         processor = FileProcessor(archive=False)
@@ -120,12 +114,13 @@ class TestLoadAircraftCSV(unittest.TestCase):
             assert results[0].time == datetime.datetime(2021, 7, 16, 8, 12, 0)
 
     def test_process_aircraft_csv_invalid(self):
+        # pylint: disable=no-self-use
         aircraft_importer = AircraftCsvFormatImporter()
 
         # Invalid number of tokens - too few on line
         check_errors_for_file_contents(
             "Date(Uk), \n Blah, Blah",
-            "Not enough tokens:",
+            "Incorrect number of tokens:",
             aircraft_importer,
             filename="OwnPos_UC.csv",
         )
@@ -133,7 +128,15 @@ class TestLoadAircraftCSV(unittest.TestCase):
         # Test Invalid Date format
         check_errors_for_file_contents(
             "Date(Uk), \n 20/03/15, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, 81.3, 311",
-            "should be 10 figure data",
+            "should be 10 figure date",
+            aircraft_importer,
+            filename="OwnPos_UC.csv",
+        )
+
+        # Test Incorrect Date format
+        check_errors_for_file_contents(
+            "Date(Uk), \n 99/03/2015, 10:09:00, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, 81.3, 311",
+            "Error in timestamp parsing.",
             aircraft_importer,
             filename="OwnPos_UC.csv",
         )
@@ -142,6 +145,14 @@ class TestLoadAircraftCSV(unittest.TestCase):
         check_errors_for_file_contents(
             "Date(Uk), \n 15/03/2020, 10:09, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, 81.3, 311",
             "Should be HH:mm:ss",
+            aircraft_importer,
+            filename="OwnPos_UC.csv",
+        )
+
+        # Test Incorrect Time Value
+        check_errors_for_file_contents(
+            "Date(Uk), \n 15/03/2020, 99:99:99, 50:37.12N, 005:06.24W, 50.61867, -5.104, 1215, 81.3, 311",
+            "Error in timestamp parsing.",
             aircraft_importer,
             filename="OwnPos_UC.csv",
         )

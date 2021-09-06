@@ -5,7 +5,6 @@ from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
-from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy
 from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
 
 
@@ -15,7 +14,7 @@ class AircraftCsvFormatImporter(Importer):
             name="Aircraft CSV Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name=" Aircraft CSV Importer",
-            default_privacy="Public",
+            default_privacy=None,
             datafile_type="CSV",
         )
         self.text_label = None
@@ -35,16 +34,19 @@ class AircraftCsvFormatImporter(Importer):
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
         # Skip the header
         if line_number == 1:
+            self.platform_name = None
             return
 
         tokens = line.tokens(line.CSV_TOKENISER, ",")
         if len(tokens) <= 1:
             # The last line may be empty, don't worry
             return
-        if len(tokens) < 8:
+        if len(tokens) != 9:
             # CSV example file has 9 columns
             self.errors.append(
-                {self.error_type: f"Error on line {line_number}. Not enough tokens: {line}"}
+                {
+                    self.error_type: f"Error on line {line_number}. Incorrect number of tokens: {line}"
+                }
             )
             return
 
@@ -62,7 +64,7 @@ class AircraftCsvFormatImporter(Importer):
             self.errors.append(
                 {
                     self.error_type: f"Error on line {line_number}. Date format '{date_token.text}' "
-                    f"should be 10 figure data"
+                    f"should be 10 figure date"
                 }
             )
             return
@@ -87,23 +89,23 @@ class AircraftCsvFormatImporter(Importer):
             )
             return
 
-        # And finally store it - Check how to do this as currently don't have a platform name
-        platform = self.get_cached_platform(data_store, platform_name=None, change_id=change_id)
+        # And finally store it
+        platform = self.get_cached_platform(data_store, self.platform_name, change_id=change_id)
+        self.platform_name = platform.name
+        self.platform_cache[self.platform_name] = platform
+
         sensor_type = data_store.add_to_sensor_types("Location-Satellite", change_id=change_id).name
-        privacy = get_lowest_privacy(data_store)
         sensor = platform.get_sensor(
             data_store=data_store,
             sensor_name="GPS",
             sensor_type=sensor_type,
-            privacy=privacy,
+            privacy=None,
             change_id=change_id,
         )
         state = datafile.create_state(data_store, platform, sensor, timestamp, self.short_name)
 
         # Set the location conversion
         location = Location(errors=self.errors, error_type=self.error_type)
-        print(lat_degrees_token.text)
-        print(long_degrees_token.text)
         lat_success = location.set_latitude_decimal_degrees(lat_degrees_token.text)
         lon_success = location.set_longitude_decimal_degrees(long_degrees_token.text)
         if lat_success and lon_success:
