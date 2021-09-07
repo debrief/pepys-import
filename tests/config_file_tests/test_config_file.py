@@ -78,7 +78,7 @@ class ConfigVariablesTestCase(unittest.TestCase):
             reload(config)
         output = temp_output.getvalue()
         assert (
-            "Config file contains incorrect variable names. Please update your configuration to the correct format."
+            "Config file contains variable names used in legacy versions of Pepys that provided insufficient support for database migration. \n Please contact your system administrator to discuss renaming db_xxx to database_xxx."
             in output
         )
 
