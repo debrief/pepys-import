@@ -31,7 +31,7 @@ if not config.has_section("database"):
 if not config.has_option("database", "database_type"):
     # Config file is likely an older version
     print(
-        "Config file contains incorrect variable names. Please update your configuration to the correct format."
+        "Config file contains variable names used in legacy versions of Pepys that provided insufficient support for database migration. \n Please contact your system administrator to discuss renaming db_xxx to database_xxx."
     )
     sys.exit(1)
 
