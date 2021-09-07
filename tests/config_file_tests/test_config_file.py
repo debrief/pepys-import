@@ -72,7 +72,7 @@ class ConfigVariablesTestCase(unittest.TestCase):
 
     @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH_3})
     def test_with_older_config_file(self):
-        # Older configuration files should throw an error and exit.
+        # pylint: disable=no-self-use
         temp_output = StringIO()
         with redirect_stdout(temp_output), pytest.raises(SystemExit):
             reload(config)
