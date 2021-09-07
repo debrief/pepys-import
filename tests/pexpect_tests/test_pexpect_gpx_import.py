@@ -86,6 +86,8 @@ def test_gpx_import_end_to_end():
     # Expect end of output
     child.expect(pexpect.EOF)
 
+    child.logfile.close()
+
     child.close()
 
     # Run a regex on the status output printed out after the import, to check that
