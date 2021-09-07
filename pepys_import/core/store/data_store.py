@@ -2372,3 +2372,7 @@ class DataStore:
             getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
         ).delete(synchronize_session="fetch")
         self.session.flush()
+
+    def export_objects_to_csv(table_obj, id_list, columns_list, output_filename):
+        # Called within Pepys_admin GUI to export a selected list of entities to a CSV file.
+        return
