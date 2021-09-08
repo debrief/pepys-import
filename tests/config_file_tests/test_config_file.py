@@ -20,6 +20,7 @@ BAD_IMPORTER_PATH = os.path.join(DIRECTORY_PATH, "bad_path")
 OUTPUT_PATH = os.path.join(DIRECTORY_PATH, "output")
 CONFIG_FILE_PATH = os.path.join(DIRECTORY_PATH, "example_config", "config.ini")
 CONFIG_FILE_PATH_2 = os.path.join(DIRECTORY_PATH, "example_config", "config_without_database.ini")
+CONFIG_FILE_PATH_3 = os.path.join(DIRECTORY_PATH, "example_config", "config_older_version.ini")
 BASIC_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "basic_tests")
 ENHANCED_PARSERS_PATH = os.path.join(DIRECTORY_PATH, "enhanced_tests")
 DATA_PATH = os.path.join(DIRECTORY_PATH, "..", "sample_data")
@@ -68,6 +69,18 @@ class ConfigVariablesTestCase(unittest.TestCase):
             reload(config)
         output = temp_output.getvalue()
         assert "Couldn't find 'database' section in" in output
+
+    @patch.dict(os.environ, {"PEPYS_CONFIG_FILE": CONFIG_FILE_PATH_3})
+    def test_with_older_config_file(self):
+        # pylint: disable=no-self-use
+        temp_output = StringIO()
+        with redirect_stdout(temp_output), pytest.raises(SystemExit):
+            reload(config)
+        output = temp_output.getvalue()
+        assert (
+            "Config file contains variable names used in legacy versions of Pepys that provided insufficient support for database migration. \n Please contact your system administrator to discuss renaming db_xxx to database_xxx."
+            in output
+        )
 
     @patch.dict(os.environ, {"PEPYS_CONFIG_FILE_USER": CONFIG_FILE_PATH})
     def test_config_file_user_variable(self):

@@ -33,7 +33,7 @@ DIR_PATH = os.path.dirname(__file__)
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-db_type = config.attributes.get("db_type", DB_TYPE)
+db_type = config.attributes.get("database_type", DB_TYPE)
 
 version_path = os.path.join(DIR_PATH, "versions")
 if db_type == "postgres":
