@@ -26,6 +26,7 @@ class ExportCSVDialog:
         for human_name, data in column_data.items():
             if data["sqlalchemy_type"] == "relationship":
                 continue
+            # Append a list to the list, as CheckboxTable expects a list of columns to display
             avail_cols.append([human_name])
             avail_cols_sys_names.append(data["system_name"])
 
@@ -34,7 +35,7 @@ class ExportCSVDialog:
 
         self.table = CheckboxTable(avail_cols, avail_cols_sys_names)
 
-        folder_completer = PathCompleter(expanduser=True)
+        folder_completer = PathCompleter(only_directories=True, expanduser=True)
         self.filename_textbox = TextArea(
             multiline=False,
             text=get_default_export_folder(),
