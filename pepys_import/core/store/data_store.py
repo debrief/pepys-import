@@ -1,3 +1,4 @@
+import csv
 import os
 import sys
 from contextlib import contextmanager
@@ -2373,6 +2374,34 @@ class DataStore:
         ).delete(synchronize_session="fetch")
         self.session.flush()
 
-    def export_objects_to_csv(table_obj, id_list, columns_list, output_filename):
-        # Called within Pepys_admin GUI to export a selected list of entities to a CSV file.
-        return
+    def convert_ids_to_objects(self, ids, table_obj):
+        results = self.session.query(table_obj).filter(
+            getattr(table_obj, get_primary_key_for_table(table_obj)).in_(ids)
+        )
+        return results
+
+    def export_objects_to_csv(self, table_obj, id_list, columns_list, output_filename):
+        # Create the header
+        header = ""
+        for column in columns_list:
+            header = header + str(column) + ","
+
+        # Get the list of all objects from the id_list parameter
+        data_list = self.convert_ids_to_objects(id_list, table_obj)
+        entries = []
+
+        # Loop thorugh all data entries in the list
+        for data in data_list:
+            # Get a single entry in the data list
+            entry_string = ""
+            for column in columns_list:
+                # For each column, get the attribute for the data - append this to a string
+                attribute = str(getattr(data, column))
+                entry_string = entry_string + attribute + ","
+            # Add the final string to the list of entries
+            entries.append(entry_string)
+
+        with open(output_filename, "w", encoding="UTF8", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(header)
+            writer.writerows(entries)
