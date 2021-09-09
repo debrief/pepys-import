@@ -196,12 +196,12 @@ def set_up_training_mode():
     archive_folder = os.path.join(training_data_folder, "output")
 
     config_contents = f"""[database]
-db_username =
-db_password =
-db_host =
-db_port = 0
-db_name = {db_path}
-db_type = sqlite
+database_username =
+database_password =
+database_host =
+database_port = 0
+database_name = {db_path}
+database_type = sqlite
 
 [archive]
 path = {archive_folder}"""
