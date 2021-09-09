@@ -2375,33 +2375,56 @@ class DataStore:
         self.session.flush()
 
     def convert_ids_to_objects(self, ids, table_obj):
+        if ids is None:
+            print("Error converting ID's to objects: No primary key IDs provided.")
+            return
+
         results = self.session.query(table_obj).filter(
             getattr(table_obj, get_primary_key_for_table(table_obj)).in_(ids)
         )
         return results
 
     def export_objects_to_csv(self, table_obj, id_list, columns_list, output_filename):
+        if output_filename is None:
+            print("Input Error: No output filepath provided.")
+            return
+
         # Create the header
-        header = ""
+        print("Exporting chosen list to CSV file. \n")
+        headers = []
         for column in columns_list:
-            header = header + str(column) + ","
+            headers.append(column)
 
         # Get the list of all objects from the id_list parameter
         data_list = self.convert_ids_to_objects(id_list, table_obj)
-        entries = []
+        if data_list is None:
+            print(
+                "Error retrieving objects - No objects found from list of chosen ids. \n"
+                + "Cannot continue with CSV export."
+            )
+            return
 
+        entries = []
         # Loop thorugh all data entries in the list
         for data in data_list:
             # Get a single entry in the data list
-            entry_string = ""
+            entry_string = []
             for column in columns_list:
                 # For each column, get the attribute for the data - append this to a string
-                attribute = str(getattr(data, column))
-                entry_string = entry_string + attribute + ","
+                try:
+                    attribute = str(getattr(data, column))
+                    entry_string.append(attribute)
+                except Exception:
+                    print(
+                        f"Attribute Error: Given column header: {column}, does not exist in table object. Ensure the column exists and try again."
+                    )
+                    return
+
             # Add the final string to the list of entries
             entries.append(entry_string)
 
-        with open(output_filename, "w", encoding="UTF8", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow(header)
+        with open(output_filename, "w", newline="") as file:
+            writer = csv.writer(file, dialect="excel")
+            writer.writerow([header for header in headers])
             writer.writerows(entries)
+        print(f"Completed CSV Export - File saved at {output_filename}")
