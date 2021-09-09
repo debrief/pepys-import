@@ -10,7 +10,8 @@ from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distan
 
 class AircraftCsvFormatImporter(Importer):
     def __init__(self):
-        """Initialisation of the Aircraft CSV Format Importer.
+        """
+        Initialisation of the Aircraft CSV Format Importer.
 
         Overrides the variables from the base importer class with those specific to this format.
         """
