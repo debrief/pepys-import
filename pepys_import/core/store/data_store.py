@@ -2427,4 +2427,5 @@ class DataStore:
             writer = csv.writer(file, dialect="excel")
             writer.writerow([header for header in headers])
             writer.writerows(entries)
+            file.close()
         print(f"Completed CSV Export - File saved at {output_filename}")
