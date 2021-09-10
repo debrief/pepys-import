@@ -43,6 +43,8 @@ class ExportCSVDialog:
             complete_while_typing=True,
         )
 
+        self.error_message = Label("", style="class:error-message")
+
         body = HSplit(
             [
                 Label("Select the columns to export"),
@@ -51,6 +53,7 @@ class ExportCSVDialog:
                     [Label("Export filename", dont_extend_width=True), self.filename_textbox],
                     padding=2,
                 ),
+                self.error_message,
             ],
             padding=1,
         )
@@ -72,6 +75,18 @@ class ExportCSVDialog:
             self.handle_cancel()
 
     def handle_ok(self):
+        if len(self.table.current_values) == 0:
+            self.error_message.text = "Please select at least one column to export"
+            return
+        else:
+            self.error_message.text = ""
+
+        if len(self.filename_textbox.text) == 0:
+            self.error_message.text = "Please enter a filename"
+            return
+        else:
+            self.error_message.text = ""
+
         self.future.set_result(
             {"columns": self.table.current_values, "filename": self.filename_textbox.text}
         )
