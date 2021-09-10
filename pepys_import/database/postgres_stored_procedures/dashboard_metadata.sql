@@ -27,6 +27,7 @@ latest_serials as (
 		s.serial_id,
 		s.serial_number::text serial_name,
 		s.exercise::text,
+		s.include_in_timeline::text,
 		s.start serial_start,
 		s.end serial_end
 	from
@@ -70,6 +71,7 @@ participating_platforms as (
 )
 select
 	'SERIALS' record_type,
+	s.include_in_timeline,
 	s.serial_id,
 	NULL platform_id,
 	s.serial_name "name",
@@ -85,6 +87,7 @@ from
 union all
 select
 	'SERIAL PARTICIPANT' record_type,
+	NULL include_in_timeline,
 	pp.serial_id,
 	pp.platform_id,
 	coalesce(pp.platform_name, 'PLT1') "name",
