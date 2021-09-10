@@ -1,4 +1,4 @@
---droping existing pepys.dashboard_metadata function
+--dropping existing pepys.dashboard_metadata function
 drop function if exists pepys.dashboard_metadata;
 
 --creating pepys.dashboard_metadata function
