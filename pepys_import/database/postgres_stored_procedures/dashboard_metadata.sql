@@ -1,4 +1,4 @@
---dropping existing pepys.dashboard_metadata function
+--droping existing pepys.dashboard_metadata function
 drop function if exists pepys.dashboard_metadata;
 
 --creating pepys.dashboard_metadata function
@@ -7,6 +7,7 @@ create function pepys.dashboard_metadata(
 	ui_inp_end_date text)
 returns table (
 	record_type text,
+	include_in_timeline text,
 	serial_id uuid,
 	platform_id uuid,
 	"name" text,
