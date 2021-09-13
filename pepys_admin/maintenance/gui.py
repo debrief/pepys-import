@@ -437,6 +437,11 @@ class MaintenanceGUI:
             # and the user might type something correct soon anyway
             pass
 
+        # Force the list of currently selected rows to be empty here
+        # This is also done in CheckboxTable itself, but because of the async nature of the code
+        # it isn't always run in the right order. This forces this to be empty before updating
+        # the selected items label
+        self.preview_table.current_values = []
         self.update_selected_items_label()
 
     def get_table_data(self):
