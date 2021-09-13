@@ -212,6 +212,7 @@ SQL_FILE_LOCATION = os.path.join(
 SOME_UUID = "54f6d015-8adf-47f4-bf02-33e06fbe0725"
 TIMELIST = ["09:00:00", "17:00:00", "17:01:00", "17:02:00"]
 DATEVAL = "2020-12-12 "
+CREATED = "2020-12-12 08:30:00"
 GAP_SECONDS = 150
 
 
@@ -312,7 +313,7 @@ def get_query():
 def populate_data(cursor, TIMELIST):
     cursor.execute("create schema pepys")
     cursor.execute('create table pepys."Sensors"(host uuid, sensor_id uuid)')
-    cursor.execute('create table pepys."States"(sensor_id uuid, time timestamp)')
+    cursor.execute('create table pepys."States"(sensor_id uuid, time timestamp, time created_date)')
     cursor.execute('create table pepys."Serials"(serial_id uuid, serial_number text)')
     cursor.execute(
         """insert into pepys."Sensors" values('{}', '{}')""".format(SOME_UUID, SOME_UUID)
@@ -322,7 +323,7 @@ def populate_data(cursor, TIMELIST):
     )
     for time in TIMELIST:
         cursor.execute(
-            """insert into pepys."States" values('{}', '{}{}')""".format(SOME_UUID, DATEVAL, time)
+            """insert into pepys."States" values('{}', '{}{}', '{}')""".format(SOME_UUID, DATEVAL, time, CREATED)
         )
     with open(SQL_FILE_LOCATION, "r") as statssqlfile:
         cursor.execute(statssqlfile.read())
