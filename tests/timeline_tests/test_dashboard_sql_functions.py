@@ -348,7 +348,7 @@ def get_test_case_data(start, end):
 
 def validateStartTimes(rows, rangeTypes, startTimes):
     for (row, ranget, startt) in zip_longest(rows, rangeTypes, startTimes):
-        (rangetype, starttime, endtime, platid, serialid) = row
+        (rangetype, starttime, endtime, platid, serialid, created_date) = row
         if rangetype != ranget or startt != starttime.strftime("%H:%M:%S"):
             print(row, ranget, startt)
             return False
@@ -357,7 +357,7 @@ def validateStartTimes(rows, rangeTypes, startTimes):
 
 def validateEndTimes(rows, rangeTypes, endTimes):
     for (row, ranget, endt) in zip_longest(rows, rangeTypes, endTimes):
-        (rangetype, starttime, endtime, platid, serialid) = row
+        (rangetype, starttime, endtime, platid, serialid, created_date) = row
         if rangetype != ranget or endt != endtime.strftime("%H:%M:%S"):
             print(row, ranget, endt)
             return False
