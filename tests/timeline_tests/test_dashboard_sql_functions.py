@@ -313,7 +313,7 @@ def get_query():
 def populate_data(cursor, TIMELIST):
     cursor.execute("create schema pepys")
     cursor.execute('create table pepys."Sensors"(host uuid, sensor_id uuid)')
-    cursor.execute('create table pepys."States"(sensor_id uuid, time timestamp, time created_date)')
+    cursor.execute('create table pepys."States"(sensor_id uuid, time timestamp, created_date timestamp )')
     cursor.execute('create table pepys."Serials"(serial_id uuid, serial_number text)')
     cursor.execute(
         """insert into pepys."Sensors" values('{}', '{}')""".format(SOME_UUID, SOME_UUID)
