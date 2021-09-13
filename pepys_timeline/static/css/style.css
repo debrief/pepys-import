@@ -99,6 +99,12 @@ h1,h2,h3,h4,h5 {
 .visavail .rect_has_data:hover {
     fill: #636161;
 }
+.visavail .rect_has_new_data {
+    fill: #BF953F;
+}
+.visavail .rect_has_new_data:hover {
+    fill: #BF953F;
+}
 .horz_grid {
     opacity: 0;
 }
