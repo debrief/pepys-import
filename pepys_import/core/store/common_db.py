@@ -309,7 +309,7 @@ class WargameMixin:
         )
 
     @declared_attr
-    def participant_platform_name(self):
+    def participants_platform_name(self):
         return association_proxy("participants", "platform_name")
 
     @declared_attr
@@ -393,7 +393,7 @@ class SerialMixin:
         return association_proxy("wargame", "name")
 
     @declared_attr
-    def participant_platform_name(self):
+    def participants_platform_name(self):
         return association_proxy("participants", "platform_name")
 
     @declared_attr
