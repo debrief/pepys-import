@@ -1,5 +1,5 @@
 from sqlalchemy import MetaData
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 # SQLite allows constraints to exist in the database that have no identifying name. This unnamed
 # constraints create problems for migration. Therefore, naming_convention is passed to declarative

@@ -69,7 +69,7 @@ class AdminShell(BaseShell):
         self.cfg = Config(os.path.join(ROOT_DIRECTORY, "alembic.ini"))
         script_location = os.path.join(ROOT_DIRECTORY, "migrations")
         self.cfg.set_main_option("script_location", script_location)
-        self.cfg.attributes["db_type"] = data_store.db_type
+        self.cfg.attributes["database_type"] = data_store.db_type
         self.cfg.attributes["connection"] = data_store.engine
 
     def do_view_dashboard(self):

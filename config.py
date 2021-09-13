@@ -27,13 +27,21 @@ if not config.has_section("database"):
     print(f"Couldn't find 'database' section in '{CONFIG_FILE_PATH}'!")
     sys.exit(1)
 
+# Error if database type is not found
+if not config.has_option("database", "database_type"):
+    # Config file is likely an older version
+    print(
+        "Config file contains variable names used in legacy versions of Pepys that provided insufficient support for database migration. \n Please contact your system administrator to discuss renaming db_xxx to database_xxx."
+    )
+    sys.exit(1)
+
 # Fetch database section
-DB_USERNAME = config.get("database", "db_username", fallback="")
-DB_PASSWORD = config.get("database", "db_password", fallback="")
-DB_HOST = config.get("database", "db_host", fallback="")
-DB_PORT = config.getint("database", "db_port", fallback=0)
-DB_NAME = config.get("database", "db_name")
-DB_TYPE = config.get("database", "db_type")
+DB_USERNAME = config.get("database", "database_username", fallback="")
+DB_PASSWORD = config.get("database", "database_password", fallback="")
+DB_HOST = config.get("database", "database_host", fallback="")
+DB_PORT = config.getint("database", "database_port", fallback=0)
+DB_NAME = config.get("database", "database_name")
+DB_TYPE = config.get("database", "database_type")
 
 # Process username and password if necessary
 if DB_USERNAME.startswith("_") and DB_USERNAME.endswith("_"):
