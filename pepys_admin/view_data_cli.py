@@ -139,6 +139,8 @@ class ViewDataShell(BaseShell):
                 headers.append(column.key)
         # Get the association proxy attributes for this table
         associated_attributes, _ = get_assoc_proxy_names_and_objects(table_cls)
+        if "privacy_name" in associated_attributes:
+            associated_attributes.remove("privacy_name")
 
         header_attributes = [getattr(table_cls, header_name) for header_name in headers]
         # Fetch first rows up to MAX_ROWS_DISPLAYED, create a table from these rows
