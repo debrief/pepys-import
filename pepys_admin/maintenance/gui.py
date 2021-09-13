@@ -611,6 +611,12 @@ class MaintenanceGUI:
             self.show_messagebox("Action", f"Running action {selected_value}")
 
     def run_export_csv(self):
+        def do_export_csv(
+            table_object, ids, columns_list, output_filename, set_percentage=None, is_cancelled=None
+        ):
+            self.data_store.export_objects_to_csv(table_object, ids, columns_list, output_filename)
+            set_percentage(100)
+
         async def coroutine():
             if len(self.preview_table.current_values) == 0:
                 await self.show_messagebox_async(
@@ -618,10 +624,34 @@ class MaintenanceGUI:
                 )
                 return
 
+            entries = await self.get_all_selected_entries()
+            selected_ids = convert_objects_to_ids(entries, self.current_table_object)
+
             dialog = ExportCSVDialog(self.column_data)
             result = await self.show_dialog_as_float(dialog)
+            columns_list = result["columns"]
+            output_filename = result["filename"]
 
-            logger.debug(result)
+            dialog = ProgressDialog(
+                f"Exporting to {os.path.basename(output_filename)}",
+                partial(
+                    do_export_csv,
+                    self.current_table_object,
+                    selected_ids,
+                    columns_list,
+                    output_filename,
+                ),
+                show_cancel=True,
+            )
+
+            result = await self.show_dialog_as_float(dialog)
+
+            if isinstance(result, Exception):
+                await self.show_messagebox_async(
+                    "Error",
+                    f"Error exporting CSV\n\nOriginal error:{textwrap.fill(str(result), 60)}",
+                )
+                return
 
         ensure_future(coroutine())
 

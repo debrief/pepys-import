@@ -6,6 +6,7 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
+import pint
 import sqlalchemy
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
@@ -18,6 +19,7 @@ from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, me
 from paths import MIGRATIONS_DIRECTORY, PEPYS_IMPORT_DIRECTORY
 from pepys_import import __build_timestamp__, __version__
 from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
@@ -2376,56 +2378,93 @@ class DataStore:
 
     def convert_ids_to_objects(self, ids, table_obj):
         if ids is None:
-            print("Error converting ID's to objects: No primary key IDs provided.")
-            return
+            raise Exception("No ids provided")
 
-        results = self.session.query(table_obj).filter(
-            getattr(table_obj, get_primary_key_for_table(table_obj)).in_(ids)
+        results = (
+            self.session.query(table_obj)
+            .filter(getattr(table_obj, get_primary_key_for_table(table_obj)).in_(ids))
+            .all()
         )
         return results
 
     def export_objects_to_csv(self, table_obj, id_list, columns_list, output_filename):
-        if output_filename is None:
-            print("Input Error: No output filepath provided.")
-            return
+        if output_filename is None or output_filename == "":
+            raise Exception("Output filename must be provided")
 
-        # Create the header
-        print("Exporting chosen list to CSV file. \n")
-        headers = []
-        for column in columns_list:
-            headers.append(column)
+        if os.path.isdir(output_filename):
+            raise Exception("You must provide a filename to export to, not a folder")
 
         # Get the list of all objects from the id_list parameter
-        data_list = self.convert_ids_to_objects(id_list, table_obj)
-        if data_list is None:
-            print(
-                "Error retrieving objects - No objects found from list of chosen ids. \n"
-                + "Cannot continue with CSV export."
-            )
-            return
+        object_list = self.convert_ids_to_objects(id_list, table_obj)
+
+        if len(object_list) == 0:
+            raise Exception("Cannot export CSV: no entries selected")
+
+        # Get an example value for each column: this lets us know what
+        # type the column is, and whether we have to handle it differently
+        # We iterate through all the entries in case a column is None in
+        # most entries but has a value in the last one - then we will
+        # still capture it properly
+        sample_column_values = {}
+
+        for entry in object_list:
+            for column in columns_list:
+                if column in sample_column_values:
+                    continue
+                value = getattr(entry, column)
+                if value is not None:
+                    sample_column_values[column] = value
+
+        new_columns_list = []
+
+        # Create the header
+        headers = []
+        for column_name in columns_list:
+            sample_value = sample_column_values.get(column_name, None)
+            if isinstance(sample_value, Location):
+                new_columns_list.append("location_lat")
+                headers.append("location_lat (decimal degrees)")
+                new_columns_list.append("location_lon")
+                headers.append("location_lon (decimal degrees)")
+            else:
+                new_columns_list.append(column_name)
+                # Put units in header if the sample value has units
+                if isinstance(sample_value, pint.quantity._Quantity):
+                    headers.append(f"{column_name} ({sample_value.units})")
+                else:
+                    headers.append(column_name)
 
         entries = []
-        # Loop thorugh all data entries in the list
-        for data in data_list:
-            # Get a single entry in the data list
-            entry_string = []
-            for column in columns_list:
-                # For each column, get the attribute for the data - append this to a string
+        for entry in object_list:
+            row_values = []
+            for column in new_columns_list:
                 try:
-                    attribute = str(getattr(data, column))
-                    entry_string.append(attribute)
-                except Exception:
-                    print(
-                        f"Attribute Error: Given column header: {column}, does not exist in table object. Ensure the column exists and try again."
+                    # Deal with location specifically, get lat/lon
+                    if column == "location_lat":
+                        value = getattr(entry, "location")
+                        row_values.append(value.latitude)
+                    elif column == "location_lon":
+                        value = getattr(entry, "location")
+                        row_values.append(value.longitude)
+                    else:
+                        value = getattr(entry, column)
+                        # If it's got units, then extract just the number (the 'magnitude' of the value)
+                        if isinstance(value, pint.quantity._Quantity):
+                            row_values.append(str(value.magnitude))
+                        elif value is None or len(value) == 0:
+                            row_values.append("")
+                        else:
+                            row_values.append(str(value))
+                except AttributeError:
+                    raise AttributeError(
+                        f"Attribute Error: Given column header: {column}, does not exist in database object. Ensure the column exists and try again."
                     )
-                    return
 
             # Add the final string to the list of entries
-            entries.append(entry_string)
+            entries.append(row_values)
 
         with open(output_filename, "w", newline="") as file:
             writer = csv.writer(file, dialect="excel")
-            writer.writerow([header for header in headers])
+            writer.writerow(headers)
             writer.writerows(entries)
             file.close()
-        print(f"Completed CSV Export - File saved at {output_filename}")
