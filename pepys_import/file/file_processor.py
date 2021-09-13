@@ -312,6 +312,11 @@ class FileProcessor:
                 TableTypes.MEASUREMENT, exclude=exclude
             )
 
+            # This will produce a header with a progress counter
+            # Be aware that the denominator is the count of all files in the path to be imported
+            # and Pepys may ignore some (or many) of these files if they aren't types that Pepys recognises
+            # So it could say "Importing file 1 of 500" and then only import 3 files, if the other 497 are
+            # files that no Pepys importers recognise
             print_new_section_title(f"Importing file {file_number} of {total_files}:\n{basename}")
 
             # We assume that good importers will have the same datafile-type values at the moment.
