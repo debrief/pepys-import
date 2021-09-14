@@ -653,6 +653,10 @@ class MaintenanceGUI:
                 )
                 return
 
+            await self.show_messagebox_async(
+                "Export completed", f"CSV export to {os.path.basename(output_filename)} completed"
+            )
+
         ensure_future(coroutine())
 
     def run_view(self):
