@@ -6,12 +6,20 @@ from pathlib import Path
 import pytest
 
 from importers.gpx_importer import GPXImporter
+from importers.nisida_importer import NisidaImporter
 from importers.replay_importer import ReplayImporter
+from pepys_admin.maintenance.column_data import create_column_data
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.core.store.db_status import TableTypes
 from pepys_import.file.file_processor import FileProcessor
+from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
+from pepys_import.utils.table_name_utils import table_name_to_class_name
 
 REP_FILE = os.path.join(os.path.dirname(__file__), "sample_data/track_files/rep_data/uk_track.rep")
 GPX_FILE = os.path.join(os.path.dirname(__file__), "sample_data/track_files/gpx/gpx_1_0.gpx")
+NISIDA_FILE = os.path.join(
+    os.path.dirname(__file__), "sample_data/track_files/nisida/nisida_example.txt"
+)
 
 
 def read_csv(filename):
@@ -255,3 +263,80 @@ def test_export_state():
 
     # Remove the file that was made
     os.remove(filename)
+
+
+def get_list_of_all_tables(data_store):
+    metadata_tables = [
+        "Platforms",
+        "Sensors",
+        "Datafiles",
+        "Series",
+        "Wargames",
+        "Serials",
+        "WargameParticipants",
+        "SerialParticipants",
+        "ConfigOptions",
+    ]
+    measurement_tables = sorted(
+        [mc.__tablename__ for mc in data_store.meta_classes[TableTypes.MEASUREMENT]]
+    )
+    reference_tables = sorted(
+        [mc.__tablename__ for mc in data_store.meta_classes[TableTypes.REFERENCE]]
+    )
+    reference_tables.remove("HelpTexts")
+    tables_list = metadata_tables + measurement_tables + reference_tables
+    return tables_list
+
+
+def test_exporting_all_tables():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
+
+        processor = FileProcessor(archive=False)
+        processor.register_importer(ReplayImporter())
+        processor.register_importer(GPXImporter())
+        processor.register_importer(NisidaImporter())
+
+        processor.process(
+            REP_FILE,
+            store,
+            False,
+        )
+        processor.process(
+            GPX_FILE,
+            store,
+            False,
+        )
+        processor.process(NISIDA_FILE)
+
+    for table_name in get_list_of_all_tables(store):
+        print(f"Running test for {table_name}")
+        class_name = table_name_to_class_name(table_name)
+        table_obj = getattr(store.db_classes, class_name)
+
+        column_data = create_column_data(store, table_obj)
+
+        all_column_names = []
+        for human_name, data in column_data.items():
+            if data["sqlalchemy_type"] == "relationship":
+                continue
+            all_column_names.append(data["system_name"])
+
+        entries = store.session.query(table_obj).all()
+        ids = [getattr(entry, get_primary_key_for_table(table_obj)) for entry in entries]
+
+        filename = str(tempfile.gettempdir()) + "/output.csv"
+
+        try:
+            store.export_objects_to_csv(
+                table_obj,
+                ids,
+                all_column_names,
+                filename,
+            )
+        except Exception as e:
+            if "Cannot export CSV: no entries selected" in str(e):
+                continue
