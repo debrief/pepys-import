@@ -736,10 +736,10 @@ def test_column_data_wargame():
             "type": "string",
             "values": [],
         },
-        "participant platform name": {
+        "participants platform name": {
             "required": True,
             "sqlalchemy_type": "assoc_proxy",
-            "system_name": "participant_platform_name",
+            "system_name": "participants_platform_name",
             "type": "string",
             "values": [],
         },
