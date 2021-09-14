@@ -8,6 +8,14 @@ import pytest
 from pepys_import.core.store.data_store import DataStore
 
 
+def read_csv(filename):
+    with open(filename, newline="") as file:
+        reader = csv.DictReader(file)
+        data = [row for row in reader]
+
+    return data
+
+
 def test_convert_ids_to_objects():
     ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
     ds.initialise()
@@ -116,9 +124,9 @@ def test_export_object_to_csv_incorrect_header():
         )
 
 
-def test_export_object_to_csv_correct_file_contents():
+def test_export_platform_type():
     # Generate the file and populate the data within it
-    fileName = str(tempfile.gettempdir()) + "/output.csv"
+    filename = str(tempfile.gettempdir()) + "/output.csv"
     columns = ["platform_type_id", "name", "default_data_interval_secs"]
     ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
     ds.initialise()
@@ -129,49 +137,25 @@ def test_export_object_to_csv_correct_file_contents():
         entries = ds.session.query(ds.db_classes.PlatformType).all()[:8]
         ids = [entry.platform_type_id for entry in entries]
 
-    actual_entries = []
-    for entry in entries:
-        e = []
-        for column in columns:
-            attribute = str(getattr(entry, column))
-            e.append(attribute)
-        actual_entries.append(e)
-    actual_entries.sort()
-
     ds.export_objects_to_csv(
         ds.db_classes.PlatformType,
         ids,
         columns,
-        fileName,
+        filename,
     )
 
-    # Read the first line of the file and check that it matches what we expect
-    with open(fileName, "r", newline="") as file:
-        csv_reader = csv.reader(file, delimiter=",")
-        line = 0
-        for row in csv_reader:
-            if line == 0:
-                # Header will appear on row one
-                header_line = row
-                line += 1
+    objects = ds.convert_ids_to_objects(ids, ds.db_classes.PlatformType)
 
-                assert header_line == ["platform_type_id", "name", "default_data_interval_secs"]
-            else:
-                # Data rows will appear on other rows - entires array is one shorter as no header so -1 from line
-                current_entry_line = actual_entries[line - 1]
-                test_cell_1 = actual_entries[line - 1][0]
-                test_cell_2 = actual_entries[line - 1][1]
-                test_cell_3 = actual_entries[line - 1][2]
+    export_contents = read_csv(filename)
 
-                actual_entry_line = row
-                actual_test_cell_1 = row[0]
-                actual_test_cell_2 = row[1]
-                actual_test_cell_3 = row[2]
+    assert set(export_contents[0].keys()) == set(columns)
 
-                assert current_entry_line == actual_entry_line
-                assert test_cell_1 == actual_test_cell_1
-                assert test_cell_2 == actual_test_cell_2
-                assert test_cell_3 == actual_test_cell_3
-                line += 1
+    for i in range(1, len(objects)):
+        assert export_contents[i]["name"] == objects[i].name
+        assert export_contents[i]["default_data_interval_secs"] == str(
+            objects[i].default_data_interval_secs
+        )
+        assert export_contents[i]["platform_type_id"] == str(objects[i].platform_type_id)
+
     # Remove the file that was made
-    os.remove(fileName)
+    os.remove(filename)
