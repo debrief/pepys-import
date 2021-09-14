@@ -444,6 +444,14 @@ consolidated_coverage_with_created as (
 	select
 		case
 			when
+				strstart.created_date is null
+			then
+				strend.created_date
+			when
+				strend.created_date is null
+			then
+				strstart.created_date
+			when
 				strstart.created_date > strend.created_date
 			then
 				strstart.created_date
@@ -457,11 +465,11 @@ consolidated_coverage_with_created as (
 		cc.ser_idx
 	from
 		consolidated_coverage cc
-			inner join
+			left join
 		state_time_rankings strstart
 				on (cc.platform_id, cc.serial_id, cc.ser_idx, cc.start_time)
 					=(strstart.platform_id, strstart.serial_id, strstart.ser_idx, strstart.time)
-			inner join
+			left join
 		state_time_rankings strend
 				on (cc.platform_id, cc.serial_id, cc.ser_idx, cc.end_time)
 					=(strend.platform_id, strend.serial_id, strend.ser_idx, strend.time)
