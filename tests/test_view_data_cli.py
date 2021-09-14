@@ -399,5 +399,21 @@ def test_check_query_only_select():
     )
 
 
+def test_view_all_tables():
+    store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    store.initialise()
+    with store.session_scope():
+        store.populate_reference()
+        store.populate_metadata()
+
+    shell = ViewDataShell(store)
+    for table_name in shell._get_table_names():
+        print(f"Running test for {table_name}:")
+        # Generate the output text for this table - we just want to make sure this works without
+        # giving any errors
+        output = shell.generate_view_table_text(table_name)
+        assert output != ""
+
+
 if __name__ == "__main__":
     unittest.main()
