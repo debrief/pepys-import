@@ -9,6 +9,7 @@ const DATE_FORMATS = {
 const DEFAULT_CONFIG = {
   TimelineRefreshSecs: 60,
   MessageOfTheDay: "Message of the day: [PENDING]",
+  filterSerials: "all"
 };
 const SERVER_ERROR_MESSAGE = "Error connecting to server";
 
@@ -131,6 +132,15 @@ function initMessageOfTheDay() {
   setMessageOfTheDay();
 }
 
+function initSerialRadio() {
+  $('input:radio[name="filter-serials-radio"]').filter(
+    `[value="${config.filterSerials}"]`).attr('checked', true);
+  $('input[type=radio][name=filter-serials-radio]').change(function() {
+    config.filterSerials = this.value;
+    renderCharts();
+  });
+}
+
 function showLoadingSpinner() {
   document.getElementById("loading-spinner-container").style.display = "flex";
 }
@@ -159,6 +169,8 @@ function clearCharts() {
   console.log("Clearing charts.");
   var chartContainer = document.getElementById("chart-container");
   chartContainer.innerHTML = "";
+  charts = [];
+  chartOptions = [];
 }
 
 function beforeRequest() {
@@ -196,7 +208,7 @@ function fetchConfig() {
                 timer.start(getTimerConfig(newConfig.TimelineRefreshSecs));
               }
 
-              config = newConfig;
+              config = {...config, ...newConfig};
 
               fetchSerialsMeta();
               setMessageOfTheDay();
@@ -406,13 +418,14 @@ function transformSerials() {
                 / currSerialParticipants.length
             )
             : 0;
-        serial.includeInTimeline = true;  // this should come from the database
         return serial;
     })
     return transformedData;
 }
 
 function renderCharts() {
+    clearCharts();
+
     const transformedSerials = transformSerials();
     console.log("transformedSerials: ", transformedSerials);
 
@@ -423,25 +436,27 @@ function renderCharts() {
     for (let i = 0; i < transformedSerials.length; i++) {
         console.log(transformedSerials[i].name, transformedSerials[i].overall_average);
 
-        if (!transformedSerials[i].includeInTimeline) {
-            console.log("Serial flag 'includeInTimeline' false, won't generate chart.");
+        if (
+          (config.filterSerials === 'included' && transformedSerials[i].include_in_timeline === 'false') ||
+          (config.filterSerials === 'excluded' && transformedSerials[i].include_in_timeline === 'true')
+          ) {
+            console.log("Serial filtered out with include_in_timeline and the radio setting, won't generate chart.");
             continue;
         }
+        const newChartOptions = {...DEFAULT_OPTIONS};
+        // override the target ids
+        newChartOptions.id_div_container = "visavail_container_new_" + (i + 1);
+        newChartOptions.id_div_graph = "visavail_graph_new_" + (i + 1);
 
-        chartOptions.push({
-          ...DEFAULT_OPTIONS
-        });
         addChartDiv(
             i + 1,
             transformedSerials[i].name,
             "" + calculatePercentageClass(transformedSerials[i].overall_average)
         );
-        // override the target ids
-        chartOptions[i].id_div_container = "visavail_container_new_" + (i + 1);
-        chartOptions[i].id_div_graph = "visavail_graph_new_" + (i + 1);
-
+        
         // create new chart instance
-        charts[i] = visavail.generate(chartOptions[i], transformedSerials[i].participants);
+        charts.push(visavail.generate(newChartOptions, transformedSerials[i].participants));
+        chartOptions.push(newChartOptions);
     }
 }
 
@@ -527,6 +542,7 @@ $(function() {
   initDateRange();
   initTimer();
   initMessageOfTheDay();
+  initSerialRadio();
   startDatetimeClock();
   timer.start(getTimerConfig(config.TimelineRefreshSecs));
   fetchConfig();

@@ -24,6 +24,15 @@ h1,h2,h3,h4,h5 {
   display: flex;
 }
 
+#filter-button {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+#filter-button-icon {
+  font-size: 1rem;
+}
+
 #date-range-form-group {
   margin-bottom: 0;
 }
@@ -129,6 +138,10 @@ h1,h2,h3,h4,h5 {
     stroke-linejoin: round;
     text-shadow: #000000 0px 0px 4px;
     font-size: 18px;
+}
+
+.visavail .ytitle-new-data {
+    fill: #ffc107;
 }
 
 .visavail .ytitle_icon_image {
