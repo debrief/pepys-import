@@ -17,8 +17,6 @@ class ExportCSVDialog:
     def __init__(self, column_data):
         self.future = Future()
 
-        # self.contextual_help = "## Selecting fields"
-
         ok_button = Button(text="OK", handler=self.handle_ok)
         cancel_button = Button(text="Cancel", handler=self.handle_cancel)
 
@@ -90,6 +88,7 @@ class ExportCSVDialog:
 
         if os.path.isdir(self.filename_textbox.text):
             self.error_message.text = "Please enter a path to a file, not a folder"
+            return
         else:
             self.error_message.text = ""
 
