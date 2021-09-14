@@ -12,6 +12,9 @@ const DEFAULT_CONFIG = {
 };
 const SERVER_ERROR_MESSAGE = "Error connecting to server";
 
+const now = moment();
+const NEWLY_CREATED_STAT_LIMIT = now.diff(moment(now).subtract(15, 'minutes'));
+
 let timer;
 let config;
 let charts;
@@ -27,6 +30,8 @@ let fromDate = moment(window.localStorage.getItem('fromDate') || yesterday);
 let toDate = moment(window.localStorage.getItem('toDate') || yesterday);
 
 const DEFAULT_OPTIONS = {
+    custom_categories: true,
+    category_percentage: [1, 2], // originally visavail allows a single value, have to change in the src as well
     margin: {
         right: 60,
         left: 50,
@@ -67,7 +72,7 @@ const DEFAULT_OPTIONS = {
     y_percentage: {
         enabled: true,
         custom_percentage: true
-    },
+    }
 };
 
 function setMessageOfTheDay() {
@@ -317,6 +322,14 @@ function sortParticipants(p1, p2) {
   if (p1.name < p2.name) return -1;
 }
 
+function inferCategory(participantStat) {
+  return participantStat.resp_range_type === "G"
+    ? 0
+    : moment().diff(moment(participantStat.resp_created)) < NEWLY_CREATED_STAT_LIMIT
+    ? 2
+    : 1;
+}
+
 function transformParticipant(participant, serial) {
     participant.serial_name = serial.name;
     const participantStats = serialsStats.filter(
@@ -325,7 +338,7 @@ function transformParticipant(participant, serial) {
     )
     let periods = participantStats.map(s => ([
             moment(s.resp_start_time).format(DATE_FORMATS.visavail),
-            Number(s.resp_range_type === "C"),
+            Number(inferCategory(s)),
             moment(s.resp_end_time).format(DATE_FORMATS.visavail),
         ]));
     participant.coverage = periods;
@@ -357,7 +370,21 @@ function transformParticipant(participant, serial) {
             measure: Math.round(participant["percent-coverage"]) + "%",
             class: "ypercentage_" + calculatePercentageClass(participant["percent-coverage"])
         },
-        data: periods
+        data: periods,
+        categories: { 
+          0: {
+            class: "rect_has_no_data",
+            tooltip_html: '<i class="fas fa-fw fa-exclamation-circle tooltip_has_no_data"></i>'
+          },
+          1: {
+            class: "rect_has_data",
+            tooltip_html: '<i class="fas fa-fw fa-check tooltip_has_data"></i>'
+          },
+          2: {
+            class: "rect_has_new_data",
+            tooltip_html: '<i class="fas fa-fw fa-check tooltip_has_new_data"></i>'
+          },
+        }
     }
 }
 
