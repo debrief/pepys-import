@@ -2434,7 +2434,7 @@ class DataStore:
             else:
                 new_columns_list.append(column_name)
                 # Put units in header if the sample value has units
-                if isinstance(sample_value, pint.quantity._Quantity):
+                if isinstance(sample_value, pint.quantity.Quantity):
                     headers.append(f"{column_name} ({sample_value.units})")
                 else:
                     headers.append(column_name)
@@ -2454,7 +2454,7 @@ class DataStore:
                     else:
                         value = getattr(entry, column)
                         # If it's got units, then extract just the number (the 'magnitude' of the value)
-                        if isinstance(value, pint.quantity._Quantity):
+                        if isinstance(value, pint.quantity.Quantity):
                             row_values.append(str(value.magnitude))
                         elif value is None or (isinstance(value, list) and len(value) == 0):
                             row_values.append("")
