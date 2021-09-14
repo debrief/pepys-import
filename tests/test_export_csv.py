@@ -25,7 +25,7 @@ NISIDA_FILE = os.path.join(
 def read_csv(filename):
     with open(filename, newline="") as file:
         reader = csv.DictReader(file)
-        data = [row for row in reader]
+        data = list(reader)
 
     return data
 
@@ -320,7 +320,7 @@ def test_exporting_all_tables():
         column_data = create_column_data(store, table_obj)
 
         all_column_names = []
-        for human_name, data in column_data.items():
+        for _, data in column_data.items():
             if data["sqlalchemy_type"] == "relationship":
                 continue
             all_column_names.append(data["system_name"])
