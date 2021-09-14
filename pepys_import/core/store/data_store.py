@@ -2383,11 +2383,14 @@ class DataStore:
         results = (
             self.session.query(table_obj)
             .filter(getattr(table_obj, get_primary_key_for_table(table_obj)).in_(ids))
+            .options(undefer("*"))
             .all()
         )
         return results
 
-    def export_objects_to_csv(self, table_obj, id_list, columns_list, output_filename):
+    def export_objects_to_csv(
+        self, table_obj, id_list, columns_list, output_filename, set_percentage=None
+    ):
         if output_filename is None or output_filename == "":
             raise Exception("Output filename must be provided")
 
@@ -2396,6 +2399,9 @@ class DataStore:
 
         # Get the list of all objects from the id_list parameter
         object_list = self.convert_ids_to_objects(id_list, table_obj)
+
+        if callable(set_percentage):
+            set_percentage(1)
 
         if len(object_list) == 0:
             raise Exception("Cannot export CSV: no entries selected")
@@ -2406,8 +2412,8 @@ class DataStore:
         # most entries but has a value in the last one - then we will
         # still capture it properly
         sample_column_values = {}
-
-        for entry in object_list:
+        percent_per_iteration = 50 / len(object_list)
+        for i, entry in enumerate(object_list):
             for column in columns_list:
                 if column in sample_column_values:
                     continue
@@ -2419,6 +2425,14 @@ class DataStore:
                     )
                 if value is not None:
                     sample_column_values[column] = value
+            if set(sample_column_values.keys()) == set(columns_list):
+                # We've got sample data for all the columns, so stop now
+                break
+            if callable(set_percentage):
+                set_percentage(i * percent_per_iteration)
+
+        if callable(set_percentage):
+            set_percentage(50)
 
         new_columns_list = []
 
@@ -2440,7 +2454,9 @@ class DataStore:
                     headers.append(column_name)
 
         entries = []
-        for entry in object_list:
+        percent_per_iteration = 50 / len(object_list)
+        update_interval = 10 if len(object_list) < 1000 else 1000
+        for i, entry in enumerate(object_list):
             row_values = []
             for column in new_columns_list:
                 try:
@@ -2467,6 +2483,9 @@ class DataStore:
 
             # Add the final string to the list of entries
             entries.append(row_values)
+            if i % update_interval == 0:
+                if callable(set_percentage):
+                    set_percentage(50 + (i * percent_per_iteration))
 
         with open(output_filename, "w", newline="") as file:
             writer = csv.writer(file, dialect="excel")

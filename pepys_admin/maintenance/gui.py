@@ -614,7 +614,9 @@ class MaintenanceGUI:
         def do_export_csv(
             table_object, ids, columns_list, output_filename, set_percentage=None, is_cancelled=None
         ):
-            self.data_store.export_objects_to_csv(table_object, ids, columns_list, output_filename)
+            self.data_store.export_objects_to_csv(
+                table_object, ids, columns_list, output_filename, set_percentage=set_percentage
+            )
             set_percentage(100)
 
         async def coroutine():
