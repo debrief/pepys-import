@@ -317,7 +317,7 @@ class FileProcessor:
             # and Pepys may ignore some (or many) of these files if they aren't types that Pepys recognises
             # So it could say "Importing file 1 of 500" and then only import 3 files, if the other 497 are
             # files that no Pepys importers recognise
-            print_new_section_title(f"Importing file {file_number} of {total_files}:\n{basename}")
+            print_new_section_title(f"Processing file {file_number} of {total_files}:\n{basename}")
 
             # We assume that good importers will have the same datafile-type values at the moment.
             # That's why we can create a datafile using the first importer's datafile_type.
