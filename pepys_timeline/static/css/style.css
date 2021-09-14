@@ -24,6 +24,15 @@ h1,h2,h3,h4,h5 {
   display: flex;
 }
 
+#filter-button {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+#filter-button-icon {
+  font-size: 1rem;
+}
+
 #date-range-form-group {
   margin-bottom: 0;
 }
@@ -87,24 +96,39 @@ h1,h2,h3,h4,h5 {
 .visavail {
     box-shadow: 0 -5px 6px 0px rgb(0 0 0 / 30%);
 }
+
 .visavail .rect_has_no_data {
     fill: lightgray;
 }
+
 .visavail .rect_has_no_data:hover {
     fill: lightgray;
 }
+
 .visavail .rect_has_data {
     fill: #636161;
 }
+
 .visavail .rect_has_data:hover {
     fill: #636161;
 }
+
+.visavail .rect_has_new_data {
+    fill: #ffc107;
+}
+
+.visavail .rect_has_new_data:hover {
+    fill: #ffc107;
+}
+
 .horz_grid {
     opacity: 0;
 }
+
 .visavail-tooltip {
     opacity: 0;
 }
+
 .visavail .ytitle {
     paint-order: stroke;
     stroke: #000000;
@@ -115,21 +139,31 @@ h1,h2,h3,h4,h5 {
     text-shadow: #000000 0px 0px 4px;
     font-size: 18px;
 }
+
+.visavail .ytitle-new-data {
+    fill: #ffc107;
+}
+
 .visavail .ytitle_icon_image {
     display: block;
 }
+
 .visavail .ytitle_icon_background {
     display: block;
 }
+
 .merchant {
     fill: #4287f566 !important;
 }
+
 .jammer {
     fill: #f5424866 !important;
 }
+
 .missile {
     fill: #f5c84266 !important;
 }
+
 .visavail .ypercentage {
   font-size: 16px;
 }
@@ -140,12 +174,14 @@ h1,h2,h3,h4,h5 {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+
 .visavail .ypercentage_amber {
     paint-order: stroke;
     fill: #ffc107;
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+
 .visavail .ypercentage_green {
     paint-order: stroke;
     fill: #28a745;
@@ -180,10 +216,12 @@ h1,h2,h3,h4,h5 {
     background-color: #dc3545!important;
     color: #ffffff !important;
 }
+
 .amber {
     background-color: #ffc107!important;
     color: #ffffff !important;
 }
+
 .green {
     background-color: #28a745!important;
     color: #ffffff !important;
