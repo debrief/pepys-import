@@ -26,6 +26,7 @@ from pepys_import.utils.text_formatting_utils import (
     custom_print_formatted_text,
     format_error_message,
     format_table,
+    print_new_section_title,
 )
 
 USER = getuser()
@@ -144,8 +145,15 @@ class FileProcessor:
             with data_store.session_scope():
                 filename = os.path.abspath(path)
                 current_path = os.path.dirname(path)
+
                 processed_ctr = self.process_file(
-                    filename, current_path, data_store, processed_ctr, import_summary
+                    filename,
+                    current_path,
+                    data_store,
+                    processed_ctr,
+                    import_summary,
+                    file_number=1,
+                    total_files=1,
                 )
             self.display_import_summary(import_summary)
             print(f"Files got processed: {processed_ctr} times")
@@ -164,24 +172,53 @@ class FileProcessor:
             # capture path in absolute form
             abs_path = os.path.abspath(path)
             if descend_tree:
-                # loop through this folder and children
+                # loop through this folder and children and store in list
+                # (so we know how many we have)
+                files_and_paths = []
                 for current_path, folders, files in os.walk(abs_path):
                     for file in sort_files(files):
-                        processed_ctr = self.process_file(
-                            file, current_path, data_store, processed_ctr, import_summary
-                        )
+                        files_and_paths.append((file, current_path))
+
+                for i, (file, current_path) in enumerate(files_and_paths, start=1):
+                    processed_ctr = self.process_file(
+                        file,
+                        current_path,
+                        data_store,
+                        processed_ctr,
+                        import_summary,
+                        file_number=i,
+                        total_files=len(files_and_paths),
+                    )
             else:
                 # loop through this path
-                for file in sort_files(os.scandir(abs_path)):
-                    if file.is_file():
-                        processed_ctr = self.process_file(
-                            file, abs_path, data_store, processed_ctr, import_summary
-                        )
+                files_in_folder = [
+                    file for file in sort_files(os.scandir(abs_path)) if file.is_file()
+                ]
+
+                for i, file in enumerate(files_in_folder, start=1):
+                    processed_ctr = self.process_file(
+                        file,
+                        abs_path,
+                        data_store,
+                        processed_ctr,
+                        import_summary,
+                        file_number=i,
+                        total_files=len(files_in_folder),
+                    )
 
         self.display_import_summary(import_summary)
         print(f"Files got processed: {processed_ctr} times")
 
-    def process_file(self, file_object, current_path, data_store, processed_ctr, import_summary):
+    def process_file(
+        self,
+        file_object,
+        current_path,
+        data_store,
+        processed_ctr,
+        import_summary,
+        file_number,
+        total_files,
+    ):
         # file may have full path, therefore extract basename and split it
         basename = os.path.basename(file_object)
         filename, file_extension = os.path.splitext(basename)
@@ -274,6 +311,14 @@ class FileProcessor:
             measurement_summaries_before = data_store.get_status(
                 TableTypes.MEASUREMENT, exclude=exclude
             )
+
+            # This will produce a header with a progress counter
+            # Be aware that the denominator is the count of all files in the path to be imported
+            # and Pepys may ignore some (or many) of these files if they aren't types that Pepys recognises
+            # So it could say "Importing file 1 of 500" and then only import 3 files, if the other 497 are
+            # files that no Pepys importers recognise
+            print_new_section_title(f"Processing file {file_number} of {total_files}:\n{basename}")
+
             # We assume that good importers will have the same datafile-type values at the moment.
             # That's why we can create a datafile using the first importer's datafile_type.
             # They don't have different datafile-type values, but if necessary, we might iterate over
