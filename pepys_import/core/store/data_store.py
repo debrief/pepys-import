@@ -2411,7 +2411,12 @@ class DataStore:
             for column in columns_list:
                 if column in sample_column_values:
                     continue
-                value = getattr(entry, column)
+                try:
+                    value = getattr(entry, column)
+                except AttributeError:
+                    raise AttributeError(
+                        f"Attribute Error: Given column header: {column}, does not exist in database object. Ensure the column exists and try again."
+                    )
                 if value is not None:
                     sample_column_values[column] = value
 
@@ -2451,7 +2456,7 @@ class DataStore:
                         # If it's got units, then extract just the number (the 'magnitude' of the value)
                         if isinstance(value, pint.quantity._Quantity):
                             row_values.append(str(value.magnitude))
-                        elif value is None or len(value) == 0:
+                        elif value is None or (isinstance(value, list) and len(value) == 0):
                             row_values.append("")
                         else:
                             row_values.append(str(value))

@@ -1,3 +1,4 @@
+import os
 from asyncio import Future
 
 from prompt_toolkit.completion.filesystem import PathCompleter
@@ -84,6 +85,11 @@ class ExportCSVDialog:
         if len(self.filename_textbox.text) == 0:
             self.error_message.text = "Please enter a filename"
             return
+        else:
+            self.error_message.text = ""
+
+        if os.path.isdir(self.filename_textbox.text):
+            self.error_message.text = "Please enter a path to a file, not a folder"
         else:
             self.error_message.text = ""
 
