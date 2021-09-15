@@ -206,7 +206,7 @@ def database_at_latest_revision(db_path):
         return False
 
 
-class StdoutAndFileWriter(object):
+class StdoutAndFileWriter:
     def __init__(self, filename):
         self.terminal = sys.stdout
         self.log = open(filename, "a")
