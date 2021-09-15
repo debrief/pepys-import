@@ -419,7 +419,7 @@ def validateStartTimes(rows, rangeTypes, startTimes):
 
 def validateEndTimes(rows, rangeTypes, endTimes):
     for (row, ranget, endt) in zip_longest(rows, rangeTypes, endTimes):
-        # pylint: disable=duplicate-unused-variable
+        # pylint: disable=unused-variable
         (rangetype, starttime, endtime, created_date, platid, serialid) = row
         if rangetype != ranget or endt != endtime.strftime("%H:%M:%S"):
             print(row, ranget, endt)
@@ -428,7 +428,7 @@ def validateEndTimes(rows, rangeTypes, endTimes):
 
 def validateForIncludeInTimeline(rows):
     for row in rows:
-        # pylint: disable=duplicate-unused-variable
+        # pylint: disable=unused-variable
         (recordType, includeInTimeline, serialid, pid, pname, exercise, ptname, start, end, gap, ftname, ftcolor) = row
         if recordType == "SERIALS":
             return includeInTimeline
