@@ -332,8 +332,10 @@ def populate_data(cursor, TIMELIST):
     cursor.execute("create schema pepys")
     cursor.execute('create table pepys."Sensors"(host uuid, sensor_id uuid)')
     cursor.execute('create table pepys."States"(sensor_id uuid, time timestamp, created_date timestamp )')
-    cursor.execute('create table pepys."Serials"(serial_id uuid, serial_number text, exercise varchar(150), include_in_timeline bool, start timestamp, "end" timestamp)')
-    cursor.execute('create table pepys."SerialParticipants"(serial_id uuid, wargame_participant_id uuid, force_type_id uuid, start timestamp, "end" timestamp)')
+    cursor.execute('create table pepys."Serials"(serial_id uuid, serial_number text, exercise varchar(150), '
+                   'include_in_timeline bool, start timestamp, "end" timestamp)')
+    cursor.execute('create table pepys."SerialParticipants"(serial_id uuid, wargame_participant_id uuid, '
+                   'force_type_id uuid, start timestamp, "end" timestamp)')
     cursor.execute('create table pepys."WargameParticipants"(wargame_participant_id uuid, platform_id uuid)')
     cursor.execute('create table pepys."Platforms"(platform_id uuid, platform_type_id uuid, quadgraph varchar(4), name varchar(150))')
     cursor.execute('create table pepys."PlatformTypes"(platform_type_id uuid, default_data_interval_secs int4, name varchar(150))')
@@ -343,7 +345,7 @@ def populate_data(cursor, TIMELIST):
         """insert into pepys."Sensors" values('{}', '{}')""".format(SOME_UUID, SOME_UUID)
     )
     cursor.execute(
-            """insert into pepys."Serials" values('{}', '{}', '{}', {}, 
+            """insert into pepys."Serials" values('{}', '{}', '{}', {},
             to_timestamp('{}','YYYY-MM-DD HH24:MI:SS'), to_timestamp('{}',
             'YYYY-MM-DD HH24:MI:SS') + interval '12 hours')""".format
             (SOME_UUID, "J052010", "EXERCISE", "true", CREATED, CREATED)
@@ -354,7 +356,7 @@ def populate_data(cursor, TIMELIST):
         )
 
     cursor.execute(
-            """insert into pepys."SerialParticipants" values('{}', '{}', '{}', 
+            """insert into pepys."SerialParticipants" values('{}', '{}', '{}',
             to_timestamp('{}','YYYY-MM-DD HH24:MI:SS'), to_timestamp('{}',
             'YYYY-MM-DD HH24:MI:SS') + interval '12 hours')""".format
             (SOME_UUID, SOME_UUID, SOME_UUID, CREATED, CREATED)
@@ -428,6 +430,7 @@ def validateForIncludeInTimeline(rows):
         if recordType == "SERIALS":
             return includeInTimeline
     return False
+
 
 if __name__ == "__main__":
     unittest.main()
