@@ -1,5 +1,4 @@
 # pylint: disable=duplicate-string-formatting-argument
-# pylint: disable=hardcoded_sql_expressions
 """
     The following describes:
 
@@ -327,7 +326,8 @@ def get_data(listPlatformRanges):
 
 
 def get_query(funcName):
-    return "select * from pepys.dashboard_" + funcName + "(%s, %s)"
+    # security checks suppressed on next line since it isn't processing user data
+    return "select * from pepys.dashboard_" + funcName + "(%s, %s)"   # nosec
 
 
 def populate_data(cursor, TIMELIST):
