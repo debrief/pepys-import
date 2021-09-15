@@ -211,8 +211,9 @@ class StdoutAndFileWriter(object):
         self.terminal = sys.stdout
         self.log = open(filename, "a")
 
-        # Pretend not to be a terminal
-        self.isatty = False
+    # Pretend not to be a terminal
+    def isatty(self):
+        return False
 
     def write(self, message):
         self.terminal.write(message)
