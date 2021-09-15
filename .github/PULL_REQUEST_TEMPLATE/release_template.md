@@ -1,3 +1,10 @@
+---
+name: Software Release
+about: Make a new release of Pepys
+title: ''
+labels: release
+assignees: 'IanMayo'
+---
 <!-- 
 Please ensure that you complete the following mandatory sections:
 
