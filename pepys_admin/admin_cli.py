@@ -2,6 +2,7 @@ import os
 import sys
 import webbrowser
 from datetime import datetime
+from getpass import getuser
 
 from alembic import command
 from alembic.config import Config
@@ -192,7 +193,7 @@ class AdminShell(BaseShell):
 
             with open(migration_log_filename, "a") as f:
                 current_timestamp = str(datetime.now())
-                username = os.getlogin()
+                username = getuser()
                 f.write(f"=== Migrations run by {username} on {current_timestamp}:\n\n")
 
             # Use a function to redirect stdout so it displays on *both* the screen (in real-time)
