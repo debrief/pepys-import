@@ -1,4 +1,5 @@
 # pylint: disable=duplicate-string-formatting-argument
+# pylint: disable=hardcoded_sql_expressions
 """
     The following describes:
 
