@@ -389,9 +389,19 @@ def populate_data(cursor, TIMELIST):
 
 
 def fetchrows(cursor, start, end):
-    cursor.execute(get_query("stats"), (start, end))
+    cursor.execute(get_query("stats"), get_test_case_data(start, end))
     return cursor.fetchall()
 
+def get_test_case_data(start, end):
+    fij = FilterInputJSON()
+    fij.serial_id = fij.platform_id = SOME_UUID
+    fij.start = DATEVAL + start
+    fij.end = DATEVAL + end
+    fij.gap_seconds = GAP_SECONDS
+    return (
+        get_data([fij]),
+        '["C","G"]',
+    )
 
 def fetchrowsMeta(cursor, start, end):
     cursor.execute(get_query("metadata"), (start, end))
