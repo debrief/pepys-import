@@ -232,3 +232,16 @@ Other tips:
 3. these other things help with PR reviews:
    1. if the change is graphical a screenshot is useful
    2. if something dynamic is happening, a video recording helps (maybe via an app like Gyazo Pro)
+
+GitHub Codespaces
+-----------------
+
+The following tips/steps allow use of GitHub codespaces for Pepys dev.
+
+CodeSpaces aren't universally available, though @IanMayo has them available by registering for the Beta Program.
+
+1. In GitHub (GH) select the branch (or create a new one)
+2. In the ``Code`` drop-down select ``New CodeSpace``
+3. The CodeSpace will open, and ``pip install`` will run, to load the dependencies
+4. Run this code to check an import works: ``python -m pepys_import.cli --path tests/sample_data/track_files/rep_data/ --db test.db --resolver default``
+4. Run this code to check things are installed: ``pytest tests/test_data_store_api_spatialite.py``
