@@ -387,27 +387,12 @@ def populate_data(cursor, TIMELIST):
         cursor.execute(metasqlfile.read())
 
 def fetchrows(cursor, start, end):
-    cursor.execute(get_query("stats"), get_test_case_data(start, end))
+    cursor.execute(get_query("stats"), (start, end))
     return cursor.fetchall()
 
 def fetchrowsMeta(cursor, start, end):
-    cursor.execute(get_query("metadata"), get_test_case_data2(start, end))
+    cursor.execute(get_query("metadata"), (start, end))
     return cursor.fetchall()
-
-def get_test_case_data(start, end):
-    fij = FilterInputJSON()
-    fij.serial_id = fij.platform_id = SOME_UUID
-    fij.start = DATEVAL + start
-    fij.end = DATEVAL + end
-    fij.gap_seconds = GAP_SECONDS
-    return (
-        get_data([fij]),
-        '["C","G"]',
-    )
-def get_test_case_data2(start, end):
-    return (
-        start, end
-    )
 
 def validateStartTimes(rows, rangeTypes, startTimes):
     for (row, ranget, startt) in zip_longest(rows, rangeTypes, startTimes):
@@ -416,7 +401,6 @@ def validateStartTimes(rows, rangeTypes, startTimes):
             print(row, ranget, startt)
             return False
     return True
-
 
 def validateEndTimes(rows, rangeTypes, endTimes):
     for (row, ranget, endt) in zip_longest(rows, rangeTypes, endTimes):
