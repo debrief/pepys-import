@@ -382,8 +382,10 @@ class Extraction(BaseSpatiaLite):
 
     extraction_id = Column(UUIDType, primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
+    entry_id = Column(UUIDType, nullable=False)
     field = Column(String(150), nullable=False)
-    chars = Column(String(150), nullable=False)
+    text = Column(Text(), nullable=False)
+    text_location = Column(String(200), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 

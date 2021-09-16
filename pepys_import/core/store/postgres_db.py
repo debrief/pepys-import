@@ -381,8 +381,10 @@ class Extraction(BasePostGIS):
 
     extraction_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     table = Column(String(150), nullable=False)
+    entry_id = Column(UUID(as_uuid=True), nullable=False)
     field = Column(String(150), nullable=False)
-    chars = Column(String(150), nullable=False)
+    text = Column(Text(), nullable=False)
+    text_location = Column(String(200), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
