@@ -312,6 +312,7 @@ class TestDashboardStatsQuery(unittest.TestCase):
             rows = fetchrowsMeta(cursor, DATEVAL + "08:00:00", DATEVAL + "20:00:00")
             assert validateForIncludeInTimeline(rows)
 
+
 class FilterInputJSON:
     pass
 
@@ -386,13 +387,16 @@ def populate_data(cursor, TIMELIST):
     with open(META_SQL_FILE_LOCATION, "r") as metasqlfile:
         cursor.execute(metasqlfile.read())
 
+
 def fetchrows(cursor, start, end):
     cursor.execute(get_query("stats"), (start, end))
     return cursor.fetchall()
 
+
 def fetchrowsMeta(cursor, start, end):
     cursor.execute(get_query("metadata"), (start, end))
     return cursor.fetchall()
+
 
 def validateStartTimes(rows, rangeTypes, startTimes):
     for (row, ranget, startt) in zip_longest(rows, rangeTypes, startTimes):
@@ -402,6 +406,7 @@ def validateStartTimes(rows, rangeTypes, startTimes):
             return False
     return True
 
+
 def validateEndTimes(rows, rangeTypes, endTimes):
     for (row, ranget, endt) in zip_longest(rows, rangeTypes, endTimes):
         # pylint: disable=unused-variable
@@ -410,6 +415,7 @@ def validateEndTimes(rows, rangeTypes, endTimes):
             print(row, ranget, endt)
             return False
     return True
+
 
 def validateForIncludeInTimeline(rows):
     for row in rows:
