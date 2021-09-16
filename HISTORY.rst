@@ -2,6 +2,15 @@
 History
 =======
 
+0.0.27 (2021-09-16)
+-------------------
+
+* Formally release first version of TimeLine (Dashboard)
+* Introduce `Export to CSV` in Maintenance pages
+* Make database migration more robust, including logging
+* New importer for Aircraft CSV data
+* Assorted bug-fixes
+
 0.0.26 (2021-08-16)
 -------------------
 
