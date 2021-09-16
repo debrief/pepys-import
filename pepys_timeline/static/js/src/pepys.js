@@ -9,8 +9,12 @@ const DATE_FORMATS = {
 const DEFAULT_CONFIG = {
   TimelineRefreshSecs: 60,
   MessageOfTheDay: "Message of the day: [PENDING]",
+  filterSerials: "all"
 };
 const SERVER_ERROR_MESSAGE = "Error connecting to server";
+
+const now = moment();
+const NEWLY_CREATED_STAT_LIMIT = now.diff(moment(now).subtract(15, 'minutes'));
 
 let timer;
 let config;
@@ -23,10 +27,12 @@ const today = new Date();
 const yesterday = new Date();
 yesterday.setDate(today.getDate() - 1);
 
-let fromDate = moment(yesterday);
-let toDate = moment(yesterday);
+let fromDate = moment(window.localStorage.getItem('fromDate') || yesterday);
+let toDate = moment(window.localStorage.getItem('toDate') || yesterday);
 
 const DEFAULT_OPTIONS = {
+    custom_categories: true,
+    category_percentage: [1, 2], // originally visavail allows a single value, have to change in the src as well
     margin: {
         right: 60,
         left: 50,
@@ -67,7 +73,7 @@ const DEFAULT_OPTIONS = {
     y_percentage: {
         enabled: true,
         custom_percentage: true
-    },
+    }
 };
 
 function setMessageOfTheDay() {
@@ -126,6 +132,15 @@ function initMessageOfTheDay() {
   setMessageOfTheDay();
 }
 
+function initSerialRadio() {
+  $('input:radio[name="filter-serials-radio"]').filter(
+    `[value="${config.filterSerials}"]`).attr('checked', true);
+  $('input[type=radio][name=filter-serials-radio]').change(function() {
+    config.filterSerials = this.value;
+    renderCharts();
+  });
+}
+
 function showLoadingSpinner() {
   document.getElementById("loading-spinner-container").style.display = "flex";
 }
@@ -154,6 +169,8 @@ function clearCharts() {
   console.log("Clearing charts.");
   var chartContainer = document.getElementById("chart-container");
   chartContainer.innerHTML = "";
+  charts = [];
+  chartOptions = [];
 }
 
 function beforeRequest() {
@@ -191,7 +208,7 @@ function fetchConfig() {
                 timer.start(getTimerConfig(newConfig.TimelineRefreshSecs));
               }
 
-              config = newConfig;
+              config = {...config, ...newConfig};
 
               fetchSerialsMeta();
               setMessageOfTheDay();
@@ -317,6 +334,14 @@ function sortParticipants(p1, p2) {
   if (p1.name < p2.name) return -1;
 }
 
+function inferCategory(participantStat) {
+  return participantStat.resp_range_type === "G"
+    ? 0
+    : moment().diff(moment(participantStat.resp_created)) < NEWLY_CREATED_STAT_LIMIT
+    ? 2
+    : 1;
+}
+
 function transformParticipant(participant, serial) {
     participant.serial_name = serial.name;
     const participantStats = serialsStats.filter(
@@ -325,7 +350,7 @@ function transformParticipant(participant, serial) {
     )
     let periods = participantStats.map(s => ([
             moment(s.resp_start_time).format(DATE_FORMATS.visavail),
-            Number(s.resp_range_type === "C"),
+            Number(inferCategory(s)),
             moment(s.resp_end_time).format(DATE_FORMATS.visavail),
         ]));
     participant.coverage = periods;
@@ -357,7 +382,21 @@ function transformParticipant(participant, serial) {
             measure: Math.round(participant["percent-coverage"]) + "%",
             class: "ypercentage_" + calculatePercentageClass(participant["percent-coverage"])
         },
-        data: periods
+        data: periods,
+        categories: { 
+          0: {
+            class: "rect_has_no_data",
+            tooltip_html: '<i class="fas fa-fw fa-exclamation-circle tooltip_has_no_data"></i>'
+          },
+          1: {
+            class: "rect_has_data",
+            tooltip_html: '<i class="fas fa-fw fa-check tooltip_has_data"></i>'
+          },
+          2: {
+            class: "rect_has_new_data",
+            tooltip_html: '<i class="fas fa-fw fa-check tooltip_has_new_data"></i>'
+          },
+        }
     }
 }
 
@@ -379,13 +418,14 @@ function transformSerials() {
                 / currSerialParticipants.length
             )
             : 0;
-        serial.includeInTimeline = true;  // this should come from the database
         return serial;
     })
     return transformedData;
 }
 
 function renderCharts() {
+    clearCharts();
+
     const transformedSerials = transformSerials();
     console.log("transformedSerials: ", transformedSerials);
 
@@ -396,25 +436,27 @@ function renderCharts() {
     for (let i = 0; i < transformedSerials.length; i++) {
         console.log(transformedSerials[i].name, transformedSerials[i].overall_average);
 
-        if (!transformedSerials[i].includeInTimeline) {
-            console.log("Serial flag 'includeInTimeline' false, won't generate chart.");
+        if (
+          (config.filterSerials === 'included' && transformedSerials[i].include_in_timeline === 'false') ||
+          (config.filterSerials === 'excluded' && transformedSerials[i].include_in_timeline === 'true')
+          ) {
+            console.log("Serial filtered out with include_in_timeline and the radio setting, won't generate chart.");
             continue;
         }
+        const newChartOptions = {...DEFAULT_OPTIONS};
+        // override the target ids
+        newChartOptions.id_div_container = "visavail_container_new_" + (i + 1);
+        newChartOptions.id_div_graph = "visavail_graph_new_" + (i + 1);
 
-        chartOptions.push({
-          ...DEFAULT_OPTIONS
-        });
         addChartDiv(
             i + 1,
             transformedSerials[i].name,
             "" + calculatePercentageClass(transformedSerials[i].overall_average)
         );
-        // override the target ids
-        chartOptions[i].id_div_container = "visavail_container_new_" + (i + 1);
-        chartOptions[i].id_div_graph = "visavail_graph_new_" + (i + 1);
-
+        
         // create new chart instance
-        charts[i] = visavail.generate(chartOptions[i], transformedSerials[i].participants);
+        charts.push(visavail.generate(newChartOptions, transformedSerials[i].participants));
+        chartOptions.push(newChartOptions);
     }
 }
 
@@ -446,6 +488,8 @@ function initTimer() {
   timer.addEventListener("started", onTimerStarted);
   timer.addEventListener("targetAchieved", onTimerTargetAchieved);
   timer.addEventListener("reset", onTimerReset);
+
+  document.querySelector("#countdown-container").onclick = onTimerTargetAchieved;
 }
 
 function initDateRange() {
@@ -478,6 +522,9 @@ function initDateRange() {
   }, function(newFromDate, newToDate) {
     fromDate = newFromDate;
     toDate = newToDate;
+
+    window.localStorage.setItem('fromDate', newFromDate);
+    window.localStorage.setItem('toDate', newToDate);
   });
 
   $("input[name=\"date-range\"]").on("apply.daterangepicker", function(ev, picker) {
@@ -495,6 +542,7 @@ $(function() {
   initDateRange();
   initTimer();
   initMessageOfTheDay();
+  initSerialRadio();
   startDatetimeClock();
   timer.start(getTimerConfig(config.TimelineRefreshSecs));
   fetchConfig();

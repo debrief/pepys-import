@@ -12,6 +12,7 @@ from alembic.script import write_hooks
 from geoalchemy2.types import Geometry
 from sqlalchemy import NUMERIC, Integer, engine_from_config
 from sqlalchemy.event import listen
+from sqlalchemy.sql.expression import text
 
 from config import DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_TYPE, DB_USERNAME
 from paths import MIGRATIONS_DIRECTORY
@@ -32,7 +33,7 @@ DIR_PATH = os.path.dirname(__file__)
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-db_type = config.attributes.get("db_type", DB_TYPE)
+db_type = config.attributes.get("database_type", DB_TYPE)
 
 version_path = os.path.join(DIR_PATH, "versions")
 if db_type == "postgres":
@@ -189,11 +190,12 @@ def run_migrations_online():
                 compare_type=True,
             )
             with context.begin_transaction():
-                context.execute("SET search_path TO pepys,public")
+                context.execute(text("SET search_path TO pepys,public"))
                 context.run_migrations()
         else:
             # Turn off the enforcement of foreign key constraints before running the migration
-            connection.execute("PRAGMA foreign_keys=OFF;")
+            connection.execute(text("PRAGMA foreign_keys=OFF;"))
+            connection.commit()
             context.configure(
                 connection=connection,
                 target_metadata=target_metadata,
@@ -204,8 +206,10 @@ def run_migrations_online():
             )
             with context.begin_transaction():
                 context.run_migrations()
+
             # Turn on the enforcement of foreign key constraints after the migration is done
-            connection.execute("PRAGMA foreign_keys=ON;")
+            connection.execute(text("PRAGMA foreign_keys=ON;"))
+            connection.commit()
 
 
 if context.is_offline_mode():

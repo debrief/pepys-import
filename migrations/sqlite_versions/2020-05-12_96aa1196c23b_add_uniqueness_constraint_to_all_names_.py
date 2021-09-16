@@ -11,7 +11,7 @@ from uuid import uuid4
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy import Column, DateTime, ForeignKey, MetaData, String
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import ReferenceRepr

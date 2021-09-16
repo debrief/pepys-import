@@ -1,7 +1,7 @@
 import unittest
 
 import pytest
-from sqlalchemy.ext.declarative import DeclarativeMeta
+from sqlalchemy.orm import DeclarativeMeta
 
 from pepys_import.core.store import sqlite_db
 from pepys_import.core.store.constants import (

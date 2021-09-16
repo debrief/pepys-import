@@ -56,12 +56,17 @@
         coverage_at_serial_start
         coverage_at_serial_end
         consolidated_coverage
+        consolidated_coverage_with_created
 
         <<STAT CONSOLIDATION CTE>>
         consolidated_stats
 
         To determine adjacency, the pepys."States" records are sorted based on time and numbered
         over serial_id, platform_id, and ser_idx in state_time_rankings CTE.
+        Before determining adjacency, duplicate "States" are merged into single "State" (as multiple sensors
+        might generate the same set of records). The merge is accomplished by gouping the records
+        using all the items that are being selected from this CTE. The "created_date" alone is calculated
+        as the most recent/max of the entries belonging to the merged group
 
         The following exhaustive cases are considered for *gap* determination
 
@@ -118,7 +123,12 @@
             for that platform and serial_id
 
         consolidated_coverage:
-            This consolidates all the *gaps* identified in the above gap CTEs
+            This consolidates all the *coverage* identified in the above gap CTEs
+
+        consolidated_coverage_with_created:
+            This CTE just determines and adds the time of the most recent "States" added to all "Coverage"
+            determined by the consolidated_coverage CTE. It does so by comparing consolidated_coverage CTE
+            with state_time_rankings CTE
 
 
 
@@ -212,6 +222,7 @@ SQL_FILE_LOCATION = os.path.join(
 SOME_UUID = "54f6d015-8adf-47f4-bf02-33e06fbe0725"
 TIMELIST = ["09:00:00", "17:00:00", "17:01:00", "17:02:00"]
 DATEVAL = "2020-12-12 "
+CREATED = "2020-12-12 08:30:00"
 GAP_SECONDS = 150
 
 
@@ -312,7 +323,7 @@ def get_query():
 def populate_data(cursor, TIMELIST):
     cursor.execute("create schema pepys")
     cursor.execute('create table pepys."Sensors"(host uuid, sensor_id uuid)')
-    cursor.execute('create table pepys."States"(sensor_id uuid, time timestamp)')
+    cursor.execute('create table pepys."States"(sensor_id uuid, time timestamp, created_date timestamp )')
     cursor.execute('create table pepys."Serials"(serial_id uuid, serial_number text)')
     cursor.execute(
         """insert into pepys."Sensors" values('{}', '{}')""".format(SOME_UUID, SOME_UUID)
@@ -322,7 +333,7 @@ def populate_data(cursor, TIMELIST):
     )
     for time in TIMELIST:
         cursor.execute(
-            """insert into pepys."States" values('{}', '{}{}')""".format(SOME_UUID, DATEVAL, time)
+            """insert into pepys."States" values('{}', '{}{}', '{}')""".format(SOME_UUID, DATEVAL, time, CREATED)
         )
     with open(SQL_FILE_LOCATION, "r") as statssqlfile:
         cursor.execute(statssqlfile.read())
@@ -347,7 +358,7 @@ def get_test_case_data(start, end):
 
 def validateStartTimes(rows, rangeTypes, startTimes):
     for (row, ranget, startt) in zip_longest(rows, rangeTypes, startTimes):
-        (rangetype, starttime, endtime, platid, serialid) = row
+        (rangetype, starttime, endtime, created_date, platid, serialid) = row
         if rangetype != ranget or startt != starttime.strftime("%H:%M:%S"):
             print(row, ranget, startt)
             return False
@@ -356,7 +367,7 @@ def validateStartTimes(rows, rangeTypes, startTimes):
 
 def validateEndTimes(rows, rangeTypes, endTimes):
     for (row, ranget, endt) in zip_longest(rows, rangeTypes, endTimes):
-        (rangetype, starttime, endtime, platid, serialid) = row
+        (rangetype, starttime, endtime, created_date, platid, serialid) = row
         if rangetype != ranget or endt != endtime.strftime("%H:%M:%S"):
             print(row, ranget, endt)
             return False

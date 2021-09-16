@@ -1,10 +1,9 @@
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import backref, relationship
+from sqlalchemy.orm import backref, declared_attr, relationship
 from tqdm import tqdm
 
 from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
@@ -310,7 +309,7 @@ class WargameMixin:
         )
 
     @declared_attr
-    def participant_platform_name(self):
+    def participants_platform_name(self):
         return association_proxy("participants", "platform_name")
 
     @declared_attr
@@ -394,7 +393,7 @@ class SerialMixin:
         return association_proxy("wargame", "name")
 
     @declared_attr
-    def participant_platform_name(self):
+    def participants_platform_name(self):
         return association_proxy("participants", "platform_name")
 
     @declared_attr

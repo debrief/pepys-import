@@ -20,8 +20,7 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import deferred
+from sqlalchemy.orm import declarative_base, deferred
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.common_db import DatafileMixin, PlatformMixin, SensorMixin

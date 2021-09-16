@@ -1,3 +1,4 @@
+import csv
 import os
 import sys
 from contextlib import contextmanager
@@ -5,16 +6,20 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
+import pint
+import sqlalchemy
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
 from sqlalchemy.orm import scoped_session, sessionmaker, undefer
 from sqlalchemy.sql import func
+from sqlalchemy.sql.expression import text
 from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, merge_references
 
-from paths import PEPYS_IMPORT_DIRECTORY
+from paths import MIGRATIONS_DIRECTORY, PEPYS_IMPORT_DIRECTORY
 from pepys_import import __build_timestamp__, __version__
 from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
@@ -44,6 +49,18 @@ from .table_summary import TableSummary, TableSummarySet
 DEFAULT_DATA_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "default_data")
 USER = getuser()  # Login name of the current user
 
+# Constant Lists of revisions
+# This is a list of revisions known to this version of pepys
+SQLITE_REVISIONS_FOLDER = os.path.join(MIGRATIONS_DIRECTORY, "sqlite_versions")
+SQLITE_REVISION_LIST = os.listdir(SQLITE_REVISIONS_FOLDER)
+SQLITE_REVISION_IDS = [sqlite_revision.split("_")[1] for sqlite_revision in SQLITE_REVISION_LIST]
+
+POSTGRES_REVISIONS_FOLDER = os.path.join(MIGRATIONS_DIRECTORY, "postgres_versions")
+POSTGRES_REVISIONS_LIST = os.listdir(POSTGRES_REVISIONS_FOLDER)
+POSTGRES_REVISIONS_IDS = [
+    postgres_revision.split("_")[1] for postgres_revision in POSTGRES_REVISIONS_LIST
+]
+
 
 class DataStore:
     """Representation of database
@@ -64,66 +81,6 @@ class DataStore:
         welcome_text="Pepys_import",
         show_status=True,
     ):
-        if db_type == "postgres":
-            self.db_classes = import_module("pepys_import.core.store.postgres_db")
-            driver = "postgresql+psycopg2"
-        elif db_type == "sqlite":
-            self.db_classes = import_module("pepys_import.core.store.sqlite_db")
-            driver = "sqlite+pysqlite"
-        else:
-            raise Exception(
-                f"Unknown db_type {db_type} supplied, if specified should be "
-                "one of 'postgres' or 'sqlite'"
-            )
-
-        # setup meta_class data
-        self.meta_classes = {}
-        self.setup_table_type_mapping()
-
-        if db_name == ":memory:":
-            self.in_memory_database = True
-        else:
-            self.in_memory_database = False
-
-        connection_string = "{}://{}:{}@{}:{}/{}".format(
-            driver, db_username, db_password, db_host, db_port, db_name
-        )
-        try:
-            if db_type == "postgres":
-                self.engine = create_engine(connection_string, echo=False, executemany_mode="batch")
-                BasePostGIS.metadata.bind = self.engine
-                # The SQL below seems to be required to set the database up correctly so that merging works.
-                # The search_path makes perfect sense, as when merging the tables come across from SQLite which
-                # has no schema, so the objects have no associated schema, and Postgres needs to be able to find
-                # them without a schema
-                # However, the CREATE EXTENSION bit makes less sense - but seems to be required to be in there.
-                # It will be a no-op if the extension already exists, so it doesn't have an efficiency implication
-                # but seems to be required.
-                with handle_database_errors():
-                    with self.engine.connect() as connection:
-                        connection.execute(
-                            "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
-                        )
-            elif db_type == "sqlite":
-                self.engine = create_engine(connection_string, echo=False)
-                listen(self.engine, "connect", load_spatialite)
-                listen(self.engine, "connect", set_sqlite_foreign_keys_on)
-                BaseSpatiaLite.metadata.bind = self.engine
-        except ArgumentError as e:
-            custom_print_formatted_text(
-                format_error_message(
-                    f"SQL Exception details: {e}\n\n"
-                    "ERROR: Invalid Connection URL Error!\n"
-                    "Please check your config file. There might be missing/wrong values!\n"
-                    "See above for the full error from SQLAlchemy."
-                )
-            )
-            sys.exit(1)
-
-        # Try to connect to the engine to check if there is any problem
-        with handle_first_connection_error(connection_string):
-            inspector = inspect(self.engine)
-            _ = inspector.get_table_names()
 
         self.missing_data_resolver = missing_data_resolver
         self.welcome_text = welcome_text
@@ -170,7 +127,80 @@ class DataStore:
         self._search_geometry_type_cache = dict()
         self._search_geometry_subtype_cache = dict()
 
-        db_session = sessionmaker(bind=self.engine, expire_on_commit=False)
+        if db_type == "postgres":
+            self.db_classes = import_module("pepys_import.core.store.postgres_db")
+            driver = "postgresql+psycopg2"
+        elif db_type == "sqlite":
+            self.db_classes = import_module("pepys_import.core.store.sqlite_db")
+            driver = "sqlite+pysqlite"
+        else:
+            raise Exception(
+                f"Unknown db_type {db_type} supplied, if specified should be "
+                "one of 'postgres' or 'sqlite'"
+            )
+
+        # setup meta_class data
+        self.meta_classes = {}
+        self.setup_table_type_mapping()
+
+        if db_name == ":memory:":
+            self.in_memory_database = True
+        else:
+            self.in_memory_database = False
+
+        connection_string = "{}://{}:{}@{}:{}/{}".format(
+            driver, db_username, db_password, db_host, db_port, db_name
+        )
+        try:
+            if db_type == "postgres":
+                self.engine = create_engine(
+                    connection_string, echo=False, executemany_mode="batch", future=True
+                )
+
+                BasePostGIS.metadata.bind = self.engine
+                # The SQL below seems to be required to set the database up correctly so that merging works.
+                # The search_path makes perfect sense, as when merging the tables come across from SQLite which
+                # has no schema, so the objects have no associated schema, and Postgres needs to be able to find
+                # them without a schema
+                # However, the CREATE EXTENSION bit makes less sense - but seems to be required to be in there.
+                # It will be a no-op if the extension already exists, so it doesn't have an efficiency implication
+                # but seems to be required.
+                with handle_database_errors():
+                    with self.engine.begin() as connection:
+                        connection.execute(
+                            text(
+                                "CREATE EXTENSION IF NOT EXISTS postgis; SET search_path = pepys,public;"
+                            )
+                        )
+                self.check_migration_version(POSTGRES_REVISIONS_IDS)
+            elif db_type == "sqlite":
+                self.engine = create_engine(connection_string, echo=False, future=True)
+                # These 'listen' calls must be the first things run after the engine is created
+                # as they set up things to happen on the first connect (which will happen when
+                # check_migration_version is called below)
+                listen(self.engine, "connect", load_spatialite)
+                listen(self.engine, "connect", set_sqlite_foreign_keys_on)
+
+                self.check_migration_version(SQLITE_REVISION_IDS)
+                BaseSpatiaLite.metadata.bind = self.engine
+
+        except ArgumentError as e:
+            custom_print_formatted_text(
+                format_error_message(
+                    f"SQL Exception details: {e}\n\n"
+                    "ERROR: Invalid Connection URL Error!\n"
+                    "Please check your config file. There might be missing/wrong values!\n"
+                    "See above for the full error from SQLAlchemy."
+                )
+            )
+            sys.exit(1)
+
+        # Try to connect to the engine to check if there is any problem
+        with handle_first_connection_error(connection_string):
+            inspector = inspect(self.engine)
+            _ = inspector.get_table_names()
+
+        db_session = sessionmaker(bind=self.engine, expire_on_commit=False, future=True)
         self.scoped_session_creator = scoped_session(db_session)
 
         # Branding Text
@@ -292,6 +322,66 @@ class DataStore:
             file for file in files if os.path.splitext(file)[0].replace(" ", "") in metadata_tables
         ]
         import_from_csv(self, sample_data_folder, metadata_files, change.change_id)
+
+    def check_migration_version(self, revision_list):
+        if len(revision_list) <= 0:
+            print(
+                "ERROR: Expected list of known revisions is empty. Cannot continue with version check.\n"
+            )
+            sys.exit(1)
+
+        try:
+            with self.engine.connect() as connection:
+                # Connect to the database and get the current table contents
+                if self.db_type == "postgres":
+                    table_contents = connection.execute(
+                        text("SELECT * from pepys.alembic_version;")
+                    ).fetchall()
+                else:
+                    table_contents = connection.execute(
+                        text("SELECT * from alembic_version;")
+                    ).fetchall()
+
+                if len(table_contents) <= 0:
+                    # Nothing has been returned, this could be because we a new database is going to be created.
+                    print("No previous database contents - continuing to create schema. \n")
+                    return
+
+                # Check that if the contents returned is the correct length
+                if len(table_contents) == 1 and isinstance(table_contents, list):
+                    if len(table_contents[0]) != 1:
+                        # Content has been found but it is not the correct length
+                        print(
+                            "ERROR: Retrieved version contents from database is incorrect length. \n"
+                            "Cannot correctly compare with currently known migrations. Please check with your administrator."
+                        )
+                        sys.exit(1)
+                else:
+                    print(
+                        "ERROR: Retrieved version contents from database is incorrect length. \n"
+                        "Cannot correctly compare with currently known migrations. Please check with your administrator."
+                    )
+                    sys.exit(1)
+
+                # Database has been found and is the correct length
+                if table_contents[0][0] in revision_list:
+                    # The returned contents is found in our list of ID's so we can return out of the function and carry on
+                    return
+                else:
+                    # The returned contents is not found in our list of ID's so we need to have an error
+                    print(
+                        f"ERROR: The current database version {table_contents[0][0]} is not recognised by this version of Pepys. \n"
+                        "You may be using an out-dated Pepys version - please check with your administrator."
+                    )
+                    sys.exit(1)
+
+        except (
+            sqlalchemy.exc.OperationalError,
+            sqlalchemy.exc.ProgrammingError,
+            sqlalchemy.exc.DatabaseError,
+        ):
+            # If Alembic version table doesn't exist then error arises. This is ok as table will be created later.
+            pass
 
     # End of Data Store methods
     #############################################################
@@ -590,7 +680,7 @@ class DataStore:
         """Search for any datafile with this name"""
         return (
             self.session.query(self.db_classes.Datafile)
-            .options(undefer("simulated"))
+            .options(undefer(self.db_classes.Datafile.simulated))
             .filter(func.lower(self.db_classes.Datafile.reference) == lowercase_or_none(name))
             .first()
         )
@@ -1382,11 +1472,11 @@ class DataStore:
         if self.db_type == "sqlite":
             meta = BaseSpatiaLite.metadata
             with self.session_scope():
-                meta.drop_all()
-                self.session.execute("DROP TABLE IF EXISTS alembic_version;")
+                meta.drop_all(bind=self.engine)
+                self.session.execute(text("DROP TABLE IF EXISTS alembic_version;"))
         else:
-            with self.engine.connect() as connection:
-                connection.execute('DROP SCHEMA IF EXISTS "pepys" CASCADE;')
+            with self.engine.begin() as connection:
+                connection.execute(text('DROP SCHEMA IF EXISTS "pepys" CASCADE;'))
 
     def get_all_datafiles(self):
         """Returns all datafiles.
@@ -2285,3 +2375,120 @@ class DataStore:
             getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
         ).delete(synchronize_session="fetch")
         self.session.flush()
+
+    def convert_ids_to_objects(self, ids, table_obj):
+        if ids is None:
+            raise Exception("No ids provided")
+
+        results = (
+            self.session.query(table_obj)
+            .filter(getattr(table_obj, get_primary_key_for_table(table_obj)).in_(ids))
+            .options(undefer("*"))
+            .all()
+        )
+        return results
+
+    def export_objects_to_csv(
+        self, table_obj, id_list, columns_list, output_filename, set_percentage=None
+    ):
+        if output_filename is None or output_filename == "":
+            raise Exception("Output filename must be provided")
+
+        if os.path.isdir(output_filename):
+            raise Exception("You must provide a filename to export to, not a folder")
+
+        # Get the list of all objects from the id_list parameter
+        object_list = self.convert_ids_to_objects(id_list, table_obj)
+
+        if callable(set_percentage):
+            set_percentage(1)
+
+        if len(object_list) == 0:
+            raise Exception("Cannot export CSV: no entries selected")
+
+        # Get an example value for each column: this lets us know what
+        # type the column is, and whether we have to handle it differently
+        # We iterate through all the entries in case a column is None in
+        # most entries but has a value in the last one - then we will
+        # still capture it properly
+        sample_column_values = {}
+        percent_per_iteration = 50 / len(object_list)
+        for i, entry in enumerate(object_list):
+            for column in columns_list:
+                if column in sample_column_values:
+                    continue
+                try:
+                    value = getattr(entry, column)
+                except AttributeError:
+                    raise AttributeError(
+                        f"Attribute Error: Given column header: {column}, does not exist in database object. Ensure the column exists and try again."
+                    )
+                if value is not None:
+                    sample_column_values[column] = value
+            if set(sample_column_values.keys()) == set(columns_list):
+                # We've got sample data for all the columns, so stop now
+                break
+            if callable(set_percentage):
+                set_percentage(i * percent_per_iteration)
+
+        if callable(set_percentage):
+            set_percentage(50)
+
+        new_columns_list = []
+
+        # Create the header
+        headers = []
+        for column_name in columns_list:
+            sample_value = sample_column_values.get(column_name, None)
+            if isinstance(sample_value, Location):
+                new_columns_list.append("location_lat")
+                headers.append("location_lat (decimal degrees)")
+                new_columns_list.append("location_lon")
+                headers.append("location_lon (decimal degrees)")
+            else:
+                new_columns_list.append(column_name)
+                # Put units in header if the sample value has units
+                if isinstance(sample_value, pint.quantity.Quantity):
+                    headers.append(f"{column_name} ({sample_value.units})")
+                else:
+                    headers.append(column_name)
+
+        entries = []
+        percent_per_iteration = 50 / len(object_list)
+        update_interval = 10 if len(object_list) < 1000 else 1000
+        for i, entry in enumerate(object_list):
+            row_values = []
+            for column in new_columns_list:
+                try:
+                    # Deal with location specifically, get lat/lon
+                    if column == "location_lat":
+                        value = getattr(entry, "location")
+                        row_values.append(value.latitude)
+                    elif column == "location_lon":
+                        value = getattr(entry, "location")
+                        row_values.append(value.longitude)
+                    else:
+                        value = getattr(entry, column)
+                        # If it's got units, then extract just the number (the 'magnitude' of the value)
+                        if isinstance(value, pint.quantity.Quantity):
+                            row_values.append(str(value.magnitude))
+                        elif value is None or (isinstance(value, list) and len(value) == 0):
+                            row_values.append("")
+                        else:
+                            row_values.append(str(value))
+                except AttributeError:
+                    raise AttributeError(
+                        f"Attribute Error: Given column header: {column}, does not exist in database object. Ensure the column exists and try again."
+                    )
+
+            # Add the final string to the list of entries
+            entries.append(row_values)
+            if i % update_interval == 0:
+                if callable(set_percentage):
+                    set_percentage(50 + (i * percent_per_iteration))
+
+        with open(output_filename, "w", newline="") as file:
+            writer = csv.writer(file, dialect="excel")
+            writer.writerow(headers)
+            writer.writerows(entries)
+            file.close()

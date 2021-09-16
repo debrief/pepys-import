@@ -4,8 +4,8 @@ from uuid import uuid4
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, TIMESTAMP, UUID
-from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
+    declared_attr,
     deferred,
     relationship,
 )

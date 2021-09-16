@@ -10,7 +10,7 @@ from uuid import uuid4
 
 from alembic import op
 from sqlalchemy import Column, DateTime, MetaData, String
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 from pepys_import.core.store import constants
 from pepys_import.core.store.db_base import sqlite_naming_convention

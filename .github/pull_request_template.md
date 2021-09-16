@@ -1,3 +1,10 @@
+---
+name: Pull Request
+about: Merge a branch containing a new feature/fix into Pepys
+title: ''
+labels:
+assignees: ''
+---
 <!-- 
 Please ensure that you complete the following mandatory sections:
 

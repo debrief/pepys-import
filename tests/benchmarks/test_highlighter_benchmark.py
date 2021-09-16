@@ -134,7 +134,7 @@ def run_highlighter_on_whole_file():
 def test_highlighter_on_whole_file_benchmark(benchmark):
     benchmark(run_highlighter_on_whole_file)
 
-    TIME_THRESHOLD = 10
+    TIME_THRESHOLD = 11
 
     if running_on_ci():
         if benchmark.stats.stats.mean > TIME_THRESHOLD:
@@ -155,7 +155,7 @@ def run_fill_char_array():
 def test_highlighter_fill_char_array_benchmark(benchmark):
     benchmark(run_fill_char_array)
 
-    TIME_THRESHOLD = 6
+    TIME_THRESHOLD = 7
 
     if running_on_ci():
         if benchmark.stats.stats.mean > TIME_THRESHOLD:

@@ -12,8 +12,7 @@ from alembic import op
 from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Column, DateTime, ForeignKey, Integer, MetaData, String, Text
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import deferred
+from sqlalchemy.orm import declarative_base, deferred
 from sqlalchemy.sql.schema import CheckConstraint, UniqueConstraint
 
 from pepys_import.core.store import constants

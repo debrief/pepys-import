@@ -13,8 +13,9 @@ from geoalchemy2 import Geometry
 from sqlalchemy import DATE, Boolean, Column, DateTime, ForeignKey, Integer, MetaData, String
 from sqlalchemy.dialects.sqlite import REAL, TIMESTAMP
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import (  # used to defer fetching attributes unless it's specifically called
+    declarative_base,
+    declared_attr,
     deferred,
     relationship,
 )

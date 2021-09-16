@@ -1,14 +1,14 @@
-"""Add stored procedures for dashboard
+"""Update dashboard stored procedures
 
-Revision ID: d139b551dd55
-Revises: 4d047dd311ef
-Create Date: 2021-05-04 15:59:03.925059+00:00
+Revision ID: bfb29dfcef94
+Revises: 563e11b30785
+Create Date: 2021-09-15 11:25:02.821944+00:00
 
 """
 import os
 
 from alembic import op
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import text
 
 from paths import PEPYS_IMPORT_DIRECTORY
@@ -17,12 +17,10 @@ STORED_PROC_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "postgres_st
 
 
 # revision identifiers, used by Alembic.
-revision = "d139b551dd55"
-down_revision = "4d047dd311ef"
+revision = "bfb29dfcef94"
+down_revision = "563e11b30785"
 branch_labels = None
 depends_on = None
-
-Session = sessionmaker()
 
 
 def upgrade():
