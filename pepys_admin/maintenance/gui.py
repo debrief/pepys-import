@@ -665,7 +665,7 @@ class MaintenanceGUI:
         async def coroutine():
             if len(self.preview_table.current_values) != 1:
                 await self.show_messagebox_async(
-                    "Error", "You must select exactly one entry before editing."
+                    "Error", "You must select exactly one entry before viewing."
                 )
                 return
 
