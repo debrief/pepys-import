@@ -107,4 +107,24 @@ their measurements are imported from.
 ## 3 - Edit values
 If one or more rows are selected then Edit Values can be used to
 edit one  or more fields for those data items.
+
+## 4 - Delete entries
+If one or more rows or entries are selected then Delete Entries can
+be used to delete these from the table. This is a permanent change and
+cannot be reversed once confirmed.
+
+## 5 - Add Entry
+This opens a prompt box in which a new entry can be entered into the table
+by simply filling out the required information about the new entry and
+clicking confirm.
+
+## 6 - View Entry
+If one entry is selected from the third panel then View Entry can be
+used to see further information about the selected entry.
+
+## 7 - Export to CSV
+If one or more entries are selected then Export to CSV can be used to
+export the chosen information to a CSV file. The export will only
+export chosen entries and columns.
+The file location and name can be chosen by the user.
 """
