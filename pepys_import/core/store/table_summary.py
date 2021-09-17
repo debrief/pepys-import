@@ -43,7 +43,9 @@ class TableSummary:
             if self.created_date == "-":
                 self.names = []
             else:
-                self.names = [a.name for a in self.session.query(self.table).all()]
+                self.names = [
+                    result[0] for result in self.session.query(getattr(self.table, "name")).all()
+                ]
 
 
 class TableSummarySet:
