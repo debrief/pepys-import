@@ -27,6 +27,7 @@ SQLITE_SQL_PATH = os.path.join(DATABASE_PATH, "sqlite", "version_datafile_table.
 POSTGRES_SQL_PATH = os.path.join(DATABASE_PATH, "postgres", "pepys_0.0.17_dump.sql")
 POSTGRES_SQL_PATH_2 = os.path.join(DATABASE_PATH, "postgres", "version_datafile_table.sql")
 LATEST_VERSIONS_PATH = os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json")
+MIGRATION_LOG_PATH = os.path.join(MIGRATIONS_DIRECTORY, "migration_output.log")
 
 
 class MigrateSQLiteTestCase(unittest.TestCase):
@@ -41,6 +42,9 @@ class MigrateSQLiteTestCase(unittest.TestCase):
 
     @patch("pepys_admin.admin_cli.prompt", return_value="Y")
     def test_do_migrate_empty_database(self, patched_input):
+        if os.path.exists(MIGRATION_LOG_PATH):
+            os.remove(MIGRATION_LOG_PATH)
+
         assert is_schema_created(self.store.engine, self.store.db_type) is False
         # This can raise SQLAlchemy warnings because of minor problems with past migrations
         # I'm not sure whether the warnings are showing a real problem with an old migration
@@ -54,6 +58,14 @@ class MigrateSQLiteTestCase(unittest.TestCase):
             warnings.simplefilter("ignore")
             self.shell.do_migrate()
         assert is_schema_created(self.store.engine, self.store.db_type) is True
+
+        # Check log output
+        with open(MIGRATION_LOG_PATH) as f:
+            log_contents = f.read()
+
+        assert "Migrations run by" in log_contents
+        assert "ccc37f794db6" in log_contents
+        assert "Migrations ran successfully" in log_contents
 
     @patch("pepys_admin.admin_cli.prompt", return_value="Y")
     @patch("pepys_import.core.store.common_db.prompt", return_value="2")
@@ -130,10 +142,21 @@ class MigratePostgresTestCase(unittest.TestCase):
 
     @patch("pepys_admin.admin_cli.prompt", return_value="Y")
     def test_do_migrate_empty_database(self, patched_input):
+        if os.path.exists(MIGRATION_LOG_PATH):
+            os.remove(MIGRATION_LOG_PATH)
+
         assert is_schema_created(self.store.engine, self.store.db_type) is False
         # Migrate
         self.shell.do_migrate()
         assert is_schema_created(self.store.engine, self.store.db_type) is True
+
+        # Check log output
+        with open(MIGRATION_LOG_PATH) as f:
+            log_contents = f.read()
+
+        assert "Migrations run by" in log_contents
+        assert "e2f70908043d" in log_contents
+        assert "Migrations ran successfully" in log_contents
 
     @patch("pepys_admin.admin_cli.prompt", return_value="Y")
     @patch("pepys_import.core.store.common_db.prompt", return_value="2")

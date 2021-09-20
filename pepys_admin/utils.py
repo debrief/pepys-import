@@ -1,6 +1,8 @@
 import json
 import os
 import sqlite3
+import sys
+from contextlib import contextmanager
 
 import pint
 from sqlalchemy.sql.schema import UniqueConstraint
@@ -202,3 +204,40 @@ def database_at_latest_revision(db_path):
         return True
     else:
         return False
+
+
+class StdoutAndFileWriter:
+    def __init__(self, filename):
+        self.terminal = sys.stdout
+        self.log = open(filename, "a")
+
+    # Pretend not to be a terminal
+    def isatty(self):
+        return False
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def close(self):
+        self.log.close()
+
+    def flush(self):
+        # this flush method is needed for python 3 compatibility.
+        # this handles the flush command by doing nothing.
+        # you might want to specify some extra behavior here.
+        pass
+
+
+@contextmanager
+def redirect_stdout_to_file_and_screen(filename):
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+    sys.stdout = StdoutAndFileWriter(filename)
+    sys.stderr = sys.stdout
+
+    yield
+
+    sys.stdout.close()
+    sys.stdout = old_stdout
+    sys.stderr = old_stderr

@@ -1,6 +1,8 @@
 import os
 import sys
 import webbrowser
+from datetime import datetime
+from getpass import getuser
 
 from alembic import command
 from alembic.config import Config
@@ -8,13 +10,14 @@ from prompt_toolkit import prompt
 from waitress import serve
 
 import config
-from paths import ROOT_DIRECTORY
+from paths import MIGRATIONS_DIRECTORY, ROOT_DIRECTORY
 from pepys_admin.base_cli import BaseShell
 from pepys_admin.export_cli import ExportShell
 from pepys_admin.initialise_cli import InitialiseShell
 from pepys_admin.maintenance.gui import MaintenanceGUI
 from pepys_admin.maintenance.tasks_gui import TasksGUI
 from pepys_admin.snapshot_cli import SnapshotShell
+from pepys_admin.utils import redirect_stdout_to_file_and_screen
 from pepys_admin.view_data_cli import ViewDataShell
 from pepys_import.core.store import constants
 from pepys_import.core.store.db_status import TableTypes
@@ -185,12 +188,33 @@ class AdminShell(BaseShell):
         )
         if confirmation.lower() == "y":
             print("Alembic migration command running, see output below.")
-            try:
-                command.upgrade(self.cfg, "head")
-            except Exception as e:
-                print(
-                    f"Exception details: {e}\n\nERROR: Alembic error when migrating the database!"
-                )
+
+            migration_log_filename = os.path.join(MIGRATIONS_DIRECTORY, "migration_output.log")
+
+            with open(migration_log_filename, "a") as f:
+                current_timestamp = str(datetime.now())
+                username = getuser()
+                f.write(f"=== Migrations run by {username} on {current_timestamp}:\n\n")
+
+            # Use a function to redirect stdout so it displays on *both* the screen (in real-time)
+            # and is output to a file. This means the user still gets the real-time progress of the
+            # migrations, while we write to a log file. If we just redirected to a variable and then
+            # printed it, the user would receive no output on the screen until the process was finished
+            # and so could not see the progress of the migrations
+            with redirect_stdout_to_file_and_screen(migration_log_filename):
+                try:
+                    command.current(self.cfg, verbose=True)
+                    command.upgrade(self.cfg, "head")
+                except Exception as e:
+                    print(
+                        f"Exception details: {e}\n\nERROR: Alembic error when migrating the database!"
+                    )
+                else:
+                    print("Migrations ran successfully")
+
+            with open(migration_log_filename, "a") as f:
+                f.write("\n=== End of migration run output")
+                f.write("\n\n\n")
 
     def do_view_data(self):
         """Runs the :code:`ViewDataShell` which offers to view a table and run SQL."""
