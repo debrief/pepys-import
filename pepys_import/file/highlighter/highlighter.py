@@ -14,7 +14,7 @@ class HighlightedFile:
     then export a highlighted version of the file that indicates extraction
     """
 
-    def __init__(self, filename: str, number_of_lines=None):
+    def __init__(self, filename: str, datafile=None, number_of_lines=None):
         """
         Constructor for this object
         Args:
@@ -26,6 +26,7 @@ class HighlightedFile:
         self.filename = filename
         self.dict_color = {}
         self.number_of_lines = number_of_lines
+        self.datafile = datafile
 
         # List of importers to ignore record calls from
         self.ignored_importers = []

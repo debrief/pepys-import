@@ -1,5 +1,7 @@
 from re import finditer, search
 
+from pepys_import.file.highlighter.support.utils import merge_adjacent_text_locations
+
 from .token import SubToken, Token
 from .usages import SingleUsage
 
@@ -144,7 +146,27 @@ class Line:
         else:
             message = "Value:" + str(value)
 
+        text_locations = []
+
         for child in self.children:
-            for i in range(int(child.start()), int(child.end())):
+            start = child.start()
+            end = child.end()
+
+            text_locations.append((start, end))
+
+            for i in range(start, end):
                 usage = SingleUsage(tool_field, message)
                 child.chars[i].usages.append(usage)
+
+        merged_text_locations = merge_adjacent_text_locations(text_locations)
+        text_location_str = ",".join([f"{low}-{high}" for low, high in merged_text_locations])
+
+        self.highlighted_file.datafile.pending_extracted_tokens.append(
+            {
+                "text": self.text,
+                "interpreted_value": str(value),
+                "text_location": text_location_str,
+                "importer": tool,
+                "field": field,
+            }
+        )

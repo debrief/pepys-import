@@ -607,6 +607,9 @@ class SerialParticipantMixin:
 class DatafileMixin:
     _default_preview_fields = ["reference", "datafile_type_name"]
     _default_dropdown_fields = ["reference"]
+    highlighted_file = None
+    pending_extracted_tokens = []
+    measurement_object_to_tokens_list = {}
 
     @declared_attr
     def privacy(self):
@@ -623,6 +626,29 @@ class DatafileMixin:
     @declared_attr
     def datafile_type_name(self):
         return association_proxy("datafile_type", "name")
+
+    def flush_extracted_tokens(self):
+        """Flush the current list of extracted tokens out to the dict linking measurement
+        objects to tokens, ready for writing to the database at the end of the import.
+
+        This should be called when all the extractions have been done for a _single_ measurement
+        object (State/Contact etc). Often this will be at the end of the `_load_this_line()` method,
+        but in more complex importers it may be needed elsewhere."""
+        # If there aren't any tokens recorded for this measurement object already
+        # then put the list into the dict. If there are already tokens recorded, then append the list
+        # to the list that's already in the dict
+        if (
+            self.measurement_object_to_tokens_list.get(self.current_measurement_object, None)
+            is None
+        ):
+            self.measurement_object_to_tokens_list[
+                self.current_measurement_object
+            ] = self.pending_extracted_tokens
+        else:
+            self.measurement_object_to_tokens_list[
+                self.current_measurement_object
+            ] += self.pending_extracted_tokens
+        self.pending_extracted_tokens = []
 
     def create_state(self, data_store, platform, sensor, timestamp, parser_name):
         """Creates a new State object to record information on the state of a particular
@@ -654,6 +680,8 @@ class DatafileMixin:
             platform=platform,
         )
         self.add_measurement_to_dict(state, parser_name)
+
+        self.current_measurement_object = state
         return state
 
     def create_contact(self, data_store, platform, sensor, timestamp, parser_name):
@@ -686,6 +714,7 @@ class DatafileMixin:
             platform=platform,
         )
         self.add_measurement_to_dict(contact, parser_name)
+        self.current_measurement_object = contact
         return contact
 
     def create_comment(
@@ -727,6 +756,7 @@ class DatafileMixin:
             platform=platform,
         )
         self.add_measurement_to_dict(comment, parser_name)
+        self.current_measurement_object = comment
         return comment
 
     def create_geometry(self, data_store, geom, geom_type_id, geom_sub_type_id, parser_name):
@@ -737,6 +767,7 @@ class DatafileMixin:
             geo_sub_type_id=geom_sub_type_id,
         )
         self.add_measurement_to_dict(geometry, parser_name)
+        self.current_measurement_object = geometry
         return geometry
 
     def create_activation(self, data_store, sensor, start, end, parser_name):
@@ -747,6 +778,7 @@ class DatafileMixin:
             source_id=self.datafile_id,
         )
         self.add_measurement_to_dict(activation, parser_name)
+        self.current_measurement_object = activation
         return activation
 
     def add_measurement_to_dict(self, measurement, parser_name):
@@ -922,6 +954,25 @@ class DatafileMixin:
                     )
 
             extraction_log.append(f"{total_objects} measurements extracted by {parser}.")
+
+        # Loop through the dict linking measurement objects to lists of extraction tokens
+        # and fill in more details on the extraction tokens, then join all the lists together
+        # ready for insert into the database
+        extraction_data = []
+        for measurement_obj, tokens_data in self.measurement_object_to_tokens_list.items():
+            for entry in tokens_data:
+                entry_id = getattr(measurement_obj, get_primary_key_for_table(measurement_obj))
+                entry["entry_id"] = entry_id
+                entry["table"] = measurement_obj.__table__.name
+                entry["datafile_id"] = self.datafile_id
+            extraction_data += tokens_data
+
+        print("Submitting extraction data")
+        for chunk_extraction_data in tqdm(chunked_list(extraction_data, size=1000)):
+            data_store.session.bulk_insert_mappings(
+                data_store.db_classes.Extraction, chunk_extraction_data
+            )
+
         return extraction_log
 
 

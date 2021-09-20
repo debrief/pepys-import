@@ -332,6 +332,9 @@ class FileProcessor:
                 privacy=privacy,
             )
 
+            highlighted_file.datafile = datafile
+            datafile.highlighted_file = highlighted_file
+
             # Update change object
             change.datafile_id = datafile.datafile_id
             data_store.session.flush()
