@@ -381,11 +381,18 @@ class Extraction(BaseSpatiaLite):
     table_type_id = 10
 
     extraction_id = Column(UUIDType, primary_key=True, default=uuid4)
-    table = Column(String(150), nullable=False)
-    entry_id = Column(UUIDType, nullable=False)
+    destination_table = Column(String(150))
+    entry_id = Column(UUIDType)
     field = Column(String(150), nullable=False)
+    datafile_id = Column(
+        UUIDType,
+        ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
     text = Column(Text(), nullable=False)
     text_location = Column(String(200), nullable=False)
+    importer = Column(String(150), nullable=False)
+    interpreted_value = Column(Text(), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 

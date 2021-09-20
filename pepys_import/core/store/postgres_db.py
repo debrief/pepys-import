@@ -380,11 +380,18 @@ class Extraction(BasePostGIS):
     table_type_id = 10
 
     extraction_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    table = Column(String(150), nullable=False)
+    destination_table = Column(String(150), nullable=False)
     entry_id = Column(UUID(as_uuid=True), nullable=False)
     field = Column(String(150), nullable=False)
+    datafile_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
     text = Column(Text(), nullable=False)
     text_location = Column(String(200), nullable=False)
+    importer = Column(String(150), nullable=False)
+    interpreted_value = Column(Text(), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
