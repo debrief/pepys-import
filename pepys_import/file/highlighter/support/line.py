@@ -101,6 +101,7 @@ class Line:
                     char_index = token_str.find(strip_char)
                     if char_index == 0:
                         token_str = token_str[1:]
+                        token_start += 1
                     # and ditch any new whitespace
                     token_str = token_str.strip()
 
