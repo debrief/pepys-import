@@ -31,7 +31,7 @@ from prompt_toolkit.lexers.pygments import PygmentsLexer
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Border, Label
 from pygments.lexers.sql import SqlLexer
-from sqlalchemy.orm import undefer
+from sqlalchemy.orm import joinedload, undefer
 
 from pepys_admin.maintenance.column_data import convert_column_data_to_edit_data, create_column_data
 from pepys_admin.maintenance.dialogs.add_dialog import AddDialog
@@ -414,9 +414,14 @@ class MaintenanceGUI:
 
                 count = query_obj.count()
 
-                # Get the first 100 results, while undefering all fields to make sure everything is
-                # available once it's been expunged (disconnected) from the database
-                results = query_obj.options(undefer("*")).limit(MAX_PREVIEW_TABLE_RESULTS).all()
+                # Get the first 100 results, while undefering all fields and loading all relationships
+                # with a join, to make sure everything is available once it's been expunged
+                # (disconnected) from the database
+                results = (
+                    query_obj.options(undefer("*"), joinedload("*"))
+                    .limit(MAX_PREVIEW_TABLE_RESULTS)
+                    .all()
+                )
 
                 if len(results) == 0:
                     self.preview_table_message.text = ""

@@ -404,6 +404,12 @@ def convert_column_data_to_edit_data(column_data, set_percentage=None):
             # Don't allow to edit ID columns
             continue
 
+        if key == "wargame participations":
+            # Don't allow to edit wargame participations, as joining the data
+            # initially takes a long time, and slows everything down
+            # This can be edited in the Tasks GUI
+            continue
+
         if value["sqlalchemy_type"] == "relationship" and value["second_level"]:
             continue
 

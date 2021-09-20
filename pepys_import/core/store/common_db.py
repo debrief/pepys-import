@@ -493,7 +493,7 @@ class WargameParticipantMixin:
         return relationship(
             "Platform",
             lazy="joined",
-            backref=backref("participations", info={"skip_in_gui": True}, lazy="joined"),
+            backref=backref("participations", info={"skip_in_gui": True}),
         )
 
     @declared_attr
