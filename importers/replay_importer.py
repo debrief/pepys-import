@@ -66,6 +66,8 @@ class ReplayImporter(Importer):
         state.speed = rep_line.speed
         state.location = rep_line.get_location()
 
+        datafile.flush_extracted_tokens()
+
     @staticmethod
     def degrees_for(degs, mins, secs, hemi: str):
         if hemi.upper() == "S" or hemi.upper() == "W":

@@ -148,6 +148,8 @@ class GPXImporter(Importer):
                     if elevation_valid:
                         state.elevation = elevation
 
+                datafile.flush_extracted_tokens()
+
     def get_child_and_text_if_exists(self, element, search_string):
         child = element.find(search_string)
         if child is not None:

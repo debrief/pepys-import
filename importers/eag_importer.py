@@ -175,6 +175,8 @@ class EAGImporter(Importer):
                 state.heading = heading
                 heading_token.record(self.name, "heading", heading)
 
+            datafile.flush_extracted_tokens()
+
     def get_previous_sunday(self, date_of_recording_str):
         format_str = "%Y%m%d"
         date_of_recording = datetime.datetime.strptime(date_of_recording_str, format_str)
