@@ -28,7 +28,7 @@ latest_serials as (
 		s.serial_id,
 		s.serial_number::text serial_name,
 		s.exercise::text,
-		s.include_in_timeline::text,
+		coalesce(s.include_in_timeline, false)::text include_in_timeline,
 		s.start serial_start,
 		s.end serial_end
 	from
