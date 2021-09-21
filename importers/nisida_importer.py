@@ -48,6 +48,8 @@ class NisidaImporter(Importer):
         self.year = None
         self.platform = None
 
+        self.set_highlighting_level("database")
+
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".TXT"
 
