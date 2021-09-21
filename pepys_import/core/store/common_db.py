@@ -635,6 +635,9 @@ class DatafileMixin:
         This should be called when all the extractions have been done for a _single_ measurement
         object (State/Contact etc). Often this will be at the end of the `_load_this_line()` method,
         but in more complex importers it may be needed elsewhere."""
+        if len(self.pending_extracted_tokens) == 0:
+            return
+
         # If there aren't any tokens recorded for this measurement object already
         # then put the list into the dict. If there are already tokens recorded, then append the list
         # to the list that's already in the dict

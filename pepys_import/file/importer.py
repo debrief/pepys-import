@@ -104,6 +104,9 @@ class Importer(ABC):
         self.error_type = f"{self.short_name} - Parsing error on {basename}"
         datafile.measurements[self.short_name] = dict()
 
+        datafile.measurement_object_to_tokens_list = {}
+        datafile.pending_extracted_tokens = []
+
         # Initialise the platform->sensor mapping here
         # so that we get a separate mapping for each file that we process
         self.platform_sensor_mapping = {}
