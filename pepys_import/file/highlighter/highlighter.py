@@ -14,7 +14,7 @@ class HighlightedFile:
     then export a highlighted version of the file that indicates extraction
     """
 
-    def __init__(self, filename: str, datafile=None, number_of_lines=None):
+    def __init__(self, filename: str, number_of_lines=None, datafile=None):
         """
         Constructor for this object
         Args:

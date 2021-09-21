@@ -134,7 +134,7 @@ class Line:
         char array referenced by each SubToken child.
         """
         recording_level = self.highlighted_file.importer_highlighting_levels.get(tool, None)
-        if recording_level is None or recording_level == "none":
+        if recording_level == "none":
             return
 
         self.highlighted_file.fill_char_array_if_needed()

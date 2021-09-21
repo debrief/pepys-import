@@ -610,6 +610,7 @@ class DatafileMixin:
     highlighted_file = None
     pending_extracted_tokens = []
     measurement_object_to_tokens_list = {}
+    current_measurement_object = None
 
     @declared_attr
     def privacy(self):
@@ -960,6 +961,8 @@ class DatafileMixin:
         # ready for insert into the database
         extraction_data = []
         for measurement_obj, tokens_data in self.measurement_object_to_tokens_list.items():
+            if measurement_obj is None:
+                continue
             for entry in tokens_data:
                 entry_id = getattr(measurement_obj, get_primary_key_for_table(measurement_obj))
                 entry["entry_id"] = entry_id
