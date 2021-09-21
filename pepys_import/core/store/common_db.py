@@ -963,7 +963,7 @@ class DatafileMixin:
             for entry in tokens_data:
                 entry_id = getattr(measurement_obj, get_primary_key_for_table(measurement_obj))
                 entry["entry_id"] = entry_id
-                entry["table"] = measurement_obj.__table__.name
+                entry["destination_table"] = measurement_obj.__table__.name
                 entry["datafile_id"] = self.datafile_id
             extraction_data += tokens_data
 
