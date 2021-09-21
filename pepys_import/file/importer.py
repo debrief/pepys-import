@@ -22,13 +22,20 @@ class Importer(ABC):
         self.errors = None
         self.error_type = None
 
-        self.do_recording = True
+        # By default all importers will record extractions to a highlighted
+        # HTML file, but not record them to the database
+        self.highlighting_level = "html"
 
     def __str__(self):
         return self.name
 
-    def disable_recording(self):
-        self.do_recording = False
+    def set_highlighting_level(self, level):
+        """Sets the level of recording highlighted extractions. Can be one of:
+
+        - "none": No highlighting or recording of extractions
+        - "html": Produce a highlighted html file showing the extractions
+        - "database": Produce a highlighted html file and record extractions to the database"""
+        self.highlighting_level = level
 
     @abstractmethod
     def can_load_this_type(self, suffix) -> bool:
@@ -105,11 +112,7 @@ class Importer(ABC):
         # so we get a separate cache for each file we process
         self.platform_cache = {}
 
-        # If we've turned off recording of extractions for this importer
-        # then add this to the list of ignored importers for this HighlightedFile
-        # object
-        if not self.do_recording:
-            file_object.ignored_importers.append(self.name)
+        file_object.importer_highlighting_levels[self.name] = self.highlighting_level
 
         # perform load
         self._load_this_file(data_store, path, file_object, datafile, change_id)

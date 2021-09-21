@@ -28,8 +28,7 @@ class HighlightedFile:
         self.number_of_lines = number_of_lines
         self.datafile = datafile
 
-        # List of importers to ignore record calls from
-        self.ignored_importers = []
+        self.importer_highlighting_levels = {}
 
     def chars_debug(self):
         """

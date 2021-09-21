@@ -106,9 +106,8 @@ class Token:
         This adds SingleUsage objects to each of the relevant characters in the
         character array stored by the SubToken objects that are children of this object.
         """
-        # Don't record anything if the importer that called record
-        # has called 'disable_recording()`
-        if tool in self.highlighted_file.ignored_importers:
+        recording_level = self.highlighted_file.importer_highlighting_levels.get(tool, None)
+        if recording_level is None or recording_level == "none":
             return
 
         self.highlighted_file.fill_char_array_if_needed()
@@ -138,15 +137,16 @@ class Token:
                 # objects
                 subtoken.chars[i].usages.append(usage)
 
-        merged_text_locations = merge_adjacent_text_locations(text_locations)
-        text_location_str = ",".join([f"{low}-{high}" for low, high in merged_text_locations])
+        if recording_level == "database":
+            merged_text_locations = merge_adjacent_text_locations(text_locations)
+            text_location_str = ",".join([f"{low}-{high}" for low, high in merged_text_locations])
 
-        self.highlighted_file.datafile.pending_extracted_tokens.append(
-            {
-                "text": self.text_space_separated,
-                "interpreted_value": str(value),
-                "text_location": text_location_str,
-                "importer": tool,
-                "field": field,
-            }
-        )
+            self.highlighted_file.datafile.pending_extracted_tokens.append(
+                {
+                    "text": self.text_space_separated,
+                    "interpreted_value": str(value),
+                    "text_location": text_location_str,
+                    "importer": tool,
+                    "field": field,
+                }
+            )
