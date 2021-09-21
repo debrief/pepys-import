@@ -380,8 +380,8 @@ class Extraction(BasePostGIS):
     table_type_id = 10
 
     extraction_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    destination_table = Column(String(150), nullable=False)
-    entry_id = Column(UUID(as_uuid=True), nullable=False)
+    destination_table = Column(String(150))
+    entry_id = Column(UUID(as_uuid=True))
     field = Column(String(150), nullable=False)
     datafile_id = Column(
         UUID(as_uuid=True),
