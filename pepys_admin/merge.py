@@ -169,6 +169,7 @@ class MergeDatabases:
         metadata_table_names.remove("Log")
         metadata_table_names.remove("Change")
         metadata_table_names.remove("Synonym")
+        metadata_table_names.remove("Extraction")
 
         added_names = {}
 
@@ -664,6 +665,34 @@ class MergeDatabases:
         # Add the log entries
         self.add_logs(logs_to_add)
 
+    def merge_extractions(self, added_datafile_ids):
+        to_add = []
+
+        with self.slave_store.session_scope():
+            with self.master_store.session_scope():
+                print("Merging Extractions")
+                for datafile_ids_chunk in tqdm(self.split_list(added_datafile_ids)):
+                    # Search for all slave Extraction entries with IDs in this list
+                    results = (
+                        self.slave_store.session.query(self.slave_store.db_classes.Extraction)
+                        .filter(
+                            self.slave_store.db_classes.Extraction.datafile_id.in_(
+                                datafile_ids_chunk
+                            )
+                        )
+                        .options(undefer("*"))
+                        .all()
+                    )
+
+                    # Convert the rows to a list of dicts
+                    dict_results = self.rows_to_list_of_dicts(results)
+
+                    to_add.extend(dict_results)
+
+                self.master_store.session.bulk_insert_mappings(
+                    self.master_store.db_classes.Extraction, to_add
+                )
+
     def merge_all_tables(self):
         """
         Does a full merge, taking all data from the slave_store database and merging it into the master_store
@@ -747,6 +776,9 @@ class MergeDatabases:
 
         # Merge the Logs and Changes table, only merging ones which still match something in the new db
         self.merge_logs_and_changes()
+
+        # Merge the Extractions table, only merging those that match a Datafile that has been added
+        self.merge_extractions([d["id"] for d in df_ids["added"]])
 
         print("Statistics:\n")
         print("Reference tables:")
