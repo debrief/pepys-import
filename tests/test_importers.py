@@ -522,7 +522,7 @@ class ImporterDisableRecordingTest(unittest.TestCase):
                     short_name="Test Importer",
                     datafile_type="Importer",
                 )
-                self.disable_recording()
+                self.set_highlighting_level("none")
 
             def can_load_this_header(self, header) -> bool:
                 return True
