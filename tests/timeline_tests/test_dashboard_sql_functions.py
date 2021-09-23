@@ -225,6 +225,7 @@ META_SQL_FILE_LOCATION = os.path.join(
 )
 
 SOME_UUID = "54f6d015-8adf-47f4-bf02-33e06fbe0725"
+SOME_UUID2 = "54f6d015-8bdf-47f4-bf02-33e06fbe0725"
 TIMELIST = ["09:00:00", "17:00:00", "17:01:00", "17:02:00"]
 DATEVAL = "2020-12-12 "
 CREATED = "2020-12-12 08:30:00"
@@ -248,6 +249,7 @@ class TestDashboardStatsQuery(unittest.TestCase):
         with psycopg2.connect(**self.postgresql.dsn()) as conn:
             cursor = conn.cursor()
             populate_data(cursor, TIMELIST)
+            populate_additional_data(cursor)
 
             # Sample Tests
             rows = fetchrows(cursor, "12:12:12", "15:12:12")
@@ -312,6 +314,14 @@ class TestDashboardStatsQuery(unittest.TestCase):
             rows = fetchrowsMeta(cursor, DATEVAL + "08:00:00", DATEVAL + "20:00:00")
             assert validateForIncludeInTimeline(rows)
 
+            #Tests for #1019 (https://github.com/debrief/pepys-import/issues/1019)
+            #There should be only one gap for SC1 as defined above
+            # Tests for scenario 1[SC1]: No records between SERIAL_START_TIME and SERIAL_END_TIME
+            rows = fetchrows(cursor, "06:00:00", "08:00:00")
+            #The following asserts would fail without the fix
+            assert len(rows) == 1
+            assert validateStartTimes(rows, ["G"], ["06:00:00"])
+            assert validateEndTimes(rows, ["G"], ["08:00:00"])
 
 class FilterInputJSON:
     pass
@@ -387,6 +397,10 @@ def populate_data(cursor, TIMELIST):
     with open(META_SQL_FILE_LOCATION, "r") as metasqlfile:
         cursor.execute(metasqlfile.read())
 
+def populate_additional_data(cursor):
+    cursor.execute(
+        """insert into pepys."Sensors" values('{}', '{}')""".format(SOME_UUID, SOME_UUID2)
+    )
 
 def fetchrows(cursor, start, end):
     cursor.execute(get_query("stats"), get_test_case_data(start, end))
@@ -430,7 +444,7 @@ def validateEndTimes(rows, rangeTypes, endTimes):
 def validateForIncludeInTimeline(rows):
     for row in rows:
         # pylint: disable=unused-variable
-        (recordType, includeInTimeline, serialid, pid, pname, exercise, ptname, start, end, gap, ftname, ftcolor) = row
+        (recordType, includeInTimeline, serialid, pid, pname, exercise, ptname, start, end, gap, intervalMissing, ftname, ftcolor) = row
         if recordType == "SERIALS":
             return includeInTimeline
     return False

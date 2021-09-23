@@ -16,6 +16,7 @@ returns table (
 	"start" timestamp without time zone,
 	"end" timestamp without time zone,
 	gap_seconds int,
+	interval_missing text,
 	force_type_name text,
 	force_type_color text)
 as
@@ -43,13 +44,25 @@ participating_platforms as (
 	select
 		ep.platform_id,
 		coalesce(p.quadgraph, upper(substring(p.name,1,4)))::text platform_name,
-		pt.default_data_interval_secs gap_seconds,
+		coalesce(pt.default_data_interval_secs, 30) gap_seconds,
 		pt.name::text platform_type_name,
 		ls.serial_start,
 		ls.serial_end,
 		coalesce(sp.start, ls.serial_start) serial_participant_start,
 		coalesce(sp.end, ls.serial_end) serial_participant_end,
 		sp.serial_id,
+		case
+			when
+				pt.default_data_interval_secs is null
+			then
+				true
+			when
+				pt.default_data_interval_secs <= 0
+			then
+				true
+			else
+				false
+		end::text interval_missing,
 		ft.name::text force_type_name,
 		ft.color::text force_type_color
 	from
@@ -81,6 +94,7 @@ select
 	s.serial_start "start",
 	s.serial_end "end",
 	NULL gap_seconds,
+	NULL interval_missing,
 	NULL::text force_type_name,
 	NULL::text force_type_color
 from
@@ -97,6 +111,7 @@ select
 	pp.serial_participant_start "start",
 	pp.serial_participant_end "end",
 	pp.gap_seconds,
+	pp.interval_missing,
 	pp.force_type_name,
 	pp.force_type_color
 from
