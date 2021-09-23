@@ -1,4 +1,7 @@
 def merge_adjacent_text_locations(text_locations):
+    if len(text_locations) == 0:
+        return []
+
     current_low = text_locations[0][0]
     current_high = text_locations[0][1]
     output = []

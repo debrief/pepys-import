@@ -6,6 +6,8 @@ import pytest
 
 from pepys_import.file.highlighter.highlighter import HighlightedFile
 from pepys_import.file.highlighter.support.combine import combine_tokens
+from pepys_import.file.highlighter.support.test_utils import FakeDatafile
+from pepys_import.file.highlighter.support.utils import merge_adjacent_text_locations
 
 PATH = os.path.abspath(__file__)
 DIR_PATH = os.path.dirname(PATH)
@@ -148,10 +150,10 @@ class UsageRecordingTests(unittest.TestCase):
 
         data_file.export(os.path.join(OUTPUT_FOLDER, "track_lines.html"), True)
 
-    def test_ignored_importers(self):
+    def test_setting_no_highlighting(self):
         data_file = HighlightedFile(DATA_FILE)
 
-        data_file.ignored_importers.append("Test Importer")
+        data_file.importer_highlighting_levels["Test Importer"] = "none"
 
         lines = data_file.lines()
 
@@ -164,6 +166,74 @@ class UsageRecordingTests(unittest.TestCase):
         # Assert that no initialisation of the chars array took place
         # and therefore the record calls did nothing
         assert len(data_file.chars) == 0
+
+    def test_setting_no_db_highlighting(self):
+        hf = HighlightedFile(DATA_FILE)
+        hf.datafile = FakeDatafile()
+
+        hf.importer_highlighting_levels["Test Importer"] = "html"
+
+        lines = hf.lines()
+
+        lines[0].record("Test Importer", "Test", "Test")
+
+        tokens = lines[1].tokens()
+
+        tokens[0].record("Test Importer", "Test", "Test")
+
+        # Assert that no initialisation of the chars array took place
+        # and therefore the record calls did nothing
+        assert len(hf.datafile.pending_extracted_tokens) == 0
+
+    def test_setting_with_db_highlighting(self):
+        hf = HighlightedFile(DATA_FILE)
+        hf.datafile = FakeDatafile()
+
+        hf.importer_highlighting_levels["Test Importer"] = "database"
+
+        lines = hf.lines()
+
+        lines[0].record("Test Importer", "Test", "Test")
+
+        tokens = lines[1].tokens()
+
+        tokens[0].record("Test Importer", "Test", "Test")
+
+        # Assert that no initialisation of the chars array took place
+        # and therefore the record calls did nothing
+        assert len(hf.datafile.pending_extracted_tokens) == 2
+
+
+def test_merge_adjacent_text_locations():
+    text_locations = [(5, 10), (15, 20), (21, 36), (40, 50), (51, 72), (73, 100)]
+
+    result = merge_adjacent_text_locations(text_locations)
+
+    assert result == [(5, 10), (15, 36), (40, 100)]
+
+
+def test_merge_adjacent_text_locations_only_one():
+    text_locations = [(5, 37)]
+
+    result = merge_adjacent_text_locations(text_locations)
+
+    assert result == [(5, 37)]
+
+
+def test_merge_adjacent_text_locations_all_merged():
+    text_locations = [(5, 10), (11, 20), (21, 36), (37, 50), (51, 72), (73, 100)]
+
+    result = merge_adjacent_text_locations(text_locations)
+
+    assert result == [(5, 100)]
+
+
+def test_merge_adjacent_text_locations_no_entries():
+    text_locations = []
+
+    result = merge_adjacent_text_locations(text_locations)
+
+    assert result == []
 
 
 if __name__ == "__main__":

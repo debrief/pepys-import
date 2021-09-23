@@ -537,7 +537,71 @@ class ImporterDisableRecordingTest(unittest.TestCase):
                 return True
 
             def _load_this_file(self, data_store, path, file_object, datafile, change_id):
-                assert file_object.ignored_importers == ["Test Importer"]
+                assert "Test Importer" in file_object.importer_highlighting_levels
+                assert file_object.importer_highlighting_levels["Test Importer"] == "none"
+
+        processor = FileProcessor()
+
+        processor.register_importer(TestImporter())
+        processor.process(DATA_PATH, None, False)
+
+    def test_record_to_database(self):
+        class TestImporter(Importer):
+            def __init__(self):
+                super().__init__(
+                    name="Test Importer",
+                    validation_level=validation_constants.BASIC_LEVEL,
+                    short_name="Test Importer",
+                    datafile_type="Importer",
+                )
+                self.set_highlighting_level("database")
+
+            def can_load_this_header(self, header) -> bool:
+                return True
+
+            def can_load_this_filename(self, filename):
+                return True
+
+            def can_load_this_type(self, suffix):
+                return True
+
+            def can_load_this_file(self, file_contents):
+                return True
+
+            def _load_this_file(self, data_store, path, file_object, datafile, change_id):
+                assert "Test Importer" in file_object.importer_highlighting_levels
+                assert file_object.importer_highlighting_levels["Test Importer"] == "database"
+
+        processor = FileProcessor()
+
+        processor.register_importer(TestImporter())
+        processor.process(DATA_PATH, None, False)
+
+    def test_default_recording_level(self):
+        class TestImporter(Importer):
+            def __init__(self):
+                super().__init__(
+                    name="Test Importer",
+                    validation_level=validation_constants.BASIC_LEVEL,
+                    short_name="Test Importer",
+                    datafile_type="Importer",
+                )
+
+            def can_load_this_header(self, header) -> bool:
+                return True
+
+            def can_load_this_filename(self, filename):
+                return True
+
+            def can_load_this_type(self, suffix):
+                return True
+
+            def can_load_this_file(self, file_contents):
+                return True
+
+            def _load_this_file(self, data_store, path, file_object, datafile, change_id):
+                assert "Test Importer" in file_object.importer_highlighting_levels
+                assert file_object.importer_highlighting_levels["Test Importer"] == "html"
 
         processor = FileProcessor()
 
