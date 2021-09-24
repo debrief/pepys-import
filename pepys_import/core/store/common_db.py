@@ -8,7 +8,7 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import backref, declared_attr, relationship
 from tqdm import tqdm
 
-from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
+import config
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
@@ -19,9 +19,6 @@ from pepys_import.utils.data_store_utils import chunked_list, shorten_uuid
 from pepys_import.utils.import_utils import import_validators
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.text_formatting_utils import format_error_menu
-
-LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
-LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
 
 
 class HostedByMixin:
@@ -836,6 +833,9 @@ class DatafileMixin:
         parser="Default",
         skip_validation=False,
     ):
+        LOCAL_BASIC_VALIDATORS = import_validators(config.LOCAL_BASIC_TESTS)
+        LOCAL_ENHANCED_VALIDATORS = import_validators(config.LOCAL_ENHANCED_TESTS)
+
         # If there is no parsing error, it will return None. If that's the case,
         # create a new list for validation errors.
         if errors is None:
