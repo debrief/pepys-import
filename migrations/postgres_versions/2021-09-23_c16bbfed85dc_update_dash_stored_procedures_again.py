@@ -18,7 +18,7 @@ STORED_PROC_PATH = os.path.join(PEPYS_IMPORT_DIRECTORY, "database", "postgres_st
 
 # revision identifiers, used by Alembic.
 revision = "c16bbfed85dc"
-down_revision = "4899e94653f1"
+down_revision = "bfb29dfcef94"
 branch_labels = None
 depends_on = None
 
