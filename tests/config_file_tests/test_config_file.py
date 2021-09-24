@@ -9,7 +9,6 @@ import pytest
 
 import config
 from importers.replay_importer import ReplayImporter
-from pepys_import.core.store import common_db
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from tests.utils import side_effect
@@ -158,19 +157,6 @@ class FileProcessorVariablesTestCase(unittest.TestCase):
 
         if os.path.exists(os.path.join(processing_path, "output")):
             os.rmdir(os.path.join(processing_path, "output"))
-
-
-class CommonDBVariablesTestCase(unittest.TestCase):
-    @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_PATH)
-    @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_PATH)
-    def test_local_parser_tests(self):
-        assert not common_db.LOCAL_BASIC_VALIDATORS
-        assert not common_db.LOCAL_ENHANCED_VALIDATORS
-
-        # reload common_db module
-        reload(common_db)
-        assert len(common_db.LOCAL_BASIC_VALIDATORS) == 1
-        assert len(common_db.LOCAL_ENHANCED_VALIDATORS) == 1
 
 
 if __name__ == "__main__":
