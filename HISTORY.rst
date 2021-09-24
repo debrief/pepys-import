@@ -2,6 +2,15 @@
 History
 =======
 
+
+0.0.28 (2021-09-24)
+-------------------
+
+* Minor fixes for timeline (-100%, include_in_timeline, default_interval)
+* Fix error for viewing Platform Entry in GUI
+* Improve speed of generating table summaries (affects import performance)
+* 
+
 0.0.27 (2021-09-16)
 -------------------
 
