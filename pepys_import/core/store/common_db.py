@@ -18,6 +18,21 @@ from pepys_import.utils.import_utils import import_validators
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.text_formatting_utils import format_error_menu
 
+LOCAL_BASIC_VALIDATORS = []
+LOCAL_ENHANCED_VALIDATORS = []
+
+
+def reload_local_validators():
+    global LOCAL_BASIC_VALIDATORS, LOCAL_ENHANCED_VALIDATORS
+    LOCAL_BASIC_VALIDATORS = import_validators(config.LOCAL_BASIC_TESTS)
+    LOCAL_ENHANCED_VALIDATORS = import_validators(config.LOCAL_ENHANCED_TESTS)
+
+
+# On initial load of this file, load the local validators (saves us doing it once
+# for each file we process). This function can be called in a test to reload them,
+# after we've played with the config values as part of a test
+reload_local_validators()
+
 
 class HostedByMixin:
     _default_preview_fields = ["subject_name", "host_name", "hosted_from", "hosted_to"]
@@ -831,8 +846,6 @@ class DatafileMixin:
         parser="Default",
         skip_validation=False,
     ):
-        LOCAL_BASIC_VALIDATORS = import_validators(config.LOCAL_BASIC_TESTS)
-        LOCAL_ENHANCED_VALIDATORS = import_validators(config.LOCAL_ENHANCED_TESTS)
 
         # If there is no parsing error, it will return None. If that's the case,
         # create a new list for validation errors.
