@@ -1,5 +1,3 @@
-from pprint import pprint
-
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -861,8 +859,6 @@ class DatafileMixin:
                 for local_bv in local_bv_objects:
                     if not local_bv.validate(measurement, errors):
                         failed_validators.append(bv.name)
-            print("Basic validator errors")
-            pprint(errors)
             if not errors:
                 return (True, failed_validators)
             return (False, failed_validators)
@@ -919,8 +915,6 @@ class DatafileMixin:
                                         del errors[-1]
 
                     prev_object_dict[curr_object.platform_name] = curr_object
-            print("Enhanced validator errors")
-            pprint(errors)
             if not errors:
                 return (True, failed_validators)
             return (False, failed_validators)
