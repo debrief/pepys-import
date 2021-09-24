@@ -292,6 +292,10 @@ class Datafile(BaseSpatiaLite, DatafileMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.measurements = dict()
+        self.highlighted_file = None
+        self.pending_extracted_tokens = []
+        self.measurement_object_to_tokens_list = {}
+        self.current_measurement_object = None
 
     __tablename__ = constants.DATAFILE
     table_type = TableTypes.METADATA

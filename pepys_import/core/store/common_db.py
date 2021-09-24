@@ -607,10 +607,6 @@ class SerialParticipantMixin:
 class DatafileMixin:
     _default_preview_fields = ["reference", "datafile_type_name"]
     _default_dropdown_fields = ["reference"]
-    highlighted_file = None
-    pending_extracted_tokens = []
-    measurement_object_to_tokens_list = {}
-    current_measurement_object = None
 
     @declared_attr
     def privacy(self):
@@ -652,6 +648,7 @@ class DatafileMixin:
             self.measurement_object_to_tokens_list[
                 self.current_measurement_object
             ] += self.pending_extracted_tokens
+
         self.pending_extracted_tokens = []
 
     def create_state(self, data_store, platform, sensor, timestamp, parser_name):
@@ -978,6 +975,9 @@ class DatafileMixin:
             data_store.session.bulk_insert_mappings(
                 data_store.db_classes.Extraction, chunk_extraction_data
             )
+
+        self.measurement_object_to_tokens_list = {}
+        self.pending_extracted_tokens = []
 
         return extraction_log
 
