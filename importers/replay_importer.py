@@ -15,8 +15,11 @@ class ReplayImporter(Importer):
         self.depth = 0.0
 
         # Example: Uncomment this line to turn off recording of extractions
-        # for this importer
-        # self.disable_recording()
+        # for this importer:
+        # self.set_highlighting_level("none")
+        # or to turn on database recording:
+        # self.set_highlighting_level("database")
+        # (default is HTML recording)
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".REP" or suffix.upper() == ".DSF"
