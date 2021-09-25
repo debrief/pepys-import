@@ -1,7 +1,12 @@
 import os
 import re
+import sys
 
 import pexpect
+import pytest
+
+if sys.platform.startswith("win"):
+    pytest.skip("Skipping pexpect tests on Windows", allow_module_level=True)
 
 
 def test_gpx_import_end_to_end():
