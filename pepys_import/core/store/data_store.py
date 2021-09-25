@@ -1,3 +1,4 @@
+import csv
 import os
 import sys
 from contextlib import contextmanager
@@ -5,6 +6,7 @@ from datetime import datetime
 from getpass import getuser
 from importlib import import_module
 
+import pint
 import sqlalchemy
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
@@ -17,6 +19,7 @@ from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, me
 from paths import MIGRATIONS_DIRECTORY, PEPYS_IMPORT_DIRECTORY
 from pepys_import import __build_timestamp__, __version__
 from pepys_import.core.formats import unit_registry
+from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.branding_util import show_software_meta_info, show_welcome_banner
@@ -2372,3 +2375,120 @@ class DataStore:
             getattr(table_obj, get_primary_key_for_table(table_obj)).in_(id_list)
         ).delete(synchronize_session="fetch")
         self.session.flush()
+
+    def convert_ids_to_objects(self, ids, table_obj):
+        if ids is None:
+            raise Exception("No ids provided")
+
+        results = (
+            self.session.query(table_obj)
+            .filter(getattr(table_obj, get_primary_key_for_table(table_obj)).in_(ids))
+            .options(undefer("*"))
+            .all()
+        )
+        return results
+
+    def export_objects_to_csv(
+        self, table_obj, id_list, columns_list, output_filename, set_percentage=None
+    ):
+        if output_filename is None or output_filename == "":
+            raise Exception("Output filename must be provided")
+
+        if os.path.isdir(output_filename):
+            raise Exception("You must provide a filename to export to, not a folder")
+
+        # Get the list of all objects from the id_list parameter
+        object_list = self.convert_ids_to_objects(id_list, table_obj)
+
+        if callable(set_percentage):
+            set_percentage(1)
+
+        if len(object_list) == 0:
+            raise Exception("Cannot export CSV: no entries selected")
+
+        # Get an example value for each column: this lets us know what
+        # type the column is, and whether we have to handle it differently
+        # We iterate through all the entries in case a column is None in
+        # most entries but has a value in the last one - then we will
+        # still capture it properly
+        sample_column_values = {}
+        percent_per_iteration = 50 / len(object_list)
+        for i, entry in enumerate(object_list):
+            for column in columns_list:
+                if column in sample_column_values:
+                    continue
+                try:
+                    value = getattr(entry, column)
+                except AttributeError:
+                    raise AttributeError(
+                        f"Attribute Error: Given column header: {column}, does not exist in database object. Ensure the column exists and try again."
+                    )
+                if value is not None:
+                    sample_column_values[column] = value
+            if set(sample_column_values.keys()) == set(columns_list):
+                # We've got sample data for all the columns, so stop now
+                break
+            if callable(set_percentage):
+                set_percentage(i * percent_per_iteration)
+
+        if callable(set_percentage):
+            set_percentage(50)
+
+        new_columns_list = []
+
+        # Create the header
+        headers = []
+        for column_name in columns_list:
+            sample_value = sample_column_values.get(column_name, None)
+            if isinstance(sample_value, Location):
+                new_columns_list.append("location_lat")
+                headers.append("location_lat (decimal degrees)")
+                new_columns_list.append("location_lon")
+                headers.append("location_lon (decimal degrees)")
+            else:
+                new_columns_list.append(column_name)
+                # Put units in header if the sample value has units
+                if isinstance(sample_value, pint.quantity.Quantity):
+                    headers.append(f"{column_name} ({sample_value.units})")
+                else:
+                    headers.append(column_name)
+
+        entries = []
+        percent_per_iteration = 50 / len(object_list)
+        update_interval = 10 if len(object_list) < 1000 else 1000
+        for i, entry in enumerate(object_list):
+            row_values = []
+            for column in new_columns_list:
+                try:
+                    # Deal with location specifically, get lat/lon
+                    if column == "location_lat":
+                        value = getattr(entry, "location")
+                        row_values.append(value.latitude)
+                    elif column == "location_lon":
+                        value = getattr(entry, "location")
+                        row_values.append(value.longitude)
+                    else:
+                        value = getattr(entry, column)
+                        # If it's got units, then extract just the number (the 'magnitude' of the value)
+                        if isinstance(value, pint.quantity.Quantity):
+                            row_values.append(str(value.magnitude))
+                        elif value is None or (isinstance(value, list) and len(value) == 0):
+                            row_values.append("")
+                        else:
+                            row_values.append(str(value))
+                except AttributeError:
+                    raise AttributeError(
+                        f"Attribute Error: Given column header: {column}, does not exist in database object. Ensure the column exists and try again."
+                    )
+
+            # Add the final string to the list of entries
+            entries.append(row_values)
+            if i % update_interval == 0:
+                if callable(set_percentage):
+                    set_percentage(50 + (i * percent_per_iteration))
+
+        with open(output_filename, "w", newline="") as file:
+            writer = csv.writer(file, dialect="excel")
+            writer.writerow(headers)
+            writer.writerows(entries)
+            file.close()

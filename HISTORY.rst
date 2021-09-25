@@ -2,6 +2,24 @@
 History
 =======
 
+
+0.0.28 (2021-09-24)
+-------------------
+
+* Minor fixes for timeline (-100%, include_in_timeline, default_interval)
+* Fix error for viewing Platform Entry in GUI
+* Improve speed of generating table summaries (affects import performance)
+* 
+
+0.0.27 (2021-09-16)
+-------------------
+
+* Formally release first version of TimeLine (Dashboard)
+* Introduce `Export to CSV` in Maintenance pages
+* Make database migration more robust, including logging
+* New importer for Aircraft CSV data
+* Assorted bug-fixes
+
 0.0.26 (2021-08-16)
 -------------------
 

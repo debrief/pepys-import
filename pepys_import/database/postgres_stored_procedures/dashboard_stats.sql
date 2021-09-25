@@ -9,6 +9,7 @@ returns table (
 	resp_range_type text,
 	resp_start_time timestamp without time zone,
 	resp_end_time timestamp without time zone,
+	resp_created timestamp without time zone,
 	resp_platform_id uuid,
 	resp_serial_id text)
 as
@@ -62,6 +63,7 @@ sensors_involved as (
 states_involved as (
 	select 
 		s.sensor_id,
+		s.created_date,
 		s.time
 	from
 		pepys."States" s
@@ -85,6 +87,7 @@ state_time_rankings as (
 	select 
 		s.time, 
 		row_number() over (partition by si.serial_id, si.platform_id, si.ser_idx order by s.time asc) as rowno,
+		max(s.created_date) created_date,
 		si.platform_id,
 		si.gap_seconds,
 		si.serial_id,
@@ -98,6 +101,12 @@ state_time_rankings as (
 							si.serial_participant_end,
 							'[]'
 							) @> s.time
+	group by
+		s.time,
+		si.platform_id,
+		si.gap_seconds,
+		si.serial_id,
+		si.ser_idx
 ),
 participation_sans_activity as (
 	select
@@ -107,7 +116,7 @@ participation_sans_activity as (
 		si.serial_id,
 		si.ser_idx
 	from
-		sensors_involved si
+		participating_platforms si
 	where
 		not exists (select 1
 					from 
@@ -244,7 +253,7 @@ participation_sans_gap as (
 		si.serial_id,
 		si.ser_idx
 	from
-		sensors_involved si
+		participating_platforms si
 	where
 		not exists (select 1
 					from 
@@ -279,7 +288,7 @@ act_with_same_part_and_gap_start as (
 				and cg.rowno = 1
 				and cg.start_time =  s.time
 			inner join
-		sensors_involved si
+		participating_platforms si
 				on si.serial_participant_start = cg.start_time
 				and si.platform_id = cg.platform_id
 				and si.serial_id = cg.serial_id
@@ -311,7 +320,7 @@ act_with_same_part_and_gap_end as (
 									cgrs1.platform_id = cg.platform_id)
 				and cg.end_time =  s.time
 			inner join
-		sensors_involved si
+		participating_platforms si
 				on si.serial_participant_end = cg.end_time
 				and si.platform_id = cg.platform_id
 				and si.serial_id = cg.serial_id
@@ -431,21 +440,57 @@ consolidated_coverage as (
 	from
 		act_with_same_part_and_gap_end
 ),
+consolidated_coverage_with_created as (
+	select
+		case
+			when
+				strstart.created_date is null
+			then
+				strend.created_date
+			when
+				strend.created_date is null
+			then
+				strstart.created_date
+			when
+				strstart.created_date > strend.created_date
+			then
+				strstart.created_date
+			else
+				strend.created_date
+		end created,
+		cc.start_time,
+		cc.end_time,
+		cc.platform_id,
+		cc.serial_id,
+		cc.ser_idx
+	from
+		consolidated_coverage cc
+			left join
+		state_time_rankings strstart
+				on (cc.platform_id, cc.serial_id, cc.ser_idx, cc.start_time)
+					=(strstart.platform_id, strstart.serial_id, strstart.ser_idx, strstart.time)
+			left join
+		state_time_rankings strend
+				on (cc.platform_id, cc.serial_id, cc.ser_idx, cc.end_time)
+					=(strend.platform_id, strend.serial_id, strend.ser_idx, strend.time)
+),
 consolidated_stats as (
 	select 
 		'C' range_type,
 		start_time,
 		end_time,
+		created,
 		platform_id,
 		serial_id,
 		ser_idx
 	from
-		consolidated_coverage
+		consolidated_coverage_with_created
 	union all
 	select 
 		'G' range_type,
 		start_time,
 		end_time,
+		null created,
 		platform_id,
 		serial_id,
 		ser_idx
@@ -456,6 +501,7 @@ select
 	cs.range_type,
 	cs.start_time,
 	cs.end_time,
+	cs.created,
 	cs.platform_id,
 	ser.serial_number::text
 from

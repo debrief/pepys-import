@@ -200,6 +200,23 @@ def test_check_migration_version_incorrect_length_null_value():
     assert exit_exception_e.value.code == 1
 
 
+def test_check_migration_version_incorrect_n_cols():
+    ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    revisions = ["version_id", "test_version_id"]
+
+    with ds.engine.begin() as connection:
+        connection.execute(text("CREATE TABLE alembic_version (col1, col2, col3);"))
+        connection.execute(text("INSERT INTO alembic_version VALUES ('', '', '');"))
+
+    with pytest.raises(SystemExit) as exit_exception_e:
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            ds.check_migration_version(revisions)
+    output = temp_output.getvalue()
+    assert "ERROR: Retrieved version contents from database is incorrect length." in output
+    assert exit_exception_e.value.code == 1
+
+
 def test_check_migration_version_no_table_contents():
     # Create a new alembic version database - function should pass
     ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
