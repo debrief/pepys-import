@@ -1,3 +1,11 @@
+# This test uses the pexpect module (based on the expect Unix tool) to run through
+# a full import of a GPX file, providing input in response to various prompts,
+# and then checking that the right number of states are imported.
+# It is a very simple example of a pexpect test, and more could easily be written to test
+# other parts of the system
+# The benefit of this over the existing end-to-end tests is that this is entirely separate
+# to Pepys itself, and does not import any of its code or mock/patch any of its functions
+# It deals with Pepys as an independent program which it controls
 import os
 import re
 import sys
