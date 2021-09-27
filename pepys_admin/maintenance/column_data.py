@@ -180,6 +180,7 @@ def create_assoc_proxy_data(ap_name, ap_obj, data_store, table_object):
             # For all other columns, no special processing is needed
             all_records = data_store.session.query(ap_obj.target_class).all()
             values = [str_if_not_none(getattr(record, ap_obj.value_attr)) for record in all_records]
+
             sorted_values = sorted(set(values))
             details["values"] = sorted_values
 
@@ -227,11 +228,11 @@ def create_normal_column_data(col, data_store, table_object):
     # Skip getting values for the remarks column, as we don't need a dropdown for that
     if details["type"] == "string" and details["system_name"] != "remarks":
         # Get values
-
-        all_records = data_store.session.query(table_object).all()
-        values = [
-            str_if_not_none(getattr(record, details["system_name"])) for record in all_records
-        ]
+        # Here we query for just the specific column name (details['system_name']) so that
+        # the generated SQL is just selecting that column, rather than selecting all the columns
+        # and doing all the joins to get the denormalised data
+        all_records = data_store.session.query(getattr(table_object, details["system_name"])).all()
+        values = [str_if_not_none(record[0]) for record in all_records]
         details["values"] = sorted(remove_duplicates_and_nones(values))
 
     return get_display_name(sys_name), details
