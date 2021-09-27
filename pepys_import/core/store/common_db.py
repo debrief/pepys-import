@@ -2084,3 +2084,8 @@ class GeometrySubTypeMixin:
 class NationalityMixin:
     _default_preview_fields = ["name", "priority"]
     _default_dropdown_fields = ["name"]
+
+
+class ExtractionMixin:
+    _default_preview_fields = ["field", "text", "interpreted_value"]
+    _default_dropdown_fields = ["field", "text", "interpreted_value"]

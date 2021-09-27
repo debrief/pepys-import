@@ -18,6 +18,7 @@ from pepys_import.core.store.common_db import (
     ContactMixin,
     DatafileMixin,
     ElevationPropertyMixin,
+    ExtractionMixin,
     GeometryMixin,
     GeometrySubTypeMixin,
     HostedByMixin,
@@ -379,7 +380,7 @@ class Log(BaseSpatiaLite, LogMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Extraction(BaseSpatiaLite):
+class Extraction(BaseSpatiaLite, ExtractionMixin):
     __tablename__ = constants.EXTRACTION
     table_type = TableTypes.METADATA
     table_type_id = 10
