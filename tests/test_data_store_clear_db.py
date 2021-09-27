@@ -8,6 +8,7 @@ from testing.postgresql import Postgresql
 from pepys_import.core.store.data_store import DataStore
 
 
+@pytest.mark.postgres
 class DataStoreClearContentsPostGISDBTestCase(TestCase):
     def setUp(self):
         self.store = None
@@ -20,7 +21,7 @@ class DataStoreClearContentsPostGISDBTestCase(TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
+            raise Exception("Creating database schema in testing Postgres database failed")
 
     def tearDown(self):
         try:
@@ -108,7 +109,7 @@ class DataStoreClearSchemaPostGISTestCase(TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
+            raise Exception("Creating database schema in testing Postgres database failed")
 
     def tearDown(self):
         try:
