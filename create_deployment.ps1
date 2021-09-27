@@ -236,7 +236,8 @@ try {
         $gitbranch = git branch --show-current
     }
     
-    $output_filename = "pepys_import-$date_str-$gitbranch-$gitcommit.zip"
+    $output_filename = "pepys_import-$date_str-$gitbranch-$gitcommit.zip".Replace("/", "-")
+
     .\7zip\7za.exe a .\$output_filename .\* -xr!7zip/ -xr!"bin\distlib-0.3.0-py2.py3-none-any.whl"
 
     if ($LastExitCode -ne 0)

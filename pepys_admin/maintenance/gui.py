@@ -26,16 +26,18 @@ from prompt_toolkit.layout.containers import (
 from prompt_toolkit.layout.controls import BufferControl
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.lexers.pygments import PygmentsLexer
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Border, Label
 from pygments.lexers.sql import SqlLexer
-from sqlalchemy.orm import undefer
+from sqlalchemy.orm import joinedload, undefer
 
 from pepys_admin.maintenance.column_data import convert_column_data_to_edit_data, create_column_data
 from pepys_admin.maintenance.dialogs.add_dialog import AddDialog
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.dialogs.edit_dialog import EditDialog
+from pepys_admin.maintenance.dialogs.export_csv_dialog import ExportCSVDialog
 from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
 from pepys_admin.maintenance.dialogs.initial_help_dialog import InitialHelpDialog
 from pepys_admin.maintenance.dialogs.merge_dialog import MergeDialog
@@ -218,7 +220,7 @@ class MaintenanceGUI:
                 self.actions_combo,
             ],
             padding=1,
-            height=Dimension(weight=0.2),
+            height=Dimension(weight=0.23),
         )
 
         # Preview container, with two tabs: a preview table and a preview graph
@@ -239,15 +241,21 @@ class MaintenanceGUI:
         self.status_bar_shortcuts = ["Ctrl-F - Select fields"]
         self.status_bar_container = DynamicContainer(self.get_status_bar_container)
 
+        initial_floats = [
+            Float(
+                xcursor=True,
+                ycursor=True,
+                content=CompletionsMenu(max_height=16, scroll_offset=1),
+            )
+        ]
+
         show_initial_help = not os.path.exists(
             os.path.expanduser(os.path.join("~", ".pepys_maintenance_help.txt"))
         )
 
         if show_initial_help:
             initial_help_dialog = InitialHelpDialog("Getting started", INTRO_HELP_TEXT)
-            initial_floats = [Float(initial_help_dialog)]
-        else:
-            initial_floats = []
+            initial_floats.append(Float(initial_help_dialog))
 
         # Putting everything together in panes
         self.root_container = FloatContainer(
@@ -324,6 +332,9 @@ class MaintenanceGUI:
         def is_view_entry_enabled():
             return len(self.preview_table.current_values) == 1
 
+        def is_csv_export_enabled():
+            return len(self.preview_table.current_values) > 0
+
         return [
             ("1 - Merge", is_merge_enabled()),
             ("2 - Split platform", is_split_platform_enabled()),
@@ -331,6 +342,7 @@ class MaintenanceGUI:
             ("4 - Delete entries", is_delete_entries_enabled()),
             ("5 - Add entry", is_add_entries_enabled()),
             ("6 - View entry", is_view_entry_enabled()),
+            ("7 - Export as CSV", is_csv_export_enabled()),
         ]
 
     def set_contextual_help(self, widget, text):
@@ -402,9 +414,14 @@ class MaintenanceGUI:
 
                 count = query_obj.count()
 
-                # Get the first 100 results, while undefering all fields to make sure everything is
-                # available once it's been expunged (disconnected) from the database
-                results = query_obj.options(undefer("*")).limit(MAX_PREVIEW_TABLE_RESULTS).all()
+                # Get the first 100 results, while undefering all fields and loading all relationships
+                # with a join, to make sure everything is available once it's been expunged
+                # (disconnected) from the database
+                results = (
+                    query_obj.options(undefer("*"), joinedload("*"))
+                    .limit(MAX_PREVIEW_TABLE_RESULTS)
+                    .all()
+                )
 
                 if len(results) == 0:
                     self.preview_table_message.text = ""
@@ -437,6 +454,11 @@ class MaintenanceGUI:
             # and the user might type something correct soon anyway
             pass
 
+        # Force the list of currently selected rows to be empty here
+        # This is also done in CheckboxTable itself, but because of the async nature of the code
+        # it isn't always run in the right order. This forces this to be empty before updating
+        # the selected items label
+        self.preview_table.current_values = []
         self.update_selected_items_label()
 
     def get_table_data(self):
@@ -588,14 +610,67 @@ class MaintenanceGUI:
             self.run_add()
         elif selected_value == "6 - View entry":
             self.run_view()
+        elif selected_value == "7 - Export as CSV":
+            self.run_export_csv()
         else:
             self.show_messagebox("Action", f"Running action {selected_value}")
+
+    def run_export_csv(self):
+        def do_export_csv(
+            table_object, ids, columns_list, output_filename, set_percentage=None, is_cancelled=None
+        ):
+            self.data_store.export_objects_to_csv(
+                table_object, ids, columns_list, output_filename, set_percentage=set_percentage
+            )
+            set_percentage(100)
+
+        async def coroutine():
+            if len(self.preview_table.current_values) == 0:
+                await self.show_messagebox_async(
+                    "Error", "You must select at least one entry before exporting."
+                )
+                return
+
+            entries = await self.get_all_selected_entries()
+            selected_ids = convert_objects_to_ids(entries, self.current_table_object)
+
+            dialog = ExportCSVDialog(self.column_data)
+            result = await self.show_dialog_as_float(dialog)
+            columns_list = result["columns"]
+            output_filename = result["filename"]
+
+            dialog = ProgressDialog(
+                f"Exporting to {os.path.basename(output_filename)}",
+                partial(
+                    do_export_csv,
+                    self.current_table_object,
+                    selected_ids,
+                    columns_list,
+                    output_filename,
+                ),
+                show_cancel=True,
+            )
+
+            result = await self.show_dialog_as_float(dialog)
+
+            if isinstance(result, Exception):
+                await self.show_messagebox_async(
+                    "Error",
+                    f"Error exporting CSV\n\nOriginal error:{textwrap.fill(str(result), 60)}",
+                )
+                return
+
+            await self.show_messagebox_async(
+                "Export completed", f"CSV export to {os.path.basename(output_filename)} completed"
+            )
+
+        ensure_future(coroutine())
 
     def run_view(self):
         async def coroutine():
             if len(self.preview_table.current_values) != 1:
                 await self.show_messagebox_async(
-                    "Error", "You must select exactly one entry before editing."
+                    "Error", "You must select exactly one entry before viewing."
                 )
                 return
 
@@ -1186,9 +1261,12 @@ class MaintenanceGUI:
         from within another async function.
         """
         float_ = Float(content=dialog)
-        # Put it at the top of the float list in the root container
-        # (which is a FloatContainer)
-        self.root_container.floats.append(float_)
+        # We want to put this dialog as the penultimate float in the list of floats
+        # This is because we want it to appear above any other dialogs (eg. if we are opening
+        # the help dialog when another dialog is already open), but we don't want it to be
+        # above the CompletionsMenu float (added in the initialisation), as then the completion
+        # menu appears in the wrong place
+        self.root_container.floats.insert(len(self.root_container.floats) - 1, float_)
 
         app = get_app()
 

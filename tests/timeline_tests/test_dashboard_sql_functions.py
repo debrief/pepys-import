@@ -1,3 +1,4 @@
+# pylint: disable=duplicate-string-formatting-argument
 """
     The following describes:
 
@@ -56,12 +57,17 @@
         coverage_at_serial_start
         coverage_at_serial_end
         consolidated_coverage
+        consolidated_coverage_with_created
 
         <<STAT CONSOLIDATION CTE>>
         consolidated_stats
 
         To determine adjacency, the pepys."States" records are sorted based on time and numbered
         over serial_id, platform_id, and ser_idx in state_time_rankings CTE.
+        Before determining adjacency, duplicate "States" are merged into single "State" (as multiple sensors
+        might generate the same set of records). The merge is accomplished by gouping the records
+        using all the items that are being selected from this CTE. The "created_date" alone is calculated
+        as the most recent/max of the entries belonging to the merged group
 
         The following exhaustive cases are considered for *gap* determination
 
@@ -118,7 +124,12 @@
             for that platform and serial_id
 
         consolidated_coverage:
-            This consolidates all the *gaps* identified in the above gap CTEs
+            This consolidates all the *coverage* identified in the above gap CTEs
+
+        consolidated_coverage_with_created:
+            This CTE just determines and adds the time of the most recent "States" added to all "Coverage"
+            determined by the consolidated_coverage CTE. It does so by comparing consolidated_coverage CTE
+            with state_time_rankings CTE
 
 
 
@@ -209,9 +220,15 @@ SQL_FILE_LOCATION = os.path.join(
     paths.PEPYS_IMPORT_DIRECTORY, "database", "postgres_stored_procedures", "dashboard_stats.sql"
 )
 
+META_SQL_FILE_LOCATION = os.path.join(
+    paths.PEPYS_IMPORT_DIRECTORY, "database", "postgres_stored_procedures", "dashboard_metadata.sql"
+)
+
 SOME_UUID = "54f6d015-8adf-47f4-bf02-33e06fbe0725"
+SOME_UUID2 = "54f6d015-8bdf-47f4-bf02-33e06fbe0725"
 TIMELIST = ["09:00:00", "17:00:00", "17:01:00", "17:02:00"]
 DATEVAL = "2020-12-12 "
+CREATED = "2020-12-12 08:30:00"
 GAP_SECONDS = 150
 
 
@@ -219,6 +236,7 @@ GAP_SECONDS = 150
 class TestDashboardStatsQuery(unittest.TestCase):
     """
     This class is to unit test the business logic implemented in dashboard_stats query.
+    This class also tests few features in dashboard_metadata query.
     """
 
     def setUp(self):
@@ -231,6 +249,7 @@ class TestDashboardStatsQuery(unittest.TestCase):
         with psycopg2.connect(**self.postgresql.dsn()) as conn:
             cursor = conn.cursor()
             populate_data(cursor, TIMELIST)
+            populate_additional_data(cursor)
 
             # Sample Tests
             rows = fetchrows(cursor, "12:12:12", "15:12:12")
@@ -291,6 +310,18 @@ class TestDashboardStatsQuery(unittest.TestCase):
             assert validateStartTimes(rows, ["C", "G"], ["17:01:00", "17:02:00"])
             assert validateEndTimes(rows, ["C", "G"], ["17:02:00", "17:05:00"])
 
+            # Tests for dashboard_metadata function
+            rows = fetchrowsMeta(cursor, DATEVAL + "08:00:00", DATEVAL + "20:00:00")
+            assert validateForIncludeInTimeline(rows)
+
+            #Tests for #1019 (https://github.com/debrief/pepys-import/issues/1019)
+            #There should be only one gap for SC1 as defined above
+            # Tests for scenario 1[SC1]: No records between SERIAL_START_TIME and SERIAL_END_TIME
+            rows = fetchrows(cursor, "06:00:00", "08:00:00")
+            #The following asserts would fail without the fix
+            assert len(rows) == 1
+            assert validateStartTimes(rows, ["G"], ["06:00:00"])
+            assert validateEndTimes(rows, ["G"], ["08:00:00"])
 
 class FilterInputJSON:
     pass
@@ -305,33 +336,75 @@ def get_data(listPlatformRanges):
     return FilterEncoder().encode(listPlatformRanges)
 
 
-def get_query():
-    return "select * from pepys.dashboard_stats(%s, %s)"
+def get_query(funcName):
+    # security checks suppressed on next line since it isn't processing user data
+    return "select * from pepys.dashboard_" + funcName + "(%s, %s)"   # nosec
 
 
 def populate_data(cursor, TIMELIST):
     cursor.execute("create schema pepys")
     cursor.execute('create table pepys."Sensors"(host uuid, sensor_id uuid)')
-    cursor.execute('create table pepys."States"(sensor_id uuid, time timestamp)')
-    cursor.execute('create table pepys."Serials"(serial_id uuid, serial_number text)')
+    cursor.execute('create table pepys."States"(sensor_id uuid, time timestamp, created_date timestamp )')
+    cursor.execute('create table pepys."Serials"(serial_id uuid, serial_number text, exercise varchar(150), '
+                   'include_in_timeline bool, start timestamp, "end" timestamp)')
+    cursor.execute('create table pepys."SerialParticipants"(serial_id uuid, wargame_participant_id uuid, '
+                   'force_type_id uuid, start timestamp, "end" timestamp)')
+    cursor.execute('create table pepys."WargameParticipants"(wargame_participant_id uuid, platform_id uuid)')
+    cursor.execute('create table pepys."Platforms"(platform_id uuid, platform_type_id uuid, quadgraph varchar(4), name varchar(150))')
+    cursor.execute('create table pepys."PlatformTypes"(platform_type_id uuid, default_data_interval_secs int4, name varchar(150))')
+    cursor.execute('create table pepys."ForceTypes"(force_type_id uuid, name varchar(150), color varchar(10))')
+
     cursor.execute(
         """insert into pepys."Sensors" values('{}', '{}')""".format(SOME_UUID, SOME_UUID)
     )
     cursor.execute(
-        """insert into pepys."Serials" values('{}', '{}')""".format(SOME_UUID, "J052010")
+            """insert into pepys."Serials" values('{}', '{}', '{}', {},
+            to_timestamp('{}','YYYY-MM-DD HH24:MI:SS'), to_timestamp('{}',
+            'YYYY-MM-DD HH24:MI:SS') + interval '12 hours')""".format
+            (SOME_UUID, "J052010", "EXERCISE", "true", CREATED, CREATED)
     )
     for time in TIMELIST:
         cursor.execute(
-            """insert into pepys."States" values('{}', '{}{}')""".format(SOME_UUID, DATEVAL, time)
+            """insert into pepys."States" values('{}', '{}{}', '{}')""".format(SOME_UUID, DATEVAL, time, CREATED)
         )
+
+    cursor.execute(
+            """insert into pepys."SerialParticipants" values('{}', '{}', '{}',
+            to_timestamp('{}','YYYY-MM-DD HH24:MI:SS'), to_timestamp('{}',
+            'YYYY-MM-DD HH24:MI:SS') + interval '12 hours')""".format
+            (SOME_UUID, SOME_UUID, SOME_UUID, CREATED, CREATED)
+    )
+    cursor.execute(
+            """insert into pepys."WargameParticipants" values('{}', '{}')""".format
+            (SOME_UUID, SOME_UUID)
+    )
+    cursor.execute(
+            """insert into pepys."Platforms" values('{}', '{}', '{}', '{}')""".format
+            (SOME_UUID, SOME_UUID, "ABCD", "PlatName")
+    )
+    cursor.execute(
+            """insert into pepys."PlatformTypes" values('{}', {}, '{}')""".format
+            (SOME_UUID, 30, "PtypeName")
+    )
+    cursor.execute(
+            """insert into pepys."ForceTypes" values('{}', '{}', '{}')""".format
+            (SOME_UUID, "ForceTypeName", "RED")
+    )
+
     with open(SQL_FILE_LOCATION, "r") as statssqlfile:
         cursor.execute(statssqlfile.read())
 
+    with open(META_SQL_FILE_LOCATION, "r") as metasqlfile:
+        cursor.execute(metasqlfile.read())
+
+def populate_additional_data(cursor):
+    cursor.execute(
+        """insert into pepys."Sensors" values('{}', '{}')""".format(SOME_UUID, SOME_UUID2)
+    )
 
 def fetchrows(cursor, start, end):
-    cursor.execute(get_query(), get_test_case_data(start, end))
+    cursor.execute(get_query("stats"), get_test_case_data(start, end))
     return cursor.fetchall()
-
 
 def get_test_case_data(start, end):
     fij = FilterInputJSON()
@@ -344,10 +417,14 @@ def get_test_case_data(start, end):
         '["C","G"]',
     )
 
+def fetchrowsMeta(cursor, start, end):
+    cursor.execute(get_query("metadata"), (start, end))
+    return cursor.fetchall()
+
 
 def validateStartTimes(rows, rangeTypes, startTimes):
     for (row, ranget, startt) in zip_longest(rows, rangeTypes, startTimes):
-        (rangetype, starttime, endtime, platid, serialid) = row
+        (rangetype, starttime, endtime, created_date, platid, serialid) = row
         if rangetype != ranget or startt != starttime.strftime("%H:%M:%S"):
             print(row, ranget, startt)
             return False
@@ -356,11 +433,21 @@ def validateStartTimes(rows, rangeTypes, startTimes):
 
 def validateEndTimes(rows, rangeTypes, endTimes):
     for (row, ranget, endt) in zip_longest(rows, rangeTypes, endTimes):
-        (rangetype, starttime, endtime, platid, serialid) = row
+        # pylint: disable=unused-variable
+        (rangetype, starttime, endtime, created_date, platid, serialid) = row
         if rangetype != ranget or endt != endtime.strftime("%H:%M:%S"):
             print(row, ranget, endt)
             return False
     return True
+
+
+def validateForIncludeInTimeline(rows):
+    for row in rows:
+        # pylint: disable=unused-variable
+        (recordType, includeInTimeline, serialid, pid, pname, exercise, ptname, start, end, gap, intervalMissing, ftname, ftcolor) = row
+        if recordType == "SERIALS":
+            return includeInTimeline
+    return False
 
 
 if __name__ == "__main__":

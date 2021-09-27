@@ -7,12 +7,12 @@ from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexers.sql import SqlLexer
 from sqlalchemy import inspect
 from sqlalchemy.exc import InvalidRequestError, OperationalError, ProgrammingError
-from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm import RelationshipProperty, class_mapper, load_only
 from sqlalchemy.sql.expression import text
 from tabulate import tabulate
 
 from pepys_admin.base_cli import BaseShell
+from pepys_admin.maintenance.column_data import get_assoc_proxy_names_and_objects
 from pepys_admin.utils import get_default_export_folder
 from pepys_import.core.store import constants
 from pepys_import.utils.table_name_utils import table_name_to_class_name
@@ -77,6 +77,9 @@ class ViewDataShell(BaseShell):
                 and not name.startswith("geometry")
                 and not name.startswith("views")
                 and not name.startswith("sql")
+                and not name.startswith("KNN")
+                and not name.startswith("ElementaryGeometries")
+                and not name.startswith("data_licenses")
                 and not name.lower().startswith("spatial")
             ]
         # Sort table names in alphabetical order
@@ -87,13 +90,21 @@ class ViewDataShell(BaseShell):
         """Asks user to select a table name. Converts table name to class name,
         fetches the objects up to the number of MAX_ROWS_DISPLAYED, and prints them in table format.
         """
-        headers = list()
-        associated_attributes = list()
         table_names = self._get_table_names()
         message = "Select a table >"
         selected_table = iterfzf(table_names, prompt=message)
         if selected_table is None:
             return
+
+        text = self.generate_view_table_text(selected_table)
+        print(text)
+
+    def generate_view_table_text(self, selected_table):
+        headers = []
+        associated_attributes = []
+
+        output_text = ""
+
         # Table names are plural in the database, therefore make it singular
         table = table_name_to_class_name(selected_table)
 
@@ -104,16 +115,15 @@ class ViewDataShell(BaseShell):
                 else:
                     result = connection.execute(text("SELECT * FROM alembic_version;"))
                     result = result.fetchall()
-                res = "Alembic Version\n"
-                res += tabulate(
+                output_text += "Alembic Version\n"
+                output_text += tabulate(
                     [[str(column) for column in row] for row in result],
                     headers=["version_number"],
                     tablefmt="grid",
                     floatfmt=".3f",
                 )
-                res += "\n"
-                print(res)
-            return
+                output_text += "\n"
+                return output_text
         # Find the class
         table_cls = getattr(self.data_store.db_classes, table)
         assert table_cls.__tablename__ == selected_table, "Couldn't find table!"
@@ -127,12 +137,11 @@ class ViewDataShell(BaseShell):
             # Take only if column is not a foreign key and it is not deferred
             if column_property.deferred is False and not column.foreign_keys:
                 headers.append(column.key)
-        # In order to find and extract association_proxy attributes, iterate over all_orm_descriptors
-        for descriptor in mapper.all_orm_descriptors:
-            if isinstance(descriptor, AssociationProxy):
-                name = f"{descriptor.target_collection}_{descriptor.value_attr}"
-                if name != "privacy_name":
-                    associated_attributes.append(name)
+        # Get the association proxy attributes for this table
+        associated_attributes, _ = get_assoc_proxy_names_and_objects(table_cls)
+        if "privacy_name" in associated_attributes:
+            associated_attributes.remove("privacy_name")
+
         header_attributes = [getattr(table_cls, header_name) for header_name in headers]
         # Fetch first rows up to MAX_ROWS_DISPLAYED, create a table from these rows
         with self.data_store.session_scope():
@@ -145,15 +154,18 @@ class ViewDataShell(BaseShell):
             headers.extend(associated_attributes)
             # Sort headers
             headers.sort()
-            res = f"{selected_table}\n"
-            res += tabulate(
-                [[str(getattr(row, column)) for column in headers] for row in values],
+
+            table_data = [[str(getattr(row, column)) for column in headers] for row in values]
+
+            output_text += f"{selected_table}\n"
+            output_text += tabulate(
+                table_data,
                 headers=headers,
                 tablefmt="grid",
                 floatfmt=".3f",
             )
-        res += "\n"
-        print(res)
+        output_text += "\n"
+        return output_text
 
     def do_output_table_to_csv(self):
         """Asks user to select a table name. Fetches all objects, and exports them to a CSV file."""

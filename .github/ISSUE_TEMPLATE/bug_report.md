@@ -1,10 +1,9 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Create a report to help us improve Pepys
 title: ''
 labels: bug
 assignees: ''
-
 ---
 
 ## Version
