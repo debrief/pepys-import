@@ -161,34 +161,6 @@ class TestImportWithWrongTypeDBFieldPostgres(unittest.TestCase):
         except AttributeError:
             return
 
-    @patch("pepys_import.utils.error_handling.custom_print_formatted_text", side_effect=side_effect)
-    def test_import_with_wrong_type_db_field(self, patched_print):
-        conn = pg8000.connect(user="postgres", password="postgres", database="test", port=55527)
-        cursor = conn.cursor()
-        # Alter table to change heading column to be a timestamp
-        cursor.execute(
-            'ALTER TABLE pepys."States" ALTER COLUMN heading SET DATA TYPE character varying(150);'
-        )
-
-        conn.commit()
-        conn.close()
-
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            db_config = {
-                "name": "test",
-                "host": "localhost",
-                "username": "postgres",
-                "password": "postgres",
-                "port": 55527,
-                "type": "postgres",
-            }
-
-            process(path=DATA_PATH, archive=False, db=db_config, resolver="default")
-        output = temp_output.getvalue()
-
-        assert "ERROR: SQL error when communicating with database" in output
-
 
 @patch("pepys_import.cli.DefaultResolver")
 def test_process_resolver_specification_default(patched_default_resolver):
