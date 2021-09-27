@@ -2,6 +2,9 @@ from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
 
 class Link16Importer(Importer):
+    """ Importer to handle two different formats of track information that are
+    transmitted using Link-16 encoding
+    """
     def __init__(self):
         super().__init__(
             name="Link-16 Format Importer",
@@ -29,7 +32,7 @@ class Link16Importer(Importer):
         # Skip the header
         if line_number == 1:
             return
-
+        tokens = line.tokens(line.CSV_TOKENISER, ",")
     ''' 
     Link-16 has (at least?) two versions that MWC would like to import. 
     Looking at MWC parser, we're expecting to extract the following fields (present in both versions):
