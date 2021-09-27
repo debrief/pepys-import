@@ -7,6 +7,7 @@ from pepys_import.utils.text_formatting_utils import (
     custom_print_formatted_text,
     format_error_message,
 )
+from pepys_import.file.highlighter.level import HighlightLevel
 
 CANCEL_IMPORT = "CANCEL"
 
@@ -24,17 +25,17 @@ class Importer(ABC):
 
         # By default all importers will record extractions to a highlighted
         # HTML file, but not record them to the database
-        self.highlighting_level = "html"
+        self.highlighting_level = HighlightLevel.HTML
 
     def __str__(self):
         return self.name
 
     def set_highlighting_level(self, level):
-        """Sets the level of recording highlighted extractions. Can be one of:
+        """Sets the HighlightLevel of recording highlighted extractions. Can be one of:
 
-        - "none": No highlighting or recording of extractions
-        - "html": Produce a highlighted html file showing the extractions
-        - "database": Produce a highlighted html file and record extractions to the database"""
+        - NONE: No highlighting or recording of extractions
+        - HTML: Produce a highlighted html file showing the extractions
+        - DATABASE: Produce a highlighted html file and record extractions to the database"""
         self.highlighting_level = level
 
     @abstractmethod

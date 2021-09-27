@@ -1,5 +1,6 @@
 from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.validators import constants
+from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.file.importer import Importer
 
 
@@ -16,9 +17,9 @@ class ReplayImporter(Importer):
 
         # Example: Uncomment this line to turn off recording of extractions
         # for this importer:
-        # self.set_highlighting_level("none")
+        # self.set_highlighting_level(HighlightLevel.NONE)
         # or to turn on database recording:
-        # self.set_highlighting_level("database")
+        # self.set_highlighting_level(HighlightLevel.DATABASE)
         # (default is HTML recording)
 
     def can_load_this_type(self, suffix):

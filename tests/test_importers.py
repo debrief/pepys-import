@@ -18,6 +18,7 @@ from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.file.importer import Importer
+from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 from pepys_import.resolvers.default_resolver import DefaultResolver
 from pepys_import.utils.import_utils import sort_files
@@ -522,7 +523,7 @@ class ImporterDisableRecordingTest(unittest.TestCase):
                     short_name="Test Importer",
                     datafile_type="Importer",
                 )
-                self.set_highlighting_level("none")
+                self.set_highlighting_level(HighlightLevel.NONE)
 
             def can_load_this_header(self, header) -> bool:
                 return True
@@ -538,7 +539,7 @@ class ImporterDisableRecordingTest(unittest.TestCase):
 
             def _load_this_file(self, data_store, path, file_object, datafile, change_id):
                 assert "Test Importer" in file_object.importer_highlighting_levels
-                assert file_object.importer_highlighting_levels["Test Importer"] == "none"
+                assert file_object.importer_highlighting_levels["Test Importer"] == HighlightLevel.NONE
 
         processor = FileProcessor()
 
@@ -554,7 +555,7 @@ class ImporterDisableRecordingTest(unittest.TestCase):
                     short_name="Test Importer",
                     datafile_type="Importer",
                 )
-                self.set_highlighting_level("database")
+                self.set_highlighting_level(HighlightLevel.DATABASE)
 
             def can_load_this_header(self, header) -> bool:
                 return True
@@ -570,7 +571,7 @@ class ImporterDisableRecordingTest(unittest.TestCase):
 
             def _load_this_file(self, data_store, path, file_object, datafile, change_id):
                 assert "Test Importer" in file_object.importer_highlighting_levels
-                assert file_object.importer_highlighting_levels["Test Importer"] == "database"
+                assert file_object.importer_highlighting_levels["Test Importer"] == HighlightLevel.DATABASE
 
         processor = FileProcessor()
 
@@ -601,7 +602,7 @@ class ImporterDisableRecordingTest(unittest.TestCase):
 
             def _load_this_file(self, data_store, path, file_object, datafile, change_id):
                 assert "Test Importer" in file_object.importer_highlighting_levels
-                assert file_object.importer_highlighting_levels["Test Importer"] == "html"
+                assert file_object.importer_highlighting_levels["Test Importer"] == HighlightLevel.HTML
 
         processor = FileProcessor()
 

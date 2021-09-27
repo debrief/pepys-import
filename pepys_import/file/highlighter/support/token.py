@@ -1,3 +1,4 @@
+from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.file.highlighter.support.utils import merge_adjacent_text_locations
 
 from .usages import SingleUsage
@@ -107,7 +108,7 @@ class Token:
         character array stored by the SubToken objects that are children of this object.
         """
         recording_level = self.highlighted_file.importer_highlighting_levels.get(tool, None)
-        if recording_level == "none":
+        if recording_level == HighlightLevel.NONE:
             return
 
         self.highlighted_file.fill_char_array_if_needed()
@@ -137,7 +138,7 @@ class Token:
                 # objects
                 subtoken.chars[i].usages.append(usage)
 
-        if recording_level == "database":
+        if recording_level == HighlightLevel.DATABASE:
             merged_text_locations = merge_adjacent_text_locations(text_locations)
             text_location_str = ",".join([f"{low}-{high}" for low, high in merged_text_locations])
 

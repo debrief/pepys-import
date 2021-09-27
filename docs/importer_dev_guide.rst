@@ -164,9 +164,9 @@ a performance cost. For high volume file types that are tightly
 structured, with little room for misinterpretation, the overhead
 may not be justified. You can configure the level of extraction that will
 take place by calling :code:`self.set_highlighting_level()` in the :code:`__init__` method.
-Three different values can be passed to this function: :code:`"none"` will turn off all extraction
-and highlighting, :code:`"html"` will record extractions to HTML but not to the database, and
-:code:`"database"` will record to both a HTML file and the database. The default is :code:`"html"`.
+Three different values can be passed to this function: :code:`HighlightLevel.NONE` will turn off all extraction
+and highlighting, :code:`"HighlightLevel.HTML"` will record extractions to HTML but not to the database, and
+:code:`"HighlightLevel.DATABASE"` will record to both a HTML file and the database. The default is :code:`"HighlightLevel.HTML"`.
 
 Similarly, it may be justified to capture extraction data in the early stages of
 developing/maintaining the parser for a new file format, with level of

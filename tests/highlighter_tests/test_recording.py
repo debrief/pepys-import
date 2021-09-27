@@ -5,6 +5,7 @@ from datetime import datetime
 import pytest
 
 from pepys_import.file.highlighter.highlighter import HighlightedFile
+from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.highlighter.support.test_utils import FakeDatafile
 from pepys_import.file.highlighter.support.utils import merge_adjacent_text_locations
@@ -153,7 +154,7 @@ class UsageRecordingTests(unittest.TestCase):
     def test_setting_no_highlighting(self):
         data_file = HighlightedFile(DATA_FILE)
 
-        data_file.importer_highlighting_levels["Test Importer"] = "none"
+        data_file.importer_highlighting_levels["Test Importer"] = HighlightLevel.NONE
 
         lines = data_file.lines()
 
@@ -171,7 +172,7 @@ class UsageRecordingTests(unittest.TestCase):
         hf = HighlightedFile(DATA_FILE)
         hf.datafile = FakeDatafile()
 
-        hf.importer_highlighting_levels["Test Importer"] = "html"
+        hf.importer_highlighting_levels["Test Importer"] = HighlightLevel.HTML
 
         lines = hf.lines()
 
@@ -189,7 +190,7 @@ class UsageRecordingTests(unittest.TestCase):
         hf = HighlightedFile(DATA_FILE)
         hf.datafile = FakeDatafile()
 
-        hf.importer_highlighting_levels["Test Importer"] = "database"
+        hf.importer_highlighting_levels["Test Importer"] = HighlightLevel.DATABASE
 
         lines = hf.lines()
 

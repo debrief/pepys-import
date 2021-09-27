@@ -1,3 +1,4 @@
+from pepys_import.file.highlighter.level import HighlightLevel
 import sys
 from datetime import datetime
 
@@ -48,7 +49,7 @@ class NisidaImporter(Importer):
         self.year = None
         self.platform = None
 
-        self.set_highlighting_level("database")
+        self.set_highlighting_level(HighlightLevel.DATABASE)
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".TXT"

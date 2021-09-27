@@ -11,6 +11,7 @@ from pepys_admin.utils import sqlalchemy_obj_to_dict
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 from pepys_import.file.highlighter.highlighter import HighlightedFile
+from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.file.highlighter.support.test_utils import FakeDatafile
 
 path = os.path.abspath(__file__)
@@ -27,7 +28,7 @@ def test_pending_extractions_generation():
     hf = HighlightedFile(DATA_FILE)
     hf.datafile = FakeDatafile()
 
-    hf.importer_highlighting_levels["Test Importer"] = "database"
+    hf.importer_highlighting_levels["Test Importer"] = HighlightLevel.DATABASE
 
     lines = hf.lines()
     lines[0].record("Test Importer", "Test Field", "Test Value", "Test Units")
@@ -59,7 +60,7 @@ def test_extraction_into_measurement_object_tokens_dict():
     hf = HighlightedFile(DATA_FILE)
     hf.datafile = ds.db_classes.Datafile()
 
-    hf.importer_highlighting_levels["Test Importer"] = "database"
+    hf.importer_highlighting_levels["Test Importer"] = HighlightLevel.DATABASE
 
     lines = hf.lines()
     lines[0].record("Test Importer", "Test Field", "Test Value", "Test Units")
@@ -95,7 +96,7 @@ def test_recording_to_database_single_file():
     processor = FileProcessor(archive=False)
 
     rep_importer = ReplayImporter()
-    rep_importer.set_highlighting_level("database")
+    rep_importer.set_highlighting_level(HighlightLevel.DATABASE)
 
     processor.register_importer(rep_importer)
 
@@ -205,13 +206,13 @@ def test_recording_to_database_multiple_files_and_importers(mock):
     processor = FileProcessor(archive=False)
 
     rep_importer = ReplayImporter()
-    rep_importer.set_highlighting_level("database")
+    rep_importer.set_highlighting_level(HighlightLevel.DATABASE)
 
     rep_com_importer = ReplayCommentImporter()
-    rep_com_importer.set_highlighting_level("database")
+    rep_com_importer.set_highlighting_level(HighlightLevel.DATABASE)
 
     rep_contact_importer = ReplayContactImporter()
-    rep_contact_importer.set_highlighting_level("database")
+    rep_contact_importer.set_highlighting_level(HighlightLevel.DATABASE)
 
     processor.register_importer(rep_importer)
     processor.register_importer(rep_com_importer)
@@ -269,7 +270,7 @@ def test_recording_to_database_single_xml_file():
     processor = FileProcessor(archive=False)
 
     gpx_importer = GPXImporter()
-    gpx_importer.set_highlighting_level("database")
+    gpx_importer.set_highlighting_level(HighlightLevel.DATABASE)
 
     processor.register_importer(gpx_importer)
 
