@@ -116,7 +116,7 @@ participation_sans_activity as (
 		si.serial_id,
 		si.ser_idx
 	from
-		sensors_involved si
+		participating_platforms si
 	where
 		not exists (select 1
 					from 
@@ -253,7 +253,7 @@ participation_sans_gap as (
 		si.serial_id,
 		si.ser_idx
 	from
-		sensors_involved si
+		participating_platforms si
 	where
 		not exists (select 1
 					from 
@@ -288,7 +288,7 @@ act_with_same_part_and_gap_start as (
 				and cg.rowno = 1
 				and cg.start_time =  s.time
 			inner join
-		sensors_involved si
+		participating_platforms si
 				on si.serial_participant_start = cg.start_time
 				and si.platform_id = cg.platform_id
 				and si.serial_id = cg.serial_id
@@ -320,7 +320,7 @@ act_with_same_part_and_gap_end as (
 									cgrs1.platform_id = cg.platform_id)
 				and cg.end_time =  s.time
 			inner join
-		sensors_involved si
+		participating_platforms si
 				on si.serial_participant_end = cg.end_time
 				and si.platform_id = cg.platform_id
 				and si.serial_id = cg.serial_id
