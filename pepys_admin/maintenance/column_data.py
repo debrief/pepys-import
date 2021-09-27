@@ -221,6 +221,9 @@ def create_normal_column_data(col, data_store, table_object):
     # Skip getting values for the remarks column, as we don't need a dropdown for that
     if details["type"] == "string" and details["system_name"] != "remarks":
         # Get values
+        # Here we query for just the specific column name (details['system_name']) so that
+        # the generated SQL is just selecting that column, rather than selecting all the columns
+        # and doing all the joins to get the denormalised data
         all_records = data_store.session.query(getattr(table_object, details["system_name"])).all()
         values = [str_if_not_none(record[0]) for record in all_records]
         details["values"] = sorted(remove_duplicates_and_nones(values))
