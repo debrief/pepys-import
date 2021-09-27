@@ -8,6 +8,7 @@ from testing.postgresql import Postgresql
 from pepys_import.core.store.data_store import DataStore
 
 
+@pytest.mark.postgres
 class DataStoreClearContentsPostGISDBTestCase(TestCase):
     def setUp(self):
         self.store = None
