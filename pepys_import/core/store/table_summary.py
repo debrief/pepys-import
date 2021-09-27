@@ -1,4 +1,3 @@
-from sqlalchemy.orm import undefer
 from tabulate import tabulate
 
 from pepys_import.core.store import constants
@@ -27,10 +26,7 @@ class TableSummary:
     def table_summary(self):
         number_of_rows = self.session.query(self.table).count()
         last_row = (
-            self.session.query(self.table)
-            .options(
-                undefer("*")
-            )  # Fetch all attributes to enforce to failing if there is any mismatch
+            self.session.query(self.table.created_date)
             .order_by(self.table.created_date.desc())
             .first()
         )
