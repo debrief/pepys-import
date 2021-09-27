@@ -13,7 +13,8 @@ from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Border, Button, Label
-from sqlalchemy.orm import undefer
+from sqlalchemy.orm import undefer, joinedload
+from sqlalchemy.orm.exc import DetachedInstanceError
 
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
 from pepys_admin.maintenance.dialogs.message_dialog import MessageDialog
@@ -29,10 +30,10 @@ logger.add("gui.log")
 
 # Uncomment the lines below to get logging of the SQL queries run by SQLAlchemy
 # to the file sql.log
-# import logging
+import logging
 
-# logging.basicConfig(filename="sql.log", level=logging.DEBUG)
-# logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
+logging.basicConfig(filename="sql.log", level=logging.DEBUG)
+logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
 
 class TasksGUI:
@@ -331,6 +332,11 @@ class TasksGUI:
                 # is detached from the session and available for use in the UI
                 self.data_store.session.commit()
                 self.data_store.session.refresh(current_task)
+                if isinstance(
+                    current_task,
+                    (self.data_store.db_classes.Wargame, self.data_store.db_classes.Serial),
+                ):
+                    _ = current_task.participants
                 self.data_store.session.expunge_all()
         except Exception as e:
             self.show_messagebox(
@@ -408,7 +414,21 @@ class TasksGUI:
         ensure_future(coroutine())
 
     def handle_tree_select(self, selected_element):
+        logger.debug("Starting tree select")
+        with self.data_store.session_scope():
+            table_object = type(selected_element.object)
+            selected_element.object = self.data_store.session.query(table_object).filter(
+                getattr(table_object, get_primary_key_for_table(table_object)) == getattr(selected_element.object, get_primary_key_for_table(table_object))
+            ).options(joinedload("*")).one()
+        # if isinstance(selected_element.object, (self.data_store.db_classes.Wargame, self.data_store.db_classes.Serial)):
+        #     try:
+        #         _ = selected_element.object.participants
+        #     except DetachedInstanceError:
+        #         with self.data_store.session_scope():
+        #             self.data_store.session.add(selected_element.object)
+        #             _ = selected_element.object.participants
         self.task_edit_widget.set_task_object(selected_element.object)
+        logger.debug("Ending tree select")
 
     def handle_tree_add(self, parent_element):
         if isinstance(parent_element.object, self.data_store.db_classes.Series):

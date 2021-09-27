@@ -301,7 +301,7 @@ class WargameMixin:
             "WargameParticipant",
             passive_deletes=True,
             cascade="all, delete, delete-orphan",
-            lazy="joined",
+            # lazy="joined",
             order_by="asc(WargameParticipant.created_date)",
             back_populates="wargame",
             uselist=True,
@@ -359,6 +359,7 @@ class WargameMixin:
         data_store.session.add(participant)
         data_store.session.flush()
         data_store.session.refresh(self)
+        _ = self.participants
 
         data_store.add_to_logs(
             table=constants.WARGAME_PARTICIPANT,
@@ -465,6 +466,7 @@ class SerialMixin:
         data_store.session.add(participant)
         data_store.session.flush()
         data_store.session.refresh(participant.serial)
+        _ = participant.serial.participants
 
         data_store.add_to_logs(
             table=constants.SERIAL_PARTICIPANT,
@@ -537,7 +539,7 @@ class SerialParticipantMixin:
                 "participants",
                 passive_deletes=True,
                 cascade="all, delete, delete-orphan",
-                lazy="joined",
+                # lazy="joined",
                 info={"skip_in_gui": True},
             ),
         )
