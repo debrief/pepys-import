@@ -1,3 +1,4 @@
+from pepys_admin.maintenance.utils import load_participants_attribute
 import textwrap
 import traceback
 from asyncio import ensure_future
@@ -13,7 +14,7 @@ from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Border, Button, Label
-from sqlalchemy.orm import undefer, joinedload
+from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.orm.exc import DetachedInstanceError
 
 from pepys_admin.maintenance.dialogs.confirmation_dialog import ConfirmationDialog
@@ -30,10 +31,10 @@ logger.add("gui.log")
 
 # Uncomment the lines below to get logging of the SQL queries run by SQLAlchemy
 # to the file sql.log
-import logging
+# import logging
 
-logging.basicConfig(filename="sql.log", level=logging.DEBUG)
-logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
+# logging.basicConfig(filename="sql.log", level=logging.DEBUG)
+# logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
 
 class TasksGUI:
@@ -57,16 +58,16 @@ class TasksGUI:
         if self.data_store.in_memory_database:
             raise ValueError("Cannot run the tasks GUI on an in-memory SQLite database")
 
-        try:
-            # This calls a simple function to check if the Privacies table has entries
-            # We don't actually care if it has entries, but it is a good simple query
-            # to run which checks if the database has been initialised
-            with self.data_store.session_scope():
-                _ = self.data_store.is_empty()
-        except Exception:
-            raise ValueError(
-                "Cannot run GUI on a non-initialised database. Please run initialise first."
-            )
+        # try:
+        # This calls a simple function to check if the Privacies table has entries
+        # We don't actually care if it has entries, but it is a good simple query
+        # to run which checks if the database has been initialised
+        with self.data_store.session_scope():
+            _ = self.data_store.is_empty()
+        # except Exception:
+        #     raise ValueError(
+        #         "Cannot run GUI on a non-initialised database. Please run initialise first."
+        #     )
 
         self.current_dialog = None
 
@@ -286,6 +287,7 @@ class TasksGUI:
             # Commit here, so that the new serial gets an ID, which we can reference below
             self.data_store.session.commit()
             self.data_store.session.refresh(new_serial)
+            new_serial = load_participants_attribute(self.data_store, new_serial)
 
             new_serial_id = new_serial.serial_id
 
@@ -296,6 +298,7 @@ class TasksGUI:
             self.data_store.session.add_all(new_participants)
             self.data_store.session.commit()
             self.data_store.session.refresh(new_serial)
+            new_serial = load_participants_attribute(self.data_store, new_serial)
             self.data_store.session.expunge_all()
 
         new_tree_element = TreeElement(new_serial.serial_number, new_serial)
@@ -332,11 +335,7 @@ class TasksGUI:
                 # is detached from the session and available for use in the UI
                 self.data_store.session.commit()
                 self.data_store.session.refresh(current_task)
-                if isinstance(
-                    current_task,
-                    (self.data_store.db_classes.Wargame, self.data_store.db_classes.Serial),
-                ):
-                    _ = current_task.participants
+                current_task = load_participants_attribute(self.data_store, current_task)
                 self.data_store.session.expunge_all()
         except Exception as e:
             self.show_messagebox(
@@ -415,18 +414,18 @@ class TasksGUI:
 
     def handle_tree_select(self, selected_element):
         logger.debug("Starting tree select")
-        with self.data_store.session_scope():
-            table_object = type(selected_element.object)
-            selected_element.object = self.data_store.session.query(table_object).filter(
-                getattr(table_object, get_primary_key_for_table(table_object)) == getattr(selected_element.object, get_primary_key_for_table(table_object))
-            ).options(joinedload("*")).one()
-        # if isinstance(selected_element.object, (self.data_store.db_classes.Wargame, self.data_store.db_classes.Serial)):
-        #     try:
-        #         _ = selected_element.object.participants
-        #     except DetachedInstanceError:
-        #         with self.data_store.session_scope():
-        #             self.data_store.session.add(selected_element.object)
-        #             _ = selected_element.object.participants
+        # with self.data_store.session_scope():
+        #     table_object = type(selected_element.object)
+        #     selected_element.object = (
+        #         self.data_store.session.query(table_object)
+        #         .filter(
+        #             getattr(table_object, get_primary_key_for_table(table_object))
+        #             == getattr(selected_element.object, get_primary_key_for_table(table_object))
+        #         )
+        #         .options(joinedload("*"))
+        #         .one()
+        #     )
+        selected_element.object = load_participants_attribute(self.data_store, selected_element.object)
         self.task_edit_widget.set_task_object(selected_element.object)
         logger.debug("Ending tree select")
 

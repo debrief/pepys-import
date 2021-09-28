@@ -7,12 +7,13 @@ from prompt_toolkit.widgets.base import Button
 
 from pepys_admin.maintenance.dialogs.serial_participant_dialog import SerialParticipantDialog
 from pepys_admin.maintenance.dialogs.wargame_participant_dialog import WargameParticipantDialog
-from pepys_admin.maintenance.utils import trim_string
+from pepys_admin.maintenance.utils import load_participants_attribute, trim_string
 from pepys_admin.maintenance.widgets.combo_box import ComboBox
 from pepys_import.core.store import constants
 from pepys_import.core.store.data_store import USER
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 
+from loguru import logger
 
 class ParticipantsWidget:
     def __init__(
@@ -436,7 +437,10 @@ class ParticipantsWidget:
             )
 
             self.task_edit_widget.task_object = ds.session.merge(self.task_edit_widget.task_object)
+            
             ds.session.refresh(self.task_edit_widget.task_object)
+            self.task_edit_widget.task_object = load_participants_attribute(ds, self.task_edit_widget.task_object)
+            logger.debug(self.task_edit_widget.task_object.participants)
             ds.session.expunge_all()
 
         new_selected_entry = self.combo_box.selected_entry - 1

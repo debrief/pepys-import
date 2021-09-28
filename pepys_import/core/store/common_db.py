@@ -1,3 +1,4 @@
+from pepys_admin.maintenance.utils import load_participants_attribute
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -359,7 +360,7 @@ class WargameMixin:
         data_store.session.add(participant)
         data_store.session.flush()
         data_store.session.refresh(self)
-        _ = self.participants
+        self = load_participants_attribute(data_store, self)
 
         data_store.add_to_logs(
             table=constants.WARGAME_PARTICIPANT,
@@ -466,7 +467,7 @@ class SerialMixin:
         data_store.session.add(participant)
         data_store.session.flush()
         data_store.session.refresh(participant.serial)
-        _ = participant.serial.participants
+        participant.serial = load_participants_attribute(data_store, participant.serial)
 
         data_store.add_to_logs(
             table=constants.SERIAL_PARTICIPANT,
@@ -535,11 +536,12 @@ class SerialParticipantMixin:
         return relationship(
             "Serial",
             lazy="joined",
+            cascade="all, delete",
             backref=backref(
                 "participants",
                 passive_deletes=True,
                 cascade="all, delete, delete-orphan",
-                # lazy="joined",
+                lazy="joined",
                 info={"skip_in_gui": True},
             ),
         )

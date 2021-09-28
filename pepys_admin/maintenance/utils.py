@@ -1,6 +1,8 @@
 import re
 from collections.abc import Iterable
 from datetime import datetime, timedelta
+from sqlalchemy.orm.exc import DetachedInstanceError
+
 
 import pint
 import sqlalchemy
@@ -168,3 +170,15 @@ def trim_string(s, chars):
         return s[:chars]
     else:
         return f"{s: <{chars}}"
+
+
+def load_participants_attribute(data_store, obj):
+    if isinstance(obj, (data_store.db_classes.Wargame, data_store.db_classes.Serial)):
+        try:
+            _ = obj.participants
+        except DetachedInstanceError:
+            with data_store.session_scope():
+                obj = data_store.session.merge(obj)
+                _ = obj.participants
+    
+    return obj
