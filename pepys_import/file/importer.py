@@ -3,11 +3,11 @@ from abc import ABC, abstractmethod
 
 from tqdm import tqdm
 
+from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.utils.text_formatting_utils import (
     custom_print_formatted_text,
     format_error_message,
 )
-from pepys_import.file.highlighter.level import HighlightLevel
 
 CANCEL_IMPORT = "CANCEL"
 

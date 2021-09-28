@@ -1,7 +1,7 @@
 from re import finditer, search
 
-from pepys_import.file.highlighter.support.utils import merge_adjacent_text_locations
 from pepys_import.file.highlighter.level import HighlightLevel
+from pepys_import.file.highlighter.support.utils import merge_adjacent_text_locations
 
 from .token import SubToken, Token
 from .usages import SingleUsage

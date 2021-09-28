@@ -1,4 +1,3 @@
-from pepys_import.file.highlighter.level import HighlightLevel
 import sys
 from datetime import datetime
 
@@ -8,6 +7,7 @@ import geopy.distance
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
+from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import CANCEL_IMPORT, Importer
 from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy
