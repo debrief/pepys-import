@@ -15,6 +15,7 @@ class TestLoadLink16(unittest.TestCase):
     def test_process_link16_v1_data(self):
         processor = FileProcessor(archive=False)
         processor.register_importer(Link16Importer)
+        
 
 
     

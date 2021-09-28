@@ -1,25 +1,28 @@
 from pepys_import.core.validators import constants
 from pepys_import.file.importer import Importer
 
+
 class Link16Importer(Importer):
-    """ Importer to handle two different formats of track information that are
+    """Importer to handle two different formats of track information that are
     transmitted using Link-16 encoding
     """
+
     def __init__(self):
         super().__init__(
             name="Link-16 Format Importer",
             validation_level=constants.BASIC_LEVEL,
             short_name="Link-16 Importer",
             default_privacy="Private",
-            datafile_type="Link-16"
+            datafile_type="Link-16",
         )
+        self.version = 1
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".CSV"
 
     def can_load_this_filename(self, filename):
         return True
-    
+
     def can_load_this_header(self, header):
         # V1 starts w/ PPLI
         # V2 starts w/ Xmt/Rcv
@@ -33,7 +36,10 @@ class Link16Importer(Importer):
         if line_number == 1:
             return
         tokens = line.tokens(line.CSV_TOKENISER, ",")
-    ''' 
+
+        track_number = tokens[2] if self.version == 1 else tokens[4]
+
+    """ 
     Link-16 has (at least?) two versions that MWC would like to import. 
     Looking at MWC parser, we're expecting to extract the following fields (present in both versions):
         - Name {v1: [2], v2: [4]}
@@ -46,4 +52,4 @@ class Link16Importer(Importer):
 
         We also have a date/time - which is offset from a user input start date/time. 
         This date time is in position [1] in both versions of the file
-    '''
+    """

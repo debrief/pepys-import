@@ -1,0 +1,9 @@
+Xmt/Rcv,SlotTime,Set,FrameIndex,STN,RI,Packing,PG,Jx.y,MLI,ADDI,RC,TN,Lat,Long,Alt,Crs,Spd,Id,|,1,2,3,4,5,6,7,8
+SomeStr,59:31.6,B,550,2,0,SomeStr,6,J2.2,3,0,0,1832,0.953371727,0.458539269,25124,5,0.972404565,Friend or Foe,|,Some Hash,Some Hash,,,,,,
+SomeStr,18:45.2,B,560,669,1,SomeStr,6,J3.3,6,0,0,1580,0.762199436,0.296645626,76355,26,0.832872258,Friend or Foe,|,Some Hash,Some Hash,,,,,,
+SomeStr,34:46.2,C,977,602,1,SomeStr,8,J2.2,2,0,0,1724,0.593366716,0.024368395,80918,301,0.505299679,Friend or Foe,|,Some Hash,Some Hash,Some Hash,Some Hash,,,,
+SomeStr,08:40.5,C,359,892,1,SomeStr,6,J2.2,0,0,0,1797,0.004832779,0.659077532,77344,215,0.020808275,Friend or Foe,|,Some Hash,Some Hash,Some Hash,Some Hash,,,,
+SomeStr,17:50.3,C,244,406,0,SomeStr,5,J2.2,3,0,0,876,0.520651098,0.297949937,43979,253,0.095743103,Friend or Foe,|,Some Hash,Some Hash,Some Hash,Some Hash,,,,
+SomeStr,35:43.4,C,608,480,1,SomeStr,6,J2.2,8,0,0,1722,0.484374883,0.246731226,10357,180,0.255749314,Friend or Foe,|,Some Hash,Some Hash,Some Hash,Some Hash,,,,
+SomeStr,24:55.8,C,358,552,1,SomeStr,2,J2.2,2,0,0,1922,0.520834873,0.039295089,66145,209,0.116855996,Friend or Foe,|,Some Hash,Some Hash,Some Hash,Some Hash,,,,
+SomeStr,39:03.4,A,189,404,1,SomeStr,2,J0.0,6,0,0,492,0.436767586,0.704958835,94939,197,0.65611902,Friend or Foe,|,Some Hash,Some Hash,Some Hash,Some Hash,,,,
