@@ -192,6 +192,8 @@ class NMEAImporter(Importer):
                 self.location = None
                 self.depth = None
 
+                datafile.flush_extracted_tokens()
+
     @staticmethod
     def parse_timestamp(date, time):
         if len(date) == 6:

@@ -1,3 +1,6 @@
+from pepys_import.file.highlighter.level import HighlightLevel
+from pepys_import.file.highlighter.support.utils import merge_adjacent_text_locations
+
 from .usages import SingleUsage
 
 
@@ -78,6 +81,15 @@ class Token:
             res += child.text
         return res
 
+    @property
+    def text_space_separated(self):
+        """Returns the entire text of the Line, with spaces separating the different subtokens
+
+        :return: Entire text content of the Line
+        :rtype: String
+        """
+        return " ".join([child.text for child in self.children])
+
     def record(self, tool: str, field: str, value: str, units: str = None):
         """
         Record the usage of this token for a specific purpose
@@ -95,9 +107,8 @@ class Token:
         This adds SingleUsage objects to each of the relevant characters in the
         character array stored by the SubToken objects that are children of this object.
         """
-        # Don't record anything if the importer that called record
-        # has called 'disable_recording()`
-        if tool in self.highlighted_file.ignored_importers:
+        recording_level = self.highlighted_file.importer_highlighting_levels.get(tool, None)
+        if recording_level == HighlightLevel.NONE:
             return
 
         self.highlighted_file.fill_char_array_if_needed()
@@ -110,10 +121,14 @@ class Token:
 
         usage = SingleUsage(tool_field, message)
 
+        text_locations = []
+
         # This loop gives us each SubToken that is a child of this Token
         for subtoken in self.children:
             start = subtoken.start()
             end = subtoken.end()
+
+            text_locations.append((start, end))
 
             for i in range(start, end):
                 # Note: subtoken.chars is a reference to a single char array
@@ -122,3 +137,17 @@ class Token:
                 # char array, even though it is accessed via different SubToken
                 # objects
                 subtoken.chars[i].usages.append(usage)
+
+        if recording_level == HighlightLevel.DATABASE:
+            merged_text_locations = merge_adjacent_text_locations(text_locations)
+            text_location_str = ",".join([f"{low}-{high}" for low, high in merged_text_locations])
+
+            self.highlighted_file.datafile.pending_extracted_tokens.append(
+                {
+                    "text": self.text_space_separated,
+                    "interpreted_value": str(value),
+                    "text_location": text_location_str,
+                    "importer": tool,
+                    "field": field,
+                }
+            )

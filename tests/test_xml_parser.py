@@ -89,6 +89,11 @@ def _check_element_record(el, file_contents):
         _check_element_record(child_el, file_contents)
 
 
+class FakeDatafile:
+    def __init__(self):
+        self.pending_extracted_tokens = []
+
+
 # To test with unicode we need to actually call the record method
 # and then get the locations it's used out from there
 def test_parser_record_works_correctly_unicode():
@@ -96,6 +101,7 @@ def test_parser_record_works_correctly_unicode():
         file_contents = f.read()
 
     hf = HighlightedFile(UNICODE_GPX_PATH)
+    hf.datafile = FakeDatafile()
 
     doc = parse(UNICODE_GPX_PATH, hf)
 
@@ -107,6 +113,7 @@ def test_parser_record_works_correctly_ascii():
         file_contents = f.read()
 
     hf = HighlightedFile(ASCII_GPX_PATH)
+    hf.datafile = FakeDatafile()
 
     doc = parse(ASCII_GPX_PATH, hf)
 

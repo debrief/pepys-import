@@ -214,8 +214,15 @@ def create_normal_column_data(col, data_store, table_object):
 
     details["required"] = not col.prop.columns[0].nullable
 
-    if details["type"] == "id" and col.key != get_primary_key_for_table(table_object):
+    if (
+        details["type"] == "id"
+        and col.key != get_primary_key_for_table(table_object)
+        and col.key != "entry_id"
+    ):
         # Skip all ID columns except the primary key
+        # Make a special exception for the entry_id field in the Extractions table
+        # where there is no relationship to use to navigate between tables, as entry_id could be
+        # a primary key in any measurement table
         return None, None
 
     # Skip getting values for the remarks column, as we don't need a dropdown for that

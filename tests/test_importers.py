@@ -17,6 +17,7 @@ from pepys_import import __version__
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.validators import constants as validation_constants
 from pepys_import.file.file_processor import FileProcessor
+from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.file.importer import Importer
 from pepys_import.resolvers.command_line_resolver import CommandLineResolver
 from pepys_import.resolvers.default_resolver import DefaultResolver
@@ -522,7 +523,7 @@ class ImporterDisableRecordingTest(unittest.TestCase):
                     short_name="Test Importer",
                     datafile_type="Importer",
                 )
-                self.disable_recording()
+                self.set_highlighting_level(HighlightLevel.NONE)
 
             def can_load_this_header(self, header) -> bool:
                 return True
@@ -537,7 +538,78 @@ class ImporterDisableRecordingTest(unittest.TestCase):
                 return True
 
             def _load_this_file(self, data_store, path, file_object, datafile, change_id):
-                assert file_object.ignored_importers == ["Test Importer"]
+                assert "Test Importer" in file_object.importer_highlighting_levels
+                assert (
+                    file_object.importer_highlighting_levels["Test Importer"] == HighlightLevel.NONE
+                )
+
+        processor = FileProcessor()
+
+        processor.register_importer(TestImporter())
+        processor.process(DATA_PATH, None, False)
+
+    def test_record_to_database(self):
+        class TestImporter(Importer):
+            def __init__(self):
+                super().__init__(
+                    name="Test Importer",
+                    validation_level=validation_constants.BASIC_LEVEL,
+                    short_name="Test Importer",
+                    datafile_type="Importer",
+                )
+                self.set_highlighting_level(HighlightLevel.DATABASE)
+
+            def can_load_this_header(self, header) -> bool:
+                return True
+
+            def can_load_this_filename(self, filename):
+                return True
+
+            def can_load_this_type(self, suffix):
+                return True
+
+            def can_load_this_file(self, file_contents):
+                return True
+
+            def _load_this_file(self, data_store, path, file_object, datafile, change_id):
+                assert "Test Importer" in file_object.importer_highlighting_levels
+                assert (
+                    file_object.importer_highlighting_levels["Test Importer"]
+                    == HighlightLevel.DATABASE
+                )
+
+        processor = FileProcessor()
+
+        processor.register_importer(TestImporter())
+        processor.process(DATA_PATH, None, False)
+
+    def test_default_recording_level(self):
+        class TestImporter(Importer):
+            def __init__(self):
+                super().__init__(
+                    name="Test Importer",
+                    validation_level=validation_constants.BASIC_LEVEL,
+                    short_name="Test Importer",
+                    datafile_type="Importer",
+                )
+
+            def can_load_this_header(self, header) -> bool:
+                return True
+
+            def can_load_this_filename(self, filename):
+                return True
+
+            def can_load_this_type(self, suffix):
+                return True
+
+            def can_load_this_file(self, file_contents):
+                return True
+
+            def _load_this_file(self, data_store, path, file_object, datafile, change_id):
+                assert "Test Importer" in file_object.importer_highlighting_levels
+                assert (
+                    file_object.importer_highlighting_levels["Test Importer"] == HighlightLevel.HTML
+                )
 
         processor = FileProcessor()
 

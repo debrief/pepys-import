@@ -159,12 +159,14 @@ files showing which parts of the file have been used to extract each individual
 part field in the created measurements, and tracks the extraction in the
 database to help understand data provenance.
 
-But this token highlighting does come with a performance cost. For high volume
-file types that are tightly structured, with little room for misinterpretation,
-the overhead may not be justified. In these circumstances, a call to
-:code:`self.disable_recording()` in the :code:`__init__` method will turn off
-the extraction highlighting for this importer, and significantly speed up the processing
-of large files.
+But this token highlighting and database recording does come with
+a performance cost. For high volume file types that are tightly
+structured, with little room for misinterpretation, the overhead
+may not be justified. You can configure the level of extraction that will
+take place by calling :code:`self.set_highlighting_level()` in the :code:`__init__` method.
+Three different values can be passed to this function: :code:`HighlightLevel.NONE` will turn off all extraction
+and highlighting, :code:`"HighlightLevel.HTML"` will record extractions to HTML but not to the database, and
+:code:`"HighlightLevel.DATABASE"` will record to both a HTML file and the database. The default is :code:`"HighlightLevel.HTML"`.
 
 Similarly, it may be justified to capture extraction data in the early stages of
 developing/maintaining the parser for a new file format, with level of
@@ -219,6 +221,13 @@ one extraction can be recorded from disparate data in the file. For example:
 
     combine_tokens(long_degrees_token, lat_degrees_token).record(
         self.name, "location", state.location, "decimal degrees")
+
+Once token extractions have been recorded using the :code:`record` method, the recorded information
+must be linked to the appropriate measurement object (State/Contact/Comment etc) and prepared for saving
+to the database. This can be done using the :code:`Datafile.flush_extracted_tokens` method, which should be called once
+all the data has been loaded for a specific measurement object. Usually this will be at the end of the
+:meth:`~pepys_import.file.importer._load_this_line` method, or at the end of a loop inside the
+:meth:`~pepys_import.file.importer._load_this_file` method - but for complex importers it may be elsewhere.
 
 
 Creating measurement objects

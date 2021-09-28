@@ -1,11 +1,10 @@
 import os
 import unittest
-from importlib import reload
 from unittest.mock import patch
 
 from importers.e_trac_importer import ETracImporter
 from importers.replay_importer import ReplayImporter
-from pepys_import.core.store import common_db
+from pepys_import.core.store.common_db import reload_local_validators
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
 
@@ -39,92 +38,96 @@ class TestLocalTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_PATH)
-    @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_PATH)
     def test_local_basic_tests(self):
-        reload(common_db)
+        with patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_PATH):
+            with patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_PATH):
+                reload_local_validators()
 
-        # check states empty
-        with self.store.session_scope():
-            # there must be no states at the beginning
-            states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 0)
+                # check states empty
+                with self.store.session_scope():
+                    # there must be no states at the beginning
+                    states = self.store.session.query(self.store.db_classes.State).all()
+                    self.assertEqual(len(states), 0)
 
-            # there must be no platforms at the beginning
-            platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 0)
+                    # there must be no platforms at the beginning
+                    platforms = self.store.session.query(self.store.db_classes.Platform).all()
+                    self.assertEqual(len(platforms), 0)
 
-            # there must be no datafiles at the beginning
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 0)
+                    # there must be no datafiles at the beginning
+                    datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+                    self.assertEqual(len(datafiles), 0)
 
-        processor = FileProcessor(archive=False)
-        processor.register_importer(ETracImporter())
+                processor = FileProcessor(archive=False)
+                processor.register_importer(ETracImporter())
 
-        # parse the folder
-        processor.process(OTHER_DATA_PATH, self.store, False)
+                # parse the folder
+                processor.process(OTHER_DATA_PATH, self.store, False)
 
-        # check data got created
-        with self.store.session_scope():
-            # there must be states after the import
-            states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 44)
+                # check data got created
+                with self.store.session_scope():
+                    # there must be states after the import
+                    states = self.store.session.query(self.store.db_classes.State).all()
+                    self.assertEqual(len(states), 44)
 
-            # there must be platforms after the import
-            platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 18)
+                    # there must be platforms after the import
+                    platforms = self.store.session.query(self.store.db_classes.Platform).all()
+                    self.assertEqual(len(platforms), 18)
 
-            # there must be one datafile afterwards
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 1)
+                    # there must be one datafile afterwards
+                    datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+                    self.assertEqual(len(datafiles), 1)
 
-            # Check that there is an elevation of 147 reported (test file was manually edited
-            # to contain an elevation of 147m)
-            results = (
-                self.store.session.query(self.store.db_classes.State)
-                .filter(self.store.db_classes.State.elevation == 147)
-                .all()
-            )
-            assert len(results) == 1
+                    # Check that there is an elevation of 147 reported (test file was manually edited
+                    # to contain an elevation of 147m)
+                    results = (
+                        self.store.session.query(self.store.db_classes.State)
+                        .filter(self.store.db_classes.State.elevation == 147)
+                        .all()
+                    )
+                    assert len(results) == 1
 
-    @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_PATH)
-    @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_PATH)
+        reload_local_validators()
+
     def test_local_basic_and_enhanced_tests(self):
-        reload(common_db)
+        with patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_PATH):
+            with patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_PATH):
+                reload_local_validators()
 
-        processor = FileProcessor(archive=False)
-        processor.register_importer(ReplayImporter())
+                processor = FileProcessor(archive=False)
+                processor.register_importer(ReplayImporter())
 
-        # check states empty
-        with self.store.session_scope():
-            # there must be no states at the beginning
-            states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 0)
+                # check states empty
+                with self.store.session_scope():
+                    # there must be no states at the beginning
+                    states = self.store.session.query(self.store.db_classes.State).all()
+                    self.assertEqual(len(states), 0)
 
-            # there must be no platforms at the beginning
-            platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 0)
+                    # there must be no platforms at the beginning
+                    platforms = self.store.session.query(self.store.db_classes.Platform).all()
+                    self.assertEqual(len(platforms), 0)
 
-            # there must be no datafiles at the beginning
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 0)
+                    # there must be no datafiles at the beginning
+                    datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+                    self.assertEqual(len(datafiles), 0)
 
-        # parse the folder
-        processor.process(REP_DATA_PATH, self.store, False)
+                # parse the folder
+                processor.process(REP_DATA_PATH, self.store, False)
 
-        # check data got created
-        with self.store.session_scope():
-            # there must be states after the import
-            states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 8)
+                # check data got created
+                with self.store.session_scope():
+                    # there must be states after the import
+                    states = self.store.session.query(self.store.db_classes.State).all()
+                    self.assertEqual(len(states), 8)
 
-            # there must be platforms after the import
-            platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 2)
+                    # there must be platforms after the import
+                    platforms = self.store.session.query(self.store.db_classes.Platform).all()
+                    self.assertEqual(len(platforms), 2)
 
-            # there must be one datafile afterwards
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 1)
+                    # there must be one datafile afterwards
+                    datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+                    self.assertEqual(len(datafiles), 1)
+
+        reload_local_validators()
 
 
 class TestLocalTestsFails(unittest.TestCase):
@@ -135,84 +138,88 @@ class TestLocalTestsFails(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_FAILS_PATH)
-    @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_FAILS_PATH)
     def test_local_basic_tests(self):
-        reload(common_db)
+        with patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_FAILS_PATH):
+            with patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_FAILS_PATH):
+                reload_local_validators()
 
-        # check states empty
-        with self.store.session_scope():
-            # there must be no states at the beginning
-            states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 0)
+                # check states empty
+                with self.store.session_scope():
+                    # there must be no states at the beginning
+                    states = self.store.session.query(self.store.db_classes.State).all()
+                    self.assertEqual(len(states), 0)
 
-            # there must be no platforms at the beginning
-            platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 0)
+                    # there must be no platforms at the beginning
+                    platforms = self.store.session.query(self.store.db_classes.Platform).all()
+                    self.assertEqual(len(platforms), 0)
 
-            # there must be no datafiles at the beginning
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 0)
+                    # there must be no datafiles at the beginning
+                    datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+                    self.assertEqual(len(datafiles), 0)
 
-        processor = FileProcessor(archive=False)
-        processor.register_importer(ETracImporter())
+                processor = FileProcessor(archive=False)
+                processor.register_importer(ETracImporter())
 
-        # parse the folder
-        processor.process(OTHER_DATA_PATH, self.store, False)
+                # parse the folder
+                processor.process(OTHER_DATA_PATH, self.store, False)
 
-        # check data got created
-        with self.store.session_scope():
-            # there must be no states after the import
-            states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 0)
+                # check data got created
+                with self.store.session_scope():
+                    # there must be no states after the import
+                    states = self.store.session.query(self.store.db_classes.State).all()
+                    self.assertEqual(len(states), 0)
 
-            # there must be platforms after the import
-            platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 18)
+                    # there must be platforms after the import
+                    platforms = self.store.session.query(self.store.db_classes.Platform).all()
+                    self.assertEqual(len(platforms), 18)
 
-            # there must be no datafiles afterwards - as all files gave errors
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 0)
+                    # there must be no datafiles afterwards - as all files gave errors
+                    datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+                    self.assertEqual(len(datafiles), 0)
 
-    @patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_FAILS_PATH)
-    @patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_FAILS_PATH)
+        reload_local_validators()
+
     def test_local_basic_and_enhanced_tests(self):
-        reload(common_db)
+        with patch("config.LOCAL_BASIC_TESTS", BASIC_PARSERS_FAILS_PATH):
+            with patch("config.LOCAL_ENHANCED_TESTS", ENHANCED_PARSERS_FAILS_PATH):
+                reload_local_validators()
 
-        processor = FileProcessor(archive=False)
-        processor.register_importer(ReplayImporter())
+                processor = FileProcessor(archive=False)
+                processor.register_importer(ReplayImporter())
 
-        # check states empty
-        with self.store.session_scope():
-            # there must be no states at the beginning
-            states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 0)
+                # check states empty
+                with self.store.session_scope():
+                    # there must be no states at the beginning
+                    states = self.store.session.query(self.store.db_classes.State).all()
+                    self.assertEqual(len(states), 0)
 
-            # there must be no platforms at the beginning
-            platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 0)
+                    # there must be no platforms at the beginning
+                    platforms = self.store.session.query(self.store.db_classes.Platform).all()
+                    self.assertEqual(len(platforms), 0)
 
-            # there must be no datafiles at the beginning
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 0)
+                    # there must be no datafiles at the beginning
+                    datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+                    self.assertEqual(len(datafiles), 0)
 
-        # parse the folder
-        with patch("pepys_import.core.store.common_db.prompt", return_value="2"):
-            processor.process(REP_DATA_PATH, self.store, False)
+                # parse the folder
+                with patch("pepys_import.core.store.common_db.prompt", return_value="2"):
+                    processor.process(REP_DATA_PATH, self.store, False)
 
-        # check data got created
-        with self.store.session_scope():
-            # there must be no states after the import
-            states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 0)
+                # check data got created
+                with self.store.session_scope():
+                    # there must be no states after the import
+                    states = self.store.session.query(self.store.db_classes.State).all()
+                    self.assertEqual(len(states), 0)
 
-            # there must be platforms after the import
-            platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 2)
+                    # there must be platforms after the import
+                    platforms = self.store.session.query(self.store.db_classes.Platform).all()
+                    self.assertEqual(len(platforms), 2)
 
-            # there must be no datafiles afterwards - as all files gave errors
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 0)
+                    # there must be no datafiles afterwards - as all files gave errors
+                    datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+                    self.assertEqual(len(datafiles), 0)
+
+        reload_local_validators()
 
 
 if __name__ == "__main__":

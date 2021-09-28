@@ -96,3 +96,5 @@ class ReplayCommentImporter(Importer):
                 comment_type=comment_type,
                 parser_name=self.short_name,
             )
+
+            datafile.flush_extracted_tokens()
