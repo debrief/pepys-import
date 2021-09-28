@@ -837,4 +837,7 @@ def test_selecting_all_table_entries(pytestconfig, test_datastore):
         )
         names = set([entry.name for entry in entries])
 
+        # Hong Kong is last entry shown in preview table, so shouldn't be in the non-visible items list
+        assert "Hong Kong" not in names
+        # UK is further down the list, so should be in the list
         assert "United Kingdom" in names
