@@ -194,8 +194,7 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
         try:
             self.store = DataStore(
                 db_name="test",
@@ -207,7 +206,7 @@ class ViewDataCLIPostgresTestCase(unittest.TestCase):
             )
             self.store.initialise()
         except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+            raise Exception("Creating database schema in testing Postgres database failed")
 
         # Parse the REP files
         processor = FileProcessor(archive=False)

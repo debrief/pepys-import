@@ -37,8 +37,7 @@ class DataStoreCacheTestCase(TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
         try:
             self.store = DataStore(
                 db_name="test",
@@ -53,8 +52,8 @@ class DataStoreCacheTestCase(TestCase):
                 self.change_id = self.store.add_to_changes(
                     "TEST", datetime.utcnow(), "TEST"
                 ).change_id
-        except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+        except Exception:
+            raise Exception("Testing postgres server could not be started/accessed")
 
     def tearDown(self) -> None:
         try:
@@ -258,8 +257,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
         try:
             self.store = DataStore(
                 db_name="test",
@@ -275,7 +273,7 @@ class LookUpDBAndAddToCacheTestCase(TestCase):
                     "TEST", datetime.utcnow(), "TEST"
                 ).change_id
         except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+            raise Exception("Creating database schema in testing Postgres database failed")
 
     def tearDown(self) -> None:
         try:
@@ -406,8 +404,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
         try:
             self.store = DataStore(
                 db_name="test",
@@ -430,7 +427,7 @@ class PlatformAndDatafileTestCase(TestCase):
                 ).name
                 self.privacy = self.store.add_to_privacies("test_privacy", 0, self.change_id).name
         except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+            raise Exception("Creating database schema in testing Postgres database failed")
 
     def tearDown(self) -> None:
         try:
@@ -637,8 +634,7 @@ class DataStoreStatusTestCase(TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
         try:
             self.store = DataStore(
                 db_name="test",
@@ -653,7 +649,7 @@ class DataStoreStatusTestCase(TestCase):
                 self.store.populate_reference(TEST_DATA_PATH)
                 self.store.populate_metadata(TEST_DATA_PATH)
         except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+            raise Exception("Creating database schema in testing Postgres database failed")
 
     def tearDown(self) -> None:
         try:
@@ -718,8 +714,7 @@ class SensorTestCase(TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
         try:
             self.store = DataStore(
                 db_name="test",
@@ -754,7 +749,7 @@ class SensorTestCase(TestCase):
                 )
                 self.store.session.expunge(self.platform)
         except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+            raise Exception("Creating database schema in testing Postgres database failed")
 
     def tearDown(self) -> None:
         try:
@@ -831,8 +826,7 @@ class MeasurementsTestCase(TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
         try:
             self.store = DataStore(
                 db_name="test",
@@ -879,7 +873,7 @@ class MeasurementsTestCase(TestCase):
                 self.store.session.expunge(self.file)
                 self.store.session.expunge(self.comment_type)
         except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+            raise Exception("Creating database schema in testing Postgres database failed")
 
         class TestParser(Importer):
             def __init__(
@@ -1018,8 +1012,7 @@ class FirstConnectionTestCase(TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
 
     def tearDown(self) -> None:
         try:

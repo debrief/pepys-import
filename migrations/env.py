@@ -193,6 +193,7 @@ def run_migrations_online():
                 context.execute(text("SET search_path TO pepys,public"))
                 context.run_migrations()
         else:
+            # Turn off the enforcement of foreign key constraints before running the migration
             context.configure(
                 connection=connection,
                 target_metadata=target_metadata,

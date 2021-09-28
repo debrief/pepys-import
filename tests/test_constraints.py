@@ -284,8 +284,7 @@ class TestNotEmptyStringPostgres(unittest.TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
 
         self.store = DataStore(
             db_name="test",

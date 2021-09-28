@@ -156,8 +156,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
         try:
             self.store = DataStore(
                 db_name="test",
@@ -169,7 +168,7 @@ class DataStorePopulatePostGISTestCase(TestCase):
             )
             self.store.initialise()
         except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+            raise Exception("Creating database schema in testing Postgres database failed")
 
     def tearDown(self) -> None:
         try:
