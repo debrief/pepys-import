@@ -1,7 +1,9 @@
 from enum import Enum
 
+
 class HighlightLevel(Enum):
     """The level of recording highlighted extractions"""
+
     NONE = 1
     """No highlighting or recording of extractions"""
     HTML = 2
