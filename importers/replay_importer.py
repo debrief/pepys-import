@@ -1,6 +1,5 @@
 from pepys_import.core.formats.rep_line import REPLine
 from pepys_import.core.validators import constants
-from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.file.importer import Importer
 
 
