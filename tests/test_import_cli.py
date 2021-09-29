@@ -80,8 +80,7 @@ class TestImportWithMissingDBFieldPostgres(unittest.TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
         try:
             self.store = DataStore(
                 db_name="test",
@@ -93,7 +92,7 @@ class TestImportWithMissingDBFieldPostgres(unittest.TestCase):
             )
             self.store.initialise()
         except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+            raise Exception("Creating database schema in testing Postgres database failed")
 
     def tearDown(self):
         try:
@@ -142,8 +141,7 @@ class TestImportWithWrongTypeDBFieldPostgres(unittest.TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
         try:
             self.store = DataStore(
                 db_name="test",
@@ -155,41 +153,13 @@ class TestImportWithWrongTypeDBFieldPostgres(unittest.TestCase):
             )
             self.store.initialise()
         except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+            raise Exception("Creating database schema in testing Postgres database failed")
 
     def tearDown(self):
         try:
             self.postgres.stop()
         except AttributeError:
             return
-
-    @patch("pepys_import.utils.error_handling.custom_print_formatted_text", side_effect=side_effect)
-    def test_import_with_wrong_type_db_field(self, patched_print):
-        conn = pg8000.connect(user="postgres", password="postgres", database="test", port=55527)
-        cursor = conn.cursor()
-        # Alter table to change heading column to be a timestamp
-        cursor.execute(
-            'ALTER TABLE pepys."States" ALTER COLUMN heading SET DATA TYPE character varying(150);'
-        )
-
-        conn.commit()
-        conn.close()
-
-        temp_output = StringIO()
-        with redirect_stdout(temp_output):
-            db_config = {
-                "name": "test",
-                "host": "localhost",
-                "username": "postgres",
-                "password": "postgres",
-                "port": 55527,
-                "type": "postgres",
-            }
-
-            process(path=DATA_PATH, archive=False, db=db_config, resolver="default")
-        output = temp_output.getvalue()
-
-        assert "ERROR: SQL error when communicating with database" in output
 
 
 @patch("pepys_import.cli.DefaultResolver")
@@ -452,8 +422,7 @@ class TestImportWithMissingDBTablePostgres(unittest.TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
         try:
             self.store = DataStore(
                 db_name="test",
@@ -465,7 +434,7 @@ class TestImportWithMissingDBTablePostgres(unittest.TestCase):
             )
             self.store.initialise()
         except OperationalError:
-            print("Database schema and data population failed! Test is skipping.")
+            raise Exception("Creating database schema in testing Postgres database failed")
 
     def tearDown(self):
         try:

@@ -26,3 +26,15 @@ def create_test_line_object(line_str):
     new_line = Line([sub_token], test_hf)
 
     return new_line
+
+
+class FakeDatafile:
+    def __init__(self):
+        self.pending_extracted_tokens = []
+
+
+def delete_entries(d, keys_to_delete):
+    for key in keys_to_delete:
+        del d[key]
+
+    return d

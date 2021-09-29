@@ -18,6 +18,7 @@ from pepys_import.core.store.common_db import (
     ContactMixin,
     DatafileMixin,
     ElevationPropertyMixin,
+    ExtractionMixin,
     GeometryMixin,
     GeometrySubTypeMixin,
     HostedByMixin,
@@ -291,6 +292,10 @@ class Datafile(BasePostGIS, DatafileMixin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.measurements = dict()
+        self.highlighted_file = None
+        self.pending_extracted_tokens = []
+        self.measurement_object_to_tokens_list = {}
+        self.current_measurement_object = None
 
     __tablename__ = constants.DATAFILE
     table_type = TableTypes.METADATA
@@ -374,15 +379,24 @@ class Log(BasePostGIS, LogMixin):
     created_date = Column(DateTime, default=datetime.utcnow)
 
 
-class Extraction(BasePostGIS):
+class Extraction(BasePostGIS, ExtractionMixin):
     __tablename__ = constants.EXTRACTION
     table_type = TableTypes.METADATA
     table_type_id = 10
 
     extraction_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    table = Column(String(150), nullable=False)
+    destination_table = Column(String(150))
+    entry_id = Column(UUID(as_uuid=True))
     field = Column(String(150), nullable=False)
-    chars = Column(String(150), nullable=False)
+    datafile_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("Datafiles.datafile_id", onupdate="cascade", ondelete="cascade"),
+        nullable=False,
+    )
+    text = Column(Text(), nullable=False)
+    text_location = Column(String(200), nullable=False)
+    importer = Column(String(150), nullable=False)
+    interpreted_value = Column(Text(), nullable=False)
     created_date = Column(DateTime, default=datetime.utcnow)
 
 

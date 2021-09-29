@@ -260,3 +260,5 @@ class ReplayContactImporter(Importer):
                     if ambig_bearing_valid:
                         ambig_bearing_token.record(self.name, "ambig bearing", ambig_bearing)
                         contact.ambig_bearing = ambig_bearing
+
+            datafile.flush_extracted_tokens()

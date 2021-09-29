@@ -1,5 +1,8 @@
 from re import finditer, search
 
+from pepys_import.file.highlighter.level import HighlightLevel
+from pepys_import.file.highlighter.support.utils import merge_adjacent_text_locations
+
 from .token import SubToken, Token
 from .usages import SingleUsage
 
@@ -101,6 +104,7 @@ class Line:
                     char_index = token_str.find(strip_char)
                     if char_index == 0:
                         token_str = token_str[1:]
+                        token_start += 1
                     # and ditch any new whitespace
                     token_str = token_str.strip()
 
@@ -130,9 +134,8 @@ class Line:
         Adds a SingleUsage object to each of the relevant characters in the
         char array referenced by each SubToken child.
         """
-        # Don't record anything if the importer that called record
-        # has called 'disable_recording()`
-        if tool in self.highlighted_file.ignored_importers:
+        recording_level = self.highlighted_file.importer_highlighting_levels.get(tool, None)
+        if recording_level == HighlightLevel.NONE:
             return
 
         self.highlighted_file.fill_char_array_if_needed()
@@ -143,7 +146,28 @@ class Line:
         else:
             message = "Value:" + str(value)
 
+        text_locations = []
+
         for child in self.children:
-            for i in range(int(child.start()), int(child.end())):
+            start = child.start()
+            end = child.end()
+
+            text_locations.append((start, end))
+
+            for i in range(start, end):
                 usage = SingleUsage(tool_field, message)
                 child.chars[i].usages.append(usage)
+
+        if recording_level == HighlightLevel.DATABASE:
+            merged_text_locations = merge_adjacent_text_locations(text_locations)
+            text_location_str = ",".join([f"{low}-{high}" for low, high in merged_text_locations])
+
+            self.highlighted_file.datafile.pending_extracted_tokens.append(
+                {
+                    "text": self.text,
+                    "interpreted_value": str(value),
+                    "text_location": text_location_str,
+                    "importer": tool,
+                    "field": field,
+                }
+            )
