@@ -31,4 +31,4 @@ def register_blueprints(app):
 
 
 def register_loggers(app):
-    dictConfig(app.config['LOG_CONFIG'])
+    dictConfig(app.config["LOG_CONFIG"])
