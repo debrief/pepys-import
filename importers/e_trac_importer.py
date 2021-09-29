@@ -138,6 +138,8 @@ class ETracImporter(Importer):
             state.speed = speed
             speed_token.record(self.name, "speed", speed)
 
+        datafile.flush_extracted_tokens()
+
     @staticmethod
     def name_for(token):
         # split into two

@@ -7,6 +7,7 @@ import geopy.distance
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
+from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import CANCEL_IMPORT, Importer
 from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy
@@ -47,6 +48,8 @@ class NisidaImporter(Importer):
         self.month = None
         self.year = None
         self.platform = None
+
+        self.set_highlighting_level(HighlightLevel.DATABASE)
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".TXT"
@@ -129,6 +132,7 @@ class NisidaImporter(Importer):
             else:
                 self.last_entry_with_text.remarks = self.last_entry_with_text.remarks + text_to_add
             line.record(self.name, "comment text", text_to_add)
+            datafile.flush_extracted_tokens()
         elif len(line.text) > 7 and line.text[7] == "/" and line.text[0:5].isdigit():
             # Check whether line starts with something like "311206Z/" (a timestamp and a slash)
             # Checking like this is faster than using regular expressions on each line
@@ -183,6 +187,7 @@ class NisidaImporter(Importer):
                     }
                 )
                 return
+            datafile.flush_extracted_tokens()
         else:
             # Not a line we recognise, so just skip to next one
             return

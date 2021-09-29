@@ -128,6 +128,19 @@ class MyElement(Element):
             self.highlighted_file.file_byte_contents[start:end].decode()
         )
 
+        text_location_str = f"{start_in_chars}-{end_in_chars}"
+        text = self.highlighted_file.file_byte_contents[start:end].decode()
+
+        self.highlighted_file.datafile.pending_extracted_tokens.append(
+            {
+                "text": text,
+                "interpreted_value": str(value),
+                "text_location": text_location_str,
+                "importer": tool,
+                "field": field,
+            }
+        )
+
         # This return returns the start and end index, mainly for use for testing
         return self.highlighted_file.set_usages_for_slice(start_in_chars, end_in_chars, usage)
 
