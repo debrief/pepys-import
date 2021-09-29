@@ -2,6 +2,12 @@
 History
 =======
 
+0.0.29 (2021-09-29)
+-------------------
+
+* Record extractions to database for future data audit
+* Performance improvement in generating table summaries
+* Performance improvement in opening some tables in Maintenance GUI
 
 0.0.28 (2021-09-24)
 -------------------
@@ -9,7 +15,6 @@ History
 * Minor fixes for timeline (-100%, include_in_timeline, default_interval)
 * Fix error for viewing Platform Entry in GUI
 * Improve speed of generating table summaries (affects import performance)
-* 
 
 0.0.27 (2021-09-16)
 -------------------
