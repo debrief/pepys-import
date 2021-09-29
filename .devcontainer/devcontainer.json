@@ -37,6 +37,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
+	// Download the dependencies, and configure the pre-commit
 	"postCreateCommand": "pip3 install --user -r requirements.txt -r requirements_dev.txt && pre-commit install",
 
 	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
