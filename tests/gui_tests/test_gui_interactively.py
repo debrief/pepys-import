@@ -109,19 +109,3 @@ async def test_delete_platform_type2(test_datastore):
         await send_text_with_delay(inp, "PlatformTy\r", 0.5)
 
         assert gui.current_table_object == test_datastore.db_classes.PlatformType
-
-        await asyncio.sleep(2)
-        await send_text_with_delay(inp, "\r")
-
-    # Should be one less PlatformType
-    with test_datastore.session_scope():
-        post_count = test_datastore.session.query(test_datastore.db_classes.PlatformType).count()
-        assert post_count == 18
-
-        # Should no longer have a 'Naval - aircraft' entry
-        entry_count = (
-            test_datastore.session.query(test_datastore.db_classes.PlatformType)
-            .filter_by(name="Naval - aircraft")
-            .count()
-        )
-        assert entry_count == 0
