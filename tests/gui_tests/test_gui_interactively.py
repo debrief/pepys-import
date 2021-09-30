@@ -1,39 +1,80 @@
-import sys
+import asyncio
+from contextlib import asynccontextmanager
 
 import pytest
+from loguru import logger
+from prompt_toolkit.application import create_app_session
+from prompt_toolkit.input import create_pipe_input
+from prompt_toolkit.input.ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
+from prompt_toolkit.keys import Keys
+from prompt_toolkit.output import DummyOutput
 
-from tests.gui_tests.gui_test_utils import run_gui
+from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
+from pepys_admin.maintenance.gui import MaintenanceGUI
 
-pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="Don't run on Windows")
-
-# These tests use the run_gui function to run the GUI in a Python terminal emulator
-# (provided by the pyte package). However, this doesn't work on Windows, so all
-# these tests are skipped on Windows.
-# Also, these tests only work properly if pytest is run with the -s option
-# that stops pytest trying to change where stdin is pointing to.
-# I tried various ways to configure this programatically, and they all
-# failed in various interesting and intermittent ways - so it is best
-# just to run these tests with -s.
-# The first few lines of each test skip the test if pytest hasn't been
-# run with -s - otherwise they would fail.
-# The CI configuration has been updated to do two test runs: one
-# for most of the tests without -s, and then the GUI tests with -s.
+logger.add("gui.log")
 
 
-def test_gui_opens(pytestconfig, test_datastore):
-    if pytestconfig.getoption("capture") != "no":
-        pytest.skip("Skipped because pytest was not run with -s option")
+@asynccontextmanager
+async def create_app_and_pipe(datastore, show_output=False, autoexit=True):
+    inp = create_pipe_input()
+    params = {"input": inp}
+    if not show_output:
+        params["output"] = DummyOutput()
+    with create_app_session(**params):
+        # Create our app
+        gui = MaintenanceGUI(datastore)
 
-    result = run_gui(test_datastore, print_output=True)
+        app_task = asyncio.create_task(gui.app.run_async())
+        await asyncio.sleep(2)
 
-    assert "Build filters  F3" in result
-    assert "Preview List   F6" in result
+        yield (inp, gui)
+
+        if autoexit:
+            gui.app.exit()  # or: app_task.cancel()
+
+        await app_task
 
 
-def test_gui_help(pytestconfig, test_datastore):
-    if pytestconfig.getoption("capture") != "no":
-        pytest.skip("Skipped because pytest was not run with -s option")
+async def send_text_with_delay(inp, text, delay=0.5):
+    # Just a key by itself
+    if isinstance(text, Keys):
+        char = REVERSE_ANSI_SEQUENCES[text]
+        inp.send_text(char)
+        await asyncio.sleep(delay)
+    # A string or a list of keys
+    for char in text:
+        if isinstance(char, Keys):
+            char = REVERSE_ANSI_SEQUENCES[char]
+        inp.send_text(char)
+        await asyncio.sleep(delay)
 
-    result = run_gui(test_datastore, keys=b"\x1bOP", print_output=True)  # Escape sequence for F1
 
-    assert "─| Help |─" in result
+@pytest.mark.asyncio
+async def test_gui_opens(test_datastore):
+    async with create_app_and_pipe(test_datastore, show_output=True, autoexit=False) as (inp, gui):
+        await send_text_with_delay(inp, [Keys.Escape, "\r"], 1)
+
+
+@pytest.mark.asyncio
+async def test_select_platform_type(test_datastore):
+    # Setup for our database access
+    async with create_app_and_pipe(test_datastore, show_output=True) as (inp, gui):
+        await send_text_with_delay(inp, "PlatformTy\r", 0.5)
+
+        # Check state here.
+        assert gui.current_table_object == test_datastore.db_classes.PlatformType
+
+
+@pytest.mark.asyncio
+async def test_show_help(test_datastore):
+    async with create_app_and_pipe(test_datastore, show_output=True) as (inp, gui):
+        # Open Help dialog
+        await send_text_with_delay(inp, Keys.F1, 0.5)
+
+        assert isinstance(gui.current_dialog, HelpDialog)
+
+        # Tab to the close button and close dialog
+        await send_text_with_delay(inp, "\t", 0.5)
+        await send_text_with_delay(inp, "\r", 0.5)
+        assert gui.current_dialog is None
