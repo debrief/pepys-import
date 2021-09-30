@@ -50,10 +50,8 @@ async def test_select_platform_type(test_datastore):
     async with create_app_and_pipe(test_datastore) as (inp, gui):
         await send_text_with_delay(inp, "PlatformTy\r", 0.5)
 
-        await asyncio.sleep(2)
-
         # Check state here.
-        # assert gui.current_table_object == test_datastore.db_classes.PlatformType
+        assert gui.current_table_object == test_datastore.db_classes.PlatformType
 
         # First entry is header, so we check 2nd entry
         assert isinstance(gui.table_objects[1], test_datastore.db_classes.PlatformType)
@@ -79,11 +77,38 @@ async def test_delete_platform_type(test_datastore):
     with test_datastore.session_scope():
         pre_count = test_datastore.session.query(test_datastore.db_classes.PlatformType).count()
         assert pre_count == 19
-    # Setup for our database access
+
     async with create_app_and_pipe(test_datastore) as (inp, gui):
         await send_text_with_delay(inp, "PlatformTy\r", 0.5)
 
         await send_text_with_delay(inp, [Keys.F6, Keys.Down, " ", "4", "\r"])
+
+        await asyncio.sleep(2)
+        await send_text_with_delay(inp, "\r")
+
+    # Should be one less PlatformType
+    with test_datastore.session_scope():
+        post_count = test_datastore.session.query(test_datastore.db_classes.PlatformType).count()
+        assert post_count == 18
+
+        # Should no longer have a 'Naval - aircraft' entry
+        entry_count = (
+            test_datastore.session.query(test_datastore.db_classes.PlatformType)
+            .filter_by(name="Naval - aircraft")
+            .count()
+        )
+        assert entry_count == 0
+
+
+async def test_delete_platform_type2(test_datastore):
+    with test_datastore.session_scope():
+        pre_count = test_datastore.session.query(test_datastore.db_classes.PlatformType).count()
+        assert pre_count == 19
+
+    async with create_app_and_pipe(test_datastore) as (inp, gui):
+        await send_text_with_delay(inp, "PlatformTy\r", 0.5)
+
+        assert gui.current_table_object == test_datastore.db_classes.PlatformType
 
         await asyncio.sleep(2)
         await send_text_with_delay(inp, "\r")
