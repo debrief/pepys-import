@@ -73,6 +73,28 @@ async def test_show_help(test_datastore):
         assert gui.current_dialog is None
 
 
+async def test_filtering(test_datastore):
+    async with create_app_and_pipe(test_datastore, show_output=True) as (inp, gui):
+        await send_text_with_delay(inp, "Plat\r", 0.5)
+        await asyncio.sleep(1)
+        await send_text_with_delay(
+            inp, ["\t", Keys.Down, Keys.Down, "\r", "\t", "\t", Keys.Down, "\r"]
+        )
+
+        assert len(gui.table_data) == 2
+
+
+async def test_filtering_no_show_output(test_datastore):
+    async with create_app_and_pipe(test_datastore, show_output=False) as (inp, gui):
+        await send_text_with_delay(inp, "Plat\r", 0.5)
+        await asyncio.sleep(1)
+        await send_text_with_delay(
+            inp, ["\t", Keys.Down, Keys.Down, "\r", "\t", "\t", Keys.Down, "\r"]
+        )
+
+        assert len(gui.table_data) == 2
+
+
 async def test_delete_platform_type(test_datastore):
     with test_datastore.session_scope():
         pre_count = test_datastore.session.query(test_datastore.db_classes.PlatformType).count()
@@ -83,7 +105,7 @@ async def test_delete_platform_type(test_datastore):
 
         await asyncio.sleep(1)
 
-        await send_text_with_delay(inp, [Keys.F6, Keys.Down, " ", "4", "\r"], delay=5)
+        await send_text_with_delay(inp, [Keys.F6, Keys.Down, " ", "4", "\r"])
 
         await asyncio.sleep(20)
         await send_text_with_delay(inp, "\r")
