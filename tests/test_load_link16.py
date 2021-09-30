@@ -1,10 +1,12 @@
 # import datetime
 import os
 import unittest
+from datetime import datetime
 
 from importers.link_16_importer import Link16Importer
 from pepys_import.core.store.data_store import DataStore
-from pepys_import.file.file_processor import FileProcessor
+
+# from pepys_import.file.file_processor import FileProcessor
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH_V1 = os.path.join(
@@ -23,32 +25,52 @@ class TestLoadLink16(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_process_link16_v1_data(self):
-        processor = FileProcessor(archive=False)
-        processor.register_importer(Link16Importer())
+    def test_extract_timestamp_relative_v1(self):
+        filename = "GEV_09-05-2021T16-10-00.raw-PPLI_201.csv"
+        assert Link16Importer.extract_timestamp(filename) == "09-05-2021T16-10-00"
 
-        # check states empty
-        with self.store.session_scope():
-            # there must be no states at the beginning
-            states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 0)
+    def test_extract_timestamp_relative_v2(self):
+        filename = "GEV_12-09-2021T09-25-00.raw-SLOTS_JMSG.csv"
+        assert Link16Importer.extract_timestamp(filename) == "12-09-2021T09-25-00"
 
-            # there must be no platforms at the beginning
-            platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 0)
+    def test_convert_timestamp_ambiguous_day_month(self):
+        timestamp = "09-05-2021T16-10-00"
+        assert Link16Importer.timestamp_to_datetime(timestamp) == datetime(2021, 5, 9, 16, 10, 0)
 
-            # there must be no datafiles at the beginning
-            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 0)
+    def test_convert_timestamp_missing(self):
+        timestamp = ""
+        assert Link16Importer.timestamp_to_datetime(timestamp) is False
 
-        # parse the data
-        processor.process(DATA_PATH_V1, self.store, False)
+    def test_convert_timestamp_invalid(self):
+        timestamp = "123456-7-8-9"
+        assert Link16Importer.timestamp_to_datetime(timestamp) is False
 
-        # check data got created
-        with self.store.session_scope():
-            # there must be states after the import
-            states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 8)
+    # def test_process_link16_v1_data(self):
+    #     processor = FileProcessor(archive=False)
+    #     processor.register_importer(Link16Importer())
+
+    #     # check states empty
+    #     with self.store.session_scope():
+    #         # there must be no states at the beginning
+    #         states = self.store.session.query(self.store.db_classes.State).all()
+    #         self.assertEqual(len(states), 0)
+
+    #         # there must be no platforms at the beginning
+    #         platforms = self.store.session.query(self.store.db_classes.Platform).all()
+    #         self.assertEqual(len(platforms), 0)
+
+    #         # there must be no datafiles at the beginning
+    #         datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+    #         self.assertEqual(len(datafiles), 0)
+
+    #     # parse the data
+    #     processor.process(DATA_PATH_V1, self.store, False)
+
+    #     # check data got created
+    #     with self.store.session_scope():
+    #         # there must be states after the import
+    #         states = self.store.session.query(self.store.db_classes.State).all()
+    #         self.assertEqual(len(states), 8)
 
     #         # there must be platforms after the import
     #         platforms = self.store.session.query(self.store.db_classes.Platform).all()
