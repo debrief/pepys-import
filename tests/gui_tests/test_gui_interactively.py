@@ -83,9 +83,9 @@ async def test_delete_platform_type(test_datastore):
 
         await asyncio.sleep(1)
 
-        await send_text_with_delay(inp, [Keys.F6, Keys.Down, " ", "4", "\r"], delay=1)
+        await send_text_with_delay(inp, [Keys.F6, Keys.Down, " ", "4", "\r"], delay=5)
 
-        await asyncio.sleep(2)
+        await asyncio.sleep(20)
         await send_text_with_delay(inp, "\r")
 
     with open("gui.log") as f:

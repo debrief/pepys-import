@@ -768,6 +768,7 @@ class MaintenanceGUI:
             return dependent_objects
 
         async def coroutine():
+            logger.debug("In coroutine")
             entries = await self.get_all_selected_entries()
 
             if len(entries) == 0:
