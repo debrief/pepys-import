@@ -3,7 +3,7 @@ import asyncio
 
 async def test_simple(test_datastore):
     print("Test")
-    asyncio.sleep(2)
+    await asyncio.sleep(2)
     print("After sleep")
 
 
