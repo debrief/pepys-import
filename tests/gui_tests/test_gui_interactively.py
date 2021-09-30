@@ -101,9 +101,9 @@ async def test_delete_platform_type(test_datastore):
 
 
 async def test_delete_platform_type2(test_datastore):
-    with test_datastore.session_scope():
-        pre_count = test_datastore.session.query(test_datastore.db_classes.PlatformType).count()
-        assert pre_count == 19
+    # with test_datastore.session_scope():
+    #     pre_count = test_datastore.session.query(test_datastore.db_classes.PlatformType).count()
+    #     assert pre_count == 19
 
     async with create_app_and_pipe(test_datastore) as (inp, gui):
         await send_text_with_delay(inp, "PlatformTy\r", 0.5)
