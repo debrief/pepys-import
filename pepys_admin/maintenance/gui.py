@@ -793,14 +793,14 @@ class MaintenanceGUI:
                 selected_items_text = f"{len(entries)} items selected"
 
             selected_ids = convert_objects_to_ids(entries, self.current_table_object)
-
+            logger.debug("Converted objects to IDs")
             dialog = ProgressDialog(
                 "Finding dependent items (may take a while)",
                 partial(do_find_dependent_objects, self.current_table_object, selected_ids),
                 show_cancel=True,
             )
             dependent_objects = await self.show_dialog_as_float(dialog)
-
+            logger.debug("Just awaited find dep objs progress dialog")
             if isinstance(dependent_objects, Exception):
                 await self.show_messagebox_async(
                     "Error",
