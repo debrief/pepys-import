@@ -51,7 +51,7 @@ jobs:
           PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
           SQLALCHEMY_WARN_20: 1
         run: |
-          pytest tests/gui_tests/test_gui_interactively.py
+          pytest tests/gui_tests/test_gui_interactively.py -s -vv
 
       - name: Run black
         shell: bash -l {0}

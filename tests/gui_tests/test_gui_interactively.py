@@ -1,7 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-import pytest
 from loguru import logger
 from prompt_toolkit.application import create_app_session
 from prompt_toolkit.input import create_pipe_input
@@ -54,13 +53,11 @@ async def send_text_with_delay(inp, text, delay=0.5):
         await asyncio.sleep(delay)
 
 
-@pytest.mark.asyncio
 async def test_gui_opens(test_datastore):
     async with create_app_and_pipe(test_datastore, autoexit=False) as (inp, gui):
         await send_text_with_delay(inp, [Keys.Escape, "\r"], 1)
 
 
-@pytest.mark.asyncio
 async def test_select_platform_type(test_datastore):
     # Setup for our database access
     async with create_app_and_pipe(test_datastore) as (inp, gui):
@@ -76,7 +73,6 @@ async def test_select_platform_type(test_datastore):
         assert len(gui.table_data) == 20
 
 
-@pytest.mark.asyncio
 async def test_show_help(test_datastore):
     async with create_app_and_pipe(test_datastore) as (inp, gui):
         # Open Help dialog
@@ -90,7 +86,6 @@ async def test_show_help(test_datastore):
         assert gui.current_dialog is None
 
 
-@pytest.mark.asyncio
 async def test_delete_platform_type(test_datastore):
     with test_datastore.session_scope():
         pre_count = test_datastore.session.query(test_datastore.db_classes.PlatformType).count()
