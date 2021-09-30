@@ -696,7 +696,7 @@ class State(BaseSpatiaLite, StateMixin, ElevationPropertyMixin, LocationProperty
     table_type_id = 28
 
     state_id = Column(UUIDType, primary_key=True, default=uuid4)
-    time = Column(TIMESTAMP, nullable=False)
+    time = Column(TIMESTAMP, nullable=False, index=True)
     sensor_id = Column(
         UUIDType,
         ForeignKey("Sensors.sensor_id", onupdate="cascade", ondelete="cascade"),
@@ -754,7 +754,7 @@ class Contact(BaseSpatiaLite, ContactMixin, LocationPropertyMixin, ElevationProp
         ForeignKey("Sensors.sensor_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
-    time = Column(TIMESTAMP, nullable=False)
+    time = Column(TIMESTAMP, nullable=False, index=True)
     _bearing = deferred(Column("bearing", REAL))
     _rel_bearing = deferred(Column("rel_bearing", REAL))
     _ambig_bearing = deferred(Column("ambig_bearing", REAL))
@@ -822,8 +822,8 @@ class Activation(BaseSpatiaLite, ActivationMixin):
         ForeignKey("Sensors.sensor_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
-    start = deferred(Column(TIMESTAMP))
-    end = deferred(Column(TIMESTAMP))
+    start = deferred(Column(TIMESTAMP, index=True))
+    end = deferred(Column(TIMESTAMP, index=True))
     _min_range = deferred(Column("min_range", REAL))
     _max_range = deferred(Column("max_range", REAL))
     _left_arc = deferred(Column("left_arc", REAL))
@@ -888,7 +888,7 @@ class Comment(BaseSpatiaLite, CommentMixin):
     platform_id = Column(
         UUIDType, ForeignKey("Platforms.platform_id", onupdate="cascade", ondelete="cascade")
     )
-    time = Column(TIMESTAMP, nullable=False)
+    time = Column(TIMESTAMP, nullable=False, index=True)
     comment_type_id = Column(
         UUIDType,
         ForeignKey("CommentTypes.comment_type_id", onupdate="cascade", ondelete="cascade"),
@@ -930,8 +930,8 @@ class Geometry1(BaseSpatiaLite, GeometryMixin):
         ForeignKey("GeometrySubTypes.geo_sub_type_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
-    start = Column(TIMESTAMP)
-    end = Column(TIMESTAMP)
+    start = Column(TIMESTAMP, index=True)
+    end = Column(TIMESTAMP, index=True)
     serial_id = Column(
         UUIDType, ForeignKey("Serials.serial_id", onupdate="cascade", ondelete="cascade")
     )
@@ -972,7 +972,7 @@ class Media(BaseSpatiaLite, MediaMixin, ElevationPropertyMixin, LocationProperty
         Column("location", Geometry(geometry_type="POINT", srid=4326, management=True))
     )
     _elevation = deferred(Column("elevation", REAL))
-    time = Column(TIMESTAMP)
+    time = Column(TIMESTAMP, index=True)
     media_type_id = Column(
         UUIDType,
         ForeignKey("MediaTypes.media_type_id", onupdate="cascade", ondelete="cascade"),
