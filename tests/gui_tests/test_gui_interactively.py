@@ -36,25 +36,26 @@ async def create_app_and_pipe(datastore, show_output=False, autoexit=True):
         print("Finished")
 
 
-# async def send_text_with_delay(inp, text, delay=0.5):
-#     # Just a key by itself
-#     if isinstance(text, Keys):
-#         char = REVERSE_ANSI_SEQUENCES[text]
-#         inp.send_text(char)
-#         await asyncio.sleep(delay)
-#     # A string or a list of keys
-#     for char in text:
-#         if isinstance(char, Keys):
-#             char = REVERSE_ANSI_SEQUENCES[char]
-#         inp.send_text(char)
-#         await asyncio.sleep(delay)
+async def send_text_with_delay(inp, text, delay=0.5):
+    # Just a key by itself
+    if isinstance(text, Keys):
+        char = REVERSE_ANSI_SEQUENCES[text]
+        inp.send_text(char)
+        await asyncio.sleep(delay)
+    # A string or a list of keys
+    for char in text:
+        if isinstance(char, Keys):
+            char = REVERSE_ANSI_SEQUENCES[char]
+        inp.send_text(char)
+        await asyncio.sleep(delay)
 
 
 async def test_simple(test_datastore):
     print("Test")
     async with create_app_and_pipe(test_datastore, autoexit=True) as (inp, gui):
-        pass
+        await send_text_with_delay(inp, [Keys.Escape, "\r"], 1)
     print("After with")
+
 
 # async def test_gui_opens(test_datastore):
 #     async with create_app_and_pipe(test_datastore, autoexit=False) as (inp, gui):
