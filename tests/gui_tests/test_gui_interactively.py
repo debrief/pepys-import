@@ -81,6 +81,8 @@ async def test_delete_platform_type(test_datastore):
     async with create_app_and_pipe(test_datastore) as (inp, gui):
         await send_text_with_delay(inp, "PlatformTy\r", 0.5)
 
+        asyncio.sleep(1)
+
         await send_text_with_delay(inp, [Keys.F6, Keys.Down, " ", "4", "\r"])
 
         await asyncio.sleep(2)
