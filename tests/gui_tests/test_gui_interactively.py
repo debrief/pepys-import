@@ -1,51 +1,39 @@
 import asyncio
+from contextlib import asynccontextmanager
+
+from prompt_toolkit.application import create_app_session
+from prompt_toolkit.input import create_pipe_input
+from prompt_toolkit.input.ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
+from prompt_toolkit.keys import Keys
+from prompt_toolkit.output import DummyOutput
+
+from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
+from pepys_admin.maintenance.gui import MaintenanceGUI
 
 
-async def test_simple(test_datastore):
-    print("Test")
-    await asyncio.sleep(2)
-    print("After sleep")
+@asynccontextmanager
+async def create_app_and_pipe(datastore, show_output=False, autoexit=True):
+    inp = create_pipe_input()
+    params = {"input": inp}
+    if not show_output:
+        params["output"] = DummyOutput()
+    print("About to create app session")
+    with create_app_session(**params):
+        # Create our app
+        gui = MaintenanceGUI(datastore)
+        print("Created app object")
 
+        app_task = asyncio.create_task(gui.app.run_async())
+        print("Ran async")
+        await asyncio.sleep(2)
+        print("Slept - about to yield")
+        yield (inp, gui)
+        print("Yielded")
+        if autoexit:
+            gui.app.exit()  # or: app_task.cancel()
 
-# import asyncio
-# from contextlib import asynccontextmanager
-
-# from loguru import logger
-# from prompt_toolkit.application import create_app_session
-# from prompt_toolkit.input import create_pipe_input
-# from prompt_toolkit.input.ansi_escape_sequences import REVERSE_ANSI_SEQUENCES
-# from prompt_toolkit.keys import Keys
-# from prompt_toolkit.output import DummyOutput
-
-# from pepys_admin.maintenance.dialogs.help_dialog import HelpDialog
-# from pepys_admin.maintenance.gui import MaintenanceGUI
-
-# logger.add("gui.log")
-
-
-# @asynccontextmanager
-# async def create_app_and_pipe(datastore, show_output=False, autoexit=True):
-#     inp = create_pipe_input()
-#     params = {"input": inp}
-#     if not show_output:
-#         params["output"] = DummyOutput()
-#     print("About to create app session")
-#     with create_app_session(**params):
-#         # Create our app
-#         gui = MaintenanceGUI(datastore)
-#         print("Created app object")
-
-#         app_task = asyncio.create_task(gui.app.run_async())
-#         print("Ran async")
-#         await asyncio.sleep(2)
-#         print("Slept - about to yield")
-#         yield (inp, gui)
-#         print("Yielded")
-#         if autoexit:
-#             gui.app.exit()  # or: app_task.cancel()
-
-#         await app_task
-#         print("Finished")
+        await app_task
+        print("Finished")
 
 
 # async def send_text_with_delay(inp, text, delay=0.5):
@@ -61,6 +49,12 @@ async def test_simple(test_datastore):
 #         inp.send_text(char)
 #         await asyncio.sleep(delay)
 
+
+async def test_simple(test_datastore):
+    print("Test")
+    async with create_app_and_pipe(test_datastore, autoexit=True) as (inp, gui):
+        pass
+    print("After with")
 
 # async def test_gui_opens(test_datastore):
 #     async with create_app_and_pipe(test_datastore, autoexit=False) as (inp, gui):
