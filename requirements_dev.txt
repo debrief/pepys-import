@@ -18,3 +18,4 @@ pytest-benchmark
 pyte
 freezegun==1.*
 pexpect
+pytest-asyncio
