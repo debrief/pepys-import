@@ -52,14 +52,14 @@ async def send_text_with_delay(inp, text, delay=0.5):
 
 @pytest.mark.asyncio
 async def test_gui_opens(test_datastore):
-    async with create_app_and_pipe(test_datastore, show_output=True, autoexit=False) as (inp, gui):
+    async with create_app_and_pipe(test_datastore, autoexit=False) as (inp, gui):
         await send_text_with_delay(inp, [Keys.Escape, "\r"], 1)
 
 
 @pytest.mark.asyncio
 async def test_select_platform_type(test_datastore):
     # Setup for our database access
-    async with create_app_and_pipe(test_datastore, show_output=True) as (inp, gui):
+    async with create_app_and_pipe(test_datastore) as (inp, gui):
         await send_text_with_delay(inp, "PlatformTy\r", 0.5)
 
         # Check state here.
@@ -68,7 +68,7 @@ async def test_select_platform_type(test_datastore):
 
 @pytest.mark.asyncio
 async def test_show_help(test_datastore):
-    async with create_app_and_pipe(test_datastore, show_output=True) as (inp, gui):
+    async with create_app_and_pipe(test_datastore) as (inp, gui):
         # Open Help dialog
         await send_text_with_delay(inp, Keys.F1, 0.5)
 
