@@ -12,28 +12,23 @@ from pepys_admin.maintenance.gui import MaintenanceGUI
 
 
 @asynccontextmanager
-async def create_app_and_pipe(datastore, show_output=False, autoexit=True):
+async def create_app_and_pipe(datastore, show_output=False):
     inp = create_pipe_input()
     params = {"input": inp}
     if not show_output:
         params["output"] = DummyOutput()
-    print("About to create app session")
     with create_app_session(**params):
         # Create our app
         gui = MaintenanceGUI(datastore)
-        print("Created app object")
 
         app_task = asyncio.create_task(gui.app.run_async())
-        print("Ran async")
         await asyncio.sleep(2)
-        print("Slept - about to yield")
+
         yield (inp, gui)
-        print("Yielded")
-        if autoexit:
-            gui.app.exit()  # or: app_task.cancel()
+
+        gui.app.exit()  # or: app_task.cancel()
 
         await app_task
-        print("Finished")
 
 
 async def send_text_with_delay(inp, text, delay=0.5):
@@ -54,6 +49,8 @@ async def test_select_platform_type(test_datastore):
     # Setup for our database access
     async with create_app_and_pipe(test_datastore) as (inp, gui):
         await send_text_with_delay(inp, "PlatformTy\r", 0.5)
+
+        await asyncio.sleep(2)
 
         # Check state here.
         assert gui.current_table_object == test_datastore.db_classes.PlatformType
