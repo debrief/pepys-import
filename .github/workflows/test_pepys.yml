@@ -37,13 +37,13 @@ jobs:
         shell: bash -l {0}
         run: pip install pytest-github-actions-annotate-failures
 
-      - name: Run tests (non GUI)
-        shell: bash -l {0}
-        env:
-          PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
-          SQLALCHEMY_WARN_20: 1
-        run: |
-          coverage3 run -m pytest -v --color=yes --ignore=tests/gui_tests tests/ -Werror
+      # - name: Run tests (non GUI)
+      #   shell: bash -l {0}
+      #   env:
+      #     PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
+      #     SQLALCHEMY_WARN_20: 1
+      #   run: |
+      #     coverage3 run -m pytest -v --color=yes --ignore=tests/gui_tests tests/ -Werror
 
       - name: Run tests (GUI)
         shell: bash -l {0}
@@ -51,7 +51,7 @@ jobs:
           PEPYS_SPATIALITE_PATH: /usr/lib/x86_64-linux-gnu/mod_spatialite.so
           SQLALCHEMY_WARN_20: 1
         run: |
-          coverage3 run -a -m pytest -v --color=yes -s tests/gui_tests -Werror
+          coverage3 run -a -m pytest -v --color=yes -s tests/gui_tests/test_gui_interactively.py -Werror
 
       - name: Run black
         shell: bash -l {0}

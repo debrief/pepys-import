@@ -21,19 +21,23 @@ async def create_app_and_pipe(datastore, show_output=False, autoexit=True):
     params = {"input": inp}
     if not show_output:
         params["output"] = DummyOutput()
+    print("About to create app session")
     with create_app_session(**params):
         # Create our app
         gui = MaintenanceGUI(datastore)
+        print("Created app object")
 
         app_task = asyncio.create_task(gui.app.run_async())
+        print("Ran async")
         await asyncio.sleep(2)
-
+        print("Slept - about to yield")
         yield (inp, gui)
-
+        print("Yielded")
         if autoexit:
             gui.app.exit()  # or: app_task.cancel()
 
         await app_task
+        print("Finished")
 
 
 async def send_text_with_delay(inp, text, delay=0.5):
