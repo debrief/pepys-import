@@ -83,10 +83,13 @@ async def test_delete_platform_type(test_datastore):
 
         await asyncio.sleep(1)
 
-        await send_text_with_delay(inp, [Keys.F6, Keys.Down, " ", "4", "\r"])
+        await send_text_with_delay(inp, [Keys.F6, Keys.Down, " ", "4", "\r"], delay=1)
 
         await asyncio.sleep(2)
         await send_text_with_delay(inp, "\r")
+
+    with open("gui.log") as f:
+        print(f.read())
 
     # Should be one less PlatformType
     with test_datastore.session_scope():

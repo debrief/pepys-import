@@ -742,7 +742,10 @@ class MaintenanceGUI:
         ensure_future(coroutine())
 
     def run_delete(self):
+        logger.debug("In run_delete")
+
         def do_delete(table_object, ids, set_percentage=None, is_cancelled=None):
+            logger.debug("In do delete")
             with self.data_store.session_scope():
                 change_id = self.data_store.add_to_changes(
                     USER, datetime.utcnow(), "Manual delete from Maintenance GUI"
@@ -753,6 +756,7 @@ class MaintenanceGUI:
         def do_find_dependent_objects(
             table_object, selected_ids, set_percentage=None, is_cancelled=None
         ):
+            logger.debug("In do_find_dep_objs")
             with self.data_store.session_scope():
                 dependent_objects = self.data_store.find_dependent_objects(
                     table_object,
