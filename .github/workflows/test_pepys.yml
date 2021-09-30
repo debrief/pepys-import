@@ -56,12 +56,12 @@ jobs:
       - name: Run black
         shell: bash -l {0}
         run: |
-          black --check --diff importers pepys_import pepys_admin
+          black --check --diff importers pepys_import pepys_admin pepys_timeline tests
 
       - name: Run isort
         shell: bash -l {0}
         run: |
-          isort --check-only --diff importers pepys_import pepys_admin
+          isort --check-only --diff importers pepys_import pepys_admin pepys_timeline tests
 
       - name: Get coverage report
         shell: bash -l {0}
