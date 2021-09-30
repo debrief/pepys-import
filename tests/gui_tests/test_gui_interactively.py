@@ -52,7 +52,7 @@ async def send_text_with_delay(inp, text, delay=0.5):
 
 async def test_simple(test_datastore):
     print("Test")
-    async with create_app_and_pipe(test_datastore, autoexit=True) as (inp, gui):
+    async with create_app_and_pipe(test_datastore, autoexit=False) as (inp, gui):
         await send_text_with_delay(inp, [Keys.Escape, "\r"], 1)
     print("After with")
 
