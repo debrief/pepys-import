@@ -75,21 +75,6 @@ class Link16Importer(Importer):
             # To skip over any blank lines
             return
 
-        # Time wrangling - TODO - consider extracting into a method
-        time_token = tokens[1]
-        line_time = timedelta(
-            hours=0,
-            minutes=int(time_token.text[:2]),
-            seconds=float(time_token.text[3:]),
-        )
-
-        if line_time < self.previous_time:
-            self.current_hour += 1
-
-        self.previous_time = line_time
-        line_time += timedelta(hours=self.current_hour)
-        line_time += self.base_timestamp
-
         if self.version == 1:
             if len(tokens) < 15:
                 self.errors.append(
@@ -115,6 +100,21 @@ class Link16Importer(Importer):
             heading_token = tokens[16]
             speed_token = tokens[17]
             altitude_token = tokens[15]
+
+        # Time wrangling - TODO - consider extracting into a method
+        time_token = tokens[1]
+        line_time = timedelta(
+            hours=0,
+            minutes=int(time_token.text[:2]),
+            seconds=float(time_token.text[3:]),
+        )
+
+        if line_time < self.previous_time:
+            self.current_hour += 1
+
+        self.previous_time = line_time
+        line_time += timedelta(hours=self.current_hour)
+        line_time += self.base_timestamp
 
         # -- TODO - Confirm that this is correct for this data
         platform = self.get_cached_platform(

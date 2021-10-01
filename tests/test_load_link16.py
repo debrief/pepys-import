@@ -7,6 +7,7 @@ from sqlalchemy import func
 from importers.link_16_importer import Link16Importer
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from tests.utils import check_errors_for_file_contents
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH_V1 = os.path.join(
@@ -134,6 +135,16 @@ class TestLoadLink16(unittest.TestCase):
             )
             assert len(results) == 1
             assert results[0].time == datetime(2021, 5, 16, 2, 8, 40, 500000)
+
+    def test_wrong_length_file_v1(self):
+        link16_importer = Link16Importer()
+        # Not enough tokens test
+        check_errors_for_file_contents(
+            "PPLI,TOD\nSomeStr,49:23.7",
+            "Not enough tokens",
+            link16_importer,
+            filename="link16-test.csv",
+        )
 
 
 """ Things to test:
