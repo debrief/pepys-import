@@ -6,7 +6,7 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import backref, declared_attr, relationship
 from tqdm import tqdm
 
-from config import LOCAL_BASIC_TESTS, LOCAL_ENHANCED_TESTS
+import config
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.store import constants
@@ -18,8 +18,20 @@ from pepys_import.utils.import_utils import import_validators
 from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
 from pepys_import.utils.text_formatting_utils import format_error_menu
 
-LOCAL_BASIC_VALIDATORS = import_validators(LOCAL_BASIC_TESTS)
-LOCAL_ENHANCED_VALIDATORS = import_validators(LOCAL_ENHANCED_TESTS)
+LOCAL_BASIC_VALIDATORS = []
+LOCAL_ENHANCED_VALIDATORS = []
+
+
+def reload_local_validators():
+    global LOCAL_BASIC_VALIDATORS, LOCAL_ENHANCED_VALIDATORS
+    LOCAL_BASIC_VALIDATORS = import_validators(config.LOCAL_BASIC_TESTS)
+    LOCAL_ENHANCED_VALIDATORS = import_validators(config.LOCAL_ENHANCED_TESTS)
+
+
+# On initial load of this file, load the local validators (saves us doing it once
+# for each file we process). This function can be called in a test to reload them,
+# after we've played with the config values as part of a test
+reload_local_validators()
 
 
 class HostedByMixin:
@@ -624,6 +636,33 @@ class DatafileMixin:
     def datafile_type_name(self):
         return association_proxy("datafile_type", "name")
 
+    def flush_extracted_tokens(self):
+        """Flush the current list of extracted tokens out to the dict linking measurement
+        objects to tokens, ready for writing to the database at the end of the import.
+
+        This should be called when all the extractions have been done for a _single_ measurement
+        object (State/Contact etc). Often this will be at the end of the `_load_this_line()` method,
+        but in more complex importers it may be needed elsewhere."""
+        if len(self.pending_extracted_tokens) == 0:
+            return
+
+        # If there aren't any tokens recorded for this measurement object already
+        # then put the list into the dict. If there are already tokens recorded, then append the list
+        # to the list that's already in the dict
+        if (
+            self.measurement_object_to_tokens_list.get(self.current_measurement_object, None)
+            is None
+        ):
+            self.measurement_object_to_tokens_list[
+                self.current_measurement_object
+            ] = self.pending_extracted_tokens
+        else:
+            self.measurement_object_to_tokens_list[
+                self.current_measurement_object
+            ] += self.pending_extracted_tokens
+
+        self.pending_extracted_tokens = []
+
     def create_state(self, data_store, platform, sensor, timestamp, parser_name):
         """Creates a new State object to record information on the state of a particular
         platform at a specific time.
@@ -654,6 +693,8 @@ class DatafileMixin:
             platform=platform,
         )
         self.add_measurement_to_dict(state, parser_name)
+
+        self.current_measurement_object = state
         return state
 
     def create_contact(self, data_store, platform, sensor, timestamp, parser_name):
@@ -686,6 +727,7 @@ class DatafileMixin:
             platform=platform,
         )
         self.add_measurement_to_dict(contact, parser_name)
+        self.current_measurement_object = contact
         return contact
 
     def create_comment(
@@ -727,6 +769,7 @@ class DatafileMixin:
             platform=platform,
         )
         self.add_measurement_to_dict(comment, parser_name)
+        self.current_measurement_object = comment
         return comment
 
     def create_geometry(self, data_store, geom, geom_type_id, geom_sub_type_id, parser_name):
@@ -737,6 +780,7 @@ class DatafileMixin:
             geo_sub_type_id=geom_sub_type_id,
         )
         self.add_measurement_to_dict(geometry, parser_name)
+        self.current_measurement_object = geometry
         return geometry
 
     def create_activation(self, data_store, sensor, start, end, parser_name):
@@ -747,6 +791,7 @@ class DatafileMixin:
             source_id=self.datafile_id,
         )
         self.add_measurement_to_dict(activation, parser_name)
+        self.current_measurement_object = activation
         return activation
 
     def add_measurement_to_dict(self, measurement, parser_name):
@@ -801,6 +846,7 @@ class DatafileMixin:
         parser="Default",
         skip_validation=False,
     ):
+
         # If there is no parsing error, it will return None. If that's the case,
         # create a new list for validation errors.
         if errors is None:
@@ -882,7 +928,6 @@ class DatafileMixin:
                                         del errors[-1]
 
                     prev_object_dict[curr_object.platform_name] = curr_object
-
             if not errors:
                 return (True, failed_validators)
             return (False, failed_validators)
@@ -922,6 +967,30 @@ class DatafileMixin:
                     )
 
             extraction_log.append(f"{total_objects} measurements extracted by {parser}.")
+
+        # Loop through the dict linking measurement objects to lists of extraction tokens
+        # and fill in more details on the extraction tokens, then join all the lists together
+        # ready for insert into the database
+        extraction_data = []
+        for measurement_obj, tokens_data in self.measurement_object_to_tokens_list.items():
+            if measurement_obj is None:
+                continue
+            for entry in tokens_data:
+                entry_id = getattr(measurement_obj, get_primary_key_for_table(measurement_obj))
+                entry["entry_id"] = entry_id
+                entry["destination_table"] = measurement_obj.__table__.name
+                entry["datafile_id"] = self.datafile_id
+            extraction_data += tokens_data
+
+        print("Submitting extraction data")
+        for chunk_extraction_data in tqdm(chunked_list(extraction_data, size=1000)):
+            data_store.session.bulk_insert_mappings(
+                data_store.db_classes.Extraction, chunk_extraction_data
+            )
+
+        self.measurement_object_to_tokens_list = {}
+        self.pending_extracted_tokens = []
+
         return extraction_log
 
 
@@ -2015,3 +2084,8 @@ class GeometrySubTypeMixin:
 class NationalityMixin:
     _default_preview_fields = ["name", "priority"]
     _default_dropdown_fields = ["name"]
+
+
+class ExtractionMixin:
+    _default_preview_fields = ["field", "text", "interpreted_value"]
+    _default_dropdown_fields = ["field", "text", "interpreted_value"]

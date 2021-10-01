@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 from tqdm import tqdm
 
+from pepys_import.file.highlighter.level import HighlightLevel
 from pepys_import.utils.text_formatting_utils import (
     custom_print_formatted_text,
     format_error_message,
@@ -22,13 +23,20 @@ class Importer(ABC):
         self.errors = None
         self.error_type = None
 
-        self.do_recording = True
+        # By default all importers will record extractions to a highlighted
+        # HTML file, but not record them to the database
+        self.highlighting_level = HighlightLevel.HTML
 
     def __str__(self):
         return self.name
 
-    def disable_recording(self):
-        self.do_recording = False
+    def set_highlighting_level(self, level):
+        """Sets the HighlightLevel of recording highlighted extractions. Can be one of:
+
+        - NONE: No highlighting or recording of extractions
+        - HTML: Produce a highlighted html file showing the extractions
+        - DATABASE: Produce a highlighted html file and record extractions to the database"""
+        self.highlighting_level = level
 
     @abstractmethod
     def can_load_this_type(self, suffix) -> bool:
@@ -97,6 +105,9 @@ class Importer(ABC):
         self.error_type = f"{self.short_name} - Parsing error on {basename}"
         datafile.measurements[self.short_name] = dict()
 
+        datafile.current_measurement_object = None
+        datafile.pending_extracted_tokens = []
+
         # Initialise the platform->sensor mapping here
         # so that we get a separate mapping for each file that we process
         self.platform_sensor_mapping = {}
@@ -105,11 +116,7 @@ class Importer(ABC):
         # so we get a separate cache for each file we process
         self.platform_cache = {}
 
-        # If we've turned off recording of extractions for this importer
-        # then add this to the list of ignored importers for this HighlightedFile
-        # object
-        if not self.do_recording:
-            file_object.ignored_importers.append(self.name)
+        file_object.importer_highlighting_levels[self.name] = self.highlighting_level
 
         # perform load
         self._load_this_file(data_store, path, file_object, datafile, change_id)

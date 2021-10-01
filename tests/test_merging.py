@@ -999,6 +999,10 @@ class TestMergeStateFromImport(unittest.TestCase):
                 sqlalchemy_obj_to_dict(item, remove_id=True) for item in results
             ]
 
+            self.master_extractions_count = self.master_store.session.query(
+                self.master_store.db_classes.Extraction.extraction_id
+            ).count()
+
         # Import two files into slave
         processor = FileProcessor(archive=False)
         processor.load_importers_dynamically()
@@ -1089,6 +1093,25 @@ class TestMergeStateFromImport(unittest.TestCase):
                 )
                 assert len(results) == len(self.master_gpx_states)
 
+                # Check that the extractions copied over properly and didn't duplicate
+                slave_new_extractions_count = (
+                    self.slave_store.session.query(
+                        self.slave_store.db_classes.Extraction.extraction_id
+                    )
+                    .join(self.slave_store.db_classes.Datafile)
+                    .filter(self.slave_store.db_classes.Datafile.reference == "uk_track.rep")
+                    .count()
+                )
+
+                after_merge_extractions_count = self.master_store.session.query(
+                    self.master_store.db_classes.Extraction.extraction_id
+                ).count()
+
+                assert (
+                    after_merge_extractions_count
+                    == self.master_extractions_count + slave_new_extractions_count
+                )
+
 
 @pytest.mark.postgres
 class TestMergeStateFromImport_Postgres(unittest.TestCase):
@@ -1106,8 +1129,7 @@ class TestMergeStateFromImport_Postgres(unittest.TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
 
         self.master_store = DataStore(
             db_name="test",
@@ -2377,8 +2399,7 @@ class TestExportAlterAndMerge_Postgres(unittest.TestCase):
                 port=55527,
             )
         except RuntimeError:
-            print("PostgreSQL database couldn't be created! Test is skipping.")
-            return
+            raise Exception("Testing Postgres server could not be started/accessed")
 
         self.master_store = DataStore(
             db_name="test",

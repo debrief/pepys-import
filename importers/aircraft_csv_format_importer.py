@@ -149,6 +149,8 @@ class AircraftCsvFormatImporter(Importer):
             state.course = course
             course_token.record(self.name, "course", course)
 
+        datafile.flush_extracted_tokens()
+
     @staticmethod
     def parse_timestamp(date, time):
         format_str = "%d/%m/%Y "

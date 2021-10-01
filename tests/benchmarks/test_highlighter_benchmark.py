@@ -134,7 +134,7 @@ def run_highlighter_on_whole_file():
 def test_highlighter_on_whole_file_benchmark(benchmark):
     benchmark(run_highlighter_on_whole_file)
 
-    TIME_THRESHOLD = 11
+    TIME_THRESHOLD = 11.5
 
     if running_on_ci():
         if benchmark.stats.stats.mean > TIME_THRESHOLD:
