@@ -120,7 +120,7 @@ class Link16Importer(Importer):
         platform = self.get_cached_platform(
             data_store, platform_name=name_token.text, change_id=change_id
         )
-        sensor_type = data_store.add_to_sensor_types("Location-Link16", change_id=change_id)
+        sensor_type = data_store.add_to_sensor_types("Location-Link16", change_id=change_id).name
         privacy = get_lowest_privacy(data_store)
         sensor = platform.get_sensor(
             data_store=data_store,
@@ -158,7 +158,7 @@ class Link16Importer(Importer):
 
         speed_valid, speed = convert_speed(
             speed_token.text,
-            unit_registry.feet_per_second,
+            unit_registry.foot_per_second,
             line_number,
             self.errors,
             self.error_type,
