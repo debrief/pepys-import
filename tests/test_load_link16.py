@@ -2,6 +2,7 @@ import os
 import unittest
 from datetime import datetime
 
+from pint import UnitRegistry
 from sqlalchemy import func
 
 from importers.link_16_importer import Link16Importer
@@ -15,6 +16,11 @@ DATA_PATH_V1 = os.path.join(
 )
 DATA_PATH_V2 = os.path.join(
     FILE_PATH, "sample_data/track_files/Link16/V2_GEV_16-05-2021T00-00-00.raw-SLOTS_JMSG.csv"
+)
+
+DATA_PATH_TIGHT_ROLLOVER = os.path.join(
+    FILE_PATH,
+    "sample_data/track_files/Link16/V1_Tight_Rollover_GEV_09-05-2021T09-58-16.raw-PPLI_201.csv",
 )
 
 
@@ -88,10 +94,25 @@ class TestLoadLink16(unittest.TestCase):
                 .order_by(self.store.db_classes.State.time)
                 .all()
             )
+            # Correct elevations
             assert len(results) == 3
+            # Timestamp checks
             assert results[0].time == datetime(2021, 5, 9, 1, 46, 38, 100000)
             assert results[1].time == datetime(2021, 5, 9, 2, 40, 47, 400000)
             assert results[2].time == datetime(2021, 5, 9, 3, 16, 35, 800000)
+
+            ureg = UnitRegistry()
+            # Location
+            assert results[0].location.latitude == 0.534945836
+            assert results[0].location.longitude == 0.739101938
+            # Heading
+            assert results[0].heading.to(ureg.degree).magnitude == 63
+            # Speed
+            assert results[0].speed.to(ureg.foot_per_second).magnitude == 262
+            # Platform uses STN
+            assert results[0].platform.name == "172"
+            assert results[1].platform.name == "385"
+            assert results[2].platform.name == "865"
 
     def test_process_link16_v2_data(self):
         processor = FileProcessor(archive=False)
@@ -136,7 +157,18 @@ class TestLoadLink16(unittest.TestCase):
             assert len(results) == 1
             assert results[0].time == datetime(2021, 5, 16, 2, 8, 40, 500000)
 
-    def test_wrong_length_file_v1(self):
+            ureg = UnitRegistry()
+            # Location
+            assert results[0].location.latitude == 0.004832779
+            assert results[0].location.longitude == 0.659077532
+            # Heading
+            assert results[0].heading.to(ureg.degree).magnitude == 215
+            # Speed
+            assert results[0].speed.to(ureg.foot_per_second).magnitude == 0.020808275
+            # Platform uses STN
+            assert results[0].platform.name == "892"
+
+    def test_invalid_file_contents_v1(self):
         link16_importer = Link16Importer()
         # Not enough tokens test
         check_errors_for_file_contents(
@@ -146,16 +178,45 @@ class TestLoadLink16(unittest.TestCase):
             filename="link16-test.csv",
         )
 
+    def test_invalid_file_contents_v2(self):
+        link16_importer = Link16Importer()
+        # Not enough tokens test
+        check_errors_for_file_contents(
+            "Xmt/Rcv,SlotTime\nSomeStr,59:31.6",
+            "Not enough tokens",
+            link16_importer,
+            filename="link16-test.csv",
+        )
 
-""" Things to test:
-        Parse the date/time stamp from the name
-        Roll timestamps forward correctly
-        We can read v1 format
-        We can read v2 format
-        Check incorrect # of tokens for v1 format throws error
-        Check incorrect # of tokens for v2 format throws error
+    def test_non_zero_timestamp(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(Link16Importer())
 
-"""
+        # parse the data
+        processor.process(DATA_PATH_TIGHT_ROLLOVER, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 8)
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 7)
+
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 1)
+
+            # Heading changed to control ordering
+            results = (
+                self.store.session.query(self.store.db_classes.State)
+                .order_by(self.store.db_classes.State.heading)
+                .all()
+            )
+            assert len(results) == 8
+            assert results[0].time == datetime(2021, 5, 9, 10, 1, 28, 230000)
 
 
 if __name__ == "__main__":
