@@ -2,6 +2,8 @@ import os
 import unittest
 from datetime import datetime
 
+from sqlalchemy import func
+
 from importers.link_16_importer import Link16Importer
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
@@ -81,10 +83,7 @@ class TestLoadLink16(unittest.TestCase):
             results = (
                 self.store.session.query(self.store.db_classes.State)
                 # Elevation == 4222 ft
-                # TODO - can we do partial matches in the filter?
-                # TODO - can we do "and" clauses in the same filter?
-                .filter(self.store.db_classes.State.elevation > 1286)
-                .filter(self.store.db_classes.State.elevation < 1287)
+                .filter(func.round(self.store.db_classes.State.elevation, 1) == 1286.9)
                 .order_by(self.store.db_classes.State.time)
                 .all()
             )
@@ -92,6 +91,49 @@ class TestLoadLink16(unittest.TestCase):
             assert results[0].time == datetime(2021, 5, 9, 1, 46, 38, 100000)
             assert results[1].time == datetime(2021, 5, 9, 2, 40, 47, 400000)
             assert results[2].time == datetime(2021, 5, 9, 3, 16, 35, 800000)
+
+    def test_process_link16_v2_data(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(Link16Importer())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 0)
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+        # parse the data
+        processor.process(DATA_PATH_V2, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 8)
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 8)
+
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 1)
+
+            results = (
+                self.store.session.query(self.store.db_classes.State)
+                # Elevation == 77344 ft
+                .filter(func.round(self.store.db_classes.State.elevation, 1) == 23574.5).all()
+            )
+            assert len(results) == 1
+            assert results[0].time == datetime(2021, 5, 16, 2, 8, 40, 500000)
 
 
 """ Things to test:
