@@ -103,17 +103,20 @@ class Link16Importer(Importer):
 
         # Time wrangling - TODO - consider extracting into a method
         time_token = tokens[1]
+        # The time as MM:SS.MS as read in from the file
         line_time = timedelta(
             hours=0,
             minutes=int(time_token.text[:2]),
             seconds=float(time_token.text[3:]),
         )
-
+        # Has time gone down from the last? If so, we've shifted an hour forwards
         if line_time < self.previous_time:
             self.current_hour += 1
 
         self.previous_time = line_time
+        # Turn the time from MM:SS.MS to HH:MM:SS.MS
         line_time += timedelta(hours=self.current_hour)
+        # Offset the parsed time relative to the file's timestamp
         line_time += self.base_timestamp
 
         # -- TODO - Confirm that this is correct for this data
