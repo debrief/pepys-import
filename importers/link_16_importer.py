@@ -119,6 +119,10 @@ class Link16Importer(Importer):
         # Offset the parsed time relative to the file's timestamp
         line_time += self.base_timestamp
 
+        time_token.record(self.name, "timestamp", line_time)
+
+        name_token.record(self.name, "vessel name", name_token.text)
+
         # -- TODO - Confirm that this is correct for this data
         platform = self.get_cached_platform(
             data_store, platform_name=name_token.text, change_id=change_id
@@ -171,6 +175,8 @@ class Link16Importer(Importer):
             state.speed = speed
             speed_token.record(self.name, "speed", speed)
 
+        datafile.flush_extracted_tokens()
+
     @staticmethod
     def extract_timestamp(filename):
         """Extracts a Link-16 timestamp from an unmodified filename
@@ -189,9 +195,10 @@ class Link16Importer(Importer):
     @staticmethod
     def timestamp_to_datetime(timestamp_string):
         """Converts a Link-16 formatted timestamp into a Python datetime
-        :param timestamp_string: The Link16 file timestamp
+        :param timestamp_string: The Link16 file timestamp (GMT/UTC/Zulu)
         :type timestamp_string: String
-        :return: a datetime if conversion successful or False if unsuccessful
+        :return: a datetime (GMT/UTC/Zulu) if conversion successful
+            or False if unsuccessful
         :rtype: datetime | bool
         """
         timestamp_format = "%d-%m-%YT%H-%M-%S"
