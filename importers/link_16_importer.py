@@ -53,8 +53,15 @@ class Link16Importer(Importer):
         filename, ext = os.path.splitext(os.path.basename(path))
         datetime_string = self.extract_timestamp(filename)
         self.base_timestamp = self.timestamp_to_datetime(datetime_string)
+        if self.base_timestamp is False:
+            self.errors.append(
+                {
+                    self.error_type: f"Error reading file {path}. Unable to read date from {datetime_string}"
+                }
+            )
+            return
         self.current_hour = 0
-        self.previous_time = timedelta(hours=0, minutes=0, seconds=0)
+        self.previous_time = timedelta()
 
         # Now do what we'd normally do on load
         for line_number, line in enumerate(tqdm(file_object.lines()), 1):

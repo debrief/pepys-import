@@ -23,6 +23,10 @@ DATA_PATH_TIGHT_ROLLOVER = os.path.join(
     "sample_data/track_files/Link16/V1_Tight_Rollover_GEV_09-05-2021T09-58-16.raw-PPLI_201.csv",
 )
 
+DATA_PATH_INVALID_TIME = os.path.join(
+    FILE_PATH, "sample_data/track_files/Link16/INVALID_10-10-2020T56-24-12.test.csv"
+)
+
 
 class TestLoadLink16(unittest.TestCase):
     def setUp(self):
@@ -60,15 +64,15 @@ class TestLoadLink16(unittest.TestCase):
         with self.store.session_scope():
             # there must be no states at the beginning
             states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 0)
+            assert len(states) == 0
 
             # there must be no platforms at the beginning
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 0)
+            assert len(platforms) == 0
 
             # there must be no datafiles at the beginning
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 0)
+            assert len(datafiles) == 0
 
         # parse the data
         processor.process(DATA_PATH_V1, self.store, False)
@@ -77,15 +81,15 @@ class TestLoadLink16(unittest.TestCase):
         with self.store.session_scope():
             # there must be states after the import
             states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 8)
+            assert len(states) == 8
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 7)
+            assert len(platforms) == 7
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 1)
+            assert len(datafiles) == 1
 
             results = (
                 self.store.session.query(self.store.db_classes.State)
@@ -122,15 +126,15 @@ class TestLoadLink16(unittest.TestCase):
         with self.store.session_scope():
             # there must be no states at the beginning
             states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 0)
+            assert len(states) == 0
 
             # there must be no platforms at the beginning
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 0)
+            assert len(platforms) == 0
 
             # there must be no datafiles at the beginning
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 0)
+            assert len(datafiles) == 0
 
         # parse the data
         processor.process(DATA_PATH_V2, self.store, False)
@@ -139,15 +143,15 @@ class TestLoadLink16(unittest.TestCase):
         with self.store.session_scope():
             # there must be states after the import
             states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 8)
+            assert len(states) == 8
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            self.assertEqual(len(platforms), 8)
+            assert len(platforms) == 8
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            self.assertEqual(len(datafiles), 1)
+            assert len(datafiles) == 1
 
             results = (
                 self.store.session.query(self.store.db_classes.State)
@@ -168,6 +172,18 @@ class TestLoadLink16(unittest.TestCase):
             # Platform uses STN
             assert results[0].platform.name == "892"
 
+    def test_invalid_timestamp(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(Link16Importer())
+
+        # parse the data
+        processor.process(DATA_PATH_INVALID_TIME, self.store, False)
+        errors = processor.importers[0].errors
+        assert len(errors) == 1
+        joined_errors = "\n".join(errors[0].values())
+        assert "Error reading file" in joined_errors
+        assert "Unable to read date from" in joined_errors
+
     def test_invalid_file_contents_v1(self):
         link16_importer = Link16Importer()
         # Not enough tokens test
@@ -175,7 +191,7 @@ class TestLoadLink16(unittest.TestCase):
             "PPLI,TOD\nSomeStr,49:23.7",
             "Not enough tokens",
             link16_importer,
-            filename="link16-test.csv",
+            filename="link16_10-10-2020T01-02-03.test.csv",
         )
 
     def test_invalid_file_contents_v2(self):
@@ -185,7 +201,7 @@ class TestLoadLink16(unittest.TestCase):
             "Xmt/Rcv,SlotTime\nSomeStr,59:31.6",
             "Not enough tokens",
             link16_importer,
-            filename="link16-test.csv",
+            filename="link16_10-10-2020T01-02-03.test.csv",
         )
 
     def test_non_zero_timestamp(self):
