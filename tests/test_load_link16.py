@@ -27,6 +27,15 @@ DATA_PATH_INVALID_TIME = os.path.join(
     FILE_PATH, "sample_data/track_files/Link16/INVALID_10-10-2020T56-24-12.test.csv"
 )
 
+DATA_PATH_MIDDLE_DATE = os.path.join(
+    FILE_PATH, "sample_data/track_files/Link16/GEV_01-02-2019T02-03-04_ii-ii.raw-PPLI_201.csv"
+)
+
+DATA_PATH_HOURS_IN_DATA = os.path.join(
+    FILE_PATH,
+    "sample_data/track_files/Link16/GEV_hours_in_data_16-05-2021T05-02-15.raw-PPLI_201.csv",
+)
+
 
 class TestLoadLink16(unittest.TestCase):
     def setUp(self):
@@ -139,6 +148,7 @@ class TestLoadLink16(unittest.TestCase):
         # parse the data
         processor.process(DATA_PATH_V2, self.store, False)
 
+        assert len(processor.importers[0].errors) == 0
         # check data got created
         with self.store.session_scope():
             # there must be states after the import
@@ -183,6 +193,89 @@ class TestLoadLink16(unittest.TestCase):
         joined_errors = "\n".join(errors[0].values())
         assert "Error reading file" in joined_errors
         assert "Unable to read date from" in joined_errors
+
+    def test_file_with_datetime_in_middle_of_filename(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(Link16Importer())
+
+        # parse the data
+        processor.process(DATA_PATH_MIDDLE_DATE, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            states = self.store.session.query(self.store.db_classes.State).all()
+            assert len(states) == 3
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 3
+
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 1
+
+            results = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(func.round(self.store.db_classes.State.elevation, 1) == 1286.9)
+                .all()
+            )
+            assert len(results) == 1
+            # Timestamp checks
+            assert results[0].time == datetime(2021, 16, 5, 2, 49, 42, 100000)
+
+            ureg = UnitRegistry()
+            # Location
+            assert results[0].location.latitude == 0.534945836
+            assert results[0].location.longitude == 0.739101938
+            # Heading
+            assert results[0].heading.to(ureg.degree).magnitude == 63
+            # Speed
+            assert results[0].speed.to(ureg.foot_per_second).magnitude == 262
+            # Platform uses STN
+            assert results[0].platform.name == "172"
+
+    def test_file_with_hours(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(Link16Importer())
+
+        # parse the data
+        processor.process(DATA_PATH_HOURS_IN_DATA, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            states = self.store.session.query(self.store.db_classes.State).all()
+            assert len(states) == 3
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 3
+
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 1
+
+            results = (
+                self.store.session.query(self.store.db_classes.State)
+                .filter(func.round(self.store.db_classes.State.elevation, 1) == 1286.9)
+                .all()
+            )
+            # Correct elevations
+            assert len(results) == 1
+            # Timestamp checks
+            assert results[0].time == datetime(2021, 5, 16, 7, 48, 53, 100000)
+
+            ureg = UnitRegistry()
+            # Location
+            assert results[0].location.latitude == 0.534945836
+            assert results[0].location.longitude == 0.739101938
+            # Heading
+            assert results[0].heading.to(ureg.degree).magnitude == 63
+            # Speed
+            assert results[0].speed.to(ureg.foot_per_second).magnitude == 262
+            # Platform uses STN
+            assert results[0].platform.name == "172"
 
     def test_invalid_file_contents_v1(self):
         link16_importer = Link16Importer()
