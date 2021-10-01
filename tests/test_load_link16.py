@@ -1,13 +1,10 @@
-import datetime
 import os
 import unittest
+from datetime import datetime
 
 from importers.link_16_importer import Link16Importer
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
-
-# from datetime import datetime
-
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH_V1 = os.path.join(
@@ -73,23 +70,28 @@ class TestLoadLink16(unittest.TestCase):
             states = self.store.session.query(self.store.db_classes.State).all()
             self.assertEqual(len(states), 8)
 
-            # # there must be platforms after the import
-            # platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            # self.assertEqual(len(platforms), 18)
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 7)
 
-            # # there must be one datafile afterwards
-            # datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
-            # self.assertEqual(len(datafiles), 1)
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 1)
 
-            # # Check that there is an elevation of 147 reported (test file was manually edited
-            # # to contain an elevation of 147m)
-            # results = (
-            #     self.store.session.query(self.store.db_classes.State)
-            #     .filter(self.store.db_classes.State.elevation == 147)
-            #     .all()
-            # )
-            # assert len(results) == 1
-            # assert results[0].time == datetime.datetime(2019, 8, 6, 4, 40, 0)
+            results = (
+                self.store.session.query(self.store.db_classes.State)
+                # Elevation == 4222 ft
+                # TODO - can we do partial matches in the filter?
+                # TODO - can we do "and" clauses in the same filter?
+                .filter(self.store.db_classes.State.elevation > 1286)
+                .filter(self.store.db_classes.State.elevation < 1287)
+                .order_by(self.store.db_classes.State.time)
+                .all()
+            )
+            assert len(results) == 3
+            assert results[0].time == datetime(2021, 5, 9, 1, 46, 38, 100000)
+            assert results[1].time == datetime(2021, 5, 9, 2, 40, 47, 400000)
+            assert results[2].time == datetime(2021, 5, 9, 3, 16, 35, 800000)
 
 
 """ Things to test:

@@ -120,6 +120,7 @@ class Link16Importer(Importer):
         platform = self.get_cached_platform(
             data_store, platform_name=name_token.text, change_id=change_id
         )
+        # TODO - confirm the actual sensor type
         sensor_type = data_store.add_to_sensor_types("Location-Link16", change_id=change_id).name
         privacy = get_lowest_privacy(data_store)
         sensor = platform.get_sensor(
