@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime, timedelta
 
 from tqdm import tqdm
@@ -192,12 +193,12 @@ class Link16Importer(Importer):
         :return: The timestamp extracted from the filename
         :rtype: String
         """
-        # TODO - confirm that there is always a double extension
         base_filename, ext = os.path.splitext(os.path.basename(filename))
         base_filename, ext = os.path.splitext(base_filename)
-        # TODO - confirm the timestamp always just before the file extension
-        extracted_datetime = base_filename[-19:]
-        return extracted_datetime
+        # Timestamp could be anywhere in the filename, so find it
+        extracted_datetime = re.search(r"(\d+-\d+-\d+T\d+-\d+-\d+)", base_filename)
+        print(extracted_datetime.group(1))
+        return extracted_datetime.group(1)
 
     @staticmethod
     def timestamp_to_datetime(timestamp_string):
