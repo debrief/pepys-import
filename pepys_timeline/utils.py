@@ -1,5 +1,5 @@
-from datetime import datetime
 import json
+from datetime import datetime
 
 
 class PepysEncoder(json.JSONEncoder):
@@ -9,12 +9,5 @@ class PepysEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def make_error_response(
-        message: str, description: str = None, http_status_code: str = 500
-):
-    return {
-        'error': {
-            'message': message,
-            'description': description
-        }
-    }, http_status_code
+def make_error_response(message: str, description: str = None, http_status_code: str = 500):
+    return {"error": {"message": message, "description": description}}, http_status_code

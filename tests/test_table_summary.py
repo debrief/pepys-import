@@ -19,7 +19,7 @@ class TableSummarySetTestCase(TestCase):
         pass
 
     def test_table_summary_returns_correct_values(self):
-        """Test whether Table Summary class returns correct values or not """
+        """Test whether Table Summary class returns correct values or not"""
 
         with self.store.session_scope():
             summary = TableSummary(self.store.session, self.store.db_classes.Privacy)
