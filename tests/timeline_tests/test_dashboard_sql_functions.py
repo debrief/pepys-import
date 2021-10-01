@@ -314,14 +314,15 @@ class TestDashboardStatsQuery(unittest.TestCase):
             rows = fetchrowsMeta(cursor, DATEVAL + "08:00:00", DATEVAL + "20:00:00")
             assert validateForIncludeInTimeline(rows)
 
-            #Tests for #1019 (https://github.com/debrief/pepys-import/issues/1019)
-            #There should be only one gap for SC1 as defined above
+            # Tests for #1019 (https://github.com/debrief/pepys-import/issues/1019)
+            # There should be only one gap for SC1 as defined above
             # Tests for scenario 1[SC1]: No records between SERIAL_START_TIME and SERIAL_END_TIME
             rows = fetchrows(cursor, "06:00:00", "08:00:00")
-            #The following asserts would fail without the fix
+            # The following asserts would fail without the fix
             assert len(rows) == 1
             assert validateStartTimes(rows, ["G"], ["06:00:00"])
             assert validateEndTimes(rows, ["G"], ["08:00:00"])
+
 
 class FilterInputJSON:
     pass
@@ -338,57 +339,79 @@ def get_data(listPlatformRanges):
 
 def get_query(funcName):
     # security checks suppressed on next line since it isn't processing user data
-    return "select * from pepys.dashboard_" + funcName + "(%s, %s)"   # nosec
+    return "select * from pepys.dashboard_" + funcName + "(%s, %s)"  # nosec
 
 
 def populate_data(cursor, TIMELIST):
     cursor.execute("create schema pepys")
     cursor.execute('create table pepys."Sensors"(host uuid, sensor_id uuid)')
-    cursor.execute('create table pepys."States"(sensor_id uuid, time timestamp, created_date timestamp )')
-    cursor.execute('create table pepys."Serials"(serial_id uuid, serial_number text, exercise varchar(150), '
-                   'include_in_timeline bool, start timestamp, "end" timestamp)')
-    cursor.execute('create table pepys."SerialParticipants"(serial_id uuid, wargame_participant_id uuid, '
-                   'force_type_id uuid, start timestamp, "end" timestamp)')
-    cursor.execute('create table pepys."WargameParticipants"(wargame_participant_id uuid, platform_id uuid)')
-    cursor.execute('create table pepys."Platforms"(platform_id uuid, platform_type_id uuid, quadgraph varchar(4), name varchar(150))')
-    cursor.execute('create table pepys."PlatformTypes"(platform_type_id uuid, default_data_interval_secs int4, name varchar(150))')
-    cursor.execute('create table pepys."ForceTypes"(force_type_id uuid, name varchar(150), color varchar(10))')
+    cursor.execute(
+        'create table pepys."States"(sensor_id uuid, time timestamp, created_date timestamp )'
+    )
+    cursor.execute(
+        'create table pepys."Serials"(serial_id uuid, serial_number text, exercise varchar(150), '
+        'include_in_timeline bool, start timestamp, "end" timestamp)'
+    )
+    cursor.execute(
+        'create table pepys."SerialParticipants"(serial_id uuid, wargame_participant_id uuid, '
+        'force_type_id uuid, start timestamp, "end" timestamp)'
+    )
+    cursor.execute(
+        'create table pepys."WargameParticipants"(wargame_participant_id uuid, platform_id uuid)'
+    )
+    cursor.execute(
+        'create table pepys."Platforms"(platform_id uuid, platform_type_id uuid, quadgraph varchar(4), name varchar(150))'
+    )
+    cursor.execute(
+        'create table pepys."PlatformTypes"(platform_type_id uuid, default_data_interval_secs int4, name varchar(150))'
+    )
+    cursor.execute(
+        'create table pepys."ForceTypes"(force_type_id uuid, name varchar(150), color varchar(10))'
+    )
 
     cursor.execute(
         """insert into pepys."Sensors" values('{}', '{}')""".format(SOME_UUID, SOME_UUID)
     )
     cursor.execute(
-            """insert into pepys."Serials" values('{}', '{}', '{}', {},
+        """insert into pepys."Serials" values('{}', '{}', '{}', {},
             to_timestamp('{}','YYYY-MM-DD HH24:MI:SS'), to_timestamp('{}',
-            'YYYY-MM-DD HH24:MI:SS') + interval '12 hours')""".format
-            (SOME_UUID, "J052010", "EXERCISE", "true", CREATED, CREATED)
+            'YYYY-MM-DD HH24:MI:SS') + interval '12 hours')""".format(
+            SOME_UUID, "J052010", "EXERCISE", "true", CREATED, CREATED
+        )
     )
     for time in TIMELIST:
         cursor.execute(
-            """insert into pepys."States" values('{}', '{}{}', '{}')""".format(SOME_UUID, DATEVAL, time, CREATED)
+            """insert into pepys."States" values('{}', '{}{}', '{}')""".format(
+                SOME_UUID, DATEVAL, time, CREATED
+            )
         )
 
     cursor.execute(
-            """insert into pepys."SerialParticipants" values('{}', '{}', '{}',
+        """insert into pepys."SerialParticipants" values('{}', '{}', '{}',
             to_timestamp('{}','YYYY-MM-DD HH24:MI:SS'), to_timestamp('{}',
-            'YYYY-MM-DD HH24:MI:SS') + interval '12 hours')""".format
-            (SOME_UUID, SOME_UUID, SOME_UUID, CREATED, CREATED)
+            'YYYY-MM-DD HH24:MI:SS') + interval '12 hours')""".format(
+            SOME_UUID, SOME_UUID, SOME_UUID, CREATED, CREATED
+        )
     )
     cursor.execute(
-            """insert into pepys."WargameParticipants" values('{}', '{}')""".format
-            (SOME_UUID, SOME_UUID)
+        """insert into pepys."WargameParticipants" values('{}', '{}')""".format(
+            SOME_UUID, SOME_UUID
+        )
     )
     cursor.execute(
-            """insert into pepys."Platforms" values('{}', '{}', '{}', '{}')""".format
-            (SOME_UUID, SOME_UUID, "ABCD", "PlatName")
+        """insert into pepys."Platforms" values('{}', '{}', '{}', '{}')""".format(
+            SOME_UUID, SOME_UUID, "ABCD", "PlatName"
+        )
     )
     cursor.execute(
-            """insert into pepys."PlatformTypes" values('{}', {}, '{}')""".format
-            (SOME_UUID, 30, "PtypeName")
+        """insert into pepys."PlatformTypes" values('{}', {}, '{}')""".format(
+            SOME_UUID, 30, "PtypeName"
+        )
     )
     cursor.execute(
-            """insert into pepys."ForceTypes" values('{}', '{}', '{}')""".format
-            (SOME_UUID, "ForceTypeName", "RED")
+        """insert into pepys."ForceTypes" values('{}', '{}', '{}')""".format(
+            SOME_UUID, "ForceTypeName", "RED"
+        )
     )
 
     with open(SQL_FILE_LOCATION, "r") as statssqlfile:
@@ -397,14 +420,17 @@ def populate_data(cursor, TIMELIST):
     with open(META_SQL_FILE_LOCATION, "r") as metasqlfile:
         cursor.execute(metasqlfile.read())
 
+
 def populate_additional_data(cursor):
     cursor.execute(
         """insert into pepys."Sensors" values('{}', '{}')""".format(SOME_UUID, SOME_UUID2)
     )
 
+
 def fetchrows(cursor, start, end):
     cursor.execute(get_query("stats"), get_test_case_data(start, end))
     return cursor.fetchall()
+
 
 def get_test_case_data(start, end):
     fij = FilterInputJSON()
@@ -416,6 +442,7 @@ def get_test_case_data(start, end):
         get_data([fij]),
         '["C","G"]',
     )
+
 
 def fetchrowsMeta(cursor, start, end):
     cursor.execute(get_query("metadata"), (start, end))
@@ -444,7 +471,21 @@ def validateEndTimes(rows, rangeTypes, endTimes):
 def validateForIncludeInTimeline(rows):
     for row in rows:
         # pylint: disable=unused-variable
-        (recordType, includeInTimeline, serialid, pid, pname, exercise, ptname, start, end, gap, intervalMissing, ftname, ftcolor) = row
+        (
+            recordType,
+            includeInTimeline,
+            serialid,
+            pid,
+            pname,
+            exercise,
+            ptname,
+            start,
+            end,
+            gap,
+            intervalMissing,
+            ftname,
+            ftcolor,
+        ) = row
         if recordType == "SERIALS":
             return includeInTimeline
     return False
