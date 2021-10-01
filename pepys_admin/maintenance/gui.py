@@ -580,9 +580,7 @@ class MaintenanceGUI:
 
             self.filter_widget.set_column_data(self.column_data)
             self.get_default_preview_fields()
-            logger.debug("Before run query")
             self.run_query()
-            logger.debug("After run query")
 
         ensure_future(coroutine())
 
