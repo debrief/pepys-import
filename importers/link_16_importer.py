@@ -124,11 +124,11 @@ class Link16Importer(Importer):
             data_store, platform_name=name_token.text, change_id=change_id
         )
         # TODO - confirm the actual sensor type
-        sensor_type = data_store.add_to_sensor_types("Location-Link16", change_id=change_id).name
+        sensor_type = data_store.add_to_sensor_types("Location-Satellite", change_id=change_id).name
         privacy = get_lowest_privacy(data_store)
         sensor = platform.get_sensor(
             data_store=data_store,
-            sensor_name="Link-16",
+            sensor_name="GPS",
             sensor_type=sensor_type,
             privacy=privacy,
             change_id=change_id,
