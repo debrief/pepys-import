@@ -2,6 +2,12 @@
 History
 =======
 
+0.0.30 (2021-10-05)
+-------------------
+
+* Incorporate Link16 importer
+* Include some performance upgrades, esp for Pepys-Admin
+
 0.0.29 (2021-09-29)
 -------------------
 
