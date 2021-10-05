@@ -37,6 +37,11 @@ DATA_PATH_HOURS_IN_DATA = os.path.join(
     "sample_data/track_files/Link16/GEV_hours_in_data_16-05-2021T05-02-15.raw-PPLI_201.csv",
 )
 
+DATA_PATH_NO_TIMESTAMP = os.path.join(
+    FILE_PATH,
+    "sample_data/track_files/Link16/GEV_no_timestamp.raw-PPLI_201.csv",
+)
+
 
 class TestLoadLink16(unittest.TestCase):
     def setUp(self):
@@ -123,8 +128,8 @@ class TestLoadLink16(unittest.TestCase):
 
             ureg = UnitRegistry()
             # Location
-            assert results[0].location.latitude == 0.534945836
-            assert results[0].location.longitude == 0.739101938
+            assert round(results[0].location.latitude, 6) == 0.534946
+            assert round(results[0].location.longitude, 6) == 0.739102
             # Heading
             assert results[0].heading.to(ureg.degree).magnitude == 63
             # Speed
@@ -180,8 +185,8 @@ class TestLoadLink16(unittest.TestCase):
 
             ureg = UnitRegistry()
             # Location
-            assert results[0].location.latitude == 0.004832779
-            assert results[0].location.longitude == 0.659077532
+            assert round(results[0].location.latitude, 6) == 0.004833
+            assert round(results[0].location.longitude, 6) == 0.659078
             # Heading
             assert results[0].heading.to(ureg.degree).magnitude == 215
             # Speed
@@ -195,6 +200,18 @@ class TestLoadLink16(unittest.TestCase):
 
         # parse the data
         processor.process(DATA_PATH_INVALID_TIME, self.store, False)
+        errors = processor.importers[0].errors
+        assert len(errors) == 1
+        joined_errors = "\n".join(errors[0].values())
+        assert "Error reading file" in joined_errors
+        assert "Unable to read date from" in joined_errors
+
+    def test_filename_without_timestamp(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(Link16Importer())
+
+        # parse the data
+        processor.process(DATA_PATH_NO_TIMESTAMP, self.store, False)
         errors = processor.importers[0].errors
         assert len(errors) == 1
         joined_errors = "\n".join(errors[0].values())
@@ -233,8 +250,8 @@ class TestLoadLink16(unittest.TestCase):
 
             ureg = UnitRegistry()
             # Location
-            assert results[0].location.latitude == 0.534945836
-            assert results[0].location.longitude == 0.739101938
+            assert round(results[0].location.latitude, 6) == 0.534946
+            assert round(results[0].location.longitude, 6) == 0.739102
             # Heading
             assert results[0].heading.to(ureg.degree).magnitude == 63
             # Speed
@@ -276,8 +293,8 @@ class TestLoadLink16(unittest.TestCase):
 
             ureg = UnitRegistry()
             # Location
-            assert results[0].location.latitude == 0.534945836
-            assert results[0].location.longitude == 0.739101938
+            assert round(results[0].location.latitude, 6) == 0.534946
+            assert round(results[0].location.longitude, 6) == 0.739102
             # Heading
             assert results[0].heading.to(ureg.degree).magnitude == 63
             # Speed
