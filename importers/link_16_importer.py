@@ -51,7 +51,7 @@ class Link16Importer(Importer):
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
         # Read the base timestamp from the filename
-        filename, ext = os.path.splitext(os.path.basename(path))
+        filename, _ = os.path.splitext(os.path.basename(path))
         datetime_string = self.extract_timestamp(filename)
         if datetime_string is False:
             self.errors.append(
@@ -228,8 +228,8 @@ class Link16Importer(Importer):
         :rtype: String
         """
         # All the files we've seen have a double file extension (raw... and csv)
-        base_filename, ext = os.path.splitext(os.path.basename(filename))
-        base_filename, ext = os.path.splitext(base_filename)
+        base_filename, _ = os.path.splitext(os.path.basename(filename))
+        base_filename, _ = os.path.splitext(base_filename)
         # Timestamp could be anywhere in the filename, so find it
         extracted_datetime = re.search(r"(\d+-\d+-\d+T\d+-\d+-\d+)", base_filename)
         try:
