@@ -68,8 +68,21 @@ class Link16Importer(Importer):
                 }
             )
             return
-        self.current_hour = 0
-        self.previous_time = timedelta()
+        self.current_hour = self.base_timestamp.hour
+        self.previous_time = timedelta(
+            hours=0, minutes=self.base_timestamp.minute, seconds=self.base_timestamp.second
+        )
+        # We only need to apply the date component as we've already applied the
+        # hours (if missing) and the timestamps in the file are not offset from
+        # the filename
+        self.date_offset = datetime(
+            year=self.base_timestamp.year,
+            month=self.base_timestamp.month,
+            day=self.base_timestamp.day,
+            hour=0,
+            minute=0,
+            second=0,
+        )
 
         # Now do what we'd normally do on load
         for line_number, line in enumerate(tqdm(file_object.lines()), 1):
@@ -145,8 +158,8 @@ class Link16Importer(Importer):
                 }
             )
             return
-        # Offset the parsed time relative to the file's timestamp
-        line_time += self.base_timestamp
+
+        line_time += self.date_offset
 
         time_token.record(self.name, "timestamp", line_time)
 

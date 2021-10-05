@@ -245,7 +245,7 @@ class TestLoadLink16(unittest.TestCase):
             )
             assert len(results) == 1
             # Timestamp checks
-            assert results[0].time == datetime(2019, 2, 1, 3, 49, 42, 100000)
+            assert results[0].time == datetime(2019, 2, 1, 3, 46, 38, 100000)
 
             ureg = UnitRegistry()
             # Location
@@ -281,24 +281,27 @@ class TestLoadLink16(unittest.TestCase):
 
             results = (
                 self.store.session.query(self.store.db_classes.State)
-                .filter(func.round(self.store.db_classes.State.elevation, 1) == 1286.9)
+                .order_by(self.store.db_classes.State.time)
                 .all()
             )
             # Correct elevations
-            assert len(results) == 1
+            assert len(results) == 3
             # Timestamp checks
-            assert results[0].time == datetime(2021, 5, 16, 7, 48, 53, 100000)
-
+            assert results[0].time == datetime(2021, 5, 16, 1, 49, 23, 700000)
+            assert results[1].time == datetime(2021, 5, 16, 2, 8, 24, 600000)
+            assert results[2].time == datetime(2021, 5, 16, 2, 46, 38, 100000)
+            # Only focus on the last one to make sure there isn't anything odd
+            # about parsing when we have hour dates
             ureg = UnitRegistry()
             # Location
-            assert round(results[0].location.latitude, 6) == 0.534946
-            assert round(results[0].location.longitude, 6) == 0.739102
+            assert round(results[2].location.latitude, 6) == 0.534946
+            assert round(results[2].location.longitude, 6) == 0.739102
             # Heading
-            assert results[0].heading.to(ureg.degree).magnitude == 63
+            assert results[2].heading.to(ureg.degree).magnitude == 63
             # Speed
-            assert results[0].speed.to(ureg.foot_per_second).magnitude == 262
+            assert results[2].speed.to(ureg.foot_per_second).magnitude == 262
             # Platform uses STN
-            assert results[0].platform.name == "172"
+            assert results[2].platform.name == "172"
 
     def test_invalid_file_contents_v1(self):
         link16_importer = Link16Importer()
@@ -348,7 +351,10 @@ class TestLoadLink16(unittest.TestCase):
                 .all()
             )
             assert len(results) == 8
-            assert results[0].time == datetime(2021, 5, 9, 10, 1, 28, 230000)
+            assert results[0].time == datetime(2021, 5, 9, 10, 3, 12, 230000)
+            assert results[1].time == datetime(2021, 5, 9, 10, 8, 24, 600000)
+            assert results[2].time == datetime(2021, 5, 9, 10, 46, 38, 100000)
+            assert results[3].time == datetime(2021, 5, 9, 11, 38, 18, 0)
 
 
 if __name__ == "__main__":
