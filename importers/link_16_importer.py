@@ -129,7 +129,6 @@ class Link16Importer(Importer):
             speed_token = tokens[17]
             altitude_token = tokens[15]
 
-        # Time wrangling - TODO - consider extracting into a method
         time_token = tokens[1]
         # Some files have HH:MM:SS.MS, others have MM:SS.MS so we need to handle both
         time_parts = time_token.text.split(":")
@@ -165,11 +164,10 @@ class Link16Importer(Importer):
 
         name_token.record(self.name, "vessel name", name_token.text)
 
-        # -- TODO - Confirm that this is correct for this data
         platform = self.get_cached_platform(
             data_store, platform_name=name_token.text, change_id=change_id
         )
-        # TODO - confirm the actual sensor type
+
         sensor_type = data_store.add_to_sensor_types("Location-Satellite", change_id=change_id).name
         privacy = get_lowest_privacy(data_store)
         sensor = platform.get_sensor(
@@ -179,7 +177,6 @@ class Link16Importer(Importer):
             privacy=privacy,
             change_id=change_id,
         )
-        # -- END TODO
         state = datafile.create_state(data_store, platform, sensor, line_time, self.short_name)
 
         location = Location(errors=self.errors, error_type=self.error_type)
