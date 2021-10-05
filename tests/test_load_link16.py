@@ -3,7 +3,6 @@ import unittest
 from datetime import datetime
 
 from pint import UnitRegistry
-from pytest import mark
 from sqlalchemy import func
 
 from importers.link_16_importer import Link16Importer
@@ -259,7 +258,6 @@ class TestLoadLink16(unittest.TestCase):
             # Platform uses STN
             assert results[0].platform.name == "172"
 
-    @mark.skip(reason="Not yet implemented a fix for this")
     def test_file_with_hours(self):
         processor = FileProcessor(archive=False)
         processor.register_importer(Link16Importer())
