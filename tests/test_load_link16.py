@@ -12,7 +12,7 @@ from tests.utils import check_errors_for_file_contents
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH_V1 = os.path.join(
-    FILE_PATH, "sample_data/track_files/Link16/V1_GEV_09-05-2021T00-00-00.raw-PPLI_201.csv"
+    FILE_PATH, "sample_data/track_files/Link16/V1_GEV_09-05-2021T03-54-05.raw-PPLI_201.csv"
 )
 DATA_PATH_V2 = os.path.join(
     FILE_PATH, "sample_data/track_files/Link16/V2_GEV_16-05-2021T00-00-00.raw-SLOTS_JMSG.csv"
@@ -120,10 +120,14 @@ class TestLoadLink16(unittest.TestCase):
             )
             # Correct elevations
             assert len(results) == 3
-            # Timestamp checks
-            assert results[0].time == datetime(2021, 5, 9, 1, 46, 38, 100000)
-            assert results[1].time == datetime(2021, 5, 9, 2, 40, 47, 400000)
-            assert results[2].time == datetime(2021, 5, 9, 3, 16, 35, 800000)
+            # Timestamp checks. Note first measurement has minutes lower than
+            # minutes in filename. So, it is assumed we're in the next hour,
+            # so hours have been incremented.
+            # The altitude filter means the first row in the results set is actually
+            # the third row in the data.
+            assert results[0].time == datetime(2021, 5, 9, 5, 46, 38, 100000)
+            assert results[1].time == datetime(2021, 5, 9, 6, 40, 47, 400000)
+            assert results[2].time == datetime(2021, 5, 9, 7, 16, 35, 800000)
 
             ureg = UnitRegistry()
             # Location
