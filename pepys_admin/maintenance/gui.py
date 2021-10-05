@@ -31,7 +31,7 @@ from prompt_toolkit.lexers.pygments import PygmentsLexer
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets.base import Border, Label
 from pygments.lexers.sql import SqlLexer
-from sqlalchemy.orm import joinedload, undefer
+from sqlalchemy.orm import Load, undefer
 
 from pepys_admin.maintenance.column_data import convert_column_data_to_edit_data, create_column_data
 from pepys_admin.maintenance.dialogs.add_dialog import AddDialog
@@ -69,8 +69,9 @@ logger.add("gui.log")
 # Uncomment the lines below to get logging of the SQL queries run by SQLAlchemy
 # to the file sql.log
 # import logging
-# logging.basicConfig(filename='sql.log', level=logging.DEBUG)
-# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
+# logging.basicConfig(filename="sql.log", level=logging.DEBUG)
+# logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
 MAX_PREVIEW_TABLE_RESULTS = 100
 
@@ -418,8 +419,13 @@ class MaintenanceGUI:
                 # Get the first 100 results, while undefering all fields and loading all relationships
                 # with a join, to make sure everything is available once it's been expunged
                 # (disconnected) from the database
+                # We use the Load(obj).joinedload("*") call to do a joined load on just the immediate
+                # relationships of the current table object. If we use joinedload("*") then this does
+                # a full recursive joinedload, joining on all the relationships of all of the objects
+                # going down the tree - which leads to a monster SQL query for a State object, as you
+                # end up loading almost every table if you do a recursive joined load
                 results = (
-                    query_obj.options(undefer("*"), joinedload("*"))
+                    query_obj.options(undefer("*"), Load(self.current_table_object).joinedload("*"))
                     .limit(MAX_PREVIEW_TABLE_RESULTS)
                     .all()
                 )
