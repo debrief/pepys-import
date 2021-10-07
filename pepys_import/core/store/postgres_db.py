@@ -687,7 +687,7 @@ class State(BasePostGIS, StateMixin, ElevationPropertyMixin, LocationPropertyMix
     table_type_id = 28
 
     state_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    time = Column(TIMESTAMP, nullable=False)
+    time = Column(TIMESTAMP, nullable=False, index=True)
     sensor_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade", ondelete="cascade"),
@@ -744,7 +744,7 @@ class Contact(BasePostGIS, ContactMixin, LocationPropertyMixin, ElevationPropert
         ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
-    time = Column(TIMESTAMP, nullable=False)
+    time = Column(TIMESTAMP, nullable=False, index=True)
     _bearing = deferred(Column("bearing", DOUBLE_PRECISION))
     _rel_bearing = deferred(Column("rel_bearing", DOUBLE_PRECISION))
     _ambig_bearing = deferred(Column("ambig_bearing", DOUBLE_PRECISION))
@@ -818,8 +818,8 @@ class Activation(BasePostGIS, ActivationMixin):
         ForeignKey("pepys.Sensors.sensor_id", onupdate="cascade", ondelete="cascade"),
         nullable=False,
     )
-    start = deferred(Column(TIMESTAMP))
-    end = deferred(Column(TIMESTAMP))
+    start = deferred(Column(TIMESTAMP, index=True))
+    end = deferred(Column(TIMESTAMP, index=True))
     _min_range = deferred(Column("min_range", DOUBLE_PRECISION))
     _max_range = deferred(Column("max_range", DOUBLE_PRECISION))
     _left_arc = deferred(Column("left_arc", DOUBLE_PRECISION))
@@ -889,7 +889,7 @@ class Comment(BasePostGIS, CommentMixin):
         UUID(as_uuid=True),
         ForeignKey("pepys.Platforms.platform_id", onupdate="cascade", ondelete="cascade"),
     )
-    time = Column(TIMESTAMP, nullable=False)
+    time = Column(TIMESTAMP, nullable=False, index=True)
     comment_type_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.CommentTypes.comment_type_id", onupdate="cascade", ondelete="cascade"),
@@ -930,8 +930,8 @@ class Geometry1(BasePostGIS, GeometryMixin):
         ),
         nullable=False,
     )
-    start = Column(TIMESTAMP)
-    end = Column(TIMESTAMP)
+    start = Column(TIMESTAMP, index=True)
+    end = Column(TIMESTAMP, index=True)
     serial_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.Serials.serial_id", onupdate="cascade", ondelete="cascade"),
@@ -977,7 +977,7 @@ class Media(BasePostGIS, MediaMixin, ElevationPropertyMixin, LocationPropertyMix
     )
     _location = deferred(Column("location", Geometry(geometry_type="POINT", srid=4326)))
     _elevation = deferred(Column("elevation", DOUBLE_PRECISION))
-    time = Column(TIMESTAMP)
+    time = Column(TIMESTAMP, index=True)
     media_type_id = Column(
         UUID(as_uuid=True),
         ForeignKey("pepys.MediaTypes.media_type_id", onupdate="cascade", ondelete="cascade"),
