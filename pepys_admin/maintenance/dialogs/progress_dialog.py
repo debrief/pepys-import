@@ -66,6 +66,7 @@ class ProgressDialog:
                         is_cancelled=self.is_cancelled,
                     ),
                 )
+                get_app().progress_bar_finished.fire()
                 self.future.set_result(result)
             except Exception as e:
                 try:

@@ -29,6 +29,7 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.layout.menus import CompletionsMenu
 from prompt_toolkit.lexers.pygments import PygmentsLexer
 from prompt_toolkit.styles import Style
+from prompt_toolkit.utils import Event
 from prompt_toolkit.widgets.base import Border, Label
 from pygments.lexers.sql import SqlLexer
 from sqlalchemy.orm import joinedload, undefer
@@ -141,6 +142,8 @@ class MaintenanceGUI:
         )
 
         self.app.dropdown_opened = False
+        self.app.progress_bar_finished = Event(self.app)
+        self.app.preview_table_updated = Event(self.app)
 
     def init_ui_components(self):
         """Initialise all of the UI components, controls, containers and widgets"""
@@ -381,6 +384,7 @@ class MaintenanceGUI:
     def run_query(self):
         """Runs the query as defined by the FilterWidget,
         and displays the result in the preview table."""
+        logger.debug("Running query")
         if self.current_table_object is None:
             return
 
@@ -460,6 +464,11 @@ class MaintenanceGUI:
         # the selected items label
         self.preview_table.current_values = []
         self.update_selected_items_label()
+        app.invalidate()
+
+        logger.debug("Firing preview updated")
+        logger.debug(f"{len(self.table_objects)=}")
+        self.app.preview_table_updated.fire()
 
     def get_table_data(self):
         return self.table_data
@@ -582,6 +591,7 @@ class MaintenanceGUI:
         widget is sensible about this and only raises this event if there has actually been
         a change in the output of the filters property. That means we can run a query
         each time this is called, and the query shouldn't get run more often than is needed."""
+        logger.debug("on filter widget change")
         # Convert the filter object to a SQL string to display in the Complete Query tab
         if value != []:
             filter_query = filter_widget_output_to_query(
