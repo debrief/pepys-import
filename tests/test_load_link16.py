@@ -41,6 +41,11 @@ DATA_PATH_NO_TIMESTAMP = os.path.join(
     "sample_data/track_files/Link16/GEV_no_timestamp.raw-PPLI_201.csv",
 )
 
+DATA_PATH_BINARY_IN_HEADER = os.path.join(
+    FILE_PATH,
+    "sample_data/track_files/Link16/V2_GEV_binary_in_header_16-05-2021T00-00-00.raw-SLOTS_JMSG.csv",
+)
+
 
 class TestLoadLink16(unittest.TestCase):
     def setUp(self):
@@ -359,6 +364,37 @@ class TestLoadLink16(unittest.TestCase):
             assert results[1].time == datetime(2021, 5, 9, 10, 8, 24, 600000)
             assert results[2].time == datetime(2021, 5, 9, 10, 46, 38, 100000)
             assert results[3].time == datetime(2021, 5, 9, 11, 38, 18, 0)
+
+    def test_binary_in_header(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(Link16Importer())
+
+        # parse the data
+        processor.process(DATA_PATH_BINARY_IN_HEADER, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 2)
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 2)
+
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 1)
+
+            # Heading changed to control ordering
+            results = (
+                self.store.session.query(self.store.db_classes.State)
+                .order_by(self.store.db_classes.State.heading)
+                .all()
+            )
+            assert len(results) == 2
+            assert results[0].time == datetime(2021, 5, 16, 0, 59, 31, 600000)
+            assert results[1].time == datetime(2021, 5, 16, 1, 18, 45, 200000)
 
 
 if __name__ == "__main__":
