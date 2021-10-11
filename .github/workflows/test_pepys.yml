@@ -21,7 +21,7 @@ jobs:
           sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ focal-pgdg main" >> /etc/apt/sources.list.d/postgresql.list'
           sudo apt update
           # workaround for pg14 being present in GitHub base image of Ubuntu
-          sudo apt remove postgresql postgresql-client
+          sudo apt remove postgresql-14 postgresql-14-client
           sudo apt install -y postgresql-13-postgis-3 sqlite3 libgdal-dev libproj-dev libproj-dev libsqlite3-dev spatialite-bin libsqlite3-mod-spatialite
 
       - name: Set up Python 3.8
