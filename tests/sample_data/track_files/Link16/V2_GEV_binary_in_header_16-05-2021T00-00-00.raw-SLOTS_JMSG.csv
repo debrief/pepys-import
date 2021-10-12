@@ -1,0 +1,3 @@
+ï»¿Xmt/Rcv,SlotTime,Set,FrameIndex,STN,RI,Packing,PG,Jx.y,MLI,ADDI,RC,TN,Lat,Long,Alt,Crs,Spd,Id,|,1,2,3,4,5,6,7,8
+SomeStr,59:31.6,B,550,2,0,SomeStr,6,J2.2,3,0,0,1832,0.953371727,0.458539269,25124,5,0.972404565,Friend or Foe,|,Some Hash,Some Hash,,,,,,
+SomeStr,18:45.2,B,560,669,1,SomeStr,6,J3.3,6,0,0,1580,0.762199436,0.296645626,76355,26,0.832872258,Friend or Foe,|,Some Hash,Some Hash,,,,,,
