@@ -1,6 +1,7 @@
 import os
 import re
 from datetime import datetime, timedelta
+from string import printable
 
 from tqdm import tqdm
 
@@ -44,7 +45,9 @@ class Link16Importer(Importer):
     def can_load_this_header(self, header):
         # V1 starts w/ PPLI
         # V2 starts w/ Xmt/Rcv
-        return header.startswith(V1_HEADER) or header.startswith(V2_HEADER)
+        # Strip any non-ASCII characters from the header
+        ascii_header = "".join(char for char in header if char in printable)
+        return ascii_header.startswith(V1_HEADER) or ascii_header.startswith(V2_HEADER)
 
     def can_load_this_file(self, file_contents):
         return True

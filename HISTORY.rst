@@ -2,6 +2,12 @@
 History
 =======
 
+
+0.0.31 (2021-10-12)
+-------------------
+
+* Fix for Link16 importer handling unexpected binary content in CSV
+
 0.0.30 (2021-10-05)
 -------------------
 
