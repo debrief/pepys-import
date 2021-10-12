@@ -230,6 +230,20 @@ class TestLoadLink16(unittest.TestCase):
         processor = FileProcessor(archive=False)
         processor.register_importer(Link16Importer())
 
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            states = self.store.session.query(self.store.db_classes.State).all()
+            assert len(states) == 0
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 0
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 0
+
         # parse the data
         processor.process(DATA_PATH_MIDDLE_DATE, self.store, False)
 
@@ -270,6 +284,20 @@ class TestLoadLink16(unittest.TestCase):
     def test_file_with_hours(self):
         processor = FileProcessor(archive=False)
         processor.register_importer(Link16Importer())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            states = self.store.session.query(self.store.db_classes.State).all()
+            assert len(states) == 0
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 0
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 0
 
         # parse the data
         processor.process(DATA_PATH_HOURS_IN_DATA, self.store, False)
@@ -336,6 +364,20 @@ class TestLoadLink16(unittest.TestCase):
         processor = FileProcessor(archive=False)
         processor.register_importer(Link16Importer())
 
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            states = self.store.session.query(self.store.db_classes.State).all()
+            assert len(states) == 0
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 0
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 0
+
         # parse the data
         processor.process(DATA_PATH_TIGHT_ROLLOVER, self.store, False)
 
@@ -368,6 +410,20 @@ class TestLoadLink16(unittest.TestCase):
     def test_binary_in_header(self):
         processor = FileProcessor(archive=False)
         processor.register_importer(Link16Importer())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            states = self.store.session.query(self.store.db_classes.State).all()
+            assert len(states) == 0
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 0
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 0
 
         # parse the data
         processor.process(DATA_PATH_BINARY_IN_HEADER, self.store, False)
