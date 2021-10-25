@@ -24,8 +24,8 @@ class JChatTests(unittest.TestCase):
         # check states empty
         with self.store.session_scope():
             # there must be no states at the beginning
-            states = self.store.session.query(self.store.db_classes.State).all()
-            assert len(states) == 0
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
+            assert len(comments) == 0
 
             # there must be no platforms at the beginning
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -38,6 +38,26 @@ class JChatTests(unittest.TestCase):
         # parse the data
         processor.process(NO_EXT_PATH, self.store, False)
 
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
+            assert len(comments) == 5
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 2
+
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 1
+
+            results = (
+                self.store.session.query(self.store.db_classes.Comment)
+                .order_by(self.store.db_classes.State.time)
+                .all()
+            )
+            print(results)
         # assert True == False
 
     # Tests to include:

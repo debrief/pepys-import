@@ -21,4 +21,3 @@ Flask
 Flask-CacheBuster
 flask-cors
 waitress
-beautifulsoup4
