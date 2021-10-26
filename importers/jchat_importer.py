@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from dateutil.parser import parse as date_parse
 from tqdm import tqdm
 
@@ -49,10 +47,10 @@ class JChatImporter(Importer):
         # TODO - Get the starting year / month from person importing
         self.year = 2021
         self.month = 10
+        self.last_days = 0
 
         # Each chat message is wrapped in a <div> tag
         for div in tqdm(doc.findall(".//{*}div")):
-
             self._read_message_div(div, data_store, datafile, change_id)
             datafile.flush_extracted_tokens()
 
@@ -98,22 +96,30 @@ class JChatImporter(Importer):
         )
         print(comment)
 
+    def roll_month_year(self):
+        """Rolls the current month/year over to the next one"""
+        self.month += 1
+        if self.month > 12:
+            self.month = 1
+            self.year += 1
+
     def parse_timestamp(self, timestamp_str, msg_id):
         """Parses the JChat timestamp passed in for the given message
-        Returns the parsed datetime representation of the timestamp
-                OR None if invalid timestamp
+        :param timestamp_str: The DDHHmmssZ formatted date time string
+        :param msg_id: The ID of the message whose timestamp is being parsed
+        :return: Returns the parsed datetime representation of the timestamp
+            OR False if unable to parse the timestamp
+        :rtype: datetime | bool
         """
         if len(timestamp_str) != 9:
             self.errors.append(
                 {self.error_type: f'Invalid JChat timestamp {timestamp_str} at {msg_id}"'}
             )
-            return None
-        print(date_parse(f"202110{timestamp_str}", tzinfos=TIMEZONE_MAPPINGS))
+            return False
+        # Parse days separately to make sure we have the right month/year
         days = int(timestamp_str[0:2])
-        hours = int(timestamp_str[2:4])
-        minutes = int(timestamp_str[4:6])
-        seconds = int(timestamp_str[6:8])
-        zone = timestamp_str[8]
-        print(f"{days} - {hours} - {minutes} - {seconds} - {zone}")
+        if days < self.last_days:
+            self.roll_month_year()
+        self.last_days = days
 
-        return datetime(self.year, self.month, days, hours, minutes, seconds)
+        return date_parse(f"{self.year}{self.month:02d}{timestamp_str}", tzinfos=TIMEZONE_MAPPINGS)
