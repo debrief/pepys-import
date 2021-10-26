@@ -55,9 +55,13 @@ class JChatImporter(Importer):
             datafile.flush_extracted_tokens()
 
     def _read_message_div(self, div, data_store, datafile, change_id):
-        """Reads the key parts of the JChat message from the data provided"""
-        # TODO - doc comments
-        msg_id = div.attrib["id"]  # TODO - do we need to record this?
+        """Reads the key parts of the JChat message from the data provided
+        :param div: The div tag from the JChat message to parse
+        :param data_store: The data store we're putting this message into
+        :param datafile: The data file we're extracting from
+        :param change_id: The change ID of this import
+        """
+        msg_id = div.attrib["id"]  # Grabbing ID to help with error reporting
         time_element = div.findall("{*}tt/font")
         if len(time_element) == 0:
             return  # TODO - record this as error
@@ -84,17 +88,14 @@ class JChatImporter(Importer):
         msg_content_tails = [part.tail for part in msg_content_element if part.tail is not None]
         msg_content = str.join(" ", msg_content_text + msg_content_tails)
 
-        comment = datafile.create_comment(
+        datafile.create_comment(
             data_store=data_store,
             platform=platform,
             timestamp=timestamp,
             comment=msg_content,
-            comment_type=data_store.add_to_comment_types(
-                "Narrative", change_id
-            ),  # TODO - should this be "JChat" type?
+            comment_type=data_store.add_to_comment_types("JChat", change_id),
             parser_name=self.short_name,
         )
-        print(comment)
 
     def roll_month_year(self):
         """Rolls the current month/year over to the next one"""
