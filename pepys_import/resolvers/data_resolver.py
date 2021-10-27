@@ -4,7 +4,15 @@ from abc import ABC, abstractmethod
 class DataResolver(ABC):
     @abstractmethod
     def resolve_platform(
-        self, data_store, platform_name, identifier, platform_type, nationality, privacy, change_id
+        self,
+        data_store,
+        platform_name,
+        identifier,
+        platform_type,
+        nationality,
+        privacy,
+        change_id,
+        quadgraph=None,
     ):
         """
         Implementation method should return any data necessary to create a platform.
@@ -22,6 +30,8 @@ class DataResolver(ABC):
         :type privacy: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: UUID
+        :param quadgraph: The quadgraph that the platform is known by
+        :type quadgraph: String
         :return:
         """
 

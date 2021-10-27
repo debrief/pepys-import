@@ -120,7 +120,15 @@ class CommandLineResolver(DataResolver):
             sys.exit(1)
 
     def resolve_platform(
-        self, data_store, platform_name, identifier, platform_type, nationality, privacy, change_id
+        self,
+        data_store,
+        platform_name,
+        identifier,
+        platform_type,
+        nationality,
+        privacy,
+        change_id,
+        quadgraph=None,
     ):
         print_new_section_title("Resolve Platform")
         platform_details = []

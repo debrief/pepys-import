@@ -1012,7 +1012,14 @@ class DataStore:
             or privacy_obj is None
         ):
             resolved_data = self.missing_data_resolver.resolve_platform(
-                self, platform_name, identifier, platform_type, nationality, privacy, change_id
+                self,
+                platform_name,
+                identifier,
+                platform_type,
+                nationality,
+                privacy,
+                change_id,
+                quadgraph,
             )
             # It means that new platform added as a synonym and existing platform returned
             if isinstance(resolved_data, self.db_classes.Platform):

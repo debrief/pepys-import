@@ -17,7 +17,15 @@ class DefaultResolver(DataResolver):
     default_datafile_type = "DATAFILE-TYPE-1"
 
     def resolve_platform(
-        self, data_store, platform_name, identifier, platform_type, nationality, privacy, change_id
+        self,
+        data_store,
+        platform_name,
+        identifier,
+        platform_type,
+        nationality,
+        privacy,
+        change_id,
+        quadgraph=None,
     ):
         # needs to establish defaults for platform_name, platform_type, nationality and privacy
         if not platform_name:
@@ -55,9 +63,9 @@ class DefaultResolver(DataResolver):
         if len(results_from_db) == 0:
             # Nothing in DB already, so return details to create new entry
             return (
-                platform_name,
+                platform_name + (quadgraph if quadgraph is not None else ""),
                 self.default_trigraph,
-                self.default_quadgraph,
+                quadgraph if quadgraph is not None else self.default_quadgraph,
                 identifier,
                 platform_type,
                 nationality,

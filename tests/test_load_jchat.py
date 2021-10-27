@@ -47,7 +47,7 @@ class JChatTests(unittest.TestCase):
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 1  # TODO - check why this is always 1
+            assert len(platforms) == 2
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
@@ -88,7 +88,7 @@ class JChatTests(unittest.TestCase):
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
-            assert len(platforms) == 1
+            assert len(platforms) == 2
 
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
@@ -102,6 +102,51 @@ class JChatTests(unittest.TestCase):
             assert results[0].content == "COMMS TEST"
             assert results[1].content == "Replay bravo"
             assert results[2].content == "Replay multiple bravos in same tag"
+
+    def test_existing_quad_with_new_quads(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(JChatImporter())
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
+            assert len(comments) == 0
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 0
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 0
+
+        # parse the data
+        processor.process(DATA_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
+            assert len(comments) == 5
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 3
+
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 1
+
+            results = (
+                self.store.session.query(self.store.db_classes.Comment)
+                .order_by(self.store.db_classes.Comment.time)
+                .all()
+            )
+            assert results[0].content == "COMMS TEST"
+            assert results[1].content == "Replay bravo"
+            assert results[2].content == "Replay bravo"
+            assert results[3].content == "Replay bravo - next day"
+            assert results[4].content == "Replay bravo - next month"
 
     # Tests to include:
     # Quad exists
