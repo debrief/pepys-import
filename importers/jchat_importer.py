@@ -42,6 +42,7 @@ class JChatImporter(Importer):
                     self.error_type: f'Invalid JChat file at {path}\nError from parsing was "{str(e)}"'
                 }
             )
+            print(f"Error {e}")
             return
 
         # TODO - Get the starting year / month from person importing
