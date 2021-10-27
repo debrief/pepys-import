@@ -149,9 +149,6 @@ class JChatTests(unittest.TestCase):
             assert results[4].content == "Replay bravo - next month"
 
     # Tests to include:
-    # Quad exists
-    # Quad doesn't exist
     # Various time wranging - e.g. month/year roll-over
     # HTML suffix
     # Missing data
-    # No suffix

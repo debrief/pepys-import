@@ -28,7 +28,9 @@ class DefaultResolver(DataResolver):
         quadgraph=None,
     ):
         # needs to establish defaults for platform_name, platform_type, nationality and privacy
-        if not platform_name:
+        if quadgraph and not platform_name:
+            platform_name = f"PLATFORM-{quadgraph}"
+        elif not platform_name:
             platform_name = self.default_platform_name
 
         if not identifier:
@@ -63,7 +65,7 @@ class DefaultResolver(DataResolver):
         if len(results_from_db) == 0:
             # Nothing in DB already, so return details to create new entry
             return (
-                platform_name + (quadgraph if quadgraph is not None else ""),
+                platform_name,
                 self.default_trigraph,
                 quadgraph if quadgraph is not None else self.default_quadgraph,
                 identifier,
