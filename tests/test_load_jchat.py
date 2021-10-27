@@ -326,4 +326,4 @@ class JChatTests(unittest.TestCase):
     # Various time wranging - e.g. month/year roll-over
     # HTML suffix
     # Missing data
-    # Unicode / emojis
+    # Test Pepys is loading same platform rather than creating multiple of the same one

@@ -1,8 +1,8 @@
 from dateutil.parser import parse as date_parse
+from lxml.html import parse
 from tqdm import tqdm
 
 from pepys_import.core.validators import constants
-from pepys_import.file.highlighter.xml_parser import parse
 from pepys_import.file.importer import Importer
 from pepys_import.utils.timezone_utils import TIMEZONE_MAPPINGS
 
@@ -32,10 +32,11 @@ class JChatImporter(Importer):
         return True
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
-        # JChat HTML is machine generated and appears to be well-formed
-        # So we can use the XML parser
+        # JChat HTML is machine generated but <br> and <hr> tags are not valid
+        # XML and appear in several of the example files, so we have to be more permissive
         try:
-            doc = parse(path, highlighted_file=file_object)
+            doc = parse(path)
+            # TODO - now that we've switched to lxml's HTML parser, need to deal with highlighting...
         except Exception as e:
             self.errors.append(
                 {
