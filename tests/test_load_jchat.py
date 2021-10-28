@@ -277,6 +277,7 @@ class JChatTests(unittest.TestCase):
                 .order_by(self.store.db_classes.Comment.time)
                 .all()
             )
+            assert len(results) == 2
             assert results[0].content == "COMMS TEST"
             assert results[1].content == "Replay bravo"
 

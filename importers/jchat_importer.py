@@ -91,7 +91,11 @@ class JChatImporter(Importer):
         :param datafile: The data file we're extracting from
         :param change_id: The change ID of this import
         """
-        msg_id = div.attrib["id"]  # Grabbing ID to help with error reporting
+        try:
+            msg_id = div.attrib["id"]  # Grabbing ID to help with error reporting
+        except KeyError:
+            # Ignore any non-comment messages (e.g. connect/disconnect)
+            return
         time_element = div.findall("{*}tt/font")
         if len(time_element) == 0:
             return  # TODO - record this as error
