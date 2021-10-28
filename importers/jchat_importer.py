@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from dateutil.parser import parse as date_parse
 from lxml.html import parse
 from tqdm import tqdm
@@ -17,6 +19,9 @@ class JChatImporter(Importer):
             short_name="JChat Importer",
             datafile_type="JChat",
         )
+        self.year = datetime.now().year
+        self.month = datetime.now().month
+        self.last_days = 0
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".HTML" or suffix == ""
@@ -46,10 +51,12 @@ class JChatImporter(Importer):
             print(f"Error {e}")
             return
 
-        # TODO - Get the starting year / month from person importing
-        self.year = 2021
-        self.month = 10
-        self.last_days = 0
+        self.year = int(
+            data_store.ask_for_missing_info("Which year this file generated (YYYY)?", self.year)
+        )
+        self.month = int(
+            data_store.ask_for_missing_info("Which month was this file generated (MM)?", self.month)
+        )
 
         # Each chat message is wrapped in a <div> tag
         for div in tqdm(doc.findall(".//{*}div")):
@@ -110,7 +117,7 @@ class JChatImporter(Importer):
         """Parses the JChat timestamp passed in for the given message
         :param timestamp_str: The DDHHmmssZ formatted date time string
         :param msg_id: The ID of the message whose timestamp is being parsed
-        :return: Returns the parsed datetime representation of the timestamp
+        :return: The parsed datetime representation of the timestamp
             OR False if unable to parse the timestamp
         :rtype: datetime | bool
         """

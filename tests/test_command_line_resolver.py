@@ -1291,6 +1291,26 @@ class SensorTestCase(unittest.TestCase):
                 change_id=self.change_id,
             )
 
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolve_missing_info(self, resolver_prompt):
+        resolver_prompt.side_effect = ["TEST_VALUE"]
+        info = self.resolver.resolve_missing_info("What do you need?", "HELLO")
+        self.assertEqual(info, "TEST_VALUE")
+
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolve_missing_info_default_fallback(self, resolver_prompt):
+        resolver_prompt.side_effect = [None]
+        info_none = self.resolver.resolve_missing_info("A question", "DEFAULT")
+        self.assertEqual(info_none, "DEFAULT")
+
+        resolver_prompt.side_effect = [""]
+        info_empty = self.resolver.resolve_missing_info("A question", "DEFAULT")
+        self.assertEqual(info_empty, "DEFAULT")
+
+        resolver_prompt.side_effect = [20]
+        info_value = self.resolver.resolve_missing_info("A question", 0)
+        self.assertEqual(info_value, 20)
+
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_sensor_empty_name_and_choice_in_sensor(self, menu_prompt):
         menu_prompt.side_effect = [

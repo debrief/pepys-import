@@ -2499,3 +2499,12 @@ class DataStore:
             writer.writerow(headers)
             writer.writerows(entries)
             file.close()
+
+    def ask_for_missing_info(self, question, default_value):
+        """Requests any missing information that isn't stored in the database
+        e.g. missing date/time info
+        :param question: The question to ask the resolver
+        :param default_value: The default value to use if unresolved
+        :return: The missing information requested
+        """
+        return self.missing_data_resolver.resolve_missing_info(question, default_value)

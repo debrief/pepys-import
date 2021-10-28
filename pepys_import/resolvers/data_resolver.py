@@ -74,3 +74,14 @@ class DataResolver(ABC):
         :type change_id: UUID
         :return:
         """
+
+    @abstractmethod
+    def resolve_missing_info(self, question, default_value):
+        """Implementation method should return the data for the given property name
+        as asked for in the question
+
+        :param property_name: The name of the property asked for
+        :param question: The question to resolve
+        :param default_value: The default value to use if unresolved
+        :return: The missing information requested
+        """

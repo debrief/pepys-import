@@ -386,6 +386,18 @@ class CommandLineResolver(DataResolver):
             if selected_object:
                 return selected_object
 
+    def resolve_missing_info(self, question, default_value):
+        if isinstance(default_value, int):
+            # Apply some validation if int expected
+            info = prompt(format_command(question), validator=numeric_validator)
+        else:
+            # Assume caller to validate if not number
+            info = prompt(format_command(question))
+        if info is None or info == "":
+            print(f"Falling back to default value: {default_value}")
+            info = default_value
+        return info
+
     def fuzzy_search_reference(
         self,
         data_store,
