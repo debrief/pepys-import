@@ -66,7 +66,6 @@ class JChatImporter(Importer):
         self.month = int(
             data_store.ask_for_missing_info("Which month was this file generated (MM)?", self.month)
         )
-        # TODO - Check these are valid year/month (ideally on input)
 
         # Each chat message is wrapped in a <div> tag
         for div in tqdm(doc.findall(".//{*}div")):
@@ -84,20 +83,39 @@ class JChatImporter(Importer):
         except KeyError:
             # Ignore any non-comment messages (e.g. connect/disconnect)
             return
-        time_element = div.findall("{*}tt/font")
-        if len(time_element) == 0:
-            return  # TODO - record this as error
-        time_string = time_element[0].text.strip("[").strip("]")
-        timestamp = self.parse_timestamp(time_string, msg_id)
-        time_element[0].record(self.name, "timestamp", timestamp)
+        time_element = div.find("{*}tt/font")
 
-        platform_element = div.findall("{*}b/a/font")[0]
+        # Sample data included some "Marker" messages with the id="marker"
+        if str.upper(msg_id) == "MARKER":
+            return  # Ignore these messages
+
+        if time_element is None:
+            self.errors.append(
+                {self.error_type: f"Unable to read message {msg_id}. No timestamp provided"}
+            )
+            return
+
+        time_string = time_element.text.strip("[").strip("]")
+        timestamp = self.parse_timestamp(time_string, msg_id)
+        time_element.record(self.name, "timestamp", timestamp)
+
+        platform_element = div.find("{*}b/a/font")
+        if platform_element is None:
+            self.errors.append(
+                {self.error_type: f"Unable to read message {msg_id}. No platform provided"}
+            )
+            return
         platform_quad = platform_element.text[0:4]
         platform_element.record(self.name, "platform", platform_quad)
         # Match on quadgraphs
         platform = self.get_cached_platform_from_quad(data_store, platform_quad, change_id)
 
         msg_content_element = div.findall("{*}span/font//")
+        if msg_content_element is None:
+            self.errors.append(
+                {self.error_type: f"Unable to read message {msg_id}. No message provided"}
+            )
+            return
         # Message content may have <br> tags so need to handle
         # The <br/> tag splits the XML tree so we need to call text and tail
         # to make sure we get all the comment text
