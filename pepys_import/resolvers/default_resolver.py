@@ -28,9 +28,7 @@ class DefaultResolver(DataResolver):
         quadgraph=None,
     ):
         # needs to establish defaults for platform_name, platform_type, nationality and privacy
-        if quadgraph and not platform_name:
-            platform_name = f"PLATFORM-{quadgraph}"
-        elif not platform_name:
+        if not platform_name:
             platform_name = self.default_platform_name
 
         if not identifier:

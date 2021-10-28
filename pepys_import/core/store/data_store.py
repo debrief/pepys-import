@@ -1054,6 +1054,17 @@ class DataStore:
             change_id=change_id,
         )
 
+    def get_platform_name_from_quad(self, quadgraph):
+        platform = (
+            self.session.query(self.db_classes.Platform)
+            .filter(func.lower(self.db_classes.Platform.quadgraph == lowercase_or_none(quadgraph)))
+            .first()
+        )
+
+        if platform is not None:
+            return platform.name
+        return None
+
     def get_status(
         self,
         table_type,

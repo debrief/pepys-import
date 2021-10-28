@@ -1,10 +1,12 @@
+import os
 from datetime import datetime
 
 from dateutil.parser import parse as date_parse
-from lxml.html import parse
+from lxml import etree, html
 from tqdm import tqdm
 
 from pepys_import.core.validators import constants
+from pepys_import.file.highlighter.xml_parser import parse
 from pepys_import.file.importer import Importer
 from pepys_import.utils.timezone_utils import TIMEZONE_MAPPINGS
 
@@ -24,7 +26,10 @@ class JChatImporter(Importer):
         self.last_days = 0
 
     def can_load_this_type(self, suffix):
-        return suffix.upper() == ".HTML" or suffix == ""
+        # The sample data that we have includes some files with .html but
+        # several files have no extension and have a . in the name
+        # so we can't use the file extension
+        return True
 
     def can_load_this_filename(self, filename):
         return True
@@ -38,10 +43,16 @@ class JChatImporter(Importer):
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
         # JChat HTML is machine generated but <br> and <hr> tags are not valid
-        # XML and appear in several of the example files, so we have to be more permissive
+        # XML and appear in several of the example files, so load & correct to xml
+        with open(path) as original:
+            original_doc = html.fromstring(original.read())
+
+        xhtml_path = f"{path}.xhtml"
+        with open(xhtml_path, "wb") as corrected:
+            corrected.write(etree.tostring(original_doc))
+
         try:
-            doc = parse(path)
-            # TODO - now that we've switched to lxml's HTML parser, need to deal with highlighting...
+            doc = parse(xhtml_path)
         except Exception as e:
             self.errors.append(
                 {
@@ -50,18 +61,28 @@ class JChatImporter(Importer):
             )
             print(f"Error {e}")
             return
+        try:
+            # Delete the extra file
+            os.remove(xhtml_path)
+        except IOError:
+            self.errors.append(
+                {
+                    self.error_type: f'Unable to remove intermediate file at {xhtml_path}\nPlease delete this file manually."'
+                }
+            )
 
+        self.quad_platform_cache = {}
         self.year = int(
-            data_store.ask_for_missing_info("Which year this file generated (YYYY)?", self.year)
+            data_store.ask_for_missing_info("Which year was this file generated (YYYY)?", self.year)
         )
         self.month = int(
             data_store.ask_for_missing_info("Which month was this file generated (MM)?", self.month)
         )
+        # TODO - Check these are valid year/month (ideally on input)
 
         # Each chat message is wrapped in a <div> tag
         for div in tqdm(doc.findall(".//{*}div")):
             self._read_message_div(div, data_store, datafile, change_id)
-            datafile.flush_extracted_tokens()
 
     def _read_message_div(self, div, data_store, datafile, change_id):
         """Reads the key parts of the JChat message from the data provided
@@ -80,14 +101,9 @@ class JChatImporter(Importer):
 
         platform_element = div.findall("{*}b/a/font")[0].text
         platform_quad = platform_element[0:4]
-        print(platform_quad)
+        print(f"Platform Quad: {platform_quad}")
         # Match on quadgraphs
-        platform = data_store.get_platform(quadgraph=platform_quad, change_id=change_id)
-        print(platform.name)
-        if platform is None:  # Couldn't get platform from quad
-            platform = self.get_cached_platform(
-                data_store, platform_name=platform_quad, change_id=change_id
-            )
+        platform = self.get_cached_platform_from_quad(data_store, platform_quad, change_id)
 
         msg_content_element = div.findall("{*}span/font//")
         # Message content may have <br> tags so need to handle
@@ -105,6 +121,8 @@ class JChatImporter(Importer):
             comment_type=data_store.add_to_comment_types("JChat", change_id),
             parser_name=self.short_name,
         )
+
+        datafile.flush_extracted_tokens()
 
     def roll_month_year(self):
         """Rolls the current month/year over to the next one"""
@@ -133,3 +151,32 @@ class JChatImporter(Importer):
         self.last_days = days
 
         return date_parse(f"{self.year}{self.month:02d}{timestamp_str}", tzinfos=TIMEZONE_MAPPINGS)
+
+    def get_cached_platform_from_quad(self, data_store, quadgraph, change_id):
+        """Attempts to get a platform from the quadgraph
+        :param data_store: The data store that we want to get the platform from
+        :param quadgraph: The quadgraph to get a platform for
+        :param change_id: The change ID should we need to make a new platform
+        :return: The platform for this quadgraph
+        :rtype: Platform
+        """
+        print(f"original: {quadgraph}")
+        # look in the cache first
+        platform_name = self.quad_platform_cache.get(quadgraph)
+        if platform_name is None:
+            # Otherwise we need to check whether there is actually a platform with this quad
+            platform_name = data_store.get_platform_name_from_quad(quadgraph)
+            print(f"Grabbed platform name from quad: {platform_name}")
+            if platform_name is None:
+                platform_name = quadgraph
+                print(f"Just using quad: {platform_name}")
+
+        print(f"About to get platform: {platform_name}")
+        # Grab the right platform
+        platform = self.get_cached_platform(
+            data_store, platform_name=platform_name, change_id=change_id
+        )
+        # Got a platform name, so now cache it
+        self.quad_platform_cache[quadgraph] = platform_name
+        print(f"Grabbed platform: {platform.name}")
+        return platform
