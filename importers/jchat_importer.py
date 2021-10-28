@@ -1,4 +1,4 @@
-import os
+import io
 from datetime import datetime
 
 from dateutil.parser import parse as date_parse
@@ -46,13 +46,10 @@ class JChatImporter(Importer):
         # XML and appear in several of the example files, so load & correct to xml
         with open(path) as original:
             original_doc = html.fromstring(original.read())
-
-        xhtml_path = f"{path}.xhtml"
-        with open(xhtml_path, "wb") as corrected:
-            corrected.write(etree.tostring(original_doc))
+        corrected = io.BytesIO(etree.tostring(original_doc))
 
         try:
-            doc = parse(xhtml_path)
+            doc = parse(corrected)
         except Exception as e:
             self.errors.append(
                 {
@@ -61,15 +58,6 @@ class JChatImporter(Importer):
             )
             print(f"Error {e}")
             return
-        try:
-            # Delete the extra file
-            os.remove(xhtml_path)
-        except IOError:
-            self.errors.append(
-                {
-                    self.error_type: f'Unable to remove intermediate file at {xhtml_path}\nPlease delete this file manually."'
-                }
-            )
 
         self.quad_platform_cache = {}
         self.year = int(
