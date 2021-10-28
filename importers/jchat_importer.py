@@ -49,7 +49,7 @@ class JChatImporter(Importer):
         corrected = io.BytesIO(etree.tostring(original_doc))
 
         try:
-            doc = parse(corrected)
+            doc = parse(corrected, highlighted_file=file_object)
         except Exception as e:
             self.errors.append(
                 {
@@ -88,12 +88,12 @@ class JChatImporter(Importer):
         if len(time_element) == 0:
             return  # TODO - record this as error
         time_string = time_element[0].text.strip("[").strip("]")
-        print(time_string)
         timestamp = self.parse_timestamp(time_string, msg_id)
+        time_element[0].record(self.name, "timestamp", timestamp)
 
-        platform_element = div.findall("{*}b/a/font")[0].text
-        platform_quad = platform_element[0:4]
-        print(f"Platform Quad: {platform_quad}")
+        platform_element = div.findall("{*}b/a/font")[0]
+        platform_quad = platform_element.text[0:4]
+        platform_element.record(self.name, "platform", platform_quad)
         # Match on quadgraphs
         platform = self.get_cached_platform_from_quad(data_store, platform_quad, change_id)
 
@@ -104,6 +104,12 @@ class JChatImporter(Importer):
         msg_content_text = [part.text for part in msg_content_element if part.text is not None]
         msg_content_tails = [part.tail for part in msg_content_element if part.tail is not None]
         msg_content = str.join(" ", msg_content_text + msg_content_tails)
+
+        try:
+            # Try encoding to avoid issues with highlighter
+            msg_content_element[0].record(self.name, "Content", msg_content.encode("cp1252"))
+        except Exception as e:
+            print(f"Unicode error: {e.object}")
 
         datafile.create_comment(
             data_store=data_store,
@@ -152,23 +158,19 @@ class JChatImporter(Importer):
         :return: The platform for this quadgraph
         :rtype: Platform
         """
-        print(f"original: {quadgraph}")
         # look in the cache first
         platform_name = self.quad_platform_cache.get(quadgraph)
         if platform_name is None:
             # Otherwise we need to check whether there is actually a platform with this quad
             platform_name = data_store.get_platform_name_from_quad(quadgraph)
-            print(f"Grabbed platform name from quad: {platform_name}")
             if platform_name is None:
                 platform_name = quadgraph
-                print(f"Just using quad: {platform_name}")
 
-        print(f"About to get platform: {platform_name}")
         # Grab the right platform
         platform = self.get_cached_platform(
             data_store, platform_name=platform_name, change_id=change_id
         )
         # Got a platform name, so now cache it
         self.quad_platform_cache[quadgraph] = platform_name
-        print(f"Grabbed platform: {platform.name}")
+
         return platform
