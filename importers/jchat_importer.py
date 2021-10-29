@@ -38,8 +38,15 @@ class JChatImporter(Importer):
         return header.startswith("<html>")
 
     def can_load_this_file(self, file_contents):
-        # TODO: Decide how far we want to go with this check
-        return True
+        if len(file_contents) < 8:  # Enough to cover the header
+            return False
+        # Check the HTML header
+        is_valid = "html" in file_contents[0]
+        is_valid = is_valid and "head" in file_contents[1]
+        is_valid = is_valid and 'style type="text/css"' in file_contents[2]
+        # Only going to check for msgcontent in case there are other styles
+        is_valid = is_valid and "msgcontent" in "".join(file_contents[3:8])
+        return is_valid
 
     def _load_this_file(self, data_store, path, file_object, datafile, change_id):
         # JChat HTML is machine generated but <br> and <hr> tags are not valid
