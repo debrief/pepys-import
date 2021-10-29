@@ -131,11 +131,10 @@ class JChatImporter(Importer):
             return
         msg_content = self.parse_message_content(msg_content_element)
 
-        try:
-            # Try encoding to avoid issues with highlighter
-            msg_content_element[0].record(self.name, "Content", msg_content.encode("cp1252"))
-        except Exception as e:
-            print(f"Unicode error: {e.object}")
+        if msg_content is None:
+            self.errors.append({self.error_type: f"Unable to parse JChat message {msg_id}."})
+            return
+        msg_content_element[0].record(self.name, "Content", msg_content)
 
         datafile.create_comment(
             data_store=data_store,
@@ -201,8 +200,7 @@ class JChatImporter(Importer):
 
         return platform
 
-    @staticmethod
-    def parse_message_content(msg_content_element):
+    def parse_message_content(self, msg_content_element):
         """Takes the content of a JChat message and parses it to a string
         :param msg_content_element: The XML element with the message in it
         :ptype msg_content_element: Element
@@ -214,4 +212,9 @@ class JChatImporter(Importer):
         # to make sure we get all the comment text
         msg_content_text = [part.text for part in msg_content_element if part.text is not None]
         msg_content_tails = [part.tail for part in msg_content_element if part.tail is not None]
-        return str.join(" ", msg_content_text + msg_content_tails)
+        msg_content = str.join(" ", msg_content_text + msg_content_tails)
+        try:
+            cp1252_content = msg_content.encode("cp1252", "ignore").decode("cp1252", "ignore")
+            return cp1252_content
+        except UnicodeError:
+            return None
