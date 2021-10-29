@@ -1059,7 +1059,7 @@ class MinMaxValidator(Validator):
             number = int(to_validate)
             if self.min and number < self.min:
                 raise ValidationError(len(document.text), f"Number must be {self.min} or higher")
-            elif self.max and number > self.max:
+            if self.max and number > self.max:
                 raise ValidationError(len(document.text), f"Number must be {self.max} or lower")
         else:
             raise ValidationError(len(document.text), "This input contains non-numeric characters")

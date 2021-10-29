@@ -127,12 +127,7 @@ class JChatImporter(Importer):
                 {self.error_type: f"Unable to read message {msg_id}. No message provided"}
             )
             return
-        # Message content may have <br> tags so need to handle
-        # The <br/> tag splits the XML tree so we need to call text and tail
-        # to make sure we get all the comment text
-        msg_content_text = [part.text for part in msg_content_element if part.text is not None]
-        msg_content_tails = [part.tail for part in msg_content_element if part.tail is not None]
-        msg_content = str.join(" ", msg_content_text + msg_content_tails)
+        msg_content = self.parse_message_content(msg_content_element)
 
         try:
             # Try encoding to avoid issues with highlighter
@@ -203,3 +198,18 @@ class JChatImporter(Importer):
         self.quad_platform_cache[quadgraph] = platform_name
 
         return platform
+
+    @staticmethod
+    def parse_message_content(msg_content_element):
+        """Takes the content of a JChat message and parses it to a string
+        :param msg_content_element: The XML element with the message in it
+        :ptype msg_content_element: Element
+        :return: The message content text
+        :rtype: String
+        """
+        # Message content may have <br> tags so need to handle
+        # The <br/> tag splits the XML tree so we need to call text and tail
+        # to make sure we get all the comment text
+        msg_content_text = [part.text for part in msg_content_element if part.text is not None]
+        msg_content_tails = [part.tail for part in msg_content_element if part.tail is not None]
+        return str.join(" ", msg_content_text + msg_content_tails)
