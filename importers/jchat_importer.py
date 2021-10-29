@@ -207,7 +207,7 @@ class JChatImporter(Importer):
 
         # Grab the right platform
         platform = self.get_cached_platform(
-            data_store, platform_name=platform_name, change_id=change_id
+            data_store, platform_name=platform_name, quadgraph=quadgraph, change_id=change_id
         )
         # Got a platform name, so now cache it
         self.quad_platform_cache[quadgraph] = platform_name
@@ -229,6 +229,7 @@ class JChatImporter(Importer):
         msg_content = str.join(" ", msg_content_text + msg_content_tails)
         try:
             cp1252_content = msg_content.encode("cp1252", "ignore").decode("cp1252", "ignore")
+            print(cp1252_content)
             return cp1252_content
         except UnicodeError:
             return None

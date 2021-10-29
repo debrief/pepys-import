@@ -194,7 +194,7 @@ class JChatTests(unittest.TestCase):
             )
             assert unicodedata.normalize("NFKC", results[0].content) == "COMMS  ’TEST"
             assert unicodedata.normalize("NFKC", results[1].content) == "Replay&‘ ...bravo"
-            assert unicodedata.normalize("NFKC", results[2].content) == "Replay–bravo"
+            assert unicodedata.normalize("NFKC", results[2].content) == "Replay–bravo"
 
     def test_room_connections_disconnections_ignored(self):
         processor = FileProcessor(archive=False)
