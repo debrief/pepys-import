@@ -35,7 +35,9 @@ class JChatImporter(Importer):
         return True
 
     def can_load_this_header(self, header):
-        return header.startswith("<html>")
+        if header:
+            return header.startswith("<html>")
+        return False
 
     def can_load_this_file(self, file_contents):
         if len(file_contents) < 8:  # Enough to cover the header
