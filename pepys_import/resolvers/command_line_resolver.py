@@ -1,7 +1,7 @@
 import sys
 
 from prompt_toolkit import prompt
-from prompt_toolkit.validation import Validator
+from prompt_toolkit.validation import ValidationError, Validator
 from tabulate import tabulate
 
 from pepys_import.core.store.constants import NATIONALITY, PLATFORM, PRIVACY
@@ -386,10 +386,10 @@ class CommandLineResolver(DataResolver):
             if selected_object:
                 return selected_object
 
-    def resolve_missing_info(self, question, default_value):
+    def resolve_missing_info(self, question, default_value, min_value=None, max_value=None):
         if isinstance(default_value, int):
             # Apply some validation if int expected
-            info = prompt(format_command(question), validator=numeric_validator)
+            info = prompt(format_command(question), validator=MinMaxValidator(min_value, max_value))
         else:
             # Assume caller to validate if not number
             info = prompt(format_command(question))
@@ -1044,3 +1044,22 @@ class CommandLineResolver(DataResolver):
         elif choice == ".":
             print("-" * 60, "\nReturning to the previous menu\n")
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
+
+
+class MinMaxValidator(Validator):
+    """A validator to check numerical values are between a given minimum/maximum value"""
+
+    def __init__(self, minimum=None, maximum=None):
+        self.min = minimum
+        self.max = maximum
+
+    def validate(self, document):
+        to_validate = document.text
+        if is_number(to_validate):
+            number = int(to_validate)
+            if self.min and number < self.min:
+                raise ValidationError(len(document.text), f"Number must be {self.min} or higher")
+            elif self.max and number > self.max:
+                raise ValidationError(len(document.text), f"Number must be {self.max} or lower")
+        else:
+            raise ValidationError(len(document.text), "This input contains non-numeric characters")

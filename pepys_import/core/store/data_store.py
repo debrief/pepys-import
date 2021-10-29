@@ -2511,11 +2511,15 @@ class DataStore:
             writer.writerows(entries)
             file.close()
 
-    def ask_for_missing_info(self, question, default_value):
+    def ask_for_missing_info(self, question, default_value, min_value=None, max_value=None):
         """Requests any missing information that isn't stored in the database
         e.g. missing date/time info
         :param question: The question to ask the resolver
         :param default_value: The default value to use if unresolved
+        :param min_value: The minimum value allowed for the result, optional
+        :param max_value: The maximum value allowed for the result, optional
         :return: The missing information requested
         """
-        return self.missing_data_resolver.resolve_missing_info(question, default_value)
+        return self.missing_data_resolver.resolve_missing_info(
+            question, default_value, min_value, max_value
+        )

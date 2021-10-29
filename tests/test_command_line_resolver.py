@@ -7,11 +7,17 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
+from prompt_toolkit.document import Document
+from prompt_toolkit.validation import ValidationError
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.resolvers import constants
 from pepys_import.resolvers.command_line_input import is_valid
-from pepys_import.resolvers.command_line_resolver import CommandLineResolver, is_number
+from pepys_import.resolvers.command_line_resolver import (
+    CommandLineResolver,
+    MinMaxValidator,
+    is_number,
+)
 from pepys_import.utils.text_formatting_utils import formatted_text_to_str
 
 DIR_PATH = os.path.dirname(__file__)
@@ -1803,6 +1809,53 @@ class GetMethodsTestCase(unittest.TestCase):
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
             self.assertEqual(len(sensors), 7)
             self.assertEqual(sensors[-1].name, "SENSOR-TEST")
+
+
+class MinMaxValidatorTests(unittest.TestCase):
+    def test_min_max_validator_none(self):
+        validator = MinMaxValidator(None, None)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("ABC"))
+
+        validator.validate(Document("20"))
+
+    def test_min_max_validator_min_only(self):
+        validator = MinMaxValidator(15, None)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("14"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("0"))
+        validator.validate(Document("15"))
+        validator.validate(Document("16"))
+        validator.validate(Document("122001"))
+
+    def test_min_max_validator_max_only(self):
+        validator = MinMaxValidator(None, 15)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("122001"))
+        validator.validate(Document("15"))
+        validator.validate(Document("14"))
+        validator.validate(Document("0"))
+
+    def test_min_max_validator_same_value(self):
+        validator = MinMaxValidator(15, 15)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("14"))
+        validator.validate(Document("15"))
+
+    def test_min_max_validator_min_and_max(self):
+        validator = MinMaxValidator(10, 15)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("9"))
+        validator.validate(Document("15"))
+        validator.validate(Document("10"))
+        validator.validate(Document("13"))
 
 
 @pytest.mark.parametrize(

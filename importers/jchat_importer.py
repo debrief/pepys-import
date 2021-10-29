@@ -61,10 +61,14 @@ class JChatImporter(Importer):
 
         self.quad_platform_cache = {}
         self.year = int(
-            data_store.ask_for_missing_info("Which year was this file generated (YYYY)?", self.year)
+            data_store.ask_for_missing_info(
+                "Which year was this file generated (YYYY)?", self.year, 1990
+            )
         )
         self.month = int(
-            data_store.ask_for_missing_info("Which month was this file generated (MM)?", self.month)
+            data_store.ask_for_missing_info(
+                "Which month was this file generated (MM)?", self.month, 1, 12
+            )
         )
 
         # Each chat message is wrapped in a <div> tag
