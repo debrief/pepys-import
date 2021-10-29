@@ -1057,7 +1057,7 @@ class DataStore:
     def get_platform_name_from_quad(self, quadgraph):
         platform = (
             self.session.query(self.db_classes.Platform)
-            .filter(func.lower(self.db_classes.Platform.quadgraph == lowercase_or_none(quadgraph)))
+            .filter(func.lower(self.db_classes.Platform.quadgraph) == lowercase_or_none(quadgraph))
             .first()
         )
 

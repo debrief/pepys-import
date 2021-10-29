@@ -1,4 +1,4 @@
-import io
+import os
 from datetime import datetime
 
 from dateutil.parser import parse as date_parse
@@ -55,10 +55,14 @@ class JChatImporter(Importer):
         # XML and appear in several of the example files, so load & correct to xml
         with open(path) as original:
             original_doc = html.fromstring(original.read())
-        corrected = io.BytesIO(etree.tostring(original_doc))
 
+        xhtml_path = f"{path}.xhtml"
+        with open(xhtml_path, "wb") as corrected:
+            corrected.write(etree.tostring(original_doc))
+
+        file_object.reinitialise(xhtml_path, datafile)
         try:
-            doc = parse(corrected, highlighted_file=file_object)
+            doc = parse(xhtml_path, highlighted_file=file_object)
         except Exception as e:
             self.errors.append(
                 {
@@ -83,6 +87,16 @@ class JChatImporter(Importer):
         # Each chat message is wrapped in a <div> tag
         for div in tqdm(doc.findall(".//{*}div")):
             self._read_message_div(div, data_store, datafile, change_id)
+
+        try:
+            # Delete the extra file
+            os.remove(xhtml_path)
+        except IOError:
+            self.errors.append(
+                {
+                    self.error_type: f'Unable to remove intermediate file at {xhtml_path}\nPlease delete this file manually."'
+                }
+            )
 
     def _read_message_div(self, div, data_store, datafile, change_id):
         """Reads the key parts of the JChat message from the data provided
