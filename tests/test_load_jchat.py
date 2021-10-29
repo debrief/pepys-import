@@ -1,6 +1,7 @@
 import os
 import unicodedata
 import unittest
+from datetime import datetime
 
 from importers.jchat_importer import JChatImporter
 from pepys_import.core.store.data_store import DataStore
@@ -14,6 +15,9 @@ UNUSUAL_CHARS_PATH = os.path.join(FILE_PATH, "sample_data/jchat_files/jchat_unus
 MARKER_MESSAGES_PATH = os.path.join(FILE_PATH, "sample_data/jchat_files/marker_messages.html")
 ROOM_MESSAGES_PATH = os.path.join(FILE_PATH, "sample_data/jchat_files/connect_disconnect.html")
 NO_HTML_EXT_DOT_IN_NAME_PATH = os.path.join(FILE_PATH, "sample_data/jchat_files/ABC_123.01_XYZ")
+YEAR_MONTH_ROLLOVER_PATH = os.path.join(
+    FILE_PATH, "sample_data/jchat_files/year_month_rollover.html"
+)
 
 
 class JChatTests(unittest.TestCase):
@@ -324,8 +328,53 @@ class JChatTests(unittest.TestCase):
             assert results[1].content == "Replay bravo"
             assert results[2].content == "Replay bravo"
 
-    # Tests to include:
-    # Various time wranging - e.g. month/year roll-over
-    # HTML suffix
-    # Missing data
-    # Test Pepys is loading same platform rather than creating multiple of the same one
+    def test_year_month_rollover(self):
+        processor = FileProcessor(archive=False)
+        importer = JChatImporter()
+        processor.register_importer(importer)
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
+            assert len(comments) == 0
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 0
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 0
+
+        # Fixed Year/month to avoid flaky tests
+        importer.year = 2020
+        importer.month = 10
+
+        # parse the data
+        processor.process(YEAR_MONTH_ROLLOVER_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
+            assert len(comments) == 6
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 3
+
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 1
+
+            results = (
+                self.store.session.query(self.store.db_classes.Comment)
+                .order_by(self.store.db_classes.Comment.time)
+                .all()
+            )
+            assert results[0].time == datetime(2020, 10, 31, 8, 27, 44)
+            assert results[1].time == datetime(2020, 11, 1, 8, 29, 44)
+            assert results[2].time == datetime(2020, 11, 30, 9, 14, 44)
+            assert results[3].time == datetime(2020, 12, 1, 10, 28, 54)
+            assert results[4].time == datetime(2020, 12, 31, 1, 8, 9)
+            assert results[5].time == datetime(2021, 1, 1, 2, 8, 9)

@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 
-from dateutil.parser import parse as date_parse
+from dateutil.tz import tzoffset
 from lxml import etree, html
 from tqdm import tqdm
 
@@ -75,12 +75,17 @@ class JChatImporter(Importer):
         self.quad_platform_cache = {}
         self.year = int(
             data_store.ask_for_missing_info(
-                "Which year was this file generated (YYYY)?", self.year, 1990
+                "Which year was this file generated (YYYY)?",
+                default_value=self.year,
+                min_value=1990,
             )
         )
         self.month = int(
             data_store.ask_for_missing_info(
-                "Which month was this file generated (MM)?", self.month, 1, 12
+                "Which month was this file generated (MM)?",
+                default_value=self.month,
+                min_value=1,
+                max_value=12,
             )
         )
 
@@ -187,7 +192,14 @@ class JChatImporter(Importer):
             self.roll_month_year()
         self.last_days = days
 
-        return date_parse(f"{self.year}{self.month:02d}{timestamp_str}", tzinfos=TIMEZONE_MAPPINGS)
+        day_and_time = timestamp_str[0:8]
+        timezone_offset = TIMEZONE_MAPPINGS[timestamp_str[8]]
+
+        timezone_aware_timestamp = datetime.strptime(
+            f"{self.year}{self.month:02d}{day_and_time}{timezone_offset}", "%Y%m%d%H%M%S%z"
+        )
+        # Give back the time in UTC for storing
+        return timezone_aware_timestamp.astimezone(tzoffset("UTC", 0))
 
     def get_cached_platform_from_quad(self, data_store, quadgraph, change_id):
         """Attempts to get a platform from the quadgraph
