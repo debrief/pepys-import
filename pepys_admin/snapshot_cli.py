@@ -12,6 +12,7 @@ from pepys_admin.base_cli import BaseShell
 from pepys_admin.merge import MergeDatabases
 from pepys_admin.snapshot_helpers import (
     export_all_measurement_tables,
+    export_measurement_tables_filtered_by_location,
     export_measurement_tables_filtered_by_time,
     export_metadata_tables,
     export_reference_tables,
@@ -147,7 +148,7 @@ class SnapshotShell(BaseShell):
     def get_time_from_user(self, prompt_text):
         valid = False
         while not valid:
-            time_str = prompt(f"{prompt_text} (YYYY-MM-DD HH:MM:SS):")
+            time_str = prompt(f"{prompt_text} (YYYY-MM-DD HH:MM:SS): ")
             try:
                 time_obj = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
                 valid = True
@@ -167,7 +168,16 @@ class SnapshotShell(BaseShell):
         )
 
     def do_export_all_data_filter_location(self):
-        print("Not implemented yet")
+        destination_store = self._export_all_ref_and_metadata()
+
+        ymin = prompt("Enter bottom latitude: ")
+        ymax = prompt("Enter top latitude: ")
+        xmin = prompt("Enter left longitude: ")
+        xmax = prompt("Enter right longitude: ")
+
+        export_measurement_tables_filtered_by_location(
+            self.data_store, destination_store, xmin, ymin, xmax, ymax
+        )
 
     def do_export_all_data_filter_participation(self):
         print("Not implemented yet")

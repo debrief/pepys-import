@@ -1,6 +1,8 @@
 import inspect
 
+from geoalchemy2.elements import WKTElement
 from sqlalchemy import or_
+from sqlalchemy.sql.functions import func
 
 from pepys_import.core.store import sqlite_db
 from pepys_import.core.store.db_status import TableTypes
@@ -140,8 +142,29 @@ def export_measurement_table_with_filter(source_store, destination_store, table,
         query = filter(table_object, query)
 
     results = query.all()
+
+    if len(results) == 0:
+        return
+
+    data_attributes = []
+    for col in table_object.__table__.columns:
+        prop = getattr(table_object, col.name).property
+        data_attributes.append(prop.key)
+
     for row in results:
-        d = {column.name: getattr(row, column.name) for column in row.__table__.columns}
+        d = {}
+        for attrib in data_attributes:
+            d[attrib] = getattr(row, attrib)
+        # TODO: Improve this
+        # This is not necessarily the most efficient way of doing this, as we're looking for
+        # an attribute starting with _ for each
+        # for col in row.__table__.columns:
+        #     try:
+        #         value = getattr(row, "_" + col.name)
+        #     except AttributeError:
+        #         value = getattr(row, col.name)
+        #     d[col.name] = value
+        # dict_values.append(row.__dict__)
         dict_values.append(d)
 
     object_ = find_sqlite_table_object(table, source_store)
@@ -194,6 +217,9 @@ def export_measurement_tables_filtered_by_time(
     export_measurement_table_with_filter(
         source_store, destination_store, source_store.db_classes.LogsHolding, time_attribute_filter
     )
+    export_measurement_table_with_filter(
+        source_store, destination_store, source_store.db_classes.Media, time_attribute_filter
+    )
 
     export_measurement_table_with_filter(
         source_store,
@@ -206,4 +232,23 @@ def export_measurement_tables_filtered_by_time(
         destination_store,
         source_store.db_classes.Geometry1,
         start_end_attribute_filter,
+    )
+
+
+def export_measurement_tables_filtered_by_location(
+    source_store, destination_store, xmin, ymin, xmax, ymax
+):
+    def location_attribute_filter(table_object, query):
+        wkt = f"POLYGON(({xmin} {ymin},{xmin} {ymax},{xmax} {ymax},{xmax} {ymin},{xmin} {ymin}))"
+        query = query.filter(
+            func.ST_Within(
+                table_object.location,
+                # func.ST_MakeEnvelope(xmin, ymin, xmax, ymax, 4326),
+                WKTElement(wkt, srid=4326),
+            )
+        )
+        return query
+
+    export_measurement_table_with_filter(
+        source_store, destination_store, source_store.db_classes.State, location_attribute_filter
     )
