@@ -239,6 +239,9 @@ def export_measurement_tables_filtered_by_location(
     source_store, destination_store, xmin, ymin, xmax, ymax
 ):
     def location_attribute_filter(table_object, query):
+        # Note: We can't use the ST_MakeEnvelope function, as it's not supported by spatialite
+        # so we have to create the WKT polygon manually. This is only done once for the filter
+        # so it shouldn't have an efficiency impact
         wkt = f"POLYGON(({xmin} {ymin},{xmin} {ymax},{xmax} {ymax},{xmax} {ymin},{xmin} {ymin}))"
         query = query.filter(
             func.ST_Within(
