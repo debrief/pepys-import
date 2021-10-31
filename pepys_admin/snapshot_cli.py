@@ -1,14 +1,21 @@
 import os
 import shutil
 import tempfile
+from datetime import datetime
 
 from iterfzf import iterfzf
 from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion import PathCompleter
+from prompt_toolkit.shortcuts import prompt
 
 from pepys_admin.base_cli import BaseShell
 from pepys_admin.merge import MergeDatabases
-from pepys_admin.snapshot_helpers import export_metadata_tables, export_reference_tables
+from pepys_admin.snapshot_helpers import (
+    export_all_measurement_tables,
+    export_measurement_tables_filtered_by_time,
+    export_metadata_tables,
+    export_reference_tables,
+)
 from pepys_admin.utils import database_at_latest_revision, get_default_export_folder
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.core.store.db_status import TableTypes
@@ -25,7 +32,11 @@ class SnapshotShell(BaseShell):
 
     choices = """(1) Create snapshot with Reference data
 (2) Create snapshot with Reference data & Metadata
-(3) Merge databases
+(3) Create snapshot with all data
+(4) Create snapshot with all data, filtered by time
+(5) Create snapshot with all data, filtered by location
+(6) Create snapshot with all data, filtered by wargame/serial
+(7) Merge databases
 (.) Back
 """
     prompt = "(pepys-admin) (snapshot) "
@@ -37,7 +48,11 @@ class SnapshotShell(BaseShell):
             ".": self.do_cancel,
             "1": self.do_export_reference_data,
             "2": self.do_export_reference_data_and_metadata,
-            "3": self.do_merge_databases,
+            "3": self.do_export_all_data,
+            "4": self.do_export_all_data_filter_time,
+            "5": self.do_export_all_data_filter_location,
+            "6": self.do_export_all_data_filter_participation,
+            "7": self.do_merge_databases,
         }
 
     @staticmethod
@@ -108,6 +123,54 @@ class SnapshotShell(BaseShell):
         print(
             f"Reference and metadata tables are successfully exported!\nYou can find it here: '{path}'."
         )
+
+    def _export_all_ref_and_metadata(self):
+        if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
+            return
+
+        destination_store, path = self._create_destination_store()
+
+        # Export reference tables
+        reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
+        export_reference_tables(self.data_store, destination_store, reference_table_objects)
+
+        # Export metadata tables
+        export_metadata_tables(self.data_store, destination_store)
+
+        return destination_store
+
+    def do_export_all_data(self):
+        destination_store = self._export_all_ref_and_metadata()
+
+        export_all_measurement_tables(self.data_store, destination_store)
+
+    def get_time_from_user(self, prompt_text):
+        valid = False
+        while not valid:
+            time_str = prompt(f"{prompt_text} (YYYY-MM-DD HH:MM:SS):")
+            try:
+                time_obj = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+                valid = True
+            except ValueError:
+                print("Invalid time entered, please try again")
+
+        return time_obj
+
+    def do_export_all_data_filter_time(self):
+        destination_store = self._export_all_ref_and_metadata()
+
+        start_time = self.get_time_from_user("Start time")
+        end_time = self.get_time_from_user("End time")
+
+        export_measurement_tables_filtered_by_time(
+            self.data_store, destination_store, start_time, end_time
+        )
+
+    def do_export_all_data_filter_location(self):
+        print("Not implemented yet")
+
+    def do_export_all_data_filter_participation(self):
+        print("Not implemented yet")
 
     def do_merge_databases(self):
         file_completer = PathCompleter(expanduser=True)

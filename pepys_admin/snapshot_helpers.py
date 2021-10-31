@@ -1,6 +1,9 @@
 import inspect
 
+from sqlalchemy import or_
+
 from pepys_import.core.store import sqlite_db
+from pepys_import.core.store.db_status import TableTypes
 
 
 def row_to_dict(table_object, data_store):
@@ -58,40 +61,47 @@ def export_reference_tables(source_store, destination_store, table_objects):
             destination_store.session.bulk_insert_mappings(object_, dict_values)
 
 
-def export_metadata_tables(source_store, destination_store, privacy_ids):
-    """Copies :code:`Platform`, :code:`Sensor` and :code:`Synonym` objects from
+def export_metadata_tables(source_store, destination_store, privacy_ids=None):
+    """Copies :code:`Platform`, :code:`Sensor`, :code:`Datafile` and :code:`Synonym` objects from
     :code:`source_store` to :code:`destination_store`.
 
     :param source_store: A :class:`DataStore` object to fetch objects
     :type source_store: DataStore
     :param destination_store: A :class:`DataStore` object to copy the objects from source_store
     :type destination_store: DataStore
-    :param privacy_ids: A list of Privacy ID's which is used to filter Platform and Sensor objects
+    :param privacy_ids: A list of Privacy ID's which is used to filter objects
     :type privacy_ids: List
     :return:
     """
     for table_object in [
         source_store.db_classes.Platform,
         source_store.db_classes.Sensor,
+        source_store.db_classes.Datafile,
         source_store.db_classes.Synonym,
     ]:
         with source_store.session_scope():
             dict_values = list()
             if table_object.__name__ == "Platform":
-                values = (
-                    source_store.session.query(table_object)
-                    .filter(table_object.privacy_id.in_(privacy_ids))
-                    .all()
-                )
+                query = source_store.session.query(table_object)
+                if privacy_ids is not None:
+                    query = query.filter(table_object.privacy_id.in_(privacy_ids))
+                values = query.all()
+
                 platform_ids = [row.platform_id for row in values]
             elif table_object.__name__ == "Sensor":
-                values = (
-                    source_store.session.query(table_object)
-                    .filter(table_object.host.in_(platform_ids))
-                    .filter(table_object.privacy_id.in_(privacy_ids))
-                    .all()
+                query = source_store.session.query(table_object).filter(
+                    table_object.host.in_(platform_ids)
                 )
+                if privacy_ids is not None:
+                    query = query.filter(table_object.privacy_id.in_(privacy_ids))
+                values = query.all()
                 sensor_ids = [row.sensor_id for row in values]
+            elif table_object.__name__ == "Datafile":
+                query = source_store.session.query(table_object)
+                if privacy_ids is not None:
+                    query = query.filter(table_object.privacy_id.in_(privacy_ids))
+
+                values = query.all()
             else:
                 all_ids = list()
                 all_ids.extend(platform_ids)
@@ -108,3 +118,92 @@ def export_metadata_tables(source_store, destination_store, privacy_ids):
             object_ = find_sqlite_table_object(table_object, source_store)
             with destination_store.session_scope():
                 destination_store.session.bulk_insert_mappings(object_, dict_values)
+
+
+def export_all_measurement_tables(source_store, destination_store):
+    measurement_table_objects = source_store.meta_classes[TableTypes.MEASUREMENT]
+
+    for table in measurement_table_objects:
+        export_measurement_table_with_filter(source_store, destination_store, table)
+
+
+def export_measurement_table_with_filter(source_store, destination_store, table, filter=None):
+    if isinstance(table, str):
+        table_object = getattr(source_store.db_classes, table)
+    else:
+        table_object = table
+
+    dict_values = []
+    query = source_store.session.query(table_object)
+
+    if filter is not None:
+        query = filter(table_object, query)
+
+    results = query.all()
+    for row in results:
+        d = {column.name: getattr(row, column.name) for column in row.__table__.columns}
+        dict_values.append(d)
+
+    object_ = find_sqlite_table_object(table, source_store)
+    with destination_store.session_scope():
+        destination_store.session.bulk_insert_mappings(object_, dict_values)
+
+
+def export_measurement_tables_filtered_by_time(
+    source_store, destination_store, start_time, end_time
+):
+    def time_attribute_filter(table_object, query):
+        """Filters on the time attribute of a table, so works for State, Contact, LogsHolding and Comment"""
+        query = query.filter(table_object.time >= start_time)
+        query = query.filter(table_object.time <= end_time)
+
+        return query
+
+    def start_end_attribute_filter(table_object, query):
+        query = query.filter(
+            or_(
+                (  # Deal with entries where start is missing, so just do a standard 'between' search on end
+                    (table_object.start == None)  # noqa
+                    & (table_object.end >= start_time)
+                    & (table_object.end <= end_time)
+                ),
+                (  # Deal with entries where end is missing, so just do a standard 'between' search on start
+                    (table_object.end == None)  # noqa
+                    & (table_object.start >= start_time)
+                    & (table_object.start <= end_time)
+                ),
+                or_(  # Deal with entries where we have both start and end, and want to test all overlap possibilities
+                    ((table_object.start >= start_time) & (table_object.end <= end_time)),
+                    ((table_object.start >= start_time) & (table_object.end >= end_time)),
+                    ((table_object.start <= start_time) & (table_object.end <= end_time)),
+                    ((table_object.start <= start_time) & (table_object.end >= end_time)),
+                ),
+            )
+        )
+        return query
+
+    export_measurement_table_with_filter(
+        source_store, destination_store, source_store.db_classes.State, time_attribute_filter
+    )
+    export_measurement_table_with_filter(
+        source_store, destination_store, source_store.db_classes.Contact, time_attribute_filter
+    )
+    export_measurement_table_with_filter(
+        source_store, destination_store, source_store.db_classes.Comment, time_attribute_filter
+    )
+    export_measurement_table_with_filter(
+        source_store, destination_store, source_store.db_classes.LogsHolding, time_attribute_filter
+    )
+
+    export_measurement_table_with_filter(
+        source_store,
+        destination_store,
+        source_store.db_classes.Activation,
+        start_end_attribute_filter,
+    )
+    export_measurement_table_with_filter(
+        source_store,
+        destination_store,
+        source_store.db_classes.Geometry1,
+        start_end_attribute_filter,
+    )
