@@ -386,15 +386,20 @@ class CommandLineResolver(DataResolver):
             if selected_object:
                 return selected_object
 
-    def resolve_missing_info(self, question, default_value, min_value=None, max_value=None):
+    def resolve_missing_info(
+        self, question, default_value, min_value=None, max_value=None, allow_empty=False
+    ):
         if isinstance(default_value, int):
             # Apply some validation if int expected
-            info = prompt(format_command(question), validator=MinMaxValidator(min_value, max_value))
+            info = prompt(
+                format_command(f"{question} (Default: {default_value})"),
+                validator=MinMaxValidator(min_value, max_value, allow_empty),
+            )
         else:
             # Assume caller to validate if not number
             info = prompt(format_command(question))
         if info is None or info == "":
-            print(f"Falling back to default value: {default_value}")
+            print(f"Using default value: {default_value}")
             info = default_value
         return info
 
@@ -1049,9 +1054,15 @@ class CommandLineResolver(DataResolver):
 class MinMaxValidator(Validator):
     """A validator to check numerical values are between a given minimum/maximum value"""
 
-    def __init__(self, minimum=None, maximum=None):
+    def __init__(self, minimum=None, maximum=None, allow_empty=False):
+        """Creates a new validator to check numerical values between two values
+        :param minimum: The minimum value (inclusive) allowed by the validator
+        :param maximum: The maximum value (inclusive) allowed by the validator
+        :param allow_empty: Whether we allow an empty string to be parsed
+        """
         self.min = minimum
         self.max = maximum
+        self.allow_empty = allow_empty
 
     def validate(self, document):
         to_validate = document.text
@@ -1061,5 +1072,7 @@ class MinMaxValidator(Validator):
                 raise ValidationError(len(document.text), f"Number must be {self.min} or higher")
             if self.max and number > self.max:
                 raise ValidationError(len(document.text), f"Number must be {self.max} or lower")
+        elif self.allow_empty is True and to_validate == "":
+            pass
         else:
             raise ValidationError(len(document.text), "This input contains non-numeric characters")

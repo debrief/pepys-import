@@ -78,6 +78,7 @@ class JChatImporter(Importer):
                 "Which year was this file generated (YYYY)?",
                 default_value=self.year,
                 min_value=1990,
+                allow_empty=True,
             )
         )
         self.month = int(
@@ -86,6 +87,7 @@ class JChatImporter(Importer):
                 default_value=self.month,
                 min_value=1,
                 max_value=12,
+                allow_empty=True,
             )
         )
 

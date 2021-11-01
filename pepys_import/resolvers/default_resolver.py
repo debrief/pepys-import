@@ -159,5 +159,7 @@ class DefaultResolver(DataResolver):
 
         return datafile_name, datafile_type, privacy
 
-    def resolve_missing_info(self, question, default_value, min_value=None, max_value=None):
+    def resolve_missing_info(
+        self, question, default_value, min_value=None, max_value=None, allow_empty=False
+    ):
         return default_value

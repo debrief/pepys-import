@@ -1857,6 +1857,27 @@ class MinMaxValidatorTests(unittest.TestCase):
         validator.validate(Document("10"))
         validator.validate(Document("13"))
 
+    def test_min_max_validator_allow_empty(self):
+        validator = MinMaxValidator(10, 15, True)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("9"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("TEXT"))
+        validator.validate(Document(""))
+
+    def test_min_max_validator__do_not_allow_empty(self):
+        validator = MinMaxValidator(10, 15, False)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("9"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("TEXT"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document(""))
+
 
 @pytest.mark.parametrize(
     "number,expected_result",

@@ -76,7 +76,9 @@ class DataResolver(ABC):
         """
 
     @abstractmethod
-    def resolve_missing_info(self, question, default_value, min_value=None, max_value=None):
+    def resolve_missing_info(
+        self, question, default_value, min_value=None, max_value=None, allow_empty=False
+    ):
         """Implementation method should return the data for the given property name
         as asked for in the question
 
@@ -85,5 +87,6 @@ class DataResolver(ABC):
         :param default_value: The default value to use if unresolved
         :param min_value: The minimum value allowed for the result, optional
         :param max_value: The maximum value allowed for the result, optional
+        :param allow_empty: Whether to allow an empty value (e.g. to accept default), optional
         :return: The missing information requested
         """
