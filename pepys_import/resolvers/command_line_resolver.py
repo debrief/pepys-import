@@ -389,15 +389,18 @@ class CommandLineResolver(DataResolver):
     def resolve_missing_info(
         self, question, default_value, min_value=None, max_value=None, allow_empty=False
     ):
+        question_to_ask = question
+        if allow_empty is True:
+            question_to_ask += f" (Default: {default_value})"
         if isinstance(default_value, int):
             # Apply some validation if int expected
             info = prompt(
-                format_command(f"{question} (Default: {default_value})"),
+                format_command(question_to_ask),
                 validator=MinMaxValidator(min_value, max_value, allow_empty),
             )
         else:
             # Assume caller to validate if not number
-            info = prompt(format_command(question))
+            info = prompt(format_command(question_to_ask))
         if info is None or info == "":
             print(f"Using default value: {default_value}")
             info = default_value
