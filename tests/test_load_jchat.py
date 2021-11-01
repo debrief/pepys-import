@@ -16,7 +16,7 @@ MARKER_MESSAGES_PATH = os.path.join(FILE_PATH, "sample_data/jchat_files/marker_m
 ROOM_MESSAGES_PATH = os.path.join(FILE_PATH, "sample_data/jchat_files/connect_disconnect.html")
 NO_HTML_EXT_DOT_IN_NAME_PATH = os.path.join(FILE_PATH, "sample_data/jchat_files/ABC_123.01_XYZ")
 YEAR_MONTH_ROLLOVER_PATH = os.path.join(
-    FILE_PATH, "sample_data/jchat_files/year_month_rollover.html"
+    FILE_PATH, "jchat_importer_date_sensitive_files/year_month_rollover.html"
 )
 
 
