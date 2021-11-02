@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 
 from dateutil.tz import tzoffset
@@ -162,6 +163,8 @@ class JChatImporter(Importer):
 
         if version == JCHAT_LEGACY:
             msg_content_element = div.findall("{*}span/font//i")
+            if len(msg_content_element) == 0:
+                msg_content_element = div.findall("{*}span/font")
         else:
             msg_content_element = div.findall("{*}font//i")  # Some have <i> tags ...
             if len(msg_content_element) == 0:
@@ -259,16 +262,8 @@ class JChatImporter(Importer):
         """
         # A split may give None or "\n" - likely related to the tag structure inside
         # the message.
-        msg_content_text = [
-            part.text
-            for part in msg_content_element
-            if part.text is not None and "\n" not in part.text
-        ]
-        msg_content_tails = [
-            part.tail
-            for part in msg_content_element
-            if part.tail is not None and "\n" not in part.tail
-        ]
+        msg_content_text = [part.text for part in msg_content_element if part.text is not None]
+        msg_content_tails = [part.tail for part in msg_content_element if part.tail is not None]
         msg_content = str.join(" ", msg_content_text + msg_content_tails)
         # Message content may have <br> tags so need to handle
         # The <br/> tag splits the XML tree so we need to delve deeper
@@ -276,20 +271,16 @@ class JChatImporter(Importer):
         subparts = [part.findall("./") for part in msg_content_element]
         # No data has had nested sub-parts so far, so only going one level deep
         if subparts and subparts[0]:
-            subparts_text = [
-                subpart.text
-                for subpart in subparts[0]
-                if subpart.text is not None and "\n" not in subpart.text
-            ]
-            subparts_tail = [
-                subpart.tail
-                for subpart in subparts[0]
-                if subpart.tail is not None and "\n" not in subpart.tail
-            ]
+            subparts_text = [subpart.text for subpart in subparts[0] if subpart.text is not None]
+            subparts_tail = [subpart.tail for subpart in subparts[0] if subpart.tail is not None]
             msg_content = msg_content + " " + " ".join(subparts_text + subparts_tail)
+        # Tidy up the string to remove
+        #   - Any line breaks that made it through
+        #   - Any trailing/leading spaces
+        #   - Any extra spaces
+        msg_content = re.sub(" +", " ", msg_content.replace("\n", "").strip())
         try:
             cp1252_content = msg_content.encode("cp1252", "ignore").decode("cp1252", "ignore")
-
             return cp1252_content
         except UnicodeError:
             return None
