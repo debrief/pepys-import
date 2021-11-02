@@ -1,6 +1,8 @@
 import inspect
+from datetime import datetime
 
 from geoalchemy2.elements import WKTElement
+from prompt_toolkit.shortcuts import prompt
 from sqlalchemy import or_
 from sqlalchemy.sql.functions import func
 
@@ -43,6 +45,19 @@ def find_sqlite_table_object(table_object, data_store):
                 return obj
     else:
         return table_object
+
+
+def get_time_from_user(prompt_text):
+    valid = False
+    while not valid:
+        time_str = prompt(f"{prompt_text} (YYYY-MM-DD HH:MM:SS): ")
+        try:
+            time_obj = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+            valid = True
+        except ValueError:
+            print("Invalid time entered, please try again")
+
+    return time_obj
 
 
 def export_reference_tables(source_store, destination_store, table_objects):

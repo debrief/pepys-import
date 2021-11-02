@@ -1,7 +1,6 @@
 import os
 import shutil
 import tempfile
-from datetime import datetime
 
 from iterfzf import iterfzf
 from prompt_toolkit import prompt as ptk_prompt
@@ -16,6 +15,7 @@ from pepys_admin.snapshot_helpers import (
     export_measurement_tables_filtered_by_time,
     export_metadata_tables,
     export_reference_tables,
+    get_time_from_user,
 )
 from pepys_admin.utils import database_at_latest_revision, get_default_export_folder
 from pepys_import.core.store.data_store import DataStore
@@ -145,23 +145,11 @@ class SnapshotShell(BaseShell):
 
         export_all_measurement_tables(self.data_store, destination_store)
 
-    def get_time_from_user(self, prompt_text):
-        valid = False
-        while not valid:
-            time_str = prompt(f"{prompt_text} (YYYY-MM-DD HH:MM:SS): ")
-            try:
-                time_obj = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
-                valid = True
-            except ValueError:
-                print("Invalid time entered, please try again")
-
-        return time_obj
-
     def do_export_all_data_filter_time(self):
         destination_store = self._export_all_ref_and_metadata()
 
-        start_time = self.get_time_from_user("Start time")
-        end_time = self.get_time_from_user("End time")
+        start_time = get_time_from_user("Start time")
+        end_time = get_time_from_user("End time")
 
         export_measurement_tables_filtered_by_time(
             self.data_store, destination_store, start_time, end_time
