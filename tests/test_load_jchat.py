@@ -18,6 +18,7 @@ NO_HTML_EXT_DOT_IN_NAME_PATH = os.path.join(FILE_PATH, "sample_data/jchat_files/
 YEAR_MONTH_ROLLOVER_PATH = os.path.join(
     FILE_PATH, "jchat_importer_date_sensitive_files/year_month_rollover.html"
 )
+MODERN_FORMAT_PATH = os.path.join(FILE_PATH, "sample_data/jchat_files/jchat_modern_format.html")
 
 
 class JChatTests(unittest.TestCase):
@@ -241,6 +242,50 @@ class JChatTests(unittest.TestCase):
             )
             assert results[0].content == "COMMS TEST"
             assert results[1].content == "Replay bravo"
+
+    def test_modern_jchat_format(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(JChatImporter())
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
+            assert len(comments) == 0
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 0
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 0
+
+        # parse the data
+        processor.process(MODERN_FORMAT_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            comments = self.store.session.query(self.store.db_classes.Comment).all()
+            assert len(comments) == 3
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            assert len(platforms) == 2
+
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            assert len(datafiles) == 1
+
+            results = (
+                self.store.session.query(self.store.db_classes.Comment)
+                .order_by(self.store.db_classes.Comment.time)
+                .all()
+            )
+            assert len(results) == 3
+            assert results[0].content == "COMMS TEST"
+            assert results[1].content == "Replay bravo - no i tag and breaks"
+            assert results[2].content == "Replay bravo - no i tag"
 
     def test_marker_messages_ignored(self):
         processor = FileProcessor(archive=False)

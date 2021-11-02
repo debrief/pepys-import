@@ -10,6 +10,10 @@ from pepys_import.file.highlighter.xml_parser import parse
 from pepys_import.file.importer import Importer
 from pepys_import.utils.timezone_utils import TIMEZONE_MAPPINGS
 
+# In future, we may be able to replace these with actual version numbers
+JCHAT_LEGACY = 1
+JCHAT_MODERN = 2
+
 
 class JChatImporter(Importer):
     """Imports JChat messages"""
@@ -113,10 +117,18 @@ class JChatImporter(Importer):
         :param change_id: The change ID of this import
         """
         try:
-            msg_id = div.attrib["id"]  # Grabbing ID to help with error reporting
+            # Older format uses id=
+            # Newer format uses msgid=
+            msg_id = div.attrib["msgid"]  # Grabbing ID to help with error reporting
+            version = JCHAT_MODERN
         except KeyError:
-            # Ignore any non-comment messages (e.g. connect/disconnect)
-            return
+            try:
+                msg_id = div.attrib["id"]
+                version = JCHAT_LEGACY
+            except KeyError:
+                # Ignore any non-comment messages (e.g. connect/disconnect)
+                return
+
         time_element = div.find("{*}tt/font")
 
         # Sample data included some "Marker" messages with the id="marker"
@@ -133,7 +145,11 @@ class JChatImporter(Importer):
         timestamp = self.parse_timestamp(time_string, msg_id)
         time_element.record(self.name, "timestamp", timestamp)
 
-        platform_element = div.find("{*}b/a/font")
+        if version == JCHAT_LEGACY:
+            platform_element = div.find("{*}b/a/font")
+        else:  # version == JCHAT_MODERN
+            platform_element = div.find("{*}b/font/a")
+
         if platform_element is None:
             self.errors.append(
                 {self.error_type: f"Unable to read message {msg_id}. No platform provided"}
@@ -144,7 +160,13 @@ class JChatImporter(Importer):
         # Match on quadgraphs
         platform = self.get_cached_platform_from_quad(data_store, platform_quad, change_id)
 
-        msg_content_element = div.findall("{*}span/font//")
+        if version == JCHAT_LEGACY:
+            msg_content_element = div.findall("{*}span/font//i")
+        else:
+            msg_content_element = div.findall("{*}font//i")  # Some have <i> tags ...
+            if len(msg_content_element) == 0:
+                msg_content_element = div.findall("{*}font")  # ... others don't
+
         if msg_content_element is None:
             self.errors.append(
                 {self.error_type: f"Unable to read message {msg_id}. No message provided"}
@@ -235,15 +257,39 @@ class JChatImporter(Importer):
         :return: The message content text
         :rtype: String
         """
-        # Message content may have <br> tags so need to handle
-        # The <br/> tag splits the XML tree so we need to call text and tail
-        # to make sure we get all the comment text
-        msg_content_text = [part.text for part in msg_content_element if part.text is not None]
-        msg_content_tails = [part.tail for part in msg_content_element if part.tail is not None]
+        # A split may give None or "\n" - likely related to the tag structure inside
+        # the message.
+        msg_content_text = [
+            part.text
+            for part in msg_content_element
+            if part.text is not None and "\n" not in part.text
+        ]
+        msg_content_tails = [
+            part.tail
+            for part in msg_content_element
+            if part.tail is not None and "\n" not in part.tail
+        ]
         msg_content = str.join(" ", msg_content_text + msg_content_tails)
+        # Message content may have <br> tags so need to handle
+        # The <br/> tag splits the XML tree so we need to delve deeper
+        # to make sure we get all the comment text
+        subparts = [part.findall("./") for part in msg_content_element]
+        # No data has had nested sub-parts so far, so only going one level deep
+        if subparts and subparts[0]:
+            subparts_text = [
+                subpart.text
+                for subpart in subparts[0]
+                if subpart.text is not None and "\n" not in subpart.text
+            ]
+            subparts_tail = [
+                subpart.tail
+                for subpart in subparts[0]
+                if subpart.tail is not None and "\n" not in subpart.tail
+            ]
+            msg_content = msg_content + " " + " ".join(subparts_text + subparts_tail)
         try:
             cp1252_content = msg_content.encode("cp1252", "ignore").decode("cp1252", "ignore")
-            print(cp1252_content)
+
             return cp1252_content
         except UnicodeError:
             return None
