@@ -6,7 +6,7 @@ flake8==3.*
 tox==3.14.0
 coverage==5.*
 pytest>=5.3.5
-Sphinx==3.*
+Sphinx==4.*
 twine==3.*
 nose2
 black
