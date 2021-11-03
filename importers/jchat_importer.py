@@ -59,11 +59,12 @@ class JChatImporter(Importer):
         # JChat HTML is machine generated but <br> and <hr> tags are not valid
         # XML and appear in several of the example files, so load & correct to xml
         with open(path) as original:
-            original_doc = html.fromstring(original.read())
+            original_doc = original.read()
+            simplified_doc = html.fromstring(self.simplify_jchat_html(original_doc))
 
         xhtml_path = f"{path}.xhtml"
         with open(xhtml_path, "wb") as corrected:
-            corrected.write(etree.tostring(original_doc))
+            corrected.write(etree.tostring(simplified_doc))
 
         file_object.reinitialise(xhtml_path, datafile)
         try:
@@ -161,22 +162,14 @@ class JChatImporter(Importer):
         # Match on quadgraphs
         platform = self.get_cached_platform_from_quad(data_store, platform_quad, change_id)
 
-        if version == JCHAT_LEGACY:
-            msg_content_element = div.findall("{*}span/font//i")
-            if len(msg_content_element) == 0:
-                msg_content_element = div.findall("{*}span/font")
-        else:
-            msg_content_element = div.findall("{*}font//i")  # Some have <i> tags ...
-            if len(msg_content_element) == 0:
-                msg_content_element = div.findall("{*}font")  # ... others don't
+        msg_content_element = [element for element in div.iterfind("font")]
 
-        if msg_content_element is None:
+        if not msg_content_element:
             self.errors.append(
                 {self.error_type: f"Unable to read message {msg_id}. No message provided"}
             )
             return
         msg_content = self.parse_message_content(msg_content_element)
-
         if msg_content is None:
             self.errors.append({self.error_type: f"Unable to parse JChat message {msg_id}."})
             return
@@ -260,27 +253,35 @@ class JChatImporter(Importer):
         :return: The message content text
         :rtype: String
         """
-        # A split may give None or "\n" - likely related to the tag structure inside
-        # the message.
-        msg_content_text = [part.text for part in msg_content_element if part.text is not None]
-        msg_content_tails = [part.tail for part in msg_content_element if part.tail is not None]
-        msg_content = str.join(" ", msg_content_text + msg_content_tails)
-        # Message content may have <br> tags so need to handle
-        # The <br/> tag splits the XML tree so we need to delve deeper
-        # to make sure we get all the comment text
-        subparts = [part.findall("./") for part in msg_content_element]
-        # No data has had nested sub-parts so far, so only going one level deep
-        if subparts and subparts[0]:
-            subparts_text = [subpart.text for subpart in subparts[0] if subpart.text is not None]
-            subparts_tail = [subpart.tail for subpart in subparts[0] if subpart.tail is not None]
-            msg_content = msg_content + " " + " ".join(subparts_text + subparts_tail)
-        # Tidy up the string to remove
-        #   - Any line breaks that made it through
-        #   - Any trailing/leading spaces
-        #   - Any extra spaces
+        if not msg_content_element:
+            return None
+        msg_content = " ".join([text for text in msg_content_element[0].itertext()])
         msg_content = re.sub(" +", " ", msg_content.replace("\n", "").strip())
         try:
             cp1252_content = msg_content.encode("cp1252", "ignore").decode("cp1252", "ignore")
             return cp1252_content
         except UnicodeError:
             return None
+
+    @staticmethod
+    def simplify_jchat_html(jchat_html_string):
+        """Strips tags that are common in jchat files but get in the way of parsing
+        :param jchat_html_string: The jchat HTML
+        :ptype jchat_html_string: String
+        :returns: The original string without the awkward tags"""
+        # The (tag to remove, string to replace it with)
+        tags_to_remove = [
+            ("<i>", ""),
+            ("</i>", ""),
+            ("<br>", " "),
+            ("<br/>", " "),
+            ("</br>", ""),  # Avoid double space
+            ('<span class="msgcontent">', ""),
+            ("<span>", ""),
+            ("</span>", ""),
+        ]
+        simple_html_string = jchat_html_string
+        for tag, replacement in tags_to_remove:
+            simple_html_string = simple_html_string.replace(tag, replacement)
+
+        return simple_html_string
