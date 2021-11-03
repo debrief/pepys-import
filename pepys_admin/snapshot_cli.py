@@ -12,7 +12,9 @@ from pepys_admin.merge import MergeDatabases
 from pepys_admin.snapshot_helpers import (
     export_all_measurement_tables,
     export_measurement_tables_filtered_by_location,
+    export_measurement_tables_filtered_by_serial_participation,
     export_measurement_tables_filtered_by_time,
+    export_measurement_tables_filtered_by_wargame_participation,
     export_metadata_tables,
     export_reference_tables,
     get_time_from_user,
@@ -36,8 +38,9 @@ class SnapshotShell(BaseShell):
 (3) Create snapshot with all data
 (4) Create snapshot with all data, filtered by time
 (5) Create snapshot with all data, filtered by location
-(6) Create snapshot with all data, filtered by wargame/serial
-(7) Merge databases
+(6) Create snapshot with all data, filtered by wargame
+(7) Create snapshot with all data, filtered by serial
+(8) Merge databases
 (.) Back
 """
     prompt = "(pepys-admin) (snapshot) "
@@ -52,8 +55,9 @@ class SnapshotShell(BaseShell):
             "3": self.do_export_all_data,
             "4": self.do_export_all_data_filter_time,
             "5": self.do_export_all_data_filter_location,
-            "6": self.do_export_all_data_filter_participation,
-            "7": self.do_merge_databases,
+            "6": self.do_export_all_data_filter_wargame_participation,
+            "7": self.do_export_all_data_filter_serial_participation,
+            "8": self.do_merge_databases,
         }
 
     @staticmethod
@@ -167,8 +171,61 @@ class SnapshotShell(BaseShell):
             self.data_store, destination_store, xmin, ymin, xmax, ymax
         )
 
-    def do_export_all_data_filter_participation(self):
-        print("Not implemented yet")
+    def do_export_all_data_filter_serial_participation(self):
+        destination_store = self._export_all_ref_and_metadata()
+
+        # TODO: Select Wargame first, then select from Serials within that Wargame
+
+        with self.data_store.session_scope():
+            results = self.data_store.session.query(
+                self.data_store.db_classes.Serial.serial_number,
+                self.data_store.db_classes.Serial.serial_id,
+            ).all()
+            serial_dict = {serial_number: serial_id for (serial_number, serial_id) in results}
+
+            if len(serial_dict) == 0:
+                print("No serials defined")
+                return
+
+            selected_serial_number = iterfzf(serial_dict.keys(), prompt="Select serial: ")
+            selected_serial_id = serial_dict[selected_serial_number]
+
+            selected_serial = (
+                self.data_store.session.query(self.data_store.db_classes.Serial)
+                .filter(self.data_store.db_classes.Serial.serial_id == selected_serial_id)
+                .one()
+            )
+
+        export_measurement_tables_filtered_by_serial_participation(
+            self.data_store, destination_store, selected_serial
+        )
+
+    def do_export_all_data_filter_wargame_participation(self):
+        destination_store = self._export_all_ref_and_metadata()
+
+        with self.data_store.session_scope():
+            results = self.data_store.session.query(
+                self.data_store.db_classes.Wargame.name,
+                self.data_store.db_classes.Wargame.wargame_id,
+            ).all()
+            wargame_dict = {name: wargame_id for (name, wargame_id) in results}
+
+            if len(wargame_dict) == 0:
+                print("No wargames defined")
+                return
+
+            selected_wargame_name = iterfzf(wargame_dict.keys(), prompt="Select wargame: ")
+            selected_wargame_id = wargame_dict[selected_wargame_name]
+
+            selected_wargame = (
+                self.data_store.session.query(self.data_store.db_classes.Wargame)
+                .filter(self.data_store.db_classes.Wargame.wargame_id == selected_wargame_id)
+                .one()
+            )
+
+        export_measurement_tables_filtered_by_wargame_participation(
+            self.data_store, destination_store, selected_wargame
+        )
 
     def do_merge_databases(self):
         file_completer = PathCompleter(expanduser=True)

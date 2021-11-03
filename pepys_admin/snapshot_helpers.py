@@ -198,56 +198,31 @@ def export_measurement_tables_filtered_by_time(
         return query
 
     def start_end_attribute_filter(table_object, query):
-        query = query.filter(
-            or_(
-                (  # Deal with entries where start is missing, so just do a standard 'between' search on end
-                    (table_object.start == None)  # noqa
-                    & (table_object.end >= start_time)
-                    & (table_object.end <= end_time)
-                ),
-                (  # Deal with entries where end is missing, so just do a standard 'between' search on start
-                    (table_object.end == None)  # noqa
-                    & (table_object.start >= start_time)
-                    & (table_object.start <= end_time)
-                ),
-                or_(  # Deal with entries where we have both start and end, and want to test all overlap possibilities
-                    ((table_object.start >= start_time) & (table_object.end <= end_time)),
-                    ((table_object.start >= start_time) & (table_object.end >= end_time)),
-                    ((table_object.start <= start_time) & (table_object.end <= end_time)),
-                    ((table_object.start <= start_time) & (table_object.end >= end_time)),
-                ),
-            )
+        return _start_end_filter(table_object, query, start_time, end_time)
+
+    tables_with_time_attribute = [
+        source_store.db_classes.State,
+        source_store.db_classes.Contact,
+        source_store.db_classes.Comment,
+        source_store.db_classes.LogsHolding,
+        source_store.db_classes.Media,
+    ]
+    for table in tables_with_time_attribute:
+        export_measurement_table_with_filter(
+            source_store, destination_store, table, time_attribute_filter
         )
-        return query
 
-    export_measurement_table_with_filter(
-        source_store, destination_store, source_store.db_classes.State, time_attribute_filter
-    )
-    export_measurement_table_with_filter(
-        source_store, destination_store, source_store.db_classes.Contact, time_attribute_filter
-    )
-    export_measurement_table_with_filter(
-        source_store, destination_store, source_store.db_classes.Comment, time_attribute_filter
-    )
-    export_measurement_table_with_filter(
-        source_store, destination_store, source_store.db_classes.LogsHolding, time_attribute_filter
-    )
-    export_measurement_table_with_filter(
-        source_store, destination_store, source_store.db_classes.Media, time_attribute_filter
-    )
-
-    export_measurement_table_with_filter(
-        source_store,
-        destination_store,
+    tables_with_start_end_attributes = [
         source_store.db_classes.Activation,
-        start_end_attribute_filter,
-    )
-    export_measurement_table_with_filter(
-        source_store,
-        destination_store,
         source_store.db_classes.Geometry1,
-        start_end_attribute_filter,
-    )
+    ]
+    for table in tables_with_start_end_attributes:
+        export_measurement_table_with_filter(
+            source_store,
+            destination_store,
+            table,
+            start_end_attribute_filter,
+        )
 
 
 def export_measurement_tables_filtered_by_location(
@@ -261,7 +236,19 @@ def export_measurement_tables_filtered_by_location(
         query = query.filter(
             func.ST_Within(
                 table_object.location,
-                # func.ST_MakeEnvelope(xmin, ymin, xmax, ymax, 4326),
+                WKTElement(wkt, srid=4326),
+            )
+        )
+        return query
+
+    def geometry_attribute_filter(table_object, query):
+        # Note: We can't use the ST_MakeEnvelope function, as it's not supported by spatialite
+        # so we have to create the WKT polygon manually. This is only done once for the filter
+        # so it shouldn't have an efficiency impact
+        wkt = f"POLYGON(({xmin} {ymin},{xmin} {ymax},{xmax} {ymax},{xmax} {ymin},{xmin} {ymin}))"
+        query = query.filter(
+            func.ST_Within(
+                table_object.geometry,
                 WKTElement(wkt, srid=4326),
             )
         )
@@ -270,3 +257,147 @@ def export_measurement_tables_filtered_by_location(
     export_measurement_table_with_filter(
         source_store, destination_store, source_store.db_classes.State, location_attribute_filter
     )
+    export_measurement_table_with_filter(
+        source_store, destination_store, source_store.db_classes.Contact, location_attribute_filter
+    )
+    export_measurement_table_with_filter(
+        source_store, destination_store, source_store.db_classes.Media, location_attribute_filter
+    )
+    export_measurement_table_with_filter(
+        source_store,
+        destination_store,
+        source_store.db_classes.Geometry1,
+        geometry_attribute_filter,
+    )
+
+
+def export_measurement_tables_filtered_by_wargame_participation(
+    source_store, destination_store, selected_wargame
+):
+    def wargame_participation_filter_with_time(table_object, query):
+        # Note: We can't use the ST_MakeEnvelope function, as it's not supported by spatialite
+        # so we have to create the WKT polygon manually. This is only done once for the filter
+        # so it shouldn't have an efficiency impact
+        wargame_start = selected_wargame.start
+        wargame_end = selected_wargame.end
+        query = query.filter(
+            source_store.db_classes.Platform.wargame_participations_objects.contains(
+                selected_wargame
+            ),
+            table_object.time >= wargame_start,
+            table_object.time <= wargame_end,
+        )
+        return query
+
+    def wargame_participation_filter_with_start_end(table_object, query):
+        wargame_start = selected_wargame.start
+        wargame_end = selected_wargame.end
+        query = query.filter(
+            source_store.db_classes.Platform.wargame_participations_objects.contains(
+                selected_wargame
+            )
+        )
+        query = _start_end_filter(table_object, query, wargame_start, wargame_end)
+
+        return query
+
+    tables_with_time = [
+        source_store.db_classes.State,
+        source_store.db_classes.Contact,
+        source_store.db_classes.Comment,
+    ]
+
+    for table in tables_with_time:
+        export_measurement_table_with_filter(
+            source_store, destination_store, table, wargame_participation_filter_with_time
+        )
+
+    export_measurement_table_with_filter(
+        source_store,
+        destination_store,
+        source_store.db_classes.Activation,
+        wargame_participation_filter_with_start_end,
+    )
+
+
+def export_measurement_tables_filtered_by_serial_participation(
+    source_store, destination_store, selected_serial
+):
+    # Get a list of all Platforms taking part in the serial, and their participation times
+    participants = source_store.session.query(source_store.db_classes.SerialParticipant).filter(
+        source_store.db_classes.SerialParticipant.serial_id == selected_serial.serial_id
+    )
+
+    for participant in participants:
+        platform_id = participant.platform.platform_id
+        start_time = participant.start if participant.start is not None else selected_serial.start
+        end_time = participant.end if participant.end is not None else selected_serial.end
+
+        print(f"{platform_id}: {start_time}, {end_time}")
+
+        def filter_function_time(table_object, query):
+            query = query.filter(
+                table_object.platform_id == platform_id,
+                table_object.time >= start_time,
+                table_object.time <= end_time,
+            )
+            return query
+
+        def filter_function_start_end(table_object, query):
+            query = query.filter(table_object.platform_id == platform_id)
+            query = _start_end_filter(table_object, query, start_time, end_time)
+            return query
+
+        tables_with_time = [
+            source_store.db_classes.State,
+            source_store.db_classes.Contact,
+            source_store.db_classes.Comment,
+        ]
+
+        for table in tables_with_time:
+            export_measurement_table_with_filter(
+                source_store, destination_store, table, filter_function_time
+            )
+
+        export_measurement_table_with_filter(
+            source_store,
+            destination_store,
+            source_store.db_classes.Activation,
+            filter_function_start_end,
+        )
+
+
+def _start_end_filter(table_object, query, start_time, end_time):
+    query = query.filter(
+        or_(
+            (  # Deal with entries where start is missing, so just do a standard 'between' search on end
+                (table_object.start == None)  # noqa
+                & (table_object.end >= start_time)
+                & (table_object.end <= end_time)
+            ),
+            (  # Deal with entries where end is missing, so just do a standard 'between' search on start
+                (table_object.end == None)  # noqa
+                & (table_object.start >= start_time)
+                & (table_object.start <= end_time)
+            ),
+            (  # Deal with entries where we have both start and end, and want to test all overlap possibilities
+                (table_object.start != None)
+                & (table_object.end != None)
+                & (
+                    ((table_object.start >= start_time) & (table_object.end <= end_time))
+                    | (
+                        (table_object.start >= start_time)
+                        & (table_object.start <= end_time)
+                        & (table_object.end >= end_time)
+                    )
+                    | (
+                        (table_object.start <= start_time)
+                        & (table_object.end <= end_time)
+                        & (table_object.end >= start_time)
+                    )
+                    | ((table_object.start <= start_time) & (table_object.end >= end_time))
+                )
+            ),
+        )
+    )
+    return query
