@@ -10,6 +10,7 @@ from prompt_toolkit.shortcuts import prompt
 from pepys_admin.base_cli import BaseShell
 from pepys_admin.merge import MergeDatabases
 from pepys_admin.snapshot_helpers import (
+    _select_wargame,
     export_all_measurement_tables,
     export_measurement_tables_filtered_by_location,
     export_measurement_tables_filtered_by_serial_participation,
@@ -174,17 +175,21 @@ class SnapshotShell(BaseShell):
     def do_export_all_data_filter_serial_participation(self):
         destination_store = self._export_all_ref_and_metadata()
 
-        # TODO: Select Wargame first, then select from Serials within that Wargame
-
         with self.data_store.session_scope():
-            results = self.data_store.session.query(
-                self.data_store.db_classes.Serial.serial_number,
-                self.data_store.db_classes.Serial.serial_id,
-            ).all()
+            selected_wargame_id = _select_wargame(self.data_store)
+
+            results = (
+                self.data_store.session.query(
+                    self.data_store.db_classes.Serial.serial_number,
+                    self.data_store.db_classes.Serial.serial_id,
+                )
+                .filter(self.data_store.db_classes.Serial.wargame_id == selected_wargame_id)
+                .all()
+            )
             serial_dict = {serial_number: serial_id for (serial_number, serial_id) in results}
 
             if len(serial_dict) == 0:
-                print("No serials defined")
+                print("No serials defined in selected wargame")
                 return
 
             selected_serial_number = iterfzf(serial_dict.keys(), prompt="Select serial: ")
@@ -204,18 +209,7 @@ class SnapshotShell(BaseShell):
         destination_store = self._export_all_ref_and_metadata()
 
         with self.data_store.session_scope():
-            results = self.data_store.session.query(
-                self.data_store.db_classes.Wargame.name,
-                self.data_store.db_classes.Wargame.wargame_id,
-            ).all()
-            wargame_dict = {name: wargame_id for (name, wargame_id) in results}
-
-            if len(wargame_dict) == 0:
-                print("No wargames defined")
-                return
-
-            selected_wargame_name = iterfzf(wargame_dict.keys(), prompt="Select wargame: ")
-            selected_wargame_id = wargame_dict[selected_wargame_name]
+            selected_wargame_id = _select_wargame(self.data_store)
 
             selected_wargame = (
                 self.data_store.session.query(self.data_store.db_classes.Wargame)

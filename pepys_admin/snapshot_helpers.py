@@ -2,6 +2,7 @@ import inspect
 from datetime import datetime
 
 from geoalchemy2.elements import WKTElement
+from iterfzf import iterfzf
 from prompt_toolkit.shortcuts import prompt
 from sqlalchemy import or_
 from sqlalchemy.sql.functions import func
@@ -401,3 +402,20 @@ def _start_end_filter(table_object, query, start_time, end_time):
         )
     )
     return query
+
+
+def _select_wargame(data_store):
+    results = data_store.session.query(
+        data_store.db_classes.Wargame.name,
+        data_store.db_classes.Wargame.wargame_id,
+    ).all()
+    wargame_dict = {name: wargame_id for (name, wargame_id) in results}
+
+    if len(wargame_dict) == 0:
+        print("No wargames defined")
+        return
+
+    selected_wargame_name = iterfzf(wargame_dict.keys(), prompt="Select wargame: ")
+    selected_wargame_id = wargame_dict[selected_wargame_name]
+
+    return selected_wargame_id
