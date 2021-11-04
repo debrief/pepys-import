@@ -12,6 +12,7 @@ class WecdisImporter(Importer):
         )
 
         self.platform_name = None
+        self.timestamp = None
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".LOG" or suffix.upper() == ".TXT"
@@ -48,6 +49,19 @@ class WecdisImporter(Importer):
         if vnm_tokens[1].text != "VNM":
             # Programming error, shouldn't be hit but if it does we're passing the wrong line
             raise TypeError(f"Expected a VNM line, given {vnm_tokens[1].text}")
-        self.platform_name, _, _ = vnm_tokens[2].text.partition(
-            "*"
-        )  # Ignore the *XX part if present
+        # Ignore the *XX part if present
+        self.platform_name, _, _ = vnm_tokens[2].text.partition("*")
+
+    def handle_dza(self, dza_tokens):
+        """Extracts the important information from a DZA (Timestamp) line
+        :param dza_tokens: A tokenised DZA line
+        :ptype dza_tokens: Line (list of tokens)"""
+        if len(dza_tokens) < 4:
+            self.errors.append(
+                {
+                    self.error_type: "DZA line does not contain enough parts. No platform name in {dza_tokens}"
+                }
+            )
+            return
+        if dza_tokens[1].text != "DZA":
+            raise TypeError(f"Expected a DZA line, given {dza_tokens[1].text}")
