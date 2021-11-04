@@ -170,7 +170,7 @@ class JChatImporter(Importer):
             )
             return
         msg_content = self.parse_message_content(msg_content_element)
-        if msg_content is None:
+        if not msg_content:
             self.errors.append({self.error_type: f"Unable to parse JChat message {msg_id}."})
             return
         msg_content_element[0].record(self.name, "Content", msg_content)
@@ -203,7 +203,7 @@ class JChatImporter(Importer):
         """
         if len(timestamp_str) != 9:
             self.errors.append(
-                {self.error_type: f'Invalid JChat timestamp {timestamp_str} at {msg_id}"'}
+                {self.error_type: f"Invalid JChat timestamp {timestamp_str} at {msg_id}"}
             )
             return False
         # Parse days separately to make sure we have the right month/year

@@ -6,6 +6,7 @@ from datetime import datetime
 from importers.jchat_importer import JChatImporter
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.file.file_processor import FileProcessor
+from tests.utils import check_errors_for_file_contents
 
 FILE_PATH = os.path.dirname(__file__)
 NO_EXT_PATH = os.path.join(FILE_PATH, "sample_data/jchat_files/jchat_no_ext")
@@ -515,6 +516,130 @@ class JChatTests(unittest.TestCase):
             assert results[2].content == "Modern - no i tag - no breaks"
             assert results[3].content == "Legacy - font a swap - no i tag - no breaks"
             assert results[4].content == "Legacy - font a swap - has i tag - no breaks"
+
+    def test_invalid_missing_timestamp(self):
+        html_string = """<html>
+            <head>
+              <style type="text/css">
+                <!--
+                    span.msgcontent { color: #0 }
+                -->
+              </style>
+            </head>
+            <body>
+                <div id="34544=34534">
+                    <b><a href=""><font>DAUN_AS</font></a></b>
+                    <span class="msgcontent"><font><i>COMMS<br>TEST</i></font></span>
+                </div>
+            <body>
+        <html>"""
+        importer = JChatImporter()
+
+        check_errors_for_file_contents(
+            html_string,
+            "Unable to read message 34544=34534. No timestamp provided",
+            importer,
+            "no_timestamp.html",
+        )
+
+    def test_invalid_invalid_timestamp(self):
+        html_string = """<html>
+            <head>
+              <style type="text/css">
+                <!--
+                    span.msgcontent { color: #0 }
+                -->
+              </style>
+            </head>
+            <body>
+                <div id="34544=34534">
+                    <tt><font>[2209744A]</font></tt>
+                    <b><a href=""><font>DAUN_AS</font></a></b>
+                    <span class="msgcontent"><font><i>COMMS<br>TEST</i></font></span>
+                </div>
+            <body>
+        <html>"""
+        importer = JChatImporter()
+
+        check_errors_for_file_contents(
+            html_string,
+            "Invalid JChat timestamp 2209744A at 34544=34534",
+            importer,
+            "invalid_timestamp.html",
+        )
+
+    def test_invalid_missing_platform(self):
+        html_string = """<html>
+            <head>
+              <style type="text/css">
+                <!--
+                    span.msgcontent { color: #0 }
+                -->
+              </style>
+            </head>
+            <body>
+                <div id="34544=34534">
+                    <tt><font>[22092744A]</font></tt>
+                    <span class="msgcontent"><font><i>COMMS<br>TEST</i></font></span>
+                </div>
+            <body>
+        <html>"""
+        importer = JChatImporter()
+
+        check_errors_for_file_contents(
+            html_string,
+            "Unable to read message 34544=34534. No platform provided",
+            importer,
+            "no_platform.html",
+        )
+
+    def test_invalid_missing_message(self):
+        html_string = """<html>
+            <head>
+              <style type="text/css">
+                <!--
+                    span.msgcontent { color: #0 }
+                -->
+              </style>
+            </head>
+            <body>
+                <div id="34544=34534">
+                    <tt><font>[22092744A]</font></tt>
+                    <b><a href=""><font>DAUN_AS</font></a></b>
+                </div>
+            <body>
+        <html>"""
+        importer = JChatImporter()
+
+        check_errors_for_file_contents(
+            html_string,
+            "Unable to read message 34544=34534. No message provided",
+            importer,
+            "no_message",
+        )
+
+    def test_empty_message(self):
+        html_string = """<html>
+            <head>
+              <style type="text/css">
+                <!--
+                    span.msgcontent { color: #0 }
+                -->
+              </style>
+            </head>
+            <body>
+                <div id="34544=34534">
+                    <tt><font>[22092744A]</font></tt>
+                    <b><a href=""><font>DAUN_AS</font></a></b>
+                    <span class="msgcontent"><font></font></span>
+                </div>
+            <body>
+        <html>"""
+        importer = JChatImporter()
+
+        check_errors_for_file_contents(
+            html_string, "Unable to parse JChat message 34544=34534.", importer, "no_message"
+        )
 
     @staticmethod
     def test_simplify_html_no_html():
