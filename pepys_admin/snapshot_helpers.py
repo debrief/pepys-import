@@ -255,15 +255,17 @@ def export_measurement_tables_filtered_by_location(
         )
         return query
 
-    export_measurement_table_with_filter(
-        source_store, destination_store, source_store.db_classes.State, location_attribute_filter
-    )
-    export_measurement_table_with_filter(
-        source_store, destination_store, source_store.db_classes.Contact, location_attribute_filter
-    )
-    export_measurement_table_with_filter(
-        source_store, destination_store, source_store.db_classes.Media, location_attribute_filter
-    )
+    tables_with_location = [
+        source_store.db_classes.State,
+        source_store.db_classes.Contact,
+        source_store.db_classes.Media,
+    ]
+
+    for table in tables_with_location:
+        export_measurement_table_with_filter(
+            source_store, destination_store, table, location_attribute_filter
+        )
+
     export_measurement_table_with_filter(
         source_store,
         destination_store,
