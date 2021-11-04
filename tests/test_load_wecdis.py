@@ -38,9 +38,11 @@ class TestWecdisImporter(unittest.TestCase):
 
     def test_wecdis_parse_vnm_invalid_line(self):
         importer = WecdisImporter()
+        # Manually initialise the errors because this is only normally done on load
+        importer.errors = list()
         importer.handle_vnm(DummyToken.string_to_dummy_tokens("$POS,VNM"))
         assert importer.platform_name is None
-        assert len(importer.errors) > 1
+        assert len(importer.errors) == 1
 
 
 class DummyToken:
