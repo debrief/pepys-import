@@ -21,3 +21,4 @@ Flask
 Flask-CacheBuster
 flask-cors
 waitress
+lxml
