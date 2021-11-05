@@ -17,7 +17,15 @@ class DefaultResolver(DataResolver):
     default_datafile_type = "DATAFILE-TYPE-1"
 
     def resolve_platform(
-        self, data_store, platform_name, identifier, platform_type, nationality, privacy, change_id
+        self,
+        data_store,
+        platform_name,
+        identifier,
+        platform_type,
+        nationality,
+        privacy,
+        change_id,
+        quadgraph=None,
     ):
         # needs to establish defaults for platform_name, platform_type, nationality and privacy
         if not platform_name:
@@ -57,7 +65,7 @@ class DefaultResolver(DataResolver):
             return (
                 platform_name,
                 self.default_trigraph,
-                self.default_quadgraph,
+                quadgraph if quadgraph is not None else self.default_quadgraph,
                 identifier,
                 platform_type,
                 nationality,
@@ -150,3 +158,8 @@ class DefaultResolver(DataResolver):
             )
 
         return datafile_name, datafile_type, privacy
+
+    def resolve_missing_info(
+        self, question, default_value, min_value=None, max_value=None, allow_empty=False
+    ):
+        return default_value

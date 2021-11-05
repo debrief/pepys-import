@@ -185,6 +185,13 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(datafile_type.name, "DATAFILE-TYPE-1")
             self.assertEqual(privacy.name, "Public")
 
+    def test_resolve_missing_info(self):
+        info_str = self.resolver.resolve_missing_info("Test question?", "DEFAULT")
+        self.assertEqual(info_str, "DEFAULT")
+
+        info_int = self.resolver.resolve_missing_info("The Question", 10)
+        self.assertEqual(info_int, 10)
+
 
 class DefaultResolverTestCaseWithNoRefLoaded(unittest.TestCase):
     """
