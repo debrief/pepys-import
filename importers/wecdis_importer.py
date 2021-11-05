@@ -8,8 +8,10 @@ from pepys_import.file.importer import Importer
 from pepys_import.utils.unit_utils import convert_absolute_angle
 
 
-class MsgType(Enum):
-    TIME = "DZM"
+class MsgType(str, Enum):
+    """The supported WECDIS message types"""
+
+    TIME = "DZA"
     PLATFORM = "VNM"
     CONTACT = "CONTACT"
     POSITION = "CPOS"
@@ -38,15 +40,15 @@ class WecdisImporter(Importer):
 
     def can_load_this_file(self, file_contents):
         # Need to differentiate from general NMEA - so check charts/version available
-        return ["CHART", "VER"] in file_contents
+        # TODO - confirm these: return ["CHART", "VER"] in file_contents
+        return True
 
     def _load_this_line(self, data_store, line_number, line, datafile, change_id):
 
         tokens = line.tokens(line.CSV_TOKENISER, ",")
-
         if len(tokens) > 1:
             # Always skip the $POSL tag [0]
-            msg_type = tokens[1].text
+            msg_type = tokens[1].text.upper().strip()
             if msg_type == MsgType.PLATFORM:
                 self.handle_vnm(tokens, line_number)
             elif msg_type == MsgType.TIME:
@@ -120,9 +122,7 @@ class WecdisImporter(Importer):
         :ptype vnm_tokens: Line (list of tokens)"""
         if len(vnm_tokens) < 3:
             self.errors.append(
-                {
-                    self.error_type: f"Line {line_number} does not contain enough parts. No platform name in {vnm_tokens}"
-                }
+                {self.error_type: f"Not enough parts in line {line_number}. No platform name found"}
             )
             return  # Not necessarily an error, but can't do anything with it now
         if vnm_tokens[1].text != "VNM":
@@ -137,9 +137,7 @@ class WecdisImporter(Importer):
         :ptype dza_tokens: Line (list of tokens)"""
         if len(dza_tokens) < 4:
             self.errors.append(
-                {
-                    self.error_type: f"Line {line_number} does not contain enough parts. No timestamp provided."
-                }
+                {self.error_type: f"Not enough parts in line {line_number}. No timestamp provided."}
             )
             return
         if dza_tokens[1].text != "DZA":
@@ -207,6 +205,6 @@ class WecdisImporter(Importer):
         try:
             parsed_timestamp = datetime.strptime(date + time, format_str)
         except ValueError:
-            return False
+            return None
 
         return parsed_timestamp
