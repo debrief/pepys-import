@@ -60,16 +60,13 @@ class TestWecdisImporter(unittest.TestCase):
         importer = WecdisImporter()
         assert importer.timestamp is None
         importer.handle_dza(DummyToken.csv_to_tokens("$POSL,DZA,20201201,010230.123,012345678*21"))
-        assert importer.timestamp == datetime(2021, 12, 1, 1, 2, 30, 123)
+        assert importer.timestamp == datetime(2020, 12, 1, 1, 2, 30, 123000)
 
     @staticmethod
     def test_wecdis_parse_dza_only_parses_dza():
         importer = WecdisImporter()
         with pytest.raises(TypeError):
-            importer.handle_dza(DummyToken.csv_to_tokens("$POSL,XYZ,NONSUCH*5D"))
-        with pytest.raises(TypeError):
-            importer.handle_dza(DummyToken.csv_to_tokens("$POSL,VNM,NONSUCH*5D"))
-        assert importer.platform_name is None
+            importer.handle_dza(DummyToken.csv_to_tokens("$POSL,XYZ,1234,NONSUCH*5D"))
         assert importer.timestamp is None
 
     @staticmethod
@@ -96,6 +93,8 @@ class DummyToken:
 
     def __init__(self, text):
         self.text = text
+        self.children = []
+        self.highlighted_file = None
 
     def record(self):
         pass
