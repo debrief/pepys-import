@@ -51,6 +51,13 @@ class TestSnapshots(unittest.TestCase):
         # Export metadata tables
         export_metadata_tables(self.source_store, self.destination_store)
 
+    def tearDown(self):
+        if os.path.exists("source.db"):
+            os.remove("source.db")
+
+        if os.path.exists("destination.db"):
+            os.remove("destination.db")
+
     def _check_tables_equal(self, tables):
         for table in tables:
             print(f"Table = {table}")
@@ -89,6 +96,7 @@ class TestSnapshots(unittest.TestCase):
         )
 
     def test_export_filtered_by_time_with_time_field_1(self):
+        # Start is part-way through measurements, so only some should be exported
         export_measurement_tables_filtered_by_time(
             self.source_store,
             self.destination_store,
