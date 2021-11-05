@@ -59,27 +59,32 @@ class TestSnapshots(unittest.TestCase):
             os.remove("destination.db")
 
     def _check_tables_equal(self, tables):
-        for table in tables:
-            print(f"Table = {table}")
-            source_table = getattr(self.source_store.db_classes, table)
-            source_values = self.source_store.session.query(source_table).all()
-            source_count = len(source_values)
+        with self.source_store.session_scope():
+            with self.destination_store.session_scope():
+                for table in tables:
+                    print(f"Table = {table}")
+                    source_table = getattr(self.source_store.db_classes, table)
+                    source_values = self.source_store.session.query(source_table).all()
+                    source_count = len(source_values)
 
-            destination_table = getattr(self.destination_store.db_classes, table)
-            destination_values = self.destination_store.session.query(destination_table).all()
-            destination_count = len(destination_values)
+                    destination_table = getattr(self.destination_store.db_classes, table)
+                    destination_values = self.destination_store.session.query(
+                        destination_table
+                    ).all()
+                    destination_count = len(destination_values)
 
-            assert source_count == destination_count
+                    assert source_count == destination_count
 
-            source_ids = [
-                getattr(item, get_primary_key_for_table(source_table)) for item in source_values
-            ]
-            destination_ids = [
-                getattr(item, get_primary_key_for_table(destination_table))
-                for item in destination_values
-            ]
+                    source_ids = [
+                        getattr(item, get_primary_key_for_table(source_table))
+                        for item in source_values
+                    ]
+                    destination_ids = [
+                        getattr(item, get_primary_key_for_table(destination_table))
+                        for item in destination_values
+                    ]
 
-            assert set(source_ids) == set(destination_ids)
+                    assert set(source_ids) == set(destination_ids)
 
     def test_export_all(self):
         export_all_measurement_tables(self.source_store, self.destination_store)
@@ -104,27 +109,29 @@ class TestSnapshots(unittest.TestCase):
             datetime(2004, 1, 1),
         )
 
-        # Check State table has only two items left in it now
-        state_entries = self.destination_store.session.query(
-            self.destination_store.db_classes.State
-        ).all()
-        assert len(state_entries) == 2
-        times = [entry.time for entry in state_entries]
-        assert times == [datetime(2003, 10, 31, 12, 0), datetime(2003, 10, 31, 12, 6)]
+        with self.source_store.session_scope():
+            with self.destination_store.session_scope():
+                # Check State table has only two items left in it now
+                state_entries = self.destination_store.session.query(
+                    self.destination_store.db_classes.State
+                ).all()
+                assert len(state_entries) == 2
+                times = [entry.time for entry in state_entries]
+                assert times == [datetime(2003, 10, 31, 12, 0), datetime(2003, 10, 31, 12, 6)]
 
-        comment_entries = self.destination_store.session.query(
-            self.destination_store.db_classes.Comment
-        ).all()
-        assert len(comment_entries) == 6
-        times = [entry.time for entry in comment_entries]
-        assert times == [
-            datetime(2003, 10, 31, 10, 56),
-            datetime(2003, 10, 31, 11, 0),
-            datetime(2003, 10, 31, 12, 6),
-            datetime(2003, 10, 31, 12, 12),
-            datetime(2003, 10, 31, 13, 5),
-            datetime(2003, 10, 31, 21, 0),
-        ]
+                comment_entries = self.destination_store.session.query(
+                    self.destination_store.db_classes.Comment
+                ).all()
+                assert len(comment_entries) == 6
+                times = [entry.time for entry in comment_entries]
+                assert times == [
+                    datetime(2003, 10, 31, 10, 56),
+                    datetime(2003, 10, 31, 11, 0),
+                    datetime(2003, 10, 31, 12, 6),
+                    datetime(2003, 10, 31, 12, 12),
+                    datetime(2003, 10, 31, 13, 5),
+                    datetime(2003, 10, 31, 21, 0),
+                ]
 
     def test_export_filtered_by_time_with_time_field_2(self):
         # Both start and end are before any of the measurements, so everything should
