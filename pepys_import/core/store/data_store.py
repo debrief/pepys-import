@@ -1012,7 +1012,14 @@ class DataStore:
             or privacy_obj is None
         ):
             resolved_data = self.missing_data_resolver.resolve_platform(
-                self, platform_name, identifier, platform_type, nationality, privacy, change_id
+                self,
+                platform_name,
+                identifier,
+                platform_type,
+                nationality,
+                privacy,
+                change_id,
+                quadgraph,
             )
             # It means that new platform added as a synonym and existing platform returned
             if isinstance(resolved_data, self.db_classes.Platform):
@@ -1046,6 +1053,17 @@ class DataStore:
             privacy=privacy_obj.name,
             change_id=change_id,
         )
+
+    def get_platform_name_from_quad(self, quadgraph):
+        platform = (
+            self.session.query(self.db_classes.Platform)
+            .filter(func.lower(self.db_classes.Platform.quadgraph) == lowercase_or_none(quadgraph))
+            .first()
+        )
+
+        if platform is not None:
+            return platform.name
+        return None
 
     def get_status(
         self,
@@ -2492,3 +2510,19 @@ class DataStore:
             writer.writerow(headers)
             writer.writerows(entries)
             file.close()
+
+    def ask_for_missing_info(
+        self, question, default_value, min_value=None, max_value=None, allow_empty=False
+    ):
+        """Requests any missing information that isn't stored in the database
+        e.g. missing date/time info
+        :param question: The question to ask the resolver
+        :param default_value: The default value to use if unresolved
+        :param min_value: The minimum value allowed for the result, optional
+        :param max_value: The maximum value allowed for the result, optional
+        :param allow_empty: Whether to allow an empty input (for accepting defaults), optional
+        :return: The missing information requested
+        """
+        return self.missing_data_resolver.resolve_missing_info(
+            question, default_value, min_value, max_value, allow_empty
+        )

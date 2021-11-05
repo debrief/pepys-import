@@ -7,11 +7,17 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
+from prompt_toolkit.document import Document
+from prompt_toolkit.validation import ValidationError
 
 from pepys_import.core.store.data_store import DataStore
 from pepys_import.resolvers import constants
 from pepys_import.resolvers.command_line_input import is_valid
-from pepys_import.resolvers.command_line_resolver import CommandLineResolver, is_number
+from pepys_import.resolvers.command_line_resolver import (
+    CommandLineResolver,
+    MinMaxValidator,
+    is_number,
+)
 from pepys_import.utils.text_formatting_utils import formatted_text_to_str
 
 DIR_PATH = os.path.dirname(__file__)
@@ -1291,6 +1297,26 @@ class SensorTestCase(unittest.TestCase):
                 change_id=self.change_id,
             )
 
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolve_missing_info(self, resolver_prompt):
+        resolver_prompt.side_effect = ["TEST_VALUE"]
+        info = self.resolver.resolve_missing_info("What do you need?", "HELLO")
+        self.assertEqual(info, "TEST_VALUE")
+
+    @patch("pepys_import.resolvers.command_line_resolver.prompt")
+    def test_resolve_missing_info_default_fallback(self, resolver_prompt):
+        resolver_prompt.side_effect = [None]
+        info_none = self.resolver.resolve_missing_info("A question", "DEFAULT")
+        self.assertEqual(info_none, "DEFAULT")
+
+        resolver_prompt.side_effect = [""]
+        info_empty = self.resolver.resolve_missing_info("A question", "DEFAULT")
+        self.assertEqual(info_empty, "DEFAULT")
+
+        resolver_prompt.side_effect = [20]
+        info_value = self.resolver.resolve_missing_info("A question", 0)
+        self.assertEqual(info_value, 20)
+
     @patch("pepys_import.resolvers.command_line_resolver.create_menu")
     def test_fuzzy_search_sensor_empty_name_and_choice_in_sensor(self, menu_prompt):
         menu_prompt.side_effect = [
@@ -1783,6 +1809,74 @@ class GetMethodsTestCase(unittest.TestCase):
             sensors = self.store.session.query(self.store.db_classes.Sensor).all()
             self.assertEqual(len(sensors), 7)
             self.assertEqual(sensors[-1].name, "SENSOR-TEST")
+
+
+class MinMaxValidatorTests(unittest.TestCase):
+    def test_min_max_validator_none(self):
+        validator = MinMaxValidator(None, None)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("ABC"))
+
+        validator.validate(Document("20"))
+
+    def test_min_max_validator_min_only(self):
+        validator = MinMaxValidator(15, None)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("14"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("0"))
+        validator.validate(Document("15"))
+        validator.validate(Document("16"))
+        validator.validate(Document("122001"))
+
+    def test_min_max_validator_max_only(self):
+        validator = MinMaxValidator(None, 15)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("122001"))
+        validator.validate(Document("15"))
+        validator.validate(Document("14"))
+        validator.validate(Document("0"))
+
+    def test_min_max_validator_same_value(self):
+        validator = MinMaxValidator(15, 15)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("14"))
+        validator.validate(Document("15"))
+
+    def test_min_max_validator_min_and_max(self):
+        validator = MinMaxValidator(10, 15)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("9"))
+        validator.validate(Document("15"))
+        validator.validate(Document("10"))
+        validator.validate(Document("13"))
+
+    def test_min_max_validator_allow_empty(self):
+        validator = MinMaxValidator(10, 15, True)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("9"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("TEXT"))
+        validator.validate(Document(""))
+
+    def test_min_max_validator__do_not_allow_empty(self):
+        validator = MinMaxValidator(10, 15, False)
+        with pytest.raises(ValidationError):
+            validator.validate(Document("16"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("9"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document("TEXT"))
+        with pytest.raises(ValidationError):
+            validator.validate(Document(""))
 
 
 @pytest.mark.parametrize(
