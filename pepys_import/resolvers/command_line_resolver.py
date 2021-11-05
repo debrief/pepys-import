@@ -1,7 +1,7 @@
 import sys
 
 from prompt_toolkit import prompt
-from prompt_toolkit.validation import Validator
+from prompt_toolkit.validation import ValidationError, Validator
 from tabulate import tabulate
 
 from pepys_import.core.store.constants import NATIONALITY, PLATFORM, PRIVACY
@@ -120,7 +120,15 @@ class CommandLineResolver(DataResolver):
             sys.exit(1)
 
     def resolve_platform(
-        self, data_store, platform_name, identifier, platform_type, nationality, privacy, change_id
+        self,
+        data_store,
+        platform_name,
+        identifier,
+        platform_type,
+        nationality,
+        privacy,
+        change_id,
+        quadgraph=None,
     ):
         print_new_section_title("Resolve Platform")
         platform_details = []
@@ -377,6 +385,26 @@ class CommandLineResolver(DataResolver):
             selected_object = objects_dict[options[int(choice) - 1]]
             if selected_object:
                 return selected_object
+
+    def resolve_missing_info(
+        self, question, default_value, min_value=None, max_value=None, allow_empty=False
+    ):
+        question_to_ask = question
+        if allow_empty is True:
+            question_to_ask += f" (Default: {default_value})"
+        if isinstance(default_value, int):
+            # Apply some validation if int expected
+            info = prompt(
+                format_command(question_to_ask),
+                validator=MinMaxValidator(min_value, max_value, allow_empty),
+            )
+        else:
+            # Assume caller to validate if not number
+            info = prompt(format_command(question_to_ask))
+        if info is None or info == "":
+            print(f"Using default value: {default_value}")
+            info = default_value
+        return info
 
     def fuzzy_search_reference(
         self,
@@ -1024,3 +1052,30 @@ class CommandLineResolver(DataResolver):
         elif choice == ".":
             print("-" * 60, "\nReturning to the previous menu\n")
             return self.resolve_sensor(data_store, sensor_name, None, host_id, None, change_id)
+
+
+class MinMaxValidator(Validator):
+    """A validator to check numerical values are between a given minimum/maximum value"""
+
+    def __init__(self, minimum=None, maximum=None, allow_empty=False):
+        """Creates a new validator to check numerical values between two values
+        :param minimum: The minimum value (inclusive) allowed by the validator
+        :param maximum: The maximum value (inclusive) allowed by the validator
+        :param allow_empty: Whether we allow an empty string to be parsed
+        """
+        self.min = minimum
+        self.max = maximum
+        self.allow_empty = allow_empty
+
+    def validate(self, document):
+        to_validate = document.text
+        if is_number(to_validate):
+            number = int(to_validate)
+            if self.min and number < self.min:
+                raise ValidationError(len(document.text), f"Number must be {self.min} or higher")
+            if self.max and number > self.max:
+                raise ValidationError(len(document.text), f"Number must be {self.max} or lower")
+        elif self.allow_empty is True and to_validate == "":
+            pass
+        else:
+            raise ValidationError(len(document.text), "This input contains non-numeric characters")
