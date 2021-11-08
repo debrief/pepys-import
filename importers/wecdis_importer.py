@@ -1,11 +1,12 @@
 from datetime import datetime
 from enum import Enum
 
+from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
-from pepys_import.utils.unit_utils import convert_absolute_angle
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
 
 
 class MsgType(str, Enum):
@@ -28,6 +29,12 @@ class WecdisImporter(Importer):
 
         self.platform_name = None
         self.timestamp = None
+        self.speed = None
+        self.heading = None
+        self.latitude = None
+        self.latitude_hemisphere = None
+        self.longitude = None
+        self.longitude_hemisphere = None
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".LOG" or suffix.upper() == ".TXT"
@@ -55,7 +62,8 @@ class WecdisImporter(Importer):
                 self.handle_dza(tokens, line_number)
             elif msg_type == MsgType.CONTACT:
                 self.handle_contact(data_store, line_number, tokens, datafile, change_id)
-
+            elif msg_type == MsgType.POSITION:
+                self.handle_position(data_store, line_number, tokens, datafile, change_id)
         # Do we have all the information we need?
         if (
             self.platform_name
@@ -155,23 +163,32 @@ class WecdisImporter(Importer):
             )
             return
 
-        combined_token = combine_tokens(dza_tokens[2], dza_tokens[3])
-        combined_token.record(self.name, "timestamp", self.timestamp)
+        timestamp_token = combine_tokens(dza_tokens[2], dza_tokens[3])
+        timestamp_token.record(self.name, "timestamp", self.timestamp)
 
     def handle_contact(self, data_store, line_number, tokens, datafile, change_id):
-        # bearing_token = tokens[4]
-        # contact_id_token = tokens[5]
-        # speed_token = tokens[6]
+        """Handles a general contact message
+        :param data_store: The data store that this is importing into
+        :param line_number: The number of the line currently being processed
+        :param tokens: The tokens parsed from the line being processed
+        :param datafile: The datafile being imported
+        :param change_id: The ID representing this import as a change
+        """
+        bearing_token = tokens[4]
+        contact_id_token = tokens[5]
+        speed_token = tokens[6]
         date_token = tokens[9]
         time_token = tokens[10]
-        # lat_token = tokens[15]
-        # lat_hem_token = tokens[16]
-        # lon_token = tokens[17]
-        # lon_hem_token = tokens[18]
+        lat_token = tokens[15]
+        lat_hem_token = tokens[16]
+        lon_token = tokens[17]
+        lon_hem_token = tokens[18]
         # TODO - figure out which one is the range
         # TODO - figure out which sensor the contact comes from
 
         timestamp = self.parse_timestamp(date_token.text, time_token.text)
+        contact_timestamp_token = combine_tokens(date_token, time_token)
+        contact_timestamp_token.record(self.name, "timestamp", timestamp)
 
         detecting_platform = self.get_cached_platform(data_store, self.platform_name, change_id)
         detecting_sensor = self.get_cached_sensor(
@@ -188,7 +205,62 @@ class WecdisImporter(Importer):
             timestamp=timestamp,
             parser_name=self.name,
         )
-        print(contact)
+
+        contact.track_number = contact_id_token.text
+        contact_id_token.record(self.name, "track number", contact.track_number)
+
+        bearing_valid, bearing = convert_absolute_angle(
+            bearing_token.text, line_number, self.errors, self.error_type
+        )
+        if bearing_valid:
+            contact.bearing = bearing
+            bearing_token.record(self.name, "bearing", bearing)
+
+        speed_valid, speed = convert_speed(
+            speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type
+        )
+        if speed_valid:
+            contact.speed = speed
+            speed_token.record(self.name, "speed", speed)
+
+        # TODO - There is almost certainly a range (probably [13]), confirm
+        # range_valid, range =
+
+        contact_location = Location(
+            errors=self.errors,
+            error_type=self.error_type,
+        )
+
+        latitude = lat_token.text
+        lat_valid = contact_location.set_latitude_dms(
+            degrees=latitude[:2],
+            minutes=latitude[2:],
+            seconds=0,
+            hemisphere=lat_hem_token,
+        )
+        longitude = lon_token.text
+        lon_valid = contact_location.set_longitude_dms(
+            degrees=longitude[:3],
+            minutes=longitude[3:],
+            seconds=0,
+            hemisphere=lon_hem_token,
+        )
+
+        if lat_valid and lon_valid:
+            contact.location = contact_location
+            combine_tokens(lat_token, lon_token).record(
+                self.name, "location", contact.location, "DMS"
+            )
+
+    def handle_position(self, data_store, line_number, tokens, datafile, change_id):
+        """Handles the position information for ownship
+        :param data_store: The data store that this is importing into
+        :param line_number: The number of the line currently being processed
+        :param tokens: The tokens parsed from the line being processed
+        :param datafile: The datafile being imported
+        :param change_id: The ID representing this import as a change
+        """
+        pass
 
     @staticmethod
     def parse_timestamp(date, time):

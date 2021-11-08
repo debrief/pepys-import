@@ -6,10 +6,13 @@ import pytest
 
 from importers.wecdis_importer import WecdisImporter
 from pepys_import.core.store.data_store import DataStore
+from pepys_import.file.file_processor import FileProcessor
 from tests.utils import check_errors_for_file_contents
 
 FILE_PATH = os.path.dirname(__file__)
-DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis/wecdis_sample.log")
+DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/wecdis_sample.log")
+DZA_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/wecdis_dza.log")
+CONTACT_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/contact.log")
 
 
 class TestWecdisImporter(unittest.TestCase):
@@ -53,13 +56,14 @@ class TestWecdisImporter(unittest.TestCase):
         check_errors_for_file_contents("$POSL,VNM", "Not enough parts in line", importer)
         assert importer.platform_name is None
 
-    @staticmethod
-    def test_wecdis_parse_dza():
+    def test_wecdis_parse_dza(self):
         importer = WecdisImporter()
+        processor = FileProcessor(archive=False)
+        processor.register_importer(importer)
+
         assert importer.timestamp is None
-        importer.handle_dza(
-            DummyToken.csv_to_tokens("$POSL,DZA,20201201,010230.123,012345678*21"), 1
-        )
+        # parse the file
+        processor.process(DZA_DATA_PATH, self.store, False)
         assert importer.timestamp == datetime(2020, 12, 1, 1, 2, 30, 123000)
 
     @staticmethod
@@ -82,6 +86,50 @@ class TestWecdisImporter(unittest.TestCase):
         )
         assert importer.platform_name is None
         assert importer.timestamp is None
+
+    def test_wecdis_parse_contact(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(WecdisImporter())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+        # parse the folder
+        processor.process(CONTACT_DATA_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 1)
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 1)
+
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 1)
+
+            # There should be one state with an elevation of -9.2
+            stored_contact = self.store.session.query(self.store.db_classes.Contact).all()
+            assert len(stored_contact) == 1
+            assert stored_contact[0].time == datetime(2020, 11, 1, 12, 34, 5, 678000)
+            assert stored_contact[0].speed == 12
+
+
+# Contact tests TODO - contact before position info, missing data
 
 
 class DummyToken:
