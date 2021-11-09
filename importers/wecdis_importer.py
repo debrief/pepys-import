@@ -137,7 +137,9 @@ class WecdisImporter(Importer):
             # Programming error, shouldn't be hit but if it does we're passing the wrong line
             raise TypeError(f"Expected a VNM line, given {vnm_tokens[1].text}")
         # Ignore the *XX part if present
-        self.platform_name, _, _ = vnm_tokens[2].text.partition("*")
+        platform_name_token = vnm_tokens[2]
+        self.platform_name, _, _ = platform_name_token.text.partition("*")
+        platform_name_token.record(self.name, "platform name", self.platform_name)
 
     def handle_dza(self, dza_tokens, line_number):
         """Extracts the important information from a DZA (Timestamp) line
@@ -193,8 +195,8 @@ class WecdisImporter(Importer):
         detecting_platform = self.get_cached_platform(data_store, self.platform_name, change_id)
         detecting_sensor = self.get_cached_sensor(
             data_store,
-            sensor_name=None,
-            sensor_type=None,
+            sensor_name="Wecdis-General-Contact",  # TODO - figure out the general contact sensor
+            sensor_type="Wecdis",
             platform_id=detecting_platform.platform_id,
             change_id=change_id,
         )
@@ -203,7 +205,7 @@ class WecdisImporter(Importer):
             platform=detecting_platform,
             sensor=detecting_sensor,
             timestamp=timestamp,
-            parser_name=self.name,
+            parser_name=self.short_name,
         )
 
         contact.track_number = contact_id_token.text
@@ -236,14 +238,14 @@ class WecdisImporter(Importer):
             degrees=latitude[:2],
             minutes=latitude[2:],
             seconds=0,
-            hemisphere=lat_hem_token,
+            hemisphere=lat_hem_token.text,
         )
         longitude = lon_token.text
         lon_valid = contact_location.set_longitude_dms(
             degrees=longitude[:3],
             minutes=longitude[3:],
             seconds=0,
-            hemisphere=lon_hem_token,
+            hemisphere=lon_hem_token.text,
         )
 
         if lat_valid and lon_valid:

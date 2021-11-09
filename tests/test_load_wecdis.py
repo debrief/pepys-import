@@ -11,6 +11,7 @@ from tests.utils import check_errors_for_file_contents
 
 FILE_PATH = os.path.dirname(__file__)
 DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/wecdis_sample.log")
+VNM_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/wecdis_vnm.log")
 DZA_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/wecdis_dza.log")
 CONTACT_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/contact.log")
 
@@ -31,11 +32,12 @@ class TestWecdisImporter(unittest.TestCase):
     def test_wecdis_contact():
         pass
 
-    @staticmethod
-    def test_wecdis_parse_vnm():
+    def test_wecdis_parse_vnm(self):
         importer = WecdisImporter()
+        processor = FileProcessor(archive=False)
+        processor.register_importer(importer)
         assert importer.platform_name != "NONSUCH"
-        importer.handle_vnm(DummyToken.csv_to_tokens("$POSL,VNM,NONSUCH*5D"), 1)
+        processor.process(VNM_DATA_PATH, self.store, False)
         assert importer.platform_name == "NONSUCH"
 
     @staticmethod
@@ -122,7 +124,6 @@ class TestWecdisImporter(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
 
-            # There should be one state with an elevation of -9.2
             stored_contact = self.store.session.query(self.store.db_classes.Contact).all()
             assert len(stored_contact) == 1
             assert stored_contact[0].time == datetime(2020, 11, 1, 12, 34, 5, 678000)
