@@ -152,3 +152,113 @@ class TestSnapshots(unittest.TestCase):
                 "Media",
             ]
         )
+
+    def _check_start_end_times(self, results, correct_start_end_times):
+        def _parse(s):
+            if s is None:
+                return None
+            else:
+                return datetime.strptime(s, "%Y-%m-%d %H:%M")
+
+        start_end_times = [(a.start, a.end) for a in results]
+
+        parsed_correct_start_end_times = [
+            (_parse(a), _parse(b)) for (a, b) in correct_start_end_times
+        ]
+
+        assert set(start_end_times) == set(parsed_correct_start_end_times)
+
+    def test_export_filtered_by_time_start_and_end_field_1(self):
+        export_measurement_tables_filtered_by_time(
+            self.source_store,
+            self.destination_store,
+            datetime(2003, 10, 31, 12, 00),
+            datetime(2004, 11, 1, 12, 00),
+        )
+
+        with self.destination_store.session_scope():
+            results = self.destination_store.session.query(
+                self.destination_store.db_classes.Activation
+            ).all()
+
+            assert len(results) == 2
+
+            self._check_start_end_times(
+                results, [("2003-10-31 13:00", "2003-10-31 14:50"), (None, "2003-10-31 15:00")]
+            )
+
+    def test_export_filtered_by_time_start_and_end_field_2(self):
+        export_measurement_tables_filtered_by_time(
+            self.source_store,
+            self.destination_store,
+            datetime(2003, 10, 31, 10, 1),
+            datetime(2003, 10, 31, 11, 2),
+        )
+
+        with self.destination_store.session_scope():
+            results = self.destination_store.session.query(
+                self.destination_store.db_classes.Activation
+            ).all()
+
+            assert len(results) == 2
+
+            self._check_start_end_times(
+                results, [("2003-10-31 10:02", None), ("2003-10-31 11:00", "2003-10-31 11:03")]
+            )
+
+    def test_export_filtered_by_time_start_and_end_field_3(self):
+        # Before all activation entries, so no results should be returned
+        export_measurement_tables_filtered_by_time(
+            self.source_store,
+            self.destination_store,
+            datetime(2003, 9, 1, 10, 1),
+            datetime(2003, 9, 2, 11, 2),
+        )
+
+        with self.destination_store.session_scope():
+            results = self.destination_store.session.query(
+                self.destination_store.db_classes.Activation
+            ).all()
+
+            assert len(results) == 0
+
+    def test_export_filtered_by_time_start_and_end_field_4(self):
+        # After all activation entries, so no results should be returned
+        export_measurement_tables_filtered_by_time(
+            self.source_store,
+            self.destination_store,
+            datetime(2003, 12, 31, 10, 1),
+            datetime(2003, 12, 31, 11, 2),
+        )
+
+        with self.destination_store.session_scope():
+            results = self.destination_store.session.query(
+                self.destination_store.db_classes.Activation
+            ).all()
+
+            assert len(results) == 0
+
+    def test_export_filtered_by_time_start_and_end_field_5(self):
+        export_measurement_tables_filtered_by_time(
+            self.source_store,
+            self.destination_store,
+            datetime(2003, 10, 31, 9, 30),
+            datetime(2003, 10, 31, 14, 0),
+        )
+
+        with self.destination_store.session_scope():
+            results = self.destination_store.session.query(
+                self.destination_store.db_classes.Activation
+            ).all()
+
+            assert len(results) == 4
+
+            self._check_start_end_times(
+                results,
+                [
+                    ("2003-10-31 10:02", None),
+                    ("2003-10-31 13:00", "2003-10-31 14:50"),
+                    ("2003-10-31 10:00", None),
+                    ("2003-10-31 11:00", "2003-10-31 11:03"),
+                ],
+            )
