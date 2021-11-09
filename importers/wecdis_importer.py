@@ -29,12 +29,6 @@ class WecdisImporter(Importer):
 
         self.platform_name = None
         self.timestamp = None
-        self.speed = None
-        self.heading = None
-        self.latitude = None
-        self.latitude_hemisphere = None
-        self.longitude = None
-        self.longitude_hemisphere = None
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".LOG" or suffix.upper() == ".TXT"
@@ -63,64 +57,9 @@ class WecdisImporter(Importer):
             elif msg_type == MsgType.CONTACT:
                 self.handle_contact(data_store, line_number, tokens, datafile, change_id)
             elif msg_type == MsgType.POSITION:
-                self.handle_position(data_store, line_number, tokens, datafile, change_id)
-        # Do we have all the information we need?
-        if (
-            self.platform_name
-            and self.timestamp
-            and self.speed
-            and self.heading
-            and self.latitude
-            and self.latitude_hemisphere
-            and self.longitude
-            and self.longitude_hemisphere
-        ):
-            platform = self.get_cached_platform(data_store, self.platform_name, change_id=change_id)
-            sensor = self.get_cached_sensor(
-                data_store=data_store,
-                sensor_name="",
-                sensor_type=None,
-                platform_id=platform.platform_id,
-                change_id=change_id,
-            )
-
-            state = datafile.create_state(
-                data_store, platform, sensor, self.timestamp, self.short_name
-            )
-
-            self.location = Location(
-                errors=self.errors,
-                error_type=self.error_type,
-            )
-
-            if not self.location.set_latitude_dms(
-                degrees=self.latitude[:2],
-                minutes=self.latitude[2:],
-                seconds=0,
-                hemisphere=self.latitude_hem,
-            ):
-                return
-
-            if not self.location.set_longitude_dms(
-                degrees=self.longitude[:3],
-                minutes=self.longitude[3:],
-                seconds=0,
-                hemisphere=self.longitude_hem,
-            ):
-                return
-
-            state.location = self.location
-
-            combine_tokens(self.lat_token, self.lon_token).record(
-                self.name, "location", state.location, "DMS"
-            )
-
-            heading_valid, heading = convert_absolute_angle(
-                self.heading, line_number, self.errors, self.error_type
-            )
-            if heading_valid:
-                state.heading = heading
-                self.heading_token.record(self.name, "heading", heading)
+                # Do we have all the information we need?
+                if self.platform_name and self.timestamp:
+                    self.handle_position(data_store, line_number, tokens, datafile, change_id)
 
         datafile.flush_extracted_tokens()
 
@@ -262,7 +201,60 @@ class WecdisImporter(Importer):
         :param datafile: The datafile being imported
         :param change_id: The ID representing this import as a change
         """
-        pass
+        lat_token = tokens[3]
+        lat_hem_token = tokens[4]
+        lon_token = tokens[5]
+        lon_hem_token = tokens[6]
+        heading_token = tokens[7]
+        speed_token = tokens[8]
+
+        platform = self.get_cached_platform(data_store, self.platform_name, change_id=change_id)
+        sensor = self.get_cached_sensor(
+            data_store=data_store,
+            sensor_name="",
+            sensor_type=None,
+            platform_id=platform.platform_id,
+            change_id=change_id,
+        )
+
+        state = datafile.create_state(data_store, platform, sensor, self.timestamp, self.short_name)
+
+        location = Location(
+            errors=self.errors,
+            error_type=self.error_type,
+        )
+        latitude = lat_token.text
+        if not location.set_latitude_dms(
+            degrees=latitude[:2], minutes=latitude[2:], seconds=0, hemisphere=lat_hem_token.text
+        ):
+            return
+
+        longitude = lon_token.text
+        if not location.set_longitude_dms(
+            degrees=longitude[:3],
+            minutes=longitude[3:],
+            seconds=0,
+            hemisphere=lon_hem_token.text,
+        ):
+            return
+
+        state.location = location
+
+        combine_tokens(lat_token, lon_token).record(self.name, "location", location, "DMS")
+
+        heading_valid, heading = convert_absolute_angle(
+            heading_token.text, line_number, self.errors, self.error_type
+        )
+        if heading_valid:
+            state.heading = heading
+            heading_token.record(self.name, "heading", heading)
+
+        speed_valid, speed = convert_speed(
+            speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type
+        )
+        if speed_valid:
+            state.speed = speed
+            speed_token.record(self.name, "speed", speed)
 
     @staticmethod
     def parse_timestamp(date, time):
