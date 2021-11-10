@@ -4,6 +4,7 @@ from datetime import datetime
 
 from pepys_admin.snapshot_helpers import (
     export_all_measurement_tables,
+    export_measurement_tables_filtered_by_location,
     export_measurement_tables_filtered_by_time,
     export_metadata_tables,
     export_reference_tables,
@@ -262,3 +263,45 @@ class TestSnapshots(unittest.TestCase):
                     ("2003-10-31 11:00", "2003-10-31 11:03"),
                 ],
             )
+
+    def test_export_filtered_by_location_no_overlap(self):
+        export_measurement_tables_filtered_by_location(
+            self.source_store, self.destination_store, -90, 0, -85, 10
+        )
+
+        with self.destination_store.session_scope():
+            results = self.destination_store.session.query(
+                self.destination_store.db_classes.State
+            ).all()
+
+            assert len(results) == 0
+
+    def test_export_filtered_by_location_partial_overlap(self):
+        export_measurement_tables_filtered_by_location(
+            self.source_store, self.destination_store, 4.1, 36, 4.3, 37
+        )
+
+        with self.destination_store.session_scope():
+            results = self.destination_store.session.query(
+                self.destination_store.db_classes.State
+            ).all()
+
+            assert len(results) == 2
+
+            times = [s.time for s in results]
+            assert times == [
+                datetime.datetime(2003, 10, 31, 10, 2),
+                datetime.datetime(2003, 10, 31, 12, 0),
+            ]
+
+    def test_export_filtered_by_location_complete_overlap(self):
+        export_measurement_tables_filtered_by_location(
+            self.source_store, self.destination_store, 2, 30, 7, 40
+        )
+
+        with self.destination_store.session_scope():
+            results = self.destination_store.session.query(
+                self.destination_store.db_classes.State
+            ).all()
+
+            assert len(results) == 5
