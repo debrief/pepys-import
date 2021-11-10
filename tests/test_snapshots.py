@@ -341,7 +341,7 @@ class TestSnapshots(unittest.TestCase):
             assert len(results) == 2
 
             times = [s.time for s in results]
-            assert times == [datetime(2003, 10, 31, 12, 0), datetime(2003, 10, 31, 12, 6)]
+            assert set(times) == set([datetime(2003, 10, 31, 12, 0), datetime(2003, 10, 31, 12, 6)])
 
             results = self.destination_store.session.query(
                 self.destination_store.db_classes.Activation
@@ -350,11 +350,13 @@ class TestSnapshots(unittest.TestCase):
             assert len(results) == 3
 
             starts = [s.start for s in results]
-            assert starts == [
-                None,
-                datetime(2003, 10, 31, 11, 0),
-                datetime(2003, 10, 31, 13, 0),
-            ]
+            assert set(starts) == set(
+                [
+                    None,
+                    datetime(2003, 10, 31, 11, 0),
+                    datetime(2003, 10, 31, 13, 0),
+                ]
+            )
 
     def _create_wargame(self, start_time, end_time):
         with self.source_store.session_scope():
