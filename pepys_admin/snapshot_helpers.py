@@ -141,8 +141,10 @@ def export_metadata_tables(source_store, destination_store, privacy_ids=None):
 def export_all_measurement_tables(source_store, destination_store):
     measurement_table_objects = source_store.meta_classes[TableTypes.MEASUREMENT]
 
-    for table in measurement_table_objects:
-        export_measurement_table_with_filter(source_store, destination_store, table)
+    with source_store.session_scope():
+        with destination_store.session_scope():
+            for table in measurement_table_objects:
+                export_measurement_table_with_filter(source_store, destination_store, table)
 
 
 def export_measurement_table_with_filter(source_store, destination_store, table, filter=None):
@@ -201,29 +203,31 @@ def export_measurement_tables_filtered_by_time(
     def start_end_attribute_filter(table_object, query):
         return _start_end_filter(table_object, query, start_time, end_time)
 
-    tables_with_time_attribute = [
-        source_store.db_classes.State,
-        source_store.db_classes.Contact,
-        source_store.db_classes.Comment,
-        source_store.db_classes.LogsHolding,
-        source_store.db_classes.Media,
-    ]
-    for table in tables_with_time_attribute:
-        export_measurement_table_with_filter(
-            source_store, destination_store, table, time_attribute_filter
-        )
+    with source_store.session_scope():
+        with destination_store.session_scope():
+            tables_with_time_attribute = [
+                source_store.db_classes.State,
+                source_store.db_classes.Contact,
+                source_store.db_classes.Comment,
+                source_store.db_classes.LogsHolding,
+                source_store.db_classes.Media,
+            ]
+            for table in tables_with_time_attribute:
+                export_measurement_table_with_filter(
+                    source_store, destination_store, table, time_attribute_filter
+                )
 
-    tables_with_start_end_attributes = [
-        source_store.db_classes.Activation,
-        source_store.db_classes.Geometry1,
-    ]
-    for table in tables_with_start_end_attributes:
-        export_measurement_table_with_filter(
-            source_store,
-            destination_store,
-            table,
-            start_end_attribute_filter,
-        )
+            tables_with_start_end_attributes = [
+                source_store.db_classes.Activation,
+                source_store.db_classes.Geometry1,
+            ]
+            for table in tables_with_start_end_attributes:
+                export_measurement_table_with_filter(
+                    source_store,
+                    destination_store,
+                    table,
+                    start_end_attribute_filter,
+                )
 
 
 def export_measurement_tables_filtered_by_location(
@@ -255,23 +259,25 @@ def export_measurement_tables_filtered_by_location(
         )
         return query
 
-    tables_with_location = [
-        source_store.db_classes.State,
-        source_store.db_classes.Contact,
-        source_store.db_classes.Media,
-    ]
+    with source_store.session_scope():
+        with destination_store.session_scope():
+            tables_with_location = [
+                source_store.db_classes.State,
+                source_store.db_classes.Contact,
+                source_store.db_classes.Media,
+            ]
 
-    for table in tables_with_location:
-        export_measurement_table_with_filter(
-            source_store, destination_store, table, location_attribute_filter
-        )
+            for table in tables_with_location:
+                export_measurement_table_with_filter(
+                    source_store, destination_store, table, location_attribute_filter
+                )
 
-    export_measurement_table_with_filter(
-        source_store,
-        destination_store,
-        source_store.db_classes.Geometry1,
-        geometry_attribute_filter,
-    )
+            export_measurement_table_with_filter(
+                source_store,
+                destination_store,
+                source_store.db_classes.Geometry1,
+                geometry_attribute_filter,
+            )
 
 
 def export_measurement_tables_filtered_by_wargame_participation(
@@ -304,70 +310,78 @@ def export_measurement_tables_filtered_by_wargame_participation(
 
         return query
 
-    tables_with_time = [
-        source_store.db_classes.State,
-        source_store.db_classes.Contact,
-        source_store.db_classes.Comment,
-    ]
+    with source_store.session_scope():
+        with destination_store.session_scope():
+            tables_with_time = [
+                source_store.db_classes.State,
+                source_store.db_classes.Contact,
+                source_store.db_classes.Comment,
+            ]
 
-    for table in tables_with_time:
-        export_measurement_table_with_filter(
-            source_store, destination_store, table, wargame_participation_filter_with_time
-        )
+            for table in tables_with_time:
+                export_measurement_table_with_filter(
+                    source_store, destination_store, table, wargame_participation_filter_with_time
+                )
 
-    export_measurement_table_with_filter(
-        source_store,
-        destination_store,
-        source_store.db_classes.Activation,
-        wargame_participation_filter_with_start_end,
-    )
+            export_measurement_table_with_filter(
+                source_store,
+                destination_store,
+                source_store.db_classes.Activation,
+                wargame_participation_filter_with_start_end,
+            )
 
 
 def export_measurement_tables_filtered_by_serial_participation(
     source_store, destination_store, selected_serial
 ):
-    # Get a list of all Platforms taking part in the serial, and their participation times
-    participants = source_store.session.query(source_store.db_classes.SerialParticipant).filter(
-        source_store.db_classes.SerialParticipant.serial_id == selected_serial.serial_id
-    )
-
-    for participant in participants:
-        platform_id = participant.platform.platform_id
-        start_time = participant.start if participant.start is not None else selected_serial.start
-        end_time = participant.end if participant.end is not None else selected_serial.end
-
-        print(f"{platform_id}: {start_time}, {end_time}")
-
-        def filter_function_time(table_object, query):
-            query = query.filter(
-                table_object.platform_id == platform_id,
-                table_object.time >= start_time,
-                table_object.time <= end_time,
-            )
-            return query
-
-        def filter_function_start_end(table_object, query):
-            query = query.filter(table_object.platform_id == platform_id)
-            query = _start_end_filter(table_object, query, start_time, end_time)
-            return query
-
-        tables_with_time = [
-            source_store.db_classes.State,
-            source_store.db_classes.Contact,
-            source_store.db_classes.Comment,
-        ]
-
-        for table in tables_with_time:
-            export_measurement_table_with_filter(
-                source_store, destination_store, table, filter_function_time
+    with source_store.session_scope():
+        with destination_store.session_scope():
+            # Get a list of all Platforms taking part in the serial, and their participation times
+            participants = source_store.session.query(
+                source_store.db_classes.SerialParticipant
+            ).filter(
+                source_store.db_classes.SerialParticipant.serial_id == selected_serial.serial_id
             )
 
-        export_measurement_table_with_filter(
-            source_store,
-            destination_store,
-            source_store.db_classes.Activation,
-            filter_function_start_end,
-        )
+            for participant in participants:
+                platform_id = participant.platform.platform_id
+                start_time = (
+                    participant.start if participant.start is not None else selected_serial.start
+                )
+                end_time = participant.end if participant.end is not None else selected_serial.end
+
+                print(f"{platform_id}: {start_time}, {end_time}")
+
+                def filter_function_time(table_object, query):
+                    query = query.filter(
+                        table_object.platform_id == platform_id,
+                        table_object.time >= start_time,
+                        table_object.time <= end_time,
+                    )
+                    return query
+
+                def filter_function_start_end(table_object, query):
+                    query = query.filter(table_object.platform_id == platform_id)
+                    query = _start_end_filter(table_object, query, start_time, end_time)
+                    return query
+
+                tables_with_time = [
+                    source_store.db_classes.State,
+                    source_store.db_classes.Contact,
+                    source_store.db_classes.Comment,
+                ]
+
+                for table in tables_with_time:
+                    export_measurement_table_with_filter(
+                        source_store, destination_store, table, filter_function_time
+                    )
+
+                export_measurement_table_with_filter(
+                    source_store,
+                    destination_store,
+                    source_store.db_classes.Activation,
+                    filter_function_start_end,
+                )
 
 
 def _start_end_filter(table_object, query, start_time, end_time):

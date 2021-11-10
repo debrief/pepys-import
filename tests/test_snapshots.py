@@ -290,8 +290,8 @@ class TestSnapshots(unittest.TestCase):
 
             times = [s.time for s in results]
             assert times == [
-                datetime.datetime(2003, 10, 31, 10, 2),
-                datetime.datetime(2003, 10, 31, 12, 0),
+                datetime(2003, 10, 31, 10, 2),
+                datetime(2003, 10, 31, 12, 0),
             ]
 
     def test_export_filtered_by_location_complete_overlap(self):
