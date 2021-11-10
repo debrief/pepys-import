@@ -6,6 +6,7 @@ from pepys_admin.snapshot_helpers import (
     export_all_measurement_tables,
     export_measurement_tables_filtered_by_location,
     export_measurement_tables_filtered_by_time,
+    export_measurement_tables_filtered_by_wargame_participation,
     export_metadata_tables,
     export_reference_tables,
 )
@@ -305,3 +306,87 @@ class TestSnapshots(unittest.TestCase):
             ).all()
 
             assert len(results) == 5
+
+    def test_export_filtered_by_wargame_no_overlap(self):
+        # Create wargame and participants with wargame times
+        # not overlapping with any data
+        wg = self._create_wargame(start_time=datetime(2000, 1, 1), end_time=datetime(2000, 2, 1))
+
+        export_measurement_tables_filtered_by_wargame_participation(
+            self.source_store, self.destination_store, wg
+        )
+
+        with self.destination_store.session_scope():
+            for table in ["State", "Comment", "Contact", "Activation"]:
+                results = self.destination_store.session.query(
+                    getattr(self.destination_store.db_classes, table)
+                ).all()
+
+                assert len(results) == 0
+
+    def test_export_filtered_by_wargame_with_overlap(self):
+        wg = self._create_wargame(
+            start_time=datetime(2003, 10, 31, 11, 0), end_time=datetime(2003, 11, 1, 12, 0)
+        )
+
+        export_measurement_tables_filtered_by_wargame_participation(
+            self.source_store, self.destination_store, wg
+        )
+
+        with self.destination_store.session_scope():
+            results = self.destination_store.session.query(
+                self.destination_store.db_classes.State
+            ).all()
+
+            assert len(results) == 2
+
+            times = [s.time for s in results]
+            assert times == [datetime(2003, 10, 31, 12, 0), datetime(2003, 10, 31, 12, 6)]
+
+            results = self.destination_store.session.query(
+                self.destination_store.db_classes.Activation
+            ).all()
+
+            assert len(results) == 3
+
+            starts = [s.start for s in results]
+            assert starts == [
+                None,
+                datetime(2003, 10, 31, 11, 0),
+                datetime(2003, 10, 31, 13, 0),
+            ]
+
+    def _create_wargame(self, start_time, end_time):
+        with self.source_store.session_scope():
+            priv_id = (
+                self.source_store.session.query(self.source_store.db_classes.Privacy)
+                .all()[0]
+                .privacy_id
+            )
+            change_id = self.source_store.add_to_changes(
+                "USER", datetime.utcnow(), "Creating test tasks/participants"
+            ).change_id
+            s1 = self.source_store.db_classes.Series(name="Test Series", privacy_id=priv_id)
+
+            wg1 = self.source_store.db_classes.Wargame(
+                name="Test Wargame",
+                start=start_time,
+                end=end_time,
+                privacy_id=priv_id,
+            )
+            wg1.series = s1
+
+            self.source_store.session.add_all([s1, wg1])
+
+            plat1 = (
+                self.source_store.session.query(self.source_store.db_classes.Platform)
+                .filter(self.source_store.db_classes.Platform.name == "ADRI")
+                .filter(self.source_store.db_classes.Platform.identifier == "123")
+                .one()
+            )
+
+            wg1.add_participant(
+                data_store=self.source_store, platform=plat1, privacy="Private", change_id=change_id
+            )
+
+        return wg1
