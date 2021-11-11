@@ -375,7 +375,7 @@ class PlatformTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["PLATFORM-1 / 123 / UK", "1"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
 
             platform = self.store.add_to_platforms(
@@ -409,7 +409,7 @@ class PlatformTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             self.store.add_to_platforms(
                 "PLATFORM-1",
@@ -453,7 +453,7 @@ class PlatformTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["3"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id)
             uk_nat = self.store.add_to_nationalities("UK", priority=1, change_id=self.change_id)
             fr_nat = self.store.add_to_nationalities("France", priority=2, change_id=self.change_id)
             self.store.add_to_platforms(
@@ -500,7 +500,7 @@ class PlatformTestCase(unittest.TestCase):
 
         # Select "Search for existing platform"->Type "TEST"->Type name/trigraph/quadgraph/identifier
         # ->Select "Search for an existing nationality"->Select "UK"->Select "Search for an existing
-        # platform type"->Select "Warship"->Select "Search for an existing classification"->Select
+        # platform type"->Select "Naval - frigate"->Select "Search for an existing classification"->Select
         # "Public"->Select "Yes"
         menu_prompt.side_effect = [
             "2",
@@ -508,7 +508,7 @@ class PlatformTestCase(unittest.TestCase):
             "1",
             "UK",
             "1",
-            "Warship",
+            "Naval - frigate",
             "1",
             "Public",
             "1",
@@ -516,7 +516,7 @@ class PlatformTestCase(unittest.TestCase):
         resolver_platform.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
             self.store.add_to_privacies("Public", 0, self.change_id)
-            self.store.add_to_platform_types("Warship", self.change_id)
+            self.store.add_to_platform_types("Naval - frigate", self.change_id)
             self.store.add_to_nationalities("UK", self.change_id)
             (
                 platform_name,
@@ -539,7 +539,7 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(trigraph, "TST")
             self.assertEqual(quadgraph, "TEST")
             self.assertEqual(identifier, "123")
-            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(platform_type.name, "Naval - frigate")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "Public")
 
@@ -551,7 +551,7 @@ class PlatformTestCase(unittest.TestCase):
         # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->
         # Select "No, make further edits"->Type name/trigraph/quadgraph/identifier->
         # Select "Search for an existing nationality"->Select "UK"->
-        # Select "Search for an existing platform type"->Select "Warship"->Select
+        # Select "Search for an existing platform type"->Select "Naval - frigate"->Select
         # "Search for an existing classification"->Select "Public"->Select "Yes"
         menu_prompt.side_effect = [
             "1",
@@ -559,7 +559,7 @@ class PlatformTestCase(unittest.TestCase):
             "1",
             "UK",
             "1",
-            "Warship",
+            "Naval - frigate",
             "1",
             "Public",
             "1",
@@ -576,7 +576,7 @@ class PlatformTestCase(unittest.TestCase):
         ]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             (
                 platform_name,
@@ -599,7 +599,7 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(trigraph, "TST")
             self.assertEqual(quadgraph, "TEST")
             self.assertEqual(identifier, "123")
-            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(platform_type.name, "Naval - frigate")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "Public")
 
@@ -611,7 +611,7 @@ class PlatformTestCase(unittest.TestCase):
         # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->Select "No"->
         # Select "Add a new platform"->Type name/trigraph/quadgraph/identifier->
         # Select "Search for an existing nationality"->Select "UK"->
-        # Select "Search for an existing platform type"->Select "Warship"->Select
+        # Select "Search for an existing platform type"->Select "Naval - frigate"->Select
         # "Search for an existing classification"->Select "Public"->Select "Yes"
         menu_prompt.side_effect = [
             "1",
@@ -620,7 +620,7 @@ class PlatformTestCase(unittest.TestCase):
             "1",
             "UK",
             "1",
-            "Warship",
+            "Naval - frigate",
             "1",
             "Public",
             "1",
@@ -637,7 +637,7 @@ class PlatformTestCase(unittest.TestCase):
         ]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             (
                 platform_name,
@@ -660,7 +660,7 @@ class PlatformTestCase(unittest.TestCase):
             self.assertEqual(trigraph, "TST")
             self.assertEqual(quadgraph, "TEST")
             self.assertEqual(identifier, "123")
-            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(platform_type.name, "Naval - frigate")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "Public")
 
@@ -676,7 +676,7 @@ class PlatformTestCase(unittest.TestCase):
             "10",
         ]
         with self.store.session_scope():
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             (
                 platform_name,
@@ -715,7 +715,7 @@ class PlatformTestCase(unittest.TestCase):
         resolver_prompt.side_effect = ["TEST", "123", "TST", "TEST"]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             self.store.add_to_platforms(
                 "PLATFORM-1",
@@ -762,7 +762,7 @@ class PlatformTestCase(unittest.TestCase):
             "1",
             "UK",
             "1",
-            "Warship",
+            "Naval - frigate",
             "1",
             "Public",
             "1",
@@ -779,7 +779,7 @@ class PlatformTestCase(unittest.TestCase):
         ]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             temp_output = StringIO()
             with redirect_stdout(temp_output):
@@ -824,7 +824,7 @@ class PlatformTestCase(unittest.TestCase):
         ]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id).name
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id).name
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id).name
             nationality = self.store.add_to_nationalities("UK", self.change_id).name
             temp_output = StringIO()
             with redirect_stdout(temp_output):
@@ -1581,7 +1581,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         menu_prompt.side_effect = [".", ".", "."]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             self.store.add_to_platforms(
                 "PLATFORM-1",
@@ -1605,7 +1605,7 @@ class CancellingAndReturnPreviousMenuTestCase(unittest.TestCase):
         menu_prompt.side_effect = ["PLATFORM-1 / 123 / UK", ".", ".", "."]
         with self.store.session_scope():
             privacy = self.store.add_to_privacies("Public", 0, self.change_id)
-            platform_type = self.store.add_to_platform_types("Warship", self.change_id)
+            platform_type = self.store.add_to_platform_types("Naval - frigate", self.change_id)
             nationality = self.store.add_to_nationalities("UK", self.change_id)
             self.store.add_to_platforms(
                 "PLATFORM-1",
