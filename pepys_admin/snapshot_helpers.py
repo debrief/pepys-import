@@ -153,6 +153,8 @@ def export_measurement_table_with_filter(source_store, destination_store, table,
     else:
         table_object = table
 
+    print(f"Exporting {table_object.__name__} measurement table")
+
     dict_values = []
     query = source_store.session.query(table_object)
 

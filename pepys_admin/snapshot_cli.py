@@ -137,6 +137,7 @@ class SnapshotShell(BaseShell):
 
         destination_store, path = self._create_destination_store()
 
+        print("Exporting reference and metadata tables")
         # Export reference tables
         reference_table_objects = self.data_store.meta_classes[TableTypes.REFERENCE]
         export_reference_tables(self.data_store, destination_store, reference_table_objects)
@@ -155,12 +156,12 @@ class SnapshotShell(BaseShell):
         print(f"Data successfully exported!\nYou can find it here: '{path}'.")
 
     def do_export_all_data_filter_time(self):
+        start_time = get_time_from_user("Start time")
+        end_time = get_time_from_user("End time")
+
         destination_store, path = self._export_all_ref_and_metadata()
         if destination_store is None:
             return
-
-        start_time = get_time_from_user("Start time")
-        end_time = get_time_from_user("End time")
 
         export_measurement_tables_filtered_by_time(
             self.data_store, destination_store, start_time, end_time
@@ -168,14 +169,14 @@ class SnapshotShell(BaseShell):
         print(f"Data successfully exported!\nYou can find it here: '{path}'.")
 
     def do_export_all_data_filter_location(self):
-        destination_store, path = self._export_all_ref_and_metadata()
-        if destination_store is None:
-            return
-
         ymin = prompt("Enter bottom latitude: ")
         ymax = prompt("Enter top latitude: ")
         xmin = prompt("Enter left longitude: ")
         xmax = prompt("Enter right longitude: ")
+
+        destination_store, path = self._export_all_ref_and_metadata()
+        if destination_store is None:
+            return
 
         export_measurement_tables_filtered_by_location(
             self.data_store, destination_store, xmin, ymin, xmax, ymax
@@ -183,10 +184,6 @@ class SnapshotShell(BaseShell):
         print(f"Data successfully exported!\nYou can find it here: '{path}'.")
 
     def do_export_all_data_filter_serial_participation(self):
-        destination_store, path = self._export_all_ref_and_metadata()
-        if destination_store is None:
-            return
-
         with self.data_store.session_scope():
             selected_wargame_id = _select_wargame(self.data_store)
             if selected_wargame_id is None:
@@ -215,16 +212,16 @@ class SnapshotShell(BaseShell):
                 .one()
             )
 
+        destination_store, path = self._export_all_ref_and_metadata()
+        if destination_store is None:
+            return
+
         export_measurement_tables_filtered_by_serial_participation(
             self.data_store, destination_store, selected_serial
         )
         print(f"Data successfully exported!\nYou can find it here: '{path}'.")
 
     def do_export_all_data_filter_wargame_participation(self):
-        destination_store, path = self._export_all_ref_and_metadata()
-        if destination_store is None:
-            return
-
         with self.data_store.session_scope():
             selected_wargame_id = _select_wargame(self.data_store)
 
@@ -236,6 +233,10 @@ class SnapshotShell(BaseShell):
                 .filter(self.data_store.db_classes.Wargame.wargame_id == selected_wargame_id)
                 .one()
             )
+
+        destination_store, path = self._export_all_ref_and_metadata()
+        if destination_store is None:
+            return
 
         export_measurement_tables_filtered_by_wargame_participation(
             self.data_store, destination_store, selected_wargame
