@@ -187,23 +187,28 @@ def database_at_latest_revision(db_path):
         )
         return False
 
-    try:
-        with open(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"), "r") as file:
-            versions = json.load(file)
-    except Exception:
-        custom_print_formatted_text(format_error_message("Could not find latest_revisions.json"))
-        return
-
-    if "LATEST_SQLITE_VERSION" not in versions:
-        custom_print_formatted_text(
-            format_error_message("Latest revision IDs couldn't found from latest_revisions.json")
-        )
-        return
+    versions = read_latest_revisions_file()
 
     if slave_version == versions["LATEST_SQLITE_VERSION"]:
         return True
     else:
         return False
+
+
+def read_latest_revisions_file():
+    try:
+        with open(os.path.join(MIGRATIONS_DIRECTORY, "latest_revisions.json"), "r") as file:
+            versions = json.load(file)
+    except Exception:
+        custom_print_formatted_text(format_error_message("Could not find latest_revisions.json"))
+        return {}
+
+    if "LATEST_SQLITE_VERSION" not in versions:
+        custom_print_formatted_text(
+            format_error_message("Latest revision IDs couldn't found from latest_revisions.json")
+        )
+        return {}
+    return versions
 
 
 class StdoutAndFileWriter:
