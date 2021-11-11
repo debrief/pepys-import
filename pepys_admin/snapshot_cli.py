@@ -132,7 +132,8 @@ class SnapshotShell(BaseShell):
 
     def _export_all_ref_and_metadata(self):
         if is_schema_created(self.data_store.engine, self.data_store.db_type) is False:
-            return
+            print("Cannot export data from an empty database")
+            return None, ""
 
         destination_store, path = self._create_destination_store()
 
@@ -147,12 +148,16 @@ class SnapshotShell(BaseShell):
 
     def do_export_all_data(self):
         destination_store, path = self._export_all_ref_and_metadata()
+        if destination_store is None:
+            return
 
         export_all_measurement_tables(self.data_store, destination_store)
         print(f"Data successfully exported!\nYou can find it here: '{path}'.")
 
     def do_export_all_data_filter_time(self):
         destination_store, path = self._export_all_ref_and_metadata()
+        if destination_store is None:
+            return
 
         start_time = get_time_from_user("Start time")
         end_time = get_time_from_user("End time")
@@ -164,6 +169,8 @@ class SnapshotShell(BaseShell):
 
     def do_export_all_data_filter_location(self):
         destination_store, path = self._export_all_ref_and_metadata()
+        if destination_store is None:
+            return
 
         ymin = prompt("Enter bottom latitude: ")
         ymax = prompt("Enter top latitude: ")
@@ -177,9 +184,13 @@ class SnapshotShell(BaseShell):
 
     def do_export_all_data_filter_serial_participation(self):
         destination_store, path = self._export_all_ref_and_metadata()
+        if destination_store is None:
+            return
 
         with self.data_store.session_scope():
             selected_wargame_id = _select_wargame(self.data_store)
+            if selected_wargame_id is None:
+                return
 
             results = (
                 self.data_store.session.query(
@@ -189,7 +200,7 @@ class SnapshotShell(BaseShell):
                 .filter(self.data_store.db_classes.Serial.wargame_id == selected_wargame_id)
                 .all()
             )
-            serial_dict = {serial_number: serial_id for (serial_number, serial_id) in results}
+            serial_dict = dict(results)
 
             if len(serial_dict) == 0:
                 print("No serials defined in selected wargame")
@@ -211,9 +222,14 @@ class SnapshotShell(BaseShell):
 
     def do_export_all_data_filter_wargame_participation(self):
         destination_store, path = self._export_all_ref_and_metadata()
+        if destination_store is None:
+            return
 
         with self.data_store.session_scope():
             selected_wargame_id = _select_wargame(self.data_store)
+
+            if selected_wargame_id is None:
+                return
 
             selected_wargame = (
                 self.data_store.session.query(self.data_store.db_classes.Wargame)

@@ -160,8 +160,7 @@ class TestSnapshots(unittest.TestCase):
         def _parse(s):
             if s is None:
                 return None
-            else:
-                return datetime.strptime(s, "%Y-%m-%d %H:%M")
+            return datetime.strptime(s, "%Y-%m-%d %H:%M")
 
         start_end_times = [(a.start, a.end) for a in results]
 

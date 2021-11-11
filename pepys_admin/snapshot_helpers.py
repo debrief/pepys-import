@@ -425,11 +425,11 @@ def _select_wargame(data_store):
         data_store.db_classes.Wargame.name,
         data_store.db_classes.Wargame.wargame_id,
     ).all()
-    wargame_dict = {name: wargame_id for (name, wargame_id) in results}
+    wargame_dict = dict(results)
 
     if len(wargame_dict) == 0:
         print("No wargames defined")
-        return
+        return None
 
     selected_wargame_name = iterfzf(wargame_dict.keys(), prompt="Select wargame: ")
     selected_wargame_id = wargame_dict[selected_wargame_name]
