@@ -120,6 +120,71 @@ def test_check_migration_version_is_found():
     ds.check_migration_version(revision)
 
 
+def test_check_migration_version_is_latest_revision():
+    # Create a new alembic version database - function should pass
+    ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    revision = ["version_id", "test_version_id", "latest_version_id"]
+    ds.latest_revisions = {"LATEST_SQLITE_VERSION": "latest_version_id"}
+
+    # Run once to create the table and stamp latest version
+    create_alembic_version_table(ds.engine, ds.db_type)
+
+    with ds.engine.begin() as connection:
+        connection.execute(text("UPDATE alembic_version SET version_num = 'latest_version_id';"))
+
+    # Shouldn't print anything
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        ds.check_migration_version(revision)
+    output = temp_output.getvalue()
+
+    assert output == ""
+
+
+def test_check_migration_version_is_not_latest_revision_warning():
+    # Create a new alembic version database - function should pass
+    ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    revision = ["version_id", "test_version_id", "latest_version_id"]
+    ds.latest_revisions = {"LATEST_SQLITE_VERSION": "newer_version"}
+
+    # Run once to create the table and stamp latest version
+    create_alembic_version_table(ds.engine, ds.db_type)
+
+    with ds.engine.begin() as connection:
+        connection.execute(text("UPDATE alembic_version SET version_num = 'latest_version_id';"))
+
+    # Shouldn't print anything
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        ds.check_migration_version(revision)
+    output = temp_output.getvalue()
+
+    assert "WARNING: The database is not at the latest revision" in output
+
+
+def test_check_migration_version_is_not_latest_revision_error():
+    # Create a new alembic version database - function should pass
+    ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
+    revision = ["version_id", "test_version_id", "latest_version_id"]
+    ds.latest_revisions = {"LATEST_SQLITE_VERSION": "newer_version"}
+    ds.error_on_db_version_mismatch = True
+
+    # Run once to create the table and stamp latest version
+    create_alembic_version_table(ds.engine, ds.db_type)
+
+    with ds.engine.begin() as connection:
+        connection.execute(text("UPDATE alembic_version SET version_num = 'latest_version_id';"))
+
+    # Shouldn't print anything
+    temp_output = StringIO()
+    with redirect_stdout(temp_output):
+        with pytest.raises(SystemExit):
+            ds.check_migration_version(revision)
+    output = temp_output.getvalue()
+
+    assert "ERROR: The database is not at the latest revision" in output
+
+
 def test_check_migration_version_no_revisions():
     # Call the function with no revisions in the list - function should call sys.exit(1)
     ds = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
@@ -384,6 +449,70 @@ class TestCheckMigrationVersion_Postgres(unittest.TestCase):
             connection.execute(text("UPDATE pepys.alembic_version SET version_num = 'version_id';"))
 
         self.store.check_migration_version(revision)
+
+    def test_check_migration_version_is_latest_revision(self):
+        revision = ["version_id", "test_version_id", "latest_version_id"]
+        self.store.latest_revisions = {"LATEST_POSTGRES_VERSION": "latest_version_id"}
+
+        # Run once to create the table and stamp latest version
+        create_alembic_version_table(self.store.engine, self.store.db_type)
+
+        with self.store.engine.begin() as connection:
+            connection.execute(
+                text("UPDATE pepys.alembic_version SET version_num = 'latest_version_id';")
+            )
+
+        # Shouldn't print anything
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.store.check_migration_version(revision)
+        output = temp_output.getvalue()
+
+        assert output == ""
+
+    def test_check_migration_version_is_not_latest_revision_warning(self):
+        # Create a new alembic version database - function should pass
+        revision = ["version_id", "test_version_id", "latest_version_id"]
+        self.store.latest_revisions = {"LATEST_POSTGRES_VERSION": "newer_version"}
+
+        # Run once to create the table and stamp latest version
+        create_alembic_version_table(self.store.engine, self.store.db_type)
+
+        with self.store.engine.begin() as connection:
+            connection.execute(
+                text("UPDATE alembic_version SET version_num = 'latest_version_id';")
+            )
+
+        # Shouldn't print anything
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            self.store.check_migration_version(revision)
+        output = temp_output.getvalue()
+
+        assert "WARNING: The database is not at the latest revision" in output
+
+    def test_check_migration_version_is_not_latest_revision_error(self):
+        # Create a new alembic version database - function should pass
+        revision = ["version_id", "test_version_id", "latest_version_id"]
+        self.store.latest_revisions = {"LATEST_POSTGRES_VERSION": "newer_version"}
+        self.store.error_on_db_version_mismatch = True
+
+        # Run once to create the table and stamp latest version
+        create_alembic_version_table(self.store.engine, self.store.db_type)
+
+        with self.store.engine.begin() as connection:
+            connection.execute(
+                text("UPDATE alembic_version SET version_num = 'latest_version_id';")
+            )
+
+        # Shouldn't print anything
+        temp_output = StringIO()
+        with redirect_stdout(temp_output):
+            with pytest.raises(SystemExit):
+                self.store.check_migration_version(revision)
+        output = temp_output.getvalue()
+
+        assert "ERROR: The database is not at the latest revision" in output
 
     def test_check_migration_version_no_revisions(self):
         # Call the function with no revisions in the list - function should call sys.exit(1)
