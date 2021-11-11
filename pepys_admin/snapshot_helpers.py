@@ -153,8 +153,6 @@ def export_measurement_table_with_filter(source_store, destination_store, table,
     else:
         table_object = table
 
-    print(f"Exporting {table_object.__name__} measurement table")
-
     dict_values = []
     query = source_store.session.query(table_object)
 
@@ -175,21 +173,13 @@ def export_measurement_table_with_filter(source_store, destination_store, table,
         d = {}
         for attrib in data_attributes:
             d[attrib] = getattr(row, attrib)
-        # TODO: Improve this
-        # This is not necessarily the most efficient way of doing this, as we're looking for
-        # an attribute starting with _ for each
-        # for col in row.__table__.columns:
-        #     try:
-        #         value = getattr(row, "_" + col.name)
-        #     except AttributeError:
-        #         value = getattr(row, col.name)
-        #     d[col.name] = value
-        # dict_values.append(row.__dict__)
         dict_values.append(d)
 
     object_ = find_sqlite_table_object(table, source_store)
     with destination_store.session_scope():
         destination_store.session.bulk_insert_mappings(object_, dict_values)
+
+    print(f"Exported {len(results)} entries from {table.__name__}")
 
 
 def export_measurement_tables_filtered_by_time(
