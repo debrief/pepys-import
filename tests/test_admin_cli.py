@@ -973,7 +973,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data()
         output = temp_output.getvalue()
-        assert "Reference tables are successfully exported!" in output
+        assert "Reference tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM DatafileTypes;")
@@ -1000,7 +1000,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
+        assert "Reference and metadata tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM SensorTypes;")
@@ -1041,7 +1041,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
+        assert "Reference and metadata tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM SensorTypes;")
@@ -1086,7 +1086,7 @@ class SnapshotPostgresTestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
+        assert "Reference and metadata tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM SensorTypes;")
@@ -1410,7 +1410,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data()
         output = temp_output.getvalue()
-        assert "Reference tables are successfully exported!" in output
+        assert "Reference tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM DatafileTypes;")
@@ -1443,7 +1443,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         output = temp_output.getvalue()
 
         assert "There is already a file named 'already_existing_file.db'" in output
-        assert "Reference tables are successfully exported!" in output
+        assert "Reference tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM DatafileTypes;")
@@ -1473,7 +1473,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
+        assert "Reference and metadata tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM SensorTypes;")
@@ -1514,7 +1514,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
+        assert "Reference and metadata tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM SensorTypes;")
@@ -1559,7 +1559,7 @@ class SnapshotShellTestCase(unittest.TestCase):
         with redirect_stdout(temp_output):
             self.shell.do_export_reference_data_and_metadata()
         output = temp_output.getvalue()
-        assert "Reference and metadata tables are successfully exported!" in output
+        assert "Reference and metadata tables successfully exported!" in output
 
         connection = sqlite3.connect("test.db")
         results = connection.execute("SELECT name FROM SensorTypes;")
