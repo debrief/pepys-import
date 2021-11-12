@@ -193,8 +193,7 @@ def database_at_latest_revision(db_path):
 
     if slave_version == versions["LATEST_SQLITE_VERSION"]:
         return True
-    else:
-        return False
+    return False
 
 
 def read_latest_revisions_file():
