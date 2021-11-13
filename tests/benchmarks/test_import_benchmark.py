@@ -42,10 +42,7 @@ def test_single_rep_file_import_long(benchmark):
 
     benchmark.pedantic(
         run_import,
-        args=(
-            processor,
-            os.path.join(FILE_DIR, "benchmark_data/bulk_data.rep"),
-        ),
+        args=(os.path.join(FILE_DIR, "benchmark_data/bulk_data.rep"),),
         iterations=1,
         rounds=1,
     )
