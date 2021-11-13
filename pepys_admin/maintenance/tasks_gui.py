@@ -261,6 +261,17 @@ class TasksGUI:
             self.show_validation_error(missing_fields=missing_fields)
             return False
 
+        start = updated_fields.get("start", current_task.start)
+        end = updated_fields.get("end", current_task.end)
+
+        if start is not None and end is not None:
+            if start > end:
+                self.show_messagebox(
+                    "Validation Error",
+                    "The start time must be before the end time",
+                )
+                return False
+
         return True
 
     def handle_duplicate(self):
