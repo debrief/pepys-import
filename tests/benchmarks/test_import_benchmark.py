@@ -9,7 +9,10 @@ from tests.benchmarks.benchmark_utils import running_on_ci
 FILE_DIR = os.path.dirname(__file__)
 
 
-def run_import(processor, file_path):
+def run_import(file_path):
+    processor = FileProcessor(archive=False)
+    processor.load_importers_dynamically()
+
     store = DataStore("", "", "", 0, ":memory:", db_type="sqlite")
     store.initialise()
 
@@ -18,12 +21,8 @@ def run_import(processor, file_path):
 
 @pytest.mark.benchmark(min_time=0.1, max_time=2.0, min_rounds=10, warmup=False)
 def test_single_rep_file_import_short(benchmark):
-    processor = FileProcessor(archive=False)
-    processor.load_importers_dynamically()
-
     benchmark(
         run_import,
-        processor=processor,
         file_path=os.path.join(FILE_DIR, "benchmark_data/rep_test1.rep"),
     )
 
