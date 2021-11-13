@@ -133,8 +133,8 @@ try {
     # the directory above the python folder (with pepys-import in it). This creates a ._pth file which
     # Python uses as it's *only* source for generating sys.path (ie. it does NOT take into account
     # environment variables such as PYTHONPATH)
-    Set-Content -Encoding ascii .\python\python38._pth @"
-python38.zip
+    Set-Content -Encoding ascii .\python\python39._pth @"
+python39.zip
 .
 Lib\site-packages
 ..
