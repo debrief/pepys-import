@@ -5,7 +5,6 @@ import tempfile
 from iterfzf import iterfzf
 from prompt_toolkit import prompt as ptk_prompt
 from prompt_toolkit.completion import PathCompleter
-from prompt_toolkit.shortcuts import prompt
 
 from pepys_admin.base_cli import BaseShell
 from pepys_admin.merge import MergeDatabases
@@ -18,6 +17,7 @@ from pepys_admin.snapshot_helpers import (
     export_measurement_tables_filtered_by_wargame_participation,
     export_metadata_tables,
     export_reference_tables,
+    get_number_from_user,
     get_time_from_user,
 )
 from pepys_admin.utils import database_at_latest_revision, get_default_export_folder
@@ -169,10 +169,10 @@ class SnapshotShell(BaseShell):
         print(f"Data successfully exported!\nYou can find it here: '{path}'.")
 
     def do_export_all_data_filter_location(self):
-        ymin = prompt("Enter bottom latitude: ")
-        ymax = prompt("Enter top latitude: ")
-        xmin = prompt("Enter left longitude: ")
-        xmax = prompt("Enter right longitude: ")
+        ymin = get_number_from_user("Enter bottom latitude: ")
+        ymax = get_number_from_user("Enter top latitude: ")
+        xmin = get_number_from_user("Enter left longitude: ")
+        xmax = get_number_from_user("Enter right longitude: ")
 
         destination_store, path = self._export_all_ref_and_metadata()
         if destination_store is None:

@@ -61,6 +61,19 @@ def get_time_from_user(prompt_text):
     return time_obj
 
 
+def get_number_from_user(prompt_text):
+    valid = False
+    while not valid:
+        value = prompt(prompt_text)
+        try:
+            float_value = float(value)
+            valid = True
+        except ValueError:
+            print("Invalid number entered, please try again")
+
+    return float_value
+
+
 def export_reference_tables(source_store, destination_store, table_objects):
     """Copies table objects from :code:`source_store` to :code:`destination_store`.
 
