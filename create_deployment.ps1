@@ -2,7 +2,7 @@ Write-Output "INFO: Starting to create Pepys deployment"
 
 # Download embedded Python distribution
 try {
-    $url = 'https://www.python.org/ftp/python/3.8.6/python-3.8.6-embed-amd64.zip'
+    $url = 'https://www.python.org/ftp/python/3.9.8/python-3.9.8-embed-amd64.zip'
     (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\python.zip")
 }
 catch {
