@@ -1,20 +1,34 @@
 name,default_data_interval_secs
-Naval - aircraft,2
-Naval - frigate,30
-Naval - auxiliary,60
-Naval - destroyer,30
-Naval - survey,60
-Naval - minesweeper,60
-Naval - patrol,30
-Naval - aircraft carrier,30
-Naval - submarine,30
-Naval - miscellaneous,30
-Merchant,60
-Tug,60
-Tanker,60
-Law Enforcement,30
-Pleasure Craft,30
-Search and Rescue,30
+Attack Craft,30
+Commercial aircraft,2
 Fishing Vessel,60
-Passenger/Ferry,60
 High Speed Craft,30
+Law Enforcement,60
+Medical,60
+Merchant,60
+Naval - aircraft carrier,30
+Naval - amphib,30
+Naval - auxiliary,30
+Naval - cruiser,30
+Naval - destroyer,30
+Naval - ExCon,30
+Naval - fixed wing,2
+Naval - frigate,30
+Naval - minewarfare,30
+Naval - miscellaneous,30
+Naval - patrol,30
+Naval - rotary wing,5
+Naval - submarine,30
+Naval - survey,30
+Passenger vessel,60
+Pleasure Craft,30
+Research vessel,60
+Sailing vessel,60
+Search and Rescue,60
+Offshore support,60
+Civilian - uncrewed surface vehicle,30
+Civilian - uncrewed underwater vehicle,30
+Civilian - uncrewed air vehicle,5
+Naval - uncrewed surface vehicle,30
+Naval - uncrewed underwater vehicle,30
+Naval - uncrewed air vehicle,5

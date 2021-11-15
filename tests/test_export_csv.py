@@ -36,13 +36,30 @@ def test_convert_ids_to_objects():
     with ds.session_scope():
         ds.populate_reference()
         ds.populate_metadata()
-        entries = ds.session.query(ds.db_classes.PlatformType).all()[:8]
+        entries = (
+            ds.session.query(ds.db_classes.PlatformType)
+            .order_by(ds.db_classes.PlatformType.name)
+            .all()[:8]
+        )
         ids = [entry.platform_type_id for entry in entries]
 
     results = ds.convert_ids_to_objects(ids, ds.db_classes.PlatformType)
     assert results is not None
     assert len(results) == 8
-    assert "Naval -" in str(results[0])
+    names = [r.name for r in results]
+
+    assert set(names) == set(
+        [
+            "Attack Craft",
+            "Civilian - uncrewed air vehicle",
+            "Civilian - uncrewed surface vehicle",
+            "Civilian - uncrewed underwater vehicle",
+            "Commercial aircraft",
+            "Fishing Vessel",
+            "High Speed Craft",
+            "Law Enforcement",
+        ]
+    )
 
 
 def test_convert_ids_to_objects_no_ids():
