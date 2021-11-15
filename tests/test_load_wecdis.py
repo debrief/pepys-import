@@ -321,8 +321,76 @@ class TestWecdisImporter(unittest.TestCase):
             assert stored_contacts[2].orientation is None
             assert stored_contacts[2].track_number == "BRG - no location or course"
 
+    def test_wecdis_multi_timestep_sample(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(WecdisImporter())
 
-# Contact tests TODO - contact before position info, missing data
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 0)
+            # there must be no contacts at the beginning
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+        # parse the folder
+        processor.process(DATA_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 4)
+
+            # there must be contacts after the import
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 3)
+
+            # there must be no platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 1)
+
+            # there must be datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 1)
+
+            stored_states = (
+                self.store.session.query(self.store.db_classes.State)
+                .order_by(self.store.db_classes.State.time)
+                .all()
+            )
+
+            assert stored_states[0].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
+            assert stored_states[1].time == datetime(2021, 11, 1, 1, 2, 45, 10000)
+            assert stored_states[2].time == datetime(2021, 11, 1, 1, 3, 5, 10000)
+            assert stored_states[3].time == datetime(2021, 12, 12, 1, 3, 35, 10000)
+
+            stored_contacts = (
+                self.store.session.query(self.store.db_classes.Contact)
+                .order_by(self.store.db_classes.Contact.time)
+                .all()
+            )
+            ureg = UnitRegistry()
+            assert round(stored_contacts[0].location.latitude, 6) == 12.566667
+            assert round(stored_contacts[0].location.longitude, 6) == 12.899538
+            assert round(stored_contacts[0].bearing.to(ureg.degree).magnitude) == 123
+            assert round(stored_contacts[0].soa.to(ureg.knot).magnitude, 1) == 3.2
+
+            assert stored_contacts[1].track_number == "BRG 2"
+            assert round(stored_contacts[1].bearing.to(ureg.degree).magnitude) == 190
+            assert stored_contacts[1].soa is None
+
+            assert round(stored_contacts[2].bearing.to(ureg.degree).magnitude) == 180
+            assert round(stored_contacts[2].soa.to(ureg.knot).magnitude, 1) == 12.5
 
 
 class DummyToken:

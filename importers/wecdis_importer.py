@@ -291,6 +291,8 @@ class WecdisImporter(Importer):
                 contact.orientation = course
                 course_token.record(self.name, "bearing", course)
 
+    # TODO - find out what the TTM range/bearing combinations relate to (a/b)
+
     def _parse_lat_lon_tokens(self, lat_token, lat_hem_token, lon_token, lon_hem_token):
         """Parse latitude and longitude tokens as a location"""
 
@@ -338,3 +340,5 @@ class WecdisImporter(Importer):
             return None
 
         return parsed_timestamp
+
+    # TODO - do we need to parse the TZS to get the time zone?
