@@ -16,6 +16,7 @@ class MsgType(str, Enum):
     PLATFORM = "VNM"
     CONTACT = "CONTACT"
     POSITION = "CPOS"
+    TMA = "TMA"
 
 
 class WecdisImporter(Importer):
@@ -60,7 +61,8 @@ class WecdisImporter(Importer):
                 # Do we have all the information we need?
                 if self.platform_name and self.timestamp:
                     self.handle_position(data_store, line_number, tokens, datafile, change_id)
-
+            elif msg_type == MsgType.TMA:
+                self.handle_tma(data_store, line_number, tokens, datafile, change_id)
         datafile.flush_extracted_tokens()
 
     def handle_vnm(self, vnm_tokens, line_number):
@@ -167,33 +169,15 @@ class WecdisImporter(Importer):
         # TODO - There is almost certainly a range (probably [13]), confirm
         # range_valid, range =
 
-        contact_location = Location(
-            errors=self.errors,
-            error_type=self.error_type,
-        )
+        location = self.parse_lat_lon_tokens(lat_token, lat_hem_token, lon_token, lon_hem_token)
+        if location:
+            contact.location = location
 
-        latitude = lat_token.text
-        lat_valid = contact_location.set_latitude_dms(
-            degrees=latitude[:2],
-            minutes=latitude[2:],
-            seconds=0,
-            hemisphere=lat_hem_token.text,
-        )
-        longitude = lon_token.text
-        lon_valid = contact_location.set_longitude_dms(
-            degrees=longitude[:3],
-            minutes=longitude[3:],
-            seconds=0,
-            hemisphere=lon_hem_token.text,
-        )
-
-        if lat_valid and lon_valid:
-            contact.location = contact_location
+        if location:
+            contact.location = location
             combine_tokens(lat_token, lon_token).record(
                 self.name, "location", contact.location, "DMS"
             )
-
-        print(f"New contact at {latitude},{longitude}")
 
     def handle_position(self, data_store, line_number, tokens, datafile, change_id):
         """Handles the position information for ownship
@@ -221,6 +205,94 @@ class WecdisImporter(Importer):
 
         state = datafile.create_state(data_store, platform, sensor, self.timestamp, self.short_name)
 
+        location = self.parse_lat_lon_tokens(lat_token, lat_hem_token, lon_token, lon_hem_token)
+        if location:
+            state.location = location
+
+        combine_tokens(lat_token, lon_token).record(self.name, "location", location, "DMS")
+
+        heading_valid, heading = convert_absolute_angle(
+            heading_token.text, line_number, self.errors, self.error_type
+        )
+        if heading_valid:
+            state.heading = heading
+            heading_token.record(self.name, "heading", heading)
+
+        speed_valid, speed = convert_speed(
+            speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type
+        )
+        if speed_valid:
+            state.speed = speed
+            speed_token.record(self.name, "speed", speed)
+
+    def handle_tma(self, data_store, line_number, tokens, datafile, change_id):
+        """Handles a contact generated from Target Motion Analysis (TMA)
+        :param data_store: The data store that this is importing into
+        :param line_number: The number of the line currently being processed
+        :param tokens: The tokens parsed from the line being processed
+        :param datafile: The datafile being imported
+        :param change_id: The ID representing this import as a change
+        """
+        # As per MWC's REP parser, only handle the BRG messages
+        type_token = tokens[2]
+        if type_token.text != "BRG":
+            return
+
+        date_token = tokens[5]
+        time_token = tokens[6]
+        bearing_token = tokens[7]
+        course_token = tokens[9]  # Optional
+        lat_token = tokens[11]
+        lat_hem_token = tokens[12]
+        lon_token = tokens[13]
+        lon_hem_token = tokens[14]
+        tma_name_token = tokens[21]
+
+        # TODO - work out speed/range fields
+        timestamp = self.parse_timestamp(date_token.text, time_token.text)
+        contact_timestamp_token = combine_tokens(date_token, time_token)
+        contact_timestamp_token.record(self.name, "timestamp", timestamp)
+
+        detecting_platform = self.get_cached_platform(data_store, self.platform_name, change_id)
+        detecting_sensor = self.get_cached_sensor(
+            data_store,
+            sensor_name="Wecdis-TMA",  # TODO - confirm name for this sensor
+            sensor_type="TMA",
+            platform_id=detecting_platform.platform_id,
+            change_id=change_id,
+        )
+        contact = datafile.create_contact(
+            data_store=data_store,
+            platform=detecting_platform,
+            sensor=detecting_sensor,
+            timestamp=timestamp,
+            parser_name=self.short_name,
+        )
+
+        location = self.parse_lat_lon_tokens(lat_token, lat_hem_token, lon_token, lon_hem_token)
+        if location:
+            contact.location = location
+        contact.track_number = tma_name_token.text
+        tma_name_token.record(self.name, "track number", contact.track_number)
+
+        bearing_valid, bearing = convert_absolute_angle(
+            bearing_token.text, line_number, self.errors, self.error_type
+        )
+        if bearing_valid:
+            contact.bearing = bearing
+            bearing_token.record(self.name, "bearing", bearing)
+
+        if course_token.text:
+            course_valid, course = convert_absolute_angle(
+                course_token.text, line_number, self.errors, self.error_type
+            )
+            if course_valid:
+                contact.orientation = course
+                course_token.record(self.name, "bearing", course)
+
+    def parse_lat_lon_tokens(self, lat_token, lat_hem_token, lon_token, lon_hem_token):
+        """Parse latitude and longitude tokens as a location"""
+
         location = Location(
             errors=self.errors,
             error_type=self.error_type,
@@ -240,23 +312,7 @@ class WecdisImporter(Importer):
         ):
             return
 
-        state.location = location
-
-        combine_tokens(lat_token, lon_token).record(self.name, "location", location, "DMS")
-
-        heading_valid, heading = convert_absolute_angle(
-            heading_token.text, line_number, self.errors, self.error_type
-        )
-        if heading_valid:
-            state.heading = heading
-            heading_token.record(self.name, "heading", heading)
-
-        speed_valid, speed = convert_speed(
-            speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type
-        )
-        if speed_valid:
-            state.speed = speed
-            speed_token.record(self.name, "speed", speed)
+        return location
 
     @staticmethod
     def parse_timestamp(date, time):

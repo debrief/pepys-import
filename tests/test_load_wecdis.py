@@ -16,6 +16,8 @@ VNM_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/wecdis_vnm.log
 DZA_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/wecdis_dza.log")
 CONTACT_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/contact.log")
 POSITION_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/position.log")
+TMA_NO_BRG_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/tma_no_brg.log")
+TMA_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/tma_brg.log")
 
 
 class TestWecdisImporter(unittest.TestCase):
@@ -97,7 +99,7 @@ class TestWecdisImporter(unittest.TestCase):
 
         # check states empty
         with self.store.session_scope():
-            # there must be no states at the beginning
+            # there must be no contacts at the beginning
             contacts = self.store.session.query(self.store.db_classes.Contact).all()
             self.assertEqual(len(contacts), 0)
 
@@ -114,7 +116,7 @@ class TestWecdisImporter(unittest.TestCase):
 
         # check data got created
         with self.store.session_scope():
-            # there must be states after the import
+            # there must be contacts after the import
             contacts = self.store.session.query(self.store.db_classes.Contact).all()
             self.assertEqual(len(contacts), 1)
 
@@ -178,6 +180,85 @@ class TestWecdisImporter(unittest.TestCase):
             ureg = UnitRegistry()
             assert round(state[0].speed.to(ureg.knot).magnitude, 1) == 2.8
             assert state[0].heading.to(ureg.degree).magnitude == 340
+
+    def test_tma_ignore_sol_max(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(WecdisImporter())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no contacts at the beginning
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+        # parse the folder
+        processor.process(TMA_NO_BRG_DATA_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be no contacts after the import
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
+
+            # there must be no platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 1)
+
+    def test_wecdis_parse_tma(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(WecdisImporter())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no contacts at the beginning
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+        # parse the folder
+        processor.process(TMA_DATA_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be no contacts after the import
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 1)
+
+            # there must be no platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 1)
+
+            # there must be datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 1)
+
+            stored_contact = self.store.session.query(self.store.db_classes.Contact).all()
+            assert len(stored_contact) == 1
+            assert stored_contact[0].time == datetime(2019, 11, 19, 1, 2, 34, 122000)
+            ureg = UnitRegistry()
+            assert round(stored_contact[0].location.latitude, 6) == 1.368723
+            assert round(stored_contact[0].location.longitude, 6) == -12.568518
+            assert round(stored_contact[0].bearing.to(ureg.degree).magnitude) == 270
+            assert stored_contact[0].orientation is None  # No course given
 
 
 class DummyToken:
