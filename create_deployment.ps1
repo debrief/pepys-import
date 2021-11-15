@@ -2,7 +2,7 @@ Write-Output "INFO: Starting to create Pepys deployment"
 
 # Download embedded Python distribution
 try {
-    $url = 'https://www.python.org/ftp/python/3.8.6/python-3.8.6-embed-amd64.zip'
+    $url = 'https://www.python.org/ftp/python/3.9.8/python-3.9.8-embed-amd64.zip'
     (New-Object System.Net.WebClient).DownloadFile($url,  "$PWD\python.zip")
 }
 catch {
@@ -133,8 +133,8 @@ try {
     # the directory above the python folder (with pepys-import in it). This creates a ._pth file which
     # Python uses as it's *only* source for generating sys.path (ie. it does NOT take into account
     # environment variables such as PYTHONPATH)
-    Set-Content -Encoding ascii .\python\python38._pth @"
-python38.zip
+    Set-Content -Encoding ascii .\python\python39._pth @"
+python39.zip
 .
 Lib\site-packages
 ..
