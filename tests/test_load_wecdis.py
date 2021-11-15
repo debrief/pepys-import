@@ -3,6 +3,7 @@ import unittest
 from datetime import datetime
 
 import pytest
+from pint import UnitRegistry
 
 from importers.wecdis_importer import WecdisImporter
 from pepys_import.core.store.data_store import DataStore
@@ -127,7 +128,9 @@ class TestWecdisImporter(unittest.TestCase):
             stored_contact = self.store.session.query(self.store.db_classes.Contact).all()
             assert len(stored_contact) == 1
             assert stored_contact[0].time == datetime(2020, 11, 1, 12, 34, 5, 678000)
-            assert stored_contact[0].speed == 12
+            ureg = UnitRegistry()
+
+            assert round(stored_contact[0].soa.to(ureg.knot).magnitude) == 12
 
 
 # Contact tests TODO - contact before position info, missing data

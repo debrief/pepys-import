@@ -161,7 +161,7 @@ class WecdisImporter(Importer):
             speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type
         )
         if speed_valid:
-            contact.speed = speed
+            contact.soa = speed  # Assuming that WECDIS records speed of approach
             speed_token.record(self.name, "speed", speed)
 
         # TODO - There is almost certainly a range (probably [13]), confirm
@@ -192,6 +192,8 @@ class WecdisImporter(Importer):
             combine_tokens(lat_token, lon_token).record(
                 self.name, "location", contact.location, "DMS"
             )
+
+        print(f"New contact at {latitude},{longitude}")
 
     def handle_position(self, data_store, line_number, tokens, datafile, change_id):
         """Handles the position information for ownship
