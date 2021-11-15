@@ -350,7 +350,7 @@ class Change(BasePostGIS):
     )
     modified = Column(DATE, nullable=False)
     reason = Column(
-        String(500), CheckConstraint("reason <> ''", name="ck_Changes_reason"), nullable=False
+        Text(), CheckConstraint("reason <> ''", name="ck_Changes_reason"), nullable=False
     )
     datafile_id = Column(
         UUID(as_uuid=True),

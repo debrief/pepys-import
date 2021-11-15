@@ -119,7 +119,7 @@ class DefaultResolverTestCase(unittest.TestCase):
             self.assertEqual(trigraph, "PL1")
             self.assertEqual(quadgraph, "PLT1")
             self.assertEqual(identifier, "123")
-            self.assertEqual(platform_type.name, "Warship")
+            self.assertEqual(platform_type.name, "Naval - frigate")
             self.assertEqual(nationality.name, "UK")
             self.assertEqual(privacy.name, "Public")
 
