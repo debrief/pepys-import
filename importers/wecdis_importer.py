@@ -169,7 +169,7 @@ class WecdisImporter(Importer):
         # TODO - There is almost certainly a range (probably [13]), confirm
         # range_valid, range =
 
-        location = self.parse_lat_lon_tokens(lat_token, lat_hem_token, lon_token, lon_hem_token)
+        location = self._parse_lat_lon_tokens(lat_token, lat_hem_token, lon_token, lon_hem_token)
         if location:
             contact.location = location
 
@@ -205,7 +205,7 @@ class WecdisImporter(Importer):
 
         state = datafile.create_state(data_store, platform, sensor, self.timestamp, self.short_name)
 
-        location = self.parse_lat_lon_tokens(lat_token, lat_hem_token, lon_token, lon_hem_token)
+        location = self._parse_lat_lon_tokens(lat_token, lat_hem_token, lon_token, lon_hem_token)
         if location:
             state.location = location
 
@@ -269,10 +269,11 @@ class WecdisImporter(Importer):
             parser_name=self.short_name,
         )
 
-        location = self.parse_lat_lon_tokens(lat_token, lat_hem_token, lon_token, lon_hem_token)
+        location = self._parse_lat_lon_tokens(lat_token, lat_hem_token, lon_token, lon_hem_token)
         if location:
             contact.location = location
-        contact.track_number = tma_name_token.text
+
+        contact.track_number, _, _ = tma_name_token.text.partition("*")
         tma_name_token.record(self.name, "track number", contact.track_number)
 
         bearing_valid, bearing = convert_absolute_angle(
@@ -290,20 +291,25 @@ class WecdisImporter(Importer):
                 contact.orientation = course
                 course_token.record(self.name, "bearing", course)
 
-    def parse_lat_lon_tokens(self, lat_token, lat_hem_token, lon_token, lon_hem_token):
+    def _parse_lat_lon_tokens(self, lat_token, lat_hem_token, lon_token, lon_hem_token):
         """Parse latitude and longitude tokens as a location"""
+
+        latitude = lat_token.text
+        longitude = lon_token.text
+
+        if not latitude or not longitude:
+            return
 
         location = Location(
             errors=self.errors,
             error_type=self.error_type,
         )
-        latitude = lat_token.text
+
         if not location.set_latitude_dms(
             degrees=latitude[:2], minutes=latitude[2:], seconds=0, hemisphere=lat_hem_token.text
         ):
             return
 
-        longitude = lon_token.text
         if not location.set_longitude_dms(
             degrees=longitude[:3],
             minutes=longitude[3:],

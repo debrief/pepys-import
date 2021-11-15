@@ -18,6 +18,7 @@ CONTACT_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/contact.lo
 POSITION_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/position.log")
 TMA_NO_BRG_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/tma_no_brg.log")
 TMA_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/tma_brg.log")
+TMA_MISSING_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/tma_missing.log")
 
 
 class TestWecdisImporter(unittest.TestCase):
@@ -134,8 +135,6 @@ class TestWecdisImporter(unittest.TestCase):
             ureg = UnitRegistry()
 
             assert round(stored_contact[0].soa.to(ureg.knot).magnitude) == 12
-
-    # Contact tests TODO - contact before position info, missing data
 
     def test_wecdis_parse_position(self):
         processor = FileProcessor(archive=False)
@@ -259,6 +258,71 @@ class TestWecdisImporter(unittest.TestCase):
             assert round(stored_contact[0].location.longitude, 6) == -12.568518
             assert round(stored_contact[0].bearing.to(ureg.degree).magnitude) == 270
             assert stored_contact[0].orientation is None  # No course given
+
+    def test_wecdis_tma_missing_fields(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(WecdisImporter())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no contacts at the beginning
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+        # parse the folder
+        processor.process(TMA_MISSING_DATA_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be no contacts after the import
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 3)
+
+            # there must be no platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 1)
+
+            # there must be datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 1)
+
+            stored_contacts = (
+                self.store.session.query(self.store.db_classes.Contact)
+                .order_by(self.store.db_classes.Contact.time)
+                .all()
+            )
+            ureg = UnitRegistry()
+            assert len(stored_contacts) == 3
+            # The contact with all the info
+            assert stored_contacts[0].time == datetime(2019, 11, 19, 1, 2, 34, 122000)
+            assert round(stored_contacts[0].location.latitude, 6) == 1.368723
+            assert round(stored_contacts[0].location.longitude, 6) == -12.568518
+            assert round(stored_contacts[0].bearing.to(ureg.degree).magnitude) == 270
+            assert round(stored_contacts[0].orientation.to(ureg.degree).magnitude) == 20
+            assert stored_contacts[0].track_number == "BRG - all data"
+            # Contact with course, but no location
+            assert stored_contacts[1].time == datetime(2020, 11, 1, 1, 2, 34, 543000)
+            assert stored_contacts[1].location is None
+            assert round(stored_contacts[1].bearing.to(ureg.degree).magnitude) == 190
+            assert round(stored_contacts[1].orientation.to(ureg.degree).magnitude) == 255
+            assert stored_contacts[1].track_number == "BRG - no location"
+            # Contact without course or location
+            assert stored_contacts[2].time == datetime(2020, 12, 22, 1, 2, 34, 665000)
+            assert stored_contacts[2].location is None
+            assert round(stored_contacts[2].bearing.to(ureg.degree).magnitude) == 359
+            assert stored_contacts[2].orientation is None
+            assert stored_contacts[2].track_number == "BRG - no location or course"
+
+
+# Contact tests TODO - contact before position info, missing data
 
 
 class DummyToken:
