@@ -325,7 +325,7 @@ class TestWecdisImporter(unittest.TestCase):
             assert stored_contacts[2].location is None
             assert round(stored_contacts[2].bearing.to(ureg.degree).magnitude) == 359
             assert stored_contacts[2].orientation is None
-            assert stored_contacts[2].track_number == "BRG - no location or course"
+            assert stored_contacts[2].track_number == "BRG - no loc/course"
 
     def test_wecdis_multi_timestep_sample(self):
         processor = FileProcessor(archive=False)
