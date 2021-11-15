@@ -123,7 +123,7 @@ def handle_three_variables(class_obj, output, idx, query_list, data_store):
 
     if ops == "LIKE":
         try:
-            if isinstance(col.type, UUIDType) or isinstance(col.type, UUID):
+            if isinstance(col.type, (UUID, UUIDType)):
                 query_list.append(cast(col, sqlalchemy.String).ilike(f"%{value}%"))
             else:
                 query_list.append(col.ilike(f"%{value}%"))
