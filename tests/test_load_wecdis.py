@@ -52,7 +52,7 @@ class TestWecdisImporter(unittest.TestCase):
             importer.handle_vnm(DummyToken.csv_to_tokens("$POSL,XYZ,NONSUCH*5D"), 1)
         with pytest.raises(TypeError):
             importer.handle_vnm(
-                DummyToken.csv_to_tokens("$POSL,DZA,20201201,010230.123,012345678*21")
+                DummyToken.csv_to_tokens("$POSL,DZA,20201201,010230.123,012345678*21"), 1
             )
         assert importer.platform_name is None
         assert importer.timestamp is None

@@ -300,7 +300,7 @@ class WecdisImporter(Importer):
         longitude = lon_token.text
 
         if not latitude or not longitude:
-            return
+            return None
 
         location = Location(
             errors=self.errors,
@@ -310,7 +310,7 @@ class WecdisImporter(Importer):
         if not location.set_latitude_dms(
             degrees=latitude[:2], minutes=latitude[2:], seconds=0, hemisphere=lat_hem_token.text
         ):
-            return
+            return None
 
         if not location.set_longitude_dms(
             degrees=longitude[:3],
@@ -318,7 +318,7 @@ class WecdisImporter(Importer):
             seconds=0,
             hemisphere=lon_hem_token.text,
         ):
-            return
+            return None
 
         return location
 
