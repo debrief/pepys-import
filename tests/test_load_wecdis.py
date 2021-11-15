@@ -60,7 +60,9 @@ class TestWecdisImporter(unittest.TestCase):
     @staticmethod
     def test_wecdis_parse_vnm_invalid_line():
         importer = WecdisImporter()
-        check_errors_for_file_contents("$POSL,VNM", "Not enough parts in line", importer)
+        check_errors_for_file_contents(
+            "$POSL,VNM\nCHART, VER", "Not enough parts in line", importer
+        )
         assert importer.platform_name is None
 
     def test_wecdis_parse_dza(self):
@@ -83,13 +85,17 @@ class TestWecdisImporter(unittest.TestCase):
     @staticmethod
     def test_wecdis_parse_dza_invalid_line():
         importer = WecdisImporter()
-        check_errors_for_file_contents("$POSL,DZA,20101030", "Not enough parts in line", importer)
+        check_errors_for_file_contents(
+            "$POSL,DZA,20101030\nCHART, VER", "Not enough parts in line", importer
+        )
 
     @staticmethod
     def test_wecdis_parse_dza_invalid_timestamp():
         importer = WecdisImporter()
         check_errors_for_file_contents(
-            "$POSL,DZA,20101035,999999.99,12343*AB", "Error in timestamp value", importer
+            "$POSL,DZA,20101035,999999.99,12343*AB\nCHART, VER",
+            "Error in timestamp value",
+            importer,
         )
         assert importer.platform_name is None
         assert importer.timestamp is None
