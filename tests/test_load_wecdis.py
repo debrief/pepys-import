@@ -15,6 +15,7 @@ DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/wecdis_sample.log"
 VNM_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/wecdis_vnm.log")
 DZA_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/wecdis_dza.log")
 CONTACT_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/contact.log")
+POSITION_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/position.log")
 
 
 class TestWecdisImporter(unittest.TestCase):
@@ -132,8 +133,51 @@ class TestWecdisImporter(unittest.TestCase):
 
             assert round(stored_contact[0].soa.to(ureg.knot).magnitude) == 12
 
+    # Contact tests TODO - contact before position info, missing data
 
-# Contact tests TODO - contact before position info, missing data
+    def test_wecdis_parse_position(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(WecdisImporter())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 0)
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+        # parse the folder
+        processor.process(POSITION_DATA_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 1)
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 1)
+
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 1)
+
+            state = self.store.session.query(self.store.db_classes.State).all()
+            assert len(state) == 1
+            assert state[0].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
+            assert round(state[0].location.latitude, 6) == 12.57613
+            assert round(state[0].location.longitude, 6) == -0.514239
+            ureg = UnitRegistry()
+            assert round(state[0].speed.to(ureg.knot).magnitude, 1) == 2.8
+            assert state[0].heading.to(ureg.degree).magnitude == 340
 
 
 class DummyToken:
