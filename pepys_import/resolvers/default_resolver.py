@@ -7,7 +7,7 @@ class DefaultResolver(DataResolver):
     default_trigraph = "PL1"
     default_quadgraph = "PLT1"
     default_identifier = "123"
-    default_platform_type = "Warship"
+    default_platform_type = "Naval - frigate"
     default_nationality = "UK"
     default_sensor_name = "SENSOR-1"
     default_sensor_type = "Position"
