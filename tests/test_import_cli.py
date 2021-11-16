@@ -204,6 +204,7 @@ def test_process_db_none(patched_file_proc, patched_data_store):
         db_name=DB_NAME,
         db_type=DB_TYPE,
         missing_data_resolver=ANY,  # We don't care about this argument, and it's hard to test
+        error_on_db_version_mismatch=ANY,
     )
 
 
@@ -257,6 +258,7 @@ def test_training_mode_setup(patched_input, patched_data_store):
         db_name=db_name,
         db_type="sqlite",
         missing_data_resolver=ANY,  # We don't care about this argument, and it's hard to test
+        error_on_db_version_mismatch=ANY,
     )
 
     # Reset PEPYS_CONFIG_FILE to what it was at the start of the test
