@@ -2,6 +2,7 @@ import operator
 from typing import List
 
 import sqlalchemy
+from sqlalchemy.dialects.postgresql.base import UUID
 from sqlalchemy.sql.expression import cast
 
 from pepys_import.core.store.data_store import DataStore
@@ -122,7 +123,7 @@ def handle_three_variables(class_obj, output, idx, query_list, data_store):
 
     if ops == "LIKE":
         try:
-            if isinstance(col.type, UUIDType):
+            if isinstance(col.type, (UUID, UUIDType)):
                 query_list.append(cast(col, sqlalchemy.String).ilike(f"%{value}%"))
             else:
                 query_list.append(col.ilike(f"%{value}%"))
