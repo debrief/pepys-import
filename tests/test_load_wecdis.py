@@ -19,6 +19,8 @@ POSITION_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/position.
 TMA_NO_BRG_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/tma_no_brg.log")
 TMA_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/tma_brg.log")
 TMA_MISSING_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/tma_missing.log")
+INVALID_LAT_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/invalid_lat.log")
+INVALID_LON_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/invalid_lon.log")
 
 
 class TestWecdisImporter(unittest.TestCase):
@@ -248,7 +250,7 @@ class TestWecdisImporter(unittest.TestCase):
             contacts = self.store.session.query(self.store.db_classes.Contact).all()
             self.assertEqual(len(contacts), 1)
 
-            # there must be no platforms after the import
+            # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             self.assertEqual(len(platforms), 1)
 
@@ -292,7 +294,7 @@ class TestWecdisImporter(unittest.TestCase):
             contacts = self.store.session.query(self.store.db_classes.Contact).all()
             self.assertEqual(len(contacts), 3)
 
-            # there must be no platforms after the import
+            # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             self.assertEqual(len(platforms), 1)
 
@@ -361,7 +363,7 @@ class TestWecdisImporter(unittest.TestCase):
             contacts = self.store.session.query(self.store.db_classes.Contact).all()
             self.assertEqual(len(contacts), 3)
 
-            # there must be no platforms after the import
+            # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
             self.assertEqual(len(platforms), 1)
 
@@ -397,6 +399,100 @@ class TestWecdisImporter(unittest.TestCase):
 
             assert round(stored_contacts[2].bearing.to(ureg.degree).magnitude) == 180
             assert round(stored_contacts[2].soa.to(ureg.knot).magnitude, 1) == 12.5
+
+    def test_invalid_lat(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(WecdisImporter())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 0)
+            # there must be no contacts at the beginning
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+        # parse the folder
+        processor.process(INVALID_LAT_DATA_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be no states after the import
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 0)
+            # there must be no contacts after the import
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 1)
+
+            # there must be no datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+            assert len(processor.importers[0].errors) == 1
+
+    def test_invalid_lon(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(WecdisImporter())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 0)
+            # there must be no contacts at the beginning
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+        # parse the folder
+        processor.process(INVALID_LON_DATA_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be no states after the import - invalid location
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 0)
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 1)
+
+            # there won't be datafile afterwards - failed import
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+            assert len(processor.importers[0].errors) == 1
+
+    # Datetime tests for formats that we don't have in sample data but are in NMEA
+    @staticmethod
+    def test_timestamp_short_form_date():
+        timestamp = WecdisImporter.parse_timestamp("210504", "120000")
+        assert timestamp == datetime(2021, 5, 4, 12)
+
+    @staticmethod
+    def test_timestamp_milliseconds_time():
+        timestamp = WecdisImporter.parse_timestamp("20210504", "120000.1201")
+        assert timestamp == datetime(2021, 5, 4, 12, 0, 0, 120100)
 
 
 class DummyToken:
