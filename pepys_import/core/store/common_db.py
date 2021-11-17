@@ -1,3 +1,5 @@
+import uuid
+
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -15,7 +17,7 @@ from pepys_import.core.validators.basic_validator import BasicValidator
 from pepys_import.core.validators.enhanced_validator import EnhancedValidator
 from pepys_import.utils.data_store_utils import chunked_list, shorten_uuid
 from pepys_import.utils.import_utils import import_validators
-from pepys_import.utils.sqlalchemy_utils import get_primary_key_for_table
+from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy, get_primary_key_for_table
 from pepys_import.utils.text_formatting_utils import format_error_menu
 
 LOCAL_BASIC_VALIDATORS = []
@@ -225,6 +227,35 @@ class PlatformMixin:
         sensor_type_obj = data_store.search_sensor_type(sensor_type)
         privacy_obj = data_store.search_privacy(privacy)
         if sensor_type_obj is None or privacy_obj is None:
+            with data_store.session_scope():
+                data_store.session.add(self)
+                if self.platform_type_name == "Unknown":
+                    # If we're dealing with an unknown Platform, then don't ask the user for
+                    # sensor details, just create them with whatever information we've got
+                    # and use UUIDs/Unknown for the missing bits
+                    if sensor_name is None:
+                        sensor_name = str(uuid.uuid4())
+
+                    if sensor_type_obj is None:
+                        sensor_type = "Unknown"
+                    else:
+                        sensor_type = sensor_type_obj.name
+
+                    if privacy_obj is None:
+                        privacy = get_lowest_privacy(data_store)
+                    else:
+                        privacy = privacy_obj.name
+
+                    return data_store.add_to_sensors(
+                        name=sensor_name,
+                        sensor_type=sensor_type,
+                        host_name=None,
+                        host_nationality=None,
+                        host_identifier=None,
+                        host_id=self.platform_id,
+                        privacy=privacy,
+                        change_id=change_id,
+                    )
             resolved_data = data_store.missing_data_resolver.resolve_sensor(
                 data_store, sensor_name, sensor_type, self.platform_id, privacy, change_id
             )

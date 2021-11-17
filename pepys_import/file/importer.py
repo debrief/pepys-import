@@ -217,7 +217,9 @@ class Importer(ABC):
 
         return resolved_sensor
 
-    def get_cached_platform(self, data_store, platform_name, change_id, quadgraph=None):
+    def get_cached_platform(
+        self, data_store, platform_name, change_id, quadgraph=None, unknown=False
+    ):
         if platform_name:
             # Look for this name in the cache first
             platform_from_cache = self.platform_cache.get(platform_name)
@@ -226,7 +228,7 @@ class Importer(ABC):
 
         # Otherwise use the resolver to find it
         resolved_platform = data_store.get_platform(
-            platform_name=platform_name, quadgraph=quadgraph, change_id=change_id
+            platform_name=platform_name, quadgraph=quadgraph, change_id=change_id, unknown=unknown
         )
 
         # Put in the cache

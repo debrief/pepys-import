@@ -1,6 +1,7 @@
 import csv
 import os
 import sys
+import uuid
 from contextlib import contextmanager
 from datetime import datetime
 from getpass import getuser
@@ -40,7 +41,11 @@ from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_
 from pepys_import.utils.value_transforming_utils import format_datetime
 
 from ...utils.error_handling import handle_database_errors, handle_first_connection_error
-from ...utils.sqlalchemy_utils import get_primary_key_for_table, sqlalchemy_object_to_json
+from ...utils.sqlalchemy_utils import (
+    get_lowest_privacy,
+    get_primary_key_for_table,
+    sqlalchemy_object_to_json,
+)
 from ...utils.table_name_utils import table_name_to_class_name
 from ...utils.text_formatting_utils import custom_print_formatted_text, format_error_message
 from .db_base import BasePostGIS, BaseSpatiaLite
@@ -987,6 +992,7 @@ class DataStore:
         trigraph=None,
         quadgraph=None,
         change_id=None,
+        unknown=False,
     ):
         """
         Adds an entry to the platforms table for the specified platform
@@ -1008,8 +1014,41 @@ class DataStore:
         :type identifier: String
         :param change_id: ID of the :class:`Change` object
         :type change_id: Integer or UUID
+        :param unknown: Whether to create this as an 'unknown' Platform, which won't ask
+                        the user to resolve details, and will assign Unknown nationality
+                        and Platform Types
+        :type unknown: Boolean
         :return: Created Platform entity
         """
+        if unknown:
+            # The importer has specifically said it wants to get a 'unknown platform' (ie. one with an unknown
+            # nationality and platform type) back from this call.
+            if platform_name is not None:
+                # The importer has provided a name, which we assume means they think this name is unique
+                # (like an IMO ID), so we search for this name and return it if it exists
+                # We'll use the first three characters of the platform name as the identifier - as this will have been used
+                # when the unknown platform was automatically created
+                platform = self.find_platform(
+                    name=platform_name, identifier=platform_name[:3], nationality="Unknown"
+                )
+                # If we found a platform with that name etc, then return it
+                if platform:
+                    return platform
+            else:
+                # If we haven't been given a name, make up a UUID name
+                platform_name = str(uuid.uuid4())
+
+            lowest_privacy = get_lowest_privacy(self)
+            return self.add_to_platforms(
+                name=platform_name,
+                trigraph=platform_name[:3],
+                quadgraph=platform_name[:4],
+                identifier=platform_name[:3],
+                nationality="Unknown",
+                platform_type="Unknown",
+                privacy=lowest_privacy,
+                change_id=change_id,
+            )
 
         # Check for name match in existing Platforms
         # If identifier and nationality are None then this just searches synonyms
