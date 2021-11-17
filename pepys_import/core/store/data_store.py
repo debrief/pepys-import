@@ -17,6 +17,7 @@ from sqlalchemy.sql.expression import text
 from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, merge_references
 
 from paths import MIGRATIONS_DIRECTORY, PEPYS_IMPORT_DIRECTORY
+from pepys_admin.utils import read_latest_revisions_file
 from pepys_import import __build_timestamp__, __version__
 from pepys_import.core.formats import unit_registry
 from pepys_import.core.formats.location import Location
@@ -80,11 +81,13 @@ class DataStore:
         missing_data_resolver=DefaultResolver(),
         welcome_text="Pepys_import",
         show_status=True,
+        error_on_db_version_mismatch=False,
     ):
 
         self.missing_data_resolver = missing_data_resolver
         self.welcome_text = welcome_text
         self.show_status = show_status
+        self.error_on_db_version_mismatch = error_on_db_version_mismatch
 
         # TEMP list of values for defaulted IDs, to be replaced by missing info lookup mechanism
         self.default_user_id = 1  # DevUser
@@ -142,6 +145,8 @@ class DataStore:
         # setup meta_class data
         self.meta_classes = {}
         self.setup_table_type_mapping()
+
+        self.latest_revisions = read_latest_revisions_file()
 
         if db_name == ":memory:":
             self.in_memory_database = True
@@ -210,9 +215,9 @@ class DataStore:
             show_software_meta_info(
                 __version__, __build_timestamp__, self.db_type, self.db_name, db_host
             )
-            # The 'pepys-import' banner is 61 characters wide, so making a line
+            # The 'pepys-import' banner is 78 characters wide, so making a line
             # of the same length makes things prettier
-            print("-" * 61)
+            print("-" * 78)
 
     def initialise(self):
         """Create schemas for the database"""
@@ -365,7 +370,23 @@ class DataStore:
 
                 # Database has been found and is the correct length
                 if table_contents[0][0] in revision_list:
-                    # The returned contents is found in our list of ID's so we can return out of the function and carry on
+                    if self.db_type == "sqlite":
+                        key_name = "LATEST_SQLITE_VERSION"
+                    else:
+                        key_name = "LATEST_POSTGRES_VERSION"
+
+                    if table_contents[0][0] != self.latest_revisions[key_name]:
+                        if self.error_on_db_version_mismatch:
+                            print(
+                                "ERROR: The database is not at the latest revision. Please ask an administrator to run the database migration."
+                            )
+                            sys.exit(1)
+                        else:
+                            print("*" * 78)
+                            print(
+                                "WARNING: The database is not at the latest revision.\nPlease ask an administrator to run the database migration."
+                            )
+                            print("*" * 78)
                     return
                 else:
                     # The returned contents is not found in our list of ID's so we need to have an error

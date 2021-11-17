@@ -129,6 +129,11 @@ class SerialParticipantDialog:
             self.error_label.text = "You must enter a valid end time, or leave it empty"
             return
 
+        if values["start"] is not None and values["end"] is not None:
+            if values["start"] > values["end"]:
+                self.error_label.text = "The end time must be after the start time"
+                return
+
         values["privacy"] = self.privacy_field.text
 
         self.future.set_result(values)

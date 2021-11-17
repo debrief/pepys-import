@@ -2281,7 +2281,7 @@ class TestExportAlterAndMerge(unittest.TestCase):
         # Check statistics
         assert "| Nationality        |                 1 |       1 |          0 |" in output
         assert "| PlatformType       |                 1 |       2 |          0 |" in output
-        assert "| Datafiles          |                 0 |       1 |          0 |" in output
+        assert "| Datafiles          |                 2 |       1 |          0 |" in output
         assert "| Platform           |                 4 |       2 |          1 |" in output
         assert "| Sensor             |                 5 |       1 |          0 |" in output
         assert "| State       |     402 |" in output
