@@ -6,7 +6,7 @@ from pepys_import.core.formats.location import Location
 from pepys_import.core.validators import constants
 from pepys_import.file.highlighter.support.combine import combine_tokens
 from pepys_import.file.importer import Importer
-from pepys_import.utils.unit_utils import convert_absolute_angle, convert_speed
+from pepys_import.utils.unit_utils import convert_absolute_angle, convert_distance, convert_speed
 
 
 class MsgType(str, Enum):
@@ -17,6 +17,8 @@ class MsgType(str, Enum):
     CONTACT = "CONTACT"
     POSITION = "CPOS"
     TMA = "TMA"
+    DEPTH = "PDS"
+    TTM = "TTM"
 
 
 class WecdisImporter(Importer):
@@ -30,6 +32,7 @@ class WecdisImporter(Importer):
 
         self.platform_name = None
         self.timestamp = None
+        self.elevation = None
 
     def can_load_this_type(self, suffix):
         return suffix.upper() == ".LOG" or suffix.upper() == ".TXT"
@@ -54,7 +57,9 @@ class WecdisImporter(Importer):
             if msg_type == MsgType.PLATFORM:
                 self.handle_vnm(tokens, line_number)
             elif msg_type == MsgType.TIME:
-                self.handle_dza(tokens, line_number)
+                self.handle_timestamp(tokens, line_number)
+            elif msg_type == MsgType.DEPTH:
+                self.handle_depth(tokens, line_number)
             elif msg_type == MsgType.CONTACT:
                 self.handle_contact(data_store, line_number, tokens, datafile, change_id)
             elif msg_type == MsgType.POSITION:
@@ -82,7 +87,25 @@ class WecdisImporter(Importer):
         self.platform_name, _, _ = platform_name_token.text.partition("*")
         platform_name_token.record(self.name, "platform name", self.platform_name)
 
-    def handle_dza(self, dza_tokens, line_number):
+    def handle_depth(self, tokens, line_number):
+        """Extracts the depth from the PDS line
+        :param tokens: A tokenised PDS line
+        :ptype tokens: Line (list of tokens)"""
+        depth_token = tokens[2]
+        depth_units_token = tokens[3]  # This is an assumption about the unit being position 3
+        if depth_token and depth_token.text:
+            # Making an assumption of how this would look if using FT.
+            # [3] may not be the units but unclear from a single sample file
+            unit_text, _, _ = depth_units_token.text.upper().partition("*")
+            units = unit_registry.foot if unit_text == "FT" else unit_registry.meter
+            depth_valid, depth = convert_distance(
+                depth_token.text, units, line_number, self.errors, self.error_type
+            )
+            if depth_valid:
+                self.elevation = -1 * depth
+            depth_token.record(self.name, "Depth", self.elevation)
+
+    def handle_timestamp(self, dza_tokens, line_number):
         """Extracts the important information from a DZA (Timestamp) line
         :param dza_tokens: A tokenised DZA line
         :ptype dza_tokens: Line (list of tokens)"""
@@ -224,6 +247,9 @@ class WecdisImporter(Importer):
         if speed_valid:
             state.speed = speed
             speed_token.record(self.name, "speed", speed)
+
+        if self.elevation:
+            state.elevation = self.elevation
 
     def handle_tma(self, data_store, line_number, tokens, datafile, change_id):
         """Handles a contact generated from Target Motion Analysis (TMA)

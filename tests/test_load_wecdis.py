@@ -21,6 +21,7 @@ TMA_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/tma_brg.log")
 TMA_MISSING_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/tma_missing.log")
 INVALID_LAT_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/invalid_lat.log")
 INVALID_LON_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/invalid_lon.log")
+DEPTH_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/depth.log")
 
 
 class TestWecdisImporter(unittest.TestCase):
@@ -81,7 +82,7 @@ class TestWecdisImporter(unittest.TestCase):
     def test_wecdis_parse_dza_only_parses_dza():
         importer = WecdisImporter()
         with pytest.raises(TypeError):
-            importer.handle_dza(DummyToken.csv_to_tokens("$POSL,XYZ,1234,NONSUCH*5D"), 1)
+            importer.handle_timestamp(DummyToken.csv_to_tokens("$POSL,XYZ,1234,NONSUCH*5D"), 1)
         assert importer.timestamp is None
 
     @staticmethod
@@ -89,6 +90,13 @@ class TestWecdisImporter(unittest.TestCase):
         importer = WecdisImporter()
         check_errors_for_file_contents(
             "$POSL,DZA,20101030\nCHART, VER", "Not enough parts in line", importer
+        )
+
+    @staticmethod
+    def test_wecdis_parse_depth_invalid_value():
+        importer = WecdisImporter()
+        check_errors_for_file_contents(
+            "$POSL,PDS,U,M\nCHART,VER", "Couldn't convert to a number", importer
         )
 
     @staticmethod
@@ -101,6 +109,51 @@ class TestWecdisImporter(unittest.TestCase):
         )
         assert importer.platform_name is None
         assert importer.timestamp is None
+
+    def test_wecdis_parse_depth(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(WecdisImporter())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no states at the beginning
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 0)
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+        # parse the folder
+        processor.process(DEPTH_DATA_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be states after the import
+            states = self.store.session.query(self.store.db_classes.State).all()
+            self.assertEqual(len(states), 3)
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 1)
+
+            # there must be one datafile afterwards
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 1)
+
+            stored_states = self.store.session.query(self.store.db_classes.State).all()
+
+            ureg = UnitRegistry()
+            # 1 - subsurface
+            assert stored_states[0].elevation.to(ureg.meter).magnitude == -123
+            # 2 - aircraft
+            assert stored_states[1].elevation.to(ureg.meter).magnitude == 456
+            # 3 - foot based
+            assert round(stored_states[2].elevation.to(ureg.foot).magnitude) == 789
 
     def test_wecdis_parse_contact(self):
         processor = FileProcessor(archive=False)
@@ -376,18 +429,23 @@ class TestWecdisImporter(unittest.TestCase):
                 .order_by(self.store.db_classes.State.time)
                 .all()
             )
+            ureg = UnitRegistry()
 
             assert stored_states[0].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
             assert stored_states[1].time == datetime(2021, 11, 1, 1, 2, 45, 10000)
             assert stored_states[2].time == datetime(2021, 11, 1, 1, 3, 5, 10000)
             assert stored_states[3].time == datetime(2021, 12, 12, 1, 3, 35, 10000)
+            assert stored_states[0].elevation.to(ureg.meter).magnitude == -11.1
+            assert stored_states[1].elevation.to(ureg.meter).magnitude == -11.1
+            assert stored_states[2].elevation.to(ureg.meter).magnitude == -11.1
+            assert stored_states[3].elevation.to(ureg.meter).magnitude == -19.7
 
             stored_contacts = (
                 self.store.session.query(self.store.db_classes.Contact)
                 .order_by(self.store.db_classes.Contact.time)
                 .all()
             )
-            ureg = UnitRegistry()
+
             assert round(stored_contacts[0].location.latitude, 6) == 12.566667
             assert round(stored_contacts[0].location.longitude, 6) == 12.899538
             assert round(stored_contacts[0].bearing.to(ureg.degree).magnitude) == 123
