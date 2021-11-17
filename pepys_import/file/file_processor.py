@@ -382,6 +382,8 @@ class FileProcessor:
                 errors.extend(importer.errors)
                 errors.extend(validation_errors)
 
+            data_store.missing_data_resolver.reset_per_file_settings()
+
             # If all tests pass for all parsers, commit datafile
             if not errors:
                 # Keep track of some details for the import summary

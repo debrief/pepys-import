@@ -1,4 +1,5 @@
 import sys
+import uuid
 
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import ValidationError, Validator
@@ -8,6 +9,7 @@ from pepys_import.core.store.constants import NATIONALITY, PLATFORM, PRIVACY
 from pepys_import.resolvers import constants
 from pepys_import.resolvers.command_line_input import create_menu, get_fuzzy_completer, is_valid
 from pepys_import.resolvers.data_resolver import DataResolver
+from pepys_import.utils.sqlalchemy_utils import get_lowest_privacy
 from pepys_import.utils.text_formatting_utils import (
     custom_print_formatted_text,
     format_command,
@@ -27,6 +29,9 @@ numeric_validator = Validator.from_callable(
 
 
 class CommandLineResolver(DataResolver):
+    def __init__(self):
+        self.store_all_platforms_as_unknown = False
+
     def resolve_datafile(self, data_store, datafile_name, datafile_type, privacy, change_id):
         """
         This method resolves datafile type and privacy. It asks user whether to create
@@ -130,9 +135,17 @@ class CommandLineResolver(DataResolver):
         change_id,
         quadgraph=None,
     ):
+        if self.store_all_platforms_as_unknown:
+            return self.add_unknown_platform(data_store, platform_name)
+
         print_new_section_title("Resolve Platform")
         platform_details = []
-        final_options = ["Add a new platform", "Search for existing platform"]
+        final_options = [
+            "Add a new platform",
+            "Search for existing platform",
+            "Store as unknown platform",
+            "Store remaining platforms as unknown",
+        ]
         if platform_name:
             # If we've got a platform_name, then we can search for all platforms
             # with this name, and present a list to the user to choose from,
@@ -200,10 +213,39 @@ class CommandLineResolver(DataResolver):
                 privacy,
                 change_id,
             )
-        elif 3 <= int(choice) <= len(choices):
+        elif choice == str(3):
+            return self.add_unknown_platform(data_store, platform_name)
+        elif choice == str(4):
+            self.store_all_platforms_as_unknown = True
+            return self.add_unknown_platform(data_store, platform_name)
+        elif 5 <= int(choice) <= len(choices):
             # One of the pre-existing platforms was chosen
-            platform_index = int(choice) - 3
+            platform_index = int(choice) - 5
             return platforms[platform_index]
+
+    def add_unknown_platform(self, data_store, platform_name):
+        if platform_name is None:
+            platform_name = str(uuid.uuid4())
+        identifier = platform_name[:3]
+        trigraph = platform_name[:3]
+        quadgraph = platform_name[:4]
+
+        chosen_platform_type = data_store.search_platform_type("Unknown")
+        chosen_nationality = data_store.search_nationality("Unknown")
+        chosen_privacy = data_store.search_privacy(get_lowest_privacy(data_store))
+
+        return (
+            platform_name,
+            trigraph,
+            quadgraph,
+            identifier,
+            chosen_platform_type,
+            chosen_nationality,
+            chosen_privacy,
+        )
+
+    def reset_per_file_settings(self):
+        self.store_all_platforms_as_unknown = False
 
     def resolve_sensor(self, data_store, sensor_name, sensor_type, host_id, privacy, change_id):
         print_new_section_title("Resolve Sensor")

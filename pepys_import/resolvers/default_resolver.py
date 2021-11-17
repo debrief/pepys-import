@@ -16,6 +16,9 @@ class DefaultResolver(DataResolver):
     default_datafile_name = "DATAFILE-1"
     default_datafile_type = "DATAFILE-TYPE-1"
 
+    def reset_per_file_settings(self):
+        pass
+
     def resolve_platform(
         self,
         data_store,
