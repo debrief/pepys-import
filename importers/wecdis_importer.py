@@ -269,6 +269,7 @@ class WecdisImporter(Importer):
         if type_token.text != "BRG":
             return
 
+        sensor_name_token = tokens[4]
         date_token = tokens[5]
         time_token = tokens[6]
         bearing_token = tokens[7]
@@ -284,11 +285,13 @@ class WecdisImporter(Importer):
         contact_timestamp_token = combine_tokens(date_token, time_token)
         contact_timestamp_token.record(self.name, "timestamp", timestamp)
 
+        sensor_name = sensor_name_token.text
+        sensor_name_token.record(self.name, "sensor", sensor_name)
         detecting_platform = self.get_cached_platform(data_store, self.platform_name, change_id)
         detecting_sensor = self.get_cached_sensor(
             data_store,
-            sensor_name="Wecdis-TMA",  # TODO - confirm name for this sensor
-            sensor_type="TMA",
+            sensor_name=f"TMA-{sensor_name}",
+            sensor_type=f"{sensor_name}",
             platform_id=detecting_platform.platform_id,
             change_id=change_id,
         )

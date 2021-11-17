@@ -333,6 +333,7 @@ class TestWecdisImporter(unittest.TestCase):
             assert round(stored_contact[0].location.longitude, 6) == -12.568518
             assert round(stored_contact[0].bearing.to(ureg.degree).magnitude) == 270
             assert stored_contact[0].orientation is None  # No course given
+            assert stored_contact[0].sensor.sensor_type.name == "5th ABC 20Ab"
 
     def test_wecdis_tma_missing_fields(self):
         processor = FileProcessor(archive=False)
