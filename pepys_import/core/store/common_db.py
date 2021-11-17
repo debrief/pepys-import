@@ -160,6 +160,10 @@ class PlatformMixin:
         return association_proxy("participations", "wargame_name")
 
     @declared_attr
+    def wargame_participations_objects(self):
+        return association_proxy("participations", "wargame")
+
+    @declared_attr
     def platform_type(self):
         return relationship("PlatformType", lazy="joined", innerjoin=True, uselist=False)
 
@@ -1891,6 +1895,10 @@ class ActivationMixin:
     @declared_attr
     def source(self):
         return relationship("Datafile", lazy="joined", uselist=False)
+
+    @declared_attr
+    def platform_id(self):
+        return association_proxy("sensor", "host")
 
     # @declared_attr
     # def source_reference(self):
