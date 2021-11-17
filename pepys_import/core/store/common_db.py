@@ -228,14 +228,13 @@ class PlatformMixin:
         privacy_obj = data_store.search_privacy(privacy)
         if sensor_type_obj is None or privacy_obj is None:
             # We don't have access to the platform type attribute on self
-            # as it has been expunged by now, so query the database and check it there
-            with data_store.session_scope():
-                platform = (
-                    data_store.session.query(data_store.db_classes.Platform)
-                    .filter(data_store.db_classes.Platform.platform_id == self.platform_id)
-                    .one()
-                )
-                platform_type_name = platform.platform_type_name
+            # as it has been expunged by now, so query the database and check it
+            platform = (
+                data_store.session.query(data_store.db_classes.Platform)
+                .filter(data_store.db_classes.Platform.platform_id == self.platform_id)
+                .one()
+            )
+            platform_type_name = platform.platform_type_name
             if platform_type_name == "Unknown":
                 # If we're dealing with an unknown Platform, then don't ask the user for
                 # sensor details, just create them with whatever information we've got
