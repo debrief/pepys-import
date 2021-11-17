@@ -222,7 +222,7 @@ class TestWecdisImporter(unittest.TestCase):
         with self.store.session_scope():
             # there must be states after the import
             states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 1)
+            self.assertEqual(len(states), 3)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -231,15 +231,29 @@ class TestWecdisImporter(unittest.TestCase):
             # there must be one datafile afterwards
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
-
-            state = self.store.session.query(self.store.db_classes.State).all()
-            assert len(state) == 1
-            assert state[0].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
-            assert round(state[0].location.latitude, 6) == 12.57613
-            assert round(state[0].location.longitude, 6) == -0.514239
+            # POS
+            states = self.store.session.query(self.store.db_classes.State).all()
+            assert states[0].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
+            assert round(states[0].location.latitude, 6) == 12.57613
+            assert round(states[0].location.longitude, 6) == -12.57613
             ureg = UnitRegistry()
-            assert round(state[0].speed.to(ureg.knot).magnitude, 1) == 2.8
-            assert state[0].heading.to(ureg.degree).magnitude == 340
+            assert states[0].speed is None
+            assert states[0].heading is None
+            assert states[0].sensor.sensor_type.name == "GPS"
+            # CPOS
+            assert states[1].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
+            assert round(states[1].location.latitude, 6) == -12.57613
+            assert round(states[1].location.longitude, 6) == -0.514239
+            assert round(states[1].speed.to(ureg.knot).magnitude, 1) == 2.8
+            assert states[1].heading.to(ureg.degree).magnitude == 340
+            assert states[1].sensor.sensor_type.name == "ABC_XY"
+            # POS2
+            assert states[2].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
+            assert round(states[2].location.latitude, 6) == 12.500054
+            assert round(states[2].location.longitude, 6) == 1.170567
+            assert states[2].speed is None
+            assert states[2].heading is None
+            assert states[2].sensor.sensor_type.name == "SENSOR1"
 
     def test_tma_ignore_sol_max(self):
         processor = FileProcessor(archive=False)
@@ -410,7 +424,7 @@ class TestWecdisImporter(unittest.TestCase):
         with self.store.session_scope():
             # there must be states after the import
             states = self.store.session.query(self.store.db_classes.State).all()
-            self.assertEqual(len(states), 4)
+            self.assertEqual(len(states), 8)
 
             # there must be contacts after the import
             contacts = self.store.session.query(self.store.db_classes.Contact).all()
@@ -432,13 +446,16 @@ class TestWecdisImporter(unittest.TestCase):
             ureg = UnitRegistry()
 
             assert stored_states[0].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
-            assert stored_states[1].time == datetime(2021, 11, 1, 1, 2, 45, 10000)
-            assert stored_states[2].time == datetime(2021, 11, 1, 1, 3, 5, 10000)
-            assert stored_states[3].time == datetime(2021, 12, 12, 1, 3, 35, 10000)
+            assert stored_states[0].sensor.sensor_type.name == "GPS"
+            assert stored_states[1].time == datetime(2021, 11, 1, 1, 2, 30, 123000)
+            assert stored_states[1].sensor.sensor_type.name == "ABC_XY"
+            assert stored_states[2].time == datetime(2021, 11, 1, 1, 2, 45, 10000)
+            assert stored_states[4].time == datetime(2021, 11, 1, 1, 3, 5, 10000)
+            assert stored_states[6].time == datetime(2021, 12, 12, 1, 3, 35, 10000)
             assert stored_states[0].elevation.to(ureg.meter).magnitude == -11.1
             assert stored_states[1].elevation.to(ureg.meter).magnitude == -11.1
-            assert stored_states[2].elevation.to(ureg.meter).magnitude == -11.1
-            assert stored_states[3].elevation.to(ureg.meter).magnitude == -19.7
+            assert stored_states[5].elevation.to(ureg.meter).magnitude == -11.1
+            assert stored_states[6].elevation.to(ureg.meter).magnitude == -19.7
 
             stored_contacts = (
                 self.store.session.query(self.store.db_classes.Contact)

@@ -15,7 +15,7 @@ class MsgType(str, Enum):
     TIME = "DZA"
     PLATFORM = "VNM"
     CONTACT = "CONTACT"
-    POSITION = "CPOS"
+    POSITION = "POS"  # Could be CPOS, POS, POS1, POS2, ... POSN
     TMA = "TMA"
     DEPTH = "PDS"
     TTM = "TTM"
@@ -62,7 +62,7 @@ class WecdisImporter(Importer):
                 self.handle_depth(tokens, line_number)
             elif msg_type == MsgType.CONTACT:
                 self.handle_contact(data_store, line_number, tokens, datafile, change_id)
-            elif msg_type == MsgType.POSITION:
+            elif MsgType.POSITION in msg_type:
                 # Do we have all the information we need?
                 if self.platform_name and self.timestamp:
                     self.handle_position(data_store, line_number, tokens, datafile, change_id)
@@ -210,18 +210,20 @@ class WecdisImporter(Importer):
         :param datafile: The datafile being imported
         :param change_id: The ID representing this import as a change
         """
+        source_token = tokens[1]
+        sensor_token = tokens[2]
         lat_token = tokens[3]
         lat_hem_token = tokens[4]
         lon_token = tokens[5]
         lon_hem_token = tokens[6]
-        heading_token = tokens[7]
-        speed_token = tokens[8]
+        sensor_name = f"{source_token.text}_{sensor_token.text}"
+        combine_tokens(source_token, sensor_token).record(self.name, "sensor", sensor_name)
 
         platform = self.get_cached_platform(data_store, self.platform_name, change_id=change_id)
         sensor = self.get_cached_sensor(
             data_store=data_store,
-            sensor_name="",
-            sensor_type=None,
+            sensor_name=f"{sensor_name}",
+            sensor_type=sensor_token.text,
             platform_id=platform.platform_id,
             change_id=change_id,
         )
@@ -234,19 +236,22 @@ class WecdisImporter(Importer):
 
         combine_tokens(lat_token, lon_token).record(self.name, "location", location, "DMS")
 
-        heading_valid, heading = convert_absolute_angle(
-            heading_token.text, line_number, self.errors, self.error_type
-        )
-        if heading_valid:
-            state.heading = heading
-            heading_token.record(self.name, "heading", heading)
+        if tokens[1].text == "CPOS":
+            heading_token = tokens[7]
+            speed_token = tokens[8]
+            heading_valid, heading = convert_absolute_angle(
+                heading_token.text, line_number, self.errors, self.error_type
+            )
+            if heading_valid:
+                state.heading = heading
+                heading_token.record(self.name, "heading", heading)
 
-        speed_valid, speed = convert_speed(
-            speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type
-        )
-        if speed_valid:
-            state.speed = speed
-            speed_token.record(self.name, "speed", speed)
+            speed_valid, speed = convert_speed(
+                speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type
+            )
+            if speed_valid:
+                state.speed = speed
+                speed_token.record(self.name, "speed", speed)
 
         if self.elevation:
             state.elevation = self.elevation
