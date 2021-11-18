@@ -1029,7 +1029,7 @@ class DataStore:
                 # We'll use the first three characters of the platform name as the identifier - as this will have been used
                 # when the unknown platform was automatically created
                 platform = self.find_platform(
-                    name=platform_name, identifier=platform_name[:3], nationality="Unknown"
+                    name=platform_name, identifier=platform_name, nationality="Unknown"
                 )
                 # If we found a platform with that name etc, then return it
                 if platform:
@@ -1043,7 +1043,7 @@ class DataStore:
                 name=platform_name,
                 trigraph=platform_name[:3],
                 quadgraph=platform_name[:4],
-                identifier=platform_name[:3],
+                identifier=platform_name,
                 nationality="Unknown",
                 platform_type="Unknown",
                 privacy=lowest_privacy,

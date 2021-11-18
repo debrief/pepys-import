@@ -136,15 +136,15 @@ class CommandLineResolver(DataResolver):
         quadgraph=None,
     ):
         if self.store_all_platforms_as_unknown:
-            return self.add_unknown_platform(data_store, platform_name)
+            return self.add_unknown_platform(data_store, platform_name, change_id)
 
         print_new_section_title("Resolve Platform")
         platform_details = []
         final_options = [
             "Add a new platform",
             "Search for existing platform",
-            "Store as unknown platform",
-            "Store remaining platforms as unknown",
+            "Store as Unknown platform",
+            "Store remaining platforms in this datafile as Unknown",
         ]
         if platform_name:
             # If we've got a platform_name, then we can search for all platforms
@@ -214,24 +214,27 @@ class CommandLineResolver(DataResolver):
                 change_id,
             )
         elif choice == str(3):
-            return self.add_unknown_platform(data_store, platform_name)
+            return self.add_unknown_platform(data_store, platform_name, change_id)
         elif choice == str(4):
             self.store_all_platforms_as_unknown = True
-            return self.add_unknown_platform(data_store, platform_name)
+            return self.add_unknown_platform(data_store, platform_name, change_id)
         elif 5 <= int(choice) <= len(choices):
             # One of the pre-existing platforms was chosen
             platform_index = int(choice) - 5
             return platforms[platform_index]
 
-    def add_unknown_platform(self, data_store, platform_name):
+    def add_unknown_platform(self, data_store, platform_name, change_id):
         if platform_name is None:
             platform_name = str(uuid.uuid4())
-        identifier = platform_name[:3]
+        identifier = platform_name
         trigraph = platform_name[:3]
         quadgraph = platform_name[:4]
 
-        chosen_platform_type = data_store.search_platform_type("Unknown")
-        chosen_nationality = data_store.search_nationality("Unknown")
+        chosen_platform_type = data_store.add_to_platform_types(
+            "Unknown", change_id, default_data_interval_secs=60
+        )
+
+        chosen_nationality = data_store.add_to_nationalities("Unknown", change_id)
         chosen_privacy = data_store.search_privacy(get_lowest_privacy(data_store))
 
         return (
