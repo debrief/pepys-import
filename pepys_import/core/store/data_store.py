@@ -1038,14 +1038,20 @@ class DataStore:
                 # If we haven't been given a name, make up a UUID name
                 platform_name = str(uuid.uuid4())
 
+            chosen_platform_type = self.add_to_platform_types(
+                "Unknown", change_id, default_data_interval_secs=60
+            )
+
+            chosen_nationality = self.add_to_nationalities("Unknown", change_id)
+
             lowest_privacy = get_lowest_privacy(self)
             return self.add_to_platforms(
                 name=platform_name,
                 trigraph=platform_name[:3],
                 quadgraph=platform_name[:4],
                 identifier=platform_name,
-                nationality="Unknown",
-                platform_type="Unknown",
+                nationality=chosen_nationality.name,
+                platform_type=chosen_platform_type.name,
                 privacy=lowest_privacy,
                 change_id=change_id,
             )
