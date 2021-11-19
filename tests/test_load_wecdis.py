@@ -316,7 +316,7 @@ class TestWecdisImporter(unittest.TestCase):
         with self.store.session_scope():
             # there must be no contacts after the import
             contacts = self.store.session.query(self.store.db_classes.Contact).all()
-            self.assertEqual(len(contacts), 1)
+            self.assertEqual(len(contacts), 2)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -326,15 +326,18 @@ class TestWecdisImporter(unittest.TestCase):
             datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
             self.assertEqual(len(datafiles), 1)
 
-            stored_contact = self.store.session.query(self.store.db_classes.Contact).all()
-            assert len(stored_contact) == 1
-            assert stored_contact[0].time == datetime(2019, 11, 19, 1, 2, 34, 122000)
+            stored_contacts = self.store.session.query(self.store.db_classes.Contact).all()
+
+            assert stored_contacts[0].time == datetime(2019, 11, 19, 1, 2, 34, 122000)
             ureg = UnitRegistry()
-            assert round(stored_contact[0].location.latitude, 6) == 1.368723
-            assert round(stored_contact[0].location.longitude, 6) == -12.568518
-            assert round(stored_contact[0].bearing.to(ureg.degree).magnitude) == 270
-            assert stored_contact[0].orientation is None  # No course given
-            assert stored_contact[0].sensor.sensor_type.name == "5th ABC 20Ab"
+            assert round(stored_contacts[0].location.latitude, 6) == 1.368723
+            assert round(stored_contacts[0].location.longitude, 6) == -12.568518
+            assert round(stored_contacts[0].bearing.to(ureg.degree).magnitude) == 270
+            assert stored_contacts[0].orientation is None  # No course given
+            assert stored_contacts[0].sensor.sensor_type.name == "5th ABC 20Ab"
+
+            assert stored_contacts[1].time == datetime(2021, 12, 12, 1, 13, 35, 156000)
+            assert stored_contacts[1].sensor.sensor_type.name == "missing_field"
 
     def test_wecdis_tma_missing_fields(self):
         processor = FileProcessor(archive=False)

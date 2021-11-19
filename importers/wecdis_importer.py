@@ -268,11 +268,21 @@ class WecdisImporter(Importer):
         time_token = tokens[6]
         bearing_token = tokens[7]
         course_token = tokens[9]  # Optional
-        lat_token = tokens[11]
-        lat_hem_token = tokens[12]
-        lon_token = tokens[13]
-        lon_hem_token = tokens[14]
-        tma_name_token = tokens[21]
+
+        # TMA lines seem to have two possible lengths - 21 or 22 tokens
+        # The extra token sits just before the latitude
+        if len(tokens) == 21:
+            lat_token = tokens[10]
+            lat_hem_token = tokens[11]
+            lon_token = tokens[12]
+            lon_hem_token = tokens[13]
+            tma_name_token = tokens[20]
+        elif len(tokens) == 22:
+            lat_token = tokens[11]
+            lat_hem_token = tokens[12]
+            lon_token = tokens[13]
+            lon_hem_token = tokens[14]
+            tma_name_token = tokens[21]
 
         # TODO - work out speed/range fields
         timestamp = self.parse_timestamp(date_token.text, time_token.text)
