@@ -423,7 +423,7 @@ class WecdisImporter(Importer):
             contact.bearing = bearing
             bearing_token.record(self.name, "bearing", bearing)
 
-        range_valid, range = convert_distance(
+        range_valid, contact_range = convert_distance(
             range_token.text,
             unit_registry.kilometers,  # TODO - confirm whether units are km, kyds or NM
             line_number,
@@ -431,8 +431,8 @@ class WecdisImporter(Importer):
             self.error_type,
         )
         if range_valid:
-            contact.range = range
-            range_token.record(self.name, "range", range)
+            contact.range = contact_range
+            range_token.record(self.name, "range", contact_range)
 
         return contact
 
