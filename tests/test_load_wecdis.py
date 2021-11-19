@@ -467,14 +467,14 @@ class TestWecdisImporter(unittest.TestCase):
 
             assert round(stored_contacts[0].location.latitude, 6) == 12.566667
             assert round(stored_contacts[0].location.longitude, 6) == 12.899538
-            assert round(stored_contacts[0].bearing.to(ureg.degree).magnitude) == 123
+            assert stored_contacts[0].bearing is None
             assert round(stored_contacts[0].soa.to(ureg.knot).magnitude, 1) == 3.2
 
             assert stored_contacts[1].track_number == "BRG 2"
             assert round(stored_contacts[1].bearing.to(ureg.degree).magnitude) == 190
             assert stored_contacts[1].soa is None
 
-            assert round(stored_contacts[2].bearing.to(ureg.degree).magnitude) == 180
+            assert stored_contacts[2].bearing is None
             assert round(stored_contacts[2].soa.to(ureg.knot).magnitude, 1) == 12.5
 
             assert round(stored_contacts[3].bearing.to(ureg.degree).magnitude, 2) == 270.52

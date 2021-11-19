@@ -142,7 +142,6 @@ class WecdisImporter(Importer):
         :param datafile: The datafile being imported
         :param change_id: The ID representing this import as a change
         """
-        bearing_token = tokens[4]
         contact_id_token = tokens[5]
         speed_token = tokens[6]
         date_token = tokens[9]
@@ -176,13 +175,6 @@ class WecdisImporter(Importer):
 
         contact.track_number = contact_id_token.text
         contact_id_token.record(self.name, "track number", contact.track_number)
-
-        bearing_valid, bearing = convert_absolute_angle(
-            bearing_token.text, line_number, self.errors, self.error_type
-        )
-        if bearing_valid:
-            contact.bearing = bearing
-            bearing_token.record(self.name, "bearing", bearing)
 
         speed_valid, speed = convert_speed(
             speed_token.text, unit_registry.knots, line_number, self.errors, self.error_type
