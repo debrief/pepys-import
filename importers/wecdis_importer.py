@@ -18,7 +18,7 @@ class MsgType(str, Enum):
     POSITION = "POS"  # Could be CPOS, POS, POS1, POS2, ... POSN
     TMA = "TMA"
     DEPTH = "PDS"
-    TTM = "TTM"
+    TTM = "TTM"  # Could be TTM1, TTM2, TTM3
 
 
 class WecdisImporter(Importer):
@@ -68,6 +68,8 @@ class WecdisImporter(Importer):
                     self.handle_position(data_store, line_number, tokens, datafile, change_id)
             elif msg_type == MsgType.TMA:
                 self.handle_tma(data_store, line_number, tokens, datafile, change_id)
+            elif MsgType.TTM in msg_type:
+                self.handle_ttm(data_store, line_number, tokens, datafile, change_id)
         datafile.flush_extracted_tokens()
 
     def handle_vnm(self, vnm_tokens, line_number):
@@ -159,7 +161,7 @@ class WecdisImporter(Importer):
         detecting_platform = self.get_cached_platform(data_store, self.platform_name, change_id)
         detecting_sensor = self.get_cached_sensor(
             data_store,
-            sensor_name="Wecdis-General-Contact",  # TODO - figure out the general contact sensor
+            sensor_name="Wecdis",  # TODO - figure out the general contact sensor
             sensor_type="Wecdis",
             platform_id=detecting_platform.platform_id,
             change_id=change_id,
@@ -323,9 +325,116 @@ class WecdisImporter(Importer):
             )
             if course_valid:
                 contact.orientation = course
-                course_token.record(self.name, "bearing", course)
+                course_token.record(self.name, "course", course)
 
-    # TODO - find out what the TTM range/bearing combinations relate to (a/b)
+    def handle_ttm(self, data_store, line_number, tokens, datafile, change_id):
+        """Handles TTM sensor contacts
+        :param data_store: The data store that this is importing into
+        :param line_number: The number of the line currently being processed
+        :param tokens: The tokens parsed from the line being processed
+        :param datafile: The datafile being imported
+        :param change_id: The ID representing this import as a change
+        """
+        # There are two sensors
+        sensor_token = tokens[2]
+        range_a_token = tokens[3]
+        bearing_a_token = tokens[4]
+        range_b_token = tokens[6]
+        bearing_b_token = tokens[7]
+        lat_token = tokens[17]
+        lat_hem_token = tokens[18]
+        lon_token = tokens[19]
+        lon_hem_token = tokens[20]
+
+        sensor_name = sensor_token.text
+        sensor_token.record(self.name, "sensor", sensor_name)
+        detecting_platform = self.get_cached_platform(data_store, self.platform_name, change_id)
+
+        contact_a = self.generate_ttm_contact(
+            sensor_name + "_a",
+            data_store,
+            datafile,
+            line_number,
+            detecting_platform,
+            range_a_token,
+            bearing_a_token,
+            change_id,
+        )
+        contact_b = self.generate_ttm_contact(
+            sensor_name + "_b",
+            data_store,
+            datafile,
+            line_number,
+            detecting_platform,
+            range_b_token,
+            bearing_b_token,
+            change_id,
+        )
+
+        location = self._parse_lat_lon_tokens(lat_token, lat_hem_token, lon_token, lon_hem_token)
+        if location:
+            contact_a.location = location
+            contact_b.location = location
+
+        contact_a.track_number = f"TTM_{sensor_name}_a"
+        contact_b.track_number = f"TTM_{sensor_name}_b"
+
+    def generate_ttm_contact(
+        self,
+        sensor_name,
+        data_store,
+        datafile,
+        line_number,
+        detecting_platform,
+        range_token,
+        bearing_token,
+        change_id,
+    ):
+        """Generates a contact from a TTM sensor range/bearing
+        TTM has two ranges and bearings - appearing to come from two linked sources
+        :param sensor_name: The name of the sensor that we're generating this contact from
+        :param data_store: The data store that this is importing into
+        :param datafile: The datafile being imported
+        :param line_number: The number of the line currently being processed
+        :param detecting_platform: The platform that's detecting the contact
+        :param range_token: The token giving the range of the contact
+        :param bearing_token: The token giving the bearing of the contact
+        :param change_id: The ID representing this import as a change
+        """
+        detecting_sensor = self.get_cached_sensor(
+            data_store,
+            sensor_name=f"TTM-{sensor_name}",
+            sensor_type=f"{sensor_name}",
+            platform_id=detecting_platform.platform_id,
+            change_id=change_id,
+        )
+        contact = datafile.create_contact(
+            data_store=data_store,
+            platform=detecting_platform,
+            sensor=detecting_sensor,
+            timestamp=self.timestamp,  # This contact type doesn't have its own timestamp
+            parser_name=self.short_name,
+        )
+
+        bearing_valid, bearing = convert_absolute_angle(
+            bearing_token.text, line_number, self.errors, self.error_type
+        )
+        if bearing_valid:
+            contact.bearing = bearing
+            bearing_token.record(self.name, "bearing", bearing)
+
+        range_valid, range = convert_distance(
+            range_token.text,
+            unit_registry.kilometers,  # TODO - confirm whether units are km, kyds or NM
+            line_number,
+            self.errors,
+            self.error_type,
+        )
+        if range_valid:
+            contact.range = range
+            range_token.record(self.name, "range", range)
+
+        return contact
 
     def _parse_lat_lon_tokens(self, lat_token, lat_hem_token, lon_token, lon_hem_token):
         """Parse latitude and longitude tokens as a location"""

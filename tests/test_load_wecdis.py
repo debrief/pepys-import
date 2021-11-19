@@ -22,6 +22,7 @@ TMA_MISSING_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/tma_mi
 INVALID_LAT_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/invalid_lat.log")
 INVALID_LON_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/invalid_lon.log")
 DEPTH_DATA_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/depth.log")
+INVALID_TTM_PATH = os.path.join(FILE_PATH, "sample_data/wecdis_files/ttm_invalid.log")
 
 
 class TestWecdisImporter(unittest.TestCase):
@@ -429,7 +430,7 @@ class TestWecdisImporter(unittest.TestCase):
 
             # there must be contacts after the import
             contacts = self.store.session.query(self.store.db_classes.Contact).all()
-            self.assertEqual(len(contacts), 3)
+            self.assertEqual(len(contacts), 5)
 
             # there must be platforms after the import
             platforms = self.store.session.query(self.store.db_classes.Platform).all()
@@ -475,6 +476,14 @@ class TestWecdisImporter(unittest.TestCase):
 
             assert round(stored_contacts[2].bearing.to(ureg.degree).magnitude) == 180
             assert round(stored_contacts[2].soa.to(ureg.knot).magnitude, 1) == 12.5
+
+            assert round(stored_contacts[3].bearing.to(ureg.degree).magnitude, 2) == 270.52
+            assert round(stored_contacts[3].range.to(ureg.kilometer).magnitude, 2) == 3.96
+            assert stored_contacts[3].track_number == "TTM_18_a"
+
+            assert round(stored_contacts[4].bearing.to(ureg.degree).magnitude, 2) == 12.53
+            assert round(stored_contacts[4].range.to(ureg.kilometer).magnitude, 2) == 12.79
+            assert stored_contacts[4].track_number == "TTM_18_b"
 
     def test_invalid_lat(self):
         processor = FileProcessor(archive=False)
@@ -558,6 +567,43 @@ class TestWecdisImporter(unittest.TestCase):
             self.assertEqual(len(datafiles), 0)
 
             assert len(processor.importers[0].errors) == 1
+
+    def test_ttm_invalid_values(self):
+        processor = FileProcessor(archive=False)
+        processor.register_importer(WecdisImporter())
+
+        # check states empty
+        with self.store.session_scope():
+            # there must be no contacts at the beginning
+            contacts = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(contacts), 0)
+
+            # there must be no platforms at the beginning
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 0)
+
+            # there must be no datafiles at the beginning
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+        # parse the folder
+        processor.process(INVALID_TTM_PATH, self.store, False)
+
+        # check data got created
+        with self.store.session_scope():
+            # there must be no states after the import - invalid location
+            states = self.store.session.query(self.store.db_classes.Contact).all()
+            self.assertEqual(len(states), 0)
+
+            # there must be platforms after the import
+            platforms = self.store.session.query(self.store.db_classes.Platform).all()
+            self.assertEqual(len(platforms), 1)
+
+            # there won't be datafile afterwards - failed import
+            datafiles = self.store.session.query(self.store.db_classes.Datafile).all()
+            self.assertEqual(len(datafiles), 0)
+
+            assert len(processor.importers[0].errors) == 4
 
     # Datetime tests for formats that we don't have in sample data but are in NMEA
     @staticmethod
