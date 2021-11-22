@@ -16,11 +16,10 @@ class FullShoreImporter(Importer):
         return suffix.upper() == ".CSV"
 
     def can_load_this_filename(self, filename):
-        return True
+        return "S4_TRACK" in filename.upper()
 
     def can_load_this_header(self, header):
-        pass
-        # TBC - return
+        return header.startswith("RECORD#,REC_DATE,REC_TIME")
 
     def can_load_this_file(self, file_contents):
         return True
