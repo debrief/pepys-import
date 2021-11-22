@@ -311,6 +311,8 @@ class WecdisImporter(Importer):
         if location:
             contact.location = location
 
+        combine_tokens(lat_token, lon_token).record(self.name, "location", location, "DMS")
+
         contact.track_number, _, _ = tma_name_token.text.partition("*")
         tma_name_token.record(self.name, "track number", contact.track_number)
 
@@ -377,6 +379,8 @@ class WecdisImporter(Importer):
         if location:
             contact_a.location = location
             contact_b.location = location
+
+        combine_tokens(lat_token, lon_token).record(self.name, "location", location, "DMS")
 
         contact_a.track_number = f"TTM_{sensor_name}_a"
         contact_b.track_number = f"TTM_{sensor_name}_b"
