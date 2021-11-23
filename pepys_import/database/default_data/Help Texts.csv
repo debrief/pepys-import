@@ -2,7 +2,7 @@ id,guidance
 RESOLVE_DATAFILE_TYPE,"The category of datafile. These categories are steadily maturing, but please see an expert user if the relevant category isn't present."
 RESOLVE_PRIVACY,"The classification of the object. You can search for a classification if it's not listed. If it's not found, please see an expert user if the relevant classification isn't present."
 RESOLVE_DATAFILE,"The Datafile Resolver. It asks for the classification of the datafile and saves the datafile to the database."
-RESOLVE_PLATFORM,"The Platform Resolver. Allows the user to select a platform from existing ones in the database or to add a new platform."
+RESOLVE_PLATFORM,"The Platform Resolver. Allows the user to select a platform from existing ones in the database or to add a new platform.  Options are provided to skip the provision of supporting metadata for platforms when necessary."
 RESOLVE_SENSOR,"The Sensor Resolver. Allows the user to select a sensor from existing ones in the database or to add a new sensor ."
 FUZZY_SEARCH_PLATFORM,"Search platform by its name, identifier, or nationality. If entered name is not found, you will be redirected to adding a new platform prompt."
 ADD_TO_PLATFORMS,"Add a new platform by typing platform name, identifier, trigraph, quadgraph; choosing nationality, platform type, and classification respectively."

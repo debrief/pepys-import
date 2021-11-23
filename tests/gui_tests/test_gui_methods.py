@@ -319,6 +319,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
                 "Yemen",
                 "Zambia",
                 "Zimbabwe",
+                "Unknown",
             ],
         },
         "nationality name": {
@@ -583,6 +584,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
                 "Yemen",
                 "Zambia",
                 "Zimbabwe",
+                "Unknown",
             ],
         },
         "platform id": {
@@ -633,6 +635,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
                 "Naval - uncrewed surface vehicle",
                 "Naval - uncrewed underwater vehicle",
                 "Naval - uncrewed air vehicle",
+                "Unknown",
             ],
         },
         "platform type name": {
@@ -674,6 +677,7 @@ def test_generating_column_data(pytestconfig, test_datastore):
                 "Research vessel",
                 "Sailing vessel",
                 "Search and Rescue",
+                "Unknown",
             ],
         },
         "privacy": {

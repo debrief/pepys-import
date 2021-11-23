@@ -300,6 +300,7 @@ def test_column_data_platform():
                 "Yemen",
                 "Zambia",
                 "Zimbabwe",
+                "Unknown",
             ],
         },
         "nationality name": {
@@ -564,6 +565,7 @@ def test_column_data_platform():
                 "Yemen",
                 "Zambia",
                 "Zimbabwe",
+                "Unknown",
             ],
         },
         "platform id": {
@@ -614,6 +616,7 @@ def test_column_data_platform():
                 "Naval - uncrewed surface vehicle",
                 "Naval - uncrewed underwater vehicle",
                 "Naval - uncrewed air vehicle",
+                "Unknown",
             ],
         },
         "platform type name": {
@@ -655,6 +658,7 @@ def test_column_data_platform():
                 "Research vessel",
                 "Sailing vessel",
                 "Search and Rescue",
+                "Unknown",
             ],
         },
         "privacy": {
@@ -906,6 +910,7 @@ def test_column_data_platform_type():
                 "Research vessel",
                 "Sailing vessel",
                 "Search and Rescue",
+                "Unknown",
             ],
         },
         "platform type id": {
@@ -1565,6 +1570,7 @@ def test_edit_data_platform():
                 "Yemen",
                 "Zambia",
                 "Zimbabwe",
+                "Unknown",
             ],
         },
         "platform type": {
@@ -1609,6 +1615,7 @@ def test_edit_data_platform():
                 "Naval - uncrewed surface vehicle",
                 "Naval - uncrewed underwater vehicle",
                 "Naval - uncrewed air vehicle",
+                "Unknown",
             ],
         },
         "privacy": {
