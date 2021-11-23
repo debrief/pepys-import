@@ -90,3 +90,8 @@ class DataResolver(ABC):
         :param allow_empty: Whether to allow an empty value (e.g. to accept default), optional
         :return: The missing information requested
         """
+
+    @abstractmethod
+    def reset_per_file_settings(self):
+        """Implementation method should do anything needed to reset per-file settings,
+        such as whether to treat all platforms as unknown."""
