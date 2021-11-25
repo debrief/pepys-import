@@ -9,6 +9,7 @@ from importlib import import_module
 
 import pint
 import sqlalchemy
+from packaging import version
 from sqlalchemy import create_engine, inspect
 from sqlalchemy.event import listen
 from sqlalchemy.exc import ArgumentError, OperationalError
@@ -17,6 +18,8 @@ from sqlalchemy.sql import func
 from sqlalchemy.sql.expression import text
 from sqlalchemy_utils import dependent_objects, get_referencing_foreign_keys, merge_references
 
+import config
+import pepys_import
 from paths import MIGRATIONS_DIRECTORY, PEPYS_IMPORT_DIRECTORY
 from pepys_admin.utils import read_latest_revisions_file
 from pepys_import import __build_timestamp__, __version__
@@ -36,6 +39,7 @@ from pepys_import.utils.data_store_utils import (
     create_stored_procedures_for_postgres,
     import_from_csv,
     lowercase_or_none,
+    read_version_from_pepys_install,
 )
 from pepys_import.utils.sqlite_utils import load_spatialite, set_sqlite_foreign_keys_on
 from pepys_import.utils.value_transforming_utils import format_datetime
@@ -224,6 +228,8 @@ class DataStore:
             # of the same length makes things prettier
             print("-" * 78)
 
+        self.check_network_version()
+
     def initialise(self):
         """Create schemas for the database"""
         if self.db_type == "sqlite":
@@ -268,6 +274,21 @@ class DataStore:
             raise
         finally:
             self.session.close()
+
+    def check_network_version(self):
+        if config.NETWORK_MASTER_INSTALL_PATH != "":
+            network_version = read_version_from_pepys_install(config.NETWORK_MASTER_INSTALL_PATH)
+            current_version = pepys_import.__version__
+
+            if network_version is None:
+                # We've already given a warning that we can't read the network version, so just continue
+                return
+
+            if version.parse(network_version) > version.parse(current_version):
+                print(
+                    "Your version of Pepys is out of date. Please run the Update Pepys program from the Start Menu."
+                )
+                sys.exit(1)
 
     #############################################################
     # Other DataStore Methods
