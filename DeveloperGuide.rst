@@ -95,20 +95,23 @@ The conda package manager can be quite slow, so the instructions show how to ins
 These instructions are for Macs with a M1 (ARM) processor. A similar approach will work for x86 (Intel) Macs, but you will need
 to ensure that you install the Intel version of miniconda.
 
-1. Install the ARM version of mambaforge, which is available `here <https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-MacOSX-arm64.sh>`_, following all the instructions to the end (including setting up integration with your shell)
+1. Install Postgres.app, available from `here <https://postgresapp.com/>`_, which is a self-contained installation of Postgres and PostGIS for MacOS.
 
-2. Create a new environment (like conda's equivalent of a virtualenv) by running: ``mamba create -n pepys python=3.9 libspatialite``. This will
+2. Once installed, add the Postgres bin directory to your PATH. This will be _inside_ the Postgres.app file you've just installed, and the path will be something
+   like :code:`/Applications/Postgres.app/Contents/Versions/14/bin`.
+
+3. Install the ARM version of mambaforge, which is available `here <https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-MacOSX-arm64.sh>`_, following all the instructions to the end (including setting up integration with your shell)
+
+4. Create a new environment (like conda's equivalent of a virtualenv) by running: ``mamba create -n pepys python=3.9 libspatialite psycopg2``. This will
    install Python 3.9 and libspatialite in a new environment called ``pepys``.
 
-3. Activate the environment by running ``mamba activate pepys``
+5. Activate the environment by running ``mamba activate pepys``
 
-4. Install the other Pepys dependencies by running ``pip install -r requirements.txt -r requirements_dev.txt``
+6. Install the other Pepys dependencies by running ``pip install -r requirements.txt -r requirements_dev.txt``
 
-5. Install the Pepys package itself in 'editable mode' by running ``pip install -e .``
+7. Install the Pepys package itself in 'editable mode' by running ``pip install -e .``
 
-6. Install Postgres.app, available from `here <https://postgresapp.com/>`_, which is a self-contained installation of Postgres and PostGIS for MacOS.
-
-7. **Important:** Skip to the :ref:`Run the unit tests` section without following the intermediate steps of the guide.
+8.  **Important:** Skip to the :ref:`Run the unit tests` section without following the intermediate steps of the guide.
 
 
 Windows
