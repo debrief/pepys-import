@@ -97,8 +97,7 @@ to ensure that you install the Intel version of miniconda.
 
 1. Install Postgres.app, available from `here <https://postgresapp.com/>`_, which is a self-contained installation of Postgres and PostGIS for MacOS.
 
-2. Once installed, add the Postgres bin directory to your PATH. Note: this doesn't have to be in the profile, it can be applied just to the current
-   session, since it is only needed for ``pip install`` step. The bin directory will be _inside_ the Postgres.app file you've just installed, and the path will be something
+2. Once installed, add the Postgres bin directory to the PATH variable in your proefile. The bin directory will be _inside_ the Postgres.app file you've just installed, and the path will be something
    like :code:`/Applications/Postgres.app/Contents/Versions/14/bin`.
 
 3. Install the ARM version of mambaforge, which is available `here <https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-MacOSX-arm64.sh>`_, following 
