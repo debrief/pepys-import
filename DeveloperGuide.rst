@@ -88,10 +88,31 @@ Run the following command::
 Mac OS X
 ^^^^^^^^
 
-**Note:** These instructions are not complete due to not having a bare OS X machine to test on. However,
-they should give you some hints as to how to get an OS X machine set up to develop pepys-import.
+The easiest way to get the relevant libraries working on a M1 MacOS machine is to use the conda Python package manager which will install from the
+packages provided by conda-forge. This is different to the standard pip/virtualenv process, but works quite nicely alongside it.
+The conda package manager can be quite slow, so the instructions show how to install mamba instead, which is a faster fork.
 
-**TODO - Complete instructions here**
+These instructions are for Macs with a M1 (ARM) processor. A similar approach will work for x86 (Intel) Macs, but you will need
+to ensure that you install the Intel version of miniconda.
+
+1. Install Postgres.app, available from `here <https://postgresapp.com/>`_, which is a self-contained installation of Postgres and PostGIS for MacOS.
+
+2. Once installed, add the Postgres bin directory to the PATH variable in your proefile. The bin directory will be _inside_ the Postgres.app file you've just installed, and the path will be something
+   like :code:`/Applications/Postgres.app/Contents/Versions/14/bin`.
+
+3. Install the ARM version of mambaforge, which is available `here <https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-MacOSX-arm64.sh>`_, following 
+    all the instructions to the end (including setting up integration with your shell)
+
+4. Create a new environment (like conda's equivalent of a virtualenv) by running: ``mamba create -n pepys python=3.9 libspatialite psycopg2``. This will
+   install Python 3.9 and libspatialite in a new environment called ``pepys``.
+
+5. Activate the environment by running ``mamba activate pepys``
+
+6. Install the other Pepys dependencies by running ``pip install -r requirements.txt -r requirements_dev.txt``
+
+7. Install the Pepys package itself in 'editable mode' by running ``pip install -e .``
+
+8.  **Important:** Skip to the :ref:`Run the unit tests` section without following the intermediate steps of the guide.
 
 
 Windows
