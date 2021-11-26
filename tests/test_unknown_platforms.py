@@ -154,8 +154,7 @@ class UnknownPlatformsResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.file.file_processor.prompt")
     @patch("pepys_import.resolvers.command_line_input.prompt")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_answering_store_as_unknown(self, prompt, menu_prompt, processor_prompt):
+    def test_answering_store_as_unknown(self, menu_prompt, processor_prompt):
         menu_prompt.side_effect = [
             "2",  # Public
             "1",  # Yes, correct
@@ -183,8 +182,7 @@ class UnknownPlatformsResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.file.file_processor.prompt")
     @patch("pepys_import.resolvers.command_line_input.prompt")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
-    def test_answering_store_remaining_as_unknown(self, prompt, menu_prompt, processor_prompt):
+    def test_answering_store_remaining_as_unknown(self, menu_prompt, processor_prompt):
         menu_prompt.side_effect = [
             "2",  # Public
             "1",  # Yes, correct
@@ -213,9 +211,8 @@ class UnknownPlatformsResolverTestCase(unittest.TestCase):
 
     @patch("pepys_import.file.file_processor.prompt")
     @patch("pepys_import.resolvers.command_line_input.prompt")
-    @patch("pepys_import.resolvers.command_line_resolver.prompt")
     def test_answering_store_remaining_as_unknown_multiple_files(
-        self, prompt, menu_prompt, processor_prompt
+        self, menu_prompt, processor_prompt
     ):
         menu_prompt.side_effect = [
             "2",  # Public
