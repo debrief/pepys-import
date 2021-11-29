@@ -1,3 +1,5 @@
+# Get the path to the network master install from the Pepys config file
+# To make this as reliable as possible, we use Pepys own config parsing code
 $network_path = python -c "import config; print(config.NETWORK_MASTER_INSTALL_PATH)"
 
 if ($network_path -eq "") {
